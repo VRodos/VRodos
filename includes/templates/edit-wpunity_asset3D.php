@@ -48,13 +48,13 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     wp_enqueue_style('wpunity_asseteditor_stylesheet');
     
     // QR code generator
-    wp_enqueue_script('wpunity_qrcode_generator');
+    wp_enqueue_script('vrodos_qrcode_generator');
     
     // Three js : for simple rendering
     wp_enqueue_script('vrodos_scripts');
     
     // For fbx binary
-    wp_enqueue_script('wpunity_inflate'); // for binary fbx
+    wp_enqueue_script('vrodos_inflate'); // for binary fbx
     
     // 1. Three js library
     wp_enqueue_script('wpunity_load119_threejs');

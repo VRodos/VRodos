@@ -11,7 +11,7 @@ function wpunity_widget_functions() {
     wp_enqueue_script('vrodos_scripts');
     
     // For fbx binary
-    wp_enqueue_script('wpunity_inflate'); // for binary fbx
+    wp_enqueue_script('vrodos_inflate'); // for binary fbx
     
     // 1. Three js library
     wp_enqueue_script('wpunity_load119_threejs');

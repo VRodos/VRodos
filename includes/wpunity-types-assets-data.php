@@ -15,7 +15,7 @@ function wpunity_assets_scripts_and_styles() {
     wp_enqueue_script( 'vrodos_content_interlinking_request');
 
 // load script from js_libs
-    wp_enqueue_script( 'wpunity_classification_request');
+    wp_enqueue_script( 'vrodos_classification_request');
     
     wp_enqueue_script('vrodos_segmentation_request');
 

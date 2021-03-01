@@ -18,7 +18,7 @@ function wpunity_load_vreditor_scripts()
     wp_enqueue_script('wpunity_load'.$vthreejs.'_OutlinePass');
     wp_enqueue_script('wpunity_load'.$vthreejs.'_ShaderPass');
     wp_enqueue_script('wpunity_load'.$vthreejs.'_FBXloader');
-    wp_enqueue_script('wpunity_inflate');
+    wp_enqueue_script('vrodos_inflate');
     
     // Fixed at 87 (forked of original 87)
     wp_enqueue_script('wpunity_load87_datgui');
@@ -51,8 +51,8 @@ function wpunity_load_custom_functions_vreditor(){
     wp_enqueue_script('wpunity_LoaderMulti');
     wp_enqueue_script('wpunity_movePointerLocker');
     wp_enqueue_script('wpunity_addRemoveOne');
-    wp_enqueue_script('wpunity_vr_editor_buttons');
-    wp_enqueue_script('wpunity_vr_editor_analytics');
+    wp_enqueue_script('vrodos_vr_editor_buttons');
+    wp_enqueue_script('vrodos_vr_editor_analytics');
 }
 add_action('wp_enqueue_scripts', 'wpunity_load_custom_functions_vreditor' );
 ?>
