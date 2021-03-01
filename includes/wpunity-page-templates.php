@@ -41,12 +41,12 @@ class wpUnityTemplate {
 
         // Add your templates to this array.
         $this->templates = array(
-            '/templates/open-vrodos_project.php'     => 'Project Manager Template',
-            '/templates/shared-wpunity_assets.php'     => 'WPUnity-List Shared Assets',
-            '/templates/edit-wpunity_scene.php'     => 'WPUnity-Edit 3D Scene',
+            '/templates/vrodos-project-manager-template.php'     => 'Project Manager Template',
+            '/templates/vrodos-assets-list-template.php'     => 'Assets List Template',
+            '/templates/vrodos-edit-3D-scene-template.php'     => 'Scene 3D Editor Template',
+            '/templates/vrodos-asset-editor-template.php'     => 'Asset Editor Template',
             '/templates/edit-wpunity_scene2D.php'     => 'WPUnity-Edit 2D Scene',
             '/templates/edit-wpunity_sceneExam.php'     => 'WPUnity-Edit Exam Scene',
-            '/templates/edit-wpunity_asset3D.php'     => 'WPUnity-3D Asset Creator',
         );
 
     }
@@ -120,15 +120,14 @@ class wpUnityTemplate {
 }
 
 
-//=================================================
-
-function vrodos_create_openProjectPage() {
+// Create "Project Manager Page" and assign its template
+function vrodos_create_ProjectManagerPage() {
     
     $ff = fopen("output_order_log.txt","a");
     fwrite($ff, 'register_activation_hook'.chr(13));
     fclose($ff);
     
-    if (! wpunity_get_page_by_slug('vrodos-project-manager')) {
+    if (! wpunity_get_page_by_slug('vrodos-project-manager-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Project Manager Page',
             'post_type' => 'page',
@@ -143,22 +142,22 @@ function vrodos_create_openProjectPage() {
         
         // Change the template of the page
         if ($new_page_id && !is_wp_error($new_page_id)) {
-            update_post_meta($new_page_id, '_wp_page_template', '/templates/open-vrodos_project.php');
+            update_post_meta($new_page_id, '_wp_page_template',
+                                '/templates/vrodos-project-manager-template.php');
         }
 
         update_option('hclpage', $new_page_id);
     }
 }
 
-//===================================
+// Create Assets List Page and assign its template
+function vrodos_create_AssetsListPage() {
 
-function wpunity_create_editGamePage() {
-
-    if (! wpunity_get_page_by_slug('wpunity-list-shared-assets')) {
+    if (! wpunity_get_page_by_slug('vrodos-assets-list-page')) {
         $new_page_id = wp_insert_post(array(
-            'post_title' => 'WPUnity-List Shared Assets',
+            'post_title' => 'Assets List Page',
             'post_type' => 'page',
-            'post_name' => 'wpunity-list-shared-assets',
+            'post_name' => 'vrodos-assets-list-page',
             'comment_status' => 'closed',
             'ping_status' => 'closed',
             'post_content' => '',
@@ -167,22 +166,22 @@ function wpunity_create_editGamePage() {
             'menu_order' => 0,
         ));
         if ($new_page_id && !is_wp_error($new_page_id)) {
-            update_post_meta($new_page_id, '_wp_page_template', '/templates/shared-wpunity_assets.php');
+            update_post_meta($new_page_id, '_wp_page_template', '/templates/vrodos-assets-list-template.php');
         }
 
         update_option('hclpage', $new_page_id);
     }
 }
 
-//==========================================================================================================================================
 
-function wpunity_create_editScenePage() {
+// Scene 3D editor
+function vrodos_create_scene3DeditorPage() {
 
-    if (! wpunity_get_page_by_slug('wpunity-edit-3d-scene')) {
+    if (! wpunity_get_page_by_slug('vrodos-edit-3d-scene-page')) {
         $new_page_id = wp_insert_post(array(
-            'post_title' => 'WPUnity-Edit 3D Scene',
+            'post_title' => 'Scene 3D Editor',
             'post_type' => 'page',
-            'post_name' => 'wpunity-edit-3d-scene',
+            'post_name' => 'vrodos-edit-3d-scene-page',
             'comment_status' => 'closed',
             'ping_status' => 'closed',
             'post_content' => '',
@@ -191,15 +190,14 @@ function wpunity_create_editScenePage() {
             'menu_order' => 0,
         ));
         if ($new_page_id && !is_wp_error($new_page_id)) {
-            update_post_meta($new_page_id, '_wp_page_template', '/templates/edit-wpunity_scene.php');
+            update_post_meta($new_page_id, '_wp_page_template', '/templates/vrodos-edit-3D-scene-template.php');
         }
 
         update_option('hclpage', $new_page_id);
     }
 }
 
-//==========================================================================================================================================
-
+// Edit 2D Scene
 function wpunity_create_editScene2DPage() {
 
     if (! wpunity_get_page_by_slug('wpunity-edit-2d-scene')) {
@@ -248,15 +246,13 @@ function wpunity_create_editSceneExamPage() {
 
 
 // --- Page to edit an Asset ----
-function wpunity_create_editAsset3D() {
-
+function vrodos_create_assetEditorPage() {
     
-    
-    if (! wpunity_get_page_by_slug('wpunity-3d-asset-creator')) {
+    if (! wpunity_get_page_by_slug('vrodos-asset-editor-page')) {
         $new_page_id = wp_insert_post(array(
-            'post_title' => 'WPUnity-3D Asset Creator',
+            'post_title' => 'Asset Editor',
             'post_type' => 'page',
-            'post_name' => 'wpunity-3d-asset-creator',
+            'post_name' => 'vrodos-asset-editor-page',
             'comment_status' => 'closed',
             'ping_status' => 'closed',
             'post_content' => '',
@@ -266,7 +262,7 @@ function wpunity_create_editAsset3D() {
         ));
         
         if ($new_page_id && !is_wp_error($new_page_id)) {
-            update_post_meta($new_page_id, '_wp_page_template', '/templates/edit-wpunity_asset3D.php');
+            update_post_meta($new_page_id, '_wp_page_template', '/templates/vrodos-asset-editor-template.php');
         }
 
         update_option('hclpage', $new_page_id);

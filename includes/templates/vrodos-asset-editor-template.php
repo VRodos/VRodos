@@ -232,7 +232,7 @@ if($scene_id != 0 ) {
 }else {
     
     // Goto shared assets
-    $goBackToLink = home_url()."/wpunity-list-shared-assets/?".
+    $goBackToLink = home_url()."/vrodos-assets-list-page/?".
         (!isset($_GET['singleproject'])?"wpunity_game=":"wpunity_project_id=").$project_id;
 }
 

@@ -131,7 +131,7 @@ get_header();
             
             
             <?php
-                echo '<a href="'.get_site_url().'/wpunity-list-shared-assets/" class="" style="float:right" data-mdc-auto-init="MDCRipple" title="View or add shared assets">';
+                echo '<a href="'.get_site_url().'/vrodos-assets-list-page/" class="" style="float:right" data-mdc-auto-init="MDCRipple" title="View or add shared assets">';
                 echo '<span id="shared-assets-button" class="mdc-button" >All Assets</span>';
                 echo '</a>';
             ?>

@@ -133,7 +133,7 @@ else if ($isUserloggedIn)
     $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0#EnglishEdit');
 
 
-$link_to_edit = home_url().'/wpunity-3d-asset-creator/?';
+$link_to_edit = home_url().'/vrodos-asset-editor-page/?';
 
 if ($single_project_asset_list)
     $link_to_edit = $link_to_edit. "singleproject=true&";
@@ -210,7 +210,7 @@ if ($single_project_asset_list)
                         <!-- Title -->
                         <h1 class="assetsListCardTitle mdc-card__title mdc-typography--title" style="">
                             <a class="mdc-theme--secondary"
-                               href="<?php echo home_url().'/wpunity-3d-asset-creator/?wpunity_game='.$pGameId.
+                               href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.
                                    '&wpunity_asset='.$asset['assetid'].'#English';
                                ?>"><?php echo $asset['assetName'];?></a>
                         </h1>
@@ -259,7 +259,7 @@ if ($single_project_asset_list)
                         <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['assetName'] ?>">
                             <div class="phonering-alo-ph-circle"></div>
                             <div class="phonering-alo-ph-circle-fill"></div>
-                            <a href="<?php echo home_url().'/wpunity-3d-asset-creator/?wpunity_game='.$pGameId.'&wpunity_scene=&wpunity_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
+                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.'&wpunity_scene=&wpunity_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
                                  class="pps-btn-img" title="teleconference_ring">
                                 <div class="phonering-alo-ph-img-circle"></div>
                             </a>

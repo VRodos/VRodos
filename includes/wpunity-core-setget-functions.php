@@ -163,12 +163,13 @@ function wpunity_combineGameStrategies($project_id){
 
 //GET page by given type (depending the template) - breacrumb and links for front-end
 function wpunity_getEditpage($type){
+	
 	if($type=='game'){
 		$edit_pages = get_pages(array(
 			'hierarchical' => 0,
 			'parent' => -1,
 			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/shared-wpunity_assets.php'
+			'meta_value' => '/templates/vrodos-assets-list-template.php'
 		));
 		return $edit_pages;
 	}elseif($type=='scene'){
@@ -176,7 +177,7 @@ function wpunity_getEditpage($type){
 			'hierarchical' => 0,
 			'parent' => -1,
 			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/edit-wpunity_scene.php'
+			'meta_value' => '/templates/vrodos-edit-3D-scene-template.php'
 		));
 		return $edit_pages;
 	}elseif($type=='scene2D'){
@@ -192,7 +193,7 @@ function wpunity_getEditpage($type){
 			'hierarchical' => 0,
 			'parent' => -1,
 			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/open-vrodos_project.php', //open-wpunity_game.php'
+			'meta_value' => '/templates/vrodos-project-manager-template.php', //open-wpunity_game.php'
 		));
 		return $edit_pages;
 	}elseif($type=='sceneExam'){
@@ -208,7 +209,7 @@ function wpunity_getEditpage($type){
 			'hierarchical' => 0,
 			'parent' => -1,
 			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/edit-wpunity_asset3D.php'
+			'meta_value' => '/templates/vrodos-asset-editor-template.php'
 		));
 		return $edit_pages;
     }elseif($type=='assetslist'){
@@ -216,7 +217,7 @@ function wpunity_getEditpage($type){
             'hierarchical' => 0,
             'parent' => -1,
             'meta_key' => '_wp_page_template',
-            'meta_value' => '/templates/shared-wpunity_assets.php'
+            'meta_value' => '/templates/vrodos-assets-list-template.php'
         ));
         return $edit_pages;
 	}else{

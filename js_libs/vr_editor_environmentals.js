@@ -450,7 +450,7 @@ class vr_editor_environmentals {
         loader.scene = this.scene;
 
         var pathn = window.location.pathname.replace(/[^/]*$/, '');
-        pathn = pathn.replace('/wpunity-edit-3d-scene/','');
+        pathn = pathn.replace('/vrodos-edit-3d-scene-page/','');
 
         loader.load(pathn + '/wp-content/plugins/vrodos/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts );
     }
