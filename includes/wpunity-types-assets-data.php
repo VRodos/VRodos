@@ -12,12 +12,12 @@ function wpunity_assets_scripts_and_styles() {
     wp_enqueue_style('wpunity_backend');
 
 // load script from js_libs
-    wp_enqueue_script( 'wpunity_content_interlinking_request');
+    wp_enqueue_script( 'vrodos_content_interlinking_request');
 
 // load script from js_libs
     wp_enqueue_script( 'wpunity_classification_request');
     
-    wp_enqueue_script('wpunity_segmentation_request');
+    wp_enqueue_script('vrodos_segmentation_request');
 
 // Three js : for simple rendering
     wp_enqueue_script('wpunity_load_threejs');
@@ -27,7 +27,7 @@ function wpunity_assets_scripts_and_styles() {
     
     
     // Some parameters to pass in the content_interlinking.js  ajax
-    wp_localize_script('wpunity_content_interlinking_request', 'phpvars',
+    wp_localize_script('vrodos_content_interlinking_request', 'phpvars',
         array('lang' => 'en',
             'externalSource' => 'Wikipedia',
             'titles' => 'Scladina'  //'Albert%20Einstein'
@@ -36,7 +36,7 @@ function wpunity_assets_scripts_and_styles() {
 
 // Some parameters to pass in the segmentation.js  ajax
     if( isset($_GET['post']) ){
-        wp_localize_script('wpunity_segmentation_request', 'phpvars',
+        wp_localize_script('vrodos_segmentation_request', 'phpvars',
             array('path' => get_post_meta($_GET['post'], 'wpunity_asset3d_pathData', true).'/',
                 'obj'  => get_post_meta($_GET['post'], 'wpunity_asset3d_obj', true)
             )

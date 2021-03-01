@@ -44,7 +44,7 @@ and the compiled game output in Unity3D: https://www.youtube.com/watch?v=qKPqvNr
 
 You can advise the following document : https://www.dropbox.com/s/q0ak9asos7bjy85/DigiArtUsageScenarios.docx?dl=0
 
-If you want to make your own asset you can use the guidelines in this wiki : https://github.com/DigiArt-project/wordpressunity3deditor/wiki/3D-Models-specifications
+If you want to make your own asset you can use the guidelines in this wiki : https://github.com/VRodos/wiki/3D-Models-specifications
 
 Let us know if you have any diffuculties or you found any bugs
 

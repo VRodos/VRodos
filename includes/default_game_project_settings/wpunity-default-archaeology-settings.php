@@ -8,17 +8,17 @@ function wpunity_getAssetYAML_archaeology($myasset_type){
     $def_json = '';
 
     if($myasset_type == 'artifact') {
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/assets/archaeology-artifact.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/assets/archaeology-artifact.txt");
     }elseif($myasset_type == 'pois_imagetext'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/assets/archaeology-pois_imagetext.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/assets/archaeology-pois_imagetext.txt");
     }elseif($myasset_type == 'pois_video'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/assets/archaeology-pois_video.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/assets/archaeology-pois_video.txt");
     }elseif($myasset_type == 'site'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/assets/archaeology-site.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/assets/archaeology-site.txt");
     }elseif($myasset_type == 'door'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/assets/archaeology-door.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/assets/archaeology-door.txt");
     }elseif($myasset_type == 'decoration_arch'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/assets/archaeology-decoration_arch.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/assets/archaeology-decoration_arch.txt");
     }
 
     return $def_json;
@@ -33,23 +33,23 @@ function wpunity_getSceneYAML_archaeology($myscene_type){
     $def_json = '';
 
     if($myscene_type == 'menu') {
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-menu.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-menu.txt");
     }elseif($myscene_type == 'credits'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-credits.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-credits.txt");
     }elseif($myscene_type == 'help'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-help.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-help.txt");
     }elseif($myscene_type == 'options'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-options.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-options.txt");
     }elseif($myscene_type == 'login'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-login.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-login.txt");
     }elseif($myscene_type == 'reward'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-reward.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-reward.txt");
     }elseif($myscene_type == 'wanderaround'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-wanderaround.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-wanderaround.txt");
     }elseif($myscene_type == 'selector'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-selector.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-selector.txt");
     }elseif($myscene_type == 'selector2'){
-        $def_json = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/archaeology/scenes/archaeology-selector2.txt");
+        $def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/archaeology/scenes/archaeology-selector2.txt");
     }
 
     return $def_json;

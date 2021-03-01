@@ -8,7 +8,7 @@ function wpunity_widget_functions() {
     
     // Load single asset kernel
     // Three js : for simple rendering
-    wp_enqueue_script('wpunity_scripts');
+    wp_enqueue_script('vrodos_scripts');
     
     // For fbx binary
     wp_enqueue_script('wpunity_inflate'); // for binary fbx

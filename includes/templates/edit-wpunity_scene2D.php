@@ -1,7 +1,7 @@
 <?php
 
 function wpunity_load_2DSceneEditorScripts() {
-	wp_enqueue_script('wpunity_scripts');
+	wp_enqueue_script('vrodos_scripts');
 	/*wp_enqueue_script( 'tinymce_js', includes_url( 'js/tinymce/' ) . 'wp-tinymce.php', array( 'jquery' ), false, true );*/
 }
 add_action('wp_enqueue_scripts', 'wpunity_load_2DSceneEditorScripts' );

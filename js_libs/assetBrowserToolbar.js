@@ -38,7 +38,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     // Create drag image BEFORE event is fired - THEN call it inside the event
     function createDragImage() {
         var img = jQuery('<img>');
-        img.attr('src', '../wp-content/plugins/wordpressunity3deditor/images/ic_asset.png');
+        img.attr('src', '../wp-content/plugins/vrodos/images/ic_asset.png');
         img.css({
             "top": 0,
             "left": 0,
@@ -187,7 +187,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     foo.appendChild(element);
                 }
 
-                f.screenImagePath = f.screenImagePath ? f.screenImagePath : "../wp-content/plugins/wordpressunity3deditor/images/ic_no_sshot.png";
+                f.screenImagePath = f.screenImagePath ? f.screenImagePath : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
 
                 let img = '<span class="mdc-list-item__start-detail CenterContents">'+
                             '<img class="assetImg" draggable="false" src=' + encodeURI(f.screenImagePath) + '>'+

@@ -51,7 +51,7 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     wp_enqueue_script('wpunity_qrcode_generator');
     
     // Three js : for simple rendering
-    wp_enqueue_script('wpunity_scripts');
+    wp_enqueue_script('vrodos_scripts');
     
     // For fbx binary
     wp_enqueue_script('wpunity_inflate'); // for binary fbx
@@ -94,26 +94,26 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     
     
     // Load scripts for asset editor
-    wp_enqueue_script('wpunity_asset_editor_scripts');
+    wp_enqueue_script('vrodos_asset_editor_scripts');
     
     // scroll for images thumnbnails (in clone)
-    wp_enqueue_script('wpunity_lightslider');
+    wp_enqueue_script('vrodos_lightslider');
     
     // Select colors
-    wp_enqueue_script('wpunity_jscolorpick');
-    wp_enqueue_script('wpunity_jsfontselect');
+    wp_enqueue_script('vrodos_jscolorpick');
+    wp_enqueue_script('vrodos_jsfontselect');
     
     // to capture screenshot of the 3D molecule and its tags
-    wp_enqueue_script('wpunity_html2canvas');
+    wp_enqueue_script('vrodos_html2canvas');
     
     $pluginpath = dirname (plugin_dir_url( __DIR__  ));
     
     // content interlinking ajax
-    wp_enqueue_script( 'ajax-wpunity_content_interlinking_request',
+    wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
         $pluginpath.'/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
     
     // ajax php admin url
-    wp_localize_script( 'ajax-wpunity_content_interlinking_request', 'my_ajax_object_fetch_content',
+    wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
         array( 'ajax_url' => admin_url( 'admin-ajax.php' ), null )
     );
     

@@ -90,7 +90,7 @@ get_header();
 
     <div class="DisplayBlock CenterContents">
 
-        <img style="margin-top:10px;" src="/wp-content/plugins/wordpressunity3deditor/images/screenshots/authtoolimage.jpg" width="50%;" alt="editor screenshot" />
+        <img style="margin-top:10px;" src="/wp-content/plugins/vrodos/images/screenshots/authtoolimage.jpg" width="50%;" alt="editor screenshot" />
         <br />
         <i style="font-size: 64px; padding-top: 10px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
         <p class="mdc-typography--title"> Please <a class="mdc-theme--secondary" href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform

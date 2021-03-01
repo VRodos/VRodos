@@ -4,7 +4,7 @@ $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 $pluginpath = str_replace('\\','/',$pluginpath);
 
 function wpunity_load2DSceneEditorScripts_exams() {
-	wp_enqueue_script('wpunity_scripts');
+	wp_enqueue_script('vrodos_scripts');
 }
 add_action('wp_enqueue_scripts', 'wpunity_load2DSceneEditorScripts_exams' );
 

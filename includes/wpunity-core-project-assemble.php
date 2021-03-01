@@ -345,7 +345,7 @@ function wpunity_compile_settings_gen($gameID,$gameSlug){
 function wpunity_compile_settings_files_gen($game_project_id, $game_path,$fileName,$fileFolder){
 
     // Get the YAML pattern
-    $fileYaml = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/" . $fileFolder . "/settings/" . $fileName);
+    $fileYaml = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/" . $fileFolder . "/settings/" . $fileName);
 
     // Add Versioning in ProjectSettings
     if($fileName === 'ProjectSettings.asset'){
@@ -740,7 +740,7 @@ function wpunity_compile_copy_StandardAssets($gameID, $gameSlug,$gameType){
 
     if($gameType == "Chemistry"){
         $fileGo = $dest . '/' . 'goedle_io/Scripts/'. 'GoedleManager.prefab';
-        $GOcontent = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/chemistry/GoedleManager.txt");
+        $GOcontent = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/chemistry/GoedleManager.txt");
 
 	    global $project_scope;
 
@@ -757,7 +757,7 @@ function wpunity_compile_copy_StandardAssets($gameID, $gameSlug,$gameType){
         fclose($create_file);
     }elseif($gameType == "Energy"){
         $fileGo = $dest . '/' . 'goedle_io/Scripts/'. 'GoedleManager.prefab';
-        $GOcontent = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/default_game_project_data/energy/GoedleManager.txt");
+        $GOcontent = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/energy/GoedleManager.txt");
 
         global $project_scope;
 

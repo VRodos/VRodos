@@ -452,7 +452,7 @@ class vr_editor_environmentals {
         var pathn = window.location.pathname.replace(/[^/]*$/, '');
         pathn = pathn.replace('/wpunity-edit-3d-scene/','');
 
-        loader.load(pathn + '/wp-content/plugins/wordpressunity3deditor/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts );
+        loader.load(pathn + '/wp-content/plugins/vrodos/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts );
     }
 
 

@@ -123,8 +123,8 @@ justify'><b>The 3D environment</b>, which can be used to edit the scene. It cont
                 href="#_ftnref1" name="_ftn1" title=""><sup><sup><span style='font-size:12.0pt;
 font-family:"Calibri",sans-serif;color:black'>[1]</span></sup></sup></a><span
                 style='font-size:10.0pt'> </span><a
-                href="https://github.com/DigiArt-project/WordpressUnity3DEditor/wiki/3D-Models-specifications"><span
-                    style='font-size:10.0pt;color:#1155CC'>https://github.com/DigiArt-project/WordpressUnity3DEditor/wiki/3D-Models-specifications</span></a></p>
+                href="https://github.com/vrodos/wiki/3D-Models-specifications"><span
+                    style='font-size:10.0pt;color:#1155CC'>https://github.com/vrodos/wiki/3D-Models-specifications</span></a></p>
     
     </div>
 </div>

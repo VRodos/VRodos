@@ -359,8 +359,8 @@ function wpunity_games_databox_show(){
 	wp_localize_script('wpunity_compile_request', 'phpvarsA',
 		array('pluginsUrl' => plugins_url(),
 			'PHP_OS'     => PHP_OS,
-			'game_dirpath'=> realpath(dirname(__FILE__).'/..').$DS.'games_assemble'.$DS.$slug, //'C:\xampp\htdocs\digiart-project_Jan17\wp-content\plugins\wordpressunity3deditor\test_compiler\game_windows'));
-			'game_urlpath'=> plugins_url( 'wordpressunity3deditor' ).'/games_assemble/'.$slug
+			'game_dirpath'=> realpath(dirname(__FILE__).'/..').$DS.'games_assemble'.$DS.$slug,
+			'game_urlpath'=> plugins_url( 'vrodos' ).'/games_assemble/'.$slug
 		));
 	
 	// load request_game.js script from js_libs

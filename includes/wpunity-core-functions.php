@@ -939,8 +939,8 @@ Characteristics :
 	- Access cost = 1 $';
 
 
-		$image_content2 = WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/regions/img2.png";
-		$image_content3 = WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/regions/img3.png";
+		$image_content2 = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/regions/img2.png";
+		$image_content3 = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/regions/img3.png";
 
 		// Create First Scene Data
 		$firstSceneData = array(
@@ -1070,7 +1070,7 @@ Characteristics :
 	$scene1_id = wp_insert_post( $firstSceneData );
 	if($game_category == 'energy_games'){
 
-		$image_content1 = WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/regions/img1.png";
+		$image_content1 = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/regions/img1.png";
 		$attachment1_id = wpunity_upload_img_vid_aud( $image_content1, $scene1_id);
 		set_post_thumbnail( $scene1_id, $attachment1_id );
 	}
@@ -1220,24 +1220,24 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
  
 	$has_image = false; $has_video = false;
 	if($assetTypeNumber == 'artifact'){
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/artifact/star.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/artifact/star_yellow.obj");
+		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/artifact/star.mtl");
+		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/artifact/star_yellow.obj");
 	}elseif($assetTypeNumber == 'door') {
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/door/door_green.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/door/door_green.obj");
+		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/door/door_green.mtl");
+		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/door/door_green.obj");
 	}elseif($assetTypeNumber == 'poi_image') {
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/poi_image_text/star.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/poi_image_text/star_blue.obj");
+		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_image_text/star.mtl");
+		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_image_text/star_blue.obj");
 		$has_image = true;
-		$image_content = WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/poi_image_text/image.jpg";
+		$image_content = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_image_text/image.jpg";
 	}elseif($assetTypeNumber == 'poi_video') {
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/poi_video/star.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/poi_video/star_red.obj");
+		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_video/star.mtl");
+		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_video/star_red.obj");
 		$has_video = true;
-		$video_content = WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/poi_video/bunny.mp4";
+		$video_content = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_video/bunny.mp4";
 	}elseif($assetTypeNumber == 'site') {
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/Site1/site1.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/Site1/site1.obj");
+		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/Site1/site1.mtl");
+		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/Site1/site1.obj");
 	}
 
 	$mtlFile_id = wpunity_upload_AssetText($mtl_content, 'material'.$assetTitleForm, $asset_newID, null, null);
@@ -2472,7 +2472,7 @@ function fake_compile_for_a_test_project()
 	// 1. Start the compile
 	$gcwd = getcwd(); // get cwd (wp-admin probably)
 
-	chdir("../wp-content/plugins/wordpressunity3deditor/test_compiler/game_windows/");
+	chdir("../wp-content/plugins/vrodos/test_compiler/game_windows/");
 
 	// Windows
 	$output = shell_exec('start /b starter.bat /c');

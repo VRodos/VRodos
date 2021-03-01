@@ -33,7 +33,7 @@ function wpunity_load_vreditor_scripts()
     wp_enqueue_script('wpunity_load87_sceneexporter');
     
     // Colorpicker for the lights
-    wp_enqueue_script('wpunity_jscolorpick');
+    wp_enqueue_script('vrodos_jscolorpick');
     
     wp_enqueue_style('wpunity_datgui');
     wp_enqueue_style('wpunity_vr_editor');
