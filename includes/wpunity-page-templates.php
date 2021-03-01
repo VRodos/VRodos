@@ -41,7 +41,7 @@ class wpUnityTemplate {
 
         // Add your templates to this array.
         $this->templates = array(
-            '/templates/open-wpunity_game.php'     => 'WPUnity-Main',
+            '/templates/open-vrodos_project.php'     => 'Project Manager Template',
             '/templates/shared-wpunity_assets.php'     => 'WPUnity-List Shared Assets',
             '/templates/edit-wpunity_scene.php'     => 'WPUnity-Edit 3D Scene',
             '/templates/edit-wpunity_scene2D.php'     => 'WPUnity-Edit 2D Scene',
@@ -122,17 +122,17 @@ class wpUnityTemplate {
 
 //=================================================
 
-function wpunity_create_openGamePage() {
+function vrodos_create_openProjectPage() {
     
     $ff = fopen("output_order_log.txt","a");
     fwrite($ff, 'register_activation_hook'.chr(13));
     fclose($ff);
     
-    if (! wpunity_get_page_by_slug('wpunity-main')) {
+    if (! wpunity_get_page_by_slug('vrodos-project-manager')) {
         $new_page_id = wp_insert_post(array(
-            'post_title' => 'WPUnity-Main',
+            'post_title' => 'Project Manager Page',
             'post_type' => 'page',
-            'post_name' => 'wpunity-main',
+            'post_name' => 'vrodos-project-manager-page', //wpunity-main
             'comment_status' => 'closed',
             'ping_status' => 'closed',
             'post_content' => '',
@@ -141,8 +141,9 @@ function wpunity_create_openGamePage() {
             'menu_order' => 0,
         ));
         
+        // Change the template of the page
         if ($new_page_id && !is_wp_error($new_page_id)) {
-            update_post_meta($new_page_id, '_wp_page_template', '/templates/open-wpunity_game.php');
+            update_post_meta($new_page_id, '_wp_page_template', '/templates/open-vrodos_project.php');
         }
 
         update_option('hclpage', $new_page_id);

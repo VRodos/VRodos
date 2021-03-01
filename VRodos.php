@@ -504,11 +504,25 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/edit-wpunity_ass
 
 // ---------  Create dedicated pages on plugin activation -------------------------
 // 68
-register_activation_hook(__FILE__,'wpunity_create_openGamePage');
+
+// Create Pages and change their template
+
+// Project Manager Page
+register_activation_hook(__FILE__,'vrodos_create_openProjectPage');
+
+// List Shared Assets Page
 register_activation_hook(__FILE__,'wpunity_create_editGamePage');
+
+// Edit 3D Scene Page
 register_activation_hook(__FILE__,'wpunity_create_editScenePage');
+
+// Edit 2D Scene Page
 register_activation_hook(__FILE__,'wpunity_create_editScene2DPage');
+
+// Edit Scene Exam Page
 register_activation_hook(__FILE__,'wpunity_create_editSceneExamPage');
+
+// Edit Asset3D Page
 register_activation_hook(__FILE__,'wpunity_create_editAsset3D');
 
 
@@ -666,7 +680,7 @@ function wpunity_lost_password_redirect() {
     $confirm = ( isset($_GET['checkemail'] ) ? $_GET['checkemail'] : '' );
 
     if( $confirm ) {
-        wp_redirect( get_site_url( ).'/wpunity-main/' );
+        wp_redirect( get_site_url( ).'/vrodos-project-manager/' );
         exit;
     }
 }

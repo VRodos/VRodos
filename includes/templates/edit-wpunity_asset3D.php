@@ -140,6 +140,8 @@ $game_type_obj = wpunity_return_project_type($project_id);
 
 //Get 'parent-game' taxonomy with the same slug as Game
 $assetPGame = get_term_by('slug', $gameSlug, 'wpunity_asset3d_pgame');
+
+//echo $assetPGame;
 $assetPGameID = $assetPGame->term_id;
 $assetPGameSlug = $assetPGame->slug;
 
