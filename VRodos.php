@@ -8,6 +8,27 @@
  * Version: 0.5
  */
 
+
+
+//-- ToDo for Scene Editor --
+//Feature: Add Rendering on Demand
+//Bug: Scene editor does not import GLB and PDB files
+//Bug:
+//Feature: Add progress bar for each item independently
+//Feature: Add VR modality
+//---------------------------
+//
+//-- ToDo for Asset Editor --
+//Bug : CSS2D for the labels of atoms does not resize correctly
+//---------------------------
+//
+//-- ToDo Asset List viewer --
+//Feature: Add render class per item
+//----------------------------
+//
+//Fixed: Major issue : When installing Joker Games do not get their category (Archaeology_game)
+
+
 //$ff = fopen("output_order_log.txt","w");
 //fwrite($ff,'----- This file displays the order of function execution ---'.chr(13));
 //fclose($ff);
