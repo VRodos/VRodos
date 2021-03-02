@@ -16,12 +16,12 @@ Features
 - Support sound
 - Eco-friendly with rendering-on-demand
 
-Pages
+Interface Pages
 
-Asset List
-Project Manager
-Scene 3D Editor
-Asset Editor
+- Asset List
+- Project Manager
+- Scene 3D Editor
+- Asset Editor
 
 
 *Currently only one animation per 3D model is supported.
