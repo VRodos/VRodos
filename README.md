@@ -40,9 +40,9 @@ Interface Pages
 [comment]: <> (### What is this repository for? ###)
 
 
-Other features
+[comment]: <> (Other features)
 
-- Lights (Spot, Directional, Sphere)
+[comment]: <> (- Lights &#40;Spot, Directional, Sphere&#41;)
 
 
 ### Do you have a demo?
