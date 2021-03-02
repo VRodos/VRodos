@@ -152,3 +152,4 @@ test_compiler/
 /semantics/
 /includes/default_game_project_data/
 /includes/default_game_project_settings/
+/peer-calls/
