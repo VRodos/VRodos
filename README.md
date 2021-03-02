@@ -76,3 +76,7 @@ Install in WordPress with "ADD from file" button.
 [comment]: <> (### Who do I talk to? ###)
 
 [comment]: <> (* I am coordinating and contributing to this repository: Dimitrios Ververidis, ververid [at] iti.gr, jimver04 [at] gmail.com)
+
+Latest
+
+Removed unecessary folders
