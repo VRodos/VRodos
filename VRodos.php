@@ -835,16 +835,15 @@ add_action( 'wp_ajax_wpunity_fetch_video_action', 'wpunity_fetch_video_action_ca
 
 
 // Peer conferencing
-add_action( 'wp_ajax_nopriv_wpunity_notify_confpeers_action', 'wpunity_notify_confpeers_callback');
-add_action( 'wp_ajax_wpunity_notify_confpeers_action', 'wpunity_notify_confpeers_callback');
-
-add_action( 'wp_ajax_wpunity_update_expert_log_action', 'wpunity_update_expert_log_callback');
+//add_action( 'wp_ajax_nopriv_wpunity_notify_confpeers_action', 'wpunity_notify_confpeers_callback');
+//add_action( 'wp_ajax_wpunity_notify_confpeers_action', 'wpunity_notify_confpeers_callback');
+//add_action( 'wp_ajax_wpunity_update_expert_log_action', 'wpunity_update_expert_log_callback');
 
 
 // AJAXES for semantics
-add_action( 'wp_ajax_wpunity_segment_obj_action', 'wpunity_segment_obj_action_callback' );
-add_action( 'wp_ajax_wpunity_monitor_segment_obj_action', 'wpunity_monitor_segment_obj_action_callback' );
-add_action( 'wp_ajax_wpunity_enlist_splitted_objs_action', 'wpunity_enlist_splitted_objs_action_callback' );
+//add_action( 'wp_ajax_wpunity_segment_obj_action', 'wpunity_segment_obj_action_callback' );
+//add_action( 'wp_ajax_wpunity_monitor_segment_obj_action', 'wpunity_monitor_segment_obj_action_callback' );
+//add_action( 'wp_ajax_wpunity_enlist_splitted_objs_action', 'wpunity_enlist_splitted_objs_action_callback' );
 
 add_action( 'wp_ajax_wpunity_classify_obj_action', 'wpunity_classify_obj_action_callback' );
 

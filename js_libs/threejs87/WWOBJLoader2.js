@@ -28,7 +28,7 @@ THREE.OBJLoader2.WWOBJLoader2 = ( function () {
 
     WWOBJLoader2.prototype._init = function () {
 
-        console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
+
 
         // check worker support first
         if ( window.Worker === undefined ) throw "This browser does not support web workers!";

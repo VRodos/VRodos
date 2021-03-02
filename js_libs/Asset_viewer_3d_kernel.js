@@ -45,9 +45,9 @@ class Asset_viewer_3d_kernel {
         this.statsSwitch = statsSwitch;
 
 
-        console.log("isBackGroundNull", isBackGroundNull);
 
-        console.log(previewProgressLabel);
+
+
 
         this.canvasToBindTo= canvasToBindTo;
         this.animationButton = animationButton;
@@ -453,9 +453,6 @@ class Asset_viewer_3d_kernel {
 
             // This adds the audio element to loaded 3D object
             this.scene.getChildByName('root').add(this.positionalAudio);
-
-        } else {
-            console.log("ERROR Audio 111", "No Audio Element is found");
         }
 
         this.resetCamera();
@@ -530,7 +527,7 @@ class Asset_viewer_3d_kernel {
     // Clear Previous model
     clearAllAssets(whocalls) {
 
-        console.log("CLEARING", whocalls);
+//        console.log("CLEARING", whocalls);
 
         this.setZeroVars();
 
@@ -844,7 +841,7 @@ class Asset_viewer_3d_kernel {
 
             // GLB
         } else if (glbFilename){
-            console.log("Loading from existing resource","GLB");
+            //console.log("Loading from existing resource","GLB");
             //console.log("glbFilename", glbFilename);
 
             // Instantiate a loader
