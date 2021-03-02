@@ -159,72 +159,7 @@ function wpunity_combineGameStrategies($project_id){
 }
 
 
-//==========================================================================================================================================
 
-//GET page by given type (depending the template) - breacrumb and links for front-end
-function wpunity_getEditpage($type){
-	
-	if($type=='game'){
-		$edit_pages = get_pages(array(
-			'hierarchical' => 0,
-			'parent' => -1,
-			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/vrodos-assets-list-template.php'
-		));
-		return $edit_pages;
-	}elseif($type=='scene'){
-		$edit_pages = get_pages(array(
-			'hierarchical' => 0,
-			'parent' => -1,
-			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/vrodos-edit-3D-scene-template.php'
-		));
-		return $edit_pages;
-	}elseif($type=='scene2D'){
-		$edit_pages = get_pages(array(
-			'hierarchical' => 0,
-			'parent' => -1,
-			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/edit-wpunity_scene2D.php'
-		));
-		return $edit_pages;
-	}elseif($type=='allgames'){
-		$edit_pages = get_pages(array(
-			'hierarchical' => 0,
-			'parent' => -1,
-			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/vrodos-project-manager-template.php', //open-wpunity_game.php'
-		));
-		return $edit_pages;
-	}elseif($type=='sceneExam'){
-		$edit_pages = get_pages(array(
-			'hierarchical' => 0,
-			'parent' => -1,
-			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/edit-wpunity_sceneExam.php'
-		));
-		return $edit_pages;
-	}elseif($type=='asset'){
-		$edit_pages = get_pages(array(
-			'hierarchical' => 0,
-			'parent' => -1,
-			'meta_key' => '_wp_page_template',
-			'meta_value' => '/templates/vrodos-asset-editor-template.php'
-		));
-		return $edit_pages;
-    }elseif($type=='assetslist'){
-        $edit_pages = get_pages(array(
-            'hierarchical' => 0,
-            'parent' => -1,
-            'meta_key' => '_wp_page_template',
-            'meta_value' => '/templates/vrodos-assets-list-template.php'
-        ));
-        return $edit_pages;
-	}else{
-		return false;
-	}
-
-}
 
 //==========================================================================================================================================
 

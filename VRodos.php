@@ -495,6 +495,7 @@ if( is_admin() ){
 include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-page-templates.php' );
 
 // 27
+// Create class tha manipulates templates
 add_action( 'plugins_loaded', array( 'wpUnityTemplate', 'get_instance' ) );
 
 // Order 1: Filters inside wpunity-page-templates
@@ -519,15 +520,17 @@ register_activation_hook(__FILE__,'vrodos_create_scene3DeditorPage');
 // Edit Asset3D Page
 register_activation_hook(__FILE__,'vrodos_create_assetEditorPage');
 
-
-
-
 // Edit 2D Scene Page
-register_activation_hook(__FILE__,'wpunity_create_editScene2DPage');
+register_activation_hook(__FILE__,'vrodos_create_scene2DeditorPage');
 
 // Edit Scene Exam Page
-register_activation_hook(__FILE__,'wpunity_create_editSceneExamPage');
+register_activation_hook(__FILE__,'vrodos_create_editSceneExamPage');
 
+// Add Project Manager and Assets List pages to menu automatically;
+register_activation_hook(__FILE__,'vrodos_nav_menu_init');
+
+// Some messages
+register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
 
 
 

@@ -124,6 +124,8 @@ $editscenePage = wpunity_getEditpage('scene');
 $editscene2DPage = wpunity_getEditpage('scene2D');
 $editsceneExamPage = wpunity_getEditpage('sceneExam');
 
+
+
 // for vr_editor
 $urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
                                 '&wpunity_scene=' .$current_scene_id . '&wpunity_asset=' );
