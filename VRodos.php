@@ -252,6 +252,8 @@ function vrodos_register_styles() {
 	
 	wp_register_style( 'wpunity_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/wpunity_asseteditor.css' );
 	
+	
+	// REM: HERE - > Rename widget and shortcode
 	wp_register_style( 'wpunity_widgets_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/wpunity_widgets.css' );
  
 	
