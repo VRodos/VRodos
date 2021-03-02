@@ -148,3 +148,5 @@ includes/chemtestUnity.zip
 js_libs/threejs79.zip
 js_libs/wu_3d_view.js
 test_compiler/
+/StandardAssets/
+/semantics/
