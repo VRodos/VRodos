@@ -1673,8 +1673,8 @@ function wpunity_enlist_splitted_objs_action_callback(){
 
 function wpunity_fetch_description_action_callback(){
 
-	$fff = fopen("output_wiki.txt","w");
-	fwrite($fff, $_POST['externalSource']);
+//	$fff = fopen("output_wiki.txt","w");
+//	fwrite($fff, $_POST['externalSource']);
 
 
 	if ($_POST['externalSource']=='Wikipedia')
@@ -1684,9 +1684,9 @@ function wpunity_fetch_description_action_callback(){
 
 	echo  strip_tags(file_get_contents($url));
 
-	fwrite($fff, $_POST['titles']);
-	fwrite($fff, htmlspecialchars($_POST['titles']));
-	fclose($fff);
+//	fwrite($fff, $_POST['titles']);
+//	fwrite($fff, htmlspecialchars($_POST['titles']));
+//	fclose($fff);
 
 	wp_die();
 }
@@ -2127,15 +2127,7 @@ function wpunity_monitor_compiling_action_callback(){
 			$pathStdOut = $_POST['dirpath']."\stdout.log";
 
 			$stdoutSTR = file_get_contents( $pathStdOut );
-
-			$fo = fopen("output_post_termalogica.txt","w");
-			//$product_terms = $_POST['dirpath'].$DS."stdout.log";
-
-			fwrite($fo, "pathStdOut".$pathStdOut );
-			fwrite($fo, "stdoutSTR".$stdoutSTR );
-
-			fclose($fo);
-
+			
 			echo json_encode(array('os'=> $os, 'CSV' => $processUnityCSV , "LOGFILE"=>$stdoutSTR));
 		}else{
 			// REMOTE

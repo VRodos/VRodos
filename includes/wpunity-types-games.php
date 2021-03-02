@@ -33,10 +33,10 @@ $wpunity_databox3 = array(
 
 // Create  custom post type 'wpunity_game'
 function wpunity_project_cpt_construct(){
-    
-    $ff = fopen("output_order_log.txt","a");
-    fwrite($ff, '7 wpunity_games_construct'.chr(13));
-    fclose($ff);
+
+//    $ff = fopen("output_order_log.txt","a");
+//    fwrite($ff, '7 wpunity_games_construct'.chr(13));
+//    fclose($ff);
     
     $labels = array(
 		'name'               => _x( 'Projects', 'post type general name'),
@@ -239,10 +239,10 @@ function wpunity_games_taxtype_box_content($post){
 		
 		$type_IDs = wp_get_object_terms( $post->ID, 'wpunity_game_type', array('fields' => 'ids') );
 		
-		$ff = fopen("output_p1.txt","w");
-		fwrite($ff, print_r($type_IDs, true));
-		fclose($ff);
-		//echo $type_IDs;
+//		$ff = fopen("output_p1.txt","w");
+//		fwrite($ff, print_r($type_IDs, true));
+//		fclose($ff);
+//		//echo $type_IDs;
 		
 		$args = array(
 			'show_option_none'   => 'Select Type',

@@ -429,9 +429,9 @@ function wpunity_assets_taxcategory_ipr_box_content_save( $post_id ) {
 
 // Save wpunity_asset3d_pgame
 function wpunity_asset_project_box_content_save($post_id ) {
-    
-    $fg = fopen("output_gg.txt","w");
-    fwrite($fg, "1".chr(13));
+
+//    $fg = fopen("output_gg.txt","w");
+//    fwrite($fg, "1".chr(13));
     
     // verify if this is an auto save routine.
     // If it is our form has not been submitted, so we dont want to do anything

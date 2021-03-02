@@ -3,10 +3,10 @@
 //SIDEBAR of Asset3D with fetch-segmentation etc...
 
 function wpunity_assets_scripts_and_styles() {
-    
-    $ff = fopen("output_order_log.txt","a");
-    fwrite($ff, '48 wpunity_assets_scripts_and_styles'.chr(13));
-    fclose($ff);
+
+//    $ff = fopen("output_order_log.txt","a");
+//    fwrite($ff, '48 wpunity_assets_scripts_and_styles'.chr(13));
+//    fclose($ff);
     
     // load css/wpunity_backend.css
     wp_enqueue_style('wpunity_backend');

@@ -252,9 +252,9 @@ if($scene_id != 0 ) {
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'],
         'post_nonce')) {
     
-    $fp = fopen("output_check_files.txt","w");
-    fwrite($fp, print_r($_FILES, true));
-    fclose($fp);
+//    $fp = fopen("output_check_files.txt","w");
+//    fwrite($fp, print_r($_FILES, true));
+//    fclose($fp);
     
     $asset_language_pack = wpunity_asset3D_languages_support1($_POST);
     //include 'edit-wpunity_asset3D_languages_support1.php';
@@ -319,10 +319,10 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     }
     
     // SCREENSHOT: upload and add id of uploaded file to postmeta wpunity_asset3d_screenimage of asset
-    $f = fopen("output_fscr.txt","w");
-    fwrite($f, $_POST['sshotFileInput']);
-    fclose($f);
-    
+//    $f = fopen("output_fscr.txt","w");
+//    fwrite($f, $_POST['sshotFileInput']);
+//    fclose($f);
+//
     
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
         wpunity_upload_asset_screenshot($_POST['sshotFileInput'], $asset_language_pack['assetTitleForm'], $asset_id);
@@ -437,9 +437,9 @@ if($asset_id != null) {
     
     $saved_term = wp_get_post_terms( $asset_id, 'wpunity_asset3d_cat' );
     
-    $fp = fopen("output_savedterm.txt","w");
-    fwrite($fp, print_r($saved_term, true));
-    fclose($fp);
+//    $fp = fopen("output_savedterm.txt","w");
+//    fwrite($fp, print_r($saved_term, true));
+//    fclose($fp);
     
     if($saved_term[0]->slug == 'terrain'){
         

@@ -59,10 +59,10 @@ $wpunity_scenes_metas_helpdata = array(
 
 // Create Scene - Scene as custom type 'wpunity_scene'
 function wpunity_scenes_construct(){
-    
-    $ff = fopen("output_order_log.txt","a");
-    fwrite($ff, '11 wpunity_scenes_construct'.chr(13));
-    fclose($ff);
+
+//    $ff = fopen("output_order_log.txt","a");
+//    fwrite($ff, '11 wpunity_scenes_construct'.chr(13));
+//    fclose($ff);
     
     
     $labels = array(
@@ -117,10 +117,10 @@ function wpunity_scenes_construct(){
 
 // Create Scene Taxonomy, namely the game that the scene belongs
 function wpunity_scenes_parent_project_tax_define(){
-    
-    $ff = fopen("output_order_log.txt","a");
-    fwrite($ff, '12 wpunity_scenes_taxpgame'.chr(13));
-    fclose($ff);
+
+//    $ff = fopen("output_order_log.txt","a");
+//    fwrite($ff, '12 wpunity_scenes_taxpgame'.chr(13));
+//    fclose($ff);
     
     $labels = array(
         'name' => _x('Parent Project', 'taxonomy general name'),

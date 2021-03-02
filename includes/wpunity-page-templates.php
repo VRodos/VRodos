@@ -124,10 +124,10 @@ class wpUnityTemplate {
 
 // Create "Project Manager Page" and assign its template
 function vrodos_create_ProjectManagerPage() {
-    
-    $ff = fopen("output_order_log.txt","a");
-    fwrite($ff, 'register_activation_hook'.chr(13));
-    fclose($ff);
+
+//    $ff = fopen("output_order_log.txt","a");
+//    fwrite($ff, 'register_activation_hook'.chr(13));
+//    fclose($ff);
     
     if (! wpunity_get_page_by_slug('vrodos-project-manager-page')) {
         $new_page_id = wp_insert_post(array(

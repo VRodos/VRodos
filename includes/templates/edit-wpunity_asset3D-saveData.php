@@ -2,10 +2,10 @@
 
 function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm, $gameSlug){
 
-    $ff = fopen("output_3D_files.txt","w");
-    fwrite($ff, "1");
-    fwrite($ff, chr(13));
-    fwrite($ff, print_r($_FILES, true));
+//    $ff = fopen("output_3D_files.txt","w");
+//    fwrite($ff, "1");
+//    fwrite($ff, chr(13));
+//    fwrite($ff, print_r($_FILES, true));
 
 
     // Clear out all previous
@@ -18,8 +18,8 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
         // Delete attachment post (apart from screenshot)
         if (!strpos($attachment->post_title, 'screenshot')) {
     
-            fwrite($ff, chr(13)."DELETING ATTACHMENT POST WITH TITLE:".
-                                                        $attachment->post_title);
+//            fwrite($ff, chr(13)."DELETING ATTACHMENT POST WITH TITLE:".
+//                                                        $attachment->post_title);
     
             // Delete all metas of the attachment post
             $attachment_metas = get_post_meta($attachment->ID);
