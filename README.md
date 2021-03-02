@@ -2,11 +2,11 @@ VRodos
 
 A plugin for WordPress to transform your website into a multipurpose 3D media management tool
 
-1. 3D assets repository
-2. 3D assets visualizer for WordPress pages, e.g. commercial pages with 3D content
-3. Database and API point of 3D media for your mobile applications
-4. Digital Signage management tool capable for visualizing 3D media
-5. VR applications authoring tool with a 3D scene editor
+- 3D assets repository
+- 3D assets visualizer for WordPress pages, e.g. commercial pages with 3D content
+- Database and API point of 3D media for your mobile applications
+- Digital Signage management tool capable for visualizing 3D media
+- VR applications authoring tool with a 3D scene editor
 
 
 Features
