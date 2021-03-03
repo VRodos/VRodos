@@ -23,9 +23,6 @@ class Asset_viewer_3d_kernel {
         this.texturesBuffer = [];
     }
 
-
-
-
     constructor(canvasToBindTo,
                 canvasLabelsToBindTo,
                 animationButton,
@@ -44,19 +41,11 @@ class Asset_viewer_3d_kernel {
 
         this.statsSwitch = statsSwitch;
 
-
-
-
-
-
         this.canvasToBindTo= canvasToBindTo;
         this.animationButton = animationButton;
         this.canvasLabelsToBindTo = canvasLabelsToBindTo;
         this.previewProgressLabel = previewProgressLabel;
         this.previewProgressLine = previewProgressLine;
-
-
-
 
         this.setZeroVars()
         this.back_3d_color = back_3d_color;

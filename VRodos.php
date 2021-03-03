@@ -8,33 +8,8 @@
  * Version: 0.5
  */
 
-
-
-//-- ToDo for Scene Editor --
-//Feature: Add Rendering on Demand
-//Bug: Scene editor does not import GLB and PDB files
-//Bug:
-//Feature: Add progress bar for each item independently
-//Feature: Add VR modality
-//---------------------------
-//
-//-- ToDo for Asset Editor --
-//Bug : CSS2D for the labels of atoms does not resize correctly
-//---------------------------
-//
-//-- ToDo Asset List viewer --
-//Feature: Add render class per item
-//----------------------------
-//
-//Fixed: Major issue : When installing Joker Games do not get their category (Archaeology_game)
-
-
-//$ff = fopen("output_order_log.txt","w");
-//fwrite($ff,'----- This file displays the order of function execution ---'.chr(13));
-//fclose($ff);
-
 /*
- * Change root .htaccess for uploading big data files
+ * Please change root .htaccess for uploading big 3D model files
  *
  *
 php_value upload_max_filesize 256M
@@ -47,66 +22,17 @@ echo ini_get('post_max_size').chr(10);
 echo ini_get('max_input_time').chr(10);
 --
  */
+
 // Only these variables can change with php
 // @ini_set( 'memory_limit', '512M');
 @ini_set( 'max_execution_time', '2400' );
 
-// Set scope based on project:
-// DigiArt - Virtual Tour: 0
-// Envisage - Virtual Lab: 1
-// Default - Game Project: any other number
+// Set scope for the 3D editor (under construction feature):
+// Virtual Tour: 0
+// Virtual Lab: 1
 $project_scope = 0;
 
-
-//function vrodos_plugin_activate() {
-//
-//	add_option( 'Activated_Plugin', 'WordpressUnity3DEditor' );
-//
-//	/* activation code here */
-//	// Display the alert box
-//
-//	//echo '<script>alert("Welcome")</script>';
-//
-//}
-//register_activation_hook( __FILE__, 'vrodos_plugin_activate' );
-//
-//
-//
-//
-//function vrodos_load_plugin() {
-//	if(is_admin()&&get_option('Activated_Plugin')=='WordpressUnity3DEditor') {
-//		delete_option('Activated_Plugin');
-//		/* do some stuff once right after activation */
-//
-//
-//		//echo '<script>alert("Welcome to VRodos")</script>';
-//	}
-//}
-//add_action('admin_init','vrodos_load_plugin');
-
-
-//===================================== Styles & Scripts ====================================
-function vrodos_load_jquery_scripts() {
-
-//	global $wp_scripts;
-//	if(is_admin()) return;
-//	$wp_scripts->registered['jquery-core']->src = 'https://code.jquery.com/jquery-3.5.1.min.js';
-//	$wp_scripts->registered['jquery']->deps = ['jquery-core'];
-
-	wp_enqueue_script('jquery');
-	wp_enqueue_script('jquery-ui-core');
-	
-	wp_enqueue_script('jquery-ui-slider');
-	wp_enqueue_script('jquery-ui-draggable');
-	wp_enqueue_script('jquery-effects-core');
-	wp_enqueue_style( 'jquery-ui-css' , plugin_dir_url( __FILE__ ) . 'css/jquery-ui.min.css' );
-	wp_enqueue_style( 'jquery-ui-theme-css' , plugin_dir_url( __FILE__ ) . 'css/jquery-ui.theme.min.css' );
-}
-// 44
-add_action('wp_enqueue_scripts', 'vrodos_load_jquery_scripts' );
-
-
-
+// VRodos js register
 function vrodos_register_scripts() {
  
 	$pluginDirJS = plugin_dir_url( __FILE__ ).'js_libs/';
@@ -177,9 +103,8 @@ function vrodos_register_scripts() {
 		array( 'vrodos_load124_statjs', $pluginDirJS.'threejs124/stats.js'),
 		
 		array( 'vrodos_load119_FBXloader', $pluginDirJS.'threejs119/FBXLoader.js'),
-//		array( 'wpunity_load119_pdbloader', $pluginDirJS.'threejs119/PDBLoader.js'),
-		array( 'wpunity_load119_GLTFLoader', $pluginDirJS.'threejs119/GLTFLoader.js'),
-		array( 'wpunity_load119_DRACOLoader', $pluginDirJS.'threejs119/DRACOLoader.js'),
+		array( 'vrodos_load119_GLTFLoader', $pluginDirJS.'threejs119/GLTFLoader.js'),
+		array( 'vrodos_load119_DRACOLoader', $pluginDirJS.'threejs119/DRACOLoader.js'),
 		array( 'vrodos_load119_DDSLoader', $pluginDirJS.'threejs119/DDSLoader.js'),
 		array( 'vrodos_load119_KTXLoader', $pluginDirJS.'threejs119/KTXLoader.js'),
 		
@@ -212,7 +137,7 @@ function vrodos_register_scripts() {
 	}
 	
 	
-	//------------------------------------------------------------------
+	//----Various for scene editor
 	
 	$scriptsD = array(
 			array( 'wpunity_vr_editor_environmentals', $pluginDirJS.'vr_editor_environmentals.js'),
@@ -699,37 +624,9 @@ add_action('login_headerurl', 'vrodos_lost_password_redirect');
 
 
 
-//$fo = fopen("output_activation.txt","w");
-//fwrite($fo, dirname( __FILE__ ) . '/includes/wpunity-core-functions.php');
-//fclose($fo);
-
-//include_once dirname( __FILE__ ) . '/includes/wpunity-core-functions.php';
-
-//include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-core-functions.php' );
-
-
-
-
-//add_filter('rest_authentication_errors', 'disable_wp_rest_api');
-//
-//function disable_wp_rest_api($access) {
-//
-//    //if (!is_user_logged_in()) {
-//
-//    //    $message = apply_filters('disable_wp_rest_api_error', __('REST API restricted to authenticated users.', 'disable-wp-rest-api'));
-//
-//    //    return new WP_Error('rest_login_required', $message, array('status' => rest_authorization_required_code()));
-//
-//  //  }
-//
-//    return $access;
-//}
-
 
 // Remove <p>  </p> from content to be used for saving json scenes in description
 remove_filter ('the_content', 'wpautop');
-
-
 
 /* ------------------------------ API ---------------------------------------- */
 /*

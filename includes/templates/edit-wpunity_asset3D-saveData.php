@@ -245,25 +245,28 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
         }
     }
     
-    if (strlen($fbx_content) > 50 ) { // Text   // 20 is the Kaydara header for fbx binary. 50 to be sure.
     
-        // 1. Upload FBX file as TEXT
+    if (substr($fbx_content, 0, 18) === "Kaydara FBX Binary") {
+    
+        // Upload FBX file as BINARY
+        if ($index_file_fbx!=-1) {
+            // 1. Upload FBX file as BINARY
+            $fbxFile_id = wpunity_upload_AssetText(null, 'fbx' . $assetTitleForm, $asset_newID,
+                $_FILES, $index_file_fbx);
+        
+            // 2. Set value of attachment IDs at custom fields
+            update_post_meta($asset_newID, 'wpunity_asset3d_fbx', $fbxFile_id);
+        }
+        
+    } else {
+    
+        // Upload FBX file as TEXT
         $fbxFile_id = wpunity_upload_AssetText($fbx_content, 'fbx'.$assetTitleForm, $asset_newID,
             null, null);
     
         // 2. Set value of attachment IDs at custom fields
         update_post_meta($asset_newID, 'wpunity_asset3d_fbx', $fbxFile_id);
         
-    } else {
-    
-        if ($index_file_fbx!=-1) {
-            // 1. Upload FBX file as BINARY
-            $fbxFile_id = wpunity_upload_AssetText(null, 'fbx' . $assetTitleForm, $asset_newID,
-                $_FILES, $index_file_fbx);
-    
-            // 2. Set value of attachment IDs at custom fields
-            update_post_meta($asset_newID, 'wpunity_asset3d_fbx', $fbxFile_id);
-        }
     }
     
     // PDB upload and add id of uploaded file to postmeta wpunity_asset3d_pdb of asset

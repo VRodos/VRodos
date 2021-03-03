@@ -67,26 +67,16 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     wp_enqueue_script('vrodos_load87_OBJloader2');
     wp_enqueue_script('vrodos_load87_WWOBJloader2');
     
-    // 4. Mtl loader
     wp_enqueue_script('vrodos_load87_MTLloader');
-    
-    // 5. Pdb loader for molecules
     wp_enqueue_script('vrodos_load87_PDBloader');
-    
-    // 6. Fbx loader
     wp_enqueue_script('vrodos_load119_FBXloader');
-    
-    // 7. Trackball controls
     //wp_enqueue_script('wpunity_load119_TrackballControls');
-    wp_enqueue_script('vrodos_load119_OrbitControls');
     
-    // 8. GLTF Loader
+    wp_enqueue_script('vrodos_load119_OrbitControls');
     wp_enqueue_script('vrodos_load119_GLTFLoader');
-    wp_enqueue_script('wpunity_load119_DRACOLoader');
+    wp_enqueue_script('vrodos_load119_DRACOLoader');
     wp_enqueue_script('vrodos_load119_DDSLoader');
     wp_enqueue_script('vrodos_load119_KTXLoader');
-    
-    // For the PDB files to annotate molecules in 3D
     wp_enqueue_script('vrodos_load119_CSS2DRenderer');
     
     // Load single asset

@@ -3536,6 +3536,8 @@ THREE.FBXLoader = ( function () {
             var nameLen = reader.getUint8();
             var name = reader.getString( nameLen );
 
+
+
             // Regards this node as NULL-record if endOffset is zero
             if ( endOffset === 0 ) return null;
 

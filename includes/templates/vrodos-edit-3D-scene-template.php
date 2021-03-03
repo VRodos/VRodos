@@ -7,17 +7,17 @@ $parameter_assetpass = $perma_structure ? '?wpunity_asset=' : '&wpunity_asset=';
 // Load VR_Editor Scripts
 function wpunity_load_vreditor_scripts()
 {
-    $vthreejs = 119;
-
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_threejs');
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_CSS2DRenderer');
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_CopyShader');
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_FXAAShader');
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_EffectComposer');
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_RenderPass');
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_OutlinePass');
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_ShaderPass');
-    wp_enqueue_script('wpunity_load'.$vthreejs.'_FBXloader');
+    wp_enqueue_script('jquery-ui-draggable');
+    
+    wp_enqueue_script('wpunity_load119_threejs');
+    wp_enqueue_script('wpunity_load119_CSS2DRenderer');
+    wp_enqueue_script('wpunity_load119_CopyShader');
+    wp_enqueue_script('wpunity_load119_FXAAShader');
+    wp_enqueue_script('wpunity_load119_EffectComposer');
+    wp_enqueue_script('wpunity_load119_RenderPass');
+    wp_enqueue_script('wpunity_load119_OutlinePass');
+    wp_enqueue_script('wpunity_load119_ShaderPass');
+    wp_enqueue_script('wpunity_load119_FBXloader');
     wp_enqueue_script('vrodos_inflate');
     
     // Fixed at 87 (forked of original 87)
