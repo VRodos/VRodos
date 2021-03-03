@@ -57,37 +57,37 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     wp_enqueue_script('vrodos_inflate'); // for binary fbx
     
     // 1. Three js library
-    wp_enqueue_script('wpunity_load119_threejs');
-    wp_enqueue_script('wpunity_load124_statjs');
+    wp_enqueue_script('vrodos_load119_threejs');
+    wp_enqueue_script('vrodos_load124_statjs');
     
     // 2. Obj loader simple; For loading an uploaded obj
-    wp_enqueue_script('wpunity_load87_OBJloader');
+    wp_enqueue_script('vrodos_load87_OBJloader');
     
     // 3. Obj loader 2: For preview loading
-    wp_enqueue_script('wpunity_load87_OBJloader2');
-    wp_enqueue_script('wpunity_load87_WWOBJloader2');
+    wp_enqueue_script('vrodos_load87_OBJloader2');
+    wp_enqueue_script('vrodos_load87_WWOBJloader2');
     
     // 4. Mtl loader
-    wp_enqueue_script('wpunity_load87_MTLloader');
+    wp_enqueue_script('vrodos_load87_MTLloader');
     
     // 5. Pdb loader for molecules
-    wp_enqueue_script('wpunity_load87_PDBloader');
+    wp_enqueue_script('vrodos_load87_PDBloader');
     
     // 6. Fbx loader
-    wp_enqueue_script('wpunity_load119_FBXloader');
+    wp_enqueue_script('vrodos_load119_FBXloader');
     
     // 7. Trackball controls
     //wp_enqueue_script('wpunity_load119_TrackballControls');
-    wp_enqueue_script('wpunity_load119_OrbitControls');
+    wp_enqueue_script('vrodos_load119_OrbitControls');
     
     // 8. GLTF Loader
-    wp_enqueue_script('wpunity_load119_GLTFLoader');
+    wp_enqueue_script('vrodos_load119_GLTFLoader');
     wp_enqueue_script('wpunity_load119_DRACOLoader');
-    wp_enqueue_script('wpunity_load119_DDSLoader');
-    wp_enqueue_script('wpunity_load119_KTXLoader');
+    wp_enqueue_script('vrodos_load119_DDSLoader');
+    wp_enqueue_script('vrodos_load119_KTXLoader');
     
     // For the PDB files to annotate molecules in 3D
-    wp_enqueue_script('wpunity_load119_CSS2DRenderer');
+    wp_enqueue_script('vrodos_load119_CSS2DRenderer');
     
     // Load single asset
     wp_enqueue_script('Asset_viewer_3d_kernel');
@@ -379,7 +379,7 @@ if($asset_id != null) {
     $assetpostMeta = get_post_meta($asset_id);
     
     // Background color in canvas
-    $back_3d_color = $assetpostMeta['wpunity_asset3d_back_3d_color'][0];
+    $back_3d_color = $assetpostMeta['vrodos_asset3d_back_3d_color'][0];
     
     // Font type for text
     $fonts = $assetpostMeta['wpunity_asset3d_fonts'][0];
@@ -427,7 +427,7 @@ $asset_fonts_saved = ($asset_id == null ? "" : get_post_meta($asset_id,'wpunity_
 
 // Retrieve Background Color saved
 $asset_back_3d_color_saved = ($asset_id == null ? "#000000" :
-    get_post_meta($asset_id,'wpunity_asset3d_back_3d_color', true));
+    get_post_meta($asset_id,'vrodos_asset3d_back_3d_color', true));
 
 // 5 asset images
 $images_urls = [null, null, null, null, null];
@@ -813,7 +813,7 @@ if($asset_id != null) {
                 <img alt="Audio Section" src="<?php echo plugins_url( '../images/audio.png', dirname(__FILE__)  );?>">
                 <div id="audioFileInputContainer">
                     <?php
-                    $audioID = get_post_meta($asset_id, 'wpunity_asset3d_audio', true);
+                    $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
                     $attachment_post = get_post( $audioID );
                     $attachment_file = $attachment_post->guid;
                     
@@ -1005,7 +1005,7 @@ if($asset_id != null) {
             <!-- Audio hidden object -->
             <div id="audioFileInputContainer" style="display:none">
                 <?php
-                $audioID = get_post_meta($asset_id, 'wpunity_asset3d_audio', true);
+                $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
                 $attachment_post = get_post( $audioID );
                 $attachment_file = $attachment_post->guid;
                 ?>

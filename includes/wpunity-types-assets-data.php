@@ -842,7 +842,7 @@ function wpunity_assets_databox_show(){
     
     
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_audio') {?>
+            }elseif ($field['id'] == 'vrodos_asset3d_audio') {?>
 
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -980,7 +980,7 @@ function wpunity_assets_databox_show(){
                     </td>
                 </tr>
                 <?php
-            }elseif (in_array($field['id'],['wpunity_asset3d_back_3d_color'])) {
+            }elseif (in_array($field['id'],['vrodos_asset3d_back_3d_color'])) {
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>

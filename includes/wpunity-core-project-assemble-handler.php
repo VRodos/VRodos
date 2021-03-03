@@ -539,7 +539,7 @@ function wpunity_fetch_asset3d_frontend_callback(){
     $fbxID = get_post_meta($asset_id, 'wpunity_asset3d_fbx');
     $fbxURL= get_the_guid($fbxID[0]);
     
-    $audioID = get_post_meta($asset_id, 'wpunity_asset3d_audio');
+    $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio');
     $audioURL= get_the_guid($audioID[0]);
     
     $texturesIDs = get_post_meta($asset_id, 'wpunity_asset3d_diffimage');

@@ -364,7 +364,7 @@ function wpunity_create_asset_addAudio_frontend($asset_newID){
         return;
     
     $attachment_audio_id = wpunity_upload_img_vid_aud( $asset_audioForm, $asset_newID);
-    update_post_meta( $asset_newID, 'wpunity_asset3d_audio', $attachment_audio_id );
+    update_post_meta( $asset_newID, 'vrodos_asset3d_audio', $attachment_audio_id );
 }
 
 
@@ -563,6 +563,6 @@ function wpunity_update_asset_texts($asset_id, $alp, $assetFonts, $assetback3dco
     update_post_meta($asset_id, 'wpunity_asset3d_description_russian_perception', $alp['assetDescFormRussianPerception']);
     
     update_post_meta($asset_id, 'wpunity_asset3d_fonts', $assetFonts);
-    update_post_meta($asset_id, 'wpunity_asset3d_back_3d_color', $assetback3dcolor);
+    update_post_meta($asset_id, 'vrodos_asset3d_back_3d_color', $assetback3dcolor);
 }
 ?>
