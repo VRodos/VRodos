@@ -210,7 +210,7 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 
 //----------------------- USER ROLES -------------------------------------------
 
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/wpunity-users-roles.php');
+require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
 
 // Order : 4
 add_action( 'init', 'wpunity_add_customroles');
@@ -219,7 +219,7 @@ add_action( 'init', 'wpunity_add_customroles');
 add_action( 'init', 'wpunity_add_capabilities_to_admin');
 
 //---------------------- Game Projects -------------------------------------------------
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/wpunity-types-games.php');
+require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-games.php');
 
 
 // Order: 7
@@ -261,7 +261,7 @@ add_action('save_post', 'wpunity_games_databox_save');
 
 //---------------------- Scenes ----------------------------------------------------
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-types-scenes.php');
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-scenes.php');
 
 // Order : 11
 add_action('init', 'wpunity_scenes_construct'); //wpunity_scene 'SCENES'
@@ -298,7 +298,7 @@ add_action('save_post', 'wpunity_scenes_metas_save');
 
 //===================================== Assets ============================================
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-types-assets.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
 
 // 14
 add_action('init', 'wpunity_assets_construct'); //wpunity_asset3d 'ASSETS 3D'
@@ -336,7 +336,7 @@ add_action( 'save_post', 'wpunity_asset_project_box_content_save');
 // 53
 add_action('add_meta_boxes','wpunity_assets_taxcategory_box');
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-types-assets-data.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets-data.php' );
 
 // Save data from infobox
 // 39
@@ -369,7 +369,7 @@ add_action( 'manage_wpunity_asset3d_posts_custom_column' , 'wpunity_set_custom_w
 
 //===================================== Other ============================================
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-core-upload-functions.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-upload-functions.php' );
 
 // 63
 add_filter( 'upload_dir', 'wpunity_upload_dir_forScenesOrAssets' );
@@ -380,7 +380,7 @@ add_filter( 'intermediate_image_sizes', 'wpunity_disable_imgthumbs_assets', 999 
 // 65
 add_filter( 'sanitize_file_name', 'wpunity_overwrite_uploads', 10, 1 );
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-core-functions.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php' );
 
 // Set to the lowest priority in order to have game taxes available when joker games are created
 // 26
@@ -397,11 +397,11 @@ add_filter( 'wp_nav_menu_items','wpunity_loginout_menu_link', 5, 2 );
 add_action('after_setup_theme', 'wpunity_remove_admin_bar');
 
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-core-setget-functions.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
 
 //Create Initial Asset Categories
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-page-settings.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-settings.php' );
 
 
 
@@ -419,7 +419,7 @@ if( is_admin() ){
 
 
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-page-templates.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-templates.php' );
 
 // 27
 // Create class tha manipulates templates
@@ -463,18 +463,18 @@ register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
 
 
 // -------------  Games versions table -------------------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-db-table-creations.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-db-table-creations.php' );
 
 // 69
 register_activation_hook( __FILE__, 'wpunity_db_create_games_versions_table' );
 
 // ------------------- Add helper functions file ------------------------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-core-helper.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
 
 //------------------- For Compile ---------------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-core-project-assemble.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-core-project-assemble-replace.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/wpunity-core-project-assemble-handler.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
 
 //-------------------- Energy related ----------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-energy-settings.php' );
@@ -521,7 +521,7 @@ add_action( 'init', 'wpunity_scenes_types_chemistry_standard_cre' );
 //include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-chemistry-yamls.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-chemistry-compile.php' );
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/PDBLoader.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-PDBLoader.php' );
 
 
 
