@@ -431,7 +431,7 @@ get_header(); ?>
         </a>
         
         <?php // Compile Dialogue html
-           require( plugin_dir_path( __DIR__ ) .  '/templates/edit-wpunity_sceneCompileDialogue.php' );
+           require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-CompileDialogue.php' );
         ?>
     </div>
 
@@ -645,7 +645,7 @@ get_header(); ?>
                 </div>
         
                 <?php
-                    require( plugin_dir_path( __DIR__ ).'/templates/edit-wpunity_scenePopups.php');
+                    require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-Popups.php');
                  ?>
                 
 
@@ -750,7 +750,7 @@ get_header(); ?>
 
                     <!-- Analytics key input card -->
                     <?php
-                    require( plugin_dir_path( __DIR__ ) . '/templates/edit-wpunity_sceneAnalytics.php' );
+                    require( plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-Analytics.php' );
                     ?>
 
                     <!--ADD NEW SCENE card for all but Energy project that has fixed scenes-->
@@ -885,7 +885,7 @@ get_header(); ?>
                 }
     
                 // Options dialogue
-                require( plugin_dir_path( __DIR__ ) .  '/templates/edit-wpunity_sceneOptionsDialogue.php' );
+                require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' );
         
                 // Information for Wind Energy scenes
                 sceneDetailsInfo($project_type);
@@ -1066,7 +1066,7 @@ get_header(); ?>
 
     <!-- Load Scene - javascript var resources3D[] -->
     <?php
-        require( plugin_dir_path( __DIR__ ).'/templates/edit-wpunity_sceneParseJSON.php' );
+        require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
         /* Initial load as php */
         $formRes = new ParseJSON($upload_url);
         $formRes->init($sceneToLoad);

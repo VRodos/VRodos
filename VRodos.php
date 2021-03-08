@@ -427,7 +427,7 @@ add_action( 'plugins_loaded', array( 'wpUnityTemplate', 'get_instance' ) );
 
 // Order 1: Filters inside wpunity-page-templates
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/edit-wpunity_asset3D-saveData.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
 
 
 // ---------  Create dedicated pages on plugin activation -------------------------

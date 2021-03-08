@@ -434,7 +434,7 @@ if($asset_id != null) {
     if($saved_term[0]->slug == 'terrain'){
         
         // Wind Energy Terrain
-        include 'edit-wpunity_asset3D-WindEnergy1.php';
+        include 'vrodos-asset-editor-WindEnergy.php';
         
     }elseif (in_array($saved_term[0]->slug , ['artifact'])) {
         // Image 1 : Featured image
@@ -477,7 +477,7 @@ if($asset_id != null) {
     <a href="#" class="animationButton" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();">Animation 1</a>
 
     <!-- QR code -->
-    <?php include 'edit-wpunity_asset3D_QRCodeGenerator.php'; ?>
+    <?php include 'vrodos-QRCodeGenerator.php'; ?>
 
 </div>
 
@@ -1109,12 +1109,12 @@ if($asset_id != null) {
         <!--  End of Edit or Show  -->
 
         <!-- MOLECULES  only-->
-        <?php include 'edit-wpunity_asset3D_ChemistrySupport1.php'; ?>
+        <?php include 'vrodos-asset-editor-ChemistrySupport.php'; ?>
         
         <?php
         // Obsolete virtual labs code
         //  if ($project_scope == 1) {
-        //        require(plugin_dir_path(__DIR__) . '/templates/edit-wpunity_asset3D_vlabsWidgets.php');
+        //        require(plugin_dir_path(__DIR__) . '/templates/vrodos-asset-editor-vlabsWidgets.php');
         //  }
         ?>
 
@@ -1225,6 +1225,12 @@ if($asset_id != null) {
 
 
 </form>
+
+
+
+
+
+
 
 <!--                     Javascript                             -->
 <script type="text/javascript">

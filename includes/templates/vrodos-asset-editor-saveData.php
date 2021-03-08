@@ -2,12 +2,6 @@
 
 function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm, $gameSlug){
 
-//    $ff = fopen("output_3D_files.txt","w");
-//    fwrite($ff, "1");
-//    fwrite($ff, chr(13));
-//    fwrite($ff, print_r($_FILES, true));
-
-
     // Clear out all previous
     
     // 1. DELETE ATTACHMENTS OF PARENT POST (ASSET POST)
@@ -18,57 +12,20 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
         // Delete attachment post (apart from screenshot)
         if (!strpos($attachment->post_title, 'screenshot')) {
     
-//            fwrite($ff, chr(13)."DELETING ATTACHMENT POST WITH TITLE:".
-//                                                        $attachment->post_title);
     
             // Delete all metas of the attachment post
             $attachment_metas = get_post_meta($attachment->ID);
-//
-//            fwrite($ff, chr(13)."ALL METAs OF ATTACHMENT".
-//                print_r($attachment_metas,true) );
-
-//            fwrite($ff,chr(13).chr(13));
-//            fwrite($ff,chr(13).chr(13));
-//
     
             $file_name = get_post_meta($attachment->ID, '_wp_attached_file', true);
-    
-//            fwrite($ff,chr(13).print_r($file_name,true));
-//
-            //unlink($file_name);
             
             foreach(array_keys($attachment_metas) as $attachment_meta_key) {
-            
-//                fwrite($ff, chr(13)."DELETE META OF ATTACHMENT".
-//                                    print_r($attachment_meta_key,true) );
-//
                 delete_post_meta($attachment->ID, $attachment_meta_key);
-                
             }
             
             // Delete attchment post
             wp_delete_post($attachment->ID, true);
         }
-    
-
-//        $asset3d_fbx_ids = get_post_meta( $asset_newID,'wpunity_asset3d_fbx',false);
-//
-//        fwrite($ff, chr(13) . print_r( $asset3d_fbx_ids, true) );
-//
-//        if (count($asset3d_fbx_ids) > 0) {
-//            // Remove previous file from file system
-//            $prevfMeta = get_post_meta($asset3d_fbx_ids[0], '_wp_attached_file', true);
-//
-//            fwrite($ff, chr(13).$prevfMeta);
-//
-//            if (file_exists($prevfMeta)) {
-//                unlink($prevfMeta);
-//            }
-//        }
-
     }
-    
-    //fclose($ff);
     
     // 1. Check if already exists
     // 2. Upload and update DB
@@ -80,14 +37,6 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
     
     // store the extensions
     $extension_texture_file = [];
-    
-//    $fp = fopen('output_post_asset.txt','w');
-//
-//    fwrite($fp, print_r($_POST, true));
-//    fwrite($fp, 'Is empty:'.($_POST['textureFileInput']===''));
-//    fwrite($fp,'\n');
-//    fwrite($fp, 'Is null:'.($_POST['textureFileInput']==null));
-//    fclose($fp);
     
     // Texture
     if (isset($_POST['textureFileInput']))
@@ -382,10 +331,6 @@ function wpunity_create_asset_addVideo_frontend($asset_newID){
     $attachment_video_id = wpunity_upload_img_vid_aud( $asset_videoForm, $asset_newID);
     update_post_meta( $asset_newID, 'wpunity_asset3d_video', $attachment_video_id );
 }
-
-
-
-
 
 
 

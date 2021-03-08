@@ -1,7 +1,0 @@
-{
-    "name": "google/translate-sample",
-    "type": "project",
-    "require": {
-        "google/cloud-translate": "^1.1"
-    }
-}
