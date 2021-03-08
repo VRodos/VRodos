@@ -1,0 +1,92 @@
+--- !u!1001 &___[door_fid]___
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: ___[door_pos_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: ___[door_pos_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: ___[door_pos_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: ___[door_rot_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: ___[door_rot_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: ___[door_rot_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: ___[door_rot_w]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_RootOrder
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 1693961036409888, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_Name
+      value: ___[door_title]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 114092677568471722, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: sceneArrival
+      value: ___[door_scene_arrival]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 114092677568471722, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: doorArrival
+      value: ___[door_door_arrival]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 114092677568471722, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: isRewardItem
+      value: ___[door_isreward]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalScale.x
+      value: ___[door_scale_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalScale.y
+      value: ___[door_scale_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalScale.z
+      value: ___[door_scale_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 4212114690526736, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4212114690526736, guid: b15690de041079845965f87f4847e73f, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 1.15
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: b15690de041079845965f87f4847e73f, type: 2}
+  m_IsPrefabParent: 0
+--- !u!4 &___[door_transform_fid]___ stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4660078065809236, guid: b15690de041079845965f87f4847e73f,
+    type: 2}
+  m_PrefabInternal: {fileID: ___[door_fid]___}
+--- !u!1001 &___[door_obj_fid]___
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: ___[door_transform_fid]___}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: ___[door_guid]___, type: 3}
+  m_IsPrefabParent: 0

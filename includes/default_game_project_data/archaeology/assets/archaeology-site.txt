@@ -1,0 +1,58 @@
+--- !u!1001 &___[site_fid]___
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: ___[site_position_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: ___[site_position_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: ___[site_position_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: ___[site_rotation_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: ___[site_rotation_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: ___[site_rotation_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: ___[site_rotation_w]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_RootOrder
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_Name
+      value: ___[site_title]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalScale.x
+      value: ___[site_scale_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalScale.y
+      value: ___[site_scale_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[site_obj_guid]___, type: 3}
+      propertyPath: m_LocalScale.z
+      value: ___[site_scale_z]___
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: ___[site_obj_guid]___, type: 3}
+  m_IsPrefabParent: 0
