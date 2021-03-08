@@ -14,14 +14,14 @@ $pluginpath = str_replace('\\','/',$pluginpath);
 
 
 // Define Ajax for the delete Game functionality
-$thepath = $pluginpath . '/js_libs/delete_ajaxes/delete_game_scene_asset.js';
+$thepath = $pluginpath . '/js_libs/ajaxes/delete_game_scene_asset.js';
 wp_enqueue_script( 'ajax-script_delete_game', $thepath, array('jquery') );
 wp_localize_script( 'ajax-script_delete_game', 'my_ajax_object_deletegame',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php'))
 );
 
 // Define Ajax for the delete Game functionality
-$thepath = $pluginpath . '/js_libs/collaborate_ajaxes/collaborate_project.js';
+$thepath = $pluginpath . '/js_libs/ajaxes/collaborate_project.js';
 wp_enqueue_script( 'ajax-script_collaborate_project', $thepath, array('jquery') );
 wp_localize_script( 'ajax-script_collaborate_project', 'my_ajax_object_collaborate_project',
     array( 'ajax_url' => admin_url( 'admin-ajax.php'))
@@ -30,7 +30,7 @@ wp_localize_script( 'ajax-script_collaborate_project', 'my_ajax_object_collabora
 
 
 // Define Ajax for the create Game functionality
-$thepath2 = $pluginpath . '/js_libs/create_ajaxes/create_game_scene_asset.js';
+$thepath2 = $pluginpath . '/js_libs/ajaxes/create_game_scene_asset.js';
 wp_enqueue_script( 'ajax-script_create_game', $thepath2, array('jquery') );
 wp_localize_script( 'ajax-script_create_game', 'my_ajax_object_creategame',
     array( 'ajax_url' => admin_url( 'admin-ajax.php'))

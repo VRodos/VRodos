@@ -56,7 +56,7 @@ $upload_dir = wp_upload_dir()['basedir'];
 $upload_dir = str_replace('\\','/',$upload_dir);
 
 // DELETE ASSET AJAX
-wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.'/js_libs/delete_ajaxes/delete_asset.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.'/js_libs/ajaxes/delete_asset.js', array('jquery') );
 wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );

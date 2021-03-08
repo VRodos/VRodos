@@ -226,13 +226,13 @@ wp_localize_script( 'ajax-script_assepile', 'my_ajax_object_assepile',
 );
 
 // DELETE SCENE AJAX
-wp_enqueue_script( 'ajax-script_deletescene', $pluginpath . '/js_libs/delete_ajaxes/delete_scene.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_deletescene', $pluginpath . '/js_libs/ajaxes/delete_scene.js', array('jquery') );
 wp_localize_script( 'ajax-script_deletescene', 'my_ajax_object_deletescene',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php'))
 );
 
 //FOR SAVING extra keys
-wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/save_scene_ajax/wpunity_save_scene_ajax.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/wpunity_save_scene_ajax.js', array('jquery') );
 wp_localize_script( 'ajax-script_savegio', 'my_ajax_object_savegio',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'project_id' => $project_id )
 );
@@ -242,21 +242,21 @@ wp_enqueue_script( 'ajax-script_filebrowse', $pluginpath.'/js_libs/assetBrowserT
 wp_localize_script( 'ajax-script_filebrowse', 'my_ajax_object_fbrowse', array( 'ajax_url' => admin_url( 'admin-ajax.php' ) ) );
 
 // Save scene
-wp_enqueue_script( 'ajax-script_savescene', $pluginpath.'/js_libs/save_scene_ajax/wpunity_save_scene_ajax.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_savescene', $pluginpath.'/js_libs/ajaxes/wpunity_save_scene_ajax.js', array('jquery') );
 wp_localize_script( 'ajax-script_savescene', 'my_ajax_object_savescene',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
 );
 
 // Delete Asset
 wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.
-    '/js_libs/delete_ajaxes/delete_asset.js', array('jquery') );
+    '/js_libs/ajaxes/delete_asset.js', array('jquery') );
 wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );
 
 // Fetch Asset
 wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
-    '/js_libs/fetch_ajaxes/fetch_asset.js', array('jquery') );
+    '/js_libs/ajaxes/fetch_asset.js', array('jquery') );
 wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
     array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );

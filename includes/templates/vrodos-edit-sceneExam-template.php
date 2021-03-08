@@ -9,7 +9,7 @@ function wpunity_load2DSceneEditorScripts_exams() {
 add_action('wp_enqueue_scripts', 'wpunity_load2DSceneEditorScripts_exams' );
 
 // DELETE ASSET AJAX
-wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.'/js_libs/delete_ajaxes/delete_asset.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.'/js_libs/ajaxes/delete_asset.js', array('jquery') );
 wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );

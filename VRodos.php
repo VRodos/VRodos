@@ -45,7 +45,7 @@ function vrodos_register_scripts() {
 		array('vrodos_jsfontselect', $pluginDirJS.'standalone_js_libraries/jquery.fontselect.js'),
 		array('vrodos_html2canvas', $pluginDirJS.'standalone_js_libraries/html2canvas.min.js'),
 		array('vrodos_assepile_request', $pluginDirJS.'assemble_compile_commands/request_game_assepile.js'),
-		array('vrodos_savescene_request', $pluginDirJS.'save_scene_ajax/vrodos_save_scene_ajax.js'),
+		array('vrodos_savescene_request', $pluginDirJS.'ajaxes/vrodos_save_scene_ajax.js'),
 		array('vrodos_content_interlinking_request', $pluginDirJS.'content_interlinking_commands/content_interlinking.js'),
 		array('vrodos_segmentation_request', $pluginDirJS.'semantics_commands/segmentation.js'),
 		
