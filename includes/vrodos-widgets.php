@@ -73,28 +73,31 @@ class vrodos_3d_widget extends WP_Widget {
     // Widget Backend
     public function form( $instance ) {
         
+        
         $title = isset( $instance[ 'title' ] ) ? $instance[ 'title' ] : '';
-        $titleShow = isset( $instance[ 'titleShow' ] ) ? $instance[ 'titleShow' ] : 'false';
+        $titleshow = isset( $instance[ 'titleshow' ] ) ? $instance[ 'titleshow' ] : 'false';
         
         $asset_id =  isset( $instance[ 'asset_id' ] ) ? $instance[ 'asset_id' ] : __( 'Insert asset id', 'vrodos_3d_widget_domain' );
-        $cameraPositionX = isset( $instance[ 'cameraPositionX' ] ) ?  $instance[ 'cameraPositionX' ] : 0;
-        $cameraPositionY = isset( $instance[ 'cameraPositionY' ] ) ?  $instance[ 'cameraPositionY' ] : 0;
-        $cameraPositionZ = isset( $instance[ 'cameraPositionZ' ] ) ?  $instance[ 'cameraPositionZ' ] : -1;
-        $canvasWidth = isset( $instance[ 'canvasWidth' ] )? $instance[ 'canvasWidth' ] : '100%';
-        $canvasHeight = isset( $instance[ 'canvasHeight' ] )? $instance[ 'canvasHeight' ] : '100%';
+        $camerapositionx = isset( $instance[ 'camerapositionx' ] ) ?  $instance[ 'camerapositionx' ] : 0;
+        $camerapositiony = isset( $instance[ 'camerapositiony' ] ) ?  $instance[ 'camerapositiony' ] : 0;
+        $camerapositionz = isset( $instance[ 'camerapositionz' ] ) ?  $instance[ 'camerapositionz' ] : -1;
+        $canvaswidth = isset( $instance[ 'canvaswidth' ] )? $instance[ 'canvaswidth' ] : '100%';
+        $canvasheight = isset( $instance[ 'canvasheight' ] )? $instance[ 'canvasheight' ] : '100%';
     
-        $canvasBackgroundColor = isset( $instance[ 'canvasBackgroundColor' ] )? $instance[ 'canvasBackgroundColor' ] : 'transparent';
+        $canvasbackgroundcolor = isset( $instance[ 'canvasbackgroundcolor' ] )? $instance[ 'canvasbackgroundcolor' ] : 'transparent';
         
-        $enableZoom = isset( $instance[ 'enableZoom' ] )? $instance[ 'enableZoom' ] : 'true';
+        $enablezoom = isset( $instance[ 'enablezoom' ] )? $instance[ 'enablezoom' ] : 'true';
     
-        $enablePan = isset( $instance[ 'enableZoom' ] )? $instance[ 'enablePan' ] : 'false';
+        $enablepan = isset( $instance[ 'enablepan' ] )? $instance[ 'enablepan' ] : 'false';
     
-        $canvasPosition = isset( $instance[ 'canvasPosition' ] )? $instance[ 'canvasPosition' ] : 'relative';
+        $canvasposition = isset( $instance[ 'canvasposition' ] )? $instance[ 'canvasposition' ] : 'relative';
         
-        $canvasTop = isset( $instance[ 'canvasTop' ] )? $instance[ 'canvasTop' ] : '';
-        $canvasBottom = isset( $instance[ 'canvasBottom' ] )? $instance[ 'canvasBottom' ] : '';
-        $canvasLeft = isset( $instance[ 'canvasLeft' ] )? $instance[ 'canvasLeft' ] : '';
-        $canvasRight = isset( $instance[ 'canvasRight' ] )? $instance[ 'canvasRight' ] : '';
+        $canvastop = isset( $instance[ 'canvastop' ] )? $instance[ 'canvastop' ] : '';
+        $canvasbottom = isset( $instance[ 'canvasbottom' ] )? $instance[ 'canvasbottom' ] : '';
+        $canvasleft = isset( $instance[ 'canvasleft' ] )? $instance[ 'canvasleft' ] : '';
+        $canvasright = isset( $instance[ 'canvasright' ] )? $instance[ 'canvasright' ] : '';
+    
+        $customcss = isset( $instance[ 'customcss' ] )? $instance[ 'customcss' ] : '';
         
         // Widget admin form
         ?>
@@ -112,15 +115,15 @@ class vrodos_3d_widget extends WP_Widget {
         </p>
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'titleShow' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'titleshow' ); ?>">
                 <?php _e( 'Title Show ?' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'titleShow' ); ?>"
-                   name="<?php echo $this->get_field_name( 'titleShow' ); ?>"
+                   id="<?php echo $this->get_field_id( 'titleshow' ); ?>"
+                   name="<?php echo $this->get_field_name( 'titleshow' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $titleShow ); ?>"
+                   value="<?php echo esc_attr( $titleshow ); ?>"
             />
         </p>
         
@@ -157,69 +160,69 @@ class vrodos_3d_widget extends WP_Widget {
         </p>
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'cameraPositionX' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'camerapositionx' ); ?>">
                 <?php _e( 'camera Position X:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'cameraPositionX' ); ?>"
-                   name="<?php echo $this->get_field_name( 'cameraPositionX' ); ?>"
+                   id="<?php echo $this->get_field_id( 'camerapositionx' ); ?>"
+                   name="<?php echo $this->get_field_name( 'camerapositionx' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $cameraPositionX ); ?>"
+                   value="<?php echo esc_attr( $camerapositionx ); ?>"
             />
         </p>
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'cameraPositionY' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'camerapositiony' ); ?>">
                 <?php _e( 'Camera Position Y:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'cameraPositionY' ); ?>"
-                   name="<?php echo $this->get_field_name( 'cameraPositionY' ); ?>"
+                   id="<?php echo $this->get_field_id( 'camerapositiony' ); ?>"
+                   name="<?php echo $this->get_field_name( 'camerapositiony' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $cameraPositionY ); ?>"
+                   value="<?php echo esc_attr( $camerapositiony ); ?>"
             />
         </p>
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'cameraPositionZ' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'camerapositionz' ); ?>">
                 <?php _e( 'Camera Position Z:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'cameraPositionZ' ); ?>"
-                   name="<?php echo $this->get_field_name( 'cameraPositionZ' ); ?>"
+                   id="<?php echo $this->get_field_id( 'camerapositionz' ); ?>"
+                   name="<?php echo $this->get_field_name( 'camerapositionz' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $cameraPositionZ ); ?>"
+                   value="<?php echo esc_attr( $camerapositionz ); ?>"
             />
         </p>
 
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'canvasWidth' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'canvaswidth' ); ?>">
                 <?php _e( 'Canvas width, e.g. 200px:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'canvasWidth' ); ?>"
-                   name="<?php echo $this->get_field_name( 'canvasWidth' ); ?>"
+                   id="<?php echo $this->get_field_id( 'canvaswidth' ); ?>"
+                   name="<?php echo $this->get_field_name( 'canvaswidth' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $canvasWidth ); ?>"
+                   value="<?php echo esc_attr( $canvaswidth ); ?>"
             />
         </p>
 
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'canvasHeight' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'canvasheight' ); ?>">
                 <?php _e( 'Canvas height:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'canvasHeight' ); ?>"
-                   name="<?php echo $this->get_field_name( 'canvasHeight' ); ?>"
+                   id="<?php echo $this->get_field_id( 'canvasheight' ); ?>"
+                   name="<?php echo $this->get_field_name( 'canvasheight' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $canvasHeight ); ?>"
+                   value="<?php echo esc_attr( $canvasheight ); ?>"
             />
         </p>
 
@@ -228,109 +231,123 @@ class vrodos_3d_widget extends WP_Widget {
         
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'canvasBackgroundColor' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'canvasbackgroundcolor' ); ?>">
                 <?php _e( 'Canvas Background Color. Examples: basic names (yellow), transparent, or rbg(0,10,100):' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'canvasBackgroundColor' ); ?>"
-                   name="<?php echo $this->get_field_name( 'canvasBackgroundColor' ); ?>"
+                   id="<?php echo $this->get_field_id( 'canvasbackgroundcolor' ); ?>"
+                   name="<?php echo $this->get_field_name( 'canvasbackgroundcolor' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $canvasBackgroundColor ); ?>"
+                   value="<?php echo esc_attr( $canvasbackgroundcolor ); ?>"
             />
         </p>
 
         
         <p>
-            <label for="<?php echo $this->get_field_id( 'enableZoom' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'enablezoom' ); ?>">
                 <?php _e( 'Enable Zoom:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'enableZoom' ); ?>"
-                   name="<?php echo $this->get_field_name( 'enableZoom' ); ?>"
+                   id="<?php echo $this->get_field_id( 'enablezoom' ); ?>"
+                   name="<?php echo $this->get_field_name( 'enablezoom' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $enableZoom ); ?>"
+                   value="<?php echo esc_attr( $enablezoom ); ?>"
             />
         </p>
         
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'enablePan' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'enablepan' ); ?>">
                 <?php _e( 'Enable pan:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'enablePan' ); ?>"
-                   name="<?php echo $this->get_field_name( 'enablePan' ); ?>"
+                   id="<?php echo $this->get_field_id( 'enablepan' ); ?>"
+                   name="<?php echo $this->get_field_name( 'enablepan' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $enablePan ); ?>"
+                   value="<?php echo esc_attr( $enablepan ); ?>"
             />
         </p>
 
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'canvasPosition' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'canvasposition' ); ?>">
                 <?php _e( 'Canvas position (relative, absolute, etc.):' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'canvasPosition' ); ?>"
-                   name="<?php echo $this->get_field_name( 'canvasPosition' ); ?>"
+                   id="<?php echo $this->get_field_id( 'canvasposition' ); ?>"
+                   name="<?php echo $this->get_field_name( 'canvasposition' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $canvasPosition ); ?>"
+                   value="<?php echo esc_attr( $canvasposition ); ?>"
             />
         </p>
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'canvasTop' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'canvastop' ); ?>">
                 <?php _e( 'Canvas top, e.g. 5px:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'canvasTop' ); ?>"
-                   name="<?php echo $this->get_field_name( 'canvasTop' ); ?>"
+                   id="<?php echo $this->get_field_id( 'canvastop' ); ?>"
+                   name="<?php echo $this->get_field_name( 'canvastop' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $canvasTop ); ?>"
+                   value="<?php echo esc_attr( $canvastop ); ?>"
             />
         </p>
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'canvasBottom' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'canvasbottom' ); ?>">
                 <?php _e( 'Canvas bottom, e.g. 5px:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'canvasBottom' ); ?>"
-                   name="<?php echo $this->get_field_name( 'canvasBottom' ); ?>"
+                   id="<?php echo $this->get_field_id( 'canvasbottom' ); ?>"
+                   name="<?php echo $this->get_field_name( 'canvasbottom' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $canvasBottom ); ?>"
+                   value="<?php echo esc_attr( $canvasbottom ); ?>"
             />
         </p>
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'canvasLeft' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'canvasleft' ); ?>">
                 <?php _e( 'Canvas left, e.g. 5px:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'canvasLeft' ); ?>"
-                   name="<?php echo $this->get_field_name( 'canvasLeft' ); ?>"
+                   id="<?php echo $this->get_field_id( 'canvasleft' ); ?>"
+                   name="<?php echo $this->get_field_name( 'canvasleft' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $canvasLeft ); ?>"
+                   value="<?php echo esc_attr( $canvasleft ); ?>"
             />
         </p>
 
         <p>
-            <label for="<?php echo $this->get_field_id( 'canvasRight' ); ?>">
+            <label for="<?php echo $this->get_field_id( 'canvasright' ); ?>">
                 <?php _e( 'Canvas right, e.g. 5px:' ); ?>
             </label>
 
             <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'canvasRight' ); ?>"
-                   name="<?php echo $this->get_field_name( 'canvasRight' ); ?>"
+                   id="<?php echo $this->get_field_id( 'canvasright' ); ?>"
+                   name="<?php echo $this->get_field_name( 'canvasright' ); ?>"
                    type="text"
-                   value="<?php echo esc_attr( $canvasRight ); ?>"
+                   value="<?php echo esc_attr( $canvasright ); ?>"
+            />
+        </p>
+
+
+        <p>
+            <label for="<?php echo $this->get_field_id( 'customcss' ); ?>">
+                <?php _e( 'Any css you like, e.g. "margin-top:50px;margin-left:30px;" :' ); ?>
+            </label>
+
+            <input class="widefat"
+                   id="<?php echo $this->get_field_id( 'customcss' ); ?>"
+                   name="<?php echo $this->get_field_name( 'customcss' ); ?>"
+                   type="text"
+                   value="<?php echo esc_attr( $customcss ); ?>"
             />
         </p>
 
@@ -340,69 +357,70 @@ class vrodos_3d_widget extends WP_Widget {
     
     // Creating widget front-end
     public function widget( $args, $instance ) {
-
-        $title = apply_filters( 'widget_title', $instance['title'] );
-        $titleShow = apply_filters( 'widget_titleShow', $instance['titleShow'] );
-        $asset_id = apply_filters( 'widget_asset_id', $instance['asset_id'] );
-        $cameraPositionX = apply_filters( 'widget_cameraPositionX', $instance['cameraPositionX'] );
-        $cameraPositionY = apply_filters( 'widget_cameraPositionY', $instance['cameraPositionY'] );
-        $cameraPositionZ = apply_filters( 'widget_cameraPositionZ', $instance['cameraPositionZ'] );
     
-        $canvasWidth = apply_filters( 'widget_canvasWidth', $instance['canvasWidth'] );
-        $canvasHeight = apply_filters( 'widget_canvasHeight', $instance['canvasHeight'] );
+        
+        $title = $instance['title']; //apply_filters( 'widget_title', $instance['title'] );
+        $titleshow = $instance['titleshow'] ; //apply_filters( 'widget_titleshow', $instance['titleshow'] );
+        $asset_id = $instance['asset_id'];    //apply_filters( 'widget_asset_id', $instance['asset_id'] );
     
-        $canvasBackgroundColor = apply_filters( 'widget_canvasBackgroundColor', $instance['canvasBackgroundColor'] );
-        $enablePan = apply_filters( 'widget_enablePan', $instance['enablePan'] );
-        $enableZoom = apply_filters( 'widget_enableZoom', $instance['enableZoom'] );
-    
-        $canvasPosition = apply_filters( 'widget_canvasPosition', $instance['canvasPosition'] );
-    
-        $canvasTop = apply_filters( 'widget_canvasTop', $instance['canvasTop'] );
-        $canvasBottom = apply_filters( 'widget_canvasTop', $instance['canvasBottom'] );
-        $canvasLeft = apply_filters( 'widget_canvasTop', $instance['canvasLeft'] );
-        $canvasRight = apply_filters( 'widget_canvasTop', $instance['canvasRight'] );
         
         
-        // before and after widget arguments are defined by themes
+        $camerapositionx = $instance['camerapositionx'];
+                                // apply_filters( 'widget_camerapositionx', $instance['camerapositionx'] );
+        $camerapositiony = $instance['camerapositiony'] ;//apply_filters( 'widget_camerapositiony', $instance['camerapositiony'] );
+        $camerapositionz = $instance['camerapositionz']; //apply_filters( 'widget_camerapositionz', $instance['camerapositionz'] );
+    
+        $canvaswidth = $instance['canvaswidth']; //apply_filters( 'widget_canvaswidth', $instance['canvaswidth'] );
+        $canvasheight = $instance['canvasheight']; //apply_filters( 'widget_canvasheight', $instance['canvasheight'] );
+    
+        $canvasbackgroundcolor = $instance['canvasbackgroundcolor']; //apply_filters( 'widget_canvasbackgroundcolor', $instance['canvasbackgroundcolor'] );
+        $enablepan = $instance['enablepan']; //apply_filters( 'widget_enablepan', $instance['enablepan'] );
+        $enablezoom = $instance['enablezoom']; //apply_filters( 'widget_enablezoom', $instance['enablezoom'] );
+    
+        $canvasposition = $instance['canvasposition']; //apply_filters( 'widget_canvasposition', $instance['canvasposition'] );
+    
+        $canvastop = $instance['canvastop']; //apply_filters( 'widget_canvastop', $instance['canvastop'] );
+        $canvasbottom = $instance['canvasbottom']; //apply_filters( 'widget_canvastop', $instance['canvasbottom'] );
+        $canvasleft = $instance['canvasleft']; //apply_filters( 'widget_canvastop', $instance['canvasleft'] );
+        $canvasright = $instance['canvasright']; //apply_filters( 'widget_canvastop', $instance['canvasright'] );
+    
+        $customcss = $instance['customcss'];
+        
+        
+        // 1. before and after widget arguments are defined by themes
         echo $args['before_widget'];
         
         
         // The data
-        if ( ! empty( $title ) && $titleShow === 'true')
+        if ( ! empty( $title ) && $titleshow === 'true')
             echo $args['before_title'] . $title . $args['after_title'];
     
-//        echo $cameraPositionX.' '.$cameraPositionY.' '.$cameraPositionZ;
-
-//        if ( ! empty( $asset_id ) )
-//            echo $asset_id;
-        
-        // -----  Step 2 : Get  urls from id ---------
+       
+        // 2. Get  urls from id
     
         // Get post
         $asset_post    = get_post($asset_id);
     
+        
         // Get post meta
         $assetpostMeta = get_post_meta($asset_id);
     
         // Background color in canvas
         $back_3d_color = $assetpostMeta['vrodos_asset3d_back_3d_color'][0];
     
+        
+        
         $asset_3d_files = get_3D_model_files($assetpostMeta, $asset_id);
         
         // audio file
         $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
         $attachment_audio_file = get_post( $audioID )->guid;
+        
+        $styledivcanvas = "position:".$canvasposition.";width:".$canvaswidth.";height:".$canvasheight.
+            ";top:".$canvastop.";bottom:".$canvasbottom.";left:".$canvasleft.";right:".$canvasright.";".$customcss;
         ?>
 
-        <div id="" class=""
-             style="position:<?php
-             echo $canvasPosition;?>; width:<?php
-             echo $canvasWidth;?>; height:<?php
-             echo $canvasHeight;?>; top:<?php
-             echo $canvasTop;?>; bottom:<?php
-             echo $canvasBottom;?>; left:<?php
-             echo $canvasLeft;?>; right:<?php
-             echo $canvasRight;?>;">
+        <div id="" class="" style="<?php echo $styledivcanvas ?>">
 
             <!--   Progress bar -->
             <div id="previewProgressSliderDiv" class="CenterContents"
@@ -416,10 +434,10 @@ class vrodos_3d_widget extends WP_Widget {
             </div>
             
             <!-- LabelRenderer of Canvas -->
-            <div id="divCanvasLabels<?php echo $title;?>" style="position:absolute; width:100%;">
+            <div id="divCanvasLabels<?php echo $title;?>" style="position:absolute; width:100%; height:100%;">
 
                 <!-- 3D Canvas -->
-                <canvas id="divCanvas<?php echo $title;?>" style="background: <?php $canvasBackgroundColor; ?>; width:100%; position:relative; background: transparent"></canvas>
+                <canvas id="divCanvas<?php echo $title;?>" style="outline: none;background: <?php $canvasbackgroundcolor; ?>; width:100%; height:100%; position:relative; background: transparent"></canvas>
 
                 <!--suppress HtmlUnknownAnchorTarget -->
                 <a href="#/" class="animationButton" style="visibility:hidden" id="animButtonDiv<?php echo $title;?>" onclick="asset_viewer_3d_kernel<?php echo $title;?>.playStopAnimation();">Animation 1</a>
@@ -439,7 +457,9 @@ class vrodos_3d_widget extends WP_Widget {
                 Your browser does not support the audio tag.
             </audio>
         <?php } ?>
-
+    
+        
+        
         <script>
             const path_url<?php echo $title;?> = "<?php echo $asset_3d_files['path'].'/'; ?>";
             const mtl_file_name_widget<?php echo $title;?>= "<?php echo $asset_3d_files['mtl']; ?>";
@@ -448,19 +468,19 @@ class vrodos_3d_widget extends WP_Widget {
             const glb_file_name_widget<?php echo $title;?>= "<?php echo $asset_3d_files['glb'];?>";
             const fbx_file_name_widget<?php echo $title;?>= "<?php echo $asset_3d_files['fbx'];    ?>";
 
-            const cameraPositionX<?php echo $title;?>= "<?php echo $cameraPositionX; ?>";
-            const cameraPositionY<?php echo $title;?>= "<?php echo $cameraPositionY; ?>";
-            const cameraPositionZ<?php echo $title;?>= "<?php echo $cameraPositionZ; ?>";
+            const camerapositionx<?php echo $title;?>= "<?php echo $camerapositionx; ?>";
+            const camerapositiony<?php echo $title;?>= "<?php echo $camerapositiony; ?>";
+            const camerapositionz<?php echo $title;?>= "<?php echo $camerapositionz; ?>";
 
-            const canvasBackgroundColor<?php echo $title;?> = "<?php echo $canvasBackgroundColor;?>";
-            const enableZoom<?php echo $title;?> = "<?php echo $enableZoom?>" === 'true';
-            const enablePan<?php echo $title;?> = "<?php echo $enablePan?>" === 'true';
+            const canvasbackgroundcolor<?php echo $title;?> = "<?php echo $canvasbackgroundcolor;?>";
+            const enablezoom<?php echo $title;?> = "<?php echo $enablezoom?>" === 'true';
+            const enablepan<?php echo $title;?> = "<?php echo $enablepan?>" === 'true';
 
             const textures_fbx_string_connected_widget<?php echo $title;?> = "<?php echo $asset_3d_files['texturesFbx']; ?>";
             const back_3d_color<?php echo $title;?> = "<?php echo $back_3d_color; ?>";
             const audio_file<?php echo $title;?> = document.getElementById( 'audioFile' );
 
-
+            
         
             const asset_viewer_3d_kernel<?php echo $title;?> = new Asset_viewer_3d_kernel(
                 document.getElementById( 'divCanvas<?php echo $title;?>' ),
@@ -468,7 +488,7 @@ class vrodos_3d_widget extends WP_Widget {
                 document.getElementById( 'animButtonDiv<?php echo $title;?>' ),
                 document.getElementById('previewProgressLabelDiv<?php echo $title;?>'),
                 document.getElementById('previewProgressSliderLineDiv<?php echo $title;?>'),
-                canvasBackgroundColor<?php echo $title;?>,
+                canvasbackgroundcolor<?php echo $title;?>,
                 audio_file<?php echo $title;?>,
                 path_url<?php echo $title;?>, // OBJ textures path
                 mtl_file_name_widget<?php echo $title;?>,
@@ -478,12 +498,12 @@ class vrodos_3d_widget extends WP_Widget {
                 glb_file_name_widget<?php echo $title;?>,
                 textures_fbx_string_connected_widget<?php echo $title;?>,
                 false,
-                canvasBackgroundColor<?php echo $title;?> === 'transparent',
-                !enablePan<?php echo $title;?>, // lock
-                enableZoom<?php echo $title;?>, // enableZoom
-                cameraPositionX<?php echo $title;?>,
-                cameraPositionY<?php echo $title;?>,
-                cameraPositionZ<?php echo $title;?>);
+                canvasbackgroundcolor<?php echo $title;?> === 'transparent',
+                !enablepan<?php echo $title;?>, // lock
+                enablezoom<?php echo $title;?>, // enablezoom
+                camerapositionx<?php echo $title;?>,
+                camerapositiony<?php echo $title;?>,
+                camerapositionz<?php echo $title;?>);
         
         </script>
         
@@ -503,48 +523,51 @@ class vrodos_3d_widget extends WP_Widget {
         $instance = array();
         
         $instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
-        $instance['titleShow'] = ( ! empty( $new_instance['titleShow'] ) ) ?
-                            strip_tags( $new_instance['titleShow'] ) : 'false';
+        $instance['titleshow'] = ( ! empty( $new_instance['titleshow'] ) ) ?
+                            strip_tags( $new_instance['titleshow'] ) : 'false';
         
         $instance['asset_id'] = ( ! empty( $new_instance['asset_id'] ) ) ? strip_tags( $new_instance['asset_id'] ) : '';
         
-        $instance['cameraPositionX'] =  !empty($new_instance['cameraPositionX']) ?
-                                               strip_tags($new_instance['cameraPositionX']) : '0';
+        $instance['camerapositionx'] =  !empty($new_instance['camerapositionx']) ?
+                                               strip_tags($new_instance['camerapositionx']) : '0';
         
-        $instance['cameraPositionY'] = ( ! empty( $new_instance['cameraPositionY'] ) ) ?
-                                               strip_tags( $new_instance['cameraPositionY'] ) : '0';
+        $instance['camerapositiony'] = ( ! empty( $new_instance['camerapositiony'] ) ) ?
+                                               strip_tags( $new_instance['camerapositiony'] ) : '0';
         
-        $instance['cameraPositionZ'] = ( ! empty( $new_instance['cameraPositionZ'] ) ) ?
-                                               strip_tags( $new_instance['cameraPositionZ'] ) : '0';
+        $instance['camerapositionz'] = ( ! empty( $new_instance['camerapositionz'] ) ) ?
+                                               strip_tags( $new_instance['camerapositionz'] ) : '0';
     
-        $instance['canvasWidth'] = ( ! empty( $new_instance['canvasWidth'] ) ) ?
-            strip_tags( $new_instance['canvasWidth'] ) : '100%';
+        $instance['canvaswidth'] = ( ! empty( $new_instance['canvaswidth'] ) ) ?
+            strip_tags( $new_instance['canvaswidth'] ) : '100%';
     
-        $instance['canvasHeight'] = ( ! empty( $new_instance['canvasHeight'] ) ) ?
-            strip_tags( $new_instance['canvasHeight'] ) : '100%';
+        $instance['canvasheight'] = ( ! empty( $new_instance['canvasheight'] ) ) ?
+            strip_tags( $new_instance['canvasheight'] ) : '100%';
     
-        $instance['canvasBackgroundColor'] = ( ! empty( $new_instance['canvasBackgroundColor'] ) ) ?
-            strip_tags( $new_instance['canvasBackgroundColor'] ) : 'transparent';
+        $instance['canvasbackgroundcolor'] = ( ! empty( $new_instance['canvasbackgroundcolor'] ) ) ?
+            strip_tags( $new_instance['canvasbackgroundcolor'] ) : 'transparent';
     
-        $instance['enableZoom'] = ( ! empty( $new_instance['enableZoom'] ) ) ?
-            strip_tags( $new_instance['enableZoom'] ) : 'true';
+        $instance['enablezoom'] = ( ! empty( $new_instance['enablezoom'] ) ) ?
+            strip_tags( $new_instance['enablezoom'] ) : 'true';
     
-        $instance['enablePan'] = ( ! empty( $new_instance['enablePan'] ) ) ?
-            strip_tags( $new_instance['enablePan'] ) : 'false';
+        $instance['enablepan'] = ( ! empty( $new_instance['enablepan'] ) ) ?
+            strip_tags( $new_instance['enablepan'] ) : 'false';
     
-        $instance['canvasPosition'] = ( ! empty( $new_instance['canvasPosition'] ) ) ?
-            strip_tags( $new_instance['canvasPosition'] ) : 'relative';
+        $instance['canvasposition'] = ( ! empty( $new_instance['canvasposition'] ) ) ?
+            strip_tags( $new_instance['canvasposition'] ) : 'relative';
     
     
         
         
-        $varNames = ['canvasTop','canvasBottom','canvasLeft','canvasRight'];
+        $varNames = ['canvastop','canvasbottom','canvasleft','canvasright'];
 
         for ($i=0; $i<count($varNames); $i++){
             $instance[$varNames[$i]] = ( ! empty( $new_instance[$varNames[$i]] ) ) ?
                 strip_tags( $new_instance[$varNames[$i]] ) : '0';
         }
-        
+    
+    
+        $instance['customcss'] = ( ! empty( $new_instance['customcss'] ) ) ?
+            strip_tags( $new_instance['customcss'] ) : '';
         
         return $instance;
     }

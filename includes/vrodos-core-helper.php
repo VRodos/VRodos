@@ -9,6 +9,7 @@
 function wpunity_return_project_type($id) {
 
 	$all_project_category = get_the_terms( $id, 'wpunity_game_type' );
+
 	$project_category     = $all_project_category[0]->name;
 
 	// Default is Archaeology

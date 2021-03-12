@@ -39,6 +39,11 @@ class Asset_viewer_3d_kernel {
                 enableZoom = true,
                 cameraPosX = 0, cameraPosY = 0, cameraPosZ = -100) {
 
+
+        console.log("AAA");
+
+        console.log(pathUrl, fbxFilename + " t:" + textures_fbx_string_connected );
+
         this.statsSwitch = statsSwitch;
 
         this.canvasToBindTo= canvasToBindTo;

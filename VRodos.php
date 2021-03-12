@@ -598,9 +598,8 @@ function my_admin_styles()  {
 
 
 // ---------- Shortcodes -------------
-/**
- *   shortcode to show content inside page with [visitor] Some content for the people just browsing your site. [/visitor]
- */
+
+// shortcode to show content inside page with [visitor] Some content for the people just browsing your site. [/visitor]
 add_shortcode( 'visitor', 'vrodos_visitor_check_shortcode' );
 
 function vrodos_visitor_check_shortcode( $atts, $content = null ) {
@@ -608,6 +607,8 @@ function vrodos_visitor_check_shortcode( $atts, $content = null ) {
         return $content;
     return '';
 }
+
+
 
 // ------- lost passwords redirect ---------
 function vrodos_lost_password_redirect() {
