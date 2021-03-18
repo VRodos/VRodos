@@ -200,7 +200,7 @@ function wpunity_addAssets_chemistry_lab_unity($scene_id){
                 $asset_type = get_the_terms( $room_id, 'wpunity_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $room_obj = get_post_meta($room_id,'wpunity_asset3d_obj',true);
+                $room_obj = get_post_meta($room_id,'vrodos_asset3d_obj',true);
 
                 $room_yaml = wpunity_getAssetYAML_chemistry('room');
                 $room_fid = wpunity_create_fids($current_fid++);
@@ -229,7 +229,7 @@ function wpunity_addAssets_chemistry_lab_unity($scene_id){
                 $asset_type = get_the_terms( $gate_id, 'wpunity_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $gate_obj = get_post_meta($gate_id,'wpunity_asset3d_obj',true);
+                $gate_obj = get_post_meta($gate_id,'vrodos_asset3d_obj',true);
 
                 $gate_yaml = wpunity_getAssetYAML_chemistry('gate');
                 $gate_fid = wpunity_create_fids($current_fid++);

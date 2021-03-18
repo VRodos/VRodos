@@ -33,7 +33,7 @@ function wpunity_assets_scripts_and_styles() {
     //    if( isset($_GET['post']) ){
     //        wp_localize_script('vrodos_segmentation_request', 'phpvars',
     //            array('path' => get_post_meta($_GET['post'], 'wpunity_asset3d_pathData', true).'/',
-    //                'obj'  => get_post_meta($_GET['post'], 'wpunity_asset3d_obj', true)
+    //                'obj'  => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
     //            )
     //        );
     //
@@ -42,7 +42,7 @@ function wpunity_assets_scripts_and_styles() {
     // Some parameters to pass in the classification.js  ajax
     //	wp_localize_script('wpunity_classification_request', 'phpvars',
     //		array('path' => get_post_meta($_GET['post'], 'wpunity_asset3d_pathData', true).'/',
-    //		      'obj' => get_post_meta($_GET['post'], 'wpunity_asset3d_obj', true)
+    //		      'obj' => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
     //		)
     //	);
 }
@@ -51,11 +51,11 @@ function wpunity_assets_scripts_and_styles() {
 
 $table_of_asset_fields = array(
 
-array('MTL File', 'MTL File', 'wpunity_asset3d_mtl', 'text',  ''),
-array('Obj File', 'Obj File', 'wpunity_asset3d_obj', 'text',  ''),
-array('Fbx File', 'Fbx File', 'wpunity_prefix_fbx', 'text',  ''),
-array('PDB File', 'PDB File', 'wpunity_prefix_pdb', 'text',  ''),
-array('GLB File', 'GLB File', 'wpunity_prefix_glb', 'text',  ''),
+array('MTL File', 'MTL File', 'vrodos_asset3d_mtl', 'text',  ''),
+array('Obj File', 'Obj File', 'vrodos_asset3d_obj', 'text',  ''),
+array('Fbx File', 'Fbx File', 'vrodos_asset3d_fbx', 'text',  ''),
+array('PDB File', 'PDB File', 'vrodos_asset3d_pdb', 'text',  ''),
+array('GLB File', 'GLB File', 'vrodos_asset3d_glb', 'text',  ''),
 
 array('Audio File'                 , 'Audio File for the 3D model', 'wpunity_prefix_audio', 'text', ''),
 array('Diffusion Image'            , 'Diffusion Image'            , 'wpunity_prefix_diffimage', 'text', ''),
@@ -109,7 +109,7 @@ array('RussianPerceptionDescription', 'Description in Russian for people with pe
 array('fonts', 'fonts', 'wpunity_prefix_fonts', 'text', ''),
 array('back_3d_color', '3D viewer background color', 'wpunity_prefix_back_3d_color', 'text', "rgb(221, 185, 155)"),
 
-array('asset_trs', 'asset translation, rotation, scale for the asset editor', 'wpunity_prefix_asset_trs', 'text', '0,0,0,0,0,0,0,0,0')
+array('assettrs', 'asset translation, rotation, scale for the asset editor', 'wpunity_prefix_asset_trs', 'text', '0,0,0,0,0,0,0,0,0')
 
 );
 
@@ -183,7 +183,7 @@ function wpunity_assets_databox_show(){
         if ($categoryAssetSlug != 'Doors') {$doorhideshow = 'none';$mediahideshow = 'block';}
         
         foreach ($wpunity_databox1['fields'] as $field) {
-            if ($field['id']=='wpunity_asset3d_mtl'){
+            if ($field['id']=='vrodos_asset3d_mtl'){
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -215,7 +215,7 @@ function wpunity_assets_databox_show(){
                 
                 
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_obj') {
+            }elseif ($field['id'] == 'vrodos_asset3d_obj') {
                 
                 ?>
                 <tr>
@@ -252,7 +252,7 @@ function wpunity_assets_databox_show(){
                 </tr>
                 
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_fbx') {?>
+            }elseif ($field['id'] == 'vrodos_asset3d_fbx') {?>
 
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -289,7 +289,7 @@ function wpunity_assets_databox_show(){
 
                 
                 <?php
-                }elseif ($field['id'] == 'wpunity_asset3d_pdb') {?>
+                }elseif ($field['id'] == 'vrodos_asset3d_pdb') {?>
     
                     <tr>
                         <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -326,7 +326,7 @@ function wpunity_assets_databox_show(){
     
     
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_glb') {?>
+            }elseif ($field['id'] == 'vrodos_asset3d_glb') {?>
 
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>

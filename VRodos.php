@@ -301,16 +301,16 @@ add_action('save_post', 'wpunity_scenes_metas_save');
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
 
 // 14
-add_action('init', 'wpunity_assets_construct'); //wpunity_asset3d 'ASSETS 3D'
+add_action('init', 'wpunity_assets_construct'); // vrodos_asset3d 'ASSETS 3D'
 
 // 15
-add_action('init', 'wpunity_assets_taxcategory'); //wpunity_asset3d_cat 'ASSET TYPES'
+add_action('init', 'wpunity_assets_taxcategory'); // vrodos_asset3d_cat 'ASSET TYPES'
 
 // 16
-add_action('init', 'wpunity_assets_taxpgame'); //wpunity_asset3d_pgame 'ASSET GAMES'
+add_action('init', 'wpunity_assets_taxpgame'); // vrodos_asset3d_pgame 'ASSET GAMES'
 
 // 17
-add_action('init', 'wpunity_assets_taxcategory_ipr'); //wpunity_asset3d_ipr_cat 'ASSET IPR CATEG'
+add_action('init', 'wpunity_assets_taxcategory_ipr'); // vrodos_asset3d_ipr_cat 'ASSET IPR CATEG'
 
 // 35
 add_action('save_post','wpunity_create_pathdata_asset',10,3);
@@ -354,11 +354,11 @@ add_action('wp_enqueue_scripts', 'wpunity_assets_scripts_and_styles' );
 
 // Add the fields to the taxonomy, using our callback function
 // 59
-//add_action( 'wpunity_asset3d_cat_edit_form_fields', 'wpunity_assets_category_yamlFields', 10, 2 );
+//add_action( ' vrodos_asset3d_cat_edit_form_fields', 'wpunity_assets_category_yamlFields', 10, 2 );
 
 // Save the changes made on the taxonomy, using our callback function
 // 60
-//add_action( 'edited_wpunity_asset3d_cat', 'wpunity_assets_category_yamlFields_save', 10, 2 );
+//add_action( 'edited_ vrodos_asset3d_cat', 'wpunity_assets_category_yamlFields_save', 10, 2 );
 
 // 61
 add_filter( 'manage_wpunity_asset3d_posts_columns', 'wpunity_set_custom_wpunity_asset3d_columns' );

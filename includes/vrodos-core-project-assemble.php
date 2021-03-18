@@ -53,7 +53,7 @@ function wpunity_compile_make_molecules_prefabs($gameID, $gameSlug){
     foreach ($molecules as $molecule) {
         $molecule_post_id = $molecule['moleculeID'];
         $molecule_post_name = $molecule['moleculeName'];
-        $pdb_id = get_post_meta($molecule_post_id,'wpunity_asset3d_pdb',true);
+        $pdb_id = get_post_meta($molecule_post_id,'vrodos_asset3d_pdb',true);
         $pdb_path = wp_get_attachment_url( $pdb_id );
         $pdb_str = file_get_contents($pdb_path);
 
@@ -424,7 +424,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
 
     if ($includeObj) {
         //OBJ FILE
-        $objID = get_post_meta($asset_id, 'wpunity_asset3d_obj', true);
+        $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true);
         if (is_numeric($objID)) {
             $asset_type = get_the_terms($asset_id, 'wpunity_asset3d_cat');
             $attachment_post = get_post($objID);
@@ -455,7 +455,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
         }
     
         //MTL FILE
-        $mtlID = get_post_meta($asset_id, 'wpunity_asset3d_mtl', true);
+        $mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true);
         if (is_numeric($mtlID)) {
             $attachment_post = get_post($mtlID);
             $attachment_file = $attachment_post->guid;

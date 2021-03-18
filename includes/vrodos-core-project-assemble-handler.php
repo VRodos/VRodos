@@ -6,7 +6,7 @@
 function wpunity_convert_pdbYAML(){
 
     // 1. from molecule_asset_id get the pdb file
-    //$pdb_text = json_encode(file_get_contents(wp_get_attachment_url(get_post_meta(4773,"wpunity_asset3d_pdb")[0])));
+    //$pdb_text = json_encode(file_get_contents(wp_get_attachment_url(get_post_meta(4773,"vrodos_asset3d_pdb")[0])));
    
     // 2. Parse pdb as json. Call javascript parser
 
@@ -458,7 +458,7 @@ function wpunity_delete_asset3d_frontend_callback(){
         $containerFolder = wp_upload_dir()['basedir'].'/Models/';
         
         // ------- MTL --------
-        $mtlID = get_post_meta($asset_id, 'wpunity_asset3d_mtl', true); // True : single value
+        $mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true); // True : single value
     
         // Delete the file from the system
         wp_delete_file($containerFolder.basename(get_attached_file($mtlID)));
@@ -482,7 +482,7 @@ function wpunity_delete_asset3d_frontend_callback(){
         foreach ($attachments_array as $k){
             $child_post_id = $k->ID;
     
-            //$fbxID = get_post_meta($asset_id, 'wpunity_asset3d_fbx', true); // True : single value
+            //$fbxID = get_post_meta($asset_id, 'vrodos_asset3d_fbx', true); // True : single value
     
             // Delete the file from the system
             wp_delete_file($containerFolder.basename(get_attached_file($child_post_id)));
@@ -493,7 +493,7 @@ function wpunity_delete_asset3d_frontend_callback(){
         
 
         // ---------- OBJ -------
-        $objID = get_post_meta($asset_id, 'wpunity_asset3d_obj', true);
+        $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true);
     
         // Delete the file from the system
         wp_delete_file($containerFolder.basename(get_attached_file($objID)));
@@ -536,7 +536,7 @@ function wpunity_fetch_asset3d_frontend_callback(){
     
     $asset_id = $_POST['asset_id'];
     
-    $fbxID = get_post_meta($asset_id, 'wpunity_asset3d_fbx');
+    $fbxID = get_post_meta($asset_id, 'vrodos_asset3d_fbx');
     $fbxURL= get_the_guid($fbxID[0]);
     
     $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio');
@@ -568,9 +568,9 @@ function wpunity_delete_asset3d_noscenes_frontend($asset_id){
     //No need to delete assets from scenes, cause scene will be deleted at the same event
     
     //1. Delete all Attachments (mtl/obj/jpg ...)
-    $mtlID = get_post_meta($asset_id,'wpunity_asset3d_mtl', true);
+    $mtlID = get_post_meta($asset_id,'vrodos_asset3d_mtl', true);
     wp_delete_attachment( $mtlID,true );
-    $objID = get_post_meta($asset_id,'wpunity_asset3d_obj', true);
+    $objID = get_post_meta($asset_id,'vrodos_asset3d_obj', true);
     wp_delete_attachment( $objID,true );
     $difID = get_post_meta($asset_id,'wpunity_asset3d_diffimage', true);
     wp_delete_attachment( $difID,true );

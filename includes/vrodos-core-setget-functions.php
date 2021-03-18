@@ -281,10 +281,10 @@ function get_assets($games_slugs){
             $asset_pgame = wp_get_post_terms($asset_id, 'wpunity_asset3d_pgame');
             
             // ALL DATA WE NEED
-            $objID = get_post_meta($asset_id, 'wpunity_asset3d_obj', true); // OBJ ID
+            $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true); // OBJ ID
             $objPath = $objID ? wp_get_attachment_url( $objID ) : '';                   // OBJ PATH
 
-            $mtlID = get_post_meta($asset_id, 'wpunity_asset3d_mtl', true); // MTL ID
+            $mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true); // MTL ID
             $mtlPath = $mtlID ? wp_get_attachment_url( $mtlID ) : '';                   // MTL PATH
 
             $difImageIDs = get_post_meta($asset_id, 'wpunity_asset3d_diffimage', false);  // Diffusion Image ID
@@ -455,16 +455,16 @@ function wpunity_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 			$isJoker = get_post_meta($asset_id, 'wpunity_asset3d_isJoker', true);    //strpos($asset_pgame[0]->slug, 'joker') !== false;
 
 			// ALL DATA WE NEED
-			$objID = get_post_meta($asset_id, 'wpunity_asset3d_obj', true); // OBJ ID
+			$objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true); // OBJ ID
 			$objPath = $objID ? wp_get_attachment_url( $objID ) : '';                   // OBJ PATH
 			
-			$fbxID = get_post_meta($asset_id, 'wpunity_asset3d_fbx', true); // FBX ID
+			$fbxID = get_post_meta($asset_id, 'vrodos_asset3d_fbx', true); // FBX ID
 			$fbxPath = $fbxID ? wp_get_attachment_url( $fbxID ) : '';                   // FBX PATH
 			
 			$audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true); // audio ID
 			$audioPath = $audioID ? wp_get_attachment_url( $audioID ) : '';      // audio PATH
 
-			$mtlID = get_post_meta($asset_id, 'wpunity_asset3d_mtl', true); // MTL ID
+			$mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true); // MTL ID
 			$mtlPath = $mtlID ? wp_get_attachment_url( $mtlID ) : '';                   // MTL PATH
 
 			$difImageIDs = get_post_meta($asset_id, 'wpunity_asset3d_diffimage', false);  // Diffusion Image ID
@@ -700,24 +700,24 @@ function get_3D_model_files($assetpostMeta, $asset_id){
 			$textures_fbx_string_connected = $path_url = null;
 	
 	//OBJ
-	if (array_key_exists('wpunity_asset3d_obj', $assetpostMeta)) {
+	if (array_key_exists('vrodos_asset3d_obj', $assetpostMeta)) {
 		
-		$mtlpost = get_post($assetpostMeta['wpunity_asset3d_mtl'][0]);
+		$mtlpost = get_post($assetpostMeta['vrodos_asset3d_mtl'][0]);
 		
 		$mtl_file_name = basename($mtlpost->guid);
-		$obj_file_name = basename(get_post($assetpostMeta['wpunity_asset3d_obj'][0])->guid);
+		$obj_file_name = basename(get_post($assetpostMeta['vrodos_asset3d_obj'][0])->guid);
 		$path_url = pathinfo($mtlpost->guid)['dirname'];
 		
 		// PDB
-	} else if (array_key_exists('wpunity_asset3d_pdb', $assetpostMeta)){
-		$pdb_file_name = get_post($assetpostMeta['wpunity_asset3d_pdb'][0])->guid;
+	} else if (array_key_exists('vrodos_asset3d_pdb', $assetpostMeta)){
+		$pdb_file_name = get_post($assetpostMeta['vrodos_asset3d_pdb'][0])->guid;
 		
 		// GLB
-	} else if (array_key_exists('wpunity_asset3d_glb', $assetpostMeta)){
-		$glb_file_name = get_post($assetpostMeta['wpunity_asset3d_glb'][0])->guid;
+	} else if (array_key_exists('vrodos_asset3d_glb', $assetpostMeta)){
+		$glb_file_name = get_post($assetpostMeta['vrodos_asset3d_glb'][0])->guid;
 		
 		// FBX
-	} else if (array_key_exists('wpunity_asset3d_fbx', $assetpostMeta)) {
+	} else if (array_key_exists('vrodos_asset3d_fbx', $assetpostMeta)) {
 		
 		// Get texture attachments of post
 		$args = array(
@@ -747,7 +747,7 @@ function get_3D_model_files($assetpostMeta, $asset_id){
 		// remove the last separator
 		$textures_fbx_string_connected = trim($textures_fbx_string_connected, "|");
 		
-		$fbxpost = get_post($assetpostMeta['wpunity_asset3d_fbx'][0]);
+		$fbxpost = get_post($assetpostMeta['vrodos_asset3d_fbx'][0]);
 		$fbx_file_name = basename($fbxpost->guid);
 		$path_url = pathinfo($fbxpost->guid)['dirname'];
 	}

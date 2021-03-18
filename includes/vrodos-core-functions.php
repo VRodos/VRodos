@@ -1260,8 +1260,8 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 	}
 
 	// Set value of attachment IDs at custom fields
-	update_post_meta($asset_newID, 'wpunity_asset3d_mtl', $mtlFile_id);
-	update_post_meta($asset_newID, 'wpunity_asset3d_obj', $objFile_id);
+	update_post_meta($asset_newID, 'vrodos_asset3d_mtl', $mtlFile_id);
+	update_post_meta($asset_newID, 'vrodos_asset3d_obj', $objFile_id);
 
 }
 
@@ -1286,7 +1286,7 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 //
 //	// Set value of attachment IDs at custom fields
 //	update_post_meta($asset_newID, 'wpunity_asset3d_mtl', $mtlFile_id);
-//	update_post_meta($asset_newID, 'wpunity_asset3d_obj', $objFile_id);
+//	update_post_meta($asset_newID, 'vrodos_asset3d_obj', $objFile_id);
 //	update_post_meta( $asset_newID, 'wpunity_asset3d_diffimage', $textureFile_id );
 //}
 

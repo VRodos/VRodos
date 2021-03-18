@@ -344,7 +344,7 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $terrain_id = $value['assetid'];
                 $asset_type = get_the_terms( $terrain_id, 'wpunity_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
-                $terrain_obj = get_post_meta($terrain_id,'wpunity_asset3d_obj',true);
+                $terrain_obj = get_post_meta($terrain_id,'vrodos_asset3d_obj',true);
 
                 $terrain_yaml = wpunity_getAssetYAML_energy('terrain');
                 $fid_of_terrain = wpunity_create_fids($current_fid++);
@@ -380,7 +380,7 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $deco_id = $value['assetid'];
                 $asset_type = get_the_terms( $deco_id, 'wpunity_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
-                $deco_obj = get_post_meta($deco_id,'wpunity_asset3d_obj',true);
+                $deco_obj = get_post_meta($deco_id,'vrodos_asset3d_obj',true);
 
                 $deco_yaml = wpunity_getAssetYAML_energy('decor');
                 $fid_decorator = wpunity_create_fids($current_fid++);
@@ -407,7 +407,7 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $marker_id = $value['assetid'];
                 $asset_type = get_the_terms( $marker_id, 'wpunity_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
-                $marker_obj = get_post_meta($marker_id,'wpunity_asset3d_obj',true);
+                $marker_obj = get_post_meta($marker_id,'vrodos_asset3d_obj',true);
 
                 $marker_yaml = wpunity_getAssetYAML_energy('marker');
                 $fid_marker = wpunity_create_fids($current_fid++);
@@ -441,7 +441,7 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $asset_type = get_the_terms( $consumer_id, 'wpunity_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $consumer_obj = get_post_meta($consumer_id,'wpunity_asset3d_obj',true);
+                $consumer_obj = get_post_meta($consumer_id,'vrodos_asset3d_obj',true);
                 $consumer_yaml = get_term_meta($asset_type_ID,'wpunity_yamlmeta_assetcat_pat',true);
                 $energy_consumption = get_post_meta($consumer_id,'wpunity_energyConsumption',true);
 
@@ -478,7 +478,7 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $asset_type = get_the_terms( $producer_id, 'wpunity_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $producer_obj = get_post_meta($producer_id,'wpunity_asset3d_obj',true);
+                $producer_obj = get_post_meta($producer_id,'vrodos_asset3d_obj',true);
                 $prod_optCosts = get_post_meta($producer_id,'wpunity_producerOptCosts',true);
                 $prod_optGen = get_post_meta($producer_id,'wpunity_producerOptGen',true);
                 $prod_powerVal = get_post_meta($producer_id,'wpunity_producerPowerProductionVal',true);
