@@ -148,6 +148,8 @@ class Asset_viewer_3d_kernel {
         this.controls.enablePan = !lockTranslation;
         this.controls.enableZoom = enableZoom;
 
+        this.controls.addEventListener('change', this.updateTRSfields);
+
         // For the animation
         this.clock = new THREE.Clock();
         this.mixers = [];
@@ -184,6 +186,21 @@ class Asset_viewer_3d_kernel {
 
     }
 
+
+    updateTRSfields(){
+
+        let assettrsDOM = document.getElementById('assettrs');
+
+        if(assettrsDOM){
+            assettrsDOM.value = Math.round(asset_viewer_3d_kernel.controls.object.position.x*1000)/1000 +','+
+                                Math.round(asset_viewer_3d_kernel.controls.object.position.y*1000)/1000 +','+
+                                Math.round(asset_viewer_3d_kernel.controls.object.position.z*1000)/1000;
+        }
+
+
+
+
+    }
 
     raylineShow(raycasterPick){
 
@@ -224,6 +241,7 @@ class Asset_viewer_3d_kernel {
     addControlEventListeners(){
 
         this.controls.addEventListener('change', this.boundRender);
+
 
         // this.controls.dispatchEvent( { type: 'change' } );
         window.addEventListener('resize', this.boundRender);

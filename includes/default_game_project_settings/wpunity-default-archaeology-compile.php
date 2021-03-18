@@ -172,7 +172,7 @@ function wpunity_addAssets_wonderaround_unity($scene_id){
                 $asset_type = get_the_terms( $poi_img_id, 'wpunity_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
                 $poi_img_obj = get_post_meta($poi_img_id,'vrodos_asset3d_obj',true);
-                $poi_img_sprite = get_post_meta($poi_img_id,'wpunity_asset3d_screenimage',true);
+                $poi_img_sprite = get_post_meta($poi_img_id,'vrodos_asset3d_screenimage',true);
                 $poi_img_yaml = wpunity_getAssetYAML_archaeology('pois_imagetext');
                 $poi_it_fid = wpunity_create_fids($current_fid++);
                 $poi_it_pos_x = - $value['position'][0]; // x is in the opposite site in unity
@@ -221,7 +221,7 @@ function wpunity_addAssets_wonderaround_unity($scene_id){
                 $asset_type_ID = $asset_type[0]->term_id;
                 $poi_vid_obj = get_post_meta($poi_vid_id,'vrodos_asset3d_obj',true);
 
-                $poi_vid_video = get_post_meta($poi_vid_id,'wpunity_asset3d_video',true);
+                $poi_vid_video = get_post_meta($poi_vid_id,'vrodos_asset3d_video',true);
                 $attachment_video_post = get_post($poi_vid_video);
                 $attachment_file = $attachment_video_post->guid;
                 $attachment_tempname = str_replace('\\', '/', $attachment_file);

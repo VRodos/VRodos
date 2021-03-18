@@ -466,7 +466,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
         }
     
         //Diffusion Image FILE
-        $difimgID = get_post_meta($asset_id, 'wpunity_asset3d_diffimage', false);
+        $difimgID = get_post_meta($asset_id, 'vrodos_asset3d_diffimage', false);
         foreach ($difimgID as $difimg_ID) {
             if (is_numeric($difimg_ID)) {
                 $attachment_post = get_post($difimg_ID);
@@ -488,7 +488,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
     
     
     //Video FILE
-    $videoID = get_post_meta($asset_id, 'wpunity_asset3d_video', true); // Video ID
+    $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true); // Video ID
     if(is_numeric($videoID) && $targetPlatform !== "WebGL"){
         $attachment_post = get_post($videoID);
         $attachment_file = $attachment_post->guid;

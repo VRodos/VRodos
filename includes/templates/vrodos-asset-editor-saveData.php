@@ -43,7 +43,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
     if ($_POST['textureFileInput']!=null) {
     
         // DELETE EXISTING TEXTURE POST, FILE, and its META:
-        $diff_images_ids = get_post_meta($asset_newID,' vrodos_asset3d_diffimage');
+        $diff_images_ids = get_post_meta($asset_newID,'vrodos_asset3d_diffimage');
     
         if (count($diff_images_ids) > 0) {
       
@@ -147,7 +147,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
             );
             
             // 2. Add id of mtl as post meta on asset
-            update_post_meta($asset_newID, ' vrodos_asset3d_mtl', $mtlFile_id);
+            update_post_meta($asset_newID, 'vrodos_asset3d_mtl', $mtlFile_id);
    
             // 3. OBJ: Get filename of mtl (remove path and txt extension) on the server
             $mtl_filename = basename(get_attached_file($mtlFile_id),'txt'). 'mtl';
@@ -170,7 +170,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
                                                 );
 
             // 6. Add id of obj as post meta on asset
-            update_post_meta($asset_newID, ' vrodos_asset3d_obj', $objFile_id);
+            update_post_meta($asset_newID, 'vrodos_asset3d_obj', $objFile_id);
         }
     }
     
@@ -204,7 +204,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
                 $_FILES, $index_file_fbx);
         
             // 2. Set value of attachment IDs at custom fields
-            update_post_meta($asset_newID, ' vrodos_asset3d_fbx', $fbxFile_id);
+            update_post_meta($asset_newID, 'vrodos_asset3d_fbx', $fbxFile_id);
         }
         
     } else {
@@ -214,7 +214,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
             null, null);
     
         // 2. Set value of attachment IDs at custom fields
-        update_post_meta($asset_newID, ' vrodos_asset3d_fbx', $fbxFile_id);
+        update_post_meta($asset_newID, 'vrodos_asset3d_fbx', $fbxFile_id);
         
     }
     
@@ -222,7 +222,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
     if ($_POST['pdbFileInput']!=null){
         if (strlen($_POST['pdbFileInput'])>0) {
             $pdbFile_id = wpunity_upload_AssetText($_POST['pdbFileInput'], 'pdb' . $assetTitleForm, $asset_newID, null, null);
-            update_post_meta($asset_newID, ' vrodos_asset3d_pdb', $pdbFile_id);
+            update_post_meta($asset_newID, 'vrodos_asset3d_pdb', $pdbFile_id);
         }
     }
     
@@ -232,7 +232,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
         if (strlen($_POST['glbFileInput'])>0) {
             $glbFile_id = wpunity_upload_AssetText(null, 'glb' . $assetTitleForm, $asset_newID,
                 $_FILES, $index_file_glb); // $_POST['glbFileInput']
-            update_post_meta($asset_newID, ' vrodos_asset3d_glb', $glbFile_id);
+            update_post_meta($asset_newID, 'vrodos_asset3d_glb', $glbFile_id);
         }
     }
 }
@@ -243,8 +243,8 @@ function wpunity_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $a
                                        $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
     
     $asset_taxonomies = array(
-        ' vrodos_asset3d_pgame' => array($assetPGameID,),
-        ' vrodos_asset3d_cat' => array($assetCatID,),
+        'wpunity_asset3d_pgame' => array($assetPGameID,),
+        'wpunity_asset3d_cat' => array($assetCatID,),
         'wpunity_asset3d_ipr_cat' => array($assetCatIPRID,)
     );
     
@@ -267,7 +267,7 @@ function wpunity_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $a
 
 // Update asset
 function wpunity_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
-                                       $asset_language_pack, $assetFonts, $assetback3dcolor){
+                                       $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
     $asset_taxonomies = array(
         'wpunity_asset3d_pgame' => array($assetPGameID,),
         'wpunity_asset3d_cat' => array($assetCatID,),
@@ -282,7 +282,7 @@ function wpunity_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $a
 
     wp_update_post($asset_new_info);
     
-    wpunity_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor);
+    wpunity_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     
     return 1;
 }
@@ -300,7 +300,7 @@ function wpunity_create_asset_addImages_frontend($asset_newID){
         } else { // Images 1,2,3,4
             if ($asset_imageForm[$i]['error'] != 4) { // No error
                 $attachment_id_image = wpunity_upload_img_vid_aud($asset_imageForm[$i], $asset_newID);
-                update_post_meta($asset_newID, 'wpunity_asset3d_image'.$i, $attachment_id_image);
+                update_post_meta($asset_newID, 'vrodos_asset3d_image'.$i, $attachment_id_image);
             }
         }
     }
@@ -329,7 +329,7 @@ function wpunity_create_asset_addVideo_frontend($asset_newID){
         return;
     
     $attachment_video_id = wpunity_upload_img_vid_aud( $asset_videoForm, $asset_newID);
-    update_post_meta( $asset_newID, 'wpunity_asset3d_video', $attachment_video_id );
+    update_post_meta( $asset_newID, 'vrodos_asset3d_video', $attachment_video_id );
 }
 
 
@@ -457,63 +457,44 @@ function wpunity_copy_3Dfiles($asset_newID, $asset_sourceID){
     if($assetpostMeta['vrodos_asset3d_obj'][0])
         update_post_meta($asset_newID, 'vrodos_asset3d_obj', $assetpostMeta['vrodos_asset3d_obj'][0]);
     
-    if($assetpostMeta['wpunity_asset3d_screenimage'][0])
-        update_post_meta($asset_newID, 'wpunity_asset3d_screenimage', $assetpostMeta['wpunity_asset3d_screenimage'][0]);
+    if($assetpostMeta['vrodos_asset3d_screenimage'][0])
+        update_post_meta($asset_newID, 'vrodos_asset3d_screenimage', $assetpostMeta['vrodos_asset3d_screenimage'][0]);
     
-    if (count($assetpostMeta['wpunity_asset3d_diffimage']) > 0) {
-        delete_post_meta($asset_newID, 'wpunity_asset3d_diffimage');
-        for ($m = 0; $m < count($assetpostMeta['wpunity_asset3d_diffimage']); $m++)
-            add_post_meta($asset_newID, 'wpunity_asset3d_diffimage', $assetpostMeta['wpunity_asset3d_diffimage'][$m]);
+    if (count($assetpostMeta['vrodos_asset3d_diffimage']) > 0) {
+        delete_post_meta($asset_newID, 'vrodos_asset3d_diffimage');
+        for ($m = 0; $m < count($assetpostMeta['vrodos_asset3d_diffimage']); $m++)
+            add_post_meta($asset_newID, 'vrodos_asset3d_diffimage', $assetpostMeta['vrodos_asset3d_diffimage'][$m]);
     }
 }
 
 
 function wpunity_update_asset_texts($asset_id, $alp, $assetFonts, $assetback3dcolor, $assettrs){
 
-    update_post_meta($asset_id, 'wpunity_asset3d_title_greek', $alp['assetTitleFormGreek']);
-    update_post_meta($asset_id, 'wpunity_asset3d_title_spanish', $alp['assetTitleFormSpanish']);
-    update_post_meta($asset_id, 'wpunity_asset3d_title_french', $alp['assetTitleFormFrench']);
-    update_post_meta($asset_id, 'wpunity_asset3d_title_german', $alp['assetTitleFormGerman']);
-    update_post_meta($asset_id, 'wpunity_asset3d_title_russian', $alp['assetTitleFormRussian']);
+    update_post_meta($asset_id, 'vrodos_asset3d_fonts', $assetFonts);
+    update_post_meta($asset_id, 'vrodos_asset3d_back3dcolor', $assetback3dcolor);
+    update_post_meta($asset_id, 'vrodos_asset3d_assettrs', $assettrs);
     
-    update_post_meta($asset_id, 'wpunity_asset3d_description_greek', $alp['assetDescFormGreek']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_spanish', $alp['assetDescFormSpanish']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_french', $alp['assetDescFormFrench']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_german', $alp['assetDescFormGerman']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_russian', $alp['assetDescFormRussian']);
+    update_post_meta($asset_id, 'vrodos_asset3d_description_kids', $alp['assetDescFormKids']);
+    update_post_meta($asset_id, 'vrodos_asset3d_description_experts', $alp['assetDescFormExperts']);
+    update_post_meta($asset_id, 'vrodos_asset3d_description_perception', $alp['assetDescFormPerception']);
     
-    update_post_meta($asset_id, 'wpunity_asset3d_description_greek', $alp['assetDescFormGreek']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_spanish', $alp['assetDescFormSpanish']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_french', $alp['assetDescFormFrench']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_german', $alp['assetDescFormGerman']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_russian', $alp['assetDescFormRussian']);
-    
-    update_post_meta($asset_id, 'wpunity_asset3d_description_kids', $alp['assetDescFormKids']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_greek_kids', $alp['assetDescFormGreekKids']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_spanish_kids', $alp['assetDescFormSpanishKids']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_french_kids', $alp['assetDescFormFrenchKids']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_german_kids', $alp['assetDescFormGermanKids']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_russian_kids', $alp['assetDescFormRussianKids']);
-    
-    update_post_meta($asset_id, 'wpunity_asset3d_description_experts', $alp['assetDescFormExperts']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_greek_experts', $alp['assetDescFormGreekExperts']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_spanish_experts', $alp['assetDescFormSpanishExperts']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_french_experts', $alp['assetDescFormFrenchExperts']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_german_experts', $alp['assetDescFormGermanExperts']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_russian_experts', $alp['assetDescFormRussianExperts']);
-    
-    update_post_meta($asset_id, 'wpunity_asset3d_description_perception', $alp['assetDescFormPerception']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_greek_perception', $alp['assetDescFormGreekPerception']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_spanish_perception', $alp['assetDescFormSpanishPerception']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_french_perception', $alp['assetDescFormFrenchPerception']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_german_perception', $alp['assetDescFormGermanPerception']);
-    update_post_meta($asset_id, 'wpunity_asset3d_description_russian_perception', $alp['assetDescFormRussianPerception']);
-    
-    update_post_meta($asset_id, 'wpunity_prefix_asset3d_fonts', $assetFonts);
-    update_post_meta($asset_id, 'wpunity_prefix_asset3d_back_3d_color', $assetback3dcolor);
-    
-    update_post_meta($asset_id, 'wpunity_prefix_assettrs', $assettrs);
-    
-    
+    $languages = ['Greek', 'Spanish', 'French', 'German', 'Russian'];
+
+    for ($i = 0; $i < count($languages); $i++) {
+        update_post_meta($asset_id, 'vrodos_asset3d_title_'.strtolower($languages[$i]),
+                                                                                 $alp['assetTitleForm'.$languages[$i]]);
+        
+        update_post_meta($asset_id, 'vrodos_asset3d_description_'.strtolower($languages[$i]),
+                                                                                  $alp['assetDescForm'.$languages[$i]]);
+        
+        update_post_meta($asset_id, 'vrodos_asset3d_description_'.strtolower($languages[$i]).'_kids',
+                                                                           $alp['assetDescForm'.$languages[$i].'Kids']);
+        
+        update_post_meta($asset_id, 'vrodos_asset3d_description_'.strtolower($languages[$i]).'_experts',
+                                                                        $alp['assetDescForm'.$languages[$i].'Experts']);
+        
+        update_post_meta($asset_id, 'vrodos_asset3d_description_'.strtolower($languages[$i]).'_perception',
+                                                                     $alp['assetDescForm'.$languages[$i].'Perception']);
+    }
 }
 ?>

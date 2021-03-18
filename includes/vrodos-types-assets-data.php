@@ -57,61 +57,59 @@ array('Fbx File', 'Fbx File', 'vrodos_asset3d_fbx', 'text',  ''),
 array('PDB File', 'PDB File', 'vrodos_asset3d_pdb', 'text',  ''),
 array('GLB File', 'GLB File', 'vrodos_asset3d_glb', 'text',  ''),
 
-array('Audio File'                 , 'Audio File for the 3D model', 'wpunity_prefix_audio', 'text', ''),
-array('Diffusion Image'            , 'Diffusion Image'            , 'wpunity_prefix_diffimage', 'text', ''),
-array('Screenshot Image'           ,'Screenshot Image'            ,  'wpunity_prefix_screenimage','text', ''),
-array('Next Scene (Only for Doors)', 'Next Scene'                 , 'wpunity_prefix_next_scene','text', ''),
-array('Video'                      , 'Video'                      , 'wpunity_prefix_video', 'text', ''),
-array('isreward'                   , 'isreward'                   , 'wpunity_prefix_isreward', 'text', '0'),
+array('Audio File'                 , 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'text', ''),
 
-array('Image 1', 'Image 1', 'wpunity_prefix_image1', 'text', ''),
-array('Image 2', 'Image 2', 'wpunity_prefix_image2', 'text', ''),
-array('Image 3', 'Image 3', 'wpunity_prefix_image3', 'text', ''),
-array('Image 4', 'Image 4', 'wpunity_prefix_image4', 'text', ''),
+array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asset3d_diffimage', 'text', ''),
+array('Screenshot Image'           ,'Screenshot Image'            , 'vrodos_asset3d_screenimage','text', ''),
+array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_next_scene','text', ''),
+array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'text', ''),
+array('isreward'                   , 'isreward'                   , 'wpunity_asset3d_isreward', 'text', '0'),
 
-array('isCloned', 'isCloned', 'wpunity_prefix_isCloned', 'text', 'false'),
-array('isJoker', 'isJoker', 'wpunity_prefix_isJoker', 'text', 'false'),
+array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'text', ''),
+array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'text', ''),
+array('Image 3', 'Image 3', 'vrodos_asset3d_image3', 'text', ''),
+array('Image 4', 'Image 4', 'vrodos_asset3d_image4', 'text', ''),
 
-array('KidsDescription', 'Description in English for kids', 'wpunity_prefix_description_kids', 'text', ''),
-array('ExpertsDescription', 'Description in English for experts', 'wpunity_prefix_description_experts','text', ''),
-array('PerceptionDescription', 'Description in English for people with perception disabilities', 'wpunity_prefix_description_perception', 'text', ''),
+array('isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'text', 'false'),
+array('isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'text', 'false'),
 
-array('GreekTitle', 'Title in Greek', 'wpunity_prefix_title_greek', 'text', ''),
-array('Greek', 'Description in Greek', 'wpunity_prefix_description_greek', 'text', ''),
-array('GreekKidsDescription', 'Description in Greek for kids', 'wpunity_prefix_description_greek_kids', 'text', ''),
-array('GreekExpertsDescription', 'Description in Greek for experts', 'wpunity_prefix_description_greek_experts', 'text', ''),
-array('GreekPerceptionDescription', 'Description in Greek for people with perception disabilities', 'wpunity_prefix_description_greek_perception', 'text', ''),
+array('fonts', 'fonts', 'vrodos_asset3d_fonts', 'text', ''),
+array('back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'text', "rgb(221, 185, 155)"),
 
-array('SpanishTitle', 'Title in Spanish', 'wpunity_prefix_title_spanish', 'text', ''),
-array('Spanish', 'Description in Spanish', 'wpunity_prefix_description_spanish', 'text', ''),
-array('SpanishKidsDescription', 'Description in Spanish for kids', 'wpunity_prefix_description_spanish_kids','text', ''),
-array('SpanishExpertsDescription', 'Description in Spanish for experts', 'wpunity_prefix_description_spanish_experts', 'text', ''),
-array('SpanishPerceptionDescription', 'Description in Spanish for people with perception disabilities', 'wpunity_prefix_description_spanish_perception', 'text', ''),
+array('Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'text', '0,0,0,0,0,0,0,0,0'),
 
-array('FrenchTitle', 'Title in French', 'wpunity_prefix_title_french', 'text', ''),
-array('French', 'Description in French', 'wpunity_prefix_description_french', 'text', ''),
-array('FrenchKidsDescription', 'Description in French for kids', 'wpunity_prefix_description_french_kids','text', ''),
-array('FrenchExpertsDescription', 'Description in French for experts', 'wpunity_prefix_description_french_experts', 'text', ''),
-array('FrenchPerceptionDescription', 'Description in French for people with perception disabilities', 'wpunity_prefix_description_french_disabilities', 'text',''),
-
-array('GermanTitle', 'Title in German', 'wpunity_prefix_title_german', 'text', ''),
-array('German', 'Description in German', 'wpunity_prefix_description_german', 'text', ''),
-array('GermanKidsDescription', 'Description in German for kids', 'wpunity_prefix_description_german_kids','text', ''),
-array('GermanExpertsDescription', 'Description in German for experts','wpunity_prefix_description_german_experts', 'text', ''),
-array('GermanPerceptionDescription', 'Description in German for people with perception disabilities','wpunity_prefix_description_german_perception', 'text', ''),
-
-array('RussianTitle', 'Title in Russian', 'wpunity_prefix_title_russian', 'text',''),
-array('Russian', 'Description in Russian', 'wpunity_prefix_description_russian', 'text', ''),
-array('RussianKidsDescription', 'Description in Russian for kids', 'wpunity_prefix_description_russian_kids', 'text', ''),
-array('RussianExpertsDescription', 'Description in Russian for experts','wpunity_prefix_description_russian_experts', 'text', ''),
-array('RussianPerceptionDescription', 'Description in Russian for people with perception disabilities','wpunity_prefix_description_russian_perception', 'text', ''),
-
-array('fonts', 'fonts', 'wpunity_prefix_fonts', 'text', ''),
-array('back_3d_color', '3D viewer background color', 'wpunity_prefix_back_3d_color', 'text', "rgb(221, 185, 155)"),
-
-array('assettrs', 'asset translation, rotation, scale for the asset editor', 'wpunity_prefix_asset_trs', 'text', '0,0,0,0,0,0,0,0,0')
+array('KidsDescription', 'Description in English for kids', 'vrodos_asset3d_description_kids', 'text', ''),
+array('ExpertsDescription', 'Description in English for experts', 'vrodos_asset3d_description_experts','text', ''),
+array('PerceptionDescription', 'Description in English for people with perception disabilities', 'vrodos_asset3d_description_perception', 'text', '')
 
 );
+
+// Add the fields that are related to language procedurally
+$languages = ['Greek', 'Spanish', 'French', 'German', 'Russian'];
+
+for ($i = 0; $i < count($languages); $i++){
+
+    // Title per language
+    $table_of_asset_fields[] = array( $languages[$i].'Title', 'Title in '.$languages[$i],
+                                            'vrodos_asset3d_title_'.strtolower($languages[$i]), 'text', '');
+
+    // Description per language
+    $table_of_asset_fields[] = array($languages[$i], 'Description in '.$languages[$i],
+                                        'vrodos_asset3d_description_'.strtolower($languages[$i]), 'text', '');
+
+    // Description for kids per language
+    $table_of_asset_fields[] = array('GreekKidsDescription', 'Description in '.$languages[$i].' for kids',
+                                    'vrodos_asset3d_description_'.strtolower($languages[$i]).'_kids', 'text', '');
+    
+    // Description for experts per language
+    $table_of_asset_fields[] = array($languages[$i].'ExpertsDescription', 'Description in '.$languages[$i].' for experts',
+                                     'vrodos_asset3d_description_'.strtolower($languages[$i]).'_experts', 'text', '');
+    
+    // Description for disabilities per language
+    $table_of_asset_fields[] = array($languages[$i].'PerceptionDescription',
+                                     'Description in '.$languages[$i].' for people with perception disabilities',
+                                     'vrodos_asset3d_description_'.strtolower($languages[$i]).'_perception', 'text', '');
+}
 
 
 $asset_fields = [];
@@ -161,6 +159,8 @@ function wpunity_assets_infobox_show(){
     <?php
 }
 
+
+// Backend form
 function wpunity_assets_databox_show(){
     global $wpunity_databox1, $post;
     
@@ -401,7 +401,7 @@ function wpunity_assets_databox_show(){
                 
                 
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_diffimage') {
+            }elseif ($field['id'] == 'vrodos_asset3d_diffimage') {
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -419,7 +419,7 @@ function wpunity_assets_databox_show(){
                     </td>
                 </tr>
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_screenimage') {
+            }elseif ($field['id'] == 'vrodos_asset3d_screenimage') {
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -436,7 +436,7 @@ function wpunity_assets_databox_show(){
                     </td>
                 </tr>
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_next_scene') {
+            }elseif ($field['id'] == 'vrodos_asset3d_next_scene') {
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -446,7 +446,7 @@ function wpunity_assets_databox_show(){
                     </td>
                 </tr>
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_image1') {
+            }elseif ($field['id'] == 'vrodos_asset3d_image1') {
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -461,7 +461,7 @@ function wpunity_assets_databox_show(){
                     </td>
                 </tr>
                 <?php
-            }elseif ($field['id'] == 'wpunity_asset3d_video') {
+            }elseif ($field['id'] == 'vrodos_asset3d_video') {
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -474,12 +474,12 @@ function wpunity_assets_databox_show(){
                 </tr>
                 <?php
             }elseif (in_array($field['id'],[
-                'wpunity_asset3d_description_kids','wpunity_asset3d_description_experts','wpunity_asset3d_description_perception',  // English
-                'wpunity_asset3d_title_greek','wpunity_asset3d_description_greek','wpunity_asset3d_description_greek_kids','wpunity_asset3d_description_greek_experts', 'wpunity_asset3d_description_greek_perception',   // Greek
-                'wpunity_asset3d_title_spanish','wpunity_asset3d_description_spanish','wpunity_asset3d_description_spanish_kids','wpunity_asset3d_description_spanish_experts','wpunity_asset3d_description_spanish_perception', // Spanish
-                'wpunity_asset3d_title_french','wpunity_asset3d_description_french','wpunity_asset3d_description_french_kids','wpunity_asset3d_description_french_experts','wpunity_asset3d_description_french_perception', // French
-                'wpunity_asset3d_title_german', 'wpunity_asset3d_description_german','wpunity_asset3d_description_german_kids','wpunity_asset3d_description_german_experts','wpunity_asset3d_description_german_perception', // German
-                'wpunity_asset3d_title_russian','wpunity_asset3d_description_russian','wpunity_asset3d_description_russian_kids','wpunity_asset3d_description_russian_experts','wpunity_asset3d_description_russian_perception' // Russion
+                'vrodos_asset3d_description_kids','vrodos_asset3d_description_experts','vrodos_asset3d_description_perception',  // English
+                'vrodos_asset3d_title_greek','vrodos_asset3d_description_greek','vrodos_asset3d_description_greek_kids','vrodos_asset3d_description_greek_experts', 'vrodos_asset3d_description_greek_perception',   // Greek
+                'vrodos_asset3d_title_spanish','vrodos_asset3d_description_spanish','vrodos_asset3d_description_spanish_kids','vrodos_asset3d_description_spanish_experts','vrodos_asset3d_description_spanish_perception', // Spanish
+                'vrodos_asset3d_title_french','vrodos_asset3d_description_french','vrodos_asset3d_description_french_kids','vrodos_asset3d_description_french_experts','vrodos_asset3d_description_french_perception', // French
+                'vrodos_asset3d_title_german', 'vrodos_asset3d_description_german','vrodos_asset3d_description_german_kids','vrodos_asset3d_description_german_experts','vrodos_asset3d_description_german_perception', // German
+                'vrodos_asset3d_title_russian','vrodos_asset3d_description_russian','vrodos_asset3d_description_russian_kids','vrodos_asset3d_description_russian_experts','vrodos_asset3d_description_russian_perception' // Russion
             ]  )) {
                 ?>
                 <tr>
@@ -491,7 +491,7 @@ function wpunity_assets_databox_show(){
                     </td>
                 </tr>
                 <?php
-            }elseif (in_array($field['id'],['wpunity_asset3d_fonts'])) {
+            }elseif (in_array($field['id'],['vrodos_asset3d_fonts'])) {
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -532,7 +532,7 @@ function wpunity_assets_databox_show(){
                 document.getElementById('wpunity_asset3d_video').style.display = 'none';
                 document.getElementById('wpunity_asset3d_video_btn').style.display = 'none';
                 document.getElementById('wpunity-assets-infobox').style.display = 'none';
-                document.getElementById('wpunity_asset3d_description_greek').style.display = 'none';
+                document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
             }else{
                 var link = document.getElementById('wpunity_asset3d_next_scene_field');
                 link.style.display = 'none';
@@ -543,7 +543,7 @@ function wpunity_assets_databox_show(){
                     document.getElementById('wpunity_asset3d_video').style.display = 'block';
                     document.getElementById('wpunity_asset3d_video_btn').style.display = 'block';
                     document.getElementById('wpunity-assets-infobox').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_description_greek').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else if(text == 'Points of Interest (Image-Text)'){
                     document.getElementById('wpunity_asset3d_image1').style.display = 'block';
                     document.getElementById('wpunity_asset3d_image1_btn').style.display = 'block';
@@ -551,7 +551,7 @@ function wpunity_assets_databox_show(){
                     document.getElementById('wpunity_asset3d_video').style.display = 'none';
                     document.getElementById('wpunity_asset3d_video_btn').style.display = 'none';
                     document.getElementById('wpunity-assets-infobox').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_description_greek').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else if(text == 'Points of Interest'){
                     document.getElementById('wpunity_asset3d_image1').style.display = 'block';
                     document.getElementById('wpunity_asset3d_image1_btn').style.display = 'block';
@@ -559,7 +559,7 @@ function wpunity_assets_databox_show(){
                     document.getElementById('wpunity_asset3d_video').style.display = 'block';
                     document.getElementById('wpunity_asset3d_video_btn').style.display = 'block';
                     document.getElementById('wpunity-assets-infobox').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_description_greek').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else{
                     document.getElementById('wpunity_asset3d_image1').style.display = 'none';
                     document.getElementById('wpunity_asset3d_image1_btn').style.display = 'none';
@@ -567,7 +567,7 @@ function wpunity_assets_databox_show(){
                     document.getElementById('wpunity_asset3d_video').style.display = 'block';
                     document.getElementById('wpunity_asset3d_video_btn').style.display = 'block';
                     document.getElementById('wpunity-assets-infobox').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_description_greek').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
                 }
             }
         }

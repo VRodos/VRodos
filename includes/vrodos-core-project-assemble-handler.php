@@ -502,7 +502,7 @@ function wpunity_delete_asset3d_frontend_callback(){
         wp_delete_attachment($objID, true);
 
         // ---------- Diffusion image ----------
-        $difID = get_post_meta($asset_id, 'wpunity_asset3d_diffimage', true);
+        $difID = get_post_meta($asset_id, 'vrodos_asset3d_diffimage', true);
     
         // Delete the file from the system
         wp_delete_file($containerFolder.basename(get_attached_file($difID)));
@@ -511,7 +511,7 @@ function wpunity_delete_asset3d_frontend_callback(){
         wp_delete_attachment($difID, true);
         
         // ---------- Screenshot ---------------
-        $screenID = get_post_meta($asset_id, 'wpunity_asset3d_screenimage', true);
+        $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
     
         // Delete the file from the system
         wp_delete_file($containerFolder.basename(get_attached_file($screenID)));
@@ -542,7 +542,7 @@ function wpunity_fetch_asset3d_frontend_callback(){
     $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio');
     $audioURL= get_the_guid($audioID[0]);
     
-    $texturesIDs = get_post_meta($asset_id, 'wpunity_asset3d_diffimage');
+    $texturesIDs = get_post_meta($asset_id, 'vrodos_asset3d_diffimage');
     $texturesURLs = [];
     
     foreach ($texturesIDs as $textureID){
@@ -572,9 +572,9 @@ function wpunity_delete_asset3d_noscenes_frontend($asset_id){
     wp_delete_attachment( $mtlID,true );
     $objID = get_post_meta($asset_id,'vrodos_asset3d_obj', true);
     wp_delete_attachment( $objID,true );
-    $difID = get_post_meta($asset_id,'wpunity_asset3d_diffimage', true);
+    $difID = get_post_meta($asset_id,'vrodos_asset3d_diffimage', true);
     wp_delete_attachment( $difID,true );
-    $screenID = get_post_meta($asset_id,'wpunity_asset3d_screenimage', true);
+    $screenID = get_post_meta($asset_id,'vrodos_asset3d_screenimage', true);
     wp_delete_attachment( $screenID,true );
 
     //2. Delete Asset3D CUSTOM POST

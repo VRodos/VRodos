@@ -382,7 +382,7 @@ function wpunity_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $t
     wp_update_attachment_metadata($attachment_id, $attachment_data);
     
     // store each texture in a post meta that receives multiple files
-    add_post_meta($parent_post_id, 'wpunity_asset3d_diffimage', $attachment_id);
+    add_post_meta($parent_post_id, 'vrodos_asset3d_diffimage', $attachment_id);
     
     remove_filter('intermediate_image_sizes_advanced',
         'wpunity_remove_allthumbs_sizes', 10);
@@ -402,7 +402,7 @@ function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id)
     $DS = DIRECTORY_SEPARATOR;
 
     // DELETE EXISTING FILE: See if has already a thumbnail and delete the file in the filesystem
-    $asset3d_screenimage_ids = get_post_meta($parent_post_id,'wpunity_asset3d_screenimage');
+    $asset3d_screenimage_ids = get_post_meta($parent_post_id,'vrodos_asset3d_screenimage');
     
     if (count($asset3d_screenimage_ids) > 0) {
         // Remove previous file from file system
@@ -457,7 +457,7 @@ function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id)
         
         wp_update_attachment_metadata( $asset3d_screenimage_id, $data );
     
-        update_post_meta($parent_post_id, 'wpunity_asset3d_screenimage', $asset3d_screenimage_id);
+        update_post_meta($parent_post_id, 'vrodos_asset3d_screenimage', $asset3d_screenimage_id);
 
     } else {
         
@@ -478,7 +478,7 @@ function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id)
         
         wp_update_attachment_metadata($attachment_id, $attachment_data);
     
-        update_post_meta($parent_post_id, 'wpunity_asset3d_screenimage', $attachment_id);
+        update_post_meta($parent_post_id, 'vrodos_asset3d_screenimage', $attachment_id);
 
         remove_filter('intermediate_image_sizes_advanced',
             'wpunity_remove_allthumbs_sizes', 10);
@@ -598,20 +598,20 @@ function wpunity_asset3D_languages_support2($asset_id){
     $output['asset_desc_label'] = ($a ? "Add a description for the asset" : "Edit the description of the asset");
     $output['asset_desc_saved'] = ($a ? "" : get_post_field('post_content', $asset_id));
     $output['asset_desc_kids_label'] = ($a ? "Add a description of the asset for kids" : "Edit the description of the asset for kids");
-    $output['asset_desc_kids_saved'] = ($a ? "" : get_post_meta($asset_id,'wpunity_asset3d_description_kids', true));
+    $output['asset_desc_kids_saved'] = ($a ? "" : get_post_meta($asset_id,'vrodos_asset3d_description_kids', true));
     $output['asset_desc_experts_label'] = ($a ? "Add a description of the asset for experts in archaeology" : "Edit the description of the asset for experts in archaeology");
-    $output['asset_desc_experts_saved'] = ($a ? "" : get_post_meta($asset_id,'wpunity_asset3d_description_experts', true));
+    $output['asset_desc_experts_saved'] = ($a ? "" : get_post_meta($asset_id,'vrodos_asset3d_description_experts', true));
     $output['asset_desc_perception_label'] = ($a ? "Add a description of the asset for people with perception problems" : "Edit the description of the asset for people with perception problems");
-    $output['asset_desc_perception_saved'] = ($a ? "" : get_post_meta($asset_id,'wpunity_asset3d_description_perception', true));
+    $output['asset_desc_perception_saved'] = ($a ? "" : get_post_meta($asset_id,'vrodos_asset3d_description_perception', true));
     
     $lang = ['greek','spanish','french','german','russian'];
     
     foreach ($lang as $l){
-        $output['asset_title_'.$l.'_saved'] = ($a ? "" : get_post_meta($asset_id,'wpunity_asset3d_title_'.$l, true));
-        $output['asset_desc_'.$l.'_saved'] = ($a ? "" : get_post_meta($asset_id,'wpunity_asset3d_description_'.$l, true));
-        $output['asset_desc_'.$l.'_kids_saved'] = ($a ? "" : get_post_meta($asset_id,'wpunity_asset3d_description_'.$l.'_kids', true));
-        $output['asset_desc_'.$l.'_experts_saved'] = ($a ? "" : get_post_meta($asset_id,'wpunity_asset3d_description_'.$l.'_experts', true));
-        $output['asset_desc_'.$l.'_perception_saved'] = ($a ? "" : get_post_meta($asset_id,'wpunity_asset3d_description_'.$l.'_perception', true));
+        $output['asset_title_'.$l.'_saved'] = ($a ? "" : get_post_meta($asset_id,'vrodos_asset3d_title_'.$l, true));
+        $output['asset_desc_'.$l.'_saved'] = ($a ? "" : get_post_meta($asset_id,'vrodos_asset3d_description_'.$l, true));
+        $output['asset_desc_'.$l.'_kids_saved'] = ($a ? "" : get_post_meta($asset_id,'vrodos_asset3d_description_'.$l.'_kids', true));
+        $output['asset_desc_'.$l.'_experts_saved'] = ($a ? "" : get_post_meta($asset_id,'vrodos_asset3d_description_'.$l.'_experts', true));
+        $output['asset_desc_'.$l.'_perception_saved'] = ($a ? "" : get_post_meta($asset_id,'vrodos_asset3d_description_'.$l.'_perception', true));
     }
     
     $l = 'greek';

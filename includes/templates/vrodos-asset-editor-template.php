@@ -81,8 +81,7 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     
     // Load single asset
     wp_enqueue_script('Asset_viewer_3d_kernel');
-    
-    
+
     // Load scripts for asset editor
     wp_enqueue_script('vrodos_asset_editor_scripts');
     
@@ -149,7 +148,6 @@ $isEditMode = $_GET['preview'] == '1' ? FALSE : TRUE;
 
 // Default image to show when there are no images for the asset
 $defaultImage = plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  );
-
 
 $curr_font = "Arial";
 $isOwner = $current_user->ID == get_post_field ('post_author', $asset_id);
@@ -294,7 +292,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         
         // Edit an existing asset: Return true if updated, false if failed
         $asset_updatedConf = wpunity_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
-            $asset_language_pack, $assetFonts, $assetback3dcolor);
+            $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     }
     
     // Upload 3D files
@@ -307,11 +305,11 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
                 $gameSlug);
         }
         
-        update_post_meta($asset_id, 'wpunity_asset3d_isCloned', 'false');
-        update_post_meta($asset_id, 'wpunity_asset3d_isJoker', $isJoker);
+        update_post_meta($asset_id, 'vrodos_asset3d_isCloned', 'false');
+        update_post_meta($asset_id, 'vrodos_asset3d_isJoker', $isJoker);
     }
     
-    // SCREENSHOT: upload and add id of uploaded file to postmeta wpunity_asset3d_screenimage of asset
+    // SCREENSHOT: upload and add id of uploaded file to postmeta vrodos_asset3d_screenimage of asset
 //    $f = fopen("output_fscr.txt","w");
 //    fwrite($f, $_POST['sshotFileInput']);
 //    fclose($f);
@@ -372,10 +370,10 @@ if($asset_id != null) {
     $assetpostMeta = get_post_meta($asset_id);
     
     // Background color in canvas
-    $back_3d_color = $assetpostMeta['vrodos_asset3d_back_3d_color'][0];
+    $back_3d_color = $assetpostMeta['vrodos_asset3d_back3dcolor'][0];
     
     // Font type for text
-    $fonts = $assetpostMeta['wpunity_asset3d_fonts'][0];
+    $fonts = $assetpostMeta['vrodos_asset3d_fonts'][0];
     
     $curr_font = str_replace("+", " ", $fonts);
     
@@ -416,14 +414,14 @@ echo '</script>';
 
 
 // Retrieve Fonts saved
-$asset_fonts_saved = ($asset_id == null ? "" : get_post_meta($asset_id,'wpunity_asset3d_fonts', true));
+$asset_fonts_saved = ($asset_id == null ? "" : get_post_meta($asset_id,'vrodos_asset3d_fonts', true));
 
 // Retrieve Background Color saved
 $asset_back_3d_color_saved = ($asset_id == null ? "#000000" :
-    get_post_meta($asset_id,'wpunity_prefix_back_3d_color', true));
+    get_post_meta($asset_id,'vrodos_asset3d_back3dcolor', true));
 
-$asset_trs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,0" :
-    get_post_meta($asset_id,'wpunity_prefix_asset_trs', true));
+$assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,0" :
+    get_post_meta($asset_id,'vrodos_asset3d_assettrs', true));
 
 
 // 5 asset images
@@ -450,7 +448,7 @@ if($asset_id != null) {
         // Image 1,2,3,4
         for ($i=1; $i <= 4; $i++){
             
-            $image_id = get_post_meta($asset_id, "wpunity_asset3d_image".$i);
+            $image_id = get_post_meta($asset_id, "vrodos_asset3d_image".$i);
             
             if(!empty($image_id[0])) {
                 $images_urls[$i] = wp_get_attachment_metadata($image_id[0]);
@@ -774,7 +772,7 @@ if($asset_id != null) {
                     
                     // if asset is edited load the existing screenshot url
                     $scrnImageURL = wp_get_attachment_url(
-                        get_post_meta($asset_id, "wpunity_asset3d_screenimage",true) );
+                        get_post_meta($asset_id, "vrodos_asset3d_screenimage",true) );
                     
                     echo '<img id = "sshotPreviewImg" src="'.$scrnImageURL.'">';
                 }
@@ -805,8 +803,9 @@ if($asset_id != null) {
 
                 
             </div>
+            
             <input type="text" id="assettrs" class="mdc-textfield__input"
-                   name="assettrs" form="3dAssetForm" value="<?php echo trim($asset_trs_saved); ?>" />
+                   name="assettrs" form="3dAssetForm" value="<?php echo trim($assettrs_saved); ?>" />
             
             
 
@@ -909,7 +908,7 @@ if($asset_id != null) {
                  src="<?php echo plugins_url( '../images/ic_video_section.png', dirname(__FILE__)  );?>">
             <div id="videoFileInputContainer" class="">
                 <?php
-                $videoID = get_post_meta($asset_id, 'wpunity_asset3d_video', true);
+                $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
                 $attachment_post = get_post($videoID);
                 $attachment_file = $attachment_post->guid;
                 ?>
@@ -943,7 +942,7 @@ if($asset_id != null) {
 
             <!-- Video -->
             <?php $showVid = in_array( $saved_term[0]->slug , ['artifact'])?'':'none';
-            $videoID = get_post_meta($asset_id, 'wpunity_asset3d_video', true);
+            $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
             ?>
             <!-- Image -->
             <?php $showImageFields = in_array($saved_term[0]->slug,['artifact'])?'':'none';  ?>
@@ -1285,24 +1284,24 @@ if($asset_id != null) {
 
 
     // ------- Class to load 3D model ---------
-    var asset_viewer_3d_kernel = new Asset_viewer_3d_kernel( document.getElementById( 'previewCanvas' ),
-        document.getElementById( 'previewCanvasLabels' ),
-        document.getElementById('animButton1'),
-        document.getElementById('previewProgressLabel'),
-        document.getElementById('previewProgressSliderLine'),
-        back_3d_color,
-        audio_file,
-        path_url, // OBJ textures path
-        mtl_file_name,
-        obj_file_name,
-        pdb_file_name,
-        fbx_file_name,
-        glb_file_name,
-        textures_fbx_string_connected,
-        true,
-        false,
-        false,
-        true);
+    var asset_viewer_3d_kernel = new Asset_viewer_3d_kernel(document.getElementById( 'previewCanvas' ),
+                                                            document.getElementById( 'previewCanvasLabels' ),
+                                                            document.getElementById('animButton1'),
+                                                            document.getElementById('previewProgressLabel'),
+                                                            document.getElementById('previewProgressSliderLine'),
+                                                            back_3d_color,
+                                                            audio_file,
+                                                            path_url, // OBJ textures path
+                                                            mtl_file_name,
+                                                            obj_file_name,
+                                                            pdb_file_name,
+                                                            fbx_file_name,
+                                                            glb_file_name,
+                                                            textures_fbx_string_connected,
+                                                            true,
+                                                            false,
+                                                            false,
+                                                            true);
 
     // Load existing 3D models
     // asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,

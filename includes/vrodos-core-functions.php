@@ -1256,7 +1256,7 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 
 	if($has_video){
 		$attachment_video_id = wpunity_upload_img_vid_aud( $video_content, $asset_newID);
-		update_post_meta( $asset_newID, 'wpunity_asset3d_video', $attachment_video_id );
+		update_post_meta( $asset_newID, 'vrodos_asset3d_video', $attachment_video_id );
 	}
 
 	// Set value of attachment IDs at custom fields
@@ -1287,7 +1287,7 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 //	// Set value of attachment IDs at custom fields
 //	update_post_meta($asset_newID, 'wpunity_asset3d_mtl', $mtlFile_id);
 //	update_post_meta($asset_newID, 'vrodos_asset3d_obj', $objFile_id);
-//	update_post_meta( $asset_newID, 'wpunity_asset3d_diffimage', $textureFile_id );
+//	update_post_meta( $asset_newID, 'vrodos_asset3d_diffimage', $textureFile_id );
 //}
 
 //==========================================================================================================================================
@@ -1306,7 +1306,7 @@ function wpunity_get_all_Available_molecules_of_game($scene_id){
 
 		$molecule_type = get_post_meta($moleculeID, 'wpunity_molecule_ChemicalTypeVal', true);
 		$molecule_title = $molecule_post->post_title;
-		$the_featured_image_ID = $screenimgID = get_post_meta($moleculeID, 'wpunity_asset3d_screenimage', true);
+		$the_featured_image_ID = $screenimgID = get_post_meta($moleculeID, 'vrodos_asset3d_screenimage', true);
 		$the_featured_image_url = wp_get_attachment_url( $the_featured_image_ID );
 
 		$moleculesData[] = ['moleculeID'=>$moleculeID, 'moleculeName'=>$molecule_title, 'moleculeImage'=>$the_featured_image_url, 'moleculeType'=>$molecule_type  ];
@@ -1388,7 +1388,7 @@ function wpunity_get_all_molecules_of_game($project_id) {
 
 			$molecule_type = get_post_meta($molecule_id, 'wpunity_molecule_ChemicalTypeVal', true);
 			$molecule_title = get_the_title();
-			$the_featured_image_ID = $screenimgID = get_post_meta($molecule_id, 'wpunity_asset3d_screenimage', true);
+			$the_featured_image_ID = $screenimgID = get_post_meta($molecule_id, 'vrodos_asset3d_screenimage', true);
 			$the_featured_image_url = wp_get_attachment_url( $the_featured_image_ID );
 
 			$moleculesIds[] = ['moleculeID'=>$molecule_id, 'moleculeName'=>$molecule_title, 'moleculeImage'=>$the_featured_image_url, 'moleculeType'=>$molecule_type  ];

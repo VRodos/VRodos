@@ -287,17 +287,17 @@ function get_assets($games_slugs){
             $mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true); // MTL ID
             $mtlPath = $mtlID ? wp_get_attachment_url( $mtlID ) : '';                   // MTL PATH
 
-            $difImageIDs = get_post_meta($asset_id, 'wpunity_asset3d_diffimage', false);  // Diffusion Image ID
+            $difImageIDs = get_post_meta($asset_id, 'vrodos_asset3d_diffimage', false);  // Diffusion Image ID
 
             $difImagePaths = [];
 
             foreach ($difImageIDs as $diffid)
                 $difImagePaths[] = wp_get_attachment_url( $diffid );                // Diffusion Image PATH
 
-            $screenImageID = get_post_meta($asset_id, 'wpunity_asset3d_screenimage', true); // Screenshot Image ID
+            $screenImageID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true); // Screenshot Image ID
             $screenImagePath = $screenImageID ? wp_get_attachment_url( $screenImageID ) : '';           // Screenshot Image PATH
 
-            $image1id = get_post_meta($asset_id, 'wpunity_asset3d_image1', true);
+            $image1id = get_post_meta($asset_id, 'vrodos_asset3d_image1', true);
 
             
             $categoryAsset = wp_get_post_terms($asset_id, 'wpunity_asset3d_cat');
@@ -306,8 +306,8 @@ function get_assets($games_slugs){
             
             $categIcon = get_term_meta($categoryAsset[0]->term_id, 'wpunity_assetcat_icon');
 
-            $isCloned = get_post_meta($asset_id, 'wpunity_asset3d_isCloned', true);
-            $isJoker = get_post_meta($asset_id, 'wpunity_asset3d_isJoker', true);
+            $isCloned = get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true);
+            $isJoker = get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true);
             
             $author_id = get_post_field ('post_author', $asset_id);
             $author_displayname = get_the_author_meta( 'display_name' , $author_id );
@@ -452,7 +452,7 @@ function wpunity_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 			$asset_name = get_the_title();
 			//$asset_pgame = wp_get_post_terms($asset_id, 'wpunity_asset3d_pgame');
 
-			$isJoker = get_post_meta($asset_id, 'wpunity_asset3d_isJoker', true);    //strpos($asset_pgame[0]->slug, 'joker') !== false;
+			$isJoker = get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true);    //strpos($asset_pgame[0]->slug, 'joker') !== false;
 
 			// ALL DATA WE NEED
 			$objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true); // OBJ ID
@@ -467,24 +467,24 @@ function wpunity_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 			$mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true); // MTL ID
 			$mtlPath = $mtlID ? wp_get_attachment_url( $mtlID ) : '';                   // MTL PATH
 
-			$difImageIDs = get_post_meta($asset_id, 'wpunity_asset3d_diffimage', false);  // Diffusion Image ID
+			$difImageIDs = get_post_meta($asset_id, 'vrodos_asset3d_diffimage', false);  // Diffusion Image ID
 
 			$difImagePaths = [];
 
 			foreach ($difImageIDs as $diffid)
 				$difImagePaths[] = wp_get_attachment_url( $diffid );                // Diffusion Image PATH
 
-			$screenImageID = get_post_meta($asset_id, 'wpunity_asset3d_screenimage', true); // Screenshot Image ID
+			$screenImageID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true); // Screenshot Image ID
 			$screenImagePath = $screenImageID ? wp_get_attachment_url( $screenImageID ) : '';           // Screenshot Image PATH
 
-			$image1id = get_post_meta($asset_id, 'wpunity_asset3d_image1', true);
+			$image1id = get_post_meta($asset_id, 'vrodos_asset3d_image1', true);
 
 			$categoryAsset = wp_get_post_terms($asset_id, 'wpunity_asset3d_cat');
             
             $categIcon = get_term_meta($categoryAsset[0]->term_id, 'wpunity_assetcat_icon');
 			
-			$isCloned = get_post_meta($asset_id, 'wpunity_asset3d_isCloned', true);
-			$isJoker = get_post_meta($asset_id, 'wpunity_asset3d_isJoker', true);
+			$isCloned = get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true);
+			$isJoker = get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true);
 
 			$allAssets[] = [
 				'assetName'=>$asset_name,

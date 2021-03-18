@@ -354,7 +354,7 @@ add_action('wp_enqueue_scripts', 'wpunity_assets_scripts_and_styles' );
 
 // Add the fields to the taxonomy, using our callback function
 // 59
-//add_action( ' vrodos_asset3d_cat_edit_form_fields', 'wpunity_assets_category_yamlFields', 10, 2 );
+//add_action( 'vrodos_asset3d_cat_edit_form_fields', 'wpunity_assets_category_yamlFields', 10, 2 );
 
 // Save the changes made on the taxonomy, using our callback function
 // 60
