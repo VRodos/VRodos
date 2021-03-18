@@ -803,6 +803,9 @@ if($asset_id != null) {
 
                 
             </div>
+    
+    
+            
             
             <input type="text" id="assettrs" class="mdc-textfield__input"
                    name="assettrs" form="3dAssetForm" value="<?php echo trim($assettrs_saved); ?>" />
@@ -1281,7 +1284,7 @@ if($asset_id != null) {
 
     let multipleFilesInputElem = document.getElementById( 'fileUploadInput' );
 
-
+    let assettrs = document.getElementById( 'assettrs' ).value;
 
     // ------- Class to load 3D model ---------
     var asset_viewer_3d_kernel = new Asset_viewer_3d_kernel(document.getElementById( 'previewCanvas' ),
@@ -1301,7 +1304,9 @@ if($asset_id != null) {
                                                             true,
                                                             false,
                                                             false,
-                                                            true);
+                                                            true,
+                                                            0, 0, 0,
+                                                            assettrs);
 
     // Load existing 3D models
     // asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,

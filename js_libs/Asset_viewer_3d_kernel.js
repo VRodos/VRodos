@@ -37,10 +37,10 @@ class Asset_viewer_3d_kernel {
                 isBackGroundNull = false,
                 lockTranslation = false,
                 enableZoom = true,
-                cameraPosX = 0, cameraPosY = 0, cameraPosZ = -100) {
+                cameraPosX = 0, cameraPosY = 0, cameraPosZ = -100, assettrs = '0,0,0,0,0,0,0,0,0') {
 
 
-        // console.log("AAA");
+
 
         //console.log(pathUrl, fbxFilename + " t:" + textures_fbx_string_connected );
 
@@ -63,7 +63,7 @@ class Asset_viewer_3d_kernel {
         this.path_url = null;
         this.mtl_file_name = this.obj_file_name = this.pdb_file_name = this.fbx_file_name = this.glb_file_name;
 
-
+        this.assettrs = assettrs.split(',');
         this.scene = new THREE.Scene();
 
         if (this.statsSwitch) {
@@ -138,6 +138,10 @@ class Asset_viewer_3d_kernel {
         // Trackball or OrbitControls controls
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
 
+
+
+
+
         //this.scene.add(new THREE.AxisHelper(5,5,5));
 
         this.controls.zoomSpeed = 1.02;
@@ -148,7 +152,8 @@ class Asset_viewer_3d_kernel {
         this.controls.enablePan = !lockTranslation;
         this.controls.enableZoom = enableZoom;
 
-        this.controls.addEventListener('change', this.updateTRSfields);
+        // this.updateTRSfields();
+        // this.controls.addEventListener('change', this.updateTRSfields);
 
         // For the animation
         this.clock = new THREE.Clock();
@@ -189,13 +194,7 @@ class Asset_viewer_3d_kernel {
 
     updateTRSfields(){
 
-        let assettrsDOM = document.getElementById('assettrs');
 
-        if(assettrsDOM){
-            assettrsDOM.value = Math.round(asset_viewer_3d_kernel.controls.object.position.x*1000)/1000 +','+
-                                Math.round(asset_viewer_3d_kernel.controls.object.position.y*1000)/1000 +','+
-                                Math.round(asset_viewer_3d_kernel.controls.object.position.z*1000)/1000;
-        }
 
 
 
@@ -241,6 +240,9 @@ class Asset_viewer_3d_kernel {
     addControlEventListeners(){
 
         this.controls.addEventListener('change', this.boundRender);
+
+
+
 
 
         // this.controls.dispatchEvent( { type: 'change' } );
@@ -301,6 +303,22 @@ class Asset_viewer_3d_kernel {
         if ( this.mixers.length > 0 ) {
             this.mixers[ 0 ].update( this.clock.getDelta() );
         }
+
+
+        let assettrsDOM = document.getElementById('assettrs');
+
+        if(assettrsDOM){
+            assettrsDOM.value = Math.round(this.controls.object.position.x*1000)/1000 +','+
+                Math.round(this.controls.object.position.y*1000)/1000 +','+
+                Math.round(this.controls.object.position.z*1000)/1000 + ','+
+                Math.round(this.controls.object.rotation.x*1000)/1000 + ','+
+                Math.round(this.controls.object.rotation.y*1000)/1000 + ','+
+                Math.round(this.controls.object.rotation.z*1000)/1000 + ','+
+                Math.round(this.camera.position.x*1000)/1000 + ','+
+                Math.round(this.camera.position.y*1000)/1000 + ','+
+                Math.round(this.camera.position.z*1000)/1000
+        }
+
     }
 
     // Render only when OrbitControls change of window is resized
@@ -1150,6 +1168,16 @@ class Asset_viewer_3d_kernel {
             this.resizeDisplayGL();
             this.controls.update();
         }
+
+
+        this.controls.object.position.x =  parseFloat(this.assettrs[0]);
+        this.controls.object.position.y =  parseFloat(this.assettrs[1]);
+        this.controls.object.position.z =  parseFloat(this.assettrs[2]);
+
+        this.controls.object.rotation.x =  parseFloat(this.assettrs[3]);
+        this.controls.object.rotation.y =  parseFloat(this.assettrs[4]);
+        this.controls.object.rotation.z =  parseFloat(this.assettrs[5]);
+
     }
 
     // Resize Renderer and Label Renderer
