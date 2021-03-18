@@ -349,7 +349,8 @@ add_action('admin_menu', 'wpunity_assets_databox_add');
 add_action('wp_enqueue_scripts', 'wpunity_assets_scripts_and_styles' );
 
 // 54
-add_action('add_meta_boxes','wpunity_assets_create_right_metaboxes');
+// For classification
+//add_action('add_meta_boxes','wpunity_assets_create_right_metaboxes');
 
 // Add the fields to the taxonomy, using our callback function
 // 59

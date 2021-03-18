@@ -255,6 +255,9 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     // 3D background color
     $assetback3dcolor=  esc_attr(strip_tags($_POST['assetback3dcolor']));
     
+    // Asset trs
+    $assettrs=  esc_attr(strip_tags($_POST['assettrs']));
+    
     //fwrite($fp, print_r($_POST,true));
     
     // Asset category
@@ -283,7 +286,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         
         //It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
         $asset_id = wpunity_create_asset_frontend($assetPGameID,$assetCatID, $gameSlug, $assetCatIPRID,
-            $asset_language_pack, $assetFonts, $assetback3dcolor);
+            $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     }else {
         ?>
         <div class='centerMessageAssetSubmit'>Updating asset...</div>
@@ -417,7 +420,11 @@ $asset_fonts_saved = ($asset_id == null ? "" : get_post_meta($asset_id,'wpunity_
 
 // Retrieve Background Color saved
 $asset_back_3d_color_saved = ($asset_id == null ? "#000000" :
-    get_post_meta($asset_id,'vrodos_asset3d_back_3d_color', true));
+    get_post_meta($asset_id,'wpunity_prefix_back_3d_color', true));
+
+$asset_trs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,0" :
+    get_post_meta($asset_id,'wpunity_prefix_asset_trs', true));
+
 
 // 5 asset images
 $images_urls = [null, null, null, null, null];
@@ -791,10 +798,17 @@ if($asset_id != null) {
 
                 <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
                        name="assetback3dcolor" form="3dAssetForm" value="<?php echo trim($asset_back_3d_color_saved); ?>" />
+                
                 <label for="assetback3dcolor" class="mdc-textfield__label"
                        style="background: none;">3D viewer background color</label>
-            </div>
 
+
+                
+            </div>
+            <input type="text" id="assettrs" class="mdc-textfield__input"
+                   name="assettrs" form="3dAssetForm" value="<?php echo trim($asset_trs_saved); ?>" />
+            
+            
 
             <!-- Audio -->
             <div id="audioDetailsPanel">

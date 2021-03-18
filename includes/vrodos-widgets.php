@@ -81,8 +81,9 @@ class vrodos_3d_widget extends WP_Widget {
         $camerapositionx = isset( $instance[ 'camerapositionx' ] ) ?  $instance[ 'camerapositionx' ] : 0;
         $camerapositiony = isset( $instance[ 'camerapositiony' ] ) ?  $instance[ 'camerapositiony' ] : 0;
         $camerapositionz = isset( $instance[ 'camerapositionz' ] ) ?  $instance[ 'camerapositionz' ] : -1;
-        $canvaswidth = isset( $instance[ 'canvaswidth' ] )? $instance[ 'canvaswidth' ] : '100%';
-        $canvasheight = isset( $instance[ 'canvasheight' ] )? $instance[ 'canvasheight' ] : '100%';
+        
+        $canvaswidth = isset( $instance[ 'canvaswidth' ] )? $instance[ 'canvaswidth' ] : '600px';
+        $canvasheight = isset( $instance[ 'canvasheight' ] )? $instance[ 'canvasheight' ] : '400px';
     
         $canvasbackgroundcolor = isset( $instance[ 'canvasbackgroundcolor' ] )? $instance[ 'canvasbackgroundcolor' ] : 'transparent';
         
@@ -201,7 +202,7 @@ class vrodos_3d_widget extends WP_Widget {
 
         <p>
             <label for="<?php echo $this->get_field_id( 'canvaswidth' ); ?>">
-                <?php _e( 'Canvas width, e.g. 200px:' ); ?>
+                <?php _e( 'Canvas width, e.g. 600px:' ); ?>
             </label>
 
             <input class="widefat"
@@ -215,7 +216,7 @@ class vrodos_3d_widget extends WP_Widget {
 
         <p>
             <label for="<?php echo $this->get_field_id( 'canvasheight' ); ?>">
-                <?php _e( 'Canvas height:' ); ?>
+                <?php _e( 'Canvas height, e.g. 400px::' ); ?>
             </label>
 
             <input class="widefat"
@@ -451,7 +452,7 @@ class vrodos_3d_widget extends WP_Widget {
                strpos($attachment_audio_file, "wav" )!==false) {
             ?>
             
-            <audio loop preload="auto" id ='audioFile'>
+            <audio loop preload="auto" id ='audioFile<?php echo $title;?>'>
                 <source src="<?php echo $attachment_audio_file;?>" type="audio/mp3">
                 <source src="<?php echo $attachment_audio_file;?>" type="audio/wav">
                 Your browser does not support the audio tag.
@@ -478,7 +479,10 @@ class vrodos_3d_widget extends WP_Widget {
 
             const textures_fbx_string_connected_widget<?php echo $title;?> = "<?php echo $asset_3d_files['texturesFbx']; ?>";
             const back_3d_color<?php echo $title;?> = "<?php echo $back_3d_color; ?>";
-            const audio_file<?php echo $title;?> = document.getElementById( 'audioFile' );
+            
+            console.log('audioFile<?php echo $title;?>', document.getElementById( 'audioFile<?php echo $title;?>' ));
+            
+            const audio_file<?php echo $title;?> = document.getElementById( 'audioFile<?php echo $title;?>' );
 
             
         

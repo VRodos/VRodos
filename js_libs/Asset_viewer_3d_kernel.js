@@ -40,9 +40,9 @@ class Asset_viewer_3d_kernel {
                 cameraPosX = 0, cameraPosY = 0, cameraPosZ = -100) {
 
 
-        console.log("AAA");
+        // console.log("AAA");
 
-        console.log(pathUrl, fbxFilename + " t:" + textures_fbx_string_connected );
+        //console.log(pathUrl, fbxFilename + " t:" + textures_fbx_string_connected );
 
         this.statsSwitch = statsSwitch;
 
@@ -95,7 +95,6 @@ class Asset_viewer_3d_kernel {
                 scope.canvasToBindTo.clientWidth ) * 2 - 1;
             mouse.y = - ( (event.clientY - scope.canvasToBindTo.getBoundingClientRect().top ) /
                 scope.canvasToBindTo.clientHeight ) * 2 + 1;
-
 
             let raycaster = new THREE.Raycaster();
 
@@ -247,8 +246,8 @@ class Asset_viewer_3d_kernel {
             this.startAutoLoopRendering();
 
             // Play the audio
-            if (document.getElementById("audioFile")) {
-                document.getElementById("audioFile").play();
+            if (this.audioElement) {
+                this.audioElement.play();
             }
 
             // Play the animation
@@ -260,8 +259,8 @@ class Asset_viewer_3d_kernel {
             this.stopAutoLoopRendering();
             this.addControlEventListeners();
 
-            if (document.getElementById("audioFile")) {
-                document.getElementById("audioFile").pause();
+            if (this.audioElement) {
+                this.audioElement.pause();
             }
             this.action.paused = true;
 
@@ -400,7 +399,7 @@ class Asset_viewer_3d_kernel {
                 if ( nTexturesLoaded === 0 )
                     texturesStreams = '';
 
-                console.log("Ignite reading fbx");
+                // console.log("Ignite reading fbx");
 
                 this.loadFbxStream(this.FbxBuffer, texturesStreams);
 
@@ -829,7 +828,7 @@ class Asset_viewer_3d_kernel {
 
         // PDB
         if (pdbFileContent) {
-            console.log("Loading from existing resource","PDB");
+            //console.log("Loading from existing resource","PDB");
 
             this.loadMolecule(pdbFileContent, "loader_asset_exists");
 
@@ -892,7 +891,7 @@ class Asset_viewer_3d_kernel {
             // OBJ load
         } else if (pathUrl) {
 
-            console.log("Loading from existing resource","OBJ");
+            //console.log("Loading from existing resource","OBJ");
 
             let scope = this;
 
@@ -959,7 +958,7 @@ class Asset_viewer_3d_kernel {
             } else if (fbxFilename){
 
 
-                console.log("Loading from existing resource","FBX");
+                //console.log("Loading from existing resource","FBX");
 
                 // split texture string into each texture
                 let url_files = textures_fbx_string_connected.split('|');
@@ -974,7 +973,7 @@ class Asset_viewer_3d_kernel {
                     this.nJpg = url_files.length;
                 }
 
-                console.log("this.nJpg", this.nJpg);
+                // console.log("this.nJpg", this.nJpg);
 
 
                 // Add the fbx also
@@ -1106,7 +1105,7 @@ class Asset_viewer_3d_kernel {
                 // Check if everything is loaded
                 if ( type === 'mtl' || type==='obj' || type==='jpg' || type==='png' || type==='fbx' || type==='gif' || type==='glb') {
 
-                    console.log("TYPE", type + " " + file);
+                    // console.log("TYPE", type + " " + file);
                     scope.checkerCompleteReading( type );
                 }else if ( type==='pdb') {
                     scope.loadMolecule(fileContent, "file_reader_cortex");

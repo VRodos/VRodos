@@ -101,7 +101,7 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local){
             // Check if everything is loaded
             if ( type === 'mtl' || type==='obj' || type==='jpg' || type==='png' || type==='fbx' || type==='gif' || type==='glb') {
 
-                console.log("TYPE", type + " " + file);
+                // console.log("TYPE", type + " " + file);
                 asset_viewer_3d_kernel_local.checkerCompleteReading( type );
             }else if ( type==='pdb') {
                 asset_viewer_3d_kernel_local.loadMolecule(fileContent, "file_reader_cortex");

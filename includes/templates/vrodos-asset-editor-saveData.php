@@ -240,7 +240,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
 
 // Create asset
 function wpunity_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID,
-                                       $asset_language_pack, $assetFonts, $assetback3dcolor){
+                                       $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
     
     $asset_taxonomies = array(
         'wpunity_asset3d_pgame' => array($assetPGameID,),
@@ -259,7 +259,7 @@ function wpunity_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $a
     $asset_id = wp_insert_post($asset_information);
     update_post_meta($asset_id, 'wpunity_asset3d_pathData', $gameSlug);
     
-    wpunity_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor);
+    wpunity_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
 
     return $asset_id ? $asset_id : 0;
 }
@@ -469,7 +469,7 @@ function wpunity_copy_3Dfiles($asset_newID, $asset_sourceID){
 }
 
 
-function wpunity_update_asset_texts($asset_id, $alp, $assetFonts, $assetback3dcolor){
+function wpunity_update_asset_texts($asset_id, $alp, $assetFonts, $assetback3dcolor, $assettrs){
 
     update_post_meta($asset_id, 'wpunity_asset3d_title_greek', $alp['assetTitleFormGreek']);
     update_post_meta($asset_id, 'wpunity_asset3d_title_spanish', $alp['assetTitleFormSpanish']);
@@ -510,7 +510,11 @@ function wpunity_update_asset_texts($asset_id, $alp, $assetFonts, $assetback3dco
     update_post_meta($asset_id, 'wpunity_asset3d_description_german_perception', $alp['assetDescFormGermanPerception']);
     update_post_meta($asset_id, 'wpunity_asset3d_description_russian_perception', $alp['assetDescFormRussianPerception']);
     
-    update_post_meta($asset_id, 'wpunity_asset3d_fonts', $assetFonts);
-    update_post_meta($asset_id, 'vrodos_asset3d_back_3d_color', $assetback3dcolor);
+    update_post_meta($asset_id, 'wpunity_prefix_asset3d_fonts', $assetFonts);
+    update_post_meta($asset_id, 'wpunity_prefix_asset3d_back_3d_color', $assetback3dcolor);
+    
+    update_post_meta($asset_id, 'wpunity_prefix_assettrs', $assettrs);
+    
+    
 }
 ?>
