@@ -407,7 +407,7 @@ class vrodos_3d_widget extends WP_Widget {
         $assetpostMeta = get_post_meta($asset_id);
     
         // Background color in canvas
-        $back_3d_color = $assetpostMeta['vrodos_asset3d_back_3d_color'][0];
+        $back_3d_color = $assetpostMeta['vrodos_asset3d_back3dcolor'][0];
     
         
         
