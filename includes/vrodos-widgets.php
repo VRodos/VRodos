@@ -484,8 +484,12 @@ class vrodos_3d_widget extends WP_Widget {
             
             const audio_file<?php echo $title;?> = document.getElementById( 'audioFile<?php echo $title;?>' );
 
-            
+            const assettrs<?php echo $title;?> = "0,0,0,0,0,0," + camerapositionx<?php echo $title;?> + "," +
+                                              camerapositiony<?php echo $title;?> + "," +
+                                              camerapositionz<?php echo $title;?>;
         
+            console.log("assettrs", assettrs<?php echo $title;?>);
+            
             const asset_viewer_3d_kernel<?php echo $title;?> = new Asset_viewer_3d_kernel(
                 document.getElementById( 'divCanvas<?php echo $title;?>' ),
                 document.getElementById( 'divCanvasLabels<?php echo $title;?>' ),
@@ -503,11 +507,9 @@ class vrodos_3d_widget extends WP_Widget {
                 textures_fbx_string_connected_widget<?php echo $title;?>,
                 false,
                 canvasbackgroundcolor<?php echo $title;?> === 'transparent',
-                !enablepan<?php echo $title;?>, // lock
+                enablepan<?php echo $title;?>, // lock
                 enablezoom<?php echo $title;?>, // enablezoom
-                camerapositionx<?php echo $title;?>,
-                camerapositiony<?php echo $title;?>,
-                camerapositionz<?php echo $title;?>);
+                assettrs<?php echo $title;?>);
         
         </script>
         

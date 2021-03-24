@@ -37,7 +37,7 @@ class Asset_viewer_3d_kernel {
                 isBackGroundNull = false,
                 lockTranslation = false,
                 enableZoom = true,
-                cameraPosX = 0, cameraPosY = 0, cameraPosZ = -100, assettrs = '0,0,0,0,0,0,0,0,0') {
+                assettrs = '0,0,0,0,0,0,0,0,-100', boundingSphereButton = null) {
 
 
 
@@ -48,6 +48,7 @@ class Asset_viewer_3d_kernel {
 
         this.canvasToBindTo= canvasToBindTo;
         this.animationButton = animationButton;
+        this.boundingSphereButton = boundingSphereButton;
         this.canvasLabelsToBindTo = canvasLabelsToBindTo;
         this.previewProgressLabel = previewProgressLabel;
         this.previewProgressLine = previewProgressLine;
@@ -121,6 +122,15 @@ class Asset_viewer_3d_kernel {
         this.aspectRatio = 1;
         this.recalcAspectRatio();
 
+
+
+
+        let cameraPosX = this.assettrs[6];
+        let cameraPosY = this.assettrs[7];
+        let cameraPosZ = this.assettrs[8];
+
+
+
         this.cameraDefaults = {
             posCamera: new THREE.Vector3(cameraPosX, cameraPosY, cameraPosZ),
             posCameraTarget: new THREE.Vector3(0, 0, 0),
@@ -189,16 +199,14 @@ class Asset_viewer_3d_kernel {
             fbxFilename, glbFilename,
             textures_fbx_string_connected);
 
+        // Resize Canvas
+        this.canvasResizeBounded = this.onCanvasResize.bind(this);
+        window.addEventListener( 'resize', this.canvasResizeBounded, true );
     }
 
 
-    updateTRSfields(){
-
-
-
-
-
-
+    onCanvasResize(){
+        this.resizeDisplayGL();
     }
 
     raylineShow(raycasterPick){
@@ -246,7 +254,7 @@ class Asset_viewer_3d_kernel {
 
 
         // this.controls.dispatchEvent( { type: 'change' } );
-        window.addEventListener('resize', this.boundRender);
+        //window.addEventListener('resize', this.boundRender);
     }
 
     // Remove OrbitControl listeners to render on demand. (this is useful for continuous animation)
@@ -254,7 +262,7 @@ class Asset_viewer_3d_kernel {
 
         this.controls.removeEventListener('change', this.boundRender);
 
-        window.removeEventListener('resize', this.boundRender);
+        //window.removeEventListener('resize', this.boundRender);
     }
 
     // Play or Stop animation
@@ -413,8 +421,7 @@ class Asset_viewer_3d_kernel {
                                     objectDefinition.pathTexture[myname] = textFil[k].value;
                                 }
 
-                                // Start with textures
-                                console.log("start textures");
+
 
                                 this.loadObjStream(objectDefinition);
                             }
@@ -847,7 +854,21 @@ class Asset_viewer_3d_kernel {
             }
         } );
 
-        return [sceneBSCenter, sceneBSRadius];
+        let sphereGeometry = new THREE.SphereGeometry(sceneBSRadius, 32, 32);
+        let sphereMaterial = new THREE.MeshBasicMaterial({color:0x00ff00, wireframe:true})
+        let sphereObject = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphereObject.visible = false;
+        sphereObject.name = "myBoundingSphere";
+
+        return [sceneBSCenter, sceneBSRadius, sphereObject];
+    }
+
+
+    showHideBoundSphere(){
+        let sphObj = this.scene.getObjectByName('myBoundingSphere');
+        let isVisible = sphObj.visible;
+        sphObj.visible = isVisible ? false : true;
+        this.render();
     }
 
 
@@ -898,7 +919,10 @@ class Asset_viewer_3d_kernel {
 
                         // Display button to start animation inside the Asset 3D previewer
                         scope.animationButton.style.display = "none";
+                    }
 
+                    if (scope.boundingSphereButton) {
+                        scope.boundingSphereButton.style.display = "inline-block";
                     }
 
                     // Add to root
@@ -951,7 +975,7 @@ class Asset_viewer_3d_kernel {
                         function (object) {
 
                             // Find bounding sphere
-                            var sphere = scope.computeSceneBoundingSphereAll(object);
+                            let sphere = scope.computeSceneBoundingSphereAll(object);
 
                             // translate object to the center
                             object.traverse(function (object) {
@@ -966,7 +990,7 @@ class Asset_viewer_3d_kernel {
                             // Find new zoom
                             var totalradius = sphere[1];
                             scope.controls.minDistance = 0.001 * totalradius;
-                            scope.controls.maxDistance = 3 * totalradius;
+                            scope.controls.maxDistance = 15 * totalradius;
 
                             scope.zoomer(scope.scene.getChildByName('root'));
                             scope.kickRendererOnDemand();
@@ -1162,13 +1186,18 @@ class Asset_viewer_3d_kernel {
 
             let sphere = this.computeSceneBoundingSphereAll(towhatObj);
 
+            this.scene.add(sphere[2]);
+
             let totalRadius = sphere[1];
-            this.controls.minDistance = 0.02 * totalRadius;
-            this.controls.maxDistance = 13 * totalRadius;
+            console.log("totalRadius", totalRadius);
+            this.controls.minDistance = 0.01 * totalRadius;
+            this.controls.maxDistance = 100 * totalRadius;
             this.resizeDisplayGL();
             this.controls.update();
         }
 
+
+        console.log(this.assettrs[0]);
 
         this.controls.object.position.x =  parseFloat(this.assettrs[0]);
         this.controls.object.position.y =  parseFloat(this.assettrs[1]);
@@ -1178,6 +1207,7 @@ class Asset_viewer_3d_kernel {
         this.controls.object.rotation.y =  parseFloat(this.assettrs[4]);
         this.controls.object.rotation.z =  parseFloat(this.assettrs[5]);
 
+        this.resetCamera();
     }
 
     // Resize Renderer and Label Renderer
@@ -1192,6 +1222,7 @@ class Asset_viewer_3d_kernel {
         this.labelRenderer.setSize(this.canvasLabelsToBindTo.offsetWidth, this.canvasLabelsToBindTo.offsetHeight, false);
 
         this.updateCamera();
+
     }
 
     // Recalculate canvas aspect ratio

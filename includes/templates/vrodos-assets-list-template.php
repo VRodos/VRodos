@@ -9,16 +9,16 @@ if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
 $parameter_assetpass = $perma_structure ? '?wpunity_asset=' : '&wpunity_asset=';
 
-if ($project_scope == 0) {
-    //	$single_lowercase = "tour";
-    //	$single_first = "Tour";
-} else if ($project_scope == 1){
-    //	$single_lowercase = "lab";
-    //	$single_first = "Lab";
-} else {
-    //	$single_lowercase = "project";
-    //	$single_first = "Project";
-}
+//if ($project_scope == 0) {
+//    //	$single_lowercase = "tour";
+//    //	$single_first = "Tour";
+//} else if ($project_scope == 1){
+//    //	$single_lowercase = "lab";
+//    //	$single_first = "Lab";
+//} else {
+//    //	$single_lowercase = "project";
+//    //	$single_first = "Project";
+//}
 
 $joker_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'wpunity_game' )->ID;
 
@@ -43,10 +43,8 @@ $isUserloggedIn = is_user_logged_in();
 $current_user = wp_get_current_user();
 $login_username = $current_user->user_login;
 
-if($isUserloggedIn)
-    $isUserAdmin = current_user_can('administrator');
-else
-    $isUserAdmin = false;
+$isUserAdmin = $isUserloggedIn ? current_user_can('administrator'): false;
+
 
 $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 $pluginpath = str_replace('\\','/',$pluginpath);

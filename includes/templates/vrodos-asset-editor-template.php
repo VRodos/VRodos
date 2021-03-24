@@ -420,7 +420,7 @@ $asset_fonts_saved = ($asset_id == null ? "" : get_post_meta($asset_id,'vrodos_a
 $asset_back_3d_color_saved = ($asset_id == null ? "#000000" :
     get_post_meta($asset_id,'vrodos_asset3d_back3dcolor', true));
 
-$assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,0" :
+$assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
     get_post_meta($asset_id,'vrodos_asset3d_assettrs', true));
 
 
@@ -480,6 +480,7 @@ if($asset_id != null) {
     <canvas id="previewCanvas" >3D canvas</canvas>
 
     <a href="#" class="animationButton" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();">Animation 1</a>
+    <a href="#" class="boundingSphereButton" id="boundSphButton" onclick="asset_viewer_3d_kernel.showHideBoundSphere();">Bounds</a>
 
     <!-- QR code -->
     <?php include 'vrodos-QRCodeGenerator.php'; ?>
@@ -807,7 +808,7 @@ if($asset_id != null) {
     
             
             
-            <input type="text" id="assettrs" class="mdc-textfield__input"
+            <input type="hidden" id="assettrs" class="mdc-textfield__input"
                    name="assettrs" form="3dAssetForm" value="<?php echo trim($assettrs_saved); ?>" />
             
             
@@ -1243,11 +1244,6 @@ if($asset_id != null) {
 </form>
 
 
-
-
-
-
-
 <!--                     Javascript                             -->
 <script type="text/javascript">
     'use strict';
@@ -1262,8 +1258,6 @@ if($asset_id != null) {
     document.getElementById("jscolorpick").value = back_3d_color;
 
     generateQRcode();
-
-
 
     let audio_file = document.getElementById( 'audioFile' );
 
@@ -1287,7 +1281,7 @@ if($asset_id != null) {
     let assettrs = document.getElementById( 'assettrs' ).value;
 
     // ------- Class to load 3D model ---------
-    var asset_viewer_3d_kernel = new Asset_viewer_3d_kernel(document.getElementById( 'previewCanvas' ),
+    let asset_viewer_3d_kernel = new Asset_viewer_3d_kernel(document.getElementById( 'previewCanvas' ),
                                                             document.getElementById( 'previewCanvasLabels' ),
                                                             document.getElementById('animButton1'),
                                                             document.getElementById('previewProgressLabel'),
@@ -1305,8 +1299,8 @@ if($asset_id != null) {
                                                             false,
                                                             false,
                                                             true,
-                                                            0, 0, 0,
-                                                            assettrs);
+                                                            assettrs,
+                                                            document.getElementById('boundSphButton'));
 
     // Load existing 3D models
     // asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,
