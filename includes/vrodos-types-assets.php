@@ -24,12 +24,13 @@ function wpunity_assets_construct(){
     );
     
     $args = array(
-        'labels' => $labels,
+         'labels' => $labels,
         'description' => 'Displays Assets 3D',
         'public' => true,
         'exclude_from_search' => true,
         'publicly_queryable' => false,
         'show_in_nav_menus' => false,
+        'show_in_rest' => true,
         'menu_position' => 25,
         'menu_icon' => 'dashicons-editor-textcolor',
         'taxonomies' => array('wpunity_asset3d_cat', 'wpunity_asset3d_pgame', 'wpunity_asset3d_ipr_cat'),

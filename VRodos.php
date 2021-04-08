@@ -656,11 +656,10 @@ function prefix_get_endpoint_phrase($request) { //
  */
 function prefix_register_example_routes() {
     // register_rest_route() handles more arguments but we are going to stick to the basics for now.
-    register_rest_route( 'wpunity/v1', '/scene/(?P<title>\S+)', array(
-        // By using this constant we ensure that when the WP_REST_Server changes our readable endpoints will work as intended.
-        'methods'  => WP_REST_Server::READABLE,
-        // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
-        'callback' => 'prefix_get_endpoint_phrase',
+    register_rest_route( 'wpunity/v1', '/scene/(?P<title>\S+)',
+		array(
+        'methods'  => WP_REST_Server::READABLE,   // By using this constant we ensure that when the WP_REST_Server changes our readable endpoints will work as intended.
+        'callback' => 'prefix_get_endpoint_phrase',  // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
     ) );
 }
 
@@ -669,6 +668,7 @@ add_action( 'rest_api_init', 'prefix_register_example_routes' );
 
 // Back-end restrict by author filtering
 function wpunity_filter_by_the_author() {
+
 	$params = array(
 		'name' => 'author', // this is the "name" attribute for filter <select>
 		'show_option_all' => 'All authors' // label for all authors (display posts without filter)
