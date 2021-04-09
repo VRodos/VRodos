@@ -216,8 +216,10 @@ function resizeText(multiplier) {
 
 function showSlides(i) {
 
+
     // Get slides div
-    var slides = document.getElementsByClassName("mySlides");
+    let slides = document.getElementsByClassName("mySlides");
+
 
     if(slides.length == 0)
         return;
@@ -231,6 +233,8 @@ function showSlides(i) {
     if (i < 0) {slideIndex = slides.length}
 
     i = slideIndex;
+
+    console.log(slides);
 
     // Show only one
     slides[i].style.display = "block";

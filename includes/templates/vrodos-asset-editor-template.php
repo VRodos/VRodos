@@ -955,7 +955,7 @@ if($asset_id != null) {
 
                 <!-- Check if video slide should be shown -->
                 <?php if ($showVid=='' && $asset_id != null && $videoID!=null){ ?>
-                    <div class="mySlides fade">
+                    <div class="">
                         <!-- Video slide -->
                         <!--<div class="numbertext">1 / 2</div>-->
                         <div id="videoDetailsPanel" style="display:<?php echo ($asset_id == null)?'none':$showVid; ?>;">
@@ -986,7 +986,7 @@ if($asset_id != null) {
                 <?php
                 for ($i=0; $i<=4; $i++){
                     if ($showImageFields=='' && $asset_id != null && $images_urls[$i]!=null){ ?>
-                        <div class="mySlides fade">
+                        <div class="">
                             <div id="imgDetailsPanel_preview" style="display: <?php echo ($asset_id == null)?'none':$showImageFields; ?>">
                                 <?php if($asset_id != null){ ?>
                                     <img alt="Related images"
@@ -1255,12 +1255,15 @@ if($asset_id != null) {
 
     let back_3d_color = "<?php echo $back_3d_color; ?>";
 
+    
     document.getElementById("jscolorpick").value = back_3d_color;
-
+    
+    
     generateQRcode();
 
+    
     let audio_file = document.getElementById( 'audioFile' );
-
+    
     let isEditMode = 0;
     isEditMode= <?php echo $isEditMode == '' ? 0: 1  ; ?>;
 
@@ -1270,15 +1273,23 @@ if($asset_id != null) {
 //        wpunity_reset_panels(asset_viewer_3d_kernel, "initial script");
 
         // Get the Default Screenshot image for reference;
+        
+        
         var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg").src;
+        
     }
 
     // Set the functionality of the screenshot button;
     screenshotHandlerSet();
 
+    
     let multipleFilesInputElem = document.getElementById( 'fileUploadInput' );
 
-    let assettrs = document.getElementById( 'assettrs' ).value;
+    
+    
+    let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
+    
+    
 
     // ------- Class to load 3D model ---------
     let asset_viewer_3d_kernel = new Asset_viewer_3d_kernel(document.getElementById( 'previewCanvas' ),
@@ -1302,6 +1313,9 @@ if($asset_id != null) {
                                                             assettrs,
                                                             document.getElementById('boundSphButton'));
 
+
+    
+    
     // Load existing 3D models
     // asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,
     //                                                      glb_file_name, textures_fbx_string_connected);
@@ -1318,6 +1332,9 @@ if($asset_id != null) {
             let MDCSelect = mdc.select.MDCSelect;
 
             // Category of asset change
+
+            
+            
             let categoryDropdown = document.getElementById('category-select');
             let categorySelect = MDCSelect.attachTo(categoryDropdown);
             let selectedCatId = jQuery('#currently-selected').attr("data-cat-id");
