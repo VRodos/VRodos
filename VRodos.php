@@ -163,11 +163,11 @@ add_action('wp_enqueue_scripts', 'vrodos_register_scripts' );
 
 function vrodos_register_styles() {
 	wp_register_style( 'wpunity_backend', plugin_dir_url( __FILE__ ) . 'css/vrodos_backend.css' );
-	wp_register_style( 'wpunity_vr_editor', plugin_dir_url( __FILE__ ) . 'css/vr_editor_style.css' );
+	wp_register_style( 'vrodos_3D_editor', plugin_dir_url( __FILE__ ) . 'css/vrodos_3D_editor.css' );
 	wp_register_style( 'wpunity_datgui', plugin_dir_url( __FILE__ ) . 'css/dat-gui.css' );
 
 	
-	wp_register_style( 'wpunity_vr_editor_filebrowser', plugin_dir_url( __FILE__ ).'css/vr_editor_fileBrowserStyle.css' );
+	wp_register_style( 'vrodos_3D_editor_browser', plugin_dir_url( __FILE__ ).'css/vrodos_3D_editor_browser.css' );
 	wp_register_style( 'wpunity_material_stylesheet',  plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.css' );
 	wp_register_script( 'wpunity_material_scripts', plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.js');
 	

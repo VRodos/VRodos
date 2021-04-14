@@ -38,7 +38,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     // Create drag image BEFORE event is fired - THEN call it inside the event
     function createDragImage() {
         var img = jQuery('<img>');
-        img.attr('src', '../wp-content/plugins/vrodos/images/ic_asset.png');
+        img.attr('src', 'wp-content/plugins/vrodos/images/ic_asset.png');
         img.css({
             "top": 0,
             "left": 0,

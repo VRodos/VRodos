@@ -36,8 +36,8 @@ function wpunity_load_vreditor_scripts()
     wp_enqueue_script('vrodos_jscolorpick');
     
     wp_enqueue_style('wpunity_datgui');
-    wp_enqueue_style('wpunity_vr_editor');
-    wp_enqueue_style('wpunity_vr_editor_filebrowser');
+    wp_enqueue_style('vrodos_3D_editor');
+    wp_enqueue_style('vrodos_3D_editor_browser');
     
 }
 add_action('wp_enqueue_scripts', 'wpunity_load_vreditor_scripts' );
@@ -232,7 +232,7 @@ wp_localize_script( 'ajax-script_deletescene', 'my_ajax_object_deletescene',
 );
 
 //FOR SAVING extra keys
-wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/wpunity_save_scene_ajax.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
 wp_localize_script( 'ajax-script_savegio', 'my_ajax_object_savegio',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'project_id' => $project_id )
 );
@@ -242,7 +242,7 @@ wp_enqueue_script( 'ajax-script_filebrowse', $pluginpath.'/js_libs/assetBrowserT
 wp_localize_script( 'ajax-script_filebrowse', 'my_ajax_object_fbrowse', array( 'ajax_url' => admin_url( 'admin-ajax.php' ) ) );
 
 // Save scene
-wp_enqueue_script( 'ajax-script_savescene', $pluginpath.'/js_libs/ajaxes/wpunity_save_scene_ajax.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_savescene', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
 wp_localize_script( 'ajax-script_savescene', 'my_ajax_object_savescene',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
 );
@@ -399,62 +399,68 @@ get_header(); ?>
 
 <?php } else { ?>
 
-    <!-- Upper Toolbar -->
-    <div class="mdc-toolbar hidable scene_editor_upper_toolbar">
-
-        <!-- Display Breadcrump about projectType>project>scene -->
-        <?php vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
-                                    $project_type, $project_type_icon, $project_post); ?>
-
-        <!-- Undo - Save - Redo -->
-        <div id="save-scene-elements">
-            <a id="undo-scene-button" title="Undo last change"><i class="material-icons">undo</i></a>
-            <a id="save-scene-button" title="Save all changes you made to the current scene">All changes saved</a>
-            <a id="redo-scene-button" title="Redo last change"><i class="material-icons">redo</i></a>
-        </div>
-
-        <!-- View Json code UI -->
-        <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
-           class="ToggleUIButtonStyle mdc-theme--secondary mdc-theme--text-hint-on-light"
-           title="View json of scene"
-           style="padding-top:1px;width:70px;left: calc(50% + 112px);">
-            json:
-            <i class="material-icons" style="background: none; opacity:1; font-size:11pt">visibility_off</i>
-        </a>
-        
-        <!-- Compile Button -->
-        <a id="compileGameBtn"
-           class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right"
-           data-mdc-auto-init="MDCRipple"
-           title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
-            COMPILE
-        </a>
-        
-        <?php // Compile Dialogue html
-           require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-CompileDialogue.php' );
-        ?>
-    </div>
-
-    <!-- Scene JSON content TextArea display and set input field -->
-    <div id="sceneJsonContent">
-          <textarea id="vrodos_scene_json_input"
-                    name="vrodos_scene_json_input"
-                    title="vrodos_scene_json_input"
-                    rows="50" cols = "100"><?php echo json_encode(json_decode($sceneToLoad), JSON_PRETTY_PRINT ); ?>
-          </textarea>
-    </div>
 
     <!-- PANELS -->
     <div class="panels">
         
         <!-- Panel 1 is the vr enivironment -->
         <div class="panel active" id="panel-1" role="tabpanel" aria-hidden="false">
-
-
-            
             
             <!-- 3D editor  -->
             <div id="vr_editor_main_div">
+
+                <!-- Upper Toolbar -->
+                <div class="mdc-toolbar hidable scene_editor_upper_toolbar">
+
+                    <!-- Display Breadcrump about projectType>project>scene -->
+                    <?php vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
+                        $project_type, $project_type_icon, $project_post); ?>
+
+                    <!-- Undo - Save - Redo -->
+                    <div id="save-scene-elements">
+                        <a id="undo-scene-button" title="Undo last change"><i class="material-icons">undo</i></a>
+                        <a id="save-scene-button" title="Save all changes you made to the current scene">All changes saved</a>
+                        <a id="redo-scene-button" title="Redo last change"><i class="material-icons">redo</i></a>
+                    </div>
+
+                    <!-- View Json code UI -->
+                    <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
+                       class="ToggleUIButtonStyle mdc-theme--secondary mdc-theme--text-hint-on-light"
+                       title="View json of scene"
+                       style="padding-top:1px;width:70px;left: calc(50% + 112px);">
+                        json:
+                        <i class="material-icons" style="background: none; opacity:1; font-size:11pt">visibility_off</i>
+                    </a>
+
+                    <!-- Compile Button -->
+                    <a id="compileGameBtn"
+                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right"
+                       data-mdc-auto-init="MDCRipple"
+                       title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
+                        COMPILE
+                    </a>
+        
+                    <?php // Compile Dialogue html
+                    require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-CompileDialogue.php' );
+                    ?>
+                </div>
+
+                <!-- Scene JSON content TextArea display and set input field -->
+                <div id="sceneJsonContent">
+                  <textarea id="vrodos_scene_json_input"
+                    name="vrodos_scene_json_input"
+                    title="vrodos_scene_json_input"
+                    rows="50" cols = "100"><?php echo json_encode(json_decode($sceneToLoad), JSON_PRETTY_PRINT ); ?>
+                  </textarea>
+                </div>
+
+
+
+
+
+
+
+
 
                 <!-- Close all 2D UIs-->
                 <a id="toggleUIBtn" data-toggle='on' type="button"

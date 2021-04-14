@@ -3,7 +3,7 @@
 /* Three js */
 #vr_editor_main_div {
     position:fixed;
-    top:60px;
+    top:30px;
     left:0;
     right:0;
     bottom:0;
@@ -171,6 +171,7 @@ canvas { pointer-events:none; z-index:10; }
     top:1px;
     width: 20%;
     left:0;
+    top:30px;
     z-index: 999;
     cursor: pointer;
     padding-top:5px;
@@ -190,7 +191,7 @@ canvas { pointer-events:none; z-index:10; }
 }
 
 #assetCategTab{
-    margin-top:30px;
+    margin-top:60px;
     background-color:black;
     padding:0px;
 }
@@ -205,6 +206,7 @@ canvas { pointer-events:none; z-index:10; }
     top:1px;
     width: 15%;
     right:0;
+    top:30px;
     z-index: 999;
 }
 
@@ -430,14 +432,14 @@ canvas { pointer-events:none; z-index:10; }
 .ToggleUIButtonStyle {
     position: absolute;
     left: calc(50% + 152px);
-    top: 2px;
+    top: 32px;
     background: transparent;
     -webkit-appearance: none;
     -moz-appearance: none;
 }
 
 .ToggleUIButtonStyle i {
-    font-size: 48px;
+    font-size: 78px;
     cursor: pointer;
 }
 
@@ -446,7 +448,7 @@ canvas { pointer-events:none; z-index:10; }
 .RemoveAssetFromSceneBtnStyle {
     position: absolute;
     left: 372px;
-    top: 10px;
+    top: 40px;
     width: 48px;
     min-width: 0;
     padding: 0;
@@ -759,6 +761,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 
 .lightcolumns{
     position: absolute; /* Do not put relative because it breaks the raycaster of canvas */
+    top:30px;
     left: 50%;
     margin-left: -50px;
     z-index:1004;
@@ -863,7 +866,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 #sceneJsonContent {
     z-index:100000;
     position:absolute;
-    top:20px;
+    top:50px;
     left:100px;
     display:none
 }

@@ -57,7 +57,7 @@ wp_localize_script( 'ajax-script_deletescene', 'my_ajax_object_deletescene',
 );
 
 //FOR SAVING extra keys
-wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/wpunity_save_scene_ajax.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
 wp_localize_script( 'ajax-script_savegio', 'my_ajax_object_savegio',
     array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'project_id' => $project_id )
 );
