@@ -1,12 +1,13 @@
 <?php
 /**
  * Plugin Name: VRodos
- * Plugin URI: https://vrodos.mklab.iti.gr
+ * Plugin URI: https://vrodos.iti.gr
  * Description: Make your wordpress website a VR site
  * Author: Dimitrios Ververidis, ververid@iti.gr
- * Author URI: https://vrodos.mklab.iti.gr
+ * Author URI: https://vrodos.iti.gr
  * Version: 0.5
  */
+
 
 /*
  * Please change root .htaccess for uploading big 3D model files
@@ -31,6 +32,8 @@ echo ini_get('max_input_time').chr(10);
 // Virtual Tour: 0
 // Virtual Lab: 1
 $project_scope = 0;
+
+
 
 // VRodos js register
 function vrodos_register_scripts() {
@@ -434,34 +437,17 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-edi
 // ---------  Create dedicated pages on plugin activation -------------------------
 // 68
 
-// Create Pages and change their template
-
-// Project Manager Page
-register_activation_hook(__FILE__,'vrodos_create_ProjectManagerPage');
-
-// List Shared Assets Page
-register_activation_hook(__FILE__,'vrodos_create_AssetsListPage');
-
-// Edit 3D Scene Page
-register_activation_hook(__FILE__,'vrodos_create_scene3DeditorPage');
-
-// Edit Asset3D Page
-register_activation_hook(__FILE__,'vrodos_create_assetEditorPage');
-
-// Edit 2D Scene Page
-register_activation_hook(__FILE__,'vrodos_create_scene2DeditorPage');
-
-// Edit Scene Exam Page
-register_activation_hook(__FILE__,'vrodos_create_editSceneExamPage');
+// 1. Project Manager
+// 2. Assets List Page
+// 3. 3D Editor
+// 4. 2D Scene editor
+// 5. Exam page
+// 6. Asset Editor
+register_activation_hook(__FILE__,'vrodos_create_pages');
 
 // Add Project Manager and Assets List pages to menu automatically;
-register_activation_hook(__FILE__,'vrodos_nav_menu_init');
-
-// Some messages
+// Some messages also
 register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
-
-
-
 
 // -------------  Games versions table -------------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-db-table-creations.php' );

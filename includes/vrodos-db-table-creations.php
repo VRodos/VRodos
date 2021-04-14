@@ -26,6 +26,8 @@ function wpunity_db_create_games_versions_table () {
 	dbDelta( $sql );
 
 	add_option( 'wpunity_db_version', $wpunity_db_version );
+ 
+ 
 }
 
 /**

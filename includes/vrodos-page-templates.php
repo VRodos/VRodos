@@ -123,12 +123,12 @@ class wpUnityTemplate {
 
 
 // Create "Project Manager Page" and assign its template
-function vrodos_create_ProjectManagerPage() {
-
-//    $ff = fopen("output_order_log.txt","a");
-//    fwrite($ff, 'register_activation_hook'.chr(13));
-//    fclose($ff);
+function vrodos_create_pages() {
     
+    // Do not remove
+    ob_start();
+
+    // 1. Project Manager
     if (! wpunity_get_page_by_slug('vrodos-project-manager-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Project Manager Page',
@@ -150,11 +150,9 @@ function vrodos_create_ProjectManagerPage() {
         
         update_option('hclpage', $new_page_id);
     }
-}
-
-// Create Assets List Page and assign its template
-function vrodos_create_AssetsListPage() {
-    
+ 
+ 
+    // 2. Assets List Page
     if (! wpunity_get_page_by_slug('vrodos-assets-list-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Assets List Page',
@@ -173,12 +171,9 @@ function vrodos_create_AssetsListPage() {
         
         update_option('hclpage', $new_page_id);
     }
-}
-
-
-// Scene 3D editor
-function vrodos_create_scene3DeditorPage() {
+   
     
+    //  3. 3D Editor
     if (! wpunity_get_page_by_slug('vrodos-edit-3d-scene-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Scene 3D Editor Page',
@@ -197,11 +192,8 @@ function vrodos_create_scene3DeditorPage() {
         
         update_option('hclpage', $new_page_id);
     }
-}
-
-// Edit 2D Scene
-function vrodos_create_scene2DeditorPage() {
     
+    // 4.  2D Scene editor
     if (! wpunity_get_page_by_slug('vrodos-edit-2d-scene-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Scene 2D Editor Page',
@@ -220,11 +212,9 @@ function vrodos_create_scene2DeditorPage() {
         
         update_option('hclpage', $new_page_id);
     }
-}
 
-// Edit Exam page
-function vrodos_create_editSceneExamPage() {
     
+    // 5. Exam page
     if (! wpunity_get_page_by_slug('vrodos-edit-exam-scene-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Edit Exam Scene Page',
@@ -243,12 +233,9 @@ function vrodos_create_editSceneExamPage() {
         
         update_option('hclpage', $new_page_id);
     }
-}
 
-
-// --- Page to edit an Asset ----
-function vrodos_create_assetEditorPage() {
     
+    // 6. Asset Editor
     if (! wpunity_get_page_by_slug('vrodos-asset-editor-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Asset Editor Page',
@@ -268,16 +255,17 @@ function vrodos_create_assetEditorPage() {
         
         update_option('hclpage', $new_page_id);
     }
+    
+    // Remove any unexpected characters that have occured from the above functions, so as not to be included in headers
+    ob_get_contents();
+//    $f = fopen("output_activation.txt","w");
+//    fwrite($f, ob_get_contents());
+//    fclose($f);
+    //trigger_error(ob_get_contents(),E_USER_ERROR);
 }
 
 
-// Add two page to navigation menu automatically
-function vrodos_nav_menu_init()
-{
-
-}
-
-
+// Add two page to navigation menu automatically and give a notification of activation
 function vrodos_fx_admin_notice_activation_hook() {
     set_transient( 'vrodos_fx-admin-notice', true, 5 );
 }
@@ -286,14 +274,13 @@ add_action( 'admin_notices', 'vrodos_fx_admin_notice_notice' );
 
 function vrodos_fx_admin_notice_notice(){
     
+    
+
+
     /* Check transient, if available display notice */
     if( get_transient( 'vrodos_fx-admin-notice' ) ){
-        ?>
-        <div class="updated notice is-dismissible">
-        
-        <?php
 
-        // If you do not have a menu, I will create one for you
+       // If you do not have a menu, I will create one for you
         if( count(get_terms('nav_menu')) == 0){
             wp_create_nav_menu("main");
         }
@@ -335,17 +322,15 @@ function vrodos_fx_admin_notice_notice(){
             }
             
         }
-    
-        ?>
-    
-        <p>Thank you for using VRodos! <strong>Two pages have been added to menu</strong>.</p>
-        </div>
-    
-        <?php
+        
+        echo '<div class="updated notice is-dismissible"><p>Thank you for using VRodos! <strong>Two pages have been added to menu</strong>.</p></div>';
+        
         /* Delete transient, only display this notice once. */
         delete_transient( 'vrodos_fx-admin-notice' );
-        
+    
+    
     }
+
 }
 
 
