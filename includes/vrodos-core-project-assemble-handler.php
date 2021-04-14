@@ -368,15 +368,15 @@ function wpunity_delete_gameproject_frontend_callback(){
     wp_reset_postdata();
 
     //2.Delete Scenes
-    $scenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+    $scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
     $scenePGameID = $scenePGame->term_id;
 
     $custom_query_args2 = array(
-        'post_type' => 'wpunity_scene',
+        'post_type' => 'vrodos_scene',
         'posts_per_page' => -1,
         'tax_query' => array(
             array(
-                'taxonomy' => 'wpunity_scene_pgame',
+                'taxonomy' => 'vrodos_scene_pgame',
                 'field'    => 'term_id',
                 'terms'    => $scenePGameID,
             ),
@@ -400,7 +400,7 @@ function wpunity_delete_gameproject_frontend_callback(){
 
     //3. Delete taxonomies from Assets & Scenes
     wp_delete_term( $assetPGameID, 'vrodos_asset3d_pgame' );
-    wp_delete_term( $scenePGameID, 'wpunity_scene_pgame' );
+    wp_delete_term( $scenePGameID, 'vrodos_scene_pgame' );
 
     //4. Delete Compile Folder of Game (if exists)
     wpunity_compile_folders_del($gameSlug);
@@ -585,7 +585,7 @@ function wpunity_delete_asset3d_noscenes_frontend($asset_id){
 // Delete asset from json
 function wpunity_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug){
 
-    $scenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+    $scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
     
     if (!$scenePGame) {
         wp_reset_postdata();
@@ -595,11 +595,11 @@ function wpunity_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug){
     $scenePGameID = $scenePGame->term_id;
 
     $custom_query_args2 = array(
-        'post_type' => 'wpunity_scene',
+        'post_type' => 'vrodos_scene',
         'posts_per_page' => -1,
         'tax_query' => array(
             array(
-                'taxonomy' => 'wpunity_scene_pgame',
+                'taxonomy' => 'vrodos_scene_pgame',
                 'field'    => 'term_id',
                 'terms'    => $scenePGameID,
             ),
@@ -657,15 +657,15 @@ function wpunity_fetch_assetids_in_scenes($gameSlug){
     // output is the ids of all the objs in the scenes
     $assetsids = [];
 
-    $scenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+    $scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
     $scenePGameID = $scenePGame->term_id;
 
     $custom_query_args2 = array(
-        'post_type' => 'wpunity_scene',
+        'post_type' => 'vrodos_scene',
         'posts_per_page' => -1,
         'tax_query' => array(
             array(
-                'taxonomy' => 'wpunity_scene_pgame',
+                'taxonomy' => 'vrodos_scene_pgame',
                 'field'    => 'term_id',
                 'terms'    => $scenePGameID,
             ),
@@ -771,7 +771,7 @@ function wpunity_compile_append_scene_to_s_selector($scene_id, $scene_name, $sce
     }
 
     $mainMenuTerm = get_term_by('slug', 'mainmenu'.$taxterm_suffix.'-yaml',
-        'wpunity_scene_yaml');
+        'vrodos_scene_yaml');
     
     $termid  = $mainMenuTerm->term_id;
     

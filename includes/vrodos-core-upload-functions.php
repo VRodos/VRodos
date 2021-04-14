@@ -12,8 +12,8 @@ function wpunity_upload_dir_forScenesOrAssets( $args ) {
     $args['path'] = str_replace($args['subdir'], '', $args['path']);
     $args['url'] = str_replace($args['subdir'], '', $args['url']);
     
-    $newdir = get_post_type($post_id) === 'wpunity_scene' ?
-         '/' . get_the_terms($post_id, 'wpunity_scene_pgame')[0]->slug . '/Scenes'  // 'wpunity_scene'
+    $newdir = get_post_type($post_id) === 'vrodos_scene' ?
+         '/' . get_the_terms($post_id, 'vrodos_scene_pgame')[0]->slug . '/Scenes'  // 'vrodos_scene'
       :  '/' . get_post_meta($post_id, 'vrodos_asset3d_pathData', true) . '/Models'; // 'vrodos_asset3d'
     
     $args['subdir'] = $newdir;

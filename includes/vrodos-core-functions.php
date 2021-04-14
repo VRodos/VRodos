@@ -158,17 +158,17 @@ function wpunity_getExamScenes_byProjectID($project_id){
 	$scene_type_slug = array( 'exam2d-chem-yaml', 'exam3d-chem-yaml' );
 
 	$custom_query_args = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			'relation' => 'AND',
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'slug',
 				'terms'    => $gameSlug
 			),
 			array(
-				'taxonomy' => 'wpunity_scene_yaml',
+				'taxonomy' => 'vrodos_scene_yaml',
 				'field'    => 'slug',
 				'terms'    => $scene_type_slug,
 			),
@@ -185,7 +185,7 @@ function wpunity_getExamScenes_byProjectID($project_id){
 			$custom_query->the_post();
 
 			$scene_data[] = get_the_ID();
-			//$scene_data['type'] = get_post_meta( get_the_ID(), 'wpunity_scene_metatype', true );
+			//$scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
 		}
 	}
 
@@ -205,17 +205,17 @@ function wpunity_getFirstSceneID_byProjectID($project_id,$project_type){
 
 
 	$custom_query_args = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			'relation' => 'AND',
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'slug',
 				'terms'    => $gameSlug
 			),
 			array(
-				'taxonomy' => 'wpunity_scene_yaml',
+				'taxonomy' => 'vrodos_scene_yaml',
 				'field'    => 'slug',
 				'terms'    => $scene_type_slug,
 			),
@@ -231,7 +231,7 @@ function wpunity_getFirstSceneID_byProjectID($project_id,$project_type){
 			$custom_query->the_post();
 
 			$scene_data['id'] = get_the_ID();
-			$scene_data['type'] = get_post_meta( get_the_ID(), 'wpunity_scene_metatype', true );
+			$scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
 		}
 	}
 
@@ -245,8 +245,8 @@ function wpunity_getFirstSceneID_byProjectID($project_id,$project_type){
 function wpunity_windEnergy_scene_stats($scene_id){
 
 	$turbinesInfoGathered = [];
-	$scene_json = get_post($scene_id)->post_content; //, 'wpunity_scene_json_input', true);
-	$scene_env = get_post_meta($scene_id, 'wpunity_scene_environment', true);
+	$scene_json = get_post($scene_id)->post_content; //, 'vrodos_scene_json_input', true);
+	$scene_env = get_post_meta($scene_id, 'vrodos_scene_environment', true);
 
 	$jsonScene = htmlspecialchars_decode($scene_json);
 	$sceneJsonARR = json_decode($jsonScene, TRUE);
@@ -394,18 +394,18 @@ function wpunity_createJoker_activation() {
 function wpunity_getNonRegionalScenes($project_id) {
 	$game_post = get_post($project_id);
 	$gameSlug = $game_post->post_name;
-	$scenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+	$scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
 	$scenePGameID = $scenePGame->term_id;
 
 	$nonRegionalScenes = array();
 
 	// Define custom query parameters
 	$custom_query_args = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
 				'terms'    => $scenePGameID,
 			)
@@ -817,7 +817,7 @@ function wpunity_createGame_GIO_request($project_id, $user_id){
 
 function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 
-	$allScenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+	$allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
 	$allScenePGameID = $allScenePGame->term_id;
 
 	$all_game_category = get_the_terms( $gameID, 'wpunity_game_type' );
@@ -844,31 +844,31 @@ function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 	$default_json = '';
 
 	if($game_category == 'energy_games'){
-		$firstSceneYAML = get_term_by('slug', 'educational-energy', 'wpunity_scene_yaml'); //Yaml Tax for First Scene
+		$firstSceneYAML = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml'); //Yaml Tax for First Scene
 		$firstSceneYAMLID = $firstSceneYAML->term_id;
-		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-yaml', 'wpunity_scene_yaml'); //Yaml Tax for Main Menu
+		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Main Menu
 		$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
-		$credentialsSceneYAML = get_term_by('slug', 'credentials-yaml', 'wpunity_scene_yaml'); //Yaml Tax for Credentials Scene
+		$credentialsSceneYAML = get_term_by('slug', 'credentials-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Credentials Scene
 		$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
 		$default_json= wpunity_getDefaultJSONscene('energy');
 	}elseif($game_category == 'archaeology_games'){
-		$firstSceneYAML = get_term_by('slug', 'wonderaround-yaml', 'wpunity_scene_yaml'); //Yaml Tax for First Scene
+		$firstSceneYAML = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml'); //Yaml Tax for First Scene
 		$firstSceneYAMLID = $firstSceneYAML->term_id;
-		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-arch-yaml', 'wpunity_scene_yaml'); //Yaml Tax for Main Menu
+		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-arch-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Main Menu
 		$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
-		$credentialsSceneYAML = get_term_by('slug', 'credentials-arch-yaml', 'wpunity_scene_yaml'); //Yaml Tax for Credentials Scene
+		$credentialsSceneYAML = get_term_by('slug', 'credentials-arch-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Credentials Scene
 		$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
 		$default_json= wpunity_getDefaultJSONscene('archaeology');
 	}elseif($game_category == 'chemistry_games'){
-		$firstSceneYAML = get_term_by('slug', 'wonderaround-lab-yaml', 'wpunity_scene_yaml'); //Yaml Tax for First Scene (Chemistry)
+		$firstSceneYAML = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml'); //Yaml Tax for First Scene (Chemistry)
 		$firstSceneYAMLID = $firstSceneYAML->term_id;
-		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-chem-yaml', 'wpunity_scene_yaml'); //Yaml Tax for Main Menu (Chemistry)
+		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Main Menu (Chemistry)
 		$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
-		$credentialsSceneYAML = get_term_by('slug', 'credentials-chem-yaml', 'wpunity_scene_yaml'); //Yaml Tax for Credentials Scene (Chemistry)
+		$credentialsSceneYAML = get_term_by('slug', 'credentials-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Credentials Scene (Chemistry)
 		$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
-		$exam2dSceneYAML = get_term_by('slug', 'exam2d-chem-yaml', 'wpunity_scene_yaml'); //Yaml Tax for Exam 2d Scene (Chemistry)
+		$exam2dSceneYAML = get_term_by('slug', 'exam2d-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Exam 2d Scene (Chemistry)
 		$exam2dSceneYAMLID = $exam2dSceneYAML->term_id;
-		$exam3dSceneYAML = get_term_by('slug', 'exam3d-chem-yaml', 'wpunity_scene_yaml'); //Yaml Tax for Exam 3d Scene (Chemistry)
+		$exam3dSceneYAML = get_term_by('slug', 'exam3d-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Exam 3d Scene (Chemistry)
 		$exam3dSceneYAMLID = $exam3dSceneYAML->term_id;
 		$default_json= wpunity_getDefaultJSONscene('chemistry');
 	}
@@ -878,14 +878,14 @@ function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 		'post_title'    => $mainmenuSceneTitle,
 		'post_content' => 'Main Menu of the Game',
 		'post_name' => $mainmenuSceneSlug,
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'post_status'   => 'publish',
 		'tax_input'    => array(
-			'wpunity_scene_pgame'     => array( $allScenePGameID ),
-			'wpunity_scene_yaml'     => array( $mainmenuSceneYAMLID ),
+			'vrodos_scene_pgame'     => array( $allScenePGameID ),
+			'vrodos_scene_yaml'     => array( $mainmenuSceneYAMLID ),
 		),'meta_input'   => array(
-			'wpunity_scene_default' => 1,
-			'wpunity_scene_metatype' => 'menu',
+			'vrodos_scene_default' => 1,
+			'vrodos_scene_metatype' => 'menu',
 			'wpunity_menu_has_help' => 1,
 			'wpunity_menu_has_login' => 1,
 			'wpunity_menu_has_options' => 1,
@@ -899,14 +899,14 @@ function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 		'post_title'    => $credentialsSceneTitle,
 		'post_content' => 'Credits of the Game',
 		'post_name' => $credentialsSceneSlug,
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'post_status'   => 'publish',
 		'tax_input'    => array(
-			'wpunity_scene_pgame'     => array( $allScenePGameID ),
-			'wpunity_scene_yaml'     => array( $credentialsSceneYAMLID ),
+			'vrodos_scene_pgame'     => array( $allScenePGameID ),
+			'vrodos_scene_yaml'     => array( $credentialsSceneYAMLID ),
 		),'meta_input'   => array(
-			'wpunity_scene_default' => 1,
-			'wpunity_scene_metatype' => 'credits',
+			'vrodos_scene_default' => 1,
+			'vrodos_scene_metatype' => 'credits',
 		),
 	);
 
@@ -947,17 +947,17 @@ Characteristics :
 			'post_title' => $firstSceneTitle,
 			'post_content' => $content1,
 			'post_name' => $firstSceneSlug,
-			'post_type' => 'wpunity_scene',
+			'post_type' => 'vrodos_scene',
 			'post_status' => 'publish',
 			'tax_input' => array(
-				'wpunity_scene_pgame' => array($allScenePGameID),
-				'wpunity_scene_yaml' => array($firstSceneYAMLID),
+				'vrodos_scene_pgame' => array($allScenePGameID),
+				'vrodos_scene_yaml' => array($firstSceneYAMLID),
 			), 'meta_input' => array(
-				'wpunity_scene_default' => 1,
-				'wpunity_scene_metatype' => 'scene',
-				'wpunity_scene_json_input' => $default_json,
+				'vrodos_scene_default' => 1,
+				'vrodos_scene_metatype' => 'scene',
+				'vrodos_scene_json_input' => $default_json,
 				'wpunity_isRegional' => 1,
-				'wpunity_scene_environment' => 'mountain',
+				'vrodos_scene_environment' => 'mountain',
 			),
 		);
 
@@ -965,17 +965,17 @@ Characteristics :
 			'post_title' => $secondSceneTitle,
 			'post_content' => $content2,
 			'post_name' => $secondSceneSlug,
-			'post_type' => 'wpunity_scene',
+			'post_type' => 'vrodos_scene',
 			'post_status' => 'publish',
 			'tax_input' => array(
-				'wpunity_scene_pgame' => array($allScenePGameID),
-				'wpunity_scene_yaml' => array($firstSceneYAMLID),
+				'vrodos_scene_pgame' => array($allScenePGameID),
+				'vrodos_scene_yaml' => array($firstSceneYAMLID),
 			), 'meta_input' => array(
-				'wpunity_scene_default' => 1,
-				'wpunity_scene_metatype' => 'scene',
-				'wpunity_scene_json_input' => $default_json,
+				'vrodos_scene_default' => 1,
+				'vrodos_scene_metatype' => 'scene',
+				'vrodos_scene_json_input' => $default_json,
 				'wpunity_isRegional' => 1,
-				'wpunity_scene_environment' => 'fields',
+				'vrodos_scene_environment' => 'fields',
 			),
 		);
 
@@ -983,17 +983,17 @@ Characteristics :
 			'post_title' => $thirdSceneTitle,
 			'post_content' => $content3,
 			'post_name' => $thirdSceneSlug,
-			'post_type' => 'wpunity_scene',
+			'post_type' => 'vrodos_scene',
 			'post_status' => 'publish',
 			'tax_input' => array(
-				'wpunity_scene_pgame' => array($allScenePGameID),
-				'wpunity_scene_yaml' => array($firstSceneYAMLID),
+				'vrodos_scene_pgame' => array($allScenePGameID),
+				'vrodos_scene_yaml' => array($firstSceneYAMLID),
 			), 'meta_input' => array(
-				'wpunity_scene_default' => 1,
-				'wpunity_scene_metatype' => 'scene',
-				'wpunity_scene_json_input' => $default_json,
+				'vrodos_scene_default' => 1,
+				'vrodos_scene_metatype' => 'scene',
+				'vrodos_scene_json_input' => $default_json,
 				'wpunity_isRegional' => 1,
-				'wpunity_scene_environment' => 'seashore',
+				'vrodos_scene_environment' => 'seashore',
 			),
 		);
 
@@ -1010,15 +1010,15 @@ Characteristics :
 			'post_title' => $firstSceneTitle,
 			'post_content' => $default_json,
 			'post_name' => $firstSceneSlug,
-			'post_type' => 'wpunity_scene',
+			'post_type' => 'vrodos_scene',
 			'post_status' => 'publish',
 			'tax_input' => array(
-				'wpunity_scene_pgame' => array($allScenePGameID),
-				'wpunity_scene_yaml' => array($firstSceneYAMLID),
+				'vrodos_scene_pgame' => array($allScenePGameID),
+				'vrodos_scene_yaml' => array($firstSceneYAMLID),
 			), 'meta_input' => array(
-				'wpunity_scene_default' => 1,
-				'wpunity_scene_metatype' => 'scene',
-				'wpunity_scene_caption' => 'Auto-created scene',
+				'vrodos_scene_default' => 1,
+				'vrodos_scene_metatype' => 'scene',
+				'vrodos_scene_caption' => 'Auto-created scene',
 				'wpunity_isRegional' => 0,
 			),
 		);
@@ -1032,15 +1032,15 @@ Characteristics :
 			'post_title'    => $exam2dSceneTitle,
 			'post_content' => 'Create Molecule Naming puzzle game',
 			'post_name' => $exam2dSceneSlug,
-			'post_type' => 'wpunity_scene',
+			'post_type' => 'vrodos_scene',
 			'post_status'   => 'publish',
 			'tax_input'    => array(
-				'wpunity_scene_pgame'     => array( $allScenePGameID ),
-				'wpunity_scene_yaml'     => array( $exam2dSceneYAMLID ),
+				'vrodos_scene_pgame'     => array( $allScenePGameID ),
+				'vrodos_scene_yaml'     => array( $exam2dSceneYAMLID ),
 			),'meta_input'   => array(
-				'wpunity_scene_default' => 1,
-				'wpunity_scene_metatype' => 'sceneExam2d',
-				'wpunity_scene_json_input' => $default_json,
+				'vrodos_scene_default' => 1,
+				'vrodos_scene_metatype' => 'sceneExam2d',
+				'vrodos_scene_json_input' => $default_json,
 			),
 		);
 
@@ -1050,15 +1050,15 @@ Characteristics :
 			'post_title'    => $exam3dSceneTitle,
 			'post_content' => 'Create Molecule Construction puzzle game',
 			'post_name' => $exam3dSceneSlug,
-			'post_type' => 'wpunity_scene',
+			'post_type' => 'vrodos_scene',
 			'post_status'   => 'publish',
 			'tax_input'    => array(
-				'wpunity_scene_pgame'     => array( $allScenePGameID ),
-				'wpunity_scene_yaml'     => array( $exam3dSceneYAMLID ),
+				'vrodos_scene_pgame'     => array( $allScenePGameID ),
+				'vrodos_scene_yaml'     => array( $exam3dSceneYAMLID ),
 			),'meta_input'   => array(
-				'wpunity_scene_default' => 1,
-				'wpunity_scene_metatype' => 'sceneExam3d',
-				'wpunity_scene_json_input' => $default_json,
+				'vrodos_scene_default' => 1,
+				'vrodos_scene_metatype' => 'sceneExam3d',
+				'vrodos_scene_json_input' => $default_json,
 			),
 		);
 
@@ -1408,11 +1408,11 @@ function wpunity_get_all_doors_of_project_fastversion($allScenePGameID){
 
 	// Define custom query parameters
 	$custom_query_args = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
 				'terms'    => $allScenePGameID,
 			),
@@ -1436,7 +1436,7 @@ function wpunity_get_all_doors_of_project_fastversion($allScenePGameID){
             
             $scene_json = get_post()->post_content;
             
-			//$scene_json = get_post_meta($scene_id, 'wpunity_scene_json_input', true);
+			//$scene_json = get_post_meta($scene_id, 'vrodos_scene_json_input', true);
 			$jsonScene = htmlspecialchars_decode($scene_json);
 			$sceneJsonARR = json_decode($jsonScene, TRUE);
 
@@ -1470,11 +1470,11 @@ function wpunity_get_all_scenesMarker_of_project_fastversion($allScenePGameID){
 
 	// Define custom query parameters
 	$custom_query_args = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
 				'terms'    => $allScenePGameID,
 			),
@@ -1498,7 +1498,7 @@ function wpunity_get_all_scenesMarker_of_project_fastversion($allScenePGameID){
             
             $scene_json = get_post()->post_content;
 			
-			//$scene_json = get_post_meta($scene_id, 'wpunity_scene_json_input', true);
+			//$scene_json = get_post_meta($scene_id, 'vrodos_scene_json_input', true);
 			$jsonScene = htmlspecialchars_decode($scene_json);
 
 			if (trim($jsonScene)==='')
@@ -1534,11 +1534,11 @@ function wpunity_get_all_sceneids_of_game($allScenePGameID){
 
 	// Define custom query parameters
 	$custom_query_args = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
 				'terms'    => $allScenePGameID,
 			),
@@ -2333,7 +2333,7 @@ function wpunity_save_scene_async_action_callback()
 	);
 
 	$res = wp_update_post($scene_new_info);
-	update_post_meta($_POST['scene_id'], 'wpunity_scene_caption', $_POST['scene_caption']);
+	update_post_meta($_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption']);
 
 	echo $res!=0 ? 'true' : 'false';
 	wp_die();
@@ -2412,7 +2412,7 @@ function wpunity_redo_scene_async_action_callback()
     );
     
     $res = wp_update_post($scene_new_info);
-    update_post_meta($_POST['scene_id'], 'wpunity_scene_caption', $_POST['scene_caption']);
+    update_post_meta($_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption']);
     
     echo $res!=0 ? 'true' : 'false';
     wp_die();

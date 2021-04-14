@@ -557,11 +557,11 @@ function wpunity_compile_scenes_gen($gameID,$gameSlug){
     $gameType = $gameTypeTerm[0]->name;
     
     $queryargs = array(
-        'post_type' => 'wpunity_scene',
+        'post_type' => 'vrodos_scene',
         'posts_per_page' => -1,
         'tax_query' => array(
             array(
-                'taxonomy' => 'wpunity_scene_pgame',
+                'taxonomy' => 'vrodos_scene_pgame',
                 'field' => 'slug',
                 'terms' => $gameSlug
             )
@@ -591,7 +591,7 @@ function wpunity_compile_scenes_gen($gameID,$gameSlug){
                 $scenes_counter, $handybuilder_file, $gameType);
             
             // Increment scene counter if scene is either WonderAround or Educational-Energy scene
-            $scene_type = get_the_terms( $scene_id, 'wpunity_scene_yaml' );
+            $scene_type = get_the_terms( $scene_id, 'vrodos_scene_yaml' );
             $scene_type_slug = $scene_type[0]->slug;
     
             if ($scene_type_slug == 'wonderaround-yaml' || $scene_type_slug == 'educational-energy' || $scene_type_slug == 'wonderaround-lab-yaml' ){
@@ -614,7 +614,7 @@ function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBui
     switch($gameType[0]->slug){
         case 'archaeology_games':
         
-            $mainMenuTerm = get_term_by('slug', 'mainmenu-arch-yaml', 'wpunity_scene_yaml');
+            $mainMenuTerm = get_term_by('slug', 'mainmenu-arch-yaml', 'vrodos_scene_yaml');
             $term_meta_s_reward = wpunity_getSceneYAML_archaeology('reward');
             $term_meta_s_selector = wpunity_getSceneYAML_archaeology('selector');
             $term_meta_s_selector_title = 'Select a Scene';
@@ -637,7 +637,7 @@ function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBui
             break;
         case 'energy_games':
     
-//            $mainMenuTerm = get_term_by('slug', 'mainmenu-yaml', 'wpunity_scene_yaml');
+//            $mainMenuTerm = get_term_by('slug', 'mainmenu-yaml', 'vrodos_scene_yaml');
 //            $term_meta_s_reward = wpunity_getSceneYAML_energy('reward');
 //            $term_meta_s_selector = wpunity_getSceneYAML_energy('selector');
 //            $term_meta_s_selector_title = 'Select a Scene';
@@ -651,7 +651,7 @@ function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBui
             break;
         case 'chemistry_games':
     
-//            $mainMenuTerm = get_term_by('slug', 'mainmenu-chem-yaml', 'wpunity_scene_yaml');
+//            $mainMenuTerm = get_term_by('slug', 'mainmenu-chem-yaml', 'vrodos_scene_yaml');
 //            $term_meta_s_reward = wpunity_getSceneYAML_chemistry('reward');
 //            $term_meta_s_selector = wpunity_getSceneYAML_chemistry('selector');
 //            $term_meta_s_selector_title = 'Select a Scene';
@@ -669,7 +669,7 @@ function wpunity_compile_scenes_cre($game_path, $scene_id, $gameSlug, $fileEdito
     //$fe = fopen("output_scenes_cre" . $scene_id . ".txt","w");
     
     $scene_post = get_post($scene_id);
-    $scene_type = get_the_terms( $scene_id, 'wpunity_scene_yaml' );
+    $scene_type = get_the_terms( $scene_id, 'vrodos_scene_yaml' );
     $scene_type_ID = $scene_type[0]->term_id;
     $scene_type_slug = $scene_type[0]->slug;
 

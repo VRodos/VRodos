@@ -21,7 +21,7 @@
                                                rows="10" cols="40" style="box-shadow: none;"
                                                type="text" form="3dAssetForm">
                                          <?php echo get_post_meta($current_scene_id,
-                                             'wpunity_scene_caption', true); ?>
+                                             'vrodos_scene_caption', true); ?>
                                      </textarea>
                             <label for="sceneCaptionInput" class="mdc-textfield__label"
                                    style="background: none;">Add a description</label>
@@ -50,24 +50,24 @@
                                 ?>
                                 
                                 <div id="featureImgContainer" class="ImageContainer">
-                                    <img id="wpunity_scene_sshot" name="wpunity_scene_sshot"
+                                    <img id="vrodos_scene_sshot" name="vrodos_scene_sshot"
                                          src="<?php echo $dataScreenshotbase64;?>">
                                 </div>
                             
                             <?php } else { ?>
                                 <div id="featureImgContainer">
-                                    <img style="width: 160px;" id="wpunity_scene_sshot" name="wpunity_scene_sshot" src="<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ); ?>">
+                                    <img style="width: 160px;" id="vrodos_scene_sshot" name="vrodos_scene_sshot" src="<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ); ?>">
                                 </div>
                             <?php } ?>
                             
                             
                             <input type="file"
                                    style="margin: auto;"
-                                   name="wpunity_scene_sshot_manual_select"
+                                   name="vrodos_scene_sshot_manual_select"
                                    title="Featured image"
                                    value=""
                             
-                                   id="wpunity_scene_sshot_manual_select"
+                                   id="vrodos_scene_sshot_manual_select"
                                    accept="image/x-png,image/gif,image/jpeg" >
                             
                             <div class="CenterContents">

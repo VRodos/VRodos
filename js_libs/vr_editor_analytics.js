@@ -33,7 +33,7 @@ function loadAnalyticsIframe(game_type, project_id, scene_id, type, current_user
 
     var url = "https://analytics.envisage-h2020.eu/?" +
         "wpunity_game=" + project_id +
-        "&wpunity_scene=" + scene_id +
+        "&vrodos_scene=" + scene_id +
         "&scene_type=scene" +
         "&lab=" + type +
         /*"&version=" + version +

@@ -41,17 +41,17 @@ function wpunity_getAllStrategies_byGame($project_id){
 	$project_slug = get_post_field( 'post_name', $project_id );
 
 	$queryargs = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			'relation' => 'AND',
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field' => 'slug',
 				'terms' => $project_slug
 			),
 			array(
-				'taxonomy' => 'wpunity_scene_yaml',
+				'taxonomy' => 'vrodos_scene_yaml',
 				'field' => 'slug',
 				'terms' => array('exam2d-chem-yaml','exam3d-chem-yaml'),
 			)
@@ -97,17 +97,17 @@ function wpunity_combineGameStrategies($project_id){
 	$assetStrategies = [];
 	$project_slug = get_post_field( 'post_name', $project_id );
 	$queryargs = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			'relation' => 'AND',
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field' => 'slug',
 				'terms' => $project_slug
 			),
 			array(
-				'taxonomy' => 'wpunity_scene_yaml',
+				'taxonomy' => 'vrodos_scene_yaml',
 				'field' => 'slug',
 				'terms' => array('exam2d-chem-yaml','exam3d-chem-yaml'),
 			)
@@ -584,17 +584,17 @@ function wpunity_getAllscenes_unityfiles_byGame($gameID){
 	$originalGame = get_post($gameID);
 	$gameSlug = $originalGame->post_name;
 	//Get 'Asset's Parent Scene' taxonomy with the same slug
-	$gameTaxonomy = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+	$gameTaxonomy = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
 	$gameTaxonomyID = $gameTaxonomy->term_id;
 
 	$queryargs = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'orderby'   => 'ID',
 		'order' => 'ASC',
 		'tax_query' => array(
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field' => 'id',
 				'terms' => $gameTaxonomyID
 			)
@@ -630,19 +630,19 @@ function wpunity_getAllexams_byGame($project_id, $addMenu){
 	else{$sceneTypes = array('exam2d-chem-yaml','exam3d-chem-yaml');}
 
 	$queryargs = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'orderby'   => 'ID',
 		'order' => 'DESC',
 		'tax_query' => array(
 			'relation' => 'AND',
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field' => 'slug',
 				'terms' => $project_slug
 			),
 			array(
-				'taxonomy' => 'wpunity_scene_yaml',
+				'taxonomy' => 'vrodos_scene_yaml',
 				'field' => 'slug',
 				'terms' => $sceneTypes,
 			)
@@ -675,11 +675,11 @@ function getProjectScenes($allScenePGameID){
 	
 	
 	$custom_query_args = array(
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			array(
-				'taxonomy' => 'wpunity_scene_pgame',
+				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
 				'terms'    => $allScenePGameID,
 			),

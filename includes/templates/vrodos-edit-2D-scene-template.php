@@ -9,10 +9,10 @@ add_action('wp_enqueue_scripts', 'wpunity_load_2DSceneEditorScripts' );
 
 
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter_Scenepass = '&wpunity_scene=';}
+if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
 
-$scene_id = intval( $_GET['wpunity_scene'] );
+$scene_id = intval( $_GET['vrodos_scene'] );
 $scene_id = sanitize_text_field( $scene_id );
 
 $scene_type = sanitize_text_field( $_GET['scene_type'] );
@@ -88,11 +88,11 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
 		if($post_help_choice){
 			$help_desc = esc_attr(strip_tags($_POST['help-description']));
-			update_post_meta($scene_id, 'wpunity_scene_help_text', $help_desc);
+			update_post_meta($scene_id, 'vrodos_scene_help_text', $help_desc);
 			$help_image =  $_FILES['help-image'];
 			if($help_image['size']!=0){
 				$attachment_help_id = wpunity_upload_img( $help_image, $scene_id);
-				update_post_meta($scene_id, 'wpunity_scene_helpimg', $attachment_help_id);
+				update_post_meta($scene_id, 'vrodos_scene_helpimg', $attachment_help_id);
 			}
 		}
 
@@ -261,7 +261,7 @@ get_header(); ?>
                                 <div class="mdc-layout-grid__cell--span-12">
                                     <h2 class="mdc-typography--title">Help description</h2>
                                     <div class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3);">
-                                        <textarea id="helpTextarea" name="help-description" class="mdc-textfield__input" rows="6" cols="40" style="box-shadow: none;"><?php echo get_post_meta($scene_id, 'wpunity_scene_help_text', true); ?></textarea>
+                                        <textarea id="helpTextarea" name="help-description" class="mdc-textfield__input" rows="6" cols="40" style="box-shadow: none;"><?php echo get_post_meta($scene_id, 'vrodos_scene_help_text', true); ?></textarea>
                                         <label for="helpTextarea" class="mdc-textfield__label" style="background: none;">Edit help description</label>
                                     </div>
                                 </div>
@@ -271,7 +271,7 @@ get_header(); ?>
                                     <h2 class="mdc-typography--title">Help image</h2>
 
 									<?php
-									$helpImgId  = get_post_meta($scene_id, 'wpunity_scene_helpimg', true);
+									$helpImgId  = get_post_meta($scene_id, 'vrodos_scene_helpimg', true);
 									$helpImgUrl = wp_get_attachment_url( $helpImgId );
 
 									if ($helpImgUrl) { ?>

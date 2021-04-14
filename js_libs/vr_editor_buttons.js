@@ -105,7 +105,7 @@ function loadButtonActions() {
     });
 
 
-    // Save experiment id: Convert scene to json and put the json in the wordpress field wpunity_scene_json_input
+    // Save experiment id: Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
     jQuery('#save-expid-button').click(function () {
         wpunity_saveExpIDAjax();
     });
@@ -118,7 +118,7 @@ function loadButtonActions() {
     });
 
     // Select image as Scene icon
-    jQuery("#wpunity_scene_sshot_manual_select").change(function () {
+    jQuery("#vrodos_scene_sshot_manual_select").change(function () {
         readLocalImageAsSceneIcon(this);
     });
 
@@ -128,7 +128,7 @@ function loadButtonActions() {
             let reader = new FileReader();
 
             reader.onload = function (e) {
-                jQuery('#wpunity_scene_sshot').attr('src', e.target.result);
+                jQuery('#vrodos_scene_sshot').attr('src', e.target.result);
                 is_scene_icon_manually_selected = true;
             };
 
@@ -268,7 +268,7 @@ function loadButtonActions() {
     }, false);
 
 
-    // Convert scene to json and put the json in the wordpress field wpunity_scene_json_input
+    // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
     jQuery('#save-scene-button').click(function() {
 
         jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
@@ -276,9 +276,9 @@ function loadButtonActions() {
         // Export using a custom variant of the old deprecated class SceneExporter
         let exporter = new THREE.SceneExporter();
 
-        document.getElementById('wpunity_scene_json_input').value = exporter.parse(envir.scene);
+        document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-        //console.log(document.getElementById('wpunity_scene_json_input').value);
+        //console.log(document.getElementById('vrodos_scene_json_input').value);
 
         if(!is_scene_icon_manually_selected)
             takeScreenshot();
@@ -533,8 +533,8 @@ function takeScreenshot(){
     envir.renderer.render( envir.scene, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
 
     // if no manually selected file for icon, then take a screenshot of the 3D canvas
-    //if (document.getElementById("wpunity_scene_sshot").src.includes("noimagemagicword"))
-    document.getElementById("wpunity_scene_sshot").src = envir.renderer.domElement.toDataURL("image/jpeg");
+    //if (document.getElementById("vrodos_scene_sshot").src.includes("noimagemagicword"))
+    document.getElementById("vrodos_scene_sshot").src = envir.renderer.domElement.toDataURL("image/jpeg");
 
     //envir.cameraAvatarHelper.visible = true;
     //envir.axisHelper.visible = true;

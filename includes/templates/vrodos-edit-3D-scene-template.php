@@ -1,7 +1,7 @@
 <?php
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
-if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else {$parameter_Scenepass = '&wpunity_scene=';}
+if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 // Load VR_Editor Scripts
@@ -78,7 +78,7 @@ $upload_url = wp_upload_dir()['baseurl'];
 $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 
 // Scene
-$current_scene_id = sanitize_text_field( intval( $_GET['wpunity_scene'] ));
+$current_scene_id = sanitize_text_field( intval( $_GET['vrodos_scene'] ));
 
 // Project
 $project_id    = sanitize_text_field( intval( $_GET['wpunity_game'] ) );
@@ -128,7 +128,7 @@ $editsceneExamPage = wpunity_getEditpage('sceneExam');
 
 // for vr_editor
 $urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
-                                '&wpunity_scene=' .$current_scene_id . '&vrodos_asset=' );
+                                '&vrodos_scene=' .$current_scene_id . '&vrodos_asset=' );
 
 // User data
 $user_data = get_userdata( get_current_user_id() );
@@ -179,7 +179,7 @@ if($project_type === 'Energy' || $project_type === 'Chemistry') {
 }
 
 // Get 'parent-game' taxonomy with the same slug as Game (in order to show scenes that belong here)
-$allScenePGame = get_term_by('slug', $projectSlug, 'wpunity_scene_pgame');
+$allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
 
 //$ff = fopen('output_merger.txt',"w");
 //fwrite($ff, "1:".print_r($project_post)         .chr(13));
@@ -300,14 +300,14 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 	$thegameType = wp_get_post_terms($project_id, 'wpunity_game_type');
 	if($thegameType[0]->slug == 'archaeology_games'){
 	    
-	    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'wpunity_scene_yaml');
+	    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
 	    
 	    $game_type_chosen_slug = 'archaeology_games';
 	    $default_json = wpunity_getDefaultJSONscene('archaeology');
 	    
 	} elseif($thegameType[0]->slug == 'energy_games'){
 	    
-	    $newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'wpunity_scene_yaml');
+	    $newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');
 	    $game_type_chosen_slug = 'energy_games';
 	    $default_json = wpunity_getDefaultJSONscene('energy');
 	
@@ -319,32 +319,32 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 		
 		if($newSceneType == 'lab'){
 		
-		    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'wpunity_scene_yaml');
+		    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');
 		
 		} elseif($newSceneType == '2d'){
 		
-		    $newscene_yaml_tax = get_term_by('slug', 'exam2d-chem-yaml', 'wpunity_scene_yaml');
+		    $newscene_yaml_tax = get_term_by('slug', 'exam2d-chem-yaml', 'vrodos_scene_yaml');
 		    $sceneMetaType = 'sceneExam2d';
 		
 		} elseif($newSceneType == '3d'){
 		
-		    $newscene_yaml_tax = get_term_by('slug', 'exam3d-chem-yaml', 'wpunity_scene_yaml');
+		    $newscene_yaml_tax = get_term_by('slug', 'exam3d-chem-yaml', 'vrodos_scene_yaml');
 		    $sceneMetaType = 'sceneExam3d';
 		}
 	}
 
 	$scene_taxonomies = array(
-		'wpunity_scene_pgame' => array(
+		'vrodos_scene_pgame' => array(
 			$allScenePGameID,
 		),
-		'wpunity_scene_yaml' => array(
+		'vrodos_scene_yaml' => array(
 			$newscene_yaml_tax->term_id,
 		)
 	);
 
 	$scene_metas = array(
-		'wpunity_scene_default' => 0,
-        'wpunity_scene_caption' => esc_attr(strip_tags($_POST['scene-caption']))
+		'vrodos_scene_default' => 0,
+        'vrodos_scene_caption' => esc_attr(strip_tags($_POST['scene-caption']))
 	);
 
 	//REGIONAL SCENE EXTRA TYPE FOR ENERGY GAMES
@@ -352,16 +352,16 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 	if($thegameType[0]->slug == 'energy_games'){
 		if($_POST['regionalSceneCheckbox'] == 'on'){$isRegional = 1;}
 		$scene_metas['wpunity_isRegional']= $isRegional;
-		$scene_metas['wpunity_scene_environment'] = 'fields';
+		$scene_metas['vrodos_scene_environment'] = 'fields';
 	}
 
 	//Add the final MetaType of the Scene
-	$scene_metas['wpunity_scene_metatype']= $sceneMetaType;
+	$scene_metas['vrodos_scene_metatype']= $sceneMetaType;
 
 	$scene_information = array(
 		'post_title' => esc_attr(strip_tags($_POST['scene-title'])),
 		'post_content' => $default_json,
-		'post_type' => 'wpunity_scene',
+		'post_type' => 'vrodos_scene',
 		'post_status' => 'publish',
 		'tax_input' => $scene_taxonomies,
 		'meta_input' => $scene_metas,
@@ -437,9 +437,9 @@ get_header(); ?>
 
     <!-- Scene JSON content TextArea display and set input field -->
     <div id="sceneJsonContent">
-          <textarea id="wpunity_scene_json_input"
-                    name="wpunity_scene_json_input"
-                    title="wpunity_scene_json_input"
+          <textarea id="vrodos_scene_json_input"
+                    name="vrodos_scene_json_input"
+                    title="vrodos_scene_json_input"
                     rows="50" cols = "100"><?php echo json_encode(json_decode($sceneToLoad), JSON_PRETTY_PRINT ); ?>
           </textarea>
     </div>
@@ -638,7 +638,7 @@ get_header(); ?>
                        style="" class="addNewAsset3DEditor" data-mdc-auto-init="MDCRipple"
                        title="Add new private asset"
                        href="<?php echo esc_url( get_permalink($newAssetPage[0]->ID) .
-                           $parameter_pass . $project_id . '&wpunity_scene=' .  $current_scene_id. '&scene_type=scene&preview=false'); ?>">
+                           $parameter_pass . $project_id . '&vrodos_scene=' .  $current_scene_id. '&scene_type=scene&preview=false'); ?>">
                         <i class="material-icons" style="cursor: pointer; font-size:54px; color:orangered; ">add_circle</i>
                     </a>
 
@@ -668,9 +668,9 @@ get_header(); ?>
                             $scene_desc = get_the_content();
                             $is_regional = get_post_meta($scene_id,'wpunity_isRegional', true);
                             $current_card_bg = $current_scene_id == $scene_id ? 'mdc-theme--primary-light-bg' : '';
-                            $scene_type = get_post_meta( $scene_id, 'wpunity_scene_metatype', true );
+                            $scene_type = get_post_meta( $scene_id, 'vrodos_scene_metatype', true );
                     
-                            $default_scene = get_post_meta( $scene_id, 'wpunity_scene_default', true );
+                            $default_scene = get_post_meta( $scene_id, 'vrodos_scene_default', true );
                     
                             //create permalink depending the scene yaml category
                             $edit_scene_page_id = ( $scene_type == 'scene' ? $editscenePage[0]->ID : $editscene2DPage[0]->ID);
@@ -710,7 +710,7 @@ get_header(); ?>
                                     </div>
 
                                     <section class="cardTitleDeleteWrapper"
-                                             style="background:<?php echo $scene_id == $_GET['wpunity_scene'] ? 'lightgreen':'';?>">
+                                             style="background:<?php echo $scene_id == $_GET['vrodos_scene'] ? 'lightgreen':'';?>">
                          <span id="<?php echo $scene_id;?>-title"
                                class="cardTitle mdc-card__title mdc-typography--title"
                                title="<?php echo $scene_title;?>">
@@ -877,7 +877,7 @@ get_header(); ?>
 
             <?php
                 // Add sceneType variable in js envir
-                $sceneType = get_post_meta($_GET['wpunity_scene'], "wpunity_scene_environment");
+                $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
                 if (count($sceneType)>0) {
                     echo '<script>';
                     echo 'envir.sceneType="' . $sceneType[0] . '";';

@@ -17,11 +17,11 @@ wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
-if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter_Scenepass = '&wpunity_scene=';}
+if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
 if( $perma_structure){$parameter_assetpass = '?vrodos_asset=';} else{$parameter_assetpass = '&vrodos_asset=';}
 
 
-$scene_id = intval( $_GET['wpunity_scene'] );
+$scene_id = intval( $_GET['vrodos_scene'] );
 $scene_id = sanitize_text_field( $scene_id );
 
 $scene_type = sanitize_text_field( $_GET['scene_type'] );

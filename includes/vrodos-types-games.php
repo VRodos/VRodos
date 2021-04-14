@@ -162,7 +162,7 @@ function wpunity_create_folder_game( $new_status, $old_status, $post){
 			);
 
 			//Create a parent game tax category for the scenes
-			wp_insert_term($gameTitle,'wpunity_scene_pgame', array(
+			wp_insert_term($gameTitle,'vrodos_scene_pgame', array(
 					'description'=> '-',
 					'slug' => $gameSlug,
 				)

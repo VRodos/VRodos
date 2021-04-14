@@ -1,7 +1,7 @@
 <?php
 
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter_Scenepass = '&wpunity_scene=';}
+if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
@@ -76,7 +76,7 @@ if (!$project_saved_keys['gioID'] && $project_scope === 1) { // In Envisage only
 }
 
 //Get 'parent-game' taxonomy with the same slug as Game (in order to show scenes that belong here)
-$allScenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+$allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
 $allScenePGameID = $allScenePGame->term_id;
 
 $game_type_obj = wpunity_return_project_type($project_id);
@@ -88,26 +88,26 @@ $editgamePage = wpunity_getEditpage('game');
 $newAssetPage = wpunity_getEditpage('asset');
 $allGamesPage = wpunity_getEditpage('allgames');
 
-$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&wpunity_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
+$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&vrodos_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
 
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
 
-    $credentials_yaml_tax = get_term_by('slug', 'credentials-yaml', 'wpunity_scene_yaml');
-    $menu_yaml_tax = get_term_by('slug', 'mainmenu-yaml', 'wpunity_scene_yaml');
-    $options_yaml_tax = get_term_by('slug', 'options-yaml', 'wpunity_scene_yaml');
+    $credentials_yaml_tax = get_term_by('slug', 'credentials-yaml', 'vrodos_scene_yaml');
+    $menu_yaml_tax = get_term_by('slug', 'mainmenu-yaml', 'vrodos_scene_yaml');
+    $options_yaml_tax = get_term_by('slug', 'options-yaml', 'vrodos_scene_yaml');
 
     $default_json = '';
     $thegameType = wp_get_post_terms($project_id, 'wpunity_game_type');
-    if($thegameType[0]->slug == 'archaeology_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'wpunity_scene_yaml');$default_json = wpunity_getDefaultJSONscene('archaeology');}
-    elseif($thegameType[0]->slug == 'energy_games'){$newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'wpunity_scene_yaml');$default_json = wpunity_getDefaultJSONscene('energy');}
-    elseif($thegameType[0]->slug == 'chemistry_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'wpunity_scene_yaml');$default_json = wpunity_getDefaultJSONscene('chemistry');}
+    if($thegameType[0]->slug == 'archaeology_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');$default_json = wpunity_getDefaultJSONscene('archaeology');}
+    elseif($thegameType[0]->slug == 'energy_games'){$newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');$default_json = wpunity_getDefaultJSONscene('energy');}
+    elseif($thegameType[0]->slug == 'chemistry_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');$default_json = wpunity_getDefaultJSONscene('chemistry');}
 
     $scene_taxonomies = array(
-        'wpunity_scene_pgame' => array(
+        'vrodos_scene_pgame' => array(
             $allScenePGameID,
         ),
-        'wpunity_scene_yaml' => array(
+        'vrodos_scene_yaml' => array(
             $newscene_yaml_tax->term_id,
         )
     );
@@ -115,8 +115,8 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     $sceneMetaType = 'scene';//default 'scene' MetaType (3js)
 
     $scene_metas = array(
-        'wpunity_scene_default' => 0,
-        'wpunity_scene_json_input' => $default_json,
+        'vrodos_scene_default' => 0,
+        'vrodos_scene_json_input' => $default_json,
     );
 
     //REGIONAL SCENE EXTRA TYPE FOR ENERGY GAMES
@@ -124,7 +124,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     if($thegameType[0]->slug == 'energy_games'){
         if($_POST['regionalSceneCheckbox'] == 'on'){$isRegional = 1;}
         $scene_metas['wpunity_isRegional']= $isRegional;
-        $scene_metas['wpunity_scene_environment'] = 'fields';
+        $scene_metas['vrodos_scene_environment'] = 'fields';
     }
 
     //SCENE TYPE FOR CHEMISTRY GAMES (Lab = scene)
@@ -134,12 +134,12 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     }
 
     //Add the final MetaType of the Scene
-    $scene_metas['wpunity_scene_metatype']= $sceneMetaType;
+    $scene_metas['vrodos_scene_metatype']= $sceneMetaType;
 
     $scene_information = array(
         'post_title' => esc_attr(strip_tags($_POST['scene-title'])),
         'post_content' => esc_attr(strip_tags($_POST['scene-caption'])),
-        'post_type' => 'wpunity_scene',
+        'post_type' => 'vrodos_scene',
         'post_status' => 'publish',
         'tax_input' => $scene_taxonomies,
         'meta_input' => $scene_metas,
@@ -316,11 +316,11 @@ get_header();
 <?php
 // Define custom query parameters
 $custom_query_args = array(
-    'post_type' => 'wpunity_scene',
+    'post_type' => 'vrodos_scene',
     'posts_per_page' => -1,
     'tax_query' => array(
         array(
-            'taxonomy' => 'wpunity_scene_pgame',
+            'taxonomy' => 'vrodos_scene_pgame',
             'field'    => 'term_id',
             'terms'    => $allScenePGameID,
         ),
@@ -361,8 +361,8 @@ if ( $custom_query->have_posts() ) :?>
                         <div class="SceneThumbnail">
                             <?php
 
-                            $default_scene = get_post_meta( $scene_id, 'wpunity_scene_default', true ); //=true Default scene - NOT DELETE-ABLE
-                            $scene_type    = get_post_meta( $scene_id, 'wpunity_scene_metatype', true ); //=menu,scene,credits - EDITABLE
+                            $default_scene = get_post_meta( $scene_id, 'vrodos_scene_default', true ); //=true Default scene - NOT DELETE-ABLE
+                            $scene_type    = get_post_meta( $scene_id, 'vrodos_scene_metatype', true ); //=menu,scene,credits - EDITABLE
 
                             //create permalink depending the scene yaml category
                             $edit_scene_page_id = ( $scene_type == 'scene' ? $editscenePage[0]->ID : $editscene2DPage[0]->ID);

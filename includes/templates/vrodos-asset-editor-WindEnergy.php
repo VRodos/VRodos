@@ -1,7 +1,7 @@
 <?php
 
-		$physics = get_post_meta($asset_id,'wpunity_physicsValues',true);
-		if($physics) {
+	$physics = get_post_meta($asset_id,'wpunity_physicsValues',true);
+	if($physics) {
 			$mean_speed_wind = $physics['mean'];
 			$var_speed_wind = $physics['variance'];
 			$min_speed_wind = $physics['min'];

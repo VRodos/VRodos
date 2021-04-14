@@ -267,37 +267,37 @@ add_action('save_post', 'wpunity_games_databox_save');
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-scenes.php');
 
 // Order : 11
-add_action('init', 'wpunity_scenes_construct'); //wpunity_scene 'SCENES'
+add_action('init', 'vrodos_scenes_construct'); //vrodos_scene 'SCENES'
 
 // Order: 12
-add_action('init', 'wpunity_scenes_parent_project_tax_define'); //wpunity_scene_pgame  'SCENE GAMES'
+add_action('init', 'vrodos_scenes_parent_project_tax_define'); //vrodos_scene_pgame  'SCENE GAMES'
 
 // Order: 13
-add_action('init', 'wpunity_scenes_taxyaml'); //wpunity_scene_yaml 'SCENE TYPES'
+add_action('init', 'vrodos_scenes_taxyaml'); //vrodos_scene_yaml 'SCENE TYPES'
 
 // Create Scene's Game Box @ scene's backend
 // 52
-add_action('add_meta_boxes','wpunity_scenes_taxgame_box');
+add_action('add_meta_boxes','vrodos_scenes_taxgame_box');
 
 //When the post is saved, also saves wpunity_game_cat
 //33
-add_action( 'save_post', 'wpunity_scenes_taxgame_box_content_save' );
+add_action( 'save_post', 'vrodos_scenes_taxgame_box_content_save' );
 
 //34
-add_action( 'save_post', 'wpunity_scenes_taxyaml_box_content_save' );
+add_action( 'save_post', 'vrodos_scenes_taxyaml_box_content_save' );
 
 // 56
-add_filter( 'manage_wpunity_scene_posts_columns', 'wpunity_set_custom_wpunity_scene_columns' );
+add_filter( 'manage_vrodos_scene_posts_columns', 'wpunity_set_custom_vrodos_scene_columns' );
 
 // Add the data to the custom columns for the scene post type
 // 57
-add_action( 'manage_wpunity_scene_posts_custom_column' , 'wpunity_set_custom_wpunity_scene_columns_fill', 10, 2 );
+add_action( 'manage_vrodos_scene_posts_custom_column' , 'wpunity_set_custom_vrodos_scene_columns_fill', 10, 2 );
 
 // 41
-add_action('admin_menu', 'wpunity_scenes_meta_definitions_add');
+add_action('admin_menu', 'vrodos_scenes_meta_definitions_add');
 
 // Save metas
-add_action('save_post', 'wpunity_scenes_metas_save');
+add_action('save_post', 'vrodos_scenes_metas_save');
 
 //===================================== Assets ============================================
 
@@ -472,7 +472,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_setti
 add_action( 'init', 'vrodos_assets_taxcategory_energy_fill' );
 
 // 21
-add_action( 'init', 'wpunity_scenes_types_energy_standard_cre' );
+add_action( 'init', 'vrodos_scenes_types_energy_standard_cre' );
 
 
 
@@ -491,7 +491,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_setti
 add_action( 'init', 'vrodos_assets_taxcategory_archaeology_fill' );
 
 // 23
-add_action( 'init', 'wpunity_scenes_types_archaeology_standard_cre' );
+add_action( 'init', 'vrodos_scenes_types_archaeology_standard_cre' );
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-archaeology-compile.php' );
 
@@ -502,7 +502,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_setti
 add_action( 'init', 'vrodos_assets_taxcategory_chemistry_fill' );
 
 // 25
-add_action( 'init', 'wpunity_scenes_types_chemistry_standard_cre' );
+add_action( 'init', 'vrodos_scenes_types_chemistry_standard_cre' );
 
 
 //include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-chemistry-yamls.php' );
@@ -626,7 +626,7 @@ remove_filter ('the_content', 'wpautop');
 //    $args = array (
 //        'title'=>$title,
 //        'post_status' => 'publish',
-//        'post_type' => 'wpunity_scene'
+//        'post_type' => 'vrodos_scene'
 //    );
 //
 //    $post = get_posts( $args );

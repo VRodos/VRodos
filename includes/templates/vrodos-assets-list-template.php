@@ -5,7 +5,7 @@
 //error_reporting(E_ALL);
 
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter_Scenepass = '&wpunity_scene=';}
+if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
@@ -70,7 +70,7 @@ wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_
 
 
 //Get 'parent-game' taxonomy with the same slug as Game (in order to show scenes that belong here)
-//$allScenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+//$allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
 //if ($allScenePGame)
 //    $allScenePGameID = $allScenePGame->term_id;
 
@@ -78,7 +78,7 @@ wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_
 $editgamePage = wpunity_getEditpage('game');
 $newAssetPage = wpunity_getEditpage('asset');
 
-//$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&wpunity_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
+//$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&vrodos_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
 get_header();
 
@@ -257,7 +257,7 @@ if ($single_project_asset_list)
                         <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['assetName'] ?>">
                             <div class="phonering-alo-ph-circle"></div>
                             <div class="phonering-alo-ph-circle-fill"></div>
-                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.'&wpunity_scene=&vrodos_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
+                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
                                  class="pps-btn-img" title="teleconference_ring">
                                 <div class="phonering-alo-ph-img-circle"></div>
                             </a>
