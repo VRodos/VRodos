@@ -416,7 +416,7 @@ function wpunity_scenes_metas_adminside_show(){
     // Use nonce for verification
     echo '<input type="hidden" name="wpunity_scenes_databox_nonce" value="', wp_create_nonce(basename(__FILE__)), '" />';
     
-    //$categoryAsset = wp_get_post_terms($assetID, 'wpunity_asset3d_cat');
+    //$categoryAsset = wp_get_post_terms($assetID, 'vrodos_asset3d_cat');
     //echo $categoryAssetSlug = $categoryAsset[0]->name;
     
     echo '<table class="form-table" id="wpunity-custom-fields-table">';

@@ -1,4 +1,4 @@
-function wpunity_assepileAjax() {
+function vrodos_assepileAjax() {
 
     var platform = jQuery( "#platformInput" ).attr( "value" );
     var compilationProgressText = jQuery( "#compilationProgressText" );
@@ -42,7 +42,7 @@ function wpunity_assepileAjax() {
         url :  isAdmin=="back" ? 'admin-ajax.php' : my_ajax_object_assepile.ajax_url,
         type : 'GET',
         data : {
-            'action': 'wpunity_assepile_action',
+            'action': 'vrodos_assepile_action',
             'gameId': my_ajax_object_assepile.id,
             'gameSlug': my_ajax_object_assepile.slug,
             'gameFormat': platform

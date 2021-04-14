@@ -45,7 +45,7 @@ $isAdmin = is_admin() ? 'back' : 'front';
 function wpunity_loadAsset3DManagerScriptsAndStyles() {
     
     // Stylesheet
-    wp_enqueue_style('wpunity_asseteditor_stylesheet');
+    wp_enqueue_style('vrodos_asseteditor_stylesheet');
     
     // QR code generator
     wp_enqueue_script('vrodos_qrcode_generator');
@@ -116,7 +116,7 @@ if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
 
 $project_id = isset($_GET['wpunity_game']) ? sanitize_text_field( intval( $_GET['wpunity_game'] )) : null ;
-$asset_id = isset($_GET['wpunity_asset']) ? sanitize_text_field( intval( $_GET['wpunity_asset'] )) : null ;
+$asset_id = isset($_GET['vrodos_asset']) ? sanitize_text_field( intval( $_GET['vrodos_asset'] )) : null ;
 $scene_id = isset($_GET['wpunity_scene']) ? sanitize_text_field( intval( $_GET['wpunity_scene'] )) : null ;
 //$previous_page = isset($_GET['previous_page']) ? sanitize_text_field( intval( $_GET['previous_page'] )) : null ;
 
@@ -128,7 +128,7 @@ $game_type_obj = wpunity_return_project_type($project_id);
 
 
 //Get 'parent-game' taxonomy with the same slug as Game
-$assetPGame = get_term_by('slug', $gameSlug, 'wpunity_asset3d_pgame');
+$assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
 
 //echo $assetPGame;
 $assetPGameID = $assetPGame->term_id;
@@ -160,14 +160,14 @@ if (!$asset_id) {
 $isEditable = false;
 
 // Old asset
-if(isset($_GET['wpunity_asset'])) {
+if(isset($_GET['vrodos_asset'])) {
     $author_id = get_post_field('post_author', $asset_id);
 }
 
 if ($isUserloggedIn) {
     $user_id = get_current_user_id();
     
-    if (!isset($_GET['wpunity_asset'])) {
+    if (!isset($_GET['vrodos_asset'])) {
         // NEW ASSET
         $isEditable = true;
         $author_id = $user_id;
@@ -244,8 +244,8 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 //    fwrite($fp, print_r($_FILES, true));
 //    fclose($fp);
     
-    $asset_language_pack = wpunity_asset3D_languages_support1($_POST);
-    //include 'edit-wpunity_asset3D_languages_support1.php';
+    $asset_language_pack = vrodos_asset3d_languages_support1($_POST);
+    //include 'edit-vrodos_asset3d_languages_support1.php';
     
     // Fonts Selected
     $assetFonts = esc_attr(strip_tags($_POST['assetFonts']));
@@ -262,13 +262,13 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     $assetCatID = intval($_POST['term_id']);//ID of Asset Category (hidden input)
     
     // Term
-    $assetCatTerm = get_term_by('id', $assetCatID, 'wpunity_asset3d_cat');
+    $assetCatTerm = get_term_by('id', $assetCatID, 'vrodos_asset3d_cat');
     
     // IPR Term id
     $assetCatIPRID = intval($_POST['term_id_ipr']); //ID of Asset Category IPR (hidden input)
     
     // IPR Term id cat
-    $assetCatIPRTerm = get_term_by('id', $assetCatIPRID, 'wpunity_asset3d_ipr_cat');
+    $assetCatIPRTerm = get_term_by('id', $assetCatIPRID, 'vrodos_asset3d_ipr_cat');
     
     // show an icon while waiting
     
@@ -343,7 +343,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     
     if($scene_id == 0) {
         // Redirect to central otherwise the form is not loaded with the new data
-        echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'&wpunity_asset='.$asset_id.'#English'.'";</script>';
+        echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'&vrodos_asset='.$asset_id.'#English'.'";</script>';
     }
     // Avoid loading the old page
     return;
@@ -400,8 +400,8 @@ get_header();
 $dropdownHeading = ($asset_id == null ? "Select a category" : "Category");
 
 // Languages fields show
-//include 'edit-wpunity_asset3D_languages_support2.php';
-$assetLangPack2 = wpunity_asset3D_languages_support2($asset_id);
+//include 'edit-vrodos_asset3d_languages_support2.php';
+$assetLangPack2 = vrodos_asset3d_languages_support2($asset_id);
 
 echo '<script>';
 echo 'var asset_title_english_saved="'.$assetLangPack2['asset_title_saved'].'";';
@@ -430,7 +430,7 @@ $images_urls = [null, null, null, null, null];
 //Check if its new/saved and get data for artifact and Terrain
 if($asset_id != null) {
     
-    $saved_term = wp_get_post_terms( $asset_id, 'wpunity_asset3d_cat' );
+    $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
     
 //    $fp = fopen("output_savedterm.txt","w");
 //    fwrite($fp, print_r($saved_term, true));
@@ -507,8 +507,8 @@ if($asset_id != null) {
                 $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
             
             // FROM NEW ASSET ONLY
-            if ( !strpos($_SERVER['REQUEST_URI'],"wpunity_asset")) {
-                $previewLink = $previewLink . '&wpunity_asset=' . $asset_id;
+            if ( !strpos($_SERVER['REQUEST_URI'],"vrodos_asset")) {
+                $previewLink = $previewLink . '&vrodos_asset=' . $asset_id;
             }
             
             // IF from single project
@@ -587,7 +587,7 @@ if($asset_id != null) {
                     'hide_empty' => false,
                     'meta_query' => array(
                         array(
-                            'key'       => 'wpunity_assetcat_gamecat',
+                            'key'       => 'vrodos_assetcat_gamecat',
                             'value'     => $myGameType,
                             'compare'   => '='
                         )
@@ -596,8 +596,8 @@ if($asset_id != null) {
                     'order' => 'DESC',
                 );
                 
-                $cat_terms = get_terms('wpunity_asset3d_cat', $args);
-                $saved_term = wp_get_post_terms( $asset_id, 'wpunity_asset3d_cat' );
+                $cat_terms = get_terms('vrodos_asset3d_cat', $args);
+                $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
                 ?>
                 
                 <?php if($asset_id == null) { ?>
@@ -851,7 +851,7 @@ if($asset_id != null) {
              src="<?php echo plugins_url( '../images/language_icon.jpg', dirname(__FILE__)  );?>">
 
         <!-- All language fields are in the following -->
-        <?php wpunity_asset3D_languages_support3($curr_font, $assetLangPack2);?>
+        <?php vrodos_asset3d_languages_support3($curr_font, $assetLangPack2);?>
 
         <!--  Select font for text -->
         <div id="assetFontsDiv">
@@ -1145,7 +1145,7 @@ if($asset_id != null) {
                 <i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
                 
                 <?php
-                $saved_ipr_term = wp_get_post_terms( $asset_id, 'wpunity_asset3d_ipr_cat');
+                $saved_ipr_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_ipr_cat');
                 
                 if($asset_id == null || empty($saved_ipr_term) ) { ?>
                     <!-- Empty IPR -->
@@ -1177,7 +1177,7 @@ if($asset_id != null) {
 
                         <!-- Add other options -->
                         <?php
-                        $cat_ipr_terms = get_terms('wpunity_asset3d_ipr_cat', array('get' => 'all'));
+                        $cat_ipr_terms = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
                         
                         foreach ( $cat_ipr_terms as $term_ipr ) { ?>
                             <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"

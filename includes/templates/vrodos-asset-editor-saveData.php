@@ -243,21 +243,21 @@ function wpunity_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $a
                                        $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
     
     $asset_taxonomies = array(
-        'wpunity_asset3d_pgame' => array($assetPGameID,),
-        'wpunity_asset3d_cat' => array($assetCatID,),
-        'wpunity_asset3d_ipr_cat' => array($assetCatIPRID,)
+        'vrodos_asset3d_pgame' => array($assetPGameID,),
+        'vrodos_asset3d_cat' => array($assetCatID,),
+        'vrodos_asset3d_ipr_cat' => array($assetCatIPRID,)
     );
     
     $asset_information = array(
         'post_title' => $asset_language_pack['assetTitleForm'],
         'post_content' => $asset_language_pack['assetDescForm'],
-        'post_type' => 'wpunity_asset3d',
+        'post_type' => 'vrodos_asset3d',
         'post_status' => 'publish',
         'tax_input' => $asset_taxonomies,
     );
 
     $asset_id = wp_insert_post($asset_information);
-    update_post_meta($asset_id, 'wpunity_asset3d_pathData', $gameSlug);
+    update_post_meta($asset_id, 'vrodos_asset3d_pathData', $gameSlug);
     
     wpunity_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
 
@@ -269,9 +269,9 @@ function wpunity_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $a
 function wpunity_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
                                        $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
     $asset_taxonomies = array(
-        'wpunity_asset3d_pgame' => array($assetPGameID,),
-        'wpunity_asset3d_cat' => array($assetCatID,),
-        'wpunity_asset3d_ipr_cat' => array($assetCatIPRID,)
+        'vrodos_asset3d_pgame' => array($assetPGameID,),
+        'vrodos_asset3d_cat' => array($assetCatID,),
+        'vrodos_asset3d_ipr_cat' => array($assetCatIPRID,)
     );
     $asset_new_info = array(
         'ID' => $asset_id,

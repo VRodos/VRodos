@@ -2,7 +2,7 @@
 
 //SIDEBAR of Asset3D with fetch-segmentation etc...
 
-function wpunity_assets_scripts_and_styles() {
+function vrodos_assets_scripts_and_styles() {
     
     // load css/wpunity_backend.css
     wp_enqueue_style('wpunity_backend');
@@ -32,7 +32,7 @@ function wpunity_assets_scripts_and_styles() {
     // Some parameters to pass in the segmentation.js  ajax
     //    if( isset($_GET['post']) ){
     //        wp_localize_script('vrodos_segmentation_request', 'phpvars',
-    //            array('path' => get_post_meta($_GET['post'], 'wpunity_asset3d_pathData', true).'/',
+    //            array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
     //                'obj'  => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
     //            )
     //        );
@@ -41,7 +41,7 @@ function wpunity_assets_scripts_and_styles() {
     
     // Some parameters to pass in the classification.js  ajax
     //	wp_localize_script('wpunity_classification_request', 'phpvars',
-    //		array('path' => get_post_meta($_GET['post'], 'wpunity_asset3d_pathData', true).'/',
+    //		array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
     //		      'obj' => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
     //		)
     //	);
@@ -63,7 +63,7 @@ array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asse
 array('Screenshot Image'           ,'Screenshot Image'            , 'vrodos_asset3d_screenimage','text', ''),
 array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_next_scene','text', ''),
 array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'text', ''),
-array('isreward'                   , 'isreward'                   , 'wpunity_asset3d_isreward', 'text', '0'),
+array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'text', '0'),
 
 array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'text', ''),
 array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'text', ''),
@@ -125,7 +125,7 @@ for ($i = 0; $i < count($table_of_asset_fields); $i++){
 
 //All information about our meta box
 $wpunity_databox1 = array('id' => 'wpunity-assets-databox',
-                          'page' => 'wpunity_asset3d',
+                          'page' => 'vrodos_asset3d',
                           'context' => 'normal',
                           'priority' => 'high',
                           'fields' => $asset_fields
@@ -133,15 +133,15 @@ $wpunity_databox1 = array('id' => 'wpunity-assets-databox',
 
 //=========================================================
 // Add and Show the metabox with Custom Field for Project ($wpunity_databox1)
-function wpunity_assets_databox_add() {
+function vrodos_assets_databox_add() {
     global $wpunity_databox1;
     
-    add_meta_box('wpunity-assets-infobox', 'Description Tips for Image-Text', 'wpunity_assets_infobox_show', 'wpunity_asset3d','normal','high' );
+    add_meta_box('wpunity-assets-infobox', 'Description Tips for Image-Text', 'vrodos_assets_infobox_show', 'vrodos_asset3d','normal','high' );
     
-    add_meta_box($wpunity_databox1['id'], 'Asset Data', 'wpunity_assets_databox_show', $wpunity_databox1['page'], $wpunity_databox1['context'], $wpunity_databox1['priority']);
+    add_meta_box($wpunity_databox1['id'], 'Asset Data', 'vrodos_assets_databox_show', $wpunity_databox1['page'], $wpunity_databox1['context'], $wpunity_databox1['priority']);
 }
 
-function wpunity_assets_infobox_show(){
+function vrodos_assets_infobox_show(){
     ?>
     <style>#wpunity-assets-infobox{display:none;}</style>
 
@@ -161,22 +161,22 @@ function wpunity_assets_infobox_show(){
 
 
 // Backend form
-function wpunity_assets_databox_show(){
+function vrodos_assets_databox_show(){
     global $wpunity_databox1, $post;
     
     $post_title = $post->post_title;
     if($post->post_status == 'publish'){$hideshow = 'none';}else{$hideshow = 'block';}
     ?>
-    <div id="wpunity_assets_box_wrapper" style="display:<?php echo $hideshow; ?>;">
+    <div id="vrodos_assets_box_wrapper" style="display:<?php echo $hideshow; ?>;">
         <span class="dashicons dashicons-lock">You must create the Asset in order to fill data</span>
     </div>
-    <input type="hidden" name="wpunity_assets_databox_nonce" value="<?php echo wp_create_nonce(basename(__FILE__)); ?>" />
+    <input type="hidden" name="vrodos_assets_databox_nonce" value="<?php echo wp_create_nonce(basename(__FILE__)); ?>" />
     <table class="form-table" id="wpunity-custom-fields-table">
         <tbody>
         
         <?php
         //Hide-Show custom fields purpose
-        $categoryAsset = wp_get_post_terms($post->ID, 'wpunity_asset3d_cat');
+        $categoryAsset = wp_get_post_terms($post->ID, 'vrodos_asset3d_cat');
         $categoryAssetSlug = $categoryAsset[0]->name;
         $doorhideshow = 'none';$mediahideshow = 'none';
         if ($categoryAssetSlug == 'Doors') {$doorhideshow = 'block';$mediahideshow = 'none';}
@@ -199,7 +199,7 @@ function wpunity_assets_databox_show(){
                         <br /><br />
                         Pathfile: <?php echo wp_get_attachment_url($meta_mtl_id); ?><br />
                         Preview mtl:<br />
-                        <textarea id="wpunity_asset3d_mtl_preview" readonly style="width:100%;height:200px;"><?php
+                        <textarea id="vrodos_asset3d_mtl_preview" readonly style="width:100%;height:200px;"><?php
                             
                             if(!$meta_mtl_id){
                                 echo "mtl is not defined";
@@ -239,7 +239,7 @@ function wpunity_assets_databox_show(){
                         <br /><br />
                         Pathfile: <?php echo wp_get_attachment_url($meta_obj_id); ?><br />
                         Preview obj:<br />
-                        <textarea id="wpunity_asset3d_obj_preview" readonly style="width:100%;height:200px;"><?php
+                        <textarea id="vrodos_asset3d_obj_preview" readonly style="width:100%;height:200px;"><?php
                             if(!$meta_obj_id){
                                 echo "obj is not defined";
                             }else{
@@ -275,7 +275,7 @@ function wpunity_assets_databox_show(){
                         <br /><br />
                         Pathfile: <?php echo wp_get_attachment_url($meta_fbx_id); ?><br />
                         Preview fbx:<br />
-                        <textarea id="wpunity_asset3d_fbx_preview" readonly style="width:100%;height:200px;"><?php
+                        <textarea id="vrodos_asset3d_fbx_preview" readonly style="width:100%;height:200px;"><?php
                             if(!$meta_fbx_id){
                                 echo "fbx is not defined";
                             }else{
@@ -312,7 +312,7 @@ function wpunity_assets_databox_show(){
                             <br /><br />
                             Pathfile: <?php echo wp_get_attachment_url($meta_pdb_id); ?><br />
                             Preview Pdb:<br />
-                            <textarea id="wpunity_asset3d_pdb_preview" readonly style="width:100%;height:200px;"><?php
+                            <textarea id="vrodos_asset3d_pdb_preview" readonly style="width:100%;height:200px;"><?php
                                 if(!$meta_pdb_id){
                                     echo "pdb is not defined";
                                 }else{
@@ -349,7 +349,7 @@ function wpunity_assets_databox_show(){
                         <br /><br />
                         Pathfile: <?php echo wp_get_attachment_url($meta_glb_id); ?><br />
                         Preview glb:<br />
-                        <textarea id="wpunity_asset3d_glb_preview" readonly style="width:100%;height:200px;"><?php
+                        <textarea id="vrodos_asset3d_glb_preview" readonly style="width:100%;height:200px;"><?php
                             if(!$meta_glb_id){
                                 echo "glb is not defined";
                             }else{
@@ -386,7 +386,7 @@ function wpunity_assets_databox_show(){
                         <br /><br />
                         Pathfile: <?php echo wp_get_attachment_url($meta_audio_id); ?><br />
                         Preview Audio:<br />
-                        <textarea id="wpunity_asset3d_audio_preview" readonly style="width:100%;height:200px;"><?php
+                        <textarea id="vrodos_asset3d_audio_preview" readonly style="width:100%;height:200px;"><?php
                             if(!$meta_audio_id){
                                 echo "Audio is not defined";
                             }else{
@@ -415,7 +415,7 @@ function wpunity_assets_databox_show(){
                         <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
                         <br />
                         Pathfile: <?php echo wp_get_attachment_url($meta_diff_id); ?><br />
-                        <img id="wpunity_asset3d_diffimage_preview" style="width:50%;height:auto" src="<?php echo wp_get_attachment_url($meta_diff_id); ?>"/>
+                        <img id="vrodos_asset3d_diffimage_preview" style="width:50%;height:auto" src="<?php echo wp_get_attachment_url($meta_diff_id); ?>"/>
                     </td>
                 </tr>
                 <?php
@@ -432,7 +432,7 @@ function wpunity_assets_databox_show(){
                         <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
                         <br />
                         Pathfile: <?php echo wp_get_attachment_url($meta_scr_id); ?><br />
-                        <img id="wpunity_asset3d_screenimage_preview" style="width:50%;height:auto" src="<?php echo wp_get_attachment_url($meta_scr_id); ?>"/>
+                        <img id="vrodos_asset3d_screenimage_preview" style="width:50%;height:auto" src="<?php echo wp_get_attachment_url($meta_scr_id); ?>"/>
                     </td>
                 </tr>
                 <?php
@@ -440,7 +440,7 @@ function wpunity_assets_databox_show(){
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td id="wpunity_asset3d_next_scene_field" style="display:<?php echo $doorhideshow; ?>;margin-bottom:0;">
+                    <td id="vrodos_asset3d_next_scene_field" style="display:<?php echo $doorhideshow; ?>;margin-bottom:0;">
                         <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
                         <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta ? $meta : $field['std']); ?>" size="30" style="width:65%"/>
                     </td>
@@ -456,7 +456,7 @@ function wpunity_assets_databox_show(){
                         <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>" style="display:<?php echo $mediahideshow; ?>;" />
 
                         Pathfile: <?php echo wp_get_attachment_url($meta_image1_id); ?><br />
-                        <img id="wpunity_asset3d_image1_preview" style="width:50%;height:auto;display:<?php echo $mediahideshow; ?>;"
+                        <img id="vrodos_asset3d_image1_preview" style="width:50%;height:auto;display:<?php echo $mediahideshow; ?>;"
                              src="<?php echo wp_get_attachment_url($meta_image1_id); ?>"/>
                     </td>
                 </tr>
@@ -525,47 +525,47 @@ function wpunity_assets_databox_show(){
 
             if(text == 'Doors'){
                 //SHOW Next Scene Custom field - Hide others
-                document.getElementById('wpunity_asset3d_next_scene_field').style.display = 'block';
-                document.getElementById('wpunity_asset3d_image1').style.display = 'none';
-                document.getElementById('wpunity_asset3d_image1_btn').style.display = 'none';
-                document.getElementById('wpunity_asset3d_image1_preview').style.display = 'none';
-                document.getElementById('wpunity_asset3d_video').style.display = 'none';
-                document.getElementById('wpunity_asset3d_video_btn').style.display = 'none';
+                document.getElementById('vrodos_asset3d_next_scene_field').style.display = 'block';
+                document.getElementById('vrodos_asset3d_image1').style.display = 'none';
+                document.getElementById('vrodos_asset3d_image1_btn').style.display = 'none';
+                document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
+                document.getElementById('vrodos_asset3d_video').style.display = 'none';
+                document.getElementById('vrodos_asset3d_video_btn').style.display = 'none';
                 document.getElementById('wpunity-assets-infobox').style.display = 'none';
                 document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
             }else{
-                var link = document.getElementById('wpunity_asset3d_next_scene_field');
+                var link = document.getElementById('vrodos_asset3d_next_scene_field');
                 link.style.display = 'none';
                 if(text == 'Points of Interest (Video)'){
-                    document.getElementById('wpunity_asset3d_image1').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_image1_btn').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_image1_preview').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_video').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_video_btn').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_image1').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_image1_btn').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_video').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
                     document.getElementById('wpunity-assets-infobox').style.display = 'none';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else if(text == 'Points of Interest (Image-Text)'){
-                    document.getElementById('wpunity_asset3d_image1').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_image1_btn').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_image1_preview').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_video').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_video_btn').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_image1').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_image1_btn').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_image1_preview').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_video').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'none';
                     document.getElementById('wpunity-assets-infobox').style.display = 'block';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else if(text == 'Points of Interest'){
-                    document.getElementById('wpunity_asset3d_image1').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_image1_btn').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_image1_preview').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_video').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_video_btn').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_image1').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_image1_btn').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_image1_preview').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_video').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
                     document.getElementById('wpunity-assets-infobox').style.display = 'none';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else{
-                    document.getElementById('wpunity_asset3d_image1').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_image1_btn').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_image1_preview').style.display = 'none';
-                    document.getElementById('wpunity_asset3d_video').style.display = 'block';
-                    document.getElementById('wpunity_asset3d_video_btn').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_image1').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_image1_btn').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_video').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
                     document.getElementById('wpunity-assets-infobox').style.display = 'none';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
                 }
@@ -582,7 +582,7 @@ function wpunity_assets_databox_show(){
             var wp_media_post_id = wp.media.model.settings.post.id; // Store the old id
             var set_to_post_id = <?php echo $post->ID; ?>; // Set this
 
-            jQuery('#wpunity_asset3d_mtl_btn').on('click', function( event ){
+            jQuery('#vrodos_asset3d_mtl_btn').on('click', function( event ){
 
                 event.preventDefault();
 
@@ -603,8 +603,8 @@ function wpunity_assets_databox_show(){
                     attachment = file_frame.state().get('selection').first().toJSON();
 
                     // Do something with attachment.id and/or attachment.url here
-                    jQuery('#wpunity_asset3d_mtl').val(attachment.id);
-                    //jQuery('#wpunity_asset3d_mtl_preview').
+                    jQuery('#vrodos_asset3d_mtl').val(attachment.id);
+                    //jQuery('#vrodos_asset3d_mtl_preview').
 
                     // Restore the main post ID
                     wp.media.model.settings.post.id = wp_media_post_id;
@@ -614,7 +614,7 @@ function wpunity_assets_databox_show(){
                 file_frame.open();
             });
 
-            jQuery('#wpunity_asset3d_obj_btn').on('click', function( event ){
+            jQuery('#vrodos_asset3d_obj_btn').on('click', function( event ){
 
                 event.preventDefault();
 
@@ -636,8 +636,8 @@ function wpunity_assets_databox_show(){
                     attachment = file_frame.state().get('selection').first().toJSON();
 
                     // Do something with attachment.id and/or attachment.url here
-                    jQuery('#wpunity_asset3d_obj').val(attachment.id);
-                    //jQuery('#wpunity_asset3d_mtl_preview').
+                    jQuery('#vrodos_asset3d_obj').val(attachment.id);
+                    //jQuery('#vrodos_asset3d_mtl_preview').
 
                     // Restore the main post ID
                     wp.media.model.settings.post.id = wp_media_post_id;
@@ -647,7 +647,7 @@ function wpunity_assets_databox_show(){
                 file_frame.open();
             });
 
-            jQuery('#wpunity_asset3d_fbx_btn').on('click', function( event ){
+            jQuery('#vrodos_asset3d_fbx_btn').on('click', function( event ){
 
                 event.preventDefault();
 
@@ -669,7 +669,7 @@ function wpunity_assets_databox_show(){
                     attachment = file_frame.state().get('selection').first().toJSON();
 
                     // Do something with attachment.id and/or attachment.url here
-                    jQuery('#wpunity_asset3d_fbx').val(attachment.id);
+                    jQuery('#vrodos_asset3d_fbx').val(attachment.id);
 
 
                     // Restore the main post ID
@@ -681,7 +681,7 @@ function wpunity_assets_databox_show(){
             });
 
 
-            jQuery('#wpunity_asset3d_diffimage_btn').on('click', function( event ){
+            jQuery('#vrodos_asset3d_diffimage_btn').on('click', function( event ){
 
                 event.preventDefault();
 
@@ -703,8 +703,8 @@ function wpunity_assets_databox_show(){
                     attachment = file_frame.state().get('selection').first().toJSON();
 
                     // Do something with attachment.id and/or attachment.url here
-                    jQuery('#wpunity_asset3d_diffimage').val(attachment.id);
-                    jQuery('#wpunity_asset3d_diffimage_preview').attr( 'src', attachment.url );
+                    jQuery('#vrodos_asset3d_diffimage').val(attachment.id);
+                    jQuery('#vrodos_asset3d_diffimage_preview').attr( 'src', attachment.url );
 
                     // Restore the main post ID
                     wp.media.model.settings.post.id = wp_media_post_id;
@@ -714,7 +714,7 @@ function wpunity_assets_databox_show(){
                 file_frame.open();
             });
 
-            jQuery('#wpunity_asset3d_screenimage_btn').on('click', function( event ){
+            jQuery('#vrodos_asset3d_screenimage_btn').on('click', function( event ){
 
                 event.preventDefault();
 
@@ -736,8 +736,8 @@ function wpunity_assets_databox_show(){
                     attachment = file_frame.state().get('selection').first().toJSON();
 
                     // Do something with attachment.id and/or attachment.url here
-                    jQuery('#wpunity_asset3d_screenimage').val(attachment.id);
-                    jQuery('#wpunity_asset3d_screenimage_preview').attr( 'src', attachment.url );
+                    jQuery('#vrodos_asset3d_screenimage').val(attachment.id);
+                    jQuery('#vrodos_asset3d_screenimage_preview').attr( 'src', attachment.url );
 
                     // Restore the main post ID
                     wp.media.model.settings.post.id = wp_media_post_id;
@@ -747,7 +747,7 @@ function wpunity_assets_databox_show(){
                 file_frame.open();
             });
 
-            jQuery('#wpunity_asset3d_image1_btn').on('click', function( event ){
+            jQuery('#vrodos_asset3d_image1_btn').on('click', function( event ){
 
                 event.preventDefault();
 
@@ -769,8 +769,8 @@ function wpunity_assets_databox_show(){
                     attachment = file_frame.state().get('selection').first().toJSON();
 
                     // Do something with attachment.id and/or attachment.url here
-                    jQuery('#wpunity_asset3d_image1').val(attachment.id);
-                    jQuery('#wpunity_asset3d_image1_preview').attr( 'src', attachment.url );
+                    jQuery('#vrodos_asset3d_image1').val(attachment.id);
+                    jQuery('#vrodos_asset3d_image1_preview').attr( 'src', attachment.url );
 
                     // Restore the main post ID
                     wp.media.model.settings.post.id = wp_media_post_id;
@@ -780,7 +780,7 @@ function wpunity_assets_databox_show(){
                 file_frame.open();
             });
 
-            jQuery('#wpunity_asset3d_video_btn').on('click', function( event ){
+            jQuery('#vrodos_asset3d_video_btn').on('click', function( event ){
 
                 event.preventDefault();
 
@@ -802,8 +802,8 @@ function wpunity_assets_databox_show(){
                     attachment = file_frame.state().get('selection').first().toJSON();
 
                     // Do something with attachment.id and/or attachment.url here
-                    jQuery('#wpunity_asset3d_video').val(attachment.id);
-                    //jQuery('#wpunity_asset3d_image3_preview').attr( 'src', attachment.url );
+                    jQuery('#vrodos_asset3d_video').val(attachment.id);
+                    //jQuery('#vrodos_asset3d_image3_preview').attr( 'src', attachment.url );
 
                     // Restore the main post ID
                     wp.media.model.settings.post.id = wp_media_post_id;
@@ -829,14 +829,14 @@ function wpunity_assets_databox_show(){
 
 
 // Save data from this metabox with Custom Field for Asset3D ($wpunity_databox)
-function wpunity_assets_databox_save($post_id) {
+function vrodos_assets_databox_save($post_id) {
     global $wpunity_databox1;
     
-    if (!isset($_POST['wpunity_assets_databox_nonce']))
+    if (!isset($_POST['vrodos_assets_databox_nonce']))
         return;
     
     // verify nonce
-    if (!wp_verify_nonce($_POST['wpunity_assets_databox_nonce'], basename(__FILE__))) {
+    if (!wp_verify_nonce($_POST['vrodos_assets_databox_nonce'], basename(__FILE__))) {
         return $post_id;
     }
     // check autosave
@@ -870,18 +870,18 @@ function wpunity_assets_databox_save($post_id) {
 // ----------------- Obsolete ------------------------------
 // Functions for segmentation and classfication of 3D models
 
-function wpunity_assets_create_right_metaboxes() {
+function vrodos_assets_create_right_metaboxes() {
     
     // These function should be passed to front-end
 
-//    add_meta_box( 'autofnc-wpunity_asset3d_fetch_description','Fetch description','wpunity_assets_fetch_description_box_content', 'wpunity_asset3d', 'side' , 'low');
-//	add_meta_box( 'autofnc-wpunity_asset3d_fetch_image','Fetch image','wpunity_assets_fetch_image_box_content', 'wpunity_asset3d', 'side' , 'low');
-//	add_meta_box( 'autofnc-wpunity_asset3d_fetch_video','Fetch video','wpunity_assets_fetch_video_box_content', 'wpunity_asset3d', 'side' , 'low');
-//	add_meta_box( 'autofnc-wpunity_asset3d_segment_obj','Segment obj','wpunity_assets_segment_obj_box_content', 'wpunity_asset3d', 'side' , 'low');
-//	add_meta_box( 'autofnc-wpunity_asset3d_classify_obj','Classify obj','wpunity_assets_classify_obj_box_content', 'wpunity_asset3d', 'side' , 'low');
+//    add_meta_box( 'autofnc-vrodos_asset3d_fetch_description','Fetch description','vrodos_assets_fetch_description_box_content', 'vrodos_asset3d', 'side' , 'low');
+//	add_meta_box( 'autofnc-vrodos_asset3d_fetch_image','Fetch image','vrodos_assets_fetch_image_box_content', 'vrodos_asset3d', 'side' , 'low');
+//	add_meta_box( 'autofnc-vrodos_asset3d_fetch_video','Fetch video','vrodos_assets_fetch_video_box_content', 'vrodos_asset3d', 'side' , 'low');
+//	add_meta_box( 'autofnc-vrodos_asset3d_segment_obj','Segment obj','vrodos_assets_segment_obj_box_content', 'vrodos_asset3d', 'side' , 'low');
+//	add_meta_box( 'autofnc-vrodos_asset3d_classify_obj','Classify obj','vrodos_assets_classify_obj_box_content', 'vrodos_asset3d', 'side' , 'low');
 }
 
-function wpunity_assets_fetch_description_box_content($post){
+function vrodos_assets_fetch_description_box_content($post){
     
     echo '<div id="wpunity_fetchDescription_bt" class="wpunity_fetchContentButton"
      onclick="wpunity_fetchDescriptionAjax()">Fetch Description</div>';
@@ -919,7 +919,7 @@ function wpunity_assets_fetch_description_box_content($post){
     <?php
 }
 
-function wpunity_assets_fetch_image_box_content($post){
+function vrodos_assets_fetch_image_box_content($post){
     
     echo '<div id="wpunity_fetchImage_bt" class="wpunity_fetchContentButton" onclick="wpunity_fetchImageAjax()">Fetch Image</div>';
     ?>
@@ -970,7 +970,7 @@ function wpunity_assets_fetch_image_box_content($post){
     <?php
 }
 
-function wpunity_assets_fetch_video_box_content($post){
+function vrodos_assets_fetch_video_box_content($post){
     
     echo '<div id="wpunity_fetchVideo_bt" class="wpunity_fetchContentButton" onclick="wpunity_fetchVideoAjax()">Fetch Video</div>';
     ?>
@@ -1016,7 +1016,7 @@ function wpunity_assets_fetch_video_box_content($post){
     <?php
 }
 
-function wpunity_assets_segment_obj_box_content($post){
+function vrodos_assets_segment_obj_box_content($post){
     
     ?>
 
@@ -1061,7 +1061,7 @@ function wpunity_assets_segment_obj_box_content($post){
     <?php
 }
 
-function wpunity_assets_classify_obj_box_content($post){
+function vrodos_assets_classify_obj_box_content($post){
     
     echo '<div id="wpunity_classifyObj_bt" class="wpunity_fetchContentButton"
                                 onclick="wpunity_classifyObjAjax()">Classify obj</div>';

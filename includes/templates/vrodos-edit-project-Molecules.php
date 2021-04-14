@@ -3,16 +3,16 @@
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter_Scenepass = '&wpunity_scene=';}
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
-$parameter_assetpass = $perma_structure ? '?wpunity_asset=' : '&wpunity_asset=';
+$parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 $project_id = intval( $_GET['wpunity_game'] );
 $project_id = sanitize_text_field( $project_id );
 
-if( isset($_GET['wpunity_asset']) ) {
+if( isset($_GET['vrodos_asset']) ) {
 
-    $asset_inserted_id = sanitize_text_field( intval( $_GET['wpunity_asset'] ));
+    $asset_inserted_id = sanitize_text_field( intval( $_GET['vrodos_asset'] ));
     $asset_post = get_post($asset_inserted_id);
-    if($asset_post->post_type == 'wpunity_asset3d') {
+    if($asset_post->post_type == 'vrodos_asset3d') {
         $create_new = 0;
         $asset_checked_id = $asset_inserted_id;
     }
@@ -88,7 +88,7 @@ $editgamePage = wpunity_getEditpage('game');
 $newAssetPage = wpunity_getEditpage('asset');
 $allGamesPage = wpunity_getEditpage('allgames');
 
-$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&wpunity_scene=' .$scene_id . '&wpunity_asset=' ); // . asset_id
+$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&wpunity_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
 
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
@@ -755,7 +755,7 @@ if ( $assets ) :?>
 
             jQuery('#unityTaskMemValue').html("0");
 
-            wpunity_assepileAjax();
+            vrodos_assepileAjax();
         });
 
         var MDCSelect = mdc.select.MDCSelect;

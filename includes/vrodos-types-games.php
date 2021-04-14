@@ -169,7 +169,7 @@ function wpunity_create_folder_game( $new_status, $old_status, $post){
 			);
 
 			//Create a parent game tax category for the assets
-			wp_insert_term($gameTitle,'wpunity_asset3d_pgame',array(
+			wp_insert_term($gameTitle,'vrodos_asset3d_pgame',array(
 					'description'=> '-',
 					'slug' => $gameSlug,
 				)
@@ -208,7 +208,7 @@ function wpunity_create_folder_game( $new_status, $old_status, $post){
         }else{
 			$gameTitle = $post->post_title;
 			//Create a parent game tax category for the assets
-			wp_insert_term($gameTitle,'wpunity_asset3d_pgame',$gameSlug,'Asset of a Game');
+			wp_insert_term($gameTitle,'vrodos_asset3d_pgame',$gameSlug,'Asset of a Game');
 		}
 	}
 }
@@ -364,10 +364,10 @@ function wpunity_games_databox_show(){
 		));
 	
 	// load request_game.js script from js_libs
-	wp_enqueue_script( 'wpunity_assemble_request');
+	wp_enqueue_script( 'vrodos_assemble_request');
 	
 	// Some parameters to pass in the request_game_assemble.js  ajax
-	wp_localize_script('wpunity_assemble_request', 'phpvarsB',
+	wp_localize_script('vrodos_assemble_request', 'phpvarsB',
 		array('pluginsUrl' => plugins_url(),
 			'PHP_OS'     => PHP_OS,
 			'source'=> realpath(dirname(__FILE__).'/../../..').$DS.'uploads'.$DS.$slug,
@@ -462,11 +462,11 @@ function wpunity_games_compilerbox_show(){
 
 // Assemble related
 function wpunity_games_assemblerbox_show(){
-	echo '<div id="wpunity_assembleButton" onclick="wpunity_assembleAjax()">Assemble</div>';
+	echo '<div id="vrodos_assembleButton" onclick="vrodos_assembleAjax()">Assemble</div>';
 	
 	echo '<br /><br />Analytic report of assemble:<br />';
-	echo '<div id="wpunity_assemble_report1"></div>';
-	echo '<div id="wpunity_assemble_report2"></div>';
+	echo '<div id="vrodos_assemble_report1"></div>';
+	echo '<div id="vrodos_assemble_report2"></div>';
 }
 
 

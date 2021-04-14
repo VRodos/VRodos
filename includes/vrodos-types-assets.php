@@ -1,7 +1,7 @@
 <?php
 
-// Create Asset3D as custom type 'wpunity_asset3d'
-function wpunity_assets_construct(){
+// Create Asset3D as custom type 'vrodos_asset3d'
+function vrodos_assets_construct(){
     
     $labels = array(
         'name' => _x('Assets 3D', 'post type general name'),
@@ -33,28 +33,28 @@ function wpunity_assets_construct(){
         'show_in_rest' => true,
         'menu_position' => 25,
         'menu_icon' => 'dashicons-editor-textcolor',
-        'taxonomies' => array('wpunity_asset3d_cat', 'wpunity_asset3d_pgame', 'wpunity_asset3d_ipr_cat'),
+        'taxonomies' => array('vrodos_asset3d_cat', 'vrodos_asset3d_pgame', 'vrodos_asset3d_ipr_cat'),
         'supports' => array('title', 'editor', 'custom-fields', 'thumbnail','revisions','author'),
         'hierarchical' => false,
         'has_archive' => false,
         //'map_meta_cap'=>true,
         'capabilities' => array(
-            'publish_posts' => 'publish_wpunity_asset3d',
-            'edit_posts' => 'edit_wpunity_asset3d',
-            'edit_others_posts' => 'edit_others_wpunity_asset3d',
-            'delete_posts' => 'delete_wpunity_asset3d',
-            'delete_others_posts' => 'delete_others_wpunity_asset3d',
-            'read_private_posts' => 'read_private_wpunity_asset3d',
-            'edit_post' => 'edit_wpunity_asset3d',
-            'delete_post' => 'delete_wpunity_asset3d',
-            'read_post' => 'read_wpunity_asset3d',
+            'publish_posts' => 'publish_vrodos_asset3d',
+            'edit_posts' => 'edit_vrodos_asset3d',
+            'edit_others_posts' => 'edit_others_vrodos_asset3d',
+            'delete_posts' => 'delete_vrodos_asset3d',
+            'delete_others_posts' => 'delete_others_vrodos_asset3d',
+            'read_private_posts' => 'read_private_vrodos_asset3d',
+            'edit_post' => 'edit_vrodos_asset3d',
+            'delete_post' => 'delete_vrodos_asset3d',
+            'read_post' => 'read_vrodos_asset3d',
         ),
     );
-    register_post_type('wpunity_asset3d', $args);
+    register_post_type('vrodos_asset3d', $args);
 }
 
 // Create custom taxonomy "Asset Type"
-function wpunity_assets_taxcategory(){
+function vrodos_assets_taxcategory(){
     
     $labels = array(
         'name' => _x('Asset Type', 'taxonomy general name'),
@@ -78,17 +78,17 @@ function wpunity_assets_taxcategory(){
         'hierarchical' => false,
         'show_admin_column' => true,
         'capabilities' => array (
-            'manage_terms' => 'manage_wpunity_asset3d_cat',
-            'edit_terms' => 'manage_wpunity_asset3d_cat',
-            'delete_terms' => 'manage_wpunity_asset3d_cat',
-            'assign_terms' => 'edit_wpunity_asset3d_cat'
+            'manage_terms' => 'manage_vrodos_asset3d_cat',
+            'edit_terms' => 'manage_vrodos_asset3d_cat',
+            'delete_terms' => 'manage_vrodos_asset3d_cat',
+            'assign_terms' => 'edit_vrodos_asset3d_cat'
         ),
     );
-    register_taxonomy('wpunity_asset3d_cat', 'wpunity_asset3d', $args);
+    register_taxonomy('vrodos_asset3d_cat', 'vrodos_asset3d', $args);
 }
 
 // Create Asset Project as custom taxonomy
-function wpunity_assets_taxpgame(){
+function vrodos_assets_taxpgame(){
     
     $labels = array(
         'name' => _x('Asset Project', 'taxonomy general name'),
@@ -112,18 +112,18 @@ function wpunity_assets_taxpgame(){
         'hierarchical' => false,
         'show_admin_column' => true,
         'capabilities' => array (
-            'manage_terms' => 'manage_wpunity_asset3d_pgame',
-            'edit_terms' => 'manage_wpunity_asset3d_pgame',
-            'delete_terms' => 'manage_wpunity_asset3d_pgame',
-            'assign_terms' => 'edit_wpunity_asset3d_pgame'
+            'manage_terms' => 'manage_vrodos_asset3d_pgame',
+            'edit_terms' => 'manage_vrodos_asset3d_pgame',
+            'delete_terms' => 'manage_vrodos_asset3d_pgame',
+            'assign_terms' => 'edit_vrodos_asset3d_pgame'
         ),
     );
-    register_taxonomy('wpunity_asset3d_pgame', 'wpunity_asset3d', $args);
+    register_taxonomy('vrodos_asset3d_pgame', 'vrodos_asset3d', $args);
 }
 
 // ================================================================
 // Create Asset Category as custom taxonomy
-function wpunity_assets_taxcategory_ipr(){
+function vrodos_assets_taxcategory_ipr(){
     $labels = array(
         'name' => _x('Asset IPR', 'taxonomy general name'),
         'singular_name' => _x('Asset IPR', 'taxonomy singular name'),
@@ -145,13 +145,13 @@ function wpunity_assets_taxcategory_ipr(){
         'hierarchical' => false,
         'show_admin_column' => true,
         'capabilities' => array (
-            'manage_terms' => 'manage_wpunity_asset3d_iprcat',
-            'edit_terms' => 'manage_wpunity_asset3d_iprcat',
-            'delete_terms' => 'manage_wpunity_asset3d_iprcat',
-            'assign_terms' => 'edit_wpunity_asset3d_iprcat'
+            'manage_terms' => 'manage_vrodos_asset3d_iprcat',
+            'edit_terms' => 'manage_vrodos_asset3d_iprcat',
+            'delete_terms' => 'manage_vrodos_asset3d_iprcat',
+            'assign_terms' => 'edit_vrodos_asset3d_iprcat'
         ),
     );
-    register_taxonomy('wpunity_asset3d_ipr_cat', 'wpunity_asset3d', $args);
+    register_taxonomy('vrodos_asset3d_ipr_cat', 'vrodos_asset3d', $args);
 }
 
 
@@ -160,7 +160,7 @@ function wpunity_assets_taxcategory_ipr(){
 //Create PathData for each asset as custom field in order to upload files at pathdata/Models folder
 function wpunity_create_pathdata_asset( $post_id ){
     
-    if (get_post_type($post_id) === 'wpunity_asset3d') {
+    if (get_post_type($post_id) === 'vrodos_asset3d') {
         
         $parentGameID = $_GET['wpunity_game'];
         
@@ -172,13 +172,13 @@ function wpunity_create_pathdata_asset( $post_id ){
         $parentGameID = intval($parentGameID, 10);
         $parentGameSlug = ( $parentGameID > 0 ) ? get_post( $parentGameID)->post_name : NULL;
         
-        update_post_meta($post_id,'wpunity_asset3d_pathData', $parentGameSlug);
+        update_post_meta($post_id,'vrodos_asset3d_pathData', $parentGameSlug);
     }
 }
 
 function wpunity_allowAuthorEditing()
 {
-    add_post_type_support( 'wpunity_asset3d', 'author' );
+    add_post_type_support( 'vrodos_asset3d', 'author' );
 }
 
 function change_user_dropdown( $query_args, $r ){
@@ -187,7 +187,7 @@ function change_user_dropdown( $query_args, $r ){
     $screen = get_current_screen();
     
     // list users whose role is e.g. 'Editor' for 'post' post type
-    if( $screen->post_type == 'wpunity_asset3d' ) {
+    if( $screen->post_type == 'vrodos_asset3d' ) {
     
         if (isset($query_args['who'])) {
             unset($query_args['who']);
@@ -203,22 +203,22 @@ function change_user_dropdown( $query_args, $r ){
 // ==========  Asset Taxes ===============
 
 // Remove standard boxes and add custom in the admin back-end
-function wpunity_assets_taxcategory_box() {
+function vrodos_assets_taxcategory_box() {
     
-    remove_meta_box( 'tagsdiv-wpunity_asset3d_pgame', 'wpunity_asset3d', 'side' );
-    remove_meta_box( 'tagsdiv-wpunity_asset3d_cat', 'wpunity_asset3d', 'side' );
-    remove_meta_box( 'tagsdiv-wpunity_asset3d_ipr_cat', 'wpunity_asset3d', 'side' );
+    remove_meta_box( 'tagsdiv-vrodos_asset3d_pgame', 'vrodos_asset3d', 'side' );
+    remove_meta_box( 'tagsdiv-vrodos_asset3d_cat', 'vrodos_asset3d', 'side' );
+    remove_meta_box( 'tagsdiv-vrodos_asset3d_ipr_cat', 'vrodos_asset3d', 'side' );
     
-    add_meta_box( 'wpunity_asset_project_selectbox','Project', 'wpunity_assets_tax_select_project_box_content', 'wpunity_asset3d', 'side' , 'high');
+    add_meta_box( 'vrodos_asset_project_selectbox','Project', 'vrodos_assets_tax_select_project_box_content', 'vrodos_asset3d', 'side' , 'high');
     
-    add_meta_box( 'wpunity_asset3d_category_selectbox','Asset Category', 'wpunity_assets_tax_select_category_box_content', 'wpunity_asset3d', 'side' , 'high');
+    add_meta_box( 'vrodos_asset3d_category_selectbox','Asset Category', 'vrodos_assets_tax_select_category_box_content', 'vrodos_asset3d', 'side' , 'high');
     
-    add_meta_box( 'wpunity_asset3d_ipr_cat_selectbox','Asset IPR Category', 'wpunity_assets_tax_select_iprcategory_box_content', 'wpunity_asset3d', 'side' , 'high');
+    add_meta_box( 'vrodos_asset3d_ipr_cat_selectbox','Asset IPR Category', 'vrodos_assets_tax_select_iprcategory_box_content', 'vrodos_asset3d', 'side' , 'high');
 }
 
-function wpunity_assets_tax_select_project_box_content($post){
+function vrodos_assets_tax_select_project_box_content($post){
     
-    $tax_name = 'wpunity_asset3d_pgame';
+    $tax_name = 'vrodos_asset3d_pgame';
     ?>
     <div class="tagsdiv" id="<?php echo $tax_name; ?>">
         
@@ -226,8 +226,8 @@ function wpunity_assets_tax_select_project_box_content($post){
         
         <?php
         // Use nonce for verification
-        wp_nonce_field( plugin_basename( __FILE__ ), 'wpunity_asset3d_pgame_noncename' );
-        $type_IDs = wp_get_object_terms( $post->ID, 'wpunity_asset3d_pgame', array('fields' => 'ids') );
+        wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_pgame_noncename' );
+        $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_pgame', array('fields' => 'ids') );
         
         if(!$type_IDs) {
             echo "term not found setting 0";
@@ -239,8 +239,8 @@ function wpunity_assets_tax_select_project_box_content($post){
             'orderby'            => 'name',
             'hide_empty'         => 0,
             'selected'           => $type_IDs[0],
-            'name'               => 'wpunity_asset3d_pgame',
-            'taxonomy'           => 'wpunity_asset3d_pgame',
+            'name'               => 'vrodos_asset3d_pgame',
+            'taxonomy'           => 'vrodos_asset3d_pgame',
             'echo'               => 0,
             'option_none_value'  => '-1',
             'id' => 'wpunity-select-category-dropdown'
@@ -261,32 +261,32 @@ function wpunity_assets_tax_select_project_box_content($post){
     <?php
 }
 
-// Save wpunity_asset3d_cat
-function wpunity_asset_tax_category_box_content_save( $post_id ) {
+// Save vrodos_asset3d_cat
+function vrodos_asset_tax_category_box_content_save( $post_id ) {
     
     // verify if this is an auto save routine.
     // If it is our form has not been submitted, so we dont want to do anything
     if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) ||
-        !isset($_POST['wpunity_asset3d_cat_noncename']) ||
-        !wp_verify_nonce( $_POST['wpunity_asset3d_cat_noncename'], plugin_basename( __FILE__ ) ) ||
+        !isset($_POST['vrodos_asset3d_cat_noncename']) ||
+        !wp_verify_nonce( $_POST['vrodos_asset3d_cat_noncename'], plugin_basename( __FILE__ ) ) ||
         // verify this came from the our screen and with proper authorization,
         // because save_post can be triggered at other times
 //        !current_user_can( 'edit_pages',$post_id ) || // Check permissions
-        !current_user_can( 'edit_wpunity_asset3d_cat',$post_id ) // Verify that user can edit categories
+        !current_user_can( 'edit_vrodos_asset3d_cat',$post_id ) // Verify that user can edit categories
     ) {
         return;
     }
     
     // OK, we're authenticated: we need to find and save the data
-    $type_ID = intval($_POST['wpunity_asset3d_cat'], 10);
-    $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'wpunity_asset3d_cat' )->slug : NULL;
-    wp_set_object_terms(  $post_id , $type, 'wpunity_asset3d_cat' );
+    $type_ID = intval($_POST['vrodos_asset3d_cat'], 10);
+    $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_asset3d_cat' )->slug : NULL;
+    wp_set_object_terms(  $post_id , $type, 'vrodos_asset3d_cat' );
 }
 
 
 // Select the category (admin select box)
-function wpunity_assets_tax_select_category_box_content($post){
-    $tax_name = 'wpunity_asset3d_cat';
+function vrodos_assets_tax_select_category_box_content($post){
+    $tax_name = 'vrodos_asset3d_cat';
     ?>
     <div class="tagsdiv" id="<?php echo $tax_name; ?>">
         
@@ -294,8 +294,8 @@ function wpunity_assets_tax_select_category_box_content($post){
         
         <?php
         // Use nonce for verification
-        wp_nonce_field( plugin_basename( __FILE__ ), 'wpunity_asset3d_cat_noncename' );
-        $type_IDs = wp_get_object_terms( $post->ID, 'wpunity_asset3d_cat', array('fields' => 'ids') );
+        wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_cat_noncename' );
+        $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_cat', array('fields' => 'ids') );
 
         if(!$type_IDs) {
             echo "term not found setting 0";
@@ -307,8 +307,8 @@ function wpunity_assets_tax_select_category_box_content($post){
             'orderby'            => 'name',
             'hide_empty'         => 0,
             'selected'           => $type_IDs[0],
-            'name'               => 'wpunity_asset3d_cat',
-            'taxonomy'           => 'wpunity_asset3d_cat',
+            'name'               => 'vrodos_asset3d_cat',
+            'taxonomy'           => 'vrodos_asset3d_cat',
             'echo'               => 0,
             'option_none_value'  => '-1',
             'id'                 => 'wpunity-select-asset3d-cat-dropdown',
@@ -330,8 +330,8 @@ function wpunity_assets_tax_select_category_box_content($post){
 }
 
 //============ IPR categories ====================
-function wpunity_assets_tax_select_iprcategory_box_content($post){
-    $tax_name = 'wpunity_asset3d_ipr_cat';
+function vrodos_assets_tax_select_iprcategory_box_content($post){
+    $tax_name = 'vrodos_asset3d_ipr_cat';
     ?>
     <div class="tagsdiv" id="<?php echo $tax_name; ?>">
         
@@ -339,9 +339,9 @@ function wpunity_assets_tax_select_iprcategory_box_content($post){
         
         <?php
         // Use nonce for verification
-        wp_nonce_field( plugin_basename( __FILE__ ), 'wpunity_asset3d_ipr_cat_noncename' );
+        wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_ipr_cat_noncename' );
         
-        $type_IDs = wp_get_object_terms( $post->ID, 'wpunity_asset3d_ipr_cat', array('fields' => 'ids') );
+        $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_ipr_cat', array('fields' => 'ids') );
 
         if(!$type_IDs) {
             echo "term not found setting 0";
@@ -353,17 +353,17 @@ function wpunity_assets_tax_select_iprcategory_box_content($post){
             'orderby'            => 'name',
             'hide_empty'         => 0,
             'selected'           => $type_IDs[0],
-            'name'               => 'wpunity_asset3d_ipr_cat',
-            'taxonomy'           => 'wpunity_asset3d_ipr_cat',
+            'name'               => 'vrodos_asset3d_ipr_cat',
+            'taxonomy'           => 'vrodos_asset3d_ipr_cat',
             'echo'               => 0,
             'option_none_value'  => '-1',
             'id' => 'wpunity-select-asset3d-ipr-cat-dropdown',
         );
         
-        //if (term_exists( 'visible to all', 'wpunity_asset3d_ipr_cat')!=0) {
+        //if (term_exists( 'visible to all', 'vrodos_asset3d_ipr_cat')!=0) {
         wp_insert_term(
             'Private', // the term
-            'wpunity_asset3d_ipr_cat', // the taxonomy
+            'vrodos_asset3d_ipr_cat', // the taxonomy
             array(
                 'description' => 'Nobody can view or edit the asset',
                 'slug' => 'asset_private',
@@ -380,7 +380,7 @@ function wpunity_assets_tax_select_iprcategory_box_content($post){
         ];
         
         foreach ($terms_ipr as $ti) {
-            wp_insert_term($ti[0], 'wpunity_asset3d_ipr_cat', array('description' => $ti[1], 'slug' => $ti[2]));
+            wp_insert_term($ti[0], 'vrodos_asset3d_ipr_cat', array('description' => $ti[1], 'slug' => $ti[2]));
         }
         
         $select = wp_dropdown_categories($args);
@@ -407,29 +407,29 @@ function wpunity_assets_tax_select_iprcategory_box_content($post){
 }
 
 // Save IPR category
-function wpunity_assets_taxcategory_ipr_box_content_save( $post_id ) {
+function vrodos_assets_taxcategory_ipr_box_content_save( $post_id ) {
     
     // verify if this is an auto save routine.
     // If it is our form has not been submitted, so we dont want to do anything
     if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
         wp_is_post_revision( $post_id ) ||
-        ! isset($_POST['wpunity_asset3d_ipr_cat_noncename']) ||
-        !wp_verify_nonce( $_POST['wpunity_asset3d_ipr_cat_noncename'], plugin_basename( __FILE__ ) ) ||
+        ! isset($_POST['vrodos_asset3d_ipr_cat_noncename']) ||
+        !wp_verify_nonce( $_POST['vrodos_asset3d_ipr_cat_noncename'], plugin_basename( __FILE__ ) ) ||
         //!current_user_can( 'edit_pages', $post_id ) ||
-        !current_user_can( 'edit_wpunity_asset3d_iprcat',$post_id ) // Verify that user can edit categories
+        !current_user_can( 'edit_vrodos_asset3d_iprcat',$post_id ) // Verify that user can edit categories
     ) {
         return;
     }
     
     // OK, we're authenticated: we need to find and save the data
-    $type_ID = intval($_POST['wpunity_asset3d_ipr_cat'], 10);
-    $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'wpunity_asset3d_ipr_cat' )->slug : NULL;
-    wp_set_object_terms(  $post_id , $type, 'wpunity_asset3d_ipr_cat' );
+    $type_ID = intval($_POST['vrodos_asset3d_ipr_cat'], 10);
+    $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_asset3d_ipr_cat' )->slug : NULL;
+    wp_set_object_terms(  $post_id , $type, 'vrodos_asset3d_ipr_cat' );
 }
 
 
-// Save wpunity_asset3d_pgame
-function wpunity_asset_project_box_content_save($post_id ) {
+// Save vrodos_asset3d_pgame
+function vrodos_asset_project_box_content_save($post_id ) {
 
 //    $fg = fopen("output_gg.txt","w");
 //    fwrite($fg, "1".chr(13));
@@ -438,27 +438,27 @@ function wpunity_asset_project_box_content_save($post_id ) {
     // If it is our form has not been submitted, so we dont want to do anything
     if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
         wp_is_post_revision( $post_id ) ||
-        !isset($_POST['wpunity_asset3d_pgame_noncename']) ||
-        !wp_verify_nonce( $_POST['wpunity_asset3d_pgame_noncename'], plugin_basename( __FILE__ ) ) ||
+        !isset($_POST['vrodos_asset3d_pgame_noncename']) ||
+        !wp_verify_nonce( $_POST['vrodos_asset3d_pgame_noncename'], plugin_basename( __FILE__ ) ) ||
         //!current_user_can( 'edit_pages', $post_id ) ||
-        !current_user_can( 'edit_wpunity_asset3d_pgame', $post_id )
+        !current_user_can( 'edit_vrodos_asset3d_pgame', $post_id )
     ) {
         return;
     }
     
     // OK, we're authenticated: we need to find and save the data
-    $type_ID = intval($_POST['wpunity_asset3d_pgame'], 10);
-    $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'wpunity_asset3d_pgame' )->slug : NULL;
-    wp_set_object_terms(  $post_id , $type, 'wpunity_asset3d_pgame' );
+    $type_ID = intval($_POST['vrodos_asset3d_pgame'], 10);
+    $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_asset3d_pgame' )->slug : NULL;
+    wp_set_object_terms(  $post_id , $type, 'vrodos_asset3d_pgame' );
 }
 
 
-function wpunity_set_custom_wpunity_asset3d_columns($columns) {
+function wpunity_set_custom_vrodos_asset3d_columns($columns) {
     $columns['asset_slug'] = 'Asset Slug';
     return $columns;
 }
 
-function wpunity_set_custom_wpunity_asset3d_columns_fill( $column, $post_id ) {
+function wpunity_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ) {
     switch ( $column ) {
         case 'asset_slug' :
             $mypost = get_post($post_id);
@@ -478,7 +478,7 @@ function wpunity_set_custom_wpunity_asset3d_columns_fill( $column, $post_id ) {
 //Yaml for each category
 
 // A callback function to add a custom field to our taxonomy
-function wpunity_assets_category_yamlFields($tag) {
+function vrodos_assets_category_yamlFields($tag) {
     // Check for existing taxonomy meta for the term you're editing
     //$term_meta_yaml_assetcat = get_term_meta( $tag->term_id, 'wpunity_yamlmeta_assetcat_pat', true );
     ?>
@@ -495,10 +495,10 @@ function wpunity_assets_category_yamlFields($tag) {
     
     <tr class="form-field term-assetcat_pat">
         <th scope="row" valign="top">
-            <label for="wpunity_assetcat_gamecat">Asset's Game</label>
+            <label for="vrodos_assetcat_gamecat">Asset's Game</label>
         </th>
         <td>
-            <textarea name="wpunity_assetcat_gamecat" id="wpunity_assetcat_gamecat" readonly><?php echo get_term_meta( $tag->term_id, 'wpunity_assetcat_gamecat', true ); ?></textarea>
+            <textarea name="vrodos_assetcat_gamecat" id="vrodos_assetcat_gamecat" readonly><?php echo get_term_meta( $tag->term_id, 'vrodos_assetcat_gamecat', true ); ?></textarea>
             <p class="description">1=Archaeology - 2=Energy - 3=Chemistry</p>
         </td>
     </tr>
@@ -507,7 +507,7 @@ function wpunity_assets_category_yamlFields($tag) {
 }
 
 // A callback function to save our extra taxonomy field(s)
-function wpunity_assets_category_yamlFields_save( $term_id ) {
+function vrodos_assets_category_yamlFields_save( $term_id ) {
 
 //    if ( isset( $_POST['wpunity_yamlmeta_assetcat_pat'] ) ) {
 //        $term_meta_wonderaround_pat = $_POST['wpunity_yamlmeta_assetcat_pat'];

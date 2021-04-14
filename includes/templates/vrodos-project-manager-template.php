@@ -4,7 +4,7 @@
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter_Scenepass = '&wpunity_scene=';}
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
-$parameter_assetpass = $perma_structure ? '?wpunity_asset=' : '&wpunity_asset=';
+$parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 $editgamePage = wpunity_getEditpage('game');
 

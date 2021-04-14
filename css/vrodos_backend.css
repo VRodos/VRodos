@@ -1,4 +1,4 @@
-#wpunity_assembleButton {
+#vrodos_assembleButton {
     background-color: #DDAF50;
     border: none;
     color: white;
@@ -87,7 +87,7 @@
     word-break: break-all;
 }
 
-#wpunity_assets_box_wrapper {
+#vrodos_assets_box_wrapper {
     width: 100%;
     height: 100%;
     z-index: 10;
@@ -100,7 +100,7 @@
     color:white;
 }
 
-#wpunity_assets_box_wrapper span {
+#vrodos_assets_box_wrapper span {
     width:100%;
     font-size:30px;
     padding-top:50px;

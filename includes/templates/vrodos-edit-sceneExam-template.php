@@ -18,7 +18,7 @@ if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$per
 
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
 if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter_Scenepass = '&wpunity_scene=';}
-if( $perma_structure){$parameter_assetpass = '?wpunity_asset=';} else{$parameter_assetpass = '&wpunity_asset=';}
+if( $perma_structure){$parameter_assetpass = '?vrodos_asset=';} else{$parameter_assetpass = '&vrodos_asset=';}
 
 
 $scene_id = intval( $_GET['wpunity_scene'] );
@@ -240,7 +240,7 @@ get_header();
                                                         <section class="mdc-card__actions">
                                                             <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" class="mdc-button mdc-button--compact mdc-card__action"
                                                                style="display:<?php echo $shouldHideDELETE_EDIT?'none':'';?>" onclick="deleteMolecule('<?php echo $molecule['moleculeID']?>','<?php echo $gameSlug; ?>')">DELETE</a>
-                                                            <a data-mdc-auto-init="MDCRipple" title="Edit asset" class="mdc-button mdc-button--compact mdc-card__action mdc-button--primary" href="<?php echo $gotoAdd_newAsset_page . '&wpunity_asset=' . $molecule['moleculeID']; ?>&<?php echo $shouldHideDELETE_EDIT?'editable=false':'editable=true' ?>">
+                                                            <a data-mdc-auto-init="MDCRipple" title="Edit asset" class="mdc-button mdc-button--compact mdc-card__action mdc-button--primary" href="<?php echo $gotoAdd_newAsset_page . '&vrodos_asset=' . $molecule['moleculeID']; ?>&<?php echo $shouldHideDELETE_EDIT?'editable=false':'editable=true' ?>">
 																<?php
 																echo $shouldHideDELETE_EDIT ? 'VIEW':'EDIT';
 																?>

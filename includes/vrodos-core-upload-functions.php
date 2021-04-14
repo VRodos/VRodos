@@ -14,7 +14,7 @@ function wpunity_upload_dir_forScenesOrAssets( $args ) {
     
     $newdir = get_post_type($post_id) === 'wpunity_scene' ?
          '/' . get_the_terms($post_id, 'wpunity_scene_pgame')[0]->slug . '/Scenes'  // 'wpunity_scene'
-      :  '/' . get_post_meta($post_id, 'wpunity_asset3d_pathData', true) . '/Models'; // 'wpunity_asset3d'
+      :  '/' . get_post_meta($post_id, 'vrodos_asset3d_pathData', true) . '/Models'; // 'vrodos_asset3d'
     
     $args['subdir'] = $newdir;
     $args['path'] .= $newdir;
@@ -34,7 +34,7 @@ function wpunity_disable_imgthumbs_assets( $image_sizes ){
     // for ex: $slider_image_sizes = array( 'thumbnail', 'medium' );
     
     // instead of unset sizes, return your custom size (nothing)
-    if( isset($_REQUEST['post_id']) && 'wpunity_asset3d' === get_post_type( $_REQUEST['post_id'] ) )
+    if( isset($_REQUEST['post_id']) && 'vrodos_asset3d' === get_post_type( $_REQUEST['post_id'] ) )
         return $slider_image_sizes;
     
     return $image_sizes;
@@ -560,7 +560,7 @@ function escstr($in, $what){
     return esc_attr(strip_tags($in, $what));
 }
 
-function wpunity_asset3D_languages_support1($allPOSTval){
+function vrodos_asset3d_languages_support1($allPOSTval){
     
     $output = [];
     
@@ -587,7 +587,7 @@ function wpunity_asset3D_languages_support1($allPOSTval){
     return $output;
 }
 
-function wpunity_asset3D_languages_support2($asset_id){
+function vrodos_asset3d_languages_support2($asset_id){
     
     $a = ($asset_id == null);
     
@@ -659,7 +659,7 @@ function wpunity_asset3D_languages_support2($asset_id){
 
 }
 
-function   wpunity_asset3D_languages_support3($curr_font, $assetLangPack2){
+function   vrodos_asset3d_languages_support3($curr_font, $assetLangPack2){
     
     echo '<ul class="langul">'.
                     '<li class="langli"><a href="#EnglishEdit">English</a></li>'.

@@ -162,7 +162,7 @@ add_action('wp_enqueue_scripts', 'vrodos_register_scripts' );
 
 
 function vrodos_register_styles() {
-	wp_register_style( 'wpunity_backend', plugin_dir_url( __FILE__ ) . 'css/wpunity_backend.css' );
+	wp_register_style( 'wpunity_backend', plugin_dir_url( __FILE__ ) . 'css/vrodos_backend.css' );
 	wp_register_style( 'wpunity_vr_editor', plugin_dir_url( __FILE__ ) . 'css/vr_editor_style.css' );
 	wp_register_style( 'wpunity_datgui', plugin_dir_url( __FILE__ ) . 'css/dat-gui.css' );
 
@@ -171,14 +171,14 @@ function vrodos_register_styles() {
 	wp_register_style( 'wpunity_material_stylesheet',  plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.css' );
 	wp_register_script( 'wpunity_material_scripts', plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.js');
 	
-	wp_register_style( 'wpunity_frontend_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/wpunity_frontend.css' );
+	wp_register_style( 'wpunity_frontend_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_frontend.css' );
 	
 	
 	wp_register_style( 'vrodos_lightslider_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/lightslider.min.css' );
     
     wp_register_style( 'wpunity_materialize_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/materialize.css' );
 	
-	wp_register_style( 'wpunity_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/wpunity_asseteditor.css' );
+	wp_register_style( 'vrodos_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_asseteditor.css' );
 	
 	
 	// REM: HERE - > Rename widget and shortcode
@@ -304,16 +304,16 @@ add_action('save_post', 'wpunity_scenes_metas_save');
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
 
 // 14
-add_action('init', 'wpunity_assets_construct'); // vrodos_asset3d 'ASSETS 3D'
+add_action('init', 'vrodos_assets_construct'); // vrodos_asset3d 'ASSETS 3D'
 
 // 15
-add_action('init', 'wpunity_assets_taxcategory'); // vrodos_asset3d_cat 'ASSET TYPES'
+add_action('init', 'vrodos_assets_taxcategory'); // vrodos_asset3d_cat 'ASSET TYPES'
 
 // 16
-add_action('init', 'wpunity_assets_taxpgame'); // vrodos_asset3d_pgame 'ASSET GAMES'
+add_action('init', 'vrodos_assets_taxpgame'); // vrodos_asset3d_pgame 'ASSET GAMES'
 
 // 17
-add_action('init', 'wpunity_assets_taxcategory_ipr'); // vrodos_asset3d_ipr_cat 'ASSET IPR CATEG'
+add_action('init', 'vrodos_assets_taxcategory_ipr'); // vrodos_asset3d_ipr_cat 'ASSET IPR CATEG'
 
 // 35
 add_action('save_post','wpunity_create_pathdata_asset',10,3);
@@ -326,49 +326,49 @@ add_filter( 'wp_dropdown_users_args', 'change_user_dropdown', 10, 2 );
 
 
 // 36
-add_action( 'save_post', 'wpunity_asset_tax_category_box_content_save');
+add_action( 'save_post', 'vrodos_asset_tax_category_box_content_save');
 
 // 37
-add_action( 'save_post', 'wpunity_assets_taxcategory_ipr_box_content_save' );
+add_action( 'save_post', 'vrodos_assets_taxcategory_ipr_box_content_save' );
 
 // 38
-add_action( 'save_post', 'wpunity_asset_project_box_content_save');
+add_action( 'save_post', 'vrodos_asset_project_box_content_save');
 
 
 // Create Asset Taxonomy Boxes (Category & Scene) @ asset's backend
 // 53
-add_action('add_meta_boxes','wpunity_assets_taxcategory_box');
+add_action('add_meta_boxes','vrodos_assets_taxcategory_box');
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets-data.php' );
 
 // Save data from infobox
 // 39
-add_action('save_post', 'wpunity_assets_databox_save');
+add_action('save_post', 'vrodos_assets_databox_save');
 
 // 42
-add_action('admin_menu', 'wpunity_assets_databox_add');
+add_action('admin_menu', 'vrodos_assets_databox_add');
 
 // 48
-add_action('wp_enqueue_scripts', 'wpunity_assets_scripts_and_styles' );
+add_action('wp_enqueue_scripts', 'vrodos_assets_scripts_and_styles' );
 
 // 54
 // For classification
-//add_action('add_meta_boxes','wpunity_assets_create_right_metaboxes');
+//add_action('add_meta_boxes','vrodos_assets_create_right_metaboxes');
 
 // Add the fields to the taxonomy, using our callback function
 // 59
-//add_action( 'vrodos_asset3d_cat_edit_form_fields', 'wpunity_assets_category_yamlFields', 10, 2 );
+//add_action( 'vrodos_asset3d_cat_edit_form_fields', 'vrodos_assets_category_yamlFields', 10, 2 );
 
 // Save the changes made on the taxonomy, using our callback function
 // 60
-//add_action( 'edited_ vrodos_asset3d_cat', 'wpunity_assets_category_yamlFields_save', 10, 2 );
+//add_action( 'edited_ vrodos_asset3d_cat', 'vrodos_assets_category_yamlFields_save', 10, 2 );
 
 // 61
-add_filter( 'manage_wpunity_asset3d_posts_columns', 'wpunity_set_custom_wpunity_asset3d_columns' );
+add_filter( 'manage_vrodos_asset3d_posts_columns', 'wpunity_set_custom_vrodos_asset3d_columns' );
 
 // Add the data to the custom columns for the book post type:
 // 62
-add_action( 'manage_wpunity_asset3d_posts_custom_column' , 'wpunity_set_custom_wpunity_asset3d_columns_fill', 10, 2 );
+add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'wpunity_set_custom_vrodos_asset3d_columns_fill', 10, 2 );
 
 
 //===================================== Other ============================================
@@ -469,7 +469,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_setti
 
 
 // 20
-add_action( 'init', 'wpunity_assets_taxcategory_energy_fill' );
+add_action( 'init', 'vrodos_assets_taxcategory_energy_fill' );
 
 // 21
 add_action( 'init', 'wpunity_scenes_types_energy_standard_cre' );
@@ -488,7 +488,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_setti
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-archaeology-settings.php' );
 
 // 22
-add_action( 'init', 'wpunity_assets_taxcategory_archaeology_fill' );
+add_action( 'init', 'vrodos_assets_taxcategory_archaeology_fill' );
 
 // 23
 add_action( 'init', 'wpunity_scenes_types_archaeology_standard_cre' );
@@ -499,7 +499,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_setti
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-chemistry-settings.php' );
 
 // 24
-add_action( 'init', 'wpunity_assets_taxcategory_chemistry_fill' );
+add_action( 'init', 'vrodos_assets_taxcategory_chemistry_fill' );
 
 // 25
 add_action( 'init', 'wpunity_scenes_types_chemistry_standard_cre' );
@@ -611,65 +611,63 @@ function vrodos_lost_password_redirect() {
 add_action('login_headerurl', 'vrodos_lost_password_redirect');
 
 
-
-
 // Remove <p>  </p> from content to be used for saving json scenes in description
 remove_filter ('the_content', 'wpautop');
 
 /* ------------------------------ API ---------------------------------------- */
-/*
- * Get scene data by title
- */
-function prefix_get_endpoint_phrase($request) { //
-    // rest_ensure_response() wraps the data we want to return into a WP_REST_Response, and ensures it will be properly returned.
-    
-    $title = (string) $request['title'];
-    
-    $args = array (
-        'title'=>$title,
-        'post_status' => 'publish',
-        'post_type' => 'wpunity_scene'
-    );
-    
-    $post = get_posts( $args );
-    $content = json_decode($post[0]->post_content, true);
-    
-    return rest_ensure_response($content);
-}
-
-/**
- * This function is where we register our routes for our example endpoint.
- */
-function prefix_register_example_routes() {
-    // register_rest_route() handles more arguments but we are going to stick to the basics for now.
-    register_rest_route( 'wpunity/v1', '/scene/(?P<title>\S+)',
-		array(
-        'methods'  => WP_REST_Server::READABLE,   // By using this constant we ensure that when the WP_REST_Server changes our readable endpoints will work as intended.
-        'callback' => 'prefix_get_endpoint_phrase',  // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
-    ) );
-}
-
-add_action( 'rest_api_init', 'prefix_register_example_routes' );
-
-
-// Back-end restrict by author filtering
-function wpunity_filter_by_the_author() {
-
-	$params = array(
-		'name' => 'author', // this is the "name" attribute for filter <select>
-		'show_option_all' => 'All authors' // label for all authors (display posts without filter)
-	);
-	
-	if ( isset($_GET['user']) )
-		$params['selected'] = $_GET['user']; // choose selected user by $_GET variable
-	
-	wp_dropdown_users( $params ); // print the ready author list
-}
-
-// 72
-add_action('restrict_manage_posts', 'wpunity_filter_by_the_author');
+///*
+// * Get scene data by title
+// */
+//function prefix_get_endpoint_phrase($request) { //
+//    // rest_ensure_response() wraps the data we want to return into a WP_REST_Response, and ensures it will be properly returned.
+//
+//    $title = (string) $request['title'];
+//
+//    $args = array (
+//        'title'=>$title,
+//        'post_status' => 'publish',
+//        'post_type' => 'wpunity_scene'
+//    );
+//
+//    $post = get_posts( $args );
+//    $content = json_decode($post[0]->post_content, true);
+//
+//    return rest_ensure_response($content);
+//}
+//
+///**
+// * This function is where we register our routes for our example endpoint.
+// */
+//function prefix_register_example_routes() {
+//
+//    register_rest_route( 'wpunity/v1', '/scene/(?P<title>\S+)',
+//		array(
+//        'methods'  => WP_REST_Server::READABLE,   // By using this constant we ensure that when the WP_REST_Server changes our readable endpoints will work as intended.
+//        'callback' => 'prefix_get_endpoint_phrase',  // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
+//    ) );
+//}
+//
+//add_action( 'rest_api_init', 'prefix_register_example_routes' );
 
 
+//--------------------------------------------------------------------------
+
+//// Back-end restrict by author filtering
+//function wpunity_filter_by_the_author() {
+//
+//	$params = array(
+//		'name' => 'author', // this is the "name" attribute for filter <select>
+//		'show_option_all' => 'All authors' // label for all authors (display posts without filter)
+//	);
+//
+//	if ( isset($_GET['user']) )
+//		$params['selected'] = $_GET['user']; // choose selected user by $_GET variable
+//
+//	wp_dropdown_users( $params ); // print the ready author list
+//}
+//
+//// 72
+//add_action('restrict_manage_posts', 'wpunity_filter_by_the_author');
 
 
 
@@ -747,9 +745,9 @@ add_action( 'wp_ajax_wpunity_killtask_compiling_action', 'wpunity_killtask_compi
 add_action( 'wp_ajax_wpunity_game_zip_action', 'wpunity_game_zip_action_callback' );
 
 // Assemble php from ajax call
-add_action( 'wp_ajax_wpunity_assemble_action', 'wpunity_assemble_action_callback' );
+add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' );
 // Add the assepile php
-add_action( 'wp_ajax_wpunity_assepile_action', 'wpunity_assepile_action_callback' );
+add_action( 'wp_ajax_vrodos_assepile_action', 'vrodos_assepile_action_callback' );
 
 
 ?>

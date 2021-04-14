@@ -26,7 +26,7 @@ function wpunity_convert_pdbYAML(){
 
     // 3. Get Molecule YAMLS
     // 3a. Find id of tax of Molecule
-    //$molecule_term_meta = get_term_meta(wp_get_post_terms( 4773,  'wpunity_asset3d_cat' )[0]->term_taxonomy_id);
+    //$molecule_term_meta = get_term_meta(wp_get_post_terms( 4773,  'vrodos_asset3d_cat' )[0]->term_taxonomy_id);
     
     // 3b. Get YAMLS of $id_tax_term_mol
     //print_r($product_terms);
@@ -340,15 +340,15 @@ function wpunity_delete_gameproject_frontend_callback(){
     $gameTitle = get_the_title( $game_id );
 
     //1.Delete Assets
-    $assetPGame = get_term_by('slug', $gameSlug, 'wpunity_asset3d_pgame');
+    $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
     $assetPGameID = $assetPGame->term_id;
 
     $custom_query_args1 = array(
-        'post_type' => 'wpunity_asset3d',
+        'post_type' => 'vrodos_asset3d',
         'posts_per_page' => -1,
         'tax_query' => array(
             array(
-                'taxonomy' => 'wpunity_asset3d_pgame',
+                'taxonomy' => 'vrodos_asset3d_pgame',
                 'field'    => 'term_id',
                 'terms'    => $assetPGameID,
             ),
@@ -399,7 +399,7 @@ function wpunity_delete_gameproject_frontend_callback(){
     wp_reset_postdata();
 
     //3. Delete taxonomies from Assets & Scenes
-    wp_delete_term( $assetPGameID, 'wpunity_asset3d_pgame' );
+    wp_delete_term( $assetPGameID, 'vrodos_asset3d_pgame' );
     wp_delete_term( $scenePGameID, 'wpunity_scene_pgame' );
 
     //4. Delete Compile Folder of Game (if exists)

@@ -7,7 +7,7 @@
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else{$parameter_Scenepass = '&wpunity_scene=';}
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
-$parameter_assetpass = $perma_structure ? '?wpunity_asset=' : '&wpunity_asset=';
+$parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 //if ($project_scope == 0) {
 //    //	$single_lowercase = "tour";
@@ -22,10 +22,10 @@ $parameter_assetpass = $perma_structure ? '?wpunity_asset=' : '&wpunity_asset=';
 
 $joker_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'wpunity_game' )->ID;
 
-//if( isset($_GET['wpunity_asset']) ) {
-//	$asset_inserted_id = sanitize_text_field( intval( $_GET['wpunity_asset'] ));
+//if( isset($_GET['vrodos_asset']) ) {
+//	$asset_inserted_id = sanitize_text_field( intval( $_GET['vrodos_asset'] ));
 //	$asset_post = get_post($asset_inserted_id);
-//	if($asset_post->post_type == 'wpunity_asset3d') {
+//	if($asset_post->post_type == 'vrodos_asset3d') {
 //		$create_new = 0;
 //		$asset_checked_id = $asset_inserted_id;
 //	}
@@ -78,7 +78,7 @@ wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_
 $editgamePage = wpunity_getEditpage('game');
 $newAssetPage = wpunity_getEditpage('asset');
 
-//$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&wpunity_scene=' .$scene_id . '&wpunity_asset=' ); // . asset_id
+//$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&wpunity_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
 get_header();
 
@@ -195,7 +195,7 @@ if ($single_project_asset_list)
                         <?php $pGameId= get_page_by_path($asset['assetParentGameSlug'], OBJECT, 'wpunity_game')->ID; ?>
                         
                         <!-- Edit url -->
-                        <a class="editasseturl" href="<?php echo $link_to_edit.'wpunity_game='.$pGameId.'&wpunity_asset='.$asset['assetid'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English'; ?>">
+                        <a class="editasseturl" href="<?php echo $link_to_edit.'wpunity_game='.$pGameId.'&vrodos_asset='.$asset['assetid'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English'; ?>">
                             <?php if ($asset['screenImagePath']){ ?>
                                 <img src="<?php echo $asset['screenImagePath']; ?>" class="asset-shared-thumbnail">
                             <?php } else { ?>
@@ -209,7 +209,7 @@ if ($single_project_asset_list)
                         <h1 class="assetsListCardTitle mdc-card__title mdc-typography--title" style="">
                             <a class="mdc-theme--secondary"
                                href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.
-                                   '&wpunity_asset='.$asset['assetid'].'#English';
+                                   '&vrodos_asset='.$asset['assetid'].'#English';
                                ?>"><?php echo $asset['assetName'];?></a>
                         </h1>
 
@@ -257,7 +257,7 @@ if ($single_project_asset_list)
                         <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['assetName'] ?>">
                             <div class="phonering-alo-ph-circle"></div>
                             <div class="phonering-alo-ph-circle-fill"></div>
-                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.'&wpunity_scene=&wpunity_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
+                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.'&wpunity_scene=&vrodos_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
                                  class="pps-btn-img" title="teleconference_ring">
                                 <div class="phonering-alo-ph-img-circle"></div>
                             </a>

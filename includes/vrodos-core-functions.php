@@ -518,13 +518,13 @@ function wpunity_extrapass_profile_fields( $user ) {
 //==========================================================================================================================================
 //==========================================================================================================================================
 // Assets
-//function wpunity_assets_menu_link( $menu, $args ) {
+//function vrodos_assets_menu_link( $menu, $args ) {
 //    $menu .= '<li class="nav-menu" class="menu-item">' .
 //        '<a href="'.get_permalink( get_page_by_path( 'wpunity-list-shared-assets/' ) ).'">Assets</a>'
 //        . '</li>';
 //    return $menu;
 //}
-//add_filter( 'wp_nav_menu_items','wpunity_assets_menu_link', 1, 2 );
+//add_filter( 'wp_nav_menu_items','vrodos_assets_menu_link', 1, 2 );
 //
 //// Projects
 //function wpunity_projects_menu_link( $menu, $args ) {
@@ -1175,30 +1175,30 @@ function wpunity_registrationhook_createAssets($user_id,$username,$game_id){
 	$game_post = get_post($game_id);
 	$game_slug = $game_post->post_name;
 
-	$parentGame_tax = get_term_by('slug', $game_slug, 'wpunity_asset3d_pgame');
+	$parentGame_tax = get_term_by('slug', $game_slug, 'vrodos_asset3d_pgame');
 	$parentGame_tax_id = $parentGame_tax->term_id;
 
-	$artifact_tax = get_term_by('slug', 'artifact', 'wpunity_asset3d_cat');
+	$artifact_tax = get_term_by('slug', 'artifact', 'vrodos_asset3d_cat');
 	$artifact_tax_id = $artifact_tax->term_id;
 	$artifactTitle = $username . ' Sample Artifact';
 	$artifactDesc = 'Artifact item created as sample';
 
-	$door_tax = get_term_by('slug', 'door', 'wpunity_asset3d_cat');
+	$door_tax = get_term_by('slug', 'door', 'vrodos_asset3d_cat');
 	$door_tax_id = $door_tax->term_id;
 	$doorTitle = $username . ' Sample Door';
 	$doorDesc = 'Door item created as sample';
 
-	$poiImage_tax = get_term_by('slug', 'pois_imagetext', 'wpunity_asset3d_cat');
+	$poiImage_tax = get_term_by('slug', 'pois_imagetext', 'vrodos_asset3d_cat');
 	$poiImage_tax_id = $poiImage_tax->term_id;
 	$poiImageTitle = $username . ' Sample POI Image';
 	$poiImageDesc = 'POI Image item created as sample';
 
-	$poiVideo_tax = get_term_by('slug', 'pois_video', 'wpunity_asset3d_cat');
+	$poiVideo_tax = get_term_by('slug', 'pois_video', 'vrodos_asset3d_cat');
 	$poiVideo_tax_id = $poiVideo_tax->term_id;
 	$poiVideoTitle = $username . ' Sample POI Video';
 	$poiVideoDesc = 'POI Video item created as sample';
 
-	$site_tax = get_term_by('slug', 'site', 'wpunity_asset3d_cat');
+	$site_tax = get_term_by('slug', 'site', 'vrodos_asset3d_cat');
 	$site_tax_id = $site_tax->term_id;
 	$siteTitle = $username . ' Sample Site';
 	$siteDesc = 'Site item created as sample';
@@ -1285,7 +1285,7 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 //	$objFile_id = wpunity_upload_AssetText($obj_content, 'obj'.$assetTitleForm, $asset_newID, $gameSlug);
 //
 //	// Set value of attachment IDs at custom fields
-//	update_post_meta($asset_newID, 'wpunity_asset3d_mtl', $mtlFile_id);
+//	update_post_meta($asset_newID, 'vrodos_asset3d_mtl', $mtlFile_id);
 //	update_post_meta($asset_newID, 'vrodos_asset3d_obj', $objFile_id);
 //	update_post_meta( $asset_newID, 'vrodos_asset3d_diffimage', $textureFile_id );
 //}
@@ -1343,7 +1343,7 @@ function wpunity_get_all_molecules_of_game($project_id) {
 
 	$game_post = get_post($project_id);
 	$gameSlug = $game_post->post_name;
-	$assetPGame = get_term_by('slug', $gameSlug, 'wpunity_asset3d_pgame');
+	$assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
 	$assetPGameID = $assetPGame->term_id;
 
 
@@ -1356,17 +1356,17 @@ function wpunity_get_all_molecules_of_game($project_id) {
 
 	// Define custom query parameters
 	$custom_query_args = array(
-		'post_type' => 'wpunity_asset3d',
+		'post_type' => 'vrodos_asset3d',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			'relation' => 'AND',
 			array(
-				'taxonomy' => 'wpunity_asset3d_pgame',
+				'taxonomy' => 'vrodos_asset3d_pgame',
 				'field'    => 'slug', //'term_id',
 				'terms'    => array($gameSlug, "chemistry-joker") //array($assetPGameID, $assetJokerGameId)
 			),
 			array(
-				'taxonomy' => 'wpunity_asset3d_cat',
+				'taxonomy' => 'vrodos_asset3d_cat',
 				'field'    => 'slug',
 				'terms'    => 'molecule',
 			),
@@ -1799,7 +1799,7 @@ function wpunity_update_expert_log_callback()
 
 //====================== GAME ASSEMBLY AND COMPILATION =================================================================
 
-function wpunity_assepile_action_callback(){
+function vrodos_assepile_action_callback(){
 
 	//$fa = fopen("output_COMPILE.txt","w");
 
@@ -1843,7 +1843,7 @@ function wpunity_assepile_action_callback(){
 	$gameType = wp_get_post_terms( $gameId, 'wpunity_game_type' );
 
 
-	$assemply_success = wpunity_assemble_the_unity_game_project($gameId, $_REQUEST['gameSlug'],
+	$assemply_success = vrodos_assemble_the_unity_game_project($gameId, $_REQUEST['gameSlug'],
 		$targetPlatform, $gameType[0]->name);
 
 //    fwrite($fa, "bbbb");

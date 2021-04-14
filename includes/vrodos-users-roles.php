@@ -78,12 +78,12 @@ function wpunity_add_customroles() {
     $role->add_cap( 'read_wpunity_scene' );
 //
 //    //Caps about Assets
-    $role->add_cap( 'publish_wpunity_asset3d' );
-    $role->add_cap( 'edit_wpunity_asset3d' );
-    $role->add_cap( 'delete_wpunity_asset3d' );
-    $role->add_cap( 'edit_wpunity_asset3d' );
-    $role->add_cap( 'delete_wpunity_asset3d' );
-    $role->add_cap( 'read_wpunity_asset3d' );
+    $role->add_cap( 'publish_vrodos_asset3d' );
+    $role->add_cap( 'edit_vrodos_asset3d' );
+    $role->add_cap( 'delete_vrodos_asset3d' );
+    $role->add_cap( 'edit_vrodos_asset3d' );
+    $role->add_cap( 'delete_vrodos_asset3d' );
+    $role->add_cap( 'read_vrodos_asset3d' );
     
     //Caps about Taxonomies
 
@@ -94,14 +94,14 @@ function wpunity_add_customroles() {
     $role->add_cap( 'manage_wpunity_scene_yaml' );
     $role->add_cap( 'edit_wpunity_scene_yaml' );
     
-    $role->add_cap( 'manage_wpunity_asset3d_cat' );
-    $role->add_cap( 'manage_wpunity_asset3d_iprcat' );
+    $role->add_cap( 'manage_vrodos_asset3d_cat' );
+    $role->add_cap( 'manage_vrodos_asset3d_iprcat' );
     
-    $role->add_cap( 'edit_wpunity_asset3d_cat' );
-    $role->add_cap( 'edit_wpunity_asset3d_iprcat' );
+    $role->add_cap( 'edit_vrodos_asset3d_cat' );
+    $role->add_cap( 'edit_vrodos_asset3d_iprcat' );
     
-    $role->add_cap( 'manage_wpunity_asset3d_pgame' );
-    $role->add_cap( 'edit_wpunity_asset3d_pgame' );
+    $role->add_cap( 'manage_vrodos_asset3d_pgame' );
+    $role->add_cap( 'edit_vrodos_asset3d_pgame' );
     
     unset( $role );
 }
@@ -134,15 +134,15 @@ function wpunity_add_capabilities_to_admin() {
     $role->add_cap( 'read_wpunity_scene' );
 
     //Caps about Assets
-    $role->add_cap( 'publish_wpunity_asset3d' );
-    $role->add_cap( 'edit_wpunity_asset3d' );
-    $role->add_cap( 'edit_others_wpunity_asset3d' );
-    $role->add_cap( 'delete_wpunity_asset3d' );
-    $role->add_cap( 'delete_others_wpunity_asset3d' );
-    $role->add_cap( 'read_private_wpunity_asset3d' );
-    $role->add_cap( 'edit_wpunity_asset3d' );
-    $role->add_cap( 'delete_wpunity_asset3d' );
-    $role->add_cap( 'read_wpunity_asset3d' );
+    $role->add_cap( 'publish_vrodos_asset3d' );
+    $role->add_cap( 'edit_vrodos_asset3d' );
+    $role->add_cap( 'edit_others_vrodos_asset3d' );
+    $role->add_cap( 'delete_vrodos_asset3d' );
+    $role->add_cap( 'delete_others_vrodos_asset3d' );
+    $role->add_cap( 'read_private_vrodos_asset3d' );
+    $role->add_cap( 'edit_vrodos_asset3d' );
+    $role->add_cap( 'delete_vrodos_asset3d' );
+    $role->add_cap( 'read_vrodos_asset3d' );
 
     //Caps about Taxonomies
     $role->add_cap( 'manage_wpunity_project_type' );
@@ -152,14 +152,14 @@ function wpunity_add_capabilities_to_admin() {
     $role->add_cap( 'manage_wpunity_scene_yaml' );
     $role->add_cap( 'edit_wpunity_scene_yaml' );
     
-    $role->add_cap( 'manage_wpunity_asset3d_cat' );
-    $role->add_cap( 'manage_wpunity_asset3d_iprcat' );
+    $role->add_cap( 'manage_vrodos_asset3d_cat' );
+    $role->add_cap( 'manage_vrodos_asset3d_iprcat' );
     
-    $role->add_cap( 'edit_wpunity_asset3d_cat' );
-    $role->add_cap( 'edit_wpunity_asset3d_iprcat' );
+    $role->add_cap( 'edit_vrodos_asset3d_cat' );
+    $role->add_cap( 'edit_vrodos_asset3d_iprcat' );
     
-    $role->add_cap( 'manage_wpunity_asset3d_pgame' );
-    $role->add_cap( 'edit_wpunity_asset3d_pgame' );
+    $role->add_cap( 'manage_vrodos_asset3d_pgame' );
+    $role->add_cap( 'edit_vrodos_asset3d_pgame' );
 
     unset( $role );
 

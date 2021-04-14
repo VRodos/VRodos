@@ -2,7 +2,7 @@
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
 if( $perma_structure){$parameter_Scenepass = '?wpunity_scene=';} else {$parameter_Scenepass = '&wpunity_scene=';}
-$parameter_assetpass = $perma_structure ? '?wpunity_asset=' : '&wpunity_asset=';
+$parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 // Load VR_Editor Scripts
 function wpunity_load_vreditor_scripts()
@@ -128,7 +128,7 @@ $editsceneExamPage = wpunity_getEditpage('sceneExam');
 
 // for vr_editor
 $urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
-                                '&wpunity_scene=' .$current_scene_id . '&wpunity_asset=' );
+                                '&wpunity_scene=' .$current_scene_id . '&vrodos_asset=' );
 
 // User data
 $user_data = get_userdata( get_current_user_id() );

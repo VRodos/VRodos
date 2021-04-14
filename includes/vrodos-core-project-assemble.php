@@ -3,7 +3,7 @@
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function wpunity_assemble_the_unity_game_project($gameID, $gameSlug, $targetPlatform, $gameType){
+function vrodos_assemble_the_unity_game_project($gameID, $gameSlug, $targetPlatform, $gameType){
 
     //0. Delete everything in order to recreate them from scratch
     wpunity_compile_folders_del($gameSlug);
@@ -426,7 +426,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
         //OBJ FILE
         $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true);
         if (is_numeric($objID)) {
-            $asset_type = get_the_terms($asset_id, 'wpunity_asset3d_cat');
+            $asset_type = get_the_terms($asset_id, 'vrodos_asset3d_cat');
             $attachment_post = get_post($objID);
             $attachment_file = $attachment_post->guid;
             $attachment_tempname = str_replace('\\', '/', $attachment_file);

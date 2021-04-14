@@ -257,14 +257,14 @@ function get_assets($games_slugs){
     $allAssets = [];
     
     $queryargs = array(
-        'post_type' => 'wpunity_asset3d',
+        'post_type' => 'vrodos_asset3d',
         'posts_per_page' => -1
     );
     
     if ($games_slugs){
     	$queryargs['tax_query'] = array(
 			array(
-				'taxonomy' => 'wpunity_asset3d_pgame',
+				'taxonomy' => 'vrodos_asset3d_pgame',
 				'field' => 'slug',
 				'terms' => $games_slugs
 			));
@@ -278,7 +278,7 @@ function get_assets($games_slugs){
             $custom_query->the_post();
             $asset_id = get_the_ID();
             $asset_name = get_the_title();
-            $asset_pgame = wp_get_post_terms($asset_id, 'wpunity_asset3d_pgame');
+            $asset_pgame = wp_get_post_terms($asset_id, 'vrodos_asset3d_pgame');
             
             // ALL DATA WE NEED
             $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true); // OBJ ID
@@ -300,11 +300,11 @@ function get_assets($games_slugs){
             $image1id = get_post_meta($asset_id, 'vrodos_asset3d_image1', true);
 
             
-            $categoryAsset = wp_get_post_terms($asset_id, 'wpunity_asset3d_cat');
+            $categoryAsset = wp_get_post_terms($asset_id, 'vrodos_asset3d_cat');
 
             
             
-            $categIcon = get_term_meta($categoryAsset[0]->term_id, 'wpunity_assetcat_icon');
+            $categIcon = get_term_meta($categoryAsset[0]->term_id, 'vrodos_assetcat_icon');
 
             $isCloned = get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true);
             $isJoker = get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true);
@@ -430,11 +430,11 @@ function wpunity_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 	$joker_game_slug = strtolower($joker_game_slug);
 
 	$queryargs = array(
-		'post_type' => 'wpunity_asset3d',
+		'post_type' => 'vrodos_asset3d',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			array(
-				'taxonomy' => 'wpunity_asset3d_pgame',
+				'taxonomy' => 'vrodos_asset3d_pgame',
 				'field' => 'slug',
 				'terms' => array($gameProjectSlug, $joker_game_slug)
 			)
@@ -450,7 +450,7 @@ function wpunity_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 			$custom_query->the_post();
 			$asset_id = get_the_ID();
 			$asset_name = get_the_title();
-			//$asset_pgame = wp_get_post_terms($asset_id, 'wpunity_asset3d_pgame');
+			//$asset_pgame = wp_get_post_terms($asset_id, 'vrodos_asset3d_pgame');
 
 			$isJoker = get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true);    //strpos($asset_pgame[0]->slug, 'joker') !== false;
 
@@ -479,9 +479,9 @@ function wpunity_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 
 			$image1id = get_post_meta($asset_id, 'vrodos_asset3d_image1', true);
 
-			$categoryAsset = wp_get_post_terms($asset_id, 'wpunity_asset3d_cat');
+			$categoryAsset = wp_get_post_terms($asset_id, 'vrodos_asset3d_cat');
             
-            $categIcon = get_term_meta($categoryAsset[0]->term_id, 'wpunity_assetcat_icon');
+            $categIcon = get_term_meta($categoryAsset[0]->term_id, 'vrodos_assetcat_icon');
 			
 			$isCloned = get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true);
 			$isJoker = get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true);
@@ -548,11 +548,11 @@ function wpunity_get_assetids_joker($gameType){
 	$joker_game_slug = strtolower($joker_game_slug);
 
 	$queryargs = array(
-		'post_type' => 'wpunity_asset3d',
+		'post_type' => 'vrodos_asset3d',
 		'posts_per_page' => -1,
 		'tax_query' => array(
 			array(
-				'taxonomy' => 'wpunity_asset3d_pgame',
+				'taxonomy' => 'vrodos_asset3d_pgame',
 				'field' => 'slug',
 				'terms' => $joker_game_slug
 			)
