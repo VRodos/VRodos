@@ -73,6 +73,10 @@ class vrodos_3d_widget extends WP_Widget {
     // Widget Backend
     public function form( $instance ) {
         
+        $f = fopen("output_instance.txt", "w");
+        fwrite($f, print_r($instance,true));
+        fclose($f);
+        
         
         $title = isset( $instance[ 'title' ] ) ? $instance[ 'title' ] : '';
         $titleshow = isset( $instance[ 'titleshow' ] ) ? $instance[ 'titleshow' ] : 'false';
@@ -358,13 +362,12 @@ class vrodos_3d_widget extends WP_Widget {
     
     // Creating widget front-end
     public function widget( $args, $instance ) {
-    
+        
         
         $title = $instance['title']; //apply_filters( 'widget_title', $instance['title'] );
         $titleshow = $instance['titleshow'] ; //apply_filters( 'widget_titleshow', $instance['titleshow'] );
         $asset_id = $instance['asset_id'];    //apply_filters( 'widget_asset_id', $instance['asset_id'] );
-    
-        
+
         
         $camerapositionx = $instance['camerapositionx'];
                                 // apply_filters( 'widget_camerapositionx', $instance['camerapositionx'] );

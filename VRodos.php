@@ -40,6 +40,8 @@ function vrodos_register_scripts() {
  
 	$pluginDirJS = plugin_dir_url( __FILE__ ).'js_libs/';
 	
+	
+	
 	$scriptsA = array(
 		array('vrodos_asset_editor_scripts', $pluginDirJS.'vrodos_asset_editor_scripts.js'),
 		array('vrodos_scripts', $pluginDirJS.'vrodos_scripts.js'),
@@ -155,6 +157,9 @@ function vrodos_register_scripts() {
 	for ( $i = 0 ; $i < count($scriptsD); $i ++){
 		wp_register_script($scriptsD[$i][0] , $scriptsD[$i][1], null, null, false );
 	}
+	
+	
+	
 }
 // 45
 add_action('wp_enqueue_scripts', 'vrodos_register_scripts' );
@@ -180,8 +185,6 @@ function vrodos_register_styles() {
 	
 	wp_register_style( 'vrodos_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_asseteditor.css' );
 	
-	
-	// REM: HERE - > Rename widget and shortcode
 	wp_register_style( 'vrodos_widgets_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_widgets.css' );
  
 	
@@ -587,6 +590,52 @@ function my_admin_styles()  {
 // ---------- Shortcodes -------------
 
 // shortcode to show content inside page with [visitor] Some content for the people just browsing your site. [/visitor]
+add_shortcode( 'VRodos_3D_widget_shortcode', 'vrodos_3D_widget_shortcode' );
+
+function vrodos_3D_widget_shortcode( $atts, $content = null ) {
+	
+	$a = shortcode_atts( array(
+		'id' => '',
+		'title' => 'NoGapsTitle',
+		'titleshow' => 'false',
+		'asset_id' => '',
+	    'camerapositionx' => 0,
+	    'camerapositiony' => 0,
+		'camerapositionz' => -1,
+	    'canvaswidth' => '600px',
+	    'canvasheight' => '400px',
+	    'canvasbackgroundcolor' => 'transparent',
+	    'enablepan' => 'true',
+	    'enablezoom' => 'true',
+	    'canvasposition' => 'relative',
+	    'canvastop' => '',
+	    'canvasbottom' => '',
+	    'canvasleft' => '',
+	    'canvasright' => '',
+        'customcss' => ''
+	), $atts );
+	
+	ob_start();
+	the_widget('vrodos_3d_widget', $a, array(
+		'widget_id'=>'arbitrary-instance-'.$a['id'],
+		'before_widget' => '',
+		'after_widget' => '',
+		'before_title' => '',
+		'after_title' => ''
+	));
+	
+	$output = ob_get_contents();
+	ob_end_clean();
+	return $output;
+	
+	
+	
+}
+
+
+
+
+// shortcode to show content inside page with [visitor] Some content for the people just browsing your site. [/visitor]
 add_shortcode( 'visitor', 'vrodos_visitor_check_shortcode' );
 
 function vrodos_visitor_check_shortcode( $atts, $content = null ) {
@@ -613,6 +662,23 @@ add_action('login_headerurl', 'vrodos_lost_password_redirect');
 
 // Remove <p>  </p> from content to be used for saving json scenes in description
 remove_filter ('the_content', 'wpautop');
+
+// -------------------- Register new block type ----------------------------------
+function vrodos_3d_register_block() {
+	
+	$pluginDirJS = plugin_dir_url( __FILE__ ).'js_libs/';
+	wp_register_script(	'vrodos-3d-block', $pluginDirJS.'vrodos_block.js', array( 'wp-blocks', 'wp-i18n', 'wp-element' ));
+	
+	register_block_type( 'vrodos/vrodos-3d-block', array('editor_script' => 'vrodos-3d-block',));
+	
+}
+add_action( 'init', 'vrodos_3d_register_block' );
+
+
+
+
+
+
 
 /* ------------------------------ API ---------------------------------------- */
 ///*
