@@ -4,7 +4,7 @@
 
 "use strict";
 
-class LoaderMulti {
+class VRodos_LoaderMulti {
 
     constructor(){ };
 

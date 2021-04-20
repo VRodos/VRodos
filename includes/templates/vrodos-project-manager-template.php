@@ -71,9 +71,8 @@ $multiple = "projects";
 //}
 
 
-wp_enqueue_style('wpunity_materialize_stylesheet', $pluginpath . '/css/materialize.css');
+//wp_enqueue_style('wpunity_materialize_stylesheet', $pluginpath . '/css/materialize.css');
 
-wp_enqueue_script('vrodos_materialize_jslib', $pluginpath . '/js_libs/materialize.js');
 
 get_header();
 ?>

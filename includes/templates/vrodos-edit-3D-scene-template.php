@@ -44,17 +44,19 @@ add_action('wp_enqueue_scripts', 'wpunity_load_vreditor_scripts' );
 
 
 function wpunity_load_custom_functions_vreditor(){
-    wp_enqueue_script('wpunity_vr_editor_environmentals');
-    wp_enqueue_script('wpunity_keyButtons');
-    wp_enqueue_script('wpunity_rayCasters');
-    wp_enqueue_script('wpunity_auxControlers');
-    wp_enqueue_script('wpunity_LoaderMulti');
-    wp_enqueue_script('wpunity_movePointerLocker');
-    wp_enqueue_script('wpunity_addRemoveOne');
-    wp_enqueue_script('vrodos_vr_editor_buttons');
+    wp_enqueue_script('vrodos_3d_editor_environmentals');
+    wp_enqueue_script('vrodos_keyButtons');
+    wp_enqueue_script('vrodos_rayCasters');
+    wp_enqueue_script('vrodos_auxControlers');
+    wp_enqueue_script('vrodos_LoaderMulti');
+    wp_enqueue_script('vrodos_movePointerLocker');
+    wp_enqueue_script('vrodos_addRemoveOne');
+    wp_enqueue_script('vrodos_3d_editor_buttons');
     wp_enqueue_script('vrodos_vr_editor_analytics');
+    wp_enqueue_script('vrodos_fetch_asset_scenes_request');
 }
 add_action('wp_enqueue_scripts', 'wpunity_load_custom_functions_vreditor' );
+
 ?>
 
 <script type="text/javascript">
@@ -238,7 +240,7 @@ wp_localize_script( 'ajax-script_savegio', 'my_ajax_object_savegio',
 );
 
 // Asset Browser
-wp_enqueue_script( 'ajax-script_filebrowse', $pluginpath.'/js_libs/assetBrowserToolbar.js', array('jquery') );
+wp_enqueue_script( 'ajax-script_filebrowse', $pluginpath.'/js_libs/vrodos_assetBrowserToolbar.js', array('jquery') );
 wp_localize_script( 'ajax-script_filebrowse', 'my_ajax_object_fbrowse', array( 'ajax_url' => admin_url( 'admin-ajax.php' ) ) );
 
 // Save scene
@@ -954,7 +956,7 @@ get_header(); ?>
         guiContainer.appendChild(controlInterface.scale.domElement);
 
         // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
-        var envir = new vr_editor_environmentals(container_3D_all);
+        var envir = new vrodos_3d_editor_environmentals(container_3D_all);
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
@@ -1079,7 +1081,7 @@ get_header(); ?>
     ?>
 
     <script>
-        loaderMulti = new LoaderMulti();
+        loaderMulti = new VRodos_LoaderMulti();
 
         loaderMulti.load(manager, resources3D, pluginPath);
         //wpunity_fetchAndLoadMultipleAssetsAjax(manager, resources3D, pluginPath);
@@ -1104,7 +1106,7 @@ get_header(); ?>
 
             jQuery("#removeAssetBtn").hide();
 
-            loaderMulti = new LoaderMulti();
+            loaderMulti = new VRodos_LoaderMulti();
             loaderMulti.load(manager, resources3D);
         }
 

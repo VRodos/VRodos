@@ -45,23 +45,21 @@ function vrodos_register_scripts() {
 	$scriptsA = array(
 		array('vrodos_asset_editor_scripts', $pluginDirJS.'vrodos_asset_editor_scripts.js'),
 		array('vrodos_scripts', $pluginDirJS.'vrodos_scripts.js'),
-		array('vrodos_lightslider', $pluginDirJS.'standalone_js_libraries/lightslider.min.js'),
-		array('vrodos_jscolorpick', $pluginDirJS.'standalone_js_libraries/jscolor.js'),
-		array('vrodos_jsfontselect', $pluginDirJS.'standalone_js_libraries/jquery.fontselect.js'),
-		array('vrodos_html2canvas', $pluginDirJS.'standalone_js_libraries/html2canvas.min.js'),
+		array('vrodos_lightslider', $pluginDirJS.'external_js_libraries/lightslider.min.js'),
+		array('vrodos_jscolorpick', $pluginDirJS.'external_js_libraries/jscolor.js'),
+		array('vrodos_jsfontselect', $pluginDirJS.'external_js_libraries/jquery.fontselect.js'),
+		array('vrodos_html2canvas', $pluginDirJS.'external_js_libraries/html2canvas.min.js'),
 		array('vrodos_assepile_request', $pluginDirJS.'assemble_compile_commands/request_game_assepile.js'),
 		array('vrodos_savescene_request', $pluginDirJS.'ajaxes/vrodos_save_scene_ajax.js'),
 		array('vrodos_content_interlinking_request', $pluginDirJS.'content_interlinking_commands/content_interlinking.js'),
 		array('vrodos_segmentation_request', $pluginDirJS.'semantics_commands/segmentation.js'),
 		
 		array('vrodos_classification_request', $pluginDirJS.'semantics_commands/classification.js'),
-		array('vrodos_fetch_asset_scenes_request', $pluginDirJS.'assetBrowserToolbar.js'),
-		array('vrodos_qrcode_generator', $pluginDirJS.'standalone_js_libraries/qrcode.js'),
-		array('vrodos_inflate', $pluginDirJS.'standalone_js_libraries/inflate.min.js'),
-		array('vrodos_materialize_jslib', $pluginDirJS.'standalone_js_libraries/materialize.js'),
-		array('Asset_viewer_3d_kernel', $pluginDirJS.'Asset_viewer_3d_kernel.js'),
-		array('vrodos_vr_editor_buttons', $pluginDirJS.'vr_editor_buttons.js'),
-		array('vrodos_vr_editor_analytics', $pluginDirJS.'vr_editor_analytics.js'),
+		array('vrodos_qrcode_generator', $pluginDirJS.'external_js_libraries/qrcode.js'),
+		array('vrodos_inflate', $pluginDirJS.'external_js_libraries/inflate.min.js'),
+		array('vrodos_AssetViewer_3D_kernel', $pluginDirJS.'vrodos_AssetViewer_3D_kernel.js'),
+		array('vrodos_3d_editor_buttons', $pluginDirJS.'vrodos_3d_editor_buttons.js'),
+		array('vrodos_vr_editor_analytics', $pluginDirJS.'vrodos_3d_editor_analytics.js'),
 	);
 	
 	for ( $i = 0 ; $i < count($scriptsA); $i ++){
@@ -145,13 +143,13 @@ function vrodos_register_scripts() {
 	//----Various for scene editor
 	
 	$scriptsD = array(
-			array( 'wpunity_vr_editor_environmentals', $pluginDirJS.'vr_editor_environmentals.js'),
-			array( 'wpunity_keyButtons', $pluginDirJS.'standalone_js_libraries/keyButtons.js'),
-			array( 'wpunity_rayCasters', $pluginDirJS.'rayCasters.js'),
-			array( 'wpunity_auxControlers', $pluginDirJS.'auxControlers.js'),
-			array( 'wpunity_LoaderMulti', $pluginDirJS.'LoaderMulti.js'),
-			array( 'wpunity_movePointerLocker', $pluginDirJS.'movePointerLocker.js'),
-			array( 'wpunity_addRemoveOne', $pluginDirJS.'addRemoveOne.js'),
+			array( 'vrodos_3d_editor_environmentals', $pluginDirJS.'vrodos_3d_editor_environmentals.js'),
+			array( 'vrodos_keyButtons', $pluginDirJS.'vrodos_keyButtons.js'),
+			array( 'vrodos_rayCasters', $pluginDirJS.'vrodos_rayCasters.js'),
+			array( 'vrodos_auxControlers', $pluginDirJS.'vrodos_auxControlers.js'),
+			array( 'vrodos_LoaderMulti', $pluginDirJS.'vrodos_LoaderMulti.js'),
+			array( 'vrodos_movePointerLocker', $pluginDirJS.'vrodos_movePointerLocker.js'),
+			array( 'vrodos_addRemoveOne', $pluginDirJS.'vrodos_addRemoveOne.js'),
 		);
 	
 	for ( $i = 0 ; $i < count($scriptsD); $i ++){
@@ -181,7 +179,7 @@ function vrodos_register_styles() {
 	
 	wp_register_style( 'vrodos_lightslider_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/lightslider.min.css' );
     
-    wp_register_style( 'wpunity_materialize_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/materialize.css' );
+    //wp_register_style( 'wpunity_materialize_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/materialize.css' );
 	
 	wp_register_style( 'vrodos_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_asseteditor.css' );
 	

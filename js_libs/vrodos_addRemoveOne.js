@@ -410,7 +410,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var extraResource = {};
         extraResource[nameModel] = resources3D[nameModel];
 
-        let loaderMulti = new LoaderMulti();
+        let loaderMulti = new VRodos_LoaderMulti();
         loaderMulti.load(manager, extraResource, pluginPath);
 
 
@@ -492,28 +492,20 @@ function deleterFomScene(nameToRemove){
 
     jQuery('#hierarchy-viewer').find('#' + nameToRemove).remove();
 
-
     //transform_controls.detach();
-
-
     triggerAutoSave();
 
     // Only Player exists then hide delete button (single one)
     if(envir.scene.children.length==5)
         jQuery("#removeAssetBtn").hide();
     else {
-
-
         let lastObject = envir.scene.children[envir.scene.children.length - 2];
 
         // place controls to last inserted obj
         transform_controls.attach(lastObject);
 
-
-
         envir.outlinePass.selectedObjects = [lastObject];
         envir.renderer.setClearColor(0xeeeeee, 1);
-
 
         // highlight
         envir.composer = [];
@@ -522,41 +514,33 @@ function deleterFomScene(nameToRemove){
 }
 
 
-function unixTimestamp_to_time( tStr){
-
-    var unix_timestamp = parseInt(tStr);
-
-    var date = new Date(unix_timestamp*1000);
-    var hours = date.getHours();
-    var minutes = "0" + date.getMinutes();
-    var seconds = "0" + date.getSeconds();
-    var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-
-    return date.getDate() + '/' + date.getMonth() + '/' + date.getFullYear() + ' ' + formattedTime;
-}
-
-function makeProducerPlane(){
-
-    var geometry = new THREE.Geometry();
-
-    geometry.vertices.push(
-        new THREE.Vector3( -50,  -50,  50 ),
-        new THREE.Vector3( -50,  -50, -50 ),
-        new THREE.Vector3(  50,  -50,  50 ),
-        new THREE.Vector3(  50,  -50, -50 ),
-    );
-
-    geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
-    geometry.faces.push( new THREE.Face3( 1, 2, 3 ) );
 
 
-    var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide, opacity: 0.5});
-    material.opacity = 0.2;
-    var plane = new THREE.Mesh( geometry, material );
+// function makeProducerPlane(){
+//
+//     var geometry = new THREE.Geometry();
+//
+//     geometry.vertices.push(
+//         new THREE.Vector3( -50,  -50,  50 ),
+//         new THREE.Vector3( -50,  -50, -50 ),
+//         new THREE.Vector3(  50,  -50,  50 ),
+//         new THREE.Vector3(  50,  -50, -50 ),
+//     );
+//
+//     geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
+//     geometry.faces.push( new THREE.Face3( 1, 2, 3 ) );
+//
+//
+//     var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide, opacity: 0.5});
+//     material.opacity = 0.2;
+//     var plane = new THREE.Mesh( geometry, material );
+//
+//     return plane;
+//
+// }
 
-    return plane;
 
-}
+
 
 // /**
 //  *    ----------- Check for Recycle Bin Drag ----------------------------

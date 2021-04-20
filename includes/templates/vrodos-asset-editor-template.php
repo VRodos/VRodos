@@ -80,7 +80,7 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     wp_enqueue_script('vrodos_load119_CSS2DRenderer');
     
     // Load single asset
-    wp_enqueue_script('Asset_viewer_3d_kernel');
+    wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
 
     // Load scripts for asset editor
     wp_enqueue_script('vrodos_asset_editor_scripts');
@@ -1292,7 +1292,7 @@ if($asset_id != null) {
     
 
     // ------- Class to load 3D model ---------
-    let asset_viewer_3d_kernel = new Asset_viewer_3d_kernel(document.getElementById( 'previewCanvas' ),
+    let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById( 'previewCanvas' ),
                                                             document.getElementById( 'previewCanvasLabels' ),
                                                             document.getElementById('animButton1'),
                                                             document.getElementById('previewProgressLabel'),

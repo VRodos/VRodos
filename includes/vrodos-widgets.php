@@ -47,7 +47,7 @@ function vrodos_widget_functions() {
     wp_enqueue_script('vrodos_load119_CSS2DRenderer');
     
     // Load single asset
-    wp_enqueue_script('Asset_viewer_3d_kernel');
+    wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
 }
 
 
@@ -493,7 +493,7 @@ class vrodos_3d_widget extends WP_Widget {
         
             console.log("assettrs", assettrs<?php echo $title;?>);
             
-            const asset_viewer_3d_kernel<?php echo $title;?> = new Asset_viewer_3d_kernel(
+            const asset_viewer_3d_kernel<?php echo $title;?> = new VRodos_AssetViewer_3D_kernel(
                 document.getElementById( 'divCanvas<?php echo $title;?>' ),
                 document.getElementById( 'divCanvasLabels<?php echo $title;?>' ),
                 document.getElementById( 'animButtonDiv<?php echo $title;?>' ),

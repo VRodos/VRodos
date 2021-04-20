@@ -1,5 +1,5 @@
 /* 3D viewer for all types of files in assetEditor */
-class Asset_viewer_3d_kernel {
+class VRodos_AssetViewer_3D_kernel {
 
     // asset_viewer_3d_kernel.scene.children :
         // 0: root (pdb, audio, fbx, GLB, OBJ)
@@ -1189,7 +1189,6 @@ class Asset_viewer_3d_kernel {
             this.scene.add(sphere[2]);
 
             let totalRadius = sphere[1];
-            console.log("totalRadius", totalRadius);
             this.controls.minDistance = 0.01 * totalRadius;
             this.controls.maxDistance = 100 * totalRadius;
             this.resizeDisplayGL();
@@ -1197,7 +1196,6 @@ class Asset_viewer_3d_kernel {
         }
 
 
-        console.log(this.assettrs[0]);
 
         this.controls.object.position.x =  parseFloat(this.assettrs[0]);
         this.controls.object.position.y =  parseFloat(this.assettrs[1]);

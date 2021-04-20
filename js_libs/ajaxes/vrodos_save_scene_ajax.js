@@ -32,9 +32,6 @@ function wpunity_saveSceneAjax() {
 }
 
 
-
-
-
 function wpunity_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 
     var postdata = {

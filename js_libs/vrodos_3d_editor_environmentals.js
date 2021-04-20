@@ -1,5 +1,5 @@
 "use strict";
-class vr_editor_environmentals {
+class vrodos_3d_editor_environmentals {
 
     constructor(container_3D_all){
 
@@ -604,7 +604,7 @@ class vr_editor_environmentals {
                 '</a>';
 
             var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11);
-            var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+            var game_object_nameB_dateCreated = this.unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
             // Add as a list item
             jQuery('#hierarchy-viewer').append(
@@ -626,7 +626,7 @@ class vr_editor_environmentals {
             var game_object_nameA_assetName = obj.name.substring(0, obj.name.length-11); //.substring(0, obj.name.length - 11);
 
             // The timestamp
-            var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+            var game_object_nameB_dateCreated = this.unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
             // Add as a list item
             jQuery('#hierarchy-viewer').append(
@@ -682,7 +682,7 @@ class vr_editor_environmentals {
 
                     // Split the object name into 2 parts: The first part is the asset name and the second the date inserted in the scene
                     var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11);
-                    var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+                    var game_object_nameB_dateCreated = this.unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
 
                 } else if (obj.categoryName ==='lightSun'){
@@ -698,7 +698,7 @@ class vr_editor_environmentals {
                         '</a>';
 
                     var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11);
-                    var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+                    var game_object_nameB_dateCreated = this.unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
                     // Add lightTargetSpot
                     // Add as a list item
@@ -784,6 +784,20 @@ class vr_editor_environmentals {
         //this.orbitControls.object.updateProjectionMatrix();
     }
 
+
+
+    unixTimestamp_to_time( tStr){
+
+        var unix_timestamp = parseInt(tStr);
+
+        var date = new Date(unix_timestamp*1000);
+        var hours = date.getHours();
+        var minutes = "0" + date.getMinutes();
+        var seconds = "0" + date.getSeconds();
+        var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+        return date.getDate() + '/' + date.getMonth() + '/' + date.getFullYear() + ' ' + formattedTime;
+    }
 
 
 
