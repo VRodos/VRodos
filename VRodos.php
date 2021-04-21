@@ -588,7 +588,7 @@ function my_admin_styles()  {
 // ---------- Shortcodes -------------
 
 // shortcode to show content inside page with [visitor] Some content for the people just browsing your site. [/visitor]
-add_shortcode( 'VRodos_3D_widget_shortcode', 'vrodos_3D_widget_shortcode' );
+//add_shortcode( 'VRodos_3D_widget_shortcode', 'vrodos_3D_widget_shortcode' );
 
 function vrodos_3D_widget_shortcode( $atts, $content = null ) {
 	
@@ -663,11 +663,24 @@ remove_filter ('the_content', 'wpautop');
 
 // -------------------- Register new block type ----------------------------------
 function vrodos_3d_register_block() {
-	
-	$pluginDirJS = plugin_dir_url( __FILE__ ).'js_libs/';
-	wp_register_script(	'vrodos-3d-block', $pluginDirJS.'vrodos_block.js', array( 'wp-blocks', 'wp-i18n', 'wp-element' ));
-	
-	register_block_type( 'vrodos/vrodos-3d-block', array('editor_script' => 'vrodos-3d-block',));
+
+	wp_register_script('vrodos-3d-block', plugin_dir_url( __FILE__ ).'build/index.js',
+		array( 'wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor' )
+	);
+
+	wp_register_style('vrodos-blocks-style', plugins_url( 'css/vrodos_blocks.css', __FILE__ ),
+		array( 'wp-edit-blocks' )
+	);
+
+	register_block_type( 'vrodos/vrodos-3d-block',
+		array(
+			'api_version' => 2,
+			'editor_script' => 'vrodos-3d-block',
+				      'style' => 'vrodos-blocks-style',
+			   'editor_style' => 'vrodos-blocks-style',
+			
+		)
+	);
 	
 }
 add_action( 'init', 'vrodos_3d_register_block' );

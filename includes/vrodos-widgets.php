@@ -72,10 +72,10 @@ class vrodos_3d_widget extends WP_Widget {
     
     // Widget Backend
     public function form( $instance ) {
-        
-        $f = fopen("output_instance.txt", "w");
-        fwrite($f, print_r($instance,true));
-        fclose($f);
+    
+//        $f = fopen("output_instance.txt", "w");
+//        fwrite($f, print_r($instance,true));
+//        fclose($f);
         
         
         $title = isset( $instance[ 'title' ] ) ? $instance[ 'title' ] : '';
@@ -483,7 +483,7 @@ class vrodos_3d_widget extends WP_Widget {
             const textures_fbx_string_connected_widget<?php echo $title;?> = "<?php echo $asset_3d_files['texturesFbx']; ?>";
             const back_3d_color<?php echo $title;?> = "<?php echo $back_3d_color; ?>";
             
-            console.log('audioFile<?php echo $title;?>', document.getElementById( 'audioFile<?php echo $title;?>' ));
+            
             
             const audio_file<?php echo $title;?> = document.getElementById( 'audioFile<?php echo $title;?>' );
 
@@ -491,8 +491,7 @@ class vrodos_3d_widget extends WP_Widget {
                                               camerapositiony<?php echo $title;?> + "," +
                                               camerapositionz<?php echo $title;?>;
         
-            console.log("assettrs", assettrs<?php echo $title;?>);
-            
+                        
             const asset_viewer_3d_kernel<?php echo $title;?> = new VRodos_AssetViewer_3D_kernel(
                 document.getElementById( 'divCanvas<?php echo $title;?>' ),
                 document.getElementById( 'divCanvasLabels<?php echo $title;?>' ),
