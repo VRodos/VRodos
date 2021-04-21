@@ -168,25 +168,90 @@ registerBlockType('vrodos/vrodos-3d-block', {
       type: 'boolean',
       default: false
     },
-    favoriteAnimal: {
+    asset_id: {
       type: 'string',
-      default: 'dogs'
+      default: 'id of the asset'
     },
-    favoriteColor: {
+    camerapositionx: {
       type: 'string',
-      default: '#DDDDDD'
+      default: '0'
     },
-    activateLasers: {
+    camerapositiony: {
+      type: 'string',
+      default: '0'
+    },
+    camerapositionz: {
+      type: 'string',
+      default: '0'
+    },
+    canvaswidth: {
+      type: 'string',
+      default: '600px'
+    },
+    canvasheight: {
+      type: 'string',
+      default: '400px'
+    },
+    canvasbackgroundcolor: {
+      type: 'string',
+      default: 'transparent'
+    },
+    enablezoom: {
+      type: 'boolean',
+      default: true
+    },
+    enablepan: {
       type: 'boolean',
       default: false
-    }
+    },
+    canvasposition: {
+      type: 'string',
+      default: 'relative'
+    },
+    canvastop: {
+      type: 'string',
+      default: ''
+    },
+    canvasbottom: {
+      type: 'string',
+      default: ''
+    },
+    canvasleft: {
+      type: 'string',
+      default: ''
+    },
+    canvasright: {
+      type: 'string',
+      default: ''
+    },
+    customcss: {
+      type: 'string',
+      default: ''
+    } //
+    // favoriteAnimal: {
+    //     type: 'string',
+    //     default: 'dogs'
+    // },
+    // favoriteColor: {
+    //     type: 'string',
+    //     default: '#DDDDDD'
+    // },
+    // activateLasers: {
+    //     type: 'boolean',
+    //     default: false
+    // }
+
   },
   edit: function edit(props) {
     var attributes = props.attributes,
         setAttributes = props.setAttributes;
     var blockProps = useBlockProps();
-    return Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])("div", null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(InspectorControls, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelBody, {
-      title: "Most awesome settings ever",
+    return Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])("div", useBlockProps(), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(InspectorControls, {
+      key: "setting"
+    }, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])("div", {
+      id: "gutenpride-controls"
+    }, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelBody, {
+      title: "VRodos block settings",
       initialOpen: true
     }, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
       label: "Title (without spaces)",
@@ -202,6 +267,125 @@ registerBlockType('vrodos/vrodos-3d-block', {
       onChange: function onChange(newval) {
         return setAttributes({
           titleshow: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Asset id",
+      value: attributes.asset_id,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          asset_id: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Camera Position X",
+      value: attributes.camerapositionx,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          camerapositionx: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Camera Position Y",
+      value: attributes.camerapositiony,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          camerapositiony: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Camera Position Z",
+      value: attributes.camerapositionz,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          camerapositionz: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Canvas Width",
+      value: attributes.canvaswidth,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          canvaswidth: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Canvas Height",
+      value: attributes.canvasheight,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          canvasheight: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(ColorPicker, {
+      color: attributes.canvasbackgroundcolor,
+      onChangeComplete: function onChangeComplete(newval) {
+        return setAttributes({
+          canvasbackgroundcolor: newval.hex
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(CheckboxControl, {
+      label: "Enable Zoom?",
+      checked: attributes.enablezoom,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          enablezoom: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(CheckboxControl, {
+      label: "Enable Pan?",
+      checked: attributes.enablepan,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          enablepan: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Canvas Position",
+      value: attributes.canvasposition,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          canvasposition: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Canvas Top",
+      value: attributes.canvastop,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          canvastop: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Canvas Bottom",
+      value: attributes.canvasbottom,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          canvasbottom: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Canvas Left",
+      value: attributes.canvasleft,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          canvasleft: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Canvas Right",
+      value: attributes.canvasright,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          canvasright: newval
+        });
+      }
+    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(TextControl, {
+      label: "Custom css",
+      value: attributes.customcss,
+      onChange: function onChange(newval) {
+        return setAttributes({
+          customcss: newval
         });
       }
     })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(SelectControl, {
@@ -222,23 +406,7 @@ registerBlockType('vrodos/vrodos-3d-block', {
           favoriteAnimal: newval
         });
       }
-    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(ColorPicker, {
-      color: attributes.favoriteColor,
-      onChangeComplete: function onChangeComplete(newval) {
-        return setAttributes({
-          favoriteColor: newval.hex
-        });
-      },
-      disableAlpha: true
-    })), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(PanelRow, null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(CheckboxControl, {
-      label: "Activate lasers?",
-      checked: attributes.activateLasers,
-      onChange: function onChange(newval) {
-        return setAttributes({
-          activateLasers: newval
-        });
-      }
-    })))), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(RichText, _babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_0___default()({}, blockProps, {
+    }))))), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_1__["createElement"])(RichText, _babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_0___default()({}, blockProps, {
       tagName: "h2",
       placeholder: "Description of 3D model",
       value: attributes.myRichHeading,
