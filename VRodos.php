@@ -465,7 +465,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemb
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
 
 //-------------------- Energy related ----------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-energy-settings.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-energy-settings.php' );
 
 
 
@@ -477,16 +477,16 @@ add_action( 'init', 'vrodos_scenes_types_energy_standard_cre' );
 
 
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-energy-yamls.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-energy-yamls.php' );
 
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-energy-compile.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-energy-compile.php' );
 
 
 
 //------------------- Archaeology related -----------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-archaeology-yamls.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-archaeology-settings.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-yamls.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-settings.php' );
 
 // 22
 add_action( 'init', 'vrodos_assets_taxcategory_archaeology_fill' );
@@ -494,10 +494,10 @@ add_action( 'init', 'vrodos_assets_taxcategory_archaeology_fill' );
 // 23
 add_action( 'init', 'vrodos_scenes_types_archaeology_standard_cre' );
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-archaeology-compile.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-compile.php' );
 
 //-------------------- Chemistry related ------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-chemistry-settings.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-chemistry-settings.php' );
 
 // 24
 add_action( 'init', 'vrodos_assets_taxcategory_chemistry_fill' );
@@ -506,8 +506,8 @@ add_action( 'init', 'vrodos_assets_taxcategory_chemistry_fill' );
 add_action( 'init', 'vrodos_scenes_types_chemistry_standard_cre' );
 
 
-//include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-chemistry-yamls.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/wpunity-default-chemistry-compile.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-chemistry-yamls.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-chemistry-compile.php' );
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-PDBLoader.php' );
 
@@ -588,7 +588,7 @@ function my_admin_styles()  {
 // ---------- Shortcodes -------------
 
 // shortcode to show content inside page with [visitor] Some content for the people just browsing your site. [/visitor]
-//add_shortcode( 'VRodos_3D_widget_shortcode', 'vrodos_3D_widget_shortcode' );
+add_shortcode( 'VRodos_3D_widget_shortcode', 'vrodos_3D_widget_shortcode' );
 
 function vrodos_3D_widget_shortcode( $atts, $content = null ) {
 	

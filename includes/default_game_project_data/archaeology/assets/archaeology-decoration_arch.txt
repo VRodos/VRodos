@@ -1,0 +1,54 @@
+--- !u!1001 &___[decor_fid]___
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: ___[decor_pos_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: ___[decor_pos_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: ___[decor_pos_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: ___[decor_rot_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: ___[decor_rot_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: ___[decor_rot_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: ___[decor_rot_w]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalScale.x
+      value: ___[decor_scale_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalScale.y
+      value: ___[decor_scale_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_LocalScale.z
+      value: ___[decor_scale_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: ___[decor_obj_guid]___, type: 3}
+      propertyPath: m_Name
+      value: ___[decor_title]___
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: ___[decor_obj_guid]___, type: 3}
+  m_IsPrefabParent: 0

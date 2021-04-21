@@ -1,0 +1,76 @@
+--- !u!1001 &___[terrain_fid]___
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: ___[terrain_position_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: ___[terrain_position_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: ___[terrain_position_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: ___[terrain_rotation_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: ___[terrain_rotation_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: ___[terrain_rotation_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: ___[terrain_rotation_w]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_RootOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalScale.x
+      value: ___[terrain_scale_x]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalScale.y
+      value: ___[terrain_scale_y]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_LocalScale.z
+      value: ___[terrain_scale_z]___
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: ___[terrain_guid]___, type: 3}
+      propertyPath: m_Name
+      value: Lab2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: ___[terrain_guid]___, type: 3}
+  m_IsPrefabParent: 0
+--- !u!1 &___[terrain_fid1]___ stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 100002, guid: ___[terrain_guid]___, type: 3}
+  m_PrefabInternal: {fileID: ___[terrain_fid]___}
+--- !u!64 &___[terrain_fid2]___
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: ___[terrain_fid1]___}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 0
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 4300000, guid: ___[terrain_guid]___, type: 3}
