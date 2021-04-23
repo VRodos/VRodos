@@ -202,15 +202,7 @@ function vrodos_register_styles() {
 add_action('wp_enqueue_scripts', 'vrodos_register_styles' );
 
 
-//----------------------- WIDGETS ---------------------------------------------
 
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
-
-// 47
-add_action('wp_enqueue_scripts', 'vrodos_widget_functions');
-
-// 49
-add_action( 'widgets_init', 'vrodos_load_widget');
 
 //----------------------- USER ROLES -------------------------------------------
 
@@ -300,7 +292,7 @@ add_action('admin_menu', 'vrodos_scenes_meta_definitions_add');
 // Save metas
 add_action('save_post', 'vrodos_scenes_metas_save');
 
-//===================================== Assets ============================================
+////===================================== Assets ============================================
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
 
@@ -352,23 +344,12 @@ add_action('admin_menu', 'vrodos_assets_databox_add');
 // 48
 add_action('wp_enqueue_scripts', 'vrodos_assets_scripts_and_styles' );
 
-// 54
-// For classification
-//add_action('add_meta_boxes','vrodos_assets_create_right_metaboxes');
-
-// Add the fields to the taxonomy, using our callback function
-// 59
-//add_action( 'vrodos_asset3d_cat_edit_form_fields', 'vrodos_assets_category_yamlFields', 10, 2 );
-
-// Save the changes made on the taxonomy, using our callback function
-// 60
-//add_action( 'edited_ vrodos_asset3d_cat', 'vrodos_assets_category_yamlFields_save', 10, 2 );
-
-// 61
+//
+//// 61
 add_filter( 'manage_vrodos_asset3d_posts_columns', 'wpunity_set_custom_vrodos_asset3d_columns' );
-
-// Add the data to the custom columns for the book post type:
-// 62
+//
+//// Add the data to the custom columns for the book post type:
+//// 62
 add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'wpunity_set_custom_vrodos_asset3d_columns_fill', 10, 2 );
 
 
@@ -376,36 +357,21 @@ add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'wpunity_set_custom_vr
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-upload-functions.php' );
 
-// 63
 add_filter( 'upload_dir', 'wpunity_upload_dir_forScenesOrAssets' );
-
-// 64
 add_filter( 'intermediate_image_sizes', 'wpunity_disable_imgthumbs_assets', 999 );
-
-// 65
 add_filter( 'sanitize_file_name', 'wpunity_overwrite_uploads', 10, 1 );
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php' );
 
 // Set to the lowest priority in order to have game taxes available when joker games are created
-// 26
 add_action( 'init', 'wpunity_createJoker_activation', 100, 2 );
-//add_action( 'activated_plugin', 'wpunity_createJoker_activation', 10, 2 );
-//register_activation_hook( __FILE__ , 'wpunity_createJoker_activation' );
-
-
-// 66
 add_filter( 'wp_nav_menu_items','wpunity_loginout_menu_link', 5, 2 );
-
 // Remove Admin bar for non admins
-// 67
 add_action('after_setup_theme', 'wpunity_remove_admin_bar');
-
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
 
 //Create Initial Asset Categories
-
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-settings.php' );
 
 
@@ -414,10 +380,10 @@ if( is_admin() ){
 	$my_settings_page = new Wpunity_settingsPage();
 	//19
 	add_action( 'init', array( $my_settings_page, 'load_settings' ) );
-	
+
 	//29
 	add_action( 'admin_init', array( $my_settings_page, 'register_general_settings' ) );
-	
+
 	// 43
 	add_action( 'admin_menu', array( $my_settings_page, 'render_setting') );
 }
@@ -431,7 +397,6 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-templates.php'
 add_action( 'plugins_loaded', array( 'wpUnityTemplate', 'get_instance' ) );
 
 // Order 1: Filters inside wpunity-page-templates
-
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
 
 
@@ -519,10 +484,10 @@ if ($project_scope === 1) {
 	add_action('register_form', 'wpunity_extrapass_register_form');
 	// Finally, save our extra registration user meta.
 	add_action('user_register', 'wpunity_extrapass_user_register', 10, 1);
-	
+
 	add_action('show_user_profile', 'wpunity_extrapass_profile_fields');
 	add_action('edit_user_profile', 'wpunity_extrapass_profile_fields');
-	
+
 	add_action( 'user_register', 'wpunity_registrationUser_save', 10, 2 );
 }
 
@@ -581,7 +546,6 @@ function my_admin_scripts() {
 //  wp_enqueue_script('my-upload');
 function my_admin_styles()  {
 	wp_enqueue_style('thickbox');
-	
 }
 
 
@@ -591,7 +555,7 @@ function my_admin_styles()  {
 add_shortcode( 'VRodos_3D_widget_shortcode', 'vrodos_3D_widget_shortcode' );
 
 function vrodos_3D_widget_shortcode( $atts, $content = null ) {
-	
+
 	$a = shortcode_atts( array(
 		'id' => '',
 		'title' => 'NoGapsTitle',
@@ -612,7 +576,7 @@ function vrodos_3D_widget_shortcode( $atts, $content = null ) {
 	    'canvasright' => '',
         'customcss' => ''
 	), $atts );
-	
+
 	ob_start();
 	the_widget('vrodos_3d_widget', $a, array(
 		'widget_id'=>'arbitrary-instance-'.$a['id'],
@@ -621,13 +585,14 @@ function vrodos_3D_widget_shortcode( $atts, $content = null ) {
 		'before_title' => '',
 		'after_title' => ''
 	));
-	
+
+
 	$output = ob_get_contents();
 	ob_end_clean();
 	return $output;
-	
-	
-	
+
+
+
 }
 
 
@@ -678,18 +643,41 @@ function vrodos_3d_register_block() {
 			'editor_script' => 'vrodos-3d-block',
 				      'style' => 'vrodos-blocks-style',
 			   'editor_style' => 'vrodos-blocks-style',
-			
+
 		)
 	);
-	
+
 }
 add_action( 'init', 'vrodos_3d_register_block' );
 
 
+//----------------------- WIDGETS ---------------------------------------------
+
+require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
+
+// 47
+add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts');
+
+
+// Register and load the widget
+function vrodos_load_widget() {
+	register_widget( 'vrodos_3d_widget' );
+}
+add_action( 'widgets_init', 'vrodos_load_widget');
 
 
 
+// 54
+// For classification
+//add_action('add_meta_boxes','vrodos_assets_create_right_metaboxes');
 
+// Add the fields to the taxonomy, using our callback function
+// 59
+//add_action( 'vrodos_asset3d_cat_edit_form_fields', 'vrodos_assets_category_yamlFields', 10, 2 );
+
+// Save the changes made on the taxonomy, using our callback function
+// 60
+//add_action( 'edited_ vrodos_asset3d_cat', 'vrodos_assets_category_yamlFields_save', 10, 2 );
 
 /* ------------------------------ API ---------------------------------------- */
 ///*
@@ -827,4 +815,4 @@ add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' 
 add_action( 'wp_ajax_vrodos_assepile_action', 'vrodos_assepile_action_callback' );
 
 
-?>
+

@@ -762,5 +762,3 @@ function get_3D_model_files($assetpostMeta, $asset_id){
 				'texturesFbx'=>$textures_fbx_string_connected,
 				'path'=>$path_url);
 }
-
-?>

@@ -6,21 +6,21 @@ function vrodos_assets_scripts_and_styles() {
     
     // load css/wpunity_backend.css
     wp_enqueue_style('wpunity_backend');
-
+    
     // load script from js_libs
     wp_enqueue_script( 'vrodos_content_interlinking_request');
-
+    
     // load script from js_libs
     wp_enqueue_script( 'vrodos_classification_request');
     
     wp_enqueue_script('vrodos_segmentation_request');
-
+    
     // Three js : for simple rendering
     wp_enqueue_script('wpunity_load_threejs');
     wp_enqueue_script('wpunity_load_objloader');
     wp_enqueue_script('wpunity_load_mtlloader');
     wp_enqueue_script('wpunity_load_orbitcontrols');
-
+    
     // Some parameters to pass in the content_interlinking.js  ajax
     wp_localize_script('vrodos_content_interlinking_request', 'phpvars',
         array('lang' => 'en',
@@ -28,7 +28,7 @@ function vrodos_assets_scripts_and_styles() {
             'titles' => 'Scladina'  //'Albert%20Einstein'
         )
     );
-
+    
     // Some parameters to pass in the segmentation.js  ajax
     //    if( isset($_GET['post']) ){
     //        wp_localize_script('vrodos_segmentation_request', 'phpvars',
@@ -50,37 +50,37 @@ function vrodos_assets_scripts_and_styles() {
 // Create metabox with Custom Fields for Asset3D ($wpunity_databox1)
 
 $table_of_asset_fields = array(
-
-array('MTL File', 'MTL File', 'vrodos_asset3d_mtl', 'text',  ''),
-array('Obj File', 'Obj File', 'vrodos_asset3d_obj', 'text',  ''),
-array('Fbx File', 'Fbx File', 'vrodos_asset3d_fbx', 'text',  ''),
-array('PDB File', 'PDB File', 'vrodos_asset3d_pdb', 'text',  ''),
-array('GLB File', 'GLB File', 'vrodos_asset3d_glb', 'text',  ''),
-
-array('Audio File'                 , 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'text', ''),
-
-array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asset3d_diffimage', 'text', ''),
-array('Screenshot Image'           ,'Screenshot Image'            , 'vrodos_asset3d_screenimage','text', ''),
-array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_next_scene','text', ''),
-array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'text', ''),
-array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'text', '0'),
-
-array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'text', ''),
-array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'text', ''),
-array('Image 3', 'Image 3', 'vrodos_asset3d_image3', 'text', ''),
-array('Image 4', 'Image 4', 'vrodos_asset3d_image4', 'text', ''),
-
-array('isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'text', 'false'),
-array('isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'text', 'false'),
-
-array('fonts', 'fonts', 'vrodos_asset3d_fonts', 'text', ''),
-array('back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'text', "rgb(221, 185, 155)"),
-
-array('Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'text', '0,0,0,0,0,0,0,0,0'),
-
-array('KidsDescription', 'Description in English for kids', 'vrodos_asset3d_description_kids', 'text', ''),
-array('ExpertsDescription', 'Description in English for experts', 'vrodos_asset3d_description_experts','text', ''),
-array('PerceptionDescription', 'Description in English for people with perception disabilities', 'vrodos_asset3d_description_perception', 'text', '')
+    
+    array('MTL File', 'MTL File', 'vrodos_asset3d_mtl', 'text',  ''),
+    array('Obj File', 'Obj File', 'vrodos_asset3d_obj', 'text',  ''),
+    array('Fbx File', 'Fbx File', 'vrodos_asset3d_fbx', 'text',  ''),
+    array('PDB File', 'PDB File', 'vrodos_asset3d_pdb', 'text',  ''),
+    array('GLB File', 'GLB File', 'vrodos_asset3d_glb', 'text',  ''),
+    
+    array('Audio File'                 , 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'text', ''),
+    
+    array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asset3d_diffimage', 'text', ''),
+    array('Screenshot Image'           ,'Screenshot Image'            , 'vrodos_asset3d_screenimage','text', ''),
+    array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_next_scene','text', ''),
+    array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'text', ''),
+    array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'text', '0'),
+    
+    array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'text', ''),
+    array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'text', ''),
+    array('Image 3', 'Image 3', 'vrodos_asset3d_image3', 'text', ''),
+    array('Image 4', 'Image 4', 'vrodos_asset3d_image4', 'text', ''),
+    
+    array('isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'text', 'false'),
+    array('isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'text', 'false'),
+    
+    array('fonts', 'fonts', 'vrodos_asset3d_fonts', 'text', ''),
+    array('back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'text', "rgb(221, 185, 155)"),
+    
+    array('Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'text', '0,0,0,0,0,0,0,0,0'),
+    
+    array('KidsDescription', 'Description in English for kids', 'vrodos_asset3d_description_kids', 'text', ''),
+    array('ExpertsDescription', 'Description in English for experts', 'vrodos_asset3d_description_experts','text', ''),
+    array('PerceptionDescription', 'Description in English for people with perception disabilities', 'vrodos_asset3d_description_perception', 'text', '')
 
 );
 
@@ -88,27 +88,27 @@ array('PerceptionDescription', 'Description in English for people with perceptio
 $languages = ['Greek', 'Spanish', 'French', 'German', 'Russian'];
 
 for ($i = 0; $i < count($languages); $i++){
-
+    
     // Title per language
     $table_of_asset_fields[] = array( $languages[$i].'Title', 'Title in '.$languages[$i],
-                                            'vrodos_asset3d_title_'.strtolower($languages[$i]), 'text', '');
-
+        'vrodos_asset3d_title_'.strtolower($languages[$i]), 'text', '');
+    
     // Description per language
     $table_of_asset_fields[] = array($languages[$i], 'Description in '.$languages[$i],
-                                        'vrodos_asset3d_description_'.strtolower($languages[$i]), 'text', '');
-
+        'vrodos_asset3d_description_'.strtolower($languages[$i]), 'text', '');
+    
     // Description for kids per language
     $table_of_asset_fields[] = array('GreekKidsDescription', 'Description in '.$languages[$i].' for kids',
-                                    'vrodos_asset3d_description_'.strtolower($languages[$i]).'_kids', 'text', '');
+        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_kids', 'text', '');
     
     // Description for experts per language
     $table_of_asset_fields[] = array($languages[$i].'ExpertsDescription', 'Description in '.$languages[$i].' for experts',
-                                     'vrodos_asset3d_description_'.strtolower($languages[$i]).'_experts', 'text', '');
+        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_experts', 'text', '');
     
     // Description for disabilities per language
     $table_of_asset_fields[] = array($languages[$i].'PerceptionDescription',
-                                     'Description in '.$languages[$i].' for people with perception disabilities',
-                                     'vrodos_asset3d_description_'.strtolower($languages[$i]).'_perception', 'text', '');
+        'Description in '.$languages[$i].' for people with perception disabilities',
+        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_perception', 'text', '');
 }
 
 
@@ -116,19 +116,19 @@ $asset_fields = [];
 for ($i = 0; $i < count($table_of_asset_fields); $i++){
     
     $asset_fields[] = array('name'     => $table_of_asset_fields[$i][0],
-                            'desc'     => $table_of_asset_fields[$i][1],
-                            'id'       => $table_of_asset_fields[$i][2],
-                            'type'     => $table_of_asset_fields[$i][3],
-                            'std'      => $table_of_asset_fields[$i][4]);
+        'desc'     => $table_of_asset_fields[$i][1],
+        'id'       => $table_of_asset_fields[$i][2],
+        'type'     => $table_of_asset_fields[$i][3],
+        'std'      => $table_of_asset_fields[$i][4]);
 }
 
 
 //All information about our meta box
 $wpunity_databox1 = array('id' => 'wpunity-assets-databox',
-                          'page' => 'vrodos_asset3d',
-                          'context' => 'normal',
-                          'priority' => 'high',
-                          'fields' => $asset_fields
+    'page' => 'vrodos_asset3d',
+    'context' => 'normal',
+    'priority' => 'high',
+    'fields' => $asset_fields
 );
 
 //=========================================================
@@ -162,6 +162,7 @@ function vrodos_assets_infobox_show(){
 
 // Backend form
 function vrodos_assets_databox_show(){
+    
     global $wpunity_databox1, $post;
     
     $post_title = $post->post_title;
@@ -286,45 +287,45 @@ function vrodos_assets_databox_show(){
                             </textarea>
                     </td>
                 </tr>
-
+                
                 
                 <?php
-                }elseif ($field['id'] == 'vrodos_asset3d_pdb') {?>
-    
-                    <tr>
-                        <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                        <td>
-                            <?php
-                            $valMaxUpload = intval(ini_get('upload_max_filesize'));
-                            if ($valMaxUpload < 100){
-                                echo "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br />";
-                                echo "Add to .htaccess the following two lines<br/>";
-                                echo "php_value upload_max_filesize 256M <br />";
-                                echo "php_value post_max_size 512M";
+            }elseif ($field['id'] == 'vrodos_asset3d_pdb') {?>
+
+                <tr>
+                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
+                    <td>
+                        <?php
+                        $valMaxUpload = intval(ini_get('upload_max_filesize'));
+                        if ($valMaxUpload < 100){
+                            echo "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br />";
+                            echo "Add to .htaccess the following two lines<br/>";
+                            echo "php_value upload_max_filesize 256M <br />";
+                            echo "php_value post_max_size 512M";
+                        }
+                        $meta_pdb_id = get_post_meta($post->ID, $field['id'], true); ?>
+
+                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
+                               value="<?php echo esc_attr($meta_pdb_id ? $meta_pdb_id : $field['std']); ?>" size="30" style="width:65%"/>
+
+                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
+
+                        <br /><br />
+                        Pathfile: <?php echo wp_get_attachment_url($meta_pdb_id); ?><br />
+                        Preview Pdb:<br />
+                        <textarea id="vrodos_asset3d_pdb_preview" readonly style="width:100%;height:200px;"><?php
+                            if(!$meta_pdb_id){
+                                echo "pdb is not defined";
+                            }else{
+                                echo "pdb text is too big to state here.";
+                                //readfile(wp_get_attachment_url($meta_fbx_id), "100");
                             }
-                            $meta_pdb_id = get_post_meta($post->ID, $field['id'], true); ?>
-    
-                            <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                                   value="<?php echo esc_attr($meta_pdb_id ? $meta_pdb_id : $field['std']); ?>" size="30" style="width:65%"/>
-    
-                            <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-    
-                            <br /><br />
-                            Pathfile: <?php echo wp_get_attachment_url($meta_pdb_id); ?><br />
-                            Preview Pdb:<br />
-                            <textarea id="vrodos_asset3d_pdb_preview" readonly style="width:100%;height:200px;"><?php
-                                if(!$meta_pdb_id){
-                                    echo "pdb is not defined";
-                                }else{
-                                    echo "pdb text is too big to state here.";
-                                    //readfile(wp_get_attachment_url($meta_fbx_id), "100");
-                                }
-                                ?>
+                            ?>
                                 </textarea>
-                        </td>
-                    </tr>
-    
-    
+                    </td>
+                </tr>
+                
+                
                 <?php
             }elseif ($field['id'] == 'vrodos_asset3d_glb') {?>
 
@@ -360,8 +361,8 @@ function vrodos_assets_databox_show(){
                                 </textarea>
                     </td>
                 </tr>
-    
-    
+                
+                
                 <?php
             }elseif ($field['id'] == 'vrodos_asset3d_audio') {?>
 
@@ -573,9 +574,6 @@ function vrodos_assets_databox_show(){
         }
 
         jQuery(document).ready(function ($) {
-
-
-
 
             // Uploading files
             var file_frame;
@@ -1110,6 +1108,6 @@ function vrodos_assets_classify_obj_box_content($post){
     
     <?php
 }
-?>
+
 
 

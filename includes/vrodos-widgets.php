@@ -1,7 +1,7 @@
 <?php
 
 // Load Scripts
-function vrodos_widget_functions() {
+function vrodos_widget_preamp_scripts() {
     
     // Stylesheet
     wp_enqueue_style('vrodos_widgets_stylesheet');
@@ -48,6 +48,7 @@ function vrodos_widget_functions() {
     
     // Load single asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
+    echo "1";
 }
 
 
@@ -57,6 +58,8 @@ class vrodos_3d_widget extends WP_Widget {
     
     function __construct() {
         parent::__construct(
+
+            
 
             // Base ID of your widget
             'vrodos_3d_widget',
@@ -73,9 +76,6 @@ class vrodos_3d_widget extends WP_Widget {
     // Widget Backend
     public function form( $instance ) {
     
-//        $f = fopen("output_instance.txt", "w");
-//        fwrite($f, print_r($instance,true));
-//        fclose($f);
         
         
         $title = isset( $instance[ 'title' ] ) ? $instance[ 'title' ] : '';
@@ -357,6 +357,7 @@ class vrodos_3d_widget extends WP_Widget {
         </p>
 
         <?php
+        
     }
     
     
@@ -389,11 +390,11 @@ class vrodos_3d_widget extends WP_Widget {
         $canvasright = $instance['canvasright']; //apply_filters( 'widget_canvastop', $instance['canvasright'] );
     
         $customcss = $instance['customcss'];
-        
-        
+    
+      
         // 1. before and after widget arguments are defined by themes
         echo $args['before_widget'];
-        
+
         
         // The data
         if ( ! empty( $title ) && $titleshow === 'true')
@@ -522,12 +523,16 @@ class vrodos_3d_widget extends WP_Widget {
         // This is where you run the code and display the output
         
         echo $args['after_widget'];
+    
+     
+        
     }
 
 
 
     // Updating widget replacing old instances with new
     public function update( $new_instance, $old_instance ) {
+
         $instance = array();
         
         $instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
@@ -582,8 +587,4 @@ class vrodos_3d_widget extends WP_Widget {
 }
 
 
-// Register and load the widget
-function vrodos_load_widget() {
-    register_widget( 'vrodos_3d_widget' );
-}
 

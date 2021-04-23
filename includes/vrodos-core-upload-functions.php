@@ -112,7 +112,7 @@ function wpunity_upload_filter( $args  ) {
 
 
 // Upload image(s) or video or audio for a certain post_id (asset or scene3D)
-function wpunity_upload_img_vid_aud($file = array(), $parent_post_id) {
+function wpunity_upload_img_vid_aud($file, $parent_post_id) {
 
     // For Images (Sprites in Unity)
     if($file['type'] === 'image/jpeg' || $file['type'] === 'image/png') {

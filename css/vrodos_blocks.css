@@ -5,5 +5,9 @@
     background-repeat: no-repeat;
     color:black;
     /*background-color: rgb(188, 172, 163);*/
+    width:80%;
 }
 
+.interface-interface-skeleton__sidebar{
+    width:300px !important;;
+}
