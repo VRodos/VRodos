@@ -48,7 +48,14 @@ function vrodos_widget_preamp_scripts() {
     
     // Load single asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
-    echo "1";
+    
+    $pluginpath = dirname (plugin_dir_url( __DIR__  ));
+    // Fetch Asset
+    wp_enqueue_script( 'ajax-script_fetchasset_meta', $pluginpath.'/vrodos/js_libs/ajaxes/fetch_asset.js', array('jquery') );
+    
+    wp_localize_script( 'ajax-script_fetchasset_meta', 'my_ajax_object_fetchasset_meta',
+        array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+    );
 }
 
 
@@ -58,9 +65,6 @@ class vrodos_3d_widget extends WP_Widget {
     
     function __construct() {
         parent::__construct(
-
-            
-
             // Base ID of your widget
             'vrodos_3d_widget',
 
@@ -76,6 +80,9 @@ class vrodos_3d_widget extends WP_Widget {
     // Widget Backend
     public function form( $instance ) {
     
+    
+
+        
         
         
         $title = isset( $instance[ 'title' ] ) ? $instance[ 'title' ] : '';
@@ -140,9 +147,11 @@ class vrodos_3d_widget extends WP_Widget {
             
 
             <select
-                class="widefat"
-                name="<?php echo $this->get_field_name( 'asset_id' ); ?>"
-                id="<?php echo $this->get_field_id( 'asset_id' ); ?>"
+                class   ="widefat"
+                onchange="vrodos_fillin_widget_assettrs(this)"
+                id      ="<?php echo $this->get_field_id( 'asset_id');?>"
+                name    ="<?php echo $this->get_field_name( 'asset_id');?>"
+                data-widgetserialno ="<?php echo $this->number;?>"
             >
             
             <?php
@@ -152,10 +161,7 @@ class vrodos_3d_widget extends WP_Widget {
                 // Iterate for the drop down
                 for ($i=0;$i<count($assets);$i++){
                     
-                    echo '<option value="'.
-                        $assets[$i]['assetid'].'" '.
-                        (esc_attr( $asset_id )==$assets[$i]['assetid']?'selected':'').
-                        '>'.
+                    echo '<option value="'.$assets[$i]['assetid'].'" '.(esc_attr( $asset_id )==$assets[$i]['assetid']?'selected':'').'>'.
                         $assets[$i]['assetName'].
                         '</option>';
                     
@@ -466,6 +472,9 @@ class vrodos_3d_widget extends WP_Widget {
         
         
         <script>
+            
+          
+
             const path_url<?php echo $title;?> = "<?php echo $asset_3d_files['path'].'/'; ?>";
             const mtl_file_name_widget<?php echo $title;?>= "<?php echo $asset_3d_files['mtl']; ?>";
             const obj_file_name_widget<?php echo $title;?>= "<?php echo $asset_3d_files['obj']; ?>";
@@ -532,7 +541,9 @@ class vrodos_3d_widget extends WP_Widget {
 
     // Updating widget replacing old instances with new
     public function update( $new_instance, $old_instance ) {
-
+    
+        
+        
         $instance = array();
         
         $instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';

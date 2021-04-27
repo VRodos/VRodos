@@ -160,7 +160,12 @@ function vrodos_register_scripts() {
 	
 }
 // 45
+
+// Register in front-end
 add_action('wp_enqueue_scripts', 'vrodos_register_scripts' );
+
+// Register also in back-end
+add_action('admin_enqueue_scripts', 'vrodos_register_scripts' );
 
 
 
@@ -656,7 +661,24 @@ add_action( 'init', 'vrodos_3d_register_block' );
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
 
 // 47
-add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts');
+add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Front-end
+//add_action('init', 'vrodos_widget_preamp_scripts'); // Back-end
+//
+//function myscriptfoo(){
+//
+//    wp_enqueue_script('vrodos_scripts');
+//}
+
+add_action( 'admin_enqueue_scripts', 'vrodos_widget_preamp_scripts');
+
+
+
+
+
+
+
+
+
 
 
 // Register and load the widget
@@ -799,6 +821,8 @@ add_action('wp_ajax_wpunity_delete_asset_action', 'wpunity_delete_asset3d_fronte
 
 // AJAX for fetch asset
 add_action('wp_ajax_wpunity_fetch_asset_action', 'wpunity_fetch_asset3d_frontend_callback');
+
+add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_backend_callback');
 
 // ------- Ajaxes for compiling ---------
 

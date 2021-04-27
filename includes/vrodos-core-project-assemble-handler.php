@@ -531,7 +531,7 @@ function wpunity_delete_asset3d_frontend_callback(){
     wp_die();
 }
 
-//DELETE Asset with files
+//Fetch Asset with files
 function wpunity_fetch_asset3d_frontend_callback(){
     
     $asset_id = $_POST['asset_id'];
@@ -561,6 +561,39 @@ function wpunity_fetch_asset3d_frontend_callback(){
     wp_die();
 }
 
+
+//Fetch Asset with files
+function vrodos_fetch_asset3d_meta_backend_callback(){
+    
+    $asset_id = $_POST['asset_id'];
+    
+    
+    
+//    $fbxID = get_post_meta($asset_id, 'vrodos_asset3d_fbx');
+//    $fbxURL= get_the_guid($fbxID[0]);
+//
+//    $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio');
+//    $audioURL= get_the_guid($audioID[0]);
+//
+//    $texturesIDs = get_post_meta($asset_id, 'vrodos_asset3d_diffimage');
+//    $texturesURLs = [];
+//
+//    foreach ($texturesIDs as $textureID){
+//        $texturesURLs[]= get_the_guid($textureID);
+//    }
+    
+    $output = new StdClass();
+    $output -> assettrs_saved = get_post_meta($asset_id,'vrodos_asset3d_assettrs', true);
+//    $output->texturesIDs = $texturesIDs;
+//    $output->fbxIDs = $fbxID;
+//    $output->fbxURL = $fbxURL;
+//    $output->texturesURLs = $texturesURLs;
+//    $output->audioID = $audioID;
+//    $output->audioURL = $audioURL;
+    
+    print_r(json_encode($output, JSON_UNESCAPED_SLASHES));
+    wp_die();
+}
 
 
 

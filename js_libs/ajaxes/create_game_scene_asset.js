@@ -64,9 +64,6 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass){
         },
         success: function (res) {
 
-            //console.log(res);
-
-
             // Add list to div
             document.getElementById('ExistingProjectsDivDOM').innerHTML = res;
         },
