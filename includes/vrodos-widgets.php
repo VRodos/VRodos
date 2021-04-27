@@ -79,11 +79,6 @@ class vrodos_3d_widget extends WP_Widget {
     
     // Widget Backend
     public function form( $instance ) {
-    
-    
-
-        
-        
         
         $title = isset( $instance[ 'title' ] ) ? $instance[ 'title' ] : '';
         $titleshow = isset( $instance[ 'titleshow' ] ) ? $instance[ 'titleshow' ] : 'false';
@@ -153,7 +148,9 @@ class vrodos_3d_widget extends WP_Widget {
                 name    ="<?php echo $this->get_field_name( 'asset_id');?>"
                 data-widgetserialno ="<?php echo $this->number;?>"
             >
-            
+
+                <option value="">Select one</option>
+                
             <?php
                 // Get all assets
                 $assets = get_assets([]);
