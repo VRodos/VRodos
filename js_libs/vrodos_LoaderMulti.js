@@ -174,7 +174,7 @@ class VRodos_LoaderMulti {
                             url: my_ajax_object_fetchasset.ajax_url,
                             type: 'POST',
                             data: {
-                                'action': 'wpunity_fetch_asset_action',
+                                'action': 'vrodos_fetch_asset_action',
                                 'asset_id': resources3D[name]['assetid']
                             },
                             success: function (res) {
@@ -247,17 +247,20 @@ class VRodos_LoaderMulti {
 
 
                                         // load a sound and set it as the PositionalAudio object's buffer
-                                        const audioLoader = new THREE.AudioLoader();
-                                        audioLoader.load( resourcesFBX['audioURL'], function( buffer ) {
-                                            audioOf3DObject.setBuffer( buffer );
-                                            audioOf3DObject.setRefDistance( 2000 );
-                                            audioOf3DObject.setDirectionalCone(330, 230, 0.01);
-                                            audioOf3DObject.setLoop(true);
-                                            audioOf3DObject.play();
 
-                                        });
+                                        //if(resourcesFBX['audioURL']){
 
-                                        object.add(audioOf3DObject);
+                                            const audioLoader = new THREE.AudioLoader();
+                                            audioLoader.load( resourcesFBX['audioURL'], function( buffer ) {
+                                                audioOf3DObject.setBuffer( buffer );
+                                                audioOf3DObject.setRefDistance( 2000 );
+                                                audioOf3DObject.setDirectionalCone(330, 230, 0.01);
+                                                audioOf3DObject.setLoop(true);
+                                                audioOf3DObject.play();
+                                            });
+
+                                            object.add(audioOf3DObject);
+                                        //}
 
                                         //------------------------------
 

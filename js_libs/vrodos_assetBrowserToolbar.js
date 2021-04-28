@@ -7,7 +7,7 @@ function wpunity_fetchSceneAssetsAjax(isAdmin, gameProjectSlug, urlforAssetEdit,
         type : 'POST',
         dataType: 'json',
         data : {
-            'action': 'wpunity_fetch_game_assets_action',
+            'action': 'vrodos_fetch_game_assets_action',
             'gameProjectSlug': gameProjectSlug,
             'gameProjectID': gameProjectID
         },
@@ -30,15 +30,19 @@ function wpunity_fetchSceneAssetsAjax(isAdmin, gameProjectSlug, urlforAssetEdit,
  */
 function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
+
+
     var filemanager = jQuery('#assetBrowserToolbar'),
         // breadcrumbs = jQuery('.breadcrumbs'),
         fileList = filemanager.find('.data');
         // closeButton = jQuery('#bt_close_file_toolbar');
 
+
+
     // Create drag image BEFORE event is fired - THEN call it inside the event
     function createDragImage() {
         var img = jQuery('<img>');
-        img.attr('src', 'wp-content/plugins/vrodos/images/ic_asset.png');
+        img.attr('src',  pluginPath+ '../images/ic_asset.png');
         img.css({
             "top": 0,
             "left": 0,

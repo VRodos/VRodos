@@ -12,7 +12,7 @@ function wpunity_deleteSceneAjax(scene_id, url_scene_redirect) {
         url: my_ajax_object_deletescene.ajax_url,
         type: 'POST',
         data: {
-            'action': 'wpunity_delete_scene_action',
+            'action': 'vrodos_delete_scene_action',
             'scene_id': scene_id,
             'url_scene_redirect': url_scene_redirect
         },

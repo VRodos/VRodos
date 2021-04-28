@@ -1671,7 +1671,7 @@ function wpunity_enlist_splitted_objs_action_callback(){
 
 //======================= CONTENT INTERLINKING =========================================================================
 
-function wpunity_fetch_description_action_callback(){
+function vrodos_fetch_description_action_callback(){
 
 //	$fff = fopen("output_wiki.txt","w");
 //	fwrite($fff, $_POST['externalSource']);
@@ -1691,7 +1691,7 @@ function wpunity_fetch_description_action_callback(){
 	wp_die();
 }
 
-function wpunity_fetch_image_action_callback(){
+function vrodos_fetch_image_action_callback(){
 
 	if ($_POST['externalSource_image']=='Wikipedia')
 		$url = 'https://'.$_POST['lang_image'].'.wikipedia.org/w/api.php?action=query&prop=imageinfo&format=json&iiprop=url&generator=images&titles='.$_POST['titles_image'];
@@ -1703,7 +1703,7 @@ function wpunity_fetch_image_action_callback(){
 	wp_die();
 }
 
-function wpunity_fetch_video_action_callback(){
+function vrodos_fetch_video_action_callback(){
 
 	if ($_POST['externalSource_video']=='Wikipedia'){
 		$url = 'https://'.$_POST['lang_video'].'.wikipedia.org/w/api.php?action=query&format=json&prop=videoinfo&viprop=derivatives&titles=File:'.$_POST['titles_video'].'.ogv';
@@ -2085,7 +2085,7 @@ goto :EOF
 }
 
 //---- AJAX MONITOR: read compile stdout.log file and return content.
-function wpunity_monitor_compiling_action_callback(){
+function vrodos_monitor_compiling_action_callback(){
 
 	$DS = DIRECTORY_SEPARATOR;
 
@@ -2160,7 +2160,7 @@ function wpunity_monitor_compiling_action_callback(){
 }
 
 //---- AJAX KILL TASK: KILL COMPILE PROCESS ------
-function wpunity_killtask_compiling_action_callback(){
+function vrodos_killtask_compiling_action_callback(){
 	$DS = DIRECTORY_SEPARATOR;
 
 	$os = 'win'; //strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'? 'win':'lin';
@@ -2211,7 +2211,7 @@ function wpunity_killtask_compiling_action_callback(){
 }
 
 //---- AJAX COMPILE 3: Zip the builds folder ---
-function wpunity_game_zip_action_callback()
+function vrodos_game_zip_action_callback()
 {
 
 	if(wpunity_getUnity_local_or_remote() != 'remote') {
@@ -2309,7 +2309,7 @@ function wpunity_append_scenes_in_EditorBuildSettings_dot_asset($filepath, $scen
 	//    echo fread($fhandle, filesize($filepath));
 }
 
-function wpunity_save_scene_async_action_callback()
+function vrodos_save_scene_async_action_callback()
 {
     // ToDo: Probably useful in Chemistry
 	//$mole = update_post_meta( $_POST['scene_id'], 'wpunity_available_molecules',$_POST['available_molecules']);
@@ -2344,7 +2344,7 @@ function wpunity_save_scene_async_action_callback()
 
 
 // Undo button for scenes
-function wpunity_undo_scene_async_action_callback()
+function vrodos_undo_scene_async_action_callback()
 {
     //$ff = fopen("undo.log","w");
     
@@ -2374,7 +2374,7 @@ function wpunity_undo_scene_async_action_callback()
 }
 
 
-//function wpunity_translate_action_callback()
+//function vrodos_translate_action_callback()
 //{
 //
 //    $text = $_POST['text'];
@@ -2390,7 +2390,7 @@ function wpunity_undo_scene_async_action_callback()
 
 
 // Redo button for scenes
-function wpunity_redo_scene_async_action_callback()
+function vrodos_redo_scene_async_action_callback()
 {
     $mole = update_post_meta( $_POST['scene_id'], 'wpunity_available_molecules',
                                                         $_POST['available_molecules']);
@@ -2423,7 +2423,7 @@ function wpunity_redo_scene_async_action_callback()
 
 
 // Save analytics keys
-function wpunity_save_gio_async_action_callback()
+function vrodos_save_gio_async_action_callback()
 {
 	// put meta in scene. True, false, or id of meta if does not exist
 	$res = update_post_meta( $_POST['project_id'], 'wpunity_project_gioApKey', wp_unslash($_POST['project_gioApKey']) );
@@ -2446,7 +2446,7 @@ function wpunity_save_gio_async_action_callback()
 	wp_die();
 }
 
-function wpunity_save_expid_async_action_callback()
+function vrodos_save_expid_async_action_callback()
 {
 	// put meta in scene. True, false, or id of meta if does not exist
 	$res = update_post_meta( $_POST['project_id'], 'wpunity_project_expID', wp_unslash($_POST['project_expID']) );

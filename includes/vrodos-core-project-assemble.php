@@ -388,7 +388,7 @@ function wpunity_compile_models_gen($gameID, $gameSlug, $targetPlatform){
     $game_path = $upload_dir . "/" . $gameSlug . 'Unity/Assets/models';
     $handybuilder_file = $upload_dir . '/' . $gameSlug . 'Unity' . '/Assets/Editor/HandyBuilder.cs';
     
-    $res = wpunity_fetch_assetids_in_scenes($gameSlug);
+    $res = vrodos_fetch_assetids_in_scenes($gameSlug);
     
     $assetIds = $res[0];  // Asset ids to include in the models
     $neededObj = $res[1]; // clones that do need their obj (given that their protos are already included)

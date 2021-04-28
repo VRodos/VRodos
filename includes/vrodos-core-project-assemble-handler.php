@@ -34,7 +34,7 @@ function wpunity_convert_pdbYAML(){
 
 
 //CREATE GAME PROJECT
-function wpunity_create_gameproject_frontend_callback(){
+function vrodos_create_gameproject_frontend_callback(){
     
     // Game project title
     $game_project_title =  strip_tags($_POST['game_project_title']);
@@ -89,7 +89,7 @@ function wpunity_create_gameproject_frontend_callback(){
 
 
 // Fetch list of project through ajax
-function wpunity_fetch_list_projects_callback(){
+function vrodos_fetch_list_projects_callback(){
 
     $user_id = $_POST['current_user_id'];
     $parameter_Scenepass = $_POST['parameter_Scenepass'];
@@ -287,7 +287,7 @@ function wpunity_fetch_list_projects_callback(){
 
 
 //UPDATE LIST OF COLLABORATORS ON PROJECT
-function wpunity_collaborate_project_frontend_callback()
+function vrodos_collaborate_project_frontend_callback()
 {
     $project_id = $_POST['project_id'];
     $collabs_emails = $_POST['collabs_emails'];
@@ -309,7 +309,7 @@ function wpunity_collaborate_project_frontend_callback()
 
 
 
-function wpunity_fetch_collaborators_frontend_callback()
+function vrodos_fetch_collaborators_frontend_callback()
 {
     $project_id = $_POST['project_id'];
     $collabs_ids = get_post_meta($project_id, 'wpunity_game_collaborators_ids', true);
@@ -331,7 +331,7 @@ function wpunity_fetch_collaborators_frontend_callback()
 
 
 //DELETE GAME PROJECT
-function wpunity_delete_gameproject_frontend_callback(){
+function vrodos_delete_gameproject_frontend_callback(){
 
     $game_id = $_POST['game_id'];
 
@@ -361,7 +361,7 @@ function wpunity_delete_gameproject_frontend_callback(){
         while ( $custom_query->have_posts() ) :
             $custom_query->the_post();
             $asset_id = get_the_ID();
-            wpunity_delete_asset3d_noscenes_frontend($asset_id);
+            vrodos_delete_asset3d_noscenes_frontend($asset_id);
         endwhile;
     endif;
 
@@ -414,7 +414,7 @@ function wpunity_delete_gameproject_frontend_callback(){
 }
 
 //DELETE spesific SCENE
-function wpunity_delete_scene_frontend_callback(){
+function vrodos_delete_scene_frontend_callback(){
 
     $scene_id = $_POST['scene_id'];
     $postTitle = get_the_title($scene_id);
@@ -446,7 +446,7 @@ function wpunity_delete_scene_frontend_callback(){
 }
 
 //DELETE Asset with files
-function wpunity_delete_asset3d_frontend_callback(){
+function vrodos_delete_asset3d_frontend_callback(){
 
     $asset_id = $_POST['asset_id'];
     $gameSlug = $_POST['game_slug'];
@@ -521,7 +521,7 @@ function wpunity_delete_asset3d_frontend_callback(){
     }
     
     // Delete all uses of Asset from Scenes (json)
-    wpunity_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug);
+    vrodos_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug);
 
     // Delete Asset post from SQL database
     wp_delete_post( $asset_id, true );
@@ -532,7 +532,7 @@ function wpunity_delete_asset3d_frontend_callback(){
 }
 
 //Fetch Asset with files
-function wpunity_fetch_asset3d_frontend_callback(){
+function vrodos_fetch_asset3d_frontend_callback(){
     
     $asset_id = $_POST['asset_id'];
     
@@ -597,7 +597,7 @@ function vrodos_fetch_asset3d_meta_backend_callback(){
 
 
 
-function wpunity_delete_asset3d_noscenes_frontend($asset_id){
+function vrodos_delete_asset3d_noscenes_frontend($asset_id){
     //No need to delete assets from scenes, cause scene will be deleted at the same event
     
     //1. Delete all Attachments (mtl/obj/jpg ...)
@@ -616,7 +616,7 @@ function wpunity_delete_asset3d_noscenes_frontend($asset_id){
 }
 
 // Delete asset from json
-function wpunity_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug){
+function vrodos_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug){
 
     $scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
     
@@ -685,7 +685,7 @@ function wpunity_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug){
  * @param $asset_id
  * @param $gameSlug
  */
-function wpunity_fetch_assetids_in_scenes($gameSlug){
+function vrodos_fetch_assetids_in_scenes($gameSlug){
 
     // output is the ids of all the objs in the scenes
     $assetsids = [];

@@ -15,7 +15,7 @@ function wpunity_createGameAjax(game_project_title, game_project_type_radio,
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
         type: 'POST',
         data: {
-            'action': 'wpunity_create_game_action',
+            'action': 'vrodos_create_game_action',
             'game_project_title': game_project_title,
             'game_project_type_radio': game_project_type_radio
         },
@@ -58,7 +58,7 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass){
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
         type: 'POST',
         data: {
-            'action': 'wpunity_fetch_list_projects_action',
+            'action': 'vrodos_fetch_list_projects_action',
             'current_user_id': current_user_id,
             'parameter_Scenepass': parameter_Scenepass
         },

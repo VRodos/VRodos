@@ -69,13 +69,13 @@ function vrodos_register_scripts() {
 	//=========================== THREE js 87 scripts ============================================
 	
 	$scriptsB = array(
-			array( 'wpunity_load87_threejs', $pluginDirJS.'threejs87/three.js'),
+			array( 'vrodos_load87_threejs', $pluginDirJS.'threejs87/three.js'),
 			array( 'vrodos_load87_OBJloader', $pluginDirJS.'threejs87/OBJLoader.js'),
 			array( 'vrodos_load87_OBJloader2', $pluginDirJS.'threejs87/OBJLoader2.js'),
 			array( 'vrodos_load87_WWOBJloader2', $pluginDirJS. 'threejs87/WWOBJLoader2.js'),
 			array( 'vrodos_load87_MTLloader', $pluginDirJS.'threejs87/MTLLoader.js'),
-			array( 'wpunity_load87_FBXloader', $pluginDirJS.'threejs87/FBXLoader.js'),
-			array( 'wpunity_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
+			array( 'vrodos_load87_FBXloader', $pluginDirJS.'threejs87/FBXLoader.js'),
+			array( 'vrodos_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
             array( 'wpunity_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
 			array( 'wpunity_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
 			array( 'wpunity_load87_datgui', $pluginDirJS.'threejs87/dat.gui.js'),
@@ -499,10 +499,10 @@ if ($project_scope === 1) {
 
 // ---- Content interlinking ----------
 
-add_action( 'wp_ajax_wpunity_fetch_description_action', 'wpunity_fetch_description_action_callback' );
+add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description_action_callback' );
 
 // Translate
-//add_action( 'wp_ajax_wpunity_translate_action', 'wpunity_translate_action_callback' );
+//add_action( 'wp_ajax_vrodos_translate_action', 'vrodos_translate_action_callback' );
 
 
 // ===================== Mime type to allow Upload ===================================
@@ -648,12 +648,29 @@ function vrodos_3d_register_block() {
 			'editor_script' => 'vrodos-3d-block',
 				      'style' => 'vrodos-blocks-style',
 			   'editor_style' => 'vrodos-blocks-style',
-
 		)
 	);
 
 }
 add_action( 'init', 'vrodos_3d_register_block' );
+
+
+
+
+add_action('rest_api_init', function() {
+    register_rest_route('awhitepixel/v1', '/mydata', [
+        'method' => 'GET',
+        'callback' => 'awhitepixel_rest_route_mydata',
+        'permission_callback' => '__return_true'
+    ]);
+});
+
+function awhitepixel_rest_route_mydata($data) {
+    $response = '{"box": 15, "jam":19}';
+    return rest_ensure_response($response);
+}
+
+
 
 
 //----------------------- WIDGETS ---------------------------------------------
@@ -662,24 +679,7 @@ require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
 
 // 47
 add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Front-end
-//add_action('init', 'vrodos_widget_preamp_scripts'); // Back-end
-//
-//function myscriptfoo(){
-//
-//    wp_enqueue_script('vrodos_scripts');
-//}
-
-add_action( 'admin_enqueue_scripts', 'vrodos_widget_preamp_scripts');
-
-
-
-
-
-
-
-
-
-
+add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Back-end
 
 // Register and load the widget
 function vrodos_load_widget() {
@@ -764,44 +764,44 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 
 // -------- Ajax for game projects ------
 // Ajax for fetching game's assets within asset browser widget at vr_editor
-add_action( 'wp_ajax_wpunity_fetch_game_assets_action', 'wpunity_fetch_game_assets_action_callback' );
+add_action( 'wp_ajax_vrodos_fetch_game_assets_action', 'vrodos_fetch_game_assets_action_callback' );
 
 // Callback for Ajax for delete game
-add_action('wp_ajax_wpunity_delete_game_action','wpunity_delete_gameproject_frontend_callback');
+add_action('wp_ajax_vrodos_delete_game_action','vrodos_delete_gameproject_frontend_callback');
 
 // Callback for add collaborators
-add_action('wp_ajax_wpunity_collaborate_project_action','wpunity_collaborate_project_frontend_callback');
+add_action('wp_ajax_vrodos_collaborate_project_action','vrodos_collaborate_project_frontend_callback');
 
 // Callback for fetching collaborators from db
-add_action('wp_ajax_wpunity_fetch_collaborators_action','wpunity_fetch_collaborators_frontend_callback');
+add_action('wp_ajax_vrodos_fetch_collaborators_action','vrodos_fetch_collaborators_frontend_callback');
 
-add_action('wp_ajax_wpunity_create_game_action','wpunity_create_gameproject_frontend_callback');
+add_action('wp_ajax_vrodos_create_game_action','vrodos_create_gameproject_frontend_callback');
 
-add_action('wp_ajax_wpunity_fetch_list_projects_action','wpunity_fetch_list_projects_callback');
+add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projects_callback');
 
 
 
 // ------ Ajaxes for scenes -----------
-add_action('wp_ajax_wpunity_save_scene_async_action','wpunity_save_scene_async_action_callback');
-add_action('wp_ajax_wpunity_undo_scene_async_action','wpunity_undo_scene_async_action_callback');
-add_action('wp_ajax_wpunity_redo_scene_async_action','wpunity_redo_scene_async_action_callback');
+add_action('wp_ajax_vrodos_save_scene_async_action','vrodos_save_scene_async_action_callback');
+add_action('wp_ajax_vrodos_undo_scene_async_action','vrodos_undo_scene_async_action_callback');
+add_action('wp_ajax_vrodos_redo_scene_async_action','vrodos_redo_scene_async_action_callback');
 
 
-add_action('wp_ajax_wpunity_save_expid_async_action','wpunity_save_expid_async_action_callback');
+add_action('wp_ajax_vrodos_save_expid_async_action','vrodos_save_expid_async_action_callback');
 
 // Ajax for saving gio asynchronoysly
-add_action('wp_ajax_wpunity_save_gio_async_action','wpunity_save_gio_async_action_callback');
+add_action('wp_ajax_vrodos_save_gio_async_action','vrodos_save_gio_async_action_callback');
 
 // Ajax for deleting scene
-add_action('wp_ajax_wpunity_delete_scene_action','wpunity_delete_scene_frontend_callback');
+add_action('wp_ajax_vrodos_delete_scene_action','vrodos_delete_scene_frontend_callback');
 
 
 //------ Ajaxes for Assets----
 // AJAXES for content interlinking
-add_action( 'wp_ajax_wpunity_fetch_description_action', 'wpunity_fetch_description_action_callback' );
-//add_action( 'wp_ajax_wpunity_translate_action', 'wpunity_translate_action_callback' );
-add_action( 'wp_ajax_wpunity_fetch_image_action', 'wpunity_fetch_image_action_callback' );
-add_action( 'wp_ajax_wpunity_fetch_video_action', 'wpunity_fetch_video_action_callback' );
+add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description_action_callback' );
+//add_action( 'wp_ajax_vrodos_translate_action', 'vrodos_translate_action_callback' );
+add_action( 'wp_ajax_vrodos_fetch_image_action', 'vrodos_fetch_image_action_callback' );
+add_action( 'wp_ajax_vrodos_fetch_video_action', 'vrodos_fetch_video_action_callback' );
 
 
 // Peer conferencing
@@ -817,10 +817,10 @@ add_action( 'wp_ajax_wpunity_fetch_video_action', 'wpunity_fetch_video_action_ca
 //add_action( 'wp_ajax_wpunity_classify_obj_action', 'wpunity_classify_obj_action_callback' );
 
 // AJAX for delete asset
-add_action('wp_ajax_wpunity_delete_asset_action', 'wpunity_delete_asset3d_frontend_callback');
+add_action('wp_ajax_vrodos_delete_asset_action', 'vrodos_delete_asset3d_frontend_callback');
 
 // AJAX for fetch asset
-add_action('wp_ajax_wpunity_fetch_asset_action', 'wpunity_fetch_asset3d_frontend_callback');
+add_action('wp_ajax_vrodos_fetch_asset_action', 'vrodos_fetch_asset3d_frontend_callback');
 
 add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_backend_callback');
 
@@ -828,14 +828,16 @@ add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_b
 
 // the ajax js is in js_lib/request_game.js (see main functions.php for registering js)
 // the ajax phps are on wpunity-core-functions.php
-add_action( 'wp_ajax_wpunity_compile_action', 'wpunity_compile_action_callback' );
-add_action( 'wp_ajax_wpunity_monitor_compiling_action', 'wpunity_monitor_compiling_action_callback' );
-add_action( 'wp_ajax_wpunity_killtask_compiling_action', 'wpunity_killtask_compiling_action_callback' );
-add_action( 'wp_ajax_wpunity_game_zip_action', 'wpunity_game_zip_action_callback' );
+
+//add_action( 'wp_ajax_wpunity_compile_action', 'wpunity_compile_action_callback' );
+add_action( 'wp_ajax_vrodos_monitor_compiling_action', 'vrodos_monitor_compiling_action_callback' );
+add_action( 'wp_ajax_vrodos_killtask_compiling_action', 'vrodos_killtask_compiling_action_callback' );
+add_action( 'wp_ajax_vrodos_game_zip_action', 'vrodos_game_zip_action_callback' );
 
 // Assemble php from ajax call
-add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' );
+//add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' );
 // Add the assepile php
+
 add_action( 'wp_ajax_vrodos_assepile_action', 'vrodos_assepile_action_callback' );
 
 

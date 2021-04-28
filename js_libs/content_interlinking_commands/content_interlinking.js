@@ -2,7 +2,7 @@
  * AJAX: FETCH CONTENT FOR DESCRIPTION
  * @param externalSource  either "Wikipedia" or "Europeana"
  */
-// function wpunity_translateAjaxFrontEnd( text, lang, description_dom ) {
+// function vrodos_translateAjaxFrontEnd( text, lang, description_dom ) {
 //
 //     // console.log(text);
 //     // console.log(lang);
@@ -11,7 +11,7 @@
 //     var reqTranslate = jQuery.ajax({
 //         url : my_ajax_object_fetch_content.ajax_url,
 //         type : 'POST',
-//         data : {'action': 'wpunity_translate_action',
+//         data : {'action': 'vrodos_translate_action',
 //             'text':           text,
 //             'lang':            lang
 //             },
@@ -71,7 +71,7 @@ function wpunity_fetchDescriptionAjaxFrontEnd( externalSource, title, descriptio
     var reqCompile = jQuery.ajax({
         url : my_ajax_object_fetch_content.ajax_url,
         type : 'POST',
-        data : {'action': 'wpunity_fetch_description_action',
+        data : {'action': 'vrodos_fetch_description_action',
             'lang':           lang,
             'externalSource': externalSource,
             'titles':         title,
@@ -190,7 +190,7 @@ function wpunity_fetchDescriptionAjax(){
     var reqCompile = jQuery.ajax({
         url : 'admin-ajax.php',
         type : 'POST',
-        data : {'action': 'wpunity_fetch_description_action',
+        data : {'action': 'vrodos_fetch_description_action',
                 'lang':           document.getElementById("fetch_lang").options[document.getElementById("fetch_lang").selectedIndex].value,
                 'externalSource': externalSource,
                 'titles':         document.getElementById("wpunity_titles_search").value.replace(" ","%20"),
@@ -249,7 +249,7 @@ function wpunity_fetchImageAjax(){
     jQuery.ajax({
         url : 'admin-ajax.php',
         type : 'POST',
-        data : {'action': 'wpunity_fetch_image_action',
+        data : {'action': 'vrodos_fetch_image_action',
             'lang_image':           document.getElementById("fetch_lang_image").options[document.getElementById("fetch_lang_image").selectedIndex].value,
             'externalSource_image': externalSourceImage,
             'titles_image':         document.getElementById("wpunity_titles_image_search_image").value
@@ -343,7 +343,7 @@ function wpunity_fetchVideoAjax(){
     jQuery.ajax({
         url : 'admin-ajax.php',
         type : 'POST',
-        data : {'action': 'wpunity_fetch_video_action',
+        data : {'action': 'vrodos_fetch_video_action',
             'lang_video':           document.getElementById("fetch_lang_video").options[document.getElementById("fetch_lang_video").selectedIndex].value,
             'externalSource_video': externalSourceVideo,
             'titles_video':         document.getElementById("wpunity_titles_video_search_video").value
@@ -433,7 +433,7 @@ function wpunity_fetchVideoAjax(){
     jQuery.ajax({
         url : 'admin-ajax.php',
         type : 'POST',
-        data : {'action': 'wpunity_fetch_video_action',
+        data : {'action': 'vrodos_fetch_video_action',
             'lang_video':           document.getElementById("fetch_lang_video").options[document.getElementById("fetch_lang_video").selectedIndex].value,
             'externalSource_video': externalSourceVideo,
             'titles_video':         document.getElementById("wpunity_titles_video_search_video").value

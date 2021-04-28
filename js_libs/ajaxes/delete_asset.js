@@ -17,7 +17,7 @@ function wpunity_deleteAssetAjax(asset_id, game_slug, isCloned) {
         url: my_ajax_object_deleteasset.ajax_url,
         type: 'POST',
         data: {
-            'action': 'wpunity_delete_asset_action',
+            'action': 'vrodos_delete_asset_action',
             'asset_id': asset_id,
             'game_slug': game_slug,
             'isCloned': isCloned

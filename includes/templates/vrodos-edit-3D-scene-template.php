@@ -24,7 +24,7 @@ function wpunity_load_vreditor_scripts()
     wp_enqueue_script('wpunity_load87_datgui');
     wp_enqueue_script('vrodos_load87_OBJloader');
     wp_enqueue_script('vrodos_load87_MTLloader');
-    wp_enqueue_script('wpunity_load87_OrbitControls');
+    wp_enqueue_script('vrodos_load87_OrbitControls');
     wp_enqueue_script('wpunity_load87_TransformControls');
     wp_enqueue_script('wpunity_load87_PointerLockControls');
     
@@ -139,7 +139,7 @@ $user_email = $user_data->user_email;
 
 // Shift vars to Javascript side
 echo '<script>';
-echo 'let pluginPath="'.$pluginpath.'";';
+echo 'var pluginPath="'.$pluginpath.'";';
 echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
 echo 'let projectId="'.$project_id.'";';
 echo 'let projectSlug="'.$projectSlug.'";';

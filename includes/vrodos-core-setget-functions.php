@@ -363,7 +363,7 @@ function get_assets($games_slugs){
 
 //TODO check them
 
-function wpunity_fetch_game_assets_action_callback(){
+function vrodos_fetch_game_assets_action_callback(){
 
 	//$ff = fopen("output_assets_call.txt", "w");
 	

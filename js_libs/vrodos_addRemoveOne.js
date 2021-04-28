@@ -352,8 +352,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             // Dimensions
             var dims = findDimensions(transform_controls.object);
 
-            console.log(dims);
-
 
             var sizeT = Math.max(...dims);
             transform_controls.setSize(sizeT > 1 ? sizeT : 1);

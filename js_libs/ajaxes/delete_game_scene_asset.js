@@ -4,7 +4,7 @@
  *  2. Delete also taxonomies: Game name as Scene taxonomy, Game name as Asset taxonomy
  *  3. Delete also uploads related to the certain game
  *
- *  All the above are encompassed in     wpunity_delete_gameproject_frontend($game_id)
+ *  All the above are encompassed in     vrodos_delete_gameproject_frontend($game_id)
  */
 function wpunity_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scenepass) {
 
@@ -12,7 +12,7 @@ function wpunity_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scen
         url: my_ajax_object_deletegame.ajax_url,
         type: 'POST',
         data: {
-            'action': 'wpunity_delete_game_action',
+            'action': 'vrodos_delete_game_action',
             'game_id': game_id
         },
         success: function (res) {

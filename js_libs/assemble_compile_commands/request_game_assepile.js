@@ -85,7 +85,7 @@ function vrodos_assepileAjax() {
                 cache: false,
                 timeout: 3600000, // 1 hour
                 data: {
-                    'action': 'wpunity_monitor_compiling_action',
+                    'action': 'vrodos_monitor_compiling_action',
                     'pid': window.unity_pid,
                     'dirpath': my_ajax_object_assepile.gameUnityProject_dirpath  //"../wp-content/plugins/wordpressunity3deditor/test_compiler/game_windows/"} , //my_ajax_object_assepile.id,
                 },
@@ -219,7 +219,7 @@ function vrodos_assepileAjax() {
             url : isAdmin=="back" ? 'admin-ajax.php' : my_ajax_object_assepile.ajax_url,
             type : 'POST',
             timeout: 1200000, // 20 min
-            data : {'action': 'wpunity_game_zip_action',
+            data : {'action': 'vrodos_game_zip_action',
                     'dirpath': dir_gamepath},
 
             success : function(response){
@@ -267,7 +267,7 @@ function wpunity_killtask_compile(pid) {
         url :  isAdmin=="back" ? 'admin-ajax.php' : my_ajax_object_assepile.ajax_url,
         type : 'POST',
         data : {
-            'action': 'wpunity_killtask_compiling_action',
+            'action': 'vrodos_killtask_compiling_action',
             'pid': pid
         },
         success : function(result) {

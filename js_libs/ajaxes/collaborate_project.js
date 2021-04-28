@@ -1,7 +1,7 @@
 /**
  * Collaborate on Project:
  *
- *  All the above are encompassed in     wpunity_collaborate_project_frontend_callback
+ *  All the above are encompassed in     vrodos_collaborate_project_frontend_callback
  */
 function wpunity_updateCollabsAjax(project_id, dialogCollab, collabs_emails) {
 
@@ -9,7 +9,7 @@ function wpunity_updateCollabsAjax(project_id, dialogCollab, collabs_emails) {
         url: my_ajax_object_collaborate_project.ajax_url,
         type: 'POST',
         data: {
-            'action': 'wpunity_collaborate_project_action',
+            'action': 'vrodos_collaborate_project_action',
             'project_id': project_id,
             'collabs_emails': collabs_emails
         },
@@ -44,7 +44,7 @@ function wpunity_fetchCollabsAjax(project_id) {
         url: my_ajax_object_collaborate_project.ajax_url,
         type: 'POST',
         data: {
-            'action': 'wpunity_fetch_collaborators_action',
+            'action': 'vrodos_fetch_collaborators_action',
             'project_id': project_id
         },
         success: function (res) {
