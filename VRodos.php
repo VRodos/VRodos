@@ -666,7 +666,9 @@ add_action('rest_api_init', function() {
 });
 
 function awhitepixel_rest_route_mydata($data) {
-    $response = '{"box": 15, "jam":19}';
+    $response =  '{ "Radio":1, "Dino":30, "Cave":15}';
+    
+
     return rest_ensure_response($response);
 }
 

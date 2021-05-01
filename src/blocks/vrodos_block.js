@@ -9,18 +9,15 @@ class EditExample extends Component {
     constructor(props) {
         super(props);
         const { attributes, setAttributes, bprops } = props;
-
         this.attributes = attributes;
         this.setAttributes = setAttributes;
         this.blockProps = bprops;
-
         this.state = {
             list: [],
-            loading: true
+            loading: true,
+            valuesassets: []
         }
     }
-
-
 
     componentDidMount() {
         this.runApiFetch();
@@ -30,53 +27,43 @@ class EditExample extends Component {
         wp.apiFetch({
             path: 'awhitepixel/v1/mydata',
         }).then(data => {
+            const datajson = JSON.parse(data);
+
+            let prices = {
+                banana: 1,
+                orange: 2,
+                meat: 4,
+            };
+
+            let selectEntries = Object.entries(datajson).map( ([k, v]) => ({label: k, value: v}) );
+
             this.setState({
                 list: data,
-                loading: false
+                loading: false,
+                valuesassets: selectEntries,
             });
         });
     }
 
     render() {
+
         return(
-
-
-
             <div>
                 {this.state.loading ? (
                     <Spinner />
                 ) : (
-
-
-
                     <p>Data is ready!
-
                         <InspectorControls key="setting">
                             <div  >
                                 <PanelBody
                                     title="Select an asset"
-                                    initialOpen={true}
-                                >
-
-
+                                    initialOpen={true}>
                                     <SelectControl
                                         label="Asset id"
-
                                         value={this.attributes.asset_id}
-
-                                        options={[
-                                            {label: "Select one", value: null, disabled: true},
-                                            {label: "A1", value: 'A1id'},
-                                            {label: "A2", value: 'A2id'},
-                                            {label: "A3", value: 'A3id'},
-                                            {label: "A4", value: 'A4id'},
-                                        ]}
-
+                                        options={this.state.valuesassets}
                                         onChange={(newval) =>  this.setAttributes({ asset_id: newval })}
                                     />
-
-
-
                                 </PanelBody>
                             </div>
                         </InspectorControls >
@@ -180,13 +167,11 @@ export default function Edit( props ) {
                         label="Canvas Top"
                         value= { attributes.canvastop }
                         onChange={ ( newval ) =>  setAttributes( { canvastop: newval } ) }
-
                     />
                     <TextControl
                         label="Canvas Bottom"
                         value= { attributes.canvasbottom }
                         onChange={ ( newval ) =>  setAttributes( { canvasbottom: newval } ) }
-
                     />
                     <TextControl
                         label="Canvas Left"
@@ -313,7 +298,3 @@ registerBlockType('vrodos/vrodos-3d-block', {
         );
     }
 });
-
-
-
-
