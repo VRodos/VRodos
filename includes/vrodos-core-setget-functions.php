@@ -313,6 +313,8 @@ function get_assets($games_slugs){
             $author_displayname = get_the_author_meta( 'display_name' , $author_id );
             $author_username = get_the_author_meta( 'nickname' , $author_id );
     
+            $assettrs = get_post_meta($asset_id,'vrodos_asset3d_assettrs', true);
+    
             $allAssets[] = [
                 'assetName'=>$asset_name,
                 'assetSlug'=>get_post()->post_name,
@@ -345,7 +347,8 @@ function get_assets($games_slugs){
                 'assetParentGameSlug'=>$asset_pgame[0]->slug,
                 'author_id'=> $author_id,
                 'author_displayname'=> $author_displayname,
-                'author_username'=> $author_username
+                'author_username'=> $author_username,
+                'assettrs' => $assettrs
             ];
         
         endwhile;

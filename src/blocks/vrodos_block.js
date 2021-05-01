@@ -8,7 +8,7 @@ class EditExample extends Component {
 
     constructor(props) {
         super(props);
-        const { attributes, setAttributes, bprops } = props;
+        const { attributes, setAttributes, bprops, state } = props;
         this.attributes = attributes;
         this.setAttributes = setAttributes;
         this.blockProps = bprops;
@@ -25,22 +25,19 @@ class EditExample extends Component {
 
     runApiFetch() {
         wp.apiFetch({
-            path: 'awhitepixel/v1/mydata',
+            method: 'GET',
+            path: 'vrodosReactRest/v1/project/slug=archaeology-joker',
         }).then(data => {
             const datajson = JSON.parse(data);
 
-            let prices = {
-                banana: 1,
-                orange: 2,
-                meat: 4,
-            };
-
-            let selectEntries = Object.entries(datajson).map( ([k, v]) => ({label: k, value: v}) );
+            let selectEntries = Object.entries(datajson).map( ([k, v]) => ({label: k, value: v[0]}) );
+            let assettrsmany = Object.entries(datajson).map( ([k, v]) => ({label: v[0], value: v[1]}) );
 
             this.setState({
                 list: data,
                 loading: false,
                 valuesassets: selectEntries,
+                //assettrsmany: assettrsmany,
             });
         });
     }
@@ -52,32 +49,8 @@ class EditExample extends Component {
                 {this.state.loading ? (
                     <Spinner />
                 ) : (
-                    <p>Data is ready!
-                        <InspectorControls key="setting">
-                            <div  >
-                                <PanelBody
-                                    title="Select an asset"
-                                    initialOpen={true}>
-                                    <SelectControl
-                                        label="Asset id"
-                                        value={this.attributes.asset_id}
-                                        options={this.state.valuesassets}
-                                        onChange={(newval) =>  this.setAttributes({ asset_id: newval })}
-                                    />
-                                </PanelBody>
-                            </div>
-                        </InspectorControls >
-
-
-                    </p>
-
-
-
+                    <p>Data is ready!</p>
                 )}
-
-
-
-
                 <RichText {...this.blockProps}
                     tagName="h2"
                     placeholder="Description of 3D model"
@@ -89,6 +62,19 @@ class EditExample extends Component {
     }
 }
 
+// // Get the assettrs for label == newval which asset id
+// let assettrs = this.state.assettrsmany.filter(
+//                 function(o){return o.label == newval;}
+//                 )[0].value;
+//
+// let split_trs = assettrs.split(",");
+//
+// console.log(split_trs);
+//
+// // this.setAttributes( { camerapositionx: split_trs[6]} );
+// // this.setAttributes( { camerapositiony: split_trs[7]} );
+// // this.setAttributes( { camerapositionz: split_trs[8]} );
+
 export default function Edit( props ) {
     props.bprops  = useBlockProps();
     const { attributes, setAttributes, bprops } = props;
@@ -99,8 +85,21 @@ export default function Edit( props ) {
 
             <InspectorControls key="setting2">
                 <PanelBody
-                    title="Front-end properties"
+                    title="Select an asset"
+                    initialOpen={true}
                     >
+
+
+                    <SelectControl
+                        label="Asset id"
+                        value={attributes.asset_id}
+                        // options={state.valuesassets}
+                        options = { [ {label: "Mine", value: 5}, {label: "Yours", value: 6} ] }
+                        onChange={(newval) => setAttributes( { asset_id: newval })}
+                    />
+
+
+
 
                     <TextControl
                         label="Title (without spaces)"

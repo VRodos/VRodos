@@ -658,18 +658,37 @@ add_action( 'init', 'vrodos_3d_register_block' );
 
 
 add_action('rest_api_init', function() {
-    register_rest_route('awhitepixel/v1', '/mydata', [
+    register_rest_route('vrodosReactRest/v1', '/project/slug=(?P<slug>[a-zA-Z0-9-]+)',
+        [
         'method' => 'GET',
-        'callback' => 'awhitepixel_rest_route_mydata',
+        'callback' => 'getAssetsRest',
         'permission_callback' => '__return_true'
     ]);
 });
 
-function awhitepixel_rest_route_mydata($data) {
-    $response =  '{ "Radio":1, "Dino":30, "Cave":15}';
-    
+function getAssetsRest($data) {
 
-    return rest_ensure_response($response);
+
+    
+    
+    $assets = get_assets($data['slug']);
+    $responseObject = [];
+    
+    
+    
+    for ($i=0;$i<count($assets);$i++){
+        $responseObject[$assets[$i]['assetName']] = (Object) [$assets[$i]['assetid'], $assets[$i]['assettrs']];
+    }
+    
+    $f = fopen("output_max.txt","a");
+    fwrite($f, print_r($responseObject,true));
+    fclose($f);
+    
+    
+    $response_json = json_encode($responseObject);
+    
+    
+    return rest_ensure_response($response_json);
 }
 
 
