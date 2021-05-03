@@ -155,9 +155,6 @@ function vrodos_register_scripts() {
 	for ( $i = 0 ; $i < count($scriptsD); $i ++){
 		wp_register_script($scriptsD[$i][0] , $scriptsD[$i][1], null, null, false );
 	}
-	
-	
-	
 }
 // 45
 
@@ -166,6 +163,59 @@ add_action('wp_enqueue_scripts', 'vrodos_register_scripts' );
 
 // Register also in back-end
 add_action('admin_enqueue_scripts', 'vrodos_register_scripts' );
+
+
+
+
+
+////SIDEBAR of Asset3D with fetch-segmentation etc...
+//// Probably it should be merged with the above
+function vrodos_assets_scripts_and_styles() {
+
+    // load script from js_libs
+    wp_enqueue_script( 'vrodos_content_interlinking_request');
+
+    // load script from js_libs
+    wp_enqueue_script( 'vrodos_classification_request');
+
+    wp_enqueue_script('vrodos_segmentation_request');
+
+    // Some parameters to pass in the content_interlinking.js  ajax
+    wp_localize_script('vrodos_content_interlinking_request', 'phpvars',
+        array('lang' => 'en',
+            'externalSource' => 'Wikipedia',
+            'titles' => 'Scladina'  //'Albert%20Einstein'
+        )
+    );
+
+    // Some parameters to pass in the segmentation.js  ajax
+    //    if( isset($_GET['post']) ){
+    //        wp_localize_script('vrodos_segmentation_request', 'phpvars',
+    //            array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
+    //                'obj'  => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
+    //            )
+    //        );
+    //
+    //    }
+
+    // Some parameters to pass in the classification.js  ajax
+    //	wp_localize_script('wpunity_classification_request', 'phpvars',
+    //		array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
+    //		      'obj' => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
+    //		)
+    //	);
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -206,7 +256,8 @@ function vrodos_register_styles() {
 // 46
 add_action('wp_enqueue_scripts', 'vrodos_register_styles' );
 
-
+// Register also in back-end
+add_action('admin_enqueue_scripts', 'vrodos_register_styles' );
 
 
 //----------------------- USER ROLES -------------------------------------------
@@ -304,6 +355,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' )
 // 14
 add_action('init', 'vrodos_assets_construct'); // vrodos_asset3d 'ASSETS 3D'
 
+
 // 15
 add_action('init', 'vrodos_assets_taxcategory'); // vrodos_asset3d_cat 'ASSET TYPES'
 
@@ -312,6 +364,9 @@ add_action('init', 'vrodos_assets_taxpgame'); // vrodos_asset3d_pgame 'ASSET GAM
 
 // 17
 add_action('init', 'vrodos_assets_taxcategory_ipr'); // vrodos_asset3d_ipr_cat 'ASSET IPR CATEG'
+
+// Register asset metas
+add_action( 'init', 'vrodos_asset3d_metas_description', 1);
 
 // 35
 add_action('save_post','wpunity_create_pathdata_asset',10,3);
@@ -356,6 +411,9 @@ add_filter( 'manage_vrodos_asset3d_posts_columns', 'wpunity_set_custom_vrodos_as
 //// Add the data to the custom columns for the book post type:
 //// 62
 add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'wpunity_set_custom_vrodos_asset3d_columns_fill', 10, 2 );
+
+
+
 
 
 //===================================== Other ============================================
@@ -657,39 +715,42 @@ add_action( 'init', 'vrodos_3d_register_block' );
 
 
 
-add_action('rest_api_init', function() {
-    register_rest_route('vrodosReactRest/v1', '/project/slug=(?P<slug>[a-zA-Z0-9-]+)',
-        [
-        'method' => 'GET',
-        'callback' => 'getAssetsRest',
-        'permission_callback' => '__return_true'
-    ]);
-});
-
-function getAssetsRest($data) {
+//add_action('rest_api_init', function() {
+//    register_rest_route('vrodosReactRest/v1', '/project/slug=(?P<slug>[a-zA-Z0-9-]+)',
+//        [
+//        'method' => 'GET',
+//        'callback' => 'getAssetsRest',
+//        'permission_callback' => '__return_true'
+//    ]);
+//});
 
 
-    
-    
-    $assets = get_assets($data['slug']);
-    $responseObject = [];
-    
-    
-    
-    for ($i=0;$i<count($assets);$i++){
-        $responseObject[$assets[$i]['assetName']] = (Object) [$assets[$i]['assetid'], $assets[$i]['assettrs']];
-    }
-    
-    $f = fopen("output_max.txt","a");
-    fwrite($f, print_r($responseObject,true));
-    fclose($f);
-    
-    
-    $response_json = json_encode($responseObject);
-    
-    
-    return rest_ensure_response($response_json);
-}
+
+
+
+
+//function getAssetsRest($data) {
+//
+//    $assets = get_assets($data['slug']);
+//    $responseObject = [];
+//
+//    for ($i=0;$i<count($assets);$i++){
+//        $responseObject[$assets[$i]['assetName']] = (Object) [$assets[$i]['assetid'], $assets[$i]['assettrs']];
+//    }
+//
+//    $f = fopen("output_max.txt","a");
+//    fwrite($f, print_r($responseObject,true));
+//    fclose($f);
+//
+//
+//    $response_json = json_encode($responseObject);
+//
+//    $f = fopen("output_max.txt","a");
+//    fwrite($f, print_r($assets['assettrs'],true));
+//    fclose($f);
+//
+//    return rest_ensure_response($response_json);
+//}
 
 
 

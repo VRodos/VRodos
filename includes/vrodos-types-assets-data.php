@@ -1,86 +1,41 @@
 <?php
 
-//SIDEBAR of Asset3D with fetch-segmentation etc...
 
-function vrodos_assets_scripts_and_styles() {
-    
-    // load css/wpunity_backend.css
-    wp_enqueue_style('wpunity_backend');
-    
-    // load script from js_libs
-    wp_enqueue_script( 'vrodos_content_interlinking_request');
-    
-    // load script from js_libs
-    wp_enqueue_script( 'vrodos_classification_request');
-    
-    wp_enqueue_script('vrodos_segmentation_request');
-    
-    // Three js : for simple rendering
-    wp_enqueue_script('wpunity_load_threejs');
-    wp_enqueue_script('wpunity_load_objloader');
-    wp_enqueue_script('wpunity_load_mtlloader');
-    wp_enqueue_script('wpunity_load_orbitcontrols');
-    
-    // Some parameters to pass in the content_interlinking.js  ajax
-    wp_localize_script('vrodos_content_interlinking_request', 'phpvars',
-        array('lang' => 'en',
-            'externalSource' => 'Wikipedia',
-            'titles' => 'Scladina'  //'Albert%20Einstein'
-        )
-    );
-    
-    // Some parameters to pass in the segmentation.js  ajax
-    //    if( isset($_GET['post']) ){
-    //        wp_localize_script('vrodos_segmentation_request', 'phpvars',
-    //            array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
-    //                'obj'  => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
-    //            )
-    //        );
-    //
-    //    }
-    
-    // Some parameters to pass in the classification.js  ajax
-    //	wp_localize_script('wpunity_classification_request', 'phpvars',
-    //		array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
-    //		      'obj' => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
-    //		)
-    //	);
-}
 
 // Create metabox with Custom Fields for Asset3D ($wpunity_databox1)
-
 $table_of_asset_fields = array(
     
-    array('MTL File', 'MTL File', 'vrodos_asset3d_mtl', 'text',  ''),
-    array('Obj File', 'Obj File', 'vrodos_asset3d_obj', 'text',  ''),
-    array('Fbx File', 'Fbx File', 'vrodos_asset3d_fbx', 'text',  ''),
-    array('PDB File', 'PDB File', 'vrodos_asset3d_pdb', 'text',  ''),
-    array('GLB File', 'GLB File', 'vrodos_asset3d_glb', 'text',  ''),
+    // Short , full, id, type, default, single, show_in_rest
+    array('MTL File', 'MTL File', 'vrodos_asset3d_mtl', 'string',  '', true, true),
+    array('Obj File', 'Obj File', 'vrodos_asset3d_obj', 'string',  '', true, true),
+    array('Fbx File', 'Fbx File', 'vrodos_asset3d_fbx', 'string',  '', true, true),
+    array('PDB File', 'PDB File', 'vrodos_asset3d_pdb', 'string',  '', true, true),
+    array('GLB File', 'GLB File', 'vrodos_asset3d_glb', 'string',  '', true, true),
     
-    array('Audio File'                 , 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'text', ''),
+    array('Audio File'                 , 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'string', '', true, true),
     
-    array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asset3d_diffimage', 'text', ''),
-    array('Screenshot Image'           ,'Screenshot Image'            , 'vrodos_asset3d_screenimage','text', ''),
-    array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_next_scene','text', ''),
-    array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'text', ''),
-    array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'text', '0'),
+    array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asset3d_diffimage', 'string', '', false, true),
+    array('Screenshot Image'           ,'Screenshot Image'            , 'vrodos_asset3d_screenimage','string', '', true, true),
+    array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_next_scene','string', '', true, true),
+    array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'string', '', true, true),
+    array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'string', '0', true, true),
     
-    array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'text', ''),
-    array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'text', ''),
-    array('Image 3', 'Image 3', 'vrodos_asset3d_image3', 'text', ''),
-    array('Image 4', 'Image 4', 'vrodos_asset3d_image4', 'text', ''),
+    array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'string', '', true, true),
+    array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'string', '', true, true),
+    array('Image 3', 'Image 3', 'vrodos_asset3d_image3', 'string', '', true, true),
+    array('Image 4', 'Image 4', 'vrodos_asset3d_image4', 'string', '', true, true),
     
-    array('isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'text', 'false'),
-    array('isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'text', 'false'),
+    array('isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'string', 'false', true, true),
+    array('isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'string', 'false', true, true),
     
-    array('fonts', 'fonts', 'vrodos_asset3d_fonts', 'text', ''),
-    array('back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'text', "rgb(221, 185, 155)"),
+    array('fonts', 'fonts', 'vrodos_asset3d_fonts', 'string', '', true, true),
+    array('back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'string', "rgb(221, 185, 155)", true, true),
     
-    array('Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'text', '0,0,0,0,0,0,0,0,0'),
+    array('Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'string', '0,0,0,0,0,0,0,0,0', true, true),
     
-    array('KidsDescription', 'Description in English for kids', 'vrodos_asset3d_description_kids', 'text', ''),
-    array('ExpertsDescription', 'Description in English for experts', 'vrodos_asset3d_description_experts','text', ''),
-    array('PerceptionDescription', 'Description in English for people with perception disabilities', 'vrodos_asset3d_description_perception', 'text', '')
+    array('KidsDescription', 'Description in English for kids', 'vrodos_asset3d_description_kids', 'string', '', true, true),
+    array('ExpertsDescription', 'Description in English for experts', 'vrodos_asset3d_description_experts','string', '', true, true),
+    array('PerceptionDescription', 'Description in English for people with perception disabilities', 'vrodos_asset3d_description_perception', 'string', '', true, true)
 
 );
 
@@ -91,45 +46,70 @@ for ($i = 0; $i < count($languages); $i++){
     
     // Title per language
     $table_of_asset_fields[] = array( $languages[$i].'Title', 'Title in '.$languages[$i],
-        'vrodos_asset3d_title_'.strtolower($languages[$i]), 'text', '');
+        'vrodos_asset3d_title_'.strtolower($languages[$i]), 'string', '', true, true);
     
     // Description per language
     $table_of_asset_fields[] = array($languages[$i], 'Description in '.$languages[$i],
-        'vrodos_asset3d_description_'.strtolower($languages[$i]), 'text', '');
+        'vrodos_asset3d_description_'.strtolower($languages[$i]), 'string', '', true, true);
     
     // Description for kids per language
     $table_of_asset_fields[] = array('GreekKidsDescription', 'Description in '.$languages[$i].' for kids',
-        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_kids', 'text', '');
+        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_kids', 'string', '', true, true);
     
     // Description for experts per language
     $table_of_asset_fields[] = array($languages[$i].'ExpertsDescription', 'Description in '.$languages[$i].' for experts',
-        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_experts', 'text', '');
+        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_experts', 'string', '', true, true);
     
     // Description for disabilities per language
     $table_of_asset_fields[] = array($languages[$i].'PerceptionDescription',
         'Description in '.$languages[$i].' for people with perception disabilities',
-        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_perception', 'text', '');
+        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_perception', 'string', '', true, true);
 }
-
 
 $asset_fields = [];
 for ($i = 0; $i < count($table_of_asset_fields); $i++){
     
-    $asset_fields[] = array('name'     => $table_of_asset_fields[$i][0],
+    $asset_fields[] = array(
+        'name'     => $table_of_asset_fields[$i][0],
         'desc'     => $table_of_asset_fields[$i][1],
         'id'       => $table_of_asset_fields[$i][2],
         'type'     => $table_of_asset_fields[$i][3],
-        'std'      => $table_of_asset_fields[$i][4]);
+        'std'      => $table_of_asset_fields[$i][4],
+        'single'      => $table_of_asset_fields[$i][5],
+        'show_in_rest'      => $table_of_asset_fields[$i][6],
+        );
 }
 
-
+global $wpunity_databox1;
 //All information about our meta box
 $wpunity_databox1 = array('id' => 'wpunity-assets-databox',
-    'page' => 'vrodos_asset3d',
-    'context' => 'normal',
-    'priority' => 'high',
-    'fields' => $asset_fields
+                        'page' => 'vrodos_asset3d',
+                        'context' => 'normal',
+                        'priority' => 'high',
+                        'fields' => $asset_fields
 );
+
+
+function vrodos_asset3d_metas_description() {
+    global $wpunity_databox1;
+    
+    foreach ($wpunity_databox1['fields'] as $meta_entry) {
+      
+        
+        $meta_id = $meta_entry['id'];
+        $meta_properties = array(
+            'type'      => $meta_entry['type'], // Validate and sanitize the meta value as a string.
+            // Default: 'string'.
+            // In 4.7 one of 'string', 'boolean', 'integer', 'number' must be used as 'type'.
+            'default' => $meta_entry['std'],
+            'description'    => $meta_entry['desc'], // Shown in the schema for the meta key.
+            'single'        => $meta_entry['single'], // Return a single value of the type. Default: false.
+            'show_in_rest'    => $meta_entry['show_in_rest'], // Show in the WP REST API response. Default: false.
+        );
+        register_post_meta( 'vrodos_asset3d', $meta_id, $meta_properties );
+    }
+}
+
 
 //=========================================================
 // Add and Show the metabox with Custom Field for Project ($wpunity_databox1)
@@ -158,7 +138,6 @@ function vrodos_assets_infobox_show(){
     
     <?php
 }
-
 
 // Backend form
 function vrodos_assets_databox_show(){
@@ -826,8 +805,12 @@ function vrodos_assets_databox_show(){
 
 
 
+
+
 // Save data from this metabox with Custom Field for Asset3D ($wpunity_databox)
+// This should be done with register_meta = https://torquemag.io/2015/03/staying-safe-and-dry-with-register_meta/
 function vrodos_assets_databox_save($post_id) {
+    
     global $wpunity_databox1;
     
     if (!isset($_POST['vrodos_assets_databox_nonce']))
@@ -851,23 +834,27 @@ function vrodos_assets_databox_save($post_id) {
     }
     
     foreach ($wpunity_databox1['fields'] as $field) {
+        
         $old = get_post_meta($post_id, $field['id'], true);
         $new = $_POST[$field['id']];
+        
         update_post_meta($post_id, $field['id'], $new);
+        
         if ($new && $new != $old) {
             update_post_meta($post_id, $field['id'], $new);
         } elseif ('' == $new && $old) {
             delete_post_meta($post_id, $field['id'], $old);
         }
+        
     }
 }
 
 
 
 
+
 // ----------------- Obsolete ------------------------------
 // Functions for segmentation and classfication of 3D models
-
 function vrodos_assets_create_right_metaboxes() {
     
     // These function should be passed to front-end
@@ -1108,6 +1095,3 @@ function vrodos_assets_classify_obj_box_content($post){
     
     <?php
 }
-
-
-
