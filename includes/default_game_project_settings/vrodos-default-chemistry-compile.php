@@ -6,12 +6,12 @@ function wpunity_create_chemistry_selector_unity($gameID,$gameSlug,$game_path,$f
 
 function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of mainmenu
-    $term_meta_s_mainmenu = wpunity_getSceneYAML_chemistry('menu');
+    $term_meta_s_mainmenu = vrodos_getSceneYAML_chemistry('menu');
     $title_text = $scene_post->post_title;
 
-    //$is_bt_settings_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_options',true) ); //Future Addition to Yaml
-    //$is_login_bt_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_login',true) ); //Future Addition to Yaml
-    //$is_help_bt_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_help',true) ); //Future Addition to Yaml
+    //$is_bt_settings_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_options',true) ); //Future Addition to Yaml
+    //$is_login_bt_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_login',true) ); //Future Addition to Yaml
+    //$is_help_bt_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_help',true) ); //Future Addition to Yaml
     $is_bt_settings_active = 0; //Always OFF
     $is_help_bt_active = 1; //Always ON
     $is_login_bt_active = 1; //Always ON
@@ -32,17 +32,17 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
     fclose($create_file);
     
     //Add Static Pages to cs & BuildSettings (Main Menu must be first)
-    //wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Reward.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    //vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Reward.unity');//Update the EditorBuildSettings.asset by adding new Scene
     //$file_path_rewCS = 'Assets/scenes/' . 'S_Reward.unity';
-    //wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_rewCS);
+    //vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_rewCS);
 
-    //wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_SceneSelector.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    //vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_SceneSelector.unity');//Update the EditorBuildSettings.asset by adding new Scene
     //$file_path_selCS = 'Assets/scenes/' . 'S_SceneSelector.unity';
-    //wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
+    //vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
 
     if($is_bt_settings_active == '1'){
         //CREATE SETTINGS/OPTIONS Unity file
-        $term_meta_s_settings = wpunity_getSceneYAML_chemistry('settings');
+        $term_meta_s_settings = vrodos_getSceneYAML_chemistry('settings');
         $file_content2 = wpunity_replace_settings_chem_unity($term_meta_s_settings);
 
         $file2 = $game_path . '/' . 'S_Settings.unity';
@@ -50,14 +50,14 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
         fwrite($create_file2,$file_content2);
         fclose($create_file2);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Settings.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Settings.unity');//Update the EditorBuildSettings.asset by adding new Scene
         $file2_path_CS = 'Assets/scenes/' . 'S_Settings.unity';
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file2_path_CS);
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file2_path_CS);
     }
 
     if($is_help_bt_active == '1'){
         //CREATE HELP Unity file
-        $term_meta_s_help = wpunity_getSceneYAML_chemistry('help');
+        $term_meta_s_help = vrodos_getSceneYAML_chemistry('help');
         $text_help_scene = get_post_meta($scene_id,'wpunity_scene_help_text',true);
         $img_help_scene_id = get_post_meta($scene_id,'wpunity_scene_helpimg',true);
         $img_help_scene_guid = 'dad02368a81759f4784c7dbe752b05d6'; //if there's no Featured Image (custom field at Main Menu)
@@ -70,14 +70,14 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
         fwrite($create_file3, $file_content3);
         fclose($create_file3);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Help.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Help.unity');//Update the EditorBuildSettings.asset by adding new Scene
         $file3_path_CS = 'Assets/scenes/' . 'S_Help.unity';
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file3_path_CS);
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file3_path_CS);
     }
 
     if($is_login_bt_active == '1'){
         //CREATE Login Unity file
-        $term_meta_s_login = wpunity_getSceneYAML_chemistry('login');
+        $term_meta_s_login = vrodos_getSceneYAML_chemistry('login');
         $WanderAroundScene_title = 'S_Lab';
 
         $file_content4 = wpunity_replace_login_chem_unity($term_meta_s_login,$WanderAroundScene_title,$gameSlug);
@@ -87,9 +87,9 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
         fwrite($create_file4,$file_content4);
         fclose($create_file4);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Login.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Login.unity');//Update the EditorBuildSettings.asset by adding new Scene
         $file4_path_CS = 'Assets/scenes/' . 'S_Login.unity';
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file4_path_CS);
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file4_path_CS);
     }
 
 
@@ -97,7 +97,7 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
 
 function wpunity_create_chemistry_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of Credits Scene
-    $term_meta_s_credits = wpunity_getSceneYAML_chemistry('credits');
+    $term_meta_s_credits = vrodos_getSceneYAML_chemistry('credits');
     $credits_content = $scene_post->post_content;
 
     $featured_image_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
@@ -113,16 +113,16 @@ function wpunity_create_chemistry_credentials_unity($scene_post,$scene_type_ID,$
     fwrite($create_file5, $file_content5);
     fclose($create_file5);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Credits.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Credits.unity');//Update the EditorBuildSettings.asset by adding new Scene
     $file5_path_CS = 'Assets/scenes/' . 'S_Credits.unity';
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file5_path_CS);
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file5_path_CS);
 }
 
 function wpunity_create_chemistry_exam2d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
 
     $exam_slug = $scene_post->post_name;
 
-    $term_meta_exam2d_chem = wpunity_getSceneYAML_chemistry('exam2d');
+    $term_meta_exam2d_chem = vrodos_getSceneYAML_chemistry('exam2d');
     $file_contentA = wpunity_replace_chemistry_exam2D_unity($term_meta_exam2d_chem,$gameSlug);
 
     $fileA = $game_path . '/' . $exam_slug . '.unity';
@@ -131,15 +131,15 @@ function wpunity_create_chemistry_exam2d_unity($scene_post,$scene_type_ID,$scene
     fclose($create_fileA);
 
     $fileApath_forCS = 'Assets/scenes/' . $exam_slug . '.unity';
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$fileApath_forCS);//Update the EditorBuildSettings.asset by adding new Scene
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$fileApath_forCS);//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
 }
 
 function wpunity_create_chemistry_exam3d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
 
     $exam_slug = $scene_post->post_name;
 
-    $term_meta_exam3d_chem = wpunity_getSceneYAML_chemistry('exam3d');
+    $term_meta_exam3d_chem = vrodos_getSceneYAML_chemistry('exam3d');
     $file_contentA = wpunity_replace_chemistry_exam3D_unity($term_meta_exam3d_chem,$gameSlug);
 
     $fileA = $game_path . '/' . $exam_slug . '.unity';
@@ -148,14 +148,14 @@ function wpunity_create_chemistry_exam3d_unity($scene_post,$scene_type_ID,$scene
     fclose($create_fileA);
 
     $fileApath_forCS = 'Assets/scenes/' . $exam_slug . '.unity';
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$fileApath_forCS);//Update the EditorBuildSettings.asset by adding new Scene
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$fileApath_forCS);//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
 
 }
 
 function wpunity_create_chemistry_lab_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
     //DATA of Chemistry Wander Around Scene
-    $term_meta_wander_around_chem = wpunity_getSceneYAML_chemistry('lab');
+    $term_meta_wander_around_chem = vrodos_getSceneYAML_chemistry('lab');
     $scene_name = $scene_post->post_name;
     $scene_title = $scene_post->post_title;
     $scene_desc = $scene_post->post_content;
@@ -166,7 +166,7 @@ function wpunity_create_chemistry_lab_unity($scene_post,$scene_type_ID,$scene_id
 
 
     $file_contentA = wpunity_replace_chemistry_lab_unity($term_meta_wander_around_chem,$scene_id); //empty energy scene with Avatar!
-    $file_contentAb = wpunity_addAssets_chemistry_lab_unity($scene_id);//add objects from json
+    $file_contentAb = vrodos_addAssets_chemistry_lab_unity($scene_id);//add objects from json
     //$fileA = $game_path . '/' . $scene_name . '.unity';
     $fileA = $game_path . '/' . 'S_Lab' . '.unity';
     $create_fileA = fopen($fileA, "w") or die("Unable to open file!");
@@ -175,12 +175,12 @@ function wpunity_create_chemistry_lab_unity($scene_post,$scene_type_ID,$scene_id
     fclose($create_fileA);
 
     $fileApath_forCS = 'Assets/scenes/' . /*$scene_name*/'S_Lab' . '.unity';
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$fileApath_forCS);//Update the EditorBuildSettings.asset by adding new Scene
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$fileApath_forCS);//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
 
 }
 
-function wpunity_addAssets_chemistry_lab_unity($scene_id){
+function vrodos_addAssets_chemistry_lab_unity($scene_id){
     $scene_json = get_post($scene_id)->post_content;
 
     $jsonScene = htmlspecialchars_decode ( $scene_json );
@@ -202,7 +202,7 @@ function wpunity_addAssets_chemistry_lab_unity($scene_id){
 
                 $room_obj = get_post_meta($room_id,'wpunity_asset3d_obj',true);
 
-                $room_yaml = wpunity_getAssetYAML_chemistry('room');
+                $room_yaml = vrodos_getAssetYAML_chemistry('room');
                 $room_fid = wpunity_create_fids($current_fid++);
                 $room_mesh_fid = wpunity_create_fids($current_fid++); //($room_fid+1)
                 $room_mesh_collider_fid = wpunity_create_fids($current_fid++); // ($room_fid+2)
@@ -231,7 +231,7 @@ function wpunity_addAssets_chemistry_lab_unity($scene_id){
 
                 $gate_obj = get_post_meta($gate_id,'wpunity_asset3d_obj',true);
 
-                $gate_yaml = wpunity_getAssetYAML_chemistry('gate');
+                $gate_yaml = vrodos_getAssetYAML_chemistry('gate');
                 $gate_fid = wpunity_create_fids($current_fid++);
                 $gate_mesh_fid = wpunity_create_fids($current_fid++);//($gate_fid+1)
                 $gate_mesh_collider_fid = wpunity_create_fids($current_fid++);//($gate_fid+2)
@@ -402,7 +402,7 @@ function wpunity_replace_chemistry_exam_AvailableMolecules($gameSlug){
     
         $moleName[0] = strtoupper($moleName[0]);
         
-        $mole_type = get_post_meta($moleculeID, 'wpunity_molecule_ChemicalTypeVal', true);
+        $mole_type = get_post_meta($moleculeID, 'vrodos_molecule_ChemicalTypeVal', true);
         $firstLine = '- name: ' . $moleName;
         $secondLine = str_repeat(' ', 4) . 'formula: ' . $mole_type;
         if($count==0){$availableMole .= $firstLine . PHP_EOL;} // line change;
@@ -434,7 +434,7 @@ function wpunity_replace_chemistry_exam_defaulStrategy($gameSlug){
 
     $count = 0;
     foreach ($savedMoleculesVal as $moleculeID) {
-        $mole_type = get_post_meta($moleculeID, 'wpunity_molecule_ChemicalTypeVal', true);
+        $mole_type = get_post_meta($moleculeID, 'vrodos_molecule_ChemicalTypeVal', true);
         if($count==0){$secondLine = '- ' . $mole_type;}
         else{$secondLine = str_repeat(' ', 2) . '- ' . $mole_type;}
         $defaulStrategy .= $secondLine . PHP_EOL; // line change;

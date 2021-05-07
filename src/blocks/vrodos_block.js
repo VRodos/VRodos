@@ -109,6 +109,39 @@ registerBlockType('vrodos/vrodos-3d-block', {
         }
 
 
+        let audio_file = '';
+        let path_url = '';
+        let mtl_file_name_widget='';
+        let obj_file_name_widget='';
+        let pdb_file_name_widget='';
+        let fbx_file_name_widget='';
+        let glb_file_name_widget='';
+        let textures_fbx_string_connected_widget='';
+
+        // const asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(
+        //     document.getElementById( 'divCanvas' ),
+        //     document.getElementById( 'divCanvasLabels' ),
+        //     document.getElementById( 'animButtonDiv' ),
+        //     document.getElementById('previewProgressLabelDiv'),
+        //     document.getElementById('previewProgressSliderLineDiv'),
+        //     attributes.canvasbackgroundcolor,
+        // audio_file,
+        // path_url, // OBJ textures path
+        // mtl_file_name_widget,
+        // obj_file_name_widget,
+        // pdb_file_name_widget,
+        // fbx_file_name_widget,
+        // glb_file_name_widget,
+        // textures_fbx_string_connected_widget,
+        // false,
+        //     canvasbackgroundcolor === 'transparent',
+        //     attributes.enablepan,
+        //     attributes.enablezoom,
+        //     attributes.assettrs);
+
+
+
+
 
         return (
             <div>
@@ -119,6 +152,8 @@ registerBlockType('vrodos/vrodos-3d-block', {
                       value={attributes.myRichHeading}
                       onChange={(newtext) => setAttributes({ myRichHeading: newtext })}
                 />
+
+
 
                 <InspectorControls key="setting2">
                     <PanelBody

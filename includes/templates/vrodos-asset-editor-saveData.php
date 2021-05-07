@@ -396,7 +396,7 @@ function wpunity_create_asset_terrainExtra_frontend($asset_newID){
     $physicsValues = array('min' => $physicsWindMinValForm, 'max' => $physicsWindMaxValForm, 'mean' => $physicsWindMeanValForm, 'variance' => $physicsWindVarianceValForm);
 
     update_post_meta($asset_newID, 'wpunity_energyConsumptionIncome', $energyConsumptionIncome);
-    update_post_meta($asset_newID, 'wpunity_physicsValues', $physicsValues);
+    update_post_meta($asset_newID, 'vrodos_physicsValues', $physicsValues);
     update_post_meta($asset_newID, 'wpunity_constructionPenalties', $constructionPenalties);
 }
 
@@ -423,9 +423,9 @@ function wpunity_create_asset_producerExtra_frontend($asset_newID){
     $producerOptCosts = array('size' => $producerTurbineSizeValForm, 'dmg' => $producerDmgCoeffValForm, 'cost' => $producerCostValForm, 'repaid' => $producerRepairCostValForm);
     $producerOptGen = array('class' => $producerClassValForm, 'speed' => $producerWindSpeedClassValForm, 'power' => $producerMaxPowerValForm);
 
-    update_post_meta($asset_newID, 'wpunity_producerPowerProductionVal', $producerPowerProductionValForm);
-    update_post_meta($asset_newID, 'wpunity_producerOptCosts', $producerOptCosts);
-    update_post_meta($asset_newID, 'wpunity_producerOptGen', $producerOptGen);
+    update_post_meta($asset_newID, 'vrodos_producerPowerProductionVal', $producerPowerProductionValForm);
+    update_post_meta($asset_newID, 'vrodos_producerOptCosts', $producerOptCosts);
+    update_post_meta($asset_newID, 'vrodos_producerOptGen', $producerOptGen);
 }
 
 
@@ -436,10 +436,10 @@ function wpunity_create_asset_moleculeExtra_frontend($asset_newID){
     $moleculeFluidViscosity = floatval($_POST['molecule-fluid-viscosity-slider-label']);
     $moleculeFluidColorVal = $_POST['moleculeFluidColorVal'];
 
-    update_post_meta($asset_newID, 'wpunity_molecule_ChemicalTypeVal', $moleculeChemicalType);
-    update_post_meta($asset_newID, 'wpunity_molecule_FunctionalGroupVal', $moleculeFunctionalGroupInput);
-    update_post_meta($asset_newID, 'wpunity_molecule_FluidViscosityVal', $moleculeFluidViscosity);
-    update_post_meta($asset_newID, 'wpunity_molecule_FluidColorVal', $moleculeFluidColorVal);
+    update_post_meta($asset_newID, 'vrodos_molecule_ChemicalTypeVal', $moleculeChemicalType);
+    update_post_meta($asset_newID, 'vrodos_molecule_FunctionalGroupVal', $moleculeFunctionalGroupInput);
+    update_post_meta($asset_newID, 'vrodos_molecule_FluidViscosityVal', $moleculeFluidViscosity);
+    update_post_meta($asset_newID, 'vrodos_molecule_FluidColorVal', $moleculeFluidColorVal);
 }
 
 //--------------  For Cloning only -------------------------------------------------------------------------------------

@@ -94,18 +94,20 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     
     // to capture screenshot of the 3D molecule and its tags
     wp_enqueue_script('vrodos_html2canvas');
+  
     
-    $pluginpath = dirname (plugin_dir_url( __DIR__  ));
-    
-    // content interlinking ajax
-    wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
-        $pluginpath.'/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
-    
-    // ajax php admin url
-    wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
-        array( 'ajax_url' => admin_url( 'admin-ajax.php' ), null )
-    );
-    
+    // Content Interlinking
+//    $pluginpath = dirname (plugin_dir_url( __DIR__  ));
+
+//    // content interlinking ajax
+//    wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
+//        $pluginpath.'/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
+//
+//    // ajax php admin url
+//    wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
+//        array( 'ajax_url' => admin_url( 'admin-ajax.php' ), null )
+//    );
+
 }
 add_action('wp_enqueue_scripts', 'wpunity_loadAsset3DManagerScriptsAndStyles' );
 
@@ -136,7 +138,7 @@ $assetPGameSlug = $assetPGame->slug;
 
 $isJoker = (strpos($assetPGameSlug, 'joker') !== false) ? "true":"false";
 
-$asset_id_avail_joker = wpunity_get_assetids_joker($game_type_obj->string);
+$asset_id_avail_joker = vrodos_get_assetids_joker($game_type_obj->string);
 
 $isUserloggedIn = is_user_logged_in();
 $current_user = wp_get_current_user();
@@ -184,12 +186,12 @@ $author_username = get_the_author_meta( 'nickname' , $author_id );
 $author_country = get_the_author_meta( 'country' , $author_id );
 
 
-$editgamePage = wpunity_getEditpage('game');
-$allGamesPage = wpunity_getEditpage('allgames');
-$editscenePage = wpunity_getEditpage('scene');
-$newAssetPage = wpunity_getEditpage('asset');
-$editscene2DPage = wpunity_getEditpage('scene2D');
-$editsceneExamPage = wpunity_getEditpage('sceneExam');
+$editgamePage = vrodos_getEditpage('game');
+$allGamesPage = vrodos_getEditpage('allgames');
+$editscenePage = vrodos_getEditpage('scene');
+$newAssetPage = vrodos_getEditpage('asset');
+$editscene2DPage = vrodos_getEditpage('scene2D');
+$editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 
 $archaeology_tax = get_term_by('slug', 'archaeology_games', 'wpunity_game_type');
@@ -198,7 +200,7 @@ $all_game_category = get_the_terms( $project_id, 'wpunity_game_type' );
 
 $game_category  = $all_game_category[0]->slug;
 
-$scene_data = wpunity_getFirstSceneID_byProjectID($project_id,$game_category);//first 3D scene id
+$scene_data = vrodos_getFirstSceneID_byProjectID($project_id,$game_category);//first 3D scene id
 
 $edit_scene_page_id = $editscenePage[0]->ID;
 
@@ -221,7 +223,7 @@ if($scene_id != 0 ) {
     
     // Goto shared assets
     $goBackToLink = home_url()."/vrodos-assets-list-page/?".
-        (!isset($_GET['singleproject'])?"wpunity_game=":"wpunity_project_id=").$project_id;
+        (!isset($_GET['singleproject'])?"wpunity_game=":"vrodos_project_id=").$project_id;
 }
 
 

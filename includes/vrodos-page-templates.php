@@ -129,7 +129,7 @@ function vrodos_create_pages() {
     ob_start();
 
     // 1. Project Manager
-    if (! wpunity_get_page_by_slug('vrodos-project-manager-page')) {
+    if (! vrodos_get_page_by_slug('vrodos-project-manager-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Project Manager Page',
             'post_type' => 'page',
@@ -153,7 +153,7 @@ function vrodos_create_pages() {
  
  
     // 2. Assets List Page
-    if (! wpunity_get_page_by_slug('vrodos-assets-list-page')) {
+    if (! vrodos_get_page_by_slug('vrodos-assets-list-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Assets List Page',
             'post_type' => 'page',
@@ -174,7 +174,7 @@ function vrodos_create_pages() {
    
     
     //  3. 3D Editor
-    if (! wpunity_get_page_by_slug('vrodos-edit-3d-scene-page')) {
+    if (! vrodos_get_page_by_slug('vrodos-edit-3d-scene-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Scene 3D Editor Page',
             'post_type' => 'page',
@@ -194,7 +194,7 @@ function vrodos_create_pages() {
     }
     
     // 4.  2D Scene editor
-    if (! wpunity_get_page_by_slug('vrodos-edit-2d-scene-page')) {
+    if (! vrodos_get_page_by_slug('vrodos-edit-2d-scene-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Scene 2D Editor Page',
             'post_type' => 'page',
@@ -215,7 +215,7 @@ function vrodos_create_pages() {
 
     
     // 5. Exam page
-    if (! wpunity_get_page_by_slug('vrodos-edit-exam-scene-page')) {
+    if (! vrodos_get_page_by_slug('vrodos-edit-exam-scene-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Edit Exam Scene Page',
             'post_type' => 'page',
@@ -236,7 +236,7 @@ function vrodos_create_pages() {
 
     
     // 6. Asset Editor
-    if (! wpunity_get_page_by_slug('vrodos-asset-editor-page')) {
+    if (! vrodos_get_page_by_slug('vrodos-asset-editor-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Asset Editor Page',
             'post_type' => 'page',
@@ -287,8 +287,8 @@ function vrodos_fx_admin_notice_notice(){
     
         $menus = get_terms('nav_menu');
         
-        $assetsList_Page = wpunity_getEditpage('assetslist')[0];
-        $projectManager_Page = wpunity_getEditpage('allgames')[0];
+        $assetsList_Page = vrodos_getEditpage('assetslist')[0];
+        $projectManager_Page = vrodos_getEditpage('allgames')[0];
     
         for ($i=0; $i < count($menus); $i++) {
         
@@ -335,7 +335,7 @@ function vrodos_fx_admin_notice_notice(){
 
 
 //GET page by given type (depending the template) - breacrumb and links for front-end
-function wpunity_getEditpage($type){
+function vrodos_getEditpage($type){
     
     if($type=='game' || $type=='assetslist'){
         $edit_pages = get_pages(array(
@@ -392,7 +392,7 @@ function wpunity_getEditpage($type){
 }
 
 // Get page by slug
-function wpunity_get_page_by_slug($slug) {
+function vrodos_get_page_by_slug($slug) {
     if ($pages = get_pages())
         foreach ($pages as $page)
             if ($slug === $page->post_name) return $page;

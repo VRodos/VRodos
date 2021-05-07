@@ -11,31 +11,31 @@ function wpunity_load_vreditor_scripts()
     
     wp_enqueue_script('wpunity_load119_threejs');
     wp_enqueue_script('wpunity_load119_CSS2DRenderer');
-    wp_enqueue_script('wpunity_load119_CopyShader');
-    wp_enqueue_script('wpunity_load119_FXAAShader');
-    wp_enqueue_script('wpunity_load119_EffectComposer');
-    wp_enqueue_script('wpunity_load119_RenderPass');
-    wp_enqueue_script('wpunity_load119_OutlinePass');
-    wp_enqueue_script('wpunity_load119_ShaderPass');
+    wp_enqueue_script('vrodos_load119_CopyShader');
+    wp_enqueue_script('vrodos_load119_FXAAShader');
+    wp_enqueue_script('vrodos_load119_EffectComposer');
+    wp_enqueue_script('vrodos_load119_RenderPass');
+    wp_enqueue_script('vrodos_load119_OutlinePass');
+    wp_enqueue_script('vrodos_load119_ShaderPass');
     wp_enqueue_script('wpunity_load119_FBXloader');
     wp_enqueue_script('vrodos_inflate');
     
     // Fixed at 87 (forked of original 87)
-    wp_enqueue_script('wpunity_load87_datgui');
+    wp_enqueue_script('vrodos_load87_datgui');
     wp_enqueue_script('vrodos_load87_OBJloader');
     wp_enqueue_script('vrodos_load87_MTLloader');
     wp_enqueue_script('vrodos_load87_OrbitControls');
-    wp_enqueue_script('wpunity_load87_TransformControls');
-    wp_enqueue_script('wpunity_load87_PointerLockControls');
+    wp_enqueue_script('vrodos_load87_TransformControls');
+    wp_enqueue_script('vrodos_load87_PointerLockControls');
     
-    wp_enqueue_script('wpunity_load87_sceneexporterutils');
-    wp_enqueue_script('wpunity_load87_scene_importer_utils');
-    wp_enqueue_script('wpunity_load87_sceneexporter');
+    wp_enqueue_script('vrodos_load87_sceneexporterutils');
+    wp_enqueue_script('vrodos_load87_scene_importer_utils');
+    wp_enqueue_script('vrodos_load87_sceneexporter');
     
     // Colorpicker for the lights
     wp_enqueue_script('vrodos_jscolorpick');
     
-    wp_enqueue_style('wpunity_datgui');
+    wp_enqueue_style('vrodos_datgui');
     wp_enqueue_style('vrodos_3D_editor');
     wp_enqueue_style('vrodos_3D_editor_browser');
     
@@ -98,13 +98,13 @@ $joker_project_id = get_page_by_path( strtolower($project_type).'-joker', OBJECT
 
 // Wind Energy Only
 if ($project_type === 'Energy') {
-    $scenesNonRegional = wpunity_getNonRegionalScenes($_REQUEST['wpunity_game']);
-    $scenesMarkerAllInfo = wpunity_get_all_scenesMarker_of_project_fastversion($project_id);
+    $scenesNonRegional = vrodos_getNonRegionalScenes($_REQUEST['wpunity_game']);
+    $scenesMarkerAllInfo = vrodos_get_all_scenesMarker_of_project_fastversion($project_id);
 }
 
 // Archaeology only
 if ($project_type === 'Archaeology') {
-    $doorsAllInfo = wpunity_get_all_doors_of_project_fastversion($project_id);
+    $doorsAllInfo = vrodos_get_all_doors_of_project_fastversion($project_id);
 }
 
 // Get scene content from post
@@ -112,7 +112,7 @@ $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneToLoad = $scene_post->post_content ? $scene_post->post_content :
-                        wpunity_getDefaultJSONscene(strtolower($project_type));
+                        vrodos_getDefaultJSONscene(strtolower($project_type));
 
 $sceneTitle = $scene_post->post_name;
 
@@ -120,11 +120,11 @@ $sceneTitle = $scene_post->post_name;
 $isAdmin = is_admin() ? 'back' : 'front';
 
 
-$allProjectsPage = wpunity_getEditpage('allgames');
-$newAssetPage = wpunity_getEditpage('asset');
-$editscenePage = wpunity_getEditpage('scene');
-$editscene2DPage = wpunity_getEditpage('scene2D');
-$editsceneExamPage = wpunity_getEditpage('sceneExam');
+$allProjectsPage = vrodos_getEditpage('allgames');
+$newAssetPage = vrodos_getEditpage('asset');
+$editscenePage = vrodos_getEditpage('scene');
+$editscene2DPage = vrodos_getEditpage('scene2D');
+$editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 
 
@@ -148,7 +148,7 @@ echo 'let isUserAdmin="'.current_user_can('administrator').'";';
 echo 'let urlforAssetEdit="'.$urlforAssetEdit.'";';
 echo 'let scene_id ="'.$current_scene_id.'";';
 echo 'let game_type ="'.strtolower($project_type).'";';
-echo 'let project_keys ="'.json_encode(wpunity_getProjectKeys($project_id, $project_type)).'";';
+echo 'let project_keys ="'.json_encode(vrodos_getProjectKeys($project_id, $project_type)).'";';
 echo 'user_email = "'.$user_email.'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
 echo 'energy_stats = '.json_encode(wpunity_windEnergy_scene_stats($current_scene_id)).';';
@@ -163,13 +163,13 @@ if ($project_type === 'Energy') {
 }
 
 if ($project_type === 'Chemistry') {
-    echo "var scenesTargetChemistry=" . json_encode(wpunity_getAllexams_byGame($joker_project_id, true)) . ";";
+    echo "var scenesTargetChemistry=" . json_encode(vrodos_getAllexams_byGame($joker_project_id, true)) . ";";
 }
 echo '</script>';
 
 
 // For analytics
-$project_saved_keys = wpunity_getProjectKeys($project_id, $project_type);
+$project_saved_keys = vrodos_getProjectKeys($project_id, $project_type);
 
 // if Virtual Lab
 if($project_type === 'Energy' || $project_type === 'Chemistry') {
@@ -197,7 +197,7 @@ if ($project_type === "Chemistry") {
 // Ajax for fetching game's assets within asset browser widget at vr_editor // user must be logged in to work, otherwise ajax has no privileges
 
 // COMPILE Ajax
-if(wpunity_getUnity_local_or_remote() != 'remote') {
+if(vrodos_getUnity_local_or_remote() != 'remote') {
 
     // Local compile
 	$gameUnityProject_dirpath = $upload_dir . '\\' . $projectSlug . 'Unity';
@@ -206,7 +206,7 @@ if(wpunity_getUnity_local_or_remote() != 'remote') {
 } else {
 
     // Remote compile
-	$ftp_cre = wpunity_get_ftpCredentials();
+	$ftp_cre = vrodos_get_ftpCredentials();
 	$ftp_host = $ftp_cre['address'];
 
 	$gamesFolder = 'COMPILE_UNITY3D_GAMES';
@@ -282,7 +282,7 @@ if ($project_type === 'Archaeology') {
 // For Chemistry only
 if(isset($_POST['submitted2']) && isset($_POST['post_nonce_field2']) && wp_verify_nonce($_POST['post_nonce_field2'], 'post_nonce')) {
 	$expID = $_POST['exp-id'];
-	update_post_meta( $project_id, 'wpunity_project_expID', $expID);
+	update_post_meta( $project_id, 'vrodos_project_expID', $expID);
 
 	$loadMainSceneLink = get_permalink($editscenePage[0]->ID) . $parameter_Scenepass . $current_scene_id . '&wpunity_game=' . $project_id . '&scene_type=scene';
 	wp_redirect( $loadMainSceneLink );
@@ -305,19 +305,19 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 	    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
 	    
 	    $game_type_chosen_slug = 'archaeology_games';
-	    $default_json = wpunity_getDefaultJSONscene('archaeology');
+	    $default_json = vrodos_getDefaultJSONscene('archaeology');
 	    
 	} elseif($thegameType[0]->slug == 'energy_games'){
 	    
 	    $newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');
 	    $game_type_chosen_slug = 'energy_games';
-	    $default_json = wpunity_getDefaultJSONscene('energy');
+	    $default_json = vrodos_getDefaultJSONscene('energy');
 	
 	}elseif($thegameType[0]->slug == 'chemistry_games'){
 	 
 		$game_type_chosen_slug = 'chemistry_games';
 		
-		$default_json = wpunity_getDefaultJSONscene('chemistry');
+		$default_json = vrodos_getDefaultJSONscene('chemistry');
 		
 		if($newSceneType == 'lab'){
 		

@@ -75,8 +75,8 @@ wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_
 //    $allScenePGameID = $allScenePGame->term_id;
 
 
-$editgamePage = wpunity_getEditpage('game');
-$newAssetPage = wpunity_getEditpage('asset');
+$editgamePage = vrodos_getEditpage('game');
+$newAssetPage = vrodos_getEditpage('asset');
 
 //$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&vrodos_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
@@ -108,15 +108,15 @@ $current_project = '';
 
 
 $single_project_asset_list = false;
-if(isset($_GET['wpunity_project_id'])) {
+if(isset($_GET['vrodos_project_id'])) {
     
     $single_project_asset_list = true;
-    $current_game_project_id = $_GET['wpunity_project_id'];
+    $current_game_project_id = $_GET['vrodos_project_id'];
     $current_game_project_post = get_post($current_game_project_id);
     $current_game_project_slug = $current_game_project_post->post_name;
     $user_games_slugs = [$current_game_project_slug];
 } else {
-    $user_games_slugs = wpunity_get_user_game_projects($user_id, $isUserAdmin);
+    $user_games_slugs = vrodos_get_user_game_projects($user_id, $isUserAdmin);
 }
 
 $assets = get_assets($user_games_slugs);
@@ -312,8 +312,8 @@ if ($single_project_asset_list)
 
 <script type="text/javascript">
 
-    //  wpunity_periodically_update_conf_log();
-    //setInterval(wpunity_periodically_update_conf_log,3000);
+    //  vrodos_periodically_update_conf_log();
+    //setInterval(vrodos_periodically_update_conf_log,3000);
     
     var mdc = window.mdc;
     mdc.autoInit();

@@ -1,7 +1,7 @@
 <?php
 
 // Create metabox with Custom Fields for Scene -($wpunity_databox4)
-//$def_json = wpunity_getDefaultJSONscene('energy');
+//$def_json = vrodos_getDefaultJSONscene('energy');
 
 //All information about scenes meta fields
 $vrodos_scenes_metas_definition = array(

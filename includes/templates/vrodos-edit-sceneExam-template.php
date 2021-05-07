@@ -39,12 +39,12 @@ $sceneSlug = $scene_post->post_title;
 $naming = stripos($sceneSlug, 'naming') ? true : false;
 
 
-$editgamePage = wpunity_getEditpage('game');
-$allGamesPage = wpunity_getEditpage('allgames');
-$newAssetPage = wpunity_getEditpage('asset');
-$editscenePage = wpunity_getEditpage('scene');
-$editscene2DPage = wpunity_getEditpage('scene2D');
-$editsceneExamPage = wpunity_getEditpage('sceneExam');
+$editgamePage = vrodos_getEditpage('game');
+$allGamesPage = vrodos_getEditpage('allgames');
+$newAssetPage = vrodos_getEditpage('asset');
+$editscenePage = vrodos_getEditpage('scene');
+$editscene2DPage = vrodos_getEditpage('scene2D');
+$editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 $userid = get_current_user_id();
 $user_data = get_userdata( $userid );
@@ -54,7 +54,7 @@ wp_enqueue_media($scene_post->ID);
 require_once(ABSPATH . "wp-admin" . '/includes/media.php');
 
 $scene_title = 'Exam';
-$molecules = wpunity_get_all_molecules_of_game($project_id);//ALL available Molecules of a GAME
+$molecules = vrodos_get_all_molecules_of_game($project_id);//ALL available Molecules of a GAME
 $savedMoleculesVal = get_post_meta($project_id, 'wpunity_exam_enabled_molecules',true);//The enabled molecules for Exams
 $savedMoleculesVal = json_decode($savedMoleculesVal) ? json_decode($savedMoleculesVal) : array();
 
@@ -66,7 +66,7 @@ if ($project_scope == 0) {
 	$single_first = "Project";
 }
 
-$scene_data = wpunity_getFirstSceneID_byProjectID($project_id,'chemistry_games'); //first 3D scene id
+$scene_data = vrodos_getFirstSceneID_byProjectID($project_id,'chemistry_games'); //first 3D scene id
 $edit_scene_page_id = $editscenePage[0]->ID;
 $goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_data['type'];
 $goBackTo_AllProjects_link = esc_url( get_permalink($allGamesPage[0]->ID));
@@ -109,7 +109,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 	// 6. Save arrays to WPDB
 
 	// Updating both exams with the same strategy
-	$allExams = wpunity_getExamScenes_byProjectID($project_id); //get all scene exams
+	$allExams = vrodos_getExamScenes_byProjectID($project_id); //get all scene exams
 	foreach ($allExams as $thescene_id) {
 		update_post_meta($thescene_id, 'wpunity_exam_strategy', $savedStrategies);
 	}
@@ -119,7 +119,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
 	// Update GIO API with strategies
 	foreach ($savedStrategies as $strategy){
-		wpunity_addStrategy_APIcall($project_id, $strategy);
+		vrodos_addStrategy_APIcall($project_id, $strategy);
 	}
 
 	//wp_redirect($goBackTo_MainLab_link);

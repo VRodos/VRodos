@@ -32,7 +32,7 @@ $wpunity_databox3 = array(
 
 
 // Create  custom post type 'wpunity_game'
-function wpunity_project_cpt_construct(){
+function vrodos_project_cpt_construct(){
 
 //    $ff = fopen("output_order_log.txt","a");
 //    fwrite($ff, '7 wpunity_games_construct'.chr(13));
@@ -74,15 +74,15 @@ function wpunity_project_cpt_construct(){
 		'has_archive'       => false,
         //'map_meta_cap'      => true,
 		'capabilities' => array(
-			'publish_posts' => 'publish_wpunity_project',
-			'edit_posts' => 'edit_wpunity_project',
-			'edit_others_posts' => 'edit_others_wpunity_project',
-			'delete_posts' => 'delete_wpunity_project',
-			'delete_others_posts' => 'delete_others_wpunity_project',
-			'read_private_posts' => 'read_private_wpunity_project',
-			'edit_post' => 'edit_wpunity_project',
-			'delete_post' => 'delete_wpunity_project',
-			'read_post' => 'read_wpunity_project'
+			'publish_posts' => 'publish_vrodos_project',
+			'edit_posts' => 'edit_vrodos_project',
+			'edit_others_posts' => 'edit_others_vrodos_project',
+			'delete_posts' => 'delete_vrodos_project',
+			'delete_others_posts' => 'delete_others_vrodos_project',
+			'read_private_posts' => 'read_private_vrodos_project',
+			'edit_post' => 'edit_vrodos_project',
+			'delete_post' => 'delete_vrodos_project',
+			'read_post' => 'read_vrodos_project'
 		)
 	);
  
@@ -91,7 +91,7 @@ function wpunity_project_cpt_construct(){
 
 
 //Create Game Type as custom taxonomy 'wpunity_game_type'
-function wpunity_project_taxtype_create(){
+function vrodos_project_taxtype_create(){
  
  
 	$labels = array(
@@ -116,10 +116,10 @@ function wpunity_project_taxtype_create(){
 		'hierarchical' => true,
 		'show_admin_column' => true,
 		'capabilities' => array (
-			'manage_terms' => 'manage_wpunity_project_type',
-			'edit_terms' => 'manage_wpunity_project_type',
-			'delete_terms' => 'manage_wpunity_project_type',
-			'assign_terms' => 'edit_wpunity_project_type'
+			'manage_terms' => 'manage_vrodos_project_type',
+			'edit_terms' => 'manage_vrodos_project_type',
+			'delete_terms' => 'manage_vrodos_project_type',
+			'assign_terms' => 'edit_vrodos_project_type'
 		),
 	);
 	
@@ -149,7 +149,7 @@ function wpunity_create_folder_game( $new_status, $old_status, $post){
 
 			//TEMPORARY
 			if ($project_scope === 1) {
-				update_post_meta( $gameID, 'wpunity_project_expID', '82a5dc78-dd27-43db-be12-f5440bbc9dd5');
+				update_post_meta( $gameID, 'vrodos_project_expID', '82a5dc78-dd27-43db-be12-f5440bbc9dd5');
 			}
 
 			wp_insert_term(
@@ -179,7 +179,7 @@ function wpunity_create_folder_game( $new_status, $old_status, $post){
 			wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID);
 
 			//Available molecules
-			$molecules = wpunity_get_all_molecules_of_game($gameID);//ALL available Molecules of a GAME
+			$molecules = vrodos_get_all_molecules_of_game($gameID);//ALL available Molecules of a GAME
 			$allMolecules = '[';$start = 0;
 			foreach ($molecules as $molecule) {
 				if($start == 0) {
@@ -471,7 +471,7 @@ function wpunity_games_assemblerbox_show(){
 
 
 
-function wpunity_projects_taxtypes_define(){
+function vrodos_projects_taxtypes_define(){
 
 wp_insert_term('Energy', 'wpunity_game_type', array('description' => 'Energy Games', 'slug' => 'energy_games'));
 
@@ -603,39 +603,39 @@ function wpunity_games_projectSettings_fields($tag) {
 		</td>
 	</tr>
 	
-	<?php $term_physics2d_settings = get_term_meta( $tag->term_id, 'wpunity_physics2d_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_physics2d_settings = get_term_meta( $tag->term_id, 'vrodos_physics2d_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-physics2d_settings">
 		<th scope="row" valign="top">
-			<label for="wpunity_physics2d_settings_term">Physics2D Settings</label>
+			<label for="vrodos_physics2d_settings_term">Physics2D Settings</label>
 		</th>
 		<td>
-			<textarea name="wpunity_physics2d_settings_term" id="wpunity_physics2d_settings_term"><?php echo $term_physics2d_settings ? $term_physics2d_settings : ''; ?></textarea>
-			<p class="description">Physics2DSettings.asset (wpunity_physics2d_settings_term)</p>
+			<textarea name="vrodos_physics2d_settings_term" id="vrodos_physics2d_settings_term"><?php echo $term_physics2d_settings ? $term_physics2d_settings : ''; ?></textarea>
+			<p class="description">Physics2DSettings.asset (vrodos_physics2d_settings_term)</p>
 		</td>
 	</tr>
 	
-	<?php $project_settings = get_term_meta( $tag->term_id, 'wpunity_project_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $project_settings = get_term_meta( $tag->term_id, 'vrodos_project_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-project_settings">
 		<th scope="row" valign="top">
-			<label for="wpunity_project_settings_term">Project Settings</label>
+			<label for="vrodos_project_settings_term">Project Settings</label>
 		</th>
 		<td>
-			<textarea name="wpunity_project_settings_term" id="wpunity_project_settings_term"><?php echo $project_settings ? $project_settings : ''; ?></textarea>
-			<p class="description">ProjectSettings.asset (wpunity_project_settings_term)</p>
+			<textarea name="vrodos_project_settings_term" id="vrodos_project_settings_term"><?php echo $project_settings ? $project_settings : ''; ?></textarea>
+			<p class="description">ProjectSettings.asset (vrodos_project_settings_term)</p>
 		</td>
 	</tr>
 	
-	<?php $project_version = get_term_meta( $tag->term_id, 'wpunity_project_version_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $project_version = get_term_meta( $tag->term_id, 'vrodos_project_version_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-project_version">
 		<th scope="row" valign="top">
-			<label for="wpunity_project_version_term">Project Version</label>
+			<label for="vrodos_project_version_term">Project Version</label>
 		</th>
 		<td>
-			<textarea name="wpunity_project_version_term" id="wpunity_project_version_term"><?php echo $project_version ? $project_version : ''; ?></textarea>
-			<p class="description">ProjectVersion.asset (wpunity_project_version_term)</p>
+			<textarea name="vrodos_project_version_term" id="vrodos_project_version_term"><?php echo $project_version ? $project_version : ''; ?></textarea>
+			<p class="description">ProjectVersion.asset (vrodos_project_version_term)</p>
 		</td>
 	</tr>
 	
@@ -738,19 +738,19 @@ function wpunity_games_projectSettings_fields_save( $term_id ) {
 		update_term_meta($term_id, 'wpunity_network_manager_term', $term_network_manager);
 	}
 	
-	if ( isset( $_POST['wpunity_physics2d_settings_term'] ) ) {
-		$term_physics2d_settings = $_POST['wpunity_physics2d_settings_term'];
-		update_term_meta($term_id, 'wpunity_physics2d_settings_term', $term_physics2d_settings);
+	if ( isset( $_POST['vrodos_physics2d_settings_term'] ) ) {
+		$term_physics2d_settings = $_POST['vrodos_physics2d_settings_term'];
+		update_term_meta($term_id, 'vrodos_physics2d_settings_term', $term_physics2d_settings);
 	}
 	
-	if ( isset( $_POST['wpunity_project_settings_term'] ) ) {
-		$term_project_settings = $_POST['wpunity_project_settings_term'];
-		update_term_meta($term_id, 'wpunity_project_settings_term', $term_project_settings);
+	if ( isset( $_POST['vrodos_project_settings_term'] ) ) {
+		$term_project_settings = $_POST['vrodos_project_settings_term'];
+		update_term_meta($term_id, 'vrodos_project_settings_term', $term_project_settings);
 	}
 	
-	if ( isset( $_POST['wpunity_project_version_term'] ) ) {
-		$term_project_version = $_POST['wpunity_project_version_term'];
-		update_term_meta($term_id, 'wpunity_project_version_term', $term_project_version);
+	if ( isset( $_POST['vrodos_project_version_term'] ) ) {
+		$term_project_version = $_POST['vrodos_project_version_term'];
+		update_term_meta($term_id, 'vrodos_project_version_term', $term_project_version);
 	}
 	
 	if ( isset( $_POST['wpunity_quality_settings_term'] ) ) {

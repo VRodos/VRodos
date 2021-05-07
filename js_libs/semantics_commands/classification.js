@@ -34,7 +34,7 @@ function wpunity_classifyObjAjax() {
             url : 'admin-ajax.php',
             type : 'POST',
             cache: false,
-            data: {'action': 'wpunity_monitor_classify_obj_action'},
+            data: {'action': 'vrodos_monitor_classify_obj_action'},
             success : function(response){
                 console.log("onread log file: " + response.length);
 

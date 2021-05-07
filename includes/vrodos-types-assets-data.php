@@ -1065,24 +1065,24 @@ function vrodos_assets_classify_obj_box_content($post){
             <td>1</td>
             <td><input type="text" size="5" name="wpunity_tag1_classification_obj"
                        id="wpunity_tag1_classification_obj" value=""></td>
-            <td><input type="text" size="5" name="wpunity_prob1_classification_obj"
-                       id="wpunity_prob1_classification_obj" value=""></td>
+            <td><input type="text" size="5" name="vrodos_prob1_classification_obj"
+                       id="vrodos_prob1_classification_obj" value=""></td>
             </td>
         </tr>
         <tr>
             <td>2</td>
             <td><input type="text" size="5" name="wpunity_tag2_classification_obj"
                        id="wpunity_tag2_classification_obj" value=""></td>
-            <td><input type="text" size="5" name="wpunity_prob2_classification_obj"
-                       id="wpunity_prob2_classification_obj" value=""></td>
+            <td><input type="text" size="5" name="vrodos_prob2_classification_obj"
+                       id="vrodos_prob2_classification_obj" value=""></td>
             </td>
         </tr>
         <tr>
             <td>3</td>
             <td><input type="text" size="5" name="wpunity_tag3_classification_obj"
                        id="wpunity_tag3_classification_obj" value=""></td>
-            <td><input type="text" size="5" name="wpunity_prob3_classification_obj"
-                       id="wpunity_prob3_classification_obj" value=""></td>
+            <td><input type="text" size="5" name="vrodos_prob3_classification_obj"
+                       id="vrodos_prob3_classification_obj" value=""></td>
             </td>
         </tr>
         </tbody>

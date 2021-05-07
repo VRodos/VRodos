@@ -37,7 +37,7 @@ function wpunity_db_create_games_versions_table () {
  * @param $game_project_id
  * @param $new_version_number
  */
-function wpunity_append_version_game($game_project_id, $new_version_number) {
+function vrodos_append_version_game($game_project_id, $new_version_number) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . "_games_versions";
 
@@ -56,7 +56,7 @@ function wpunity_append_version_game($game_project_id, $new_version_number) {
  * @param $game_project_id
  * @return array|int|null|object
  */
-function wpunity_get_last_version_of_game($game_project_id){
+function vrodos_get_last_version_of_game($game_project_id){
 
 	global $wpdb;
 	$table_name = $wpdb->prefix . "_games_versions";
@@ -75,7 +75,7 @@ function wpunity_get_last_version_of_game($game_project_id){
  * @param $game_project_id
  * @return array|null|object
  */
-function wpunity_get_all_versions_of_game($game_project_id){
+function vrodos_get_all_versions_of_game($game_project_id){
     global $wpdb;
     $table_name = $wpdb->prefix . "_games_versions";
 

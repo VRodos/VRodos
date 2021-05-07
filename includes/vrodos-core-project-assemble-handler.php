@@ -181,9 +181,9 @@ function vrodos_fetch_list_projects_callback(){
     
             $all_game_category = get_the_terms( $game_id, 'wpunity_game_type' );
             $game_category     = $all_game_category[0]->slug;
-            $scene_data = wpunity_getFirstSceneID_byProjectID($game_id,$game_category);//first 3D scene id
+            $scene_data = vrodos_getFirstSceneID_byProjectID($game_id,$game_category);//first 3D scene id
         
-           $editscenePage = wpunity_getEditpage('scene');
+           $editscenePage = vrodos_getEditpage('scene');
        
             $edit_scene_page_id = $editscenePage[0]->ID;
             
@@ -191,9 +191,9 @@ function vrodos_fetch_list_projects_callback(){
             $loadMainSceneLink = esc_url( (get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&wpunity_game=' . $game_id . '&scene_type=' . $scene_data['type']));
     
     
-            $assets_list_page =  wpunity_getEditpage('assetslist');
+            $assets_list_page =  vrodos_getEditpage('assetslist');
             $assets_list_page_id = $assets_list_page[0]->ID;
-            $loadProjectAssets = esc_url( get_permalink($assets_list_page_id) . '?wpunity_project_id=' . $game_id );
+            $loadProjectAssets = esc_url( get_permalink($assets_list_page_id) . '?vrodos_project_id=' . $game_id );
             
             
     
@@ -771,7 +771,7 @@ function wpunity_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $sc
 guid: ___[jpg_guid]___
 timeCreated: ___[unx_time_created]___
 licenseType: Free
-[junk line to allow importer will do the rest, do not remove]'; //wpunity_getYaml_jpg_sprite_pattern();
+[junk line to allow importer will do the rest, do not remove]'; //vrodos_getYaml_jpg_sprite_pattern();
 
     $sprite_meta_guid = wpunity_create_guids('jpg', $featured_image_sprite_id);
     $sprite_meta_yaml_replace = wpunity_replace_spritemeta($sprite_meta_yaml,$sprite_meta_guid);
@@ -810,7 +810,7 @@ function wpunity_compile_append_scene_to_s_selector($scene_id, $scene_name, $sce
     
 //    $metaname = 'wpunity_yamlmeta_s_selector2'.$taxnamemeta_suffix;
 //    $term_meta_s_selector2 = get_term_meta($termid, $metaname,true);
-    $term_meta_s_selector2 = wpunity_getSceneYAML_archaeology('selector2');
+    $term_meta_s_selector2 = vrodos_getSceneYAML_archaeology('selector2');
     
     $sceneSelectorFile = $game_path . '/S_SceneSelector.unity';
     

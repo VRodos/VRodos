@@ -41,7 +41,7 @@ function wpunity_segmentObjAjax(iter, minDist, maxDist, minPoints, maxPoints) {
             url : 'admin-ajax.php',
             type : 'POST',
             cache: false,
-            data: {'action': 'wpunity_monitor_segment_obj_action',
+            data: {'action': 'vrodos_monitor_segment_obj_action',
                    'path':phpvars.path,
                    'obj':phpvars.obj},
             success : function(response){

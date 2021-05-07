@@ -69,28 +69,19 @@ function vrodos_register_scripts() {
 	//=========================== THREE js 87 scripts ============================================
 	
 	$scriptsB = array(
-			array( 'vrodos_load87_threejs', $pluginDirJS.'threejs87/three.js'),
 			array( 'vrodos_load87_OBJloader', $pluginDirJS.'threejs87/OBJLoader.js'),
 			array( 'vrodos_load87_OBJloader2', $pluginDirJS.'threejs87/OBJLoader2.js'),
 			array( 'vrodos_load87_WWOBJloader2', $pluginDirJS. 'threejs87/WWOBJLoader2.js'),
 			array( 'vrodos_load87_MTLloader', $pluginDirJS.'threejs87/MTLLoader.js'),
-			array( 'vrodos_load87_FBXloader', $pluginDirJS.'threejs87/FBXLoader.js'),
 			array( 'vrodos_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
-            array( 'wpunity_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
-			array( 'wpunity_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
-			array( 'wpunity_load87_datgui', $pluginDirJS.'threejs87/dat.gui.js'),
+            array( 'vrodos_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
+			array( 'vrodos_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
+			array( 'vrodos_load87_datgui', $pluginDirJS.'threejs87/dat.gui.js'),
 			
-			array( 'wpunity_load87_CopyShader', $pluginDirJS.'threejs87/CopyShader.js'),
-			array( 'wpunity_load87_FXAAShader', $pluginDirJS.'threejs87/FXAAShader.js'),
-			array( 'wpunity_load87_EffectComposer', $pluginDirJS.'threejs87/EffectComposer.js'),
-			array( 'wpunity_load87_RenderPass', $pluginDirJS.'threejs87/RenderPass.js'),
-			array( 'wpunity_load87_OutlinePass', $pluginDirJS.'threejs87/OutlinePass.js'),
-			array( 'wpunity_load87_ShaderPass', $pluginDirJS.'threejs87/ShaderPass.js'),
 			array( 'vrodos_load87_PDBloader', $pluginDirJS.'threejs87/PDBLoader.js'),
-			array( 'wpunity_load87_CSS2DRenderer', $pluginDirJS.'threejs87/CSS2DRenderer.js'),
-			array( 'wpunity_load87_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
-			array( 'wpunity_load87_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
-			array( 'wpunity_load87_sceneexporter', $pluginDirJS.'threejs87/SceneExporter.js'),
+			array( 'vrodos_load87_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
+			array( 'vrodos_load87_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
+			array( 'vrodos_load87_sceneexporter', $pluginDirJS.'threejs87/SceneExporter.js'),
 		);
 	
 	for ( $i = 0 ; $i < count($scriptsB); $i ++){
@@ -101,8 +92,8 @@ function vrodos_register_scripts() {
 	
 	$scriptsC = array(
 		array( 'vrodos_load119_threejs', $pluginDirJS.'threejs119/three.js'),
-		array( 'wpunity_load124_threejs', $pluginDirJS.'threejs124/three.js'),
-		array( 'wpunity_load125_threejs', $pluginDirJS.'threejs125/three.js'),
+		array( 'vrodos_load124_threejs', $pluginDirJS.'threejs124/three.js'),
+		array( 'vrodos_load125_threejs', $pluginDirJS.'threejs125/three.js'),
 		array( 'vrodos_load124_statjs', $pluginDirJS.'threejs124/stats.js'),
 		
 		array( 'vrodos_load119_FBXloader', $pluginDirJS.'threejs119/FBXLoader.js'),
@@ -112,27 +103,22 @@ function vrodos_register_scripts() {
 		array( 'vrodos_load119_KTXLoader', $pluginDirJS.'threejs119/KTXLoader.js'),
 		
 		array( 'vrodos_load119_OrbitControls', $pluginDirJS.'threejs119/OrbitControls.js'),
-		array( 'wpunity_load125_OrbitControls', $pluginDirJS.'threejs125/OrbitControls.js'),
-		array( 'wpunity_load119_TransformControls', $pluginDirJS.'threejs119/TransformControls.js'),
+		array( 'vrodos_load125_OrbitControls', $pluginDirJS.'threejs125/OrbitControls.js'),
+		array( 'vrodos_load119_TransformControls', $pluginDirJS.'threejs119/TransformControls.js'),
 		array( 'vrodos_load124_TrackballControls', $pluginDirJS.'threejs124/TrackballControls.js'),
-		array( 'wpunity_load119_PointerLockControls', $pluginDirJS.'threejs119/PointerLockControls.js'),
+		array( 'vrodos_load119_PointerLockControls', $pluginDirJS.'threejs119/PointerLockControls.js'),
 		
-		array( 'wpunity_load125_TrackballControls', $pluginDirJS.'threejs125/TrackballControls.js'),
-		array( 'wpunity_load125_CSS2DRenderer', $pluginDirJS.'threejs125/CSS2DRenderer.js'),
+		array( 'vrodos_load125_TrackballControls', $pluginDirJS.'threejs125/TrackballControls.js'),
+		array( 'vrodos_load125_CSS2DRenderer', $pluginDirJS.'threejs125/CSS2DRenderer.js'),
 
-//		array( 'wpunity_load_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
-//		array( 'wpunity_load_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
-//		array( 'wpunity_load_sceneexporter', $pluginDirJS.'threejs87/SceneExporter.js'),
-		
-		
 		array( 'vrodos_load119_CSS2DRenderer', $pluginDirJS.'threejs119/CSS2DRenderer.js'),
 		
-		array( 'wpunity_load119_CopyShader', $pluginDirJS.'threejs119/CopyShader.js'),
-		array( 'wpunity_load119_FXAAShader', $pluginDirJS.'threejs119/FXAAShader.js'),
-		array( 'wpunity_load119_EffectComposer', $pluginDirJS.'threejs119/EffectComposer.js'),
-		array( 'wpunity_load119_RenderPass', $pluginDirJS.'threejs119/RenderPass.js'),
-		array( 'wpunity_load119_OutlinePass', $pluginDirJS.'threejs119/OutlinePass.js'),
-		array( 'wpunity_load119_ShaderPass', $pluginDirJS.'threejs119/ShaderPass.js'),
+		array( 'vrodos_load119_CopyShader', $pluginDirJS.'threejs119/CopyShader.js'),
+		array( 'vrodos_load119_FXAAShader', $pluginDirJS.'threejs119/FXAAShader.js'),
+		array( 'vrodos_load119_EffectComposer', $pluginDirJS.'threejs119/EffectComposer.js'),
+		array( 'vrodos_load119_RenderPass', $pluginDirJS.'threejs119/RenderPass.js'),
+		array( 'vrodos_load119_OutlinePass', $pluginDirJS.'threejs119/OutlinePass.js'),
+		array( 'vrodos_load119_ShaderPass', $pluginDirJS.'threejs119/ShaderPass.js'),
 	);
 	
 	for ( $i = 0 ; $i < count($scriptsC); $i ++){
@@ -164,77 +150,22 @@ add_action('wp_enqueue_scripts', 'vrodos_register_scripts' );
 // Register also in back-end
 add_action('admin_enqueue_scripts', 'vrodos_register_scripts' );
 
-
-
-
-
-////SIDEBAR of Asset3D with fetch-segmentation etc...
-//// Probably it should be merged with the above
-function vrodos_assets_scripts_and_styles() {
-
-    // load script from js_libs
-    wp_enqueue_script( 'vrodos_content_interlinking_request');
-
-    // load script from js_libs
-    wp_enqueue_script( 'vrodos_classification_request');
-
-    wp_enqueue_script('vrodos_segmentation_request');
-
-    // Some parameters to pass in the content_interlinking.js  ajax
-    wp_localize_script('vrodos_content_interlinking_request', 'phpvars',
-        array('lang' => 'en',
-            'externalSource' => 'Wikipedia',
-            'titles' => 'Scladina'  //'Albert%20Einstein'
-        )
-    );
-
-    // Some parameters to pass in the segmentation.js  ajax
-    //    if( isset($_GET['post']) ){
-    //        wp_localize_script('vrodos_segmentation_request', 'phpvars',
-    //            array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
-    //                'obj'  => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
-    //            )
-    //        );
-    //
-    //    }
-
-    // Some parameters to pass in the classification.js  ajax
-    //	wp_localize_script('wpunity_classification_request', 'phpvars',
-    //		array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
-    //		      'obj' => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
-    //		)
-    //	);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function vrodos_register_styles() {
-	wp_register_style( 'wpunity_backend', plugin_dir_url( __FILE__ ) . 'css/vrodos_backend.css' );
+ 
+	wp_register_style( 'vrodos_backend', plugin_dir_url( __FILE__ ) . 'css/vrodos_backend.css' );
 	wp_register_style( 'vrodos_3D_editor', plugin_dir_url( __FILE__ ) . 'css/vrodos_3D_editor.css' );
-	wp_register_style( 'wpunity_datgui', plugin_dir_url( __FILE__ ) . 'css/dat-gui.css' );
+	wp_register_style( 'vrodos_datgui', plugin_dir_url( __FILE__ ) . 'css/dat-gui.css' );
 
 	
 	wp_register_style( 'vrodos_3D_editor_browser', plugin_dir_url( __FILE__ ).'css/vrodos_3D_editor_browser.css' );
-	wp_register_style( 'wpunity_material_stylesheet',  plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.css' );
-	wp_register_script( 'wpunity_material_scripts', plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.js');
+	wp_register_style( 'vrodos_material_stylesheet',  plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.css' );
+	wp_register_script( 'vrodos_material_scripts', plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.js');
 	
-	wp_register_style( 'wpunity_frontend_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_frontend.css' );
-	
+	wp_register_style( 'vrodos_frontend_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_frontend.css' );
 	
 	wp_register_style( 'vrodos_lightslider_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/lightslider.min.css' );
     
-    //wp_register_style( 'wpunity_materialize_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/materialize.css' );
+    //wp_register_style( 'vrodos_materialize_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/materialize.css' );
 	
 	wp_register_style( 'vrodos_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_asseteditor.css' );
 	
@@ -243,15 +174,15 @@ function vrodos_register_styles() {
 	
 	// TODO: When ready for production, ignore  node_modules folder and move the 2 material css & js files to another folder.
 	// Material & Frontend CSS & Scripts
-	wp_enqueue_style('wpunity_material_stylesheet');
-	wp_enqueue_script('wpunity_material_scripts');
-	wp_enqueue_style( 'wpunity_material_icons', plugin_dir_url( __FILE__ ) . 'css/material-icons/material-icons.css' );
-//    wp_enqueue_style( 'wpunity_glyphter_icons', plugin_dir_url( __FILE__ ) . 'css/glyphter-font/Glyphter.css' );
-	wp_enqueue_style('wpunity_frontend_stylesheet');
+	wp_enqueue_style('vrodos_material_stylesheet');
+	wp_enqueue_script('vrodos_material_scripts');
+//	wp_enqueue_style( 'vrodos_material_icons', plugin_dir_url( __FILE__ ) . 'css/material-icons/material-icons.css' );
+//    wp_enqueue_style( 'vrodos_glyphter_icons', plugin_dir_url( __FILE__ ) . 'css/glyphter-font/Glyphter.css' );
+	wp_enqueue_style('vrodos_frontend_stylesheet');
 	
 	wp_enqueue_style( 'vrodos_lightslider_stylesheet');
 	
-	wp_enqueue_style('wpunity_backend');
+	wp_enqueue_style('vrodos_backend');
 }
 // 46
 add_action('wp_enqueue_scripts', 'vrodos_register_styles' );
@@ -265,23 +196,23 @@ add_action('admin_enqueue_scripts', 'vrodos_register_styles' );
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
 
 // Order : 4
-add_action( 'init', 'wpunity_add_customroles');
+add_action( 'init', 'vrodos_add_customroles');
 
 // Order: 6
-add_action( 'init', 'wpunity_add_capabilities_to_admin');
+add_action( 'init', 'vrodos_add_capabilities_to_admin');
 
 //---------------------- Game Projects -------------------------------------------------
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-games.php');
 
 
 // Order: 7
-add_action('init', 'wpunity_project_cpt_construct', 1); //wpunity_game 'GAMES'
+add_action('init', 'vrodos_project_cpt_construct', 1);
 
 // Order: 9
-add_action('init', 'wpunity_project_taxtype_create', 2); //wpunity_game_type 'GAME TYPES'
+add_action('init', 'vrodos_project_taxtype_create', 2);
 
 // Order : 2
-add_action( 'init', 'wpunity_projects_taxtypes_define', 3 );
+add_action( 'init', 'vrodos_projects_taxtypes_define', 3 );
 
 
 
@@ -402,7 +333,7 @@ add_action('save_post', 'vrodos_assets_databox_save');
 add_action('admin_menu', 'vrodos_assets_databox_add');
 
 // 48
-add_action('wp_enqueue_scripts', 'vrodos_assets_scripts_and_styles' );
+//add_action('wp_enqueue_scripts', 'vrodos_assets_scripts_and_styles' );
 
 //
 //// 61
@@ -571,7 +502,7 @@ add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description
  *
  * @return mixed
  */
-function wpunity_mime_types($mime_types){
+function vrodos_mime_types($mime_types){
 	$mime_types['json'] = 'text/json';
 	$mime_types['obj'] = 'text/plain';
 	$mime_types['mp4'] = 'video/mp4';
@@ -587,7 +518,7 @@ function wpunity_mime_types($mime_types){
 }
 
 // 70
-add_filter('upload_mimes', 'wpunity_mime_types', 1, 1);
+add_filter('upload_mimes', 'vrodos_mime_types', 1, 1);
 
 
 
@@ -838,6 +769,47 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 //// 72
 //add_action('restrict_manage_posts', 'wpunity_filter_by_the_author');
 
+//---------------------- Content Interlinking ------------------------
+//////SIDEBAR of Asset3D with fetch-segmentation etc...
+////// Probably it should be merged with the above
+//function vrodos_assets_scripts_and_styles() {
+//
+//    // load script from js_libs
+//    wp_enqueue_script( 'vrodos_content_interlinking_request');
+//
+//    // load script from js_libs
+//    wp_enqueue_script( 'vrodos_classification_request');
+//
+//    wp_enqueue_script('vrodos_segmentation_request');
+//
+//    // Some parameters to pass in the content_interlinking.js  ajax
+//    wp_localize_script('vrodos_content_interlinking_request', 'phpvars',
+//        array('lang' => 'en',
+//            'externalSource' => 'Wikipedia',
+//            'titles' => 'Scladina'  //'Albert%20Einstein'
+//        )
+//    );
+//
+//    // Some parameters to pass in the segmentation.js  ajax
+//    //    if( isset($_GET['post']) ){
+//    //        wp_localize_script('vrodos_segmentation_request', 'phpvars',
+//    //            array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
+//    //                'obj'  => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
+//    //            )
+//    //        );
+//    //
+//    //    }
+//
+//    // Some parameters to pass in the classification.js  ajax
+//    //	wp_localize_script('wpunity_classification_request', 'phpvars',
+//    //		array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
+//    //		      'obj' => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
+//    //		)
+//    //	);
+//}
+
+
+
 
 
 //
@@ -894,7 +866,7 @@ add_action( 'wp_ajax_vrodos_fetch_video_action', 'vrodos_fetch_video_action_call
 
 // AJAXES for semantics
 //add_action( 'wp_ajax_wpunity_segment_obj_action', 'wpunity_segment_obj_action_callback' );
-//add_action( 'wp_ajax_wpunity_monitor_segment_obj_action', 'wpunity_monitor_segment_obj_action_callback' );
+//add_action( 'wp_ajax_vrodos_monitor_segment_obj_action', 'vrodos_monitor_segment_obj_action_callback' );
 //add_action( 'wp_ajax_wpunity_enlist_splitted_objs_action', 'wpunity_enlist_splitted_objs_action_callback' );
 //add_action( 'wp_ajax_wpunity_classify_obj_action', 'wpunity_classify_obj_action_callback' );
 

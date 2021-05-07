@@ -6,7 +6,7 @@ if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_
 if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
-$editgamePage = wpunity_getEditpage('game');
+$editgamePage = vrodos_getEditpage('game');
 
 
 $pluginpath = dirname (plugin_dir_url( __DIR__  ));
@@ -71,7 +71,7 @@ $multiple = "projects";
 //}
 
 
-//wp_enqueue_style('wpunity_materialize_stylesheet', $pluginpath . '/css/materialize.css');
+//wp_enqueue_style('vrodos_materialize_stylesheet', $pluginpath . '/css/materialize.css');
 
 
 get_header();

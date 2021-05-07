@@ -5,7 +5,7 @@ function wpunity_remove_admin_login_header() {
     remove_action('wp_head', '_admin_bar_bump_cb');
 }
 
-function wpunity_addStrategy_APIcall($project_id, $strategy){
+function vrodos_addStrategy_APIcall($project_id, $strategy){
 
 	global $project_scope;
 
@@ -14,7 +14,7 @@ function wpunity_addStrategy_APIcall($project_id, $strategy){
 	$userEmail = $user_info->user_email;
 	$extraPass = get_the_author_meta( 'extra_pass', $user_id );
 
-	$project_keys = wpunity_getProjectKeys($project_id, $project_scope);
+	$project_keys = vrodos_getProjectKeys($project_id, $project_scope);
 
 	$args = array(
 		'method' => 'POST',
@@ -151,7 +151,7 @@ function wpunity_addStrategy_APIcall($project_id, $strategy){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function wpunity_getExamScenes_byProjectID($project_id){
+function vrodos_getExamScenes_byProjectID($project_id){
 	$gamePost = get_post($project_id);
 	$gameSlug = $gamePost->post_name;
 
@@ -194,7 +194,7 @@ function wpunity_getExamScenes_byProjectID($project_id){
 }
 
 
-function wpunity_getFirstSceneID_byProjectID($project_id,$project_type){
+function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
 	$gamePost = get_post($project_id);
 	$gameSlug = $gamePost->post_name;
 
@@ -258,12 +258,12 @@ function wpunity_windEnergy_scene_stats($scene_id){
 				if ($key !== 'avatarYawObject') {
 					if ($value['categoryName'] === 'Producer') {
 
-						$optCosts = get_post_meta($value['assetid'],'wpunity_producerOptCosts',true);
+						$optCosts = get_post_meta($value['assetid'],'vrodos_producerOptCosts',true);
 						if($optCosts) {
 							$optCosts_size = $optCosts['size'];
 							$optCosts_cost = $optCosts['cost'];
 						}
-						$optGen = get_post_meta($value['assetid'],'wpunity_producerOptGen',true);
+						$optGen = get_post_meta($value['assetid'],'vrodos_producerOptGen',true);
 						if($optGen) {
 							$optGen_power = $optGen['power'];
 						}
@@ -391,7 +391,7 @@ function wpunity_createJoker_activation() {
 
 
 
-function wpunity_getNonRegionalScenes($project_id) {
+function vrodos_getNonRegionalScenes($project_id) {
 	$game_post = get_post($project_id);
 	$gameSlug = $game_post->post_name;
 	$scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
@@ -527,12 +527,12 @@ function wpunity_extrapass_profile_fields( $user ) {
 //add_filter( 'wp_nav_menu_items','vrodos_assets_menu_link', 1, 2 );
 //
 //// Projects
-//function wpunity_projects_menu_link( $menu, $args ) {
+//function vrodos_projects_menu_link( $menu, $args ) {
 //    $menu .= '<li class="nav-menu" class="menu-item">' .
 //        '<a href="'.get_permalink( get_page_by_path( 'wpunity-main/' ) ).'">Projects</a></li>';
 //    return $menu;
 //}
-//add_filter( 'wp_nav_menu_items','wpunity_projects_menu_link', 2, 2 );
+//add_filter( 'wp_nav_menu_items','vrodos_projects_menu_link', 2, 2 );
 //
 //
 //// Projects
@@ -547,7 +547,7 @@ function wpunity_extrapass_profile_fields( $user ) {
 //
 //
 //// Display Members as menu item (Ultimatemember plugin)
-//function wpunity_members_menu_link( $menu, $args ) {
+//function vrodos_members_menu_link( $menu, $args ) {
 //    $menu .= '<li class="nav-menu" class="menu-item">' .
 //        '<a href="'.get_permalink( get_page_by_path( 'members/' ) ).'">Members</a></li>';
 //    return $menu;
@@ -572,7 +572,7 @@ function wpunity_extrapass_profile_fields( $user ) {
 //
 //include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 //if ( is_plugin_active( 'ultimate-member/ultimate-member.php' ) ) {
-//    add_filter( 'wp_nav_menu_items','wpunity_members_menu_link', 3, 2 );
+//    add_filter( 'wp_nav_menu_items','vrodos_members_menu_link', 3, 2 );
 //}
 
 
@@ -629,13 +629,13 @@ add_filter('login_redirect', 'wpunity_default_page');
 
 
 //Function to get ALL necessary keys about GIO Analytics
-function wpunity_getProjectKeys($project_id, $project_type) {
+function vrodos_getProjectKeys($project_id, $project_type) {
 
 	$mykeys = array();
 
 	if ($project_type === 'Energy' || $project_type === 'Chemistry' || $project_type === 1) {
-		$myGioID = get_post_meta( $project_id, 'wpunity_project_gioApKey', true);
-		$myExpID = get_post_meta( $project_id, 'wpunity_project_expID', true);
+		$myGioID = get_post_meta( $project_id, 'vrodos_project_gioApKey', true);
+		$myExpID = get_post_meta( $project_id, 'vrodos_project_expID', true);
 		$extraPass = get_the_author_meta( 'extra_pass', get_current_user_id() );
 		$mykeys = array('projectID' => $project_id, 'gioID' => $myGioID, 'expID' => $myExpID, 'extraPass' => $extraPass);
 	}
@@ -780,8 +780,8 @@ function wpunity_createGame_GIO_request($project_id, $user_id){
 						$api_key = $keys->app->api_key;
 
 						// Save values to our DB
-						update_post_meta( $project_id, 'wpunity_project_gioApKey', $app_key);
-						update_post_meta( $project_id, 'wpunity_project_gioAPIKey', $api_key);
+						update_post_meta( $project_id, 'vrodos_project_gioApKey', $app_key);
+						update_post_meta( $project_id, 'vrodos_project_gioAPIKey', $api_key);
 
 
 					} else {
@@ -850,7 +850,7 @@ function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 		$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
 		$credentialsSceneYAML = get_term_by('slug', 'credentials-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Credentials Scene
 		$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
-		$default_json= wpunity_getDefaultJSONscene('energy');
+		$default_json= vrodos_getDefaultJSONscene('energy');
 	}elseif($game_category == 'archaeology_games'){
 		$firstSceneYAML = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml'); //Yaml Tax for First Scene
 		$firstSceneYAMLID = $firstSceneYAML->term_id;
@@ -858,7 +858,7 @@ function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 		$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
 		$credentialsSceneYAML = get_term_by('slug', 'credentials-arch-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Credentials Scene
 		$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
-		$default_json= wpunity_getDefaultJSONscene('archaeology');
+		$default_json= vrodos_getDefaultJSONscene('archaeology');
 	}elseif($game_category == 'chemistry_games'){
 		$firstSceneYAML = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml'); //Yaml Tax for First Scene (Chemistry)
 		$firstSceneYAMLID = $firstSceneYAML->term_id;
@@ -870,7 +870,7 @@ function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 		$exam2dSceneYAMLID = $exam2dSceneYAML->term_id;
 		$exam3dSceneYAML = get_term_by('slug', 'exam3d-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Exam 3d Scene (Chemistry)
 		$exam3dSceneYAMLID = $exam3dSceneYAML->term_id;
-		$default_json= wpunity_getDefaultJSONscene('chemistry');
+		$default_json= vrodos_getDefaultJSONscene('chemistry');
 	}
 
 	// Create Main Menu Scene Data
@@ -886,9 +886,9 @@ function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 		),'meta_input'   => array(
 			'vrodos_scene_default' => 1,
 			'vrodos_scene_metatype' => 'menu',
-			'wpunity_menu_has_help' => 1,
-			'wpunity_menu_has_login' => 1,
-			'wpunity_menu_has_options' => 1,
+			'vrodos_menu_has_help' => 1,
+			'vrodos_menu_has_login' => 1,
+			'vrodos_menu_has_options' => 1,
 		),
 	);
 
@@ -1294,7 +1294,7 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 //==========================================================================================================================================
 //Important GET functions
 
-function wpunity_get_all_Available_molecules_of_game($scene_id){
+function vrodos_get_all_Available_molecules_of_game($scene_id){
 
 	$saved_available_moleculeIDs = get_post_meta($scene_id, 'wpunity_available_molecules', true);
 	$available_moleculeIDs = substr($saved_available_moleculeIDs, 1, -1);
@@ -1304,7 +1304,7 @@ function wpunity_get_all_Available_molecules_of_game($scene_id){
 		$moleculeID = substr($moleculeID, 1, -1);
 		$molecule_post = get_post($moleculeID);
 
-		$molecule_type = get_post_meta($moleculeID, 'wpunity_molecule_ChemicalTypeVal', true);
+		$molecule_type = get_post_meta($moleculeID, 'vrodos_molecule_ChemicalTypeVal', true);
 		$molecule_title = $molecule_post->post_title;
 		$the_featured_image_ID = $screenimgID = get_post_meta($moleculeID, 'vrodos_asset3d_screenimage', true);
 		$the_featured_image_url = wp_get_attachment_url( $the_featured_image_ID );
@@ -1321,7 +1321,7 @@ function wpunity_derive_molecules_checklist(){
     
     $analytics_molecule_list = array('HCL','H2O','NaF','NaCl','KBr','CH4','CaCl2','CF4');
 	$analytics_molecule_checklist = array(0,0,0,0,0,0,0,0);
-	$molecules = wpunity_get_all_molecules_of_game($project_id);
+	$molecules = vrodos_get_all_molecules_of_game($project_id);
 	$molecule_list = [];
 	foreach ($molecules as $molecule) {
 		array_push($molecule_list, $molecule['moleculeType']);
@@ -1339,7 +1339,7 @@ function wpunity_derive_molecules_checklist(){
 
 
 //Get All MOLECULES of specific game by given project ID
-function wpunity_get_all_molecules_of_game($project_id) {
+function vrodos_get_all_molecules_of_game($project_id) {
 
 	$game_post = get_post($project_id);
 	$gameSlug = $game_post->post_name;
@@ -1386,7 +1386,7 @@ function wpunity_get_all_molecules_of_game($project_id) {
 
 			$molecule_id = get_the_ID();
 
-			$molecule_type = get_post_meta($molecule_id, 'wpunity_molecule_ChemicalTypeVal', true);
+			$molecule_type = get_post_meta($molecule_id, 'vrodos_molecule_ChemicalTypeVal', true);
 			$molecule_title = get_the_title();
 			$the_featured_image_ID = $screenimgID = get_post_meta($molecule_id, 'vrodos_asset3d_screenimage', true);
 			$the_featured_image_url = wp_get_attachment_url( $the_featured_image_ID );
@@ -1402,7 +1402,7 @@ function wpunity_get_all_molecules_of_game($project_id) {
 }
 
 //Get All DOORS of specific game (from all scenes) by given project ID (parent game ID)
-function wpunity_get_all_doors_of_project_fastversion($allScenePGameID){
+function vrodos_get_all_doors_of_project_fastversion($allScenePGameID){
 
 	$sceneIds = [];
 
@@ -1464,7 +1464,7 @@ function wpunity_get_all_doors_of_project_fastversion($allScenePGameID){
 	return $doorInfoGathered;
 }
 
-function wpunity_get_all_scenesMarker_of_project_fastversion($allScenePGameID){
+function vrodos_get_all_scenesMarker_of_project_fastversion($allScenePGameID){
 
 	$sceneIds = [];
 
@@ -1528,7 +1528,7 @@ function wpunity_get_all_scenesMarker_of_project_fastversion($allScenePGameID){
 
 
 //Get All SCENES (ids) of specific game by given project ID (parent game ID)
-function wpunity_get_all_sceneids_of_game($allScenePGameID){
+function vrodos_get_all_sceneids_of_game($allScenePGameID){
 
 	$sceneIds = [];
 
@@ -1638,7 +1638,7 @@ function wpunity_segment_obj_action_callback() {
 }
 
 //---- AJAX COMPILE 2: read compile stdout.log file and return content.
-function wpunity_monitor_segment_obj_action_callback(){
+function vrodos_monitor_segment_obj_action_callback(){
 
 	echo file_get_contents(pathinfo($_POST['obj'], PATHINFO_DIRNAME ).'/log.txt');
 
@@ -1872,17 +1872,17 @@ function vrodos_assepile_action_callback(){
 		$game_dirpath = $upload_dir . '/' . $_REQUEST['gameSlug'] . 'Unity';
 
 //		$ff = fopen("outputFF.txt","w");
-//        fwrite($ff, print_r(wpunity_getUnity_local_or_remote(),true));
-//        fwrite($ff, print_r(wpunity_get_ftpCredentials(),true));
-//        fwrite($ff, print_r(wpunity_getUnity_exe_folder(),true)."\n");
-//        fwrite($ff, print_r(wpunity_getRemote_api_folder(),true)."\n");
-//        fwrite($ff, print_r(wpunity_getRemote_server_path(),true)."\n");
+//        fwrite($ff, print_r(vrodos_getUnity_local_or_remote(),true));
+//        fwrite($ff, print_r(vrodos_get_ftpCredentials(),true));
+//        fwrite($ff, print_r(vrodos_getUnity_exe_folder(),true)."\n");
+//        fwrite($ff, print_r(vrodos_getRemote_api_folder(),true)."\n");
+//        fwrite($ff, print_r(vrodos_getRemote_server_path(),true)."\n");
 
 
-//		fwrite($ff, print_r(wpunity_getUnity_local_or_remote(),true));
+//		fwrite($ff, print_r(vrodos_getUnity_local_or_remote(),true));
 
-		$remote_game_server_folder_dir = wpunity_getUnity_local_or_remote() =='local' ?
-			$game_dirpath : (wpunity_getRemote_server_path().$_REQUEST['gameSlug'] . 'Unity');
+		$remote_game_server_folder_dir = vrodos_getUnity_local_or_remote() =='local' ?
+			$game_dirpath : (vrodos_getRemote_server_path().$_REQUEST['gameSlug'] . 'Unity');
 
 
 //		fwrite($ff, $remote_game_server_folder_dir);
@@ -1952,7 +1952,7 @@ goto :EOF
 		chdir($game_dirpath);
 
 		if ($os === 'win') {
-			if(wpunity_getUnity_local_or_remote() != 'remote') {
+			if(vrodos_getUnity_local_or_remote() != 'remote') {
 
 				// local compile
 				$unity_pid = shell_exec($compile_command);
@@ -1962,7 +1962,7 @@ goto :EOF
 			} else {
 
 				// remote
-				$ftp_cre = wpunity_get_ftpCredentials();
+				$ftp_cre = vrodos_get_ftpCredentials();
 
 				$ftp_host = $ftp_cre['address'];
 				$ftp_user_name = $ftp_cre['username'];
@@ -2118,7 +2118,7 @@ function vrodos_monitor_compiling_action_callback(){
 
 	} else {
 		// WINDOWS
-		if(wpunity_getUnity_local_or_remote() == 'local') {
+		if(vrodos_getUnity_local_or_remote() == 'local') {
 			// LOCAL
 			//$phpcomd = 'TASKLIST /FI "imagename eq Unity.exe" /v /fo CSV';
 			$phpcomd = 'TASKLIST /FI "pid eq ' . $_POST['pid'] . '" /v /fo CSV';
@@ -2131,7 +2131,7 @@ function vrodos_monitor_compiling_action_callback(){
 			echo json_encode(array('os'=> $os, 'CSV' => $processUnityCSV , "LOGFILE"=>$stdoutSTR));
 		}else{
 			// REMOTE
-			$ftp_cre = wpunity_get_ftpCredentials();
+			$ftp_cre = vrodos_get_ftpCredentials();
 
 			$ftp_host = $ftp_cre['address'];
 
@@ -2179,12 +2179,12 @@ function vrodos_killtask_compiling_action_callback(){
 
 	}else {
 
-		if(wpunity_getUnity_local_or_remote() != 'remote') {
+		if(vrodos_getUnity_local_or_remote() != 'remote') {
 			$phpcomd = 'Taskkill /PID ' . $_POST['pid'] . ' /F';
 			$killres = shell_exec($phpcomd);
 		} else{
 
-			$ftp_cre = wpunity_get_ftpCredentials();
+			$ftp_cre = vrodos_get_ftpCredentials();
 
 			$ftp_host = $ftp_cre['address'];
 
@@ -2214,7 +2214,7 @@ function vrodos_killtask_compiling_action_callback(){
 function vrodos_game_zip_action_callback()
 {
 
-	if(wpunity_getUnity_local_or_remote() != 'remote') {
+	if(vrodos_getUnity_local_or_remote() != 'remote') {
 		$DS = DIRECTORY_SEPARATOR;
 
 		// TEST
@@ -2269,7 +2269,7 @@ function vrodos_game_zip_action_callback()
 		}
 	} else{
 
-		$ftp_cre = wpunity_get_ftpCredentials();
+		$ftp_cre = vrodos_get_ftpCredentials();
 
 		$ftp_host = $ftp_cre['address'];
 
@@ -2292,7 +2292,7 @@ function vrodos_game_zip_action_callback()
 // -- Append scene paths in EditorBuildSettings.asset file --
 // $filepath : The path of the already written EditorBuildSettings.asset file
 // $scenepath : The scene to add as path : "Assets/scenes/S_Settings.unity"
-function wpunity_append_scenes_in_EditorBuildSettings_dot_asset($filepath, $scenepath){
+function vrodos_append_scenes_in_EditorBuildSettings_dot_asset($filepath, $scenepath){
 
 	//a. open file for append
 	$fhandle = fopen($filepath, "a");
@@ -2426,7 +2426,7 @@ function vrodos_redo_scene_async_action_callback()
 function vrodos_save_gio_async_action_callback()
 {
 	// put meta in scene. True, false, or id of meta if does not exist
-	$res = update_post_meta( $_POST['project_id'], 'wpunity_project_gioApKey', wp_unslash($_POST['project_gioApKey']) );
+	$res = update_post_meta( $_POST['project_id'], 'vrodos_project_gioApKey', wp_unslash($_POST['project_gioApKey']) );
 
 //	$attachment_id = wpunity_upload_Assetimg64($_POST['scene_screenshot'], 'scene_'.$_POST['scene_id'].'_featimg',
 //		$_POST['scene_id'], get_post($_POST['scene_id'])->post_name );
@@ -2449,7 +2449,7 @@ function vrodos_save_gio_async_action_callback()
 function vrodos_save_expid_async_action_callback()
 {
 	// put meta in scene. True, false, or id of meta if does not exist
-	$res = update_post_meta( $_POST['project_id'], 'wpunity_project_expID', wp_unslash($_POST['project_expID']) );
+	$res = update_post_meta( $_POST['project_id'], 'vrodos_project_expID', wp_unslash($_POST['project_expID']) );
 
 	echo $res ? 'true' : 'false';
 	wp_die();

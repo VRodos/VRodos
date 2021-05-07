@@ -4,65 +4,65 @@ function wpunity_create_energy_standardScenes_unity($gameID,$gameSlug,$game_path
     
 
     //SIMULATION SCENE FIELDS
-    $term_meta_simuFields = wpunity_getSceneYAML_energy('fields');
+    $term_meta_simuFields = vrodos_getSceneYAML_energy('fields');
     $file_simuFields = $game_path . '/' . 'Stage3(Plains).unity';
     $create_file1 = fopen($file_simuFields, "w") or die("Unable to open file!");
     fwrite($create_file1, $term_meta_simuFields);
     fclose($create_file1);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/Stage3(Plains).unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/Stage3(Plains).unity');//Update the EditorBuildSettings.asset by adding new Scene
     $file_path_selCS = 'Assets/scenes/' . 'Stage3(Plains).unity';
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
 
     //SIMULATION SCENE MOUNTAINS
-    $term_meta_simuMount = wpunity_getSceneYAML_energy('mountains');
+    $term_meta_simuMount = vrodos_getSceneYAML_energy('mountains');
     $file_simuMount = $game_path . '/' . 'Stage3(Mountains).unity';
     $create_file2 = fopen($file_simuMount, "w") or die("Unable to open file!");
     fwrite($create_file2, $term_meta_simuMount);
     fclose($create_file2);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/Stage3(Mountains).unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/Stage3(Mountains).unity');//Update the EditorBuildSettings.asset by adding new Scene
     $file_path_selCS = 'Assets/scenes/' . 'Stage3(Mountains).unity';
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
 
     //SIMULATION SCENE FIELDS
-    $term_meta_simuSea = wpunity_getSceneYAML_energy('seashore');
+    $term_meta_simuSea = vrodos_getSceneYAML_energy('seashore');
     $file_simuSea = $game_path . '/' . 'Stage3(Seashore).unity';
     $create_file3 = fopen($file_simuSea, "w") or die("Unable to open file!");
     fwrite($create_file3, $term_meta_simuSea);
     fclose($create_file3);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/Stage3(Seashore).unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/Stage3(Seashore).unity');//Update the EditorBuildSettings.asset by adding new Scene
     $file_path_selCS = 'Assets/scenes/' . 'Stage3(Seashore).unity';
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
 
 
     //SIMULATION SCENE STATS
-    $term_meta_stats = wpunity_getSceneYAML_energy('stats');
+    $term_meta_stats = vrodos_getSceneYAML_energy('stats');
     $file_Stats = $game_path . '/' . 'S_Stats.unity';
     $create_file4 = fopen($file_Stats, "w") or die("Unable to open file!");
     fwrite($create_file4, $term_meta_stats);
     fclose($create_file4);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Stats.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Stats.unity');//Update the EditorBuildSettings.asset by adding new Scene
     $file_path_selCS = 'Assets/scenes/' . 'S_Stats.unity';
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
 
 
     //SIMULATION SCENE TURBINE SELECTION
-    $term_meta_turb = wpunity_getSceneYAML_energy('turbines');
+    $term_meta_turb = vrodos_getSceneYAML_energy('turbines');
     $file_turb = $game_path . '/' . 'S_TurbineSelection.unity';
     $create_file5 = fopen($file_turb, "w") or die("Unable to open file!");
     fwrite($create_file5, $term_meta_turb);
     fclose($create_file5);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_TurbineSelection.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_TurbineSelection.unity');//Update the EditorBuildSettings.asset by adding new Scene
     $file_path_selCS = 'Assets/scenes/' . 'S_TurbineSelection.unity';
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
 
 }
 
-function wpunity_getRegionalscene_byGame($allScenePGameID,$regType){
+function vrodos_getRegionalscene_byGame($allScenePGameID,$regType){
 
     $myquery_args = array(
         'post_type' => 'wpunity_scene',
@@ -108,9 +108,9 @@ function wpunity_create_energy_selector_unity($gameID,$gameSlug,$game_path,$file
     $allScenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
     $allScenePGameID = $allScenePGame->term_id;
 
-    $mount_id = wpunity_getRegionalscene_byGame($allScenePGameID,'mountain');
-    $fields_id = wpunity_getRegionalscene_byGame($allScenePGameID,'fields');
-    $sea_id = wpunity_getRegionalscene_byGame($allScenePGameID,'seashore');
+    $mount_id = vrodos_getRegionalscene_byGame($allScenePGameID,'mountain');
+    $fields_id = vrodos_getRegionalscene_byGame($allScenePGameID,'fields');
+    $sea_id = vrodos_getRegionalscene_byGame($allScenePGameID,'seashore');
 
     $mount_json = get_post($mount_id)->post_content; //,'wpunity_scene_json_input',true);
     $fields_json = get_post($fields_id)->post_content; //,'wpunity_scene_json_input',true);
@@ -130,25 +130,25 @@ function wpunity_create_energy_selector_unity($gameID,$gameSlug,$game_path,$file
 //    fwrite($fo, "Sea" . $seashore_activation);
 //    fclose($fo);
     
-    $term_meta_s_selector = wpunity_getSceneYAML_energy('selector');
+    $term_meta_s_selector = vrodos_getSceneYAML_energy('selector');
     $file_selector = $game_path . '/' . 'S_SceneSelector.unity';
     $file_content = wpunity_replace_sceneselector_energy_unity($term_meta_s_selector,$mountains_activation,$seashore_activation,$fields_activation);
     $create_file2 = fopen($file_selector, "w") or die("Unable to open file!");
     fwrite($create_file2, $file_content);
     fclose($create_file2);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_SceneSelector.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_SceneSelector.unity');//Update the EditorBuildSettings.asset by adding new Scene
     $file_path_selCS = 'Assets/scenes/' . 'S_SceneSelector.unity';
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
 }
 
 function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of mainmenu
-    $term_meta_s_mainmenu = wpunity_getSceneYAML_energy('menu');
+    $term_meta_s_mainmenu = vrodos_getSceneYAML_energy('menu');
 
-    //$is_bt_settings_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_options',true) );
-    //$is_help_bt_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_help',true) );
-    //$is_login_bt_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_login',true) );
+    //$is_bt_settings_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_options',true) );
+    //$is_help_bt_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_help',true) );
+    //$is_login_bt_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_login',true) );
 
     $is_bt_settings_active = 0;//Always OFF
     $is_help_bt_active = 1;//Always ON
@@ -169,13 +169,13 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
     fclose($create_file);
 
     //Add Static Pages to cs & BuildSettings (Main Menu must be first)
-    //wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Reward.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    //vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Reward.unity');//Update the EditorBuildSettings.asset by adding new Scene
     //$file_path_rewCS = 'Assets/scenes/' . 'S_Reward.unity';
-    //wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_rewCS);
+    //vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_rewCS);
 
     if($is_bt_settings_active == '1'){
         //CREATE SETTINGS/OPTIONS Unity file
-        $term_meta_s_settings = wpunity_getSceneYAML_energy('settings');
+        $term_meta_s_settings = vrodos_getSceneYAML_energy('settings');
         $file_content2 = wpunity_replace_settings_unity($term_meta_s_settings);
 
         $file2 = $game_path . '/' . 'S_Settings.unity';
@@ -183,14 +183,14 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
         fwrite($create_file2,$file_content2);
         fclose($create_file2);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Settings.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Settings.unity');//Update the EditorBuildSettings.asset by adding new Scene
         $file2_path_CS = 'Assets/scenes/' . 'S_Settings.unity';
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file2_path_CS);
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file2_path_CS);
     }
 
     if($is_help_bt_active == '1'){
         //CREATE HELP Unity file
-        $term_meta_s_help = wpunity_getSceneYAML_energy('help');
+        $term_meta_s_help = vrodos_getSceneYAML_energy('help');
         $text_help_scene = get_post_meta($scene_id,'wpunity_scene_help_text',true);
         $img_help_scene_id = get_post_meta($scene_id,'wpunity_scene_helpimg',true);
         $img_help_scene_guid = 'dad02368a81759f4784c7dbe752b05d6'; //if there's no Featured Image (custom field at Main Menu)
@@ -202,14 +202,14 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
         fwrite($create_file3, $file_content3);
         fclose($create_file3);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Help.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Help.unity');//Update the EditorBuildSettings.asset by adding new Scene
         $file3_path_CS = 'Assets/scenes/' . 'S_Help.unity';
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file3_path_CS);
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file3_path_CS);
     }
 
     if($is_login_bt_active == '1'){
         //CREATE Login Unity file
-        $term_meta_s_login = wpunity_getSceneYAML_energy('login');
+        $term_meta_s_login = vrodos_getSceneYAML_energy('login');
         $file_content4 = wpunity_replace_login_energy_unity($term_meta_s_login);
 
         $file4 = $game_path . '/S_Login.unity';
@@ -217,15 +217,15 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
         fwrite($create_file4,$file_content4);
         fclose($create_file4);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Login.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Login.unity');//Update the EditorBuildSettings.asset by adding new Scene
         $file4_path_CS = 'Assets/scenes/' . 'S_Login.unity';
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file4_path_CS);
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file4_path_CS);
     }
 }
 
 function wpunity_create_energy_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of Credits Scene
-    $term_meta_s_credits = wpunity_getSceneYAML_energy('credits');
+    $term_meta_s_credits = vrodos_getSceneYAML_energy('credits');
     $credits_content = $scene_post->post_content;
 
     $featured_image_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
@@ -238,9 +238,9 @@ function wpunity_create_energy_credentials_unity($scene_post,$scene_type_ID,$sce
     fwrite($create_file5, $file_content5);
     fclose($create_file5);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Credits.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Credits.unity');//Update the EditorBuildSettings.asset by adding new Scene
     $file5_path_CS = 'Assets/scenes/' . 'S_Credits.unity';
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file5_path_CS);
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file5_path_CS);
 }
 
 function wpunity_create_energy_educational_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
@@ -250,7 +250,7 @@ function wpunity_create_energy_educational_unity($scene_post,$scene_type_ID,$sce
 //    fwrite($fg, "1");
     
     //DATA of Educational Energy Scene
-    $term_meta_educational_energy = wpunity_getSceneYAML_energy('regional');
+    $term_meta_educational_energy = vrodos_getSceneYAML_energy('regional');
     $scene_name = $scene_post->post_name;
     $scene_title = $scene_post->post_title;
     $scene_desc = $scene_post->post_content;
@@ -280,7 +280,7 @@ function wpunity_create_energy_educational_unity($scene_post,$scene_type_ID,$sce
 //    fwrite($fg, $scene_id);
     
     
-    $file_content7b = wpunity_addAssets_educational_energy_unity($scene_id);//add objects from json
+    $file_content7b = vrodos_addAssets_educational_energy_unity($scene_id);//add objects from json
     
 //    fwrite($fg, "6");
     
@@ -296,14 +296,14 @@ function wpunity_create_energy_educational_unity($scene_post,$scene_type_ID,$sce
 //    fwrite($fg, "8");
 
     $file7path_forCS = 'Assets/scenes/' . $scene_unity_title . '.unity';
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$file7path_forCS);//Update the EditorBuildSettings.asset by adding new Scene
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file7path_forCS);
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$file7path_forCS);//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file7path_forCS);
     
 //    fwrite($fg, "success");
 //    fclose($fg);
 }
 
-function wpunity_addAssets_educational_energy_unity($scene_id){
+function vrodos_addAssets_educational_energy_unity($scene_id){
 
 //    $ff = fopen("output_assets_edu.txt","w");
 
@@ -346,7 +346,7 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $asset_type_ID = $asset_type[0]->term_id;
                 $terrain_obj = get_post_meta($terrain_id,'wpunity_asset3d_obj',true);
 
-                $terrain_yaml = wpunity_getAssetYAML_energy('terrain');
+                $terrain_yaml = vrodos_getAssetYAML_energy('terrain');
                 $fid_of_terrain = wpunity_create_fids($current_fid++);
                 $fid_of_terrain1 = wpunity_create_fids($current_fid++);//($fid_of_terrain+1)
                 $fid_of_terrain2 = wpunity_create_fids($current_fid++);//($fid_of_terrain+2)
@@ -382,7 +382,7 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $asset_type_ID = $asset_type[0]->term_id;
                 $deco_obj = get_post_meta($deco_id,'wpunity_asset3d_obj',true);
 
-                $deco_yaml = wpunity_getAssetYAML_energy('decor');
+                $deco_yaml = vrodos_getAssetYAML_energy('decor');
                 $fid_decorator = wpunity_create_fids($current_fid++);
                 $fid_decorator1 = wpunity_create_fids($current_fid++);//($fid_decorator+1)
                 $fid_decorator2 = wpunity_create_fids($current_fid++);//($fid_decorator+2)
@@ -409,7 +409,7 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $asset_type_ID = $asset_type[0]->term_id;
                 $marker_obj = get_post_meta($marker_id,'wpunity_asset3d_obj',true);
 
-                $marker_yaml = wpunity_getAssetYAML_energy('marker');
+                $marker_yaml = vrodos_getAssetYAML_energy('marker');
                 $fid_marker = wpunity_create_fids($current_fid++);
                 $fid_marker1 = wpunity_create_fids($current_fid++);//($fid_marker+1)
                 $fid_marker2 = wpunity_create_fids($current_fid++);//($fid_marker+2)
@@ -479,9 +479,9 @@ function wpunity_addAssets_educational_energy_unity($scene_id){
                 $asset_type_ID = $asset_type[0]->term_id;
 
                 $producer_obj = get_post_meta($producer_id,'wpunity_asset3d_obj',true);
-                $prod_optCosts = get_post_meta($producer_id,'wpunity_producerOptCosts',true);
-                $prod_optGen = get_post_meta($producer_id,'wpunity_producerOptGen',true);
-                $prod_powerVal = get_post_meta($producer_id,'wpunity_producerPowerProductionVal',true);
+                $prod_optCosts = get_post_meta($producer_id,'vrodos_producerOptCosts',true);
+                $prod_optGen = get_post_meta($producer_id,'vrodos_producerOptGen',true);
+                $prod_powerVal = get_post_meta($producer_id,'vrodos_producerPowerProductionVal',true);
                 $prod_powerVal = str_replace(array('[',']'), '',$prod_powerVal);//remove all [ ]
                 $prod_powerVal_array = explode(',', $prod_powerVal);//create Array with values of string
 

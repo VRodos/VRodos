@@ -42,7 +42,7 @@ function wpunity_compile_make_molecules_prefabs($gameID, $gameSlug){
     $projectLocalPath = str_replace('\\','/',$upload_dir);
 
     $projectName = $gameSlug;
-    $molecules = wpunity_get_all_molecules_of_game($gameID);//ALL available Molecules of a GAME
+    $molecules = vrodos_get_all_molecules_of_game($gameID);//ALL available Molecules of a GAME
    
     
 //    $fb  = fopen("outputPREKA.txt","w");
@@ -246,7 +246,7 @@ static void build() {
 * to
 *    WebGLBuilder.cs
 * */
-function wpunity_add_in_HandyBuilder_cs($filepath, $assetpath, $scenepath){
+function vrodos_add_in_HandyBuilder_cs($filepath, $assetpath, $scenepath){
 
     $LF = chr(10); // line change
 
@@ -351,13 +351,13 @@ function wpunity_compile_settings_files_gen($game_project_id, $game_path,$fileNa
     if($fileName === 'ProjectSettings.asset'){
 
         // get from db the last version of the game
-        $game_version_number = wpunity_get_last_version_of_game($game_project_id);
+        $game_version_number = vrodos_get_last_version_of_game($game_project_id);
 
         // increment for the new game
         $game_version_number += 1;
 
         // append new vn to db
-        wpunity_append_version_game($game_project_id, $game_version_number);
+        vrodos_append_version_game($game_project_id, $game_version_number);
 
         // Zero pad to 4 digits
         $game_version_number_padded = str_pad($game_version_number, 4, '0', STR_PAD_LEFT);
@@ -451,7 +451,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
                     '/' . $attachment_name['filename'] . 'CollidersNoOptimization.obj';
             }
         
-            wpunity_add_in_HandyBuilder_cs($handybuilder_file, $new_file_path_forCS, null);
+            vrodos_add_in_HandyBuilder_cs($handybuilder_file, $new_file_path_forCS, null);
         }
     
         //MTL FILE
@@ -500,7 +500,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
         $new_file = $upload_dir .'/' .$gameSlug . "Unity/Assets/Resources" .'/' . $attachment_name['filename'] . '.' . $attachment_name['extension'];
         copy($attachment_file,$new_file);
         $new_file_path_forCS = 'Assets/Resources' .'/' . $attachment_name['filename'] . '.' . $attachment_name['extension'];
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, $new_file_path_forCS, null);
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, $new_file_path_forCS, null);
     }
 
     //Featured Image FILE
@@ -517,7 +517,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
         copy($attachment_file, $new_file);
 
         //$new_file_path_forCS = 'Assets/Resources' .'/' . $attachment_name['filename'] . '.' . $attachment_name['extension'];
-        //wpunity_add_in_HandyBuilder_cs($handybuilder_file, $new_file_path_forCS, null);
+        //vrodos_add_in_HandyBuilder_cs($handybuilder_file, $new_file_path_forCS, null);
     }
 
 }
@@ -532,7 +532,7 @@ function wpunity_compile_objmeta_cre($folder, $objName, $objID, $suffix = ""){
 guid: ___[obj_guid]___
 timeCreated: ___[unx_time_created]___
 licenseType: Free
-[junk line]";      // wpunity_getYaml_obj_dotmeta_pattern();
+[junk line]";      // vrodos_getYaml_obj_dotmeta_pattern();
 
     $objMetaContent = wpunity_replace_objmeta($objMetaPattern, $objID);
 
@@ -575,8 +575,8 @@ function wpunity_compile_scenes_gen($gameID,$gameSlug){
     $custom_query = new WP_Query( $queryargs );
     
     // MainMenu should be first in EditorBuildSettings.asset and HandyBuilder.cs
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset( $fileEditorBuildSets,'Assets/scenes/S_MainMenu.unity');
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_MainMenu.unity');
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset( $fileEditorBuildSets,'Assets/scenes/S_MainMenu.unity');
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_MainMenu.unity');
     
     // Add Static scenes
     wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBuildSets, $handybuilder_file, $gameID);
@@ -615,8 +615,8 @@ function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBui
         case 'archaeology_games':
         
             $mainMenuTerm = get_term_by('slug', 'mainmenu-arch-yaml', 'vrodos_scene_yaml');
-            $term_meta_s_reward = wpunity_getSceneYAML_archaeology('reward');
-            $term_meta_s_selector = wpunity_getSceneYAML_archaeology('selector');
+            $term_meta_s_reward = vrodos_getSceneYAML_archaeology('reward');
+            $term_meta_s_selector = vrodos_getSceneYAML_archaeology('selector');
             $term_meta_s_selector_title = 'Select a Scene';
         
             // S_SceneSelector.unity create
@@ -638,8 +638,8 @@ function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBui
         case 'energy_games':
     
 //            $mainMenuTerm = get_term_by('slug', 'mainmenu-yaml', 'vrodos_scene_yaml');
-//            $term_meta_s_reward = wpunity_getSceneYAML_energy('reward');
-//            $term_meta_s_selector = wpunity_getSceneYAML_energy('selector');
+//            $term_meta_s_reward = vrodos_getSceneYAML_energy('reward');
+//            $term_meta_s_selector = vrodos_getSceneYAML_energy('selector');
 //            $term_meta_s_selector_title = 'Select a Scene';
 
             //create standard energy scenes (simulation scenes, stats, turbine selection etc)
@@ -652,8 +652,8 @@ function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBui
         case 'chemistry_games':
     
 //            $mainMenuTerm = get_term_by('slug', 'mainmenu-chem-yaml', 'vrodos_scene_yaml');
-//            $term_meta_s_reward = wpunity_getSceneYAML_chemistry('reward');
-//            $term_meta_s_selector = wpunity_getSceneYAML_chemistry('selector');
+//            $term_meta_s_reward = vrodos_getSceneYAML_chemistry('reward');
+//            $term_meta_s_selector = vrodos_getSceneYAML_chemistry('selector');
 //            $term_meta_s_selector_title = 'Select a Scene';
     
             //do nothing
@@ -744,10 +744,10 @@ function wpunity_compile_copy_StandardAssets($gameID, $gameSlug,$gameType){
 
 	    global $project_scope;
 
-        $project_saved_keys = wpunity_getProjectKeys($gameID, $project_scope);
+        $project_saved_keys = vrodos_getProjectKeys($gameID, $project_scope);
         $g_app_key = $project_saved_keys['gioID'];
-        //$g_api_key = $project_saved_keys['wpunity_project_gioAPIKey'];
-		$g_api_key = get_post_meta($gameID,'wpunity_project_gioAPIKey',true);
+        //$g_api_key = $project_saved_keys['vrodos_project_gioAPIKey'];
+		$g_api_key = get_post_meta($gameID,'vrodos_project_gioAPIKey',true);
 		
         $file_content = str_replace("___[g_app_key]___",$g_app_key,$GOcontent);
         $file_content = str_replace("___[g_api_key]___",$g_api_key,$file_content);
@@ -761,10 +761,10 @@ function wpunity_compile_copy_StandardAssets($gameID, $gameSlug,$gameType){
 
         global $project_scope;
 
-        $project_saved_keys = wpunity_getProjectKeys($gameID, $project_scope);
+        $project_saved_keys = vrodos_getProjectKeys($gameID, $project_scope);
         $g_app_key = $project_saved_keys['gioID'];
-        //$g_api_key = $project_saved_keys['wpunity_project_gioAPIKey'];
-        $g_api_key = get_post_meta($gameID,'wpunity_project_gioAPIKey',true);
+        //$g_api_key = $project_saved_keys['vrodos_project_gioAPIKey'];
+        $g_api_key = get_post_meta($gameID,'vrodos_project_gioAPIKey',true);
 
         $file_content = str_replace("___[g_app_key]___",$g_app_key,$GOcontent);
         $file_content = str_replace("___[g_api_key]___",$g_api_key,$file_content);

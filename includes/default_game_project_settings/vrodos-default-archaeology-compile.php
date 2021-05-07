@@ -2,11 +2,11 @@
 
 function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of mainmenu-arch-yaml
-    $term_meta_s_mainmenu = wpunity_getSceneYAML_archaeology('menu');
+    $term_meta_s_mainmenu = vrodos_getSceneYAML_archaeology('menu');
     $title_text = $scene_post->post_title;
-    $is_bt_settings_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_options',true) );
-    $is_help_bt_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_help',true) );
-    $is_login_bt_active = intval ( get_post_meta($scene_id,'wpunity_menu_has_login',true) );
+    $is_bt_settings_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_options',true) );
+    $is_help_bt_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_help',true) );
+    $is_login_bt_active = intval ( get_post_meta($scene_id,'vrodos_menu_has_login',true) );
     $is_exit_button_active = 1;//TODO
     $featured_image_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
     $featured_image_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6';//if there's no Featured Image
@@ -24,16 +24,16 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
 
     
     //Add Static Pages to EditorBuilderSettings.asset and in HandyBuilder.cs
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Reward.unity');//Update the EditorBuildSettings.asset by adding new Scene
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Reward.unity');
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Reward.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Reward.unity');
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_SceneSelector.unity');//Update the EditorBuildSettings.asset by adding new Scene
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_SceneSelector.unity');
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_SceneSelector.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_SceneSelector.unity');
 
     // Settings button active switch
     if($is_bt_settings_active == '1'){
         //CREATE SETTINGS/OPTIONS Unity file
-        $term_meta_s_settings = wpunity_getSceneYAML_archaeology('options');
+        $term_meta_s_settings = vrodos_getSceneYAML_archaeology('options');
         $file_content2 = wpunity_replace_settings_unity($term_meta_s_settings);
 
         $file2 = $game_path . '/S_Settings.unity';
@@ -41,14 +41,14 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
         fwrite($create_file2,$file_content2);
         fclose($create_file2);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Settings.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Settings.unity');//Update the EditorBuildSettings.asset by adding new Scene
         $file2_path_CS = 'Assets/scenes/' . 'S_Settings.unity';
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $file2_path_CS);
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file2_path_CS);
     }
 
     if($is_help_bt_active == '1'){
         //CREATE HELP Unity file
-        $term_meta_s_help = wpunity_getSceneYAML_archaeology('help');
+        $term_meta_s_help = vrodos_getSceneYAML_archaeology('help');
         $text_help_scene = get_post_meta($scene_id,'wpunity_scene_help_text',true);
         $img_help_scene_id = get_post_meta($scene_id,'wpunity_scene_helpimg',true);
         $img_help_scene_guid = 'dad02368a81759f4784c7dbe752b05d6'; //if there's no Featured Image (custom field at Main Menu)
@@ -60,13 +60,13 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
         fwrite($create_file3, $file_content3);
         fclose($create_file3);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Help.unity');//Update the EditorBuildSettings.asset by adding new Scene
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Help.unity');
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Help.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Help.unity');
     }
 
     if($is_login_bt_active == '1'){
         //CREATE Login Unity file
-        $term_meta_s_login = wpunity_getSceneYAML_archaeology('login');
+        $term_meta_s_login = vrodos_getSceneYAML_archaeology('login');
         $file_content4 = wpunity_replace_login_unity($term_meta_s_login);
 
         $file4 = $game_path . '/S_Login.unity';
@@ -74,14 +74,14 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
         fwrite($create_file4,$file_content4);
         fclose($create_file4);
 
-        wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Login.unity');//Update the EditorBuildSettings.asset by adding new Scene
-        wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Login.unity');
+        vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Login.unity');//Update the EditorBuildSettings.asset by adding new Scene
+        vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Login.unity');
     }
 }
 
 function wpunity_create_archaeology_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of Credits Scene
-    $term_meta_s_credits = wpunity_getSceneYAML_archaeology('credits');
+    $term_meta_s_credits = vrodos_getSceneYAML_archaeology('credits');
     $credits_content = $scene_post->post_content;
 
     $featured_image_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
@@ -94,14 +94,14 @@ function wpunity_create_archaeology_credentials_unity($scene_post,$scene_type_ID
     fwrite($create_file5, $file_content5);
     fclose($create_file5);
 
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Credits.unity');//Update the EditorBuildSettings.asset by adding new Scene
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Credits.unity');
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,'Assets/scenes/S_Credits.unity');//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Credits.unity');
 }
 
 function wpunity_create_archaeology_wonderaround_unity($scene_post, $scene_type_ID, $scene_id, $gameSlug, $game_path, $fileEditorBuildSettings, $handybuilder_file,
                                                        $scenes_counter, $gameType){
     //DATA of Wonder Around Scene
-    $term_meta_wonder_around = wpunity_getSceneYAML_archaeology('wanderaround');
+    $term_meta_wonder_around = vrodos_getSceneYAML_archaeology('wanderaround');
     //$json_scene = get_post_meta($scene_id,'wpunity_scene_json_input',true);
     $scene_name = $scene_post->post_name;
     $scene_title = $scene_post->post_title;
@@ -112,7 +112,7 @@ function wpunity_create_archaeology_wonderaround_unity($scene_post, $scene_type_
     if($featured_image_edu_sprite_id != ''){$featured_image_edu_sprite_guid = wpunity_compile_sprite_upload($featured_image_edu_sprite_id,$gameSlug,$scene_id);}
 
     $file_contentA = wpunity_replace_wonderaround_unity($term_meta_wonder_around,$scene_id); //empty energy scene with Avatar!
-    $file_contentAb = wpunity_addAssets_wonderaround_unity($scene_id);//add objects from json
+    $file_contentAb = vrodos_addAssets_wonderaround_unity($scene_id);//add objects from json
     $fileA = $game_path . '/' . $scene_name . '.unity';
     $create_fileA = fopen($fileA, "w") or die("Unable to open file!");
     fwrite($create_fileA, $file_contentA);
@@ -123,11 +123,11 @@ function wpunity_create_archaeology_wonderaround_unity($scene_post, $scene_type_
          $game_path, $scenes_counter, $featured_image_edu_sprite_guid, $gameType);
 
     $fileApath_forCS = 'Assets/scenes/' . $scene_name . '.unity';
-    wpunity_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$fileApath_forCS);//Update the EditorBuildSettings.asset by adding new Scene
-    wpunity_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
+    vrodos_append_scenes_in_EditorBuildSettings_dot_asset($fileEditorBuildSettings,$fileApath_forCS);//Update the EditorBuildSettings.asset by adding new Scene
+    vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
 }
 
-function wpunity_addAssets_wonderaround_unity($scene_id){
+function vrodos_addAssets_wonderaround_unity($scene_id){
     $scene_json = get_post($scene_id)->post_content;
 
     $jsonScene = htmlspecialchars_decode ( $scene_json );
@@ -148,7 +148,7 @@ function wpunity_addAssets_wonderaround_unity($scene_id){
 
                 $site_obj = get_post_meta($site_id,'wpunity_asset3d_obj',true);
 
-                $site_yaml = wpunity_getAssetYAML_archaeology('site');
+                $site_yaml = vrodos_getAssetYAML_archaeology('site');
                 $site_fid = wpunity_create_fids($current_fid++);
                 $site_obj_guid = wpunity_create_guids('obj', $site_obj);
                 $site_position_x = - $value['position'][0]; // x is in the opposite site in unity
@@ -173,7 +173,7 @@ function wpunity_addAssets_wonderaround_unity($scene_id){
                 $asset_type_ID = $asset_type[0]->term_id;
                 $poi_img_obj = get_post_meta($poi_img_id,'wpunity_asset3d_obj',true);
                 $poi_img_sprite = get_post_meta($poi_img_id,'wpunity_asset3d_screenimage',true);
-                $poi_img_yaml = wpunity_getAssetYAML_archaeology('pois_imagetext');
+                $poi_img_yaml = vrodos_getAssetYAML_archaeology('pois_imagetext');
                 $poi_it_fid = wpunity_create_fids($current_fid++);
                 $poi_it_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $poi_it_pos_y = $value['position'][1];
@@ -226,7 +226,7 @@ function wpunity_addAssets_wonderaround_unity($scene_id){
                 $attachment_file = $attachment_video_post->guid;
                 $attachment_tempname = str_replace('\\', '/', $attachment_file);
                 $attachment_name = pathinfo($attachment_tempname);
-                $poi_vid_yaml = wpunity_getAssetYAML_archaeology('pois_video');
+                $poi_vid_yaml = vrodos_getAssetYAML_archaeology('pois_video');
                 $poi_v_fid = wpunity_create_fids($current_fid++);
                 $poi_v_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $poi_v_pos_y = $value['position'][1];
@@ -259,7 +259,7 @@ function wpunity_addAssets_wonderaround_unity($scene_id){
 
                 $door_obj = get_post_meta($door_id,'wpunity_asset3d_obj',true);
 
-                $door_yaml = wpunity_getAssetYAML_archaeology('door');
+                $door_yaml = vrodos_getAssetYAML_archaeology('door');
                 $door_fid = wpunity_create_fids($current_fid++);
                 $door_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $door_pos_y = $value['position'][1];
@@ -295,7 +295,7 @@ function wpunity_addAssets_wonderaround_unity($scene_id){
                 $asset_type_ID = $asset_type[0]->term_id;
 
                 $artifact_obj = get_post_meta($artifact_id,'wpunity_asset3d_obj',true);
-                $artifact_yaml = wpunity_getAssetYAML_archaeology('artifact');
+                $artifact_yaml = vrodos_getAssetYAML_archaeology('artifact');
                 $poi_a_fid = wpunity_create_fids($current_fid++);
                 $poi_a_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $poi_a_pos_y = $value['position'][1];
@@ -332,7 +332,7 @@ function wpunity_addAssets_wonderaround_unity($scene_id){
 
                 $decoarch_obj = get_post_meta($decoarch_id,'wpunity_asset3d_obj',true);
 
-                $decorarch_yaml = wpunity_getAssetYAML_archaeology('decoration_arch');
+                $decorarch_yaml = vrodos_getAssetYAML_archaeology('decoration_arch');
                 $decor_fid = wpunity_create_fids($current_fid++);
                 $decor_obj_guid = wpunity_create_guids('obj', $decoarch_obj);
                 $decor_pos_x = - $value['position'][0]; // x is in the opposite site in unity

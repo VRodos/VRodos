@@ -1,6 +1,6 @@
 <?php
 
-	$physics = get_post_meta($asset_id,'wpunity_physicsValues',true);
+	$physics = get_post_meta($asset_id,'vrodos_physicsValues',true);
 	if($physics) {
 			$mean_speed_wind = $physics['mean'];
 			$var_speed_wind = $physics['variance'];
@@ -29,19 +29,19 @@
 			$var_consumption = $consumptions['var'];
 		}
 	}elseif($saved_term[0]->slug == 'producer') {
-		$optCosts = get_post_meta($asset_id,'wpunity_producerOptCosts',true);
+		$optCosts = get_post_meta($asset_id,'vrodos_producerOptCosts',true);
 		if($optCosts) {
 			$optCosts_size = $optCosts['size'];
 			$optCosts_dmg = $optCosts['dmg'];
 			$optCosts_cost = $optCosts['cost'];
 			$optCosts_repaid = $optCosts['repaid'];
 		}
-		$optGen = get_post_meta($asset_id,'wpunity_producerOptGen',true);
+		$optGen = get_post_meta($asset_id,'vrodos_producerOptGen',true);
 		if($optGen) {
 			$optGen_class = $optGen['class'];
 			$optGen_speed = $optGen['speed'];
 			$optGen_power = $optGen['power'];
 		}
-		$optProductionVal = get_post_meta($asset_id,'wpunity_producerPowerProductionVal',true);
+		$optProductionVal = get_post_meta($asset_id,'vrodos_producerPowerProductionVal',true);
 
 ?>

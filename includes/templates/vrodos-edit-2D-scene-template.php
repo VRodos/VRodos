@@ -26,22 +26,22 @@ $game_type_obj = wpunity_return_project_type($project_id);
 $scene_post = get_post($scene_id);
 $sceneSlug = $scene_post->post_title;
 
-$editgamePage = wpunity_getEditpage('game');
-$allGamesPage = wpunity_getEditpage('allgames');
-$newAssetPage = wpunity_getEditpage('asset');
-$editscenePage = wpunity_getEditpage('scene');
-$editscene2DPage = wpunity_getEditpage('scene2D');
-$editsceneExamPage = wpunity_getEditpage('sceneExam');
+$editgamePage = vrodos_getEditpage('game');
+$allGamesPage = vrodos_getEditpage('allgames');
+$newAssetPage = vrodos_getEditpage('asset');
+$editscenePage = vrodos_getEditpage('scene');
+$editscene2DPage = vrodos_getEditpage('scene2D');
+$editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
     $scene_data='';
     if($game_type_obj->string == 'Energy'){
-        $scene_data = wpunity_getFirstSceneID_byProjectID($project_id,'energy_games');//first 3D scene id
+        $scene_data = vrodos_getFirstSceneID_byProjectID($project_id,'energy_games');//first 3D scene id
     }elseif($game_type_obj->string == 'Chemistry'){
-        $scene_data = wpunity_getFirstSceneID_byProjectID($project_id,'chemistry_games');//first 3D scene id
+        $scene_data = vrodos_getFirstSceneID_byProjectID($project_id,'chemistry_games');//first 3D scene id
     }else{
-        $scene_data = wpunity_getFirstSceneID_byProjectID($project_id,'archaeology_games');//first 3D scene id
+        $scene_data = vrodos_getFirstSceneID_byProjectID($project_id,'archaeology_games');//first 3D scene id
     }
     $edit_scene_page_id = $editscenePage[0]->ID;
     $goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_data['type'];
@@ -82,9 +82,9 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 		$post_login_choice =  esc_attr(strip_tags($_POST['login']));
 		$post_help_choice =  esc_attr(strip_tags($_POST['help']));
 
-		if($post_options_choice){update_post_meta($scene_id, 'wpunity_menu_has_options', 1);}else{update_post_meta($scene_id, 'wpunity_menu_has_options', 0);}
-		if($post_login_choice){update_post_meta($scene_id, 'wpunity_menu_has_login', 1);}else{update_post_meta($scene_id, 'wpunity_menu_has_login', 0);}
-		if($post_help_choice){update_post_meta($scene_id, 'wpunity_menu_has_help', 1);}else{update_post_meta($scene_id, 'wpunity_menu_has_help', 0);}
+		if($post_options_choice){update_post_meta($scene_id, 'vrodos_menu_has_options', 1);}else{update_post_meta($scene_id, 'vrodos_menu_has_options', 0);}
+		if($post_login_choice){update_post_meta($scene_id, 'vrodos_menu_has_login', 1);}else{update_post_meta($scene_id, 'vrodos_menu_has_login', 0);}
+		if($post_help_choice){update_post_meta($scene_id, 'vrodos_menu_has_help', 1);}else{update_post_meta($scene_id, 'vrodos_menu_has_help', 0);}
 
 		if($post_help_choice){
 			$help_desc = esc_attr(strip_tags($_POST['help-description']));
@@ -127,7 +127,7 @@ if ($project_scope == 0) {
 $all_game_category = get_the_terms( $project_id, 'wpunity_game_type' );
 $game_category  = $all_game_category[0]->slug;
 
-$scene_data = wpunity_getFirstSceneID_byProjectID($project_id,$game_category);//first 3D scene id
+$scene_data = vrodos_getFirstSceneID_byProjectID($project_id,$game_category);//first 3D scene id
 $edit_scene_page_id = $editscenePage[0]->ID;
 $goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_data['type'];
 $goBackTo_AllProjects_link = esc_url( get_permalink($allGamesPage[0]->ID));
@@ -191,15 +191,15 @@ get_header(); ?>
                         <h2 class="mdc-typography--title">Enable Main Menu entries</h2>
 						<?php
 
-						$optionsFlag = get_post_meta($scene_id,'wpunity_menu_has_options',true);
+						$optionsFlag = get_post_meta($scene_id,'vrodos_menu_has_options',true);
 						$optionsEnabled = $optionsFlag ? 'true' : 'false';
 						$optionsChecked = $optionsFlag ? 'checked' : '';
 
-						$loginFlag = get_post_meta($scene_id,'wpunity_menu_has_login',true);
+						$loginFlag = get_post_meta($scene_id,'vrodos_menu_has_login',true);
 						$loginEnabled = $loginFlag ? 'true' : 'false';
 						$loginChecked = $loginFlag ? 'checked' : '';
 
-						$helpFlag = get_post_meta($scene_id,'wpunity_menu_has_help',true);
+						$helpFlag = get_post_meta($scene_id,'vrodos_menu_has_help',true);
 						$helpEnabled = $helpFlag ? 'true' : 'false';
 						$helpChecked = $helpFlag ? 'checked' : '';
 

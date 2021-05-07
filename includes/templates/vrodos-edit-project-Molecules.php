@@ -69,7 +69,7 @@ wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
 );
 
 
-$project_saved_keys = wpunity_getProjectKeys($project_id, $project_scope);
+$project_saved_keys = vrodos_getProjectKeys($project_id, $project_scope);
 
 if (!$project_saved_keys['gioID'] && $project_scope === 1) { // In Envisage only) {
 	echo "<script type='text/javascript'>alert(\"APP KEY not found. Please make sure that your are logged in, and your user account has been registered correctly.\");</script>";
@@ -81,12 +81,12 @@ $allScenePGameID = $allScenePGame->term_id;
 
 $game_type_obj = wpunity_return_project_type($project_id);
 
-$editscenePage = wpunity_getEditpage('scene');
-$editscene2DPage = wpunity_getEditpage('scene2D');
-$editsceneExamPage = wpunity_getEditpage('sceneExam');
-$editgamePage = wpunity_getEditpage('game');
-$newAssetPage = wpunity_getEditpage('asset');
-$allGamesPage = wpunity_getEditpage('allgames');
+$editscenePage = vrodos_getEditpage('scene');
+$editscene2DPage = vrodos_getEditpage('scene2D');
+$editsceneExamPage = vrodos_getEditpage('sceneExam');
+$editgamePage = vrodos_getEditpage('game');
+$newAssetPage = vrodos_getEditpage('asset');
+$allGamesPage = vrodos_getEditpage('allgames');
 
 $urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&vrodos_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
@@ -99,9 +99,9 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
     $default_json = '';
     $thegameType = wp_get_post_terms($project_id, 'wpunity_game_type');
-    if($thegameType[0]->slug == 'archaeology_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');$default_json = wpunity_getDefaultJSONscene('archaeology');}
-    elseif($thegameType[0]->slug == 'energy_games'){$newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');$default_json = wpunity_getDefaultJSONscene('energy');}
-    elseif($thegameType[0]->slug == 'chemistry_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');$default_json = wpunity_getDefaultJSONscene('chemistry');}
+    if($thegameType[0]->slug == 'archaeology_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');$default_json = vrodos_getDefaultJSONscene('archaeology');}
+    elseif($thegameType[0]->slug == 'energy_games'){$newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');$default_json = vrodos_getDefaultJSONscene('energy');}
+    elseif($thegameType[0]->slug == 'chemistry_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');$default_json = vrodos_getDefaultJSONscene('chemistry');}
 
     $scene_taxonomies = array(
         'vrodos_scene_pgame' => array(
@@ -596,9 +596,9 @@ $wp_query = $temp_query; ?>
 
 
 
-<?php $assets = wpunity_getAllassets_byGameProject($gameSlug, $project_id);
+<?php $assets = vrodos_getAllassets_byGameProject($gameSlug, $project_id);
 
-//      $assets_joker_game = wpunity_getAllassets_byGameProject('archaeology-joker');
+//      $assets_joker_game = vrodos_getAllassets_byGameProject('archaeology-joker');
 //      $assets = array_merge($assets_game, $assets_joker_game);
 
 // Output custom query loop

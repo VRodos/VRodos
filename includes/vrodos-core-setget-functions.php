@@ -1,6 +1,6 @@
 <?php
 
-function wpunity_getDefaultJSONscene($mygameType){
+function vrodos_getDefaultJSONscene($mygameType){
 	
 	if($mygameType == 'archaeology') {
 		$def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/assets/standard_scene.json");
@@ -34,7 +34,7 @@ function wpunity_countEnergyMarkers($scene_json) {
 //==========================================================================================================================================
 
 
-function wpunity_getAllStrategies_byGame($project_id){
+function vrodos_getAllStrategies_byGame($project_id){
 
 	$assetStrategies = [];
 
@@ -164,7 +164,7 @@ function wpunity_combineGameStrategies($project_id){
 //==========================================================================================================================================
 
 ////Get Settings Values
-function wpunity_getUnity_local_or_remote(){
+function vrodos_getUnity_local_or_remote(){
 	$generaloptions = get_option( 'general_settings' );
 
 	if($generaloptions["wpunity_unity_local_or_remote"]) {
@@ -174,7 +174,7 @@ function wpunity_getUnity_local_or_remote(){
 	}
 }
 
-function wpunity_getUnity_exe_folder(){
+function vrodos_getUnity_exe_folder(){
 	$generaloptions = get_option( 'general_settings' );
 	if($generaloptions["wpunity_unity_exe_folder"]) {
 		return $generaloptions["wpunity_unity_exe_folder"];
@@ -183,7 +183,7 @@ function wpunity_getUnity_exe_folder(){
 	}
 }
 
-function wpunity_getRemote_api_folder(){
+function vrodos_getRemote_api_folder(){
 	$generaloptions = get_option( 'general_settings' );
 	if($generaloptions["wpunity_remote_api_folder"]) {
 		return $generaloptions["wpunity_remote_api_folder"];
@@ -192,7 +192,7 @@ function wpunity_getRemote_api_folder(){
 	}
 }
 
-function wpunity_getRemote_server_path(){
+function vrodos_getRemote_server_path(){
 	$generaloptions = get_option( 'general_settings' );
 	if($generaloptions["wpunity_server_path"]) {
 		return $generaloptions["wpunity_server_path"];
@@ -201,7 +201,7 @@ function wpunity_getRemote_server_path(){
 	}
 }
 
-function wpunity_get_ftpCredentials(){
+function vrodos_get_ftpCredentials(){
 	$generaloptions = get_option( 'general_settings' );
 
 	$ftp_credentials = array('address'  => $generaloptions["wpunity_ftp_address"],
@@ -213,7 +213,7 @@ function wpunity_get_ftpCredentials(){
 }
 
 /* Get all game projects of the user */
-function wpunity_get_user_game_projects($user_id, $isUserAdmin){
+function vrodos_get_user_game_projects($user_id, $isUserAdmin){
     
     
     $games_slugs = ['archaeology-joker','energy-joker','chemistry-joker'];
@@ -375,7 +375,7 @@ function vrodos_fetch_game_assets_action_callback(){
 	// Output the directory listing as JSON
 	header('Content-type: application/json');
 
-	$response = wpunity_getAllassets_byGameProject($_POST['gameProjectSlug'], $_POST['gameProjectID']);
+	$response = vrodos_getAllassets_byGameProject($_POST['gameProjectSlug'], $_POST['gameProjectID']);
 	
 //	fwrite($ff, print_r($response, true));
 
@@ -422,7 +422,7 @@ function vrodos_fetch_game_assets_action_callback(){
  * @param $gameProjectID
  * @return array
  */
-function wpunity_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
+function vrodos_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 
 	$allAssets = [];
 
@@ -540,7 +540,7 @@ function wpunity_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
  * @param $gameProjectID
  * @return array
  */
-function wpunity_get_assetids_joker($gameType){
+function vrodos_get_assetids_joker($gameType){
 
 	$assetIds = [];
 
@@ -580,7 +580,7 @@ function wpunity_get_assetids_joker($gameType){
 
 
 // jimver : check this
-function wpunity_getAllscenes_unityfiles_byGame($gameID){
+function vrodos_getAllscenes_unityfiles_byGame($gameID){
 
 	$allUnityScenes = [];
 
@@ -624,7 +624,7 @@ function wpunity_getAllscenes_unityfiles_byGame($gameID){
 
 //  Get all Exams
 
-function wpunity_getAllexams_byGame($project_id, $addMenu){
+function vrodos_getAllexams_byGame($project_id, $addMenu){
 
 	$allExamScenes = [];
 
