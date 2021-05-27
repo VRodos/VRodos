@@ -176,7 +176,7 @@ function vrodos_register_styles() {
 	// Material & Frontend CSS & Scripts
 	wp_enqueue_style('vrodos_material_stylesheet');
 	wp_enqueue_script('vrodos_material_scripts');
-//	wp_enqueue_style( 'vrodos_material_icons', plugin_dir_url( __FILE__ ) . 'css/material-icons/material-icons.css' );
+	wp_enqueue_style( 'vrodos_material_icons', plugin_dir_url( __FILE__ ) . 'css/material-icons/material-icons.css' );
 //    wp_enqueue_style( 'vrodos_glyphter_icons', plugin_dir_url( __FILE__ ) . 'css/glyphter-font/Glyphter.css' );
 	wp_enqueue_style('vrodos_frontend_stylesheet');
 	
@@ -584,9 +584,6 @@ function vrodos_3D_widget_shortcode( $atts, $content = null ) {
 	$output = ob_get_contents();
 	ob_end_clean();
 	return $output;
-
-
-
 }
 
 
