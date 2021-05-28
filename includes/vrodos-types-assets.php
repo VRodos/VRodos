@@ -37,8 +37,8 @@ function vrodos_assets_construct(){
         'supports' => array('title', 'editor', 'custom-fields', 'thumbnail','revisions','author'),
         'hierarchical' => false,
         'show_in_graphql' => true,
-        'graphql_single_name' => 'VRodosAsset3d',
-        'graphql_plural_name' => 'VRodosAssets3d',
+        'graphql_single_name' => 'vrodosAsset3d',
+        'graphql_plural_name' => 'vrodosAssets3d',
         'has_archive' => false,
         //'map_meta_cap'=>true,
         'capabilities' => array(

@@ -712,6 +712,21 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 //add_action( 'edited_ vrodos_asset3d_cat', 'vrodos_assets_category_yamlFields_save', 10, 2 );
 
 /* ------------------------------ API ---------------------------------------- */
+
+//------------ 1. GraphQL
+add_action( 'graphql_register_types', function() {
+    register_graphql_field( 'vrodosAsset3d', 'glb', [
+        'type' => 'String',
+        'description' => __( 'The glb 3D file of the asset3d', 'wp-graphql' ),
+        'resolve' => function( $post ) {
+            $glb = get_post_meta( $post->ID, 'vrodos_asset3d_glb', true );
+            return ! empty( $glb ) ? $glb : 'blue';
+        }
+    ] );
+} );
+
+
+//--------- 2. REST
 ///*
 // * Get scene data by title
 // */
