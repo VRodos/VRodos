@@ -6,7 +6,7 @@
 
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
-if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
+if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 //if ($project_scope == 0) {
@@ -20,7 +20,7 @@ $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 //    //	$single_first = "Project";
 //}
 
-$joker_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'wpunity_game' )->ID;
+$joker_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'vrodos_game' )->ID;
 
 //if( isset($_GET['vrodos_asset']) ) {
 //	$asset_inserted_id = sanitize_text_field( intval( $_GET['vrodos_asset'] ));
@@ -192,10 +192,10 @@ if ($single_project_asset_list)
 
                 <div class="asset-shared-thumbnail mdc-card mdc-theme--background" id="<?php echo $asset['assetid']; ?>">
     
-                        <?php $pGameId= get_page_by_path($asset['assetParentGameSlug'], OBJECT, 'wpunity_game')->ID; ?>
+                        <?php $pGameId= get_page_by_path($asset['assetParentGameSlug'], OBJECT, 'vrodos_game')->ID; ?>
                         
                         <!-- Edit url -->
-                        <a class="editasseturl" href="<?php echo $link_to_edit.'wpunity_game='.$pGameId.'&vrodos_asset='.$asset['assetid'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English'; ?>">
+                        <a class="editasseturl" href="<?php echo $link_to_edit.'vrodos_game='.$pGameId.'&vrodos_asset='.$asset['assetid'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English'; ?>">
                             <?php if ($asset['screenImagePath']){ ?>
                                 <img src="<?php echo $asset['screenImagePath']; ?>" class="asset-shared-thumbnail">
                             <?php } else { ?>
@@ -208,7 +208,7 @@ if ($single_project_asset_list)
                         <!-- Title -->
                         <h1 class="assetsListCardTitle mdc-card__title mdc-typography--title" style="">
                             <a class="mdc-theme--secondary"
-                               href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.
+                               href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.
                                    '&vrodos_asset='.$asset['assetid'].'#English';
                                ?>"><?php echo $asset['assetName'];?></a>
                         </h1>
@@ -235,7 +235,7 @@ if ($single_project_asset_list)
                             
                             <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" style="color:white; background: rgba(214,30,30,0.7);"
                                class="deleteAssetListButton mdc-button mdc-button--compact mdc-card__action"
-                               onclick="wpunity_deleteAssetAjax(<?php echo $asset['assetid'];?>,'<?php echo $joker_project_slug ?>',<?php echo $asset['isCloned'];?>)"
+                               onclick="vrodos_deleteAssetAjax(<?php echo $asset['assetid'];?>,'<?php echo $joker_project_slug ?>',<?php echo $asset['isCloned'];?>)"
                                >DEL</a>
                             
                         <?php } ?>
@@ -257,7 +257,7 @@ if ($single_project_asset_list)
                         <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['assetName'] ?>">
                             <div class="phonering-alo-ph-circle"></div>
                             <div class="phonering-alo-ph-circle-fill"></div>
-                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?wpunity_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
+                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
                                  class="pps-btn-img" title="teleconference_ring">
                                 <div class="phonering-alo-ph-img-circle"></div>
                             </a>

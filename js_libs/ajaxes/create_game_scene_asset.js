@@ -3,9 +3,9 @@
  *  1. Create Game Project
  *  2. Create Default scenes
   *
- *  All the above are encompassed in     wpunity_create_gameproject_frontend($game_id)
+ *  All the above are encompassed in     vrodos_create_gameproject_frontend($game_id)
  */
-function wpunity_createGameAjax(game_project_title, game_project_type_radio,
+function vrodos_createGameAjax(game_project_title, game_project_type_radio,
                                 current_user_id, parameter_Scenepass) {
 
     console.log(game_project_title, game_project_type_radio,

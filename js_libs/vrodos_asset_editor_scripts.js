@@ -12,10 +12,10 @@ var currLanguage = "English";
 var slideIndex = 0;
 
 
-function wpunity_clear_asset_files(asset_viewer_3d_kernel) {
+function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
 
     if (asset_viewer_3d_kernel.renderer) {
-        asset_viewer_3d_kernel.clearAllAssets("wpunity_clear_asset_files");
+        asset_viewer_3d_kernel.clearAllAssets("vrodos_clear_asset_files");
     }
 
     // Clear inputs
@@ -245,7 +245,7 @@ function plusSlides(i) {
 }
 
 // Create model screenshot
-function wpunity_create_model_sshot(asset_viewer_3d_kernel_local) {
+function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
 
     asset_viewer_3d_kernel_local.render();
 
@@ -292,12 +292,12 @@ function loadFileInputLabel(objectType) {
         }
 }
 
-function wpunity_reset_panels(asset_viewer_3d_kernel, whocalls) {
+function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
 
-    console.log("wpunity_reset_panels", whocalls)
+    console.log("vrodos_reset_panels", whocalls)
 
     // Clear all
-    wpunity_clear_asset_files(asset_viewer_3d_kernel);
+    vrodos_clear_asset_files(asset_viewer_3d_kernel);
 
     if (jQuery("ProducerPlotTooltip")) {
         jQuery("div.ProducerPlotTooltip").remove();
@@ -317,7 +317,7 @@ function wpunity_reset_panels(asset_viewer_3d_kernel, whocalls) {
 }
 
 function clearList() {
-    wpunity_reset_panels(asset_viewer_3d_kernel, "clearList");
+    vrodos_reset_panels(asset_viewer_3d_kernel, "clearList");
 }
 
 
@@ -380,7 +380,7 @@ function startConf(){
     document.getElementById('iframeConf').src =
         "https://heliosvr.mklab.iti.gr:3000/call/<?php echo $assetLangPack2['asset_title_saved']; ?>";
 
-    wpunity_notify_confpeers();
+    vrodos_notify_confpeers();
 }
 
 // function setCanvasDivSize(){
@@ -421,7 +421,7 @@ function screenshotHandlerSet(){
     if (document.getElementById("sshotPreviewImg")) {
         jQuery("#createModelScreenshotBtn").click(function () {
             asset_viewer_3d_kernel.renderer.preserveDrawingBuffer = true;
-            wpunity_create_model_sshot(asset_viewer_3d_kernel);
+            vrodos_create_model_sshot(asset_viewer_3d_kernel);
         });
     }
 

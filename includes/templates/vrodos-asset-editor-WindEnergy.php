@@ -7,13 +7,13 @@
 			$min_speed_wind = $physics['min'];
 			$max_speed_wind = $physics['max'];
 		}
-		$energy_income = get_post_meta($asset_id,'wpunity_energyConsumptionIncome',true);
+		$energy_income = get_post_meta($asset_id,'vrodos_energyConsumptionIncome',true);
 		if($energy_income) {
 			$income_when_overpower = $energy_income['over'];
 			$income_when_correct_power = $energy_income['correct'];
 			$income_when_under_power = $energy_income['under'];
 		}
-		$constr_pen = get_post_meta($asset_id,'wpunity_constructionPenalties',true);
+		$constr_pen = get_post_meta($asset_id,'vrodos_constructionPenalties',true);
 		if($constr_pen){
 			$access_penalty = $constr_pen['access'];
 			$archaeology_penalty = $constr_pen['arch'];
@@ -21,7 +21,7 @@
 			$hvdistance_penalty = $constr_pen['hiVolt'];
 		}
 	}elseif($saved_term[0]->slug == 'consumer'){
-		$consumptions = get_post_meta($asset_id,'wpunity_energyConsumption',true);
+		$consumptions = get_post_meta($asset_id,'vrodos_energyConsumption',true);
 		if($consumptions) {
 			$min_consumption = $consumptions['min'];
 			$max_consumption = $consumptions['max'];

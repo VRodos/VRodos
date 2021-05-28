@@ -1,27 +1,27 @@
 <?php
 
-function wpunity_load_2DSceneEditorScripts() {
+function vrodos_load_2DSceneEditorScripts() {
 	wp_enqueue_script('vrodos_scripts');
 	/*wp_enqueue_script( 'tinymce_js', includes_url( 'js/tinymce/' ) . 'wp-tinymce.php', array( 'jquery' ), false, true );*/
 }
-add_action('wp_enqueue_scripts', 'wpunity_load_2DSceneEditorScripts' );
+add_action('wp_enqueue_scripts', 'vrodos_load_2DSceneEditorScripts' );
 
 
 
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
-if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
+if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 
 $scene_id = intval( $_GET['vrodos_scene'] );
 $scene_id = sanitize_text_field( $scene_id );
 
 $scene_type = sanitize_text_field( $_GET['scene_type'] );
 
-$project_id = intval( $_GET['wpunity_game'] );
+$project_id = intval( $_GET['vrodos_game'] );
 $project_id = sanitize_text_field( $project_id );
 
 $game_post = get_post($project_id);
-$game_type_obj = wpunity_return_project_type($project_id);
+$game_type_obj = vrodos_return_project_type($project_id);
 
 $scene_post = get_post($scene_id);
 $sceneSlug = $scene_post->post_title;
@@ -44,7 +44,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         $scene_data = vrodos_getFirstSceneID_byProjectID($project_id,'archaeology_games');//first 3D scene id
     }
     $edit_scene_page_id = $editscenePage[0]->ID;
-    $goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_data['type'];
+    $goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_data['type'];
 
 
     if($scene_type == 'credits'){
@@ -65,7 +65,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 			}
 		}
 
-		$attachment_id = wpunity_upload_img( $post_image, $scene_id);
+		$attachment_id = vrodos_upload_img( $post_image, $scene_id);
 		set_post_thumbnail( $scene_id, $attachment_id );
 
 		if($post_id){
@@ -91,12 +91,12 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 			update_post_meta($scene_id, 'vrodos_scene_help_text', $help_desc);
 			$help_image =  $_FILES['help-image'];
 			if($help_image['size']!=0){
-				$attachment_help_id = wpunity_upload_img( $help_image, $scene_id);
+				$attachment_help_id = vrodos_upload_img( $help_image, $scene_id);
 				update_post_meta($scene_id, 'vrodos_scene_helpimg', $attachment_help_id);
 			}
 		}
 
-		$attachment_id = wpunity_upload_img( $post_image, $scene_id);
+		$attachment_id = vrodos_upload_img( $post_image, $scene_id);
 		set_post_thumbnail( $scene_id, $attachment_id );
 
 		//wp_redirect(esc_url( get_permalink($editgamePage[0]->ID) . $parameter_pass . $project_id ));
@@ -124,12 +124,12 @@ if ($project_scope == 0) {
 	$single_first = "Project";
 }
 
-$all_game_category = get_the_terms( $project_id, 'wpunity_game_type' );
+$all_game_category = get_the_terms( $project_id, 'vrodos_game_type' );
 $game_category  = $all_game_category[0]->slug;
 
 $scene_data = vrodos_getFirstSceneID_byProjectID($project_id,$game_category);//first 3D scene id
 $edit_scene_page_id = $editscenePage[0]->ID;
-$goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_data['type'];
+$goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_data['type'];
 $goBackTo_AllProjects_link = esc_url( get_permalink($allGamesPage[0]->ID));
 
 get_header(); ?>
@@ -334,7 +334,7 @@ get_header(); ?>
                     document.getElementById('featuredImgPreview').src = '<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ); ?>';
                 } else {
                     jQuery('#featureImgContainer').addClass('ImageContainer');
-                    wpunity_read_url(this, "#featuredImgPreview");
+                    vrodos_read_url(this, "#featuredImgPreview");
                 }
             });
 
@@ -352,7 +352,7 @@ get_header(); ?>
                     document.getElementById('helpImgPreview').src = '<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ); ?>';
                 } else {
                     jQuery('#helpImgContainer').addClass('ImageContainer');
-                    wpunity_read_url(this, "#helpImgPreview");
+                    vrodos_read_url(this, "#helpImgPreview");
                 }
             });
 

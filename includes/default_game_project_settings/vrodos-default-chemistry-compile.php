@@ -1,10 +1,10 @@
 <?php
 
-function wpunity_create_chemistry_selector_unity($gameID,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_chemistry_selector_unity($gameID,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
 
 }
 
-function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of mainmenu
     $term_meta_s_mainmenu = vrodos_getSceneYAML_chemistry('menu');
     $title_text = $scene_post->post_title;
@@ -21,10 +21,10 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
     $featured_image_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6';//if there's no Featured Image
 
     if($featured_image_sprite_id != ''){
-        $featured_image_sprite_guid = wpunity_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $scene_id);
+        $featured_image_sprite_guid = vrodos_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $scene_id);
     }
 
-    $file_content = wpunity_replace_mainmenu_chem_unity($term_meta_s_mainmenu,$title_text,$featured_image_sprite_guid,$is_bt_settings_active,$is_help_bt_active,$is_exit_button_active,$is_login_bt_active);
+    $file_content = vrodos_replace_mainmenu_chem_unity($term_meta_s_mainmenu,$title_text,$featured_image_sprite_guid,$is_bt_settings_active,$is_help_bt_active,$is_exit_button_active,$is_login_bt_active);
 
     $file = $game_path . '/' . 'S_MainMenu.unity';
     $create_file = fopen($file, "w") or die("Unable to open file!");
@@ -43,7 +43,7 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
     if($is_bt_settings_active == '1'){
         //CREATE SETTINGS/OPTIONS Unity file
         $term_meta_s_settings = vrodos_getSceneYAML_chemistry('settings');
-        $file_content2 = wpunity_replace_settings_chem_unity($term_meta_s_settings);
+        $file_content2 = vrodos_replace_settings_chem_unity($term_meta_s_settings);
 
         $file2 = $game_path . '/' . 'S_Settings.unity';
         $create_file2 = fopen($file2, "w") or die("Unable to open file!");
@@ -58,12 +58,12 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
     if($is_help_bt_active == '1'){
         //CREATE HELP Unity file
         $term_meta_s_help = vrodos_getSceneYAML_chemistry('help');
-        $text_help_scene = get_post_meta($scene_id,'wpunity_scene_help_text',true);
-        $img_help_scene_id = get_post_meta($scene_id,'wpunity_scene_helpimg',true);
+        $text_help_scene = get_post_meta($scene_id,'vrodos_scene_help_text',true);
+        $img_help_scene_id = get_post_meta($scene_id,'vrodos_scene_helpimg',true);
         $img_help_scene_guid = 'dad02368a81759f4784c7dbe752b05d6'; //if there's no Featured Image (custom field at Main Menu)
         $imgbg_help_scene_guid = 'dad02368a81759f4784c7dbe752b05d6';
-        if($img_help_scene_id != ''){$img_help_scene_guid = wpunity_compile_sprite_upload($img_help_scene_id,$gameSlug,$scene_id);}
-        $file_content3 = wpunity_replace_help_chem_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid,$imgbg_help_scene_guid);
+        if($img_help_scene_id != ''){$img_help_scene_guid = vrodos_compile_sprite_upload($img_help_scene_id,$gameSlug,$scene_id);}
+        $file_content3 = vrodos_replace_help_chem_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid,$imgbg_help_scene_guid);
 
         $file3 = $game_path . '/' . 'S_Help.unity';
         $create_file3 = fopen($file3, "w") or die("Unable to open file!");
@@ -80,7 +80,7 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
         $term_meta_s_login = vrodos_getSceneYAML_chemistry('login');
         $WanderAroundScene_title = 'S_Lab';
 
-        $file_content4 = wpunity_replace_login_chem_unity($term_meta_s_login,$WanderAroundScene_title,$gameSlug);
+        $file_content4 = vrodos_replace_login_chem_unity($term_meta_s_login,$WanderAroundScene_title,$gameSlug);
 
         $file4 = $game_path . '/S_Login.unity';
         $create_file4 = fopen($file4, "w") or die("Unable to open file!");
@@ -95,7 +95,7 @@ function wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$sce
 
 }
 
-function wpunity_create_chemistry_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_chemistry_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of Credits Scene
     $term_meta_s_credits = vrodos_getSceneYAML_chemistry('credits');
     $credits_content = $scene_post->post_content;
@@ -105,8 +105,8 @@ function wpunity_create_chemistry_credentials_unity($scene_post,$scene_type_ID,$
 
     $background_image_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6'; //there's no Background Image
 
-    if($featured_image_sprite_id != ''){$featured_image_sprite_guid = wpunity_compile_sprite_upload($featured_image_sprite_id,$gameSlug,$scene_id);}
-    $file_content5 = wpunity_replace_creditsscene_chem_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid,$background_image_sprite_guid);
+    if($featured_image_sprite_id != ''){$featured_image_sprite_guid = vrodos_compile_sprite_upload($featured_image_sprite_id,$gameSlug,$scene_id);}
+    $file_content5 = vrodos_replace_creditsscene_chem_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid,$background_image_sprite_guid);
 
     $file5 = $game_path . '/' . 'S_Credits.unity';
     $create_file5 = fopen($file5, "w") or die("Unable to open file!");
@@ -118,12 +118,12 @@ function wpunity_create_chemistry_credentials_unity($scene_post,$scene_type_ID,$
     vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file5_path_CS);
 }
 
-function wpunity_create_chemistry_exam2d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
+function vrodos_create_chemistry_exam2d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
 
     $exam_slug = $scene_post->post_name;
 
     $term_meta_exam2d_chem = vrodos_getSceneYAML_chemistry('exam2d');
-    $file_contentA = wpunity_replace_chemistry_exam2D_unity($term_meta_exam2d_chem,$gameSlug);
+    $file_contentA = vrodos_replace_chemistry_exam2D_unity($term_meta_exam2d_chem,$gameSlug);
 
     $fileA = $game_path . '/' . $exam_slug . '.unity';
     $create_fileA = fopen($fileA, "w") or die("Unable to open file!");
@@ -135,12 +135,12 @@ function wpunity_create_chemistry_exam2d_unity($scene_post,$scene_type_ID,$scene
     vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $fileApath_forCS);
 }
 
-function wpunity_create_chemistry_exam3d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
+function vrodos_create_chemistry_exam3d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
 
     $exam_slug = $scene_post->post_name;
 
     $term_meta_exam3d_chem = vrodos_getSceneYAML_chemistry('exam3d');
-    $file_contentA = wpunity_replace_chemistry_exam3D_unity($term_meta_exam3d_chem,$gameSlug);
+    $file_contentA = vrodos_replace_chemistry_exam3D_unity($term_meta_exam3d_chem,$gameSlug);
 
     $fileA = $game_path . '/' . $exam_slug . '.unity';
     $create_fileA = fopen($fileA, "w") or die("Unable to open file!");
@@ -153,7 +153,7 @@ function wpunity_create_chemistry_exam3d_unity($scene_post,$scene_type_ID,$scene
 
 }
 
-function wpunity_create_chemistry_lab_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
+function vrodos_create_chemistry_lab_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
     //DATA of Chemistry Wander Around Scene
     $term_meta_wander_around_chem = vrodos_getSceneYAML_chemistry('lab');
     $scene_name = $scene_post->post_name;
@@ -162,10 +162,10 @@ function wpunity_create_chemistry_lab_unity($scene_post,$scene_type_ID,$scene_id
 
     $featured_image_edu_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
     $featured_image_edu_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6';//if there's no Featured Image
-    if($featured_image_edu_sprite_id != ''){$featured_image_edu_sprite_guid = wpunity_compile_sprite_upload($featured_image_edu_sprite_id,$gameSlug,$scene_id);}
+    if($featured_image_edu_sprite_id != ''){$featured_image_edu_sprite_guid = vrodos_compile_sprite_upload($featured_image_edu_sprite_id,$gameSlug,$scene_id);}
 
 
-    $file_contentA = wpunity_replace_chemistry_lab_unity($term_meta_wander_around_chem,$scene_id); //empty energy scene with Avatar!
+    $file_contentA = vrodos_replace_chemistry_lab_unity($term_meta_wander_around_chem,$scene_id); //empty energy scene with Avatar!
     $file_contentAb = vrodos_addAssets_chemistry_lab_unity($scene_id);//add objects from json
     //$fileA = $game_path . '/' . $scene_name . '.unity';
     $fileA = $game_path . '/' . 'S_Lab' . '.unity';
@@ -197,16 +197,16 @@ function vrodos_addAssets_chemistry_lab_unity($scene_id){
             if ($value['categoryName'] == 'Room') {
 
                 $room_id = $value['assetid'];
-                $asset_type = get_the_terms( $room_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $room_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $room_obj = get_post_meta($room_id,'wpunity_asset3d_obj',true);
+                $room_obj = get_post_meta($room_id,'vrodos_asset3d_obj',true);
 
                 $room_yaml = vrodos_getAssetYAML_chemistry('room');
-                $room_fid = wpunity_create_fids($current_fid++);
-                $room_mesh_fid = wpunity_create_fids($current_fid++); //($room_fid+1)
-                $room_mesh_collider_fid = wpunity_create_fids($current_fid++); // ($room_fid+2)
-                $room_obj_guid =  wpunity_create_guids('obj', $room_obj);
+                $room_fid = vrodos_create_fids($current_fid++);
+                $room_mesh_fid = vrodos_create_fids($current_fid++); //($room_fid+1)
+                $room_mesh_collider_fid = vrodos_create_fids($current_fid++); // ($room_fid+2)
+                $room_obj_guid =  vrodos_create_guids('obj', $room_obj);
                 $room_position_x = - $value['position'][0]; // x is in the opposite site in unity
                 $room_position_y = $value['position'][1];
                 $room_position_z = $value['position'][2];
@@ -219,25 +219,25 @@ function vrodos_addAssets_chemistry_lab_unity($scene_id){
                 $room_scale_z = $value['scale'][2];
                 $room_title = get_the_title($room_id);
 
-                $room_finalyaml = wpunity_replace_room_unity($room_yaml,$room_fid,$room_mesh_fid,$room_mesh_collider_fid,$room_obj_guid,$room_position_x,$room_position_y,$room_position_z,$room_rotation_x,$room_rotation_y,$room_rotation_z,$room_rotation_w,$room_scale_x,$room_scale_y,$room_scale_z,$room_title);
+                $room_finalyaml = vrodos_replace_room_unity($room_yaml,$room_fid,$room_mesh_fid,$room_mesh_collider_fid,$room_obj_guid,$room_position_x,$room_position_y,$room_position_z,$room_rotation_x,$room_rotation_y,$room_rotation_z,$room_rotation_w,$room_scale_x,$room_scale_y,$room_scale_z,$room_title);
                 $allObjectsYAML = $allObjectsYAML . $LF . $room_finalyaml;
             }
 
             if ($value['categoryName'] == 'Gate') {
 
                 $gate_id = $value['assetid'];
-                $asset_type = get_the_terms( $gate_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $gate_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $gate_obj = get_post_meta($gate_id,'wpunity_asset3d_obj',true);
+                $gate_obj = get_post_meta($gate_id,'vrodos_asset3d_obj',true);
 
                 $gate_yaml = vrodos_getAssetYAML_chemistry('gate');
-                $gate_fid = wpunity_create_fids($current_fid++);
-                $gate_mesh_fid = wpunity_create_fids($current_fid++);//($gate_fid+1)
-                $gate_mesh_collider_fid = wpunity_create_fids($current_fid++);//($gate_fid+2)
-                $gate_fid4 = wpunity_create_fids($current_fid++);
-                $gate_fid5 = wpunity_create_fids($current_fid++);
-                $gate_obj_guid = wpunity_create_guids('obj', $gate_obj);
+                $gate_fid = vrodos_create_fids($current_fid++);
+                $gate_mesh_fid = vrodos_create_fids($current_fid++);//($gate_fid+1)
+                $gate_mesh_collider_fid = vrodos_create_fids($current_fid++);//($gate_fid+2)
+                $gate_fid4 = vrodos_create_fids($current_fid++);
+                $gate_fid5 = vrodos_create_fids($current_fid++);
+                $gate_obj_guid = vrodos_create_guids('obj', $gate_obj);
                 $gate_position_x = - $value['position'][0]; // x is in the opposite site in unity
                 $gate_position_y = $value['position'][1];
                 $gate_position_z = $value['position'][2];
@@ -249,7 +249,7 @@ function vrodos_addAssets_chemistry_lab_unity($scene_id){
                 $gate_scale_y = $value['scale'][1];
                 $gate_scale_z = $value['scale'][2];
                 $gate_targetID = $value['sceneID_target'];
-                $gate_type = get_the_terms( $gate_targetID, 'wpunity_scene_yaml' );
+                $gate_type = get_the_terms( $gate_targetID, 'vrodos_scene_yaml' );
                 $gate_type_slug = $gate_type[0]->slug;//We changed the Main Menu unity name so we have to check and replace
                 $interactable_value = '0';//temp values
                 $scoreManager_Fid = '0';//temp values
@@ -274,9 +274,9 @@ function vrodos_addAssets_chemistry_lab_unity($scene_id){
                     $moleculeNamingScene_fid = $target_post_slug;
                 }
 
-                $gate_finalyaml = wpunity_replace_gate_unity2($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_mesh_collider_fid,$gate_obj_guid,$gate_position_x,$gate_position_y,$gate_position_z,$gate_rotation_x,$gate_rotation_y,$gate_rotation_z,$gate_rotation_w,$gate_scale_x,$gate_scale_y,$gate_scale_z,$moleculeNamingScene_fid,$interactable_value,$scoreManager_Fid,$gate_fid4,$gate_fid5);
+                $gate_finalyaml = vrodos_replace_gate_unity2($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_mesh_collider_fid,$gate_obj_guid,$gate_position_x,$gate_position_y,$gate_position_z,$gate_rotation_x,$gate_rotation_y,$gate_rotation_z,$gate_rotation_w,$gate_scale_x,$gate_scale_y,$gate_scale_z,$moleculeNamingScene_fid,$interactable_value,$scoreManager_Fid,$gate_fid4,$gate_fid5);
 
-                //$gate_finalyaml = wpunity_replace_gate_unity($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_mesh_collider_fid,$gate_obj_guid,$gate_position_x,$gate_position_y,$gate_position_z,$gate_rotation_x,$gate_rotation_y,$gate_rotation_z,$gate_rotation_w,$gate_scale_x,$gate_scale_y,$gate_scale_z,$moleculeNamingScene_fid);
+                //$gate_finalyaml = vrodos_replace_gate_unity($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_mesh_collider_fid,$gate_obj_guid,$gate_position_x,$gate_position_y,$gate_position_z,$gate_rotation_x,$gate_rotation_y,$gate_rotation_z,$gate_rotation_w,$gate_scale_x,$gate_scale_y,$gate_scale_z,$moleculeNamingScene_fid);
                 $allObjectsYAML = $allObjectsYAML . $LF . $gate_finalyaml;
             }
         }
@@ -290,7 +290,7 @@ function vrodos_addAssets_chemistry_lab_unity($scene_id){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function wpunity_replace_mainmenu_chem_unity($term_meta_s_mainmenu,$title_text,$featured_image_sprite_guid,$is_bt_settings_active,$is_help_bt_active,$is_exit_button_active,$is_login_bt_active){
+function vrodos_replace_mainmenu_chem_unity($term_meta_s_mainmenu,$title_text,$featured_image_sprite_guid,$is_bt_settings_active,$is_help_bt_active,$is_exit_button_active,$is_login_bt_active){
     $file_content_return = str_replace("___[mainmenu_featured_image_sprite]___",$featured_image_sprite_guid,$term_meta_s_mainmenu);
     //$file_content_return = str_replace("___[mainmenu_title_text]___",$title_text,$file_content_return);
     //$file_content_return = str_replace("___[mainmenu_is_bt_settings_active]___",$is_bt_settings_active,$file_content_return);
@@ -302,7 +302,7 @@ function wpunity_replace_mainmenu_chem_unity($term_meta_s_mainmenu,$title_text,$
 
 }
 
-function wpunity_replace_creditsscene_chem_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid,$background_image_sprite_guid){
+function vrodos_replace_creditsscene_chem_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid,$background_image_sprite_guid){
     $file_content_return = str_replace("___[text_credits_scene]___",$credits_content,$term_meta_s_credits);
     $file_content_return = str_replace("___[img_credits_scene]___",$featured_image_sprite_guid,$file_content_return);
     $file_content_return = str_replace("___[imgbg_credits_scene]___",$background_image_sprite_guid,$file_content_return);
@@ -310,11 +310,11 @@ function wpunity_replace_creditsscene_chem_unity($term_meta_s_credits,$credits_c
     return $file_content_return;
 }
 
-function wpunity_replace_settings_chem_unity($term_meta_s_settings){
+function vrodos_replace_settings_chem_unity($term_meta_s_settings){
     return $term_meta_s_settings;
 }
 
-function wpunity_replace_help_chem_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid,$imgbg_help_scene_guid){
+function vrodos_replace_help_chem_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid,$imgbg_help_scene_guid){
     $file_content_return = str_replace("___[text_help_scene]___",$text_help_scene,$term_meta_s_help);
     $file_content_return = str_replace("___[img_help_scene]___",$img_help_scene_guid,$file_content_return);
     $file_content_return = str_replace("___[imgbg_help_scene]___",$imgbg_help_scene_guid,$file_content_return);
@@ -322,9 +322,9 @@ function wpunity_replace_help_chem_unity($term_meta_s_help,$text_help_scene,$img
     return $file_content_return;
 }
 
-function wpunity_replace_login_chem_unity($term_meta_s_login,$WanderAroundScene_title,$gameSlug){
-    $available_Molecules = wpunity_replace_chemistry_exam_AvailableMolecules($gameSlug);
-    $defaul_strategy = wpunity_replace_chemistry_exam_defaulStrategy($gameSlug);
+function vrodos_replace_login_chem_unity($term_meta_s_login,$WanderAroundScene_title,$gameSlug){
+    $available_Molecules = vrodos_replace_chemistry_exam_AvailableMolecules($gameSlug);
+    $defaul_strategy = vrodos_replace_chemistry_exam_defaulStrategy($gameSlug);
 
     $file_content_return = str_replace("___[WanderAroundScene]___",$WanderAroundScene_title,$term_meta_s_login);
     $file_content_return = str_replace("___[available_Molecules]___",$available_Molecules,$file_content_return);
@@ -333,7 +333,7 @@ function wpunity_replace_login_chem_unity($term_meta_s_login,$WanderAroundScene_
     return $file_content_return;
 }
 
-function wpunity_replace_chemistry_lab_unity($term_meta_wander_around_chem,$scene_id){
+function vrodos_replace_chemistry_lab_unity($term_meta_wander_around_chem,$scene_id){
 
     $scene_json = get_post($scene_id)->post_content;
 
@@ -364,10 +364,10 @@ function wpunity_replace_chemistry_lab_unity($term_meta_wander_around_chem,$scen
 
 }
 
-function wpunity_replace_chemistry_exam2D_unity($term_meta_exam2d_chem,$gameSlug){
+function vrodos_replace_chemistry_exam2D_unity($term_meta_exam2d_chem,$gameSlug){
 
-//    $available_Molecules = wpunity_replace_chemistry_exam_AvailableMolecules($gameSlug);
-//    $defaul_strategy = wpunity_replace_chemistry_exam_defaulStrategy($gameSlug);
+//    $available_Molecules = vrodos_replace_chemistry_exam_AvailableMolecules($gameSlug);
+//    $defaul_strategy = vrodos_replace_chemistry_exam_defaulStrategy($gameSlug);
 //
 //    $file_content_return = str_replace("___[available_Molecules]___",$available_Molecules,$term_meta_exam2d_chem);
 //    $file_content_return = str_replace("___[defaul_strategy]___",$defaul_strategy,$file_content_return);
@@ -377,7 +377,7 @@ function wpunity_replace_chemistry_exam2D_unity($term_meta_exam2d_chem,$gameSlug
 
 }
 
-function wpunity_replace_chemistry_exam_AvailableMolecules($gameSlug){
+function vrodos_replace_chemistry_exam_AvailableMolecules($gameSlug){
     /* 4 kena:
     - name: ___[mole_formula_name]___
         formula: ___[mole_formula_type]___
@@ -385,7 +385,7 @@ function wpunity_replace_chemistry_exam_AvailableMolecules($gameSlug){
 
     $args = array(
         'name'        => $gameSlug,
-        'post_type'   => 'wpunity_game',
+        'post_type'   => 'vrodos_game',
         'post_status' => 'publish',
         'numberposts' => 1
     );
@@ -393,7 +393,7 @@ function wpunity_replace_chemistry_exam_AvailableMolecules($gameSlug){
     $project_id = $my_post[0]->ID;
 
     $availableMole = '';
-    $savedMoleculesVal = get_post_meta($project_id, 'wpunity_exam_enabled_molecules',true);//The enabled molecules for Exams
+    $savedMoleculesVal = get_post_meta($project_id, 'vrodos_exam_enabled_molecules',true);//The enabled molecules for Exams
     $savedMoleculesVal = json_decode($savedMoleculesVal);
 
     $count = 0;
@@ -414,14 +414,14 @@ function wpunity_replace_chemistry_exam_AvailableMolecules($gameSlug){
     return $availableMole;
 }
 
-function wpunity_replace_chemistry_exam_defaulStrategy($gameSlug){
+function vrodos_replace_chemistry_exam_defaulStrategy($gameSlug){
     /*
     - ___[mole_formula_type]___
     */
 
     $args = array(
         'name'        => $gameSlug,
-        'post_type'   => 'wpunity_game',
+        'post_type'   => 'vrodos_game',
         'post_status' => 'publish',
         'numberposts' => 1
     );
@@ -429,7 +429,7 @@ function wpunity_replace_chemistry_exam_defaulStrategy($gameSlug){
     $project_id = $my_post[0]->ID;
 
     $defaulStrategy = '';
-    $savedMoleculesVal = get_post_meta($project_id, 'wpunity_exam_enabled_molecules',true);//The enabled molecules for Exams
+    $savedMoleculesVal = get_post_meta($project_id, 'vrodos_exam_enabled_molecules',true);//The enabled molecules for Exams
     $savedMoleculesVal = json_decode($savedMoleculesVal);
 
     $count = 0;
@@ -443,14 +443,14 @@ function wpunity_replace_chemistry_exam_defaulStrategy($gameSlug){
     return $defaulStrategy;
 }
 
-function wpunity_replace_chemistry_exam_molePrefabs($gameSlug){
+function vrodos_replace_chemistry_exam_molePrefabs($gameSlug){
     /*
     - {fileID: ___[prefab_fileId]___, guid: ___[prefab_guid]___, type: 2}
     */
 
     $args = array(
         'name'        => $gameSlug,
-        'post_type'   => 'wpunity_game',
+        'post_type'   => 'vrodos_game',
         'post_status' => 'publish',
         'numberposts' => 1
     );
@@ -458,7 +458,7 @@ function wpunity_replace_chemistry_exam_molePrefabs($gameSlug){
     $project_id = $my_post[0]->ID;
 
     $molePrefabs = '';
-    $savedMoleculesVal = get_post_meta($project_id, 'wpunity_exam_enabled_molecules',true);//The enabled molecules for Exams
+    $savedMoleculesVal = get_post_meta($project_id, 'vrodos_exam_enabled_molecules',true);//The enabled molecules for Exams
     $savedMoleculesVal = json_decode($savedMoleculesVal);
     $count = 0;
     foreach ($savedMoleculesVal as $moleculeID) {
@@ -475,11 +475,11 @@ function wpunity_replace_chemistry_exam_molePrefabs($gameSlug){
     return $molePrefabs;
 }
 
-function wpunity_replace_chemistry_exam3D_unity($term_meta_exam3d_chem,$gameSlug){
+function vrodos_replace_chemistry_exam3D_unity($term_meta_exam3d_chem,$gameSlug){
 
-    //$available_Molecules = wpunity_replace_chemistry_exam_AvailableMolecules($gameSlug);
-    //$defaul_strategy = wpunity_replace_chemistry_exam_defaulStrategy($gameSlug);
-    $molecule_prefabs = wpunity_replace_chemistry_exam_molePrefabs($gameSlug);
+    //$available_Molecules = vrodos_replace_chemistry_exam_AvailableMolecules($gameSlug);
+    //$defaul_strategy = vrodos_replace_chemistry_exam_defaulStrategy($gameSlug);
+    $molecule_prefabs = vrodos_replace_chemistry_exam_molePrefabs($gameSlug);
 
     $file_content_return = str_replace("___[molecule_prefabs]___",$molecule_prefabs,$term_meta_exam3d_chem);
     //$file_content_return = str_replace("___[available_Molecules]___",$available_Molecules,$file_content_return);
@@ -489,7 +489,7 @@ function wpunity_replace_chemistry_exam3D_unity($term_meta_exam3d_chem,$gameSlug
 
 }
 
-function wpunity_replace_room_unity($room_yaml,$room_fid,$room_mesh_fid,$room_mesh_collider_fid,$room_obj_guid,$room_position_x,$room_position_y,$room_position_z,$room_rotation_x,$room_rotation_y,$room_rotation_z,$room_rotation_w,$room_scale_x,$room_scale_y,$room_scale_z,$room_title){
+function vrodos_replace_room_unity($room_yaml,$room_fid,$room_mesh_fid,$room_mesh_collider_fid,$room_obj_guid,$room_position_x,$room_position_y,$room_position_z,$room_rotation_x,$room_rotation_y,$room_rotation_z,$room_rotation_w,$room_scale_x,$room_scale_y,$room_scale_z,$room_title){
     $file_content_return = str_replace("___[room_fid]___",$room_fid,$room_yaml);
     $file_content_return = str_replace("___[room_mesh_fid]___",$room_mesh_fid,$file_content_return);
     $file_content_return = str_replace("___[room_mesh_collider_fid]___",$room_mesh_collider_fid,$file_content_return);
@@ -509,7 +509,7 @@ function wpunity_replace_room_unity($room_yaml,$room_fid,$room_mesh_fid,$room_me
     return $file_content_return;
 }
 
-function wpunity_replace_gate_unity($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_mesh_collider_fid,$gate_obj_guid,$gate_position_x,$gate_position_y,$gate_position_z,$gate_rotation_x,$gate_rotation_y,$gate_rotation_z,$gate_rotation_w,$gate_scale_x,$gate_scale_y,$gate_scale_z,$moleculeNamingScene_fid){
+function vrodos_replace_gate_unity($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_mesh_collider_fid,$gate_obj_guid,$gate_position_x,$gate_position_y,$gate_position_z,$gate_rotation_x,$gate_rotation_y,$gate_rotation_z,$gate_rotation_w,$gate_scale_x,$gate_scale_y,$gate_scale_z,$moleculeNamingScene_fid){
     $file_content_return = str_replace("___[gate_fid]___",$gate_fid,$gate_yaml);
     $file_content_return = str_replace("___[gate_mesh_fid]___",$gate_mesh_fid,$file_content_return);
     $file_content_return = str_replace("___[gate_mesh_collider_fid]___",$gate_mesh_collider_fid,$file_content_return);
@@ -530,7 +530,7 @@ function wpunity_replace_gate_unity($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_me
 
 }
 
-function wpunity_replace_gate_unity2($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_mesh_collider_fid,$gate_obj_guid,$gate_position_x,$gate_position_y,$gate_position_z,$gate_rotation_x,$gate_rotation_y,$gate_rotation_z,$gate_rotation_w,$gate_scale_x,$gate_scale_y,$gate_scale_z,$moleculeNamingScene_fid,$interactable_value,$scoreManager_Fid,$gate_fid4,$gate_fid5){
+function vrodos_replace_gate_unity2($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_mesh_collider_fid,$gate_obj_guid,$gate_position_x,$gate_position_y,$gate_position_z,$gate_rotation_x,$gate_rotation_y,$gate_rotation_z,$gate_rotation_w,$gate_scale_x,$gate_scale_y,$gate_scale_z,$moleculeNamingScene_fid,$interactable_value,$scoreManager_Fid,$gate_fid4,$gate_fid5){
     $file_content_return = str_replace("___[gate_fid]___",$gate_fid,$gate_yaml);
     $file_content_return = str_replace("___[gate_fid4]___",$gate_fid4,$file_content_return);
     $file_content_return = str_replace("___[gate_fid5]___",$gate_fid5,$file_content_return);
@@ -555,6 +555,6 @@ function wpunity_replace_gate_unity2($gate_yaml,$gate_fid,$gate_mesh_fid,$gate_m
 }
 
 
-function wpunity_replace_molecule_unity(){}
+function vrodos_replace_molecule_unity(){}
 
 ?>

@@ -11,7 +11,7 @@
     cursor: pointer;
 }
 
-#wpunity_compileButton {
+#vrodos_compileButton {
     background-color: #4CAF50;
     border: none;
     color: white;
@@ -24,7 +24,7 @@
     cursor: pointer;
 }
 
-.wpunity_fetchContentButton {
+.vrodos_fetchContentButton {
     background-color: #aba400;
     border: none;
     color: white;
@@ -38,7 +38,7 @@
     transition: all ease 0.1s;
 }
 
-.wpunity_fetchContentButton:active {
+.vrodos_fetchContentButton:active {
     box-shadow: 0 3px 0 #00823F;
     background-color: #006ef5;
     top: 3px;
@@ -48,7 +48,7 @@
 
 
 
-#wpunity-custom-fields-table, #wpunity-custom-fields-table td, #wpunity-custom-fields-table th{
+#vrodos-custom-fields-table, #vrodos-custom-fields-table td, #vrodos-custom-fields-table th{
     border: 1px solid #dddddd;
     padding: 15px;
     border-collapse: collapse;

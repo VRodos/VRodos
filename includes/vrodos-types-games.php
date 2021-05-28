@@ -1,29 +1,29 @@
 <?php
 
 //All information about our meta box
-$wpunity_databox3 = array(
-	'id' => 'wpunity-games-databox',
-	'page' => 'wpunity_game',
+$vrodos_databox3 = array(
+	'id' => 'vrodos-games-databox',
+	'page' => 'vrodos_game',
 	'context' => 'normal',
 	'priority' => 'high',
 	'fields' => array(
 		array(
 			'name' => 'Latitude',
 			'desc' => 'Game\'s Latitude',
-			'id' => 'wpunity_game_lat',
+			'id' => 'vrodos_game_lat',
 			'type' => 'text',
 			'std' => ''
 		),
 		array(
 			'name' => 'Longitude',
 			'desc' => 'Game\'s Longitude',
-			'id' => 'wpunity_game_lng',
+			'id' => 'vrodos_game_lng',
 			'type' => 'text',
 			'std' => ''
 		),array(
 			'name' => 'collaborators_ids',
 			'desc' => 'ids of collaborators starting separated and ending by semicolon',
-			'id' => 'wpunity_game_collaborators_ids',
+			'id' => 'vrodos_game_collaborators_ids',
 			'type' => 'text',
 			'std' => ""
 		)
@@ -31,11 +31,11 @@ $wpunity_databox3 = array(
 );
 
 
-// Create  custom post type 'wpunity_game'
+// Create  custom post type 'vrodos_game'
 function vrodos_project_cpt_construct(){
 
 //    $ff = fopen("output_order_log.txt","a");
-//    fwrite($ff, '7 wpunity_games_construct'.chr(13));
+//    fwrite($ff, '7 vrodos_games_construct'.chr(13));
 //    fclose($ff);
     
     $labels = array(
@@ -68,7 +68,7 @@ function vrodos_project_cpt_construct(){
 		'show_ui'               => true,
 		'menu_position'     => 26,
 		'menu_icon'         =>'dashicons-media-interactive',
-		'taxonomies'        => array('wpunity_game_type'),
+		'taxonomies'        => array('vrodos_game_type'),
 		'supports'          => array('title','author','editor','custom-fields','revisions'),
 		'hierarchical'      => false,
 		'has_archive'       => false,
@@ -86,11 +86,11 @@ function vrodos_project_cpt_construct(){
 		)
 	);
  
-	register_post_type('wpunity_game', $args);
+	register_post_type('vrodos_game', $args);
 }
 
 
-//Create Game Type as custom taxonomy 'wpunity_game_type'
+//Create Game Type as custom taxonomy 'vrodos_game_type'
 function vrodos_project_taxtype_create(){
  
  
@@ -123,20 +123,20 @@ function vrodos_project_taxtype_create(){
 		),
 	);
 	
-	register_taxonomy('wpunity_game_type', 'wpunity_game', $args);
+	register_taxonomy('vrodos_game_type', 'vrodos_game', $args);
 }
 
 
 // Generate Taxonomy (for scenes & assets) with Game's slug/name
 // Create Default Scenes for this "Game"
-function wpunity_create_folder_game( $new_status, $old_status, $post){
+function vrodos_create_folder_game( $new_status, $old_status, $post){
 
 	$post_type = get_post_type($post);
 	$gameSlug = $post->post_name;
 
 	global $project_scope;
 
-	if ($post_type == 'wpunity_game' && $new_status == 'publish') {
+	if ($post_type == 'vrodos_game' && $new_status == 'publish') {
 
 //        $fh = fopen("output_folder_Game.txt","a");
 //        fwrite($fh, $post_type . " " . $new_status ." ". $gameSlug .'\n' );
@@ -176,7 +176,7 @@ function wpunity_create_folder_game( $new_status, $old_status, $post){
 			);
 
 			//Create Default Scenes for this "Game"
-			wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID);
+			vrodos_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID);
 
 			//Available molecules
 			$molecules = vrodos_get_all_molecules_of_game($gameID);//ALL available Molecules of a GAME
@@ -190,19 +190,19 @@ function wpunity_create_folder_game( $new_status, $old_status, $post){
 				}
 			}
 			$allMolecules = $allMolecules . ']';
-			update_post_meta($gameID, 'wpunity_exam_enabled_molecules', $allMolecules);
+			update_post_meta($gameID, 'vrodos_exam_enabled_molecules', $allMolecules);
 
 
 			//Create Sample Data (assets) for the game that auto-created
 			$current_user = wp_get_current_user();
 			$user_id = $current_user->ID;
 			$username = $current_user->user_login;
-			//wpunity_registrationhook_createAssets($user_id,$username,$gameID);
+			//vrodos_registrationhook_createAssets($user_id,$username,$gameID);
 			//MALTA remove comments
 
 			// Request keys from GIO
 			if ($project_scope === 1) {
-				wpunity_createGame_GIO_request( $gameID , $user_id );
+				vrodos_createGame_GIO_request( $gameID , $user_id );
 			}
 
         }else{
@@ -216,18 +216,18 @@ function wpunity_create_folder_game( $new_status, $old_status, $post){
 
 
 //Create Game Category Box @ Game's backend
-function wpunity_games_taxcategory_box() {
+function vrodos_games_taxcategory_box() {
 
-	remove_meta_box( 'wpunity_game_typediv', 'wpunity_game', 'side' ); //Removes the default metabox at side
+	remove_meta_box( 'vrodos_game_typediv', 'vrodos_game', 'side' ); //Removes the default metabox at side
 	
-	add_meta_box( 'tagsdiv-wpunity_game_type','Game Type','wpunity_games_taxtype_box_content', 'wpunity_game', 'side' , 'high'); //Adds the custom metabox with select box
+	add_meta_box( 'tagsdiv-vrodos_game_type','Game Type','vrodos_games_taxtype_box_content', 'vrodos_game', 'side' , 'high'); //Adds the custom metabox with select box
 	
 }
 
 
 
-function wpunity_games_taxtype_box_content($post){
-	$tax_name = 'wpunity_game_type';
+function vrodos_games_taxtype_box_content($post){
+	$tax_name = 'vrodos_game_type';
 	?>
 	<div class="tagsdiv" id="<?php echo $tax_name; ?>">
 		
@@ -235,9 +235,9 @@ function wpunity_games_taxtype_box_content($post){
 		
 		<?php
 		// Use nonce for verification
-		wp_nonce_field( plugin_basename( __FILE__ ), 'wpunity_game_type_noncename' );
+		wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_game_type_noncename' );
 		
-		$type_IDs = wp_get_object_terms( $post->ID, 'wpunity_game_type', array('fields' => 'ids') );
+		$type_IDs = wp_get_object_terms( $post->ID, 'vrodos_game_type', array('fields' => 'ids') );
 		
 //		$ff = fopen("output_p1.txt","w");
 //		fwrite($ff, print_r($type_IDs, true));
@@ -249,11 +249,11 @@ function wpunity_games_taxtype_box_content($post){
 			'orderby'            => 'name',
 			'hide_empty'         => 0,
 			'selected'           => $type_IDs[0],
-			'name'               => 'wpunity_game_type',
-			'taxonomy'           => 'wpunity_game_type',
+			'name'               => 'vrodos_game_type',
+			'taxonomy'           => 'vrodos_game_type',
 			'echo'               => 0,
 			'option_none_value'  => '-1',
-			'id' => 'wpunity-select-type-dropdown'
+			'id' => 'vrodos-select-type-dropdown'
 		);
 		
 		$select = wp_dropdown_categories($args);
@@ -273,7 +273,7 @@ function wpunity_games_taxtype_box_content($post){
 }
 
 
-function wpunity_games_taxtype_box_content_save( $post_id ) {
+function vrodos_games_taxtype_box_content_save( $post_id ) {
 	
 	global $wpdb;
 	
@@ -282,16 +282,16 @@ function wpunity_games_taxtype_box_content_save( $post_id ) {
 	if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) )
 		return;
 	
-	if (!isset($_POST['wpunity_game_cat_noncename']))
+	if (!isset($_POST['vrodos_game_cat_noncename']))
 		return;
 	
 	// verify this came from the our screen and with proper authorization,
 	// because save_post can be triggered at other times
-	if ( !wp_verify_nonce( $_POST['wpunity_game_type_noncename'], plugin_basename( __FILE__ ) ) )
+	if ( !wp_verify_nonce( $_POST['vrodos_game_type_noncename'], plugin_basename( __FILE__ ) ) )
 		return;
 	
 	// Check permissions
-	if ( 'wpunity_game' == $_POST['post_type'] )
+	if ( 'vrodos_game' == $_POST['post_type'] )
 	{
 		if ( ! ( current_user_can( 'edit_page', $post_id )  ) )
 			return;
@@ -303,20 +303,20 @@ function wpunity_games_taxtype_box_content_save( $post_id ) {
 	}
 	
 	// OK, we're authenticated: we need to find and save the data
-	$type_ID = intval($_POST['wpunity_game_type'], 10);
+	$type_ID = intval($_POST['vrodos_game_type'], 10);
 	
-	$type = ( $type_ID > 0 ) ? get_term( $type_ID, 'wpunity_game_type' )->slug : NULL;
+	$type = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_game_type' )->slug : NULL;
 	
-	wp_set_object_terms(  $post_id , $type, 'wpunity_game_type' );
+	wp_set_object_terms(  $post_id , $type, 'vrodos_game_type' );
 }
 
-function wpunity_set_custom_wpunity_game_columns($columns) {
+function vrodos_set_custom_vrodos_game_columns($columns) {
 	$columns['game_slug'] = 'Game Slug';
 	
 	return $columns;
 }
 
-function wpunity_set_custom_wpunity_game_columns_fill( $column, $post_id ) {
+function vrodos_set_custom_vrodos_game_columns_fill( $column, $post_id ) {
 	switch ( $column ) {
 		
 		case 'game_slug' :
@@ -330,33 +330,33 @@ function wpunity_set_custom_wpunity_game_columns_fill( $column, $post_id ) {
 	}
 }
 
-// Create metabox with Custom Fields for Game ($wpunity_databox3)
+// Create metabox with Custom Fields for Game ($vrodos_databox3)
 
 
 
 
-//Add and Show the metabox with Custom Field for Game and the Compiler Box ($wpunity_databox3)
-function wpunity_games_databox_add() {
+//Add and Show the metabox with Custom Field for Game and the Compiler Box ($vrodos_databox3)
+function vrodos_games_databox_add() {
 	
-    global $wpunity_databox3;
+    global $vrodos_databox3;
 	
-	add_meta_box($wpunity_databox3['id'], 'Game Data', 'wpunity_games_databox_show', $wpunity_databox3['page'], $wpunity_databox3['context'], $wpunity_databox3['priority']);
-	add_meta_box('wpunity-games-assembler-box', 'Game Assembler', 'wpunity_games_assemblerbox_show', 'wpunity_game', 'side', 'low'); //Compiler Box
-	add_meta_box('wpunity-games-compiler-box', 'Game Compiler', 'wpunity_games_compilerbox_show', 'wpunity_game', 'side', 'low'); //Compiler Box
+	add_meta_box($vrodos_databox3['id'], 'Game Data', 'vrodos_games_databox_show', $vrodos_databox3['page'], $vrodos_databox3['context'], $vrodos_databox3['priority']);
+	add_meta_box('vrodos-games-assembler-box', 'Game Assembler', 'vrodos_games_assemblerbox_show', 'vrodos_game', 'side', 'low'); //Compiler Box
+	add_meta_box('vrodos-games-compiler-box', 'Game Compiler', 'vrodos_games_compilerbox_show', 'vrodos_game', 'side', 'low'); //Compiler Box
 }
 
-function wpunity_games_databox_show(){
+function vrodos_games_databox_show(){
 	
-	global $wpunity_databox3, $post;
+	global $vrodos_databox3, $post;
 	$DS = DIRECTORY_SEPARATOR ;
 	
 	// load request_game.js script from js_libs
-	wp_enqueue_script( 'wpunity_compile_request');
+	wp_enqueue_script( 'vrodos_compile_request');
 	
 	$slug = $post->post_name;
 	
 	// Some parameters to pass in the request_game_compile.js  ajax
-	wp_localize_script('wpunity_compile_request', 'phpvarsA',
+	wp_localize_script('vrodos_compile_request', 'phpvarsA',
 		array('pluginsUrl' => plugins_url(),
 			'PHP_OS'     => PHP_OS,
 			'game_dirpath'=> realpath(dirname(__FILE__).'/..').$DS.'games_assemble'.$DS.$slug,
@@ -377,9 +377,9 @@ function wpunity_games_databox_show(){
 		));
 	
 	// Use nonce for verification
-	echo '<input type="hidden" name="wpunity_games_databox_nonce" value="', wp_create_nonce(basename(__FILE__)), '" />';
-	echo '<table class="form-table" id="wpunity-custom-fields-table">';
-	foreach ($wpunity_databox3['fields'] as $field) {
+	echo '<input type="hidden" name="vrodos_games_databox_nonce" value="', wp_create_nonce(basename(__FILE__)), '" />';
+	echo '<table class="form-table" id="vrodos-custom-fields-table">';
+	foreach ($vrodos_databox3['fields'] as $field) {
 		// get current post meta data
 		$meta = get_post_meta($post->ID, $field['id'], true);
 		echo '<tr>',
@@ -414,15 +414,15 @@ function wpunity_games_databox_show(){
 	echo '</table>';
 }
 
-// Save data from this metabox with Custom Field for Game ($wpunity_databox3)
-function wpunity_games_databox_save($post_id) {
-	global $wpunity_databox3;
+// Save data from this metabox with Custom Field for Game ($vrodos_databox3)
+function vrodos_games_databox_save($post_id) {
+	global $vrodos_databox3;
 	
-	if (!isset($_POST['wpunity_games_databox_nonce']))
+	if (!isset($_POST['vrodos_games_databox_nonce']))
 		return;
 	
 	// verify nonce
-	if (!wp_verify_nonce($_POST['wpunity_games_databox_nonce'], basename(__FILE__))) {
+	if (!wp_verify_nonce($_POST['vrodos_games_databox_nonce'], basename(__FILE__))) {
 		return $post_id;
 	}
 	// check autosave
@@ -437,7 +437,7 @@ function wpunity_games_databox_save($post_id) {
 	} elseif (!current_user_can('edit_post', $post_id)) {
 		return $post_id;
 	}
-	foreach ($wpunity_databox3['fields'] as $field) {
+	foreach ($vrodos_databox3['fields'] as $field) {
 		$old = get_post_meta($post_id, $field['id'], true);
 		$new = $_POST[$field['id']];
 		if ($new && $new != $old) {
@@ -449,19 +449,19 @@ function wpunity_games_databox_save($post_id) {
 }
 
 // Compiling related
-function wpunity_games_compilerbox_show(){
-	echo '<div id="wpunity_compileButton" onclick="wpunity_compileAjax()">Compile</div>';
-	echo '<div id="wpunity_compile_report1"></div>';
-	echo '<div id="wpunity_compile_report2"></div>';
-	echo '<div id="wpunity_zipgame_report"></div>';
+function vrodos_games_compilerbox_show(){
+	echo '<div id="vrodos_compileButton" onclick="vrodos_compileAjax()">Compile</div>';
+	echo '<div id="vrodos_compile_report1"></div>';
+	echo '<div id="vrodos_compile_report2"></div>';
+	echo '<div id="vrodos_zipgame_report"></div>';
 	
 	echo '<br /><br />Analytic report of compile:<br />';
-	echo '<div id="wpunity_compile_game_stdoutlog_report" style="font-size: x-small"></div>';
+	echo '<div id="vrodos_compile_game_stdoutlog_report" style="font-size: x-small"></div>';
 	
 }
 
 // Assemble related
-function wpunity_games_assemblerbox_show(){
+function vrodos_games_assemblerbox_show(){
 	echo '<div id="vrodos_assembleButton" onclick="vrodos_assembleAjax()">Assemble</div>';
 	
 	echo '<br /><br />Analytic report of assemble:<br />';
@@ -473,11 +473,11 @@ function wpunity_games_assemblerbox_show(){
 
 function vrodos_projects_taxtypes_define(){
 
-wp_insert_term('Energy', 'wpunity_game_type', array('description' => 'Energy Games', 'slug' => 'energy_games'));
+wp_insert_term('Energy', 'vrodos_game_type', array('description' => 'Energy Games', 'slug' => 'energy_games'));
 
-wp_insert_term('Archaeology','wpunity_game_type', array('description'=> 'Archaeology Games','slug'=>'archaeology_games'));
+wp_insert_term('Archaeology','vrodos_game_type', array('description'=> 'Archaeology Games','slug'=>'archaeology_games'));
 
-wp_insert_term('Chemistry','wpunity_game_type',array('description'=> 'Chemistry Games','slug' => 'chemistry_games'));
+wp_insert_term('Chemistry','vrodos_game_type',array('description'=> 'Chemistry Games','slug' => 'chemistry_games'));
 
 }
 
@@ -488,118 +488,118 @@ wp_insert_term('Chemistry','wpunity_game_type',array('description'=> 'Chemistry 
 
 //16 Settings for each Game Type as term_meta
 // A callback function to add a custom field to our taxonomy
-function wpunity_games_projectSettings_fields($tag) {
+function vrodos_games_projectSettings_fields($tag) {
 	?>
 	<tr class="form-field">
 		<th scope="row" valign="top"></th>
 		<td><h2>Project Settings</h2></td>
 	</tr>
 	
-	<?php $term_audio_manager = get_term_meta( $tag->term_id, 'wpunity_audio_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_audio_manager = get_term_meta( $tag->term_id, 'vrodos_audio_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-audio_manager">
 		<th scope="row" valign="top">
-			<label for="wpunity_audio_manager_term">Audio Manager</label>
+			<label for="vrodos_audio_manager_term">Audio Manager</label>
 		</th>
 		<td>
-			<textarea name="wpunity_audio_manager_term" id="wpunity_audio_manager_term"><?php echo $term_audio_manager ? $term_audio_manager : ''; ?></textarea>
-			<p class="description">AudioManager.asset (wpunity_audio_manager_term)</p>
+			<textarea name="vrodos_audio_manager_term" id="vrodos_audio_manager_term"><?php echo $term_audio_manager ? $term_audio_manager : ''; ?></textarea>
+			<p class="description">AudioManager.asset (vrodos_audio_manager_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_cluster_input_manager = get_term_meta( $tag->term_id, 'wpunity_cluster_input_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_cluster_input_manager = get_term_meta( $tag->term_id, 'vrodos_cluster_input_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-cluster_input_manager">
 		<th scope="row" valign="top">
-			<label for="wpunity_cluster_input_manager_term">Cluster Input Manager</label>
+			<label for="vrodos_cluster_input_manager_term">Cluster Input Manager</label>
 		</th>
 		<td>
-			<textarea name="wpunity_cluster_input_manager_term" id="wpunity_cluster_input_manager_term"><?php echo $term_cluster_input_manager ? $term_cluster_input_manager : ''; ?></textarea>
-			<p class="description">ClusterInputManager.asset (wpunity_cluster_input_manager_term)</p>
+			<textarea name="vrodos_cluster_input_manager_term" id="vrodos_cluster_input_manager_term"><?php echo $term_cluster_input_manager ? $term_cluster_input_manager : ''; ?></textarea>
+			<p class="description">ClusterInputManager.asset (vrodos_cluster_input_manager_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_dynamics_manager = get_term_meta( $tag->term_id, 'wpunity_dynamics_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_dynamics_manager = get_term_meta( $tag->term_id, 'vrodos_dynamics_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-dynamics_manager">
 		<th scope="row" valign="top">
-			<label for="wpunity_dynamics_manager_term">Dynamics Manager</label>
+			<label for="vrodos_dynamics_manager_term">Dynamics Manager</label>
 		</th>
 		<td>
-			<textarea name="wpunity_dynamics_manager_term" id="wpunity_dynamics_manager_term"><?php echo $term_dynamics_manager ? $term_dynamics_manager : ''; ?></textarea>
-			<p class="description">DynamicsManager.asset (wpunity_dynamics_manager_term)</p>
+			<textarea name="vrodos_dynamics_manager_term" id="vrodos_dynamics_manager_term"><?php echo $term_dynamics_manager ? $term_dynamics_manager : ''; ?></textarea>
+			<p class="description">DynamicsManager.asset (vrodos_dynamics_manager_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_editor_build_settings = get_term_meta( $tag->term_id, 'wpunity_editor_build_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_editor_build_settings = get_term_meta( $tag->term_id, 'vrodos_editor_build_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-editor_build_settings">
 		<th scope="row" valign="top">
-			<label for="wpunity_editor_build_settings_term">Editor Build Settings</label>
+			<label for="vrodos_editor_build_settings_term">Editor Build Settings</label>
 		</th>
 		<td>
-			<textarea name="wpunity_editor_build_settings_term" id="wpunity_editor_build_settings_term"><?php echo $term_editor_build_settings ? $term_editor_build_settings : ''; ?></textarea>
-			<p class="description">EditorBuildSettings.asset (wpunity_editor_build_settings_term)</p>
+			<textarea name="vrodos_editor_build_settings_term" id="vrodos_editor_build_settings_term"><?php echo $term_editor_build_settings ? $term_editor_build_settings : ''; ?></textarea>
+			<p class="description">EditorBuildSettings.asset (vrodos_editor_build_settings_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_editor_settings = get_term_meta( $tag->term_id, 'wpunity_editor_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_editor_settings = get_term_meta( $tag->term_id, 'vrodos_editor_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-editor_settings">
 		<th scope="row" valign="top">
-			<label for="wpunity_editor_settings_term">Editor Settings</label>
+			<label for="vrodos_editor_settings_term">Editor Settings</label>
 		</th>
 		<td>
-			<textarea name="wpunity_editor_settings_term" id="wpunity_editor_settings_term"><?php echo $term_editor_settings ? $term_editor_settings : ''; ?></textarea>
-			<p class="description">EditorSettings.asset (wpunity_editor_settings_term)</p>
+			<textarea name="vrodos_editor_settings_term" id="vrodos_editor_settings_term"><?php echo $term_editor_settings ? $term_editor_settings : ''; ?></textarea>
+			<p class="description">EditorSettings.asset (vrodos_editor_settings_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_graphics_settings = get_term_meta( $tag->term_id, 'wpunity_graphics_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_graphics_settings = get_term_meta( $tag->term_id, 'vrodos_graphics_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-graphics_settings">
 		<th scope="row" valign="top">
-			<label for="wpunity_graphics_settings_term">Graphics Settings</label>
+			<label for="vrodos_graphics_settings_term">Graphics Settings</label>
 		</th>
 		<td>
-			<textarea name="wpunity_graphics_settings_term" id="wpunity_graphics_settings_term"><?php echo $term_graphics_settings ? $term_graphics_settings : ''; ?></textarea>
-			<p class="description">GraphicsSettings.asset (wpunity_graphics_settings_term)</p>
+			<textarea name="vrodos_graphics_settings_term" id="vrodos_graphics_settings_term"><?php echo $term_graphics_settings ? $term_graphics_settings : ''; ?></textarea>
+			<p class="description">GraphicsSettings.asset (vrodos_graphics_settings_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_input_manager = get_term_meta( $tag->term_id, 'wpunity_input_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_input_manager = get_term_meta( $tag->term_id, 'vrodos_input_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-input_manager">
 		<th scope="row" valign="top">
-			<label for="wpunity_input_manager_term">Input Manager</label>
+			<label for="vrodos_input_manager_term">Input Manager</label>
 		</th>
 		<td>
-			<textarea name="wpunity_input_manager_term" id="wpunity_input_manager_term"><?php echo $term_input_manager ? $term_input_manager : ''; ?></textarea>
-			<p class="description">InputManager.asset (wpunity_input_manager_term)</p>
+			<textarea name="vrodos_input_manager_term" id="vrodos_input_manager_term"><?php echo $term_input_manager ? $term_input_manager : ''; ?></textarea>
+			<p class="description">InputManager.asset (vrodos_input_manager_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_nav_mesh_areas = get_term_meta( $tag->term_id, 'wpunity_nav_mesh_areas_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_nav_mesh_areas = get_term_meta( $tag->term_id, 'vrodos_nav_mesh_areas_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-nav_mesh_areas">
 		<th scope="row" valign="top">
-			<label for="wpunity_nav_mesh_areas_term">Nav Mesh Areas</label>
+			<label for="vrodos_nav_mesh_areas_term">Nav Mesh Areas</label>
 		</th>
 		<td>
-			<textarea name="wpunity_nav_mesh_areas_term" id="wpunity_nav_mesh_areas_term"><?php echo $term_nav_mesh_areas ? $term_nav_mesh_areas : ''; ?></textarea>
-			<p class="description">NavMeshAreas.asset (wpunity_nav_mesh_areas_term)</p>
+			<textarea name="vrodos_nav_mesh_areas_term" id="vrodos_nav_mesh_areas_term"><?php echo $term_nav_mesh_areas ? $term_nav_mesh_areas : ''; ?></textarea>
+			<p class="description">NavMeshAreas.asset (vrodos_nav_mesh_areas_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_network_manager = get_term_meta( $tag->term_id, 'wpunity_network_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_network_manager = get_term_meta( $tag->term_id, 'vrodos_network_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-network_manager">
 		<th scope="row" valign="top">
-			<label for="wpunity_network_manager_term">Network Manager</label>
+			<label for="vrodos_network_manager_term">Network Manager</label>
 		</th>
 		<td>
-			<textarea name="wpunity_network_manager_term" id="wpunity_network_manager_term"><?php echo $term_network_manager ? $term_network_manager : ''; ?></textarea>
-			<p class="description">NetworkManager.asset (wpunity_network_manager_term)</p>
+			<textarea name="vrodos_network_manager_term" id="vrodos_network_manager_term"><?php echo $term_network_manager ? $term_network_manager : ''; ?></textarea>
+			<p class="description">NetworkManager.asset (vrodos_network_manager_term)</p>
 		</td>
 	</tr>
 	
@@ -639,51 +639,51 @@ function wpunity_games_projectSettings_fields($tag) {
 		</td>
 	</tr>
 	
-	<?php $quality_settings = get_term_meta( $tag->term_id, 'wpunity_quality_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $quality_settings = get_term_meta( $tag->term_id, 'vrodos_quality_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-quality_settings">
 		<th scope="row" valign="top">
-			<label for="wpunity_quality_settings_term">Quality Settings</label>
+			<label for="vrodos_quality_settings_term">Quality Settings</label>
 		</th>
 		<td>
-			<textarea name="wpunity_quality_settings_term" id="wpunity_quality_settings_term"><?php echo $quality_settings ? $quality_settings : ''; ?></textarea>
-			<p class="description">QualitySettings.asset (wpunity_quality_settings_term)</p>
+			<textarea name="vrodos_quality_settings_term" id="vrodos_quality_settings_term"><?php echo $quality_settings ? $quality_settings : ''; ?></textarea>
+			<p class="description">QualitySettings.asset (vrodos_quality_settings_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_tag_manager = get_term_meta( $tag->term_id, 'wpunity_tag_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_tag_manager = get_term_meta( $tag->term_id, 'vrodos_tag_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-tag_manager">
 		<th scope="row" valign="top">
-			<label for="wpunity_tag_manager_term">Tag Manager</label>
+			<label for="vrodos_tag_manager_term">Tag Manager</label>
 		</th>
 		<td>
-			<textarea name="wpunity_tag_manager_term" id="wpunity_tag_manager_term"><?php echo $term_tag_manager ? $term_tag_manager : ''; ?></textarea>
-			<p class="description">TagManager.asset (wpunity_tag_manager_term)</p>
+			<textarea name="vrodos_tag_manager_term" id="vrodos_tag_manager_term"><?php echo $term_tag_manager ? $term_tag_manager : ''; ?></textarea>
+			<p class="description">TagManager.asset (vrodos_tag_manager_term)</p>
 		</td>
 	</tr>
 	
-	<?php $term_time_manager = get_term_meta( $tag->term_id, 'wpunity_time_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $term_time_manager = get_term_meta( $tag->term_id, 'vrodos_time_manager_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-time_manager">
 		<th scope="row" valign="top">
-			<label for="wpunity_time_manager_term">Time Manager</label>
+			<label for="vrodos_time_manager_term">Time Manager</label>
 		</th>
 		<td>
-			<textarea name="wpunity_time_manager_term" id="wpunity_time_manager_term"><?php echo $term_time_manager ? $term_time_manager : ''; ?></textarea>
-			<p class="description">TimeManager.asset (wpunity_time_manager_term)</p>
+			<textarea name="vrodos_time_manager_term" id="vrodos_time_manager_term"><?php echo $term_time_manager ? $term_time_manager : ''; ?></textarea>
+			<p class="description">TimeManager.asset (vrodos_time_manager_term)</p>
 		</td>
 	</tr>
 	
-	<?php $unity_connect_settings = get_term_meta( $tag->term_id, 'wpunity_unity_connect_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
+	<?php $unity_connect_settings = get_term_meta( $tag->term_id, 'vrodos_unity_connect_settings_term', true );// Check for existing taxonomy meta for the term you're editing ?>
 	
 	<tr class="form-field term-unity_connect_settings">
 		<th scope="row" valign="top">
-			<label for="wpunity_unity_connect_settings_term">Unity Connect Settings</label>
+			<label for="vrodos_unity_connect_settings_term">Unity Connect Settings</label>
 		</th>
 		<td>
-			<textarea name="wpunity_unity_connect_settings_term" id="wpunity_unity_connect_settings_term"><?php echo $unity_connect_settings ? $unity_connect_settings : ''; ?></textarea>
-			<p class="description">UnityConnectSettings.asset (wpunity_unity_connect_settings_term)</p>
+			<textarea name="vrodos_unity_connect_settings_term" id="vrodos_unity_connect_settings_term"><?php echo $unity_connect_settings ? $unity_connect_settings : ''; ?></textarea>
+			<p class="description">UnityConnectSettings.asset (vrodos_unity_connect_settings_term)</p>
 		</td>
 	</tr>
 	
@@ -691,51 +691,51 @@ function wpunity_games_projectSettings_fields($tag) {
 }
 
 // Save our extra taxonomy fields
-function wpunity_games_projectSettings_fields_save( $term_id ) {
+function vrodos_games_projectSettings_fields_save( $term_id ) {
 	
-	if ( isset( $_POST['wpunity_audio_manager_term'] ) ) {
-		$term_audio_manager = $_POST['wpunity_audio_manager_term'];
-		update_term_meta($term_id, 'wpunity_audio_manager_term', $term_audio_manager);
+	if ( isset( $_POST['vrodos_audio_manager_term'] ) ) {
+		$term_audio_manager = $_POST['vrodos_audio_manager_term'];
+		update_term_meta($term_id, 'vrodos_audio_manager_term', $term_audio_manager);
 	}
 	
-	if ( isset( $_POST['wpunity_cluster_input_manager_term'] ) ) {
-		$term_cluster_input_manager = $_POST['wpunity_cluster_input_manager_term'];
-		update_term_meta($term_id, 'wpunity_cluster_input_manager_term', $term_cluster_input_manager);
+	if ( isset( $_POST['vrodos_cluster_input_manager_term'] ) ) {
+		$term_cluster_input_manager = $_POST['vrodos_cluster_input_manager_term'];
+		update_term_meta($term_id, 'vrodos_cluster_input_manager_term', $term_cluster_input_manager);
 	}
 	
-	if ( isset( $_POST['wpunity_dynamics_manager_term'] ) ) {
-		$term_dynamics_manager = $_POST['wpunity_dynamics_manager_term'];
-		update_term_meta($term_id, 'wpunity_dynamics_manager_term', $term_dynamics_manager);
+	if ( isset( $_POST['vrodos_dynamics_manager_term'] ) ) {
+		$term_dynamics_manager = $_POST['vrodos_dynamics_manager_term'];
+		update_term_meta($term_id, 'vrodos_dynamics_manager_term', $term_dynamics_manager);
 	}
 	
-	if ( isset( $_POST['wpunity_editor_build_settings_term'] ) ) {
-		$term_editor_build_settings = $_POST['wpunity_editor_build_settings_term'];
-		update_term_meta($term_id, 'wpunity_editor_build_settings_term', $term_editor_build_settings);
+	if ( isset( $_POST['vrodos_editor_build_settings_term'] ) ) {
+		$term_editor_build_settings = $_POST['vrodos_editor_build_settings_term'];
+		update_term_meta($term_id, 'vrodos_editor_build_settings_term', $term_editor_build_settings);
 	}
 	
-	if ( isset( $_POST['wpunity_editor_settings_term'] ) ) {
-		$term_editor_settings = $_POST['wpunity_editor_settings_term'];
-		update_term_meta($term_id, 'wpunity_editor_settings_term', $term_editor_settings);
+	if ( isset( $_POST['vrodos_editor_settings_term'] ) ) {
+		$term_editor_settings = $_POST['vrodos_editor_settings_term'];
+		update_term_meta($term_id, 'vrodos_editor_settings_term', $term_editor_settings);
 	}
 	
-	if ( isset( $_POST['wpunity_graphics_settings_term'] ) ) {
-		$term_graphics_settings = $_POST['wpunity_graphics_settings_term'];
-		update_term_meta($term_id, 'wpunity_graphics_settings_term', $term_graphics_settings);
+	if ( isset( $_POST['vrodos_graphics_settings_term'] ) ) {
+		$term_graphics_settings = $_POST['vrodos_graphics_settings_term'];
+		update_term_meta($term_id, 'vrodos_graphics_settings_term', $term_graphics_settings);
 	}
 	
-	if ( isset( $_POST['wpunity_input_manager_term'] ) ) {
-		$term_input_manager = $_POST['wpunity_input_manager_term'];
-		update_term_meta($term_id, 'wpunity_input_manager_term', $term_input_manager);
+	if ( isset( $_POST['vrodos_input_manager_term'] ) ) {
+		$term_input_manager = $_POST['vrodos_input_manager_term'];
+		update_term_meta($term_id, 'vrodos_input_manager_term', $term_input_manager);
 	}
 	
-	if ( isset( $_POST['wpunity_nav_mesh_areas_term'] ) ) {
-		$term_nav_mesh_areas = $_POST['wpunity_nav_mesh_areas_term'];
-		update_term_meta($term_id, 'wpunity_nav_mesh_areas_term', $term_nav_mesh_areas);
+	if ( isset( $_POST['vrodos_nav_mesh_areas_term'] ) ) {
+		$term_nav_mesh_areas = $_POST['vrodos_nav_mesh_areas_term'];
+		update_term_meta($term_id, 'vrodos_nav_mesh_areas_term', $term_nav_mesh_areas);
 	}
 	
-	if ( isset( $_POST['wpunity_network_manager_term'] ) ) {
-		$term_network_manager = $_POST['wpunity_network_manager_term'];
-		update_term_meta($term_id, 'wpunity_network_manager_term', $term_network_manager);
+	if ( isset( $_POST['vrodos_network_manager_term'] ) ) {
+		$term_network_manager = $_POST['vrodos_network_manager_term'];
+		update_term_meta($term_id, 'vrodos_network_manager_term', $term_network_manager);
 	}
 	
 	if ( isset( $_POST['vrodos_physics2d_settings_term'] ) ) {
@@ -753,29 +753,29 @@ function wpunity_games_projectSettings_fields_save( $term_id ) {
 		update_term_meta($term_id, 'vrodos_project_version_term', $term_project_version);
 	}
 	
-	if ( isset( $_POST['wpunity_quality_settings_term'] ) ) {
-		$term_quality_settings = $_POST['wpunity_quality_settings_term'];
-		update_term_meta($term_id, 'wpunity_quality_settings_term', $term_quality_settings);
+	if ( isset( $_POST['vrodos_quality_settings_term'] ) ) {
+		$term_quality_settings = $_POST['vrodos_quality_settings_term'];
+		update_term_meta($term_id, 'vrodos_quality_settings_term', $term_quality_settings);
 	}
 	
-	if ( isset( $_POST['wpunity_tag_manager_term'] ) ) {
-		$term_tag_manager = $_POST['wpunity_tag_manager_term'];
-		update_term_meta($term_id, 'wpunity_tag_manager_term', $term_tag_manager);
+	if ( isset( $_POST['vrodos_tag_manager_term'] ) ) {
+		$term_tag_manager = $_POST['vrodos_tag_manager_term'];
+		update_term_meta($term_id, 'vrodos_tag_manager_term', $term_tag_manager);
 	}
 	
-	if ( isset( $_POST['wpunity_time_manager_term'] ) ) {
-		$term_time_manager = $_POST['wpunity_time_manager_term'];
-		update_term_meta($term_id, 'wpunity_time_manager_term', $term_time_manager);
+	if ( isset( $_POST['vrodos_time_manager_term'] ) ) {
+		$term_time_manager = $_POST['vrodos_time_manager_term'];
+		update_term_meta($term_id, 'vrodos_time_manager_term', $term_time_manager);
 	}
 	
-	if ( isset( $_POST['wpunity_unity_connect_settings_term'] ) ) {
-		$term_unity_connect_settings = $_POST['wpunity_unity_connect_settings_term'];
-		update_term_meta($term_id, 'wpunity_unity_connect_settings_term', $term_unity_connect_settings);
+	if ( isset( $_POST['vrodos_unity_connect_settings_term'] ) ) {
+		$term_unity_connect_settings = $_POST['vrodos_unity_connect_settings_term'];
+		update_term_meta($term_id, 'vrodos_unity_connect_settings_term', $term_unity_connect_settings);
 	}
 }
 
-//add_action( 'wpunity_game_type_edit_form_fields', 'wpunity_games_projectSettings_fields', 10, 2 );
-//add_action( 'edited_wpunity_game_type', 'wpunity_games_projectSettings_fields_save', 10, 2 );
+//add_action( 'vrodos_game_type_edit_form_fields', 'vrodos_games_projectSettings_fields', 10, 2 );
+//add_action( 'edited_vrodos_game_type', 'vrodos_games_projectSettings_fields_save', 10, 2 );
 
 
 

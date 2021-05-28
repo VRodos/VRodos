@@ -2,7 +2,7 @@
 
 // Add openGame templates to every theme
 
-class wpUnityTemplate {
+class vrodosTemplate {
     
     //A reference to an instance of this class.
     private static $instance;
@@ -12,7 +12,7 @@ class wpUnityTemplate {
     
     //Returns an instance of this class.
     public static function get_instance() {
-        if ( null == self::$instance ) { self::$instance = new wpUnityTemplate();}
+        if ( null == self::$instance ) { self::$instance = new vrodosTemplate();}
         return self::$instance;
     }
     
@@ -133,7 +133,7 @@ function vrodos_create_pages() {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Project Manager Page',
             'post_type' => 'page',
-            'post_name' => 'vrodos-project-manager-page', //wpunity-main
+            'post_name' => 'vrodos-project-manager-page', //vrodos-main
             'comment_status' => 'closed',
             'ping_status' => 'closed',
             'post_content' => '',
@@ -237,6 +237,7 @@ function vrodos_create_pages() {
     
     // 6. Asset Editor
     if (! vrodos_get_page_by_slug('vrodos-asset-editor-page')) {
+        
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Asset Editor Page',
             'post_type' => 'page',
@@ -273,9 +274,6 @@ function vrodos_fx_admin_notice_activation_hook() {
 add_action( 'admin_notices', 'vrodos_fx_admin_notice_notice' );
 
 function vrodos_fx_admin_notice_notice(){
-    
-    
-
 
     /* Check transient, if available display notice */
     if( get_transient( 'vrodos_fx-admin-notice' ) ){

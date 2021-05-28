@@ -38,8 +38,8 @@ function loadButtonActions() {
         jQuery("#compileProceedBtn").addClass("LinkDisabled");
         jQuery("#compileCancelBtn").addClass("LinkDisabled");
 
-        jQuery("#wpunity-ziplink").hide();
-        jQuery("#wpunity-weblink").hide();
+        jQuery("#vrodos-ziplink").hide();
+        jQuery("#vrodos-weblink").hide();
 
         jQuery("#compilationProgressText").html("");
 
@@ -62,7 +62,7 @@ function loadButtonActions() {
         console.log(pid);
 
         if (pid) {
-            wpunity_killtask_compile(pid);
+            vrodos_killtask_compile(pid);
         }
     });
 
@@ -107,7 +107,7 @@ function loadButtonActions() {
 
     // Save experiment id: Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
     jQuery('#save-expid-button').click(function () {
-        wpunity_saveExpIDAjax();
+        vrodos_saveExpIDAjax();
     });
 
 
@@ -142,7 +142,7 @@ function loadButtonActions() {
         jQuery('#delete-scene-dialog-progress-bar').show();
         jQuery("#deleteSceneDialogDeleteBtn").addClass("LinkDisabled");
         jQuery("#deleteSceneDialogCancelBtn").addClass("LinkDisabled");
-        wpunity_deleteSceneAjax(deleteDialog.id, url_scene_redirect);
+        vrodos_deleteSceneAjax(deleteDialog.id, url_scene_redirect);
     });
 
     jQuery("#deleteSceneDialogCancelBtn").click(function (e) {
@@ -283,7 +283,7 @@ function loadButtonActions() {
         if(!is_scene_icon_manually_selected)
             takeScreenshot();
 
-        wpunity_saveSceneAjax();
+        vrodos_saveSceneAjax();
     });
 
 
@@ -294,7 +294,7 @@ function loadButtonActions() {
 
         post_revision_no += 1;
 
-        wpunity_undoSceneAjax(uploadDir, post_revision_no);
+        vrodos_undoSceneAjax(uploadDir, post_revision_no);
     });
 
     // REDO button
@@ -305,7 +305,7 @@ function loadButtonActions() {
 
         jQuery('#redo-scene-button').html("...").addClass("LinkDisabled");
 
-        wpunity_undoSceneAjax();
+        vrodos_undoSceneAjax();
     });
 
 

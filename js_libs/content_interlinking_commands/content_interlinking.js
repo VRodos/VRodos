@@ -30,7 +30,7 @@
 //             console.log("ERROR"  + thrownError);
 //             alert('Error 28: API problems. Fetch again? ' + thrownError);
 //
-//             //document.getElementById('wpunity_fetchDescription_bt').innerHTML = 'Error 21: Fetch again?' + thrownError;
+//             //document.getElementById('vrodos_fetchDescription_bt').innerHTML = 'Error 21: Fetch again?' + thrownError;
 //         }
 //     });
 //
@@ -44,14 +44,14 @@
  * AJAX: FETCH CONTENT FOR DESCRIPTION
  * @param externalSource  either "Wikipedia" or "Europeana"
  */
-function wpunity_fetchDescriptionAjaxFrontEnd( externalSource, title, description_dom ){
+function vrodos_fetchDescriptionAjaxFrontEnd( externalSource, title, description_dom ){
 
-    //document.getElementById('wpunity_fetchDescription_bt').innerHTML = "Fetching";
+    //document.getElementById('vrodos_fetchDescription_bt').innerHTML = "Fetching";
     //externalSource = document.getElementById("fetch_source").options[document.getElementById("fetch_source").selectedIndex].value;
     //lang document.getElementById("fetch_lang").options[document.getElementById("fetch_lang").selectedIndex].value;
 
     // Replace empty spaces with underscores
-    var title =   title.replace(new RegExp(" ", 'g'),"_"); // document.getElementById("wpunity_titles_search").value.replace(" ","%20");
+    var title =   title.replace(new RegExp(" ", 'g'),"_"); // document.getElementById("vrodos_titles_search").value.replace(" ","%20");
 
         //console.log("AAA" + title);
 
@@ -160,7 +160,7 @@ function wpunity_fetchDescriptionAjaxFrontEnd( externalSource, title, descriptio
 
                 }
             }
-            //document.getElementById('wpunity_fetchDescription_bt').innerHTML = "Fetch";
+            //document.getElementById('vrodos_fetchDescription_bt').innerHTML = "Fetch";
 
         },
         error : function(xhr, ajaxOptions, thrownError){
@@ -168,7 +168,7 @@ function wpunity_fetchDescriptionAjaxFrontEnd( externalSource, title, descriptio
             console.log("ERROR"  + thrownError);
             alert('Error 21: API problems. Fetch again? ' + thrownError);
 
-            //document.getElementById('wpunity_fetchDescription_bt').innerHTML = 'Error 21: Fetch again?' + thrownError;
+            //document.getElementById('vrodos_fetchDescription_bt').innerHTML = 'Error 21: Fetch again?' + thrownError;
         }
     });
 
@@ -181,9 +181,9 @@ function wpunity_fetchDescriptionAjaxFrontEnd( externalSource, title, descriptio
 //----------------------------------------------------------------------------------
 //  AJAX: FETCH CONTENT FOR DESCRIPTION
 //----------------------------------------------------------------------------------
-function wpunity_fetchDescriptionAjax(){
+function vrodos_fetchDescriptionAjax(){
 
-    document.getElementById('wpunity_fetchDescription_bt').innerHTML = "Fetching";
+    document.getElementById('vrodos_fetchDescription_bt').innerHTML = "Fetching";
 
     externalSource = document.getElementById("fetch_source").options[document.getElementById("fetch_source").selectedIndex].value;
 
@@ -193,8 +193,8 @@ function wpunity_fetchDescriptionAjax(){
         data : {'action': 'vrodos_fetch_description_action',
                 'lang':           document.getElementById("fetch_lang").options[document.getElementById("fetch_lang").selectedIndex].value,
                 'externalSource': externalSource,
-                'titles':         document.getElementById("wpunity_titles_search").value.replace(" ","%20"),
-                'fulltext':       document.getElementById("wpunity_fulltext_chkbox").checked?'':'exintro=&'},
+                'titles':         document.getElementById("vrodos_titles_search").value.replace(" ","%20"),
+                'fulltext':       document.getElementById("vrodos_fulltext_chkbox").checked?'':'exintro=&'},
 
         success : function(response) {
 
@@ -222,12 +222,12 @@ function wpunity_fetchDescriptionAjax(){
 
                 }
             }
-            document.getElementById('wpunity_fetchDescription_bt').innerHTML = "Fetch";
+            document.getElementById('vrodos_fetchDescription_bt').innerHTML = "Fetch";
 
         },
         error : function(xhr, ajaxOptions, thrownError){
             console.log("ERROR");
-            document.getElementById('wpunity_fetchDescription_bt').innerHTML = 'Error 21: Fetch again?' + thrownError;
+            document.getElementById('vrodos_fetchDescription_bt').innerHTML = 'Error 21: Fetch again?' + thrownError;
         }
     });
 
@@ -238,13 +238,13 @@ function wpunity_fetchDescriptionAjax(){
 //----------------------------------------------------------------------------------
 //  FETCH IMAGES
 //----------------------------------------------------------------------------------
-function wpunity_fetchImageAjax(){
+function vrodos_fetchImageAjax(){
 
-    document.getElementById('wpunity_fetchImage_bt').innerHTML = "Fetching";
+    document.getElementById('vrodos_fetchImage_bt').innerHTML = "Fetching";
 
     externalSourceImage = document.getElementById("fetch_source_image").options[document.getElementById("fetch_source_image").selectedIndex].value;
 
-    document.getElementById("wpunity_titles_image_search_image").value = document.getElementById("wpunity_titles_image_search_image").value.replace(/ /g,"+");
+    document.getElementById("vrodos_titles_image_search_image").value = document.getElementById("vrodos_titles_image_search_image").value.replace(/ /g,"+");
 
     jQuery.ajax({
         url : 'admin-ajax.php',
@@ -252,7 +252,7 @@ function wpunity_fetchImageAjax(){
         data : {'action': 'vrodos_fetch_image_action',
             'lang_image':           document.getElementById("fetch_lang_image").options[document.getElementById("fetch_lang_image").selectedIndex].value,
             'externalSource_image': externalSourceImage,
-            'titles_image':         document.getElementById("wpunity_titles_image_search_image").value
+            'titles_image':         document.getElementById("vrodos_titles_image_search_image").value
             },
 
         success : function(response) {
@@ -317,11 +317,11 @@ function wpunity_fetchImageAjax(){
                 }
             }
 
-            document.getElementById('wpunity_fetchImage_bt').innerHTML = "Fetch";
+            document.getElementById('vrodos_fetchImage_bt').innerHTML = "Fetch";
         },
         error : function(xhr, ajaxOptions, thrownError){
             console.log("ERROR");
-            document.getElementById('wpunity_fetchImage_bt').innerHTML = 'Error 22: Fetch again?' + thrownError;
+            document.getElementById('vrodos_fetchImage_bt').innerHTML = 'Error 22: Fetch again?' + thrownError;
         }
     });
 
@@ -332,13 +332,13 @@ function wpunity_fetchImageAjax(){
 //----------------------------------------------------------------------------------
 //  FETCH VIDEOS
 //----------------------------------------------------------------------------------
-function wpunity_fetchVideoAjax(){
+function vrodos_fetchVideoAjax(){
 
-    document.getElementById('wpunity_fetchVideo_bt').innerHTML = "Fetching";
+    document.getElementById('vrodos_fetchVideo_bt').innerHTML = "Fetching";
 
     externalSourceVideo = document.getElementById("fetch_source_video").options[document.getElementById("fetch_source_video").selectedIndex].value;
 
-    document.getElementById("wpunity_titles_video_search_video").value = document.getElementById("wpunity_titles_video_search_video").value.replace(/ /g,"_");
+    document.getElementById("vrodos_titles_video_search_video").value = document.getElementById("vrodos_titles_video_search_video").value.replace(/ /g,"_");
 
     jQuery.ajax({
         url : 'admin-ajax.php',
@@ -346,7 +346,7 @@ function wpunity_fetchVideoAjax(){
         data : {'action': 'vrodos_fetch_video_action',
             'lang_video':           document.getElementById("fetch_lang_video").options[document.getElementById("fetch_lang_video").selectedIndex].value,
             'externalSource_video': externalSourceVideo,
-            'titles_video':         document.getElementById("wpunity_titles_video_search_video").value
+            'titles_video':         document.getElementById("vrodos_titles_video_search_video").value
         },
 
         success : function(response) {
@@ -408,11 +408,11 @@ function wpunity_fetchVideoAjax(){
                 }
             }
 
-            document.getElementById('wpunity_fetchVideo_bt').innerHTML = "Fetch";
+            document.getElementById('vrodos_fetchVideo_bt').innerHTML = "Fetch";
         },
         error : function(xhr, ajaxOptions, thrownError){
             console.log("ERROR");
-            document.getElementById('wpunity_fetchVideo_bt').innerHTML = 'Error 23: Fetch again?' + thrownError;
+            document.getElementById('vrodos_fetchVideo_bt').innerHTML = 'Error 23: Fetch again?' + thrownError;
         }
     });
 }
@@ -422,13 +422,13 @@ function wpunity_fetchVideoAjax(){
 //----------------------------------------------------------------------------------
 //  FETCH VIDEOS
 //----------------------------------------------------------------------------------
-function wpunity_fetchVideoAjax(){
+function vrodos_fetchVideoAjax(){
 
-    document.getElementById('wpunity_fetchVideo_bt').innerHTML = "Fetching";
+    document.getElementById('vrodos_fetchVideo_bt').innerHTML = "Fetching";
 
     externalSourceVideo = document.getElementById("fetch_source_video").options[document.getElementById("fetch_source_video").selectedIndex].value;
 
-    document.getElementById("wpunity_titles_video_search_video").value = document.getElementById("wpunity_titles_video_search_video").value.replace(/ /g,"_");
+    document.getElementById("vrodos_titles_video_search_video").value = document.getElementById("vrodos_titles_video_search_video").value.replace(/ /g,"_");
 
     jQuery.ajax({
         url : 'admin-ajax.php',
@@ -436,7 +436,7 @@ function wpunity_fetchVideoAjax(){
         data : {'action': 'vrodos_fetch_video_action',
             'lang_video':           document.getElementById("fetch_lang_video").options[document.getElementById("fetch_lang_video").selectedIndex].value,
             'externalSource_video': externalSourceVideo,
-            'titles_video':         document.getElementById("wpunity_titles_video_search_video").value
+            'titles_video':         document.getElementById("vrodos_titles_video_search_video").value
         },
 
         success : function(response) {
@@ -498,11 +498,11 @@ function wpunity_fetchVideoAjax(){
                 }
             }
 
-            document.getElementById('wpunity_fetchVideo_bt').innerHTML = "Fetch";
+            document.getElementById('vrodos_fetchVideo_bt').innerHTML = "Fetch";
         },
         error : function(xhr, ajaxOptions, thrownError){
             console.log("ERROR");
-            document.getElementById('wpunity_fetchVideo_bt').innerHTML = 'Error 23: Fetch again?' + thrownError;
+            document.getElementById('vrodos_fetchVideo_bt').innerHTML = 'Error 23: Fetch again?' + thrownError;
         }
     });
 
@@ -511,12 +511,12 @@ function wpunity_fetchVideoAjax(){
 
 
 // Notify that somebody has entered conference room
-function wpunity_notify_confpeers() {
+function vrodos_notify_confpeers() {
 
     jQuery.ajax({
         url : isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_fetch_content.ajax_url,
         type : 'POST',
-        data : {'action': 'wpunity_notify_confpeers_action',
+        data : {'action': 'vrodos_notify_confpeers_action',
                 'confroom':  document.getElementById('assetTitleView').innerHTML
         },
         success : function(response) {
@@ -535,7 +535,7 @@ function vrodos_periodically_update_conf_log() {
     jQuery.ajax({
         url : isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_fetch_content.ajax_url,
         type : 'POST',
-        data : {'action': 'wpunity_update_expert_log_action'
+        data : {'action': 'vrodos_update_expert_log_action'
         },
         success : function(response) {
 

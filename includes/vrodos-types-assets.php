@@ -36,6 +36,9 @@ function vrodos_assets_construct(){
         'taxonomies' => array('vrodos_asset3d_cat', 'vrodos_asset3d_pgame', 'vrodos_asset3d_ipr_cat'),
         'supports' => array('title', 'editor', 'custom-fields', 'thumbnail','revisions','author'),
         'hierarchical' => false,
+        'show_in_graphql' => true,
+        'graphql_single_name' => 'VRodosAsset3d',
+        'graphql_plural_name' => 'VRodosAssets3d',
         'has_archive' => false,
         //'map_meta_cap'=>true,
         'capabilities' => array(
@@ -83,6 +86,9 @@ function vrodos_assets_taxcategory(){
             'delete_terms' => 'manage_vrodos_asset3d_cat',
             'assign_terms' => 'edit_vrodos_asset3d_cat'
         ),
+        'show_in_graphql' => true,
+        'graphql_single_name' => 'VrodosAsset3DCategory',
+        'graphql_plural_name' => 'VrodosAsset3DCategories',
     );
     register_taxonomy('vrodos_asset3d_cat', 'vrodos_asset3d', $args);
 }
@@ -158,11 +164,11 @@ function vrodos_assets_taxcategory_ipr(){
 
 
 //Create PathData for each asset as custom field in order to upload files at pathdata/Models folder
-function wpunity_create_pathdata_asset( $post_id ){
+function vrodos_create_pathdata_asset( $post_id ){
     
     if (get_post_type($post_id) === 'vrodos_asset3d') {
         
-        $parentGameID = $_GET['wpunity_game'];
+        $parentGameID = $_GET['vrodos_game'];
         
         if (!is_numeric($parentGameID)) {
             echo "ERROR 455: ParentGameID is not numeric.";
@@ -176,7 +182,7 @@ function wpunity_create_pathdata_asset( $post_id ){
     }
 }
 
-function wpunity_allowAuthorEditing()
+function vrodos_allowAuthorEditing()
 {
     add_post_type_support( 'vrodos_asset3d', 'author' );
 }
@@ -243,7 +249,7 @@ function vrodos_assets_tax_select_project_box_content($post){
             'taxonomy'           => 'vrodos_asset3d_pgame',
             'echo'               => 0,
             'option_none_value'  => '-1',
-            'id' => 'wpunity-select-category-dropdown'
+            'id' => 'vrodos-select-category-dropdown'
         );
         
         $select = wp_dropdown_categories($args);
@@ -311,12 +317,12 @@ function vrodos_assets_tax_select_category_box_content($post){
             'taxonomy'           => 'vrodos_asset3d_cat',
             'echo'               => 0,
             'option_none_value'  => '-1',
-            'id'                 => 'wpunity-select-asset3d-cat-dropdown',
+            'id'                 => 'vrodos-select-asset3d-cat-dropdown',
         );
         
         $select = wp_dropdown_categories($args);
         
-        //        $replace = "<select$1 onchange='wpunity_hidecfields_asset3d();' required>";
+        //        $replace = "<select$1 onchange='vrodos_hidecfields_asset3d();' required>";
         //        $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
         //
         //        $old_option = "<option value='-1'>";
@@ -357,7 +363,7 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
             'taxonomy'           => 'vrodos_asset3d_ipr_cat',
             'echo'               => 0,
             'option_none_value'  => '-1',
-            'id' => 'wpunity-select-asset3d-ipr-cat-dropdown',
+            'id' => 'vrodos-select-asset3d-ipr-cat-dropdown',
         );
         
         //if (term_exists( 'visible to all', 'vrodos_asset3d_ipr_cat')!=0) {
@@ -385,7 +391,7 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
         
         $select = wp_dropdown_categories($args);
         
-        //        $replace = "<select$1 onchange='wpunity_hidecfields_asset3d();' required>";
+        //        $replace = "<select$1 onchange='vrodos_hidecfields_asset3d();' required>";
         //        $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
         //
         //        $old_option = "<option value='-1'>";
@@ -453,12 +459,12 @@ function vrodos_asset_project_box_content_save($post_id ) {
 }
 
 
-function wpunity_set_custom_vrodos_asset3d_columns($columns) {
+function vrodos_set_custom_vrodos_asset3d_columns($columns) {
     $columns['asset_slug'] = 'Asset Slug';
     return $columns;
 }
 
-function wpunity_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ) {
+function vrodos_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ) {
     switch ( $column ) {
         case 'asset_slug' :
             $mypost = get_post($post_id);
@@ -480,16 +486,16 @@ function wpunity_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ) {
 // A callback function to add a custom field to our taxonomy
 function vrodos_assets_category_yamlFields($tag) {
     // Check for existing taxonomy meta for the term you're editing
-    //$term_meta_yaml_assetcat = get_term_meta( $tag->term_id, 'wpunity_yamlmeta_assetcat_pat', true );
+    //$term_meta_yaml_assetcat = get_term_meta( $tag->term_id, 'vrodos_yamlmeta_assetcat_pat', true );
     ?>
     
     <!--    <tr class="form-field term-assetcat_pat">-->
     <!--        <th scope="row" valign="top">-->
-    <!--            <label for="wpunity_yamlmeta_wonderaround_pat">Asset's YAML</label>-->
+    <!--            <label for="vrodos_yamlmeta_wonderaround_pat">Asset's YAML</label>-->
     <!--        </th>-->
     <!--        <td>-->
-    <!--            <textarea name="wpunity_yamlmeta_assetcat_pat" id="wpunity_yamlmeta_assetcat_pat">--><?php //echo $term_meta_yaml_assetcat ? $term_meta_yaml_assetcat : ''; ?><!--</textarea>-->
-    <!--            <p class="description">wpunity_yamlmeta_assetcat_pat</p>-->
+    <!--            <textarea name="vrodos_yamlmeta_assetcat_pat" id="vrodos_yamlmeta_assetcat_pat">--><?php //echo $term_meta_yaml_assetcat ? $term_meta_yaml_assetcat : ''; ?><!--</textarea>-->
+    <!--            <p class="description">vrodos_yamlmeta_assetcat_pat</p>-->
     <!--        </td>-->
     <!--    </tr>-->
     
@@ -509,9 +515,9 @@ function vrodos_assets_category_yamlFields($tag) {
 // A callback function to save our extra taxonomy field(s)
 function vrodos_assets_category_yamlFields_save( $term_id ) {
 
-//    if ( isset( $_POST['wpunity_yamlmeta_assetcat_pat'] ) ) {
-//        $term_meta_wonderaround_pat = $_POST['wpunity_yamlmeta_assetcat_pat'];
-//        update_term_meta($term_id, 'wpunity_yamlmeta_assetcat_pat', $term_meta_wonderaround_pat);
+//    if ( isset( $_POST['vrodos_yamlmeta_assetcat_pat'] ) ) {
+//        $term_meta_wonderaround_pat = $_POST['vrodos_yamlmeta_assetcat_pat'];
+//        update_term_meta($term_id, 'vrodos_yamlmeta_assetcat_pat', $term_meta_wonderaround_pat);
 //    }
 }
 

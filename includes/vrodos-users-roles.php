@@ -22,16 +22,16 @@
 //$role->remove_cap('level_0');
 
 
-//$role->remove_cap('edit_wpunity_game');
-//$role->remove_cap('read_wpunity_game');
-//$role->remove_cap('read_private_wpunity_game ');
-//$role->remove_cap('delete_others_wpunity_game');
-//$role->remove_cap('delete_wpunity_game');
-//$role->remove_cap('edit_others_wpunity_game');
+//$role->remove_cap('edit_vrodos_game');
+//$role->remove_cap('read_vrodos_game');
+//$role->remove_cap('read_private_vrodos_game ');
+//$role->remove_cap('delete_others_vrodos_game');
+//$role->remove_cap('delete_vrodos_game');
+//$role->remove_cap('edit_others_vrodos_game');
 //
 //$role->remove_cap('manage_game_type');
 //$role->remove_cap('edit_game_type');
-//$role->remove_cap('read_private_wpunity_game');
+//$role->remove_cap('read_private_vrodos_game');
 //$role->remove_cap('manage_game_cat');
 //$role->remove_cap('edit_game_cat');
 //$role->remove_cap('manage_game_type');
@@ -89,8 +89,8 @@ function vrodos_add_customroles() {
 
     $role->add_cap( 'manage_vrodos_project_type' );
     $role->add_cap( 'edit_vrodos_project_type' );
-    $role->add_cap( 'manage_wpunity_taxpgame' );
-    $role->add_cap( 'edit_wpunity_taxpgame' );
+    $role->add_cap( 'manage_vrodos_taxpgame' );
+    $role->add_cap( 'edit_vrodos_taxpgame' );
     $role->add_cap( 'manage_vrodos_scene_yaml' );
     $role->add_cap( 'edit_vrodos_scene_yaml' );
     
@@ -147,8 +147,8 @@ function vrodos_add_capabilities_to_admin() {
     //Caps about Taxonomies
     $role->add_cap( 'manage_vrodos_project_type' );
     $role->add_cap( 'edit_vrodos_project_type' );
-    $role->add_cap( 'manage_wpunity_taxpgame' );
-    $role->add_cap( 'edit_wpunity_taxpgame' );
+    $role->add_cap( 'manage_vrodos_taxpgame' );
+    $role->add_cap( 'edit_vrodos_taxpgame' );
     $role->add_cap( 'manage_vrodos_scene_yaml' );
     $role->add_cap( 'edit_vrodos_scene_yaml' );
     

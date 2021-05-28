@@ -3,10 +3,10 @@
 $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 $pluginpath = str_replace('\\','/',$pluginpath);
 
-function wpunity_load2DSceneEditorScripts_exams() {
+function vrodos_load2DSceneEditorScripts_exams() {
 	wp_enqueue_script('vrodos_scripts');
 }
-add_action('wp_enqueue_scripts', 'wpunity_load2DSceneEditorScripts_exams' );
+add_action('wp_enqueue_scripts', 'vrodos_load2DSceneEditorScripts_exams' );
 
 // DELETE ASSET AJAX
 wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.'/js_libs/ajaxes/delete_asset.js', array('jquery') );
@@ -16,7 +16,7 @@ wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
 
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 
-if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
+if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
 if( $perma_structure){$parameter_assetpass = '?vrodos_asset=';} else{$parameter_assetpass = '&vrodos_asset=';}
 
@@ -26,11 +26,11 @@ $scene_id = sanitize_text_field( $scene_id );
 
 $scene_type = sanitize_text_field( $_GET['scene_type'] );
 
-$project_id = intval( $_GET['wpunity_game'] );
+$project_id = intval( $_GET['vrodos_game'] );
 $project_id = sanitize_text_field( $project_id );
 
 $game_post = get_post($project_id);
-$game_type_obj = wpunity_return_project_type($project_id);
+$game_type_obj = vrodos_return_project_type($project_id);
 $gameSlug = $game_post->post_name;
 
 $scene_post = get_post($scene_id);
@@ -55,7 +55,7 @@ require_once(ABSPATH . "wp-admin" . '/includes/media.php');
 
 $scene_title = 'Exam';
 $molecules = vrodos_get_all_molecules_of_game($project_id);//ALL available Molecules of a GAME
-$savedMoleculesVal = get_post_meta($project_id, 'wpunity_exam_enabled_molecules',true);//The enabled molecules for Exams
+$savedMoleculesVal = get_post_meta($project_id, 'vrodos_exam_enabled_molecules',true);//The enabled molecules for Exams
 $savedMoleculesVal = json_decode($savedMoleculesVal) ? json_decode($savedMoleculesVal) : array();
 
 if ($project_scope == 0) {
@@ -68,12 +68,12 @@ if ($project_scope == 0) {
 
 $scene_data = vrodos_getFirstSceneID_byProjectID($project_id,'chemistry_games'); //first 3D scene id
 $edit_scene_page_id = $editscenePage[0]->ID;
-$goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_data['type'];
+$goBackTo_MainLab_link = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_data['type'];
 $goBackTo_AllProjects_link = esc_url( get_permalink($allGamesPage[0]->ID));
-$refresh_to_examPage =  get_permalink($editsceneExamPage[0]->ID) . $parameter_Scenepass . $scene_id . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_type;
-$gotoAdd_newAsset_page = get_permalink($newAssetPage[0]->ID) . $parameter_Scenepass . $scene_id . '&wpunity_game=' . $project_id ;
+$refresh_to_examPage =  get_permalink($editsceneExamPage[0]->ID) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_type;
+$gotoAdd_newAsset_page = get_permalink($newAssetPage[0]->ID) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id ;
 
-$preSavedStrategies = get_post_meta($scene_id, 'wpunity_exam_strategy', true) ? get_post_meta($scene_id, 'wpunity_exam_strategy', true) : false;
+$preSavedStrategies = get_post_meta($scene_id, 'vrodos_exam_strategy', true) ? get_post_meta($scene_id, 'vrodos_exam_strategy', true) : false;
 
 if ($preSavedStrategies) {
 
@@ -111,10 +111,10 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 	// Updating both exams with the same strategy
 	$allExams = vrodos_getExamScenes_byProjectID($project_id); //get all scene exams
 	foreach ($allExams as $thescene_id) {
-		update_post_meta($thescene_id, 'wpunity_exam_strategy', $savedStrategies);
+		update_post_meta($thescene_id, 'vrodos_exam_strategy', $savedStrategies);
 	}
 
-	$savedStrategies = get_post_meta($scene_id, 'wpunity_exam_strategy', true);
+	$savedStrategies = get_post_meta($scene_id, 'vrodos_exam_strategy', true);
 	$savedStrategies = json_decode($savedStrategies, true);
 
 	// Update GIO API with strategies
@@ -129,7 +129,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
 if(isset($_POST['submitted2']) && isset($_POST['post_nonce_field2']) && wp_verify_nonce($_POST['post_nonce_field2'], 'post_nonce')) {
 	$saveEnabledMolecules = $_POST['availableMoleculesInput'];
-	update_post_meta($project_id, 'wpunity_exam_enabled_molecules', $saveEnabledMolecules);
+	update_post_meta($project_id, 'vrodos_exam_enabled_molecules', $saveEnabledMolecules);
 	wp_redirect($refresh_to_examPage);
 	exit;
 }
@@ -479,7 +479,7 @@ get_header();
             jQuery( "#deleteMolecDialogDeleteBtn" ).addClass( "LinkDisabled" );
             jQuery( "#deleteMolecDialogCancelBtn" ).addClass( "LinkDisabled" );
 
-            wpunity_deleteAssetAjax(deleteDialog.id, deleteDialog.game_slug);
+            vrodos_deleteAssetAjax(deleteDialog.id, deleteDialog.game_slug);
 
         });
 

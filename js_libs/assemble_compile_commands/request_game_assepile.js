@@ -205,9 +205,9 @@ function vrodos_assepileAjax() {
 
         var dir_gamepath = my_ajax_object_assepile.gameUnityProject_dirpath ;//"../wp-content/plugins/wordpressunity3deditor/test_compiler/game_windows/"; // my_ajax_object_assepile.game_dirpath; // without filename
 
-        // Get domain path, e.g. from http://127.0.0.1:8080/digiart-project_Jan17/wpunity-edit-project/?wpunity_game=1040  isolate
+        // Get domain path, e.g. from http://127.0.0.1:8080/digiart-project_Jan17/vrodos-edit-project/?vrodos_game=1040  isolate
         // http://127.0.0.1:8080/digiart-project_Jan17/
-        // The way is to get the substring without /wpunity-edit-project/?wpunity_game=1040  (until the prelast slash)
+        // The way is to get the substring without /vrodos-edit-project/?vrodos_game=1040  (until the prelast slash)
 
         // var domain_path = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
         // domain_path = domain_path.substring(0,domain_path.lastIndexOf('/'));
@@ -223,8 +223,8 @@ function vrodos_assepileAjax() {
                     'dirpath': dir_gamepath},
 
             success : function(response){
-                //document.getElementById('wpunity_zipgame_report').innerHTML = response;
-                //document.getElementById('wpunity_zipgame_report').innerHTML = '<a href="'+ phpvarsA.game_urlpath + '/game.zip">Download game in a zip file </a>';
+                //document.getElementById('vrodos_zipgame_report').innerHTML = response;
+                //document.getElementById('vrodos_zipgame_report').innerHTML = '<a href="'+ phpvarsA.game_urlpath + '/game.zip">Download game in a zip file </a>';
 
                 console.log("Ajax 3: Success: ");
                 console.log("Ajax 3: Success: response"+ response);
@@ -233,19 +233,19 @@ function vrodos_assepileAjax() {
                 // Check if index.html exists (because it is not always compiled for web)
                 console.log("Ajax 3: Success: index.html location " + my_ajax_object_assepile.gameUnityProject_urlpath + '/builds/WebGL/index.html' );
 
-                document.getElementById('wpunity-ziplink').href = my_ajax_object_assepile.gameUnityProject_urlpath + '/game.zip';
-                jQuery('#wpunity-ziplink').show();
+                document.getElementById('vrodos-ziplink').href = my_ajax_object_assepile.gameUnityProject_urlpath + '/game.zip';
+                jQuery('#vrodos-ziplink').show();
 
                 if (platform === 'platform-web') {
-                    document.getElementById('wpunity-weblink').href = my_ajax_object_assepile.gameUnityProject_urlpath + '/builds/WebGL/index.html';
-                    jQuery('#wpunity-weblink').show();
+                    document.getElementById('vrodos-weblink').href = my_ajax_object_assepile.gameUnityProject_urlpath + '/builds/WebGL/index.html';
+                    jQuery('#vrodos-weblink').show();
                 }
 
                 hideCompileProgressSlider();
                 compilationProgressText.append( '<p>Zip file created!</p>');
             },
             error : function(xhr, ajaxOptions, thrownError){
-                //document.getElementById('wpunity_zipgame_report').innerHTML = 'Zipping game: ERROR [17]! '+ thrownError;
+                //document.getElementById('vrodos_zipgame_report').innerHTML = 'Zipping game: ERROR [17]! '+ thrownError;
                 console.log("Ajax 3: Fail:" + "Zipping game: ERROR [17]! " + thrownError);
 
                 hideCompileProgressSlider();
@@ -255,7 +255,7 @@ function vrodos_assepileAjax() {
 }
 
 // Kill the compile
-function wpunity_killtask_compile(pid) {
+function vrodos_killtask_compile(pid) {
 
     if (pid === -1) {
         console.log("Couldn't find process!")

@@ -1,4 +1,4 @@
-function wpunity_saveSceneAjax() {
+function vrodos_saveSceneAjax() {
 
     var postdata = {
         'action': 'vrodos_save_scene_async_action',
@@ -32,7 +32,7 @@ function wpunity_saveSceneAjax() {
 }
 
 
-function wpunity_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
+function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 
     var postdata = {
         'action': 'vrodos_undo_scene_async_action',
@@ -87,7 +87,7 @@ function wpunity_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 
 
 
-function wpunity_saveGIOApKeyAjax() {
+function vrodos_saveGIOApKeyAjax() {
 
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savegio.ajax_url,
@@ -118,7 +118,7 @@ function wpunity_saveGIOApKeyAjax() {
 
 }
 
-function wpunity_saveExpIDAjax() {
+function vrodos_saveExpIDAjax() {
 
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savegio.ajax_url,

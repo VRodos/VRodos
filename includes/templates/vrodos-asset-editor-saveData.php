@@ -1,6 +1,6 @@
 <?php
 
-function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm, $gameSlug){
+function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm, $gameSlug){
 
     // Clear out all previous
     
@@ -87,7 +87,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
         for ($i = 0; $i < count($content_texture); $i++) {
             
             // Upload texture content
-            $texturePost_id = wpunity_upload_asset_texture(
+            $texturePost_id = vrodos_upload_asset_texture(
                 $content_texture[$textureNamesIn[$i]], // content of file
                 'texture_' . $textureNamesIn[$i] . '_' . $assetTitleForm, // new filename
                 $asset_newID, // asset id
@@ -138,7 +138,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
         if (strlen(trim($_POST['mtlFileInput']))>0 && strlen(trim($_POST['objFileInput']))>0) {
           
             // 1. Upload mtl content as text and get the id of meta
-            $mtlFile_id = wpunity_upload_AssetText(
+            $mtlFile_id = vrodos_upload_AssetText(
                             $mtl_content,               // the content
                     'material' .                 // it should have the keyword material in finale basename
                             $assetTitleForm,            // It should have also the title of Asset
@@ -163,7 +163,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
             $obj_content = substr_replace($obj_content, $obj_contentfirst, 0, $nCharsToSearch);
             
             // 5. Upload OBJ
-            $objFile_id = wpunity_upload_AssetText($obj_content, // the OBJ content
+            $objFile_id = vrodos_upload_AssetText($obj_content, // the OBJ content
                                            'obj' .$assetTitleForm, // it should have the obj and title as name
                                                   $asset_newID,
                                                   null, null
@@ -200,7 +200,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
         // Upload FBX file as BINARY
         if ($index_file_fbx!=-1) {
             // 1. Upload FBX file as BINARY
-            $fbxFile_id = wpunity_upload_AssetText(null, 'fbx' . $assetTitleForm, $asset_newID,
+            $fbxFile_id = vrodos_upload_AssetText(null, 'fbx' . $assetTitleForm, $asset_newID,
                 $_FILES, $index_file_fbx);
         
             // 2. Set value of attachment IDs at custom fields
@@ -210,7 +210,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
     } else {
     
         // Upload FBX file as TEXT
-        $fbxFile_id = wpunity_upload_AssetText($fbx_content, 'fbx'.$assetTitleForm, $asset_newID,
+        $fbxFile_id = vrodos_upload_AssetText($fbx_content, 'fbx'.$assetTitleForm, $asset_newID,
             null, null);
     
         // 2. Set value of attachment IDs at custom fields
@@ -221,7 +221,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
     // PDB upload and add id of uploaded file to postmeta  vrodos_asset3d_pdb of asset
     if ($_POST['pdbFileInput']!=null){
         if (strlen($_POST['pdbFileInput'])>0) {
-            $pdbFile_id = wpunity_upload_AssetText($_POST['pdbFileInput'], 'pdb' . $assetTitleForm, $asset_newID, null, null);
+            $pdbFile_id = vrodos_upload_AssetText($_POST['pdbFileInput'], 'pdb' . $assetTitleForm, $asset_newID, null, null);
             update_post_meta($asset_newID, 'vrodos_asset3d_pdb', $pdbFile_id);
         }
     }
@@ -230,7 +230,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
     // GLB upload and add id of uploaded file to postmeta  vrodos_asset3d_glb of asset
     if ($_POST['glbFileInput']!=null){
         if (strlen($_POST['glbFileInput'])>0) {
-            $glbFile_id = wpunity_upload_AssetText(null, 'glb' . $assetTitleForm, $asset_newID,
+            $glbFile_id = vrodos_upload_AssetText(null, 'glb' . $assetTitleForm, $asset_newID,
                 $_FILES, $index_file_glb); // $_POST['glbFileInput']
             update_post_meta($asset_newID, 'vrodos_asset3d_glb', $glbFile_id);
         }
@@ -239,7 +239,7 @@ function wpunity_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleFor
 
 
 // Create asset
-function wpunity_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID,
+function vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID,
                                        $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
     
     $asset_taxonomies = array(
@@ -259,14 +259,14 @@ function wpunity_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $a
     $asset_id = wp_insert_post($asset_information);
     update_post_meta($asset_id, 'vrodos_asset3d_pathData', $gameSlug);
     
-    wpunity_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
+    vrodos_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
 
     return $asset_id ? $asset_id : 0;
 }
 
 
 // Update asset
-function wpunity_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
+function vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
                                        $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
     $asset_taxonomies = array(
         'vrodos_asset3d_pgame' => array($assetPGameID,),
@@ -282,12 +282,12 @@ function wpunity_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $a
 
     wp_update_post($asset_new_info);
     
-    wpunity_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
+    vrodos_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     
     return 1;
 }
 
-function wpunity_create_asset_addImages_frontend($asset_newID){
+function vrodos_create_asset_addImages_frontend($asset_newID){
     
     $asset_imageForm = [];
     for ($i=0; $i<=4; $i++){
@@ -295,11 +295,11 @@ function wpunity_create_asset_addImages_frontend($asset_newID){
         
         if ($i==0){
             // Featured image (thumbnail)
-            $attachment_id = wpunity_upload_img_vid_aud( $asset_imageForm[0], $asset_newID);
+            $attachment_id = vrodos_upload_img_vid_aud( $asset_imageForm[0], $asset_newID);
             set_post_thumbnail( $asset_newID, $attachment_id );
         } else { // Images 1,2,3,4
             if ($asset_imageForm[$i]['error'] != 4) { // No error
-                $attachment_id_image = wpunity_upload_img_vid_aud($asset_imageForm[$i], $asset_newID);
+                $attachment_id_image = vrodos_upload_img_vid_aud($asset_imageForm[$i], $asset_newID);
                 update_post_meta($asset_newID, 'vrodos_asset3d_image'.$i, $attachment_id_image);
             }
         }
@@ -308,34 +308,34 @@ function wpunity_create_asset_addImages_frontend($asset_newID){
 }
 
 
-function wpunity_create_asset_addAudio_frontend($asset_newID){
+function vrodos_create_asset_addAudio_frontend($asset_newID){
     $asset_audioForm = $_FILES['audioFileInput'];
     
     // 4 error means empty
     if ( $asset_audioForm['error'] == 4  )
         return;
     
-    $attachment_audio_id = wpunity_upload_img_vid_aud( $asset_audioForm, $asset_newID);
+    $attachment_audio_id = vrodos_upload_img_vid_aud( $asset_audioForm, $asset_newID);
     update_post_meta( $asset_newID, 'vrodos_asset3d_audio', $attachment_audio_id );
 }
 
 
 
-function wpunity_create_asset_addVideo_frontend($asset_newID){
+function vrodos_create_asset_addVideo_frontend($asset_newID){
     $asset_videoForm = $_FILES['videoFileInput'];
     
     // 4 error means empty
     if ( $asset_videoForm['error'] == 4  )
         return;
     
-    $attachment_video_id = wpunity_upload_img_vid_aud( $asset_videoForm, $asset_newID);
+    $attachment_video_id = vrodos_upload_img_vid_aud( $asset_videoForm, $asset_newID);
     update_post_meta( $asset_newID, 'vrodos_asset3d_video', $attachment_video_id );
 }
 
 
 
 // ------------- Chemistry - Wind Energy related ----------------------------
-function wpunity_create_asset_consumerExtra_frontend($asset_newID){
+function vrodos_create_asset_consumerExtra_frontend($asset_newID){
     //Energy Consumption
     $safe_cons_values = range(0, 2000, 5);
     $safe_cons_values2 = range(0, 1000, 5);
@@ -352,10 +352,10 @@ function wpunity_create_asset_consumerExtra_frontend($asset_newID){
 
     $energyConsumption = array('min' => $energyConsumptionMinValForm, 'max' => $energyConsumptionMaxValForm, 'mean' => $energyConsumptionMeanValForm, 'var' => $energyConsumptionVarianceValForm);
 
-    update_post_meta($asset_newID, 'wpunity_energyConsumption', $energyConsumption);
+    update_post_meta($asset_newID, 'vrodos_energyConsumption', $energyConsumption);
 }
 
-function wpunity_create_asset_terrainExtra_frontend($asset_newID){
+function vrodos_create_asset_terrainExtra_frontend($asset_newID){
     $underPowerIncomeValForm = floatval($_POST['underPowerIncomeVal']);
     $correctPowerIncomeValForm = floatval($_POST['correctPowerIncomeVal']);
     $overPowerIncomeValForm = floatval($_POST['overPowerIncomeVal']);
@@ -395,12 +395,12 @@ function wpunity_create_asset_terrainExtra_frontend($asset_newID){
 
     $physicsValues = array('min' => $physicsWindMinValForm, 'max' => $physicsWindMaxValForm, 'mean' => $physicsWindMeanValForm, 'variance' => $physicsWindVarianceValForm);
 
-    update_post_meta($asset_newID, 'wpunity_energyConsumptionIncome', $energyConsumptionIncome);
+    update_post_meta($asset_newID, 'vrodos_energyConsumptionIncome', $energyConsumptionIncome);
     update_post_meta($asset_newID, 'vrodos_physicsValues', $physicsValues);
-    update_post_meta($asset_newID, 'wpunity_constructionPenalties', $constructionPenalties);
+    update_post_meta($asset_newID, 'vrodos_constructionPenalties', $constructionPenalties);
 }
 
-function wpunity_create_asset_producerExtra_frontend($asset_newID){
+function vrodos_create_asset_producerExtra_frontend($asset_newID){
     $producerTurbineSizeValForm = intval($_POST['producerTurbineSizeVal']);
     $producerDmgCoeffValForm = floatval($_POST['producerDmgCoeffVal']);
     $producerCostValForm = intval($_POST['producerCostVal']);
@@ -430,7 +430,7 @@ function wpunity_create_asset_producerExtra_frontend($asset_newID){
 
 
 
-function wpunity_create_asset_moleculeExtra_frontend($asset_newID){
+function vrodos_create_asset_moleculeExtra_frontend($asset_newID){
     $moleculeChemicalType = $_POST['moleculeChemicalType'];
     $moleculeFunctionalGroupInput = $_POST['moleculeFunctionalGroupInput'];
     $moleculeFluidViscosity = floatval($_POST['molecule-fluid-viscosity-slider-label']);
@@ -443,32 +443,32 @@ function wpunity_create_asset_moleculeExtra_frontend($asset_newID){
 }
 
 //--------------  For Cloning only -------------------------------------------------------------------------------------
-function wpunity_copy_3Dfiles($asset_newID, $asset_sourceID){
-    
-    // Get the source post
-    $assetpostMeta = get_post_meta($asset_sourceID);
-    
-    if ($assetpostMeta['vrodos_asset3d_pdb'][0])
-        update_post_meta($asset_newID, 'vrodos_asset3d_pdb', $assetpostMeta['vrodos_asset3d_pdb'][0]);
-    
-    if ($assetpostMeta['vrodos_asset3d_mtl'][0])
-        update_post_meta($asset_newID, 'vrodos_asset3d_mtl', $assetpostMeta['vrodos_asset3d_mtl'][0]);
-    
-    if($assetpostMeta['vrodos_asset3d_obj'][0])
-        update_post_meta($asset_newID, 'vrodos_asset3d_obj', $assetpostMeta['vrodos_asset3d_obj'][0]);
-    
-    if($assetpostMeta['vrodos_asset3d_screenimage'][0])
-        update_post_meta($asset_newID, 'vrodos_asset3d_screenimage', $assetpostMeta['vrodos_asset3d_screenimage'][0]);
-    
-    if (count($assetpostMeta['vrodos_asset3d_diffimage']) > 0) {
-        delete_post_meta($asset_newID, 'vrodos_asset3d_diffimage');
-        for ($m = 0; $m < count($assetpostMeta['vrodos_asset3d_diffimage']); $m++)
-            add_post_meta($asset_newID, 'vrodos_asset3d_diffimage', $assetpostMeta['vrodos_asset3d_diffimage'][$m]);
-    }
-}
+//function vrodos_copy_3Dfiles($asset_newID, $asset_sourceID){
+//
+//    // Get the source post
+//    $assetpostMeta = get_post_meta($asset_sourceID);
+//
+//    if ($assetpostMeta['vrodos_asset3d_pdb'][0])
+//        update_post_meta($asset_newID, 'vrodos_asset3d_pdb', $assetpostMeta['vrodos_asset3d_pdb'][0]);
+//
+//    if ($assetpostMeta['vrodos_asset3d_mtl'][0])
+//        update_post_meta($asset_newID, 'vrodos_asset3d_mtl', $assetpostMeta['vrodos_asset3d_mtl'][0]);
+//
+//    if($assetpostMeta['vrodos_asset3d_obj'][0])
+//        update_post_meta($asset_newID, 'vrodos_asset3d_obj', $assetpostMeta['vrodos_asset3d_obj'][0]);
+//
+//    if($assetpostMeta['vrodos_asset3d_screenimage'][0])
+//        update_post_meta($asset_newID, 'vrodos_asset3d_screenimage', $assetpostMeta['vrodos_asset3d_screenimage'][0]);
+//
+//    if (count($assetpostMeta['vrodos_asset3d_diffimage']) > 0) {
+//        delete_post_meta($asset_newID, 'vrodos_asset3d_diffimage');
+//        for ($m = 0; $m < count($assetpostMeta['vrodos_asset3d_diffimage']); $m++)
+//            add_post_meta($asset_newID, 'vrodos_asset3d_diffimage', $assetpostMeta['vrodos_asset3d_diffimage'][$m]);
+//    }
+//}
 
 
-function wpunity_update_asset_texts($asset_id, $alp, $assetFonts, $assetback3dcolor, $assettrs){
+function vrodos_update_asset_texts($asset_id, $alp, $assetFonts, $assetback3dcolor, $assettrs){
 
     update_post_meta($asset_id, 'vrodos_asset3d_fonts', $assetFonts);
     update_post_meta($asset_id, 'vrodos_asset3d_back3dcolor', $assetback3dcolor);

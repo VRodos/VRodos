@@ -32,7 +32,7 @@ function loadAnalyticsIframe(game_type, project_id, scene_id, type, current_user
     var type = game_type === 'chemistry' ? game_type : 'energy3d' ;
 
     var url = "https://analytics.envisage-h2020.eu/?" +
-        "wpunity_game=" + project_id +
+        "vrodos_game=" + project_id +
         "&vrodos_scene=" + scene_id +
         "&scene_type=scene" +
         "&lab=" + type +

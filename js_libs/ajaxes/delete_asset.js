@@ -3,10 +3,10 @@
  *
  * Parameters from javascript
  * scene_id : the scene to delete
- * wpunity_deleteSceneAjax()
+ * vrodos_deleteSceneAjax()
  *
  */
-function wpunity_deleteAssetAjax(asset_id, game_slug, isCloned) {
+function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
 
     if (typeof envir != "undefined") {
         jQuery("#deleteAssetProgressBar-" + asset_id).show();

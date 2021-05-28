@@ -2,10 +2,10 @@
 
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
-if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
+if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
-$project_id = intval( $_GET['wpunity_game'] );
+$project_id = intval( $_GET['vrodos_game'] );
 $project_id = sanitize_text_field( $project_id );
 
 if( isset($_GET['vrodos_asset']) ) {
@@ -79,7 +79,7 @@ if (!$project_saved_keys['gioID'] && $project_scope === 1) { // In Envisage only
 $allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
 $allScenePGameID = $allScenePGame->term_id;
 
-$game_type_obj = wpunity_return_project_type($project_id);
+$game_type_obj = vrodos_return_project_type($project_id);
 
 $editscenePage = vrodos_getEditpage('scene');
 $editscene2DPage = vrodos_getEditpage('scene2D');
@@ -98,7 +98,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     $options_yaml_tax = get_term_by('slug', 'options-yaml', 'vrodos_scene_yaml');
 
     $default_json = '';
-    $thegameType = wp_get_post_terms($project_id, 'wpunity_game_type');
+    $thegameType = wp_get_post_terms($project_id, 'vrodos_game_type');
     if($thegameType[0]->slug == 'archaeology_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');$default_json = vrodos_getDefaultJSONscene('archaeology');}
     elseif($thegameType[0]->slug == 'energy_games'){$newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');$default_json = vrodos_getDefaultJSONscene('energy');}
     elseif($thegameType[0]->slug == 'chemistry_games'){$newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');$default_json = vrodos_getDefaultJSONscene('chemistry');}
@@ -123,7 +123,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     $isRegional = 0;//default value
     if($thegameType[0]->slug == 'energy_games'){
         if($_POST['regionalSceneCheckbox'] == 'on'){$isRegional = 1;}
-        $scene_metas['wpunity_isRegional']= $isRegional;
+        $scene_metas['vrodos_isRegional']= $isRegional;
         $scene_metas['vrodos_scene_environment'] = 'fields';
     }
 
@@ -367,7 +367,7 @@ if ( $custom_query->have_posts() ) :?>
                             //create permalink depending the scene yaml category
                             $edit_scene_page_id = ( $scene_type == 'scene' ? $editscenePage[0]->ID : $editscene2DPage[0]->ID);
                             if($scene_type == 'sceneExam2d' ||  $scene_type == 'sceneExam3d'){$edit_scene_page_id = $editsceneExamPage[0]->ID;}
-                            $edit_page_link     = esc_url( get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_type );
+                            $edit_page_link     = esc_url( get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_type );
                             ?>
                             <a href="<?php echo $edit_page_link; ?>">
 
@@ -510,8 +510,8 @@ if ( $custom_query->have_posts() ) :?>
                         <div id="compilationProgressText" class="CenterContents mdc-typography--title"></div>
 
                         <div class="CenterContents">
-                            <a class="mdc-typography--title" href="" id="wpunity-ziplink" style="display:none;"> <i style="vertical-align: text-bottom" class="material-icons">file_download</i> Download Zip</a>
-                            <a class="mdc-typography--title" href="" id="wpunity-weblink" style="display:none;margin-left:30px" target="_blank">Web link</a>
+                            <a class="mdc-typography--title" href="" id="vrodos-ziplink" style="display:none;"> <i style="vertical-align: text-bottom" class="material-icons">file_download</i> Download Zip</a>
+                            <a class="mdc-typography--title" href="" id="vrodos-weblink" style="display:none;margin-left:30px" target="_blank">Web link</a>
                         </div>
 
                     </section>
@@ -649,7 +649,7 @@ if ( $assets ) :?>
 
 
                         <section class="mdc-card__actions">
-                            <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" class="mdc-button mdc-button--compact mdc-card__action" onclick="wpunity_deleteAssetAjax(<?php echo $asset[assetid];?>,'<?php echo $gameSlug ?>',<?php echo $asset[isCloned];?>)"
+                            <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" class="mdc-button mdc-button--compact mdc-card__action" onclick="vrodos_deleteAssetAjax(<?php echo $asset[assetid];?>,'<?php echo $gameSlug ?>',<?php echo $asset[isCloned];?>)"
                                style="display:<?php echo $shouldHideDELETE_EDIT?'none':'';?>">DELETE</a>
                             <a data-mdc-auto-init="MDCRipple" title="Edit asset" class="mdc-button mdc-button--compact mdc-card__action mdc-button--primary" href="<?php echo $urlforAssetEdit.$asset[assetid]; ?>&<?php echo $shouldHideDELETE_EDIT?'editable=false':'editable=true' ?>">
                                 <?php
@@ -735,7 +735,7 @@ if ( $assets ) :?>
             console.log(pid);
 
             if (pid) {
-                wpunity_killtask_compile(pid);
+                vrodos_killtask_compile(pid);
             }
         });
 
@@ -748,8 +748,8 @@ if ( $assets ) :?>
             jQuery( "#compileProceedBtn" ).addClass( "LinkDisabled" );
             jQuery( "#compileCancelBtn" ).addClass( "LinkDisabled" );
 
-            jQuery( "#wpunity-ziplink" ).hide();
-            jQuery( "#wpunity-weblink" ).hide();
+            jQuery( "#vrodos-ziplink" ).hide();
+            jQuery( "#vrodos-weblink" ).hide();
 
             jQuery( "#compilationProgressText" ).html("");
 
@@ -795,7 +795,7 @@ if ( $assets ) :?>
             jQuery( "#deleteSceneDialogDeleteBtn" ).addClass( "LinkDisabled" );
             jQuery( "#deleteSceneDialogCancelBtn" ).addClass( "LinkDisabled" );
 
-            wpunity_deleteSceneAjax(deleteDialog.id);
+            vrodos_deleteSceneAjax(deleteDialog.id);
         });
 
         jQuery("#deleteSceneDialogCancelBtn").click(function (e) {

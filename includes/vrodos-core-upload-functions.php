@@ -2,7 +2,7 @@
 // All functions related to uploading files
 
 // Get the directory for media uploading of a scene or an asset
-function wpunity_upload_dir_forScenesOrAssets( $args ) {
+function vrodos_upload_dir_forScenesOrAssets( $args ) {
     
     if (!isset( $_REQUEST['post_id'] ))
         return $args;
@@ -27,7 +27,7 @@ function wpunity_upload_dir_forScenesOrAssets( $args ) {
 
 
 // Disable all auto created thumbnails for Assets3D
-function wpunity_disable_imgthumbs_assets( $image_sizes ){
+function vrodos_disable_imgthumbs_assets( $image_sizes ){
     
     // extra sizes
     $slider_image_sizes = array(  );
@@ -44,7 +44,7 @@ function wpunity_disable_imgthumbs_assets( $image_sizes ){
 
 
 // Overwrite attachments
-function wpunity_overwrite_uploads( $name ){
+function vrodos_overwrite_uploads( $name ){
     
     // Parent id
     $post_parent_id = isset($_REQUEST['post_id']) ? (int)$_REQUEST['post_id'] : 0;
@@ -81,13 +81,13 @@ function wpunity_overwrite_uploads( $name ){
 
 
 
-function wpunity_remove_allthumbs_sizes( $sizes, $metadata ) {
+function vrodos_remove_allthumbs_sizes( $sizes, $metadata ) {
     return [];
 }
 
 
 // Change directory for images and videos to uploads/Models
-function wpunity_upload_img_vid_aud_directory( $dir ) {
+function vrodos_upload_img_vid_aud_directory( $dir ) {
     return array(
                 'path'   => $dir['basedir'] . '/Models',
                 'url'    => $dir['baseurl'] . '/Models',
@@ -97,7 +97,7 @@ function wpunity_upload_img_vid_aud_directory( $dir ) {
 
 
 // Change general upload directory to Models
-function wpunity_upload_filter( $args  ) {
+function vrodos_upload_filter( $args  ) {
     
     $newdir =  '/Models';
     
@@ -112,7 +112,7 @@ function wpunity_upload_filter( $args  ) {
 
 
 // Upload image(s) or video or audio for a certain post_id (asset or scene3D)
-function wpunity_upload_img_vid_aud($file, $parent_post_id) {
+function vrodos_upload_img_vid_aud($file, $parent_post_id) {
 
     // For Images (Sprites in Unity)
     if($file['type'] === 'image/jpeg' || $file['type'] === 'image/png') {
@@ -126,28 +126,28 @@ function wpunity_upload_img_vid_aud($file, $parent_post_id) {
     }
 
     // Remove thumbs generating all sizes
-    add_filter( 'intermediate_image_sizes_advanced', 'wpunity_remove_allthumbs_sizes', 10, 2 );
+    add_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
     
     // We need admin power
     require_once( ABSPATH . 'wp-admin/includes/admin.php' );
 
     // Add all models to "uploads/Models/" folder
-    add_filter( 'upload_dir', 'wpunity_upload_img_vid_aud_directory' );
+    add_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
 
     // Upload
     $file_return = wp_handle_upload( $file, array('test_form' => false ) );
     
     // Remove upload filter to "Models" folder
-    remove_filter( 'upload_dir', 'wpunity_upload_img_vid_aud_directory' );
+    remove_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
     
     // if file has been uploaded succesfully
     if( !isset( $file_return['error'] ) && !isset( $file_return['upload_error_handler'] ) ) {
     
         // Id of attachment post
-        $attachment_id = wpunity_insert_attachment_post($file_return, $parent_post_id );
+        $attachment_id = vrodos_insert_attachment_post($file_return, $parent_post_id );
         
         // Remove filter for not generating various thumbnails sizes
-        remove_filter( 'intermediate_image_sizes_advanced', 'wpunity_remove_allthumbs_sizes', 10, 2 );
+        remove_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
         
         // Return the attachment id
         if( 0 < intval( $attachment_id, 10 ) ) {
@@ -160,7 +160,7 @@ function wpunity_upload_img_vid_aud($file, $parent_post_id) {
 
 
 // Upload images for only for 2D scenes
-function wpunity_upload_img($file = array(), $parent_post_id) {
+function vrodos_upload_img($file = array(), $parent_post_id) {
     
     // Require admin power
     require_once( ABSPATH . 'wp-admin/includes/admin.php' );
@@ -171,7 +171,7 @@ function wpunity_upload_img($file = array(), $parent_post_id) {
     if( !isset( $file_return['error'] ) && !isset( $file_return['upload_error_handler'] ) ) {
         
         // Id of attachment post
-        $attachment_id = wpunity_insert_attachment_post($file_return, $parent_post_id );
+        $attachment_id = vrodos_insert_attachment_post($file_return, $parent_post_id );
         
         if( 0 < intval( $attachment_id, 10 ) ) {
             return $attachment_id;
@@ -182,7 +182,7 @@ function wpunity_upload_img($file = array(), $parent_post_id) {
 }
 
 // Insert attachment post
-function wpunity_insert_attachment_post($file_return, $parent_post_id ){
+function vrodos_insert_attachment_post($file_return, $parent_post_id ){
     
     // Get the filename
     $filename = $file_return['file'];
@@ -213,7 +213,7 @@ function wpunity_insert_attachment_post($file_return, $parent_post_id ){
 
 
 // Immitation of $_FILE through $_POST . This works only for jpgs and pngs
-function wpunity_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, $type) {
+function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, $type) {
     
     $DS = DIRECTORY_SEPARATOR;
     
@@ -236,7 +236,7 @@ function wpunity_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id,
     $hashed_filename = md5($imgTitle . microtime()) . '_' . $imgTitle . '.' . $type;
 
     // Remove all sizes of thumbnails creation procedure
-    add_filter('intermediate_image_sizes_advanced', 'wpunity_remove_allthumbs_sizes', 10, 2);
+    add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     
     // Get admin power
     require_once(ABSPATH . 'wp-admin/includes/admin.php');
@@ -268,14 +268,14 @@ function wpunity_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id,
     );
     
     // Change directory to models
-    add_filter('upload_dir', 'wpunity_upload_filter');
+    add_filter('upload_dir', 'vrodos_upload_filter');
     
     // upload file to server
     // @new use $file instead of $image_upload
     $file_return = wp_handle_sideload($file, array('test_form' => false));
     
     // Remove filter for /Models folder upload
-    remove_filter('upload_dir', 'wpunity_upload_filter');
+    remove_filter('upload_dir', 'vrodos_upload_filter');
     
     $new_filename = $file_return['file'];
     $new_filename = str_replace("\\","/", $new_filename);
@@ -325,7 +325,7 @@ function wpunity_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id,
         wp_update_attachment_metadata($attachment_id, $attachment_data);
         
         remove_filter('intermediate_image_sizes_advanced',
-            'wpunity_remove_allthumbs_sizes', 10);
+            'vrodos_remove_allthumbs_sizes', 10);
         
         if (0 < intval($attachment_id, 10)) {
             return $attachment_id;
@@ -338,7 +338,7 @@ function wpunity_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id,
 
 
 // Asset: Used to save textures
-function wpunity_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $type) {
+function vrodos_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $type) {
     
     $DS = DIRECTORY_SEPARATOR;
     
@@ -346,7 +346,7 @@ function wpunity_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $t
     $hashed_filename = $parent_post_id.'_'.$imgTitle . '.' . $type;
 
     // Remove all sizes of thumbnails creation procedure
-    add_filter('intermediate_image_sizes_advanced', 'wpunity_remove_allthumbs_sizes', 10, 2);
+    add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     
     // Get admin power
     require_once(ABSPATH . 'wp-admin/includes/admin.php');
@@ -385,7 +385,7 @@ function wpunity_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $t
     add_post_meta($parent_post_id, 'vrodos_asset3d_diffimage', $attachment_id);
     
     remove_filter('intermediate_image_sizes_advanced',
-        'wpunity_remove_allthumbs_sizes', 10);
+        'vrodos_remove_allthumbs_sizes', 10);
     
     if (0 < intval($attachment_id, 10)) {
         return $attachment_id;
@@ -397,22 +397,30 @@ function wpunity_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $t
 
 
 // Asset: Used to save screenshot
-function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id) {
+function vrodos_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id) {
 
     $DS = DIRECTORY_SEPARATOR;
 
     // DELETE EXISTING FILE: See if has already a thumbnail and delete the file in the filesystem
     $asset3d_screenimage_ids = get_post_meta($parent_post_id,'vrodos_asset3d_screenimage');
     
-    if (count($asset3d_screenimage_ids) > 0) {
-        // Remove previous file from file system
-        $prevfMeta = get_post_meta($asset3d_screenimage_ids[0], '_wp_attachment_metadata', false);
-        
-        if (count($prevfMeta)>0) {
-            if (file_exists($prevfMeta[0]['file'])) {
-                unlink($prevfMeta[0]['file']);
+    if (!empty($asset3d_screenimage_ids) && !empty($asset3d_screenimage_ids[0])) {
+            // Remove previous file from file system
+            
+            $prevfMeta = get_post_meta($asset3d_screenimage_ids[0], '_wp_attachment_metadata', false);
+            
+            $f = fopen("output_screenshot.txt", "w");
+            fwrite($f, print_r($asset3d_screenimage_ids, true));
+            fwrite($f, chr(13));
+            fwrite($f, chr(13));
+            fwrite($f, print_r($prevfMeta, true));
+            fclose($f);
+            
+            if (count($prevfMeta)>0) {
+                if (file_exists($prevfMeta[0]['file'])) {
+                    unlink($prevfMeta[0]['file']);
+                }
             }
-        }
     }
     
     // UPLOAD NEW FILE:
@@ -421,7 +429,7 @@ function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id)
     $hashed_filename = $parent_post_id .'_'. $imgTitle.'_asset_screenshot.png';
     
     // Remove all sizes of thumbnails creation procedure
-    add_filter('intermediate_image_sizes_advanced', 'wpunity_remove_allthumbs_sizes', 10, 2);
+    add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     
 //    // Get admin power
 //    require_once(ABSPATH . 'wp-admin/includes/admin.php');
@@ -439,8 +447,12 @@ function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id)
     
     // DATABASE UPDATE
     
+    $f2 = fopen("output_screenshot_create.txt","w");
+    fwrite($f2, print_r($asset3d_screenimage_ids, true));
+    fclose($f2);
+    
     // If post meta already exists
-    if (count($asset3d_screenimage_ids) > 0){
+    if (!empty($asset3d_screenimage_ids) && !empty($asset3d_screenimage_ids[0])) {
     
         $asset3d_screenimage_id = $asset3d_screenimage_ids[0];
         
@@ -459,7 +471,7 @@ function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id)
     
         update_post_meta($parent_post_id, 'vrodos_asset3d_screenimage', $asset3d_screenimage_id);
 
-    } else {
+    } else { // If post does not exist
         
         $attachment = array(
             'post_mime_type' => 'image/png', //$file_return['type'],
@@ -481,7 +493,7 @@ function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id)
         update_post_meta($parent_post_id, 'vrodos_asset3d_screenimage', $attachment_id);
 
         remove_filter('intermediate_image_sizes_advanced',
-            'wpunity_remove_allthumbs_sizes', 10);
+            'vrodos_remove_allthumbs_sizes', 10);
         
         if (0 < intval($attachment_id, 10)) {
             return $attachment_id;
@@ -494,7 +506,7 @@ function wpunity_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id)
 
 
 // Immitation of $_FILE through $_POST . This is for objs, fbx and mtls
-function wpunity_upload_AssetText($textContent, $textTitle, $parent_post_id, $TheFiles, $index_file) {
+function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $TheFiles, $index_file) {
     
     $DS = DIRECTORY_SEPARATOR;
     
@@ -502,7 +514,7 @@ function wpunity_upload_AssetText($textContent, $textTitle, $parent_post_id, $Th
     
     // --------------  1. Upload file ---------------
     // ?? Filters the image sizes automatically generated when uploading an image.
-    add_filter( 'intermediate_image_sizes_advanced', 'wpunity_remove_allthumbs_sizes', 10, 2 );
+    add_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
     
     require_once( ABSPATH . 'wp-admin/includes/admin.php' );
     
@@ -547,7 +559,7 @@ function wpunity_upload_AssetText($textContent, $textTitle, $parent_post_id, $Th
     
     update_post_meta($attachment_id, '_wp_attached_file', $fbxpath);
     
-    remove_filter( 'intermediate_image_sizes_advanced', 'wpunity_remove_allthumbs_sizes', 10, 2 );
+    remove_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
    
     if( 0 < intval( $attachment_id, 10 ) ) {
         return $attachment_id;
@@ -736,11 +748,11 @@ function   vrodos_asset3d_languages_support3($curr_font, $assetLangPack2){
     
     // <!-- WIKIPEDIA button -->
 //    echo '<button type="button" class="FullWidth mdc-button mdc-button--raised mdc-button--primary" data-mdc-auto-init="MDCRipple"'
-//             .' onclick="wpunity_fetchDescriptionAjaxFrontEnd('Wikipedia', assetTitle.value, jQuery('#assetDesc')[0])">'.
+//             .' onclick="vrodos_fetchDescriptionAjaxFrontEnd('Wikipedia', assetTitle.value, jQuery('#assetDesc')[0])">'.
 //                'Fetch description from Wikipedia</button>';
 //
 //
 //                <button type="button" class="FullWidth mdc-button mdc-button--raised mdc-button--primary" data-mdc-auto-init="MDCRipple"
-//                            onclick="wpunity_fetchDescriptionAjaxFrontEnd('Europeana', assetTitle.value, jQuery('#assetDesc')[0])"
+//                            onclick="vrodos_fetchDescriptionAjaxFrontEnd('Europeana', assetTitle.value, jQuery('#assetDesc')[0])"
 //                            style="margin-top:30px" >Fetch description from Europeana</button>
 }

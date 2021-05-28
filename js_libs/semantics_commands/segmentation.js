@@ -2,18 +2,18 @@
 //var os_dependend_var = phpvars.PHP_OS.toUpperCase().substr(0, 3) === 'WIN'? 1:4;
 
 // handles the click event for link 1, sends the query
-function wpunity_segmentObjAjax(iter, minDist, maxDist, minPoints, maxPoints) {
+function vrodos_segmentObjAjax(iter, minDist, maxDist, minPoints, maxPoints) {
 
-    document.getElementById('wpunity_segmentButton').innerHTML = "Segmenting ...";
-    document.getElementById("wpunity-segmentation-report").innerHTML = "...";
-    document.getElementById("wpunity-segmentation-status").innerHTML = "-1";
-    document.getElementById("wpunity-segmentation-log").innerHTML = "Trying to segment the obj ...";
+    document.getElementById('vrodos_segmentButton').innerHTML = "Segmenting ...";
+    document.getElementById("vrodos-segmentation-report").innerHTML = "...";
+    document.getElementById("vrodos-segmentation-status").innerHTML = "-1";
+    document.getElementById("vrodos-segmentation-log").innerHTML = "Trying to segment the obj ...";
 
     //  AJAX 1: Send the segmentation command.
     jQuery.ajax({
         url : 'admin-ajax.php',
         type : 'POST',
-        data : {'action':'wpunity_segment_obj_action',
+        data : {'action':'vrodos_segment_obj_action',
                 'path':phpvars.path,
                 'obj':phpvars.obj,
                 'iter':iter,
@@ -23,10 +23,10 @@ function wpunity_segmentObjAjax(iter, minDist, maxDist, minPoints, maxPoints) {
                 'maxPoints':maxPoints
                },
         success : function(response){
-            document.getElementById('wpunity_segmentButton').innerHTML = "Success.";
+            document.getElementById('vrodos_segmentButton').innerHTML = "Success.";
         },
         error : function(xhr, ajaxOptions, thrownError){
-            document.getElementById('wpunity_segmentButton').innerHTML = 'Error: Segment again?';
+            document.getElementById('vrodos_segmentButton').innerHTML = 'Error: Segment again?';
         }
     });
 
@@ -52,31 +52,31 @@ function wpunity_segmentObjAjax(iter, minDist, maxDist, minPoints, maxPoints) {
                 if (counterLines != counterLinesPrevious) {
                     counterLinesPrevious = counterLines;
 
-                    document.getElementById("wpunity-segmentation-report").innerHTML = "Log file:" + counterLinesPrevious + " lines";
-                    document.getElementById("wpunity-segmentation-log").innerHTML = response;
+                    document.getElementById("vrodos-segmentation-report").innerHTML = "Log file:" + counterLinesPrevious + " lines";
+                    document.getElementById("vrodos-segmentation-log").innerHTML = response;
                 } else {
                     clearInterval(interval);
 
-                    document.getElementById("wpunity-segmentation-report").innerHTML = "Segmentation completed, lasted: " + (new Date().getTime() - start_time)/1000 + " seconds";
+                    document.getElementById("vrodos-segmentation-report").innerHTML = "Segmentation completed, lasted: " + (new Date().getTime() - start_time)/1000 + " seconds";
 
                     if (response.indexOf("Segmentation completed successfully")>0){
-                        document.getElementById("wpunity-segmentation-status").innerHTML = "and the result is Success.";
+                        document.getElementById("vrodos-segmentation-status").innerHTML = "and the result is Success.";
                         enlistFilesAjax();
                         clearInterval(interval);
 
                     } else {
-                        document.getElementById("wpunity-segmentation-status").innerHTML = 'and the result is Error [125] : Segmentation error ' + response;
+                        document.getElementById("vrodos-segmentation-status").innerHTML = 'and the result is Error [125] : Segmentation error ' + response;
                     }
 
 
-                     document.getElementById("wpunity-segmentation-report").innerHTML = response;
+                     document.getElementById("vrodos-segmentation-report").innerHTML = response;
                 }
             },
             error : function(xhr, ajaxOptions, thrownError){
-                document.getElementById("wpunity-segmentation-log").innerHTML = "and the result is Error [161] : HTML " + xhr.status + "<br />" +
+                document.getElementById("vrodos-segmentation-log").innerHTML = "and the result is Error [161] : HTML " + xhr.status + "<br />" +
                     xhr.getAllResponseHeaders() + " " + thrownError;
 
-                document.getElementById("wpunity-segmentation-report").innerHTML = response;
+                document.getElementById("vrodos-segmentation-report").innerHTML = response;
             }
         });
     }, 1000);
@@ -91,14 +91,14 @@ function enlistFilesAjax() {
     jQuery.ajax({
         url : 'admin-ajax.php',
         type : 'POST',
-        data : {'action': 'wpunity_enlist_splitted_objs_action',
+        data : {'action': 'vrodos_enlist_splitted_objs_action',
                 'path':phpvars.path,
                 'obj':phpvars.obj},
         success : function(response){
-            document.getElementById('wpunity-segmentation-report').innerHTML = response;
+            document.getElementById('vrodos-segmentation-report').innerHTML = response;
         },
         error : function(xhr, ajaxOptions, thrownError){
-            document.getElementById('wpunity-segmentation-report').innerHTML = 'Enlist files: ERROR [171]! '+ thrownError;
+            document.getElementById('vrodos-segmentation-report').innerHTML = 'Enlist files: ERROR [171]! '+ thrownError;
         }
     });
 }

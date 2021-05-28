@@ -1,11 +1,11 @@
 <?php
 
-// Create metabox with Custom Fields for Scene -($wpunity_databox4)
+// Create metabox with Custom Fields for Scene -($vrodos_databox4)
 //$def_json = vrodos_getDefaultJSONscene('energy');
 
 //All information about scenes meta fields
 $vrodos_scenes_metas_definition = array(
-    'id' => 'wpunity-scenes-databox',
+    'id' => 'vrodos-scenes-databox',
     'page' => 'vrodos_scene',
     'context' => 'normal',
     'priority' => 'high',
@@ -34,7 +34,7 @@ $vrodos_scenes_metas_definition = array(
 );
 
 $vrodos_scenes_metas_helpdata = array(
-    'id' => 'wpunity-scenes-databox-helpdata',
+    'id' => 'vrodos-scenes-databox-helpdata',
     'page' => 'vrodos_scene',
     'context' => 'side',
     'priority' => 'low',
@@ -144,10 +144,10 @@ function vrodos_scenes_parent_project_tax_define(){
         'hierarchical' => false,
         'show_admin_column' => true,
         'capabilities' => array (
-            'manage_terms' => 'manage_wpunity_taxpgame',
-            'edit_terms' => 'manage_wpunity_taxpgame',
-            'delete_terms' => 'manage_wpunity_taxpgame',
-            'assign_terms' => 'edit_wpunity_taxpgame'
+            'manage_terms' => 'manage_vrodos_taxpgame',
+            'edit_terms' => 'manage_vrodos_taxpgame',
+            'delete_terms' => 'manage_vrodos_taxpgame',
+            'assign_terms' => 'edit_vrodos_taxpgame'
         ),
     );
     
@@ -222,7 +222,7 @@ function vrodos_scenes_taxgame_box_content($post){
             'taxonomy'           => 'vrodos_scene_pgame',
             'echo'               => 0,
             'option_none_value'  => '-1',
-            'id' => 'wpunity-select-category-dropdown'
+            'id' => 'vrodos-select-category-dropdown'
         );
         
         $select = wp_dropdown_categories($args);
@@ -264,7 +264,7 @@ function vrodos_scenes_taxyaml_box_content($post){
             'taxonomy'           => 'vrodos_scene_yaml',
             'echo'               => 0,
             'option_none_value'  => '-1',
-            'id' => 'wpunity-select-category-dropdown'
+            'id' => 'vrodos-select-category-dropdown'
         );
         
         $select = wp_dropdown_categories($args);
@@ -367,13 +367,13 @@ function vrodos_scenes_taxyaml_box_content_save( $post_id ) {
     
 }
 
-function wpunity_set_custom_vrodos_scene_columns($columns) {
+function vrodos_set_custom_vrodos_scene_columns($columns) {
     $columns['scene_slug'] = 'Scene Slug';
     return $columns;
 }
 
 // Add the data to the custom columns for the scene post type
-function wpunity_set_custom_vrodos_scene_columns_fill( $column, $post_id ) {
+function vrodos_set_custom_vrodos_scene_columns_fill( $column, $post_id ) {
     switch ( $column ) {
         
         case 'scene_slug' :
@@ -388,7 +388,7 @@ function wpunity_set_custom_vrodos_scene_columns_fill( $column, $post_id ) {
 }
 
 
-// Add and Show the metabox with Custom Field for Scene - ($wpunity_databox4)
+// Add and Show the metabox with Custom Field for Scene - ($vrodos_databox4)
 function vrodos_scenes_meta_definitions_add() {
     global $vrodos_scenes_metas_definition,$vrodos_scenes_metas_helpdata, $post;
     
@@ -419,7 +419,7 @@ function vrodos_scenes_metas_adminside_show(){
     //$categoryAsset = wp_get_post_terms($assetID, 'vrodos_asset3d_cat');
     //echo $categoryAssetSlug = $categoryAsset[0]->name;
     
-    echo '<table class="form-table" id="wpunity-custom-fields-table">';
+    echo '<table class="form-table" id="vrodos-custom-fields-table">';
     
     foreach ($vrodos_scenes_metas_definition['fields'] as $field) {
         
@@ -469,7 +469,7 @@ function vrodos_scenes_metas_helpdata_adminside_show(){
     echo '<textarea name="', esc_attr($vrodos_scenes_metas_helpdata['fields'][0]['id']), '" id="', esc_attr($vrodos_scenes_metas_helpdata['fields'][0]['id']), '" cols="60" rows="4" style="width:97%">', esc_attr($value_of_helptext ? $value_of_helptext : $vrodos_scenes_metas_helpdata['fields'][0]['std']), '</textarea>', '<br />', esc_html($vrodos_scenes_metas_helpdata['fields'][0]['desc']);
     echo '<br /><br />';
     echo '<input type="text" name="', esc_attr($vrodos_scenes_metas_helpdata['fields'][1]['id']), '" id="', esc_attr($vrodos_scenes_metas_helpdata['fields'][1]['id']), '" value="', esc_attr($value_of_helpimg ? $value_of_helpimg : $vrodos_scenes_metas_helpdata['fields'][1]['std']), '" size="30" style="width:97%" />', '<br />', esc_html($vrodos_scenes_metas_helpdata['fields'][1]['desc']);
-    //echo '<input id="' . esc_attr($wpunity_databox_helpdata['fields'][1]['id']) . '_btn" type="button" value="Upload Help Image"/>';
+    //echo '<input id="' . esc_attr($vrodos_databox_helpdata['fields'][1]['id']) . '_btn" type="button" value="Upload Help Image"/>';
 }
 
 // Save data from this metabox with Custom Field for Scene

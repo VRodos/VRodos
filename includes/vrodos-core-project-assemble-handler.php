@@ -3,7 +3,7 @@
 // ==========================================================================================================
 
 //Convert PDB into the molecule YAML
-function wpunity_convert_pdbYAML(){
+function vrodos_convert_pdbYAML(){
 
     // 1. from molecule_asset_id get the pdb file
     //$pdb_text = json_encode(file_get_contents(wp_get_attachment_url(get_post_meta(4773,"vrodos_asset3d_pdb")[0])));
@@ -40,9 +40,9 @@ function vrodos_create_gameproject_frontend_callback(){
     $game_project_title =  strip_tags($_POST['game_project_title']);
     $game_project_type_radiobutton = $_POST['game_project_type_radio'];//1 = Archaeology , 2 = Energy , 3 = Chemistry
     
-    $archaeology_tax = get_term_by('slug', 'archaeology_games', 'wpunity_game_type');
-    $energy_tax = get_term_by('slug', 'energy_games', 'wpunity_game_type');
-    $chemistry_tax = get_term_by('slug', 'chemistry_games', 'wpunity_game_type');
+    $archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
+    $energy_tax = get_term_by('slug', 'energy_games', 'vrodos_game_type');
+    $chemistry_tax = get_term_by('slug', 'chemistry_games', 'vrodos_game_type');
 
 //        $ff = fopen("output_create_ajax.txt","w");
 //        fwrite($ff, $game_project_title);
@@ -66,7 +66,7 @@ function vrodos_create_gameproject_frontend_callback(){
     
   
     $game_taxonomies = array(
-        'wpunity_game_type' => array(
+        'vrodos_game_type' => array(
             $game_type_chosen_id,
         )
     );
@@ -74,7 +74,7 @@ function vrodos_create_gameproject_frontend_callback(){
     $game_project_information = array(
         'post_title' => esc_attr($game_project_title),
         'post_content' => '',
-        'post_type' => 'wpunity_game',
+        'post_type' => 'vrodos_game',
         'post_status' => 'publish',
         'tax_input' => $game_taxonomies,
     );
@@ -96,7 +96,7 @@ function vrodos_fetch_list_projects_callback(){
     
     // Define custom query parameters
     $custom_query_args = array(
-        'post_type' => 'wpunity_game',
+        'post_type' => 'vrodos_game',
         /*'posts_per_page' => 10,*/
         'posts_per_page' => -1,
         /*'paged' => $paged,*/
@@ -138,7 +138,7 @@ function vrodos_fetch_list_projects_callback(){
             // ToDo: replace current_user_can with smth like current_user_is
            } elseif (current_user_can('project_master')) {
 
-               $collaborators = get_post_meta(get_the_ID(),'wpunity_game_collaborators_ids')[0];
+               $collaborators = get_post_meta(get_the_ID(),'vrodos_game_collaborators_ids')[0];
     
 //               fwrite($fp, 'Author:' . print_r(get_the_author_meta('ID'), true));
 //               fwrite($fp, 'UserId:' . print_r($user_id, true));
@@ -177,9 +177,9 @@ function vrodos_fetch_list_projects_callback(){
            if ($game_title == 'Archaeology Joker' || $game_title == 'Energy Joker' || $game_title == 'Chemistry Joker' )
                 continue;
     
-            $game_type_obj = wpunity_return_project_type($game_id);
+            $game_type_obj = vrodos_return_project_type($game_id);
     
-            $all_game_category = get_the_terms( $game_id, 'wpunity_game_type' );
+            $all_game_category = get_the_terms( $game_id, 'vrodos_game_type' );
             $game_category     = $all_game_category[0]->slug;
             $scene_data = vrodos_getFirstSceneID_byProjectID($game_id,$game_category);//first 3D scene id
         
@@ -188,7 +188,7 @@ function vrodos_fetch_list_projects_callback(){
             $edit_scene_page_id = $editscenePage[0]->ID;
             
             
-            $loadMainSceneLink = esc_url( (get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&wpunity_game=' . $game_id . '&scene_type=' . $scene_data['type']));
+            $loadMainSceneLink = esc_url( (get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type']));
     
     
             $assets_list_page =  vrodos_getEditpage('assetslist');
@@ -225,12 +225,12 @@ function vrodos_fetch_list_projects_callback(){
                'data-mdc-auto-init="MDCRipple" title="Add collaborators for '.
                $game_title . '" onclick="collaborateProject(' . $game_id . ')">';
     
-           $collaborators = get_post_meta($game_id, 'wpunity_game_collaborators_ids');
+           $collaborators = get_post_meta($game_id, 'vrodos_game_collaborators_ids');
     
            // Find number of current collaborators
            if ( count($collaborators)>0) {
         
-               $collabs_ids_raw = get_post_meta($game_id, 'wpunity_game_collaborators_ids')[0];
+               $collabs_ids_raw = get_post_meta($game_id, 'vrodos_game_collaborators_ids')[0];
                $collabs_ids = array_values(array_filter(explode(";", $collabs_ids_raw)));
            } else {
                $collabs_ids = [];
@@ -303,7 +303,7 @@ function vrodos_collaborate_project_frontend_callback()
             $collabs_ids .= ';'.$collab_id_data->ID;
     }
     
-    update_post_meta($project_id, 'wpunity_game_collaborators_ids', $collabs_ids);
+    update_post_meta($project_id, 'vrodos_game_collaborators_ids', $collabs_ids);
     wp_die();
 }
 
@@ -312,7 +312,7 @@ function vrodos_collaborate_project_frontend_callback()
 function vrodos_fetch_collaborators_frontend_callback()
 {
     $project_id = $_POST['project_id'];
-    $collabs_ids = get_post_meta($project_id, 'wpunity_game_collaborators_ids', true);
+    $collabs_ids = get_post_meta($project_id, 'vrodos_game_collaborators_ids', true);
     
     $collabs_ids = explode(';',$collabs_ids);
     
@@ -403,7 +403,7 @@ function vrodos_delete_gameproject_frontend_callback(){
     wp_delete_term( $scenePGameID, 'vrodos_scene_pgame' );
 
     //4. Delete Compile Folder of Game (if exists)
-    wpunity_compile_folders_del($gameSlug);
+    vrodos_compile_folders_del($gameSlug);
 
     //5. Delete Game CUSTOM POST
     wp_delete_post( $game_id, false );
@@ -746,7 +746,7 @@ function vrodos_fetch_assetids_in_scenes($gameSlug){
 
 //==========================================================================================================================================
 //==========================================================================================================================================
-function wpunity_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $scene_id){
+function vrodos_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $scene_id){
 
     $upload = wp_upload_dir();
     $upload_dir = $upload['basedir'];
@@ -773,8 +773,8 @@ timeCreated: ___[unx_time_created]___
 licenseType: Free
 [junk line to allow importer will do the rest, do not remove]'; //vrodos_getYaml_jpg_sprite_pattern();
 
-    $sprite_meta_guid = wpunity_create_guids('jpg', $featured_image_sprite_id);
-    $sprite_meta_yaml_replace = wpunity_replace_spritemeta($sprite_meta_yaml,$sprite_meta_guid);
+    $sprite_meta_guid = vrodos_create_guids('jpg', $featured_image_sprite_id);
+    $sprite_meta_yaml_replace = vrodos_replace_spritemeta($sprite_meta_yaml,$sprite_meta_guid);
     
     if (strpos($attachment_name['filename'], 'sprite') == false)
         $sprite_meta_file = $game_models_path .'/' . $attachment_name['filename'] . '_sprite.' . $attachment_name['extension'] . '.meta';
@@ -789,7 +789,7 @@ licenseType: Free
     return $sprite_meta_guid;
 }
 
-function wpunity_compile_append_scene_to_s_selector($scene_id, $scene_name, $scene_title, $scene_desc,
+function vrodos_compile_append_scene_to_s_selector($scene_id, $scene_name, $scene_title, $scene_desc,
                                                     $scene_type_ID,$game_path,$scenes_counter,$featured_image_edu_sprite_guid, $gameType){
 
     $taxterm_suffix = '';
@@ -808,19 +808,19 @@ function wpunity_compile_append_scene_to_s_selector($scene_id, $scene_name, $sce
     
     $termid  = $mainMenuTerm->term_id;
     
-//    $metaname = 'wpunity_yamlmeta_s_selector2'.$taxnamemeta_suffix;
+//    $metaname = 'vrodos_yamlmeta_s_selector2'.$taxnamemeta_suffix;
 //    $term_meta_s_selector2 = get_term_meta($termid, $metaname,true);
     $term_meta_s_selector2 = vrodos_getSceneYAML_archaeology('selector2');
     
     $sceneSelectorFile = $game_path . '/S_SceneSelector.unity';
     
     //Create guid for the tile
-    $guid_tile_sceneselector = wpunity_create_fids($scene_id);
+    $guid_tile_sceneselector = vrodos_create_fids($scene_id);
 
-    $guid_tile_recttransform = wpunity_create_fids_rect($scene_id);
+    $guid_tile_recttransform = vrodos_create_fids_rect($scene_id);
     
     //Add Scene to initial part of Scene Selector
-    wpunity_compile_s_selector_addtile($sceneSelectorFile, $guid_tile_recttransform);
+    vrodos_compile_s_selector_addtile($sceneSelectorFile, $guid_tile_recttransform);
     
     //Add second part of the new Scene Tile
 
@@ -840,7 +840,7 @@ function wpunity_compile_append_scene_to_s_selector($scene_id, $scene_name, $sce
     $name_of_scene_to_load = $scene_name;//without .unity (we generate unity files with post slug as name)
 
 
-    $fileData = wpunity_compile_s_selector_replace_tile_gen($term_meta_s_selector2,$tile_pos_x, $tile_pos_y,
+    $fileData = vrodos_compile_s_selector_replace_tile_gen($term_meta_s_selector2,$tile_pos_x, $tile_pos_y,
         $guid_tile_sceneselector,
         $seq_index_of_scene,$name_of_panel,
         $guid_sprite_scene_featured_img,$text_title_tile,
@@ -852,7 +852,7 @@ function wpunity_compile_append_scene_to_s_selector($scene_id, $scene_name, $sce
     $succapp = file_put_contents($sceneSelectorFile, $LF . $fileData . $LF, FILE_APPEND);
 }
 
-function wpunity_compile_s_selector_addtile($sceneSelectorFile, $guid_tile_recttransform){
+function vrodos_compile_s_selector_addtile($sceneSelectorFile, $guid_tile_recttransform){
     # ReplaceChildren
     $LF = chr(10); // line change
 

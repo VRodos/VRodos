@@ -1,6 +1,6 @@
 <?php
 
-function wpunity_create_energy_standardScenes_unity($gameID,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_energy_standardScenes_unity($gameID,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     
 
     //SIMULATION SCENE FIELDS
@@ -65,18 +65,18 @@ function wpunity_create_energy_standardScenes_unity($gameID,$gameSlug,$game_path
 function vrodos_getRegionalscene_byGame($allScenePGameID,$regType){
 
     $myquery_args = array(
-        'post_type' => 'wpunity_scene',
+        'post_type' => 'vrodos_scene',
         'posts_per_page' => -1,
         'tax_query' => array(
             array(
-                'taxonomy' => 'wpunity_scene_pgame',
+                'taxonomy' => 'vrodos_scene_pgame',
                 'field'    => 'term_id',
                 'terms'    => $allScenePGameID,
             ),
         ),
         'meta_query' => array(
             array(
-                'key'     => 'wpunity_scene_environment',
+                'key'     => 'vrodos_scene_environment',
                 'value'   => $regType,
                 'compare' => 'IN',
             ),
@@ -95,32 +95,32 @@ function vrodos_getRegionalscene_byGame($allScenePGameID,$regType){
     endif;
     wp_reset_query();
 
-    //wpunity_scene_environment
+    //vrodos_scene_environment
 
     return $scene_id;
 }
 
 
-function wpunity_create_energy_selector_unity($gameID,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_energy_selector_unity($gameID,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     $mountains_activation = 0;
     $seashore_activation = 0;
     $fields_activation = 0;
-    $allScenePGame = get_term_by('slug', $gameSlug, 'wpunity_scene_pgame');
+    $allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
     $allScenePGameID = $allScenePGame->term_id;
 
     $mount_id = vrodos_getRegionalscene_byGame($allScenePGameID,'mountain');
     $fields_id = vrodos_getRegionalscene_byGame($allScenePGameID,'fields');
     $sea_id = vrodos_getRegionalscene_byGame($allScenePGameID,'seashore');
 
-    $mount_json = get_post($mount_id)->post_content; //,'wpunity_scene_json_input',true);
-    $fields_json = get_post($fields_id)->post_content; //,'wpunity_scene_json_input',true);
-    $sea_json = get_post($sea_id)->content; //,'wpunity_scene_json_input',true);
+    $mount_json = get_post($mount_id)->post_content; //,'vrodos_scene_json_input',true);
+    $fields_json = get_post($fields_id)->post_content; //,'vrodos_scene_json_input',true);
+    $sea_json = get_post($sea_id)->content; //,'vrodos_scene_json_input',true);
 
     
     
-    if(wpunity_countEnergyMarkers($mount_json)){$mountains_activation = 1;}
-    if(wpunity_countEnergyMarkers($fields_json)){$fields_activation = 1;}
-    if(wpunity_countEnergyMarkers($sea_json)){$seashore_activation = 1;}
+    if(vrodos_countEnergyMarkers($mount_json)){$mountains_activation = 1;}
+    if(vrodos_countEnergyMarkers($fields_json)){$fields_activation = 1;}
+    if(vrodos_countEnergyMarkers($sea_json)){$seashore_activation = 1;}
     
 //    $fo = fopen("output_energy_scenes.txt","w");
 //    fwrite($fo, "Mount" . $mountains_activation);
@@ -132,7 +132,7 @@ function wpunity_create_energy_selector_unity($gameID,$gameSlug,$game_path,$file
     
     $term_meta_s_selector = vrodos_getSceneYAML_energy('selector');
     $file_selector = $game_path . '/' . 'S_SceneSelector.unity';
-    $file_content = wpunity_replace_sceneselector_energy_unity($term_meta_s_selector,$mountains_activation,$seashore_activation,$fields_activation);
+    $file_content = vrodos_replace_sceneselector_energy_unity($term_meta_s_selector,$mountains_activation,$seashore_activation,$fields_activation);
     $create_file2 = fopen($file_selector, "w") or die("Unable to open file!");
     fwrite($create_file2, $file_content);
     fclose($create_file2);
@@ -142,7 +142,7 @@ function wpunity_create_energy_selector_unity($gameID,$gameSlug,$game_path,$file
     vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file_path_selCS);
 }
 
-function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of mainmenu
     $term_meta_s_mainmenu = vrodos_getSceneYAML_energy('menu');
 
@@ -158,10 +158,10 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
     $featured_image_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6';//if there's no Featured Image
 
     if($featured_image_sprite_id != ''){
-        $featured_image_sprite_guid = wpunity_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $scene_id);
+        $featured_image_sprite_guid = vrodos_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $scene_id);
     }
 
-    $file_content = wpunity_replace_mainmenu_energy_unity($term_meta_s_mainmenu,$featured_image_sprite_guid);
+    $file_content = vrodos_replace_mainmenu_energy_unity($term_meta_s_mainmenu,$featured_image_sprite_guid);
 
     $file = $game_path . '/' . 'S_MainMenu.unity';
     $create_file = fopen($file, "w") or die("Unable to open file!");
@@ -176,7 +176,7 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
     if($is_bt_settings_active == '1'){
         //CREATE SETTINGS/OPTIONS Unity file
         $term_meta_s_settings = vrodos_getSceneYAML_energy('settings');
-        $file_content2 = wpunity_replace_settings_unity($term_meta_s_settings);
+        $file_content2 = vrodos_replace_settings_unity($term_meta_s_settings);
 
         $file2 = $game_path . '/' . 'S_Settings.unity';
         $create_file2 = fopen($file2, "w") or die("Unable to open file!");
@@ -191,11 +191,11 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
     if($is_help_bt_active == '1'){
         //CREATE HELP Unity file
         $term_meta_s_help = vrodos_getSceneYAML_energy('help');
-        $text_help_scene = get_post_meta($scene_id,'wpunity_scene_help_text',true);
-        $img_help_scene_id = get_post_meta($scene_id,'wpunity_scene_helpimg',true);
+        $text_help_scene = get_post_meta($scene_id,'vrodos_scene_help_text',true);
+        $img_help_scene_id = get_post_meta($scene_id,'vrodos_scene_helpimg',true);
         $img_help_scene_guid = 'dad02368a81759f4784c7dbe752b05d6'; //if there's no Featured Image (custom field at Main Menu)
-        if($img_help_scene_id != ''){$img_help_scene_guid = wpunity_compile_sprite_upload($img_help_scene_id,$gameSlug,$scene_id);}
-        $file_content3 = wpunity_replace_help_energy_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid);
+        if($img_help_scene_id != ''){$img_help_scene_guid = vrodos_compile_sprite_upload($img_help_scene_id,$gameSlug,$scene_id);}
+        $file_content3 = vrodos_replace_help_energy_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid);
 
         $file3 = $game_path . '/' . 'S_Help.unity';
         $create_file3 = fopen($file3, "w") or die("Unable to open file!");
@@ -210,7 +210,7 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
     if($is_login_bt_active == '1'){
         //CREATE Login Unity file
         $term_meta_s_login = vrodos_getSceneYAML_energy('login');
-        $file_content4 = wpunity_replace_login_energy_unity($term_meta_s_login);
+        $file_content4 = vrodos_replace_login_energy_unity($term_meta_s_login);
 
         $file4 = $game_path . '/S_Login.unity';
         $create_file4 = fopen($file4, "w") or die("Unable to open file!");
@@ -223,15 +223,15 @@ function wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_
     }
 }
 
-function wpunity_create_energy_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_energy_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of Credits Scene
     $term_meta_s_credits = vrodos_getSceneYAML_energy('credits');
     $credits_content = $scene_post->post_content;
 
     $featured_image_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
     $featured_image_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6'; //if there's no Featured Image
-    if($featured_image_sprite_id != ''){$featured_image_sprite_guid = wpunity_compile_sprite_upload($featured_image_sprite_id,$gameSlug,$scene_id);}
-    $file_content5 = wpunity_replace_creditsscene_energy_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid);
+    if($featured_image_sprite_id != ''){$featured_image_sprite_guid = vrodos_compile_sprite_upload($featured_image_sprite_id,$gameSlug,$scene_id);}
+    $file_content5 = vrodos_replace_creditsscene_energy_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid);
 
     $file5 = $game_path . '/' . 'S_Credits.unity';
     $create_file5 = fopen($file5, "w") or die("Unable to open file!");
@@ -243,7 +243,7 @@ function wpunity_create_energy_credentials_unity($scene_post,$scene_type_ID,$sce
     vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, $file5_path_CS);
 }
 
-function wpunity_create_energy_educational_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
+function vrodos_create_energy_educational_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType){
 
 //    $fg = fopen("output_edu_energy.txt","w");
 //
@@ -258,7 +258,7 @@ function wpunity_create_energy_educational_unity($scene_post,$scene_type_ID,$sce
 //    fwrite($fg, "2");
     
     //S_Mountains, S_Fields, S_Seashore fixed unity filenames
-    $scene_env = get_post_meta($scene_id,'wpunity_scene_environment',true);
+    $scene_env = get_post_meta($scene_id,'vrodos_scene_environment',true);
     $scene_unity_title = 'S_Mountains';
     if($scene_env == 'seashore'){$scene_unity_title = 'S_Seashore';}
     if($scene_env == 'fields'){$scene_unity_title = 'S_Fields';}
@@ -268,11 +268,11 @@ function wpunity_create_energy_educational_unity($scene_post,$scene_type_ID,$sce
     $featured_image_edu_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
     $featured_image_edu_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6';//if there's no Featured Image
     if($featured_image_edu_sprite_id != ''){$featured_image_edu_sprite_guid =
-        wpunity_compile_sprite_upload($featured_image_edu_sprite_id, $gameSlug, $scene_id);}
+        vrodos_compile_sprite_upload($featured_image_edu_sprite_id, $gameSlug, $scene_id);}
     
 //    fwrite($fg, "4");
     
-    $file_content7 = wpunity_replace_educational_energy_unity($term_meta_educational_energy,$scene_id); //empty energy scene with Avatar!
+    $file_content7 = vrodos_replace_educational_energy_unity($term_meta_educational_energy,$scene_id); //empty energy scene with Avatar!
     
 //    fwrite($fg, "5");
 
@@ -309,7 +309,7 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
 
     
     
-    $scene_json = get_post($scene_id)->post_content; //,'wpunity_scene_json_input',true);
+    $scene_json = get_post($scene_id)->post_content; //,'vrodos_scene_json_input',true);
     
     
     //fwrite($ff, print_r($scene_json));
@@ -342,15 +342,15 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
     
                 
                 $terrain_id = $value['assetid'];
-                $asset_type = get_the_terms( $terrain_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $terrain_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
-                $terrain_obj = get_post_meta($terrain_id,'wpunity_asset3d_obj',true);
+                $terrain_obj = get_post_meta($terrain_id,'vrodos_asset3d_obj',true);
 
                 $terrain_yaml = vrodos_getAssetYAML_energy('terrain');
-                $fid_of_terrain = wpunity_create_fids($current_fid++);
-                $fid_of_terrain1 = wpunity_create_fids($current_fid++);//($fid_of_terrain+1)
-                $fid_of_terrain2 = wpunity_create_fids($current_fid++);//($fid_of_terrain+2)
-                $guid_terrain_mesh = wpunity_create_guids('obj', $terrain_obj);
+                $fid_of_terrain = vrodos_create_fids($current_fid++);
+                $fid_of_terrain1 = vrodos_create_fids($current_fid++);//($fid_of_terrain+1)
+                $fid_of_terrain2 = vrodos_create_fids($current_fid++);//($fid_of_terrain+2)
+                $guid_terrain_mesh = vrodos_create_guids('obj', $terrain_obj);
                 $x_pos_terrain = - $value['position'][0]; // x is in the opposite site in unity
                 $y_pos_terrain = $value['position'][1];
                 $z_pos_terrain = $value['position'][2];
@@ -369,7 +369,7 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
     
       //          fwrite($ff, "33:");
                 
-                $terrain_finalyaml = wpunity_replace_terrain_unity($terrain_yaml,$fid_of_terrain,$fid_of_terrain1,$fid_of_terrain2,$guid_terrain_mesh,$x_pos_terrain,$y_pos_terrain,$z_pos_terrain,$x_rotation_terrain,$y_rotation_terrain,$z_rotation_terrain,$w_rotation_terrain,$x_scale_terrain,$y_scale_terrain,$z_scale_terrain);
+                $terrain_finalyaml = vrodos_replace_terrain_unity($terrain_yaml,$fid_of_terrain,$fid_of_terrain1,$fid_of_terrain2,$guid_terrain_mesh,$x_pos_terrain,$y_pos_terrain,$z_pos_terrain,$x_rotation_terrain,$y_rotation_terrain,$z_rotation_terrain,$w_rotation_terrain,$x_scale_terrain,$y_scale_terrain,$z_scale_terrain);
                 $allObjectsYAML = $allObjectsYAML . $LF . $terrain_finalyaml;
     
 //                fwrite($ff, "34:");
@@ -378,15 +378,15 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
             }
             if ($value['categoryName'] == 'Decoration'){
                 $deco_id = $value['assetid'];
-                $asset_type = get_the_terms( $deco_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $deco_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
-                $deco_obj = get_post_meta($deco_id,'wpunity_asset3d_obj',true);
+                $deco_obj = get_post_meta($deco_id,'vrodos_asset3d_obj',true);
 
                 $deco_yaml = vrodos_getAssetYAML_energy('decor');
-                $fid_decorator = wpunity_create_fids($current_fid++);
-                $fid_decorator1 = wpunity_create_fids($current_fid++);//($fid_decorator+1)
-                $fid_decorator2 = wpunity_create_fids($current_fid++);//($fid_decorator+2)
-                $guid_obj_decorator = wpunity_create_guids('obj', $deco_obj);
+                $fid_decorator = vrodos_create_fids($current_fid++);
+                $fid_decorator1 = vrodos_create_fids($current_fid++);//($fid_decorator+1)
+                $fid_decorator2 = vrodos_create_fids($current_fid++);//($fid_decorator+2)
+                $guid_obj_decorator = vrodos_create_guids('obj', $deco_obj);
                 $x_pos_decorator = - $value['position'][0]; // x is in the opposite site in unity
                 $y_pos_decorator = $value['position'][1];
                 $z_pos_decorator = $value['position'][2];
@@ -398,23 +398,23 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
                 $y_scale_decorator = $value['scale'][1];
                 $z_scale_decorator = $value['scale'][2];
 
-                $deco_finalyaml = wpunity_replace_decorator_unity($deco_yaml,$fid_decorator,$fid_decorator1,$fid_decorator2,$guid_obj_decorator,$x_pos_decorator,$y_pos_decorator,$z_pos_decorator,$x_rotation_decorator,$y_rotation_decorator,$z_rotation_decorator,$w_rotation_decorator,$x_scale_decorator,$y_scale_decorator,$z_scale_decorator);
+                $deco_finalyaml = vrodos_replace_decorator_unity($deco_yaml,$fid_decorator,$fid_decorator1,$fid_decorator2,$guid_obj_decorator,$x_pos_decorator,$y_pos_decorator,$z_pos_decorator,$x_rotation_decorator,$y_rotation_decorator,$z_rotation_decorator,$w_rotation_decorator,$x_scale_decorator,$y_scale_decorator,$z_scale_decorator);
                 $allObjectsYAML = $allObjectsYAML . $LF . $deco_finalyaml;
     
                 //fwrite($ff, "5");
             }
             if ($value['categoryName'] == 'Marker'){
                 $marker_id = $value['assetid'];
-                $asset_type = get_the_terms( $marker_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $marker_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
-                $marker_obj = get_post_meta($marker_id,'wpunity_asset3d_obj',true);
+                $marker_obj = get_post_meta($marker_id,'vrodos_asset3d_obj',true);
 
                 $marker_yaml = vrodos_getAssetYAML_energy('marker');
-                $fid_marker = wpunity_create_fids($current_fid++);
-                $fid_marker1 = wpunity_create_fids($current_fid++);//($fid_marker+1)
-                $fid_marker2 = wpunity_create_fids($current_fid++);//($fid_marker+2)
-                $fid_marker3 = wpunity_create_fids($current_fid++);//($fid_marker+3)
-                $guid_obj_marker = wpunity_create_guids('obj', $marker_obj);
+                $fid_marker = vrodos_create_fids($current_fid++);
+                $fid_marker1 = vrodos_create_fids($current_fid++);//($fid_marker+1)
+                $fid_marker2 = vrodos_create_fids($current_fid++);//($fid_marker+2)
+                $fid_marker3 = vrodos_create_fids($current_fid++);//($fid_marker+3)
+                $guid_obj_marker = vrodos_create_guids('obj', $marker_obj);
                 $x_pos_marker = - $value['position'][0]; // x is in the opposite site in unity
                 $y_pos_marker = $value['position'][1];
                 $z_pos_marker = $value['position'][2];
@@ -430,7 +430,7 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
                 $nature_penalty = $value['natural_penalty'];
                 $HV_penalty = $value['hv_penalty'];
 
-                $marker_finalyaml = wpunity_replace_marker_unity($marker_yaml,$fid_marker,$fid_marker1,$fid_marker2,$fid_marker3,$guid_obj_marker,$x_pos_marker,$y_pos_marker,$z_pos_marker,$x_rotation_marker,$y_rotation_marker,$z_rotation_marker,$w_rotation_marker,$x_scale_marker,$y_scale_marker,$z_scale_marker,$archaelogical_penalty,$nature_penalty,$HV_penalty);
+                $marker_finalyaml = vrodos_replace_marker_unity($marker_yaml,$fid_marker,$fid_marker1,$fid_marker2,$fid_marker3,$guid_obj_marker,$x_pos_marker,$y_pos_marker,$z_pos_marker,$x_rotation_marker,$y_rotation_marker,$z_rotation_marker,$w_rotation_marker,$x_scale_marker,$y_scale_marker,$z_scale_marker,$archaelogical_penalty,$nature_penalty,$HV_penalty);
                 $allObjectsYAML = $allObjectsYAML . $LF . $marker_finalyaml;
     
     //            fwrite($ff, "6");
@@ -438,14 +438,14 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
             /*
             if ($value['categoryName'] == 'Consumer'){
                 $consumer_id = $value['assetid'];
-                $asset_type = get_the_terms( $consumer_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $consumer_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $consumer_obj = get_post_meta($consumer_id,'wpunity_asset3d_obj',true);
-                $consumer_yaml = get_term_meta($asset_type_ID,'wpunity_yamlmeta_assetcat_pat',true);
-                $energy_consumption = get_post_meta($consumer_id,'wpunity_energyConsumption',true);
+                $consumer_obj = get_post_meta($consumer_id,'vrodos_asset3d_obj',true);
+                $consumer_yaml = get_term_meta($asset_type_ID,'vrodos_yamlmeta_assetcat_pat',true);
+                $energy_consumption = get_post_meta($consumer_id,'vrodos_energyConsumption',true);
 
-                $fid_prefab_consumer_parent = wpunity_create_fids($current_fid++);
+                $fid_prefab_consumer_parent = vrodos_create_fids($current_fid++);
                 $x_pos_consumer = - $value['position'][0]; // x is in the opposite site in unity
                 $y_pos_consumer = $value['position'][1];
                 $z_pos_consumer = $value['position'][2];
@@ -454,9 +454,9 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
                 $z_rotation_consumer = $value['quaternion'][2];
                 $w_rotation_consumer = $value['quaternion'][3];
                 $name_consumer = get_the_title($consumer_id);
-                $fid_consumer_prefab_transform = wpunity_create_fids($current_fid++);
-                $fid_consumer_prefab_child = wpunity_create_fids($current_fid++);
-                $guid_consumer_prefab_child_obj = wpunity_create_guids('obj', $consumer_obj);
+                $fid_consumer_prefab_transform = vrodos_create_fids($current_fid++);
+                $fid_consumer_prefab_child = vrodos_create_fids($current_fid++);
+                $guid_consumer_prefab_child_obj = vrodos_create_guids('obj', $consumer_obj);
 
 
                 // REM STATHIS
@@ -466,7 +466,7 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
                 $max_power_consumer = $energy_consumption['max'];
 
 
-                $consumer_finalyaml = wpunity_replace_consumer_unity($consumer_yaml,$fid_prefab_consumer_parent,$x_pos_consumer,$y_pos_consumer,
+                $consumer_finalyaml = vrodos_replace_consumer_unity($consumer_yaml,$fid_prefab_consumer_parent,$x_pos_consumer,$y_pos_consumer,
                     $z_pos_consumer,$x_rotation_consumer,$y_rotation_consumer,$z_rotation_consumer,$w_rotation_consumer,$name_consumer,$fid_consumer_prefab_transform,
                     $fid_consumer_prefab_child,$guid_consumer_prefab_child_obj,
                     $mean_power_consumer, $var_power_consumer, $min_power_consumer, $max_power_consumer);
@@ -475,10 +475,10 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
 
             if ($value['categoryName'] == 'Producer'){
                 $producer_id = $value['assetid'];
-                $asset_type = get_the_terms( $producer_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $producer_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $producer_obj = get_post_meta($producer_id,'wpunity_asset3d_obj',true);
+                $producer_obj = get_post_meta($producer_id,'vrodos_asset3d_obj',true);
                 $prod_optCosts = get_post_meta($producer_id,'vrodos_producerOptCosts',true);
                 $prod_optGen = get_post_meta($producer_id,'vrodos_producerOptGen',true);
                 $prod_powerVal = get_post_meta($producer_id,'vrodos_producerPowerProductionVal',true);
@@ -486,8 +486,8 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
                 $prod_powerVal_array = explode(',', $prod_powerVal);//create Array with values of string
 
 
-                $producer_yaml = get_term_meta($asset_type_ID,'wpunity_yamlmeta_assetcat_pat',true);
-                $fid_producer = wpunity_create_fids($current_fid++);
+                $producer_yaml = get_term_meta($asset_type_ID,'vrodos_yamlmeta_assetcat_pat',true);
+                $fid_producer = vrodos_create_fids($current_fid++);
                 $x_pos_producer = - $value['position'][0]; // x is in the opposite site in unity
                 $y_pos_producer = $value['position'][1];
                 $z_pos_producer = $value['position'][2];
@@ -505,13 +505,13 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
                 $turbine_windspeed_class = $prod_optGen['speed'];
                 $turbine_repair_cost = $prod_optCosts['repaid'];
                 $turbine_damage_coefficient = $prod_optCosts['dmg'];
-                $fid_transformation_parent_producer = wpunity_create_fids($current_fid++);
-                $fid_child_producer = wpunity_create_fids($current_fid++);
-                $obj_guid_producer = wpunity_create_guids('obj', $producer_obj);
+                $fid_transformation_parent_producer = vrodos_create_fids($current_fid++);
+                $fid_child_producer = vrodos_create_fids($current_fid++);
+                $obj_guid_producer = vrodos_create_guids('obj', $producer_obj);
                 $producer_name = get_the_title($producer_id);
                 $power_curve_val = $prod_powerVal_array;
 
-                $producer_finalyaml = wpunity_replace_producer_unity($producer_yaml,$fid_producer,$x_pos_producer,$y_pos_producer,$z_pos_producer,$x_rot_parent,$y_rot_parent,$z_rot_parent,$w_rot_parent,$y_position_infoquad,$y_pos_quadselector,$turbine_name_class,$turbine_max_power,$turbine_cost,$rotor_diameter,$turbine_windspeed_class,$turbine_repair_cost,$turbine_damage_coefficient,$fid_transformation_parent_producer,$fid_child_producer,$obj_guid_producer,$producer_name,$power_curve_val);
+                $producer_finalyaml = vrodos_replace_producer_unity($producer_yaml,$fid_producer,$x_pos_producer,$y_pos_producer,$z_pos_producer,$x_rot_parent,$y_rot_parent,$z_rot_parent,$w_rot_parent,$y_position_infoquad,$y_pos_quadselector,$turbine_name_class,$turbine_max_power,$turbine_cost,$rotor_diameter,$turbine_windspeed_class,$turbine_repair_cost,$turbine_damage_coefficient,$fid_transformation_parent_producer,$fid_child_producer,$obj_guid_producer,$producer_name,$power_curve_val);
                 $allObjectsYAML = $allObjectsYAML . $LF . $producer_finalyaml;
             }
             */
@@ -530,7 +530,7 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function wpunity_replace_sceneselector_energy_unity($term_meta_s_selector,$mountains_activation,$seashore_activation,$fields_activation){
+function vrodos_replace_sceneselector_energy_unity($term_meta_s_selector,$mountains_activation,$seashore_activation,$fields_activation){
     $file_content_return = str_replace("___[mountains_activation]___",$mountains_activation,$term_meta_s_selector);
     $file_content_return = str_replace("___[seashore_activation]___",$seashore_activation,$file_content_return);
     $file_content_return = str_replace("___[fields_activation]___",$fields_activation,$file_content_return);
@@ -538,33 +538,33 @@ function wpunity_replace_sceneselector_energy_unity($term_meta_s_selector,$mount
     return $file_content_return;
 }
 
-function wpunity_replace_mainmenu_energy_unity($term_meta_s_mainmenu,$featured_image_sprite_guid){
+function vrodos_replace_mainmenu_energy_unity($term_meta_s_mainmenu,$featured_image_sprite_guid){
     $file_content_return = str_replace("___[mainmenu_featured_image_sprite]___",$featured_image_sprite_guid,$term_meta_s_mainmenu);
 
     return $file_content_return;
 }
 
-function wpunity_replace_creditsscene_energy_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid){
+function vrodos_replace_creditsscene_energy_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid){
     $file_content_return = str_replace("___[text_credits_scene]___",$credits_content,$term_meta_s_credits);
     $file_content_return = str_replace("___[img_credits_scene]___",$featured_image_sprite_guid,$file_content_return);
 
     return $file_content_return;
 }
 
-function wpunity_replace_help_energy_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid){
+function vrodos_replace_help_energy_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid){
     $file_content_return = str_replace("___[text_help_scene]___",$text_help_scene,$term_meta_s_help);
     $file_content_return = str_replace("___[img_help_scene]___",$img_help_scene_guid,$file_content_return);
 
     return $file_content_return;
 }
 
-function wpunity_replace_login_energy_unity($term_meta_s_login){
+function vrodos_replace_login_energy_unity($term_meta_s_login){
     return $term_meta_s_login;
 }
 
-function wpunity_replace_educational_energy_unity($term_meta_educational_energy,$scene_id){
+function vrodos_replace_educational_energy_unity($term_meta_educational_energy,$scene_id){
 
-    $scene_json = get_post($scene_id)->post_content;//,'wpunity_scene_json_input',true);
+    $scene_json = get_post($scene_id)->post_content;//,'vrodos_scene_json_input',true);
 
     $jsonScene = htmlspecialchars_decode ( $scene_json );
     $sceneJsonARR = json_decode($jsonScene, TRUE);
@@ -590,7 +590,7 @@ function wpunity_replace_educational_energy_unity($term_meta_educational_energy,
     return $file_content_return;
 }
 
-function wpunity_replace_terrain_unity($terrain_yaml,$fid_of_terrain,$fid_of_terrain1,$fid_of_terrain2,$guid_terrain_mesh,$x_pos_terrain,$y_pos_terrain,$z_pos_terrain,$x_rotation_terrain,$y_rotation_terrain,$z_rotation_terrain,$w_rotation_terrain,$x_scale_terrain,$y_scale_terrain,$z_scale_terrain){
+function vrodos_replace_terrain_unity($terrain_yaml,$fid_of_terrain,$fid_of_terrain1,$fid_of_terrain2,$guid_terrain_mesh,$x_pos_terrain,$y_pos_terrain,$z_pos_terrain,$x_rotation_terrain,$y_rotation_terrain,$z_rotation_terrain,$w_rotation_terrain,$x_scale_terrain,$y_scale_terrain,$z_scale_terrain){
     $file_content_return = str_replace("___[terrain_fid]___",$fid_of_terrain,$terrain_yaml);
     $file_content_return = str_replace("___[terrain_fid1]___",$fid_of_terrain1,$file_content_return);
     $file_content_return = str_replace("___[terrain_fid2]___",$fid_of_terrain2,$file_content_return);
@@ -610,7 +610,7 @@ function wpunity_replace_terrain_unity($terrain_yaml,$fid_of_terrain,$fid_of_ter
 }
 
 /*
-function wpunity_replace_consumer_unity($consumer_yaml,$fid_prefab_consumer_parent,$x_pos_consumer,$y_pos_consumer,$z_pos_consumer,$x_rotation_consumer,$y_rotation_consumer,$z_rotation_consumer,$w_rotation_consumer,$name_consumer,$fid_consumer_prefab_transform,
+function vrodos_replace_consumer_unity($consumer_yaml,$fid_prefab_consumer_parent,$x_pos_consumer,$y_pos_consumer,$z_pos_consumer,$x_rotation_consumer,$y_rotation_consumer,$z_rotation_consumer,$w_rotation_consumer,$name_consumer,$fid_consumer_prefab_transform,
                                         $fid_consumer_prefab_child,$guid_consumer_prefab_child_obj,
                                         $mean_power_consumer, $var_power_consumer, $min_power_consumer, $max_power_consumer){
 
@@ -640,7 +640,7 @@ function wpunity_replace_consumer_unity($consumer_yaml,$fid_prefab_consumer_pare
 */
 
 /*
-function wpunity_replace_producer_unity($producer_yaml,$fid_producer,$x_pos_producer,$y_pos_producer,$z_pos_producer,$x_rot_parent,$y_rot_parent,$z_rot_parent,$w_rot_parent,$y_position_infoquad,$y_pos_quadselector,$turbine_name_class,$turbine_max_power,$turbine_cost,$rotor_diameter,$turbine_windspeed_class,$turbine_repair_cost,$turbine_damage_coefficient,$fid_transformation_parent_producer,$fid_child_producer,$obj_guid_producer,$producer_name,$power_curve_val){
+function vrodos_replace_producer_unity($producer_yaml,$fid_producer,$x_pos_producer,$y_pos_producer,$z_pos_producer,$x_rot_parent,$y_rot_parent,$z_rot_parent,$w_rot_parent,$y_position_infoquad,$y_pos_quadselector,$turbine_name_class,$turbine_max_power,$turbine_cost,$rotor_diameter,$turbine_windspeed_class,$turbine_repair_cost,$turbine_damage_coefficient,$fid_transformation_parent_producer,$fid_child_producer,$obj_guid_producer,$producer_name,$power_curve_val){
 
     $file_content_return = str_replace("___[fid_producer]___",$fid_producer,$producer_yaml);
     $file_content_return = str_replace("___[x_pos_producer]___",$x_pos_producer,$file_content_return);
@@ -696,7 +696,7 @@ function wpunity_replace_producer_unity($producer_yaml,$fid_producer,$x_pos_prod
 }
 */
 
-function wpunity_replace_marker_unity($marker_yaml,$fid_marker,$fid_marker1,$fid_marker2,$fid_marker3,$guid_obj_marker,$x_pos_marker,$y_pos_marker,$z_pos_marker,$x_rotation_marker,$y_rotation_marker,$z_rotation_marker,$w_rotation_marker,$x_scale_marker,$y_scale_marker,$z_scale_marker,$archaelogical_penalty,$nature_penalty,$HV_penalty){
+function vrodos_replace_marker_unity($marker_yaml,$fid_marker,$fid_marker1,$fid_marker2,$fid_marker3,$guid_obj_marker,$x_pos_marker,$y_pos_marker,$z_pos_marker,$x_rotation_marker,$y_rotation_marker,$z_rotation_marker,$w_rotation_marker,$x_scale_marker,$y_scale_marker,$z_scale_marker,$archaelogical_penalty,$nature_penalty,$HV_penalty){
 
     $file_content_return = str_replace("___[marker_fid]___",$fid_marker,$marker_yaml);
     $file_content_return = str_replace("___[marker_fid1]___",$fid_marker1,$file_content_return);
@@ -723,7 +723,7 @@ function wpunity_replace_marker_unity($marker_yaml,$fid_marker,$fid_marker1,$fid
 }
 
 
-function wpunity_replace_decorator_unity($deco_yaml,$fid_decorator,$fid_decorator1,$fid_decorator2,$guid_obj_decorator,$x_pos_decorator,$y_pos_decorator,$z_pos_decorator,$x_rotation_decorator,$y_rotation_decorator,$z_rotation_decorator,$w_rotation_decorator,$x_scale_decorator,$y_scale_decorator,$z_scale_decorator){
+function vrodos_replace_decorator_unity($deco_yaml,$fid_decorator,$fid_decorator1,$fid_decorator2,$guid_obj_decorator,$x_pos_decorator,$y_pos_decorator,$z_pos_decorator,$x_rotation_decorator,$y_rotation_decorator,$z_rotation_decorator,$w_rotation_decorator,$x_scale_decorator,$y_scale_decorator,$z_scale_decorator){
     $file_content_return = str_replace("___[decor_fid]___",$fid_decorator,$deco_yaml);
     $file_content_return = str_replace("___[decor_fid1]___",$fid_decorator1,$file_content_return);
     $file_content_return = str_replace("___[decor_fid2]___",$fid_decorator2,$file_content_return);

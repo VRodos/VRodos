@@ -3,7 +3,7 @@
  *
  *  All the above are encompassed in     vrodos_collaborate_project_frontend_callback
  */
-function wpunity_updateCollabsAjax(project_id, dialogCollab, collabs_emails) {
+function vrodos_updateCollabsAjax(project_id, dialogCollab, collabs_emails) {
 
     jQuery.ajax({
         url: my_ajax_object_collaborate_project.ajax_url,
@@ -36,7 +36,7 @@ function wpunity_updateCollabsAjax(project_id, dialogCollab, collabs_emails) {
 
 
 
-function wpunity_fetchCollabsAjax(project_id) {
+function vrodos_fetchCollabsAjax(project_id) {
 
 
 

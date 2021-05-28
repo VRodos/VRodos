@@ -1,14 +1,14 @@
 <?php
 
-global $wpunity_db_version;
-$wpunity_db_version = '1.0';
+global $vrodos_db_version;
+$vrodos_db_version = '1.0';
 
 /**
  *     Create the table of games versions
  */
-function wpunity_db_create_games_versions_table () {
+function vrodos_db_create_games_versions_table () {
 	global $wpdb;
-	global $wpunity_db_version;
+	global $vrodos_db_version;
 
 	$table_name = $wpdb->prefix . "_games_versions";
 
@@ -25,7 +25,7 @@ function wpunity_db_create_games_versions_table () {
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql );
 
-	add_option( 'wpunity_db_version', $wpunity_db_version );
+	add_option( 'vrodos_db_version', $vrodos_db_version );
  
  
 }

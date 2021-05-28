@@ -6,37 +6,37 @@
 function vrodos_assemble_the_unity_game_project($gameID, $gameSlug, $targetPlatform, $gameType){
 
     //0. Delete everything in order to recreate them from scratch
-    wpunity_compile_folders_del($gameSlug);
+    vrodos_compile_folders_del($gameSlug);
 
     //1. Create Default Folder Structure
-    wpunity_compile_folders_gen($gameSlug);
+    vrodos_compile_folders_gen($gameSlug);
 
     //1b. Create cs files before all data that give commands to editor and importer
     // GeneralImportSettings is completed as it is whereas Handybuilder.cs is a template that should be filled with assets and scenes to import
-    wpunity_compile_cs_gen($gameSlug, $targetPlatform);
+    vrodos_compile_cs_gen($gameSlug, $targetPlatform);
     
     //2. Create Project Settings files (16 files):
     // ProjectSettings.asset is modified with the versioning system.
     // EditorBuildSettings.asset is not modified. Just copied.
-    wpunity_compile_settings_gen($gameID,$gameSlug);
+    vrodos_compile_settings_gen($gameID,$gameSlug);
 
     //3. Create models related files (go in Models and Resources)
-    wpunity_compile_models_gen($gameID, $gameSlug, $targetPlatform);
+    vrodos_compile_models_gen($gameID, $gameSlug, $targetPlatform);
 
     //4. Create Scenes.Unity files (at Assets/scenes)
-    wpunity_compile_scenes_gen($gameID,$gameSlug);
+    vrodos_compile_scenes_gen($gameID,$gameSlug);
 
     //5. Copy StandardAssets depending the Game Type
-    wpunity_compile_copy_StandardAssets($gameID, $gameSlug, $gameType);
+    vrodos_compile_copy_StandardAssets($gameID, $gameSlug, $gameType);
     
     //6. If game is chemistry then make the molecule prefabs
     if ($gameType == "Chemistry")
-        wpunity_compile_make_molecules_prefabs($gameID, $gameSlug);
+        vrodos_compile_make_molecules_prefabs($gameID, $gameSlug);
     
     return 'true';
 }
 
-function wpunity_compile_make_molecules_prefabs($gameID, $gameSlug){
+function vrodos_compile_make_molecules_prefabs($gameID, $gameSlug){
     $upload = wp_upload_dir();
     $upload_dir = $upload['basedir'];
     $projectLocalPath = str_replace('\\','/',$upload_dir);
@@ -96,7 +96,7 @@ function wpunity_compile_make_molecules_prefabs($gameID, $gameSlug){
 //==========================================================================================================================================
 //==========================================================================================================================================
 //0. Delete everything in order to recreate them from scratch
-function wpunity_compile_folders_del($gameSlug) {
+function vrodos_compile_folders_del($gameSlug) {
 
     $upload = wp_upload_dir();
     $upload_dir = $upload['basedir'];
@@ -136,7 +136,7 @@ function wpunity_compile_folders_del($gameSlug) {
 //==========================================================================================================================================
 //==========================================================================================================================================
 //1. Create Default Folder Structure
-function wpunity_compile_folders_gen($gameSlug){
+function vrodos_compile_folders_gen($gameSlug){
     $upload = wp_upload_dir();
     $upload_dir = $upload['basedir'];
     $upload_dir = str_replace('\\','/',$upload_dir);
@@ -174,18 +174,18 @@ function wpunity_compile_folders_gen($gameSlug){
 //==========================================================================================================================================
 //==========================================================================================================================================
 //1b. Create cs file before all data (Generate HandyBuilder.cs and GeneralImportSettings.cs)
-function wpunity_compile_cs_gen($gameSlug, $targetPlatform){
+function vrodos_compile_cs_gen($gameSlug, $targetPlatform){
     
     // 1. HandyBuilder.cs
     // Get 'Uploads' dir path of wordpress
     $upload_dir = str_replace('\\','/', wp_upload_dir()['basedir']);
 
-    wpunity_createEmpty_HandyBuilder_cs($upload_dir.'/'.$gameSlug.'Unity/Assets/Editor/HandyBuilder.cs',
+    vrodos_createEmpty_HandyBuilder_cs($upload_dir.'/'.$gameSlug.'Unity/Assets/Editor/HandyBuilder.cs',
                                                 $targetPlatform);
     
     // 2. GeneralImportSettings.cs: Copy from Editor_Commons folder
     
-    $pluginSlug = plugin_basename(__FILE__); // wordpressunity3deditor/includes/wpunity-core-project-assemble.php
+    $pluginSlug = plugin_basename(__FILE__); // wordpressunity3deditor/includes/vrodos-core-project-assemble.php
     
     $pluginSlug = substr($pluginSlug, 0, strpos($pluginSlug, "/")); // wordpressunity3deditor
     
@@ -199,7 +199,7 @@ function wpunity_compile_cs_gen($gameSlug, $targetPlatform){
 }
 
 /* Create an empty WebGLBuilder.cs in a certain $filepath */
-function wpunity_createEmpty_HandyBuilder_cs($filepath, $targetPlatform){
+function vrodos_createEmpty_HandyBuilder_cs($filepath, $targetPlatform){
     $handle = fopen($filepath, 'w');
     $targetFileFormat = ''; // WebGL and Linux are blank
 
@@ -305,9 +305,9 @@ function vrodos_add_in_HandyBuilder_cs($filepath, $assetpath, $scenepath){
 //==========================================================================================================================================
 //==========================================================================================================================================
 //2. Create Project Settings files (16 files)
-function wpunity_compile_settings_gen($gameID,$gameSlug){
+function vrodos_compile_settings_gen($gameID,$gameSlug){
 
-    $gameType = wp_get_post_terms( $gameID, 'wpunity_game_type' );
+    $gameType = wp_get_post_terms( $gameID, 'vrodos_game_type' );
     
     switch($gameType[0]->slug) {
         case 'archaeology_games':
@@ -324,25 +324,25 @@ function wpunity_compile_settings_gen($gameID,$gameSlug){
     $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
     $game_path = $upload_dir . "/" . $gameSlug . 'Unity';
 
-    wpunity_compile_settings_files_gen($gameID, $game_path,'AudioManager.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'ClusterInputManager.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'DynamicsManager.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'EditorBuildSettings.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'EditorSettings.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'GraphicsSettings.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'InputManager.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'NavMeshAreas.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'NetworkManager.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'Physics2DSettings.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'ProjectSettings.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'ProjectVersion.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'QualitySettings.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'TagManager.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'TimeManager.asset',$fileFolder);
-    wpunity_compile_settings_files_gen($gameID, $game_path,'UnityConnectSettings.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'AudioManager.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'ClusterInputManager.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'DynamicsManager.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'EditorBuildSettings.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'EditorSettings.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'GraphicsSettings.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'InputManager.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'NavMeshAreas.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'NetworkManager.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'Physics2DSettings.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'ProjectSettings.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'ProjectVersion.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'QualitySettings.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'TagManager.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'TimeManager.asset',$fileFolder);
+    vrodos_compile_settings_files_gen($gameID, $game_path,'UnityConnectSettings.asset',$fileFolder);
 }
 
-function wpunity_compile_settings_files_gen($game_project_id, $game_path,$fileName,$fileFolder){
+function vrodos_compile_settings_files_gen($game_project_id, $game_path,$fileName,$fileFolder){
 
     // Get the YAML pattern
     $fileYaml = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/default_game_project_data/" . $fileFolder . "/settings/" . $fileName);
@@ -382,7 +382,7 @@ function wpunity_compile_settings_files_gen($game_project_id, $game_path,$fileNa
 // First get all assets of game
 // Second all objs in Models and sprites/videos in Resources
 // Third all objs in HandyBuilder.cs for importing (wrapper)
-function wpunity_compile_models_gen($gameID, $gameSlug, $targetPlatform){
+function vrodos_compile_models_gen($gameID, $gameSlug, $targetPlatform){
 
     $upload_dir = str_replace('\\','/', wp_upload_dir()['basedir']);
     $game_path = $upload_dir . "/" . $gameSlug . 'Unity/Assets/models';
@@ -398,7 +398,7 @@ function wpunity_compile_models_gen($gameID, $gameSlug, $targetPlatform){
     for ($i = 0 ; $i < count($assetIds); $i++ )
     {
         if (!in_array($assetIds[$i], $assetsAlreadyIncluded)){
-            wpunity_compile_assets_cre($game_path, $assetIds[$i], $handybuilder_file, $gameSlug, $targetPlatform, $neededObj[$i]);
+            vrodos_compile_assets_cre($game_path, $assetIds[$i], $handybuilder_file, $gameSlug, $targetPlatform, $neededObj[$i]);
             $assetsAlreadyIncluded[] = $assetIds[$i];
         }
     }
@@ -413,7 +413,7 @@ function wpunity_compile_models_gen($gameID, $gameSlug, $targetPlatform){
  * @param $targetPlatform
  * @param $includeObj  :  Not always wanted to include obj. Clones should not include their obj which has the same id with its prototype (only in the case both exist in the scene).
  */
-function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $gameSlug, $targetPlatform, $includeObj){
+function vrodos_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $gameSlug, $targetPlatform, $includeObj){
 
     //Create the folder of the Model(Asset)
     $asset_post = get_post($asset_id);
@@ -440,9 +440,9 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
             copy($attachment_file, $new_file);
         
             if ($asset_type[0]->name == 'Site' || $asset_type[0]->name == 'Room')
-                wpunity_compile_objmeta_cre($folder, $attachment_name['filename'], $objID, 'CollidersNoOptimization');
+                vrodos_compile_objmeta_cre($folder, $attachment_name['filename'], $objID, 'CollidersNoOptimization');
             else
-                wpunity_compile_objmeta_cre($folder, $attachment_name['filename'], $objID, '');
+                vrodos_compile_objmeta_cre($folder, $attachment_name['filename'], $objID, '');
         
             $new_file_path_forCS = 'Assets/models/' . $asset_post->post_name . '/' . $attachment_name['filename'] . '.obj';
         
@@ -523,7 +523,7 @@ function wpunity_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $
 }
 
 //Create initial meta for objs
-function wpunity_compile_objmeta_cre($folder, $objName, $objID, $suffix = ""){
+function vrodos_compile_objmeta_cre($folder, $objName, $objID, $suffix = ""){
 
     $file = $folder . '/' . $objName . $suffix. '.obj.meta';
     $create_file = fopen($file, "w") or die("Unable to open file!");
@@ -534,7 +534,7 @@ timeCreated: ___[unx_time_created]___
 licenseType: Free
 [junk line]";      // vrodos_getYaml_obj_dotmeta_pattern();
 
-    $objMetaContent = wpunity_replace_objmeta($objMetaPattern, $objID);
+    $objMetaContent = vrodos_replace_objmeta($objMetaPattern, $objID);
 
     fwrite($create_file, $objMetaContent);
     fclose($create_file);
@@ -545,7 +545,7 @@ licenseType: Free
 //4. Create Unity files (at Assets/scenes)
 
 //Generate scenes
-function wpunity_compile_scenes_gen($gameID,$gameSlug){
+function vrodos_compile_scenes_gen($gameID,$gameSlug){
  
     $upload_dir = str_replace('\\','/', wp_upload_dir()['basedir']);
     
@@ -553,7 +553,7 @@ function wpunity_compile_scenes_gen($gameID,$gameSlug){
     $fileEditorBuildSets = $upload_dir . "/" . $gameSlug . 'Unity/ProjectSettings/EditorBuildSettings.asset';
     $handybuilder_file = $upload_dir . '/' . $gameSlug . 'Unity/Assets/Editor/HandyBuilder.cs';
     
-    $gameTypeTerm = wp_get_post_terms( $gameID, 'wpunity_game_type' );
+    $gameTypeTerm = wp_get_post_terms( $gameID, 'vrodos_game_type' );
     $gameType = $gameTypeTerm[0]->name;
     
     $queryargs = array(
@@ -579,7 +579,7 @@ function wpunity_compile_scenes_gen($gameID,$gameSlug){
     vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_MainMenu.unity');
     
     // Add Static scenes
-    wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBuildSets, $handybuilder_file, $gameID);
+    vrodos_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBuildSets, $handybuilder_file, $gameID);
     
     if ( $custom_query->have_posts() ) :
         while ( $custom_query->have_posts() ) :
@@ -587,7 +587,7 @@ function wpunity_compile_scenes_gen($gameID,$gameSlug){
             $scene_id = get_the_ID();
     
             //Create the non-static Unity Scenes (or those that have dependency from non-static)
-            wpunity_compile_scenes_cre($game_path, $scene_id, $gameSlug, $fileEditorBuildSets,
+            vrodos_compile_scenes_cre($game_path, $scene_id, $gameSlug, $fileEditorBuildSets,
                 $scenes_counter, $handybuilder_file, $gameType);
             
             // Increment scene counter if scene is either WonderAround or Educational-Energy scene
@@ -606,10 +606,10 @@ function wpunity_compile_scenes_gen($gameID,$gameSlug){
 
 
 //Create Reward and SceneSelector
-function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBuildSettings, $handybuilder_file, $gameID){
+function vrodos_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBuildSettings, $handybuilder_file, $gameID){
     
     //get the first Game Type taxonomy in order to get the yamls (all of them have the same)
-    $gameType = wp_get_post_terms( $gameID, 'wpunity_game_type' );
+    $gameType = wp_get_post_terms( $gameID, 'vrodos_game_type' );
 
     switch($gameType[0]->slug){
         case 'archaeology_games':
@@ -643,10 +643,10 @@ function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBui
 //            $term_meta_s_selector_title = 'Select a Scene';
 
             //create standard energy scenes (simulation scenes, stats, turbine selection etc)
-            wpunity_create_energy_standardScenes_unity($gameID, $gameSlug, $game_path, $fileEditorBuildSettings, $handybuilder_file);
+            vrodos_create_energy_standardScenes_unity($gameID, $gameSlug, $game_path, $fileEditorBuildSettings, $handybuilder_file);
     
             // Make the scene selector
-            wpunity_create_energy_selector_unity($gameID,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
+            vrodos_create_energy_selector_unity($gameID,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
     
             break;
         case 'chemistry_games':
@@ -657,14 +657,14 @@ function wpunity_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBui
 //            $term_meta_s_selector_title = 'Select a Scene';
     
             //do nothing
-            wpunity_create_chemistry_selector_unity($gameID, $gameSlug, $game_path, $fileEditorBuildSettings, $handybuilder_file);
+            vrodos_create_chemistry_selector_unity($gameID, $gameSlug, $game_path, $fileEditorBuildSettings, $handybuilder_file);
             
             break;
     }
 }
 
 //Create MainMenu scene and others
-function wpunity_compile_scenes_cre($game_path, $scene_id, $gameSlug, $fileEditorBuildSettings, $scenes_counter, $handybuilder_file, $gameType){
+function vrodos_compile_scenes_cre($game_path, $scene_id, $gameSlug, $fileEditorBuildSettings, $scenes_counter, $handybuilder_file, $gameType){
 
     //$fe = fopen("output_scenes_cre" . $scene_id . ".txt","w");
     
@@ -680,27 +680,27 @@ function wpunity_compile_scenes_cre($game_path, $scene_id, $gameSlug, $fileEdito
     
     
     if($scene_type_slug == 'mainmenu-yaml'){
-        wpunity_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
+        vrodos_create_energy_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
     }elseif($scene_type_slug == 'mainmenu-arch-yaml'){
-        wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
+        vrodos_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
     }elseif($scene_type_slug == 'mainmenu-chem-yaml'){
-        wpunity_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
+        vrodos_create_chemistry_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
     }elseif($scene_type_slug == 'credentials-arch-yaml'){
-        wpunity_create_archaeology_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
+        vrodos_create_archaeology_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
     }elseif($scene_type_slug == 'credentials-yaml'){
-        wpunity_create_energy_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
+        vrodos_create_energy_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
     }elseif($scene_type_slug == 'credentials-chem-yaml'){
-        wpunity_create_chemistry_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
+        vrodos_create_chemistry_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file);
     }elseif($scene_type_slug == 'educational-energy'){
-        wpunity_create_energy_educational_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
+        vrodos_create_energy_educational_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
     }elseif($scene_type_slug == 'wonderaround-yaml'){
-        wpunity_create_archaeology_wonderaround_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
+        vrodos_create_archaeology_wonderaround_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
     }elseif($scene_type_slug == 'wonderaround-lab-yaml'){
-        wpunity_create_chemistry_lab_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
+        vrodos_create_chemistry_lab_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
     }elseif($scene_type_slug == 'exam2d-chem-yaml'){
-        wpunity_create_chemistry_exam2d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
+        vrodos_create_chemistry_exam2d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
     }elseif($scene_type_slug == 'exam3d-chem-yaml'){
-        wpunity_create_chemistry_exam3d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
+        vrodos_create_chemistry_exam3d_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file,$scenes_counter,$gameType);
     }
     
 //    fwrite($fe, "success");
@@ -711,7 +711,7 @@ function wpunity_compile_scenes_cre($game_path, $scene_id, $gameSlug, $fileEdito
 //==========================================================================================================================================
 //5. Copy StandardAssets depending the Game Type
 
-function wpunity_compile_copy_StandardAssets($gameID, $gameSlug,$gameType){
+function vrodos_compile_copy_StandardAssets($gameID, $gameSlug,$gameType){
     $upload = wp_upload_dir();
     $upload_dir = $upload['basedir'];
     $upload_dir = str_replace('\\','/',$upload_dir);

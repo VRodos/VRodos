@@ -217,30 +217,30 @@ add_action( 'init', 'vrodos_projects_taxtypes_define', 3 );
 
 
 // 28
-add_action('transition_post_status','wpunity_create_folder_game', 9 , 3);
+add_action('transition_post_status','vrodos_create_folder_game', 9 , 3);
 
 
 // 50
-add_filter( 'manage_wpunity_game_posts_columns', 'wpunity_set_custom_wpunity_game_columns' );
+add_filter( 'manage_vrodos_game_posts_columns', 'vrodos_set_custom_vrodos_game_columns' );
 
 //Create Game Category Box @ Game's backend
 // 51
-add_action('add_meta_boxes','wpunity_games_taxcategory_box');
+add_action('add_meta_boxes','vrodos_games_taxcategory_box');
 
 
 /* Do something with the data entered */
 // 31
-add_action( 'save_post', 'wpunity_games_taxtype_box_content_save' );
+add_action( 'save_post', 'vrodos_games_taxtype_box_content_save' );
 
 // Add the data to the custom columns for the game post type:
 // 55
-add_action( 'manage_wpunity_game_posts_custom_column' , 'wpunity_set_custom_wpunity_game_columns_fill', 10, 2 );
+add_action( 'manage_vrodos_game_posts_custom_column' , 'vrodos_set_custom_vrodos_game_columns_fill', 10, 2 );
 
 // 40
-add_action('admin_menu', 'wpunity_games_databox_add');
+add_action('admin_menu', 'vrodos_games_databox_add');
 
 // 32
-add_action('save_post', 'wpunity_games_databox_save');
+add_action('save_post', 'vrodos_games_databox_save');
 
 //---------------------- Scenes ----------------------------------------------------
 
@@ -259,7 +259,7 @@ add_action('init', 'vrodos_scenes_taxyaml'); //vrodos_scene_yaml 'SCENE TYPES'
 // 52
 add_action('add_meta_boxes','vrodos_scenes_taxgame_box');
 
-//When the post is saved, also saves wpunity_game_cat
+//When the post is saved, also saves vrodos_game_cat
 //33
 add_action( 'save_post', 'vrodos_scenes_taxgame_box_content_save' );
 
@@ -267,11 +267,11 @@ add_action( 'save_post', 'vrodos_scenes_taxgame_box_content_save' );
 add_action( 'save_post', 'vrodos_scenes_taxyaml_box_content_save' );
 
 // 56
-add_filter( 'manage_vrodos_scene_posts_columns', 'wpunity_set_custom_vrodos_scene_columns' );
+add_filter( 'manage_vrodos_scene_posts_columns', 'vrodos_set_custom_vrodos_scene_columns' );
 
 // Add the data to the custom columns for the scene post type
 // 57
-add_action( 'manage_vrodos_scene_posts_custom_column' , 'wpunity_set_custom_vrodos_scene_columns_fill', 10, 2 );
+add_action( 'manage_vrodos_scene_posts_custom_column' , 'vrodos_set_custom_vrodos_scene_columns_fill', 10, 2 );
 
 // 41
 add_action('admin_menu', 'vrodos_scenes_meta_definitions_add');
@@ -300,10 +300,10 @@ add_action('init', 'vrodos_assets_taxcategory_ipr'); // vrodos_asset3d_ipr_cat '
 add_action( 'init', 'vrodos_asset3d_metas_description', 1);
 
 // 35
-add_action('save_post','wpunity_create_pathdata_asset',10,3);
+add_action('save_post','vrodos_create_pathdata_asset',10,3);
 
 // 18
-add_action('init','wpunity_allowAuthorEditing');
+add_action('init','vrodos_allowAuthorEditing');
 
 // 58
 add_filter( 'wp_dropdown_users_args', 'change_user_dropdown', 10, 2 );
@@ -337,11 +337,11 @@ add_action('admin_menu', 'vrodos_assets_databox_add');
 
 //
 //// 61
-add_filter( 'manage_vrodos_asset3d_posts_columns', 'wpunity_set_custom_vrodos_asset3d_columns' );
+add_filter( 'manage_vrodos_asset3d_posts_columns', 'vrodos_set_custom_vrodos_asset3d_columns' );
 //
 //// Add the data to the custom columns for the book post type:
 //// 62
-add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'wpunity_set_custom_vrodos_asset3d_columns_fill', 10, 2 );
+add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'vrodos_set_custom_vrodos_asset3d_columns_fill', 10, 2 );
 
 
 
@@ -351,17 +351,17 @@ add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'wpunity_set_custom_vr
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-upload-functions.php' );
 
-add_filter( 'upload_dir', 'wpunity_upload_dir_forScenesOrAssets' );
-add_filter( 'intermediate_image_sizes', 'wpunity_disable_imgthumbs_assets', 999 );
-add_filter( 'sanitize_file_name', 'wpunity_overwrite_uploads', 10, 1 );
+add_filter( 'upload_dir', 'vrodos_upload_dir_forScenesOrAssets' );
+add_filter( 'intermediate_image_sizes', 'vrodos_disable_imgthumbs_assets', 999 );
+add_filter( 'sanitize_file_name', 'vrodos_overwrite_uploads', 10, 1 );
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php' );
 
 // Set to the lowest priority in order to have game taxes available when joker games are created
-add_action( 'init', 'wpunity_createJoker_activation', 100, 2 );
-add_filter( 'wp_nav_menu_items','wpunity_loginout_menu_link', 5, 2 );
+add_action( 'init', 'vrodos_createJoker_activation', 100, 2 );
+add_filter( 'wp_nav_menu_items','vrodos_loginout_menu_link', 5, 2 );
 // Remove Admin bar for non admins
-add_action('after_setup_theme', 'wpunity_remove_admin_bar');
+add_action('after_setup_theme', 'vrodos_remove_admin_bar');
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
 
@@ -371,7 +371,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-settings.php' 
 
 
 if( is_admin() ){
-	$my_settings_page = new Wpunity_settingsPage();
+	$my_settings_page = new vrodos_settingsPage();
 	//19
 	add_action( 'init', array( $my_settings_page, 'load_settings' ) );
 
@@ -388,9 +388,9 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-templates.php'
 
 // 27
 // Create class tha manipulates templates
-add_action( 'plugins_loaded', array( 'wpUnityTemplate', 'get_instance' ) );
+add_action( 'plugins_loaded', array( 'vrodosTemplate', 'get_instance' ) );
 
-// Order 1: Filters inside wpunity-page-templates
+// Order 1: Filters inside vrodos-page-templates
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
 
 
@@ -413,7 +413,7 @@ register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-db-table-creations.php' );
 
 // 69
-register_activation_hook( __FILE__, 'wpunity_db_create_games_versions_table' );
+register_activation_hook( __FILE__, 'vrodos_db_create_games_versions_table' );
 
 // ------------------- Add helper functions file ------------------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
@@ -475,14 +475,14 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-PDBLoader.php' );
 // For Envisage only
 if ($project_scope === 1) {
 	// Add a new form element...
-	add_action('register_form', 'wpunity_extrapass_register_form');
+	add_action('register_form', 'vrodos_extrapass_register_form');
 	// Finally, save our extra registration user meta.
-	add_action('user_register', 'wpunity_extrapass_user_register', 10, 1);
+	add_action('user_register', 'vrodos_extrapass_user_register', 10, 1);
 
-	add_action('show_user_profile', 'wpunity_extrapass_profile_fields');
-	add_action('edit_user_profile', 'wpunity_extrapass_profile_fields');
+	add_action('show_user_profile', 'vrodos_extrapass_profile_fields');
+	add_action('edit_user_profile', 'vrodos_extrapass_profile_fields');
 
-	add_action( 'user_register', 'wpunity_registrationUser_save', 10, 2 );
+	add_action( 'user_register', 'vrodos_registrationUser_save', 10, 2 );
 }
 
 
@@ -737,7 +737,7 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 // */
 //function prefix_register_example_routes() {
 //
-//    register_rest_route( 'wpunity/v1', '/scene/(?P<title>\S+)',
+//    register_rest_route( 'vrodos/v1', '/scene/(?P<title>\S+)',
 //		array(
 //        'methods'  => WP_REST_Server::READABLE,   // By using this constant we ensure that when the WP_REST_Server changes our readable endpoints will work as intended.
 //        'callback' => 'prefix_get_endpoint_phrase',  // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
@@ -750,7 +750,7 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 //--------------------------------------------------------------------------
 
 //// Back-end restrict by author filtering
-//function wpunity_filter_by_the_author() {
+//function vrodos_filter_by_the_author() {
 //
 //	$params = array(
 //		'name' => 'author', // this is the "name" attribute for filter <select>
@@ -764,7 +764,7 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 //}
 //
 //// 72
-//add_action('restrict_manage_posts', 'wpunity_filter_by_the_author');
+//add_action('restrict_manage_posts', 'vrodos_filter_by_the_author');
 
 //---------------------- Content Interlinking ------------------------
 //////SIDEBAR of Asset3D with fetch-segmentation etc...
@@ -798,7 +798,7 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 //    //    }
 //
 //    // Some parameters to pass in the classification.js  ajax
-//    //	wp_localize_script('wpunity_classification_request', 'phpvars',
+//    //	wp_localize_script('vrodos_classification_request', 'phpvars',
 //    //		array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
 //    //		      'obj' => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
 //    //		)
@@ -856,16 +856,16 @@ add_action( 'wp_ajax_vrodos_fetch_video_action', 'vrodos_fetch_video_action_call
 
 
 // Peer conferencing
-//add_action( 'wp_ajax_nopriv_wpunity_notify_confpeers_action', 'wpunity_notify_confpeers_callback');
-//add_action( 'wp_ajax_wpunity_notify_confpeers_action', 'wpunity_notify_confpeers_callback');
-//add_action( 'wp_ajax_wpunity_update_expert_log_action', 'wpunity_update_expert_log_callback');
+//add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', 'vrodos_notify_confpeers_callback');
+//add_action( 'wp_ajax_vrodos_notify_confpeers_action', 'vrodos_notify_confpeers_callback');
+//add_action( 'wp_ajax_vrodos_update_expert_log_action', 'vrodos_update_expert_log_callback');
 
 
 // AJAXES for semantics
-//add_action( 'wp_ajax_wpunity_segment_obj_action', 'wpunity_segment_obj_action_callback' );
+//add_action( 'wp_ajax_vrodos_segment_obj_action', 'vrodos_segment_obj_action_callback' );
 //add_action( 'wp_ajax_vrodos_monitor_segment_obj_action', 'vrodos_monitor_segment_obj_action_callback' );
-//add_action( 'wp_ajax_wpunity_enlist_splitted_objs_action', 'wpunity_enlist_splitted_objs_action_callback' );
-//add_action( 'wp_ajax_wpunity_classify_obj_action', 'wpunity_classify_obj_action_callback' );
+//add_action( 'wp_ajax_vrodos_enlist_splitted_objs_action', 'vrodos_enlist_splitted_objs_action_callback' );
+//add_action( 'wp_ajax_vrodos_classify_obj_action', 'vrodos_classify_obj_action_callback' );
 
 // AJAX for delete asset
 add_action('wp_ajax_vrodos_delete_asset_action', 'vrodos_delete_asset3d_frontend_callback');
@@ -878,9 +878,9 @@ add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_b
 // ------- Ajaxes for compiling ---------
 
 // the ajax js is in js_lib/request_game.js (see main functions.php for registering js)
-// the ajax phps are on wpunity-core-functions.php
+// the ajax phps are on vrodos-core-functions.php
 
-//add_action( 'wp_ajax_wpunity_compile_action', 'wpunity_compile_action_callback' );
+//add_action( 'wp_ajax_vrodos_compile_action', 'vrodos_compile_action_callback' );
 add_action( 'wp_ajax_vrodos_monitor_compiling_action', 'vrodos_monitor_compiling_action_callback' );
 add_action( 'wp_ajax_vrodos_killtask_compiling_action', 'vrodos_killtask_compiling_action_callback' );
 add_action( 'wp_ajax_vrodos_game_zip_action', 'vrodos_game_zip_action_callback' );

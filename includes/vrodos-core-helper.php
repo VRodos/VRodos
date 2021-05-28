@@ -6,9 +6,9 @@
  * Time: 3:40 μμ
  */
 
-function wpunity_return_project_type($id) {
+function vrodos_return_project_type($id) {
 
-	$all_project_category = get_the_terms( $id, 'wpunity_game_type' );
+	$all_project_category = get_the_terms( $id, 'vrodos_game_type' );
 
 	$project_category     = $all_project_category[0]->name;
 

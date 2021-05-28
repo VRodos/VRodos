@@ -2,24 +2,24 @@
 //var os_dependend_var = phpvars.PHP_OS.toUpperCase().substr(0, 3) === 'WIN'? 1:4;
 
 // handles the click event for link 1, sends the query
-function wpunity_classifyObjAjax() {
+function vrodos_classifyObjAjax() {
 
-    document.getElementById('wpunity_segmentButton').innerHTML = "Classifying ...";
-    document.getElementById("wpunity-segmentation-report").innerHTML = "...";
-    document.getElementById("wpunity-segmentation-status").innerHTML = "-1";
-    document.getElementById("wpunity-segmentation-log").innerHTML = "Trying to classify the obj ...";
+    document.getElementById('vrodos_segmentButton').innerHTML = "Classifying ...";
+    document.getElementById("vrodos-segmentation-report").innerHTML = "...";
+    document.getElementById("vrodos-segmentation-status").innerHTML = "-1";
+    document.getElementById("vrodos-segmentation-log").innerHTML = "Trying to classify the obj ...";
 
     //  AJAX 1: Send the segmentation command.
     jQuery.ajax({
         url : 'admin-ajax.php',
         type : 'POST',
-        data : {'action': 'wpunity_classify_obj_action'},
+        data : {'action': 'vrodos_classify_obj_action'},
         success : function(response){
-            document.getElementById('wpunity_classifyButton').innerHTML = "Success.";
+            document.getElementById('vrodos_classifyButton').innerHTML = "Success.";
             enlistObjs();
         },
         error : function(xhr, ajaxOptions, thrownError){
-            document.getElementById('wpunity_classifyButton').innerHTML = 'Error: Classify again?';
+            document.getElementById('vrodos_classifyButton').innerHTML = 'Error: Classify again?';
         }
     });
 
@@ -43,28 +43,28 @@ function wpunity_classifyObjAjax() {
                 if (counterLines != counterLinesPrevious) {
                     counterLinesPrevious = counterLines;
 
-                    document.getElementById("wpunity-classify-report").innerHTML = "Log file:" + counterLinesPrevious + " lines";
-                    document.getElementById("wpunity-classify-log").innerHTML = response;
+                    document.getElementById("vrodos-classify-report").innerHTML = "Log file:" + counterLinesPrevious + " lines";
+                    document.getElementById("vrodos-classify-log").innerHTML = response;
                 } else {
                     clearInterval(interval);
 
-                    document.getElementById("wpunity-classify-report").innerHTML = "Classification completed, lasted: " + (new Date().getTime() - start_time)/1000 + " seconds";
+                    document.getElementById("vrodos-classify-report").innerHTML = "Classification completed, lasted: " + (new Date().getTime() - start_time)/1000 + " seconds";
 
                     if (response.indexOf("Completed successfully")>0){
-                        document.getElementById("wpunity-classification-status").innerHTML = "and the result is Success.";
+                        document.getElementById("vrodos-classification-status").innerHTML = "and the result is Success.";
                         clearInterval(interval);
                     } else {
-                        document.getElementById("wpunity-classification-status").innerHTML = 'and the result is Error [145] : Classification error ' + response;
+                        document.getElementById("vrodos-classification-status").innerHTML = 'and the result is Error [145] : Classification error ' + response;
                     }
 
-                    document.getElementById("wpunity-classification-report").innerHTML = response;
+                    document.getElementById("vrodos-classification-report").innerHTML = response;
                 }
             },
             error : function(xhr, ajaxOptions, thrownError){
-                document.getElementById("wpunity-classification-log").innerHTML = "and the result is Error [171] : HTML " + xhr.status + "<br />" +
+                document.getElementById("vrodos-classification-log").innerHTML = "and the result is Error [171] : HTML " + xhr.status + "<br />" +
                     xhr.getAllResponseHeaders() + " " + thrownError;
 
-                document.getElementById("wpunity-classification-report").innerHTML = response;
+                document.getElementById("vrodos-classification-report").innerHTML = response;
             }
         });
     }, 2000);

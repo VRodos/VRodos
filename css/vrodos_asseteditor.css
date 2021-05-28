@@ -184,16 +184,16 @@
     "font-style: italic;"
 }
 
-#wpunity-asset-author{
+#vrodos-asset-author{
     display:inline-block;text-align:left;
     float:right;right:0;margin-top:0;width:auto;
 }
 
-#wpunity-authorImg{
+#vrodos-authorImg{
     width:40px; min-width:40px; height:40px; min-height:40px; border-radius: 50%;
 }
 
-.wpunity-back-button {
+.vrodos-back-button {
     color: #1e90ff;
     overflow: hidden;
     text-overflow: ellipsis;

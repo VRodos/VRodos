@@ -2,7 +2,7 @@
 
 
 
-// Create metabox with Custom Fields for Asset3D ($wpunity_databox1)
+// Create metabox with Custom Fields for Asset3D ($vrodos_databox1)
 $table_of_asset_fields = array(
     
     // Short , full, id, type, default, single, show_in_rest
@@ -80,9 +80,9 @@ for ($i = 0; $i < count($table_of_asset_fields); $i++){
         );
 }
 
-global $wpunity_databox1;
+global $vrodos_databox1;
 //All information about our meta box
-$wpunity_databox1 = array('id' => 'wpunity-assets-databox',
+$vrodos_databox1 = array('id' => 'vrodos-assets-databox',
                         'page' => 'vrodos_asset3d',
                         'context' => 'normal',
                         'priority' => 'high',
@@ -91,9 +91,9 @@ $wpunity_databox1 = array('id' => 'wpunity-assets-databox',
 
 
 function vrodos_asset3d_metas_description() {
-    global $wpunity_databox1;
+    global $vrodos_databox1;
     
-    foreach ($wpunity_databox1['fields'] as $meta_entry) {
+    foreach ($vrodos_databox1['fields'] as $meta_entry) {
       
         
         $meta_id = $meta_entry['id'];
@@ -112,18 +112,18 @@ function vrodos_asset3d_metas_description() {
 
 
 //=========================================================
-// Add and Show the metabox with Custom Field for Project ($wpunity_databox1)
+// Add and Show the metabox with Custom Field for Project ($vrodos_databox1)
 function vrodos_assets_databox_add() {
-    global $wpunity_databox1;
+    global $vrodos_databox1;
     
-    add_meta_box('wpunity-assets-infobox', 'Description Tips for Image-Text', 'vrodos_assets_infobox_show', 'vrodos_asset3d','normal','high' );
+    add_meta_box('vrodos-assets-infobox', 'Description Tips for Image-Text', 'vrodos_assets_infobox_show', 'vrodos_asset3d','normal','high' );
     
-    add_meta_box($wpunity_databox1['id'], 'Asset Data', 'vrodos_assets_databox_show', $wpunity_databox1['page'], $wpunity_databox1['context'], $wpunity_databox1['priority']);
+    add_meta_box($vrodos_databox1['id'], 'Asset Data', 'vrodos_assets_databox_show', $vrodos_databox1['page'], $vrodos_databox1['context'], $vrodos_databox1['priority']);
 }
 
 function vrodos_assets_infobox_show(){
     ?>
-    <style>#wpunity-assets-infobox{display:none;}</style>
+    <style>#vrodos-assets-infobox{display:none;}</style>
 
     &lt;b&gt;&lt;size=40&gt;MyTitle&lt;/size&gt;&lt;/b&gt; <br/>
 
@@ -142,7 +142,7 @@ function vrodos_assets_infobox_show(){
 // Backend form
 function vrodos_assets_databox_show(){
     
-    global $wpunity_databox1, $post;
+    global $vrodos_databox1, $post;
     
     $post_title = $post->post_title;
     if($post->post_status == 'publish'){$hideshow = 'none';}else{$hideshow = 'block';}
@@ -151,7 +151,7 @@ function vrodos_assets_databox_show(){
         <span class="dashicons dashicons-lock">You must create the Asset in order to fill data</span>
     </div>
     <input type="hidden" name="vrodos_assets_databox_nonce" value="<?php echo wp_create_nonce(basename(__FILE__)); ?>" />
-    <table class="form-table" id="wpunity-custom-fields-table">
+    <table class="form-table" id="vrodos-custom-fields-table">
         <tbody>
         
         <?php
@@ -162,7 +162,7 @@ function vrodos_assets_databox_show(){
         if ($categoryAssetSlug == 'Doors') {$doorhideshow = 'block';$mediahideshow = 'none';}
         if ($categoryAssetSlug != 'Doors') {$doorhideshow = 'none';$mediahideshow = 'block';}
         
-        foreach ($wpunity_databox1['fields'] as $field) {
+        foreach ($vrodos_databox1['fields'] as $field) {
             if ($field['id']=='vrodos_asset3d_mtl'){
                 ?>
                 <tr>
@@ -498,8 +498,8 @@ function vrodos_assets_databox_show(){
     </table>
 
     <script>
-        function wpunity_hidecfields_asset3d() {
-            var e = document.getElementById("wpunity-select-asset3d-cat-dropdown");
+        function vrodos_hidecfields_asset3d() {
+            var e = document.getElementById("vrodos-select-asset3d-cat-dropdown");
             var value = e.options[e.selectedIndex].value;
             var text = e.options[e.selectedIndex].text;
 
@@ -511,7 +511,7 @@ function vrodos_assets_databox_show(){
                 document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
                 document.getElementById('vrodos_asset3d_video').style.display = 'none';
                 document.getElementById('vrodos_asset3d_video_btn').style.display = 'none';
-                document.getElementById('wpunity-assets-infobox').style.display = 'none';
+                document.getElementById('vrodos-assets-infobox').style.display = 'none';
                 document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
             }else{
                 var link = document.getElementById('vrodos_asset3d_next_scene_field');
@@ -522,7 +522,7 @@ function vrodos_assets_databox_show(){
                     document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
                     document.getElementById('vrodos_asset3d_video').style.display = 'block';
                     document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
-                    document.getElementById('wpunity-assets-infobox').style.display = 'none';
+                    document.getElementById('vrodos-assets-infobox').style.display = 'none';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else if(text == 'Points of Interest (Image-Text)'){
                     document.getElementById('vrodos_asset3d_image1').style.display = 'block';
@@ -530,7 +530,7 @@ function vrodos_assets_databox_show(){
                     document.getElementById('vrodos_asset3d_image1_preview').style.display = 'block';
                     document.getElementById('vrodos_asset3d_video').style.display = 'none';
                     document.getElementById('vrodos_asset3d_video_btn').style.display = 'none';
-                    document.getElementById('wpunity-assets-infobox').style.display = 'block';
+                    document.getElementById('vrodos-assets-infobox').style.display = 'block';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else if(text == 'Points of Interest'){
                     document.getElementById('vrodos_asset3d_image1').style.display = 'block';
@@ -538,7 +538,7 @@ function vrodos_assets_databox_show(){
                     document.getElementById('vrodos_asset3d_image1_preview').style.display = 'block';
                     document.getElementById('vrodos_asset3d_video').style.display = 'block';
                     document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
-                    document.getElementById('wpunity-assets-infobox').style.display = 'none';
+                    document.getElementById('vrodos-assets-infobox').style.display = 'none';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else{
                     document.getElementById('vrodos_asset3d_image1').style.display = 'none';
@@ -546,7 +546,7 @@ function vrodos_assets_databox_show(){
                     document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
                     document.getElementById('vrodos_asset3d_video').style.display = 'block';
                     document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
-                    document.getElementById('wpunity-assets-infobox').style.display = 'none';
+                    document.getElementById('vrodos-assets-infobox').style.display = 'none';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
                 }
             }
@@ -807,11 +807,11 @@ function vrodos_assets_databox_show(){
 
 
 
-// Save data from this metabox with Custom Field for Asset3D ($wpunity_databox)
+// Save data from this metabox with Custom Field for Asset3D ($vrodos_databox)
 // This should be done with register_meta = https://torquemag.io/2015/03/staying-safe-and-dry-with-register_meta/
 function vrodos_assets_databox_save($post_id) {
     
-    global $wpunity_databox1;
+    global $vrodos_databox1;
     
     if (!isset($_POST['vrodos_assets_databox_nonce']))
         return;
@@ -833,7 +833,7 @@ function vrodos_assets_databox_save($post_id) {
         return $post_id;
     }
     
-    foreach ($wpunity_databox1['fields'] as $field) {
+    foreach ($vrodos_databox1['fields'] as $field) {
         
         $old = get_post_meta($post_id, $field['id'], true);
         $new = $_POST[$field['id']];
@@ -868,8 +868,8 @@ function vrodos_assets_create_right_metaboxes() {
 
 function vrodos_assets_fetch_description_box_content($post){
     
-    echo '<div id="wpunity_fetchDescription_bt" class="wpunity_fetchContentButton"
-     onclick="wpunity_fetchDescriptionAjax()">Fetch Description</div>';
+    echo '<div id="vrodos_fetchDescription_bt" class="vrodos_fetchContentButton"
+     onclick="vrodos_fetchDescriptionAjax()">Fetch Description</div>';
     ?>
 
     <br /><br />
@@ -893,12 +893,12 @@ function vrodos_assets_fetch_description_box_content($post){
 
     <br />
     <br />
-    Terms to search:<input type="text" size="30" name="wpunity_titles_search" id="wpunity_titles_search" value="<?php echo $post->post_title?>">
+    Terms to search:<input type="text" size="30" name="vrodos_titles_search" id="vrodos_titles_search" value="<?php echo $post->post_title?>">
 
     <br />
     <br />
 
-    Full text:<input type="checkbox" name="wpunity_fulltext_chkbox" id="wpunity_fulltext_chkbox" value="">
+    Full text:<input type="checkbox" name="vrodos_fulltext_chkbox" id="vrodos_fulltext_chkbox" value="">
     
     
     <?php
@@ -906,7 +906,7 @@ function vrodos_assets_fetch_description_box_content($post){
 
 function vrodos_assets_fetch_image_box_content($post){
     
-    echo '<div id="wpunity_fetchImage_bt" class="wpunity_fetchContentButton" onclick="wpunity_fetchImageAjax()">Fetch Image</div>';
+    echo '<div id="vrodos_fetchImage_bt" class="vrodos_fetchContentButton" onclick="vrodos_fetchImageAjax()">Fetch Image</div>';
     ?>
 
     <br /><br />
@@ -930,7 +930,7 @@ function vrodos_assets_fetch_image_box_content($post){
 
     <br />
     <br />
-    Terms to search:<input type="text" size="30" name="wpunity_titles_image_search_image" id="wpunity_titles_image_search_image" value="<?php echo $post->post_title?>">
+    Terms to search:<input type="text" size="30" name="vrodos_titles_image_search_image" id="vrodos_titles_image_search_image" value="<?php echo $post->post_title?>">
 
     <br />
     <br />
@@ -957,7 +957,7 @@ function vrodos_assets_fetch_image_box_content($post){
 
 function vrodos_assets_fetch_video_box_content($post){
     
-    echo '<div id="wpunity_fetchVideo_bt" class="wpunity_fetchContentButton" onclick="wpunity_fetchVideoAjax()">Fetch Video</div>';
+    echo '<div id="vrodos_fetchVideo_bt" class="vrodos_fetchContentButton" onclick="vrodos_fetchVideoAjax()">Fetch Video</div>';
     ?>
 
     <br /><br />
@@ -981,7 +981,7 @@ function vrodos_assets_fetch_video_box_content($post){
 
     <br />
     <br />
-    Terms to search:<input type="text" size="30" name="wpunity_titles_video_search_video" id="wpunity_titles_video_search_video" value="<?php echo $post->post_title?>">
+    Terms to search:<input type="text" size="30" name="vrodos_titles_video_search_video" id="vrodos_titles_video_search_video" value="<?php echo $post->post_title?>">
     Wikipedia example:<br /> "Sarmientosaurus 3D skull"
     <br />
     <br />
@@ -1005,51 +1005,51 @@ function vrodos_assets_segment_obj_box_content($post){
     
     ?>
 
-    <div id="wpunity_segmentButton" class="wpunity_fetchContentButton"
-         onclick="wpunity_segmentObjAjax(document.getElementById('wpunity_titles_segment_obj_iter').value,
-                                         document.getElementById('wpunity_titles_segment_obj_min_dist').value,
-                                         document.getElementById('wpunity_titles_segment_obj_max_dist').value,
-                                         document.getElementById('wpunity_titles_segment_obj_min_points').value,
-                                         document.getElementById('wpunity_titles_segment_obj_max_points').value
+    <div id="vrodos_segmentButton" class="vrodos_fetchContentButton"
+         onclick="vrodos_segmentObjAjax(document.getElementById('vrodos_titles_segment_obj_iter').value,
+                                         document.getElementById('vrodos_titles_segment_obj_min_dist').value,
+                                         document.getElementById('vrodos_titles_segment_obj_max_dist').value,
+                                         document.getElementById('vrodos_titles_segment_obj_min_points').value,
+                                         document.getElementById('vrodos_titles_segment_obj_max_points').value
                                             )">Segment obj</div>;
 
     <br />
     Parameters<br />
     <table>
         <tbody>
-        <tr><td>Algorithm iterations</td><td><input type="text" size="5" name="wpunity_titles_segment_obj_iter" id="wpunity_titles_segment_obj_iter" value="100"></td></tr>
-        <tr><td>Min distance</td><td><input type="text" size="5" name="wpunity_titles_segment_obj_min_dist" id="wpunity_titles_segment_obj_min_dist" value="0.01"></td></tr>
-        <tr><td>Max distance</td><td><input type="text" size="5" name="wpunity_titles_segment_obj_max_dist" id="wpunity_titles_segment_obj_max_dist" value="0.2"></td></tr>
-        <tr><td>Min points</td><td><input type="text" size="5" name="wpunity_titles_segment_obj_min_points" id="wpunity_titles_segment_obj_min_points" value="100"></td></tr>
-        <tr><td>Max points</td><td><input type="text" size="5" name="wpunity_titles_segment_obj_max_points" id="wpunity_titles_segment_obj_max_points" value="25000"></td></tr>
+        <tr><td>Algorithm iterations</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_iter" id="vrodos_titles_segment_obj_iter" value="100"></td></tr>
+        <tr><td>Min distance</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_min_dist" id="vrodos_titles_segment_obj_min_dist" value="0.01"></td></tr>
+        <tr><td>Max distance</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_max_dist" id="vrodos_titles_segment_obj_max_dist" value="0.2"></td></tr>
+        <tr><td>Min points</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_min_points" id="vrodos_titles_segment_obj_min_points" value="100"></td></tr>
+        <tr><td>Max points</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_max_points" id="vrodos_titles_segment_obj_max_points" value="25000"></td></tr>
         </tbody>
     </table>
 
     <br />
-    <div id="wpunity-segmentation-report" name="wpunity-segmentation-report">Status</div><br />
-    <div id="wpunity-segmentation-status" name="wpunity-segmentation-status">Report</div><br />
+    <div id="vrodos-segmentation-report" name="vrodos-segmentation-report">Status</div><br />
+    <div id="vrodos-segmentation-status" name="vrodos-segmentation-status">Report</div><br />
 
     <br />
     Results<br />
-    <div id="wpunity-segmentation-results" name="wpunity-segmentation-results">
-        <a href="" id="wpunity-segmentation-res1"></a>
-        <a href="" id="wpunity-segmentation-res2"></a>
-        <a href="" id="wpunity-segmentation-res3"></a>
-        <a href="" id="wpunity-segmentation-res4"></a>
-        <a href="" id="wpunity-segmentation-res5"></a>
-        <a href="" id="wpunity-segmentation-res6"></a>
+    <div id="vrodos-segmentation-results" name="vrodos-segmentation-results">
+        <a href="" id="vrodos-segmentation-res1"></a>
+        <a href="" id="vrodos-segmentation-res2"></a>
+        <a href="" id="vrodos-segmentation-res3"></a>
+        <a href="" id="vrodos-segmentation-res4"></a>
+        <a href="" id="vrodos-segmentation-res5"></a>
+        <a href="" id="vrodos-segmentation-res6"></a>
     </div>
 
     <br />
-    <div id="wpunity-segmentation-log" name="wpunity-segmentation-log">Log file</div>
+    <div id="vrodos-segmentation-log" name="vrodos-segmentation-log">Log file</div>
     
     <?php
 }
 
 function vrodos_assets_classify_obj_box_content($post){
     
-    echo '<div id="wpunity_classifyObj_bt" class="wpunity_fetchContentButton"
-                                onclick="wpunity_classifyObjAjax()">Classify obj</div>';
+    echo '<div id="vrodos_classifyObj_bt" class="vrodos_fetchContentButton"
+                                onclick="vrodos_classifyObjAjax()">Classify obj</div>';
     ?>
 
     <br />
@@ -1063,24 +1063,24 @@ function vrodos_assets_classify_obj_box_content($post){
         </tr>
         <tr>
             <td>1</td>
-            <td><input type="text" size="5" name="wpunity_tag1_classification_obj"
-                       id="wpunity_tag1_classification_obj" value=""></td>
+            <td><input type="text" size="5" name="vrodos_tag1_classification_obj"
+                       id="vrodos_tag1_classification_obj" value=""></td>
             <td><input type="text" size="5" name="vrodos_prob1_classification_obj"
                        id="vrodos_prob1_classification_obj" value=""></td>
             </td>
         </tr>
         <tr>
             <td>2</td>
-            <td><input type="text" size="5" name="wpunity_tag2_classification_obj"
-                       id="wpunity_tag2_classification_obj" value=""></td>
+            <td><input type="text" size="5" name="vrodos_tag2_classification_obj"
+                       id="vrodos_tag2_classification_obj" value=""></td>
             <td><input type="text" size="5" name="vrodos_prob2_classification_obj"
                        id="vrodos_prob2_classification_obj" value=""></td>
             </td>
         </tr>
         <tr>
             <td>3</td>
-            <td><input type="text" size="5" name="wpunity_tag3_classification_obj"
-                       id="wpunity_tag3_classification_obj" value=""></td>
+            <td><input type="text" size="5" name="vrodos_tag3_classification_obj"
+                       id="vrodos_tag3_classification_obj" value=""></td>
             <td><input type="text" size="5" name="vrodos_prob3_classification_obj"
                        id="vrodos_prob3_classification_obj" value=""></td>
             </td>
@@ -1089,9 +1089,9 @@ function vrodos_assets_classify_obj_box_content($post){
     </table>
 
     <br />
-    <div id="wpunity-classification-report" name="wpunity-classification-report">Status</div><br />
-    <div id="wpunity-classification-status" name="wpunity-classification-status">Report</div><br />
-    <div id="wpunity-segmentation-log" name="wpunity-segmentation-log">Log file</div>
+    <div id="vrodos-classification-report" name="vrodos-classification-report">Status</div><br />
+    <div id="vrodos-classification-status" name="vrodos-classification-status">Report</div><br />
+    <div id="vrodos-segmentation-log" name="vrodos-segmentation-log">Log file</div>
     
     <?php
 }

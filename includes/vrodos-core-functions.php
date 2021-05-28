@@ -1,7 +1,7 @@
 <?php
 
 // Remove margin-top from page
-function wpunity_remove_admin_login_header() {
+function vrodos_remove_admin_login_header() {
     remove_action('wp_head', '_admin_bar_bump_cb');
 }
 
@@ -242,7 +242,7 @@ function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function wpunity_windEnergy_scene_stats($scene_id){
+function vrodos_windEnergy_scene_stats($scene_id){
 
 	$turbinesInfoGathered = [];
 	$scene_json = get_post($scene_id)->post_content; //, 'vrodos_scene_json_input', true);
@@ -294,7 +294,7 @@ function wpunity_windEnergy_scene_stats($scene_id){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function wpunity_the_slug_exists($post_name) {
+function vrodos_the_slug_exists($post_name) {
 	global $wpdb;
 	if($wpdb->get_row("SELECT post_name FROM wp_posts WHERE post_name = '" . $post_name . "'", 'ARRAY_A')) {
 		return true;
@@ -304,19 +304,19 @@ function wpunity_the_slug_exists($post_name) {
 }
 
 
-function wpunity_createJoker_activation() {
+function vrodos_createJoker_activation() {
 	$userID = get_current_user_id();
-	//$virtualplace_tax = get_term_by('slug', 'virtual_place', 'wpunity_game_cat');
-	//$realplace_tax = get_term_by('slug', 'real_place', 'wpunity_game_cat');
+	//$virtualplace_tax = get_term_by('slug', 'virtual_place', 'vrodos_game_cat');
+	//$realplace_tax = get_term_by('slug', 'real_place', 'vrodos_game_cat');
 
-	if (!wpunity_the_slug_exists('archaeology-joker')) {
+	if (!vrodos_the_slug_exists('archaeology-joker')) {
 
-	    $archaeology_tax = get_term_by('slug', 'archaeology_games', 'wpunity_game_type');
+	    $archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
 
 		$archaeology_tax_id = $archaeology_tax->term_id;
 
 		$game_taxonomies_arch = array(
-			'wpunity_game_type' => array(
+			'vrodos_game_type' => array(
 				$archaeology_tax_id,
 			)
 		);
@@ -325,7 +325,7 @@ function wpunity_createJoker_activation() {
 			'post_title' => 'Archaeology Joker',
 			'post_name' => 'archaeology-joker',
 			'post_content' => '',
-			'post_type' => 'wpunity_game',
+			'post_type' => 'vrodos_game',
 			'post_status' => 'publish',
 			'tax_input' => $game_taxonomies_arch,
 			'post_author'   => $userID,
@@ -334,12 +334,12 @@ function wpunity_createJoker_activation() {
 		wp_insert_post($game_information_arch);
 	}
 
-	if (!wpunity_the_slug_exists('energy-joker')) {
-		$energy_tax = get_term_by('slug', 'energy_games', 'wpunity_game_type');
+	if (!vrodos_the_slug_exists('energy-joker')) {
+		$energy_tax = get_term_by('slug', 'energy_games', 'vrodos_game_type');
 		$energy_tax_id = $energy_tax->term_id;
 
 		$game_taxonomies_ener = array(
-			'wpunity_game_type' => array(
+			'vrodos_game_type' => array(
 				$energy_tax_id,
 			)
 		);
@@ -348,7 +348,7 @@ function wpunity_createJoker_activation() {
 			'post_title' => 'Energy Joker',
 			'post_name' => 'energy-joker',
 			'post_content' => '',
-			'post_type' => 'wpunity_game',
+			'post_type' => 'vrodos_game',
 			'post_status' => 'publish',
 			'tax_input' => $game_taxonomies_ener,
 			'post_author'   => $userID,
@@ -357,15 +357,15 @@ function wpunity_createJoker_activation() {
 		wp_insert_post($game_information_ener);
 	}
 
-	if (!wpunity_the_slug_exists('chemistry-joker')) {
-		$chemistry_tax = get_term_by('slug', 'chemistry_games', 'wpunity_game_type');
+	if (!vrodos_the_slug_exists('chemistry-joker')) {
+		$chemistry_tax = get_term_by('slug', 'chemistry_games', 'vrodos_game_type');
 		$chemistry_tax_id = $chemistry_tax->term_id;
 
 		$game_taxonomies_chem = array(
-			'wpunity_game_type' => array(
+			'vrodos_game_type' => array(
 				$chemistry_tax_id,
 			),
-//			'wpunity_game_cat' => array(
+//			'vrodos_game_cat' => array(
 //				$virtualplace_tax->term_id,
 //			)
 		);
@@ -374,7 +374,7 @@ function wpunity_createJoker_activation() {
 			'post_title' => 'Chemistry Joker',
 			'post_name' => 'chemistry-joker',
 			'post_content' => '',
-			'post_type' => 'wpunity_game',
+			'post_type' => 'vrodos_game',
 			'post_status' => 'publish',
 			'tax_input' => $game_taxonomies_chem,
 			'post_author'   => $userID,
@@ -410,7 +410,7 @@ function vrodos_getNonRegionalScenes($project_id) {
 				'terms'    => $scenePGameID,
 			)
 		),
-		'meta_key'   => 'wpunity_isRegional',
+		'meta_key'   => 'vrodos_isRegional',
 		'meta_value' => '0',
 		'orderby' => 'ID',
 		'order' => 'DESC',
@@ -442,7 +442,7 @@ function vrodos_getNonRegionalScenes($project_id) {
 
 
 
-function wpunity_extrapass_register_form() {
+function vrodos_extrapass_register_form() {
 
 	$extrapass = ( ! empty( $_POST['extra_pass'] ) ) ? sanitize_text_field( $_POST['extra_pass'] ) : '';
 
@@ -452,8 +452,8 @@ function wpunity_extrapass_register_form() {
 
     <script type="text/javascript">
         jQuery(document).ready(
-            function wpunityGenerateExtraPass(){
-                var rString = wpunity_randomString(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+            function vrodosGenerateExtraPass(){
+                var rString = vrodos_randomString(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
                 document.getElementById('extra_pass').value  = rString;
             }
         );
@@ -463,15 +463,15 @@ function wpunity_extrapass_register_form() {
         });
 
 
-        function wpunity_randomString(length, chars) {
+        function vrodos_randomString(length, chars) {
             var result = '';
             for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
             return result;
         }
 
 
-        //		function wpunityGenerateExtraPass(){
-        //			var rString = wpunity_randomString(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        //		function vrodosGenerateExtraPass(){
+        //			var rString = vrodos_randomString(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
         //			document.getElementById('extra_pass').value  = rString;
         //		}
     </script>
@@ -481,9 +481,9 @@ function wpunity_extrapass_register_form() {
 //2. Add validation. In this case, we make sure extra_pass is required.
 // For Envisage only
 if ($project_scope === 1) {
-    add_filter('registration_errors', 'wpunity_extrapass_registration_errors', 10, 3);
+    add_filter('registration_errors', 'vrodos_extrapass_registration_errors', 10, 3);
 }
-function wpunity_extrapass_registration_errors( $errors, $sanitized_user_login, $user_email ) {
+function vrodos_extrapass_registration_errors( $errors, $sanitized_user_login, $user_email ) {
 
 	if ( empty( $_POST['extra_pass'] ) || ! empty( $_POST['extra_pass'] ) && trim( $_POST['extra_pass'] ) == '' ) {
 		$errors->add( 'extra_pass_error', sprintf('<strong>%s</strong>: %s','ERROR','You must include an extra pass.', 'mydomain' ));
@@ -494,7 +494,7 @@ function wpunity_extrapass_registration_errors( $errors, $sanitized_user_login, 
 }
 
 //3. Finally, save our extra registration user meta. For Envisage only.
-function wpunity_extrapass_user_register( $user_id ) {
+function vrodos_extrapass_user_register( $user_id ) {
 	if ( ! empty( $_POST['extra_pass'] ) ) {
 		update_user_meta( $user_id, 'extra_pass', sanitize_text_field( $_POST['extra_pass'] ) );
 	}
@@ -502,7 +502,7 @@ function wpunity_extrapass_user_register( $user_id ) {
 
 
 
-function wpunity_extrapass_profile_fields( $user ) {
+function vrodos_extrapass_profile_fields( $user ) {
 	?>
     <h3><?php esc_html_e('Extra Information'); ?></h3>
 
@@ -520,7 +520,7 @@ function wpunity_extrapass_profile_fields( $user ) {
 // Assets
 //function vrodos_assets_menu_link( $menu, $args ) {
 //    $menu .= '<li class="nav-menu" class="menu-item">' .
-//        '<a href="'.get_permalink( get_page_by_path( 'wpunity-list-shared-assets/' ) ).'">Assets</a>'
+//        '<a href="'.get_permalink( get_page_by_path( 'vrodos-list-shared-assets/' ) ).'">Assets</a>'
 //        . '</li>';
 //    return $menu;
 //}
@@ -529,19 +529,19 @@ function wpunity_extrapass_profile_fields( $user ) {
 //// Projects
 //function vrodos_projects_menu_link( $menu, $args ) {
 //    $menu .= '<li class="nav-menu" class="menu-item">' .
-//        '<a href="'.get_permalink( get_page_by_path( 'wpunity-main/' ) ).'">Projects</a></li>';
+//        '<a href="'.get_permalink( get_page_by_path( 'vrodos-main/' ) ).'">Projects</a></li>';
 //    return $menu;
 //}
 //add_filter( 'wp_nav_menu_items','vrodos_projects_menu_link', 2, 2 );
 //
 //
 //// Projects
-//function wpunity_compiled_projects_menu_link( $menu, $args ) {
+//function vrodos_compiled_projects_menu_link( $menu, $args ) {
 //    $menu .= '<li class="nav-menu" class="menu-item">' .
 //        '<a href="'.get_permalink( get_page_by_path( 'compiled-projects/' ) ).'">Compiled Projects</a></li>';
 //    return $menu;
 //}
-//add_filter( 'wp_nav_menu_items','wpunity_compiled_projects_menu_link', 2, 3 );
+//add_filter( 'wp_nav_menu_items','vrodos_compiled_projects_menu_link', 2, 3 );
 //
 //
 //
@@ -555,20 +555,20 @@ function wpunity_extrapass_profile_fields( $user ) {
 //
 //
 //// Display Feedback page as menu item (Ultimatemember plugin)
-//function wpunity_feedback_menu_link( $menu, $args ) {
+//function vrodos_feedback_menu_link( $menu, $args ) {
 //    $menu .= '<li class="nav-menu" class="menu-item">' .
 //        '<a href="'.get_permalink( get_page_by_path( 'feedback/' ) ).'">Feedback</a></li>';
 //    return $menu;
 //}
-//add_filter( 'wp_nav_menu_items','wpunity_feedback_menu_link', 4, 4 );
+//add_filter( 'wp_nav_menu_items','vrodos_feedback_menu_link', 4, 4 );
 //
-//function wpunity_contact_menu_link( $menu, $args ) {
+//function vrodos_contact_menu_link( $menu, $args ) {
 //    $menu .= '<li class="nav-menu" class="menu-item">' .
 //        '<a href="'.get_permalink( get_page_by_path( 'contact/' ) ).'">Contact</a>'
 //        . '</li>';
 //    return $menu;
 //}
-//add_filter( 'wp_nav_menu_items','wpunity_contact_menu_link', 5, 2 );
+//add_filter( 'wp_nav_menu_items','vrodos_contact_menu_link', 5, 2 );
 //
 //include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 //if ( is_plugin_active( 'ultimate-member/ultimate-member.php' ) ) {
@@ -582,7 +582,7 @@ function wpunity_extrapass_profile_fields( $user ) {
 
 
 // Display Login/Logout in menu
-function wpunity_loginout_menu_link( $menu, $args ) {
+function vrodos_loginout_menu_link( $menu, $args ) {
     //$loginout = wp_loginout($_SERVER['REQUEST_URI'], false );
     $loginout = '<li class="nav-menu" class="menu-item">' . wp_loginout($_SERVER['REQUEST_URI'], false ) . '</li>';
     $menu .= $loginout;
@@ -613,19 +613,19 @@ function wpunity_loginout_menu_link( $menu, $args ) {
 
 
 
-function wpunity_remove_admin_bar() {
+function vrodos_remove_admin_bar() {
     if (!current_user_can('administrator') && !is_admin()) {
         show_admin_bar(false);
     }
 }
 
 // Redirect to home page after login (not go to profile)
-function wpunity_default_page() {
+function vrodos_default_page() {
     
     return home_url();
 }
 
-add_filter('login_redirect', 'wpunity_default_page');
+add_filter('login_redirect', 'vrodos_default_page');
 
 
 //Function to get ALL necessary keys about GIO Analytics
@@ -648,7 +648,7 @@ if ($project_scope === 1) {
 
 }
 
-function wpunity_registrationUser_save( $user_id ) {
+function vrodos_registrationUser_save( $user_id ) {
 
 	$user_info = get_userdata($user_id);
 
@@ -709,7 +709,7 @@ function wpunity_registrationUser_save( $user_id ) {
 }
 
 //STEP 2 for GIO data
-function wpunity_createGame_GIO_request($project_id, $user_id){
+function vrodos_createGame_GIO_request($project_id, $user_id){
 	$user_info = get_userdata($user_id);
 	$userEmail = $user_info->user_email;
 	$extraPass = get_the_author_meta( 'extra_pass', $user_id );
@@ -815,12 +815,12 @@ function wpunity_createGame_GIO_request($project_id, $user_id){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function wpunity_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
+function vrodos_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 
 	$allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
 	$allScenePGameID = $allScenePGame->term_id;
 
-	$all_game_category = get_the_terms( $gameID, 'wpunity_game_type' );
+	$all_game_category = get_the_terms( $gameID, 'vrodos_game_type' );
 	$game_category  = $all_game_category[0]->slug;
 
 	$mainmenuSceneTitle = 'Main Menu'; //Title for Main Menu
@@ -956,7 +956,7 @@ Characteristics :
 				'vrodos_scene_default' => 1,
 				'vrodos_scene_metatype' => 'scene',
 				'vrodos_scene_json_input' => $default_json,
-				'wpunity_isRegional' => 1,
+				'vrodos_isRegional' => 1,
 				'vrodos_scene_environment' => 'mountain',
 			),
 		);
@@ -974,7 +974,7 @@ Characteristics :
 				'vrodos_scene_default' => 1,
 				'vrodos_scene_metatype' => 'scene',
 				'vrodos_scene_json_input' => $default_json,
-				'wpunity_isRegional' => 1,
+				'vrodos_isRegional' => 1,
 				'vrodos_scene_environment' => 'fields',
 			),
 		);
@@ -992,7 +992,7 @@ Characteristics :
 				'vrodos_scene_default' => 1,
 				'vrodos_scene_metatype' => 'scene',
 				'vrodos_scene_json_input' => $default_json,
-				'wpunity_isRegional' => 1,
+				'vrodos_isRegional' => 1,
 				'vrodos_scene_environment' => 'seashore',
 			),
 		);
@@ -1000,8 +1000,8 @@ Characteristics :
 		$scene2_id = wp_insert_post( $secondSceneData );
 		$scene3_id = wp_insert_post( $thirdSceneData );
 
-		$attachment2_id = wpunity_upload_img_vid_aud( $image_content2, $scene2_id);
-		$attachment3_id = wpunity_upload_img_vid_aud( $image_content3, $scene3_id);
+		$attachment2_id = vrodos_upload_img_vid_aud( $image_content2, $scene2_id);
+		$attachment3_id = vrodos_upload_img_vid_aud( $image_content3, $scene3_id);
 		set_post_thumbnail( $scene2_id, $attachment2_id );
 		set_post_thumbnail( $scene3_id, $attachment3_id );
 	}else {
@@ -1019,7 +1019,7 @@ Characteristics :
 				'vrodos_scene_default' => 1,
 				'vrodos_scene_metatype' => 'scene',
 				'vrodos_scene_caption' => 'Auto-created scene',
-				'wpunity_isRegional' => 0,
+				'vrodos_isRegional' => 0,
 			),
 		);
 	}
@@ -1071,7 +1071,7 @@ Characteristics :
 	if($game_category == 'energy_games'){
 
 		$image_content1 = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/regions/img1.png";
-		$attachment1_id = wpunity_upload_img_vid_aud( $image_content1, $scene1_id);
+		$attachment1_id = vrodos_upload_img_vid_aud( $image_content1, $scene1_id);
 		set_post_thumbnail( $scene1_id, $attachment1_id );
 	}
 }
@@ -1081,7 +1081,7 @@ Characteristics :
 //GUIDs & FIDs
 
 // 32 chars Hex (identifier for the resource)
-function wpunity_create_guids($objTypeSTR, $objID, $extra_id_material=null){
+function vrodos_create_guids($objTypeSTR, $objID, $extra_id_material=null){
 
 	switch ($objTypeSTR) {
 		case 'unity':  $objType = "1"; break;
@@ -1096,17 +1096,17 @@ function wpunity_create_guids($objTypeSTR, $objID, $extra_id_material=null){
 }
 
 // 10 chars Decimal (identifier for the GameObject) (e.g. dino1, dino2 have different fid but share the same guid)
-function wpunity_create_fids($id){
+function vrodos_create_fids($id){
 	return str_pad($id, 10, "0", STR_PAD_LEFT);
 }
 
-function wpunity_create_fids_rect($id){
+function vrodos_create_fids_rect($id){
 	return '1' . str_pad($id, 9, "0", STR_PAD_LEFT);
 }
 
-function wpunity_replace_objmeta($file_content,$objID){
+function vrodos_replace_objmeta($file_content,$objID){
 	$unix_time = time();
-	$guid_id = wpunity_create_guids('obj',$objID);
+	$guid_id = vrodos_create_guids('obj',$objID);
 
 	$file_content_return = str_replace("___[obj_guid]___",$guid_id,$file_content);
 	$file_content_return = str_replace("___[unx_time_created]___",$unix_time,$file_content_return);
@@ -1114,9 +1114,9 @@ function wpunity_replace_objmeta($file_content,$objID){
 	return $file_content_return;
 }
 
-function wpunity_replace_foldermeta($file_content,$folderID){
+function vrodos_replace_foldermeta($file_content,$folderID){
 	$unix_time = time();
-	$guid_id = wpunity_create_guids('folder',$folderID);
+	$guid_id = vrodos_create_guids('folder',$folderID);
 
 	$file_content_return = str_replace("___[folder_guid]___",$guid_id,$file_content);
 	$file_content_return = str_replace("___[unx_time_created]___",$unix_time,$file_content_return);
@@ -1124,9 +1124,9 @@ function wpunity_replace_foldermeta($file_content,$folderID){
 	return $file_content_return;
 }
 
-function wpunity_replace_jpgmeta($file_content,$objID){
+function vrodos_replace_jpgmeta($file_content,$objID){
 	$unix_time = time();
-	$guid_id = wpunity_create_guids('jpg',$objID);
+	$guid_id = vrodos_create_guids('jpg',$objID);
 
 	$file_content_return = str_replace("___[jpg_guid]___",$guid_id,$file_content);
 	$file_content_return = str_replace("___[unx_time_created]___",$unix_time,$file_content_return);
@@ -1138,18 +1138,18 @@ function wpunity_replace_jpgmeta($file_content,$objID){
 //==========================================================================================================================================
 //Create sample data when a user is registered (changed it to "when a game is created")
 
-//add_action( 'user_register', 'wpunity_registrationhook_createGame', 10, 1 );
+//add_action( 'user_register', 'vrodos_registrationhook_createGame', 10, 1 );
 
-function wpunity_registrationhook_createGame( $user_id ) {
+function vrodos_registrationhook_createGame( $user_id ) {
 
 	$user_info = get_userdata($user_id);
 	$username = $user_info->user_login;
 
-	$archaeology_tax = get_term_by('slug', 'archaeology_games', 'wpunity_game_type');
+	$archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
 	$game_type_chosen_id = $archaeology_tax->term_id;
 
 	$game_taxonomies = array(
-		'wpunity_game_type' => array(
+		'vrodos_game_type' => array(
 			$game_type_chosen_id,
 		)
 	);
@@ -1159,7 +1159,7 @@ function wpunity_registrationhook_createGame( $user_id ) {
 	$game_information = array(
 		'post_title' => $game_title,
 		'post_content' => '',
-		'post_type' => 'wpunity_game',
+		'post_type' => 'vrodos_game',
 		'post_status' => 'publish',
 		'tax_input' => $game_taxonomies,
 		'post_author' => $user_id,
@@ -1167,11 +1167,11 @@ function wpunity_registrationhook_createGame( $user_id ) {
 
 	$game_id = wp_insert_post($game_information);
 
-	wpunity_registrationhook_createAssets($user_id,$username,$game_id);
+	vrodos_registrationhook_createAssets($user_id,$username,$game_id);
 
 }
 
-function wpunity_registrationhook_createAssets($user_id,$username,$game_id){
+function vrodos_registrationhook_createAssets($user_id,$username,$game_id){
 	$game_post = get_post($game_id);
 	$game_slug = $game_post->post_name;
 
@@ -1203,20 +1203,20 @@ function wpunity_registrationhook_createAssets($user_id,$username,$game_id){
 	$siteTitle = $username . ' Sample Site';
 	$siteDesc = 'Site item created as sample';
 
-	$newArtifact_ID = wpunity_create_asset_frontend($parentGame_tax_id,$artifact_tax_id,$artifactTitle,$artifactDesc,$game_slug);
-	$newDoor_ID = wpunity_create_asset_frontend($parentGame_tax_id,$door_tax_id,$doorTitle,$doorDesc,$game_slug);
-	$newPOIimage_ID = wpunity_create_asset_frontend($parentGame_tax_id,$poiImage_tax_id,$poiImageTitle,$poiImageDesc,$game_slug);
-	$newPOIvideo_ID = wpunity_create_asset_frontend($parentGame_tax_id,$poiVideo_tax_id,$poiVideoTitle,$poiVideoDesc,$game_slug);
-	$newSite_ID = wpunity_create_asset_frontend($parentGame_tax_id,$site_tax_id,$siteTitle,$siteDesc,$game_slug);
+	$newArtifact_ID = vrodos_create_asset_frontend($parentGame_tax_id,$artifact_tax_id,$artifactTitle,$artifactDesc,$game_slug);
+	$newDoor_ID = vrodos_create_asset_frontend($parentGame_tax_id,$door_tax_id,$doorTitle,$doorDesc,$game_slug);
+	$newPOIimage_ID = vrodos_create_asset_frontend($parentGame_tax_id,$poiImage_tax_id,$poiImageTitle,$poiImageDesc,$game_slug);
+	$newPOIvideo_ID = vrodos_create_asset_frontend($parentGame_tax_id,$poiVideo_tax_id,$poiVideoTitle,$poiVideoDesc,$game_slug);
+	$newSite_ID = vrodos_create_asset_frontend($parentGame_tax_id,$site_tax_id,$siteTitle,$siteDesc,$game_slug);
 
-	wpunity_registrationhook_uploadAssets_noTexture($artifactTitle,$newArtifact_ID,$game_slug,'artifact');
-	wpunity_registrationhook_uploadAssets_noTexture($doorTitle,$newDoor_ID,$game_slug,'door');
-	wpunity_registrationhook_uploadAssets_noTexture($poiImageTitle,$newPOIimage_ID,$game_slug,'poi_image');
-	wpunity_registrationhook_uploadAssets_noTexture($poiVideoTitle,$newPOIvideo_ID,$game_slug,'poi_video');
-	wpunity_registrationhook_uploadAssets_noTexture($siteTitle,$newSite_ID,$game_slug,'site');
+	vrodos_registrationhook_uploadAssets_noTexture($artifactTitle,$newArtifact_ID,$game_slug,'artifact');
+	vrodos_registrationhook_uploadAssets_noTexture($doorTitle,$newDoor_ID,$game_slug,'door');
+	vrodos_registrationhook_uploadAssets_noTexture($poiImageTitle,$newPOIimage_ID,$game_slug,'poi_image');
+	vrodos_registrationhook_uploadAssets_noTexture($poiVideoTitle,$newPOIvideo_ID,$game_slug,'poi_video');
+	vrodos_registrationhook_uploadAssets_noTexture($siteTitle,$newSite_ID,$game_slug,'site');
 }
 
-function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_newID,$gameSlug,$assetTypeNumber){
+function vrodos_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_newID,$gameSlug,$assetTypeNumber){
  
 	$has_image = false; $has_video = false;
 	if($assetTypeNumber == 'artifact'){
@@ -1240,22 +1240,22 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/Site1/site1.obj");
 	}
 
-	$mtlFile_id = wpunity_upload_AssetText($mtl_content, 'material'.$assetTitleForm, $asset_newID, null, null);
+	$mtlFile_id = vrodos_upload_AssetText($mtl_content, 'material'.$assetTitleForm, $asset_newID, null, null);
 	$mtlFile_filename = basename(get_attached_file($mtlFile_id));
 
 	// OBJ
 	$mtlFile_filename_notxt = substr( $mtlFile_filename, 0, -4 );
 	$mtlFile_filename_withMTLext = $mtlFile_filename_notxt . '.mtl';
 	$obj_content = preg_replace("/.*\b" . 'mtllib' . "\b.*\n/ui", "mtllib " . $mtlFile_filename_withMTLext . "\n", $obj_content);
-	$objFile_id = wpunity_upload_AssetText($obj_content, 'obj'.$assetTitleForm, $asset_newID, null, null);
+	$objFile_id = vrodos_upload_AssetText($obj_content, 'obj'.$assetTitleForm, $asset_newID, null, null);
 
 	if($has_image){
-		$attachment_id = wpunity_upload_img_vid_aud( $image_content, $asset_newID);
+		$attachment_id = vrodos_upload_img_vid_aud( $image_content, $asset_newID);
 		set_post_thumbnail( $asset_newID, $attachment_id );
 	}
 
 	if($has_video){
-		$attachment_video_id = wpunity_upload_img_vid_aud( $video_content, $asset_newID);
+		$attachment_video_id = vrodos_upload_img_vid_aud( $video_content, $asset_newID);
 		update_post_meta( $asset_newID, 'vrodos_asset3d_video', $attachment_video_id );
 	}
 
@@ -1265,24 +1265,24 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 
 }
 
-//function wpunity_registrationhook_uploadAssets_withTexture($assetTitleForm,$asset_newID,$gameSlug,$assetTypeNumber){
+//function vrodos_registrationhook_uploadAssets_withTexture($assetTitleForm,$asset_newID,$gameSlug,$assetTypeNumber){
 //
 //	$texture_content = WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/Site1/site1.jpg";
 //	$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/Site1/site1.mtl");
 //	$obj_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/Site1/site1.obj");
 //
-//	$textureFile_id = wpunity_upload_Assetimg64($texture_content, 'texture_'.$assetTitleForm, $asset_newID, $gameSlug);
+//	$textureFile_id = vrodos_upload_Assetimg64($texture_content, 'texture_'.$assetTitleForm, $asset_newID, $gameSlug);
 //	$textureFile_filename = basename(get_attached_file($textureFile_id));
 //
 //	$mtl_content = preg_replace("/.*\b" . 'map_Kd' . "\b.*/ui", "map_Kd " . $textureFile_filename, $mtl_content);
-//	$mtlFile_id = wpunity_upload_AssetText($mtl_content, 'material'.$assetTitleForm, $asset_newID, $gameSlug);
+//	$mtlFile_id = vrodos_upload_AssetText($mtl_content, 'material'.$assetTitleForm, $asset_newID, $gameSlug);
 //	$mtlFile_filename = basename(get_attached_file($mtlFile_id));
 //
 //	// OBJ
 //	$mtlFile_filename_notxt = substr( $mtlFile_filename, 0, -4 );
 //	$mtlFile_filename_withMTLext = $mtlFile_filename_notxt . '.mtl';
 //	$obj_content = preg_replace("/.*\b" . 'mtllib' . "\b.*\n/ui", "mtllib " . $mtlFile_filename_withMTLext . "\n", $obj_content);
-//	$objFile_id = wpunity_upload_AssetText($obj_content, 'obj'.$assetTitleForm, $asset_newID, $gameSlug);
+//	$objFile_id = vrodos_upload_AssetText($obj_content, 'obj'.$assetTitleForm, $asset_newID, $gameSlug);
 //
 //	// Set value of attachment IDs at custom fields
 //	update_post_meta($asset_newID, 'vrodos_asset3d_mtl', $mtlFile_id);
@@ -1296,7 +1296,7 @@ function wpunity_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_
 
 function vrodos_get_all_Available_molecules_of_game($scene_id){
 
-	$saved_available_moleculeIDs = get_post_meta($scene_id, 'wpunity_available_molecules', true);
+	$saved_available_moleculeIDs = get_post_meta($scene_id, 'vrodos_available_molecules', true);
 	$available_moleculeIDs = substr($saved_available_moleculeIDs, 1, -1);
 	$available_moleculeIDs = explode(',',$available_moleculeIDs);
 	$moleculesData = array();
@@ -1317,7 +1317,7 @@ function vrodos_get_all_Available_molecules_of_game($scene_id){
 
 
 // Chemistry: Get molecule list for analytics
-function wpunity_derive_molecules_checklist(){
+function vrodos_derive_molecules_checklist(){
     
     $analytics_molecule_list = array('HCL','H2O','NaF','NaCl','KBr','CH4','CaCl2','CF4');
 	$analytics_molecule_checklist = array(0,0,0,0,0,0,0,0);
@@ -1347,7 +1347,7 @@ function vrodos_get_all_molecules_of_game($project_id) {
 	$assetPGameID = $assetPGame->term_id;
 
 
-	$my_posts = get_page_by_path("chemistry-joker",ARRAY_A,'wpunity_game');
+	$my_posts = get_page_by_path("chemistry-joker",ARRAY_A,'vrodos_game');
 
 	$assetJokerGameId = $my_posts['ID'];
 
@@ -1569,7 +1569,7 @@ function vrodos_get_all_sceneids_of_game($allScenePGameID){
 //=============================== SEMANTICS ON 3D ============================================================
 
 // ---- AJAX SEMANTICS 1: run segmentation ----------
-function wpunity_segment_obj_action_callback() {
+function vrodos_segment_obj_action_callback() {
 
 	$DS = DIRECTORY_SEPARATOR;
 	if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
@@ -1646,7 +1646,7 @@ function vrodos_monitor_segment_obj_action_callback(){
 }
 
 //---- AJAX COMPILE 3: Enlist the split objs -------------
-function wpunity_enlist_splitted_objs_action_callback(){
+function vrodos_enlist_splitted_objs_action_callback(){
 
 	$DS = DIRECTORY_SEPARATOR;
 	$path = wp_upload_dir()['basedir'].$DS.$_POST['path'];
@@ -1718,7 +1718,7 @@ function vrodos_fetch_video_action_callback(){
 }
 
 
-function wpunity_notify_confpeers_callback(){
+function vrodos_notify_confpeers_callback(){
     
     $ff = fopen("confroom_log.txt","a");
     
@@ -1742,7 +1742,7 @@ function wpunity_notify_confpeers_callback(){
 
 
 // Read log content from conferences
-function wpunity_update_expert_log_callback()
+function vrodos_update_expert_log_callback()
 {
     // reset
     //unlink("wp-admin/confroom_log.txt");
@@ -1840,7 +1840,7 @@ function vrodos_assepile_action_callback(){
 //    fwrite($fa, $_REQUEST['gameId']);
 //    fwrite($fa, print_r($_REQUEST, true));
 
-	$gameType = wp_get_post_terms( $gameId, 'wpunity_game_type' );
+	$gameType = wp_get_post_terms( $gameId, 'vrodos_game_type' );
 
 
 	$assemply_success = vrodos_assemble_the_unity_game_project($gameId, $_REQUEST['gameSlug'],
@@ -2312,11 +2312,11 @@ function vrodos_append_scenes_in_EditorBuildSettings_dot_asset($filepath, $scene
 function vrodos_save_scene_async_action_callback()
 {
     // ToDo: Probably useful in Chemistry
-	//$mole = update_post_meta( $_POST['scene_id'], 'wpunity_available_molecules',$_POST['available_molecules']);
+	//$mole = update_post_meta( $_POST['scene_id'], 'vrodos_available_molecules',$_POST['available_molecules']);
 
 	// Save screenshot
 	if (isset($_POST['scene_screenshot']))
-		$attachment_id = wpunity_upload_scene_screenshot(
+		$attachment_id = vrodos_upload_scene_screenshot(
 		             $_POST['scene_screenshot'],
             'scene_'.$_POST['scene_id'].'_featimg',
 			          $_POST['scene_id'],
@@ -2392,11 +2392,11 @@ function vrodos_undo_scene_async_action_callback()
 // Redo button for scenes
 function vrodos_redo_scene_async_action_callback()
 {
-    $mole = update_post_meta( $_POST['scene_id'], 'wpunity_available_molecules',
+    $mole = update_post_meta( $_POST['scene_id'], 'vrodos_available_molecules',
                                                         $_POST['available_molecules']);
     
     if (isset($_POST['scene_screenshot'])){
-        $attachment_id = wpunity_upload_scene_screenshot(
+        $attachment_id = vrodos_upload_scene_screenshot(
             $_POST['scene_screenshot'],
             'scene_'.$_POST['scene_id'].'_featimg',
             $_POST['scene_id'],
@@ -2428,7 +2428,7 @@ function vrodos_save_gio_async_action_callback()
 	// put meta in scene. True, false, or id of meta if does not exist
 	$res = update_post_meta( $_POST['project_id'], 'vrodos_project_gioApKey', wp_unslash($_POST['project_gioApKey']) );
 
-//	$attachment_id = wpunity_upload_Assetimg64($_POST['scene_screenshot'], 'scene_'.$_POST['scene_id'].'_featimg',
+//	$attachment_id = vrodos_upload_Assetimg64($_POST['scene_screenshot'], 'scene_'.$_POST['scene_id'].'_featimg',
 //		$_POST['scene_id'], get_post($_POST['scene_id'])->post_name );
 //
 //	set_post_thumbnail( $_POST['scene_id'], $attachment_id );

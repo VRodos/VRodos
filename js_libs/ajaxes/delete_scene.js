@@ -3,10 +3,10 @@
  *
  * Parameters from javascript
  * scene_id : the scene to delete
- * wpunity_deleteSceneAjax()
+ * vrodos_deleteSceneAjax()
  *
  */
-function wpunity_deleteSceneAjax(scene_id, url_scene_redirect) {
+function vrodos_deleteSceneAjax(scene_id, url_scene_redirect) {
 
     jQuery.ajax({
         url: my_ajax_object_deletescene.ajax_url,

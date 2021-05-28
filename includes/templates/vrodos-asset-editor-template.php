@@ -8,7 +8,7 @@
 
 <?php
 // Remove the admin bar
-add_action('get_header', 'wpunity_remove_admin_login_header');
+add_action('get_header', 'vrodos_remove_admin_login_header');
 
 //Create asset interfaces
 
@@ -19,7 +19,7 @@ add_action('get_header', 'wpunity_remove_admin_login_header');
 // For auto-translation by Google
 $hasTranslator = false;
 //if ($hasTranslator) {
-//    putenv("GOOGLE_APPLICATION_CREDENTIALS=".get_option( 'general_settings' )['wpunity_google_application_credentials']);
+//    putenv("GOOGLE_APPLICATION_CREDENTIALS=".get_option( 'general_settings' )['vrodos_google_application_credentials']);
 //    if (file_exists(plugin_dir_path(__DIR__) . '/translate/vendor/autoload.php')) {
 //        // Include Google Cloud dependendencies using Composer
 //        require(plugin_dir_path(__DIR__) . '/translate/vendor/autoload.php');
@@ -42,7 +42,7 @@ $isAdmin = is_admin() ? 'back' : 'front';
 <?php
 
 // Load Scripts
-function wpunity_loadAsset3DManagerScriptsAndStyles() {
+function vrodos_loadAsset3DManagerScriptsAndStyles() {
     
     // Stylesheet
     wp_enqueue_style('vrodos_asseteditor_stylesheet');
@@ -70,7 +70,7 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
     wp_enqueue_script('vrodos_load87_MTLloader');
     wp_enqueue_script('vrodos_load87_PDBloader');
     wp_enqueue_script('vrodos_load119_FBXloader');
-    //wp_enqueue_script('wpunity_load119_TrackballControls');
+    //wp_enqueue_script('vrodos_load119_TrackballControls');
     
     wp_enqueue_script('vrodos_load119_OrbitControls');
     wp_enqueue_script('vrodos_load119_GLTFLoader');
@@ -109,15 +109,15 @@ function wpunity_loadAsset3DManagerScriptsAndStyles() {
 //    );
 
 }
-add_action('wp_enqueue_scripts', 'wpunity_loadAsset3DManagerScriptsAndStyles' );
+add_action('wp_enqueue_scripts', 'vrodos_loadAsset3DManagerScriptsAndStyles' );
 
 // End Of Scripts Loading
 
 $perma_structure = get_option('permalink_structure') ? true : false;
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
-if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
+if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 
-$project_id = isset($_GET['wpunity_game']) ? sanitize_text_field( intval( $_GET['wpunity_game'] )) : null ;
+$project_id = isset($_GET['vrodos_game']) ? sanitize_text_field( intval( $_GET['vrodos_game'] )) : null ;
 $asset_id = isset($_GET['vrodos_asset']) ? sanitize_text_field( intval( $_GET['vrodos_asset'] )) : null ;
 $scene_id = isset($_GET['vrodos_scene']) ? sanitize_text_field( intval( $_GET['vrodos_scene'] )) : null ;
 //$previous_page = isset($_GET['previous_page']) ? sanitize_text_field( intval( $_GET['previous_page'] )) : null ;
@@ -126,7 +126,7 @@ $scene_id = isset($_GET['vrodos_scene']) ? sanitize_text_field( intval( $_GET['v
 // Game project variables
 $game_post = get_post($project_id);
 $gameSlug = $game_post->post_name;
-$game_type_obj = wpunity_return_project_type($project_id);
+$game_type_obj = vrodos_return_project_type($project_id);
 
 
 //Get 'parent-game' taxonomy with the same slug as Game
@@ -194,9 +194,9 @@ $editscene2DPage = vrodos_getEditpage('scene2D');
 $editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 
-$archaeology_tax = get_term_by('slug', 'archaeology_games', 'wpunity_game_type');
+$archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
 
-$all_game_category = get_the_terms( $project_id, 'wpunity_game_type' );
+$all_game_category = get_the_terms( $project_id, 'vrodos_game_type' );
 
 $game_category  = $all_game_category[0]->slug;
 
@@ -216,14 +216,14 @@ $goBackToLink = '';
 // If coming from scene then go to scene editor
 if($scene_id != 0 ) {
     
-    $goBackToLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&wpunity_game=' .
+    $goBackToLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' .
         $project_id . '&scene_type=' . $_GET['scene_type'];
     
 }else {
     
     // Goto shared assets
     $goBackToLink = home_url()."/vrodos-assets-list-page/?".
-        (!isset($_GET['singleproject'])?"wpunity_game=":"vrodos_project_id=").$project_id;
+        (!isset($_GET['singleproject'])?"vrodos_game=":"vrodos_project_id=").$project_id;
 }
 
 
@@ -285,7 +285,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         <?php
         
         //It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
-        $asset_id = wpunity_create_asset_frontend($assetPGameID,$assetCatID, $gameSlug, $assetCatIPRID,
+        $asset_id = vrodos_create_asset_frontend($assetPGameID,$assetCatID, $gameSlug, $assetCatIPRID,
             $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     }else {
         ?>
@@ -293,7 +293,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         <?php
         
         // Edit an existing asset: Return true if updated, false if failed
-        $asset_updatedConf = wpunity_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
+        $asset_updatedConf = vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
             $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     }
     
@@ -303,7 +303,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         // NoCloning: Upload files from POST but check first
         // if any 3D files have been selected for upload
         if (count($_FILES['multipleFilesInput']['name']) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ){
-            wpunity_create_asset_3DFilesExtra_frontend($asset_id, $asset_language_pack['assetTitleForm'],
+            vrodos_create_asset_3DFilesExtra_frontend($asset_id, $asset_language_pack['assetTitleForm'],
                 $gameSlug);
         }
         
@@ -318,28 +318,28 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 //
     
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
-        wpunity_upload_asset_screenshot($_POST['sshotFileInput'], $asset_language_pack['assetTitleForm'], $asset_id);
+        vrodos_upload_asset_screenshot($_POST['sshotFileInput'], $asset_language_pack['assetTitleForm'], $asset_id);
     }
     
     // Save parameters
     switch ($assetCatTerm->slug){
         case 'consumer':
-            wpunity_create_asset_consumerExtra_frontend($asset_id);
+            vrodos_create_asset_consumerExtra_frontend($asset_id);
             break;
         case 'terrain':
-            wpunity_create_asset_terrainExtra_frontend($asset_id);
+            vrodos_create_asset_terrainExtra_frontend($asset_id);
             break;
         case 'producer':
-            wpunity_create_asset_producerExtra_frontend($asset_id);
+            vrodos_create_asset_producerExtra_frontend($asset_id);
             break;
         case 'molecule':
-            wpunity_create_asset_moleculeExtra_frontend($asset_id);
+            vrodos_create_asset_moleculeExtra_frontend($asset_id);
             break;
         case 'artifact':
         default:
-            wpunity_create_asset_addImages_frontend($asset_id);
-            wpunity_create_asset_addAudio_frontend($asset_id);
-            wpunity_create_asset_addVideo_frontend($asset_id);
+            vrodos_create_asset_addImages_frontend($asset_id);
+            vrodos_create_asset_addAudio_frontend($asset_id);
+            vrodos_create_asset_addVideo_frontend($asset_id);
             break;
     }
     
@@ -496,7 +496,7 @@ if($asset_id != null) {
     if ($isUserloggedIn && $isEditMode) {
         ?>
 
-        <a title="Back" class="wpunity-back-button hideAtLocked mdc-button" href="<?php echo $goBackToLink;?>">
+        <a title="Back" class="vrodos-back-button hideAtLocked mdc-button" href="<?php echo $goBackToLink;?>">
             <em class="material-icons arrowback" >arrow_back</em>Assets Manager</a>
         <?php
     }
@@ -569,7 +569,7 @@ if($asset_id != null) {
                 <?php
                 
                 $myGameType = 0;
-                $all_game_types = get_the_terms( $project_id, 'wpunity_game_type' );
+                $all_game_types = get_the_terms( $project_id, 'vrodos_game_type' );
                 $game_type_slug = $all_game_types[0]->slug;
                 
                 switch ($game_type_slug) {
@@ -896,7 +896,7 @@ if($asset_id != null) {
             // On select image alter preview thumbnail
             for (let i=0; i<=4; i++){
                 jQuery("#img"+i.toString()+"Input").change(function() {
-                    wpunity_read_url(this, "#img"+i.toString()+"Preview");
+                    vrodos_read_url(this, "#img"+i.toString()+"Preview");
                 });
             }
         </script>
@@ -1219,12 +1219,12 @@ if($asset_id != null) {
 
 
 <!-- Author -->
-<table id="wpunity-asset-author" description="Author details" class="mdc-typography--caption">
+<table id="vrodos-asset-author" description="Author details" class="mdc-typography--caption">
     <caption>Author</caption>
     <tr>
 
         <th id="authorImageRow" rowspan="2">
-            <img alt="Author image" id="wpunity-authorImg"
+            <img alt="Author image" id="vrodos-authorImg"
                  src="<?php echo get_avatar_url($author_id);?>">
         </th>
 
@@ -1272,7 +1272,7 @@ if($asset_id != null) {
     // Reset 3D canvas if not preview
     if (isEditMode === 1) {
         // clear canvas and divs for fields
-//        wpunity_reset_panels(asset_viewer_3d_kernel, "initial script");
+//        vrodos_reset_panels(asset_viewer_3d_kernel, "initial script");
 
         // Get the Default Screenshot image for reference;
         
@@ -1382,7 +1382,7 @@ if($asset_id != null) {
 
                 asset_viewer_3d_kernel.resizeDisplayGL();
 
-                //wpunity_reset_panels(asset_viewer_3d_kernel, "loadlayout");
+                //vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
 
                 let cat;
                 let descText = document.getElementById('categoryDescription');

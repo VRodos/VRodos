@@ -16,7 +16,7 @@ function vrodos_getDefaultJSONscene($mygameType){
 }
 
 
-function wpunity_countEnergyMarkers($scene_json) {
+function vrodos_countEnergyMarkers($scene_json) {
 
 	$nMarkers = 0;
 
@@ -65,7 +65,7 @@ function vrodos_getAllStrategies_byGame($project_id){
 			$custom_query->the_post();
 			$examID = get_the_ID();
 			$examName = get_the_title($examID);
-			$examStrategy = get_post_meta($examID, 'wpunity_exam_strategy', true);
+			$examStrategy = get_post_meta($examID, 'vrodos_exam_strategy', true);
 
 			$assetStrategies[] = [
 				'examID' => $examID,
@@ -92,7 +92,7 @@ function vrodos_getAllStrategies_byGame($project_id){
 }
 
 
-function wpunity_combineGameStrategies($project_id){
+function vrodos_combineGameStrategies($project_id){
 
 	$assetStrategies = [];
 	$project_slug = get_post_field( 'post_name', $project_id );
@@ -123,7 +123,7 @@ function wpunity_combineGameStrategies($project_id){
 			$examName = get_the_title($examID);
 
 			$examName = $examName=='Molecule Naming' ? 'naming' : 'construction' ;
-			$examStrategy = get_post_meta($examID, 'wpunity_exam_strategy', true);
+			$examStrategy = get_post_meta($examID, 'vrodos_exam_strategy', true);
 
 			$assetStrategies[] = [
 				'examID' => $examID,
@@ -167,8 +167,8 @@ function wpunity_combineGameStrategies($project_id){
 function vrodos_getUnity_local_or_remote(){
 	$generaloptions = get_option( 'general_settings' );
 
-	if($generaloptions["wpunity_unity_local_or_remote"]) {
-		return $generaloptions["wpunity_unity_local_or_remote"];
+	if($generaloptions["vrodos_unity_local_or_remote"]) {
+		return $generaloptions["vrodos_unity_local_or_remote"];
 	}else{
 		return 'local';
 	}
@@ -176,8 +176,8 @@ function vrodos_getUnity_local_or_remote(){
 
 function vrodos_getUnity_exe_folder(){
 	$generaloptions = get_option( 'general_settings' );
-	if($generaloptions["wpunity_unity_exe_folder"]) {
-		return $generaloptions["wpunity_unity_exe_folder"];
+	if($generaloptions["vrodos_unity_exe_folder"]) {
+		return $generaloptions["vrodos_unity_exe_folder"];
 	}else{
 		return 'C:\Program Files\Unity';
 	}
@@ -185,8 +185,8 @@ function vrodos_getUnity_exe_folder(){
 
 function vrodos_getRemote_api_folder(){
 	$generaloptions = get_option( 'general_settings' );
-	if($generaloptions["wpunity_remote_api_folder"]) {
-		return $generaloptions["wpunity_remote_api_folder"];
+	if($generaloptions["vrodos_remote_api_folder"]) {
+		return $generaloptions["vrodos_remote_api_folder"];
 	}else{
 		return 'http://myurl/';
 	}
@@ -194,8 +194,8 @@ function vrodos_getRemote_api_folder(){
 
 function vrodos_getRemote_server_path(){
 	$generaloptions = get_option( 'general_settings' );
-	if($generaloptions["wpunity_server_path"]) {
-		return $generaloptions["wpunity_server_path"];
+	if($generaloptions["vrodos_server_path"]) {
+		return $generaloptions["vrodos_server_path"];
 	}else{
 		return 'C:/xampp/htdocs/COMPILE_UNITY3D_GAMES/';
 	}
@@ -204,9 +204,9 @@ function vrodos_getRemote_server_path(){
 function vrodos_get_ftpCredentials(){
 	$generaloptions = get_option( 'general_settings' );
 
-	$ftp_credentials = array('address'  => $generaloptions["wpunity_ftp_address"],
-                             'username' => $generaloptions["wpunity_ftp_username"],
-                             'password' => $generaloptions["wpunity_ftp_pass"]);
+	$ftp_credentials = array('address'  => $generaloptions["vrodos_ftp_address"],
+                             'username' => $generaloptions["vrodos_ftp_username"],
+                             'password' => $generaloptions["vrodos_ftp_pass"]);
 
 	return $ftp_credentials;
 
@@ -226,7 +226,7 @@ function vrodos_get_user_game_projects($user_id, $isUserAdmin){
     
     $custom_query_args = array(
 //        'author' => $user_id,
-        'post_type' => 'wpunity_game',
+        'post_type' => 'vrodos_game',
         'posts_per_page' => -1,
     );
     
@@ -427,7 +427,7 @@ function vrodos_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 	$allAssets = [];
 
 	// find the joker game slug e.g. "Archaeology-joker"
-	$joker_game_slug = wp_get_post_terms( $gameProjectID, 'wpunity_game_type')[0]->name."-joker";
+	$joker_game_slug = wp_get_post_terms( $gameProjectID, 'vrodos_game_type')[0]->name."-joker";
 
 	// Slugs are low case "Archaeology-joker" -> "archaeology-joker"
 	$joker_game_slug = strtolower($joker_game_slug);

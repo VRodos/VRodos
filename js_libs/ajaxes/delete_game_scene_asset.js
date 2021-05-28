@@ -6,7 +6,7 @@
  *
  *  All the above are encompassed in     vrodos_delete_gameproject_frontend($game_id)
  */
-function wpunity_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scenepass) {
+function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scenepass) {
 
     jQuery.ajax({
         url: my_ajax_object_deletegame.ajax_url,

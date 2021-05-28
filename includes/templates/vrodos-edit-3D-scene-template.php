@@ -1,23 +1,23 @@
 <?php
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
+if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 // Load VR_Editor Scripts
-function wpunity_load_vreditor_scripts()
+function vrodos_load_vreditor_scripts()
 {
     wp_enqueue_script('jquery-ui-draggable');
     
-    wp_enqueue_script('wpunity_load119_threejs');
-    wp_enqueue_script('wpunity_load119_CSS2DRenderer');
+    wp_enqueue_script('vrodos_load119_threejs');
+    wp_enqueue_script('vrodos_load119_CSS2DRenderer');
     wp_enqueue_script('vrodos_load119_CopyShader');
     wp_enqueue_script('vrodos_load119_FXAAShader');
     wp_enqueue_script('vrodos_load119_EffectComposer');
     wp_enqueue_script('vrodos_load119_RenderPass');
     wp_enqueue_script('vrodos_load119_OutlinePass');
     wp_enqueue_script('vrodos_load119_ShaderPass');
-    wp_enqueue_script('wpunity_load119_FBXloader');
+    wp_enqueue_script('vrodos_load119_FBXloader');
     wp_enqueue_script('vrodos_inflate');
     
     // Fixed at 87 (forked of original 87)
@@ -40,10 +40,10 @@ function wpunity_load_vreditor_scripts()
     wp_enqueue_style('vrodos_3D_editor_browser');
     
 }
-add_action('wp_enqueue_scripts', 'wpunity_load_vreditor_scripts' );
+add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
 
 
-function wpunity_load_custom_functions_vreditor(){
+function vrodos_load_custom_functions_vreditor(){
     wp_enqueue_script('vrodos_3d_editor_environmentals');
     wp_enqueue_script('vrodos_keyButtons');
     wp_enqueue_script('vrodos_rayCasters');
@@ -55,7 +55,7 @@ function wpunity_load_custom_functions_vreditor(){
     wp_enqueue_script('vrodos_vr_editor_analytics');
     wp_enqueue_script('vrodos_fetch_asset_scenes_request');
 }
-add_action('wp_enqueue_scripts', 'wpunity_load_custom_functions_vreditor' );
+add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 
 ?>
 
@@ -83,22 +83,22 @@ $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 $current_scene_id = sanitize_text_field( intval( $_GET['vrodos_scene'] ));
 
 // Project
-$project_id    = sanitize_text_field( intval( $_GET['wpunity_game'] ) );
+$project_id    = sanitize_text_field( intval( $_GET['vrodos_game'] ) );
 $project_post  = get_post($project_id);
 $projectSlug   = $project_post->post_name;
 
 // Get if project is : 'Archaeology' or 'Energy' or 'Chemistry'
-$project_type = wpunity_return_project_type($project_id)->string;
+$project_type = vrodos_return_project_type($project_id)->string;
 
 // Get project type icon
-$project_type_icon = wpunity_return_project_type($project_id)->icon;
+$project_type_icon = vrodos_return_project_type($project_id)->icon;
 
 // Get Joker project id
-$joker_project_id = get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'wpunity_game' )->ID;
+$joker_project_id = get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID;
 
 // Wind Energy Only
 if ($project_type === 'Energy') {
-    $scenesNonRegional = vrodos_getNonRegionalScenes($_REQUEST['wpunity_game']);
+    $scenesNonRegional = vrodos_getNonRegionalScenes($_REQUEST['vrodos_game']);
     $scenesMarkerAllInfo = vrodos_get_all_scenesMarker_of_project_fastversion($project_id);
 }
 
@@ -151,7 +151,7 @@ echo 'let game_type ="'.strtolower($project_type).'";';
 echo 'let project_keys ="'.json_encode(vrodos_getProjectKeys($project_id, $project_type)).'";';
 echo 'user_email = "'.$user_email.'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
-echo 'energy_stats = '.json_encode(wpunity_windEnergy_scene_stats($current_scene_id)).';';
+echo 'energy_stats = '.json_encode(vrodos_windEnergy_scene_stats($current_scene_id)).';';
 
 
 if ($project_type === 'Archaeology') {
@@ -191,7 +191,7 @@ $allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
 $allScenePGameID = $allScenePGame->term_id;
 
 if ($project_type === "Chemistry") {
-    $analytics_molecule_checklist = wpunity_derive_molecules_checklist();
+    $analytics_molecule_checklist = vrodos_derive_molecules_checklist();
 }
 
 // Ajax for fetching game's assets within asset browser widget at vr_editor // user must be logged in to work, otherwise ajax has no privileges
@@ -284,7 +284,7 @@ if(isset($_POST['submitted2']) && isset($_POST['post_nonce_field2']) && wp_verif
 	$expID = $_POST['exp-id'];
 	update_post_meta( $project_id, 'vrodos_project_expID', $expID);
 
-	$loadMainSceneLink = get_permalink($editscenePage[0]->ID) . $parameter_Scenepass . $current_scene_id . '&wpunity_game=' . $project_id . '&scene_type=scene';
+	$loadMainSceneLink = get_permalink($editscenePage[0]->ID) . $parameter_Scenepass . $current_scene_id . '&vrodos_game=' . $project_id . '&scene_type=scene';
 	wp_redirect( $loadMainSceneLink );
 	exit;
 }
@@ -299,7 +299,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 	$game_type_chosen_slug = '';
 
 	$default_json = '';
-	$thegameType = wp_get_post_terms($project_id, 'wpunity_game_type');
+	$thegameType = wp_get_post_terms($project_id, 'vrodos_game_type');
 	if($thegameType[0]->slug == 'archaeology_games'){
 	    
 	    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
@@ -353,7 +353,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 	$isRegional = 0;//default value
 	if($thegameType[0]->slug == 'energy_games'){
 		if($_POST['regionalSceneCheckbox'] == 'on'){$isRegional = 1;}
-		$scene_metas['wpunity_isRegional']= $isRegional;
+		$scene_metas['vrodos_isRegional']= $isRegional;
 		$scene_metas['vrodos_scene_environment'] = 'fields';
 	}
 
@@ -374,7 +374,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 	if($scene_id){
 		if($sceneMetaType == 'sceneExam2d' || $sceneMetaType == 'sceneExam3d'){$edit_scene_page_id = $editsceneExamPage[0]->ID;}
 		else{$edit_scene_page_id = $editscenePage[0]->ID;}
-		$loadMainSceneLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&wpunity_game=' . $project_id . '&scene_type=' . $sceneMetaType;
+		$loadMainSceneLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $sceneMetaType;
 		wp_redirect( $loadMainSceneLink );
 		exit;
 	}
@@ -674,7 +674,7 @@ get_header(); ?>
                             $scene_id = get_the_ID();
                             $scene_title = get_the_title();
                             $scene_desc = get_the_content();
-                            $is_regional = get_post_meta($scene_id,'wpunity_isRegional', true);
+                            $is_regional = get_post_meta($scene_id,'vrodos_isRegional', true);
                             $current_card_bg = $current_scene_id == $scene_id ? 'mdc-theme--primary-light-bg' : '';
                             $scene_type = get_post_meta( $scene_id, 'vrodos_scene_metatype', true );
                     
@@ -688,7 +688,7 @@ get_header(); ?>
                             }
                     
                             $url_redirect_delete_scene = get_permalink($edit_scene_page_id) . $parameter_Scenepass .
-                                $scene_id . '&wpunity_game=' . $project_id . '&scene_type=' . $scene_type;
+                                $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_type;
                     
                             if($scene_type !== 'menu' && $scene_type !== 'credits') {
                                 if ($default_scene) {
@@ -932,7 +932,7 @@ get_header(); ?>
     
         // load asset browser with data
         jQuery(document).ready(function(){
-            wpunity_fetchSceneAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
+            vrodos_fetchSceneAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
     
             // make asset browser draggable
             jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
@@ -1084,7 +1084,7 @@ get_header(); ?>
         loaderMulti = new VRodos_LoaderMulti();
 
         loaderMulti.load(manager, resources3D, pluginPath);
-        //wpunity_fetchAndLoadMultipleAssetsAjax(manager, resources3D, pluginPath);
+        //vrodos_fetchAndLoadMultipleAssetsAjax(manager, resources3D, pluginPath);
 
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json){

@@ -3,7 +3,7 @@
 
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
-if( $perma_structure){$parameter_pass = '?wpunity_game=';} else{$parameter_pass = '&wpunity_game=';}
+if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 $editgamePage = vrodos_getEditpage('game');
@@ -400,7 +400,7 @@ get_header();
         //jQuery('.chips-initial').material_chip({data: [], placeholder: 'Your collaborator email'});
         
         // Fetch collaborators and insert to "textarea-collaborators"
-        wpunity_fetchCollabsAjax(project_id);
+        vrodos_fetchCollabsAjax(project_id);
 
         
     }
@@ -433,7 +433,7 @@ get_header();
         jQuery( "#cancelDeleteGameBtn" ).addClass( "LinkDisabled" );
 
         //console.log("ID:", dialog.id);
-        wpunity_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
+        vrodos_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
 
     });
 
@@ -462,7 +462,7 @@ get_header();
         console.log("currCollabsEmails2", currCollabsEmails);
         
         // 2. Update ids of collaborators ;15;5;4;
-        wpunity_updateCollabsAjax(dialogCollaborators.project_id, dialogCollaborators, currCollabsEmails);
+        vrodos_updateCollabsAjax(dialogCollaborators.project_id, dialogCollaborators, currCollabsEmails);
 
     });
     
@@ -480,7 +480,7 @@ get_header();
 
         if (title_game_project.length > 2) {
             var  game_type_radio_button = document.getElementsByName("gameTypeRadio")[0].value;
-            wpunity_createGameAjax(title_game_project, game_type_radio_button, current_user_id, parameter_Scenepass);
+            vrodos_createGameAjax(title_game_project, game_type_radio_button, current_user_id, parameter_Scenepass);
             jQuery('#createNewGameBtn').hide();
             jQuery('#create-game-progress-bar').show();
         }

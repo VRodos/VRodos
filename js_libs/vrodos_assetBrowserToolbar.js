@@ -1,5 +1,5 @@
 //  AJAX: FETCH Assets 3d
-function wpunity_fetchSceneAssetsAjax(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID){
+function vrodos_fetchSceneAssetsAjax(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID){
 
 
     jQuery.ajax({
@@ -244,7 +244,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
                     (f.isJoker==='false'?
                             ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-'+ f.assetid
-                                + '" onclick="wpunity_deleteAssetAjax('+
+                                + '" onclick="vrodos_deleteAssetAjax('+
                                 f.assetid + ', \'' + gameProjectSlug + '\',' + f.isCloned + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
                             ''
                     )

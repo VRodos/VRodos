@@ -325,9 +325,9 @@
     //    var meanspeed_value = <?php //echo json_encode($mean_speed_wind);?>//;
     //    var varspeed_value = <?php //echo json_encode($var_speed_wind);?>//;
 
-    //    var windSpeedRangeSlider = wpunity_create_slider_component("#wind-speed-range", true, {min: 0, max: 40, values:[minspeed_value,maxspeed_value], valIds:["#physicsWindMinVal", "#physicsWindMaxVal" ], units:"m/sec"});
-    //    var windMeanSlider = wpunity_create_slider_component("#wind-mean-slider", false, {min: 0, max: 40, value: meanspeed_value, valId:"#physicsWindMeanVal", units:"m/sec"});
-    //    var windVarianceSlider = wpunity_create_slider_component("#wind-variance-slider", false, {min: 1, max: 100, value: varspeed_value, valId:"#physicsWindVarianceVal", units:""});
+    //    var windSpeedRangeSlider = vrodos_create_slider_component("#wind-speed-range", true, {min: 0, max: 40, values:[minspeed_value,maxspeed_value], valIds:["#physicsWindMinVal", "#physicsWindMaxVal" ], units:"m/sec"});
+    //    var windMeanSlider = vrodos_create_slider_component("#wind-mean-slider", false, {min: 0, max: 40, value: meanspeed_value, valId:"#physicsWindMeanVal", units:"m/sec"});
+    //    var windVarianceSlider = vrodos_create_slider_component("#wind-variance-slider", false, {min: 1, max: 100, value: varspeed_value, valId:"#physicsWindVarianceVal", units:""});
     //
     //
     //    // Change Mean range according to Speed range
@@ -347,9 +347,9 @@
     //    var mean_cons = <?php //echo json_encode($mean_consumption);?>//;
     //    var var_cons = <?php //echo json_encode($var_consumption);?>//;
     //
-    //    var energyConsumptionRangeSlider = wpunity_create_slider_component("#energy-consumption-range", true, {min: 0, max: 2000, values:[min_cons, max_cons], valIds:["#energyConsumptionMinVal", "#energyConsumptionMaxVal" ], step: 5, units:"kW"});
-    //    var energyConsumptionMeanSlider = wpunity_create_slider_component("#energy-consumption-mean-slider", false, {min: 50, max: 150, value: mean_cons, valId:"#energyConsumptionMeanVal", step: 5, units:"kW"});
-    //    var energyConsumptionVarianceSlider = wpunity_create_slider_component("#energy-consumption-variance-slider", false, {min: 5, max: 1000, value: var_cons, valId:"#energyConsumptionVarianceVal", step: 5, units:""});
+    //    var energyConsumptionRangeSlider = vrodos_create_slider_component("#energy-consumption-range", true, {min: 0, max: 2000, values:[min_cons, max_cons], valIds:["#energyConsumptionMinVal", "#energyConsumptionMaxVal" ], step: 5, units:"kW"});
+    //    var energyConsumptionMeanSlider = vrodos_create_slider_component("#energy-consumption-mean-slider", false, {min: 50, max: 150, value: mean_cons, valId:"#energyConsumptionMeanVal", step: 5, units:"kW"});
+    //    var energyConsumptionVarianceSlider = vrodos_create_slider_component("#energy-consumption-variance-slider", false, {min: 5, max: 1000, value: var_cons, valId:"#energyConsumptionVarianceVal", step: 5, units:""});
     //
     //
     //    // Change Mean range according to Speed range
@@ -368,9 +368,9 @@
     //    var income_correct = <?php //echo json_encode($income_when_correct_power);?>//;
     //    var income_underpower = <?php //echo json_encode($income_when_under_power);?>//;
     //
-    //    var terrainOverPowerIncomeSlider = wpunity_create_slider_component("#over-power-income-slider", false, {min: -5, max: 5, value: income_overpower, valId:"#overPowerIncomeVal", step: 0.5, units:"$"});
-    //    var terrainCorrectPowerIncomeSlider = wpunity_create_slider_component("#correct-power-income-slider", false, {min: -5, max: 5, value: income_correct, valId:"#correctPowerIncomeVal", step: 0.5, units:"$"});
-    //    var terrainUnderPowerIncomeSlider = wpunity_create_slider_component("#under-power-income-slider", false, {min: -5, max: 5, value: income_underpower, valId:"#underPowerIncomeVal", step: 0.5, units:"$"});
+    //    var terrainOverPowerIncomeSlider = vrodos_create_slider_component("#over-power-income-slider", false, {min: -5, max: 5, value: income_overpower, valId:"#overPowerIncomeVal", step: 0.5, units:"$"});
+    //    var terrainCorrectPowerIncomeSlider = vrodos_create_slider_component("#correct-power-income-slider", false, {min: -5, max: 5, value: income_correct, valId:"#correctPowerIncomeVal", step: 0.5, units:"$"});
+    //    var terrainUnderPowerIncomeSlider = vrodos_create_slider_component("#under-power-income-slider", false, {min: -5, max: 5, value: income_underpower, valId:"#underPowerIncomeVal", step: 0.5, units:"$"});
     //
     //    var opt_size = <?php //echo json_encode($optCosts_size);?>//;
     //    var opt_dmg = <?php //echo json_encode($optCosts_dmg);?>//;
@@ -379,14 +379,14 @@
     //    var opt_speed = <?php //echo json_encode($optGen_speed);?>//;
     //    var opt_power = <?php //echo json_encode($optGen_power);?>//;
     //
-    //    var producerTurbineSizeSlider = wpunity_create_slider_component("#producer-turbine-size-slider", false, {min: 3, max: 250, value: opt_size, valId:"#producerTurbineSizeVal", step: 1, units:"m"});
-    //    var producerDmgCoeffSlider = wpunity_create_slider_component("#producer-damage-coeff-slider", false, {min: 0.001, max: 0.02, value: opt_dmg, valId:"#producerDmgCoeffVal", step: 0.001, units:"Probability / sec"});
-    //    var producerCostSlider = wpunity_create_slider_component("#producer-cost-slider", false, {min: 1, max: 10, value: opt_cost, valId:"#producerCostVal", step: 1, units:"$"});
-    //    var producerRepairCostSlider = wpunity_create_slider_component("#producer-repair-cost-slider", false, {min: 0.5, max: 5, value: opt_repaid, valId:"#producerRepairCostVal", step: 0.5, units:"$"});
-    //    var producerWindSpeedClassSlider = wpunity_create_slider_component("#producer-wind-speed-class-slider", false, {min: 2, max: 20, value: opt_speed, valId:"#producerWindSpeedClassVal", step: 0.01, units:"m/sec"});
-    //    var producerMaxPowerSlider = wpunity_create_slider_component("#producer-max-power-slider", false, {min: 0.001, max: 20, value: opt_power, valId:"#producerMaxPowerVal", step: 0.001, units:"MW"});
+    //    var producerTurbineSizeSlider = vrodos_create_slider_component("#producer-turbine-size-slider", false, {min: 3, max: 250, value: opt_size, valId:"#producerTurbineSizeVal", step: 1, units:"m"});
+    //    var producerDmgCoeffSlider = vrodos_create_slider_component("#producer-damage-coeff-slider", false, {min: 0.001, max: 0.02, value: opt_dmg, valId:"#producerDmgCoeffVal", step: 0.001, units:"Probability / sec"});
+    //    var producerCostSlider = vrodos_create_slider_component("#producer-cost-slider", false, {min: 1, max: 10, value: opt_cost, valId:"#producerCostVal", step: 1, units:"$"});
+    //    var producerRepairCostSlider = vrodos_create_slider_component("#producer-repair-cost-slider", false, {min: 0.5, max: 5, value: opt_repaid, valId:"#producerRepairCostVal", step: 0.5, units:"$"});
+    //    var producerWindSpeedClassSlider = vrodos_create_slider_component("#producer-wind-speed-class-slider", false, {min: 2, max: 20, value: opt_speed, valId:"#producerWindSpeedClassVal", step: 0.01, units:"m/sec"});
+    //    var producerMaxPowerSlider = vrodos_create_slider_component("#producer-max-power-slider", false, {min: 0.001, max: 20, value: opt_power, valId:"#producerMaxPowerVal", step: 0.001, units:"MW"});
     //
-    //    var moleculeFluidViscositySlider = wpunity_create_slider_component("#molecule-fluid-viscosity-slider", false, {min: 0, max: 2000, value: 1, valId:"#moleculeFluidViscosityVal", step: 0.1, units:"", inputText:true});
+    //    var moleculeFluidViscositySlider = vrodos_create_slider_component("#molecule-fluid-viscosity-slider", false, {min: 0, max: 2000, value: 1, valId:"#moleculeFluidViscosityVal", step: 0.1, units:"", inputText:true});
     //
     //    // POI Image panels - Add/remove POI inputs
     //    var poiMaxFields      = 3; // max input boxes allowed

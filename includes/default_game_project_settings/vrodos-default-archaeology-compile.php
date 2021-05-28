@@ -1,6 +1,6 @@
 <?php
 
-function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of mainmenu-arch-yaml
     $term_meta_s_mainmenu = vrodos_getSceneYAML_archaeology('menu');
     $title_text = $scene_post->post_title;
@@ -12,10 +12,10 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
     $featured_image_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6';//if there's no Featured Image
 
     if($featured_image_sprite_id != ''){
-        $featured_image_sprite_guid = wpunity_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $scene_id);
+        $featured_image_sprite_guid = vrodos_compile_sprite_upload($featured_image_sprite_id, $gameSlug, $scene_id);
     }
 
-    $file_content = wpunity_replace_mainmenu_unity($term_meta_s_mainmenu,$title_text,$featured_image_sprite_guid,$is_bt_settings_active,$is_help_bt_active,$is_exit_button_active,$is_login_bt_active);
+    $file_content = vrodos_replace_mainmenu_unity($term_meta_s_mainmenu,$title_text,$featured_image_sprite_guid,$is_bt_settings_active,$is_help_bt_active,$is_exit_button_active,$is_login_bt_active);
 
     $file = $game_path . '/' . 'S_MainMenu.unity';
     $create_file = fopen($file, "w") or die("Unable to open file!");
@@ -34,7 +34,7 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
     if($is_bt_settings_active == '1'){
         //CREATE SETTINGS/OPTIONS Unity file
         $term_meta_s_settings = vrodos_getSceneYAML_archaeology('options');
-        $file_content2 = wpunity_replace_settings_unity($term_meta_s_settings);
+        $file_content2 = vrodos_replace_settings_unity($term_meta_s_settings);
 
         $file2 = $game_path . '/S_Settings.unity';
         $create_file2 = fopen($file2, "w") or die("Unable to open file!");
@@ -49,11 +49,11 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
     if($is_help_bt_active == '1'){
         //CREATE HELP Unity file
         $term_meta_s_help = vrodos_getSceneYAML_archaeology('help');
-        $text_help_scene = get_post_meta($scene_id,'wpunity_scene_help_text',true);
-        $img_help_scene_id = get_post_meta($scene_id,'wpunity_scene_helpimg',true);
+        $text_help_scene = get_post_meta($scene_id,'vrodos_scene_help_text',true);
+        $img_help_scene_id = get_post_meta($scene_id,'vrodos_scene_helpimg',true);
         $img_help_scene_guid = 'dad02368a81759f4784c7dbe752b05d6'; //if there's no Featured Image (custom field at Main Menu)
-        if($img_help_scene_id != ''){$img_help_scene_guid = wpunity_compile_sprite_upload($img_help_scene_id,$gameSlug,$scene_id);}
-        $file_content3 = wpunity_replace_help_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid);
+        if($img_help_scene_id != ''){$img_help_scene_guid = vrodos_compile_sprite_upload($img_help_scene_id,$gameSlug,$scene_id);}
+        $file_content3 = vrodos_replace_help_unity($term_meta_s_help,$text_help_scene,$img_help_scene_guid);
 
         $file3 = $game_path . '/' . 'S_Help.unity';
         $create_file3 = fopen($file3, "w") or die("Unable to open file!");
@@ -67,7 +67,7 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
     if($is_login_bt_active == '1'){
         //CREATE Login Unity file
         $term_meta_s_login = vrodos_getSceneYAML_archaeology('login');
-        $file_content4 = wpunity_replace_login_unity($term_meta_s_login);
+        $file_content4 = vrodos_replace_login_unity($term_meta_s_login);
 
         $file4 = $game_path . '/S_Login.unity';
         $create_file4 = fopen($file4, "w") or die("Unable to open file!");
@@ -79,15 +79,15 @@ function wpunity_create_archaeology_mainmenu_unity($scene_post,$scene_type_ID,$s
     }
 }
 
-function wpunity_create_archaeology_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
+function vrodos_create_archaeology_credentials_unity($scene_post,$scene_type_ID,$scene_id,$gameSlug,$game_path,$fileEditorBuildSettings,$handybuilder_file){
     //DATA of Credits Scene
     $term_meta_s_credits = vrodos_getSceneYAML_archaeology('credits');
     $credits_content = $scene_post->post_content;
 
     $featured_image_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
     $featured_image_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6'; //if there's no Featured Image
-    if($featured_image_sprite_id != ''){$featured_image_sprite_guid = wpunity_compile_sprite_upload($featured_image_sprite_id,$gameSlug,$scene_id);}
-    $file_content5 = wpunity_replace_creditsscene_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid);
+    if($featured_image_sprite_id != ''){$featured_image_sprite_guid = vrodos_compile_sprite_upload($featured_image_sprite_id,$gameSlug,$scene_id);}
+    $file_content5 = vrodos_replace_creditsscene_unity($term_meta_s_credits,$credits_content,$featured_image_sprite_guid);
 
     $file5 = $game_path . '/S_Credits.unity';
     $create_file5 = fopen($file5, "w") or die("Unable to open file!");
@@ -98,20 +98,20 @@ function wpunity_create_archaeology_credentials_unity($scene_post,$scene_type_ID
     vrodos_add_in_HandyBuilder_cs($handybuilder_file, null, 'Assets/scenes/S_Credits.unity');
 }
 
-function wpunity_create_archaeology_wonderaround_unity($scene_post, $scene_type_ID, $scene_id, $gameSlug, $game_path, $fileEditorBuildSettings, $handybuilder_file,
+function vrodos_create_archaeology_wonderaround_unity($scene_post, $scene_type_ID, $scene_id, $gameSlug, $game_path, $fileEditorBuildSettings, $handybuilder_file,
                                                        $scenes_counter, $gameType){
     //DATA of Wonder Around Scene
     $term_meta_wonder_around = vrodos_getSceneYAML_archaeology('wanderaround');
-    //$json_scene = get_post_meta($scene_id,'wpunity_scene_json_input',true);
+    //$json_scene = get_post_meta($scene_id,'vrodos_scene_json_input',true);
     $scene_name = $scene_post->post_name;
     $scene_title = $scene_post->post_title;
-    $scene_desc = get_post_meta($scene_id, 'wpunity_scene_caption', true); //$scene_post->post_content;
+    $scene_desc = get_post_meta($scene_id, 'vrodos_scene_caption', true); //$scene_post->post_content;
 
     $featured_image_edu_sprite_id = get_post_thumbnail_id( $scene_id );//The Featured Image ID
     $featured_image_edu_sprite_guid = 'dad02368a81759f4784c7dbe752b05d6';//if there's no Featured Image
-    if($featured_image_edu_sprite_id != ''){$featured_image_edu_sprite_guid = wpunity_compile_sprite_upload($featured_image_edu_sprite_id,$gameSlug,$scene_id);}
+    if($featured_image_edu_sprite_id != ''){$featured_image_edu_sprite_guid = vrodos_compile_sprite_upload($featured_image_edu_sprite_id,$gameSlug,$scene_id);}
 
-    $file_contentA = wpunity_replace_wonderaround_unity($term_meta_wonder_around,$scene_id); //empty energy scene with Avatar!
+    $file_contentA = vrodos_replace_wonderaround_unity($term_meta_wonder_around,$scene_id); //empty energy scene with Avatar!
     $file_contentAb = vrodos_addAssets_wonderaround_unity($scene_id);//add objects from json
     $fileA = $game_path . '/' . $scene_name . '.unity';
     $create_fileA = fopen($fileA, "w") or die("Unable to open file!");
@@ -119,7 +119,7 @@ function wpunity_create_archaeology_wonderaround_unity($scene_post, $scene_type_
     fwrite($create_fileA,$file_contentAb);
     fclose($create_fileA);
 
-    wpunity_compile_append_scene_to_s_selector($scene_id, $scene_name, $scene_title, $scene_desc, $scene_type_ID,
+    vrodos_compile_append_scene_to_s_selector($scene_id, $scene_name, $scene_title, $scene_desc, $scene_type_ID,
          $game_path, $scenes_counter, $featured_image_edu_sprite_guid, $gameType);
 
     $fileApath_forCS = 'Assets/scenes/' . $scene_name . '.unity';
@@ -143,14 +143,14 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
         }else{
             if ($value['categoryName'] == 'Site'){
                 $site_id = $value['assetid'];
-                $asset_type = get_the_terms( $site_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $site_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $site_obj = get_post_meta($site_id,'wpunity_asset3d_obj',true);
+                $site_obj = get_post_meta($site_id,'vrodos_asset3d_obj',true);
 
                 $site_yaml = vrodos_getAssetYAML_archaeology('site');
-                $site_fid = wpunity_create_fids($current_fid++);
-                $site_obj_guid = wpunity_create_guids('obj', $site_obj);
+                $site_fid = vrodos_create_fids($current_fid++);
+                $site_obj_guid = vrodos_create_guids('obj', $site_obj);
                 $site_position_x = - $value['position'][0]; // x is in the opposite site in unity
                 $site_position_y = $value['position'][1];
                 $site_position_z = $value['position'][2];
@@ -163,18 +163,18 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $site_scale_z = $value['scale'][2];
                 $site_title = get_the_title($site_id);
 
-                $site_finalyaml = wpunity_replace_site_unity($site_yaml,$site_fid,$site_obj_guid,$site_position_x,$site_position_y,$site_position_z,$site_rotation_x,$site_rotation_y,$site_rotation_z,$site_rotation_w,$site_scale_x,$site_scale_y,$site_scale_z,$site_title);
+                $site_finalyaml = vrodos_replace_site_unity($site_yaml,$site_fid,$site_obj_guid,$site_position_x,$site_position_y,$site_position_z,$site_rotation_x,$site_rotation_y,$site_rotation_z,$site_rotation_w,$site_scale_x,$site_scale_y,$site_scale_z,$site_title);
                 $allObjectsYAML = $allObjectsYAML . $LF . $site_finalyaml;
             }
             if ($value['categoryName'] == 'Points of Interest (Image-Text)'){
                 $poi_img_id = $value['assetid'];
                 $content_post = get_post($poi_img_id);
-                $asset_type = get_the_terms( $poi_img_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $poi_img_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
-                $poi_img_obj = get_post_meta($poi_img_id,'wpunity_asset3d_obj',true);
-                $poi_img_sprite = get_post_meta($poi_img_id,'wpunity_asset3d_screenimage',true);
+                $poi_img_obj = get_post_meta($poi_img_id,'vrodos_asset3d_obj',true);
+                $poi_img_sprite = get_post_meta($poi_img_id,'vrodos_asset3d_screenimage',true);
                 $poi_img_yaml = vrodos_getAssetYAML_archaeology('pois_imagetext');
-                $poi_it_fid = wpunity_create_fids($current_fid++);
+                $poi_it_fid = vrodos_create_fids($current_fid++);
                 $poi_it_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $poi_it_pos_y = $value['position'][1];
                 $poi_it_pos_z = $value['position'][2];
@@ -201,11 +201,11 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_it_text = str_replace("\r\n\r\n","\r\n\r\n\r\n", $poi_it_text);
 
 
-                $poi_it_connector_fid = wpunity_create_fids($current_fid++);
-                $poi_it_obj_fid = wpunity_create_fids($current_fid++);
-                $poi_it_obj_guid = wpunity_create_guids('obj', $poi_img_obj);
+                $poi_it_connector_fid = vrodos_create_fids($current_fid++);
+                $poi_it_obj_fid = vrodos_create_fids($current_fid++);
+                $poi_it_obj_guid = vrodos_create_guids('obj', $poi_img_obj);
 
-                $poi_img_finalyaml = wpunity_replace_poi_img_unity($poi_img_yaml,
+                $poi_img_finalyaml = vrodos_replace_poi_img_unity($poi_img_yaml,
                     $poi_it_fid,$poi_it_pos_x,$poi_it_pos_y,$poi_it_pos_z,
                     $poi_it_rot_x, $poi_it_rot_y,$poi_it_rot_z,$poi_it_rot_w,$poi_it_scale_x,
                     $poi_it_scale_y,$poi_it_scale_z,$poi_it_title,
@@ -217,17 +217,17 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
             if ($value['categoryName'] == 'Points of Interest (Video)'){
 
                 $poi_vid_id = $value['assetid'];
-                $asset_type = get_the_terms( $poi_vid_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $poi_vid_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
-                $poi_vid_obj = get_post_meta($poi_vid_id,'wpunity_asset3d_obj',true);
+                $poi_vid_obj = get_post_meta($poi_vid_id,'vrodos_asset3d_obj',true);
 
-                $poi_vid_video = get_post_meta($poi_vid_id,'wpunity_asset3d_video',true);
+                $poi_vid_video = get_post_meta($poi_vid_id,'vrodos_asset3d_video',true);
                 $attachment_video_post = get_post($poi_vid_video);
                 $attachment_file = $attachment_video_post->guid;
                 $attachment_tempname = str_replace('\\', '/', $attachment_file);
                 $attachment_name = pathinfo($attachment_tempname);
                 $poi_vid_yaml = vrodos_getAssetYAML_archaeology('pois_video');
-                $poi_v_fid = wpunity_create_fids($current_fid++);
+                $poi_v_fid = vrodos_create_fids($current_fid++);
                 $poi_v_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $poi_v_pos_y = $value['position'][1];
                 $poi_v_pos_z = $value['position'][2];
@@ -240,13 +240,13 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_v_scale_z = $value['scale'][2];
                 $poi_v_isreward = $value['isreward'];
                 $poi_v_title = get_the_title($poi_vid_id);
-                $poi_v_trans_fid = wpunity_create_fids($current_fid++);
-                $poi_v_obj_fid = wpunity_create_fids($current_fid++);
-                $poi_v_obj_guid = wpunity_create_guids('obj', $poi_vid_obj);
+                $poi_v_trans_fid = vrodos_create_fids($current_fid++);
+                $poi_v_obj_fid = vrodos_create_fids($current_fid++);
+                $poi_v_obj_guid = vrodos_create_guids('obj', $poi_vid_obj);
                 $poi_v_v_name = $attachment_name['filename'];
                 $poi_v_v_url = $attachment_video_post->guid;
 
-                $poi_vid_finalyaml = wpunity_replace_poi_vid_unity($poi_vid_yaml,$poi_v_fid,$poi_v_pos_x,$poi_v_pos_y,
+                $poi_vid_finalyaml = vrodos_replace_poi_vid_unity($poi_vid_yaml,$poi_v_fid,$poi_v_pos_x,$poi_v_pos_y,
                     $poi_v_pos_z,$poi_v_rot_x,$poi_v_rot_y,$poi_v_rot_z,$poi_v_rot_w,$poi_v_scale_x,$poi_v_scale_y,$poi_v_scale_z,$poi_v_title,
                     $poi_v_trans_fid,$poi_v_obj_fid, $poi_v_obj_guid, $poi_v_v_name, $poi_v_v_url, $poi_v_isreward);
 
@@ -254,13 +254,13 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
             }
             if ($value['categoryName'] == 'Door'){
                 $door_id = $value['assetid'];
-                $asset_type = get_the_terms( $door_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $door_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $door_obj = get_post_meta($door_id,'wpunity_asset3d_obj',true);
+                $door_obj = get_post_meta($door_id,'vrodos_asset3d_obj',true);
 
                 $door_yaml = vrodos_getAssetYAML_archaeology('door');
-                $door_fid = wpunity_create_fids($current_fid++);
+                $door_fid = vrodos_create_fids($current_fid++);
                 $door_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $door_pos_y = $value['position'][1];
                 $door_pos_z = $value['position'][2];
@@ -278,11 +278,11 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $door_scene_arrival = rtrim($door_scene_arrival, ")"); // remove also the last parenthesis
 
                 $door_door_arrival = $value['doorName_target'];
-                $door_transform_fid = wpunity_create_fids($current_fid++);
-                $door_obj_fid = wpunity_create_fids($current_fid++);
-                $door_guid = wpunity_create_guids('obj', $door_obj);
+                $door_transform_fid = vrodos_create_fids($current_fid++);
+                $door_obj_fid = vrodos_create_fids($current_fid++);
+                $door_guid = vrodos_create_guids('obj', $door_obj);
 
-                $door_finalyaml = wpunity_replace_door_unity($door_yaml,$door_fid,$door_pos_x,$door_pos_y,$door_pos_z,$door_rot_x,$door_rot_y,
+                $door_finalyaml = vrodos_replace_door_unity($door_yaml,$door_fid,$door_pos_x,$door_pos_y,$door_pos_z,$door_rot_x,$door_rot_y,
                     $door_rot_z,$door_rot_w,$door_scale_x,$door_scale_y,$door_scale_z,$door_title,
                     $door_scene_arrival,$door_door_arrival,$door_transform_fid,$door_obj_fid,$door_guid, $door_isreward);
 
@@ -291,12 +291,12 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
             if ($value['categoryName'] == 'Artifact'){
 
                 $artifact_id = $value['assetid'];
-                $asset_type = get_the_terms( $artifact_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $artifact_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $artifact_obj = get_post_meta($artifact_id,'wpunity_asset3d_obj',true);
+                $artifact_obj = get_post_meta($artifact_id,'vrodos_asset3d_obj',true);
                 $artifact_yaml = vrodos_getAssetYAML_archaeology('artifact');
-                $poi_a_fid = wpunity_create_fids($current_fid++);
+                $poi_a_fid = vrodos_create_fids($current_fid++);
                 $poi_a_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $poi_a_pos_y = $value['position'][1];
                 $poi_a_pos_z = $value['position'][2];
@@ -310,14 +310,14 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_a_isreward = $value['isreward'];
                 
                 $poi_a_title = get_the_title($artifact_id);
-                $poi_a_transform_fid = wpunity_create_fids($current_fid++);
-                $poi_a_obj_fid = wpunity_create_fids($current_fid++);
-                $poi_a_obj_guid = wpunity_create_guids('obj', $artifact_obj);
+                $poi_a_transform_fid = vrodos_create_fids($current_fid++);
+                $poi_a_obj_fid = vrodos_create_fids($current_fid++);
+                $poi_a_obj_guid = vrodos_create_guids('obj', $artifact_obj);
 
                 $content_post = get_post($artifact_id);
                 $poi_a_text =   html_entity_decode(  $content_post->post_content ) ;
 
-                $artifact_finalyaml = wpunity_replace_artifact_unity($artifact_yaml,$poi_a_fid,$poi_a_pos_x,$poi_a_pos_y,$poi_a_pos_z,
+                $artifact_finalyaml = vrodos_replace_artifact_unity($artifact_yaml,$poi_a_fid,$poi_a_pos_x,$poi_a_pos_y,$poi_a_pos_z,
                     $poi_a_rot_x,$poi_a_rot_y,$poi_a_rot_z,$poi_a_rot_w,
                     $poi_a_scale_x,$poi_a_scale_y,$poi_a_scale_z,
                     $poi_a_title,$poi_a_transform_fid,$poi_a_obj_fid,$poi_a_obj_guid, $poi_a_text, $poi_a_isreward );
@@ -327,14 +327,14 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
             if ($value['categoryName'] == 'Decoration (Archaeology)'){
 
                 $decoarch_id = $value['assetid'];
-                $asset_type = get_the_terms( $decoarch_id, 'wpunity_asset3d_cat' );
+                $asset_type = get_the_terms( $decoarch_id, 'vrodos_asset3d_cat' );
                 $asset_type_ID = $asset_type[0]->term_id;
 
-                $decoarch_obj = get_post_meta($decoarch_id,'wpunity_asset3d_obj',true);
+                $decoarch_obj = get_post_meta($decoarch_id,'vrodos_asset3d_obj',true);
 
                 $decorarch_yaml = vrodos_getAssetYAML_archaeology('decoration_arch');
-                $decor_fid = wpunity_create_fids($current_fid++);
-                $decor_obj_guid = wpunity_create_guids('obj', $decoarch_obj);
+                $decor_fid = vrodos_create_fids($current_fid++);
+                $decor_obj_guid = vrodos_create_guids('obj', $decoarch_obj);
                 $decor_pos_x = - $value['position'][0]; // x is in the opposite site in unity
                 $decor_pos_y = $value['position'][1];
                 $decor_pos_z = $value['position'][2];
@@ -347,7 +347,7 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $decor_scale_z = $value['scale'][2];
                 $decor_title = get_the_title($decoarch_id);
 
-                $decoarch_finalyaml = wpunity_replace_decoration_arch_unity($decorarch_yaml,$decor_fid,$decor_obj_guid,$decor_pos_x,$decor_pos_y,
+                $decoarch_finalyaml = vrodos_replace_decoration_arch_unity($decorarch_yaml,$decor_fid,$decor_obj_guid,$decor_pos_x,$decor_pos_y,
                     $decor_pos_z,$decor_rot_x,$decor_rot_y,$decor_rot_z,$decor_rot_w,$decor_scale_x,$decor_scale_y,$decor_scale_z,
                     $decor_title);
                 $allObjectsYAML = $allObjectsYAML . $LF . $decoarch_finalyaml;
@@ -363,7 +363,7 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function wpunity_replace_wonderaround_unity($term_meta_wonder_around, $scene_id){
+function vrodos_replace_wonderaround_unity($term_meta_wonder_around, $scene_id){
 
     $scene_json = get_post($scene_id)->post_content;
 
@@ -409,7 +409,7 @@ function wpunity_replace_wonderaround_unity($term_meta_wonder_around, $scene_id)
     return $file_content_return;
 }
 
-function wpunity_replace_decoration_arch_unity($decorarch_yaml,$decor_fid,$decor_obj_guid,$decor_pos_x,$decor_pos_y,
+function vrodos_replace_decoration_arch_unity($decorarch_yaml,$decor_fid,$decor_obj_guid,$decor_pos_x,$decor_pos_y,
                                                $decor_pos_z,$decor_rot_x,$decor_rot_y,$decor_rot_z,$decor_rot_w,
                                                $decor_scale_x,$decor_scale_y,$decor_scale_z,$decor_title){
 
@@ -430,7 +430,7 @@ function wpunity_replace_decoration_arch_unity($decorarch_yaml,$decor_fid,$decor
     return $file_content_return;
 }
 
-function wpunity_replace_artifact_unity($artifact_yaml, $poi_a_fid, $poi_a_pos_x, $poi_a_pos_y, $poi_a_pos_z, $poi_a_rot_x,
+function vrodos_replace_artifact_unity($artifact_yaml, $poi_a_fid, $poi_a_pos_x, $poi_a_pos_y, $poi_a_pos_z, $poi_a_rot_x,
                                         $poi_a_rot_y,$poi_a_rot_z,$poi_a_rot_w,$poi_a_scale_x,$poi_a_scale_y,
                                         $poi_a_scale_z,$poi_a_title,$poi_a_transform_fid,$poi_a_obj_fid,$poi_a_obj_guid, $poi_a_text,
                                         $poi_a_isreward){
@@ -460,7 +460,7 @@ function wpunity_replace_artifact_unity($artifact_yaml, $poi_a_fid, $poi_a_pos_x
     return $file_content_return;
 }
 
-function wpunity_replace_door_unity($door_yaml,$door_fid,$door_pos_x,$door_pos_y,$door_pos_z,$door_rot_x,$door_rot_y,$door_rot_z,
+function vrodos_replace_door_unity($door_yaml,$door_fid,$door_pos_x,$door_pos_y,$door_pos_z,$door_rot_x,$door_rot_y,$door_rot_z,
                                     $door_rot_w,$door_scale_x,$door_scale_y,$door_scale_z,
                                     $door_title,
                                     $door_scene_arrival,$door_door_arrival,$door_transform_fid,$door_obj_fid,$door_guid, $door_isreward){
@@ -489,7 +489,7 @@ function wpunity_replace_door_unity($door_yaml,$door_fid,$door_pos_x,$door_pos_y
     return $file_content_return;
 }
 
-function wpunity_replace_poi_vid_unity($poi_vid_yaml,$poi_v_fid,$poi_v_pos_x,$poi_v_pos_y,$poi_v_pos_z,$poi_v_rot_x,$poi_v_rot_y,$poi_v_rot_z,
+function vrodos_replace_poi_vid_unity($poi_vid_yaml,$poi_v_fid,$poi_v_pos_x,$poi_v_pos_y,$poi_v_pos_z,$poi_v_rot_x,$poi_v_rot_y,$poi_v_rot_z,
                                        $poi_v_rot_w,$poi_v_scale_x,$poi_v_scale_y,$poi_v_scale_z,$poi_v_title,$poi_v_trans_fid,
                                        $poi_v_obj_fid,$poi_v_obj_guid,$poi_v_v_name, $poi_v_v_url, $poi_v_isreward){
 
@@ -516,7 +516,7 @@ function wpunity_replace_poi_vid_unity($poi_vid_yaml,$poi_v_fid,$poi_v_pos_x,$po
     return $file_content_return;
 }
 
-function wpunity_replace_poi_img_unity($poi_img_yaml,$poi_it_fid,
+function vrodos_replace_poi_img_unity($poi_img_yaml,$poi_it_fid,
                                        $poi_it_pos_x,$poi_it_pos_y,$poi_it_pos_z,$poi_it_rot_x,$poi_it_rot_y,$poi_it_rot_z,$poi_it_rot_w,
                                        $poi_it_scale_x,$poi_it_scale_y,$poi_it_scale_z,
                                        $poi_it_title,$poi_it_sprite_name,
@@ -546,7 +546,7 @@ function wpunity_replace_poi_img_unity($poi_img_yaml,$poi_it_fid,
     return $file_content_return;
 }
 
-function wpunity_replace_site_unity($site_yaml,$site_fid,$site_obj_guid,$site_position_x,$site_position_y,$site_position_z,$site_rotation_x,$site_rotation_y,$site_rotation_z,$site_rotation_w,$site_scale_x,$site_scale_y,$site_scale_z,$site_title){
+function vrodos_replace_site_unity($site_yaml,$site_fid,$site_obj_guid,$site_position_x,$site_position_y,$site_position_z,$site_rotation_x,$site_rotation_y,$site_rotation_z,$site_rotation_w,$site_scale_x,$site_scale_y,$site_scale_z,$site_title){
     $file_content_return = str_replace("___[site_fid]___",$site_fid,$site_yaml);
     $file_content_return = str_replace("___[site_obj_guid]___",$site_obj_guid,$file_content_return);
     $file_content_return = str_replace("___[site_position_x]___",$site_position_x,$file_content_return);
