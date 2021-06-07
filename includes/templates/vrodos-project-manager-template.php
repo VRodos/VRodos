@@ -230,7 +230,7 @@ get_header();
 						<?php wp_nonce_field('post_nonce', 'post_nonce_field'); ?>
                         <input type="hidden" name="submitted" id="submitted" value="true" />
                             <!-- instead of type="submit" -->
-                            <button id="createNewGameBtn"  type="button"
+                            <button id="createNewProjectBtn"  type="button"
                                 class="ButtonFullWidth mdc-button mdc-elevation--z2 mdc-button--raised"
                                     data-mdc-auto-init="MDCRipple"> CREATE</button>
                             
@@ -473,15 +473,15 @@ get_header();
     });
     
 
-    jQuery('#createNewGameBtn').click( function (e) {
+    jQuery('#createNewProjectBtn').click( function (e) {
         
         // Title of game project
-        var title_game_project = document.getElementById('title').value;
+        var title_vrodos_project = document.getElementById('title').value;
 
-        if (title_game_project.length > 2) {
+        if (title_vrodos_project.length > 2) {
             var  game_type_radio_button = document.getElementsByName("gameTypeRadio")[0].value;
-            vrodos_createGameAjax(title_game_project, game_type_radio_button, current_user_id, parameter_Scenepass);
-            jQuery('#createNewGameBtn').hide();
+            vrodos_createGameAjax(title_vrodos_project, game_type_radio_button, current_user_id, parameter_Scenepass);
+            jQuery('#createNewProjectBtn').hide();
             jQuery('#create-game-progress-bar').show();
         }
     });

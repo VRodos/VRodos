@@ -295,7 +295,8 @@ function vrodos_windEnergy_scene_stats($scene_id){
 //==========================================================================================================================================
 
 function vrodos_the_slug_exists($post_name) {
-	global $wpdb;
+	
+    global $wpdb;
 	if($wpdb->get_row("SELECT post_name FROM wp_posts WHERE post_name = '" . $post_name . "'", 'ARRAY_A')) {
 		return true;
 	} else {
@@ -305,7 +306,8 @@ function vrodos_the_slug_exists($post_name) {
 
 
 function vrodos_createJoker_activation() {
-	$userID = get_current_user_id();
+	
+    $userID = get_current_user_id();
 	//$virtualplace_tax = get_term_by('slug', 'virtual_place', 'vrodos_game_cat');
 	//$realplace_tax = get_term_by('slug', 'real_place', 'vrodos_game_cat');
 

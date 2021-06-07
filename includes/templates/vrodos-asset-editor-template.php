@@ -1267,10 +1267,14 @@ if($asset_id != null) {
     let audio_file = document.getElementById( 'audioFile' );
     
     let isEditMode = 0;
-    isEditMode= <?php echo $isEditMode == '' ? 0: 1  ; ?>;
+
+
+    isEditMode= <?php echo $_GET['preview'] === 1 ? 1 : 0; ?>;
+    
+    console.log("isEditMode", isEditMode);
 
     // Reset 3D canvas if not preview
-    if (isEditMode === 1) {
+    if (isEditMode) {
         // clear canvas and divs for fields
 //        vrodos_reset_panels(asset_viewer_3d_kernel, "initial script");
 

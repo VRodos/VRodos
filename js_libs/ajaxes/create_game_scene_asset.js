@@ -23,7 +23,7 @@ function vrodos_createGameAjax(game_project_title, game_project_type_radio,
 
             console.log("Game project has been successfully created");
 
-            jQuery('#createNewGameBtn').show();
+            jQuery('#createNewProjectBtn').show();
             jQuery('#create-game-progress-bar').hide();
 
             // ajax add project to list
@@ -51,8 +51,6 @@ function vrodos_createGameAjax(game_project_title, game_project_type_radio,
 
 
 function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass){
-
-
 
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,

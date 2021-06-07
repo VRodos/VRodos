@@ -852,6 +852,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: none;
     border-radius: 0;
+    height: 25px !important;
 }
 
 .titleLengthSuggest{
