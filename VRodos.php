@@ -7,8 +7,6 @@
  * Author URI: https://vrodos.iti.gr
  * Version: 0.6
  */
-
-
 /*
  * Please change root .htaccess for uploading big 3D model files
  *
