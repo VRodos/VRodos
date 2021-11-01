@@ -18,6 +18,10 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script('vrodos_load119_OutlinePass');
     wp_enqueue_script('vrodos_load119_ShaderPass');
     wp_enqueue_script('vrodos_load119_FBXloader');
+    wp_enqueue_script('vrodos_load119_GLTFLoader');
+    wp_enqueue_script('vrodos_load119_DRACOLoader');
+    wp_enqueue_script('vrodos_load119_DDSLoader');
+    wp_enqueue_script('vrodos_load119_KTXLoader');
     wp_enqueue_script('vrodos_inflate');
     
     // Fixed at 87 (forked of original 87)

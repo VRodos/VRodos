@@ -142,9 +142,6 @@ class VRodos_LoaderMulti {
                                         }
                                     });
 
-
-
-
                                     object = setObjectProperties(object, name, resources3D);
                                     envir.scene.add(object);
                                 },
@@ -166,7 +163,7 @@ class VRodos_LoaderMulti {
 
 
 
-                    } else {
+                    } else if (resources3D[name]['fbx'] !== '') {
 
                         // ------------------ FBX Loading ---------------------------------
 
@@ -174,7 +171,7 @@ class VRodos_LoaderMulti {
                             url: my_ajax_object_fetchasset.ajax_url,
                             type: 'POST',
                             data: {
-                                'action': 'vrodos_fetch_asset_action',
+                                'action': 'vrodos_fetch_fbx_asset_action',
                                 'asset_id': resources3D[name]['assetid']
                             },
                             success: function (res) {
@@ -184,21 +181,11 @@ class VRodos_LoaderMulti {
                                 let textureFilesURLs = resourcesFBX['texturesURLs'];
                                 let fbxURL = resourcesFBX['fbxURL'];
 
-
-
-                                // How to load FBX from these
-                                // console.log("textureFilesURLs",textureFilesURLs);
-                                // console.log("fbxURL", fbxURL);
-
                                 // let baseUrlPath = fbxURL.substring(0, fbxURL.lastIndexOf("/")+1);
-                                //
                                 // let fbxFileName =  fbxURL.replace(/^.*[\\\/]/, '');
-                                //
                                 // console.log(fbxFileName, baseUrlPath);
 
-
                                 let loader = new THREE.FBXLoader(manager);
-
                                 loader.load(fbxURL, function ( object ) {
 
                                     // Animation set
@@ -212,9 +199,7 @@ class VRodos_LoaderMulti {
                                         console.log("Your FBX does not have animation");
                                     }
 
-
                                     object.traverse(function (node) {
-
                                             if (node.material) {
                                                 if (node.material.name) {
                                                     if (node.material.name.includes("Transparent")) {
@@ -237,14 +222,11 @@ class VRodos_LoaderMulti {
                                         });
 
 
-
                                         object = setObjectProperties(object, name, resources3D);
-
 
                                         // -------- Sound --------------
                                         // create the PositionalAudio object (passing in the listener)
                                         let audioOf3DObject = new THREE.PositionalAudio( envir.audiolistener );
-
 
                                         // load a sound and set it as the PositionalAudio object's buffer
 
@@ -267,16 +249,12 @@ class VRodos_LoaderMulti {
                                         envir.scene.add( object );
 
                                     },
-
-
                                     //onFBXProgressLoad
                                     function (xhr) {
                                         var downloadedBytes = name.substring(0, name.length - 11) + " downloaded " +
                                             Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
 
                                         document.getElementById("result_download2").innerHTML = downloadedBytes;
-
-
                                     },
                                     // XHR error
                                     function (xhr) {
@@ -297,6 +275,56 @@ class VRodos_LoaderMulti {
                                 console.log("Ajax Fetch Asset: ERROR: 179" + thrownError);
                             }
                         });
+                    } else if (resources3D[name]['glb'] !== '') {
+
+                        // Instantiate a loader
+                        const loader = new THREE.GLTFLoader();
+
+                        // loader.load(glbFilename,
+                        //     // called when the resource is loaded
+                        //     function ( gltf ) {
+                        //
+                        //         if (gltf.animations.length>0) {
+                        //
+                        //             let glbmixer = new THREE.AnimationMixer(gltf.scene);
+                        //             scope.mixers.push(glbmixer);
+                        //             scope.action = glbmixer.clipAction(gltf.animations[0]);
+                        //
+                        //             // Display button to start animation inside the Asset 3D previewer
+                        //             scope.animationButton.style.display = "inline-block";
+                        //
+                        //         } else {
+                        //
+                        //             // Display button to start animation inside the Asset 3D previewer
+                        //             scope.animationButton.style.display = "none";
+                        //         }
+                        //
+                        //         if (scope.boundingSphereButton) {
+                        //             scope.boundingSphereButton.style.display = "inline-block";
+                        //         }
+                        //
+                        //         // Add to root
+                        //         scope.scene.getChildByName('root').add(gltf.scene);
+                        //         scope.zoomer(scope.scene.getChildByName('root'));
+                        //         scope.kickRendererOnDemand();
+                        //
+                        //         //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";
+                        //
+                        //     },
+                        //     // called while loading is progressing
+                        //     function ( xhr ) {
+                        //
+                        //         scope.previewProgressLabel.innerHTML =
+                        //             Math.round( xhr.loaded / xhr.total * 100 ) + '% loaded';
+                        //
+                        //     },
+                        //     // called when loading has errors
+                        //     function ( error ) {
+                        //
+                        //         console.log( 'An error happened', error );
+                        //
+                        //     }
+                        // );
 
 
 

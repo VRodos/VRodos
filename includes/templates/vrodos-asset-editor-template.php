@@ -1267,11 +1267,16 @@ if($asset_id != null) {
     let audio_file = document.getElementById( 'audioFile' );
     
     let isEditMode = 0;
-
-
-    isEditMode= <?php echo $_GET['preview'] === 1 ? 1 : 0; ?>;
+    let isLoggedIn= <?php echo $isUserloggedIn ? 1: 0; ?>;
+   
+    if (isLoggedIn === 1) {
+        isEditMode = <?php echo $_GET['preview'] === '1' ? 0 : 1; ?>;
+    } else {
+        isEditMode = 0;
+    }
     
-    console.log("isEditMode", isEditMode);
+    
+    console.log("isEditModeA:", isEditMode);
 
     // Reset 3D canvas if not preview
     if (isEditMode) {
@@ -1338,8 +1343,6 @@ if($asset_id != null) {
             let MDCSelect = mdc.select.MDCSelect;
 
             // Category of asset change
-
-            
             
             let categoryDropdown = document.getElementById('category-select');
             let categorySelect = MDCSelect.attachTo(categoryDropdown);
@@ -1409,10 +1412,8 @@ if($asset_id != null) {
 
         // Select artifact, Remove category menu
         setTimeout(function () {
-
             //jQuery("#category-select").click(); // Expand category
             jQuery('li[data-cat-slug="artifact"]').click();
-
             //jQuery('#assetTitle')[0].value = 'a12'; // Set title
             //jQuery("#objRadio-label").click(); // Set fbx type
             //jQuery("#fileUploadInput").click(); // Click browse files
@@ -1426,6 +1427,8 @@ if($asset_id != null) {
 
     } else {
 
+        console.log("isEditMode:" + isEditMode);
+        
         // View mode: Show only the description mentioned in anchor #
         let url = window.location.href;
         let langcurr = url.substring(url.indexOf("#") + 1);

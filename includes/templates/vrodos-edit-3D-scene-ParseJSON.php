@@ -16,9 +16,9 @@ class ParseJSON {
         $objID = '';
         $mtlID = '';
         $fbxID = '';
+        $glbID = '';
         $audioID = '';
-        
-    
+
         $categoryID = '';
         $image1id = '';
         $doorName_source = '';
@@ -213,6 +213,7 @@ class ParseJSON {
                                             '","mtl":"'.$mtl.
                                             '","mtlID":"'.$mtlID.
                                             '","fbxID":"'.$fbxID.
+                                            '","glbID":"'.$glbID.
                                             '","audioID":"'.$audioID.
                                             '","categoryName":"'.$categoryName.
                                             '","categoryID":"'.$categoryID.

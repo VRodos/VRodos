@@ -122,6 +122,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 "mtl": e.target.attributes.getNamedItem("data-mtlPath").value,
                 "mtlID": e.target.attributes.getNamedItem("data-mtlID").value,
                 "fbxID": e.target.attributes.getNamedItem("data-fbxID").value,
+                "glbID": e.target.attributes.getNamedItem("data-glbID").value,
                 "audioID": e.target.attributes.getNamedItem("data-audioID").value,
                 "categoryID": e.target.attributes.getNamedItem("data-categoryID").value,
                 "categoryName": e.target.attributes.getNamedItem("data-categoryName").value,
@@ -207,6 +208,8 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     '" data-objID="'+ f.objID +
                     '" data-fbxPath="'+ f.fbxPath +
                     '" data-fbxID="'+ f.fbxID +
+                    '" data-glbPath="'+ f.glbPath +
+                    '" data-glbID="'+ f.glbID +
                     '" data-mtlPath="'+ f.mtlPath +
                     '" data-mtlID="'+ f.mtlID +
                     '" data-audioID="'+ f.audioID +

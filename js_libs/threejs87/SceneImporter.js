@@ -79,6 +79,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             var mtl = value['fnMtl'];
             var mtlID = value['fnMtlID'];
             var fbxID = value['fbxID'];
+            var glbID = value['glbID'];
             var audioID = value['audioID'];
             var categoryName = value['categoryName'];
             var categoryID = value['categoryID'];
@@ -117,6 +118,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
                 "mtl":mtl,
                 "mtlID":mtlID,
                 "fbxID":fbxID,
+                "glbID":glbID,
                 "audioID":audioID,
                 "categoryName":categoryName,"categoryID":categoryID,
                 "image1id":image1id,"doorName_source":doorName_source,"doorName_target":doorName_target,

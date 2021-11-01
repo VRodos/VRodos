@@ -16,6 +16,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "mtl": mtlFname,
         "mtlID": dataDrag.mtlID,
         "fbxID": dataDrag.fbxID,
+        "glbID": dataDrag.glbID,
         "audioID": dataDrag.audioID,
         "categoryName": dataDrag.categoryName,
         "categoryDescription": dataDrag.categoryDescription,

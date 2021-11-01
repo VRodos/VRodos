@@ -386,8 +386,10 @@ function vrodos_fetch_game_assets_action_callback(){
 		
 		if ($response[$i]['objPath']!='')
 			$response[$i]['path'] = $response[$i]['objPath'];
-		else
+		else if ($response[$i]['fbxPath'])
 			$response[$i]['path'] = $response[$i]['fbxPath'];
+        else if ($response[$i]['glbPath'])
+            $response[$i]['path'] = $response[$i]['glbPath'];
 
 //		// Find kb size: Too expensive
 //		$ch = curl_init($response[$i]['objPath']);
@@ -463,6 +465,9 @@ function vrodos_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 			
 			$fbxID = get_post_meta($asset_id, 'vrodos_asset3d_fbx', true); // FBX ID
 			$fbxPath = $fbxID ? wp_get_attachment_url( $fbxID ) : '';                   // FBX PATH
+            
+            $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true); // GLB ID
+            $glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
 			
 			$audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true); // audio ID
 			$audioPath = $audioID ? wp_get_attachment_url( $audioID ) : '';      // audio PATH

@@ -345,6 +345,7 @@ THREE.SceneExporter.prototype = {
                     '	"categoryIcon" : ' + '"' + o.categoryIcon  + '"' + ',',
                     '	"categoryID" : ' + '"' + o.categoryID  + '"' + ',',
                     '   "fbxID" : ' + '"' + o.fbxID + '"' + ',',
+                    '   "glbID" : ' + '"' + o.glbID + '"' + ',',
                     '   "audioID" : ' + '"' + o.audioID + '"' + ',',
                     '	"image1id" : ' + '"' + o.image1id  + '"' + ',',
                     '   "doorName_source" : ' + '"' + o.doorName_source  + '"' + ',',

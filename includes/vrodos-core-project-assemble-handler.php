@@ -531,8 +531,8 @@ function vrodos_delete_asset3d_frontend_callback(){
     wp_die();
 }
 
-//Fetch Asset with files
-function vrodos_fetch_asset3d_frontend_callback(){
+//Fetch FBX Asset with files
+function vrodos_fetch_fbx_asset3d_frontend_callback(){
     
     $asset_id = $_POST['asset_id'];
     
@@ -554,6 +554,30 @@ function vrodos_fetch_asset3d_frontend_callback(){
     $output->fbxIDs = $fbxID;
     $output->fbxURL = $fbxURL;
     $output->texturesURLs = $texturesURLs;
+    $output->audioID = $audioID;
+    $output->audioURL = $audioURL;
+    
+    print_r(json_encode($output, JSON_UNESCAPED_SLASHES));
+    wp_die();
+}
+
+
+//Fetch GLB Asset
+function vrodos_fetch_glb_asset3d_frontend_callback(){
+    
+    $asset_id = $_POST['asset_id'];
+    
+    $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb');
+    $glbURL= get_the_guid($glbID[0]);
+    
+    $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio');
+    $audioURL= get_the_guid($audioID[0]);
+
+    $output = new StdClass();
+    $output->texturesIDs = [];
+    $output->glbIDs = $glbID;
+    $output->glbURL = $glbURL;
+    $output->texturesURLs = [];
     $output->audioID = $audioID;
     $output->audioURL = $audioURL;
     
