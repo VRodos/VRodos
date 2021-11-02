@@ -12,9 +12,6 @@ function raycasterSetter(event){
     mouse.x =   ( (event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft()) / envir.container_3D_all.clientWidth ) * 2 - 1;
     mouse.y = - ( (event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop()) / envir.container_3D_all.clientHeight ) * 2 + 1;
 
-
-
-
     // Main Raycast object
     let raycasterPick = new THREE.Raycaster();
 
@@ -35,6 +32,8 @@ function raycasterSetter(event){
  * @returns {*[]}
  */
 function dragDropVerticalRayCasting (event){
+
+    console.log("Raycaster");
 
     // Init the raycaster
     let raycasterPick = raycasterSetter(event);
@@ -135,12 +134,15 @@ function onMouseSelect( event ) {
     let raycasterPick = raycasterSetter(event);
 
     // All 3D meshes that can be clicked
-    let activMesh = getActiveMeshes();
+    let activMeshes = getActiveMeshes();
+
+    console.log("activMeshes", activMeshes);
+
     //.concat([envir.scene.getObjectByName("Camera3Dmodel")]); //, , envir.avatarControls //envir.scene.getObjectByName("Camera3Dmodel"),
    //transform_controls.getObjectByName('trs_modeChanger')
 
     // Find the intersections (it can be more than one)
-    var intersects = raycasterPick.intersectObjects( activMesh , true );
+    var intersects = raycasterPick.intersectObjects( activMeshes , true );
 
     if (intersects.length === 0)
         return;
@@ -1029,7 +1031,11 @@ function getActiveMeshes(){
     // ToDo: Is it possible to avoid traversing scene object in each drag event?
     envir.scene.traverse( function(child) {
 
+        // console.log(child.name, child.hasOwnProperty('isDigiArt3DMesh'));
+        console.log("child", child.name + " " + child.isDigiArt3DMesh);
+
         if (child.hasOwnProperty('isDigiArt3DMesh')) {
+            // console.log(child.name, "pushhhhhhhhhhhhhhhhhhh");
             activeMeshes.push(child);
         }
     });

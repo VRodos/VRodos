@@ -205,9 +205,7 @@ function loadButtonActions() {
     document.getElementById('vr_editor_main_div').ondrop =
         function (ev) {
 
-
             let dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
-
 
             let categoryName = dataDrag.categoryName;
             let nameModel = dataDrag.title;
@@ -221,6 +219,7 @@ function loadButtonActions() {
                 dataDrag.objID = dataDrag.mtlID = dataDrag.assetid = dataDrag.categoryIcon = '';
 
                 dataDrag.fbxID = '';
+                dataDrag.glbID = '';
                 dataDrag.audioID = '';
 
                 dataDrag.categoryID = dataDrag.diffImages = dataDrag.diffImageIDs = dataDrag.image1id = dataDrag.doorName_source = '';

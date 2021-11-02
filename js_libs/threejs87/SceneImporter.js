@@ -3,6 +3,8 @@
 function parseJSON_javascript(scene_json, UPLOAD_DIR){
 
 
+    console.log("scene_json", scene_json);
+
     if (scene_json.length==0)
         return [];
 
@@ -58,6 +60,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
                 "mtl":'',
                 "mtlID":'',
                 "fbxID":'',
+                "glbID":'',
                 "audioID":'',
                 "categoryName":'',"categoryID":'',
                 "image1id":'',"doorName_source":'',"doorName_target":'',
@@ -71,6 +74,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
         } else {
             var path = UPLOAD_DIR + value['fnPath'];
 
+            console.log("value", value);
 
             var assetid = value['assetid'];
             var assetname = value['assetname'];

@@ -660,9 +660,13 @@ class vrodos_3d_editor_environmentals {
 
     setHierarchyViewer(){
 
+
         jQuery('#hierarchy-viewer').empty();
 
         this.scene.traverse(function(obj) {
+
+
+
             if(obj.isDigiArt3DModel || obj.name === "avatarYawObject") {
 
                 // Make the html for the delete button Avatar should not be deleted
@@ -671,6 +675,7 @@ class vrodos_3d_editor_environmentals {
 
                 // Normal assets (Non avatar, nor Sun)
                 if (obj.name != 'avatarYawObject' && obj.categoryName!='lightSun') {
+
                     var deleteButtonHTML =
                         '<a href="javascript:void(0);" class="mdc-list-item" aria-label="Delete asset"' +
                         ' title="Delete asset object" onclick="' +
@@ -682,7 +687,8 @@ class vrodos_3d_editor_environmentals {
 
                     // Split the object name into 2 parts: The first part is the asset name and the second the date inserted in the scene
                     var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11);
-                    var game_object_nameB_dateCreated = this.unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+
+                    var game_object_nameB_dateCreated = envir.unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
 
                 } else if (obj.categoryName ==='lightSun'){
@@ -698,7 +704,10 @@ class vrodos_3d_editor_environmentals {
                         '</a>';
 
                     var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11);
-                    var game_object_nameB_dateCreated = this.unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+
+
+
+                    var game_object_nameB_dateCreated = envir.unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
                     // Add lightTargetSpot
                     // Add as a list item
@@ -731,6 +740,7 @@ class vrodos_3d_editor_environmentals {
                 }
 
 
+                console.log("Add to hierachy");
 
                 // Add as a list item
                 jQuery('#hierarchy-viewer').append(

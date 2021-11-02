@@ -887,6 +887,7 @@ add_action('wp_ajax_vrodos_delete_asset_action', 'vrodos_delete_asset3d_frontend
 
 // AJAX for fetch asset
 add_action('wp_ajax_vrodos_fetch_fbx_asset_action', 'vrodos_fetch_fbx_asset3d_frontend_callback');
+add_action('wp_ajax_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_asset3d_frontend_callback');
 
 add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_backend_callback');
 

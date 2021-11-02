@@ -30,11 +30,9 @@ function vrodos_fetchSceneAssetsAjax(isAdmin, gameProjectSlug, urlforAssetEdit, 
  */
 function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
-
-
-    var filemanager = jQuery('#assetBrowserToolbar'),
+    var filemanager = jQuery('#assetBrowserToolbar');
         // breadcrumbs = jQuery('.breadcrumbs'),
-        fileList = filemanager.find('.data');
+    var fileList = filemanager.find('.data');
         // closeButton = jQuery('#bt_close_file_toolbar');
 
 
@@ -42,7 +40,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     // Create drag image BEFORE event is fired - THEN call it inside the event
     function createDragImage() {
         var img = jQuery('<img>');
-        img.attr('src',  pluginPath+ '../images/ic_asset.png');
+        img.attr('src',  pluginPath + '/images/ic_asset.png');
         img.css({
             "top": 0,
             "left": 0,
@@ -57,6 +55,8 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         return img[0];
     }
     var dragImg = createDragImage();
+
+
 
     render(responseData, gameProjectSlug, urlforAssetEdit );
 
@@ -102,16 +102,24 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
     fileList.on({
         click: function(e) {
-            //alert("Drag n drop zip files onto 3D space");
+            //alert("Drag n drop models onto 3D space");
+
+
 
             e.preventDefault();
         },
 
         dragstart: function(e) {
+            // Problems with Chrome. Firefox ok.
 
-            dragImg.src = e.target.attributes.getNamedItem("data-sshot-url").value;
+            let screenshotImage = e.target.attributes.getNamedItem("data-sshot-url");
+
+
+
+            dragImg.src = screenshotImage ? screenshotImage.value : "/wp-content/plugins/vrodos/images/ic_asset.png";
 
             e.originalEvent.dataTransfer.setDragImage(dragImg, 32, 32);
+
 
             var dragData = {
                 "title": e.target.attributes.getNamedItem("data-assetslug").value + "_" + Math.floor(Date.now() / 1000),
@@ -199,6 +207,8 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                             // '<span class="megabytesAsset mdc-typography--caption mdc-theme--text-secondary-on-light">'+ fileSize + '</span>'+
                       '</span>';
 
+
+
                 var file = jQuery('<li draggable="true" id="asset-'+ f.assetid + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
                     ' title="Drag the card into the plane, (Size: '+ fileSize + ')"' +
                     ' data-assetslug="'+ f.assetSlug +
@@ -260,7 +270,6 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     '<div class="progressSliderSubLine progressDecrease"></div>\n' +
                     '</div>' +
                     '</li>' );
-
 
 
                 file.appendTo(fileList);

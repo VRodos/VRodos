@@ -164,6 +164,10 @@ class ParseJSON {
                 $objID = $value->fnObjID;
                 $mtl = $value->fnMtl;
                 $mtlID = $value->fnMtlID;
+    
+                $fbxID = $value->fbxID;
+                $glbID = $value->glbID;
+                
                 $categoryName = $value->categoryName;
                 $categoryID = $value->categoryID;
                 $image1id = $value->image1id;

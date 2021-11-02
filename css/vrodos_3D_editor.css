@@ -879,6 +879,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     position: absolute;
     top:50px;
     height: 25em;
+    background: white;
 }
 
 #analyticsIframeContainer{

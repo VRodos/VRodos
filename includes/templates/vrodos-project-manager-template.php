@@ -210,7 +210,7 @@ get_header();
                                     </div>
                                 </div>
                                 <label id="gameTypeArchRadio-label" for="gameTypeArchRadio">
-                                    <i class="material-icons"></i>Archaeology</label>
+                                    <i class="material-icons"></i>Culture</label>
                             </li>
                             <?php }?>
 
@@ -221,7 +221,7 @@ get_header();
                             <span id="game-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">A Wind Energy park simulation with many areas and parameters</span>
                             <?php } else { ?>
                         <span id="game-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">
-                            Design a virtual tour of your own archaeological place
+                            Design a virtual space where people can meet and co-create
                             <?php } ?>
                             
 

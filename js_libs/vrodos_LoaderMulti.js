@@ -6,7 +6,9 @@
 
 class VRodos_LoaderMulti {
 
-    constructor(){ };
+    constructor(who){
+
+    };
 
     load(manager, resources3D, pluginPath) {
 
@@ -144,6 +146,9 @@ class VRodos_LoaderMulti {
 
                                     object = setObjectProperties(object, name, resources3D);
                                     envir.scene.add(object);
+
+                                    jQuery("#progressWrapper").get(0).style.visibility= "hidden";
+
                                 },
 
                                 //onObjProgressLoad
@@ -163,7 +168,8 @@ class VRodos_LoaderMulti {
 
 
 
-                    } else if (resources3D[name]['fbx'] !== '') {
+                    } else if (resources3D[name]['fbxID'] !== "" && resources3D[name]['fbxID'] !== undefined) {
+
 
                         // ------------------ FBX Loading ---------------------------------
 
@@ -177,7 +183,6 @@ class VRodos_LoaderMulti {
                             success: function (res) {
 
                                 let resourcesFBX = JSON.parse(res);
-
                                 let textureFilesURLs = resourcesFBX['texturesURLs'];
                                 let fbxURL = resourcesFBX['fbxURL'];
 
@@ -186,7 +191,9 @@ class VRodos_LoaderMulti {
                                 // console.log(fbxFileName, baseUrlPath);
 
                                 let loader = new THREE.FBXLoader(manager);
-                                loader.load(fbxURL, function ( object ) {
+                                loader.load(fbxURL,
+
+                                    function ( object ) {
 
                                     // Animation set
                                     object.mixer = new THREE.AnimationMixer( object );
@@ -221,7 +228,6 @@ class VRodos_LoaderMulti {
                                             }
                                         });
 
-
                                         object = setObjectProperties(object, name, resources3D);
 
                                         // -------- Sound --------------
@@ -247,6 +253,8 @@ class VRodos_LoaderMulti {
                                         //------------------------------
 
                                         envir.scene.add( object );
+                                        jQuery("#progressWrapper").get(0).style.visibility= "hidden";
+
 
                                     },
                                     //onFBXProgressLoad
@@ -270,63 +278,140 @@ class VRodos_LoaderMulti {
                             // Ajax error
                             error: function (xhr, ajaxOptions, thrownError) {
 
-                                alert("Could not fetch asset. Probably deleted ?");
+                                alert("Could not fetch FBX asset. Probably deleted ?");
 
-                                console.log("Ajax Fetch Asset: ERROR: 179" + thrownError);
+                                console.log("Ajax Fetch FBX Asset: ERROR: 179" + thrownError);
                             }
                         });
-                    } else if (resources3D[name]['glb'] !== '') {
+                    } else if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
 
-                        // Instantiate a loader
-                        const loader = new THREE.GLTFLoader();
+                        jQuery.ajax({
+                            url: my_ajax_object_fetchasset.ajax_url,
+                            type: 'POST',
+                            data: {
+                                'action': 'vrodos_fetch_glb_asset_action',
+                                'asset_id': resources3D[name]['assetid']
+                            },
+                            success: function (res) {
 
-                        // loader.load(glbFilename,
-                        //     // called when the resource is loaded
-                        //     function ( gltf ) {
-                        //
-                        //         if (gltf.animations.length>0) {
-                        //
-                        //             let glbmixer = new THREE.AnimationMixer(gltf.scene);
-                        //             scope.mixers.push(glbmixer);
-                        //             scope.action = glbmixer.clipAction(gltf.animations[0]);
-                        //
-                        //             // Display button to start animation inside the Asset 3D previewer
-                        //             scope.animationButton.style.display = "inline-block";
-                        //
-                        //         } else {
-                        //
-                        //             // Display button to start animation inside the Asset 3D previewer
-                        //             scope.animationButton.style.display = "none";
-                        //         }
-                        //
-                        //         if (scope.boundingSphereButton) {
-                        //             scope.boundingSphereButton.style.display = "inline-block";
-                        //         }
-                        //
-                        //         // Add to root
-                        //         scope.scene.getChildByName('root').add(gltf.scene);
-                        //         scope.zoomer(scope.scene.getChildByName('root'));
-                        //         scope.kickRendererOnDemand();
-                        //
-                        //         //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";
-                        //
-                        //     },
-                        //     // called while loading is progressing
-                        //     function ( xhr ) {
-                        //
-                        //         scope.previewProgressLabel.innerHTML =
-                        //             Math.round( xhr.loaded / xhr.total * 100 ) + '% loaded';
-                        //
-                        //     },
-                        //     // called when loading has errors
-                        //     function ( error ) {
-                        //
-                        //         console.log( 'An error happened', error );
-                        //
-                        //     }
-                        // );
+                                let resourcesGLB = JSON.parse(res);
+
+                                let glbURL = resourcesGLB['glbURL'];
+
+                                // Instantiate a loader
+                                const loader = new THREE.GLTFLoader(manager);
+
+                                loader.load(glbURL,
+
+                                    // called when the resource is loaded
+                                    function (object) {
 
 
+
+                                        if (object.animations.length > 0) {
+
+                                            // Animation set
+                                            object.mixer = new THREE.AnimationMixer(object.scene);
+                                            envir.animationMixers.push(object.mixer);
+
+                                            let action = object.mixer.clipAction(object.animations[0]);
+                                            action.play();
+
+                                        }
+
+
+
+                                        // object.scene.children.traverse(function (node) {
+                                        //     if (node.material) {
+                                        //         if (node.material.name) {
+                                        //             if (node.material.name.includes("Transparent")) {
+                                        //                 node.material.transparent = true;
+                                        //                 // to make transparency behind transparency to work
+                                        //                 node.material.alphaTest = 0.5;
+                                        //             }
+                                        //         }
+                                        //     }
+                                        //
+                                        //     if (node instanceof THREE.Mesh) {
+                                        //         node.isDigiArt3DMesh = true;
+                                        //         node.castShadow = true;
+                                        //         node.receiveShadow = true;
+                                        //         if (node.name.includes("renderOrder")) {
+                                        //             let iR = node.name.indexOf("renderOrder");
+                                        //             node.renderOrder = parseInt(node.name.substring(iR + 12, iR + 15));
+                                        //         }
+                                        //     }
+                                        // });
+
+
+
+
+                                        object = setObjectProperties(object.scene, name, resources3D);
+                                        object.isDigiArt3DMesh = true;
+                                        // -------- Sound --------------
+                                        // // create the PositionalAudio object (passing in the listener)
+                                        // let audioOf3DObject = new THREE.PositionalAudio(envir.audiolistener);
+                                        //
+                                        // // load a sound and set it as the PositionalAudio object's buffer
+                                        //
+                                        // //if(resourcesFBX['audioURL']){
+                                        //
+                                        // const audioLoader = new THREE.AudioLoader();
+                                        // audioLoader.load(resourcesGLB['audioURL'], function (buffer) {
+                                        //     audioOf3DObject.setBuffer(buffer);
+                                        //     audioOf3DObject.setRefDistance(2000);
+                                        //     audioOf3DObject.setDirectionalCone(330, 230, 0.01);
+                                        //     audioOf3DObject.setLoop(true);
+                                        //     audioOf3DObject.play();
+                                        // });
+                                        //
+                                        // object.add(audioOf3DObject);
+                                        // //}
+
+                                        //------------------------------
+
+
+                                        envir.scene.add(object);
+
+                                        jQuery("#progressWrapper").get(0).style.visibility= "hidden";
+
+
+                                    },
+                                    // called while loading is progressing
+                                    function (xhr) {
+
+                                        var downloadedBytes = name.substring(0, name.length - 11) + " downloaded " +
+                                            Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
+
+                                        document.getElementById("result_download2").innerHTML = downloadedBytes;
+                                    },
+                                    // called when loading has errors
+                                    function (error) {
+
+
+                                        console.log('An GLB loading error happened. Error 1590', error);
+
+                                    }
+                                );
+                            }
+                            ,
+                            // Ajax error
+                            error: function (xhr, ajaxOptions, thrownError) {
+
+                                alert("Could not fetch GLB asset. Probably deleted ?");
+
+                                console.log("Ajax Fetch Asset: ERROR: 189" + thrownError);
+                            }
+                        });
+
+                    } else {
+
+                        alert("Unsupported 3D model format. Error 118.");
+
+                        console.log("fbxID", resources3D[name]['fbxID']);
+                        console.log("glbID", resources3D[name]['glbID']);
+
+                        console.log("Unsupported 3D model format: ERROR: 118");
 
                     }
                 }
@@ -583,8 +668,9 @@ class VRodos_LoaderMulti {
     }
 }
 
-
+// Set loaded Object or Scene (for GLBs) properties
 function setObjectProperties(object, name, resources3D) {
+
     object.isDigiArt3DModel = true;
     object.isLight = resources3D[name]['isLight'];
     object.name = name;
@@ -600,7 +686,8 @@ function setObjectProperties(object, name, resources3D) {
     object.fnMtl = resources3D[name]['mtl'];
     object.fnMtlID = resources3D[name]['mtlID'];
 
-    object.fnFbxID = resources3D[name]['fbxID'];
+    object.fbxID = resources3D[name]['fbxID'];
+    object.glbID = resources3D[name]['glbID'];
 
     object.audioID = resources3D[name]['audioID'];
 
@@ -639,6 +726,7 @@ function setObjectProperties(object, name, resources3D) {
     object.scale.set( resources3D[name]['trs']['scale'],
         resources3D[name]['trs']['scale'],
         resources3D[name]['trs']['scale']);
+
 
     return object;
 }

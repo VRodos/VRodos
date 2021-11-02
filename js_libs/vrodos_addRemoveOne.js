@@ -7,6 +7,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "scale": 1
     };
 
+
+    console.log("dataDrag.glbID", dataDrag.glbID);
+
     resources3D[nameModel] = {
         "path": path,
         "assetid": dataDrag.assetid,
@@ -136,11 +139,8 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         envir.addInHierarchyViewer(lightTargetSpot);
 
-
         // Auto-save
         triggerAutoSave();
-
-
 
     } else if (categoryName==='lightLamp') {
 
@@ -316,6 +316,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         // When all are finished loading
         manager.onLoad = function () {
 
+
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
             var insertedObject = envir.scene.getObjectByName(nameModel);
@@ -353,7 +354,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             // Dimensions
             var dims = findDimensions(transform_controls.object);
 
-
             var sizeT = Math.max(...dims);
             transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
@@ -361,10 +361,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
 
             if (categoryName === "Producer") {
-
-                //var plane = makeProducerPlane();
-
-                //insertedObject.add(plane);
 
                 var clonos = [];
 
@@ -395,16 +391,17 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
                 insertedObject.position.set(0, 100, 0);
             }
 
+
+
             // Add in scene
             envir.addInHierarchyViewer(insertedObject);
 
-
-
             // Auto-save
             triggerAutoSave();
-
-
         };
+
+
+
 
         var extraResource = {};
         extraResource[nameModel] = resources3D[nameModel];

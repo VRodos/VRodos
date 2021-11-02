@@ -365,7 +365,7 @@ THREE.SceneExporter.prototype = {
                     //'	"visible"  : ' + o.visible + ( o.children.length ? ',' : '' )
                 ];
                 //===============================================
-                //console.log(output);
+
             } else if ( o.categoryName==="lightSun" ){
 
                 var quatR_light = new THREE.Quaternion();

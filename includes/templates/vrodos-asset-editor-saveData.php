@@ -172,68 +172,64 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
             // 6. Add id of obj as post meta on asset
             update_post_meta($asset_newID, 'vrodos_asset3d_obj', $objFile_id);
         }
-    }
+    } else if ($_POST['fbxFileInput']) {
+
+        // Fbx as text
+        $fbx_content = stripslashes($_POST['fbxFileInput']);
     
+        // Fbx as binary
+        $nFiles = count($_FILES['multipleFilesInput']['name']);
     
-    // Fbx as text
-    $fbx_content = stripslashes($_POST['fbxFileInput']);
+        $index_file_fbx = -1;
     
-    // Fbx as binary
-    $nFiles = count($_FILES['multipleFilesInput']['name']);
-    
-    $index_file_fbx = -1;
-    $index_file_glb = -1;
-    
-    for ( $i = 0 ; $i < $nFiles; $i ++){
-       if ( strpos($_FILES['multipleFilesInput']['name'][$i],'.fbx')>0 ){
-           $index_file_fbx = $i;
+        for ($i = 0; $i < $nFiles; $i++) {
+            if (strpos($_FILES['multipleFilesInput']['name'][$i], '.fbx') > 0) {
+                $index_file_fbx = $i;
+            }
         }
-    
-        if ( strpos($_FILES['multipleFilesInput']['name'][$i],'.glb')>0 ){
-            $index_file_glb = $i;
-        }
-    }
-    
-    
-    if (substr($fbx_content, 0, 18) === "Kaydara FBX Binary") {
-    
-        // Upload FBX file as BINARY
-        if ($index_file_fbx!=-1) {
-            // 1. Upload FBX file as BINARY
-            $fbxFile_id = vrodos_upload_AssetText(null, 'fbx' . $assetTitleForm, $asset_newID,
-                $_FILES, $index_file_fbx);
+
+        if (substr($fbx_content, 0, 18) === "Kaydara FBX Binary") {
+        
+            // Upload FBX file as BINARY
+            if ($index_file_fbx != -1) {
+                // 1. Upload FBX file as BINARY
+                $fbxFile_id = vrodos_upload_AssetText(null, 'fbx' . $assetTitleForm, $asset_newID,
+                    $_FILES, $index_file_fbx);
+            
+                // 2. Set value of attachment IDs at custom fields
+                update_post_meta($asset_newID, 'vrodos_asset3d_fbx', $fbxFile_id);
+            }
+        
+        } else {
+        
+            // Upload FBX file as TEXT
+            $fbxFile_id = vrodos_upload_AssetText($fbx_content, 'fbx' . $assetTitleForm, $asset_newID,
+                null, null);
         
             // 2. Set value of attachment IDs at custom fields
             update_post_meta($asset_newID, 'vrodos_asset3d_fbx', $fbxFile_id);
+        
         }
+    } else if ($_POST['pdbFileInput']){
         
-    } else {
-    
-        // Upload FBX file as TEXT
-        $fbxFile_id = vrodos_upload_AssetText($fbx_content, 'fbx'.$assetTitleForm, $asset_newID,
-            null, null);
-    
-        // 2. Set value of attachment IDs at custom fields
-        update_post_meta($asset_newID, 'vrodos_asset3d_fbx', $fbxFile_id);
-        
-    }
-    
-    // PDB upload and add id of uploaded file to postmeta  vrodos_asset3d_pdb of asset
-    if ($_POST['pdbFileInput']!=null){
-        if (strlen($_POST['pdbFileInput'])>0) {
-            $pdbFile_id = vrodos_upload_AssetText($_POST['pdbFileInput'], 'pdb' . $assetTitleForm, $asset_newID, null, null);
+        if (strlen($_POST['pdbFileInput']) > 0) {
+            $pdbFile_id = vrodos_upload_AssetText($_POST['pdbFileInput'], 'pdb' . $assetTitleForm,
+                                                                    $asset_newID, null, null);
+            
             update_post_meta($asset_newID, 'vrodos_asset3d_pdb', $pdbFile_id);
         }
-    }
+        
+    } else if ($_POST['glbFileInput']) {
     
-    
-    // GLB upload and add id of uploaded file to postmeta  vrodos_asset3d_glb of asset
-    if ($_POST['glbFileInput']!=null){
-        if (strlen($_POST['glbFileInput'])>0) {
+        // GLB upload and add id of uploaded file to postmeta  vrodos_asset3d_glb of asset
+        
+        if (strlen($_POST['glbFileInput']) > 0) {
             $glbFile_id = vrodos_upload_AssetText(null, 'glb' . $assetTitleForm, $asset_newID,
-                $_FILES, $index_file_glb); // $_POST['glbFileInput']
+                $_FILES, 0);
+            
             update_post_meta($asset_newID, 'vrodos_asset3d_glb', $glbFile_id);
         }
+        
     }
 }
 

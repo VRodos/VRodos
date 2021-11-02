@@ -386,9 +386,9 @@ function vrodos_fetch_game_assets_action_callback(){
 		
 		if ($response[$i]['objPath']!='')
 			$response[$i]['path'] = $response[$i]['objPath'];
-		else if ($response[$i]['fbxPath'])
+		else if ($response[$i]['fbxPath']!='')
 			$response[$i]['path'] = $response[$i]['fbxPath'];
-        else if ($response[$i]['glbPath'])
+        else if ($response[$i]['glbPath']!='')
             $response[$i]['path'] = $response[$i]['glbPath'];
 
 //		// Find kb size: Too expensive
@@ -506,6 +506,8 @@ function vrodos_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 				'objPath'=>$objPath,
 				'fbxID'=>$fbxID,
 				'fbxPath'=>$fbxPath,
+                'glbID'=>$glbID,
+                'glbPath'=>$glbPath,
 				'audioID'=>$audioID,
 				'audioPath'=>$audioPath,
 				'mtlID'=>$mtlID,

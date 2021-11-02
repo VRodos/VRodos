@@ -1008,9 +1008,11 @@ get_header(); ?>
 
             // In the case the last asset is missing then put controls on the camera
             if (typeof objItem === "undefined"){
+                
                 name = 'avatarYawObject';
                 trs_tmp = resources3D[name]['trs'];
                 objItem = envir.scene.getObjectByName(name);
+                
             } else {
                 
                 transform_controls.attach(objItem);
@@ -1065,12 +1067,14 @@ get_header(); ?>
 
             // Set Target light for Spots
             for (let n in resources3D) {
+                
                 (function (name) {
                     if (resources3D[name]['categoryName'] === 'lightSpot') {
                         let lightSpot = envir.scene.getObjectByName(name);
                         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
                     }
                 })(n);
+                
             }
 
         }; // End of manager
@@ -1085,8 +1089,10 @@ get_header(); ?>
     ?>
 
     <script>
-        loaderMulti = new VRodos_LoaderMulti();
+        loaderMulti = new VRodos_LoaderMulti("1");
 
+        
+        
         loaderMulti.load(manager, resources3D, pluginPath);
         //vrodos_fetchAndLoadMultipleAssetsAjax(manager, resources3D, pluginPath);
 
@@ -1110,7 +1116,7 @@ get_header(); ?>
 
             jQuery("#removeAssetBtn").hide();
 
-            loaderMulti = new VRodos_LoaderMulti();
+            loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
         }
 
@@ -1121,9 +1127,8 @@ get_header(); ?>
         function animate()
         {
             if(isPaused) {
-                
                 return;
-            } else  {}
+            }
 
             id_animation_frame = requestAnimationFrame( animate );
 
