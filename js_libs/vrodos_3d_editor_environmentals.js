@@ -740,7 +740,6 @@ class vrodos_3d_editor_environmentals {
                 }
 
 
-                console.log("Add to hierachy");
 
                 // Add as a list item
                 jQuery('#hierarchy-viewer').append(

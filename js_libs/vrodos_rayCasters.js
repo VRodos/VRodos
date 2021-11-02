@@ -136,8 +136,6 @@ function onMouseSelect( event ) {
     // All 3D meshes that can be clicked
     let activMeshes = getActiveMeshes();
 
-    console.log("activMeshes", activMeshes);
-
     //.concat([envir.scene.getObjectByName("Camera3Dmodel")]); //, , envir.avatarControls //envir.scene.getObjectByName("Camera3Dmodel"),
    //transform_controls.getObjectByName('trs_modeChanger')
 
@@ -1030,12 +1028,7 @@ function getActiveMeshes(){
 
     // ToDo: Is it possible to avoid traversing scene object in each drag event?
     envir.scene.traverse( function(child) {
-
-        // console.log(child.name, child.hasOwnProperty('isDigiArt3DMesh'));
-        console.log("child", child.name + " " + child.isDigiArt3DMesh);
-
         if (child.hasOwnProperty('isDigiArt3DMesh')) {
-            // console.log(child.name, "pushhhhhhhhhhhhhhhhhhh");
             activeMeshes.push(child);
         }
     });
