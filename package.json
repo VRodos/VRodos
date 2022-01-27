@@ -6,7 +6,7 @@
   "dependencies": {
     "material-components-web": "^0.22.0",
     "react-three-fiber": "^6.0.13",
-    "three": "^0.128.0"
+    "three": "^0.137.0"
   },
   "devDependencies": {
     "@wordpress/scripts": "14.1.1"
