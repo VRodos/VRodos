@@ -159,7 +159,7 @@ function onMouseSelect( event ) {
 
             transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));
 
-            envir.renderer.setClearColor( 0xeeeeee, 1);
+            //envir.renderer.setClearColor( 0xeeeeee, 1);
 
             // Steve can not be deleted
             transform_controls.size = 1;
@@ -212,7 +212,7 @@ function selectorMajor(event, objectSel){
 
         transform_controls.attach( objectSel );
 
-        envir.renderer.setClearColor( 0xeeeeee  );
+        // envir.renderer.setClearColor( 0xeeeeee  );
 
         // X for deleting object is visible (only Steve can not be deleted)
         transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;

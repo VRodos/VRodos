@@ -165,7 +165,7 @@ function vrodos_combineGameStrategies($project_id){
 
 ////Get Settings Values
 function vrodos_getUnity_local_or_remote(){
-	$generaloptions = get_option( 'general_settings' );
+	$generaloptions = get_option( 'vrodos_general_settings' );
 
 	if($generaloptions["vrodos_unity_local_or_remote"]) {
 		return $generaloptions["vrodos_unity_local_or_remote"];
@@ -175,7 +175,7 @@ function vrodos_getUnity_local_or_remote(){
 }
 
 function vrodos_getUnity_exe_folder(){
-	$generaloptions = get_option( 'general_settings' );
+	$generaloptions = get_option( 'vrodos_general_settings' );
 	if($generaloptions["vrodos_unity_exe_folder"]) {
 		return $generaloptions["vrodos_unity_exe_folder"];
 	}else{
@@ -184,7 +184,7 @@ function vrodos_getUnity_exe_folder(){
 }
 
 function vrodos_getRemote_api_folder(){
-	$generaloptions = get_option( 'general_settings' );
+	$generaloptions = get_option( 'vrodos_general_settings' );
 	if($generaloptions["vrodos_remote_api_folder"]) {
 		return $generaloptions["vrodos_remote_api_folder"];
 	}else{
@@ -193,7 +193,7 @@ function vrodos_getRemote_api_folder(){
 }
 
 function vrodos_getRemote_server_path(){
-	$generaloptions = get_option( 'general_settings' );
+	$generaloptions = get_option( 'vrodos_general_settings' );
 	if($generaloptions["vrodos_server_path"]) {
 		return $generaloptions["vrodos_server_path"];
 	}else{
@@ -202,7 +202,7 @@ function vrodos_getRemote_server_path(){
 }
 
 function vrodos_get_ftpCredentials(){
-	$generaloptions = get_option( 'general_settings' );
+	$generaloptions = get_option( 'vrodos_general_settings' );
 
 	$ftp_credentials = array('address'  => $generaloptions["vrodos_ftp_address"],
                              'username' => $generaloptions["vrodos_ftp_username"],

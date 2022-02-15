@@ -44,6 +44,7 @@ class vrodosTemplate {
             '/templates/vrodos-project-manager-template.php'     => 'Project Manager Template',
             '/templates/vrodos-assets-list-template.php'     => 'Assets List Template',
             '/templates/vrodos-edit-3D-scene-template.php'     => 'Scene 3D Editor Template',
+            '/templates/vrodos-view-3D-scene-template.php'     => 'Scene 3D Viewer Template',
             '/templates/vrodos-asset-editor-template.php'     => 'Asset Editor Template',
             '/templates/vrodos-edit-2D-scene-template.php'     => 'Scene 2D Editor Template ',
             '/templates/vrodos-edit-sceneExam-template.php'     => 'Scene Exam Editor Template',

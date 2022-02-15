@@ -7,7 +7,7 @@ class vrodos_settingsPage {
      * here as well as our tabs array which is populated
      * when registering settings
      */
-    private $general_settings_key = 'general_settings';
+    private $general_settings_key = 'vrodos_general_settings';
     private $options_key = 'vrodos_options';
     private $settings_tabs = array();
 

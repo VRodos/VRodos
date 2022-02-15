@@ -907,3 +907,85 @@ add_action( 'wp_ajax_vrodos_assepile_action', 'vrodos_assepile_action_callback' 
 
 
 
+//-------- Remove Gutenberg for Widgets ---------
+
+// deactivate new block editor
+function disable_widgets_block_editor() {
+	remove_theme_support( 'widgets-block-editor' );
+}
+add_action( 'after_setup_theme', 'disable_widgets_block_editor' );
+
+
+
+//-------- Uninstall -------------------
+register_uninstall_hook(__FILE__, 'vrodos_remove_db_residues');
+
+
+function vrodos_remove_db_residues(){
+    
+    global $wpdb;
+    $del_prefix = $wpdb->prefix;
+    
+    
+    // 1. Options
+    delete_option('vrodos_scene_yaml_children');
+    delete_option('vrodos_game_type_children');
+    delete_option('widget_vrodos_3d_widget');
+    delete_option('vrodos_db_version');
+    
+    // 2. Postmeta
+    $wpdb->query("DELETE FROM ".$del_prefix."postmeta WHERE meta_value LIKE '%vrodos%'");
+	
+	 //Deletes these:
+		//    vrodos-project-manager-template.php
+		//    vrodos-assets-list-template.php
+		//    vrodos-edit-3D-scene-template.php
+		//    vrodos-edit-2D-scene-template.php
+		//    vrodos-edit-sceneExam-template.php
+		//    vrodos-asset-editor-template.php
+	
+	
+	// 2. Posts
+	$wpdb->query("DELETE FROM ".$del_prefix."posts WHERE post_name LIKE '%vrodos%' OR post_name LIKE '%joker%'");
+//	vrodos-project-manager-page
+//	vrodos-assets-list-page
+//	vrodos-edit-3d-scene-page
+//    vrodos-edit-2d-scene-page
+//    vrodos-edit-exam-scene-page
+//    vrodos-asset-editor-page
+//    archaeology-joker
+//    energy-joker
+//    chemistry-joker
+
+	// 3. Termmeta
+	$wpdb->query("DELETE FROM ".$del_prefix."termmeta WHERE meta_key LIKE '%vrodos%'");
+	
+	// 4. Term
+	$wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%-yaml%'");
+	$wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%-joker%'");
+	$wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%_games%'");
+	$wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%pois_%'");
+	$wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%decoration%'");
+	
+	
+	// +++
+		//terrain
+		//marker
+		//educational-energy
+		//artifact
+		//site
+		//door
+		//room
+		//gate
+		//molecule
+
+	// 5. Term relationships
+	// +++
+	
+	// 6. Term taxonomy
+	$wpdb->query("DELETE FROM ".$del_prefix."term_taxonomy WHERE taxonomy LIKE '%vrodos%'");
+	
+
+	// 7. wp__games_versions table
+	$wpdb->query("DROP TABLE ".$del_prefix."_games_versions");
+}

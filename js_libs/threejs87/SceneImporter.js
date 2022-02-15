@@ -3,7 +3,7 @@
 function parseJSON_javascript(scene_json, UPLOAD_DIR){
 
 
-    console.log("scene_json", scene_json);
+    //console.log("scene_json", scene_json);
 
     if (scene_json.length==0)
         return [];
@@ -11,8 +11,22 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
     var resources3D_local =[];
 
     var scene_json_obj = JSON.parse(scene_json);
-    scene_json_obj = scene_json_obj['objects'];
 
+
+
+    var scene_json_metadata = scene_json_obj['metadata'];
+
+    for (var jo_key in scene_json_metadata) {
+
+        var name = jo_key;
+        var value = scene_json_metadata[jo_key];
+        if (name == 'ClearColor') {
+            resources3D_local["SceneSettings"]= {'ClearColor': value };
+        }
+    }
+
+
+    scene_json_obj = scene_json_obj['objects'];
 
     for (var jo_key in scene_json_obj){
 
@@ -74,7 +88,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
         } else {
             var path = UPLOAD_DIR + value['fnPath'];
 
-            console.log("value", value);
+            //console.log("value", value);
 
             var assetid = value['assetid'];
             var assetname = value['assetname'];

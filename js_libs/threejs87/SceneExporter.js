@@ -805,10 +805,13 @@ THREE.SceneExporter.prototype = {
             '		"formatVersion" : 4.0,',
             '		"type"		: "scene",',
             '		"generatedBy"	: "SceneExporter.js",',
-            '		"objects"       : ' + nobjects +  // + ',',
+            '		"ClearColor" : "#' + envir.renderer.getClearColor().getHexString() + '",',
+            '		"objects"       : ' + nobjects + //+  ',',
+            // + ',',
             // '		"geometries"    : ' + ngeometries + ',',
             // '		"materials"     : ' + nmaterials + ',',
             // '		"textures"      : ' + ntextures,
+
             '	},',
             '',
             '	"urlBaseType": "relativeToScene",',
@@ -819,6 +822,8 @@ THREE.SceneExporter.prototype = {
             objects,
             '	}',    // Original line:   '	},',
             '',
+
+
 
             // '	"geometries" :',
             // '	{',
@@ -858,6 +863,9 @@ THREE.SceneExporter.prototype = {
             // '	}',
             '}'
         ].join( '\n' );
+
+
+        //console.log(output);
 
         return output; //JSON.parse( output );
     }

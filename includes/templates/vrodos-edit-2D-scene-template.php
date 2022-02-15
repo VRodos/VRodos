@@ -65,7 +65,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 			}
 		}
 
-		$attachment_id = vrodos_upload_img( $post_image, $scene_id);
+		$attachment_id = vrodos_upload_img( $scene_id, $post_image );
 		set_post_thumbnail( $scene_id, $attachment_id );
 
 		if($post_id){
@@ -91,12 +91,12 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 			update_post_meta($scene_id, 'vrodos_scene_help_text', $help_desc);
 			$help_image =  $_FILES['help-image'];
 			if($help_image['size']!=0){
-				$attachment_help_id = vrodos_upload_img( $help_image, $scene_id);
+				$attachment_help_id = vrodos_upload_img( $scene_id, $help_image );
 				update_post_meta($scene_id, 'vrodos_scene_helpimg', $attachment_help_id);
 			}
 		}
 
-		$attachment_id = vrodos_upload_img( $post_image, $scene_id);
+		$attachment_id = vrodos_upload_img( $scene_id, $post_image );
 		set_post_thumbnail( $scene_id, $attachment_id );
 
 		//wp_redirect(esc_url( get_permalink($editgamePage[0]->ID) . $parameter_pass . $project_id ));

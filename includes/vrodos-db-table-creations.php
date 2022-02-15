@@ -26,8 +26,6 @@ function vrodos_db_create_games_versions_table () {
 	dbDelta( $sql );
 
 	add_option( 'vrodos_db_version', $vrodos_db_version );
- 
- 
 }
 
 /**

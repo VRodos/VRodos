@@ -79,10 +79,12 @@ class vrodos_3d_editor_environmentals {
 
                 jQuery(".hidable").hide();  // Lights bar
 
-                envir.isComposerOn = false;
+                envir.isComposerOn = true;
                 transform_controls.visible  = false;
                 envir.getSteveFrustum().visible = false;
-
+                envir.gridHelper.visible = false;
+                envir.axesHelper.visible = false;
+                envir.outlinePass.enabled = false;
 
                 envir.setVisiblityLightHelpingElements(false);
 
@@ -104,6 +106,10 @@ class vrodos_3d_editor_environmentals {
                 jQuery(".hidable").show(); // Lights bar
                 envir.isComposerOn = true;
                 transform_controls.visible  = true;
+
+                envir.gridHelper.visible = true;
+                envir.axesHelper.visible = true;
+                envir.outlinePass.enabled = true;
 
                 envir.setVisiblityLightHelpingElements(true);
 
@@ -450,9 +456,8 @@ class vrodos_3d_editor_environmentals {
         loader.scene = this.scene;
 
         var pathn = window.location.pathname.replace(/[^/]*$/, '');
-        pathn = pathn.replace('/vrodos-edit-3d-scene-page/','');
-
-        loader.load(pathn + '/wp-content/plugins/vrodos/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts );
+        pathn = pathn.split('/').slice(0,-2).join('/');
+        loader.load(pathn + '/wp-content/plugins/VRodos/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts );
     }
 
 
@@ -507,9 +512,6 @@ class vrodos_3d_editor_environmentals {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.autoClear = false;
-
-
-
 
         this.labelRenderer = new THREE.CSS2DRenderer();
         this.labelRenderer.domElement.style.position = 'absolute';

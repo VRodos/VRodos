@@ -160,7 +160,7 @@ function vrodos_upload_img_vid_aud($file, $parent_post_id) {
 
 
 // Upload images for only for 2D scenes
-function vrodos_upload_img($file = array(), $parent_post_id) {
+function vrodos_upload_img($parent_post_id, $file = array()) {
     
     // Require admin power
     require_once( ABSPATH . 'wp-admin/includes/admin.php' );
@@ -521,7 +521,10 @@ function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $The
     $upload_dir = wp_upload_dir();
 
     $upload_path = str_replace('/',$DS,$upload_dir['basedir']) . $DS .'Models'.$DS;
-    
+	
+	// Make Models folder
+	mkdir($upload_path);
+	
     //$hashed_filename = md5( $textTitle . microtime() ) . '_' . $textTitle.'.txt';
     
     $hashed_filename = $parent_post_id . '_' . $textTitle.'.txt';

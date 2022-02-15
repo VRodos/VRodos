@@ -112,7 +112,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         // highlight
         envir.outlinePass.selectedObjects = [insertedObject];
-        envir.renderer.setClearColor(0xeeeeee, 1);
+        //envir.renderer.setClearColor(0xeeeeee, 1);
         //envir.scene.add(transform_controls);
 
         // Position
@@ -190,7 +190,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         // highlight
         envir.outlinePass.selectedObjects = [insertedObject];
-        envir.renderer.setClearColor(0xeeeeee, 1);
+        //envir.renderer.setClearColor(0xeeeeee, 1);
         //envir.scene.add(transform_controls);
 
         // Position
@@ -271,7 +271,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         // highlight
         envir.outlinePass.selectedObjects = [insertedObject];
-        envir.renderer.setClearColor(0xeeeeee, 1);
+        //envir.renderer.setClearColor(0xeeeeee, 1);
         //envir.scene.add(transform_controls);
 
         // Position
@@ -340,7 +340,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             envir.setComposer();
 
             envir.outlinePass.selectedObjects = [insertedObject];
-            envir.renderer.setClearColor(0xeeeeee, 1);
+            //envir.renderer.setClearColor(0xeeeeee, 1);
 
             //envir.scene.add(transform_controls);
 
@@ -501,7 +501,7 @@ function deleterFomScene(nameToRemove){
         transform_controls.attach(lastObject);
 
         envir.outlinePass.selectedObjects = [lastObject];
-        envir.renderer.setClearColor(0xeeeeee, 1);
+        //envir.renderer.setClearColor(0xeeeeee, 1);
 
         // highlight
         envir.composer = [];

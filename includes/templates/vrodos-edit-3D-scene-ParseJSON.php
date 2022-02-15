@@ -38,6 +38,22 @@ class ParseJSON {
         
         $sceneToLoad = htmlspecialchars_decode($sceneToLoad);
         $content_JSON = json_decode($sceneToLoad);
+    
+    
+        $json_metadata = $content_JSON->metadata;
+        
+        foreach ($json_metadata as $key=>$value) {
+             $name = $key;
+             if ($name == 'ClearColor') {
+                 echo '<script>';
+                 echo 'resources3D["SceneSettings"]= {'.
+                                                      '"ClearColor":"'.$value.'"'.
+                                                                '};';
+                 echo '</script>';
+             }
+        }
+        
+        
         $json_objects = $content_JSON->objects;
     
         // For light target

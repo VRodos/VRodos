@@ -49,6 +49,7 @@ add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
 
 function vrodos_load_custom_functions_vreditor(){
     wp_enqueue_script('vrodos_3d_editor_environmentals');
+	wp_enqueue_script('vrodos_jscolorpick');
     wp_enqueue_script('vrodos_keyButtons');
     wp_enqueue_script('vrodos_rayCasters');
     wp_enqueue_script('vrodos_auxControlers');
@@ -115,7 +116,7 @@ if ($project_type === 'Archaeology') {
 $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
-$sceneToLoad = $scene_post->post_content ? $scene_post->post_content :
+$sceneJSON = $scene_post->post_content ? $scene_post->post_content :
                         vrodos_getDefaultJSONscene(strtolower($project_type));
 
 $sceneTitle = $scene_post->post_name;
@@ -456,7 +457,7 @@ get_header(); ?>
                   <textarea id="vrodos_scene_json_input"
                     name="vrodos_scene_json_input"
                     title="vrodos_scene_json_input"
-                    rows="50" cols = "100"><?php echo json_encode(json_decode($sceneToLoad), JSON_PRETTY_PRINT ); ?>
+                    rows="50" cols = "100"><?php echo json_encode(json_decode($sceneJSON), JSON_PRETTY_PRINT ); ?>
                   </textarea>
                 </div>
 
@@ -596,6 +597,16 @@ get_header(); ?>
                             <hr class="mdc-list-divider">
                             <ul class="mdc-list" id="hierarchy-viewer" style="max-height: 460px; overflow-y: scroll"></ul>
                         </div>
+                    </div>
+                    
+                    <!-- Set Clear Color -->
+                    <div id="sceneClearColor" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield">
+                        <label for="jscolorpick" style="display:none">Color pick</label>
+                        <input id="jscolorpick" class="jscolor {onFineChange:'updateColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255);">
+
+                        <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000">
+
+                        <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above" style="background: none;">Scene Background Color</label>
                     </div>
 
                 </div>
@@ -1083,12 +1094,15 @@ get_header(); ?>
     <!-- Load Scene - javascript var resources3D[] -->
     <?php
         require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
+        
         /* Initial load as php */
-        $formRes = new ParseJSON($upload_url);
-        $formRes->init($sceneToLoad);
+	    $SceneParserPHP = new ParseJSON($upload_url);
+	    $SceneParserPHP->init($sceneJSON);
+     
     ?>
 
     <script>
+        //console.log(resources3D);
         loaderMulti = new VRodos_LoaderMulti("1");
 
         
@@ -1116,6 +1130,8 @@ get_header(); ?>
 
             jQuery("#removeAssetBtn").hide();
 
+            console.log(resources3D);
+            
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
         }
@@ -1192,6 +1208,21 @@ get_header(); ?>
 
         // Set all buttons actions
         loadButtonActions();
+
+
+        function updateColorPicker(picker){
+            document.getElementById('sceneClearColor').value = picker.toRGBString();
+
+            
+            var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
+            envir.renderer.setClearColor(hex);
+        }
+
+        function rgbToHex(red, green, blue) {
+            const rgb = (red << 16) | (green << 8) | (blue << 0);
+            return '#' + (0x1000000 + rgb).toString(16).slice(1);
+        }
+        
     </script>
 <?php } ?>
 

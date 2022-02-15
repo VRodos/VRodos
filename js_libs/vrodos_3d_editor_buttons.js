@@ -18,14 +18,16 @@ function loadButtonActions() {
     });
 
     // Select platform for compile
-    var platformSelect = MDCSelect.attachTo(document.getElementById('platform-select'));
+    if(document.getElementById('platform-select')) {
+        var platformSelect = MDCSelect.attachTo(document.getElementById('platform-select'));
 
-    document.getElementById('platform-select').addEventListener('MDCSelect:change',
-        function () {
-            jQuery("#platformInput").attr("value", platformSelect.selectedOptions[0].getAttribute("id"));
-            jQuery("#compileProceedBtn").removeClass("LinkDisabled");
-        }
-    );
+        document.getElementById('platform-select').addEventListener('MDCSelect:change',
+            function () {
+                jQuery("#platformInput").attr("value", platformSelect.selectedOptions[0].getAttribute("id"));
+                jQuery("#compileProceedBtn").removeClass("LinkDisabled");
+            }
+        );
+    }
 
 
     // Compile Proceed
@@ -261,10 +263,11 @@ function loadButtonActions() {
         };
 
 
-    // Pause rendering (to cool down the machine sometimes)
-    jQuery("#pauseRendering").get(0).addEventListener('mousedown', function (event) {
-        pauseClickFun();
-    }, false);
+    if(jQuery("#pauseRendering").get(0)) {
+        jQuery("#pauseRendering").get(0).addEventListener('mousedown', function (event) {
+            pauseClickFun();
+        }, false);
+    }
 
 
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
@@ -354,12 +357,14 @@ function loadButtonActions() {
         btn.toggleClass('mdc-theme--secondary-bg');
     });
 
-    firstPersonBlockerBtn.addEventListener('click', function (event) {
+    if(firstPersonBlockerBtn) {
+        firstPersonBlockerBtn.addEventListener('click', function (event) {
 
-        firstPersonViewWithoutLock();
-        jQuery("#firstPersonBlockerBtn").toggleClass('mdc-theme--secondary-bg');
+            firstPersonViewWithoutLock();
+            jQuery("#firstPersonBlockerBtn").toggleClass('mdc-theme--secondary-bg');
 
-    }, false);
+        }, false);
+    }
 
 
     // 3D Widgets change mode (Translation-Rotation-Scale)

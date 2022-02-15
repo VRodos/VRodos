@@ -12,8 +12,11 @@ class VRodos_LoaderMulti {
 
     load(manager, resources3D, pluginPath) {
 
-         for (let n in resources3D) {
+        for (let n in resources3D) {
             (function (name) {
+
+                if(name==='SceneSettings')
+                    return;
 
                 // Lights are in a different loop
                 if (resources3D[name]['categoryName'].startsWith("light"))
@@ -419,9 +422,30 @@ class VRodos_LoaderMulti {
         }
 
 
-        // Lights loop
+        // Lights and Scene Settings loop
         for (var n in resources3D) {
             (function (name) {
+
+
+
+             // Scene Settings
+             if(name==='SceneSettings') {
+
+
+                 envir.renderer.setClearColor(resources3D['SceneSettings'].ClearColor);
+
+                 if(document.getElementById('sceneClearColor')) {
+                     document.getElementById('sceneClearColor').value = resources3D['SceneSettings'].ClearColor;
+                 }
+
+                 if(document.getElementById('jscolorpick')) {
+                     document.getElementById('jscolorpick').value = resources3D['SceneSettings'].ClearColor;
+                 }
+
+                 return;
+             }
+
+
 
              if (!resources3D[name]['categoryName'].startsWith("light"))
                 return;
