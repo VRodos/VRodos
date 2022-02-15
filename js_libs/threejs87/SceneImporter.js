@@ -129,6 +129,16 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             var s_y = value['scale'][1];
             var s_z = value['scale'][2];
 
+            var videoTextureSrc = value['videoTextureSrc'];
+
+
+            var videoTextureRepeatX= value['videoTextureRepeatX'];
+            var videoTextureRepeatY= value['videoTextureRepeatY'];
+            var videoTextureCenterX= value['videoTextureCenterX'];
+            var videoTextureCenterY= value['videoTextureCenterY'];
+            var videoTextureRotation= value['videoTextureRotation'];
+
+
             var selected_object_trs={"translation":[t_x,t_y,t_z],"rotation":[r_x,r_y,r_z],"scale":[s_x,s_y,s_z]};
 
             resources3D_local[name]= {"path":path,
@@ -141,6 +151,12 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
                 "fbxID":fbxID,
                 "glbID":glbID,
                 "color":color,
+                "videoTextureSrc":videoTextureSrc,
+                "videoTextureRepeatX":videoTextureRepeatX,
+                "videoTextureRepeatY":videoTextureRepeatY,
+                "videoTextureCenterX":videoTextureCenterX,
+                "videoTextureCenterY":videoTextureCenterY,
+                "videoTextureRotation":videoTextureRotation,
                 "audioID":audioID,
                 "categoryName":categoryName,"categoryID":categoryID,
                 "image1id":image1id,"doorName_source":doorName_source,"doorName_target":doorName_target,

@@ -132,6 +132,7 @@ $editscene2DPage = vrodos_getEditpage('scene2D');
 $editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 
+$videos = vrodos_getVideoAttachmentsFromMediaLibrary();
 
 // for vr_editor
 $urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
@@ -416,6 +417,9 @@ get_header(); ?>
             <!-- 3D editor  -->
             <div id="vr_editor_main_div">
 
+
+                
+                
                 <!-- Upper Toolbar -->
                 <div class="mdc-toolbar hidable scene_editor_upper_toolbar">
 
@@ -1226,6 +1230,10 @@ get_header(); ?>
             const rgb = (red << 16) | (green << 8) | (blue << 0);
             return '#' + (0x1000000 + rgb).toString(16).slice(1);
         }
+
+
+    
+        
         
     </script>
 <?php } ?>

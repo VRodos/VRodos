@@ -1,5 +1,40 @@
 <!--Popups when right-clicking on 3D objects: included in vr_editor -->
 
+<script>
+    // Set video texture when popup change
+    function textureChangeFunction() {
+        var url = document.getElementById("ObjectVideoTexture").value;
+        var videoDom = document.createElement('video');
+        videoDom.src = url;
+        videoDom.load();
+        var videoTexture = new THREE.VideoTexture( videoDom );
+        
+        
+        videoTexture.wrapS = videoTexture.wrapT = THREE.RepeatWrapping;
+        
+        var rX = document.getElementById("ObjectVideoTextureRepeatX").value;
+        var rY = document.getElementById("ObjectVideoTextureRepeatY").value;
+        
+        
+        
+        videoTexture.repeat.set( rX, rY );
+        
+        var rotationTexture = document.getElementById("ObjectVideoTextureRotation").value;
+        videoTexture.rotation = rotationTexture;
+        
+        var cX = document.getElementById("ObjectVideoTextureCenterX").value;
+        var cY = document.getElementById("ObjectVideoTextureCenterY").value;
+        videoTexture.center = new THREE.Vector2(cX, cY);
+        
+        
+        var movieMaterial = new THREE.MeshBasicMaterial( { map: videoTexture, side:THREE.DoubleSide } );
+        setTimeout( function() {
+             transform_controls.object.children[0].material = movieMaterial;
+             videoDom.play();
+        }, 1000 );
+    }
+</script>
+
 <!-- Artifact @ Archaeology: Popup menu to for Reward item checkbox, from  -->
 <div id="popUpArtifactPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2" style="min-width: 200px;display:none">
 
@@ -30,7 +65,68 @@
     <input type="text" id="ObjectColor" name="ObjectColor" title="Set a hex number, ffffff is the default (white)"
            value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateObjectColorPicker(this)'}"
            style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+    <br />
+
+    <!-- The Video texture of the object -->
+    <label for="ObjectVideoTexture" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+        Object Video Texture:</label>
+
+    <select id="ObjectVideoTexture" name="ObjectVideoTexture" title="Set a texture"
+            style="width: 270px;display: inline-block;padding: 2px;text-align: right;"
+            onchange="textureChangeFunction(this)">
+        <option selected="selected">Choose one</option>
+		<?php
+        	foreach($videos as $v){
+		    	echo "<option value='$v'>$v</option>";
+		   }
+		?>
+    </select>
     
+    <br />
+
+    <!-- The Video texture rotation -->
+    <label for="ObjectVideoTextureRotation" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+        Video Texture Rotation:</label>
+
+    <input type="text" id="ObjectVideoTextureRotation" name="ObjectVideoTextureRotation" title="Texture Rotation"
+           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+
+    <br />
+
+    <!-- The Video texture center U -->
+    <label for="ObjectVideoTextureCenterX" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+        Video Texture Center U:</label>
+
+    <input type="text" id="ObjectVideoTextureCenterX" name="ObjectVideoTextureCenterX" title="Texture Center X"
+           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+
+    <!-- The Video texture center V -->
+    <label for="ObjectVideoTextureCenterY" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+        Video Texture Center V:</label>
+
+    <input type="text" id="ObjectVideoTextureCenterY" name="ObjectVideoTextureCenterY" title="Texture Center Y"
+           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+
+    <br />
+
+    <!-- The Video texture repeat X -->
+    <label for="ObjectVideoTextureRepeatX" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+        Video Texture Repeat X:</label>
+
+    <input type="text" id="ObjectVideoTextureRepeatX" name="ObjectVideoTextureRepeatX" title="Texture Repeat X"
+           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+
+    <!-- The Video texture repeat Y -->
+    <label for="ObjectVideoTextureRepeatY" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+        Video Texture Repeat Y:</label>
+
+    <input type="text" id="ObjectVideoTextureRepeatY" name="ObjectVideoTextureRepeatY" title="Texture Repeat Y"
+           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
     
 </div>
 

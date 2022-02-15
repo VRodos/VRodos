@@ -151,6 +151,26 @@ function vrodos_addStrategy_APIcall($project_id, $strategy){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
+function vrodos_getVideoAttachmentsFromMediaLibrary(){
+
+    $query_images_args = array(
+        'post_type'      => 'attachment',
+        'post_mime_type' => 'video',
+        'post_status'    => 'inherit',
+        'posts_per_page' => - 1,
+    );
+
+    $query_images = new WP_Query( $query_images_args );
+	
+	$videos = array();
+    foreach ( $query_images->posts as $image ) {
+        $videos[] = wp_get_attachment_url( $image->ID );
+    }
+    
+    return $videos;
+}
+
+
 function vrodos_getExamScenes_byProjectID($project_id){
 	$gamePost = get_post($project_id);
 	$gameSlug = $gamePost->post_name;

@@ -728,8 +728,43 @@ function setObjectProperties(object, name, resources3D) {
     object.glbID = resources3D[name]['glbID'];
 
 
+
+
+
     object.children[0].material.color.setHex( "0x" +  resources3D[name]['color'] );
 
+    //============== Video texture ==========
+    if(resources3D[name]['videoTextureSrc']!=='') {
+
+        console.log("resources3D[name]['videoTextureSrc']", resources3D[name]);
+
+        var videoDom = document.createElement('video');
+        videoDom.src = resources3D[name]['videoTextureSrc'];
+        videoDom.load();
+        var videoTexture = new THREE.VideoTexture(videoDom);
+
+        videoTexture.wrapS = videoTexture.wrapT = THREE.RepeatWrapping;
+
+        var rX = resources3D[name]['videoTextureRepeatX'];
+        var rY = resources3D[name]['videoTextureRepeatY'];
+
+        videoTexture.repeat.set(rX, rY);
+
+        var rotationTexture = resources3D[name]['videoTextureRotation'];
+        videoTexture.rotation = rotationTexture;
+
+        var cX = resources3D[name]['videoTextureCenterX'];
+        var cY = resources3D[name]['videoTextureCenterY'];
+        videoTexture.center = new THREE.Vector2(cX, cY);
+
+        var movieMaterial = new THREE.MeshBasicMaterial({map: videoTexture, side: THREE.DoubleSide});
+        setTimeout(function () {
+            transform_controls.object.children[0].material = movieMaterial;
+            videoDom.play();
+        }, 1000);
+    }
+
+    //=======================================
 
     object.audioID = resources3D[name]['audioID'];
 

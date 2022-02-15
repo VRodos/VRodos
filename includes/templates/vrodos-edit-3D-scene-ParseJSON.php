@@ -19,6 +19,13 @@ class ParseJSON {
         $glbID = '';
         $audioID = '';
 
+        $videoTextureSrc = '';
+        $videoTextureRepeatX = '';
+        $videoTextureRepeatY = '';
+        $videoTextureCenterX = '';
+        $videoTextureCenterY = '';
+        $videoTextureRotation = '';
+        
         $categoryID = '';
         $image1id = '';
         $doorName_source = '';
@@ -186,7 +193,16 @@ class ParseJSON {
                 
                 $fbxID = $value->fbxID;
                 $glbID = $value->glbID;
+    
+                $videoTextureSrc = $value->videoTextureSrc;
+                $videoTextureRepeatX = $value->videoTextureRepeatX;
+                $videoTextureRepeatY = $value->videoTextureRepeatY;
+                $videoTextureCenterX = $value->videoTextureCenterX;
+                $videoTextureCenterY = $value->videoTextureCenterY;
+                $videoTextureRotation = $value->videoTextureRotation;
                 
+    
+    
                 $categoryName = $value->categoryName;
                 $categoryID = $value->categoryID;
                 $image1id = $value->image1id;
@@ -228,8 +244,8 @@ class ParseJSON {
             echo '<script>';
             echo 'var selected_object_trs={"translation":['.$t_x.','.$t_y.','.$t_z.'],"rotation":['.
                 $r_x .','.$r_y .','.$r_z .'],'.'"scale":[' . $s_x . ',' . $s_y . ',' . $s_z . ']};';
-
-            
+    
+         
             
             echo 'resources3D["'.$name.'"]= {'.
                                             '"path":"'.$path.
@@ -243,6 +259,12 @@ class ParseJSON {
                                             '","glbID":"'.$glbID.
                                             '","color":"'.$color.
                                             '","audioID":"'.$audioID.
+                                            '","videoTextureSrc":"'.$videoTextureSrc.
+                                            '","videoTextureRepeatX":"'.$videoTextureRepeatX .
+                                            '","videoTextureRepeatY":"'.$videoTextureRepeatY .
+                                            '","videoTextureCenterX":"'.$videoTextureCenterX .
+                                            '","videoTextureCenterY":"'.$videoTextureCenterY .
+                                            '","videoTextureRotation":"'.$videoTextureRotation .
                                             '","categoryName":"'.$categoryName.
                                             '","categoryID":"'.$categoryID.
                                             '","image1id":"'.$image1id.
