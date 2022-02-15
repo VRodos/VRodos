@@ -1017,8 +1017,10 @@ get_header(); ?>
             let trs_tmp = resources3D[name]['trs'];
             let objItem = envir.scene.getObjectByName(name);
 
+            
             // In the case the last asset is missing then put controls on the camera
             if (typeof objItem === "undefined"){
+                
                 
                 name = 'avatarYawObject';
                 trs_tmp = resources3D[name]['trs'];
@@ -1032,11 +1034,13 @@ get_header(); ?>
                 envir.scene.add(transform_controls);
 
                 if (selected_object_name != 'avatarYawObject') {
+                    
                     transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
                                                                         trs_tmp['translation'][2]);
                     transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
                                                                 trs_tmp['rotation'][2]);
-                    transform_controls.object.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+                    
+                    transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
                 }
 
                 jQuery('#object-manipulation-toggle').show();

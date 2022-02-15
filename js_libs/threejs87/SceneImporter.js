@@ -98,6 +98,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             var mtlID = value['fnMtlID'];
             var fbxID = value['fbxID'];
             var glbID = value['glbID'];
+            var color = value['color'];
             var audioID = value['audioID'];
             var categoryName = value['categoryName'];
             var categoryID = value['categoryID'];
@@ -124,9 +125,11 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             var t_y = value['position'][1];
             var t_z = value['position'][2];
 
-            var scale = value['scale'][0];
+            var s_x = value['scale'][0];
+            var s_y = value['scale'][1];
+            var s_z = value['scale'][2];
 
-            var selected_object_trs={"translation":[t_x,t_y,t_z],"rotation":[r_x,r_y,r_z],"scale":scale};
+            var selected_object_trs={"translation":[t_x,t_y,t_z],"rotation":[r_x,r_y,r_z],"scale":[s_x,s_y,s_z]};
 
             resources3D_local[name]= {"path":path,
                 "assetid":assetid,
@@ -137,6 +140,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
                 "mtlID":mtlID,
                 "fbxID":fbxID,
                 "glbID":glbID,
+                "color":color,
                 "audioID":audioID,
                 "categoryName":categoryName,"categoryID":categoryID,
                 "image1id":image1id,"doorName_source":doorName_source,"doorName_target":doorName_target,

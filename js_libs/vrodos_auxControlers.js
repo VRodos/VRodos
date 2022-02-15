@@ -121,6 +121,8 @@ function controllerDatGuiOnChange() {
     );
 
 
+    // ----- Scale ----
+
     dg_controller_sc.onChange(function(value) {
 
             cancelAnimationFrame( id_animation_frame );
@@ -144,21 +146,19 @@ function controllerDatGuiOnChange() {
             cancelAnimationFrame( id_animation_frame );
 
             if (dg_dim_x_prev) {
-                gui_controls_funs.dg_scale = gui_controls_funs.dg_scale * value / dg_dim_x_prev;
+                //gui_controls_funs.dg_scale = gui_controls_funs.dg_scale * value / dg_dim_x_prev;
 
-                transform_controls.object.scale.set(gui_controls_funs.dg_scale, gui_controls_funs.dg_scale, gui_controls_funs.dg_scale);
+                transform_controls.object.scale.set(value, gui_controls_funs.dg_dim_y, gui_controls_funs.dg_dim_z);
 
-                var dims = findDimensions(transform_controls.object);
-
-                //gui_controls_funs.dg_dim_x = dims[0];
-                gui_controls_funs.dg_dim_y = dims[1];
-                gui_controls_funs.dg_dim_z = dims[2];
+                // var dims = findDimensions(transform_controls.object);
+                //
+                // gui_controls_funs.dg_dim_y = dims[1];
+                // gui_controls_funs.dg_dim_z = dims[2];
+                envir.scene.dispatchEvent({type:"modificationPendingSave"});
             }
 
             dg_dim_x_prev = value;
             animate();
-
-
         }
     );
 
@@ -168,17 +168,16 @@ function controllerDatGuiOnChange() {
             cancelAnimationFrame( id_animation_frame );
 
             if (dg_dim_y_prev) {
-                gui_controls_funs.dg_scale = gui_controls_funs.dg_scale * value / dg_dim_y_prev;
+                //gui_controls_funs.dg_scale = gui_controls_funs.dg_scale * value / dg_dim_y_prev;
 
-                transform_controls.object.scale.set(gui_controls_funs.dg_scale, gui_controls_funs.dg_scale, gui_controls_funs.dg_scale);
+                transform_controls.object.scale.set(gui_controls_funs.dg_dim_x, value, gui_controls_funs.dg_dim_z);
 
-                var dims = findDimensions(transform_controls.object);
-
-                gui_controls_funs.dg_dim_x = dims[0];
-                //gui_controls_funs.dg_dim_y = dims[1];
-                gui_controls_funs.dg_dim_z = dims[2];
+                // var dims = findDimensions(transform_controls.object);
+                //
+                // gui_controls_funs.dg_dim_x = dims[0];
+                // gui_controls_funs.dg_dim_z = dims[2];
+                envir.scene.dispatchEvent({type:"modificationPendingSave"});
             }
-
 
             dg_dim_y_prev = value;
             animate();
@@ -191,17 +190,16 @@ function controllerDatGuiOnChange() {
             cancelAnimationFrame( id_animation_frame );
 
             if (dg_dim_z_prev) {
-                gui_controls_funs.dg_scale = gui_controls_funs.dg_scale * value / dg_dim_z_prev;
+                //gui_controls_funs.dg_scale = gui_controls_funs.dg_scale * value / dg_dim_z_prev;
 
-                transform_controls.object.scale.set(gui_controls_funs.dg_scale, gui_controls_funs.dg_scale, gui_controls_funs.dg_scale);
+                transform_controls.object.scale.set(gui_controls_funs.dg_dim_x, gui_controls_funs.dg_dim_y, value);
 
-                var dims = findDimensions(transform_controls.object);
-
-                gui_controls_funs.dg_dim_x = dims[0];
-                gui_controls_funs.dg_dim_y = dims[1];
-                //gui_controls_funs.dg_dim_z = dims[2];
+                // var dims = findDimensions(transform_controls.object);
+                //
+                // gui_controls_funs.dg_dim_x = dims[0];
+                // gui_controls_funs.dg_dim_y = dims[1];
+                envir.scene.dispatchEvent({type:"modificationPendingSave"});
             }
-
 
             dg_dim_z_prev = value;
             animate();
@@ -215,7 +213,9 @@ function controllerDatGuiOnChange() {
     setKeyPressControllerConstrained(dg_controller_rx);
     setKeyPressControllerConstrained(dg_controller_ry);
     setKeyPressControllerConstrained(dg_controller_rz);
-    setKeyPressControllerConstrained(dg_controller_sc);
+
+
+    //setKeyPressControllerConstrained(dg_controller_sc);
 
     setKeyPressControllerConstrained(dg_controller_dim_x);
     setKeyPressControllerConstrained(dg_controller_dim_y);
@@ -315,42 +315,61 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
     if (transform_controls.object.rotation._y*180/Math.PI != this.dg_ry){
         gui_controls_funs.dg_ry = transform_controls.object.rotation._y * 180/Math.PI;
 
-//        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //---------rotate_z -------------------------------
     if (transform_controls.object.rotation._z*180/Math.PI != gui_controls_funs.dg_rz){
         gui_controls_funs.dg_rz = transform_controls.object.rotation._z * 180/Math.PI;
 
-        //envir.scene.dispatchEvent({type:"modificationPendingSave"});
-    }
-
-    //---------scale by TransformTools-------------------------------
-    var val = 0;
-
-    if (transform_controls.object.scale.x != gui_controls_funs.dg_scale){
-        val = transform_controls.object.scale.x;
-    } else if (transform_controls.object.scale.y != gui_controls_funs.dg_scale){
-        val = transform_controls.object.scale.y
-    } else if (transform_controls.object.scale.z != gui_controls_funs.dg_scale){
-        val = transform_controls.object.scale.z
-    }
-
-    //console.log("val", val);
-
-    if (val > 0) {
-        gui_controls_funs.dg_scale = val;
-        transform_controls.object.scale.set( val, val, val);
-
-        var dims = findDimensions(transform_controls.object);
-
-        gui_controls_funs.dg_dim_x = dims[0];
-        gui_controls_funs.dg_dim_y = dims[1];
-        gui_controls_funs.dg_dim_z = dims[2];
-
-        // Auto-save
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
+
+    //---------scale_x -------------------------------
+    if (transform_controls.object.scale.x != gui_controls_funs.dg_dim_x){
+        gui_controls_funs.dg_dim_x = transform_controls.object.scale.x;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //---------scale_y -------------------------------
+    if (transform_controls.object.scale.y != gui_controls_funs.dg_dim_y){
+        gui_controls_funs.dg_dim_y = transform_controls.object.scale.y;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //---------scale_z -------------------------------
+    if (transform_controls.object.scale.z != gui_controls_funs.dg_dim_z){
+        gui_controls_funs.dg_dim_z = transform_controls.object.scale.z;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+
+    //---------scale by TransformTools-------------------------------
+    // var val = 0;
+    //
+    // if (transform_controls.object.scale.x != gui_controls_funs.dg_scale){
+    //     val = transform_controls.object.scale.x;
+    // } else if (transform_controls.object.scale.y != gui_controls_funs.dg_scale){
+    //     val = transform_controls.object.scale.y
+    // } else if (transform_controls.object.scale.z != gui_controls_funs.dg_scale){
+    //     val = transform_controls.object.scale.z
+    // }
+    //
+    // //console.log("val", val);
+    //
+    // if (val > 0) {
+    //     gui_controls_funs.dg_scale = val;
+    //     transform_controls.object.scale.set( val, val, val);
+    //
+    //     var dims = findDimensions(transform_controls.object);
+    //
+    //     gui_controls_funs.dg_dim_x = dims[0];
+    //     gui_controls_funs.dg_dim_y = dims[1];
+    //     gui_controls_funs.dg_dim_z = dims[2];
+    //
+    //     // Auto-save
+    //     envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    // }
     //--------- end of scale ------------------------
 }
 

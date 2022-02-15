@@ -3,18 +3,35 @@
 <!-- Artifact @ Archaeology: Popup menu to for Reward item checkbox, from  -->
 <div id="popUpArtifactPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2" style="min-width: 200px;display:none">
 
+    
     <!-- The close button-->
     <a style="float: right;" type="button" class="mdc-theme--primary"
-       onclick='this.parentNode.style.display = "none"; clearAndUnbindCheckBoxProperties("artifact_reward_checkbox"); return false;'>
+       onclick='this.parentNode.style.display = "none"; return false;'>
+        <!-- clearAndUnbindCheckBoxProperties("artifact_reward_checkbox"); -->
         <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
 
     <!-- The checkbox-->
+
+    
+    <label for="artifact_reward_checkbox" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">Is a reward item?</label>
+    
     <input type="checkbox" title="Select if it is a reward item"  id="artifact_reward_checkbox" name="artifact_reward_checkbox"
            class="mdc-textfield__input mdc-theme--text-primary-on-light"
-           style="width: 100px !important; float: right; margin-left: 80px; margin-top: 20px;">
-    <label for="artifact_reward_checkbox" class="mdc-textfield__label"
-           style="margin-left: 10px; bottom: 8px; margin-bottom: 0px;">Is a reward item?</label>
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;">
+       
+    <br />
+
+    <!-- The Color of the object -->
+    <label for="ObjectColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+        Object Color:</label>
+
+    <input type="text" id="ObjectColor" name="ObjectColor" title="Set a hex number, ffffff is the default (white)"
+           value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateObjectColorPicker(this)'}"
+           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+    
+    
 </div>
 
 <!-- Sun @ Archaeology: Popup menu to for Sun Intensity and Color -->

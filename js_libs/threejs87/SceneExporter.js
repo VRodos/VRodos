@@ -346,6 +346,7 @@ THREE.SceneExporter.prototype = {
                     '	"categoryID" : ' + '"' + o.categoryID  + '"' + ',',
                     '   "fbxID" : ' + '"' + o.fbxID + '"' + ',',
                     '   "glbID" : ' + '"' + o.glbID + '"' + ',',
+                    '   "color" : ' + '"' + o.children[0].material.color.getHexString() + '"' + ',',
                     '   "audioID" : ' + '"' + o.audioID + '"' + ',',
                     '	"image1id" : ' + '"' + o.image1id  + '"' + ',',
                     '   "doorName_source" : ' + '"' + o.doorName_source  + '"' + ',',
@@ -373,6 +374,7 @@ THREE.SceneExporter.prototype = {
                 var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
+
                 // REM HERE Check with trailing comma
                 var output = [
                     '\t\t' + LabelString(getObjectName(o)) + ' : {',
@@ -381,11 +383,10 @@ THREE.SceneExporter.prototype = {
                     o.rotation.y + "," +
                     o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
 
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," +
-                    quatR_light._y + "," +
-                    quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
+                    '	"quaternion" : ' + "[" + quatR_light._x + "," + quatR_light._y + "," + quatR_light._z + "," +
+                                                                                            quatR_light._w + "]" + ',',
+
+                    '	"scale"	    : ' + '[' + o.scale.x + ',' + o.scale.y + ',' + o.scale.z + '],',
                     '	"lightintensity"	: "' + o.intensity + '",',
                     '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
                     '	"targetposition" : ' + Vector3String(o.target.position) + ',',

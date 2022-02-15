@@ -511,7 +511,7 @@ function displayArtifactProperties(event, name){
     ppPropertiesDiv[0].style.top  = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
     // Add change listener
-    chbox.change(function(e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
+    //chbox.change(function(e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
 }
 
 
@@ -918,13 +918,18 @@ function changeSpotPenumbra(){
 }
 
 
+/// Sun Color Selector
+function updateObjectColorPicker(picker){
 
+    var hexcol = "0x" + document.getElementById("ObjectColor").value;
 
+    //Change material color
+    transform_controls.object.children[0].material.color.setHex(hexcol);
+}
 
 
 /// Sun Color Selector
 function updateSunColorPickerLight(picker){
-
 
     var hexcol = "0x" + document.getElementById("sunColor").value;
 
@@ -942,8 +947,6 @@ function updateSunColorPickerLight(picker){
     // TargetSpot
     var lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
     lightTargetSpot.children[0].material.color.setHex(hexcol);
-
-
 }
 
 

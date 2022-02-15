@@ -26,6 +26,8 @@ class VRodos_LoaderMulti {
 
                 // Load Steve
                 if (name == 'avatarYawObject') {
+
+                    console.log('avatarYawObject');
                     //mtlLoader.setPath(pluginPath+"/assets/Steve/");
                     // STEVE is the CAMERA MESH
 
@@ -110,6 +112,9 @@ class VRodos_LoaderMulti {
 
                     //------------------- OBJ Loading --------------------------
                     if (resources3D[name]['mtl'] != '') {
+
+                        console.log("OBJ loading");
+
                         mtlLoader.setPath(resources3D[name]['path']);
                         mtlLoader.load(resources3D[name]['mtl'], function (materials) {
 
@@ -173,7 +178,7 @@ class VRodos_LoaderMulti {
 
                     } else if (resources3D[name]['fbxID'] !== "" && resources3D[name]['fbxID'] !== undefined) {
 
-
+                        console.log("FBX loading");
                         // ------------------ FBX Loading ---------------------------------
 
                         jQuery.ajax({
@@ -287,6 +292,8 @@ class VRodos_LoaderMulti {
                             }
                         });
                     } else if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
+
+                        console.log("GLB Loading")
 
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
@@ -410,10 +417,11 @@ class VRodos_LoaderMulti {
                     } else {
 
                         alert("Unsupported 3D model format. Error 118.");
-
-                        console.log("fbxID", resources3D[name]['fbxID']);
-                        console.log("glbID", resources3D[name]['glbID']);
-
+                        //
+                        console.log("name", name);
+                        // console.log("fbxID", resources3D[name]['fbxID']);
+                        // console.log("glbID", resources3D[name]['glbID']);
+                        //
                         console.log("Unsupported 3D model format: ERROR: 118");
 
                     }
@@ -426,11 +434,10 @@ class VRodos_LoaderMulti {
         for (var n in resources3D) {
             (function (name) {
 
-
-
              // Scene Settings
              if(name==='SceneSettings') {
 
+                 console.log("scene settings");
 
                  envir.renderer.setClearColor(resources3D['SceneSettings'].ClearColor);
 
@@ -452,9 +459,11 @@ class VRodos_LoaderMulti {
 
              if (resources3D[name]['categoryName']==='lightSun' ){
 
+
+                console.log("Light Sun");
                 var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
-                    resources3D[name]['lightcolor'][1],
-                    resources3D[name]['lightcolor'][2]);
+                                            resources3D[name]['lightcolor'][1],
+                                            resources3D[name]['lightcolor'][2]);
 
                 var lightintensity = resources3D[name]['lightintensity'];
 
@@ -479,14 +488,16 @@ class VRodos_LoaderMulti {
                 resources3D[name]['trs']['rotation'][1],
                 resources3D[name]['trs']['rotation'][2] );
 
-                lightSun.scale.set( resources3D[name]['trs']['scale'],
-                resources3D[name]['trs']['scale'],
-                resources3D[name]['trs']['scale']);
+
+
+                lightSun.scale.set( resources3D[name]['trs']['scale'][0],
+                                        resources3D[name]['trs']['scale'][1],
+                                        resources3D[name]['trs']['scale'][2]);
 
 
                 lightSun.target.position.set(resources3D[name]['targetposition'][0],
-                resources3D[name]['targetposition'][1],
-                resources3D[name]['targetposition'][2]); // where it points
+                                            resources3D[name]['targetposition'][1],
+                                            resources3D[name]['targetposition'][2]); // where it points
 
                 lightSun.name = name;
                 lightSun.categoryName = "lightSun";
@@ -543,8 +554,8 @@ class VRodos_LoaderMulti {
                 lightTargetSpot.isLightTargetSpot = true;
 
                 lightTargetSpot.position.set(resources3D[name]['targetposition'][0],
-                resources3D[name]['targetposition'][1],
-                resources3D[name]['targetposition'][2]);
+                                            resources3D[name]['targetposition'][1],
+                                            resources3D[name]['targetposition'][2]);
 
                 lightTargetSpot.parentLight = lightSun;
                 lightTargetSpot.parentLightHelper = lightSunHelper;
@@ -552,13 +563,15 @@ class VRodos_LoaderMulti {
                 lightSun.target.position.set(lightTargetSpot.position.x, lightTargetSpot.position.y,
                                                 lightTargetSpot.position.z) ;
 
-                envir.scene.add(lightTargetSpot);
+                 envir.scene.add(lightTargetSpot);
 
                  //Create a helper for the shadow camera (optional)
                  var lightSunShadowhelper = new THREE.CameraHelper( lightSun.shadow.camera );
                  envir.scene.add( lightSunShadowhelper );
 
         } else if (resources3D[name]['categoryName']==='lightLamp' ){
+
+            console.log("Light Lamp");
 
             var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                 resources3D[name]['lightcolor'][1],
@@ -618,6 +631,7 @@ class VRodos_LoaderMulti {
             lightLampHelper.update();
 
         } else if (resources3D[name]['categoryName']==='lightSpot' ){
+
 
             var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                 resources3D[name]['lightcolor'][1],
@@ -712,6 +726,10 @@ function setObjectProperties(object, name, resources3D) {
 
     object.fbxID = resources3D[name]['fbxID'];
     object.glbID = resources3D[name]['glbID'];
+
+
+    object.children[0].material.color.setHex( "0x" +  resources3D[name]['color'] );
+
 
     object.audioID = resources3D[name]['audioID'];
 

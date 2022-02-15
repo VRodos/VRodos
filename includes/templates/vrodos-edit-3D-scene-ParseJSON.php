@@ -31,6 +31,7 @@ class ParseJSON {
         $isreward = '';
         $isCloned = '';
         $isJoker = '';
+        $color = ''; // object color override
 
 
 
@@ -181,6 +182,8 @@ class ParseJSON {
                 $mtl = $value->fnMtl;
                 $mtlID = $value->fnMtlID;
     
+                $color = $value->color;
+                
                 $fbxID = $value->fbxID;
                 $glbID = $value->glbID;
                 
@@ -216,11 +219,15 @@ class ParseJSON {
             $t_y = $value->position[1];
             $t_z = $value->position[2];
 
-            $scale = $value->scale[0];
+            $s_x = $value->scale[0];
+            $s_y = $value->scale[1];
+            $s_z = $value->scale[2];
+            
+            
 
             echo '<script>';
             echo 'var selected_object_trs={"translation":['.$t_x.','.$t_y.','.$t_z.'],"rotation":['.
-                $r_x .','.$r_y .','.$r_z .'],'.'"scale":'.$scale.'};';
+                $r_x .','.$r_y .','.$r_z .'],'.'"scale":[' . $s_x . ',' . $s_y . ',' . $s_z . ']};';
 
             
             
@@ -234,6 +241,7 @@ class ParseJSON {
                                             '","mtlID":"'.$mtlID.
                                             '","fbxID":"'.$fbxID.
                                             '","glbID":"'.$glbID.
+                                            '","color":"'.$color.
                                             '","audioID":"'.$audioID.
                                             '","categoryName":"'.$categoryName.
                                             '","categoryID":"'.$categoryID.
