@@ -4,7 +4,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
     let selected_object_trs = {
         "translation": [translation[0], translation[1], translation[2]],
         "rotation": [0,0,0],
-        "scale": 1
+        "scale": [1,1,1]
     };
 
 
@@ -20,12 +20,19 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "mtlID": dataDrag.mtlID,
         "fbxID": dataDrag.fbxID,
         "glbID": dataDrag.glbID,
+        "color": "",
         "audioID": dataDrag.audioID,
         "categoryName": dataDrag.categoryName,
         "categoryDescription": dataDrag.categoryDescription,
         "categoryIcon": dataDrag.categoryIcon,
         "categoryID": dataDrag.categoryID,
         "image1id": dataDrag.image1id,
+        "videoTextureSrc":"",
+        "videoTextureRepeatX":"1",
+        "videoTextureRepeatY":"1",
+        "videoTextureCenterX":"0",
+        "videoTextureCenterY":"0",
+        "videoTextureRotation":"0",
         "doorName_source":dataDrag.doorName_source,
         "doorName_target":dataDrag.doorName_target,
         "sceneName_target":dataDrag.sceneName_target,
@@ -104,7 +111,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
         insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-        insertedObject.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+        insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
         insertedObject.parent = envir.scene;
 
         // place controls to last inserted obj
@@ -118,7 +125,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         // Position
         transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
         transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-        transform_controls.object.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+        transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
         selected_object_name = nameModel;
 
@@ -182,7 +189,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
         insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-        insertedObject.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+        insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
         insertedObject.parent = envir.scene;
 
         // place controls to last inserted obj
@@ -196,7 +203,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         // Position
         transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
         transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-        transform_controls.object.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+        transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
         selected_object_name = nameModel;
 
@@ -263,7 +270,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
         insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-        insertedObject.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+        insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
         insertedObject.parent = envir.scene;
 
         // place controls to last inserted obj
@@ -277,7 +284,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         // Position
         transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
         transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-        transform_controls.object.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+        transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
         selected_object_name = nameModel;
 
@@ -316,7 +323,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         // When all are finished loading
         manager.onLoad = function () {
 
-
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
             var insertedObject = envir.scene.getObjectByName(nameModel);
@@ -329,7 +335,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
             insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
             insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-            insertedObject.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+            insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
             insertedObject.parent = envir.scene;
 
             // place controls to last inserted obj
@@ -347,7 +353,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             // Position
             transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
             transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-            transform_controls.object.scale.set(trs_tmp['scale'], trs_tmp['scale'], trs_tmp['scale']);
+            transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
             selected_object_name = nameModel;
 
@@ -391,16 +397,12 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
                 insertedObject.position.set(0, 100, 0);
             }
 
-
-
             // Add in scene
             envir.addInHierarchyViewer(insertedObject);
 
             // Auto-save
             triggerAutoSave();
         };
-
-
 
 
         var extraResource = {};
@@ -424,13 +426,14 @@ function resetInScene(name){
 
     if (game_type!="energy")
         envir.avatarControls.getObject().position.set(0,1.3,0);
-    else
-        envir.avatarControls.getObject().position.set(0,200,500);
-
+    else {
+        envir.avatarControls.getObject().position.set(0, 200, 500);
+        envir.avatarControls.getObject().scale.set(1, 1, 1);
+    }
 
     envir.avatarControls.getObject().quaternion.set(0,0,0,1);
     envir.avatarControls.getObject().children[0].rotation.set(0,0,0);
-
+    envir.avatarControls.getObject().children[0].scale.set(1,1,1);
 }
 
 /**

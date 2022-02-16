@@ -321,6 +321,11 @@ THREE.SceneExporter.prototype = {
 //                console.log("Quaternion:", o);
 
                 // ================ Ververidis Main =============: All objs
+
+
+                var vswitch  = o.children[0].material.map;
+
+
                 var output = [
                     '\t\t' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
@@ -347,12 +352,12 @@ THREE.SceneExporter.prototype = {
                     '   "fbxID" : ' + '"' + o.fbxID + '"' + ',',
                     '   "glbID" : ' + '"' + o.glbID + '"' + ',',
                     '   "color" : ' + '"' + o.children[0].material.color.getHexString() + '"' + ',',
-                    '   "videoTextureSrc" : ' + '"' + (o.children[0].material.map? o.children[0].material.map.image.src : '') + '"' + ',',
-                    '   "videoTextureRepeatX" : ' + '"' + (o.children[0].material.map? o.children[0].material.map.repeat.x :'') + '"' + ',',
-                    '   "videoTextureRepeatY" : ' + '"' + (o.children[0].material.map?o.children[0].material.map.repeat.y:'') + '"' + ',',
-                    '   "videoTextureCenterX" : ' + '"' + (o.children[0].material.map?o.children[0].material.map.center.x:'') + '"' + ',',
-                    '   "videoTextureCenterY" : ' + '"' + (o.children[0].material.map?o.children[0].material.map.center.y:'') + '"' + ',',
-                    '   "videoTextureRotation" : ' + '"' + (o.children[0].material.map?o.children[0].material.map.rotation:'') + '"' + ',',
+                    '   "videoTextureSrc" : ' + '"' + (vswitch? vswitch.image.src : '') + '"' + ',',
+                    '   "videoTextureRepeatX" : ' + '"' + (vswitch? vswitch.repeat.x :'') + '"' + ',',
+                    '   "videoTextureRepeatY" : ' + '"' + (vswitch? vswitch.repeat.y:'') + '"' + ',',
+                    '   "videoTextureCenterX" : ' + '"' + (vswitch? vswitch.center.x:'') + '"' + ',',
+                    '   "videoTextureCenterY" : ' + '"' + (vswitch? vswitch.center.y:'') + '"' + ',',
+                    '   "videoTextureRotation" : ' + '"' + (vswitch? vswitch.rotation:'') + '"' + ',',
                     '   "audioID" : ' + '"' + o.audioID + '"' + ',',
                     '	"image1id" : ' + '"' + o.image1id  + '"' + ',',
                     '   "doorName_source" : ' + '"' + o.doorName_source  + '"' + ',',

@@ -455,9 +455,9 @@ class vrodos_3d_editor_environmentals {
         var loader = new THREE.FontLoader();
         loader.scene = this.scene;
 
-        var pathn = window.location.pathname.replace(/[^/]*$/, '');
-        pathn = pathn.split('/').slice(0,-2).join('/');
-        loader.load(pathn + '/wp-content/plugins/VRodos/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts );
+        // var pathn = window.location.pathname.replace(/[^/]*$/, '');
+        // pathn = pathn.split('/').slice(0,-2).join('/');
+        loader.load(siteurl + '/wp-content/plugins/VRodos/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts );
     }
 
 

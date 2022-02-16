@@ -46,10 +46,10 @@ var dg_controller_rx = controlInterface.rotate.add( gui_controls_funs, 'dg_rx', 
 var dg_controller_ry = controlInterface.rotate.add( gui_controls_funs, 'dg_ry', -179, 180, 0.001).name('<span style="color:green">Rotate y</span>');//.listen();
 var dg_controller_rz = controlInterface.rotate.add( gui_controls_funs, 'dg_rz', -179, 180, 0.001).name('<span style="color:blue">Rotate z</span>');//.listen();
 
-var dg_controller_sc  = controlInterface.scale.add( gui_controls_funs, 'dg_scale').min(0.001).max(1000).step(0.001).name('Scale');//.listen();
-var dg_controller_dim_x = controlInterface.scale.add( gui_controls_funs, 'dg_dim_x').min(0.001).max(1000).step(0.001).name('<span style="color:red">x length</span>');
-var dg_controller_dim_y = controlInterface.scale.add( gui_controls_funs, 'dg_dim_y').min(0.001).max(1000).step(0.001).name('<span style="color:green">y length</span>');
-var dg_controller_dim_z = controlInterface.scale.add( gui_controls_funs, 'dg_dim_z').min(0.001).max(1000).step(0.001).name('<span style="color:blue">z length</span>');
+//var dg_controller_sc  = controlInterface.scale.add( gui_controls_funs, 'dg_scale').min(0.001).max(1000).step(0.001).name('Scale');//.listen();
+var dg_controller_dim_x = controlInterface.scale.add( gui_controls_funs, 'dg_dim_x').min(0.01).max(30).step(0.01).name('<span style="color:red">x length</span>');
+var dg_controller_dim_y = controlInterface.scale.add( gui_controls_funs, 'dg_dim_y').min(0.01).max(30).step(0.01).name('<span style="color:green">y length</span>');
+var dg_controller_dim_z = controlInterface.scale.add( gui_controls_funs, 'dg_dim_z').min(0.01).max(30).step(0.01).name('<span style="color:blue">z length</span>');
 
 controlInterface.translate.domElement.style='width:100%';
 
@@ -123,21 +123,21 @@ function controllerDatGuiOnChange() {
 
     // ----- Scale ----
 
-    dg_controller_sc.onChange(function(value) {
-
-            cancelAnimationFrame( id_animation_frame );
-
-            transform_controls.object.scale.set(gui_controls_funs.dg_scale, gui_controls_funs.dg_scale, gui_controls_funs.dg_scale);
-
-            var dims = findDimensions(transform_controls.object);
-
-            gui_controls_funs.dg_dim_x = dims[0];
-            gui_controls_funs.dg_dim_y = dims[1];
-            gui_controls_funs.dg_dim_z = dims[2];
-
-            animate();
-        }
-    );
+    // dg_controller_sc.onChange(function(value) {
+    //
+    //         cancelAnimationFrame( id_animation_frame );
+    //
+    //         transform_controls.object.scale.set(gui_controls_funs.dg_scale, gui_controls_funs.dg_scale, gui_controls_funs.dg_scale);
+    //
+    //         var dims = findDimensions(transform_controls.object);
+    //
+    //         gui_controls_funs.dg_dim_x = dims[0];
+    //         gui_controls_funs.dg_dim_y = dims[1];
+    //         gui_controls_funs.dg_dim_z = dims[2];
+    //
+    //         animate();
+    //     }
+    // );
 
 
     // When x length changes from dat gui then change also scale, y and z lengths, and scale the object with transform controls also

@@ -27,7 +27,7 @@ class VRodos_LoaderMulti {
                 // Load Steve
                 if (name == 'avatarYawObject') {
 
-                    console.log('avatarYawObject');
+                    //console.log('avatarYawObject');
                     //mtlLoader.setPath(pluginPath+"/assets/Steve/");
                     // STEVE is the CAMERA MESH
 
@@ -113,7 +113,7 @@ class VRodos_LoaderMulti {
                     //------------------- OBJ Loading --------------------------
                     if (resources3D[name]['mtl'] != '') {
 
-                        console.log("OBJ loading");
+                        //console.log("OBJ loading");
 
                         mtlLoader.setPath(resources3D[name]['path']);
                         mtlLoader.load(resources3D[name]['mtl'], function (materials) {
@@ -178,7 +178,7 @@ class VRodos_LoaderMulti {
 
                     } else if (resources3D[name]['fbxID'] !== "" && resources3D[name]['fbxID'] !== undefined) {
 
-                        console.log("FBX loading");
+                        //console.log("FBX loading");
                         // ------------------ FBX Loading ---------------------------------
 
                         jQuery.ajax({
@@ -293,7 +293,7 @@ class VRodos_LoaderMulti {
                         });
                     } else if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
 
-                        console.log("GLB Loading")
+                        //console.log("GLB Loading")
 
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
@@ -437,7 +437,7 @@ class VRodos_LoaderMulti {
              // Scene Settings
              if(name==='SceneSettings') {
 
-                 console.log("scene settings");
+                 //console.log("scene settings");
 
                  envir.renderer.setClearColor(resources3D['SceneSettings'].ClearColor);
 
@@ -459,8 +459,6 @@ class VRodos_LoaderMulti {
 
              if (resources3D[name]['categoryName']==='lightSun' ){
 
-
-                console.log("Light Sun");
                 var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                                             resources3D[name]['lightcolor'][1],
                                             resources3D[name]['lightcolor'][2]);
@@ -478,15 +476,14 @@ class VRodos_LoaderMulti {
                  lightSun.shadow.camera.far = 500;     // default
 
                 // REM HERE
-                lightSun.position.set(
-                    resources3D[name]['trs']['translation'][0],
-                resources3D[name]['trs']['translation'][1],
-                resources3D[name]['trs']['translation'][2] );
+                lightSun.position.set(resources3D[name]['trs']['translation'][0],
+                                      resources3D[name]['trs']['translation'][1],
+                                      resources3D[name]['trs']['translation'][2] );
 
                 lightSun.rotation.set(
-                    resources3D[name]['trs']['rotation'][0],
-                resources3D[name]['trs']['rotation'][1],
-                resources3D[name]['trs']['rotation'][2] );
+                                            resources3D[name]['trs']['rotation'][0],
+                                        resources3D[name]['trs']['rotation'][1],
+                                        resources3D[name]['trs']['rotation'][2] );
 
 
 
@@ -511,10 +508,10 @@ class VRodos_LoaderMulti {
                  lightSun.shadow.camera.near = 0.5;
                  lightSun.shadow.camera.far = 1000;
 
-                 lightSun.shadow.camera.left = -10;
-                 lightSun.shadow.camera.right = 10;
-                 lightSun.shadow.camera.top = 10;
-                 lightSun.shadow.camera.bottom = -10;
+                 lightSun.shadow.camera.left = -30;
+                 lightSun.shadow.camera.right = 30;
+                 lightSun.shadow.camera.top = 30;
+                 lightSun.shadow.camera.bottom = -30;
 
                 //// Add Sun Helper
                 var sunSphere = new THREE.Mesh(
@@ -571,7 +568,7 @@ class VRodos_LoaderMulti {
 
         } else if (resources3D[name]['categoryName']==='lightLamp' ){
 
-            console.log("Light Lamp");
+
 
             var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                 resources3D[name]['lightcolor'][1],
@@ -730,41 +727,20 @@ function setObjectProperties(object, name, resources3D) {
 
 
 
-
     object.children[0].material.color.setHex( "0x" +  resources3D[name]['color'] );
+    object.children[0].receiveShadow = true;
+    object.children[0].castShadow = true;
 
     //============== Video texture ==========
     if(resources3D[name]['videoTextureSrc']!=='') {
 
-        console.log("resources3D[name]['videoTextureSrc']", resources3D[name]);
-
-        var videoDom = document.createElement('video');
-        videoDom.src = resources3D[name]['videoTextureSrc'];
-        videoDom.load();
-        var videoTexture = new THREE.VideoTexture(videoDom);
-
-        videoTexture.wrapS = videoTexture.wrapT = THREE.RepeatWrapping;
-
-        var rX = resources3D[name]['videoTextureRepeatX'];
-        var rY = resources3D[name]['videoTextureRepeatY'];
-
-        videoTexture.repeat.set(rX, rY);
-
-        var rotationTexture = resources3D[name]['videoTextureRotation'];
-        videoTexture.rotation = rotationTexture;
-
-        var cX = resources3D[name]['videoTextureCenterX'];
-        var cY = resources3D[name]['videoTextureCenterY'];
-        videoTexture.center = new THREE.Vector2(cX, cY);
-
-        var movieMaterial = new THREE.MeshBasicMaterial({map: videoTexture, side: THREE.DoubleSide});
-        setTimeout(function () {
-            transform_controls.object.children[0].material = movieMaterial;
-            videoDom.play();
-        }, 1000);
+        //console.log("resources3D[name]['videoTextureSrc']", resources3D[name]['videoTextureSrc']);
+       startVideo(resources3D, name);
     }
 
     //=======================================
+
+
 
     object.audioID = resources3D[name]['audioID'];
 
@@ -800,10 +776,47 @@ function setObjectProperties(object, name, resources3D) {
         resources3D[name]['trs']['rotation'][1],
         resources3D[name]['trs']['rotation'][2] );
 
-    object.scale.set( resources3D[name]['trs']['scale'],
-        resources3D[name]['trs']['scale'],
-        resources3D[name]['trs']['scale']);
+    object.scale.set( resources3D[name]['trs']['scale'][0],
+        resources3D[name]['trs']['scale'][1],
+        resources3D[name]['trs']['scale'][2]);
 
 
     return object;
+}
+
+function startVideo (resources3D, name){
+
+    //console.log("startVideo");
+
+    var videoDom = Array();
+    var videoTexture = Array();
+
+    videoDom[name] = document.createElement('video');
+    videoDom[name].src = resources3D[name]['videoTextureSrc'];
+    videoDom[name].load();
+    videoTexture[name] = new THREE.VideoTexture(videoDom[name]);
+
+    videoTexture[name].wrapS = videoTexture[name].wrapT = THREE.RepeatWrapping;
+
+    var rX = resources3D[name]['videoTextureRepeatX'];
+    var rY = resources3D[name]['videoTextureRepeatY'];
+
+    videoTexture[name].repeat.set(rX, rY);
+    videoTexture[name].rotation = resources3D[name]['videoTextureRotation'];
+
+    var cX = resources3D[name]['videoTextureCenterX'];
+    var cY = resources3D[name]['videoTextureCenterY'];
+    videoTexture[name].center = new THREE.Vector2(cX, cY);
+
+
+    var cHex = "#" + resources3D[name]['color'];
+
+    var movieMaterial = new THREE.MeshBasicMaterial({map: videoTexture[name], side: THREE.DoubleSide, color: cHex});
+    setTimeout(function () {
+        envir.scene.getChildByName(name).children[0].material = movieMaterial;
+
+
+
+        videoDom[name].play();
+    }, 1000);
 }

@@ -158,7 +158,7 @@ echo 'let project_keys ="'.json_encode(vrodos_getProjectKeys($project_id, $proje
 echo 'user_email = "'.$user_email.'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
 echo 'energy_stats = '.json_encode(vrodos_windEnergy_scene_stats($current_scene_id)).';';
-
+echo 'var siteurl="'.site_url().'";';
 
 if ($project_type === 'Archaeology') {
     echo "var doorsAll=" . json_encode($doorsAllInfo) . ";";

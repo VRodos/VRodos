@@ -42,42 +42,33 @@ function vrodos_load_vrviewer_scripts()
     wp_enqueue_style('vrodos_datgui');
     wp_enqueue_style('vrodos_3D_editor');
     wp_enqueue_style('vrodos_3D_editor_browser');
-    
+	
+	wp_enqueue_script('vrodos_3d_editor_environmentals');
+	wp_enqueue_script('vrodos_keyButtons');
+	wp_enqueue_script('vrodos_rayCasters');
+	wp_enqueue_script('vrodos_auxControlers');
+	wp_enqueue_script('vrodos_LoaderMulti');
+	wp_enqueue_script('vrodos_movePointerLocker');
+	wp_enqueue_script('vrodos_addRemoveOne');
+	wp_enqueue_script('vrodos_3d_editor_buttons');
+	wp_enqueue_script('vrodos_vr_editor_analytics');
+	wp_enqueue_script('vrodos_fetch_asset_scenes_request');
+ 
 }
 add_action('wp_enqueue_scripts', 'vrodos_load_vrviewer_scripts' );
 
 
-function vrodos_load_custom_functions_vrviewer(){
-    wp_enqueue_script('vrodos_3d_editor_environmentals');
-    wp_enqueue_script('vrodos_keyButtons');
-    wp_enqueue_script('vrodos_rayCasters');
-    wp_enqueue_script('vrodos_auxControlers');
-    wp_enqueue_script('vrodos_LoaderMulti');
-    wp_enqueue_script('vrodos_movePointerLocker');
-    wp_enqueue_script('vrodos_addRemoveOne');
-    wp_enqueue_script('vrodos_3d_editor_buttons');
-    wp_enqueue_script('vrodos_vr_editor_analytics');
-    wp_enqueue_script('vrodos_fetch_asset_scenes_request');
-}
-add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vrviewer' );
-
-?>
-
-<script type="text/javascript">
-    // keep track for the undo-redo function
-    post_revision_no = 1;
-
-    // is rendering paused
-    isPaused = false;
-
-    // Use lighting or basic materials (basic does not employ light, no shadows)
-    window.isAnyLight = true;
-</script>
-
-
-<?php
 // Define current path of plugin
 $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
+
+// Fetch Asset
+wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
+                                             '/js_libs/ajaxes/fetch_asset.js', array('jquery') );
+wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
+	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+);
+
+
 
 // wpcontent/uploads/
 $upload_url = wp_upload_dir()['baseurl'];
@@ -91,27 +82,8 @@ $project_id    = sanitize_text_field( intval( $_GET['vrodos_game'] ) );
 $project_post  = get_post($project_id);
 $projectSlug   = $project_post->post_name;
 
-
-
 // Get if project is : 'Archaeology' or 'Energy' or 'Chemistry'
 $project_type = vrodos_return_project_type($project_id)->string;
-
-
-
-
-// Get Joker project id
-$joker_project_id = get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID;
-
-// Wind Energy Only
-if ($project_type === 'Energy') {
-    $scenesNonRegional = vrodos_getNonRegionalScenes($_REQUEST['vrodos_game']);
-    $scenesMarkerAllInfo = vrodos_get_all_scenesMarker_of_project_fastversion($project_id);
-}
-
-// Archaeology only
-if ($project_type === 'Archaeology') {
-    $doorsAllInfo = vrodos_get_all_doors_of_project_fastversion($project_id);
-}
 
 // Get scene content from post
 $scene_post = get_post($current_scene_id);
@@ -122,115 +94,36 @@ $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
 
 $sceneTitle = $scene_post->post_name;
 
-// Front End or Back end
-$isAdmin = is_admin() ? 'back' : 'front';
-
-
-$allProjectsPage = vrodos_getEditpage('allgames');
-$newAssetPage = vrodos_getEditpage('asset');
-$editscenePage = vrodos_getEditpage('scene');
-$editscene2DPage = vrodos_getEditpage('scene2D');
-$editsceneExamPage = vrodos_getEditpage('sceneExam');
-
-// for vr_editor
-$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
-                                '&vrodos_scene=' .$current_scene_id . '&vrodos_asset=' );
-
-// User data
-$user_data = get_userdata( get_current_user_id() );
-$user_email = $user_data->user_email;
-
-
 // Shift vars to Javascript side
 echo '<script>';
 echo 'var pluginPath="'.$pluginpath.'";';
 echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
-echo 'let projectId="'.$project_id.'";';
-echo 'let projectSlug="'.$projectSlug.'";';
-echo 'var isAdmin="'.$isAdmin.'";';
-echo 'let isUserAdmin="'.current_user_can('administrator').'";';
-echo 'let urlforAssetEdit="'.$urlforAssetEdit.'";';
-echo 'let scene_id ="'.$current_scene_id.'";';
-echo 'let game_type ="'.strtolower($project_type).'";';
-echo 'let project_keys ="'.json_encode(vrodos_getProjectKeys($project_id, $project_type)).'";';
-echo 'user_email = "'.$user_email.'";';
-echo 'current_user_id = "'.get_current_user_id().'";';
-echo 'energy_stats = '.json_encode(vrodos_windEnergy_scene_stats($current_scene_id)).';';
-
-
-if ($project_type === 'Archaeology') {
-    echo "var doorsAll=" . json_encode($doorsAllInfo) . ";";
-}
-if ($project_type === 'Energy') {
-    echo "var scenesMarkerAll=" . json_encode($scenesMarkerAllInfo) . ";";
-    echo "var scenesNonRegional=".json_encode($scenesNonRegional).";";
-}
+echo 'var siteurl="'.site_url().'";';
 echo '</script>';
-
-
-
-// Get 'parent-game' taxonomy with the same slug as Game (in order to show scenes that belong here)
-$allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
-
-$allScenePGameID = $allScenePGame->term_id;
-
-
-// Fetch Asset
-wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
-    '/js_libs/ajaxes/fetch_asset.js', array('jquery') );
-wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
-    array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
-);
-
-
-
-wp_enqueue_media($scene_post->ID);
-require_once(ABSPATH . "wp-admin" . '/includes/media.php');
-
 
 
 
 // Make the header of the page
 get_header(); ?>
 
-
-
     <!-- PANELS -->
-    <div class="panels">
-        
-        <!-- Panel 1 is the vr enivironment -->
-        <div class="panel active" id="panel-1" role="tabpanel" aria-hidden="false">
-            
-            <!-- 3D editor  -->
-            <div id="vr_editor_main_div">
+    <!-- 3D editor  -->
+    <div id="vr_editor_main_div">
 
-                <!--  Make form to submit user changes -->
-                <div id="progressWrapper" class="VrInfoPhpStyle" style="visibility: visible">
-                    <div id="progress" class="ProgressContainerStyle mdc-theme--text-primary-on-light mdc-typography--subheading1">
-                    </div>
+        <!--  Make form to submit user changes -->
+        <div id="progressWrapper" class="VrInfoPhpStyle" style="visibility: visible">
+            <div id="progress" class="ProgressContainerStyle mdc-theme--text-primary-on-light mdc-typography--subheading1">
+            </div>
 
-                    <div id="result_download" class="result"></div>
-                    <div id="result_download2" class="result"></div>
-                </div>
-                
-                <?php
-                    require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-Popups.php');
-                 ?>
-                
-            </div>   <!--   VR DIV   -->
-          
-      </div>
-    </div>
-
-
+            <div id="result_download" class="result"></div>
+            <div id="result_download2" class="result"></div>
+        </div>
+    </div>   <!--   VR DIV   -->
 
     <!--  Part 3: Start 3D with Javascript   -->
     <script>
         // all 3d dom
         let container_3D_all = document.getElementById( 'vr_editor_main_div' );
-
-        // Selected object name
-        var selected_object_name = '';
 
         // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
         var envir = new vrodos_3d_editor_environmentals(container_3D_all);
@@ -263,38 +156,19 @@ get_header(); ?>
 
             jQuery("#progressWrapper").get(0).style.visibility= "hidden";
 
-            // Get the last inserted object
-            let name = Object.keys(resources3D).pop();
-            let trs_tmp = resources3D[name]['trs'];
-            let objItem = envir.scene.getObjectByName(name);
-
-            // In the case the last asset is missing then put controls on the camera
-            if (typeof objItem === "undefined"){
-                
-                name = 'avatarYawObject';
-                trs_tmp = resources3D[name]['trs'];
-                objItem = envir.scene.getObjectByName(name);
-                
-            } else {
-                selected_object_name = name;
-            }
 
             // Find scene dimension in order to configure camera in 2D view (Y axis distance)
             findSceneDimensions();
             envir.updateCameraGivenSceneLimits();
 
-            //envir.setHierarchyViewer();
-
             // Set Target light for Spots
             for (let n in resources3D) {
-                
                 (function (name) {
                     if (resources3D[name]['categoryName'] === 'lightSpot') {
                         let lightSpot = envir.scene.getObjectByName(name);
                         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
                     }
                 })(n);
-                
             }
 
         }; // End of manager
@@ -344,10 +218,6 @@ get_header(); ?>
         // ANIMATE
         function animate()
         {
-            if(isPaused) {
-                return;
-            }
-
             id_animation_frame = requestAnimationFrame( animate );
 
             // Select the proper camera (orbit, or avatar, or thirdPersonView)
@@ -376,6 +246,7 @@ get_header(); ?>
             
             // Update it
             envir.orbitControls.update();
+            
         }
 
         animate();
@@ -384,5 +255,7 @@ get_header(); ?>
         envir.isComposerOn = true;
         //transform_controls.visible  = false;
         envir.getSteveFrustum().visible = false;
+        envir.orbitControls.enableRotate = true;
+        envir.orbitControls.enable = true;
     </script>
 
