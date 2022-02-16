@@ -1,8 +1,7 @@
 <?php
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
-$parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
+
 
 // Load VR_Editor Scripts
 function vrodos_load_vrviewer_scripts()
@@ -53,7 +52,19 @@ function vrodos_load_vrviewer_scripts()
 	wp_enqueue_script('vrodos_3d_editor_buttons');
 	wp_enqueue_script('vrodos_vr_editor_analytics');
 	wp_enqueue_script('vrodos_fetch_asset_scenes_request');
+	
+	wp_enqueue_script( 'vrodos_load119_Font');
+	wp_enqueue_script( 'vrodos_load119_Cache');
+	wp_enqueue_script( 'vrodos_load119_Loader');
+	wp_enqueue_script( 'vrodos_load119_FileLoader');
+	wp_enqueue_script( 'vrodos_load119_LoadingManager');
+	
+	wp_enqueue_script( 'vrodos_load119_FontLoader');
+	
+	wp_enqueue_script( 'vrodos_load119_FileLoader');
+	
  
+	
 }
 add_action('wp_enqueue_scripts', 'vrodos_load_vrviewer_scripts' );
 
@@ -78,19 +89,18 @@ $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 $current_scene_id = sanitize_text_field( intval( $_GET['vrodos_scene'] ));
 
 // Project
-$project_id    = sanitize_text_field( intval( $_GET['vrodos_game'] ) );
-$project_post  = get_post($project_id);
-$projectSlug   = $project_post->post_name;
-
-// Get if project is : 'Archaeology' or 'Energy' or 'Chemistry'
-$project_type = vrodos_return_project_type($project_id)->string;
+//$project_id    = sanitize_text_field( intval( $_GET['vrodos_game'] ) );
+//$project_post  = get_post($project_id);
+//$projectSlug   = $project_post->post_name;
+//
+//// Get if project is : 'Archaeology' or 'Energy' or 'Chemistry'
+//$project_type = vrodos_return_project_type($project_id)->string;
 
 // Get scene content from post
 $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
-$sceneJSON = $scene_post->post_content ? $scene_post->post_content :
-                        vrodos_getDefaultJSONscene(strtolower($project_type));
+$sceneJSON = $scene_post->post_content;
 
 $sceneTitle = $scene_post->post_name;
 
@@ -257,5 +267,51 @@ get_header(); ?>
         envir.getSteveFrustum().visible = false;
         envir.orbitControls.enableRotate = true;
         envir.orbitControls.enable = true;
+
+
+        
+        // ================== Text ============
+        const loader = new FontLoader();
+
+        loader.load( siteurl + '/wp-content/plugins/VRodos/js_libs/threejs87/helvetiker_regular.typeface.json', function ( font ) {
+
+            const geometry = new THREE.TextGeometry( 'Hello!', {
+                font: font,
+                size:1,
+                height: 0.1,
+                curveSegments: 6,
+                bevelEnabled: false,
+                bevelThickness: 0.5,
+                bevelSize: 0.5,
+                bevelOffset: 0,
+                bevelSegments: 1
+            } );
+
+            var texture = THREE.ImageUtils.loadTexture( siteurl + '/wp-content/plugins/VRodos/images/dots.png');
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set( 2, 2);
+
+            var localPlanes = [
+                new THREE.Plane( new THREE.Vector3( 0, 0, 0 ), 1 ),
+                new THREE.Plane( new THREE.Vector3( 15, 5, 15 ), 1 )
+            ];
+
+            var material = new THREE.MeshPhongMaterial( { map: texture, opacity:1, transparent:true,             emissiveIntensity: 1,
+                emissive: new THREE.Color(1, 0, 0) ,
+                clippingPlanes: localPlanes,
+                clipIntersection: true}
+            );
+            material.color.set(0xff0000);
+            textMesh1 = new THREE.Mesh( geometry, material );
+            textMesh1.position.y += 3;
+            envir.scene.add(textMesh1);
+
+            // ==============================
+
+
+            
+            
+        } );
+        
     </script>
 
