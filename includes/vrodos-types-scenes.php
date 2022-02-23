@@ -91,7 +91,8 @@ function vrodos_scenes_construct(){
         'exclude_from_search' => true,
         'publicly_queryable' => false,
         'show_in_nav_menus' => false,
-        'show_in_rest' => true,
+        'show_ui'           => true,
+        'show_in_menu'      => false,
         'menu_position' => 25,
         'menu_icon' => 'dashicons-media-default',
         'taxonomies' => array('vrodos_scene_pgame','vrodos_scene_yaml'),
@@ -139,8 +140,9 @@ function vrodos_scenes_parent_project_tax_define(){
     $args = array(
         'description' => 'Project that the Scene belongs',
         'labels' => $labels,
-        'public' => false,
+        'public' => true,
         'show_ui' => true,
+        'show_in_menu' => true,
         'hierarchical' => false,
         'show_admin_column' => true,
         'capabilities' => array (
@@ -174,6 +176,7 @@ function vrodos_scenes_taxyaml(){
         'labels' => $labels,
         'public' => false,
         'show_ui' => true,
+        'show_in_menu' => true,
         'hierarchical' => true,
         'show_admin_column' => true,
         'capabilities' => array (

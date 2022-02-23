@@ -30,7 +30,8 @@ function vrodos_assets_construct(){
         'exclude_from_search' => true,
         'publicly_queryable' => false,
         'show_in_nav_menus' => false,
-        'show_in_rest' => true,
+         'show_ui'               => true, // (bool) Whether to generate and allow a UI for managing this post type in the admin. Default is value of $public.
+         'show_in_menu'          => false, // Where to show the post type in the admin menu. To work, $show_ui must be true. If true, the post type is shown in its own top level menu. If false, no menu is shown. If a string of an existing top level menu ('tools.php' or 'edit.php?post_type=page', for example), the post type will be placed as a sub-menu of that. Default is value of $show_ui.
         'menu_position' => 25,
         'menu_icon' => 'dashicons-editor-textcolor',
         'taxonomies' => array('vrodos_asset3d_cat', 'vrodos_asset3d_pgame', 'vrodos_asset3d_ipr_cat'),

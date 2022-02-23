@@ -66,6 +66,7 @@ function vrodos_project_cpt_construct(){
 		'publicly_queryable'    => false,
 		'show_in_nav_menus'     => false,
 		'show_ui'               => true,
+		'show_in_menu'          => false,
 		'menu_position'     => 26,
 		'menu_icon'         =>'dashicons-media-interactive',
 		'taxonomies'        => array('vrodos_game_type'),
@@ -337,12 +338,15 @@ function vrodos_set_custom_vrodos_game_columns_fill( $column, $post_id ) {
 
 //Add and Show the metabox with Custom Field for Game and the Compiler Box ($vrodos_databox3)
 function vrodos_games_databox_add() {
-	
+
     global $vrodos_databox3;
-	
-	add_meta_box($vrodos_databox3['id'], 'Game Data', 'vrodos_games_databox_show', $vrodos_databox3['page'], $vrodos_databox3['context'], $vrodos_databox3['priority']);
-	add_meta_box('vrodos-games-assembler-box', 'Game Assembler', 'vrodos_games_assemblerbox_show', 'vrodos_game', 'side', 'low'); //Compiler Box
-	add_meta_box('vrodos-games-compiler-box', 'Game Compiler', 'vrodos_games_compilerbox_show', 'vrodos_game', 'side', 'low'); //Compiler Box
+
+    add_meta_box($vrodos_databox3['id'], 'Game Data', 'vrodos_games_databox_show',
+                 $vrodos_databox3['page'], $vrodos_databox3['context'], $vrodos_databox3['priority']);
+
+    add_meta_box('vrodos-games-assembler-box', 'Game Assembler', 'vrodos_games_assemblerbox_show', 'vrodos_game', 'side', 'low'); //Compiler Box
+
+    add_meta_box('vrodos-games-compiler-box', 'Game Compiler', 'vrodos_games_compilerbox_show', 'vrodos_game', 'side', 'low'); //Compiler Box
 }
 
 function vrodos_games_databox_show(){

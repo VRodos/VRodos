@@ -382,15 +382,18 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-settings.php' 
 
 
 if( is_admin() ){
-	$my_settings_page = new vrodos_settingsPage();
+	
+	
+	$vrodos_settings_page = new vrodos_settingsPage();
+	
 	//19
-	add_action( 'init', array( $my_settings_page, 'load_settings' ) );
+	add_action( 'init', array( $vrodos_settings_page, 'load_settings' ) );
 
 	//29
-	add_action( 'admin_init', array( $my_settings_page, 'register_general_settings' ) );
+	add_action( 'admin_init', array( $vrodos_settings_page, 'register_general_settings' ) );
 
 	// 43
-	add_action( 'admin_menu', array( $my_settings_page, 'render_setting') );
+	//add_action( 'admin_menu', array( $vrodos_settings_page, 'render_setting') );
 }
 
 
@@ -700,6 +703,7 @@ require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
 
 // 47
 add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Front-end
+
 add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Back-end
 
 // Register and load the widget
@@ -709,7 +713,7 @@ function vrodos_load_widget() {
 add_action( 'widgets_init', 'vrodos_load_widget');
 
 
-//----------------------- WIDGETS ---------------------------------------------
+//----------------------- WIDGET SCENE ---------------------------------------------
 
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widget-scene.php');
 
@@ -911,10 +915,25 @@ add_action( 'wp_ajax_vrodos_fetch_video_action', 'vrodos_fetch_video_action_call
 // AJAX for delete asset
 add_action('wp_ajax_vrodos_delete_asset_action', 'vrodos_delete_asset3d_frontend_callback');
 
-// AJAX for fetch asset
+
+
+// AJAX for fetching assets
+
+// Front-end FBX Logged in
 add_action('wp_ajax_vrodos_fetch_fbx_asset_action', 'vrodos_fetch_fbx_asset3d_frontend_callback');
+
+// Front-end FBX not Logged in
+add_action('wp_ajax_nopriv_vrodos_fetch_fbx_asset_action', 'vrodos_fetch_fbx_asset3d_frontend_callback');
+
+
+// Front-end GLB Logged in
 add_action('wp_ajax_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_asset3d_frontend_callback');
 
+// Front-end GLB not Logged in
+add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_asset3d_frontend_callback');
+
+
+// Backend
 add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_backend_callback');
 
 // ------- Ajaxes for compiling ---------
@@ -1017,3 +1036,114 @@ function vrodos_remove_db_residues(){
 	// 7. wp__games_versions table
 	$wpdb->query("DROP TABLE ".$del_prefix."_games_versions");
 }
+
+
+add_action('admin_menu', 'vrodos_plugin_menu');
+
+function vrodos_plugin_menu(){
+	add_menu_page( 'VRodos Plugin Page',
+				   'VRodos',
+					'manage_options',
+		            'vrodos-plugin',
+		            'vrodos_plugin_main_page',
+					plugin_dir_url( __FILE__ ) . '/images/vrodos_icon_20_w.png',
+					25);
+	
+	
+	add_submenu_page('vrodos-plugin',
+					 'Projects',
+				     'Projects',
+			         'manage_options',
+		             'edit.php?post_type=vrodos_game'
+                     );
+	
+	add_submenu_page('vrodos-plugin',
+					'Scenes',
+					'Scenes',
+					'manage_options',
+					'edit.php?post_type=vrodos_scene'
+					);
+	
+	
+	add_submenu_page('vrodos-plugin',
+		'Assets',
+		'Assets',
+		'manage_options',
+		'edit.php?post_type=vrodos_asset3d');
+	
+	
+	add_submenu_page('vrodos-plugin',
+		'Scene Types',
+		'Scene Types',
+		'manage_options',
+		'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_yaml');
+	
+	
+	add_submenu_page('vrodos-plugin',
+		'Scenes Parent Projects',
+		'Scenes Parent Projects',
+		'manage_options',
+		'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_pgame');
+	
+	
+	add_submenu_page('vrodos-plugin',
+		'Project Types',
+		'Project Types',
+		'manage_options',
+		'edit-tags.php?post_type=vrodos_game&taxonomy=vrodos_game_type');
+	
+	add_submenu_page('vrodos-plugin',
+		'Asset Types',
+		'Asset Types',
+		'manage_options',
+		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_cat');
+	
+	
+	add_submenu_page('vrodos-plugin',
+		'Asset Projects',
+		'Asset Projects',
+		'manage_options',
+		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_pgame');
+	
+	add_submenu_page('vrodos-plugin',
+		'Asset IPR',
+		'Asset IPR',
+		'manage_options',
+		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_ipr_cat');
+	
+}
+
+function vrodos_plugin_main_page(){
+	echo "<h1>VRodos plugin</h1>";
+	echo "<h2>Manage 3D data</h2>";
+}
+
+add_action('parent_file', 'keep_taxonomy_menu_open');
+function keep_taxonomy_menu_open($parent_file) {
+	global $current_screen;
+	$taxonomy = $current_screen->taxonomy;
+	if ($taxonomy == 'vrodos_scene_yaml' || $taxonomy == 'vrodos_scene_pgame' || $taxonomy == 'vrodos_game_type' ||
+	    $taxonomy == 'vrodos_asset3d_cat' || $taxonomy == 'vrodos_asset3d_cat' ||  $taxonomy == 'vrodos_asset3d_pgame' ||
+	    $taxonomy == 'vrodos_asset3d_ipr_cat'
+				)
+		$parent_file = 'vrodos-plugin';
+	return $parent_file;
+}
+//function vrodos_plugin_admin_show_projects(){
+//	$redirect_url = admin_url( '/edit.php?post_type=vrodos_game');
+//	echo "<script>location.href = '$redirect_url';</script>";
+//
+//}
+//
+//function vrodos_plugin_admin_show_scenes(){
+//	$redirect_url = admin_url( '/edit.php?post_type=vrodos_scene');
+//	echo "<script>location.href = '$redirect_url';</script>";
+//}
+//
+//function vrodos_plugin_admin_show_assets(){
+//	$redirect_url = admin_url( '/edit.php?post_type=vrodos_asset3d');
+//	echo "<script>location.href = '$redirect_url';</script>";
+//}
+
+
+

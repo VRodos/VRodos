@@ -50,22 +50,15 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_vr_editor_analytics');
 	wp_enqueue_script('vrodos_fetch_asset_scenes_request');
  
- 
-//    $pluginpath = dirname (plugin_dir_url( __DIR__  ));
-//    // Fetch Asset
-//    wp_enqueue_script( 'ajax-script_fetchasset_meta', $pluginpath.'/vrodos/js_libs/ajaxes/fetch_asset.js', array('jquery') );
-//
-//    wp_localize_script( 'ajax-script_fetchasset_meta', 'my_ajax_object_fetchasset_meta',
-//        array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
-//    );
-	
-	
 	// Define current path of plugin
 	$pluginpath = str_replace('\\','/', plugin_dir_url( __DIR__  ));
-
+    
     // Fetch Asset
 	wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
 	                                             '/js_libs/ajaxes/fetch_asset.js', array('jquery') );
+    
+    //$glb_file_name = get_post($assetpostMeta['vrodos_asset3d_glb'][0])->guid;
+    
 	wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
 		array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 	);

@@ -75,6 +75,7 @@ $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 // Fetch Asset
 wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
                                              '/js_libs/ajaxes/fetch_asset.js', array('jquery') );
+
 wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );

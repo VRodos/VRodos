@@ -780,7 +780,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 
 .panel { display: none; }
 .panel.active { display: block; }
-.navigation-top {display:none;}
+/*.navigation-top {display:none;}*/
 .mdc-tab { min-width: 0; }
 .custom-header { display:none; }
 .main-navigation a { padding: 0.2em 1em; font-size:9pt !important;}

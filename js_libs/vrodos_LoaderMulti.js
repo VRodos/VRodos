@@ -295,6 +295,8 @@ class VRodos_LoaderMulti {
 
                         //console.log("GLB Loading")
 
+
+
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
                             type: 'POST',
@@ -408,7 +410,9 @@ class VRodos_LoaderMulti {
                             // Ajax error
                             error: function (xhr, ajaxOptions, thrownError) {
 
-                                alert("Could not fetch GLB asset. Probably deleted ?");
+                                alert("Could not fetch GLB asset. Probably deleted ? "+ name);
+
+
 
                                 console.log("Ajax Fetch Asset: ERROR: 189" + thrownError);
                             }
@@ -792,6 +796,8 @@ function startVideo (resources3D, name){
     var videoTexture = Array();
 
     videoDom[name] = document.createElement('video');
+    videoDom[name].autoplay = true;
+    videoDom[name].muted = true;
     videoDom[name].src = resources3D[name]['videoTextureSrc'];
     videoDom[name].load();
     videoTexture[name] = new THREE.VideoTexture(videoDom[name]);
@@ -812,11 +818,25 @@ function startVideo (resources3D, name){
     var cHex = "#" + resources3D[name]['color'];
 
     var movieMaterial = new THREE.MeshBasicMaterial({map: videoTexture[name], side: THREE.DoubleSide, color: cHex});
+
     setTimeout(function () {
         envir.scene.getChildByName(name).children[0].material = movieMaterial;
 
+        // const promise = videoDom[name].play();
+        // if(promise !== undefined){
+        //     promise.then(() => {
+        //         // Autoplay started
+        //     }).catch(error => {
+        //         // Autoplay was prevented.
+        //         videoDom[name].muted = false;
+        //         videoDom[name].play();
+        //     });
+        // }
 
+        document.body.addEventListener("mousemove", function () {
+            //videoDom[name].muted = false;
+            videoDom[name].play();
+        });
 
-        videoDom[name].play();
     }, 1000);
 }
