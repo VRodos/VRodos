@@ -15,12 +15,9 @@ function vrodos_read_url(input, id) {
 
 
 function vrodos_fillin_widget_assettrs( selectedObject ) {
-
     if (selectedObject) {
         let asset_id = selectedObject.value;
         vrodos_fetch_Assettrs_and_setWidget(asset_id, selectedObject);
-
-
     }
 }
 

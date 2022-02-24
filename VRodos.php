@@ -5,7 +5,7 @@
  * Description: Make your wordpress website a VR site
  * Author: Dimitrios Ververidis, ververid@iti.gr
  * Author URI: https://vrodos.iti.gr
- * Version: 0.6
+ * Version: 0.7
  */
 /*
  * Please change root .htaccess for uploading big 3D model files
@@ -179,6 +179,7 @@ function vrodos_register_styles() {
     //wp_register_style( 'vrodos_materialize_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/materialize.css' );
 	
 	wp_register_style( 'vrodos_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_asseteditor.css' );
+	wp_register_style( 'vrodos_sceneeditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_sceneeditor.css' );
 	
 	wp_register_style( 'vrodos_widgets_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_widgets.css' );
  
@@ -1038,6 +1039,8 @@ function vrodos_remove_db_residues(){
 }
 
 
+
+//---------------- Back end Menu -------------------
 add_action('admin_menu', 'vrodos_plugin_menu');
 
 function vrodos_plugin_menu(){
@@ -1097,8 +1100,7 @@ function vrodos_plugin_menu(){
 		'Asset Types',
 		'manage_options',
 		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_cat');
-	
-	
+
 	add_submenu_page('vrodos-plugin',
 		'Asset Projects',
 		'Asset Projects',
@@ -1113,10 +1115,7 @@ function vrodos_plugin_menu(){
 	
 }
 
-function vrodos_plugin_main_page(){
-	echo "<h1>VRodos plugin</h1>";
-	echo "<h2>Manage 3D data</h2>";
-}
+
 
 add_action('parent_file', 'keep_taxonomy_menu_open');
 function keep_taxonomy_menu_open($parent_file) {
@@ -1129,21 +1128,74 @@ function keep_taxonomy_menu_open($parent_file) {
 		$parent_file = 'vrodos-plugin';
 	return $parent_file;
 }
-//function vrodos_plugin_admin_show_projects(){
-//	$redirect_url = admin_url( '/edit.php?post_type=vrodos_game');
-//	echo "<script>location.href = '$redirect_url';</script>";
-//
-//}
-//
-//function vrodos_plugin_admin_show_scenes(){
-//	$redirect_url = admin_url( '/edit.php?post_type=vrodos_scene');
-//	echo "<script>location.href = '$redirect_url';</script>";
-//}
-//
-//function vrodos_plugin_admin_show_assets(){
-//	$redirect_url = admin_url( '/edit.php?post_type=vrodos_asset3d');
-//	echo "<script>location.href = '$redirect_url';</script>";
-//}
 
+function vrodos_plugin_main_page(){
+	?>
+	
+	<div id="wpbody" role="main">
+	<div id="wpbody-content">
+	<div class="wrap">
+	<div id="welcome-panel" class="welcome-panel" style="background: #1b4d0d url(images/about-texture.png) center repeat ">
+	<div class="welcome-panel-content">
+	<div class="welcome-panel-header">
+		<h2>Welcome to VRodos!</h2>
+		<p>
+			<a href="https://vrodos.iti.gr">
+				Learn more about VRodos 0.7 version.</a>
+		</p>
+	</div>
+	<div class="welcome-panel-column-container">
+		<div class="welcome-panel-column">
+			<div class="welcome-panel-icon-pages"></div>
+			<div class="welcome-panel-column-content">
+				<h3>3D Models Repository</h3>
+				<p>Database with web interfaces for 3D models management.</p>
+			</div>
+		</div>
+		<div class="welcome-panel-column">
+			<div class="welcome-panel-icon-layout"></div>
+			<div class="welcome-panel-column-content">
+				<h3>Authoring tool for VR applications</h3>
+				<p>An authoring tool for VR applications in Unity3D format without programming.</p>
+			</div>
+		</div>
+		<div class="welcome-panel-column">
+			<div class="welcome-panel-icon-styles"></div>
+			<div class="welcome-panel-column-content">
+				<h3>Management tool for Digital Labels.</h3>
+				<p>Authoring tool for Digital Labels with 3D data.</p>
+			</div>
+		</div>
+	</div>
+	</div>
+	</div>
+	</div>
+	</div>
+	</div>
+	
+	
+	
+	
+	<hr class="wp-block-separator"/>
+<!--	<h2> Authoring process</h2>-->
+
+<!--	<figure class="wp-block-table"><table><tbody><tr><td>1. Make new project</td><td>2. Add your own asset</td><td>3. Compile and play</td></tr><tr><td>-->
+<!--					<iframe src="https://www.youtube.com/embed/3RokEN-co9Y" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" width="560" height="315" frameborder="0"></iframe>-->
+<!--				</td><td>-->
+<!--					<iframe src="https://www.youtube.com/embed/iMJdcrztVmY" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" width="560" height="315" frameborder="0"></iframe>-->
+<!--				</td><td>-->
+<!--					<iframe src="https://www.youtube.com/embed/RWWUy1MD3j8" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" width="560" height="315" frameborder="0"></iframe>-->
+<!--				</td></tr></tbody></table>-->
+<!--	</figure>-->
+	
+	
+	
+	
+	
+	
+	
+	
+	<?php
+}
 
 

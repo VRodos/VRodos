@@ -215,10 +215,7 @@ function vrodos_get_ftpCredentials(){
 /* Get all game projects of the user */
 function vrodos_get_user_game_projects($user_id, $isUserAdmin){
     
-    
     $games_slugs = ['archaeology-joker','energy-joker','chemistry-joker'];
-    
-    
     
     // user is not logged in return only joker game
     if($user_id==0)
@@ -250,12 +247,58 @@ function vrodos_get_user_game_projects($user_id, $isUserAdmin){
     return array_unique ($games_slugs);
 }
 
+
+function get_scenes_wonder_around() {
+	
+	$allScenes = [];
+	
+	
+	$custom_query_args = array(
+		'post_type'      => 'vrodos_scene',
+		'posts_per_page' => - 1,
+		'tax_query'      => array(
+			array(
+				'taxonomy' => 'vrodos_scene_yaml',
+				'field'    => 'slug',
+				'terms'    => 'wonderaround-yaml',
+			),
+		),
+		'orderby'        => 'ID',
+		'order'          => 'DESC',
+		/*'paged' => $paged,*/
+	);
+	
+	$custom_query = new WP_Query( $custom_query_args );
+	
+	if ( $custom_query->have_posts() ) :
+		while ( $custom_query->have_posts() ) :
+			
+			$custom_query->the_post();
+			$scene_id = get_the_ID();
+			$scene_name = get_the_title();
+			
+			$scenePGame = get_the_terms($scene_id, 'vrodos_scene_pgame');
+			
+			$allAssets[] = [
+				'sceneName'=>$scene_name,
+				'sceneSlug'=>get_post()->post_name,
+				'sceneid'=>$scene_id,
+				'scene_parent_project'=>$scenePGame
+			];
+			
+		endwhile;
+	endif;
+	
+	
+	
+	
+	return $allAssets;
+}
+
+
+
 function get_assets($games_slugs){
-	
-	
-	
     $allAssets = [];
-    
     $queryargs = array(
         'post_type' => 'vrodos_asset3d',
         'posts_per_page' => -1

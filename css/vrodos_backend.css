@@ -105,3 +105,8 @@
     font-size:30px;
     padding-top:50px;
 }
+
+.welcome-panel::before {
+    background: none;
+}
+

@@ -151,37 +151,35 @@ class vrodos_3d_widget_scene extends WP_Widget {
 			    <?php _e( 'Scene id:' ); ?>
             </label>
 
-            <input class="widefat"
-                   id="<?php echo $this->get_field_id( 'scene_id' ); ?>"
-                   name="<?php echo $this->get_field_name( 'scene_id' ); ?>"
-                   type="text"
-                   value="<?php echo esc_attr( $scene_id ); ?>"
-            />
+<!--            <input class="widefat"-->
+<!--                   id="--><?php //echo $this->get_field_id( 'scene_id' ); ?><!--"-->
+<!--                   name="--><?php //echo $this->get_field_name( 'scene_id' ); ?><!--"-->
+<!--                   type="text"-->
+<!--                   value="--><?php //echo esc_attr( $scene_id ); ?><!--"-->
+<!--            />-->
 
-<!--            <select-->
-<!--                    class   ="widefat"-->
-<!--                    onchange="vrodos_fillin_widget_assettrs(this)"-->
-<!--                    id      ="--><?php //echo $this->get_field_id( 'asset_id');?><!--"-->
-<!--                    name    ="--><?php //echo $this->get_field_name( 'asset_id');?><!--"-->
-<!--                    data-widgetserialno ="--><?php //echo $this->number;?><!--"-->
-<!--            >-->
-<!---->
-<!--                <option value="">Select one</option>-->
-<!--			-->
-<!--			    --><?php
-//			    // Get all assets
-//			    $assets = get_assets([]);
-//
-//			    // Iterate for the drop down
-//			    for ($i=0;$i<count($assets);$i++){
-//
-//				    echo '<option value="'.$assets[$i]['assetid'].'" '.(esc_attr( $asset_id )==$assets[$i]['assetid']?'selected':'').'>'.
-//				         $assets[$i]['assetName'].
-//				         '</option>';
-//
-//			    }
-//			    ?>
-<!--            </select>-->
+            <!--                    onchange="vrodos_fillin_widget_scenetrs(this)"-->
+            
+            <select
+                    class   ="widefat"
+                    id   = "<?php echo $this->get_field_id( 'scene_id');?>"
+                    name = "<?php echo $this->get_field_name( 'scene_id');?>"
+                    data-widgetserialno ="<?php echo $this->number;?>"
+                >
+                <option value="">Select one</option>
+			    <?php
+	    		    // Get all assets
+    			    $scenes = get_scenes_wonder_around();
+                    
+                    // Iterate for the drop down
+                    for ($i=0;$i<count($scenes);$i++){
+                        echo '<option value="'.$scenes[$i]['sceneid'].'" '.
+                                               (esc_attr( $scene_id ) == $scenes[$i]['sceneid']?'selected':'').'>'.
+                                              $scenes[$i]['sceneName'].
+                             ' of '.$scenes[$i]['scene_parent_project'][0]->name.'</option>';
+                    }
+			    ?>
+            </select>
         </p>
 
         <p>
