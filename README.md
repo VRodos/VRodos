@@ -54,12 +54,18 @@ Chrome or Firefox
 
 ### Installation instructions ###
 
-Download as zip
+- Download as zip
 
-Install in WordPress with "ADD from file" button.
+- Install in WordPress with "ADD from file" button.
 
+- Download mdc and other node modules
 
+    -- VRodos > npm install
 
+- Set permalinks to Day / Name (2nd option)
+- Add to menu 
+-- Assets List Page
+-- Project Manager page
 
 
 [comment]: <> (### Peer calls ###)
