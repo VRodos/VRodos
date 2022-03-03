@@ -8,9 +8,21 @@ class VRodos_LoaderMulti {
 
     constructor(who){
 
+
+
     };
 
     load(manager, resources3D, pluginPath) {
+
+        // Load envMap.
+        var textureLoader = new THREE.TextureLoader();
+        var envmap_texture = textureLoader.load(pluginPath + '/images/hdr/venice_sunset_1k.hdr');
+        envmap_texture.mapping = THREE.EquirectangularReflectionMapping;
+        envmap_texture.encoding = THREE.sRGBEncoding;
+
+
+
+
 
         for (let n in resources3D) {
             (function (name) {
@@ -64,7 +76,7 @@ class VRodos_LoaderMulti {
                                 object.renderOrder = 1;
 
                                 envir.scene.add(object);
-                                envir.setSteveToAvatarControls();
+                                envir.setCamMeshToAvatarControls();
                                 // envir.setSteveWorldPosition(resources3D[name]['trs']['translation'][0],
                                 //     resources3D[name]['trs']['translation'][1],
                                 //     resources3D[name]['trs']['translation'][2],
@@ -95,7 +107,7 @@ class VRodos_LoaderMulti {
                                 object.visible = false;
 
                                 envir.scene.add(object);
-                                envir.setSteveOldToAvatarControls();
+                                envir.setSteveToAvatarControls();
 
                                 envir.setSteveWorldPosition(resources3D[name]['trs']['translation'][0],
                                     resources3D[name]['trs']['translation'][1],
@@ -357,6 +369,21 @@ class VRodos_LoaderMulti {
 
 
 
+                                        // --------- Post-processing ----------------
+                                        // object.scene.traverse((node) => {
+                                        //     if (node.isMesh) {
+                                        //         //node.material.envMap = envmap_texture;
+                                        //
+                                        //         const generator = new THREE.PMREMGenerator( envir.renderer );
+                                        //         const envMap = generator.fromScene( envir.scene ,0,0.1,1300 );
+                                        //         envMap.mapping = THREE.CubeRefractionMapping;;
+                                        //         envMap.texture.encoding  = THREE.sRGBEEncoding ;
+                                        //         node.material.envMap = envMap.texture;
+                                        //         node.material.envMapIntensity = 1 ;
+                                        //
+                                        //     }
+                                        // });
+
 
                                         object = setObjectProperties(object.scene, name, resources3D);
                                         object.isDigiArt3DMesh = true;
@@ -568,6 +595,7 @@ class VRodos_LoaderMulti {
 
                  //Create a helper for the shadow camera (optional)
                  var lightSunShadowhelper = new THREE.CameraHelper( lightSun.shadow.camera );
+                 lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
                  envir.scene.add( lightSunShadowhelper );
 
         } else if (resources3D[name]['categoryName']==='lightLamp' ){

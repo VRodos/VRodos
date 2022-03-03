@@ -890,7 +890,12 @@
             else
                 this.sphereCenter = computeSceneBoundingSphereAll ( object) [0] ;
 
-            this.bboxX = new THREE.BoxHelper( this.object, 0xff0000 );
+
+            try {
+                this.bboxX = new THREE.BoxHelper(this.object, 0xff0000);
+            } catch(e){
+                console.error("555:" + this.object.name, this.object.position.x);
+            }
 
             //-------------- X ------------------------------
             this.bboxX.geometry.index.array[0] = 0;

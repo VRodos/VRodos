@@ -43,7 +43,7 @@ function firstPersonViewWithoutLock(){
 
         // Glow effect change camera
         envir.composer = [];
-        envir.setComposer();
+        envir.setComposerAndPasses();
 
         envir.isComposerOn = true;
 
@@ -71,7 +71,7 @@ function firstPersonViewWithoutLock(){
 
 
         envir.composer = [];
-        envir.setComposer();
+        envir.setComposerAndPasses();
 
         envir.isComposerOn = true;
 

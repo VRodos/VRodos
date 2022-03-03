@@ -418,24 +418,31 @@ function findBorders(grouObj){
 
 
 // Find Limits (world coordinates) of the selected object
-function findObjectLimits(grouObj){
+function findObjectLimits(groupObj){
 
-    grouObj.remove( grouObj.getObjectByName('bbox') );
-    grouObj.remove( grouObj.getObjectByName('x_dim_line') );
+
+
+    groupObj.remove( groupObj.getObjectByName('bbox') );
+    groupObj.remove( groupObj.getObjectByName('x_dim_line') );
+
 
     // ======= bbox ========================
-    var box = new THREE.BoxHelper( grouObj, 0xff00ff );
+    try {
+        var box = new THREE.BoxHelper(groupObj, 0xff00ff);
 
-    box.geometry.computeBoundingBox();
-    box.name = "bbox";
+        box.geometry.computeBoundingBox();
+        box.name = "bbox";
 
-    // var finalVec = new THREE.Vector3().subVectors(box.geometry.boundingBox.min, box.geometry.boundingBox.max);
-    //
-    // var x = Math.abs(finalVec.x);
-    // var y = Math.abs(finalVec.y);
-    // var z = Math.abs(finalVec.z);
+        // var finalVec = new THREE.Vector3().subVectors(box.geometry.boundingBox.min, box.geometry.boundingBox.max);
+        // var x = Math.abs(finalVec.x);
+        // var y = Math.abs(finalVec.y);
+        // var z = Math.abs(finalVec.z);
 
-    return [box.geometry.boundingBox.min, box.geometry.boundingBox.max];
+        return [box.geometry.boundingBox.min, box.geometry.boundingBox.max];
+    } catch (e){
+        console.error("ERROR 512" + groupObj.name + "is problematic");
+        return [new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)];
+    }
 }
 
 
@@ -452,6 +459,7 @@ function findSceneDimensions(){
     for (var i = 0; i < envir.scene.children.length; i++) {
 
         if (envir.scene.children[i].name !== "myTransformControls" && envir.scene.children[i].name !== "myGridHelper") {
+
 
             var sizeXYZ_Arr = findObjectLimits(envir.scene.children[i]);
 

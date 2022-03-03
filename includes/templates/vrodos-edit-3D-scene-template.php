@@ -38,6 +38,13 @@ function vrodos_load_vreditor_scripts()
     
     // Colorpicker for the lights
     wp_enqueue_script('vrodos_jscolorpick');
+	
+    // Timestamp script
+	wp_enqueue_script('vrodos_scripts');
+    
+    // Hierarchy Viewer
+	wp_enqueue_script('vrodos_HierarchyViewer');
+	
     
     wp_enqueue_style('vrodos_datgui');
     wp_enqueue_style('vrodos_3D_editor');
@@ -408,7 +415,6 @@ get_header(); ?>
 
 <?php } else { ?>
 
-
     <!-- PANELS -->
     <div class="panels">
         
@@ -417,9 +423,6 @@ get_header(); ?>
             
             <!-- 3D editor  -->
             <div id="vr_editor_main_div">
-
-
-                
                 
                 <!-- Upper Toolbar -->
                 <div class="mdc-toolbar hidable scene_editor_upper_toolbar">
@@ -467,13 +470,6 @@ get_header(); ?>
                 </div>
 
 
-
-
-
-
-
-
-
                 <!-- Close all 2D UIs-->
                 <a id="toggleUIBtn" data-toggle='on' type="button"
                    class="ToggleUIButtonStyle mdc-theme--secondary" title="Toggle interface">
@@ -481,27 +477,27 @@ get_header(); ?>
                 </a>
 
                 <!-- Lights -->
-                <div class="lightcolumns hidable">
-                    <div class="lightcolumn" data-light="Sun" draggable="true">
-                        <header draggable="false">Sun</header><img draggable="false"
-                           src="<?php echo $pluginpath?>/images/lights/sun.png" class="lighticon"/>
+                <div class="lightbuttons hidable">
+                    
+                    <div class="lightbutton" data-light="Sun" draggable="true">
+                            <header draggable="false" class="notdraggable">Sun</header>
+                            <img draggable="false" class="lighticon notdraggable"
+                                 src="<?php echo $pluginpath?>/images/lights/sun.png"/>
                     </div>
-                    <div class="lightcolumn" data-light="Lamp" draggable="true">
-                        <header draggable="false">Lamp</header><img draggable="false"
-                           src="<?php echo $pluginpath?>/images/lights/lamp.png" draggable="false" class="lighticon"/>
+                    
+                    <div class="lightbutton" data-light="Lamp" draggable="true">
+                        <header draggable="false" class="notdraggable">Lamp</header>
+                          <img draggable="false" class="lighticon notdraggable"
+                           src="<?php echo $pluginpath?>/images/lights/lamp.png" draggable="false"/>
                     </div>
-                    <div class="lightcolumn" data-light="Spot" draggable="true"><header draggable="false">Spot</header>
-                        <img draggable="false" src="<?php echo $pluginpath?>/images/lights/spot.png" draggable="false"
-                             class="lighticon"/>
+                    
+                    <div class="lightbutton" data-light="Spot" draggable="true">
+                        <header draggable="false" class="notdraggable">Spot</header>
+                        <img draggable="false" class="lighticon notdraggable"
+                             src="<?php echo $pluginpath?>/images/lights/spot.png" draggable="false"/>
                     </div>
+                    
                 </div>
-
-                <!-- Remove game object from scene -->
-                <a type="button" id="removeAssetBtn"
-                   class="RemoveAssetFromSceneBtnStyle hidable mdc-button mdc-button--raised mdc-button--primary mdc-button--dense"
-                   title="Remove selected asset from the scene" data-mdc-auto-init="MDCRipple">
-                    <i class="material-icons">delete</i>
-                </a>
 
                 <!--  Open/Close Right Hierarchy panel-->
                 <a id="hierarchy-toggle-btn" data-toggle='on' type="button"
@@ -607,7 +603,7 @@ get_header(); ?>
                     <!-- Set Clear Color -->
                     <div id="sceneClearColor" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield">
                         <label for="jscolorpick" style="display:none">Color pick</label>
-                        <input id="jscolorpick" class="jscolor {onFineChange:'updateColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255);">
+                        <input id="jscolorpick" class="jscolor {onFineChange:'updateClearColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255);">
 
                         <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000">
 
@@ -964,19 +960,19 @@ get_header(); ?>
     <!--  Part 3: Start 3D with Javascript   -->
     <script>
         // all 3d dom
-        let container_3D_all = document.getElementById( 'vr_editor_main_div' );
+        let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 
         // Selected object name
         var selected_object_name = '';
 
-        // Add 3D gui widgets to gui container_3D_all
+        // Add 3D gui widgets to gui vr_editor_main_div
         let guiContainer = document.getElementById('numerical_gui-container');
         guiContainer.appendChild(controlInterface.translate.domElement);
         guiContainer.appendChild(controlInterface.rotate.domElement);
         guiContainer.appendChild(controlInterface.scale.domElement);
 
         // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
-        var envir = new vrodos_3d_editor_environmentals(container_3D_all);
+        var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
@@ -1062,7 +1058,7 @@ get_header(); ?>
                 if (selected_object_name != 'avatarYawObject') {
                     let dims = findDimensions(transform_controls.object);
                     sizeT = Math.max(...dims);
-                    jQuery("#removeAssetBtn").show();
+                    
                     
                     // 6 is rotation
                     transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
@@ -1074,7 +1070,7 @@ get_header(); ?>
                     }
                 } else {
                     transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
-                    jQuery("#removeAssetBtn").hide();
+                    
                 }
                 transform_controls.setSize( sizeT > 1 ? sizeT : 1 );
             }
@@ -1137,7 +1133,7 @@ get_header(); ?>
             transform_controls = envir.scene.getObjectByName('myTransformControls');
             transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));
 
-            jQuery("#removeAssetBtn").hide();
+            
 
             console.log(resources3D);
             
@@ -1162,7 +1158,7 @@ get_header(); ?>
                 (envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar) : envir.cameraOrbit;
 
             // Render it
-            envir.renderer.render( envir.scene, curr_camera);
+            //envir.renderer.render( envir.scene, curr_camera);
             
             // Label is for setting labels to objects
             envir.labelRenderer.render( envir.scene, curr_camera);
@@ -1219,10 +1215,8 @@ get_header(); ?>
         loadButtonActions();
 
 
-        function updateColorPicker(picker){
+        function updateClearColorPicker(picker){
             document.getElementById('sceneClearColor').value = picker.toRGBString();
-
-            
             var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
             envir.renderer.setClearColor(hex);
         }

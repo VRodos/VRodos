@@ -1,6 +1,46 @@
 <!--Popups when right-clicking on 3D objects: included in vr_editor -->
 
 <script>
+
+    /// Change object Color callback
+    function updateObjectColorPicker(picker){
+        var hexcol = "0x" + document.getElementById("ObjectColor").value;
+        //Change material color
+        transform_controls.object.children[0].material.color.setHex(hexcol);
+    }
+
+    /// Change object Emissive Color callback
+    function updateObjectEmissiveColorPicker(picker){
+        var hexcol = "0x" + document.getElementById("ObjectEmissiveColor").value;
+        transform_controls.object.children[0].material.emissive.setHex(hexcol);
+    }
+
+    // Emissive Intensity onChange callback
+    function changeEmissiveIntensity(){
+        var emissiveIntensity = document.getElementById("ObjectEmissiveIntensity").value;
+        transform_controls.object.children[0].material.emissiveIntensity = parseFloat(emissiveIntensity);
+    }
+
+    // Lightmap Intensity onChange callback
+    function changeLightMapIntensity(){
+        var lightMapIntensity = document.getElementById("ObjectLightMapIntensity").value;
+        transform_controls.object.children[0].material.emissiveIntensity = parseFloat(lightMapIntensity);
+    }
+    
+    // Roughness onChange callback
+    function changeRoughness(){
+        var roughness = document.getElementById("ObjectRoughness").value;
+        transform_controls.object.children[0].material.roughness = parseFloat(roughness);
+        
+    }
+
+    // Metallic onChange callback
+    function changeMetalness(){
+        var metalness = document.getElementById("ObjectMetalness").value;
+        transform_controls.object.children[0].material.metalness = parseFloat(metalness);
+        
+    }
+    
     // Set video texture when popup change
     function textureChangeFunction() {
         var url = document.getElementById("ObjectVideoTexture").value;
@@ -36,98 +76,152 @@
 </script>
 
 <!-- Artifact @ Archaeology: Popup menu to for Reward item checkbox, from  -->
-<div id="popUpArtifactPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2" style="min-width: 200px;display:none">
+<div id="popUpArtifactPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2" style="min-width: 200px;display:none; max-width:450px;padding:0px;">
 
-    
     <!-- The close button-->
-    <a style="float: right;" type="button" class="mdc-theme--primary"
+    <a style="position:absolute;right:35px;top:10px" type="button" class="mdc-theme--primary"
        onclick='this.parentNode.style.display = "none"; return false;'>
         <!-- clearAndUnbindCheckBoxProperties("artifact_reward_checkbox"); -->
         <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
-
-    <!-- The checkbox-->
-
     
-    <label for="artifact_reward_checkbox" class="mdc-textfield__label"
-           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">Is a reward item?</label>
+    <div id="popup_artifact_scroller" style="overflow-y: scroll; height:300px;padding: 15px;margin: 0px;">
     
-    <input type="checkbox" title="Select if it is a reward item"  id="artifact_reward_checkbox" name="artifact_reward_checkbox"
-           class="mdc-textfield__input mdc-theme--text-primary-on-light"
-           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;">
-       
-    <br />
-
-    <!-- The Color of the object -->
-    <label for="ObjectColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
-        Object Color:</label>
-
-    <input type="text" id="ObjectColor" name="ObjectColor" title="Set a hex number, ffffff is the default (white)"
-           value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateObjectColorPicker(this)'}"
-           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
-    <br />
-
-    <!-- The Video texture of the object -->
-    <label for="ObjectVideoTexture" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
-        Object Video Texture:</label>
-
-    <select id="ObjectVideoTexture" name="ObjectVideoTexture" title="Set a texture"
-            style="width: 270px;display: inline-block;padding: 2px;text-align: right;"
-            onchange="textureChangeFunction(this)">
-        <option selected="selected">Choose one</option>
-		<?php
-        	foreach($videos as $v){
-		    	echo "<option value='$v'>$v</option>";
-		   }
-		?>
-    </select>
+        <!-- The Color of the object -->
+        <label for="ObjectColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Object Color:</label>
     
-    <br />
+        <input type="text" id="ObjectColor" name="ObjectColor" title="Set a hex number, ffffff is the default (white)"
+               value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateObjectColorPicker(this)'}"
+               style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+        <br />
 
-    <!-- The Video texture rotation -->
-    <label for="ObjectVideoTextureRotation" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
-        Video Texture Rotation:</label>
 
-    <input type="text" id="ObjectVideoTextureRotation" name="ObjectVideoTextureRotation" title="Texture Rotation"
-           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
-           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+        <!-- The Emissive Color of the object -->
+        <label for="ObjectEmissiveColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Object Emissive:</label>
 
-    <br />
+        <input type="text" id="ObjectEmissiveColor" name="ObjectEmissiveColor" title="Set a hex number, ffffff is the default (white)"
+               value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateObjectEmissiveColorPicker(this)'}"
+               style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+        <br />
 
-    <!-- The Video texture center U -->
-    <label for="ObjectVideoTextureCenterX" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
-        Video Texture Center U:</label>
-
-    <input type="text" id="ObjectVideoTextureCenterX" name="ObjectVideoTextureCenterX" title="Texture Center X"
-           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
-           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
-
-    <!-- The Video texture center V -->
-    <label for="ObjectVideoTextureCenterY" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
-        Video Texture Center V:</label>
-
-    <input type="text" id="ObjectVideoTextureCenterY" name="ObjectVideoTextureCenterY" title="Texture Center Y"
-           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
-           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
-
-    <br />
-
-    <!-- The Video texture repeat X -->
-    <label for="ObjectVideoTextureRepeatX" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
-        Video Texture Repeat X:</label>
-
-    <input type="text" id="ObjectVideoTextureRepeatX" name="ObjectVideoTextureRepeatX" title="Texture Repeat X"
-           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
-           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
-
-    <!-- The Video texture repeat Y -->
-    <label for="ObjectVideoTextureRepeatY" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
-        Video Texture Repeat Y:</label>
-
-    <input type="text" id="ObjectVideoTextureRepeatY" name="ObjectVideoTextureRepeatY" title="Texture Repeat Y"
-           value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
-           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+        <!-- Emissive Intensity -->
+        <label for="ObjectEmissiveIntensity" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Emissive Intensity:</label>
+        <div class="mdc-slider" style="width:50%; display:inline-block; height:30px">
+            <input class="mdc-slider__input" type="range" min="0" max="1" value="0.5" step="0.01"
+                   id="ObjectEmissiveIntensity" name="ObjectEmissiveIntensity" aria-label="Emissive intensity slider" oninput="changeEmissiveIntensity(this);">
+            <div class="mdc-slider__thumb">
+                <div class="mdc-slider__thumb-knob"></div>
+            </div>
+        </div>
+        
+        <br />
+        
     
+        <!-- Roughness -->
+        <label for="ObjectRoughness" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Roughness:</label>
+        <div class="mdc-slider" style="width:50%; display:inline-block; height:30px">
+            <input class="mdc-slider__input" type="range" min="0" max="1" value="0.5" step="0.01"
+                   id="ObjectRoughness" name="ObjectRoughness" aria-label="Roughness slider" oninput="changeRoughness(this);">
+            <div class="mdc-slider__thumb">
+                <div class="mdc-slider__thumb-knob"></div>
+            </div>
+        </div>
+
+        <!-- Metalness -->
+        <label for="ObjectMetalness" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Metalness:</label>
+        <div class="mdc-slider" style="width:50%; display:inline-block; height:30px">
+            <input class="mdc-slider__input" type="range" min="0" max="1" value="0.5" step="0.01"
+                   id="ObjectMetalness" name="ObjectMetalness" aria-label="Metalness slider"
+                   oninput="changeMetalness(this);">
+            <div class="mdc-slider__thumb">
+                <div class="mdc-slider__thumb-knob"></div>
+            </div>
+        </div>
+
+        <!-- Lightmap intensity -->
+        <label for="ObjectLightMapIntensity" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            LightMap Intensity:</label>
+        <div class="mdc-slider" style="width:50%; display:inline-block; height:30px">
+            <input class="mdc-slider__input" type="range" min="0" max="1" value="0.5" step="0.01"
+                   id="ObjectLightMapIntensity" name="ObjectLightMapIntensity" aria-label="LightMap Intensity slider"
+                   oninput="changeLightMapIntensity(this);">
+            <div class="mdc-slider__thumb">
+                <div class="mdc-slider__thumb-knob"></div>
+            </div>
+        </div>
+        
+        <!-- The Video texture of the object -->
+        <label for="ObjectVideoTexture" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; display: inline-block; vertical-align: center;">
+            Texture:</label>
+    
+        <select id="ObjectVideoTexture" name="ObjectVideoTexture" title="Set a texture"
+                style="width: 250px;display: inline-block;text-align: right;margin-left: 20px;margin-top: 15px;vertical-align: middle;"
+                onchange="textureChangeFunction(this)">
+            <option selected="selected">Choose one</option>
+            <?php
+                foreach($videos as $v){
+                    echo "<option value='$v'>$v</option>";
+               }
+            ?>
+        </select>
+        
+        <br />
+    
+        <!-- The Video texture rotation -->
+        <label for="ObjectVideoTextureRotation" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Video Texture Rotation:</label>
+    
+        <input type="text" id="ObjectVideoTextureRotation" name="ObjectVideoTextureRotation" title="Texture Rotation"
+               value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+               style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+        <br />
+    
+        <!-- The Video texture center U -->
+        <label for="ObjectVideoTextureCenterX" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Video Texture Center U:</label>
+        <input type="text" id="ObjectVideoTextureCenterX" name="ObjectVideoTextureCenterX" title="Texture Center X"
+               value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+               style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+        <br />
+        
+        <!-- The Video texture center V -->
+        <label for="ObjectVideoTextureCenterY" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Video Texture Center V:</label>
+        <input type="text" id="ObjectVideoTextureCenterY" name="ObjectVideoTextureCenterY" title="Texture Center Y"
+               value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+               style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+        <br />
+    
+        <!-- The Video texture repeat X -->
+        <label for="ObjectVideoTextureRepeatX" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Video Texture Repeat X:</label>
+        <input type="text" id="ObjectVideoTextureRepeatX" name="ObjectVideoTextureRepeatX" title="Texture Repeat X"
+               value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+               style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+        <br />
+        
+        <!-- The Video texture repeat Y -->
+        <label for="ObjectVideoTextureRepeatY" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+            Video Texture Repeat Y:</label>
+        <input type="text" id="ObjectVideoTextureRepeatY" name="ObjectVideoTextureRepeatY" title="Texture Repeat Y"
+               value="0" maxlength="3" class="" onchange="textureChangeFunction(this)"
+               style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+    
+        <br />
+        
+        <!--  Reward checkbox -->
+        <label for="artifact_reward_checkbox" class="mdc-textfield__label"
+               style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">Is a reward item?</label>
+        <input type="checkbox" title="Select if it is a reward item"  id="artifact_reward_checkbox" name="artifact_reward_checkbox"
+               class="mdc-textfield__input mdc-theme--text-primary-on-light"
+               style="width: 6ch;padding: 2px;display: inline-block; text-align: right;">
+        <br />
+    </div>
 </div>
 
 <!-- Sun @ Archaeology: Popup menu to for Sun Intensity and Color -->

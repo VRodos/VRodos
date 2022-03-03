@@ -9,8 +9,8 @@ function raycasterSetter(event){
 
     // calculate mouse position in normalized device coordinates
     // (-1 to +1) for both components
-    mouse.x =   ( (event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft()) / envir.container_3D_all.clientWidth ) * 2 - 1;
-    mouse.y = - ( (event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop()) / envir.container_3D_all.clientHeight ) * 2 + 1;
+    mouse.x =   ( (event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft()) / envir.vr_editor_main_div.clientWidth ) * 2 - 1;
+    mouse.y = - ( (event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop()) / envir.vr_editor_main_div.clientHeight ) * 2 + 1;
 
     // Main Raycast object
     let raycasterPick = new THREE.Raycaster();
@@ -32,8 +32,6 @@ function raycasterSetter(event){
  * @returns {*[]}
  */
 function dragDropVerticalRayCasting (event){
-
-    console.log("Raycaster");
 
     // Init the raycaster
     let raycasterPick = raycasterSetter(event);
@@ -165,7 +163,7 @@ function onMouseSelect( event ) {
             transform_controls.size = 1;
             transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
 
-            jQuery("#removeAssetBtn").hide();
+
 
             return;
         }
@@ -232,7 +230,7 @@ function selectorMajor(event, objectSel){
 
             // Can not be deleted
             transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
-            jQuery("#removeAssetBtn").hide();
+
 
         } else {
             // find dimensions of object in order to resize transform controls
@@ -242,7 +240,7 @@ function selectorMajor(event, objectSel){
 
             transform_controls.size = sizeT > 1 ? sizeT : 1;
 
-            jQuery("#removeAssetBtn").show();
+
             transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
         }
 
@@ -256,7 +254,7 @@ function selectorMajor(event, objectSel){
             jQuery("#" + transform_controls.getMode() + "-switch").click();
 
         // Show also the UI button
-        jQuery("#removeAssetBtn").show();
+
 
         // highlight
         envir.outlinePass.selectedObjects = [objectSel];
@@ -918,14 +916,7 @@ function changeSpotPenumbra(){
 }
 
 
-/// Sun Color Selector
-function updateObjectColorPicker(picker){
 
-    var hexcol = "0x" + document.getElementById("ObjectColor").value;
-
-    //Change material color
-    transform_controls.object.children[0].material.color.setHex(hexcol);
-}
 
 
 /// Sun Color Selector
@@ -1019,6 +1010,19 @@ function clearAndUnbind(selectName=null, idstr=null, chkboxname=null){
     }
 
 }
+
+// Highlight item in Hierarchy viewer
+function setBackgroundColorHierarchyViewer(name) {
+
+    jQuery('#hierarchy-viewer li').each(
+        function (idx, li) {
+            jQuery(li)[0].style.background = 'rgb(244, 244, 244)';
+        }
+    );
+
+    jQuery('#hierarchy-viewer').find('#' + name)[0].style.background = '#a4addf';
+}
+
 
 /**
  * Get active meshes for raycast picking method

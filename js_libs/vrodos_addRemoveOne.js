@@ -8,8 +8,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
     };
 
 
-    console.log("dataDrag.glbID", dataDrag.glbID);
-
     resources3D[nameModel] = {
         "path": path,
         "assetid": dataDrag.assetid,
@@ -50,8 +48,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
-        // lightSun.position.set( 0, 45, 0 ); set by raycaster
-
         lightSun.name = nameModel;
         lightSun.isDigiArt3DModel = true;
         lightSun.categoryName = "lightSun";
@@ -93,15 +89,17 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         lightSun.target.position = lightTargetSpot.position;
 
+        // Add shadow helper
+        var lightSunShadowhelper = new THREE.CameraHelper( lightSun.shadow.camera );
+        lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
+
         envir.scene.add(lightSun);
         envir.scene.add(lightSunHelper);
         envir.scene.add(lightTargetSpot);
+        envir.scene.add(lightSunShadowhelper);
 
         lightSun.target.updateMatrixWorld();
         lightSunHelper.update();
-
-        var lightSunShadowhelper = new THREE.CameraHelper( lightSun.shadow.camera );
-        envir.scene.add( lightSunShadowhelper );
 
         // Add transform controls
         var insertedObject = envir.scene.getObjectByName(nameModel);
@@ -134,7 +132,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var sizeT = Math.max(...dims);
         transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-        jQuery("#removeAssetBtn").show();
+
         transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
 
@@ -142,9 +140,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
 
         // Add in scene
-        envir.addInHierarchyViewer(insertedObject);
+        addInHierarchyViewer(insertedObject);
 
-        envir.addInHierarchyViewer(lightTargetSpot);
+        addInHierarchyViewer(lightTargetSpot);
 
         // Auto-save
         triggerAutoSave();
@@ -212,13 +210,13 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var sizeT = Math.max(...dims);
         transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-        jQuery("#removeAssetBtn").show();
+
         transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
         transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
 
         // Add in scene
-        envir.addInHierarchyViewer(insertedObject);
+        addInHierarchyViewer(insertedObject);
 
         triggerAutoSave();
 
@@ -293,13 +291,13 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var sizeT = Math.max(...dims);
         transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-        jQuery("#removeAssetBtn").show();
+
         transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
         transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
 
         // Add in scene
-        envir.addInHierarchyViewer(insertedObject);
+        addInHierarchyViewer(insertedObject);
 
         triggerAutoSave();
 
@@ -343,7 +341,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
             // highlight
             envir.composer = [];
-            envir.setComposer();
+            envir.setComposerAndPasses();
 
             envir.outlinePass.selectedObjects = [insertedObject];
             //envir.renderer.setClearColor(0xeeeeee, 1);
@@ -363,7 +361,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             var sizeT = Math.max(...dims);
             transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-            jQuery("#removeAssetBtn").show();
+
             transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
 
             if (categoryName === "Producer") {
@@ -398,7 +396,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             }
 
             // Add in scene
-            envir.addInHierarchyViewer(insertedObject);
+            addInHierarchyViewer(insertedObject);
 
             // Auto-save
             triggerAutoSave();
@@ -413,7 +411,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
 
         envir.composer = [];
-        envir.setComposer();
+        envir.setComposerAndPasses();
 
     }
 }
@@ -436,6 +434,64 @@ function resetInScene(name){
     envir.avatarControls.getObject().children[0].scale.set(1,1,1);
 }
 
+function addInHierarchyViewer(obj) {
+
+    // ALL but the lightTargetSpot
+    if (obj.categoryName != 'lightTargetSpot') {
+
+        // ADD in the Hierarchy viewer
+        var deleteButtonHTML =
+            '<a href="javascript:void(0);" class="hierarchyItemDelete mdc-list-item" aria-label="Delete asset"' +
+            ' title="Delete asset object" onclick="' +
+            // Delete object from scene and remove it from the hierarchy viewer
+            'deleterFomScene(\'' + obj.name + '\');'
+            + '">' +
+            '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Delete">delete </i>' +
+            '</a>';
+
+        var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11);
+        var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+
+        // Add as a list item
+        jQuery('#hierarchy-viewer').append(
+            '<li class="hierarchyItem mdc-list-item" id="' + obj.name + '">' +
+            '<a href="javascript:void(0);" class="hierarchyItemName mdc-list-item"  ' +
+            'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
+            '<span id="" class="mdc-list-item__text">' +
+            game_object_nameA_assetName + '<br />' +
+            '<span style="font-size:7pt; color:grey">' + game_object_nameB_dateCreated + '</span>' +
+            '</span>' +
+            '</a>' +
+            deleteButtonHTML +
+            '</li>'
+        );
+    } else {
+        // lightTargetSpot
+
+        // lightTargetSpot without the timestamp
+        var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11); //.substring(0, obj.name.length - 11);
+
+        // The timestamp
+        var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+
+        // Add as a list item
+        jQuery('#hierarchy-viewer').append(
+            '<li class="hierarchyItem mdc-list-item" id="' + obj.name + '">' +
+            '<a href="javascript:void(0);" class="hierarchyItemName mdc-list-item"  ' +
+            'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
+            '<span id="" class="mdc-list-item__text">' +
+            game_object_nameA_assetName + '<br />' +
+            '<span style="font-size:7pt; color:grey">' + game_object_nameB_dateCreated + '</span>' +
+            '</span>' +
+            '</a>' +
+            '' +
+            '</li>'
+        );
+    }
+}
+
+
+
 /**
  *
  * Delete from scene
@@ -444,13 +500,9 @@ function resetInScene(name){
  */
 function deleterFomScene(nameToRemove){
 
-    var container = document.paramsform;
-
-    // Delete Variables
-    //delArchive[nameToRemove] = resources3D[nameToRemove];
     delete resources3D[nameToRemove];
 
-    // Remove from scene and add to recycle bin
+    // Get object (Child)
     var objectSelected = envir.scene.getObjectByName(nameToRemove);
 
     // remove animations
@@ -461,25 +513,20 @@ function deleterFomScene(nameToRemove){
     envir.animationMixers = filtered;
     isPaused = false;
 
-
-    // If deleting light then remove also its LightHelper and lightTargetSpot
+    // If deleting light then remove also its LightHelper and lightTargetSpot and Shadow Helper
     if (objectSelected.isLight){
-        for (var i=0; i< envir.scene.children.length; i++){
-            // Light Helper check
-            if (envir.scene.children[i].parentLightName === nameToRemove){
-                envir.scene.remove(envir.scene.children[i]);
-            }
-            // Target spot check
-            if (typeof envir.scene.children[i].parentLight !== 'undefined')
-            {
-                if (envir.scene.children[i].parentLight.name === nameToRemove) {
-                    envir.scene.remove(envir.scene.children[i]);
-                    console.log("nameToRemove", nameToRemove);
-                    // remove from hierarchy also
-                    jQuery('#hierarchy-viewer').find('#' + "lightTargetSpot_" + nameToRemove).remove();
-                }
-            }
-        }
+
+        // Sun Shadow Helper
+        envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + nameToRemove));
+
+        // Sun target spot
+        envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + nameToRemove));
+
+        // Sun target spot remove from hierarchy viewer
+        jQuery('#hierarchy-viewer').find('#' + "lightTargetSpot_" + nameToRemove).remove();
+
+        // Light Helper (for all lights)
+        envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + nameToRemove));
     }
 
     transform_controls.detach(objectSelected);
@@ -487,29 +534,30 @@ function deleterFomScene(nameToRemove){
     // prevent orbiting
     document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
 
+    // Remove object from scene
     envir.scene.remove(objectSelected);
 
+    // Remove from hierarchy viewer
     jQuery('#hierarchy-viewer').find('#' + nameToRemove).remove();
 
     //transform_controls.detach();
+
+    // Save scene
     triggerAutoSave();
 
-    // Only Player exists then hide delete button (single one)
-    if(envir.scene.children.length==5)
-        jQuery("#removeAssetBtn").hide();
-    else {
-        let lastObject = envir.scene.children[envir.scene.children.length - 2];
-
-        // place controls to last inserted obj
-        transform_controls.attach(lastObject);
-
-        envir.outlinePass.selectedObjects = [lastObject];
-        //envir.renderer.setClearColor(0xeeeeee, 1);
-
-        // highlight
-        envir.composer = [];
-        envir.setComposer();
-    }
+    // // Only Player exists then hide delete button (single one)
+    // if(envir.scene.children.length>5){
+    //     let lastObject = envir.scene.children[envir.scene.children.length - 2];
+    //
+    //     // place controls to last inserted obj
+    //     transform_controls.attach(lastObject);
+    //
+    //     envir.outlinePass.selectedObjects = [lastObject];
+    //
+    //     // highlight
+    //     envir.composer = [];
+    //     envir.setComposerAndPasses();
+    // }
 }
 
 
@@ -550,12 +598,12 @@ function deleterFomScene(nameToRemove){
 //     var mouseDrag = new THREE.Vector2();
 //
 //     // handle scrolling of window
-//     var offtop = envir.container_3D_all.getBoundingClientRect().top;
-//     var offleft =envir.container_3D_all.getBoundingClientRect().left;
+//     var offtop = envir.vr_editor_main_div.getBoundingClientRect().top;
+//     var offleft =envir.vr_editor_main_div.getBoundingClientRect().left;
 //
 //     // translate into -1 to 1 values
-//     mouseDrag.x =   ( (event.clientX - offleft)  / envir.container_3D_all.clientWidth ) * 2 - 1;
-//     mouseDrag.y = - ( (event.clientY - offtop) / envir.container_3D_all.clientHeight ) * 2 + 1;
+//     mouseDrag.x =   ( (event.clientX - offleft)  / envir.vr_editor_main_div.clientWidth ) * 2 - 1;
+//     mouseDrag.y = - ( (event.clientY - offtop) / envir.vr_editor_main_div.clientHeight ) * 2 + 1;
 //
 //     // calculate objects intersecting the picking ray
 //     raycasterRecycleBin.setFromCamera( mouseDrag, envir.cameraOrbit );

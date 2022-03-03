@@ -29,7 +29,6 @@ function loadButtonActions() {
         );
     }
 
-
     // Compile Proceed
     jQuery("#compileProceedBtn").click(function () {
 
@@ -323,17 +322,6 @@ function loadButtonActions() {
         jQuery("#thirdPersonBlockerBtn").toggleClass('mdc-theme--secondary-bg');
     });
 
-    // // FULL SCREEN Toggle
-    jQuery('#fullScreenBtn').click(function() {
-
-        if (container_3D_all.style.position=="absolute") {
-            envir.makeFullScreen();
-        } else {
-            envir.makeWindowedScreen();
-        }
-
-    });
-
     // Autorotate in 3D
     jQuery('#toggle-tour-around-btn').click(function() {
 
@@ -383,11 +371,6 @@ function loadButtonActions() {
         }
         transform_controls.setMode(mode);
         showObjectPropertiesPanel(mode);
-    });
-
-    // Remove asset from scene
-    jQuery("#removeAssetBtn").click(function(){
-        deleterFomScene(transform_controls.object.name);
     });
 
     // Axis Increase size btn
@@ -485,10 +468,128 @@ function loadButtonActions() {
     jQuery("#popUpSpotPropertiesDiv").bind('contextmenu', function(e) { return false; });
 
 
+    // Toggle UIs to clear out vision
+    jQuery('#toggleUIBtn').click(function () {
+
+        var btn = jQuery('#toggleUIBtn');
+        var icon = jQuery('#toggleUIBtn i');
+
+        jQuery("#hierarchy-toggle-btn").click();
+        jQuery("#bt_close_file_toolbar").click();
+        jQuery("#scenesList-toggle-btn").click();
+
+        if (btn.data('toggle') === 'on') {
+
+            // Hide
+            btn.addClass('mdc-theme--text-hint-on-light');
+            btn.removeClass('mdc-theme--secondary');
+            icon.html('<i class="material-icons">visibility_off</i>');
+            btn.data('toggle', 'off');
+
+            jQuery(".hidable").hide();  // Lights bar
+
+            envir.isComposerOn = true;
+            transform_controls.visible = false;
+            envir.getSteveFrustum().visible = false;
+            envir.gridHelper.visible = false;
+            envir.axesHelper.visible = false;
+            envir.outlinePass.enabled = false;
+
+            setVisiblityLightHelpingElements(false);
+
+            jQuery("#wpadminbar").hide();
+
+            // footer that is high up below admin bar
+            jQuery("#colophon").hide();
+
+            jQuery("#vr_editor_main_div")[0].style.top = 0;
+
+            jQuery('#cookie-law-info-again').hide();
+        } else {
+            // Show
+            btn.removeClass('mdc-theme--text-hint-on-light');
+            btn.addClass('mdc-theme--secondary');
+            icon.html('<i class="material-icons">visibility</i>');
+            btn.data('toggle', 'on');
+
+            jQuery(".hidable").show(); // Lights bar
+            envir.isComposerOn = true;
+            transform_controls.visible = true;
+
+            envir.gridHelper.visible = true;
+            envir.axesHelper.visible = true;
+            envir.outlinePass.enabled = true;
+
+            setVisiblityLightHelpingElements(true);
+
+            // wp admin bar show
+            jQuery("#wpadminbar").show();
+
+            // footer that is high up below admin bar
+            jQuery("#colophon").show();
+
+            jQuery("#vr_editor_main_div")[0].style.top = "60px";
+            // if in 3rd person view then show the cameraobject
+            //envir.getSteveFrustum().visible = true;
+
+            if (envir.thirdPersonView || avatarControlsEnabled)
+                envir.getSteveFrustum().visible = false;
+            else
+                envir.getSteveFrustum().visible = true; // envir.thirdPersonView && avatarControlsEnabled;
+
+        }
+        envir.turboResize();
+    });
+
+
+    // Drag light: Add event listeners
+    var cols = document.querySelectorAll('.lightbuttons .lightbutton');
+    [].forEach.call(cols, function (col) {
+        col.addEventListener('dragstart', handleLightDragStart, false);
+    });
+
+
+    // Handler for dragging light
+    function handleLightDragStart(e) {
+
+        // lightSun or lightLamp or lightSpot
+        var dragData = {"categoryName": "light" + e.target.dataset.light, "title": "mylight" +
+                        e.target.dataset.light + "_" + Math.floor(Date.now() / 1000)
+                        };
+
+        e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        return false;
+    }
 }
 
 
+
+
+
 // ==================== Global scope functions ================
+
+function setVisiblityLightHelpingElements(statusVisibility) {
+
+    for (var i = 0; i < envir.scene.children.length; i++) {
+        var curr_obj = envir.scene.children[i];
+
+        if (curr_obj.categoryName === 'lightHelper' || curr_obj.categoryName === 'lightTargetSpot')
+            curr_obj.visible = statusVisibility;
+
+        if (curr_obj.categoryName === 'lightSun')
+            curr_obj.children[0].visible = statusVisibility;
+
+        if (curr_obj.categoryName === 'lightLamp')
+            curr_obj.children[0].visible = statusVisibility;
+
+        if (curr_obj.categoryName === 'lightSpot')
+            curr_obj.children[0].visible = statusVisibility;
+
+        if (curr_obj.type === 'CameraHelper') // This is the shadow camera of sun
+            curr_obj.visible = statusVisibility;
+    }
+}
+
 
 function pauseClickFun(){
     isPaused = !isPaused;
@@ -509,6 +610,9 @@ function pauseClickFun(){
                 node.play();
         }
     } );
+
+
+
 
 }
 

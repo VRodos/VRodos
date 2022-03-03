@@ -134,10 +134,10 @@ get_header(); ?>
     <!--  Part 3: Start 3D with Javascript   -->
     <script>
         // all 3d dom
-        let container_3D_all = document.getElementById( 'vr_editor_main_div' );
+        let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 
         // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
-        var envir = new vrodos_3d_editor_environmentals(container_3D_all);
+        var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
         envir.is2d = false;
 
         firstPersonBlockerBtn = null;
@@ -217,7 +217,7 @@ get_header(); ?>
             // transform_controls = envir.scene.getObjectByName('myTransformControls');
             // transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));
 
-            jQuery("#removeAssetBtn").hide();
+            
 
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
@@ -262,7 +262,7 @@ get_header(); ?>
 
         animate();
 
-        envir.setVisiblityLightHelpingElements(false);
+        setVisiblityLightHelpingElements(false);
         envir.isComposerOn = true;
         //transform_controls.visible  = false;
         envir.getSteveFrustum().visible = false;

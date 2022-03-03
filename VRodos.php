@@ -147,6 +147,7 @@ function vrodos_register_scripts() {
 			array( 'vrodos_LoaderMulti', $pluginDirJS.'vrodos_LoaderMulti.js'),
 			array( 'vrodos_movePointerLocker', $pluginDirJS.'vrodos_movePointerLocker.js'),
 			array( 'vrodos_addRemoveOne', $pluginDirJS.'vrodos_addRemoveOne.js'),
+		    array( 'vrodos_HierarchyViewer', $pluginDirJS.'vrodos_HierarchyViewer.js')
 		);
 	
 	for ( $i = 0 ; $i < count($scriptsD); $i ++){
