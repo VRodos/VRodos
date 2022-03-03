@@ -150,7 +150,7 @@ function onMouseSelect( event ) {
         if( (intersects[0].object.name === 'Steve' || intersects[0].object.name === 'SteveShieldMesh'
                 || intersects[0].object.name === 'SteveMesh' ) && event.button === 0 ){
 
-            envir.setBackgroundColorHierarchyViewer("avatarYawObject");
+            setBackgroundColorHierarchyViewer("avatarYawObject");
 
             // highlight
             envir.outlinePass.selectedObjects = [intersects[0].object.parent.children[0]];
@@ -162,9 +162,6 @@ function onMouseSelect( event ) {
             // Steve can not be deleted
             transform_controls.size = 1;
             transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
-
-
-
             return;
         }
     }
@@ -206,7 +203,7 @@ function selectorMajor(event, objectSel){
     if (event.button === 0 || event.button === 2) {
 
         // set the selected color of the hierarchy viewer
-        envir.setBackgroundColorHierarchyViewer(objectSel.name);
+        setBackgroundColorHierarchyViewer(objectSel.name);
 
         transform_controls.attach( objectSel );
 
@@ -263,6 +260,8 @@ function selectorMajor(event, objectSel){
     }
 
     // Right click: overide its properties ( Door, MicroscopeTextbook, Box )
+
+    console.log(event);
     if (event.button === 2) {
         activeOverides(event, objectSel);
         event.preventDefault();
@@ -1011,17 +1010,7 @@ function clearAndUnbind(selectName=null, idstr=null, chkboxname=null){
 
 }
 
-// Highlight item in Hierarchy viewer
-function setBackgroundColorHierarchyViewer(name) {
 
-    jQuery('#hierarchy-viewer li').each(
-        function (idx, li) {
-            jQuery(li)[0].style.background = 'rgb(244, 244, 244)';
-        }
-    );
-
-    jQuery('#hierarchy-viewer').find('#' + name)[0].style.background = '#a4addf';
-}
 
 
 /**

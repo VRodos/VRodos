@@ -63,7 +63,8 @@ function vrodos_load_vrviewer_scripts()
 	
 	wp_enqueue_script( 'vrodos_load119_FileLoader');
 	
- 
+	// Hierarchy Viewer
+	wp_enqueue_script('vrodos_HierarchyViewer');
 	
 }
 add_action('wp_enqueue_scripts', 'vrodos_load_vrviewer_scripts' );
@@ -212,7 +213,7 @@ get_header(); ?>
                     envir.scene.remove(envir.scene.children[i]);
             }
 
-            envir.setHierarchyViewer();
+            setHierarchyViewer();
 
             // transform_controls = envir.scene.getObjectByName('myTransformControls');
             // transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));

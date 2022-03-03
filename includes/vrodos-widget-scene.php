@@ -19,7 +19,7 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_load119_DDSLoader');
 	wp_enqueue_script('vrodos_load119_KTXLoader');
 	wp_enqueue_script('vrodos_inflate');
-	
+
 	// Fixed at 87 (forked of original 87)
 	wp_enqueue_script('vrodos_load87_datgui');
 	wp_enqueue_script('vrodos_load87_OBJloader');
@@ -32,6 +32,9 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_load87_scene_importer_utils');
 	wp_enqueue_script('vrodos_load87_sceneexporter');
 	
+	// Hierarchy Viewer
+	wp_enqueue_script('vrodos_HierarchyViewer');
+ 
 	// Colorpicker for the lights
 	wp_enqueue_script('vrodos_jscolorpick');
 	
@@ -547,7 +550,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
                         envir.scene.remove(envir.scene.children[i]);
                 }
         
-                envir.setHierarchyViewer();
+                setHierarchyViewer();
         
                 // transform_controls = envir.scene.getObjectByName('myTransformControls');
                 // transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));

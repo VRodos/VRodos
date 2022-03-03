@@ -28,7 +28,7 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script('vrodos_load87_datgui');
     wp_enqueue_script('vrodos_load87_OBJloader');
     wp_enqueue_script('vrodos_load87_MTLloader');
-    wp_enqueue_script('vrodos_load87_OrbitControls');
+    wp_enqueue_script('vrodos_load119_OrbitControls');
     wp_enqueue_script('vrodos_load87_TransformControls');
     wp_enqueue_script('vrodos_load87_PointerLockControls');
     
@@ -44,14 +44,13 @@ function vrodos_load_vreditor_scripts()
     
     // Hierarchy Viewer
 	wp_enqueue_script('vrodos_HierarchyViewer');
-	
-    
+
     wp_enqueue_style('vrodos_datgui');
     wp_enqueue_style('vrodos_3D_editor');
     wp_enqueue_style('vrodos_3D_editor_browser');
 	wp_enqueue_style('vrodos_sceneeditor_stylesheet');
- 
 }
+
 add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
 
 
@@ -592,7 +591,7 @@ get_header(); ?>
                     </div>
 
                     <!-- Hierarchy viewer -->
-                    <div id="row6" class="row-right-panel">
+                    <div id="row6" class="row-right-panel" style="max-height:50%;">
                         <div class="HierarchyViewerStyle mdc-card" id="hierarchy-viewer-container">
                             <span class="hierarchyViewerTitle mdc-typography--subheading1 mdc-theme--text-primary-on-background" style="">Hierarchy Viewer</span>
                             <hr class="mdc-list-divider">
@@ -601,11 +600,14 @@ get_header(); ?>
                     </div>
                     
                     <!-- Set Clear Color -->
-                    <div id="sceneClearColor" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield">
-                        <label for="jscolorpick" style="display:none">Color pick</label>
-                        <input id="jscolorpick" class="jscolor {onFineChange:'updateClearColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255);">
+                    <div id="sceneClearColor" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield"
+                          >
+                        
+<!--                        <label for="jscolorpick" style="display:none">Color pick</label>-->
+                        
+                        <input id="jscolorpick" class="jscolor {onFineChange:'updateClearColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); max-width:100px; margin-left:30px; margin-bottom:5px">
 
-                        <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000">
+                        <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden">
 
                         <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above" style="background: none;">Scene Background Color</label>
                     </div>
@@ -1079,7 +1081,7 @@ get_header(); ?>
             findSceneDimensions();
             envir.updateCameraGivenSceneLimits();
 
-            envir.setHierarchyViewer();
+            setHierarchyViewer();
 
             // Set Target light for Spots
             for (let n in resources3D) {
@@ -1128,7 +1130,7 @@ get_header(); ?>
                     envir.scene.remove(envir.scene.children[i]);
             }
 
-            envir.setHierarchyViewer();
+            setHierarchyViewer();
 
             transform_controls = envir.scene.getObjectByName('myTransformControls');
             transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));

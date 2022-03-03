@@ -434,61 +434,7 @@ function resetInScene(name){
     envir.avatarControls.getObject().children[0].scale.set(1,1,1);
 }
 
-function addInHierarchyViewer(obj) {
 
-    // ALL but the lightTargetSpot
-    if (obj.categoryName != 'lightTargetSpot') {
-
-        // ADD in the Hierarchy viewer
-        var deleteButtonHTML =
-            '<a href="javascript:void(0);" class="hierarchyItemDelete mdc-list-item" aria-label="Delete asset"' +
-            ' title="Delete asset object" onclick="' +
-            // Delete object from scene and remove it from the hierarchy viewer
-            'deleterFomScene(\'' + obj.name + '\');'
-            + '">' +
-            '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Delete">delete </i>' +
-            '</a>';
-
-        var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11);
-        var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
-
-        // Add as a list item
-        jQuery('#hierarchy-viewer').append(
-            '<li class="hierarchyItem mdc-list-item" id="' + obj.name + '">' +
-            '<a href="javascript:void(0);" class="hierarchyItemName mdc-list-item"  ' +
-            'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
-            '<span id="" class="mdc-list-item__text">' +
-            game_object_nameA_assetName + '<br />' +
-            '<span style="font-size:7pt; color:grey">' + game_object_nameB_dateCreated + '</span>' +
-            '</span>' +
-            '</a>' +
-            deleteButtonHTML +
-            '</li>'
-        );
-    } else {
-        // lightTargetSpot
-
-        // lightTargetSpot without the timestamp
-        var game_object_nameA_assetName = obj.name.substring(0, obj.name.length - 11); //.substring(0, obj.name.length - 11);
-
-        // The timestamp
-        var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
-
-        // Add as a list item
-        jQuery('#hierarchy-viewer').append(
-            '<li class="hierarchyItem mdc-list-item" id="' + obj.name + '">' +
-            '<a href="javascript:void(0);" class="hierarchyItemName mdc-list-item"  ' +
-            'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
-            '<span id="" class="mdc-list-item__text">' +
-            game_object_nameA_assetName + '<br />' +
-            '<span style="font-size:7pt; color:grey">' + game_object_nameB_dateCreated + '</span>' +
-            '</span>' +
-            '</a>' +
-            '' +
-            '</li>'
-        );
-    }
-}
 
 
 
