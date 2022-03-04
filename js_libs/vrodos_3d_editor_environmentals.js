@@ -35,6 +35,28 @@ class vrodos_3d_editor_environmentals {
         this.scene = new THREE.Scene();
         this.scene.name = "vrodosScene";
 
+        // Add a background to the scene
+        var rgbeloader = new THREE.RGBELoader();
+
+
+        rgbeloader.setPath( '/wordpress/wp-content/plugins/vrodos/images/hdr/' )
+            .load( 'quarry_01_1k.hdr', function ( texture ) {
+
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+
+                //envir.scene.background = texture;
+                envir.scene.environment = texture;
+
+            } );
+
+
+        this.cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
+        this.cubeRenderTarget.texture.type = THREE.HalfFloatType;
+
+        // REM HERE
+        // Check envmap for every material
+        this.cubeCamera = new THREE.CubeCamera( 1, 1000, this.cubeRenderTarget );
+
         // --- Add Grid to scene
         this.gridHelper = new THREE.GridHelper(2000, 40);
         this.gridHelper.name = "myGridHelper";
@@ -59,6 +81,11 @@ class vrodos_3d_editor_environmentals {
         // VSMShadowMap filters shadow maps using the Variance Shadow Map (VSM) algorithm. When using VSMShadowMap all shadow receivers will also cast shadows.
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.autoClear = false;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.5;
+
+
 
         // Label renderer for CSS2D renderer
         this.labelRenderer = new THREE.CSS2DRenderer();
@@ -71,6 +98,7 @@ class vrodos_3d_editor_environmentals {
 
         this.renderer.sortObjects = true;
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
+
 
         // This works well for outlining objects in white background
         this.renderer.setClearColor(0xeeeeee, 1);

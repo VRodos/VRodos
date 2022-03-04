@@ -121,6 +121,7 @@ function vrodos_register_scripts() {
 		
 		array( 'vrodos_load119_Font', $pluginDirJS.'threejs119/Font.js'),
 		array( 'vrodos_load119_Loader', $pluginDirJS.'threejs119/Loader.js'),
+		array( 'vrodos_load119_RGBELoader', $pluginDirJS.'threejs119/RGBELoader.js'),
 		array( 'vrodos_load119_Cache', $pluginDirJS.'threejs119/Cache.js'),
 		array( 'vrodos_load119_FileLoader', $pluginDirJS.'threejs119/FileLoader.js'),
 		array( 'vrodos_load119_LoadingManager', $pluginDirJS.'threejs119/LoadingManager.js'),

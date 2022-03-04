@@ -18,6 +18,7 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script('vrodos_load119_OutlinePass');
     wp_enqueue_script('vrodos_load119_ShaderPass');
     wp_enqueue_script('vrodos_load119_FBXloader');
+	wp_enqueue_script('vrodos_load119_RGBELoader');
     wp_enqueue_script('vrodos_load119_GLTFLoader');
     wp_enqueue_script('vrodos_load119_DRACOLoader');
     wp_enqueue_script('vrodos_load119_DDSLoader');
@@ -1177,9 +1178,13 @@ get_header(); ?>
 
             if (envir.isComposerOn)
                 envir.composer.render();
+
+            
             
             // Update it
             updatePositionsAndControls();
+
+            envir.cubeCamera.update( envir.renderer, envir.scene );
         }
 
         // UPDATE
@@ -1216,7 +1221,6 @@ get_header(); ?>
         // Set all buttons actions
         loadButtonActions();
 
-
         function updateClearColorPicker(picker){
             document.getElementById('sceneClearColor').value = picker.toRGBString();
             var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
@@ -1227,11 +1231,6 @@ get_header(); ?>
             const rgb = (red << 16) | (green << 8) | (blue << 0);
             return '#' + (0x1000000 + rgb).toString(16).slice(1);
         }
-
-
-    
-        
-        
     </script>
 <?php } ?>
 
