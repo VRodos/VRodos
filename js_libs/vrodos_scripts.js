@@ -31,5 +31,14 @@ function unixTimestamp_to_time(tStr) {
     return date.getDate() + '/' + date.getMonth() + '/' + date.getFullYear() + ' ' + formattedTime;
 }
 
+function updateClearColorPicker(picker){
+    document.getElementById('sceneClearColor').value = picker.toRGBString();
+    var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
+    envir.renderer.setClearColor(hex);
+}
 
+function rgbToHex(red, green, blue) {
+    const rgb = (red << 16) | (green << 8) | (blue << 0);
+    return '#' + (0x1000000 + rgb).toString(16).slice(1);
+}
 

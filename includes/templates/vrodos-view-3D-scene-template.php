@@ -47,6 +47,7 @@ function vrodos_load_vrviewer_scripts()
 	wp_enqueue_script('vrodos_rayCasters');
 	wp_enqueue_script('vrodos_auxControlers');
 	wp_enqueue_script('vrodos_LoaderMulti');
+	wp_enqueue_script('vrodos_LightsLoader');
 	wp_enqueue_script('vrodos_movePointerLocker');
 	wp_enqueue_script('vrodos_addRemoveOne');
 	wp_enqueue_script('vrodos_3d_editor_buttons');

@@ -146,6 +146,7 @@ function vrodos_register_scripts() {
 			array( 'vrodos_rayCasters', $pluginDirJS.'vrodos_rayCasters.js'),
 			array( 'vrodos_auxControlers', $pluginDirJS.'vrodos_auxControlers.js'),
 			array( 'vrodos_LoaderMulti', $pluginDirJS.'vrodos_LoaderMulti.js'),
+		    array( 'vrodos_LightsLoader', $pluginDirJS.'vrodos_LightsLoader.js'),
 			array( 'vrodos_movePointerLocker', $pluginDirJS.'vrodos_movePointerLocker.js'),
 			array( 'vrodos_addRemoveOne', $pluginDirJS.'vrodos_addRemoveOne.js'),
 		    array( 'vrodos_HierarchyViewer', $pluginDirJS.'vrodos_HierarchyViewer.js')

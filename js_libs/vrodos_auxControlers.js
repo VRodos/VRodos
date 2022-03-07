@@ -47,9 +47,9 @@ var dg_controller_ry = controlInterface.rotate.add( gui_controls_funs, 'dg_ry', 
 var dg_controller_rz = controlInterface.rotate.add( gui_controls_funs, 'dg_rz', -179, 180, 0.001).name('<span style="color:blue">Rotate z</span>');//.listen();
 
 //var dg_controller_sc  = controlInterface.scale.add( gui_controls_funs, 'dg_scale').min(0.001).max(1000).step(0.001).name('Scale');//.listen();
-var dg_controller_dim_x = controlInterface.scale.add( gui_controls_funs, 'dg_dim_x').min(0.01).max(30).step(0.01).name('<span style="color:red">x length</span>');
-var dg_controller_dim_y = controlInterface.scale.add( gui_controls_funs, 'dg_dim_y').min(0.01).max(30).step(0.01).name('<span style="color:green">y length</span>');
-var dg_controller_dim_z = controlInterface.scale.add( gui_controls_funs, 'dg_dim_z').min(0.01).max(30).step(0.01).name('<span style="color:blue">z length</span>');
+var dg_controller_dim_x = controlInterface.scale.add( gui_controls_funs, 'dg_dim_x').min(0.01).max(100).step(0.01).name('<span style="color:red">x length</span>');
+var dg_controller_dim_y = controlInterface.scale.add( gui_controls_funs, 'dg_dim_y').min(0.01).max(100).step(0.01).name('<span style="color:green">y length</span>');
+var dg_controller_dim_z = controlInterface.scale.add( gui_controls_funs, 'dg_dim_z').min(0.01).max(100).step(0.01).name('<span style="color:blue">z length</span>');
 
 controlInterface.translate.domElement.style='width:100%';
 
@@ -375,13 +375,22 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
 
 
 // Find dimensions of the selected object
-function findDimensions(grouObj){
+function findDimensions(groupObj){
 
-    grouObj.remove( grouObj.getObjectByName('bbox') );
-    grouObj.remove( grouObj.getObjectByName('x_dim_line') );
+    groupObj.remove( groupObj.getObjectByName('bbox') );
+    groupObj.remove( groupObj.getObjectByName('x_dim_line') );
 
     // ======= bbox ========================
-    var box = new THREE.BoxHelper( grouObj, 0xff00ff );
+    var box;
+    if (groupObj.type !== "PointLight" &&  groupObj.type !== "PointLightHelper" && groupObj.type !== "SpotLight") {
+
+        box = new THREE.BoxHelper(groupObj, 0xff00ff);
+    } else {
+        const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
+        const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+        var simpleBox = new THREE.Mesh( geometryBox, materialBox );
+        box = new THREE.BoxHelper(simpleBox, 0xff00ff);
+    }
 
     box.geometry.computeBoundingBox();
     box.name = "bbox";
@@ -396,13 +405,21 @@ function findDimensions(grouObj){
 }
 
 // Find dimensions of the selected object
-function findBorders(grouObj){
+function findBorders(groupObj){
 
-    grouObj.remove( grouObj.getObjectByName('bbox') );
-    grouObj.remove( grouObj.getObjectByName('x_dim_line') );
+    groupObj.remove( groupObj.getObjectByName('bbox') );
+    groupObj.remove( groupObj.getObjectByName('x_dim_line') );
 
     // ======= bbox ========================
-    var box = new THREE.BoxHelper( grouObj, 0xff00ff );
+    var box;
+    if (groupObj.type !== "PointLight" &&  groupObj.type !== "PointLightHelper") {
+        box = new THREE.BoxHelper(groupObj, 0xff00ff);
+    } else {
+        const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
+        const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+        const simpleBox = new THREE.Mesh( geometryBox, materialBox );
+        box = new THREE.BoxHelper(simpleBox, 0xff00ff);
+    }
 
     box.geometry.computeBoundingBox();
     box.name = "bbox";
@@ -420,15 +437,21 @@ function findBorders(grouObj){
 // Find Limits (world coordinates) of the selected object
 function findObjectLimits(groupObj){
 
-
-
     groupObj.remove( groupObj.getObjectByName('bbox') );
     groupObj.remove( groupObj.getObjectByName('x_dim_line') );
 
-
     // ======= bbox ========================
     try {
-        var box = new THREE.BoxHelper(groupObj, 0xff00ff);
+
+        var box;
+        if (groupObj.type !== "PointLight" &&  groupObj.type !== "PointLightHelper") {
+            box = new THREE.BoxHelper(groupObj, 0xff00ff);
+        } else {
+            const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
+            const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+            const simpleBox = new THREE.Mesh( geometryBox, materialBox );
+            box = new THREE.BoxHelper(simpleBox, 0xff00ff);
+        }
 
         box.geometry.computeBoundingBox();
         box.name = "bbox";

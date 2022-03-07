@@ -53,7 +53,7 @@ class ParseJSON {
         foreach ($json_metadata as $key=>$value) {
              $name = $key;
              if ($name == 'ClearColor') {
-                 echo '<script>';
+                 echo '<script type="text/javascript">';
                  echo 'resources3D["SceneSettings"]= {'.
                                                       '"ClearColor":"'.$value.'"'.
                                                                 '};';
@@ -241,12 +241,10 @@ class ParseJSON {
             
             
 
-            echo '<script>';
+            echo '<script type="text/javascript">';
             echo 'var selected_object_trs={"translation":['.$t_x.','.$t_y.','.$t_z.'],"rotation":['.
                 $r_x .','.$r_y .','.$r_z .'],'.'"scale":[' . $s_x . ',' . $s_y . ',' . $s_z . ']};';
-    
-         
-            
+
             echo 'resources3D["'.$name.'"]= {'.
                                             '"path":"'.$path.
                                             '","assetid":"'.$assetid.

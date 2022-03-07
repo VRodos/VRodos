@@ -39,15 +39,17 @@ class vrodos_3d_editor_environmentals {
         var rgbeloader = new THREE.RGBELoader();
 
 
-        rgbeloader.setPath( '/wordpress/wp-content/plugins/vrodos/images/hdr/' )
-            .load( 'quarry_01_1k.hdr', function ( texture ) {
-
-                texture.mapping = THREE.EquirectangularReflectionMapping;
-
-                //envir.scene.background = texture;
-                envir.scene.environment = texture;
-
-            } );
+        // rgbeloader.setPath( '/wordpress/wp-content/plugins/vrodos/images/hdr/' )
+        //     .load( 'quarry_01_1k.hdr', function ( texture ) {
+        //
+        //         texture.mapping = THREE.EquirectangularReflectionMapping;
+        //
+        //         envir.maintexture = texture;
+        //
+        //         //envir.scene.background = texture;
+        //         envir.scene.environment = texture;
+        //
+        //     } );
 
 
         this.cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );

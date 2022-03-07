@@ -61,6 +61,7 @@ function vrodos_load_custom_functions_vreditor(){
     wp_enqueue_script('vrodos_keyButtons');
     wp_enqueue_script('vrodos_rayCasters');
     wp_enqueue_script('vrodos_auxControlers');
+	wp_enqueue_script('vrodos_LightsLoader');
     wp_enqueue_script('vrodos_LoaderMulti');
     wp_enqueue_script('vrodos_movePointerLocker');
     wp_enqueue_script('vrodos_addRemoveOne');
@@ -81,15 +82,27 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 
     // Use lighting or basic materials (basic does not employ light, no shadows)
     window.isAnyLight = true;
+
+    // This holds all the 3D resources to load. Generated in Parse JSON.
+    var resources3D  = [];
+
+    // For autosave after each action
+    var mapActions = {}; // You could also use an array
 </script>
 
 
 <?php
+// resources3D class
+require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
+
 // Define current path of plugin
 $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 
 // wpcontent/uploads/
 $upload_url = wp_upload_dir()['baseurl'];
+
+
+
 $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 
 // Scene
@@ -126,6 +139,10 @@ $scene_post = get_post($current_scene_id);
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
                         vrodos_getDefaultJSONscene(strtolower($project_type));
+
+// Load resources 3D
+$SceneParserPHP = new ParseJSON($upload_url);
+$SceneParserPHP->init($sceneJSON);
 
 $sceneTitle = $scene_post->post_name;
 
@@ -951,7 +968,7 @@ get_header(); ?>
     
         // load asset browser with data
         jQuery(document).ready(function(){
-            vrodos_fetchSceneAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
+            vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
     
             // make asset browser draggable
             jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
@@ -962,6 +979,10 @@ get_header(); ?>
 
     <!--  Part 3: Start 3D with Javascript   -->
     <script>
+
+        // id of animation frame is used for canceling animation when dat-gui changes
+        var id_animation_frame;
+
         // all 3d dom
         let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 
@@ -991,14 +1012,16 @@ get_header(); ?>
         // When Dat.Gui changes update php, javascript vars and transform_controls
         controllerDatGuiOnChange();
 
-        // Load all 3D including Steve
-        let loaderMulti;
+        // Add lights on scene
+        var lightsLoader = new VRodos_LightsLoader();
+        lightsLoader.load(resources3D);
 
-        // id of animation frame is used for canceling animation when dat-gui changes
-        var id_animation_frame;
 
-        var resources3D  = [];// This holds all the resources to load. Generated in Parse JSON
+        
+        
 
+        envir.scene.add(transform_controls);
+        
         // Load Manager
         // Make progress bar visible
         jQuery("#progress").get(0).style.display = "block";
@@ -1006,76 +1029,27 @@ get_header(); ?>
         let manager = new THREE.LoadingManager();
 
         manager.onProgress = function ( item, loaded, total ) {
-            //console.log(item, loaded, total);
             if (total >= 2)
                 document.getElementById("result_download").innerHTML = "Loading " + (loaded-1) + " out of " + (total-2);
         };
 
+        
+        
         // When all are finished loading place them in the correct position
         manager.onLoad = function () {
 
-            jQuery("#progressWrapper").get(0).style.visibility= "hidden";
+            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
             // Get the last inserted object
-            let name = Object.keys(resources3D).pop();
-            let trs_tmp = resources3D[name]['trs'];
+            let l = Object.keys(resources3D).length;
+            let name = Object.keys(resources3D)[l - 1]; //Object.keys(resources3D).pop();
+
             let objItem = envir.scene.getObjectByName(name);
-
             
-            // In the case the last asset is missing then put controls on the camera
-            if (typeof objItem === "undefined"){
-                
-                
-                name = 'avatarYawObject';
-                trs_tmp = resources3D[name]['trs'];
-                objItem = envir.scene.getObjectByName(name);
-                
+            if (objItem === undefined){
+                return;
             } else {
-                
-                transform_controls.attach(objItem);
-                // highlight
-                envir.outlinePass.selectedObjects = [objItem];
-                envir.scene.add(transform_controls);
-
-                if (selected_object_name != 'avatarYawObject') {
-                    
-                    transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
-                                                                        trs_tmp['translation'][2]);
-                    transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
-                                                                trs_tmp['rotation'][2]);
-                    
-                    transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
-                }
-
-                jQuery('#object-manipulation-toggle').show();
-                jQuery('#axis-manipulation-buttons').show();
-                jQuery('#double-sided-switch').show();
-                showObjectPropertiesPanel(transform_controls.getMode());
-
-                selected_object_name = name;
-
-                transform_controls.setMode("rottrans");
-                
-                let sizeT = 1;
-                // Resize controls based on object size
-                if (selected_object_name != 'avatarYawObject') {
-                    let dims = findDimensions(transform_controls.object);
-                    sizeT = Math.max(...dims);
-                    
-                    
-                    // 6 is rotation
-                    transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
-
-                    if (selected_object_name.includes("lightSun") || selected_object_name.includes("lightLamp") ||
-                        selected_object_name.includes("lightSpot")){
-                        // ROTATE GIZMO: Sun and lamp can not be rotated
-                        transform_controls.children[6].children[0].children[1].visible = false;
-                    }
-                } else {
-                    transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
-                    
-                }
-                transform_controls.setSize( sizeT > 1 ? sizeT : 1 );
+                attachToControls(name, objItem);
             }
 
             // Find scene dimension in order to configure camera in 2D view (Y axis distance)
@@ -1086,38 +1060,21 @@ get_header(); ?>
 
             // Set Target light for Spots
             for (let n in resources3D) {
-                
                 (function (name) {
                     if (resources3D[name]['categoryName'] === 'lightSpot') {
                         let lightSpot = envir.scene.getObjectByName(name);
                         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
                     }
                 })(n);
-                
             }
-
         }; // End of manager
-    </script>
 
-    <!-- Load Scene - javascript var resources3D[] -->
-    <?php
-        require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
-        
-        /* Initial load as php */
-	    $SceneParserPHP = new ParseJSON($upload_url);
-	    $SceneParserPHP->init($sceneJSON);
-     
-    ?>
+        // Loader of assets
+        var loaderMulti = new VRodos_LoaderMulti();
 
-    <script>
-        //console.log(resources3D);
-        loaderMulti = new VRodos_LoaderMulti("1");
-
-        
-        
         loaderMulti.load(manager, resources3D, pluginPath);
-        //vrodos_fetchAndLoadMultipleAssetsAjax(manager, resources3D, pluginPath);
-
+        
+        
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json){
 
@@ -1136,10 +1093,6 @@ get_header(); ?>
             transform_controls = envir.scene.getObjectByName('myTransformControls');
             transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));
 
-            
-
-            console.log(resources3D);
-            
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
         }
@@ -1178,8 +1131,7 @@ get_header(); ?>
 
             if (envir.isComposerOn)
                 envir.composer.render();
-
-            
+           
             
             // Update it
             updatePositionsAndControls();
@@ -1213,24 +1165,59 @@ get_header(); ?>
             }
         }
 
-        // For autosave after each action
-        var mapActions = {}; // You could also use an array
-
         animate();
 
         // Set all buttons actions
         loadButtonActions();
+        
+        
+        function attachToControls(name, objItem){
 
-        function updateClearColorPicker(picker){
-            document.getElementById('sceneClearColor').value = picker.toRGBString();
-            var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
-            envir.renderer.setClearColor(hex);
-        }
+            let trs_tmp = resources3D[name]['trs'];
+            transform_controls.attach(objItem);
 
-        function rgbToHex(red, green, blue) {
-            const rgb = (red << 16) | (green << 8) | (blue << 0);
-            return '#' + (0x1000000 + rgb).toString(16).slice(1);
+            // highlight
+            envir.outlinePass.selectedObjects = [objItem];
+
+            if (selected_object_name != 'avatarYawObject') {
+                transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
+                    trs_tmp['translation'][2]);
+                transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
+                    trs_tmp['rotation'][2]);
+                transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+            }
+
+            jQuery('#object-manipulation-toggle').show();
+            jQuery('#axis-manipulation-buttons').show();
+            jQuery('#double-sided-switch').show();
+
+            showObjectPropertiesPanel(transform_controls.getMode());
+
+            selected_object_name = name;
+            transform_controls.setMode("rottrans");
+
+            let sizeT = 1;
+
+            // Resize controls based on object size
+            if (selected_object_name != 'avatarYawObject') {
+                let dims = findDimensions(transform_controls.object);
+                sizeT = Math.max(...dims);
+
+                // 6 is rotation
+                transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
+
+                if (selected_object_name.includes("lightSun") || selected_object_name.includes("lightLamp") ||
+                    selected_object_name.includes("lightSpot")){
+                    // ROTATE GIZMO: Sun and lamp can not be rotated
+                    transform_controls.children[6].children[0].children[1].visible = false;
+                }
+            } else {
+                transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
+            }
+
+            transform_controls.setSize( sizeT > 1 ? sizeT : 1 );
         }
+        
     </script>
 <?php } ?>
 

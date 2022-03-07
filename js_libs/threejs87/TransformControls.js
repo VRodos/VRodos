@@ -892,7 +892,22 @@
 
 
             try {
-                this.bboxX = new THREE.BoxHelper(this.object, 0xff0000);
+                //this.bboxX = new THREE.BoxHelper(this.object, 0xff0000);
+
+                this.bboxX = '';
+
+                if (this.object.type !== "PointLight" &&  this.object.type !== "PointLightHelper"
+                    &&  this.object.type !== "SpotLight") {
+                    this.bboxX = new THREE.BoxHelper(this.object, 0xff00ff);
+                    //console.log(this.bboxX);
+                } else {
+
+                    const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
+                    const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+                    var simpleBox = new THREE.Mesh( geometryBox, materialBox );
+                    this.bboxX = new THREE.BoxHelper(simpleBox, 0xff00ff);
+                }
+
             } catch(e){
                 console.error("555:" + this.object.name, this.object.position.x);
             }
@@ -926,7 +941,7 @@
             this.bboxX.geometry.attributes.position.array[11] *= 1.25;
 
             //-------------- Y ---------------------------------
-            this.bboxY = new THREE.BoxHelper( this.object, 0x00ff00 );
+            this.bboxY = this.bboxX; //new THREE.BoxHelper( this.object, 0x00ff00 );
             this.bboxY.geometry.index.array[0] = 0;
             this.bboxY.geometry.index.array[1] = 0;
             this.bboxY.geometry.index.array[2] = 0;
@@ -957,7 +972,7 @@
 
 
             //-------------- Z ---------------------------------
-            this.bboxZ = new THREE.BoxHelper( this.object, 0x5555ff );
+            this.bboxZ = this.bboxY; //new THREE.BoxHelper( this.object, 0x5555ff );
             this.bboxZ.geometry.index.array[0] = 0;
             this.bboxZ.geometry.index.array[1] = 0;
             this.bboxZ.geometry.index.array[2] = 0;
@@ -1053,32 +1068,22 @@
             worldPosition.setFromMatrixPosition( scope.object.matrixWorld );
             worldRotation.setFromRotationMatrix( tempMatrix.extractRotation( scope.object.matrixWorld ) );
 
-
             for (var i = 0; i < envir.scene.children.length; i++){
 
                 var node = envir.scene.children[i];
 
                 if (node.isLightHelper){
-
                     node.position.setFromMatrixPosition(node.light.matrix);
                     node.updateMatrix();
                     node.update();
-
-
                 }
 
                 if (node.isLightTargetSpot){
-
                     node.parentLight.target.position.setFromMatrixPosition(node.matrix);
                     node.parentLight.target.updateMatrixWorld();
-
-
-
                 }
 
             }
-
-
 
 
             var camera;

@@ -7,22 +7,9 @@
 class VRodos_LoaderMulti {
 
     constructor(who){
-
-
-
     };
 
     load(manager, resources3D, pluginPath) {
-
-        // Load envMap.
-        var textureLoader = new THREE.TextureLoader();
-        var envmap_texture = textureLoader.load(pluginPath + '/images/hdr/venice_sunset_1k.hdr');
-        envmap_texture.mapping = THREE.EquirectangularReflectionMapping;
-        envmap_texture.encoding = THREE.sRGBEncoding;
-
-
-
-
 
         for (let n in resources3D) {
             (function (name) {
@@ -48,7 +35,7 @@ class VRodos_LoaderMulti {
 
                         materials.preload();
 
-                        let objloader = new THREE.OBJLoader(manager);
+                        let objloader = new THREE.OBJLoader();
                         objloader.setMaterials(materials);
 
                         objloader.load(pluginPath + '/assets/Steve/camera.obj', 'after',
@@ -95,7 +82,7 @@ class VRodos_LoaderMulti {
 
                         materials.preload();
 
-                        let objloader = new THREE.OBJLoader(manager);
+                        let objloader = new THREE.OBJLoader();
                         objloader.setMaterials(materials);
 
                         objloader.load(pluginPath + '/assets/Steve/Steve.obj', 'after',
@@ -125,7 +112,7 @@ class VRodos_LoaderMulti {
                     //------------------- OBJ Loading --------------------------
                     if (resources3D[name]['mtl'] != '') {
 
-                        //console.log("OBJ loading");
+                        console.log("OBJ loading");
 
                         mtlLoader.setPath(resources3D[name]['path']);
                         mtlLoader.load(resources3D[name]['mtl'], function (materials) {
@@ -190,7 +177,7 @@ class VRodos_LoaderMulti {
 
                     } else if (resources3D[name]['fbxID'] !== "" && resources3D[name]['fbxID'] !== undefined) {
 
-                        //console.log("FBX loading");
+                        console.log("FBX loading");
                         // ------------------ FBX Loading ---------------------------------
 
                         jQuery.ajax({
@@ -305,10 +292,6 @@ class VRodos_LoaderMulti {
                         });
                     } else if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
 
-                        //console.log("GLB Loading")
-
-
-
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
                             type: 'POST',
@@ -331,90 +314,22 @@ class VRodos_LoaderMulti {
                                     function (object) {
 
 
+                                    //console.log(object);
+
 
                                         if (object.animations.length > 0) {
-
                                             // Animation set
                                             object.mixer = new THREE.AnimationMixer(object.scene);
                                             envir.animationMixers.push(object.mixer);
-
                                             let action = object.mixer.clipAction(object.animations[0]);
                                             action.play();
-
                                         }
-
-
-
-                                        // object.scene.children.traverse(function (node) {
-                                        //     if (node.material) {
-                                        //         if (node.material.name) {
-                                        //             if (node.material.name.includes("Transparent")) {
-                                        //                 node.material.transparent = true;
-                                        //                 // to make transparency behind transparency to work
-                                        //                 node.material.alphaTest = 0.5;
-                                        //             }
-                                        //         }
-                                        //     }
                                         //
-                                        //     if (node instanceof THREE.Mesh) {
-                                        //         node.isDigiArt3DMesh = true;
-                                        //         node.castShadow = true;
-                                        //         node.receiveShadow = true;
-                                        //         if (node.name.includes("renderOrder")) {
-                                        //             let iR = node.name.indexOf("renderOrder");
-                                        //             node.renderOrder = parseInt(node.name.substring(iR + 12, iR + 15));
-                                        //         }
-                                        //     }
-                                        // });
-
-
-
-                                        // --------- Post-processing ----------------
-                                        // object.scene.traverse((node) => {
-                                        //     if (node.isMesh) {
-                                        //         //node.material.envMap = envmap_texture;
-                                        //
-                                        //         const generator = new THREE.PMREMGenerator( envir.renderer );
-                                        //         const envMap = generator.fromScene( envir.scene ,0,0.1,1300 );
-                                        //         envMap.mapping = THREE.CubeRefractionMapping;;
-                                        //         envMap.texture.encoding  = THREE.sRGBEEncoding ;
-                                        //         node.material.envMap = envMap.texture;
-                                        //         node.material.envMapIntensity = 1 ;
-                                        //
-                                        //     }
-                                        // });
-
-
                                         object = setObjectProperties(object.scene, name, resources3D);
                                         object.isDigiArt3DMesh = true;
-                                        // -------- Sound --------------
-                                        // // create the PositionalAudio object (passing in the listener)
-                                        // let audioOf3DObject = new THREE.PositionalAudio(envir.audiolistener);
-                                        //
-                                        // // load a sound and set it as the PositionalAudio object's buffer
-                                        //
-                                        // //if(resourcesFBX['audioURL']){
-                                        //
-                                        // const audioLoader = new THREE.AudioLoader();
-                                        // audioLoader.load(resourcesGLB['audioURL'], function (buffer) {
-                                        //     audioOf3DObject.setBuffer(buffer);
-                                        //     audioOf3DObject.setRefDistance(2000);
-                                        //     audioOf3DObject.setDirectionalCone(330, 230, 0.01);
-                                        //     audioOf3DObject.setLoop(true);
-                                        //     audioOf3DObject.play();
-                                        // });
-                                        //
-                                        // object.add(audioOf3DObject);
-                                        // //}
-
-                                        //------------------------------
-
-
+                                        // //------------------------------
                                         envir.scene.add(object);
-
                                         jQuery("#progressWrapper").get(0).style.visibility= "hidden";
-
-
                                     },
                                     // called while loading is progressing
                                     function (xhr) {
@@ -439,8 +354,6 @@ class VRodos_LoaderMulti {
 
                                 alert("Could not fetch GLB asset. Probably deleted ? "+ name);
 
-
-
                                 console.log("Ajax Fetch Asset: ERROR: 189" + thrownError);
                             }
                         });
@@ -461,277 +374,7 @@ class VRodos_LoaderMulti {
         }
 
 
-        // Lights and Scene Settings loop
-        for (var n in resources3D) {
-            (function (name) {
 
-             // Scene Settings
-             if(name==='SceneSettings') {
-
-                 //console.log("scene settings");
-
-                 envir.renderer.setClearColor(resources3D['SceneSettings'].ClearColor);
-
-                 if(document.getElementById('sceneClearColor')) {
-                     document.getElementById('sceneClearColor').value = resources3D['SceneSettings'].ClearColor;
-                 }
-
-                 if(document.getElementById('jscolorpick')) {
-                     document.getElementById('jscolorpick').value = resources3D['SceneSettings'].ClearColor;
-                 }
-
-                 return;
-             }
-
-
-
-             if (!resources3D[name]['categoryName'].startsWith("light"))
-                return;
-
-             if (resources3D[name]['categoryName']==='lightSun' ){
-
-                var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
-                                            resources3D[name]['lightcolor'][1],
-                                            resources3D[name]['lightcolor'][2]);
-
-                var lightintensity = resources3D[name]['lightintensity'];
-
-                // LIGHT
-                var lightSun = new THREE.DirectionalLight( colora, lightintensity ); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
-                //lightSun.castShadow = true;
-
-                 //Set up shadow properties for the light
-                 lightSun.shadow.mapSize.width = 2048;  // default
-                 lightSun.shadow.mapSize.height = 2048; // default
-                 lightSun.shadow.camera.near = 0.5;    // default
-                 lightSun.shadow.camera.far = 500;     // default
-
-                // REM HERE
-                lightSun.position.set(resources3D[name]['trs']['translation'][0],
-                                      resources3D[name]['trs']['translation'][1],
-                                      resources3D[name]['trs']['translation'][2] );
-
-                lightSun.rotation.set(
-                                            resources3D[name]['trs']['rotation'][0],
-                                        resources3D[name]['trs']['rotation'][1],
-                                        resources3D[name]['trs']['rotation'][2] );
-
-
-
-                lightSun.scale.set( resources3D[name]['trs']['scale'][0],
-                                        resources3D[name]['trs']['scale'][1],
-                                        resources3D[name]['trs']['scale'][2]);
-
-
-                lightSun.target.position.set(resources3D[name]['targetposition'][0],
-                                            resources3D[name]['targetposition'][1],
-                                            resources3D[name]['targetposition'][2]); // where it points
-
-                lightSun.name = name;
-                lightSun.categoryName = "lightSun";
-                lightSun.isDigiArt3DModel = true;
-                lightSun.isLight = true;
-
-                lightSun.castShadow = true;
-                lightSun.shadow.mapSize.width = 512;
-                lightSun.shadow.mapSize.height = 512;
-
-                 lightSun.shadow.camera.near = 0.5;
-                 lightSun.shadow.camera.far = 1000;
-
-                 lightSun.shadow.camera.left = -30;
-                 lightSun.shadow.camera.right = 30;
-                 lightSun.shadow.camera.top = 30;
-                 lightSun.shadow.camera.bottom = -30;
-
-                //// Add Sun Helper
-                var sunSphere = new THREE.Mesh(
-                    new THREE.SphereBufferGeometry( 1, 16, 8 ),
-                    new THREE.MeshBasicMaterial( { color: colora } )
-                );
-                sunSphere.isDigiArt3DMesh = true;
-                sunSphere.name = "SunSphere";
-                lightSun.add(sunSphere);
-
-
-                var lightSunHelper = new THREE.DirectionalLightHelper( lightSun, 3, colora);
-                lightSunHelper.isLightHelper = true;
-                lightSunHelper.name = 'lightHelper_' + lightSun.name;
-                lightSunHelper.categoryName = 'lightHelper';
-                lightSunHelper.parentLightName = name;
-                envir.scene.add(lightSunHelper);
-
-                // end of sphere
-                envir.scene.add(lightSun);
-
-                lightSun.target.updateMatrixWorld();
-                lightSunHelper.update();
-
-                // REM LOAD ALSO THE SPOT HELPER AND EXPORT IMPORT IT : SEE FROM ADD REMOVE ONE !!!!
-                // Target spot: Where Sun points
-                var lightTargetSpot = new THREE.Object3D();
-
-                lightTargetSpot.add(new THREE.Mesh(
-                new THREE.SphereBufferGeometry( 0.5, 16, 8 ),
-                new THREE.MeshBasicMaterial( { color: colora } )
-                ));
-
-                lightTargetSpot.isDigiArt3DMesh = true;
-                lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
-                lightTargetSpot.categoryName = "lightTargetSpot";
-                lightTargetSpot.isLightTargetSpot = true;
-
-                lightTargetSpot.position.set(resources3D[name]['targetposition'][0],
-                                            resources3D[name]['targetposition'][1],
-                                            resources3D[name]['targetposition'][2]);
-
-                lightTargetSpot.parentLight = lightSun;
-                lightTargetSpot.parentLightHelper = lightSunHelper;
-
-                lightSun.target.position.set(lightTargetSpot.position.x, lightTargetSpot.position.y,
-                                                lightTargetSpot.position.z) ;
-
-                 envir.scene.add(lightTargetSpot);
-
-                 //Create a helper for the shadow camera (optional)
-                 var lightSunShadowhelper = new THREE.CameraHelper( lightSun.shadow.camera );
-                 lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
-                 envir.scene.add( lightSunShadowhelper );
-
-        } else if (resources3D[name]['categoryName']==='lightLamp' ){
-
-
-
-            var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
-                resources3D[name]['lightcolor'][1],
-                resources3D[name]['lightcolor'][2]);
-
-            var lightpower = resources3D[name]['lightpower'];
-            var lightdecay = resources3D[name]['lightdecay'];
-            var lightdistance = resources3D[name]['lightdistance'];
-
-
-            // LIGHT
-            var lightLamp = new THREE.PointLight(colora, lightpower, lightdistance, lightdecay);
-            lightLamp.power = lightpower;
-
-
-            lightLamp.position.set(
-                resources3D[name]['trs']['translation'][0],
-                resources3D[name]['trs']['translation'][1],
-                resources3D[name]['trs']['translation'][2] );
-
-            lightLamp.rotation.set(
-                resources3D[name]['trs']['rotation'][0],
-                resources3D[name]['trs']['rotation'][1],
-                resources3D[name]['trs']['rotation'][2] );
-
-            lightLamp.scale.set( resources3D[name]['trs']['scale'],
-                resources3D[name]['trs']['scale'],
-                resources3D[name]['trs']['scale']);
-
-            lightLamp.name = name;
-            lightLamp.categoryName = "lightLamp";
-            lightLamp.isDigiArt3DModel = true;
-            lightLamp.isLight = true;
-
-                 lightLamp.castShadow = true;
-
-            //// Add Lamp Sphere
-            var lampSphere = new THREE.Mesh(
-                new THREE.SphereBufferGeometry(0.5, 16, 8),
-                new THREE.MeshBasicMaterial({color: colora})
-            );
-            lampSphere.isDigiArt3DMesh = true;
-            lampSphere.name = "LampSphere";
-            lightLamp.add(lampSphere);
-            // end of sphere
-
-            // Helper
-            var lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, colora);
-            lightLampHelper.isLightHelper = true;
-            lightLampHelper.name = 'lightHelper_' + lightLamp.name;
-            lightLampHelper.categoryName = 'lightHelper';
-            lightLampHelper.parentLightName = lightLamp.name;
-
-            envir.scene.add(lightLamp);
-            envir.scene.add(lightLampHelper);
-
-            lightLampHelper.update();
-
-        } else if (resources3D[name]['categoryName']==='lightSpot' ){
-
-
-            var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
-                resources3D[name]['lightcolor'][1],
-                resources3D[name]['lightcolor'][2]);
-
-            var lightpower = resources3D[name]['lightpower'];
-            var lightdecay = resources3D[name]['lightdecay'];
-            var lightdistance = resources3D[name]['lightdistance'];
-            var lightangle = resources3D[name]['lightangle'];
-            var lightpenumbra = resources3D[name]['lightpenumbra'];
-
-            // LIGHT
-            var lightSpot = new THREE.SpotLight(colora, lightpower, lightdistance, lightangle, lightpenumbra, lightdecay);
-            lightSpot.power = lightpower;
-
-            lightSpot.position.set(
-                resources3D[name]['trs']['translation'][0],
-                resources3D[name]['trs']['translation'][1],
-                resources3D[name]['trs']['translation'][2] );
-
-            lightSpot.rotation.set(
-                resources3D[name]['trs']['rotation'][0],
-                resources3D[name]['trs']['rotation'][1],
-                resources3D[name]['trs']['rotation'][2] );
-
-            lightSpot.scale.set( resources3D[name]['trs']['scale'],
-                resources3D[name]['trs']['scale'],
-                resources3D[name]['trs']['scale']);
-
-            lightSpot.name = name;
-            lightSpot.categoryName = "lightSpot";
-            lightSpot.isDigiArt3DModel = true;
-            lightSpot.isLight = true;
-
-              lightSpot.castShadow = true;
-
-
-
-              lightSpot.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 50, 1, 0.5, 100 ) );
-              lightSpot.shadow.bias = 0.0001;
-             //
-              lightSpot.shadow.mapSize.width = 1024;
-              lightSpot.shadow.mapSize.height = 1024;
-
-
-
-            //// Add Spot Cone
-            var spotSphere = new THREE.Mesh(
-                new THREE.SphereBufferGeometry( 1, 16, 8 ),
-                new THREE.MeshBasicMaterial({color: colora})
-            );
-            spotSphere.isDigiArt3DMesh = true;
-            spotSphere.name = "SpotSphere";
-            lightSpot.add(spotSphere);
-            // end of sphere
-
-            // Helper
-            var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, colora);
-            lightSpotHelper.isLightHelper = true;
-            lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
-            lightSpotHelper.categoryName = 'lightHelper';
-            lightSpotHelper.parentLightName = lightSpot.name;
-
-            envir.scene.add(lightSpot);
-            envir.scene.add(lightSpotHelper);
-
-            lightSpotHelper.update();
-
-        }
-        })(n);
-        }
     }
 }
 

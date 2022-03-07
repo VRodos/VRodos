@@ -261,7 +261,7 @@ function selectorMajor(event, objectSel){
 
     // Right click: overide its properties ( Door, MicroscopeTextbook, Box )
 
-    console.log(event);
+    //console.log(event);
     if (event.button === 2) {
         activeOverides(event, objectSel);
         event.preventDefault();
