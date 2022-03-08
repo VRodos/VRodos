@@ -613,32 +613,53 @@ get_header(); ?>
                         <div class="HierarchyViewerStyle mdc-card" id="hierarchy-viewer-container">
                             <span class="hierarchyViewerTitle mdc-typography--subheading1 mdc-theme--text-primary-on-background" style="">Hierarchy Viewer</span>
                             <hr class="mdc-list-divider">
-                            <ul class="mdc-list" id="hierarchy-viewer" style="max-height: 460px; overflow-y: scroll"></ul>
+                            <ul class="mdc-list" id="hierarchy-viewer" style="max-height: 300px; overflow-y: scroll"></ul>
                         </div>
                     </div>
                     
                     <!-- Set Clear Color -->
-                    <div id="sceneClearColor" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield">
+                    <div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0px; padding:0px; height:30px; background: rgba(255,255,255,0.5)">
                         
-                        <input id="jscolorpick" class="jscolor {onFineChange:'updateClearColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); max-width:100px; margin-left:30px; margin-bottom:5px">
+                        <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); margin-left:30px; margin-bottom:5px; height:15px; margin-top:0px; padding:0px; font-size:10px; width:50px; display: flex !important;float: right;position: absolute;right: 5px;top: 5px;">
 
-                        <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden">
+                        <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px">
 
-                        <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above" style="background: none;">Scene Background Color</label>
+                        <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above"
+                               style="background: none;font-size:10px; width: 70%;padding:5px">Scene Background Color</label>
                     </div>
 
                     <!-- Set RendererToneMapping  -->
                     <div id="rendererToneMappingDiv"
                          class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
-                         style="width:100%; padding:15px;">
-                        <br />
-                            <br />
+                         style="width:100%; margin:0px; padding:0px; height:30px; background: rgba(255,255,255,0.5)">
+    
                             <input type="range" min="0" max="5" value="2" step="0.01"
                                    id="rendererToneMapping" class="mdc-slider__input"
+                                   style="width:90px; display: flex !important;float: right;position: absolute;right: 5px;top: 5px;padding:0px;"
                                    name="rendererToneMapping" form="3dAssetForm"
-                                        onchange="changeRendererToneMapping(this.value)">
+                                   onchange="changeRendererToneMapping(this.value)">
 
-                        <label for="rendererToneMapping" class="mdc-textfield__label mdc-textfield__label--float-above" style="background: none;">Renderer Tone Mapping</label>
+                        <label for="rendererToneMapping"
+                               class="mdc-textfield__label mdc-textfield__label--float-above"
+                               style="background: none;font-size:10px; width: 70%;padding:5px;">Renderer Tone Mapping</label>
+                    </div>
+
+                    <!-- Enable Environmental texture  -->
+                    <div id="sceneEnvironmentTextureDiv"
+                         class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
+                         style="width:100%; margin:0; padding:0; height:30px; background: rgba(255,255,255,0.5)">
+
+                        <input type="checkbox"
+                               id="sceneEnvironmentTexture" class="mdc-checkbox"
+                               style="width:15px;display:flex !important;float:right;position:absolute;right:5px;top:10px;padding:0;"
+                               name="rendererToneMapping" form="3dAssetForm"
+                               onchange="enableSceneEnvironmentTexture(this.checked)">
+
+
+
+                        <label for="sceneEnvironmentTexture"
+                               class="mdc-textfield__label mdc-textfield__label--float-above"
+                               style="background: none;font-size:10px; width: 70%;padding:5px;font-weight:bold">Enable environment texture</label>
                     </div>
 
                 </div>

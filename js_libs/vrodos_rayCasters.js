@@ -690,8 +690,6 @@ function displayDoorProperties(event, name){
  */
 function displayMarkerProperties(event, name){
 
-
-
     var popUpMarkerPropertiesDiv = jQuery("#popUpMarkerPropertiesDiv");
 
     // The three select penalties
@@ -871,95 +869,7 @@ function displayMarkerProperties(event, name){
     });
 }
 
-// Sun
-function changeSunIntensity(){
-    transform_controls.object.intensity = document.getElementById("sunIntensity").value;
-}
 
-
-// Lamp
-function changeLampPower(){
-    transform_controls.object.power = document.getElementById("lampPower").value;
-}
-
-function changeLampDistance(){
-    transform_controls.object.distance = document.getElementById("lampDistance").value;
-}
-
-function changeLampDecay(){
-    transform_controls.object.decay = document.getElementById("lampDecay").value;
-}
-
-
-// Spot
-function changeSpotTargetObject(){
-    transform_controls.object.target = envir.scene.getChildByName(document.getElementById("spotTargetObject").value);
-}
-
-function changeSpotPower(){
-    transform_controls.object.power = document.getElementById("spotPower").value;
-}
-
-function changeSpotDistance(){
-    transform_controls.object.distance = document.getElementById("spotDistance").value;
-}
-
-function changeSpotDecay(){
-    transform_controls.object.decay = document.getElementById("spotDecay").value;
-}
-
-function changeSpotAngle(){
-    transform_controls.object.angle = document.getElementById("spotAngle").value;
-}
-
-function changeSpotPenumbra(){
-    transform_controls.object.penumbra = document.getElementById("spotPenumbra").value;
-}
-
-
-
-
-
-/// Sun Color Selector
-function updateSunColorPickerLight(picker){
-
-    var hexcol = "0x" + document.getElementById("sunColor").value;
-
-    // Sun as object
-    transform_controls.object.color.setHex(hexcol);
-
-    // Sun as Sphere
-    transform_controls.object.children[0].material.color.setHex(hexcol);
-
-    // Sun Helper
-    var lightHelper = envir.scene.getObjectByName("lightHelper_"+transform_controls.object.name);
-    lightHelper.children[0].material.color.setHex(hexcol);
-    lightHelper.children[1].material.color.setHex(hexcol);
-
-    // TargetSpot
-    var lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
-    lightTargetSpot.children[0].material.color.setHex(hexcol);
-}
-
-
-/// Lamp Color Selector
-function updateLampColorPickerLight(picker){
-    var hexcol = "0x" + document.getElementById("lampColor").value;
-    // Lamp as object
-    transform_controls.object.color.setHex(hexcol);
-    // Lamp as Sphere
-    transform_controls.object.children[0].material.color.setHex(hexcol);
-}
-
-
-/// Spot Color Selector
-function updateSpotColorPickerLight(picker){
-    var hexcol = "0x" + document.getElementById("spotColor").value;
-    // Spot as object
-    transform_controls.object.color.setHex(hexcol);
-    // Spot as Sphere
-    transform_controls.object.children[0].material.color.setHex(hexcol);
-}
 
 
 

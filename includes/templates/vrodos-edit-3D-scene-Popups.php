@@ -1,10 +1,88 @@
 <!--Popups when right-clicking on 3D objects: included in vr_editor -->
 
 <script>
-    
+
+    function enableSceneEnvironmentTexture(value){
+        envir.scene.environment = value ? envir.maintexture : null;
+    }
+
     function changeRendererToneMapping(value){
         envir.renderer.toneMappingExposure = value;
     }
+
+    /// Change object Color callback
+    function updateObjectColorPicker(picker){
+        //Change material color
+        transform_controls.object.children[0].material.color.setHex("0x" + document.getElementById("ObjectColor").value);
+    }
+
+    /// Change object Emissive Color callback
+    function updateObjectEmissiveColorPicker(picker){
+        transform_controls.object.children[0].material.emissive.setHex("0x" + document.getElementById("ObjectEmissiveColor").value);
+    }
+
+    // Emissive Intensity onChange callback
+    function changeEmissiveIntensity(){
+        transform_controls.object.children[0].material.emissiveIntensity = parseFloat(document.getElementById("ObjectEmissiveIntensity").value);
+    }
+
+    // Lightmap Intensity onChange callback
+    function changeLightMapIntensity(){
+        transform_controls.object.children[0].material.emissiveIntensity = parseFloat(document.getElementById("ObjectLightMapIntensity").value);
+    }
+
+    // Roughness onChange callback
+    function changeRoughness(){
+        transform_controls.object.children[0].material.roughness = parseFloat(document.getElementById("ObjectRoughness").value);
+    }
+
+    // Metallic onChange callback
+    function changeMetalness(){
+        transform_controls.object.children[0].material.metalness = parseFloat(document.getElementById("ObjectMetalness").value);
+    }
+    
+    /// Sun Color Selector
+    function updateSunColorPickerLight(picker){
+
+        var hexcol = "0x" + document.getElementById("sunColor").value;
+
+        // Sun as object
+        transform_controls.object.color.setHex(hexcol);
+
+        // Sun as Sphere
+        transform_controls.object.children[0].material.color.setHex(hexcol);
+
+        // Sun Helper
+        var lightHelper = envir.scene.getObjectByName("lightHelper_"+transform_controls.object.name);
+        lightHelper.children[0].material.color.setHex(hexcol);
+        lightHelper.children[1].material.color.setHex(hexcol);
+
+        // TargetSpot
+        var lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
+        lightTargetSpot.children[0].material.color.setHex(hexcol);
+    }
+
+
+    /// Lamp Color Selector
+    function updateLampColorPickerLight(picker){
+        var hexcol = "0x" + document.getElementById("lampColor").value;
+        // Lamp as object
+        transform_controls.object.color.setHex(hexcol);
+        // Lamp as Sphere
+        transform_controls.object.children[0].material.color.setHex(hexcol);
+    }
+
+
+    /// Spot Color Selector
+    function updateSpotColorPickerLight(picker){
+        var hexcol = "0x" + document.getElementById("spotColor").value;
+        // Spot as object
+        transform_controls.object.color.setHex(hexcol);
+        // Spot as Sphere
+        transform_controls.object.children[0].material.color.setHex(hexcol);
+    }
+    
+
     
     function initPopsVals(){
 
@@ -19,44 +97,7 @@
 
     }
 
-    /// Change object Color callback
-    function updateObjectColorPicker(picker){
-        var hexcol = "0x" + document.getElementById("ObjectColor").value;
-        //Change material color
-        transform_controls.object.children[0].material.color.setHex(hexcol);
-    }
 
-    /// Change object Emissive Color callback
-    function updateObjectEmissiveColorPicker(picker){
-        var hexcol = "0x" + document.getElementById("ObjectEmissiveColor").value;
-        transform_controls.object.children[0].material.emissive.setHex(hexcol);
-    }
-
-    // Emissive Intensity onChange callback
-    function changeEmissiveIntensity(){
-        var emissiveIntensity = document.getElementById("ObjectEmissiveIntensity").value;
-        transform_controls.object.children[0].material.emissiveIntensity = parseFloat(emissiveIntensity);
-    }
-
-    // Lightmap Intensity onChange callback
-    function changeLightMapIntensity(){
-        var lightMapIntensity = document.getElementById("ObjectLightMapIntensity").value;
-        transform_controls.object.children[0].material.emissiveIntensity = parseFloat(lightMapIntensity);
-    }
-    
-    // Roughness onChange callback
-    function changeRoughness(){
-        var roughness = document.getElementById("ObjectRoughness").value;
-        transform_controls.object.children[0].material.roughness = parseFloat(roughness);
-        
-    }
-
-    // Metallic onChange callback
-    function changeMetalness(){
-        var metalness = document.getElementById("ObjectMetalness").value;
-        transform_controls.object.children[0].material.metalness = parseFloat(metalness);
-        
-    }
     
     // Set video texture when popup change
     function textureChangeFunction() {
@@ -257,7 +298,8 @@
 
     <input type="text" id="sunIntensity" name="sunIntensity" title="Set a number from 0 to infinite, 1 is the default"
            value="1" maxlength="4"
-           class="mdc-textfield__input" style="width: 6ch;padding: 2px;display: inline-block; text-align: right;" onkeyup="changeSunIntensity()"/>
+           class="mdc-textfield__input" style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+           onkeyup="transform_controls.object.intensity = this.value;"/>
 
 
     <!-- The Color of the sun-->
@@ -286,7 +328,8 @@
 
     <input type="text" id="lampPower" name="lampPower" title="Set a number from 0 to infinite, 1 is the default"
            value="1" maxlength="4"
-           class="mdc-textfield__input" style="width: 6ch; padding: 2px; display: inline; text-align: right;" onkeyup="changeLampPower()"/>
+           class="mdc-textfield__input" style="width: 6ch; padding: 2px; display: inline; text-align: right;"
+           onkeyup="transform_controls.object.power = this.value"/>
 
     <!-- The Color of the Lamp-->
     <label for="lampColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 160px; display: inline-block; vertical-align: bottom;">
@@ -302,14 +345,22 @@
 
     <input type="text" id="lampDistance" name="lampDistance" title="Set a number from 0 to infinite, 100 is the default"
            value="100" maxlength="4"
-           class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="changeLampDistance()"/>
+           class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;"
+           onkeyup="transform_controls.object.distance = this.value"/>
 
     <!-- The Decay -->
     <label for="lampDecay" class="mdc-textfield__label" style="position: initial; width: 160px; display: inline-block; margin-top: 15px;">
         Set Lamp Decay:</label>
 
     <input type="text" id="lampDecay" name="lampDecay" title="Set a number from 0 to infinite, 2 is the default"
-           value="2" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="changeLampDecay()"/>
+           value="2" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.decay = this.value"/>
+
+    <!-- The Radius -->
+    <label for="lampRadius" class="mdc-textfield__label" style="position: initial; width: 160px; display: inline-block; margin-top: 15px;">
+        Set Lamp Radius:</label>
+
+    <input type="text" id="lampRadius" name="lampRadius" title="Set a number from 0 to infinite, 2 is the default"
+           value="8" maxlength="3" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.shadow.radius = this.value"/>
 </div>
 
 <!-- Spot @ Archaeology: Popup menu to for Lamp Decay, Power, Distance and Color -->
@@ -328,7 +379,8 @@
         Set target object:</label>
 
     <select id="spotTargetObject" name="spotTargetObject" title="Set object to place spot among the scene objects"
-            class="mdc-select" style="padding: 2px; display: inline-block;" onchange="changeSpotTargetObject()">
+            class="mdc-select" style="padding: 2px; display: inline-block;"
+            onchange="transform_controls.object.target = envir.scene.getObjectByName(this.value);">
     </select>
 
 
@@ -339,7 +391,7 @@
     <input type="text" id="spotPower" name="spotPower" title="Set a number from 0 to infinite, 1 is the default"
            value="1" maxlength="4"
            class="mdc-textfield__input" style="width: 7ch;padding: 2px;display: inline; text-align: right;"
-           onkeyup="changeSpotPower()"/>
+           onkeyup="transform_controls.object.power = this.value;"/>
 
     <!-- The Color of the Lamp-->
     <label for="spotColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
@@ -355,21 +407,22 @@
 
     <input type="text" id="spotDistance" name="spotDistance" title="Set a number from 0 to infinite, 100 is the default"
            value="100" maxlength="4"
-           class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block; text-align: right;" onkeyup="changeSpotDistance()"/>
+           class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block; text-align: right;"
+           onkeyup="transform_controls.object.distance = this.value;"/>
 
     <!-- The Decay -->
     <label for="spotDecay" class="mdc-textfield__label" style="position: initial; width: 150px; display: inline-block; margin-top: 15px;">
         Set Spot Decay:</label>
 
     <input type="text" id="spotDecay" name="spotDecay" title="Set a number from 0 to infinite, 2 is the default"
-           value="2" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="changeSpotDecay()"/>
+           value="2" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.decay = this.value;"/>
 
     <!-- The Angle -->
     <label for="spotAngle" class="mdc-textfield__label" style="position: initial; width: 150px; display: inline-block; margin-top: 15px;">
         Set Spot Angle:</label>
 
     <input type="text" id="spotAngle" name="spotAngle" title="Set a number from 0 to pi/2,  pi/4 is the default"
-           value="0.785" maxlength="5" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="changeSpotAngle()"/>
+           value="0.785" maxlength="5" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.angle = this.value;"/>
 
 
     <!-- The Penumbra -->
@@ -377,13 +430,7 @@
         Set Penumbra:</label>
 
     <input type="text" id="spotPenumbra" name="spotPenumbra" title="Set a number from 0 to 1,  0 is the default"
-           value="0" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="changeSpotPenumbra()"/>
-
-
-
-
-
-
+           value="0" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.penumbra = this.value;"/>
 
 </div>
 
