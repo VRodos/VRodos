@@ -1,6 +1,23 @@
 <!--Popups when right-clicking on 3D objects: included in vr_editor -->
 
 <script>
+    
+    function changeRendererToneMapping(value){
+        envir.renderer.toneMappingExposure = value;
+    }
+    
+    function initPopsVals(){
+
+        let currentColor = transform_controls.object.children[0].material.color.getHexString().toUpperCase();
+        
+        document.getElementById("ObjectColor").value = currentColor;
+        
+        document.getElementById("ObjectColor").className =
+            "jscolor {valueElement:null, value:"+ currentColor +",onFineChange:'updateObjectColorPicker(this)'}";
+
+        document.getElementById("ObjectColor").style.backgroundColor = "#" + currentColor;
+
+    }
 
     /// Change object Color callback
     function updateObjectColorPicker(picker){

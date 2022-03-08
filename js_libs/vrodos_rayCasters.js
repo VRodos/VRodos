@@ -363,36 +363,38 @@ function activeOverides(event, object){
     var name = object.name;
     var categ = object.categoryName;
 
-    if( categ === 'Artifact')
-        displayArtifactProperties(event, name);
-
-    if( categ === 'Points of Interest (Image-Text)')
-        displayPoiImageTextProperties(event, name);
-
-    if( categ === 'Points of Interest (Video)')
-        displayPoiVideoProperties(event, name);
-
-    if( categ === 'Door')
-        displayDoorProperties(event, name);
-
-    if( categ === 'Marker')
-        displayMarkerProperties(event, name);
-
-    if( categ === 'Gate')
-        displayGateProperties(event, name);
-
-    if( categ === 'Box' ) // for chemistry box
-        displayBoxProperties(event, name);
-
-    if( categ === 'lightSun')
-        displaySunProperties(event, name);
-
-    if( categ === 'lightLamp')
-        displayLampProperties(event, name);
-
-    if( categ === 'lightSpot')
-        displaySpotProperties(event, name);
-
+    switch(categ){
+        case 'Artifact':
+            displayArtifactProperties(event, name);
+            break;
+        case 'Points of Interest (Image-Text)':
+            displayPoiImageTextProperties(event, name);
+            break;
+        case 'Points of Interest (Video)':
+            displayPoiVideoProperties(event, name);
+            break;
+        case 'Door' :
+            displayDoorProperties(event, name);
+            break;
+        case 'Marker' :
+            displayMarkerProperties(event, name);
+            break;
+        case 'Gate' :
+            displayGateProperties(event, name);
+            break;
+        case 'Box' :
+            displayBoxProperties(event, name);
+            break;
+        case 'lightSun' :
+            displaySunProperties(event, name);
+            break;
+        case 'lightLamp' :
+            displayLampProperties(event, name);
+            break
+        case 'lightSpot' :
+            displaySpotProperties(event, name);
+            break;
+    }
 }
 
 
@@ -503,7 +505,7 @@ function displayArtifactProperties(event, name){
     chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
 
     // Show Selection
-    ppPropertiesDiv.show();
+    ppPropertiesDiv.show(function(){initPopsVals();});
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
     ppPropertiesDiv[0].style.top  = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 

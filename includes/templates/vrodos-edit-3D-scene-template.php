@@ -618,16 +618,27 @@ get_header(); ?>
                     </div>
                     
                     <!-- Set Clear Color -->
-                    <div id="sceneClearColor" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield"
-                          >
-                        
-<!--                        <label for="jscolorpick" style="display:none">Color pick</label>-->
+                    <div id="sceneClearColor" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield">
                         
                         <input id="jscolorpick" class="jscolor {onFineChange:'updateClearColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); max-width:100px; margin-left:30px; margin-bottom:5px">
 
                         <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden">
 
                         <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above" style="background: none;">Scene Background Color</label>
+                    </div>
+
+                    <!-- Set RendererToneMapping  -->
+                    <div id="rendererToneMappingDiv"
+                         class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
+                         style="width:100%; padding:15px;">
+                        <br />
+                            <br />
+                            <input type="range" min="0" max="5" value="2" step="0.01"
+                                   id="rendererToneMapping" class="mdc-slider__input"
+                                   name="rendererToneMapping" form="3dAssetForm"
+                                        onchange="changeRendererToneMapping(this.value)">
+
+                        <label for="rendererToneMapping" class="mdc-textfield__label mdc-textfield__label--float-above" style="background: none;">Renderer Tone Mapping</label>
                     </div>
 
                 </div>
