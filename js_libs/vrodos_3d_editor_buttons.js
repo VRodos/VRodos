@@ -361,16 +361,18 @@ function loadButtonActions() {
         let mode = jQuery("input[name='object-manipulation-switch']:checked").val();
 
         // Sun and Target spot can not change control manipulation mode
-        if (transform_controls.object.categoryName.includes("lightTargetSpot") ||
-            transform_controls.object.categoryName.includes("lightSun") ||
-            transform_controls.object.categoryName.includes("lightLamp") ||
-            transform_controls.object.categoryName.includes("lightSpot")){
+        if(transform_controls.object) {
+            if (transform_controls.object.categoryName.includes("lightTargetSpot") ||
+                transform_controls.object.categoryName.includes("lightSun") ||
+                transform_controls.object.categoryName.includes("lightLamp") ||
+                transform_controls.object.categoryName.includes("lightSpot")) {
 
-            if (mode === 'rotate')
-                return;
+                if (mode === 'rotate')
+                    return;
+            }
+            transform_controls.setMode(mode);
+            showObjectPropertiesPanel(mode);
         }
-        transform_controls.setMode(mode);
-        showObjectPropertiesPanel(mode);
     });
 
     // Axis Increase size btn
@@ -439,23 +441,28 @@ function loadButtonActions() {
 
 
     // Main canvas handlers
-    // Select event listener
-    jQuery("#vr_editor_main_div canvas").get(0).addEventListener( 'dblclick', onMouseDoubleClickFocus, false );
 
-    // Mouse Up
-    jQuery("#vr_editor_main_div canvas").get(0).addEventListener( 'mouseup', saveScene, false );
+    let canvas3D = jQuery("#vr_editor_main_div canvas").get(0);
 
-    // Capture save events on scene: envir.scene.dispatchEvent({type:"save"});
+    // Left click
+    canvas3D.addEventListener('mousedown', onLeftMouseDown, false);
+
+    // Left double click
+    canvas3D.addEventListener('dblclick', onMouseDoubleClickFocus, false);
+
+    // Left Up
+    canvas3D.addEventListener('mouseup', saveScene, false);
+
+    // Right Click
+    canvas3D.addEventListener('contextmenu', contextMenuClick, false);
+
+
+    // Auto-Saving
+    // Detect enter button press for saving scene
+    canvas3D.addEventListener( 'keypress', saveScene, false );
+
+    // Auto save listener
     envir.scene.addEventListener("modificationPendingSave", saveScene);
-
-    // To detect enter button press for saving scene
-    jQuery("#vr_editor_main_div canvas").get(0).addEventListener( 'keypress', saveScene, false );
-
-    /*jQuery("#vr_editor_main_div").get(0).addEventListener( 'mousedown', onMouseDown );*/
-    jQuery("#vr_editor_main_div canvas").get(0).addEventListener( 'mousedown', onMouseSelect, false );
-
-    // Context Menu click (right click)
-    jQuery("#vr_editor_main_div canvas").get(0).addEventListener( 'contextmenu', contextMenuClick, false );
 
     // Prevent showing the context menu (normal behaviour when rightclicking in web items)
     jQuery("#popUpArtifactPropertiesDiv").bind('contextmenu', function(e) { return false; });

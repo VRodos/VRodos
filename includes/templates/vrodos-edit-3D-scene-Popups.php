@@ -1,7 +1,6 @@
 <!--Popups when right-clicking on 3D objects: included in vr_editor -->
 
 <script>
-
     function enableSceneEnvironmentTexture(value){
         envir.scene.environment = value ? envir.maintexture : null;
     }
@@ -10,33 +9,26 @@
         envir.renderer.toneMappingExposure = value;
     }
 
-    /// Change object Color callback
     function updateObjectColorPicker(picker){
-        //Change material color
         transform_controls.object.children[0].material.color.setHex("0x" + document.getElementById("ObjectColor").value);
     }
 
-    /// Change object Emissive Color callback
     function updateObjectEmissiveColorPicker(picker){
         transform_controls.object.children[0].material.emissive.setHex("0x" + document.getElementById("ObjectEmissiveColor").value);
     }
 
-    // Emissive Intensity onChange callback
     function changeEmissiveIntensity(){
         transform_controls.object.children[0].material.emissiveIntensity = parseFloat(document.getElementById("ObjectEmissiveIntensity").value);
     }
 
-    // Lightmap Intensity onChange callback
     function changeLightMapIntensity(){
         transform_controls.object.children[0].material.emissiveIntensity = parseFloat(document.getElementById("ObjectLightMapIntensity").value);
     }
 
-    // Roughness onChange callback
     function changeRoughness(){
         transform_controls.object.children[0].material.roughness = parseFloat(document.getElementById("ObjectRoughness").value);
     }
 
-    // Metallic onChange callback
     function changeMetalness(){
         transform_controls.object.children[0].material.metalness = parseFloat(document.getElementById("ObjectMetalness").value);
     }

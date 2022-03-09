@@ -1,57 +1,55 @@
+function findIntersected(event){
+    let raycasterPick = raycasterSetter(event);
+
+    // All 3D meshes that can be clicked
+    let activeMeshes = getActiveMeshes();
+
+    if (activeMeshes.length === 0)
+        return [];
+    else {
+        //.concat([envir.scene.getObjectByName("Camera3Dmodel")]); //, , envir.avatarControls //envir.scene.getObjectByName("Camera3Dmodel"),
+        //transform_controls.getObjectByName('trs_modeChanger')
+
+        // Find the intersections (it can be more than one)
+        let intersectedObjects = raycasterPick.intersectObjects(activeMeshes, true);
+
+        return intersectedObjects;
+    }
+}
+
+
 // raycasting for picking objects
 function raycasterSetter(event){
-
-    // option to show or not the ray line
-    let showRayPickLine = false;
 
     /* Keep mouse clicks */
     let mouse = new THREE.Vector2();
 
     // calculate mouse position in normalized device coordinates
-    // (-1 to +1) for both components
-    mouse.x =   ( (event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft()) / envir.vr_editor_main_div.clientWidth ) * 2 - 1;
-    mouse.y = - ( (event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop()) / envir.vr_editor_main_div.clientHeight ) * 2 + 1;
+    let canvasOffset = jQuery('#vr_editor_main_div').offset();
+    let w = jQuery(window);
+    mouse.x =   ( (event.clientX - canvasOffset.left + w.scrollLeft()) / envir.vr_editor_main_div.clientWidth ) * 2 - 1;
+    mouse.y = - ( (event.clientY - canvasOffset.top + w.scrollTop()) / envir.vr_editor_main_div.clientHeight ) * 2 + 1;
 
     // Main Raycast object
     let raycasterPick = new THREE.Raycaster();
-
-    raycasterPick.setFromCamera(mouse, avatarControlsEnabled?envir.cameraAvatar:envir.cameraOrbit);
+    raycasterPick.setFromCamera(mouse, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
 
     // Show the myBulletLine (raycast)
-    if (showRayPickLine)
-        raylineVisualize(raycasterPick);
+    // raylineVisualize(raycasterPick);
 
     return raycasterPick;
 }
 
-/**
- * This raycasting is used for drag n droping objects into the scene in 2D mode in order to
- * find the correct y (height) to place the object
- *
- * @param event
- * @returns {*[]}
- */
+
+// This raycasting is used for drag n droping objects into the scene in 2D mode in order to
+// find the correct y (height) to place the object
 function dragDropVerticalRayCasting (event){
-
-    // Init the raycaster
-    let raycasterPick = raycasterSetter(event);
-
-    // All 3D meshes that can be clicked
-    let activMesh = getActiveMeshes(); //.concat([transform_controls.getObjectByName('trs_modeChanger')]); //envir.avatarControls, //envir.scene.getObjectByName("Camera3Dmodel"),
-
-    if (activMesh.length == 0)
-        return [0,0,0];
-
-    // // Find the intersections (it can be more than one)
-    let intersects = raycasterPick.intersectObjects( activMesh , true );
-
-    if(intersects.length == 0)
-        return [0,0,0];
-
-    return [intersects[0].point.x,intersects[0].point.y,intersects[0].point.z];
+    let intersects = findIntersected(event);
+    return intersects.length === 0 ? [0,0,0] : [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z];
 }
 
 
+// On Double click center screen and focus to that object
 function onMouseDoubleClickFocus( event , objectName) {
 
     if (typeof objectName == 'undefined') {
@@ -62,51 +60,8 @@ function onMouseDoubleClickFocus( event , objectName) {
         selectorMajor(event, envir.scene.getObjectByName(objectName) );
     }
 
-    // // This makes the camera to go on top of the selected item
-    if (envir.is2d) {
-
-        //var borders = findBorders(transform_controls.object);
-
-        //var minBorders = borders[0];
-        //var maxBorders = borders[1];
-        //
-        // console.log(minBorders);
-        //
-        // console.log(maxBorders);
-        //
-        // console.log(envir.orbitControls.object.left);
-        //
-        //
-        // envir.updateCameraGivenSceneLimits();
-        //
-        //
-        // envir.orbitControls.object.bottom+= minBorders.x;
-        // envir.orbitControls.object.top   += maxBorders.x;
-        //
-        // envir.orbitControls.object.left  += minBorders.z;
-        // envir.orbitControls.object.right += maxBorders.z;
-
-        // envir.orbitControls.object.top  += transform_controls.object.position.x;
-        // envir.orbitControls.object.down += transform_controls.object.position.x;
-        //
-        //
-        // console.log(envir.orbitControls.object.left);
-
-        // This is not valid
-        // envir.orbitControls.target.x = transform_controls.object.position.x;
-        // envir.orbitControls.target.y = transform_controls.object.position.y;
-        // envir.orbitControls.target.z = transform_controls.object.position.z;
-
-        // envir.orbitControls.object.rotation._x = - Math.PI/2;
-        // envir.orbitControls.object.rotation._y = 0;
-        // envir.orbitControls.object.rotation._z = 0;
-        //
-        //
-        // envir.orbitControls.reset2();
-
-
-
-    } else {
+    // This makes the camera to go on top of the selected item
+    if (!envir.is2d) {
         envir.orbitControls.target.x = transform_controls.object.position.x;
         envir.orbitControls.target.y = transform_controls.object.position.y;
         envir.orbitControls.target.z = transform_controls.object.position.z;
@@ -115,12 +70,13 @@ function onMouseDoubleClickFocus( event , objectName) {
     envir.orbitControls.object.updateProjectionMatrix();
 }
 
+
 /**
  * Detect mouse events
  *
  * @param event
  */
-function onMouseSelect( event ) {
+function onLeftMouseDown( event ) {
 
     // Middle click return
     if(event.button === 1)
@@ -129,16 +85,7 @@ function onMouseSelect( event ) {
     event.preventDefault();
     event.stopPropagation();
 
-    let raycasterPick = raycasterSetter(event);
-
-    // All 3D meshes that can be clicked
-    let activMeshes = getActiveMeshes();
-
-    //.concat([envir.scene.getObjectByName("Camera3Dmodel")]); //, , envir.avatarControls //envir.scene.getObjectByName("Camera3Dmodel"),
-   //transform_controls.getObjectByName('trs_modeChanger')
-
-    // Find the intersections (it can be more than one)
-    var intersects = raycasterPick.intersectObjects( activMeshes , true );
+    let intersects = findIntersected(event);
 
     if (intersects.length === 0)
         return;
@@ -200,7 +147,7 @@ function onMouseSelect( event ) {
  */
 function selectorMajor(event, objectSel){
 
-    if (event.button === 0 || event.button === 2) {
+    if (event.button === 0) {
 
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.name);
@@ -247,31 +194,72 @@ function selectorMajor(event, objectSel){
 
         transform_controls.setMode( envir.is2d ? "rottrans" : "translate" );
 
-        if (!envir.is2d)
+        if (!envir.is2d) {
             jQuery("#" + transform_controls.getMode() + "-switch").click();
-
-        // Show also the UI button
-
+        }
 
         // highlight
         envir.outlinePass.selectedObjects = [objectSel];
 
         selected_object_name = objectSel.name;
     }
+}
 
-    // Right click: overide its properties ( Door, MicroscopeTextbook, Box )
 
-    //console.log(event);
-    if (event.button === 2) {
-        activeOverides(event, objectSel);
-        event.preventDefault();
+// Right Click: Show properties
+function contextMenuClick(event){
+
+    let intersected = findIntersected(event);
+
+    // Check if right-clicked is the one selected already with left-click
+    if (intersected[0].object.parent.name === transform_controls.object.name){
+        showProperties(event, intersected[0].object.parent);
     }
 }
 
-function contextMenuClick(event){
+// Right click raycast operations
+function showProperties(event, object){
 
-    onMouseSelect(event);
+    if (object.name === "Camera3Dmodel") {
+        alert("Do not right click the camera or its front part");
+        return;
+    }
 
+    //var objectParent  = inters.object.parent;
+    var name = object.name;
+
+    switch(object.categoryName){
+        case 'Artifact':
+            displayArtifactProperties(event, name);
+            break;
+        case 'Points of Interest (Image-Text)':
+            displayPoiImageTextProperties(event, name);
+            break;
+        case 'Points of Interest (Video)':
+            displayPoiVideoProperties(event, name);
+            break;
+        case 'Door' :
+            displayDoorProperties(event, name);
+            break;
+        case 'Marker' :
+            displayMarkerProperties(event, name);
+            break;
+        case 'Gate' :
+            displayGateProperties(event, name);
+            break;
+        case 'Box' :
+            displayBoxProperties(event, name);
+            break;
+        case 'lightSun' :
+            displaySunProperties(event, name);
+            break;
+        case 'lightLamp' :
+            displayLampProperties(event, name);
+            break
+        case 'lightSpot' :
+            displaySpotProperties(event, name);
+            break;
+    }
 }
 
 /**
@@ -325,13 +313,6 @@ function displayBoxProperties(event, nameBoxSource){
     ppSelect.add(option);
     // -------------------
 
-    // Set from saved value
-    // if(envir.scene.getObjectByName(nameDoorSource).doorName_target)
-    //     jQuery("#popupDoorSelect").val ( envir.scene.getObjectByName(nameDoorSource).doorName_target + " at " +
-    //         envir.scene.getObjectByName(nameDoorSource).sceneName_target );
-
-    // mdc.textfield.MDCTextfield.attachTo(document.getElementById('doorInputTextfield'));
-
     // On popup change
     jQuery("#chemistryGateComponent").change(function(e) {
 
@@ -342,61 +323,14 @@ function displayBoxProperties(event, nameBoxSource){
             return;
 
         if (valfgroup && valfgroup != "Cancel" && valfgroup != "Select") {
-
             envir.scene.getObjectByName(nameBoxSource).chemical_functional_group = valfgroup.trim();
         }
+
         jQuery("#chemistryGatePopupDiv").hide();
 
         clearAndUnbind("chemistryGateComponent");
     });
 }
-
-
-
-// Right click raycast operations
-function activeOverides(event, object){
-
-    if (object.name === "Camera3Dmodel")
-        alert("Do not right click the camera or its front part");
-
-    //var objectParent  = inters.object.parent;
-    var name = object.name;
-    var categ = object.categoryName;
-
-    switch(categ){
-        case 'Artifact':
-            displayArtifactProperties(event, name);
-            break;
-        case 'Points of Interest (Image-Text)':
-            displayPoiImageTextProperties(event, name);
-            break;
-        case 'Points of Interest (Video)':
-            displayPoiVideoProperties(event, name);
-            break;
-        case 'Door' :
-            displayDoorProperties(event, name);
-            break;
-        case 'Marker' :
-            displayMarkerProperties(event, name);
-            break;
-        case 'Gate' :
-            displayGateProperties(event, name);
-            break;
-        case 'Box' :
-            displayBoxProperties(event, name);
-            break;
-        case 'lightSun' :
-            displaySunProperties(event, name);
-            break;
-        case 'lightLamp' :
-            displayLampProperties(event, name);
-            break
-        case 'lightSpot' :
-            displaySpotProperties(event, name);
-            break;
-    }
-}
-
 
 /**
  *  Gate
@@ -480,9 +414,6 @@ function displayGateProperties(event, nameGateSource) {
 
 }
 
-
-
-
 /**
  *  Artifact properties
  *
@@ -512,9 +443,6 @@ function displayArtifactProperties(event, name){
     // Add change listener
     //chbox.change(function(e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
 }
-
-
-//
 
 /**
  * Poi video properties
