@@ -143,7 +143,6 @@ class VRodos_LightsLoader {
 
                 } else if (resources3D[name]['categoryName']==='lightLamp' ){
 
-
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
                         resources3D[name]['lightcolor'][2]);
@@ -199,7 +198,9 @@ class VRodos_LightsLoader {
                     lightLampHelper.update();
 
                     // If we do not attach them, they are not visible in Editor !
-                    attachToControls(name, envir.scene.getObjectByName(name) );
+                    if (typeof transform_controls !== "undefined") {
+                        attachToControls(name, envir.scene.getObjectByName(name));
+                    }
 
                 } else if (resources3D[name]['categoryName']==='lightSpot' ){
 
@@ -269,7 +270,9 @@ class VRodos_LightsLoader {
                     lightSpotHelper.update();
 
                     // If we do not attach them, they are not visible in Editor !
-                    attachToControls(name, envir.scene.getObjectByName(name) );
+                    if (typeof transform_controls !== "undefined") {
+                        attachToControls(name, envir.scene.getObjectByName(name));
+                    }
 
                 }
             })(n);

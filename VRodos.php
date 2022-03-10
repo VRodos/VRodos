@@ -145,6 +145,7 @@ function vrodos_register_scripts() {
 			array( 'vrodos_keyButtons', $pluginDirJS.'vrodos_keyButtons.js'),
 			array( 'vrodos_rayCasters', $pluginDirJS.'vrodos_rayCasters.js'),
 			array( 'vrodos_auxControlers', $pluginDirJS.'vrodos_auxControlers.js'),
+		    array( 'vrodos_BordersFinder', $pluginDirJS.'vrodos_BordersFinder.js'),
 			array( 'vrodos_LoaderMulti', $pluginDirJS.'vrodos_LoaderMulti.js'),
 		    array( 'vrodos_LightsLoader', $pluginDirJS.'vrodos_LightsLoader.js'),
 			array( 'vrodos_movePointerLocker', $pluginDirJS.'vrodos_movePointerLocker.js'),
@@ -168,6 +169,7 @@ function vrodos_register_styles() {
  
 	wp_register_style( 'vrodos_backend', plugin_dir_url( __FILE__ ) . 'css/vrodos_backend.css' );
 	wp_register_style( 'vrodos_3D_editor', plugin_dir_url( __FILE__ ) . 'css/vrodos_3D_editor.css' );
+	wp_register_style( 'vrodos_3D_viewer', plugin_dir_url( __FILE__ ) . 'css/vrodos_3D_viewer.css' );
 	wp_register_style( 'vrodos_datgui', plugin_dir_url( __FILE__ ) . 'css/dat-gui.css' );
 
 	
@@ -182,7 +184,7 @@ function vrodos_register_styles() {
     //wp_register_style( 'vrodos_materialize_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/materialize.css' );
 	
 	wp_register_style( 'vrodos_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_asseteditor.css' );
-	wp_register_style( 'vrodos_sceneeditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_sceneeditor.css' );
+	
 	
 	wp_register_style( 'vrodos_widgets_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_widgets.css' );
  

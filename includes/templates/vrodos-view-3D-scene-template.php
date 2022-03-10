@@ -1,7 +1,6 @@
 <?php
-if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
-
+$perma_structure = get_option('permalink_structure') ? true : false;
+$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' :  '&vrodos_scene=';
 
 // Load VR_Editor Scripts
 function vrodos_load_vrviewer_scripts()
@@ -17,17 +16,24 @@ function vrodos_load_vrviewer_scripts()
     wp_enqueue_script('vrodos_load119_OutlinePass');
     wp_enqueue_script('vrodos_load119_ShaderPass');
     wp_enqueue_script('vrodos_load119_FBXloader');
+	wp_enqueue_script('vrodos_load119_RGBELoader');
     wp_enqueue_script('vrodos_load119_GLTFLoader');
     wp_enqueue_script('vrodos_load119_DRACOLoader');
     wp_enqueue_script('vrodos_load119_DDSLoader');
     wp_enqueue_script('vrodos_load119_KTXLoader');
     wp_enqueue_script('vrodos_inflate');
+	
+	// Timestamp script
+	wp_enqueue_script('vrodos_scripts');
+	
+	// Hierarchy Viewer
+	wp_enqueue_script('vrodos_HierarchyViewer');
     
     // Fixed at 87 (forked of original 87)
     wp_enqueue_script('vrodos_load87_datgui');
     wp_enqueue_script('vrodos_load87_OBJloader');
     wp_enqueue_script('vrodos_load87_MTLloader');
-    wp_enqueue_script('vrodos_load87_OrbitControls');
+	wp_enqueue_script('vrodos_load119_OrbitControls');
     wp_enqueue_script('vrodos_load87_TransformControls');
     wp_enqueue_script('vrodos_load87_PointerLockControls');
     
@@ -37,17 +43,15 @@ function vrodos_load_vrviewer_scripts()
     
     // Colorpicker for the lights
     wp_enqueue_script('vrodos_jscolorpick');
-    
-    wp_enqueue_style('vrodos_datgui');
-    wp_enqueue_style('vrodos_3D_editor');
-    wp_enqueue_style('vrodos_3D_editor_browser');
-	
+   
+
 	wp_enqueue_script('vrodos_3d_editor_environmentals');
 	wp_enqueue_script('vrodos_keyButtons');
 	wp_enqueue_script('vrodos_rayCasters');
 	wp_enqueue_script('vrodos_auxControlers');
-	wp_enqueue_script('vrodos_LoaderMulti');
+    wp_enqueue_script('vrodos_BordersFinder');
 	wp_enqueue_script('vrodos_LightsLoader');
+    wp_enqueue_script('vrodos_LoaderMulti');
 	wp_enqueue_script('vrodos_movePointerLocker');
 	wp_enqueue_script('vrodos_addRemoveOne');
 	wp_enqueue_script('vrodos_3d_editor_buttons');
@@ -59,17 +63,15 @@ function vrodos_load_vrviewer_scripts()
 	wp_enqueue_script( 'vrodos_load119_Loader');
 	wp_enqueue_script( 'vrodos_load119_FileLoader');
 	wp_enqueue_script( 'vrodos_load119_LoadingManager');
-	
 	wp_enqueue_script( 'vrodos_load119_FontLoader');
 	
-	wp_enqueue_script( 'vrodos_load119_FileLoader');
 	
-	// Hierarchy Viewer
-	wp_enqueue_script('vrodos_HierarchyViewer');
-	
+	wp_enqueue_style('vrodos_3D_viewer');
 }
 add_action('wp_enqueue_scripts', 'vrodos_load_vrviewer_scripts' );
 
+
+require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
 
 // Define current path of plugin
 $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
@@ -81,8 +83,6 @@ wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
 wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
 	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );
-
-
 
 // wpcontent/uploads/
 $upload_url = wp_upload_dir()['baseurl'];
@@ -104,7 +104,6 @@ $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content;
-
 $sceneTitle = $scene_post->post_name;
 
 // Shift vars to Javascript side
@@ -113,11 +112,23 @@ echo 'var pluginPath="'.$pluginpath.'";';
 echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
 echo 'var siteurl="'.site_url().'";';
 echo '</script>';
+?>
 
+<script>
+    var resources3D = [];
+</script>
 
+<?php
+/* resources3D[] javascript */
+$SceneParserPHP = new ParseJSON( $upload_url );
+$SceneParserPHP->init( $sceneJSON );
+
+//style="top: <?php echo is_user_logged_in()?'30':'0'"
 
 // Make the header of the page
-get_header(); ?>
+get_header();
+
+?>
 
     <!-- PANELS -->
     <!-- 3D editor  -->
@@ -150,7 +161,9 @@ get_header(); ?>
         // id of animation frame is used for canceling animation when dat-gui changes
         var id_animation_frame;
 
-        var resources3D  = [];// This holds all the resources to load. Generated in Parse JSON
+        // Add lights on scene
+        var lightsLoader = new VRodos_LightsLoader();
+        lightsLoader.load(resources3D);
 
         // Load Manager
         // Make progress bar visible
@@ -187,13 +200,6 @@ get_header(); ?>
         }; // End of manager
     </script>
 
-    <!-- Load Scene - javascript var resources3D[] -->
-    <?php
-        require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
-        /* Initial load as php */
-        $SceneParserPHP = new ParseJSON($upload_url);
-        $SceneParserPHP->init($sceneJSON);
-    ?>
 
     <script>
         loaderMulti = new VRodos_LoaderMulti("1");
@@ -236,9 +242,6 @@ get_header(); ?>
             // Select the proper camera (orbit, or avatar, or thirdPersonView)
             let curr_camera = avatarControlsEnabled ?
                 (envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar) : envir.cameraOrbit;
-
-            // Render it
-            envir.renderer.render( envir.scene, curr_camera);
             
             // Label is for setting labels to objects
             envir.labelRenderer.render( envir.scene, curr_camera);
@@ -259,7 +262,8 @@ get_header(); ?>
             
             // Update it
             envir.orbitControls.update();
-            
+
+            envir.cubeCamera.update( envir.renderer, envir.scene );
         }
 
         animate();
@@ -275,12 +279,12 @@ get_header(); ?>
         
         // ================== Text ============
         const loader = new FontLoader();
-
+        var textGeometry;
         loader.load( siteurl + '/wp-content/plugins/VRodos/js_libs/threejs87/helvetiker_regular.typeface.json', function ( font ) {
 
-            const geometry = new THREE.TextGeometry( 'Hello!', {
+            textGeometry = new THREE.TextGeometry('Hello!', {
                 font: font,
-                size:1,
+                size: 1,
                 height: 0.1,
                 curveSegments: 6,
                 bevelEnabled: false,
@@ -288,33 +292,48 @@ get_header(); ?>
                 bevelSize: 0.5,
                 bevelOffset: 0,
                 bevelSegments: 1
-            } );
+            });
+        });
 
-            var texture = THREE.ImageUtils.loadTexture( siteurl + '/wp-content/plugins/VRodos/images/dots.png');
-            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set( 2, 2);
+        let textureLoader = new THREE.TextureLoader();
+        let texturePngPath = siteurl + '/wp-content/plugins/VRodos/images/dots.png';
 
-            var localPlanes = [
-                new THREE.Plane( new THREE.Vector3( 0, 0, 0 ), 1 ),
-                new THREE.Plane( new THREE.Vector3( 15, 5, 15 ), 1 )
-            ];
+        textureLoader.load( texturePngPath,
 
-            var material = new THREE.MeshPhongMaterial( { map: texture, opacity:1, transparent:true,             emissiveIntensity: 1,
-                emissive: new THREE.Color(1, 0, 0) ,
-                clippingPlanes: localPlanes,
-                clipIntersection: true}
-            );
-            material.color.set(0xff0000);
-            textMesh1 = new THREE.Mesh( geometry, material );
-            textMesh1.position.y += 3;
-            envir.scene.add(textMesh1);
+                // onLoad callback
+                function ( texture ) {
+                    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.set( 2, 2);
 
-            // ==============================
+                    var localPlanes = [
+                        new THREE.Plane( new THREE.Vector3( 0, 0, 0 ), 1 ),
+                        new THREE.Plane( new THREE.Vector3( 15, 5, 15 ), 1 )
+                    ];
 
+                    var material = new THREE.MeshPhongMaterial( { map: texture, opacity:1, transparent:true, emissiveIntensity: 1,
+                        emissive: new THREE.Color(1, 0, 0) ,
+                        clippingPlanes: localPlanes,
+                        clipIntersection: true}
+                    );
+                    material.color.set(0xff0000);
+                    textMesh1 = new THREE.Mesh( textGeometry, material );
+                    textMesh1.position.y += 3;
+                    textMesh1.position.x += 3;
+                    
+                    
+                    envir.scene.add(textMesh1);
+                },
 
-            
-            
-        } );
+                // onProgress callback currently not supported
+                undefined,
+
+                // onError callback
+                function ( err ) {
+                    console.error( 'An error happened 5112.' );
+                }
+        );
+        
+        
         
     </script>
 

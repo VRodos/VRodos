@@ -1,0 +1,67 @@
+.navigation-top {
+    display:block;
+    z-index: 10000;
+    background: transparent;
+    width: 180px;
+    top: 0;
+    border: 0;
+}
+
+/* Three js */
+#vr_editor_main_div {
+    /*position:fixed;*/
+    /*top:30px;*/
+    left:0;
+    right:0;
+    bottom:0;
+    top:0;
+    background-color: #eee;
+    /*min-width:600px;*/
+    /*height: 600px;*/
+    z-index: 999;
+    /*999;*/
+}
+
+/* Php info top right */
+.VrInfoPhpStyle {
+    /*font-size: 0.6vw;*/
+    max-font-size: 20pt;
+    background: rgba(255, 255, 255, .54);
+    color: #000;
+    position: absolute;
+    text-align: center;
+    top: 50%;
+    left: 50%;
+    width: 20%;
+    padding: 2px;
+}
+
+
+/* Progress bar */
+.ProgressContainerStyle {
+    top: 7em;
+    width: auto;
+    font-variant: small-caps;
+    z-index: 100;
+    text-align: center;
+    display: none;
+}
+
+#progressbar {
+    text-align: center;
+    background: white;
+    width: auto;
+    height: 5px;
+}
+
+#scene_loading_bar {
+    background:#64dee3;
+    width:auto;
+    height:5px;
+}
+
+
+
+
+
+

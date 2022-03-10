@@ -491,7 +491,7 @@ function startVideo (resources3D, name){
     var movieMaterial = new THREE.MeshBasicMaterial({map: videoTexture[name], side: THREE.DoubleSide, color: cHex});
 
     setTimeout(function () {
-        envir.scene.getChildByName(name).children[0].material = movieMaterial;
+        envir.scene.getObjectByName(name).children[0].material = movieMaterial;
 
         // const promise = videoDom[name].play();
         // if(promise !== undefined){

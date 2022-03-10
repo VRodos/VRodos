@@ -24,6 +24,12 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script('vrodos_load119_DDSLoader');
     wp_enqueue_script('vrodos_load119_KTXLoader');
     wp_enqueue_script('vrodos_inflate');
+	
+	// Timestamp script
+	wp_enqueue_script('vrodos_scripts');
+	
+	// Hierarchy Viewer
+	wp_enqueue_script('vrodos_HierarchyViewer');
     
     // Fixed at 87 (forked of original 87)
     wp_enqueue_script('vrodos_load87_datgui');
@@ -39,12 +45,6 @@ function vrodos_load_vreditor_scripts()
     
     // Colorpicker for the lights
     wp_enqueue_script('vrodos_jscolorpick');
-	
-    // Timestamp script
-	wp_enqueue_script('vrodos_scripts');
-    
-    // Hierarchy Viewer
-	wp_enqueue_script('vrodos_HierarchyViewer');
 
     wp_enqueue_style('vrodos_datgui');
     wp_enqueue_style('vrodos_3D_editor');
@@ -61,6 +61,7 @@ function vrodos_load_custom_functions_vreditor(){
     wp_enqueue_script('vrodos_keyButtons');
     wp_enqueue_script('vrodos_rayCasters');
     wp_enqueue_script('vrodos_auxControlers');
+    wp_enqueue_script('vrodos_BordersFinder');
 	wp_enqueue_script('vrodos_LightsLoader');
     wp_enqueue_script('vrodos_LoaderMulti');
     wp_enqueue_script('vrodos_movePointerLocker');
@@ -632,16 +633,22 @@ get_header(); ?>
                     <div id="rendererToneMappingDiv"
                          class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
                          style="width:100%; margin:0px; padding:0px; height:30px; background: rgba(255,255,255,0.5)">
-    
-                            <input type="range" min="0" max="5" value="2" step="0.01"
-                                   id="rendererToneMapping" class="mdc-slider__input"
-                                   style="width:90px; display: flex !important;float: right;position: absolute;right: 5px;top: 5px;padding:0px;"
-                                   name="rendererToneMapping" form="3dAssetForm"
-                                   onchange="changeRendererToneMapping(this.value)">
+
 
                         <label for="rendererToneMapping"
-                               class="mdc-textfield__label mdc-textfield__label--float-above"
-                               style="background: none;font-size:10px; width: 70%;padding:5px;">Renderer Tone Mapping</label>
+                               class=""
+                               style="width:70px;font-size: 7px;padding-left: 5px;">Renderer Tone Mapping</label>
+                        
+                         <input type="range" min="0" max="2" value="1" step="0.01"
+                                   id="rendererToneMappingSlider" class="mdc-slider__input"
+                                   style="width:90px;padding:5px;"
+                                   name="rendererToneMappingSlider" form="3dAssetForm"
+                                   onchange="changeRendererToneMapping(this.value); document.getElementById('rendererToneMapping').value = this.value;">
+                        
+                        <input type="number" id="rendererToneMapping" name="rendererToneMapping"
+                               min="0" max="2" step="0.01"
+                               style="width:45px;font-size:10px;min-height: 10px;margin-left:5px;height:20px;margin-bottom:4px;padding:0;"
+                               onchange="changeRendererToneMapping(this.value); document.getElementById('rendererToneMappingSlider').value = this.value;">
                     </div>
 
                     <!-- Enable Environmental texture  -->
@@ -652,7 +659,7 @@ get_header(); ?>
                         <input type="checkbox"
                                id="sceneEnvironmentTexture" class="mdc-checkbox"
                                style="width:15px;display:flex !important;float:right;position:absolute;right:5px;top:10px;padding:0;"
-                               name="rendererToneMapping" form="3dAssetForm"
+                               name="sceneEnvironmentTexture" form="3dAssetForm"
                                onchange="enableSceneEnvironmentTexture(this.checked)">
 
 

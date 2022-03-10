@@ -14,17 +14,20 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_load119_OutlinePass');
 	wp_enqueue_script('vrodos_load119_ShaderPass');
 	wp_enqueue_script('vrodos_load119_FBXloader');
+	wp_enqueue_script('vrodos_load119_RGBELoader');
 	wp_enqueue_script('vrodos_load119_GLTFLoader');
 	wp_enqueue_script('vrodos_load119_DRACOLoader');
 	wp_enqueue_script('vrodos_load119_DDSLoader');
 	wp_enqueue_script('vrodos_load119_KTXLoader');
 	wp_enqueue_script('vrodos_inflate');
-
+	
+	wp_enqueue_script('vrodos_scripts');
+ 
 	// Fixed at 87 (forked of original 87)
 	wp_enqueue_script('vrodos_load87_datgui');
 	wp_enqueue_script('vrodos_load87_OBJloader');
 	wp_enqueue_script('vrodos_load87_MTLloader');
-	wp_enqueue_script('vrodos_load87_OrbitControls');
+	wp_enqueue_script('vrodos_load119_OrbitControls');
 	wp_enqueue_script('vrodos_load87_TransformControls');
 	wp_enqueue_script('vrodos_load87_PointerLockControls');
 	
@@ -32,20 +35,17 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_load87_scene_importer_utils');
 	wp_enqueue_script('vrodos_load87_sceneexporter');
 	
-	// Hierarchy Viewer
-	wp_enqueue_script('vrodos_HierarchyViewer');
  
 	// Colorpicker for the lights
 	wp_enqueue_script('vrodos_jscolorpick');
 	
-	wp_enqueue_style('vrodos_datgui');
-	wp_enqueue_style('vrodos_3D_editor');
-	wp_enqueue_style('vrodos_3D_editor_browser');
+	
 	
 	wp_enqueue_script('vrodos_3d_editor_environmentals');
 	wp_enqueue_script('vrodos_keyButtons');
 	wp_enqueue_script('vrodos_rayCasters');
 	wp_enqueue_script('vrodos_auxControlers');
+    wp_enqueue_script('vrodos_BordersFinder');
 	wp_enqueue_script('vrodos_LoaderMulti');
 	wp_enqueue_script('vrodos_LightsLoader');
 	wp_enqueue_script('vrodos_movePointerLocker');
@@ -430,7 +430,23 @@ class vrodos_3d_widget_scene extends WP_Widget {
 
         // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 	    $sceneJSON = $scene_post->post_content;
-	
+
+        
+        //                <!-- Load Scene - javascript var resources3D[] -->
+        ?>
+            
+            <script>
+                var resources3D  = [];// This holds all the resources to load. Generated in Parse JSON
+            </script>
+        
+        <?php
+        require( plugin_dir_path( __DIR__ ).'includes/templates/vrodos-edit-3D-scene-ParseJSON.php' );
+        
+        /* Initial load as php */
+        $SceneParserPHP = new ParseJSON($upload_url);
+        $SceneParserPHP->init($sceneJSON);
+        
+        
 	    $sceneTitle = $scene_post->post_name;
 	
 	    $pluginpath = str_replace('\\','/', plugin_dir_url( __DIR__  ) );
@@ -482,8 +498,12 @@ class vrodos_3d_widget_scene extends WP_Widget {
             // id of animation frame is used for canceling animation when dat-gui changes
             var id_animation_frame;
         
-            var resources3D  = [];// This holds all the resources to load. Generated in Parse JSON
-        
+            
+
+            // Add lights on scene
+            var lightsLoader = new VRodos_LightsLoader();
+            lightsLoader.load(resources3D);
+            
             // Load Manager
             // Make progress bar visible
             jQuery("#progress").get(0).style.display = "block";
@@ -519,15 +539,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
             }; // End of manager
         </script>
         
-        <!-- Load Scene - javascript var resources3D[] -->
-        <?php
-        
-        require( plugin_dir_path( __DIR__ ).'includes/templates/vrodos-edit-3D-scene-ParseJSON.php' );
-        
-        /* Initial load as php */
-        $SceneParserPHP = new ParseJSON($upload_url);
-        $SceneParserPHP->init($sceneJSON);
-        ?>
+
         
         <script>
             
@@ -574,8 +586,6 @@ class vrodos_3d_widget_scene extends WP_Widget {
                 let curr_camera = avatarControlsEnabled ?
                     (envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar) : envir.cameraOrbit;
         
-                // Render it
-                envir.renderer.render( envir.scene, curr_camera);
         
                 // Label is for setting labels to objects
                 envir.labelRenderer.render( envir.scene, curr_camera);
@@ -596,7 +606,8 @@ class vrodos_3d_widget_scene extends WP_Widget {
         
                 // Update it
                 envir.orbitControls.update();
-        
+
+                envir.cubeCamera.update( envir.renderer, envir.scene );
             }
         
             animate();
