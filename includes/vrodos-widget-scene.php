@@ -27,7 +27,7 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_load87_datgui');
 	wp_enqueue_script('vrodos_load87_OBJloader');
 	wp_enqueue_script('vrodos_load87_MTLloader');
-	wp_enqueue_script('vrodos_load119_OrbitControls');
+	wp_enqueue_script('vrodos_load87_OrbitControls');
 	wp_enqueue_script('vrodos_load87_TransformControls');
 	wp_enqueue_script('vrodos_load87_PointerLockControls');
 	

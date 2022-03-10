@@ -2,24 +2,20 @@
     display:block;
     z-index: 10000;
     background: transparent;
-    width: 180px;
+    width: 150px;
     top: 0;
     border: 0;
 }
 
 /* Three js */
 #vr_editor_main_div {
-    /*position:fixed;*/
-    /*top:30px;*/
+    position:fixed;
+    top:30px; /* Important */
     left:0;
     right:0;
     bottom:0;
-    top:0;
     background-color: #eee;
-    /*min-width:600px;*/
-    /*height: 600px;*/
     z-index: 999;
-    /*999;*/
 }
 
 /* Php info top right */
@@ -35,7 +31,6 @@
     width: 20%;
     padding: 2px;
 }
-
 
 /* Progress bar */
 .ProgressContainerStyle {
@@ -60,8 +55,846 @@
     height:5px;
 }
 
+/*-------------------------- */
+
+.VrGuiContainerStyle {
+    /*position: absolute;*/
+    /*text-align: left;*/
+    /*top: 12%;*/
+    /*right: 0;*/
+    width: 100%;
+    /*padding: 0;*/
+}
+
+/* rightPanelToggleOnOff*/
+.scenesListToggleStyle {
+    position:absolute;
+    bottom:0px;
+    width: 40px;
+    left:0;
+    z-index: 1001;
+    min-width:30px;
+    max-height:400px;
+    padding:0;
+    display:flex;
+}
+
+.scenesListToggleStyle i {
+    display:block;
+    cursor: pointer;
+}
+
+.scenesListToggleOn {
+    height: 17%;
+}
+
+.scenesListToggleOff {
+    height: 4%;
+}
 
 
 
 
 
+
+
+
+#compileGameBtn {
+    position: absolute;
+    top: 5px;
+    right: 0px;
+    height: 20px;
+    line-height: 1.4em;
+}
+
+
+.HeaderButtonStyle {
+    float: right;
+    margin-top:5px;
+}
+
+
+#formdiv {
+    font-size: 1vw;
+    overflow-y: scroll;
+    max-height:40%;
+    width:50%;
+    position:absolute;
+    bottom:0;
+    opacity:0.5;
+}
+
+#paramsform {
+    font-size: 0.6vw;
+    background:#eee;
+    color:#000;
+    padding: 10px;
+}
+
+#paramsform input {
+    font-size: 0.6vw;
+}
+
+
+
+
+/* Links have red color
+a { color:red }
+*/
+
+/* This disables the mouse rotation of canvas
+canvas { pointer-events:none; z-index:10; }
+*/
+
+/* Result */
+.result {
+    margin: 1px;
+    font-size: smaller;
+}
+
+.EditorObjOverlapSelectStyle {
+    z-index: 1000;
+    position: absolute;
+    display: none;
+    padding: 12px;
+}
+
+.EditorObjOverlapSelectStyle select {
+    background-color: rgba(255,255,255,.87);
+    border: 1px solid rgba(0,0,0,.12);
+}
+
+.EditorObjOverlapSelectStyle a {
+    width: 48px;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+}
+
+/*Assets Left Toolbar*/
+
+/* leftPanelToggleOnOff*/
+.AssetsToggleStyle {
+    position:absolute;
+    top:1px;
+    width: 20%;
+    left:0;
+    top:30px;
+    z-index: 999;
+    cursor: pointer;
+    padding-top:5px;
+}
+
+.AssetsToggleStyle i {
+    display:block;
+    cursor: pointer;
+}
+
+.AssetsToggleOn {
+    width: 20%;
+}
+
+.AssetsToggleOff {
+    width: 4%;
+}
+
+#assetCategTab{
+    margin-top:60px;
+    background-color:black;
+    padding:0px;
+}
+
+
+.affineSwitch{
+    width:33% !important;
+    margin-bottom:0px;
+}
+
+
+/* rightPanelToggleOnOff*/
+.HierarchyToggleStyle {
+    position:absolute;
+    top:1px;
+    width: 300px;
+    right:0;
+    top:30px;
+    z-index: 999;
+}
+
+.HierarchyToggleStyle i {
+    display:block;
+    cursor: pointer;
+}
+
+.HierarchyToggleOn {
+    width: 300px;
+}
+
+.HierarchyToggleOff {
+    width: 4%;
+}
+
+.right-elements-panel-style {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width:300px;
+    height:100%;
+    background-color: rgba(0,0,0,0.12);
+    /*border: 1px solid rgba(0,0,0,.5);*/
+    z-index:2;
+}
+
+.row-right-panel {
+    width:100%;
+    display:flex;
+    margin-bottom:1px;
+}
+
+
+
+.VrWalkInButtonStyle a i, .EditorObjOverlapSelectStyle a i {
+    /*padding-top: 4px;*/
+}
+
+/*Right Panel*/
+
+.VrEditorOptionsBtnStyle {
+    width:100%;
+    /*position: absolute;*/
+    /*right: 0;*/
+    /*top: 2px;*/
+    /*width: 48px;*/
+    /*min-width: 0;*/
+    /*padding: 0;*/
+    /*margin: 0;*/
+}
+
+
+/*row2*/
+.EditorTourToggleBtn {
+    width:20%;
+    min-width: 20px;
+    padding:0px;
+    padding-top:3px;
+    /*display:inline;*/
+    /*position: absolute;*/
+    /*right: 15%;*/
+    /*top: 4%;*/
+}
+
+.EditorDimensionToggleBtn {
+    width:20%;
+    min-width: 20px;
+    padding:0px;
+    /*position: absolute;*/
+    /*right: 10%;*/
+    /*top: 4%;*/
+}
+
+.VrWalkInButtonStyle {
+    width:35%;
+    min-width: 30px;
+    z-index: 1200;
+    /*display:block;*/
+    /*position: absolute;*/
+    /*right: 0;*/
+    /*top: 4%;*/
+}
+
+.ThirdPersonVrWalkInButtonStyle {
+    width:25%;
+    min-width: 20px;
+    padding-top:4px;
+    /*position: absolute;*/
+    /*right: 5%;*/
+    /*top: 4%;*/
+}
+
+/*row3*/
+.ObjectManipulationToggle {
+    /*overflow: hidden;*/
+    background: transparent;
+    display:inline-flex;
+    /*position: absolute;*/
+    /*top: 8%;*/
+    /*right:0;*/
+    width:100%;
+}
+
+.ObjectManipulationToggle input {
+    position: absolute !important;
+    clip: rect(0, 0, 0, 0);
+    height: 1px;
+    width: 1px;
+    border: 0;
+    overflow: hidden;
+}
+
+.ObjectManipulationToggle label {
+    /*float: left;*/
+}
+
+.ObjectManipulationToggle label {
+    /*display: inline-block;*/
+    width: 80px;
+    background-color: #e4e4e4;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    font-weight: normal;
+    text-align: center;
+    text-shadow: none;
+    padding: 6px 14px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition:    all 0.1s ease-in-out;
+    -ms-transition:     all 0.1s ease-in-out;
+    -o-transition:      all 0.1s ease-in-out;
+    transition:         all 0.1s ease-in-out;
+}
+
+.ObjectManipulationToggle label:hover {
+    cursor: pointer;
+}
+
+.ObjectManipulationToggle input:checked + label {
+    background-color: #3f51b5;
+    color:#ffffff;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.ObjectManipulationToggle label:first-of-type {
+    border-radius: 0px 0 0 0px;
+}
+
+.ObjectManipulationToggle label:last-of-type {
+    border-radius: 0px 0 0 0px;
+}
+
+/*row5 Axis size*/
+.AxisManipulationBtns {
+    display:flex;
+    margin-left:10px;
+    margin-top:3px;
+}
+
+/*row6 Hierarchy viewer*/
+#hierarchyViewerTitle{
+    padding:3px;
+    font-size:14px;
+}
+
+
+.HierarchyViewerStyle {
+    display:flex;
+    width: 100%;
+    /*overflow-y: auto;*/
+    /*position: absolute;*/
+    /*right: 0;*/
+    /*top: 30%;*/
+    background-color: #dfdfdf;
+}
+
+#hierarchy-viewer{
+    padding:0px;
+
+}
+
+#hierarchy-viewer li{
+    padding-left:5px;
+
+}
+
+
+.hierarchyItem {
+    width:100%
+}
+
+.hierarchyItemName {
+    font-size: 9pt;
+    line-height:12pt;
+    width:80%
+}
+
+.hierarchyItemDelete {
+    width:20%
+}
+
+.ToggleUIButtonStyle {
+    position: absolute;
+    left: 25%;
+    top: 32px;
+    background: transparent;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.ToggleUIButtonStyle i {
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.RemoveAssetFromSceneBtnStyle {
+    position: absolute;
+    left: 372px;
+    top: 40px;
+    width: 48px;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.SaveSceneBtnStyle {
+    position: absolute;
+    right: 1px;
+    top: 2px;
+    padding: 0;
+    margin: 0;
+    /*width: 130px;*/
+}
+
+.SaveBtnContainerStyle {
+    position: absolute;
+    text-align: center;
+    top: 7px;
+    right: 1px;
+}
+
+
+
+
+.RemoveAssetFromSceneBtnStyle i, .VrEditorOptionsBtnStyle i, .HierarchyToggleStyle i, .EditorTourToggleBtn a i, .ThirdPersonVrWalkInButtonStyle a i {
+    padding-top: 4px;
+}
+
+
+.pauseRenderingDivStyle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 40px;
+    padding: 0;
+    margin: 0;
+    z-index:999;
+}
+
+#pauseRendering {
+    width:40px;
+    min-width:30px;
+    padding:0;
+    padding-top: 4px;
+    margin: 0;
+    background:gray;
+}
+
+
+
+
+
+
+.AxisManipulationBtns a {
+    min-width: 0;
+    margin: 0 0 0 0px;
+    height: 18px;
+    vertical-align: top;
+    line-height: 1.5em;
+}
+
+
+
+
+button, html [type="button"], [type="reset"], [type="submit"] {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+}
+
+
+
+
+/*CARD STYLING*/
+#scenesInsideVREditor{
+    position:absolute;
+    display:inline-flex;
+    height:17%;
+    width:auto;
+    left:0;
+    bottom:0;
+    z-index:1000;
+    background:rgba(0, 0, 0, 0.12);
+    padding-left:60px !important;
+    padding-top:5px;
+    padding-right:20px;
+}
+
+.SceneCardContainer {
+    width: 150px;
+    padding-left:20px;
+}
+
+.sceneTab{
+    /*height:100px;*/
+    display:block;
+    background: transparent;
+}
+
+.SceneThumbnail {
+    position:relative;
+    width:100%;
+    height:80px;
+    max-height:80px;
+    min-height:50px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.sceneDisplayBlock {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.sceneDisplayBlock a {
+    width: 100%;
+    height: 100%;
+}
+
+.sceneDisplayBlock a img {
+    width: 100%;
+    height: 100%;
+}
+
+
+.landscapeIcon {
+    font-size: 34px; padding-top: 20px;
+}
+
+/*.SceneThumbnail a {*/
+/*    display: block;*/
+/*    text-align: center;*/
+/*    vertical-align: middle;*/
+/*    !*height: 100%;*!*/
+/*}*/
+
+/*.SceneThumbnail a img {*/
+/*    position: absolute;*/
+/*    height:80px;*/
+/*    max-height:80px;*/
+/*    min-height:50px;*/
+/*    overflow: hidden;*/
+/*    -webkit-transform: translate(-50%,-50%);*/
+/*    -ms-transform: translate(-50%,-50%);*/
+/*    transform: translate(-50%,-50%);*/
+/*}*/
+
+.cardTitleDeleteWrapper {
+    width:100%;
+    max-height:30px;
+    background:white;
+}
+
+.cardTitle{
+    width: 70%;
+    margin:0px;
+    font-size:14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left:5px;
+}
+
+.cardDeleteIcon {
+    float:right;
+    right:0;
+    min-width:30px;
+    margin: 0 !important;
+    max-height:25px;
+    padding:0px;
+    margin-top:3px;
+}
+
+/*.cardDescription{*/
+/*    padding:0px;*/
+/*    margin:0px;*/
+/*    font-size:12px;*/
+/*}*/
+
+.deleteIconMaterial{
+    font-size:18px;
+}
+
+
+.ImageContainer {
+    width:100%;
+    height:80px;
+    max-height:80px;
+    min-height:50px;
+    position:relative;
+    text-align: center;
+    overflow: hidden;
+}
+
+
+.ImageContainer img {
+    position: absolute;
+    /*min-height: 225px;*/
+    /*width: auto;*/
+    height: 100%;
+    overflow: hidden;
+    -webkit-transform: translate(-50%,-50%);
+    -ms-transform: translate(-50%,-50%);
+    transform: translate(-50%,-50%);
+    display: block;
+    text-align: center;
+    vertical-align: middle;
+    height: 100%;
+}
+
+#save-scene-elements{
+    position: absolute;
+    right: 20%;
+    width: 200px;
+    top:-3px;
+}
+
+#save-scene-button {
+    color: hotpink;
+    position:relative;
+    font-size: medium;
+    cursor:pointer;
+}
+
+#undo-scene-button{
+    color: hotpink;
+    position: relative;
+    left: 0;
+    cursor: pointer;
+    top: 5px;
+}
+
+#redo-scene-button{
+    color: hotpink;
+    position: relative;
+    right: 0;
+    cursor: pointer;
+    top: 5px;
+}
+
+/* Lights Drag and Drop bar*/
+/* Prevent the text contents of draggable elements from being selectable. */
+[draggable] {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Required to make elements draggable in old WebKit */
+    -khtml-user-drag: element;
+    -webkit-user-drag: element;
+}
+.lightbutton {
+    height: 42px;
+    width: 40px;
+    float: left;
+    /*border: 1px solid #333;*/
+    background-color: #ccc;
+
+    -webkit-border-radius: 10px;
+    -ms-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    /*-webkit-box-shadow: inset 0 0 3px #000;*/
+    /*-ms-box-shadow: inset 0 0 3px #000;*/
+    /*box-shadow: inset 0 0 3px #000;*/
+    text-align: center;
+    cursor: move;
+    vertical-align: center ;
+}
+
+.lightbutton:not(:last-child){
+    margin-right: 2px;
+}
+
+.lightbutton header {
+    color: #fff;
+    text-shadow: #000 0 1px;
+    box-shadow: 5px;
+    padding:1px;
+    background: black;
+    font-size: 8pt;
+    /*-moz-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*!*/
+    /*background: -webkit-gradient(linear, left top, right top,*/
+    /*color-stop(0, rgb(0,0,0)),*/
+    /*color-stop(0.50, rgb(79,79,79)),*/
+    /*color-stop(1, rgb(21,21,21)));*/
+    /*background: -webkit-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*/
+    /*background: -ms-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*/
+    /*border-bottom: 1px solid #ddd;*/
+    -webkit-border-top-left-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    -ms-border-radius-topleft: 10px;
+    border-top-left-radius: 10px;
+    -webkit-border-top-right-radius: 10px;
+    -ms-border-top-right-radius: 10px;
+    -moz-border-radius-topright: 10px;
+    border-top-right-radius: 10px;
+}
+
+
+.lightbutton.over {
+    border: 2px dashed #000;
+}
+.lighticon{
+    width:20px;
+    margin-top:3px;
+    margin-bottom:2px;
+}
+
+.lightbuttons{
+    position: absolute; /* Do not put relative because it breaks the raycaster of canvas */
+    top:30px;
+    left: 50%;
+    margin-left: -50px;
+    z-index:1004;
+    background-color:var(--mdc-theme-primary, #3f51b5);
+    display:inline-block;
+    padding:5px;
+    -webkit-border-bottom-left-radius: 10px;
+    -ms-border-bottom-left-radius: 10px;
+    -moz-border-bottom-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    -webkit-border-bottom-right-radius: 10px;
+    -ms-border-bottom-right-radius: 10px;
+    -moz-border-bottom-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.mdc-tab { min-width: 0; }
+.custom-header { display:none; }
+.main-navigation a { padding: 0.2em 1em; font-size:9pt !important;}
+.site-branding {display:none;}
+#content {padding:0px;}
+
+
+#vr_editor_right_panel_title{
+    height:65px;
+    vertical-align: bottom;
+    bottom:0;
+    display:table-cell;
+    padding-left:5px;
+}
+
+.cardNewSceneInput{
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.scene_editor_upper_toolbar{
+    display:block;
+    position:fixed;
+    z-index:1000;
+}
+
+#sceneInfoBreadcrump{
+    height:30px;
+    margin:0;
+    font-size: 14px;
+    vertical-align: middle;
+    display:block
+}
+
+#projectNameBreadcrump{
+    float:left;
+    max-width:50%;
+    line-height:1.8em;
+}
+
+.sceneArrowBack{
+    font-size: 20px;
+    vertical-align: middle;
+}
+
+.sceneProjectTypeLabel{
+    font-size: 16px;
+    vertical-align: middle;
+    margin-bottom:3px;
+    padding-right:5px;
+}
+
+.chevronRight{
+    font-size:20px;
+    vertical-align:middle;
+    padding-right:5px;
+}
+
+#sceneTitleInput{
+    display:block;
+    float:left;
+    width:15%;
+    margin-left:0px;
+    padding:0px;
+    border: none;
+    font-size:14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+    border-radius: 0;
+    height: 25px !important;
+}
+
+.titleLengthSuggest{
+    height:25px;
+    max-width:10%;
+    display:block;
+    float:left;
+    left:300px !important;
+    position:absolute;
+}
+
+#sceneJsonContent {
+    z-index:100000;
+    position:absolute;
+    top:50px;
+    left:100px;
+    display:none
+}
+
+#vrodos_scene_json_input {
+    z-index: 100000;
+    width: 800px;
+    height: 500px;
+    position: absolute;
+    top:50px;
+    height: 25em;
+    background: white;
+}
+
+#analyticsIframeContainer{
+    position: relative;
+    overflow: hidden;
+    padding-top: 150%;
+    display: none;
+}
+
+#analyticsIframeContent{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.notdraggable{
+    user-drag: none;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}

@@ -161,49 +161,40 @@ function controllerDatGuiOnChange() {
     );
 
     // Make slider-text controllers more interactive
-    setEventListenerKeyPressControllerUnconstrained(dg_controller_tx);
-    setEventListenerKeyPressControllerUnconstrained(dg_controller_ty);
-    setEventListenerKeyPressControllerUnconstrained(dg_controller_tz);
+    dg_controller_tx.domElement.childNodes[0].event3DOperation = 'Tx';
+    setEventListenerKeyPressControllerUnconstrained(dg_controller_tx.domElement.childNodes[0]);
+
+    dg_controller_ty.domElement.childNodes[0].event3DOperation = 'Ty';
+    setEventListenerKeyPressControllerUnconstrained(dg_controller_ty.domElement.childNodes[0]);
+
+    dg_controller_tz.domElement.childNodes[0].event3DOperation = 'Tz';
+    setEventListenerKeyPressControllerUnconstrained(dg_controller_tz.domElement.childNodes[0]);
 
     // Input Text listeners
+    dg_controller_rx.domElement.children[0].childNodes[0].event3DOperation = 'Rx';
     setEventListenerKeyPressControllerConstrained(dg_controller_rx.domElement.children[0].childNodes[0]);
+
+    dg_controller_ry.domElement.children[0].childNodes[0].event3DOperation = 'Ry';
     setEventListenerKeyPressControllerConstrained(dg_controller_ry.domElement.children[0].childNodes[0]);
+
+    dg_controller_rz.domElement.children[0].childNodes[0].event3DOperation = 'Rz';
     setEventListenerKeyPressControllerConstrained(dg_controller_rz.domElement.children[0].childNodes[0]);
 
+    dg_controller_dim_x.domElement.children[0].childNodes[0].event3DOperation = 'Sx';
     setEventListenerKeyPressControllerConstrained(dg_controller_dim_x.domElement.children[0].childNodes[0]);
+
+    dg_controller_dim_y.domElement.children[0].childNodes[0].event3DOperation = 'Sy';
     setEventListenerKeyPressControllerConstrained(dg_controller_dim_y.domElement.children[0].childNodes[0]);
+
+    dg_controller_dim_z.domElement.children[0].childNodes[0].event3DOperation = 'Sz';
     setEventListenerKeyPressControllerConstrained(dg_controller_dim_z.domElement.children[0].childNodes[0]);
 }
 
+
 /**
  * This function allows the dat gui text element of the slider to be clickable and interactive
- *  This is for translation which is not constrained (no slider) with limits
  * @param element
  */
-function setEventListenerKeyPressControllerUnconstrained(element){
-
-    var div = element.domElement.children;
-
-    div[0].onclick = function(event){
-         cancelAnimationFrame( id_animation_frame );
-     };
-
-    // While on Input Field on Focus and press enter
-    div[0].addEventListener('keydown', function (e) {
-
-        if (e.keyCode == 13) {
-          animate();
-          // trigger autosave
-          triggerAutoSave();
-        }
-    }, true);
-}
-
-
-/**
-* This function allows the dat gui text element of the slider to be clickable and interactive
-* @param element
-*/
 function setEventListenerKeyPressControllerConstrained(element) {
 
     // onclick inside stop animating
@@ -214,10 +205,34 @@ function setEventListenerKeyPressControllerConstrained(element) {
     // While on Input Field on Focus and press enter
     element.addEventListener('keydown', function (e) {
 
+        switch (element.event3DOperation) {
+            case 'Sx':
+                gui_controls_funs.dg_dim_x = element.value;
+                transform_controls.object.scale.x = element.value;
+                break;
+            case 'Sy':
+                gui_controls_funs.dg_dim_y = element.value;
+                transform_controls.object.scale.y = element.value;
+                break;
+            case 'Sz':
+                gui_controls_funs.dg_dim_z = element.value;
+                transform_controls.object.scale.z = element.value;
+                break;
+            case 'Rx':
+                gui_controls_funs.dg_rx = element.value;
+                transform_controls.object.rotation.x = element.value;
+                break;
+            case 'Ry':
+                gui_controls_funs.dg_ry = element.value;
+                transform_controls.object.rotation.y = element.value;
+                break;
+            case 'Rz':
+                gui_controls_funs.dg_rz = element.value;
+                transform_controls.object.rotation.z = element.value;
+                break;
 
-        // REM : HERE . Do it per object
-        gui_controls_funs.dg_dim_x = element.value;
-        transform_controls.object.scale.x = element.value;
+        }
+
         // 13 is enter
         if (e.keyCode == 13) {
             animate();
@@ -225,6 +240,47 @@ function setEventListenerKeyPressControllerConstrained(element) {
         }
     }, true);
 }
+
+/**
+ * This function allows the dat gui text element of the slider to be clickable and interactive
+ *  This is for translation which is not constrained (no slider) with limits
+ * @param element
+ */
+function setEventListenerKeyPressControllerUnconstrained(element){
+
+    element.addEventListener("click", function (event) {
+         cancelAnimationFrame( id_animation_frame );
+     });
+
+    // While on Input Field on Focus and press enter
+    element.addEventListener('keydown', function (e) {
+
+        // REM : HERE . Do it per object
+        switch (element.event3DOperation) {
+            case 'Tx':
+                gui_controls_funs.dg_tx = element.value;
+                transform_controls.object.position.x = element.value;
+                break;
+            case 'Ty':
+                gui_controls_funs.dg_ty = element.value;
+                transform_controls.object.position.y = element.value;
+                break;
+            case 'Tz':
+                gui_controls_funs.dg_tz = element.value;
+                transform_controls.object.position.z = element.value;
+                break;
+        }
+
+        if (e.keyCode == 13) {
+          animate();
+          // trigger autosave
+          triggerAutoSave();
+        }
+    }, true);
+}
+
+
+
 
 
 /**
@@ -237,7 +293,6 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
     //--------- translate_x ---------------
     if (transform_controls.object.position.x!= gui_controls_funs.dg_tx){
         gui_controls_funs.dg_tx = transform_controls.object.position.x;
-
         // Auto-save
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
@@ -280,9 +335,6 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
 
     //---------scale_x -------------------------------
     if (transform_controls.object.scale.x != gui_controls_funs.dg_dim_x){
-
-        console.log("Tick update", gui_controls_funs.dg_dim_x + " " + transform_controls.object.scale.x);
-
         gui_controls_funs.dg_dim_x = transform_controls.object.scale.x;
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }

@@ -127,10 +127,6 @@ function vrodos_register_scripts() {
 		array( 'vrodos_load119_LoadingManager', $pluginDirJS.'threejs119/LoadingManager.js'),
 		
 		array( 'vrodos_load119_FontLoader', $pluginDirJS.'threejs119/FontLoader.js'),
-		
-		
-		
-		
 	);
 	
 	for ( $i = 0 ; $i < count($scriptsC); $i ++){
@@ -705,33 +701,33 @@ add_action( 'init', 'vrodos_3d_register_block' );
 
 //----------------------- WIDGETS ---------------------------------------------
 
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
-
-// 47
-add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Front-end
-
-add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Back-end
-
-// Register and load the widget
-function vrodos_load_widget() {
-	register_widget( 'vrodos_3d_widget' );
-}
-add_action( 'widgets_init', 'vrodos_load_widget');
+//require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
+//
+//// 47
+//add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Front-end
+//
+//add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Back-end
+//
+//// Register and load the widget
+//function vrodos_load_widget() {
+//	register_widget( 'vrodos_3d_widget' );
+//}
+//add_action( 'widgets_init', 'vrodos_load_widget');
 
 
 //----------------------- WIDGET SCENE ---------------------------------------------
 
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widget-scene.php');
-
-// 47
-add_action('wp_enqueue_scripts', 'vrodos_widget_scene_preamp_scripts'); // Front-end
-add_action('admin_enqueue_scripts', 'vrodos_widget_scene_preamp_scripts'); // Back-end
-
-// Register and load the widget
-function vrodos_load_widget_scene() {
-	register_widget( 'vrodos_3d_widget_scene' );
-}
-add_action( 'widgets_init', 'vrodos_load_widget_scene');
+//require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widget-scene.php');
+//
+//// 47
+//add_action('wp_enqueue_scripts', 'vrodos_widget_scene_preamp_scripts'); // Front-end
+//add_action('admin_enqueue_scripts', 'vrodos_widget_scene_preamp_scripts'); // Back-end
+//
+//// Register and load the widget
+//function vrodos_load_widget_scene() {
+//	register_widget( 'vrodos_3d_widget_scene' );
+//}
+//add_action( 'widgets_init', 'vrodos_load_widget_scene');
 
 
 
