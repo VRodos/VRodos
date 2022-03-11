@@ -1130,6 +1130,94 @@ function keep_taxonomy_menu_open($parent_file) {
 	return $parent_file;
 }
 
+
+// ----------- Nav menu : Add Scene-3d-view with parameters ------------
+add_action( 'wp_nav_menu_item_custom_fields', 'vrodos_add_scene_id_to_scene_as_menu_item' );
+function vrodos_add_scene_id_to_scene_as_menu_item($item_id ) {
+	
+	$scene_id = get_post_meta( $item_id, '_scene_id', true );
+ 
+	?>
+    <div style="clear: both;">
+        
+        <span class="description">Scene</span><br />
+        
+        <input type="hidden"
+               class="nav-menu-id"
+               value="<?php echo $item_id ;?>"
+        />
+        
+        <div class="logged-input-holder">
+
+            <select
+                    name = "scene_id[<?php echo $item_id ;?>]"
+                    id   = "scene-id-<?php echo $item_id ;?>"
+                    class="widefat"
+            >
+                <option value=""></option>
+            
+
+                <?php $scenes = get_scenes_wonder_around();
+    
+                    // Iterate for the drop down
+                    for ($i=0;$i<count($scenes);$i++){
+                        
+                        echo '<option value="'.$scenes[$i]['sceneid'].'" '.
+                                        (esc_attr( $scene_id ) == $scenes[$i]['sceneid']?'selected':'').'>'.
+                                        $scenes[$i]['sceneName'].
+                                        ' of '.$scenes[$i]['scene_parent_project'][0]->name.'</option>';
+                    }
+                ?>
+            </select>
+            
+            
+            
+            
+            
+        </div>
+    </div>
+	<?php
+}
+
+add_action( 'wp_update_nav_menu_item', 'save_menu_item_desc', 10, 2 );
+function save_menu_item_desc( $menu_id, $menu_item_db_id ) {
+
+	if ( isset( $_POST['scene_id'][$menu_item_db_id]  ) ) {
+
+		$sanitized_data = sanitize_text_field( $_POST['scene_id'][$menu_item_db_id] );
+
+		update_post_meta( $menu_item_db_id, '_scene_id', $sanitized_data );
+
+	} else {
+
+		delete_post_meta( $menu_item_db_id, '_scene_id' );
+
+	}
+}
+
+
+add_filter( 'wp_get_nav_menu_items','nav_items', 11, 3 );
+function nav_items( $items, $menu, $args )
+{
+	if( is_admin() )
+		return $items;
+	
+	foreach( $items as $item )
+	{
+		$scene_id = get_post_meta( $item->ID, '_scene_id', true );
+  
+		if ( ! empty( $scene_id ) ) {
+			$item->url .= '?vrodos_scene=' . $scene_id;
+		}
+	}
+	return $items;
+}
+
+
+//---------
+
+
+// Main backend info page
 function vrodos_plugin_main_page(){
 	?>
 	

@@ -14,7 +14,7 @@ class VRodos_LoaderMulti {
         for (let n in resources3D) {
             (function (name) {
 
-                if(name==='SceneSettings')
+                if(name==='ClearColor' || name==='toneMappingExposure' | name ==='enableEnvironmentTexture' )
                     return;
 
                 // Lights are in a different loop
@@ -403,6 +403,11 @@ function setObjectProperties(object, name, resources3D) {
 
 
     object.children[0].material.color.setHex( "0x" +  resources3D[name]['color'] );
+    object.children[0].material.emissive.setHex( "0x" +  resources3D[name]['emissive'] );
+    object.children[0].material.roughness = parseFloat( resources3D[name]['roughness'] );
+    object.children[0].material.metalness = parseFloat( resources3D[name]['metalness'] );
+    object.children[0].material.emissiveIntensity = parseFloat( resources3D[name]['emissiveIntensity'] );
+
     object.children[0].receiveShadow = true;
     object.children[0].castShadow = true;
 
@@ -490,7 +495,10 @@ function startVideo (resources3D, name){
 
     var movieMaterial = new THREE.MeshBasicMaterial({map: videoTexture[name], side: THREE.DoubleSide, color: cHex});
 
+
+
     setTimeout(function () {
+
         envir.scene.getObjectByName(name).children[0].material = movieMaterial;
 
         // const promise = videoDom[name].play();

@@ -89,16 +89,13 @@ class vrodos_3d_widget_scene extends WP_Widget {
     
     // Widget Backend
     public function form( $instance ) {
-	
-	
+
 	    $title = isset( $instance[ 'title' ] ) ? $instance[ 'title' ] : '';
 	    $titleshow = isset( $instance[ 'titleshow' ] ) ? $instance[ 'titleshow' ] : 'false';
 	
 	    //$asset_id =  isset( $instance[ 'asset_id' ] ) ? $instance[ 'asset_id' ] : __( 'Insert asset id', 'vrodos_3d_widget_domain' );
 	    $scene_id =  isset( $instance[ 'scene_id' ] ) ? $instance[ 'scene_id' ] : __( 'Insert scene id', 'vrodos_3d_widget_scene_domain' );
-	    
-     
-     
+
 	    $camerapositionx = isset( $instance[ 'camerapositionx' ] ) ?  $instance[ 'camerapositionx' ] : 0;
 	    $camerapositiony = isset( $instance[ 'camerapositiony' ] ) ?  $instance[ 'camerapositiony' ] : 0;
 	    $camerapositionz = isset( $instance[ 'camerapositionz' ] ) ?  $instance[ 'camerapositionz' ] : -1;
@@ -149,20 +146,10 @@ class vrodos_3d_widget_scene extends WP_Widget {
             />
         </p>
 
-
         <p>
             <label for="<?php echo $this->get_field_id( 'scene_id' ); ?>">
 			    <?php _e( 'Scene id:' ); ?>
             </label>
-
-<!--            <input class="widefat"-->
-<!--                   id="--><?php //echo $this->get_field_id( 'scene_id' ); ?><!--"-->
-<!--                   name="--><?php //echo $this->get_field_name( 'scene_id' ); ?><!--"-->
-<!--                   type="text"-->
-<!--                   value="--><?php //echo esc_attr( $scene_id ); ?><!--"-->
-<!--            />-->
-
-            <!--                    onchange="vrodos_fillin_widget_scenetrs(this)"-->
             
             <select
                     class   ="widefat"

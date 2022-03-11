@@ -17,18 +17,50 @@ class VRodos_LightsLoader {
             (function (name) {
 
                 // Scene Settings
-                if(name === 'SceneSettings') {
+                if(name === 'ClearColor') {
 
-                    envir.renderer.setClearColor(resources3D['SceneSettings'].ClearColor);
+                    envir.renderer.setClearColor(resources3D['ClearColor']);
 
                     if(document.getElementById('sceneClearColor')) {
-                        document.getElementById('sceneClearColor').value = resources3D['SceneSettings'].ClearColor;
+                        document.getElementById('sceneClearColor').value = resources3D['ClearColor'];
                     }
                     if(document.getElementById('jscolorpick')) {
-                        document.getElementById('jscolorpick').value = resources3D['SceneSettings'].ClearColor;
+                        document.getElementById('jscolorpick').value = resources3D['ClearColor'];
                     }
                     return;
                 }
+
+                if(name === 'toneMappingExposure') {
+
+
+                    let toneMappingExposure =  parseFloat(resources3D['toneMappingExposure']);
+                    envir.renderer.toneMappingExposure = toneMappingExposure;
+
+                    if(document.getElementById('rendererToneMapping')) {
+                        document.getElementById('rendererToneMapping').value = toneMappingExposure;
+                    }
+
+                    if(document.getElementById('rendererToneMappingSlider')) {
+                        document.getElementById('rendererToneMappingSlider').value = toneMappingExposure;
+                    }
+                    return;
+                }
+
+
+                if(name === 'enableEnvironmentTexture') {
+
+                    let enableEnvironmentTexture = (resources3D['enableEnvironmentTexture'] === 'true');
+
+                    envir.scene.environment = enableEnvironmentTexture ? envir.maintexture : "";
+
+                    if(document.getElementById('sceneEnvironmentTexture')) {
+                        document.getElementById('sceneEnvironmentTexture').checked = enableEnvironmentTexture;
+                    }
+
+                    return;
+                }
+
+
 
                 if (!resources3D[name]['categoryName'].startsWith("light"))
                     return;
@@ -147,12 +179,12 @@ class VRodos_LightsLoader {
                         resources3D[name]['lightcolor'][1],
                         resources3D[name]['lightcolor'][2]);
 
-                    var lightpower = resources3D[name]['lightpower'];
+                    var lightintensity = resources3D[name]['lightintensity'];
                     var lightdecay = resources3D[name]['lightdecay'];
                     var lightdistance = resources3D[name]['lightdistance'];
                     // LIGHT
-                    var lightLamp = new THREE.PointLight(colora, lightpower, lightdistance, lightdecay);
-                    lightLamp.power = lightpower;
+                    var lightLamp = new THREE.PointLight(colora, lightintensity, lightdistance, lightdecay);
+                    lightLamp.intensity = lightintensity;
 
                     lightLamp.position.set(
                         resources3D[name]['trs']['translation'][0],
@@ -173,7 +205,7 @@ class VRodos_LightsLoader {
                     lightLamp.isDigiArt3DModel = true;
                     lightLamp.isLight = true;
                     lightLamp.castShadow = true;
-                    lightLamp.shadow.radius = 4;
+                    lightLamp.shadow.radius = parseFloat( resources3D[name]['shadowRadius'] );
 
 
 
@@ -199,7 +231,9 @@ class VRodos_LightsLoader {
 
                     // If we do not attach them, they are not visible in Editor !
                     if (typeof transform_controls !== "undefined") {
-                        attachToControls(name, envir.scene.getObjectByName(name));
+                        if (typeof attachToControls !== "undefined") {
+                            attachToControls(name, envir.scene.getObjectByName(name));
+                        }
                     }
 
                 } else if (resources3D[name]['categoryName']==='lightSpot' ){
@@ -208,15 +242,15 @@ class VRodos_LightsLoader {
                         resources3D[name]['lightcolor'][1],
                         resources3D[name]['lightcolor'][2]);
 
-                    var lightpower = resources3D[name]['lightpower'];
+                    var lightintensity = resources3D[name]['lightintensity'];
                     var lightdecay = resources3D[name]['lightdecay'];
                     var lightdistance = resources3D[name]['lightdistance'];
                     var lightangle = resources3D[name]['lightangle'];
                     var lightpenumbra = resources3D[name]['lightpenumbra'];
 
                     // LIGHT
-                    var lightSpot = new THREE.SpotLight(colora, lightpower, lightdistance, lightangle, lightpenumbra, lightdecay);
-                    lightSpot.power = lightpower;
+                    var lightSpot = new THREE.SpotLight(colora, lightintensity, lightdistance, lightangle, lightpenumbra, lightdecay);
+                    lightSpot.intensity = lightintensity;
 
                     lightSpot.position.set(
                         resources3D[name]['trs']['translation'][0],
@@ -271,7 +305,9 @@ class VRodos_LightsLoader {
 
                     // If we do not attach them, they are not visible in Editor !
                     if (typeof transform_controls !== "undefined") {
-                        attachToControls(name, envir.scene.getObjectByName(name));
+                        if (typeof attachToControls !== "undefined") {
+                            attachToControls(name, envir.scene.getObjectByName(name));
+                        }
                     }
 
                 }

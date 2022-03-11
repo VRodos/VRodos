@@ -104,37 +104,12 @@ $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 // Scene
 $current_scene_id = sanitize_text_field( intval( $_GET['vrodos_scene'] ));
 
-// Project
-$project_id    = sanitize_text_field( intval( $_GET['vrodos_game'] ) );
-$project_post  = get_post($project_id);
-$projectSlug   = $project_post->post_name;
-
-// Get if project is : 'Archaeology' or 'Energy' or 'Chemistry'
-$project_type = vrodos_return_project_type($project_id)->string;
-
-// Get project type icon
-$project_type_icon = vrodos_return_project_type($project_id)->icon;
-
-// Get Joker project id
-$joker_project_id = get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID;
-
-// Wind Energy Only
-if ($project_type === 'Energy') {
-	$scenesNonRegional = vrodos_getNonRegionalScenes($_REQUEST['vrodos_game']);
-	$scenesMarkerAllInfo = vrodos_get_all_scenesMarker_of_project_fastversion($project_id);
-}
-
-// Archaeology only
-if ($project_type === 'Archaeology') {
-	$doorsAllInfo = vrodos_get_all_doors_of_project_fastversion($project_id);
-}
-
 // Get scene content from post
 $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
-	vrodos_getDefaultJSONscene(strtolower($project_type));
+	vrodos_getDefaultJSONscene(strtolower('archaeology'));
 
 // Load resources 3D
 $SceneParserPHP = new ParseJSON($upload_url);
@@ -155,133 +130,20 @@ $editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 $videos = vrodos_getVideoAttachmentsFromMediaLibrary();
 
-// for vr_editor
-$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
-                            '&vrodos_scene=' .$current_scene_id . '&vrodos_asset=' );
-
-// User data
-$user_data = get_userdata( get_current_user_id() );
-$user_email = $user_data->user_email;
-
-
 // Shift vars to Javascript side
 echo '<script>';
 echo 'var pluginPath="'.$pluginpath.'";';
 echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
-echo 'let projectId="'.$project_id.'";';
-echo 'let projectSlug="'.$projectSlug.'";';
 echo 'var isAdmin="'.$isAdmin.'";';
 echo 'let isUserAdmin="'.current_user_can('administrator').'";';
-echo 'let urlforAssetEdit="'.$urlforAssetEdit.'";';
 echo 'let scene_id ="'.$current_scene_id.'";';
-echo 'let game_type ="'.strtolower($project_type).'";';
-echo 'let project_keys ="'.json_encode(vrodos_getProjectKeys($project_id, $project_type)).'";';
-echo 'user_email = "'.$user_email.'";';
+echo 'let game_type ="'.strtolower('archaeology').'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
 echo 'energy_stats = '.json_encode(vrodos_windEnergy_scene_stats($current_scene_id)).';';
 echo 'var siteurl="'.site_url().'";';
-
-if ($project_type === 'Archaeology') {
-	echo "var doorsAll=" . json_encode($doorsAllInfo) . ";";
-}
-if ($project_type === 'Energy') {
-	echo "var scenesMarkerAll=" . json_encode($scenesMarkerAllInfo) . ";";
-	echo "var scenesNonRegional=".json_encode($scenesNonRegional).";";
-}
-
-if ($project_type === 'Chemistry') {
-	echo "var scenesTargetChemistry=" . json_encode(vrodos_getAllexams_byGame($joker_project_id, true)) . ";";
-}
 echo '</script>';
 
 
-// For analytics
-$project_saved_keys = vrodos_getProjectKeys($project_id, $project_type);
-
-// if Virtual Lab
-if($project_type === 'Energy' || $project_type === 'Chemistry') {
-	if (!array_key_exists('gioID', $project_saved_keys)) {
-		echo "<script type='text/javascript'>alert(\"APP KEY not found." .
-		     " Please make sure that your user account has been registered correctly, " .
-		     "and you have loaded the correct page\");</script>";
-	}
-}
-
-// Get 'parent-game' taxonomy with the same slug as Game (in order to show scenes that belong here)
-$allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
-
-//$ff = fopen('output_merger.txt',"w");
-//fwrite($ff, "1:".print_r($project_post)         .chr(13));
-//fwrite($ff, "2:".print_r($projectSlug,true));
-//fclose($ff);
-
-$allScenePGameID = $allScenePGame->term_id;
-
-if ($project_type === "Chemistry") {
-	$analytics_molecule_checklist = vrodos_derive_molecules_checklist();
-}
-
-// Ajax for fetching game's assets within asset browser widget at vr_editor // user must be logged in to work, otherwise ajax has no privileges
-
-// COMPILE Ajax
-if(vrodos_getUnity_local_or_remote() != 'remote') {
-	
-	// Local compile
-	$gameUnityProject_dirpath = $upload_dir . '\\' . $projectSlug . 'Unity';
-	$gameUnityProject_urlpath = $pluginpath . '/../../uploads/' . $projectSlug . 'Unity/';
-	
-} else {
-	
-	// Remote compile
-	$ftp_cre = vrodos_get_ftpCredentials();
-	$ftp_host = $ftp_cre['address'];
-	
-	$gamesFolder = 'COMPILE_UNITY3D_GAMES';
-	
-	$gameUnityProject_dirpath = $gamesFolder."/".$projectSlug."Unity";
-	$gameUnityProject_urlpath = "http://".$ftp_host."/".$gamesFolder."/".$projectSlug."Unity";
-}
-
-
-$thepath = $pluginpath . '/js_libs/assemble_compile_commands/request_game_assepile.js';
-wp_enqueue_script( 'ajax-script_assepile', $thepath, array('jquery') );
-wp_localize_script( 'ajax-script_assepile', 'my_ajax_object_assepile',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php'),
-	       'id' => $project_id,
-	       'slug' => $projectSlug,
-	       'gameUnityProject_dirpath' => $gameUnityProject_dirpath,
-	       'gameUnityProject_urlpath' => $gameUnityProject_urlpath
-	)
-);
-
-// DELETE SCENE AJAX
-wp_enqueue_script( 'ajax-script_deletescene', $pluginpath . '/js_libs/ajaxes/delete_scene.js', array('jquery') );
-wp_localize_script( 'ajax-script_deletescene', 'my_ajax_object_deletescene',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php'))
-);
-
-//FOR SAVING extra keys
-wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
-wp_localize_script( 'ajax-script_savegio', 'my_ajax_object_savegio',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'project_id' => $project_id )
-);
-
-// Asset Browser
-wp_enqueue_script( 'ajax-script_filebrowse', $pluginpath.'/js_libs/vrodos_assetBrowserToolbar.js', array('jquery') );
-wp_localize_script( 'ajax-script_filebrowse', 'my_ajax_object_fbrowse', array( 'ajax_url' => admin_url( 'admin-ajax.php' ) ) );
-
-// Save scene
-wp_enqueue_script( 'ajax-script_savescene', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
-wp_localize_script( 'ajax-script_savescene', 'my_ajax_object_savescene',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
-);
-
-// Delete Asset
-wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.
-                                              '/js_libs/ajaxes/delete_asset.js', array('jquery') );
-wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
-);
 
 // Fetch Asset
 wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
@@ -294,120 +156,6 @@ wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
 
 wp_enqueue_media($scene_post->ID);
 require_once(ABSPATH . "wp-admin" . '/includes/media.php');
-
-if ($project_type === 'Archaeology') {
-	$single_lowercase = "tour";
-	$single_first = "Tour";
-} else if ($project_type === 'Energy' || $project_type === 'Chemistry'){
-	$single_lowercase = "lab";
-	$single_first = "Lab";
-} else {
-	$single_lowercase = "project";
-	$single_first = "Project";
-}
-
-// For Chemistry only
-if(isset($_POST['submitted2']) && isset($_POST['post_nonce_field2']) && wp_verify_nonce($_POST['post_nonce_field2'], 'post_nonce')) {
-	$expID = $_POST['exp-id'];
-	update_post_meta( $project_id, 'vrodos_project_expID', $expID);
-	
-	$loadMainSceneLink = get_permalink($editscenePage[0]->ID) . $parameter_Scenepass . $current_scene_id . '&vrodos_game=' . $project_id . '&scene_type=scene';
-	wp_redirect( $loadMainSceneLink );
-	exit;
-}
-
-
-// ADD NEW SCENE
-if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
-	
-	$newSceneType = $_POST['sceneTypeRadio'];
-	
-	$sceneMetaType = 'scene';//default 'scene' MetaType (3js)
-	$game_type_chosen_slug = '';
-	
-	$default_json = '';
-	$thegameType = wp_get_post_terms($project_id, 'vrodos_game_type');
-	if($thegameType[0]->slug == 'archaeology_games'){
-		
-		$newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
-		
-		$game_type_chosen_slug = 'archaeology_games';
-		$default_json = vrodos_getDefaultJSONscene('archaeology');
-		
-	} elseif($thegameType[0]->slug == 'energy_games'){
-		
-		$newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');
-		$game_type_chosen_slug = 'energy_games';
-		$default_json = vrodos_getDefaultJSONscene('energy');
-		
-	}elseif($thegameType[0]->slug == 'chemistry_games'){
-		
-		$game_type_chosen_slug = 'chemistry_games';
-		
-		$default_json = vrodos_getDefaultJSONscene('chemistry');
-		
-		if($newSceneType == 'lab'){
-			
-			$newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');
-			
-		} elseif($newSceneType == '2d'){
-			
-			$newscene_yaml_tax = get_term_by('slug', 'exam2d-chem-yaml', 'vrodos_scene_yaml');
-			$sceneMetaType = 'sceneExam2d';
-			
-		} elseif($newSceneType == '3d'){
-			
-			$newscene_yaml_tax = get_term_by('slug', 'exam3d-chem-yaml', 'vrodos_scene_yaml');
-			$sceneMetaType = 'sceneExam3d';
-		}
-	}
-	
-	$scene_taxonomies = array(
-		'vrodos_scene_pgame' => array(
-			$allScenePGameID,
-		),
-		'vrodos_scene_yaml' => array(
-			$newscene_yaml_tax->term_id,
-		)
-	);
-	
-	$scene_metas = array(
-		'vrodos_scene_default' => 0,
-		'vrodos_scene_caption' => esc_attr(strip_tags($_POST['scene-caption']))
-	);
-	
-	//REGIONAL SCENE EXTRA TYPE FOR ENERGY GAMES
-	$isRegional = 0;//default value
-	if($thegameType[0]->slug == 'energy_games'){
-		if($_POST['regionalSceneCheckbox'] == 'on'){$isRegional = 1;}
-		$scene_metas['vrodos_isRegional']= $isRegional;
-		$scene_metas['vrodos_scene_environment'] = 'fields';
-	}
-	
-	//Add the final MetaType of the Scene
-	$scene_metas['vrodos_scene_metatype']= $sceneMetaType;
-	
-	$scene_information = array(
-		'post_title' => esc_attr(strip_tags($_POST['scene-title'])),
-		'post_content' => $default_json,
-		'post_type' => 'vrodos_scene',
-		'post_status' => 'publish',
-		'tax_input' => $scene_taxonomies,
-		'meta_input' => $scene_metas,
-	);
-	
-	$scene_id = wp_insert_post($scene_information);
-	
-	if($scene_id){
-		if($sceneMetaType == 'sceneExam2d' || $sceneMetaType == 'sceneExam3d'){$edit_scene_page_id = $editsceneExamPage[0]->ID;}
-		else{$edit_scene_page_id = $editscenePage[0]->ID;}
-		$loadMainSceneLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $sceneMetaType;
-		wp_redirect( $loadMainSceneLink );
-		exit;
-	}
-}
-
-$goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
 // Make the header of the page
 get_header(); ?>
@@ -592,15 +340,11 @@ get_header(); ?>
 
             if (objItem === undefined){
                 return;
-            } else {
-               // attachToControls(name, objItem);
             }
 
             // Find scene dimension in order to configure camera in 2D view (Y axis distance)
             findSceneDimensions();
             envir.updateCameraGivenSceneLimits();
-
-            
 
             // Set Target light for Spots
             for (let n in resources3D) {
@@ -617,9 +361,6 @@ get_header(); ?>
         var loaderMulti = new VRodos_LoaderMulti();
 
         loaderMulti.load(manager, resources3D, pluginPath);
-
-
-   
 
         //--- initiate PointerLockControls ---------------
         initPointerLock();
@@ -671,7 +412,6 @@ get_header(); ?>
             updatePointerLockControls();
 
             transform_controls.update(); // update the axis controls based on the browse controls
-          
 
             // Now update the translation and rotation input texts
             if (transform_controls.object) {
@@ -693,57 +433,8 @@ get_header(); ?>
 
         // Set all buttons actions
         loadButtonActions();
-
-
-        function attachToControls(name, objItem){
-
-            // let trs_tmp = resources3D[name]['trs'];
-            // transform_controls.attach(objItem);
-            //
-            // // highlight
-            // envir.outlinePass.selectedObjects = [objItem];
-            //
-            // if (selected_object_name != 'avatarYawObject') {
-            //     transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
-            //         trs_tmp['translation'][2]);
-            //     transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
-            //         trs_tmp['rotation'][2]);
-            //     transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
-            // }
-            //
-            // jQuery('#object-manipulation-toggle').show();
-            // jQuery('#axis-manipulation-buttons').show();
-            // jQuery('#double-sided-switch').show();
-            //
-            // showObjectPropertiesPanel(transform_controls.getMode());
-            //
-            // selected_object_name = name;
-            // transform_controls.setMode("rottrans");
-            //
-            // let sizeT = 1;
-            //
-            // // Resize controls based on object size
-            // if (selected_object_name != 'avatarYawObject') {
-            //     let dims = findDimensions(transform_controls.object);
-            //     sizeT = Math.max(...dims);
-            //
-            //     // 6 is rotation
-            //     transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
-            //
-            //     if (selected_object_name.includes("lightSun") || selected_object_name.includes("lightLamp") ||
-            //         selected_object_name.includes("lightSpot")){
-            //         // ROTATE GIZMO: Sun and lamp can not be rotated
-            //         transform_controls.children[6].children[0].children[1].visible = false;
-            //     }
-            // } else {
-            //     transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
-            // }
-            //
-            // transform_controls.setSize( sizeT > 1 ? sizeT : 1 );
-        }
-
     </script>
 <?php } ?>
 
-<?php get_footer(); ?>
+<?php // get_footer(); ?>
 

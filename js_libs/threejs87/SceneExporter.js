@@ -181,82 +181,84 @@ THREE.SceneExporter.prototype = {
 
 
 
-        function LightString( o, n ) {
-
-            if ( o instanceof THREE.AmbientLight ) {
-
-                var output = [
-
-                    '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-                    '	"type"  : "AmbientLight",',
-                    '	"color" : ' + o.color.getHex() + ( o.children.length ? ',' : '' )
-
-                ];
-
-            } else if ( o instanceof THREE.DirectionalLight ) {
-
-                var output = [
-
-                    '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-                    '	"type"      : "DirectionalLight",',
-                    '	"color"     : ' + o.color.getHex() + ',',
-                    '	"intensity" : ' + o.intensity + ',',
-                    '	"direction" : ' + Vector3String( o.position ) + ',',
-                    '	"target"    : ' + LabelString( getObjectName( o.target ) ) + ( o.children.length ? ',' : '' )
-
-                ];
-
-            } else if ( o instanceof THREE.PointLight ) {
-
-                var output = [
-
-                    '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-                    '	"type"      : "PointLight",',
-                    '	"color"     : ' + o.color.getHex() + ',',
-                    '	"intensity" : ' + o.intensity + ',',
-                    '	"position"  : ' + Vector3String( o.position ) + ',',
-                    '	"distance"  : ' + o.distance + ( o.children.length ? ',' : '' )
-
-                ];
-
-            } else if ( o instanceof THREE.SpotLight ) {
-
-                var output = [
-
-                    '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-                    '	"type"      : "SpotLight",',
-                    '	"color"     : ' + o.color.getHex() + ',',
-                    '	"intensity" : ' + o.intensity + ',',
-                    '	"position"  : ' + Vector3String( o.position ) + ',',
-                    '	"distance"  : ' + o.distance + ',',
-                    '	"angle"     : ' + o.angle + ',',
-                    '	"exponent"  : ' + o.exponent + ',',
-                    '	"target"    : ' + LabelString( getObjectName( o.target ) ) + ( o.children.length ? ',' : '' )
-
-                ];
-
-            } else if ( o instanceof THREE.HemisphereLight ) {
-
-                var output = [
-
-                    '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-                    '	"type"        : "HemisphereLight",',
-                    '	"skyColor"    : ' + o.color.getHex() + ',',
-                    '	"groundColor" : ' + o.groundColor.getHex() + ',',
-                    '	"intensity"   : ' + o.intensity + ',',
-                    '	"position"    : ' + Vector3String( o.position ) + ( o.children.length ? ',' : '' )
-
-                ];
-
-            } else {
-
-                var output = [];
-
-            }
-
-            return generateMultiLineString( output, '\n\t\t', n );
-
-        }
+        // function LightString( o, n ) {
+        //
+        //     if ( o instanceof THREE.AmbientLight ) {
+        //
+        //         var output = [
+        //
+        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
+        //             '	"type"  : "AmbientLight",',
+        //             '	"color" : ' + o.color.getHex() + ( o.children.length ? ',' : '' )
+        //
+        //         ];
+        //
+        //     } else if ( o instanceof THREE.DirectionalLight ) {
+        //
+        //         var output = [
+        //
+        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
+        //             '	"type"      : "DirectionalLight",',
+        //             '	"color"     : ' + o.color.getHex() + ',',
+        //             '	"intensity" : ' + o.intensity + ',',
+        //             '	"direction" : ' + Vector3String( o.position ) + ',',
+        //             '	"target"    : ' + LabelString( getObjectName( o.target ) ) + ( o.children.length ? ',' : '' )
+        //
+        //         ];
+        //
+        //     } else if ( o instanceof THREE.PointLight ) {
+        //
+        //         var output = [
+        //
+        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
+        //             '	"type"      : "PointLight",',
+        //             '	"color"     : ' + o.color.getHex() + ',',
+        //             '	"shadowRadius" : ' + o.shadow.radius + ',',
+        //             '	"decay" : ' + o.decay + ',',
+        //             '	"intensity" : ' + o.intensity + ',',
+        //             '	"position"  : ' + Vector3String( o.position ) + ',',
+        //             '	"distance"  : ' + o.distance + ( o.children.length ? ',' : '' )
+        //
+        //         ];
+        //
+        //     } else if ( o instanceof THREE.SpotLight ) {
+        //
+        //         var output = [
+        //
+        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
+        //             '	"type"      : "SpotLight",',
+        //             '	"color"     : ' + o.color.getHex() + ',',
+        //             '	"intensity" : ' + o.intensity + ',',
+        //             '	"position"  : ' + Vector3String( o.position ) + ',',
+        //             '	"distance"  : ' + o.distance + ',',
+        //             '	"angle"     : ' + o.angle + ',',
+        //             '	"exponent"  : ' + o.exponent + ',',
+        //             '	"target"    : ' + LabelString( getObjectName( o.target ) ) + ( o.children.length ? ',' : '' )
+        //
+        //         ];
+        //
+        //     } else if ( o instanceof THREE.HemisphereLight ) {
+        //
+        //         var output = [
+        //
+        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
+        //             '	"type"        : "HemisphereLight",',
+        //             '	"skyColor"    : ' + o.color.getHex() + ',',
+        //             '	"groundColor" : ' + o.groundColor.getHex() + ',',
+        //             '	"intensity"   : ' + o.intensity + ',',
+        //             '	"position"    : ' + Vector3String( o.position ) + ( o.children.length ? ',' : '' )
+        //
+        //         ];
+        //
+        //     } else {
+        //
+        //         var output = [];
+        //
+        //     }
+        //
+        //     return generateMultiLineString( output, '\n\t\t', n );
+        //
+        // }
 
 
 
@@ -325,7 +327,6 @@ THREE.SceneExporter.prototype = {
 
                 var vswitch  = o.children[0].material.map;
 
-
                 var output = [
                     '\t\t' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
@@ -352,6 +353,11 @@ THREE.SceneExporter.prototype = {
                     '   "fbxID" : ' + '"' + o.fbxID + '"' + ',',
                     '   "glbID" : ' + '"' + o.glbID + '"' + ',',
                     '   "color" : ' + '"' + o.children[0].material.color.getHexString() + '"' + ',',
+                    '   "emissive" : ' + '"' + (o.children[0].material.emissive !== undefined ?
+                                                o.children[0].material.emissive.getHexString() : '000000') + '"' + ',',
+                    '   "roughness" : ' + '"' + o.children[0].material.roughness + '"' + ',',
+                    '   "metalness" : ' + '"' + o.children[0].material.metalness + '"' + ',',
+                    '   "emissiveIntensity" : ' + '"' + o.children[0].material.emissiveIntensity + '"' + ',',
                     '   "videoTextureSrc" : ' + '"' + (vswitch? vswitch.image.src : '') + '"' + ',',
                     '   "videoTextureRepeatX" : ' + '"' + (vswitch? vswitch.repeat.x :'') + '"' + ',',
                     '   "videoTextureRepeatY" : ' + '"' + (vswitch? vswitch.repeat.y:'') + '"' + ',',
@@ -424,10 +430,11 @@ THREE.SceneExporter.prototype = {
                     quatR_light._z + "," +
                     quatR_light._w + "]" + ',',
                     '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"lightpower"	: "' + o.power + '",',
+                    '	"lightintensity"	: "' + o.intensity + '",',
                     '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
                     '	"lightdecay" : "' + o.decay + '",',
                     '	"lightdistance" : "' + o.distance + '",',
+                    '	"shadowRadius" : "' + o.shadow.radius + '",',
                     '	"categoryName" : "' + o.categoryName + '",',
                     '	"isLight"   : ' + '"' + 'true' + '"' + ( o.children.length ? ',' : '' )
                 ];
@@ -455,7 +462,7 @@ THREE.SceneExporter.prototype = {
                     quatR_light._z + "," +
                     quatR_light._w + "]" + ',',
                     '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"lightpower"	: "' + o.power + '",',
+                    '	"lightintensity"	: "' + o.intensity + '",',
                     '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
                     '	"lightdecay" : "' + o.decay + '",',
                     '	"lightdistance" : "' + o.distance + '",',
@@ -818,12 +825,9 @@ THREE.SceneExporter.prototype = {
             '		"type"		: "scene",',
             '		"generatedBy"	: "SceneExporter.js",',
             '		"ClearColor" : "#' + envir.renderer.getClearColor().getHexString() + '",',
+            '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
+            '		"enableEnvironmentTexture" : "' + (!!envir.scene.environment) + '",',
             '		"objects"       : ' + nobjects + //+  ',',
-            // + ',',
-            // '		"geometries"    : ' + ngeometries + ',',
-            // '		"materials"     : ' + nmaterials + ',',
-            // '		"textures"      : ' + ntextures,
-
             '	},',
             '',
             '	"urlBaseType": "relativeToScene",',

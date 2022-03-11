@@ -21,9 +21,9 @@
         transform_controls.object.children[0].material.emissiveIntensity = parseFloat(document.getElementById("ObjectEmissiveIntensity").value);
     }
 
-    function changeLightMapIntensity(){
-        transform_controls.object.children[0].material.emissiveIntensity = parseFloat(document.getElementById("ObjectLightMapIntensity").value);
-    }
+    // function changeLightMapIntensity(){
+    //     transform_controls.object.children[0].material.lightMapIntensity = parseFloat(document.getElementById("ObjectLightMapIntensity").value);
+    // }
 
     function changeRoughness(){
         transform_controls.object.children[0].material.roughness = parseFloat(document.getElementById("ObjectRoughness").value);
@@ -194,16 +194,16 @@
         </div>
 
         <!-- Lightmap intensity -->
-        <label for="ObjectLightMapIntensity" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
-            LightMap Intensity:</label>
-        <div class="mdc-slider" style="width:50%; display:inline-block; height:30px">
-            <input class="mdc-slider__input" type="range" min="0" max="1" value="0.5" step="0.01"
-                   id="ObjectLightMapIntensity" name="ObjectLightMapIntensity" aria-label="LightMap Intensity slider"
-                   oninput="changeLightMapIntensity(this);">
-            <div class="mdc-slider__thumb">
-                <div class="mdc-slider__thumb-knob"></div>
-            </div>
-        </div>
+<!--        <label for="ObjectLightMapIntensity" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">-->
+<!--            LightMap Intensity:</label>-->
+<!--        <div class="mdc-slider" style="width:50%; display:inline-block; height:30px">-->
+<!--            <input class="mdc-slider__input" type="range" min="0" max="1" value="0.5" step="0.01"-->
+<!--                   id="ObjectLightMapIntensity" name="ObjectLightMapIntensity" aria-label="LightMap Intensity slider"-->
+<!--                   oninput="changeLightMapIntensity(this);">-->
+<!--            <div class="mdc-slider__thumb">-->
+<!--                <div class="mdc-slider__thumb-knob"></div>-->
+<!--            </div>-->
+<!--        </div>-->
         
         <!-- The Video texture of the object -->
         <label for="ObjectVideoTexture" class="mdc-textfield__label" style="top: 16px; position: relative; bottom: 5px; margin-bottom: 15px; display: inline-block; vertical-align: center;">
@@ -321,7 +321,7 @@
     <input type="text" id="lampPower" name="lampPower" title="Set a number from 0 to infinite, 1 is the default"
            value="1" maxlength="4"
            class="mdc-textfield__input" style="width: 6ch; padding: 2px; display: inline; text-align: right;"
-           onkeyup="transform_controls.object.power = this.value"/>
+           onkeyup="transform_controls.object.intensity = this.value"/>
 
     <!-- The Color of the Lamp-->
     <label for="lampColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 160px; display: inline-block; vertical-align: bottom;">

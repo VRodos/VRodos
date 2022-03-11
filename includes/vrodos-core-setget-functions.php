@@ -249,9 +249,7 @@ function vrodos_get_user_game_projects($user_id, $isUserAdmin){
 
 
 function get_scenes_wonder_around() {
-	
 	$allScenes = [];
-	
 	
 	$custom_query_args = array(
 		'post_type'      => 'vrodos_scene',
@@ -288,10 +286,7 @@ function get_scenes_wonder_around() {
 			
 		endwhile;
 	endif;
-	
-	
-	
-	
+
 	return $allAssets;
 }
 

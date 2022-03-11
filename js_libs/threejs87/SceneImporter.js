@@ -2,8 +2,7 @@
 
 function parseJSON_javascript(scene_json, UPLOAD_DIR){
 
-
-    //console.log("scene_json", scene_json);
+    console.error("Not all properties are supported by undo: 115");
 
     if (scene_json.length==0)
         return [];
@@ -67,6 +66,9 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             var isLight = "true";
             var selected_object_trs={"translation":[t_x,t_y,t_z],"rotation":[r_x,r_y,r_z],"scale":scale};
 
+            var lightintensity = value['lightintensity'];
+
+
             resources3D_local[name]= {"path":'',
                 "assetid":'',
                 "obj":'',
@@ -76,13 +78,131 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
                 "fbxID":'',
                 "glbID":'',
                 "audioID":'',
-                "categoryName":'',"categoryID":'',
-                "image1id":'',"doorName_source":'',"doorName_target":'',
+                "lightintensity":lightintensity,
+                "categoryName":'lightSun',
+                "categoryID":'',
+                "image1id":'',
+                "doorName_source":'',
+                "doorName_target":'',
                 "sceneName_target":'',"sceneID_target":'',"archaeology_penalty":'',
                 "hv_penalty":'',"natural_penalty":'',"isreward":0,"isCloned":0,
                 "isJoker":0,
                 "isLight":"true",
                 "trs":selected_object_trs};
+
+        } else if (name.includes('lightLamp')){
+
+
+            var path = '';
+            var obj = '';
+            var mtl = '';
+
+            var t_x = value['position'][0];
+            var t_y = value['position'][1];
+            var t_z = value['position'][2];
+
+
+            var r_x = 0;
+            var r_y = 0;
+            var r_z = 0;
+
+            var scale = 1;
+
+            var color = value['color'];
+            var lightintensity = value['lightintensity'];
+            var lightdecay = value['lightdecay'];
+            var lightdistance = value['lightdistance'];
+            var shadowRadius = value['shadowRadius'];
+
+
+            var isLight = "true";
+            var selected_object_trs={"translation":[t_x,t_y,t_z],"rotation":[r_x,r_y,r_z],"scale":scale};
+
+            resources3D_local[name]= {
+                "path":'',
+                "assetid":'',
+                "obj":'',
+                "objID":'',
+                "mtl":'',
+                "mtlID":'',
+                "fbxID":'',
+                "glbID":'',
+                "audioID":'',
+                "categoryName":'lightLamp',
+                "lightintensity":lightintensity,
+                "categoryID":'',
+                "image1id":'',
+                "doorName_source":'',
+                "doorName_target":'',
+                "sceneName_target":'',
+                "sceneID_target":'',
+                "archaeology_penalty":'',
+                "hv_penalty":'',
+                "natural_penalty":'',
+                "isreward":0,
+                "isCloned":0,
+                "isJoker":0,
+                "isLight":"true",
+                "trs":selected_object_trs};
+
+
+            // '	"type"      : "PointLight",',
+            // '	"color"     : ' + o.color.getHex() + ',',
+            // '	"shadowRadius" : ' + o.shadow.radius + ',',
+            // '	"intensity" : ' + o.intensity + ',',
+            // '	"position"  : ' + Vector3String( o.position ) + ',',
+            // '	"distance"  : ' + o.distance + ( o.children.length ? ',' : '' )
+
+
+        } else if (name.includes('lightSpot')){
+
+            var path = '';
+            var obj = '';
+            var mtl = '';
+
+            var t_x = value['position'][0];
+            var t_y = value['position'][1];
+            var t_z = value['position'][2];
+
+
+            var r_x = value['rotation'][0];
+            var r_y = value['rotation'][1];
+            var r_z = value['rotation'][2];
+
+            var scale = value['scale'][0];
+
+            var isLight = "true";
+            var selected_object_trs={"translation":[t_x,t_y,t_z],"rotation":[r_x,r_y,r_z],"scale":scale};
+
+            var lightintensity = value['lightintensity'];
+
+            resources3D_local[name]= {
+                "path":'',
+                "assetid":'',
+                "obj":'',
+                "objID":'',
+                "mtl":'',
+                "mtlID":'',
+                "fbxID":'',
+                "glbID":'',
+                "audioID":'',
+                "categoryName":'lightSpot',
+                "lightintensity":lightintensity,
+                "categoryID":'',
+                "image1id":'',
+                "doorName_source":'',
+                "doorName_target":'',
+                "sceneName_target":'',
+                "sceneID_target":'',
+                "archaeology_penalty":'',
+                "hv_penalty":'',
+                "natural_penalty":'',
+                "isreward":0,
+                "isCloned":0,
+                "isJoker":0,
+                "isLight":"true",
+                "trs":selected_object_trs};
+
 
 
         } else {
@@ -99,6 +219,12 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             var fbxID = value['fbxID'];
             var glbID = value['glbID'];
             var color = value['color'];
+            var emissive = value['emissive'];
+            var emissiveIntensity = value['emissiveIntensity'];
+            var roughness = value['roughness'];
+            var metalness = value['metalness'];
+
+
             var audioID = value['audioID'];
             var categoryName = value['categoryName'];
             var categoryID = value['categoryID'];
@@ -151,6 +277,10 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
                 "fbxID":fbxID,
                 "glbID":glbID,
                 "color":color,
+                "emissive":emissive,
+                "emissiveIntensity":emissiveIntensity,
+                "roughness":roughness,
+                "metalness":metalness,
                 "videoTextureSrc":videoTextureSrc,
                 "videoTextureRepeatX":videoTextureRepeatX,
                 "videoTextureRepeatY":videoTextureRepeatY,

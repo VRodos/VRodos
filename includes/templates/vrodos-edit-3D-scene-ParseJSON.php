@@ -39,7 +39,12 @@ class ParseJSON {
         $isCloned = '';
         $isJoker = '';
         $color = ''; // object color override
-
+        $emissive = '';
+        $emissiveIntensity = '';
+        $roughness = '';
+        $metalness = '';
+        
+        
 
 
         
@@ -50,16 +55,13 @@ class ParseJSON {
     
         $json_metadata = $content_JSON->metadata;
         
-        foreach ($json_metadata as $key=>$value) {
-             $name = $key;
-             if ($name == 'ClearColor') {
-                 echo '<script type="text/javascript">';
-                 echo 'resources3D["SceneSettings"]= {'.
-                                                      '"ClearColor":"'.$value.'"'.
-                                                                '};';
-                 echo '</script>';
-             }
-        }
+        echo '<script>';
+        echo 'resources3D["ClearColor"]= "'.$json_metadata->ClearColor.'";';
+        echo 'resources3D["toneMappingExposure"]= "'.$json_metadata->toneMappingExposure.'";';
+        echo 'resources3D["enableEnvironmentTexture"]= "'.$json_metadata->enableEnvironmentTexture.'";';
+        echo '</script>';
+        
+        
         
         
         $json_objects = $content_JSON->objects;
@@ -74,15 +76,17 @@ class ParseJSON {
         $light_color_b = 1;
     
         $lightintensity = 1; // Sun
-    
-        $lightpower = 1; // Lamp
         $lightdecay = 1; // Lamp
         $lightdistance = 100; // Lamp
+        $shadowRadius = 8;
         
         $lightangle = 0.7;
         $lightpenumbra = 0;
     
         $lighttargetobjectname = '';
+        
+        
+        
         
         foreach ($json_objects as $key=>$value) {
 
@@ -142,9 +146,10 @@ class ParseJSON {
     
                 $categoryName = 'lightLamp';
                 $isLight = "true";
-                $lightpower = $value->lightpower;
+                $lightintensity = $value->lightintensity;
                 $lightdecay = $value->lightdecay;
                 $lightdistance = $value->lightdistance;
+                $shadowRadius = $value->shadowRadius;
     
             } elseif ( strpos($name, 'lightSpot') !== false ){
     
@@ -166,7 +171,7 @@ class ParseJSON {
     
                 $categoryName = 'lightSpot';
                 $isLight = "true";
-                $lightpower = $value->lightpower;
+                $lightintensity = $value->lightintensity;
                 $lightdecay = $value->lightdecay;
                 $lightdistance = $value->lightdistance;
     
@@ -190,6 +195,10 @@ class ParseJSON {
                 $mtlID = $value->fnMtlID;
     
                 $color = $value->color;
+                $emissive = $value->emissive;
+                $emissiveIntensity = $value->emissiveIntensity;
+                $roughness = $value->roughness;
+                $metalness = $value->metalness;
                 
                 $fbxID = $value->fbxID;
                 $glbID = $value->glbID;
@@ -256,6 +265,10 @@ class ParseJSON {
                                             '","fbxID":"'.$fbxID.
                                             '","glbID":"'.$glbID.
                                             '","color":"'.$color.
+                                            '","emissive":"'.$emissive.
+                                            '","emissiveIntensity":"'.$emissiveIntensity.
+                                            '","roughness":"'.$roughness.
+                                            '","metalness":"'.$metalness.
                                             '","audioID":"'.$audioID.
                                             '","videoTextureSrc":"'.$videoTextureSrc.
                                             '","videoTextureRepeatX":"'.$videoTextureRepeatX .
@@ -278,7 +291,7 @@ class ParseJSON {
                                             '","isJoker":"'.$isJoker.
                                             '","isLight":"'.$isLight.
                                             '","lightintensity":"'.$lightintensity.
-                                            '","lightpower":"'.$lightpower.
+                                            '","shadowRadius":"'.$shadowRadius.
                                             '","lightdecay":"'.$lightdecay.
                                             '","lightdistance":"'.$lightdistance.
                                             '","lightangle":"'.$lightangle.

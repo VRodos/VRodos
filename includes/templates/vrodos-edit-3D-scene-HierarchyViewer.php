@@ -138,7 +138,7 @@
 	     style="width:100%; margin:0; padding:0; height:30px; background: rgba(255,255,255,0.5)">
 		
 		<input type="checkbox"
-		       id="sceneEnvironmentTexture" class="mdc-checkbox"
+		       id="sceneEnvironmentTexture"
 		       style="width:15px;display:flex !important;float:right;position:absolute;right:5px;top:10px;padding:0;"
 		       name="sceneEnvironmentTexture" form="3dAssetForm"
 		       onchange="enableSceneEnvironmentTexture(this.checked)">
