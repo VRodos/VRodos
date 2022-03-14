@@ -504,10 +504,10 @@ function loadButtonActions() {
 
             setVisiblityLightHelpingElements(false);
 
-            jQuery("#wpadminbar").hide();
+            //jQuery("#wpadminbar").hide();
 
             // footer that is high up below admin bar
-            jQuery("#colophon").hide();
+            //jQuery("#colophon").hide();
 
             jQuery("#vr_editor_main_div")[0].style.top = 0;
 
@@ -530,12 +530,12 @@ function loadButtonActions() {
             setVisiblityLightHelpingElements(true);
 
             // wp admin bar show
-            jQuery("#wpadminbar").show();
+            //jQuery("#wpadminbar").show();
 
             // footer that is high up below admin bar
-            jQuery("#colophon").show();
+            //jQuery("#colophon").show();
 
-            jQuery("#vr_editor_main_div")[0].style.top = "60px";
+            //jQuery("#vr_editor_main_div")[0].style.top = "60px";
             // if in 3rd person view then show the cameraobject
             //envir.getSteveFrustum().visible = true;
 

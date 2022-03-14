@@ -1218,9 +1218,13 @@ function vrodos_plugin_main_page(){
 	<div id="wpbody" role="main">
 	<div id="wpbody-content">
 	<div class="wrap">
+        <h1>VRodos Dashboard</h1>
 	<div id="welcome-panel" class="welcome-panel" style="background: #1b4d0d url(images/about-texture.png) center repeat ">
 	<div class="welcome-panel-content">
 	<div class="welcome-panel-header">
+        <img src="<?php echo plugin_dir_url( __FILE__ )?>images/VRodos_icon_512.png" alt="VRodos Icon" style="width:128px;height:128px;position: absolute;
+right: 0;
+margin-right: 20px;">
 		<h2>Welcome to VRodos!</h2>
 		<p>
 			<a href="https://vrodos.iti.gr">

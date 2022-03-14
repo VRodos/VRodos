@@ -1,11 +1,36 @@
+
+
+
+
+/*:root {*/
+/*    --adminbar-height: 0px !important;*/
+/*    --login-bar-height: 0;*/
+/*    --menu-bar-height: 0;*/
+/*    --wp-admin--admin-bar--height: 0px;*/
+/*}*/
+
+/*html {*/
+/*    --adminbar-height: 0px !important;*/
+/*    --login-bar-height: 0;*/
+/*    --menu-bar-height: 0;*/
+/*    --wp-admin--admin-bar--height: 0px;*/
+/*}*/
+
 .navigation-top {
     display:none;
 }
 
+.panel { display: none; }
+
+.panel.active { display: block; }
+
+
+
 /* Three js */
 #vr_editor_main_div {
     position:fixed;
-    top:30px;
+    /*top:30px;*/
+    top:0;
     left:0;
     right:0;
     bottom:0;
@@ -650,7 +675,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 #save-scene-elements{
     position: absolute;
     right: 20%;
-    width: 200px;
+    width: 300px;
     top:-3px;
 }
 
@@ -688,6 +713,26 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     -khtml-user-drag: element;
     -webkit-user-drag: element;
 }
+
+.lightbuttons {
+    position: absolute !important; /* Do not put relative because it breaks the raycaster of canvas */
+    top:30px;
+    left: 50%;
+    margin-left: -50px;
+    z-index:1004;
+    background-color:var(--mdc-theme-primary, #3f51b5);
+    display:inline-block;
+    padding:5px;
+    -webkit-border-bottom-left-radius: 10px;
+    -ms-border-bottom-left-radius: 10px;
+    -moz-border-bottom-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    -webkit-border-bottom-right-radius: 10px;
+    -ms-border-bottom-right-radius: 10px;
+    -moz-border-bottom-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
 .lightbutton {
     height: 42px;
     width: 40px;
@@ -746,27 +791,10 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     margin-bottom:2px;
 }
 
-.lightbuttons{
-    position: absolute; /* Do not put relative because it breaks the raycaster of canvas */
-    top:30px;
-    left: 50%;
-    margin-left: -50px;
-    z-index:1004;
-    background-color:var(--mdc-theme-primary, #3f51b5);
-    display:inline-block;
-    padding:5px;
-    -webkit-border-bottom-left-radius: 10px;
-    -ms-border-bottom-left-radius: 10px;
-    -moz-border-bottom-left-radius: 10px;
-    border-bottom-left-radius: 10px;
-    -webkit-border-bottom-right-radius: 10px;
-    -ms-border-bottom-right-radius: 10px;
-    -moz-border-bottom-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-}
 
-.panel { display: none; }
-.panel.active { display: block; }
+
+
+
 
 .mdc-tab { min-width: 0; }
 .custom-header { display:none; }
@@ -892,4 +920,8 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
+}
+
+#compileGameBtn{
+    display:none;
 }

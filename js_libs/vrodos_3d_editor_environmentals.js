@@ -39,7 +39,7 @@ class vrodos_3d_editor_environmentals {
         var rgbeloader = new THREE.RGBELoader();
 
 
-        rgbeloader.setPath( '/wordpress/wp-content/plugins/vrodos/images/hdr/' )
+        rgbeloader.setPath( siteurl + '/wp-content/plugins/VRodos/images/hdr/' )
             .load( 'quarry_01_1k.hdr', function ( texture ) {
 
                 texture.mapping = THREE.EquirectangularReflectionMapping;

@@ -3,6 +3,9 @@
     "formatVersion": 4.0,
     "type": "scene",
     "generatedBy": "SceneExporter.js",
+    "ClearColor" : "#eeeeee",
+    "toneMappingExposure" : "1",
+    "enableEnvironmentTexture" : "false",
     "objects": 9
   },
   "urlBaseType": "relativeToScene",

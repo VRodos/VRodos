@@ -2,14 +2,16 @@
 
 function vrodos_getDefaultJSONscene($mygameType){
 	
+	$p = plugin_dir_path( __DIR__ );
+	
 	if($mygameType == 'archaeology') {
-		$def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/assets/standard_scene.json");
+		$def_json = file_get_contents($p . "/assets/standard_scene.json");
 	}else if($mygameType == 'energy') {
-		$def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/assets/standard_scene_energy.json");
+		$def_json = file_get_contents($p . "/assets/standard_scene_energy.json");
 	}elseif($mygameType == 'chemistry'){
-		$def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/assets/standard_scene_chemistry.json");
+		$def_json = file_get_contents($p . "/assets/standard_scene_chemistry.json");
 	} else {
-		$def_json = file_get_contents(WP_PLUGIN_DIR . "/vrodos/assets/standard_scene.json");
+		$def_json = file_get_contents($p . "/assets/standard_scene.json");
 	}
 
 	return $def_json;

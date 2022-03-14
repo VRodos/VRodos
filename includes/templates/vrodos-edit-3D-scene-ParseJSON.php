@@ -55,6 +55,9 @@ class ParseJSON {
     
         $json_metadata = $content_JSON->metadata;
         
+        
+        
+        
         echo '<script>';
         echo 'resources3D["ClearColor"]= "'.$json_metadata->ClearColor.'";';
         echo 'resources3D["toneMappingExposure"]= "'.$json_metadata->toneMappingExposure.'";';

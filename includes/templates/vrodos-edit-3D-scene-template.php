@@ -1,8 +1,10 @@
 <?php
+
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
+
 
 // Load VR_Editor Scripts
 function vrodos_load_vreditor_scripts()
@@ -49,7 +51,6 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_style('vrodos_datgui');
     wp_enqueue_style('vrodos_3D_editor');
     wp_enqueue_style('vrodos_3D_editor_browser');
-	wp_enqueue_style('vrodos_sceneeditor_stylesheet');
 }
 
 add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
@@ -139,7 +140,7 @@ $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
-                        vrodos_getDefaultJSONscene(strtolower($project_type));
+                                                    vrodos_getDefaultJSONscene(strtolower($project_type));
 
 // Load resources 3D
 $SceneParserPHP = new ParseJSON($upload_url);
@@ -248,6 +249,7 @@ if(vrodos_getUnity_local_or_remote() != 'remote') {
 }
 
 
+
 $thepath = $pluginpath . '/js_libs/assemble_compile_commands/request_game_assepile.js';
 wp_enqueue_script( 'ajax-script_assepile', $thepath, array('jquery') );
 wp_localize_script( 'ajax-script_assepile', 'my_ajax_object_assepile',
@@ -296,9 +298,14 @@ wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
 );
 
 
-
 wp_enqueue_media($scene_post->ID);
 require_once(ABSPATH . "wp-admin" . '/includes/media.php');
+
+// Make the header of the page
+wp_head();
+//get_header();
+
+//==========================================
 
 if ($project_type === 'Archaeology') {
 	$single_lowercase = "tour";
@@ -320,6 +327,7 @@ if(isset($_POST['submitted2']) && isset($_POST['post_nonce_field2']) && wp_verif
 	wp_redirect( $loadMainSceneLink );
 	exit;
 }
+
 
 
 // ADD NEW SCENE
@@ -413,9 +421,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 }
 
 $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
-
-// Make the header of the page
-get_header(); ?>
+?>
 
 <?php if ( !is_user_logged_in() ) { ?>
 
@@ -617,7 +623,7 @@ get_header(); ?>
 
        <?php
          // Panels 2,3,4 are Analytics for Chemistry and WindEnergy projects
-         panelsAnalytics($project_type, $project_saved_keys);
+         //panelsAnalytics($project_type, $project_saved_keys);
        ?>
     </div>
     
@@ -634,24 +640,28 @@ get_header(); ?>
         var deleteDialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
         deleteDialog.focusTrap_.deactivate();
         
-        // Compile dialogue
-        var compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
-        compileDialog.focusTrap_.deactivate();
-    
-        // Project Analytics
-        loadAnalyticsTab(projectId, scene_id, project_keys, game_type, user_email, current_user_id, energy_stats);
+        // // Compile dialogue
+        // var compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
+        // compileDialog.focusTrap_.deactivate();
+        //
+        // // Project Analytics
+        // loadAnalyticsTab(projectId, scene_id, project_keys, game_type, user_email, current_user_id, energy_stats);
     
         // Less top margin if not Admin
-        if (!isUserAdmin)
-            document.getElementById("vr_editor_main_div").style.top = "28px";
+        // if (!isUserAdmin)
+        //     document.getElementById("vr_editor_main_div").style.top = "28px";
     
         // load asset browser with data
         jQuery(document).ready(function(){
             vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
-    
-            // make asset browser draggable
-            jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
+
+            //console.log( jQuery('#assetBrowserToolbar'));
+            
+            // make asset browser draggable: not working without get_footer
+            //jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
         });
+
+
         
     </script>
 
@@ -900,4 +910,9 @@ get_header(); ?>
     </script>
 <?php } ?>
 
-<?php get_footer(); ?>
+<?php  // get_footer(); ?>
+
+<style type="text/css" media="screen">
+    html { margin-top: 28px !important; }
+    * html body { margin-top: 28px !important; }
+</style>

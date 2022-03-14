@@ -39,7 +39,7 @@ echo '<div id="sceneInfoBreadcrump" '.
 
         // Project Scene path at breadcrump
         ' <div id="projectNameBreadcrump" >'.
-            '<a title="Back"'.
+            '<a title="Back" style="margin-right:10px"'.
                ' href="'.$goBackTo_AllProjects_link.'">'.
                 '<i class="material-icons mdc-theme--text-primary-on-dark sceneArrowBack">arrow_back</i>'.
             '</a>'.
@@ -47,7 +47,7 @@ echo '<div id="sceneInfoBreadcrump" '.
             '<i class="material-icons mdc-theme--text-icon-on-dark sceneProjectTypeLabel"'.
                ' title="'.$project_type.'">'.$project_type_icon.
             '</i>'.
-                $project_type.
+//                $project_type.
             '<i class="material-icons mdc-theme--text-icon-on-dark chevronRight">chevron_right</i>'.
                 $project_post->post_title.
             '<i class="material-icons mdc-theme--text-icon-on-dark chevronRight">chevron_right</i>'.
