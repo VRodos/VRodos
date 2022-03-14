@@ -2,7 +2,13 @@
 
 // Load Scripts
 function vrodos_widget_preamp_scripts() {
-    
+
+    // I do not want to load the scripts when I am on the edit 3d scene
+    global $template;
+	if (basename($template)==="vrodos-edit-3D-scene-template.php"){
+        return;
+    }
+
     // Stylesheet
     wp_enqueue_style('vrodos_widgets_stylesheet');
     
@@ -48,8 +54,12 @@ function vrodos_widget_preamp_scripts() {
     
     // Load single asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
+	
+    // Helping scripts
+	wp_enqueue_script('vrodos_scripts');
     
     $pluginpath = dirname (plugin_dir_url( __DIR__  ));
+    
     // Fetch Asset
     wp_enqueue_script( 'ajax-script_fetchasset_meta', $pluginpath.'/vrodos/js_libs/ajaxes/fetch_asset.js', array('jquery') );
     
@@ -60,22 +70,41 @@ function vrodos_widget_preamp_scripts() {
 
 
 
+
 // Creating the widget
 class vrodos_3d_widget extends WP_Widget {
+	
+	protected static $did_script = false;
     
     function __construct() {
+	
+	
+        
         parent::__construct(
-            // Base ID of your widget
-            'vrodos_3d_widget',
+                        // Base ID of your widget
+                        'vrodos_3d_widget',
 
-            // Widget name will appear in UI
-            __('VRodos 3D Model Widget', 'vrodos_3d_widget_domain'),
-
-            // Widget description
-            array( 'description' => __( 'A widget to place 3D models', 'vrodos_widget_domain' ), )
+                        // Widget name will appear in UI
+                        __('VRodos 3D Model Widget', 'vrodos_3d_widget_domain'),
+        
+                        // Widget description
+                        array( 'description' => __( 'A widget to place 3D models', 'vrodos_widget_domain' ), )
         );
+	
+	    //add_action('wp_enqueue_scripts', array($this, 'vrodos_widget_scripts_switch'));
+	
+	    // Back-end
+	    add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts', 10);
+	
+	   
+
+        
+        // Enque only if widget is active (dragged in the sidebar in back-end)
+	    if ( is_active_widget( false, false, $this->id_base, true ) ) {
+		    add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts', 10);
+	    }
     }
-    
+
     
     // Widget Backend
     public function form( $instance ) {
@@ -366,7 +395,8 @@ class vrodos_3d_widget extends WP_Widget {
     
     // Creating widget front-end
     public function widget( $args, $instance ) {
-        
+     
+
         
         $title = $instance['title']; //apply_filters( 'widget_title', $instance['title'] );
         $titleshow = $instance['titleshow'] ; //apply_filters( 'widget_titleshow', $instance['titleshow'] );
@@ -540,7 +570,6 @@ class vrodos_3d_widget extends WP_Widget {
     // Updating widget replacing old instances with new
     public function update( $new_instance, $old_instance ) {
     
-        
         
         $instance = array();
         

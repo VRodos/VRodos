@@ -701,18 +701,14 @@ add_action( 'init', 'vrodos_3d_register_block' );
 
 //----------------------- WIDGETS ---------------------------------------------
 
-//require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
-//
-//// 47
-//add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Front-end
-//
-//add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts'); // Back-end
-//
-//// Register and load the widget
-//function vrodos_load_widget() {
-//	register_widget( 'vrodos_3d_widget' );
-//}
-//add_action( 'widgets_init', 'vrodos_load_widget');
+require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
+
+// 47
+// Register and load the widget
+function vrodos_load_widget() {
+	register_widget( 'vrodos_3d_widget' );
+}
+add_action( 'widgets_init', 'vrodos_load_widget');
 
 
 //----------------------- WIDGET SCENE ---------------------------------------------
@@ -916,8 +912,6 @@ add_action( 'wp_ajax_vrodos_fetch_video_action', 'vrodos_fetch_video_action_call
 
 // AJAX for delete asset
 add_action('wp_ajax_vrodos_delete_asset_action', 'vrodos_delete_asset3d_frontend_callback');
-
-
 
 // AJAX for fetching assets
 
