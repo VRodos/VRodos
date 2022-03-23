@@ -214,6 +214,31 @@ add_action( 'init', 'vrodos_add_customroles');
 // Order: 6
 add_action( 'init', 'vrodos_add_capabilities_to_admin');
 
+//------------------ Menu functions ------------------------------------
+require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-menu-functions.php');
+
+// Front-end
+// Display login/logout at main menu
+//add_filter( 'wp_nav_menu_items','vrodos_loginout_menu_link', 5, 2 );
+
+// Add scene id as option to menu item
+add_action( 'wp_nav_menu_item_custom_fields', 'vrodos_add_scene_id_to_scene_as_menu_item', 100, 2 );
+
+add_action( 'wp_update_nav_menu_item', 'save_menu_item_desc', 10, 2 );
+
+add_filter( 'wp_get_nav_menu_items','nav_items', 11, 3 );
+
+// Back-end Menu
+// Main VRodos menu
+add_action('admin_menu', 'vrodos_plugin_menu');
+
+add_action('parent_file', 'keep_taxonomy_menu_open');
+
+function wpb_custom_new_menu() {
+	register_nav_menu('3d-menu',__( '3D Menu' ));
+}
+add_action( 'init', 'wpb_custom_new_menu' );
+
 //---------------------- Game Projects -------------------------------------------------
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-games.php');
 
@@ -372,7 +397,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php'
 
 // Set to the lowest priority in order to have game taxes available when joker games are created
 add_action( 'init', 'vrodos_createJoker_activation', 100, 2 );
-add_filter( 'wp_nav_menu_items','vrodos_loginout_menu_link', 5, 2 );
+
 // Remove Admin bar for non admins
 add_action('after_setup_theme', 'vrodos_remove_admin_bar');
 
@@ -1035,180 +1060,7 @@ function vrodos_remove_db_residues(){
 
 
 
-//---------------- Back end Menu -------------------
-add_action('admin_menu', 'vrodos_plugin_menu');
 
-function vrodos_plugin_menu(){
-	add_menu_page( 'VRodos Plugin Page',
-				   'VRodos',
-					'manage_options',
-		            'vrodos-plugin',
-		            'vrodos_plugin_main_page',
-					plugin_dir_url( __FILE__ ) . '/images/vrodos_icon_20_w.png',
-					25);
-	
-	
-	add_submenu_page('vrodos-plugin',
-					 'Projects',
-				     'Projects',
-			         'manage_options',
-		             'edit.php?post_type=vrodos_game'
-                     );
-	
-	add_submenu_page('vrodos-plugin',
-					'Scenes',
-					'Scenes',
-					'manage_options',
-					'edit.php?post_type=vrodos_scene'
-					);
-	
-	
-	add_submenu_page('vrodos-plugin',
-		'Assets',
-		'Assets',
-		'manage_options',
-		'edit.php?post_type=vrodos_asset3d');
-	
-	
-	add_submenu_page('vrodos-plugin',
-		'Scene Types',
-		'Scene Types',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_yaml');
-	
-	
-	add_submenu_page('vrodos-plugin',
-		'Scenes Parent Projects',
-		'Scenes Parent Projects',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_pgame');
-	
-	
-	add_submenu_page('vrodos-plugin',
-		'Project Types',
-		'Project Types',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_game&taxonomy=vrodos_game_type');
-	
-	add_submenu_page('vrodos-plugin',
-		'Asset Types',
-		'Asset Types',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_cat');
-
-	add_submenu_page('vrodos-plugin',
-		'Asset Projects',
-		'Asset Projects',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_pgame');
-	
-	add_submenu_page('vrodos-plugin',
-		'Asset IPR',
-		'Asset IPR',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_ipr_cat');
-	
-}
-
-
-
-add_action('parent_file', 'keep_taxonomy_menu_open');
-function keep_taxonomy_menu_open($parent_file) {
-	global $current_screen;
-	$taxonomy = $current_screen->taxonomy;
-	if ($taxonomy == 'vrodos_scene_yaml' || $taxonomy == 'vrodos_scene_pgame' || $taxonomy == 'vrodos_game_type' ||
-	    $taxonomy == 'vrodos_asset3d_cat' || $taxonomy == 'vrodos_asset3d_cat' ||  $taxonomy == 'vrodos_asset3d_pgame' ||
-	    $taxonomy == 'vrodos_asset3d_ipr_cat'
-				)
-		$parent_file = 'vrodos-plugin';
-	return $parent_file;
-}
-
-
-// ----------- Nav menu : Add Scene-3d-view with parameters ------------
-add_action( 'wp_nav_menu_item_custom_fields', 'vrodos_add_scene_id_to_scene_as_menu_item' );
-function vrodos_add_scene_id_to_scene_as_menu_item($item_id ) {
-	
-	$scene_id = get_post_meta( $item_id, '_scene_id', true );
- 
-	?>
-    <div style="clear: both;">
-        
-        <span class="description">Scene</span><br />
-        
-        <input type="hidden"
-               class="nav-menu-id"
-               value="<?php echo $item_id ;?>"
-        />
-        
-        <div class="logged-input-holder">
-
-            <select
-                    name = "scene_id[<?php echo $item_id ;?>]"
-                    id   = "scene-id-<?php echo $item_id ;?>"
-                    class="widefat"
-            >
-                <option value=""></option>
-            
-
-                <?php $scenes = get_scenes_wonder_around();
-    
-                    // Iterate for the drop down
-                    for ($i=0;$i<count($scenes);$i++){
-                        
-                        echo '<option value="'.$scenes[$i]['sceneid'].'" '.
-                                        (esc_attr( $scene_id ) == $scenes[$i]['sceneid']?'selected':'').'>'.
-                                        $scenes[$i]['sceneName'].
-                                        ' of '.$scenes[$i]['scene_parent_project'][0]->name.'</option>';
-                    }
-                ?>
-            </select>
-            
-            
-            
-            
-            
-        </div>
-    </div>
-	<?php
-}
-
-add_action( 'wp_update_nav_menu_item', 'save_menu_item_desc', 10, 2 );
-function save_menu_item_desc( $menu_id, $menu_item_db_id ) {
-
-	if ( isset( $_POST['scene_id'][$menu_item_db_id]  ) ) {
-
-		$sanitized_data = sanitize_text_field( $_POST['scene_id'][$menu_item_db_id] );
-
-		update_post_meta( $menu_item_db_id, '_scene_id', $sanitized_data );
-
-	} else {
-
-		delete_post_meta( $menu_item_db_id, '_scene_id' );
-
-	}
-}
-
-
-add_filter( 'wp_get_nav_menu_items','nav_items', 11, 3 );
-function nav_items( $items, $menu, $args )
-{
-	if( is_admin() )
-		return $items;
-	
-	foreach( $items as $item )
-	{
-		$scene_id = get_post_meta( $item->ID, '_scene_id', true );
-  
-		if ( ! empty( $scene_id ) ) {
-			$item->url .= '?vrodos_scene=' . $scene_id;
-		}
-	}
-	return $items;
-}
-
-
-//---------
 
 
 // Main backend info page

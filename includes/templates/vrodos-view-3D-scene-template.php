@@ -157,6 +157,12 @@ wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
 wp_enqueue_media($scene_post->ID);
 require_once(ABSPATH . "wp-admin" . '/includes/media.php');
 
+wp_nav_menu( array(
+	'theme_location' => '3d-menu',
+	'container_class' => 'menu-3d-class' )
+);
+
+
 // Make the header of the page
 get_header(); ?>
 

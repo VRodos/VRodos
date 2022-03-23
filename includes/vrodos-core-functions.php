@@ -603,13 +603,7 @@ function vrodos_extrapass_profile_fields( $user ) {
 
 
 
-// Display Login/Logout in menu
-function vrodos_loginout_menu_link( $menu, $args ) {
-    //$loginout = wp_loginout($_SERVER['REQUEST_URI'], false );
-    $loginout = '<li class="nav-menu" class="menu-item">' . wp_loginout($_SERVER['REQUEST_URI'], false ) . '</li>';
-    $menu .= $loginout;
-    return $menu;
-}
+
 
 
 
