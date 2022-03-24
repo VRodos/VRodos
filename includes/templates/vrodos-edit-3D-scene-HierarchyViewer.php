@@ -59,7 +59,7 @@
 	<!--  Object Controls T,R,S -->
 	<div id="row3" class="row-right-panel" style="display:block">
 		
-		<div style="padding-left:5px; padding-top:10px; background: whitesmoke"> Object controls</div>
+		<div class="mdc-typography--subheading2 mdc-theme--text-secondary-on-light" style="padding-left:10px; background: whitesmoke"> Object controls</div>
 		
 		<!-- Translate, Rotate, Scale Buttons -->
 		<div id="object-manipulation-toggle"
@@ -83,7 +83,7 @@
 	
 	<!--  Axes resize -->
 	<div id="row5" class="row-right-panel" style="padding-top:6px; padding-left:5px; padding-bottom:6px; background:whitesmoke">
-		<span class="mdc-typography--subheading1" style="font-size:12px">Axes controls size:</span>
+		<span class="mdc-typography--subheading1 mdc-theme--text-secondary-on-light">Axes controls size:</span>
 		<div id="axis-manipulation-buttons" class="AxisManipulationBtns mdc-typography" style="display: none;">
 			<a id="axis-size-decrease-btn" data-mdc-auto-init="MDCRipple" title="Decrease axes size" class="mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">-</a>
 			<a id="axis-size-increase-btn" data-mdc-auto-init="MDCRipple" title="Increase axes size" class="mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">+</a>
@@ -117,8 +117,8 @@
 		
 		
 		<label for="rendererToneMapping"
-		       class=""
-		       style="width:110px;font-size: 9px;padding-left: 5px;">Renderer Tone Mapping</label>
+		       class="mdc-theme--text-secondary-on-light"
+		       style="width:110px;font-size: 9px;padding-left: 5px;height:100%;padding-top:5px;line-height: 10px">Renderer Tone Mapping</label>
 		
 		<input type="range" min="0" max="2" value="1" step="0.01"
 		       id="rendererToneMappingSlider" class="mdc-slider__input"

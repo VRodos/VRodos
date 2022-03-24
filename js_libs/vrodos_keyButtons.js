@@ -50,6 +50,8 @@ document.addEventListener( 'wheel', function ( event ) {
 document.addEventListener( 'keydown',
     function ( event ) {
 
+        console.log(event);
+
         var objManipulationSwitch = jQuery('input:radio[name=object-manipulation-switch]');
 
         switch ( event.keyCode ) {
@@ -74,6 +76,12 @@ document.addEventListener( 'keydown',
             case 69: moveDown = true; break; // E
             case 32: break; // space
             case 96: break;// 0
+            case 46:
+                // If focus is on main screen but not at inputs
+                if(event.composedPath()[0].tagName === "BODY") {
+                    deleterFomScene(transform_controls.object.name);
+                }
+                break;//  delete
         }
     });
 

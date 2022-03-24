@@ -10,7 +10,7 @@
 /* Three js */
 #vr_editor_main_div {
     position:fixed;
-    top:30px; /* Important */
+    top:0px; /* Important */
     left:0;
     right:0;
     bottom:0;
@@ -810,3 +810,20 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     -webkit-user-select: none;
     -ms-user-select: none;
 }
+
+.menu-3d-class{
+    z-index: 10000;
+    position:absolute;
+    margin-left:45px;
+    margin-top:0px;
+    list-style: none;
+    font-weight: bold;
+}
+
+.menu-3d-class ul{
+   list-style: none;
+    margin-left:15px;
+    margin-top:0px;
+}
+
+

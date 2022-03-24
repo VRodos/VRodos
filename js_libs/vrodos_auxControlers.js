@@ -230,7 +230,6 @@ function setEventListenerKeyPressControllerConstrained(element) {
                 gui_controls_funs.dg_rz = element.value;
                 transform_controls.object.rotation.z = element.value;
                 break;
-
         }
 
         // 13 is enter

@@ -54,8 +54,8 @@ class ParseJSON {
     
     
         $json_metadata = $content_JSON->metadata;
-        
-        
+    
+    
         
         
         echo '<script>';

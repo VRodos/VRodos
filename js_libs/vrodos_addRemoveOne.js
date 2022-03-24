@@ -147,15 +147,17 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         // Auto-save
         triggerAutoSave();
 
-    } else if (categoryName==='lightLamp') {
+    }
+    else if (categoryName==='lightLamp') {
 
         var lightLamp = new THREE.PointLight( 0xffffff, 1, 100, 2 );
-        lightLamp.power = 1;
+
 
         lightLamp.name = nameModel;
         lightLamp.isDigiArt3DModel = true;
         lightLamp.categoryName = "lightLamp";
         lightLamp.isLight = true;
+        lightLamp.castShadow = true;
 
         //// Add Lamp Helper
         var lampSphere = new THREE.Mesh(
@@ -220,10 +222,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         triggerAutoSave();
 
-    } else if (categoryName==='lightSpot') {
+    }
+    else if (categoryName==='lightSpot') {
 
         var lightSpot = new THREE.SpotLight( 0xffffff, 1, 5, 0.39, 0, 2 );
-        lightSpot.power = 1;
 
         lightSpot.name = nameModel;
         lightSpot.isDigiArt3DModel = true;
@@ -302,7 +304,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         triggerAutoSave();
 
 
-    } else {
+    }
+    else {
+
+        // Add an object
 
         // Make progress bar visible
         jQuery("#progress").get(0).style.display = "block";
@@ -336,17 +341,27 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
             insertedObject.parent = envir.scene;
 
+
+
+            if(isNaN(insertedObject.children[0].material.metalness)){
+                let mat = insertedObject.children[0].material;
+                mat.metalness = 0;
+                mat.roughness = 0.5;
+                mat.emissiveIntensity = 0;
+                if(mat.color.r +
+                mat.color.g + mat.color.b === 0){
+                    mat.color = new THREE.Color("rgb(50%, 50%, 50%)");
+                }
+
+            }
+
             // place controls to last inserted obj
             transform_controls.attach(insertedObject);
 
             // highlight
             envir.composer = [];
             envir.setComposerAndPasses();
-
             envir.outlinePass.selectedObjects = [insertedObject];
-            //envir.renderer.setClearColor(0xeeeeee, 1);
-
-            //envir.scene.add(transform_controls);
 
             // Position
             transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
@@ -361,7 +376,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             var sizeT = Math.max(...dims);
             transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-
+            // Make the default gizmo visible
             transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
 
             if (categoryName === "Producer") {

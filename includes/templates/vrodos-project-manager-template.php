@@ -71,8 +71,6 @@ $multiple = "projects";
 //}
 
 
-//wp_enqueue_style('vrodos_materialize_stylesheet', $pluginpath . '/css/materialize.css');
-
 
 get_header();
 ?>
@@ -85,7 +83,9 @@ get_header();
 <!--</p>-->
 
 <!-- if user not logged in then show a hint to login -->
-<?php if ( !is_user_logged_in() ) { ?>
+<?php if ( !is_user_logged_in() ) {
+    
+    ?>
 
     <div class="DisplayBlock CenterContents">
 
@@ -109,9 +109,9 @@ get_header();
     <a href="#" class="helpButton" onclick="alert('Create a new <?php echo $full_title_lowercase; ?> or edit an existing one')">
         ?
     </a>
-
+    <p >
     
-    <span style="float:right; right:0px; font-family: 'Comic Sans MS'; display:inline-table;margin-top:10px; margin-right:10px;">Welcome,
+    <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="float:right; right:0px; display:inline-table;margin-top:10px; margin-right:10px;">Welcome,
         <a href="<?php echo get_site_url() ?>/account/" style="color:dodgerblue">
               <?php echo $login_username;?>
         </a>
@@ -172,7 +172,7 @@ get_header();
                             Must be at least 3 characters long
                         </p>
 
-                        <label class="mdc-typography--title NewGameLabel">Choose <?php echo $single; ?> type</label>
+                        <label class="mdc-typography--title mdc-theme--text-primary-on-light NewGameLabel">Choose <?php echo $single; ?> type</label>
                         <ul class="RadioButtonList" onclick="loadGameDescription();">
 
                             <?php if ($project_scope===1){?>
@@ -210,7 +210,7 @@ get_header();
                                     </div>
                                 </div>
                                 <label id="gameTypeArchRadio-label" for="gameTypeArchRadio">
-                                    <i class="material-icons"></i>Culture</label>
+                                    <i class="material-icons"></i>Meetings</label>
                             </li>
                             <?php }?>
 

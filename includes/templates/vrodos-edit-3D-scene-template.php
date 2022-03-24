@@ -201,6 +201,7 @@ if ($project_type === 'Chemistry') {
 echo '</script>';
 
 
+
 // For analytics
 $project_saved_keys = vrodos_getProjectKeys($project_id, $project_type);
 
@@ -423,7 +424,8 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 ?>
 
-<?php if ( !is_user_logged_in() ) { ?>
+<?php if ( !is_user_logged_in() ) {
+    ?>
 
     <!-- if user not logged in, then prompt to log in -->
     <div class="DisplayBlock CenterContents">
@@ -437,6 +439,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
     <hr class="WhiteSpaceSeparator">
 
+    
+    
 <?php } else { ?>
 
     <!-- PANELS -->

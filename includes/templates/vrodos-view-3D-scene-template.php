@@ -91,6 +91,8 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 // resources3D class
 require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
 
+
+
 // Define current path of plugin
 $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 
@@ -112,14 +114,18 @@ $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
 	vrodos_getDefaultJSONscene(strtolower('archaeology'));
 
 // Load resources 3D
+
+
 $SceneParserPHP = new ParseJSON($upload_url);
+
 $SceneParserPHP->init($sceneJSON);
+
+
 
 $sceneTitle = $scene_post->post_name;
 
 // Front End or Back end
 $isAdmin = is_admin() ? 'back' : 'front';
-
 
 $allProjectsPage = vrodos_getEditpage('allgames');
 $newAssetPage = vrodos_getEditpage('asset');
@@ -157,30 +163,73 @@ wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
 wp_enqueue_media($scene_post->ID);
 require_once(ABSPATH . "wp-admin" . '/includes/media.php');
 
-wp_nav_menu( array(
-	'theme_location' => '3d-menu',
-	'container_class' => 'menu-3d-class' )
-);
+if(is_user_logged_in() ) {
+	wp_nav_menu( array(
+			'theme_location'  => '3d-menu',
+			'container_class' => 'menu-3d-class'
+		)
+	);
+	
+	wp_head();
+	
+} else {
 
+//	wp_nav_menu( array(
+//			'theme_location'  => 'top-menu',
+//            'menu' => 'menu-adventure-flyout-menu'
+//    ));
 
-// Make the header of the page
-get_header(); ?>
+//			'container_class' => 'menu-3d-class'
+// 'menu'            => '',
+// 'container'       => 'div',
+// 'container_class' => '',
+// 'container_id'    => '',
+// 'menu_class'      => 'menu',
+// 'menu_id'         => '',
+// 'echo'            => true,
+// 'fallback_cb'     => 'wp_page_menu',
+// 'before'          => '',
+// 'after'           => '',
+// 'link_before'     => '',
+// 'link_after'      => '',
+// 'items_wrap'      => '<ul id="%1$s" class="%2$s">%3$s</ul>',
+// 'depth'           => 0,
+// 'walker'          => ''
+//		)
+//	);
+	
+ 
+	
+	get_header();
+}
+?>
 
-<?php if ( !is_user_logged_in() ) { ?>
+<?php if ( !is_user_logged_in() ) {
+	
+	?>
 
     <!-- if user not logged in, then prompt to log in -->
     <div class="DisplayBlock CenterContents">
-        <i style="font-size: 64px; padding-top: 80px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
-        <p class="mdc-typography--title"> Please <a class="mdc-theme--secondary"
+        <i style="font-size: 64px; padding-top: 0px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
+        <p class="mdc-typography--title mdc-theme--text-primary-on-light"> Please <a class="mdc-theme--secondary"
                                                     href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform</p>
-        <p class="mdc-typography--title"> Or
+        <p class="mdc-typography--title mdc-theme--text-primary-on-light"> Or
             <a class="mdc-theme--secondary" href="<?php echo wp_registration_url(); ?>">register</a>
             if you don't have an account</p>
+
+
+        <p class="mdc-typography--title mdc-theme--text-primary-on-light"> Or
+            <a class="mdc-theme--secondary" href="<?php echo site_url(); ?>">return to home page</a>
+            </p>
+        
     </div>
 
     <hr class="WhiteSpaceSeparator">
 
-<?php } else { ?>
+<?php } else {
+    
+    
+    ?>
 
     <!-- PANELS -->
     <div class="panels">
@@ -217,6 +266,7 @@ get_header(); ?>
 		
     </div>
 
+    
 
     <!-- Scripts part 1: The GUIs -->
     <script type="text/javascript">

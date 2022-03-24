@@ -115,10 +115,11 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
 
 
-            dragImg.src = screenshotImage ? screenshotImage.value : "/wp-content/plugins/vrodos/images/ic_asset.png";
+            dragImg.src = screenshotImage ? screenshotImage.value : "/wp-content/plugins/VRodos/images/ic_asset.png";
 
             e.originalEvent.dataTransfer.setDragImage(dragImg, 32, 32);
 
+            console.log(e.target);
 
             var dragData = {
                 "title": e.target.attributes.getNamedItem("data-assetslug").value + "_" + Math.floor(Date.now() / 1000),
@@ -202,7 +203,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 f.screenImagePath = f.screenImagePath ? f.screenImagePath : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
 
                 let img = '<span class="mdc-list-item__start-detail CenterContents">'+
-                            '<img class="assetImg" draggable="false" src=' + encodeURI(f.screenImagePath) + '>'+
+                            '<img class="assetImg" draggable="false" style="-webkit-user-drag: none" src=' + encodeURI(f.screenImagePath) + '>'+
                             // '<span class="megabytesAsset mdc-typography--caption mdc-theme--text-secondary-on-light">'+ fileSize + '</span>'+
                       '</span>';
 

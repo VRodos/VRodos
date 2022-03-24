@@ -239,6 +239,18 @@ function wpb_custom_new_menu() {
 }
 add_action( 'init', 'wpb_custom_new_menu' );
 
+
+//add_filter( 'wp_nav_menu_items', 'add_loginout_link', 10, 2 );
+//function add_loginout_link( $items, $args ) {
+//	if (is_user_logged_in() && $args->theme_location == 'top_navigation') {
+//		$items .= wp_nav_menu( array('menu' => 'menu-logged-in', 'container' => '', 'echo' => false, 'items_wrap' => '%3$s') );
+//	}
+//    elseif (!is_user_logged_in() && $args->theme_location == 'top_navigation') {
+//		$items .= wp_nav_menu( array('menu' => 'menu-logged-out', 'container' => '', 'echo' => false, 'items_wrap' => '%3$s') );
+//	}
+//	return $items;
+//}
+
 //---------------------- Game Projects -------------------------------------------------
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-games.php');
 
