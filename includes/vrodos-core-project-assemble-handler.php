@@ -22,66 +22,64 @@ function vrodos_convert_pdbYAML(){
     
     // 2a. Atoms xyz translation of atoms e.g. {"H": [10,20,30], O:[], H:[]}
     // 2b. Bonds to conect atoms e.g. {[1,2],[2,3]}
-
-
     // 3. Get Molecule YAMLS
     // 3a. Find id of tax of Molecule
     //$molecule_term_meta = get_term_meta(wp_get_post_terms( 4773,  'vrodos_asset3d_cat' )[0]->term_taxonomy_id);
-    
     // 3b. Get YAMLS of $id_tax_term_mol
     //print_r($product_terms);
 }
 
 
-//CREATE GAME PROJECT
-function vrodos_create_gameproject_frontend_callback(){
+// CREATE PROJECT
+function vrodos_create_project_frontend_callback(){
     
-    // Game project title
-    $game_project_title =  strip_tags($_POST['game_project_title']);
-    $game_project_type_radiobutton = $_POST['game_project_type_radio'];//1 = Archaeology , 2 = Energy , 3 = Chemistry
+    // Project title
+    $project_title =  strip_tags($_POST['project_title']);
+    $project_type_radio = $_POST['project_type_radio'];//1 = Archaeology , 2 = Energy , 3 = Chemistry, 4 = VRExpo, 5= VirtualProduction
     
     $archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
     $energy_tax = get_term_by('slug', 'energy_games', 'vrodos_game_type');
     $chemistry_tax = get_term_by('slug', 'chemistry_games', 'vrodos_game_type');
+    $vrexpo_tax = get_term_by('slug', 'vrexpo_games', 'vrodos_game_type');
+    $virtualproduction_tax = get_term_by('slug', 'virtualproduction_games', 'vrodos_game_type');
 
 //        $ff = fopen("output_create_ajax.txt","w");
-//        fwrite($ff, $game_project_title);
-//        fwrite($ff, $game_project_type_radiobutton);
+//        fwrite($ff, $project_title);
+//        fwrite($ff, $project_type_radio);
 //        fwrite($ff, $archaeology_tax);
 //        fclose($ff);
     
-    $game_type_chosen_id = '';
-    //$game_type_chosen_slug = '';
+    $project_type_chosen_id = '';
     
-    if($game_project_type_radiobutton == 1){
-        $game_type_chosen_id = $archaeology_tax->term_id;
-        //$game_type_chosen_slug = 'archaeology_games';
-    }else if($game_project_type_radiobutton == 2){
-        $game_type_chosen_id = $energy_tax->term_id;
-        //$game_type_chosen_slug = 'energy_games';
-    }else if($game_project_type_radiobutton == 3){
-        $game_type_chosen_id = $chemistry_tax->term_id;
-        //$game_type_chosen_slug = 'chemistry_games';
+    if($project_type_radio == 1){
+        $project_type_chosen_id = $archaeology_tax->term_id;
+    }else if($project_type_radio == 2){
+        $project_type_chosen_id = $energy_tax->term_id;
+    }else if($project_type_radio == 3) {
+        $project_type_chosen_id = $chemistry_tax->term_id;
+    }else if($project_type_radio == 4) {
+        $project_type_chosen_id = $vrexpo_tax->term_id;
+    }else if($project_type_radio == 5) {
+        $project_type_chosen_id = $virtualproduction_tax->term_id;
     }
-    
-  
-    $game_taxonomies = array(
+
+    $project_taxonomies = array(
         'vrodos_game_type' => array(
-            $game_type_chosen_id,
+            $project_type_chosen_id,
         )
     );
     
-    $game_project_information = array(
-        'post_title' => esc_attr($game_project_title),
+    $project_information = array(
+        'post_title' => esc_attr($project_title),
         'post_content' => '',
         'post_type' => 'vrodos_game',
         'post_status' => 'publish',
-        'tax_input' => $game_taxonomies,
+        'tax_input' => $project_taxonomies,
     );
     
-    $game_id = wp_insert_post($game_project_information);
+    $project_id = wp_insert_post($project_information);
    
-    echo $game_id;
+    echo $project_id;
     wp_die();
 }
 

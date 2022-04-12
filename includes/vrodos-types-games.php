@@ -93,8 +93,7 @@ function vrodos_project_cpt_construct(){
 
 //Create Game Type as custom taxonomy 'vrodos_game_type'
 function vrodos_project_taxtype_create(){
- 
- 
+
 	$labels = array(
 		'name'              => _x( 'Project Type', 'taxonomy general name'),
 		'singular_name'     => _x( 'Project Type', 'taxonomy singular name'),
@@ -130,7 +129,7 @@ function vrodos_project_taxtype_create(){
 
 // Generate Taxonomy (for scenes & assets) with Game's slug/name
 // Create Default Scenes for this "Game"
-function vrodos_create_folder_game( $new_status, $old_status, $post){
+function vrodos_create_folder_project( $new_status, $old_status, $post){
 
 	$post_type = get_post_type($post);
 	$projectSlug = $post->post_name;
@@ -148,19 +147,19 @@ function vrodos_create_folder_game( $new_status, $old_status, $post){
 			$gameTitle = $post->post_title;
 			$gameID = $post->ID;
 
-			//TEMPORARY
+			// TEMPORARY : Virtual Labs
 			if ($project_scope === 1) {
 				update_post_meta( $gameID, 'vrodos_project_expID', '82a5dc78-dd27-43db-be12-f5440bbc9dd5');
 			}
 
-			wp_insert_term(
-				'Apple', // the term
-				'product', // the taxonomy
-				array(
-					'description'=> 'A yummy apple.',
-					'slug' => 'apple',
-				)
-			);
+//			wp_insert_term(
+//				'Apple', // the term
+//				'product', // the taxonomy
+//				array(
+//					'description'=> 'A yummy apple.',
+//					'slug' => 'apple',
+//				)
+//			);
 
 			//Create a parent game tax category for the scenes
 			wp_insert_term($gameTitle,'vrodos_scene_pgame', array(
@@ -483,7 +482,7 @@ function vrodos_projects_taxtypes_define(){
 	
 	wp_insert_term('VR Exhibition','vrodos_game_type', array('description'=> 'Exhibitions in 3D','slug'=>'vrexpo_games'));
 	
-	wp_insert_term('Theatre','vrodos_game_type', array('description'=> 'Archaeology Games','slug'=>'theatre_games'));
+	wp_insert_term('Virtual Production','vrodos_game_type', array('description'=> 'Archaeology Games','slug'=>'virtualproduction_games'));
 
 }
 

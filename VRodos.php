@@ -269,7 +269,7 @@ add_action( 'init', 'vrodos_projects_taxtypes_define', 3 );
 
 
 // 28
-add_action('transition_post_status','vrodos_create_folder_game', 9 , 3);
+add_action('transition_post_status','vrodos_create_folder_project', 9 , 3);
 
 
 // 50
@@ -908,7 +908,7 @@ add_action('wp_ajax_vrodos_collaborate_project_action','vrodos_collaborate_proje
 // Callback for fetching collaborators from db
 add_action('wp_ajax_vrodos_fetch_collaborators_action','vrodos_fetch_collaborators_frontend_callback');
 
-add_action('wp_ajax_vrodos_create_game_action','vrodos_create_gameproject_frontend_callback');
+add_action('wp_ajax_vrodos_create_project_action','vrodos_create_project_frontend_callback');
 
 add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projects_callback');
 

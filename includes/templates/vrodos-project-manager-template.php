@@ -27,7 +27,7 @@ wp_localize_script( 'ajax-script_collaborate_project', 'my_ajax_object_collabora
 );
 
 // Define Ajax for the create Game functionality
-$thepath2 = $pluginpath . '/js_libs/ajaxes/create_game_scene_asset.js';
+$thepath2 = $pluginpath . '/js_libs/ajaxes/create_project.js';
 wp_enqueue_script( 'ajax-script_create_game', $thepath2, array('jquery') );
 wp_localize_script( 'ajax-script_create_game', 'my_ajax_object_creategame',
     array( 'ajax_url' => admin_url( 'admin-ajax.php'))
@@ -154,7 +154,7 @@ get_header();
                             <li class="mdc-form-field">
                                 <div class="mdc-radio">
                                     <input class="mdc-radio__native-control" type="radio" id="gameTypeArchRadio"
-                                           checked="" name="gameTypeRadio" value="1">
+                                           checked="" name="projectTypeRadio" value="1">
                                     <div class="mdc-radio__background">
                                         <div class="mdc-radio__outer-circle"></div>
                                         <div class="mdc-radio__inner-circle"></div>
@@ -170,7 +170,7 @@ get_header();
                                 <li class="mdc-form-field">
                                     <div class="mdc-radio">
                                         <input class="mdc-radio__native-control" type="radio" id="gameTypeChemistryRadio"
-                                               name="gameTypeRadio" value="3">
+                                               name="projectTypeRadio" value="3">
                                         <div class="mdc-radio__background">
                                             <div class="mdc-radio__outer-circle"></div>
                                             <div class="mdc-radio__inner-circle"></div>
@@ -182,7 +182,7 @@ get_header();
                                 <li class="mdc-form-field">
                                     <div class="mdc-radio">
                                         <input class="mdc-radio__native-control" type="radio" id="gameTypeEnergyRadio"
-                                               checked="" name="gameTypeRadio" value="2">
+                                               checked="" name="projectTypeRadio" value="2">
                                         <div class="mdc-radio__background">
                                             <div class="mdc-radio__outer-circle"></div>
                                             <div class="mdc-radio__inner-circle"></div>
@@ -197,7 +197,7 @@ get_header();
                                 <li class="mdc-form-field">
                                     <div class="mdc-radio">
                                         <input class="mdc-radio__native-control" type="radio" id="gameTypeVRExpoRadio"
-                                               checked="" name="gameTypeRadio" value="4">
+                                               checked="" name="projectTypeRadio" value="4">
                                         <div class="mdc-radio__background">
                                             <div class="mdc-radio__outer-circle"></div>
                                             <div class="mdc-radio__inner-circle"></div>
@@ -213,7 +213,7 @@ get_header();
                                 <li class="mdc-form-field">
                                     <div class="mdc-radio">
                                         <input class="mdc-radio__native-control" type="radio" id="gameTypeVirtualProductionRadio"
-                                               checked="" name="gameTypeRadio" value="5">
+                                               checked="" name="projectTypeRadio" value="5">
                                         <div class="mdc-radio__background">
                                             <div class="mdc-radio__outer-circle"></div>
                                             <div class="mdc-radio__inner-circle"></div>
@@ -331,7 +331,7 @@ get_header();
 <!--                        <div class="progressSliderSubLine progressDecrease"></div>-->
 <!--                    </div>-->
 <!--                </section>-->
-<!---->
+
                 <footer class="mdc-dialog__footer">
                     <a class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" id="cancelCollabsBtn">Cancel</a>
                     <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" id="updateCollabsBtn">Update</a>
@@ -346,6 +346,8 @@ get_header();
 <script type="text/javascript">
     window.mdc.autoInit();
 
+    fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass);
+    
     // Delete Dialogue
     var dialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
     dialog.focusTrap_.deactivate();
@@ -368,12 +370,56 @@ get_header();
         } else if (checked === 4){
             jQuery("#project-description-label").html("Create a VR expo space");
         } else if (checked === 5){
-            jQuery("#project-description-label").html("Create a Virtual Production");
+            jQuery("#project-description-label").html("Create a Multiuser Virtual Production project");
         }
     }
 
     loadProjectTypeDescription();
+
+    jQuery('#createNewProjectBtn').click( function (e) {
+        // Title of game project
+        var title_vrodos_project = document.getElementById('title').value;
+        if (title_vrodos_project.length > 2) {
+            var project_type = document.getElementsByName("projectTypeRadio")[0].value;
+            
+            // CREATE THE PROJECT !
+            vrodos_createProjectAjax(title_vrodos_project, project_type, current_user_id, parameter_Scenepass);
+            
+            jQuery('#createNewProjectBtn').hide();
+            jQuery('#create-game-progress-bar').show();
+        }
+    });
+
     
+
+    function deleteProject(id) {
+        var dialogTitle = document.getElementById("delete-dialog-title");
+        var dialogDescription = document.getElementById("delete-dialog-description");
+        var projectTitle = document.getElementById(id+"-title").innerHTML;
+        projectTitle = projectTitle.substring(0, projectTitle.indexOf('<'));
+        projectTitle = projectTitle.trim();
+
+        dialogTitle.innerHTML = "<b>Delete " + projectTitle+"?</b>";
+        dialogDescription.innerHTML = "Are you sure you want to delete your project '" +projectTitle + "'? There is no Undo functionality once you delete it.";
+        dialog.id = id;
+        dialog.show();
+    }
+
+    jQuery('#deleteProjectBtn').click( function (e) {
+        jQuery('#delete-dialog-progress-bar').show();
+        jQuery( "#deleteProjectBtn" ).addClass( "LinkDisabled" );
+        jQuery( "#canceldeleteProjectBtn" ).addClass( "LinkDisabled" );
+        //console.log("ID:", dialog.id);
+        vrodos_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
+    });
+
+    jQuery('#canceldeleteProjectBtn').click( function (e) {
+        jQuery('#delete-dialog-progress-bar').hide();
+        dialog.close();
+    });
+
+
+    // ------- Collaborators -------------------
     function collaborateProject(project_id) {
         var dialogTitle = document.getElementById("collaborate-dialog-title");
         var dialogDescription = document.getElementById("collaborate-dialog-description");
@@ -391,44 +437,7 @@ get_header();
         
         // Fetch collaborators and insert to "textarea-collaborators"
         vrodos_fetchCollabsAjax(project_id);
-
-        
     }
-    
-    
-    function deleteProject(id) {
-
-        var dialogTitle = document.getElementById("delete-dialog-title");
-        var dialogDescription = document.getElementById("delete-dialog-description");
-        var projectTitle = document.getElementById(id+"-title").innerHTML;
-        projectTitle = projectTitle.substring(0, projectTitle.indexOf('<'));
-        projectTitle = projectTitle.trim();
-
-        dialogTitle.innerHTML = "<b>Delete " + projectTitle+"?</b>";
-        dialogDescription.innerHTML = "Are you sure you want to delete your project '" +projectTitle + "'? There is no Undo functionality once you delete it.";
-        dialog.id = id;
-        dialog.show();
-    }
-    
-
-    jQuery('#deleteProjectBtn').click( function (e) {
-
-        jQuery('#delete-dialog-progress-bar').show();
-
-        jQuery( "#deleteProjectBtn" ).addClass( "LinkDisabled" );
-        jQuery( "#canceldeleteProjectBtn" ).addClass( "LinkDisabled" );
-
-        //console.log("ID:", dialog.id);
-        vrodos_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
-
-    });
-
-    jQuery('#canceldeleteProjectBtn').click( function (e) {
-
-        jQuery('#delete-dialog-progress-bar').hide();
-        dialog.close();
-
-    });
 
     jQuery('#updateCollabsBtn').click( function (e) {
 
@@ -448,25 +457,9 @@ get_header();
         vrodos_updateCollabsAjax(dialogCollaborators.project_id, dialogCollaborators, currCollabsEmails);
     });
     
-    
     jQuery('#cancelCollabsBtn').click( function (e) {
         dialogCollaborators.close();
     });
-    
 
-    jQuery('#createNewProjectBtn').click( function (e) {
-        
-        // Title of game project
-        var title_vrodos_project = document.getElementById('title').value;
-
-        if (title_vrodos_project.length > 2) {
-            var game_type_radio_button = document.getElementsByName("gameTypeRadio")[0].value;
-            vrodos_createGameAjax(title_vrodos_project, game_type_radio_button, current_user_id, parameter_Scenepass);
-            jQuery('#createNewProjectBtn').hide();
-            jQuery('#create-game-progress-bar').show();
-        }
-    });
-
-    fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass);
 </script>
 <?php get_footer(); ?>

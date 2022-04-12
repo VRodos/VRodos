@@ -5,19 +5,15 @@
   *
  *  All the above are encompassed in     vrodos_create_gameproject_frontend($game_id)
  */
-function vrodos_createGameAjax(game_project_title, game_project_type_radio,
-                                current_user_id, parameter_Scenepass) {
-
-    console.log(game_project_title, game_project_type_radio,
-        current_user_id, parameter_Scenepass);
+function vrodos_createProjectAjax(project_title, project_type, current_user_id, parameter_Scenepass) {
 
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
         type: 'POST',
         data: {
-            'action': 'vrodos_create_game_action',
-            'game_project_title': game_project_title,
-            'game_project_type_radio': game_project_type_radio
+            'action': 'vrodos_create_project_action',
+            'project_title': project_title,
+            'project_type_radio': project_type
         },
         success: function (res) {
 
