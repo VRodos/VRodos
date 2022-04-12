@@ -62,7 +62,7 @@ function vrodos_create_energy_standardScenes_unity($gameID,$gameSlug,$game_path,
 
 }
 
-function vrodos_getRegionalscene_byGame($allScenePGameID,$regType){
+function vrodos_getRegionalscene_byGame($parent_project_id_as_term_id,$regType){
 
     $myquery_args = array(
         'post_type' => 'vrodos_scene',
@@ -71,7 +71,7 @@ function vrodos_getRegionalscene_byGame($allScenePGameID,$regType){
             array(
                 'taxonomy' => 'vrodos_scene_pgame',
                 'field'    => 'term_id',
-                'terms'    => $allScenePGameID,
+                'terms'    => $parent_project_id_as_term_id,
             ),
         ),
         'meta_query' => array(
@@ -106,11 +106,11 @@ function vrodos_create_energy_selector_unity($gameID,$gameSlug,$game_path,$fileE
     $seashore_activation = 0;
     $fields_activation = 0;
     $allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
-    $allScenePGameID = $allScenePGame->term_id;
+    $parent_project_id_as_term_id = $allScenePGame->term_id;
 
-    $mount_id = vrodos_getRegionalscene_byGame($allScenePGameID,'mountain');
-    $fields_id = vrodos_getRegionalscene_byGame($allScenePGameID,'fields');
-    $sea_id = vrodos_getRegionalscene_byGame($allScenePGameID,'seashore');
+    $mount_id = vrodos_getRegionalscene_byGame($parent_project_id_as_term_id,'mountain');
+    $fields_id = vrodos_getRegionalscene_byGame($parent_project_id_as_term_id,'fields');
+    $sea_id = vrodos_getRegionalscene_byGame($parent_project_id_as_term_id,'seashore');
 
     $mount_json = get_post($mount_id)->post_content; //,'vrodos_scene_json_input',true);
     $fields_json = get_post($fields_id)->post_content; //,'vrodos_scene_json_input',true);

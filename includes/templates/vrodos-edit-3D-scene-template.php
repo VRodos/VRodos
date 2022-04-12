@@ -222,7 +222,7 @@ $allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
 //fwrite($ff, "2:".print_r($projectSlug,true));
 //fclose($ff);
 
-$allScenePGameID = $allScenePGame->term_id;
+$parent_project_id_as_term_id = $allScenePGame->term_id;
 
 if ($project_type === "Chemistry") {
     $analytics_molecule_checklist = vrodos_derive_molecules_checklist();
@@ -378,7 +378,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
 	$scene_taxonomies = array(
 		'vrodos_scene_pgame' => array(
-			$allScenePGameID,
+			$parent_project_id_as_term_id,
 		),
 		'vrodos_scene_yaml' => array(
 			$newscene_yaml_tax->term_id,

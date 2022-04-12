@@ -834,7 +834,7 @@ function vrodos_createGame_GIO_request($project_id, $user_id){
 function vrodos_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 
 	$allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
-	$allScenePGameID = $allScenePGame->term_id;
+	$parent_project_id_as_term_id = $allScenePGame->term_id;
 
 	$all_game_category = get_the_terms( $gameID, 'vrodos_game_type' );
 	$game_category  = $all_game_category[0]->slug;
@@ -897,7 +897,7 @@ function vrodos_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 		'post_type' => 'vrodos_scene',
 		'post_status'   => 'publish',
 		'tax_input'    => array(
-			'vrodos_scene_pgame'     => array( $allScenePGameID ),
+			'vrodos_scene_pgame'     => array( $parent_project_id_as_term_id ),
 			'vrodos_scene_yaml'     => array( $mainmenuSceneYAMLID ),
 		),'meta_input'   => array(
 			'vrodos_scene_default' => 1,
@@ -918,7 +918,7 @@ function vrodos_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
 		'post_type' => 'vrodos_scene',
 		'post_status'   => 'publish',
 		'tax_input'    => array(
-			'vrodos_scene_pgame'     => array( $allScenePGameID ),
+			'vrodos_scene_pgame'     => array( $parent_project_id_as_term_id ),
 			'vrodos_scene_yaml'     => array( $credentialsSceneYAMLID ),
 		),'meta_input'   => array(
 			'vrodos_scene_default' => 1,
@@ -966,7 +966,7 @@ Characteristics :
 			'post_type' => 'vrodos_scene',
 			'post_status' => 'publish',
 			'tax_input' => array(
-				'vrodos_scene_pgame' => array($allScenePGameID),
+				'vrodos_scene_pgame' => array($parent_project_id_as_term_id),
 				'vrodos_scene_yaml' => array($firstSceneYAMLID),
 			), 'meta_input' => array(
 				'vrodos_scene_default' => 1,
@@ -984,7 +984,7 @@ Characteristics :
 			'post_type' => 'vrodos_scene',
 			'post_status' => 'publish',
 			'tax_input' => array(
-				'vrodos_scene_pgame' => array($allScenePGameID),
+				'vrodos_scene_pgame' => array($parent_project_id_as_term_id),
 				'vrodos_scene_yaml' => array($firstSceneYAMLID),
 			), 'meta_input' => array(
 				'vrodos_scene_default' => 1,
@@ -1002,7 +1002,7 @@ Characteristics :
 			'post_type' => 'vrodos_scene',
 			'post_status' => 'publish',
 			'tax_input' => array(
-				'vrodos_scene_pgame' => array($allScenePGameID),
+				'vrodos_scene_pgame' => array($parent_project_id_as_term_id),
 				'vrodos_scene_yaml' => array($firstSceneYAMLID),
 			), 'meta_input' => array(
 				'vrodos_scene_default' => 1,
@@ -1029,7 +1029,7 @@ Characteristics :
 			'post_type' => 'vrodos_scene',
 			'post_status' => 'publish',
 			'tax_input' => array(
-				'vrodos_scene_pgame' => array($allScenePGameID),
+				'vrodos_scene_pgame' => array($parent_project_id_as_term_id),
 				'vrodos_scene_yaml' => array($firstSceneYAMLID),
 			), 'meta_input' => array(
 				'vrodos_scene_default' => 1,
@@ -1051,7 +1051,7 @@ Characteristics :
 			'post_type' => 'vrodos_scene',
 			'post_status'   => 'publish',
 			'tax_input'    => array(
-				'vrodos_scene_pgame'     => array( $allScenePGameID ),
+				'vrodos_scene_pgame'     => array( $parent_project_id_as_term_id ),
 				'vrodos_scene_yaml'     => array( $exam2dSceneYAMLID ),
 			),'meta_input'   => array(
 				'vrodos_scene_default' => 1,
@@ -1069,7 +1069,7 @@ Characteristics :
 			'post_type' => 'vrodos_scene',
 			'post_status'   => 'publish',
 			'tax_input'    => array(
-				'vrodos_scene_pgame'     => array( $allScenePGameID ),
+				'vrodos_scene_pgame'     => array( $parent_project_id_as_term_id ),
 				'vrodos_scene_yaml'     => array( $exam3dSceneYAMLID ),
 			),'meta_input'   => array(
 				'vrodos_scene_default' => 1,
@@ -1418,7 +1418,7 @@ function vrodos_get_all_molecules_of_game($project_id) {
 }
 
 //Get All DOORS of specific game (from all scenes) by given project ID (parent game ID)
-function vrodos_get_all_doors_of_project_fastversion($allScenePGameID){
+function vrodos_get_all_doors_of_project_fastversion($parent_project_id_as_term_id){
 
 	$sceneIds = [];
 
@@ -1430,7 +1430,7 @@ function vrodos_get_all_doors_of_project_fastversion($allScenePGameID){
 			array(
 				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
-				'terms'    => $allScenePGameID,
+				'terms'    => $parent_project_id_as_term_id,
 			),
 		),
 		'orderby' => 'ID',
@@ -1480,7 +1480,7 @@ function vrodos_get_all_doors_of_project_fastversion($allScenePGameID){
 	return $doorInfoGathered;
 }
 
-function vrodos_get_all_scenesMarker_of_project_fastversion($allScenePGameID){
+function vrodos_get_all_scenesMarker_of_project_fastversion($parent_project_id_as_term_id){
 
 	$sceneIds = [];
 
@@ -1492,7 +1492,7 @@ function vrodos_get_all_scenesMarker_of_project_fastversion($allScenePGameID){
 			array(
 				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
-				'terms'    => $allScenePGameID,
+				'terms'    => $parent_project_id_as_term_id,
 			),
 		),
 		'orderby' => 'ID',
@@ -1544,7 +1544,7 @@ function vrodos_get_all_scenesMarker_of_project_fastversion($allScenePGameID){
 
 
 //Get All SCENES (ids) of specific game by given project ID (parent game ID)
-function vrodos_get_all_sceneids_of_game($allScenePGameID){
+function vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id){
 
 	$sceneIds = [];
 
@@ -1556,7 +1556,7 @@ function vrodos_get_all_sceneids_of_game($allScenePGameID){
 			array(
 				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
-				'terms'    => $allScenePGameID,
+				'terms'    => $parent_project_id_as_term_id,
 			),
 		),
 		'orderby' => 'ID',

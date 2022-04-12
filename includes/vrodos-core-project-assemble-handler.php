@@ -138,7 +138,7 @@ function vrodos_fetch_list_projects_callback(){
             // ToDo: replace current_user_can with smth like current_user_is
            } elseif (current_user_can('project_master')) {
 
-               $collaborators = get_post_meta(get_the_ID(),'vrodos_game_collaborators_ids')[0];
+               $collaborators = get_post_meta(get_the_ID(),'vrodos_project_collaborators_ids')[0];
     
 //               fwrite($fp, 'Author:' . print_r(get_the_author_meta('ID'), true));
 //               fwrite($fp, 'UserId:' . print_r($user_id, true));
@@ -225,12 +225,12 @@ function vrodos_fetch_list_projects_callback(){
                'data-mdc-auto-init="MDCRipple" title="Add collaborators for '.
                $game_title . '" onclick="collaborateProject(' . $game_id . ')">';
     
-           $collaborators = get_post_meta($game_id, 'vrodos_game_collaborators_ids');
+           $collaborators = get_post_meta($game_id, 'vrodos_project_collaborators_ids');
     
            // Find number of current collaborators
            if ( count($collaborators)>0) {
         
-               $collabs_ids_raw = get_post_meta($game_id, 'vrodos_game_collaborators_ids')[0];
+               $collabs_ids_raw = get_post_meta($game_id, 'vrodos_project_collaborators_ids')[0];
                $collabs_ids = array_values(array_filter(explode(";", $collabs_ids_raw)));
            } else {
                $collabs_ids = [];
@@ -251,7 +251,7 @@ function vrodos_fetch_list_projects_callback(){
            
            // -------- Delete button ----------------
            echo '<a href="javascript:void(0)" class="" style="" aria-label="Delete game" title="Delete project" '.
-                        'onclick="deleteGame('.$game_id.')">';
+                        'onclick="deleteProject('.$game_id.')">';
            echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color:orangered" '
                 .'aria-hidden="true" title="Delete project">delete</i>';
            echo '</a>';
@@ -303,7 +303,7 @@ function vrodos_collaborate_project_frontend_callback()
             $collabs_ids .= ';'.$collab_id_data->ID;
     }
     
-    update_post_meta($project_id, 'vrodos_game_collaborators_ids', $collabs_ids);
+    update_post_meta($project_id, 'vrodos_project_collaborators_ids', $collabs_ids);
     wp_die();
 }
 
@@ -312,7 +312,7 @@ function vrodos_collaborate_project_frontend_callback()
 function vrodos_fetch_collaborators_frontend_callback()
 {
     $project_id = $_POST['project_id'];
-    $collabs_ids = get_post_meta($project_id, 'vrodos_game_collaborators_ids', true);
+    $collabs_ids = get_post_meta($project_id, 'vrodos_project_collaborators_ids', true);
     
     $collabs_ids = explode(';',$collabs_ids);
     

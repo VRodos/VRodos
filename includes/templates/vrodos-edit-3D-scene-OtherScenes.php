@@ -1,30 +1,59 @@
-<div id="scenesInsideVREditor" class="" style="">
-	
-	<?php $custom_query = getProjectScenes($allScenePGameID);?>
-	
-	<?php if ( $custom_query->have_posts() ) :
-		while ( $custom_query->have_posts() ) :
-			
+<?php
+      // 1. Get all scenes that belong to this parent project
+      // 2. Create tabs
+      // 3. Create scenes dialogue
+      // 4. Delete dialogue
+
+      global $project_id;
+      global $project_type;
+      global $parent_project_id_as_term_id;
+      global $current_scene_id;
+      global $editscenePage;
+      global $editscene2DPage;
+      global $editsceneExamPage;
+      global $parameter_Scenepass;
+?>
+
+<div id="scenesInsideVREditor">
+ 
+    <?php
+    
+    // Get all scenes that have as parent this project
+    $custom_query = getProjectScenes($parent_project_id_as_term_id);
+    
+    if ( $custom_query->have_posts() ):
+        while ( $custom_query->have_posts() ) :
+
 			$custom_query->the_post();
 			$scene_id = get_the_ID();
 			$scene_title = get_the_title();
 			$scene_desc = get_the_content();
-			$is_regional = get_post_meta($scene_id,'vrodos_isRegional', true);
-			$current_card_bg = $current_scene_id == $scene_id ? 'mdc-theme--primary-light-bg' : '';
+			
+            // Energy: Is regional scene ?
+            $is_regional = get_post_meta($scene_id,'vrodos_isRegional', true);
+            
+            // Set background color in card
+			$current_card_bg = ($current_scene_id == $scene_id ? 'mdc-theme--primary-light-bg' : '');
+            
+            // Get scene type
 			$scene_type = get_post_meta( $scene_id, 'vrodos_scene_metatype', true );
 			
+            // 0 or 1: depending if this scene is the default one
 			$default_scene = get_post_meta( $scene_id, 'vrodos_scene_default', true );
 			
-			//create permalink depending the scene yaml category
+			// Create the link when scene is clicked to be edited (permalink depending on the scene yaml category 2D or 3D)
 			$edit_scene_page_id = ( $scene_type == 'scene' ? $editscenePage[0]->ID : $editscene2DPage[0]->ID);
 			
+            // Chemistry
 			if($scene_type == 'sceneExam2d' ||  $scene_type == 'sceneExam3d'){
 				$edit_scene_page_id = $editsceneExamPage[0]->ID;
 			}
 			
+            // Url when the scene is deleted
 			$url_redirect_delete_scene = get_permalink($edit_scene_page_id) . $parameter_Scenepass .
 			                             $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_type;
 			
+            // Create redirect javascript
 			if($scene_type !== 'menu' && $scene_type !== 'credits') {
 				if ($default_scene) {
 					echo '<script>';
@@ -35,11 +64,13 @@
 			
 			$edit_page_link = esc_url( $url_redirect_delete_scene );
 			
-			?>
+            ?>
 			
-			<div id="scene-<?php echo $scene_id; ?>" class="SceneCardContainer">
-				<div class="sceneTab mdc-card mdc-theme--background <?php echo $current_card_bg;?> ">
-					<div class="SceneThumbnail">
+            <!-- Create a tab for each scene -->
+            <div id="scene-<?php echo $scene_id;?>" class="SceneCardContainer">
+                <div class="sceneTab mdc-card mdc-theme--background <?php echo $current_card_bg;?> ">
+
+                    <div class="SceneThumbnail">
 						<div class="sceneDisplayBlock mdc-theme--primary-bg CenterContents">
 							<a href="<?php echo $edit_page_link; ?>">
 								<?php if(has_post_thumbnail($scene_id)) {
@@ -93,7 +124,7 @@
 	
 	<!-- Analytics key input card -->
 	<?php
-	require( plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-Analytics.php' );
+        require( plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-Analytics.php' );
 	?>
 	
 	<!--ADD NEW SCENE card for all but Energy project that has fixed scenes-->
@@ -212,4 +243,4 @@
 		</div>
 		<div class="mdc-dialog__backdrop"></div>
 	</aside>
-</div>   <!-- Scenes List Div -->
+</div><!-- Scenes List Div -->

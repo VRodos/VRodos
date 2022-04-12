@@ -2,28 +2,28 @@
 
 //All information about our meta box
 $vrodos_databox3 = array(
-	'id' => 'vrodos-games-databox',
+	'id' => 'vrodos-projects-databox',
 	'page' => 'vrodos_game',
 	'context' => 'normal',
 	'priority' => 'high',
 	'fields' => array(
 		array(
 			'name' => 'Latitude',
-			'desc' => 'Game\'s Latitude',
+			'desc' => 'Project\'s Latitude',
 			'id' => 'vrodos_game_lat',
 			'type' => 'text',
 			'std' => ''
 		),
 		array(
 			'name' => 'Longitude',
-			'desc' => 'Game\'s Longitude',
+			'desc' => 'Project\'s Longitude',
 			'id' => 'vrodos_game_lng',
 			'type' => 'text',
 			'std' => ''
 		),array(
 			'name' => 'collaborators_ids',
 			'desc' => 'ids of collaborators starting separated and ending by semicolon',
-			'id' => 'vrodos_game_collaborators_ids',
+			'id' => 'vrodos_project_collaborators_ids',
 			'type' => 'text',
 			'std' => ""
 		)
@@ -133,17 +133,17 @@ function vrodos_project_taxtype_create(){
 function vrodos_create_folder_game( $new_status, $old_status, $post){
 
 	$post_type = get_post_type($post);
-	$gameSlug = $post->post_name;
+	$projectSlug = $post->post_name;
 
 	global $project_scope;
 
 	if ($post_type == 'vrodos_game' && $new_status == 'publish') {
 
 //        $fh = fopen("output_folder_Game.txt","a");
-//        fwrite($fh, $post_type . " " . $new_status ." ". $gameSlug .'\n' );
+//        fwrite($fh, $post_type . " " . $new_status ." ". $projectSlug .'\n' );
 //        fclose($fh);
 
-		if(($gameSlug != 'archaeology-joker') && ($gameSlug != 'energy-joker') && ($gameSlug != 'chemistry-joker')){
+		if(($projectSlug != 'archaeology-joker') && ($projectSlug != 'energy-joker') && ($projectSlug != 'chemistry-joker')){
 
 			$gameTitle = $post->post_title;
 			$gameID = $post->ID;
@@ -165,19 +165,19 @@ function vrodos_create_folder_game( $new_status, $old_status, $post){
 			//Create a parent game tax category for the scenes
 			wp_insert_term($gameTitle,'vrodos_scene_pgame', array(
 					'description'=> '-',
-					'slug' => $gameSlug,
+					'slug' => $projectSlug,
 				)
 			);
 
 			//Create a parent game tax category for the assets
 			wp_insert_term($gameTitle,'vrodos_asset3d_pgame',array(
 					'description'=> '-',
-					'slug' => $gameSlug,
+					'slug' => $projectSlug,
 				)
 			);
 
 			//Create Default Scenes for this "Game"
-			vrodos_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID);
+			vrodos_create_default_scenes_for_game($projectSlug, $gameTitle, $gameID);
 
 			//Available molecules
 			$molecules = vrodos_get_all_molecules_of_game($gameID);//ALL available Molecules of a GAME
@@ -209,7 +209,7 @@ function vrodos_create_folder_game( $new_status, $old_status, $post){
         }else{
 			$gameTitle = $post->post_title;
 			//Create a parent game tax category for the assets
-			wp_insert_term($gameTitle,'vrodos_asset3d_pgame',$gameSlug,'Asset of a Game');
+			wp_insert_term($gameTitle,'vrodos_asset3d_pgame',$projectSlug,'Asset of a Game');
 		}
 	}
 }
@@ -218,21 +218,19 @@ function vrodos_create_folder_game( $new_status, $old_status, $post){
 
 //Create Game Category Box @ Game's backend
 function vrodos_games_taxcategory_box() {
-
-	remove_meta_box( 'vrodos_game_typediv', 'vrodos_game', 'side' ); //Removes the default metabox at side
-	
-	add_meta_box( 'tagsdiv-vrodos_game_type','Game Type','vrodos_games_taxtype_box_content', 'vrodos_game', 'side' , 'high'); //Adds the custom metabox with select box
-	
+    
+    remove_meta_box( 'vrodos_game_typediv', 'vrodos_game', 'side' ); //Removes the default metabox at side
+    add_meta_box( 'tagsdiv-vrodos_game_type','Game Type','vrodos_projects_taxtype_box_content', 'vrodos_game', 'side' , 'high'); //Adds the custom metabox with select box
 }
 
 
 
-function vrodos_games_taxtype_box_content($post){
+function vrodos_projects_taxtype_box_content($post){
 	$tax_name = 'vrodos_game_type';
 	?>
 	<div class="tagsdiv" id="<?php echo $tax_name; ?>">
 		
-		<p class="howto"><?php echo 'Select type for current Game' ?></p>
+		<p class="howto"><?php echo 'Select type for current project' ?></p>
 		
 		<?php
 		// Use nonce for verification
@@ -477,11 +475,15 @@ function vrodos_games_assemblerbox_show(){
 
 function vrodos_projects_taxtypes_define(){
 
-wp_insert_term('Energy', 'vrodos_game_type', array('description' => 'Energy Games', 'slug' => 'energy_games'));
+    wp_insert_term('Energy', 'vrodos_game_type', array('description' => 'Energy Games', 'slug' => 'energy_games'));
 
-wp_insert_term('Archaeology','vrodos_game_type', array('description'=> 'Archaeology Games','slug'=>'archaeology_games'));
+    wp_insert_term('Archaeology','vrodos_game_type', array('description'=> 'Archaeology Games','slug'=>'archaeology_games'));
 
-wp_insert_term('Chemistry','vrodos_game_type',array('description'=> 'Chemistry Games','slug' => 'chemistry_games'));
+    wp_insert_term('Chemistry','vrodos_game_type',array('description'=> 'Chemistry Games','slug' => 'chemistry_games'));
+	
+	wp_insert_term('VR Exhibition','vrodos_game_type', array('description'=> 'Exhibitions in 3D','slug'=>'vrexpo_games'));
+	
+	wp_insert_term('Theatre','vrodos_game_type', array('description'=> 'Archaeology Games','slug'=>'theatre_games'));
 
 }
 

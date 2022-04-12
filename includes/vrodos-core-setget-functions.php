@@ -721,9 +721,8 @@ function vrodos_getAllexams_byGame($project_id, $addMenu){
 	return $allExamScenes;
 }
 
-function getProjectScenes($allScenePGameID){
-	
-	
+function getProjectScenes($parent_project_id_as_term_id){
+
 	$custom_query_args = array(
 		'post_type' => 'vrodos_scene',
 		'posts_per_page' => -1,
@@ -731,7 +730,7 @@ function getProjectScenes($allScenePGameID){
 			array(
 				'taxonomy' => 'vrodos_scene_pgame',
 				'field'    => 'term_id',
-				'terms'    => $allScenePGameID,
+				'terms'    => $parent_project_id_as_term_id,
 			),
 		),
 		'orderby' => 'ID',

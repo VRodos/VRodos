@@ -72,7 +72,7 @@ wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_
 //Get 'parent-game' taxonomy with the same slug as Game (in order to show scenes that belong here)
 //$allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
 //if ($allScenePGame)
-//    $allScenePGameID = $allScenePGame->term_id;
+//    $parent_project_id_as_term_id = $allScenePGame->term_id;
 
 
 $editgamePage = vrodos_getEditpage('game');

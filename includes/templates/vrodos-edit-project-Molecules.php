@@ -77,7 +77,7 @@ if (!$project_saved_keys['gioID'] && $project_scope === 1) { // In Envisage only
 
 //Get 'parent-game' taxonomy with the same slug as Game (in order to show scenes that belong here)
 $allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
-$allScenePGameID = $allScenePGame->term_id;
+$parent_project_id_as_term_id = $allScenePGame->term_id;
 
 $game_type_obj = vrodos_return_project_type($project_id);
 
@@ -105,7 +105,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
     $scene_taxonomies = array(
         'vrodos_scene_pgame' => array(
-            $allScenePGameID,
+            $parent_project_id_as_term_id,
         ),
         'vrodos_scene_yaml' => array(
             $newscene_yaml_tax->term_id,
@@ -322,7 +322,7 @@ $custom_query_args = array(
         array(
             'taxonomy' => 'vrodos_scene_pgame',
             'field'    => 'term_id',
-            'terms'    => $allScenePGameID,
+            'terms'    => $parent_project_id_as_term_id,
         ),
     ),
     'orderby' => 'ID',

@@ -27,9 +27,11 @@ echo ini_get('max_input_time').chr(10);
 @ini_set( 'max_execution_time', '2400' );
 
 // Set scope for the 3D editor (under construction feature):
-// Virtual Tour: 0
-// Virtual Lab: 1
-$project_scope = 0;
+// VirtualTour: 0
+// VirtualLab: 1
+// VRExpo     : 2
+// VirtualProduction : 3
+$project_scope = 2;
 
 
 
