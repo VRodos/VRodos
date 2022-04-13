@@ -35,7 +35,7 @@ function vrodos_create_project_frontend_callback(){
     
     // Project title
     $project_title =  strip_tags($_POST['project_title']);
-    $project_type_radio = $_POST['project_type_radio'];//1 = Archaeology , 2 = Energy , 3 = Chemistry, 4 = VRExpo, 5= VirtualProduction
+    $project_type_radio = $_POST['project_type_radio']; //1 = Archaeology , 2 = Energy , 3 = Chemistry, 4 = VRExpo, 5= VirtualProduction
     
     $archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
     $energy_tax = get_term_by('slug', 'energy_games', 'vrodos_game_type');
@@ -45,12 +45,13 @@ function vrodos_create_project_frontend_callback(){
 
 //        $ff = fopen("output_create_ajax.txt","w");
 //        fwrite($ff, $project_title);
+//
 //        fwrite($ff, $project_type_radio);
-//        fwrite($ff, $archaeology_tax);
-//        fclose($ff);
+//        fwrite($ff, chr(13));
     
+
     $project_type_chosen_id = '';
-    
+
     if($project_type_radio == 1){
         $project_type_chosen_id = $archaeology_tax->term_id;
     }else if($project_type_radio == 2){
@@ -63,6 +64,10 @@ function vrodos_create_project_frontend_callback(){
         $project_type_chosen_id = $virtualproduction_tax->term_id;
     }
 
+//        fwrite($ff, chr(13));
+//        fwrite($ff, $project_type_chosen_id);
+//        fwrite($ff, chr(13));
+    
     $project_taxonomies = array(
         'vrodos_game_type' => array(
             $project_type_chosen_id,
@@ -78,7 +83,11 @@ function vrodos_create_project_frontend_callback(){
     );
     
     $project_id = wp_insert_post($project_information);
-   
+    
+//    fwrite($ff, $project_id);
+//
+//    fclose($ff);
+    
     echo $project_id;
     wp_die();
 }
@@ -172,7 +181,7 @@ function vrodos_fetch_list_projects_callback(){
            //       continue;
     
            // Do not show Joker projects
-           if ($game_title == 'Archaeology Joker' || $game_title == 'Energy Joker' || $game_title == 'Chemistry Joker' )
+           if (str_contains($game_title, ' Joker'))
                 continue;
     
             $game_type_obj = vrodos_return_project_type($game_id);

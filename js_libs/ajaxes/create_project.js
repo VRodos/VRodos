@@ -7,6 +7,8 @@
  */
 function vrodos_createProjectAjax(project_title, project_type, current_user_id, parameter_Scenepass) {
 
+    console.log("project_type", project_type);
+
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
         type: 'POST',

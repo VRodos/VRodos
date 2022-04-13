@@ -129,24 +129,26 @@ function vrodos_project_taxtype_create(){
 
 // Generate Taxonomy (for scenes & assets) with Game's slug/name
 // Create Default Scenes for this "Game"
-function vrodos_create_folder_project( $new_status, $old_status, $post){
+function vrodos_on_create_project( $new_status, $old_status, $post){
 
 	$post_type = get_post_type($post);
-	$projectSlug = $post->post_name;
-
-	global $project_scope;
 
 	if ($post_type == 'vrodos_game' && $new_status == 'publish') {
+		
+		$projectSlug = $post->post_name;
 
 //        $fh = fopen("output_folder_Game.txt","a");
 //        fwrite($fh, $post_type . " " . $new_status ." ". $projectSlug .'\n' );
 //        fclose($fh);
 
+        // If project is not a joker one
 		if(($projectSlug != 'archaeology-joker') && ($projectSlug != 'energy-joker') && ($projectSlug != 'chemistry-joker')){
 
 			$gameTitle = $post->post_title;
 			$gameID = $post->ID;
-
+			
+			global $project_scope;
+   
 			// TEMPORARY : Virtual Labs
 			if ($project_scope === 1) {
 				update_post_meta( $gameID, 'vrodos_project_expID', '82a5dc78-dd27-43db-be12-f5440bbc9dd5');
@@ -174,7 +176,11 @@ function vrodos_create_folder_project( $new_status, $old_status, $post){
 					'slug' => $projectSlug,
 				)
 			);
-
+			
+			
+			
+			
+			
 			//Create Default Scenes for this "Game"
 			vrodos_create_default_scenes_for_game($projectSlug, $gameTitle, $gameID);
 
@@ -784,4 +790,4 @@ function vrodos_games_projectSettings_fields_save( $term_id ) {
 
 
 
-?>
+

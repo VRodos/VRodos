@@ -69,7 +69,7 @@ function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
 
             alert("Could not delete asset. Please try again or try deleting it from the administration panel.");
 
-            console.log("Ajax Delete Asset: ERROR: 169" + thrownError);
+            console.log("Ajax Delete Asset: ERROR: 170" + thrownError);
         }
     });
 }

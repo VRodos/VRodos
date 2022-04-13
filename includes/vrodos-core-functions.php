@@ -325,89 +325,83 @@ function vrodos_the_slug_exists($post_name) {
 }
 
 
-function vrodos_createJoker_activation() {
+function vrodos_create_joker_projects() {
 	
     $userID = get_current_user_id();
 	//$virtualplace_tax = get_term_by('slug', 'virtual_place', 'vrodos_game_cat');
 	//$realplace_tax = get_term_by('slug', 'real_place', 'vrodos_game_cat');
-
+	
+	
 	if (!vrodos_the_slug_exists('archaeology-joker')) {
-
-	    $archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
-
-		$archaeology_tax_id = $archaeology_tax->term_id;
-
-		$game_taxonomies_arch = array(
-			'vrodos_game_type' => array(
-				$archaeology_tax_id,
-			)
-		);
-
-		$game_information_arch = array(
-			'post_title' => 'Archaeology Joker',
-			'post_name' => 'archaeology-joker',
-			'post_content' => '',
-			'post_type' => 'vrodos_game',
-			'post_status' => 'publish',
-			'tax_input' => $game_taxonomies_arch,
-			'post_author'   => $userID,
-		);
-
-		wp_insert_post($game_information_arch);
+		
+		$tax_slug = 'archaeology_games';
+		$post_title = 'Archaeology Joker';
+		$post_name = 'archaeology-joker';
+		
+		create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
 	}
 
 	if (!vrodos_the_slug_exists('energy-joker')) {
-		$energy_tax = get_term_by('slug', 'energy_games', 'vrodos_game_type');
-		$energy_tax_id = $energy_tax->term_id;
-
-		$game_taxonomies_ener = array(
-			'vrodos_game_type' => array(
-				$energy_tax_id,
-			)
-		);
-
-		$game_information_ener = array(
-			'post_title' => 'Energy Joker',
-			'post_name' => 'energy-joker',
-			'post_content' => '',
-			'post_type' => 'vrodos_game',
-			'post_status' => 'publish',
-			'tax_input' => $game_taxonomies_ener,
-			'post_author'   => $userID,
-		);
-
-		wp_insert_post($game_information_ener);
+		
+		$tax_slug = 'energy_games';
+		$post_title = 'Energy Joker';
+		$post_name = 'energy-joker';
+		
+		create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
 	}
-
+ 
 	if (!vrodos_the_slug_exists('chemistry-joker')) {
-		$chemistry_tax = get_term_by('slug', 'chemistry_games', 'vrodos_game_type');
-		$chemistry_tax_id = $chemistry_tax->term_id;
-
-		$game_taxonomies_chem = array(
-			'vrodos_game_type' => array(
-				$chemistry_tax_id,
-			),
-//			'vrodos_game_cat' => array(
-//				$virtualplace_tax->term_id,
-//			)
-		);
-
-		$game_information_chem = array(
-			'post_title' => 'Chemistry Joker',
-			'post_name' => 'chemistry-joker',
-			'post_content' => '',
-			'post_type' => 'vrodos_game',
-			'post_status' => 'publish',
-			'tax_input' => $game_taxonomies_chem,
-			'post_author'   => $userID,
-		);
-
-		wp_insert_post($game_information_chem);
+		
+		$tax_slug = 'chemistry_games';
+		$post_title = 'Chemistry Joker';
+		$post_name = 'chemistry-joker';
+		
+		create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
 	}
+ 
 
+	if (!vrodos_the_slug_exists('vrexpo-joker')) {
 
+        $tax_slug = 'vrexpo_games';
+        $post_title = 'VRExpo Joker';
+        $post_name = 'vrexpo-joker';
+
+        create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
+	}
+	
+	if (!vrodos_the_slug_exists('virtualproduction-joker')) {
+		
+		$tax_slug = 'virtualproduction_games';
+		$post_title = 'Virtual Production Joker';
+		$post_name = 'virtualproduction-joker';
+		
+		create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
+	}
 }
 
+function create_post_project_joker($tax_slug, $post_title, $post_name, $userID){
+	
+	$tax = get_term_by('slug', $tax_slug, 'vrodos_game_type');
+	$tax_id = $tax->term_id;
+	$project_taxonomies_arch = array(
+		'vrodos_game_type' => array(
+			$tax_id,
+		)
+	);
+	
+	$project_information_arch = array(
+		'post_title' => $post_title,
+		'post_name' => $post_name,
+		'post_content' => '',
+		'post_type' => 'vrodos_game',
+		'post_status' => 'publish',
+		'tax_input' => $project_taxonomies_arch,
+		'post_author'   => $userID,
+	);
+	
+	wp_insert_post($project_information_arch);
+ 
+}
 
 
 
@@ -831,266 +825,9 @@ function vrodos_createGame_GIO_request($project_id, $user_id){
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function vrodos_create_default_scenes_for_game($gameSlug, $gameTitle, $gameID){
-
-	$allScenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
-	$parent_project_id_as_term_id = $allScenePGame->term_id;
-
-	$all_game_category = get_the_terms( $gameID, 'vrodos_game_type' );
-	$game_category  = $all_game_category[0]->slug;
-
-	$mainmenuSceneTitle = 'Main Menu'; //Title for Main Menu
-	$mainmenuSceneSlug = $gameSlug . '-main-menu' ; //Slug for Main Menu
-	if($game_category == 'archaeology_games') {
-		$firstSceneTitle = 'Place'; //Title for First Menu
-		$firstSceneSlug = $gameSlug . '-first-scene'; //Slug for First Menu
-	}else{
-		$firstSceneTitle = 'Lab'; //Title for First Menu
-		$firstSceneSlug = $gameSlug . '-first-scene'; //Slug for First Menu
-	}
-	$credentialsSceneTitle = 'Credits'; //Title for Credentials Menu
-	$credentialsSceneSlug = $gameSlug . '-credits-scene'; //Slug for Credentials Menu
-	if($game_category == 'chemistry_games'){
-		$exam2dSceneTitle = 'Molecule Naming'; //Title for Exam Scene
-		$exam2dSceneSlug = $gameSlug . '-exam2d'; //Slug for Exam Scene
-		$exam3dSceneTitle = 'Molecule Construction';
-		$exam3dSceneSlug = $gameSlug . '-exam3d';
-	}
-
-	$default_json = '';
-
-	if($game_category == 'energy_games'){
-		$firstSceneYAML = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml'); //Yaml Tax for First Scene
-		$firstSceneYAMLID = $firstSceneYAML->term_id;
-		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Main Menu
-		$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
-		$credentialsSceneYAML = get_term_by('slug', 'credentials-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Credentials Scene
-		$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
-		$default_json= vrodos_getDefaultJSONscene('energy');
-	}elseif($game_category == 'archaeology_games'){
-		$firstSceneYAML = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml'); //Yaml Tax for First Scene
-		$firstSceneYAMLID = $firstSceneYAML->term_id;
-		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-arch-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Main Menu
-		$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
-		$credentialsSceneYAML = get_term_by('slug', 'credentials-arch-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Credentials Scene
-		$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
-		$default_json= vrodos_getDefaultJSONscene('archaeology');
-	}elseif($game_category == 'chemistry_games'){
-		$firstSceneYAML = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml'); //Yaml Tax for First Scene (Chemistry)
-		$firstSceneYAMLID = $firstSceneYAML->term_id;
-		$mainmenuSceneYAML = get_term_by('slug', 'mainmenu-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Main Menu (Chemistry)
-		$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
-		$credentialsSceneYAML = get_term_by('slug', 'credentials-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Credentials Scene (Chemistry)
-		$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
-		$exam2dSceneYAML = get_term_by('slug', 'exam2d-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Exam 2d Scene (Chemistry)
-		$exam2dSceneYAMLID = $exam2dSceneYAML->term_id;
-		$exam3dSceneYAML = get_term_by('slug', 'exam3d-chem-yaml', 'vrodos_scene_yaml'); //Yaml Tax for Exam 3d Scene (Chemistry)
-		$exam3dSceneYAMLID = $exam3dSceneYAML->term_id;
-		$default_json= vrodos_getDefaultJSONscene('chemistry');
-	}
-
-	// Create Main Menu Scene Data
-	$mainmenuSceneData = array(
-		'post_title'    => $mainmenuSceneTitle,
-		'post_content' => 'Main Menu of the Game',
-		'post_name' => $mainmenuSceneSlug,
-		'post_type' => 'vrodos_scene',
-		'post_status'   => 'publish',
-		'tax_input'    => array(
-			'vrodos_scene_pgame'     => array( $parent_project_id_as_term_id ),
-			'vrodos_scene_yaml'     => array( $mainmenuSceneYAMLID ),
-		),'meta_input'   => array(
-			'vrodos_scene_default' => 1,
-			'vrodos_scene_metatype' => 'menu',
-			'vrodos_menu_has_help' => 1,
-			'vrodos_menu_has_login' => 1,
-			'vrodos_menu_has_options' => 1,
-		),
-	);
-
-	wp_insert_post( $mainmenuSceneData );
-
-	// Create Credentials Scene Data
-	$credentialsSceneData = array(
-		'post_title'    => $credentialsSceneTitle,
-		'post_content' => 'Credits of the Game',
-		'post_name' => $credentialsSceneSlug,
-		'post_type' => 'vrodos_scene',
-		'post_status'   => 'publish',
-		'tax_input'    => array(
-			'vrodos_scene_pgame'     => array( $parent_project_id_as_term_id ),
-			'vrodos_scene_yaml'     => array( $credentialsSceneYAMLID ),
-		),'meta_input'   => array(
-			'vrodos_scene_default' => 1,
-			'vrodos_scene_metatype' => 'credits',
-		),
-	);
-
-	wp_insert_post( $credentialsSceneData );
-
-
-	if($game_category == 'energy_games'){
-		$firstSceneTitle = 'Mountains'; //Title for First Menu
-		$firstSceneSlug = $gameSlug . '-mountains'; //Slug for First Menu
-		$secondSceneTitle = 'Fields'; //Title for First Menu
-		$secondSceneSlug = $gameSlug . '-fields'; //Slug for First Menu
-		$thirdSceneTitle = 'Seashore'; //Title for First Menu
-		$thirdSceneSlug = $gameSlug . '-seashore'; //Slug for First Menu
-
-		$content1 = 'Area-1 is near mountains.It has difficult access. Its windclass is High (10 m/s).
-Here you have 5 places to explore.Characteristics :
-	- Average Wind speed = 10 m/s
-	- Access cost = 3 $';
-
-		$content2 = 'Area-2 is near plain land. It has not difficult access. Its windclass is Medium (windspeeds 8.5 m/s).
-Here you have 5 places to explore.
-Characteristics :
-	- Average Wind speed = 8.5 m/s
-	- Access cost = 2 $';
-
-		$content3 = 'Area-3 is near seashore. It has easy access due to port. Its windclass is Low (windspeeds 7.5 m/s).
-Here you have 8 places to explore.
-Characteristics :
-	- Average Wind speed = 7.5 m/s
-	- Access cost = 1 $';
-
-
-		$image_content2 = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/regions/img2.png";
-		$image_content3 = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/regions/img3.png";
-
-		// Create First Scene Data
-		$firstSceneData = array(
-			'post_title' => $firstSceneTitle,
-			'post_content' => $content1,
-			'post_name' => $firstSceneSlug,
-			'post_type' => 'vrodos_scene',
-			'post_status' => 'publish',
-			'tax_input' => array(
-				'vrodos_scene_pgame' => array($parent_project_id_as_term_id),
-				'vrodos_scene_yaml' => array($firstSceneYAMLID),
-			), 'meta_input' => array(
-				'vrodos_scene_default' => 1,
-				'vrodos_scene_metatype' => 'scene',
-				'vrodos_scene_json_input' => $default_json,
-				'vrodos_isRegional' => 1,
-				'vrodos_scene_environment' => 'mountain',
-			),
-		);
-
-		$secondSceneData = array(
-			'post_title' => $secondSceneTitle,
-			'post_content' => $content2,
-			'post_name' => $secondSceneSlug,
-			'post_type' => 'vrodos_scene',
-			'post_status' => 'publish',
-			'tax_input' => array(
-				'vrodos_scene_pgame' => array($parent_project_id_as_term_id),
-				'vrodos_scene_yaml' => array($firstSceneYAMLID),
-			), 'meta_input' => array(
-				'vrodos_scene_default' => 1,
-				'vrodos_scene_metatype' => 'scene',
-				'vrodos_scene_json_input' => $default_json,
-				'vrodos_isRegional' => 1,
-				'vrodos_scene_environment' => 'fields',
-			),
-		);
-
-		$thirdSceneData = array(
-			'post_title' => $thirdSceneTitle,
-			'post_content' => $content3,
-			'post_name' => $thirdSceneSlug,
-			'post_type' => 'vrodos_scene',
-			'post_status' => 'publish',
-			'tax_input' => array(
-				'vrodos_scene_pgame' => array($parent_project_id_as_term_id),
-				'vrodos_scene_yaml' => array($firstSceneYAMLID),
-			), 'meta_input' => array(
-				'vrodos_scene_default' => 1,
-				'vrodos_scene_metatype' => 'scene',
-				'vrodos_scene_json_input' => $default_json,
-				'vrodos_isRegional' => 1,
-				'vrodos_scene_environment' => 'seashore',
-			),
-		);
-
-		$scene2_id = wp_insert_post( $secondSceneData );
-		$scene3_id = wp_insert_post( $thirdSceneData );
-
-		$attachment2_id = vrodos_upload_img_vid_aud( $image_content2, $scene2_id);
-		$attachment3_id = vrodos_upload_img_vid_aud( $image_content3, $scene3_id);
-		set_post_thumbnail( $scene2_id, $attachment2_id );
-		set_post_thumbnail( $scene3_id, $attachment3_id );
-	}else {
-		// Create First Scene Data
-		$firstSceneData = array(
-			'post_title' => $firstSceneTitle,
-			'post_content' => $default_json,
-			'post_name' => $firstSceneSlug,
-			'post_type' => 'vrodos_scene',
-			'post_status' => 'publish',
-			'tax_input' => array(
-				'vrodos_scene_pgame' => array($parent_project_id_as_term_id),
-				'vrodos_scene_yaml' => array($firstSceneYAMLID),
-			), 'meta_input' => array(
-				'vrodos_scene_default' => 1,
-				'vrodos_scene_metatype' => 'scene',
-				'vrodos_scene_caption' => 'Auto-created scene',
-				'vrodos_isRegional' => 0,
-			),
-		);
-	}
 
 
 
-	if($game_category == 'chemistry_games'){
-		// Create Exam Scene Data
-		$exam2dSceneData = array(
-			'post_title'    => $exam2dSceneTitle,
-			'post_content' => 'Create Molecule Naming puzzle game',
-			'post_name' => $exam2dSceneSlug,
-			'post_type' => 'vrodos_scene',
-			'post_status'   => 'publish',
-			'tax_input'    => array(
-				'vrodos_scene_pgame'     => array( $parent_project_id_as_term_id ),
-				'vrodos_scene_yaml'     => array( $exam2dSceneYAMLID ),
-			),'meta_input'   => array(
-				'vrodos_scene_default' => 1,
-				'vrodos_scene_metatype' => 'sceneExam2d',
-				'vrodos_scene_json_input' => $default_json,
-			),
-		);
-
-		wp_insert_post( $exam2dSceneData );
-
-		$exam3dSceneData = array(
-			'post_title'    => $exam3dSceneTitle,
-			'post_content' => 'Create Molecule Construction puzzle game',
-			'post_name' => $exam3dSceneSlug,
-			'post_type' => 'vrodos_scene',
-			'post_status'   => 'publish',
-			'tax_input'    => array(
-				'vrodos_scene_pgame'     => array( $parent_project_id_as_term_id ),
-				'vrodos_scene_yaml'     => array( $exam3dSceneYAMLID ),
-			),'meta_input'   => array(
-				'vrodos_scene_default' => 1,
-				'vrodos_scene_metatype' => 'sceneExam3d',
-				'vrodos_scene_json_input' => $default_json,
-			),
-		);
-
-		wp_insert_post( $exam3dSceneData );
-	}
-
-	// Insert posts 1-1 into the database
-
-	$scene1_id = wp_insert_post( $firstSceneData );
-	if($game_category == 'energy_games'){
-
-		$image_content1 = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/regions/img1.png";
-		$attachment1_id = vrodos_upload_img_vid_aud( $image_content1, $scene1_id);
-		set_post_thumbnail( $scene1_id, $attachment1_id );
-	}
-}
 
 //==========================================================================================================================================
 //==========================================================================================================================================

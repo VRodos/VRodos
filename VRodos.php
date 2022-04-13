@@ -31,7 +31,7 @@ echo ini_get('max_input_time').chr(10);
 // VirtualLab: 1
 // VRExpo     : 2
 // VirtualProduction : 3
-$project_scope = 2;
+$project_scope = 0;
 
 
 
@@ -269,7 +269,7 @@ add_action( 'init', 'vrodos_projects_taxtypes_define', 3 );
 
 
 // 28
-add_action('transition_post_status','vrodos_create_folder_project', 9 , 3);
+add_action('transition_post_status','vrodos_on_create_project', 9 , 3);
 
 
 // 50
@@ -334,6 +334,8 @@ add_action('save_post', 'vrodos_scenes_metas_save');
 ////===================================== Assets ============================================
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
+
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scenes.php' );
 
 // 14
 add_action('init', 'vrodos_assets_construct'); // vrodos_asset3d 'ASSETS 3D'
@@ -410,7 +412,7 @@ add_filter( 'sanitize_file_name', 'vrodos_overwrite_uploads', 10, 1 );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php' );
 
 // Set to the lowest priority in order to have game taxes available when joker games are created
-add_action( 'init', 'vrodos_createJoker_activation', 100, 2 );
+add_action( 'init', 'vrodos_create_joker_projects', 100, 2 );
 
 // Remove Admin bar for non admins
 add_action('after_setup_theme', 'vrodos_remove_admin_bar');
