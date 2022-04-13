@@ -142,7 +142,7 @@ function vrodos_on_create_project( $new_status, $old_status, $post){
 //        fclose($fh);
 
         // If project is not a joker one
-		if(($projectSlug != 'archaeology-joker') && ($projectSlug != 'energy-joker') && ($projectSlug != 'chemistry-joker')){
+		if(!str_contains($projectSlug,'-joker')){
 
 			$gameTitle = $post->post_title;
 			$gameID = $post->ID;
@@ -479,17 +479,11 @@ function vrodos_games_assemblerbox_show(){
 
 
 function vrodos_projects_taxtypes_define(){
-
-    wp_insert_term('Energy', 'vrodos_game_type', array('description' => 'Energy Games', 'slug' => 'energy_games'));
-
-    wp_insert_term('Archaeology','vrodos_game_type', array('description'=> 'Archaeology Games','slug'=>'archaeology_games'));
-
-    wp_insert_term('Chemistry','vrodos_game_type',array('description'=> 'Chemistry Games','slug' => 'chemistry_games'));
-	
-	wp_insert_term('VR Exhibition','vrodos_game_type', array('description'=> 'Exhibitions in 3D','slug'=>'vrexpo_games'));
-	
-	wp_insert_term('Virtual Production','vrodos_game_type', array('description'=> 'Archaeology Games','slug'=>'virtualproduction_games'));
-
+    wp_insert_term('energy',     'vrodos_game_type',       array('description' => 'Energy Projects',     'slug' => 'energy_games'));
+    wp_insert_term('archaeology','vrodos_game_type',       array('description'=> 'Archaeology Projects', 'slug' => 'archaeology_games'));
+    wp_insert_term('chemistry',  'vrodos_game_type',       array('description'=> 'Chemistry Projects',   'slug' => 'chemistry_games'));
+	wp_insert_term('vrexpo',     'vrodos_game_type',       array('description'=> 'Exhibition Projects', 'slug' => 'vrexpo_games'));
+	wp_insert_term('virtualproduction','vrodos_game_type', array('description'=> 'Archaeology Projects', 'slug' => 'virtualproduction_games'));
 }
 
 

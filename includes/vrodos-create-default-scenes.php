@@ -457,12 +457,12 @@ function vrodos_create_vrexpo_default_scenes($projectSlug){
 	$firstSceneYAMLID = $firstSceneYAML->term_id;
 	
 	// Main Menu YAML
-	$mainmenuSceneYAML   = get_term_by( 'slug', 'mainmenu-arch-yaml', 'vrodos_scene_yaml' ); //Yaml Tax for Main Menu
-	$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
+//	$mainmenuSceneYAML   = get_term_by( 'slug', 'mainmenu-arch-yaml', 'vrodos_scene_yaml' ); //Yaml Tax for Main Menu
+//	$mainmenuSceneYAMLID = $mainmenuSceneYAML->term_id;
 	
 	// Credentials Scene YAML
-	$credentialsSceneYAML   = get_term_by( 'slug', 'credentials-arch-yaml', 'vrodos_scene_yaml' ); //Yaml Tax for Credentials Scene
-	$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
+//	$credentialsSceneYAML   = get_term_by( 'slug', 'credentials-arch-yaml', 'vrodos_scene_yaml' ); //Yaml Tax for Credentials Scene
+//	$credentialsSceneYAMLID = $credentialsSceneYAML->term_id;
 	
 	// ToChange
 	$default_json = vrodos_getDefaultJSONscene( 'archaeology' );
@@ -522,10 +522,10 @@ function vrodos_create_vrexpo_default_scenes($projectSlug){
 	$fourthSceneTitle = 'Expo';
 	$fourthSceneSlug  = $projectSlug . '-expo-scene';
 	
-	$content1 = 'Lobby:  Birds eye, Single Player';
-	$content2 = 'Auditorium: First person, Single Player';
-	$content3 = 'Cafe:  Birds eye, Multi Player';
-	$content4 = 'Expo:  Birds eye, Single Player';
+	$content1 = '';
+	$content2 = '';
+	$content3 = '';
+	$content4 = '';
 	
 	// Create Lobby Scene Data
 	$firstSceneData = array(
@@ -586,9 +586,9 @@ function vrodos_create_vrexpo_default_scenes($projectSlug){
 	);
 	
 	$fourthSceneData = array(
-		'post_title'   => $thirdSceneTitle,
-		'post_content' => $content3,
-		'post_name'    => $thirdSceneSlug,
+		'post_title'   => $fourthSceneTitle,
+		'post_content' => $content4,
+		'post_name'    => $fourthSceneSlug,
 		'post_type'    => 'vrodos_scene',
 		'post_status'  => 'publish',
 		'tax_input'    => array(
@@ -600,7 +600,7 @@ function vrodos_create_vrexpo_default_scenes($projectSlug){
 			'vrodos_scene_metatype'    => 'scene',
 			'vrodos_scene_json_input'  => $default_json,
 			'vrodos_isRegional'        => 0,
-			'vrodos_scene_environment' => 'Cafe',
+			'vrodos_scene_environment' => 'Expo',
 		),
 	);
 	

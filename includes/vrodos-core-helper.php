@@ -10,17 +10,21 @@ function vrodos_return_project_type($id) {
 
 	$all_project_category = get_the_terms( $id, 'vrodos_game_type' );
 
-	$project_category     = $all_project_category[0]->name;
+	$project_category = $all_project_category[0]->name;
 
 	// Default is Archaeology
 	$project_type_icon = "account_balance";
 
 	// Set game type icon
-	if ( $project_category === 'Energy' )
+	if ( $project_category === 'Energy' ) {
 		$project_type_icon = "blur_on";
-
-    if ( $project_category === 'Chemistry' )
-        $project_type_icon = "bubble_chart";
+	}elseif ( $project_category === 'Chemistry' ) {
+		$project_type_icon = "bubble_chart";
+	}elseif ( $project_category === 'vrexpo' ) {
+		$project_type_icon = "public";
+	}elseif ( $project_category === 'virtualproduction' ) {
+		$project_type_icon = "theater_comedy";
+	}
 
 
 	$obj = new stdClass();

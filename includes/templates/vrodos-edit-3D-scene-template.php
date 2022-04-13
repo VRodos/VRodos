@@ -121,6 +121,9 @@ $project_type = vrodos_return_project_type($project_id)->string;
 // Get project type icon
 $project_type_icon = vrodos_return_project_type($project_id)->icon;
 
+echo "I: ". $project_type_icon;
+
+
 // Get Joker project id
 $joker_project_id = get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID;
 

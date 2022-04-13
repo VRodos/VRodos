@@ -128,7 +128,7 @@
 	?>
 	
 	<!--ADD NEW SCENE card for all but Energy project that has fixed scenes-->
-	<?php if($project_type !== "Energy") { ?>
+	<?php if($project_type !== "Energy" && $project_type!=="vrexpo") { ?>
 		
 		<div id="add-new-scene-card" class="SceneCardContainer">
 			
