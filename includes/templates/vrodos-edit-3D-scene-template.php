@@ -121,9 +121,6 @@ $project_type = vrodos_return_project_type($project_id)->string;
 // Get project type icon
 $project_type_icon = vrodos_return_project_type($project_id)->icon;
 
-echo "I: ". $project_type_icon;
-
-
 // Get Joker project id
 $joker_project_id = get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID;
 
@@ -612,13 +609,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
 
             <?php
-                // Add sceneType variable in js envir
-                $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
-                if (count($sceneType)>0) {
-                    echo '<script>';
-                    echo 'envir.sceneType="' . $sceneType[0] . '";';
-                    echo '</script>';
-                }
+           
     
                 // Options dialogue
                 require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' );
@@ -660,9 +651,9 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
     
         // load asset browser with data
         jQuery(document).ready(function(){
+            
             vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
 
-            //console.log( jQuery('#assetBrowserToolbar'));
             
             // make asset browser draggable: not working without get_footer
             //jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
@@ -770,6 +761,9 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
         loaderMulti.load(manager, resources3D, pluginPath);
         
+        if (resources3D.length === 0) {
+            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
+        }
         
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json){
@@ -917,9 +911,18 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
     </script>
 <?php } ?>
 
-<?php  // get_footer(); ?>
+<?php
+    // Add sceneType variable in js envir
+    $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
+    echo $sceneType;
+    if (count($sceneType)>0) {
+        echo '<script>';
+        echo 'envir.sceneType="' . $sceneType[0] . '";';
+        echo '</script>';
+    }
+?>
 
 <style type="text/css" media="screen">
-    html { margin-top: 28px !important; }
-    * html body { margin-top: 28px !important; }
+    /*html { margin-top: 28px !important; }*/
+    /** html body { margin-top: 28px !important; }*/
 </style>

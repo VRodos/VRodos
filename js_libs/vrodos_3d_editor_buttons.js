@@ -641,15 +641,21 @@ function showObjectPropertiesPanel(type) {
 function takeScreenshot(){
 
     //envir.cameraAvatarHelper.visible = false;
-    if (envir.scene.getObjectByName("myTransformControls"))
-        envir.scene.getObjectByName("myTransformControls").visible=false;
+    if (envir.scene.getObjectByName("myTransformControls")) {
+        envir.scene.getObjectByName("myTransformControls").visible = false;
+    }
+
+    envir.renderer.preserveDrawingBuffer = true;
 
     // Save screenshot data to input
     envir.renderer.render( envir.scene, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
 
     // if no manually selected file for icon, then take a screenshot of the 3D canvas
     //if (document.getElementById("vrodos_scene_sshot").src.includes("noimagemagicword"))
+
+
     document.getElementById("vrodos_scene_sshot").src = envir.renderer.domElement.toDataURL("image/jpeg");
+    envir.renderer.preserveDrawingBuffer = false;
 
     //envir.cameraAvatarHelper.visible = true;
     //envir.axisHelper.visible = true;

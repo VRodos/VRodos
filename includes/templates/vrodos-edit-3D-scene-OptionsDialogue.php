@@ -1,3 +1,7 @@
+<?php
+    global $current_scene_id;
+?>
+
 <!-- Scene Options Dialog-->
 <aside id="options-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
        aria-labelledby="Scene options dialog" aria-describedby="Set the settings of the scene"

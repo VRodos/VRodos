@@ -119,7 +119,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
             e.originalEvent.dataTransfer.setDragImage(dragImg, 32, 32);
 
-            console.log(e.target);
+
 
             var dragData = {
                 "title": e.target.attributes.getNamedItem("data-assetslug").value + "_" + Math.floor(Date.now() / 1000),

@@ -468,11 +468,11 @@ function vrodos_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 
 	$allAssets = [];
 
-	// find the joker game slug e.g. "Archaeology-joker"
-	$joker_game_slug = wp_get_post_terms( $gameProjectID, 'vrodos_game_type')[0]->name."-joker";
-
-	// Slugs are low case "Archaeology-joker" -> "archaeology-joker"
-	$joker_game_slug = strtolower($joker_game_slug);
+//	// find the joker game slug e.g. "Archaeology-joker"
+//	$joker_game_slug = wp_get_post_terms( $gameProjectID, 'vrodos_game_type')[0]->name."-joker";
+//
+//	// Slugs are low case "Archaeology-joker" -> "archaeology-joker"
+//	$joker_game_slug = strtolower($joker_game_slug);
 
 	$queryargs = array(
 		'post_type' => 'vrodos_asset3d',
@@ -481,7 +481,7 @@ function vrodos_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 			array(
 				'taxonomy' => 'vrodos_asset3d_pgame',
 				'field' => 'slug',
-				'terms' => array($gameProjectSlug, $joker_game_slug)
+				'terms' => array($gameProjectSlug, 'vrexpo-joker', 'archaeology-joker', 'virtualproduction-joker', 'energy-joker', 'chemistry-joker')
 			)
 		)
 	);

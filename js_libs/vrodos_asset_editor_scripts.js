@@ -255,7 +255,7 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
         asset_viewer_3d_kernel_local.render();
         document.getElementById("sshotPreviewImg").src = canvas.toDataURL("image/png");
 
-        //------------ Resize ------------
+        //------------ Resize ---------------------------------------
         var resizedCanvas = document.createElement("canvas");
         var resizedContext = resizedCanvas.getContext("2d");
         var context = canvas.getContext("2d");
