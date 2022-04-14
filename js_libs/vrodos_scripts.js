@@ -34,7 +34,8 @@ function unixTimestamp_to_time(tStr) {
 function updateClearColorPicker(picker){
     document.getElementById('sceneClearColor').value = picker.toRGBString();
     var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
-    envir.renderer.setClearColor(hex);
+    //envir.renderer.setClearColor(hex);
+    envir.scene.background = new THREE.Color(hex);
 }
 
 function rgbToHex(red, green, blue) {

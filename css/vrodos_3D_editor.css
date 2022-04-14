@@ -647,10 +647,10 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 
 
 .ImageContainer {
-    width:100%;
-    height:80px;
-    max-height:80px;
-    min-height:50px;
+    /*width:100%;*/
+    /*height:80px;*/
+    /*max-height:80px;*/
+    /*min-height:50px;*/
     position:relative;
     text-align: center;
     overflow: hidden;
@@ -658,18 +658,16 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 
 
 .ImageContainer img {
-    position: absolute;
-    /*min-height: 225px;*/
-    /*width: auto;*/
-    height: 100%;
-    overflow: hidden;
-    -webkit-transform: translate(-50%,-50%);
-    -ms-transform: translate(-50%,-50%);
-    transform: translate(-50%,-50%);
-    display: block;
-    text-align: center;
-    vertical-align: middle;
-    height: 100%;
+    /*position: absolute;*/
+    /*height: 100%;*/
+    /*overflow: hidden;*/
+    /*-webkit-transform: translate(-50%,-50%);*/
+    /*-ms-transform: translate(-50%,-50%);*/
+    /*transform: translate(-50%,-50%);*/
+    /*display: block;*/
+    /*text-align: center;*/
+    /*vertical-align: middle;*/
+    /*height: 100%;*/
 }
 
 #save-scene-elements{

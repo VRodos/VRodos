@@ -103,7 +103,9 @@ class vrodos_3d_editor_environmentals {
 
 
         // This works well for outlining objects in white background
-        this.renderer.setClearColor(0xeeeeee, 1);
+        //this.renderer.setClearColor(0xeeeeee, 1);
+        this.scene.background = new THREE.Color(0xeeeeee);
+
 
         // add the renderers to the canvas
         this.vr_editor_main_div.appendChild(this.renderer.domElement);

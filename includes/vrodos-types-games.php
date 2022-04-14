@@ -182,7 +182,7 @@ function vrodos_on_create_project( $new_status, $old_status, $post){
 			
 			
 			//Create Default Scenes for this "Game"
-			vrodos_create_default_scenes_for_game($projectSlug, $gameTitle, $gameID);
+			vrodos_create_default_scenes_for_game($projectSlug, $gameID);
 
 			//Available molecules
 			$molecules = vrodos_get_all_molecules_of_game($gameID);//ALL available Molecules of a GAME

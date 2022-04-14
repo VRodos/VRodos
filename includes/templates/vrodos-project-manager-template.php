@@ -265,12 +265,15 @@ get_header();
                role="alertdialog"
                aria-labelledby="Delete project dialog"
                aria-describedby="Delete project dialog" data-mdc-auto-init="MDCDialog">
-               <div class="mdc-dialog__surface">
+               
+            <div class="mdc-dialog__surface">
+            
                 <header class="mdc-dialog__header">
                     <h2 id="delete-dialog-title" class="mdc-dialog__header__title">
                         Delete project?
                     </h2>
                 </header>
+            
                 <section id="delete-dialog-description" class="mdc-dialog__body mdc-typography--body1">
                     Are you sure you want to delete your <?php echo $full_title_lowercase; ?>? There is no Undo functionality once you delete it.
                 </section>
@@ -405,12 +408,25 @@ get_header();
         dialog.show();
     }
 
+    
     jQuery('#deleteProjectBtn').click( function (e) {
+        
         jQuery('#delete-dialog-progress-bar').show();
+        
+        // Disable buttons
         jQuery( "#deleteProjectBtn" ).addClass( "LinkDisabled" );
+        
         jQuery( "#canceldeleteProjectBtn" ).addClass( "LinkDisabled" );
+        
         //console.log("ID:", dialog.id);
         vrodos_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
+
+        // Enable buttons after 3 secs
+        setTimeout(function(){
+            jQuery( "#deleteProjectBtn" ).removeClass( "LinkDisabled" );
+            jQuery( "#canceldeleteProjectBtn" ).removeClass( "LinkDisabled" );
+            },
+            3000);
     });
 
     jQuery('#canceldeleteProjectBtn').click( function (e) {

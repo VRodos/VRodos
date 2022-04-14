@@ -23,7 +23,7 @@ function vrodos_return_project_type($id) {
 	}elseif ( $project_category === 'vrexpo' ) {
 		$project_type_icon = "public";
 	}elseif ( $project_category === 'virtualproduction' ) {
-		$project_type_icon = "theater_comedy";
+		$project_type_icon = "theaters";
 	}
 
 
