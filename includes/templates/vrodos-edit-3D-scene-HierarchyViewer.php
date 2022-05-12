@@ -113,11 +113,11 @@
                     </div>
                     
                 </div>
-                <label id="sceneColorRadio-label" for="sceneColorRadio" style="margin-bottom: 0;">Color
+                <label id="sceneColorRadio-label" for="sceneColorRadio" style="margin-bottom: 0;">Color</label>
 
-                
-                
-                </label>
+                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0px;font-size: 10px;width: 50px;" disabled>
+
+                <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px">
 
          
             </li>
@@ -136,9 +136,7 @@
         </ul>
 
 
-        <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" value="000000" autocomplete="off" style="background-image: none; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); margin-left:30px; margin-bottom:5px; height:15px; margin-top:0px; padding:0px; font-size:10px; width:50px; display: flex !important;float: right;position: absolute;right: 5px;top: 5px;">
-
-        <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px">
+    
 	
 		
   
