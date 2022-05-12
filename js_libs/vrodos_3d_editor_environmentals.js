@@ -44,10 +44,13 @@ class vrodos_3d_editor_environmentals {
 
                 texture.mapping = THREE.EquirectangularReflectionMapping;
 
+
                 envir.maintexture = texture;
 
-                //envir.scene.background = texture;
-                //envir.scene.environment = envir.maintexture;
+                envir.scene.background = texture;
+                //envir.scene.background = new THREE.Color(0xeeeeee);
+
+                envir.scene.environment = envir.maintexture;
 
             } );
 
@@ -104,7 +107,9 @@ class vrodos_3d_editor_environmentals {
 
         // This works well for outlining objects in white background
         //this.renderer.setClearColor(0xeeeeee, 1);
-        this.scene.background = new THREE.Color(0xeeeeee);
+
+
+
 
 
         // add the renderers to the canvas

@@ -6,26 +6,40 @@
  * Time: 3:40 μμ
  */
 
+function vrodos_project_type_icon($project_category){
+ 
+	// Set game type icon
+	switch($project_category){
+		case 'Archaeology':
+			$project_type_icon = "account_balance";
+			break;
+		case 'Energy':
+			$project_type_icon = "power";
+			break;
+		case 'Chemistry':
+			$project_type_icon = "bubble_chart";
+			break;
+		case 'vrexpo':
+			$project_type_icon = "public";
+			break;
+		case 'virtualproduction':
+			$project_type_icon = "theaters";
+			break;
+        default:
+	        $project_type_icon = "account_balance";
+	        break;
+	}
+    
+    return $project_type_icon;
+}
+
 function vrodos_return_project_type($id) {
 
 	$all_project_category = get_the_terms( $id, 'vrodos_game_type' );
 
 	$project_category = $all_project_category[0]->name;
-
-	// Default is Archaeology
-	$project_type_icon = "account_balance";
-
-	// Set game type icon
-	if ( $project_category === 'Energy' ) {
-		$project_type_icon = "blur_on";
-	}elseif ( $project_category === 'Chemistry' ) {
-		$project_type_icon = "bubble_chart";
-	}elseif ( $project_category === 'vrexpo' ) {
-		$project_type_icon = "public";
-	}elseif ( $project_category === 'virtualproduction' ) {
-		$project_type_icon = "theaters";
-	}
-
+	
+	$project_type_icon = vrodos_project_type_icon($project_category);
 
 	$obj = new stdClass();
 	$obj->string = $project_category;

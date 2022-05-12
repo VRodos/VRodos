@@ -161,7 +161,11 @@ get_header();
                                     </div>
                                 </div>
                                 <label id="gameTypeArchRadio-label" for="gameTypeArchRadio">
-                                    <i class="material-icons"></i>Virtual Tour</label>
+                                    <i class="material-icons">
+		                                <?php echo vrodos_project_type_icon('archaeology') ?>
+                                    </i>
+                                    <span style="vertical-align: super">Virtual Tour</span>
+                                </label>
                             </li>
                             <?php }?>
 	
@@ -176,7 +180,12 @@ get_header();
                                             <div class="mdc-radio__inner-circle"></div>
                                         </div>
                                     </div>
-                                    <label id="gameTypeChemistryRadio-label" for="gameTypeChemistryRadio">Chemistry</label>
+                                    <label id="gameTypeChemistryRadio-label" for="gameTypeChemistryRadio">
+                                        <i class="material-icons">
+		                                    <?php echo vrodos_project_type_icon('Chemistry') ?>
+                                        </i>
+                                        <span style="vertical-align: super">Chemistry</span>
+                                    </label>
                                 </li>
 
                                 <li class="mdc-form-field">
@@ -188,7 +197,12 @@ get_header();
                                             <div class="mdc-radio__inner-circle"></div>
                                         </div>
                                     </div>
-                                    <label id="gameTypeEnergyRadio-label" for="gameTypeEnergyRadio">Energy</label>
+                                    <label id="gameTypeEnergyRadio-label" for="gameTypeEnergyRadio">
+                                        <i class="material-icons">
+                                            <?php echo vrodos_project_type_icon('Energy');?>
+                                        </i>
+                                        <span style="vertical-align: super">Energy</span>
+                                    </label>
                                 </li>
 	                        <?php }?>
                          
@@ -204,7 +218,11 @@ get_header();
                                         </div>
                                     </div>
                                     <label id="gameTypeVRExpoRadio-label" for="gameTypeVRExpoRadio">
-                                        <i class="material-icons"></i>VR Expo</label>
+                                        <i class="material-icons">
+                                            <?php echo vrodos_project_type_icon('vrexpo') ?>
+                                        </i>
+                                        <span style="vertical-align: super">VR Expo</span>
+                                    </label>
                                 </li>
 	                        <?php }?>
 	
@@ -220,7 +238,11 @@ get_header();
                                         </div>
                                     </div>
                                     <label id="gameTypeVirtualProductionRadio-label" for="gameTypeVirtualProductionRadio">
-                                        <i class="material-icons"></i>Virtual Production</label>
+                                        <i class="material-icons">
+		                                    <?php echo vrodos_project_type_icon('virtualproduction') ?>
+                                        </i>
+                                        <span style="vertical-align: super">Virtual Production</span>
+                                    </label>
                                 </li>
 	                        <?php }?>
                         </ul>

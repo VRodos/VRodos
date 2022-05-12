@@ -40,8 +40,6 @@ function vrodos_register_scripts() {
  
 	$pluginDirJS = plugin_dir_url( __FILE__ ).'js_libs/';
 	
-	
-	
 	$scriptsA = array(
 		array('vrodos_asset_editor_scripts', $pluginDirJS.'vrodos_asset_editor_scripts.js'),
 		array('vrodos_scripts', $pluginDirJS.'vrodos_scripts.js'),
