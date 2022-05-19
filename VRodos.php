@@ -103,6 +103,7 @@ function vrodos_register_scripts() {
 		array( 'vrodos_load119_OrbitControls', $pluginDirJS.'threejs119/OrbitControls.js'),
 		array( 'vrodos_load125_OrbitControls', $pluginDirJS.'threejs125/OrbitControls.js'),
 		array( 'vrodos_load119_TransformControls', $pluginDirJS.'threejs119/TransformControls.js'),
+		array( 'vrodos_load125_TransformControls', $pluginDirJS.'threejs125/TransformControls.js'),
 		array( 'vrodos_load124_TrackballControls', $pluginDirJS.'threejs124/TrackballControls.js'),
 		array( 'vrodos_load119_PointerLockControls', $pluginDirJS.'threejs119/PointerLockControls.js'),
 		
@@ -112,11 +113,17 @@ function vrodos_register_scripts() {
 		array( 'vrodos_load119_CSS2DRenderer', $pluginDirJS.'threejs119/CSS2DRenderer.js'),
 		
 		array( 'vrodos_load119_CopyShader', $pluginDirJS.'threejs119/CopyShader.js'),
+		array( 'vrodos_load125_CopyShader', $pluginDirJS.'threejs125/CopyShader.js'),
 		array( 'vrodos_load119_FXAAShader', $pluginDirJS.'threejs119/FXAAShader.js'),
+		array( 'vrodos_load125_FXAAShader', $pluginDirJS.'threejs125/FXAAShader.js'),
 		array( 'vrodos_load119_EffectComposer', $pluginDirJS.'threejs119/EffectComposer.js'),
+		array( 'vrodos_load125_EffectComposer', $pluginDirJS.'threejs125/EffectComposer.js'),
 		array( 'vrodos_load119_RenderPass', $pluginDirJS.'threejs119/RenderPass.js'),
+		array( 'vrodos_load125_RenderPass', $pluginDirJS.'threejs125/RenderPass.js'),
 		array( 'vrodos_load119_OutlinePass', $pluginDirJS.'threejs119/OutlinePass.js'),
+		array( 'vrodos_load125_OutlinePass', $pluginDirJS.'threejs125/OutlinePass.js'),
 		array( 'vrodos_load119_ShaderPass', $pluginDirJS.'threejs119/ShaderPass.js'),
+		array( 'vrodos_load125_ShaderPass', $pluginDirJS.'threejs125/ShaderPass.js'),
 		
 		
 		array( 'vrodos_load119_Font', $pluginDirJS.'threejs119/Font.js'),

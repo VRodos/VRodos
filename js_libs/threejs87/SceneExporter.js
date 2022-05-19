@@ -824,7 +824,7 @@ THREE.SceneExporter.prototype = {
             '		"formatVersion" : 4.0,',
             '		"type"		: "scene",',
             '		"generatedBy"	: "SceneExporter.js",',
-            '		"ClearColor" : "#' + envir.scene.background.getHexString() + '",',
+            '		"ClearColor" : "#' + (envir.scene.background.isColor?envir.scene.background.getHexString():'000000') + '",',
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableEnvironmentTexture" : "' + (!!envir.scene.environment) + '",',
             '		"objects"       : ' + nobjects + //+  ',',
