@@ -12,6 +12,16 @@ function loadButtonActions() {
         jQuery("#pauseRendering").get(0).childNodes[1].innerText = "play_arrow";
     });
 
+    // Compile Project button
+    jQuery("#compileToAframeBtn").click(function () {
+        compileDialog.show();
+
+        // Pause Rendering
+        //isPaused = true;
+        //jQuery("#pauseRendering").get(0).childNodes[1].innerText = "play_arrow";
+    });
+
+
     // Cogwheel options button
     jQuery("#optionsPopupBtn").click(function () {
         (new mdc.dialog.MDCDialog(document.querySelector('#options-dialog'))).show();
