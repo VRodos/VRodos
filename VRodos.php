@@ -30,7 +30,7 @@ echo ini_get('max_input_time').chr(10);
 // VirtualTour: 0
 // VirtualLab: 1
 // VRExpo     : 2
-// VirtualProduction : 3
+// VirtualProduction (MediaVerse) : 3
 $project_scope = 2;
 
 
