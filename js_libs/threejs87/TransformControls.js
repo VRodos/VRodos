@@ -1,4 +1,4 @@
-// Children transform_controls.children
+// Map of the Gizmos as Children of transform_controls.children
 
 // 3:  3D Translate
 // 4:  3D Rotate

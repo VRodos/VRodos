@@ -12,15 +12,6 @@ function loadButtonActions() {
         jQuery("#pauseRendering").get(0).childNodes[1].innerText = "play_arrow";
     });
 
-    // Compile Project button
-    jQuery("#compileToAframeBtn").click(function () {
-        compileDialog.show();
-
-        // Pause Rendering
-        //isPaused = true;
-        //jQuery("#pauseRendering").get(0).childNodes[1].innerText = "play_arrow";
-    });
-
 
     // Cogwheel options button
     jQuery("#optionsPopupBtn").click(function () {
@@ -257,7 +248,7 @@ function loadButtonActions() {
             showObjectPropertiesPanel(transform_controls.getMode());
 
             if (envir.is2d) {
-                transform_controls.setMode("rottrans");
+                transform_controls.setMode("translate");
                 jQuery("#translatePanelGui").show();
             }
 
@@ -435,7 +426,7 @@ function loadButtonActions() {
             jQuery("#dim-change-btn").text("2D").attr("title", "2D mode");
 
             envir.is2d = true;
-            transform_controls.setMode("rottrans");
+            transform_controls.setMode("translate");
 
             envir.scene.getObjectByName("SteveOld").visible = false;
             envir.scene.getObjectByName("Camera3Dmodel").visible = true;

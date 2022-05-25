@@ -4,6 +4,8 @@ function findIntersected(event){
     // All 3D meshes that can be clicked
     let activeMeshes = getActiveMeshes();
 
+    //console.log(activeMeshes);
+
     if (activeMeshes.length === 0)
         return [];
     else {
@@ -108,7 +110,7 @@ function onLeftMouseDown( event ) {
 
             // Steve can not be deleted
             transform_controls.size = 1;
-            transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
+            //transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
             return;
         }
     }
@@ -157,14 +159,14 @@ function selectorMajor(event, objectSel){
         // envir.renderer.setClearColor( 0xeeeeee  );
 
         // X for deleting object is visible (only Steve can not be deleted)
-        transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
+       // transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
 
         // Rotate GIZMO
-        transform_controls.children[6].children[0].children[1].visible = true; // ROTATE GIZMO
+        // transform_controls.children[6].children[0].children[1].visible = true; // ROTATE GIZMO
 
         if (objectSel.categoryName === "lightSun" || objectSel.categoryName === "lightTargetSpot"
             || objectSel.categoryName === "lightSpot" || objectSel.categoryName === "lightLamp") {
-            transform_controls.children[6].children[0].children[1].visible = false; // 2D ROTATE GIZMO
+           // transform_controls.children[6].children[0].children[1].visible = false; // 2D ROTATE GIZMO
         }
 
         if (objectSel.name === "avatarYawObject") {
@@ -173,7 +175,7 @@ function selectorMajor(event, objectSel){
             transform_controls.size = 1;
 
             // Can not be deleted
-            transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
+            //transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
 
 
         } else {
@@ -185,14 +187,15 @@ function selectorMajor(event, objectSel){
             transform_controls.size = sizeT > 1 ? sizeT : 1;
 
 
-            transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
+            //transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
         }
 
         if (objectSel.categoryName === "lightTargetSpot"){
-            transform_controls.children[6].children[0].children[2].visible = false; // 2D DELETE GIZMO
+            //transform_controls.children[6].children[0].children[2].visible = false; // 2D DELETE GIZMO
         }
 
-        transform_controls.setMode( envir.is2d ? "rottrans" : "translate" );
+        //transform_controls.setMode( envir.is2d ? "rottrans" : "translate" );
+        transform_controls.setMode( "translate" );
 
         if (!envir.is2d) {
             jQuery("#" + transform_controls.getMode() + "-switch").click();
@@ -210,6 +213,8 @@ function selectorMajor(event, objectSel){
 function contextMenuClick(event){
 
     let intersected = findIntersected(event);
+
+
 
     // Check if right-clicked is the one selected already with left-click
     if (intersected[0].object.parent.name === transform_controls.object.name){

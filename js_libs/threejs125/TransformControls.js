@@ -1,3 +1,13 @@
+// Map of the Gizmos as Children of transform_controls.children
+
+// 3:  3D Translate
+// 4:  3D Rotate
+// 5:  3D Scale
+
+// 6:  2D Rot Trans Delete     .children[0].children[0]    :  Move
+// 6:  2D Rot Trans Delete     .children[0].children[1]    :  Rotate
+// 6:  2D Rot Trans Delete     .children[0].children[2]    :  Delete    (.handleGizmos.XZY[0][0])
+
 THREE.TransformControls = function ( camera, domElement ) {
 
 	if ( domElement === undefined ) {
@@ -240,6 +250,9 @@ THREE.TransformControls = function ( camera, domElement ) {
 		if ( this.object === undefined || this.dragging === true ) return;
 
 		raycaster.setFromCamera( pointer, this.camera );
+
+		// console.log( _gizmo.picker  )
+		// console.log(this.mode);
 
 		var intersect = intersectObjectWithRay( _gizmo.picker[ this.mode ], raycaster );
 
@@ -1156,6 +1169,8 @@ THREE.TransformControlsGizmo = function () {
 		var quaternion = space === 'local' ? this.worldQuaternion : identityQuaternion;
 
 		// Show only gizmos for current transform mode
+
+		this.mode = 'translate';
 
 		this.gizmo[ 'translate' ].visible = this.mode === 'translate';
 		this.gizmo[ 'rotate' ].visible = this.mode === 'rotate';
