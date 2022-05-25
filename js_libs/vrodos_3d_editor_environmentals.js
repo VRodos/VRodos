@@ -40,7 +40,7 @@ class vrodos_3d_editor_environmentals {
 
 
         rgbeloader.setPath( siteurl + '/wp-content/plugins/VRodos/images/hdr/' )
-            .load( 'quarry_01_1k.hdr', function ( texture ) {
+            .load( 'Stonewall_Ref.hdr', function ( texture ) {
 
                 texture.mapping = THREE.EquirectangularReflectionMapping;
 

@@ -38,6 +38,9 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script('vrodos_load87_datgui');
     wp_enqueue_script('vrodos_load87_OBJloader');
     wp_enqueue_script('vrodos_load87_MTLloader');
+    
+    // ToDo : See why OrbitControls125  destroys object selection and fix
+    
     wp_enqueue_script('vrodos_load87_OrbitControls');
 	wp_enqueue_script('vrodos_load125_TransformControls');
     wp_enqueue_script('vrodos_load87_PointerLockControls');
