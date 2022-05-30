@@ -1130,6 +1130,62 @@ margin-right: 20px;">
 	</div>
 	</div>
 	</div>
+        
+        <table>
+            <tr>
+                <td>
+                <?php
+
+
+                $args = array(
+	                'post_type' => 'vrodos_scene',
+	                'posts_per_page' => -1
+                );
+                
+                $query = new WP_Query($args);
+
+                echo 'Total number of Scenes:'. $query->found_posts;
+
+                ?>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                <?php
+                
+                $args = array(
+	                'post_type' => 'vrodos_asset3d',
+	                'posts_per_page' => -1
+                );
+
+                $query = new WP_Query($args);
+
+                echo 'Total number of Assets:'. $query->found_posts;
+                
+                echo "<br />";
+                if ($query->have_posts() ) :
+
+                    while ( $query->have_posts() ) : $query->the_post();
+                        echo "id: " . get_the_ID() . " title: " . get_the_title() .
+                             " Parent Project: ".
+                             wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame')[0]->name .
+                             " <br />";
+                        
+                    endwhile;
+	
+                    
+	
+	                
+                    
+                    wp_reset_postdata();
+                endif;
+
+                ?>
+
+                </td>
+            </tr>
+        </table>
+        
 	</div>
 	</div>
 	
