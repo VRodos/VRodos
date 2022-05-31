@@ -262,7 +262,15 @@ THREE.OrbitControls = function ( object, domElement ) {
     var startEvent = { type: 'start' };
     var endEvent = { type: 'end' };
 
-    var STATE = { NONE: - 1, ROTATE: 0, DOLLY: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_DOLLY: 4, TOUCH_PAN: 5 };
+    var STATE = {
+        NONE: - 1,
+        ROTATE: 0,
+        DOLLY: 1,
+        PAN: 2,
+        TOUCH_ROTATE: 3,
+        TOUCH_DOLLY: 4,
+        TOUCH_PAN: 5
+    };
 
     var state = STATE.NONE;
 
@@ -431,7 +439,6 @@ THREE.OrbitControls = function ( object, domElement ) {
 
     function handleMouseDownRotate( event ) {
 
-        //console.log( 'handleMouseDownRotate' );
 
         rotateStart.set( event.clientX, event.clientY );
 
@@ -439,7 +446,6 @@ THREE.OrbitControls = function ( object, domElement ) {
 
     function handleMouseDownDolly( event ) {
 
-        //console.log( 'handleMouseDownDolly' );
 
         dollyStart.set( event.clientX, event.clientY );
 
@@ -447,25 +453,23 @@ THREE.OrbitControls = function ( object, domElement ) {
 
     function handleMouseDownPan( event ) {
 
-        //console.log( 'handleMouseDownPan' );
-
         panStart.set( event.clientX, event.clientY );
 
     }
 
     function handleMouseMoveRotate( event ) {
 
-        //console.log( 'handleMouseMoveRotate' );
 
         rotateEnd.set( event.clientX, event.clientY );
+
+
         rotateDelta.subVectors( rotateEnd, rotateStart );
 
         var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
-        // rotating across whole screen goes 360 degrees around
         rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientWidth * scope.rotateSpeed );
 
-        // rotating up and down along whole screen attempts to go 360, but limited to 180
+
         rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight * scope.rotateSpeed );
 
         rotateStart.copy( rotateEnd );
@@ -500,8 +504,6 @@ THREE.OrbitControls = function ( object, domElement ) {
 
     function handleMouseMovePan( event ) {
 
-        //console.log( 'handleMouseMovePan' );
-
         panEnd.set( event.clientX, event.clientY );
 
         panDelta.subVectors( panEnd, panStart );
@@ -516,13 +518,11 @@ THREE.OrbitControls = function ( object, domElement ) {
 
     function handleMouseUp( event ) {
 
-        // console.log( 'handleMouseUp' );
+        // no-op
 
     }
 
     function handleMouseWheel( event ) {
-
-//        console.log( 'handleMouseWheel' );
 
         if ( event.deltaY < 0 ) {
 

@@ -11,18 +11,22 @@ function vrodos_load_vreditor_scripts()
 {
     wp_enqueue_script('jquery-ui-draggable');
     
-    wp_enqueue_script('vrodos_load125_threejs');
-    wp_enqueue_script('vrodos_load125_CSS2DRenderer');
-    wp_enqueue_script('vrodos_load125_CopyShader');
-    wp_enqueue_script('vrodos_load125_FXAAShader');
-    wp_enqueue_script('vrodos_load125_EffectComposer');
-    wp_enqueue_script('vrodos_load125_RenderPass');
-    wp_enqueue_script('vrodos_load125_OutlinePass');
-    wp_enqueue_script('vrodos_load125_ShaderPass');
+    wp_enqueue_script('vrodos_load119_threejs');
+    wp_enqueue_script('vrodos_load119_CSS2DRenderer');
+    wp_enqueue_script('vrodos_load119_CopyShader');
+    wp_enqueue_script('vrodos_load119_FXAAShader');
+    wp_enqueue_script('vrodos_load119_EffectComposer');
+    wp_enqueue_script('vrodos_load119_RenderPass');
+    wp_enqueue_script('vrodos_load119_OutlinePass');
+    wp_enqueue_script('vrodos_load119_ShaderPass');
     
     wp_enqueue_script('vrodos_load119_FBXloader');
-	wp_enqueue_script('vrodos_load119_RGBELoader');
+	
+    wp_enqueue_script('vrodos_load119_RGBELoader');
+	
+    
     wp_enqueue_script('vrodos_load119_GLTFLoader');
+	
     wp_enqueue_script('vrodos_load119_DRACOLoader');
     wp_enqueue_script('vrodos_load119_DDSLoader');
     wp_enqueue_script('vrodos_load119_KTXLoader');
@@ -38,11 +42,8 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script('vrodos_load87_datgui');
     wp_enqueue_script('vrodos_load87_OBJloader');
     wp_enqueue_script('vrodos_load87_MTLloader');
-    
-    // ToDo : See why OrbitControls125  destroys object selection and fix
-    
     wp_enqueue_script('vrodos_load87_OrbitControls');
-	wp_enqueue_script('vrodos_load125_TransformControls');
+    wp_enqueue_script('vrodos_load87_TransformControls');
     wp_enqueue_script('vrodos_load87_PointerLockControls');
     
     wp_enqueue_script('vrodos_load87_sceneexporterutils');
@@ -691,7 +692,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
-        var transform_controls = new THREE.TransformControls( envir.cameraOrbit, envir.renderer.domElement );
+        var transform_controls = new THREE.TransformControls( envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
 
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
@@ -830,7 +831,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             // Update it
             updatePositionsAndControls();
 
-            envir.cubeCamera.update( envir.renderer, envir.scene );
+            //envir.cubeCamera.update( envir.renderer, envir.scene );
         }
 
         // UPDATE
@@ -840,7 +841,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             updatePointerLockControls();
 
-            //transform_controls.update(); // update the axis controls based on the browse controls
+            transform_controls.update(); // update the axis controls based on the browse controls
             //envir.stats.update();
 
             // Now update the translation and rotation input texts
@@ -888,7 +889,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             showObjectPropertiesPanel(transform_controls.getMode());
 
             selected_object_name = name;
-            transform_controls.setMode("translate");
+            transform_controls.setMode("rottrans");
 
             let sizeT = 1;
 
@@ -898,15 +899,15 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 sizeT = Math.max(...dims);
 
                 // 6 is rotation
-                //transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
+                transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
 
                 if (selected_object_name.includes("lightSun") || selected_object_name.includes("lightLamp") ||
                     selected_object_name.includes("lightSpot")){
                     // ROTATE GIZMO: Sun and lamp can not be rotated
-                    //transform_controls.children[6].children[0].children[1].visible = false;
+                    transform_controls.children[6].children[0].children[1].visible = false;
                 }
             } else {
-                //transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
+                transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
             }
 
             transform_controls.setSize( sizeT > 1 ? sizeT : 1 );

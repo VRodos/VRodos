@@ -31,53 +31,8 @@ class vrodos_3d_editor_environmentals {
         this.NEAR = 0.01;
         this.FAR = 200000; // keep the camera empty until everything is loaded
 
-        // ------ Create Scene -------
-        this.scene = new THREE.Scene();
-        this.scene.name = "vrodosScene";
-
-        // Add a background to the scene
-        var rgbeloader = new THREE.RGBELoader();
-
-
-        rgbeloader.setPath( siteurl + '/wp-content/plugins/VRodos/images/hdr/' )
-            .load( 'Stonewall_Ref.hdr', function ( texture ) {
-
-                texture.mapping = THREE.EquirectangularReflectionMapping;
-
-
-                envir.maintexture = texture;
-
-                envir.scene.background = texture;
-                //envir.scene.background = new THREE.Color(0xeeeeee);
-
-                envir.scene.environment = envir.maintexture;
-
-            } );
-
-
-        this.cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
-        this.cubeRenderTarget.texture.type = THREE.HalfFloatType;
-
-        // REM HERE
-        // Check envmap for every material
-        this.cubeCamera = new THREE.CubeCamera( 1, 1000, this.cubeRenderTarget );
-
-        // --- Add Grid to scene
-        this.gridHelper = new THREE.GridHelper(2000, 40);
-        this.gridHelper.name = "myGridHelper";
-        this.scene.add(this.gridHelper);
-        this.gridHelper.visible = false;
-
-        // -- Add Axes helper
-        this.axesHelper = new THREE.AxesHelper(100);
-        this.axesHelper.name = "myAxisHelper";
-        this.scene.add(this.axesHelper);
-        this.setAxisText();
-        this.axesHelper.visible = false;
-
         // -- Set Renderer ----
         this.renderer = new THREE.WebGLRenderer({antialias: true, alpha: false, logarithmicDepthBuffer: false});
-
         this.renderer.shadowMap.enabled = true;
 
         // BasicShadowMap gives unfiltered shadow maps - fastest, but lowest quality.
@@ -107,6 +62,56 @@ class vrodos_3d_editor_environmentals {
 
         // This works well for outlining objects in white background
         //this.renderer.setClearColor(0xeeeeee, 1);
+
+
+
+
+        // ------ Create Scene -------
+        this.scene = new THREE.Scene();
+        this.scene.name = "vrodosScene";
+
+        // This doesn't work well for outlining objects in white background
+        //this.scene.background = new THREE.Color( 0xeeeeee );
+
+        //this.scene.background = new THREE.Color(this.back_3d_color);
+
+
+
+
+
+        // // Add a background to the scene
+        var rgbeloader = new THREE.RGBELoader();
+
+        rgbeloader.setPath( siteurl + '/wp-content/plugins/VRodos/images/hdr/' )
+            .load( 'Stonewall_Ref.hdr', function ( texture ) {
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+                envir.maintexture = texture;
+                //envir.scene.background = texture;
+                //envir.scene.background = new THREE.Color(0xeeeeee);
+                envir.scene.environment = envir.maintexture;
+            } );
+        //
+        // this.cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
+        // this.cubeRenderTarget.texture.type = THREE.HalfFloatType;
+        //
+        // // REM HERE
+        // // Check envmap for every material
+        // this.cubeCamera = new THREE.CubeCamera( 1, 1000, this.cubeRenderTarget );
+
+        // --- Add Grid to scene
+        this.gridHelper = new THREE.GridHelper(2000, 40);
+        this.gridHelper.name = "myGridHelper";
+        this.scene.add(this.gridHelper);
+        this.gridHelper.visible = false;
+
+        // -- Add Axes helper
+        this.axesHelper = new THREE.AxesHelper(100);
+        this.axesHelper.name = "myAxisHelper";
+        this.scene.add(this.axesHelper);
+        this.setAxisText();
+        this.axesHelper.visible = false;
+
+
 
 
 
