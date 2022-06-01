@@ -436,7 +436,7 @@ if(is_user_logged_in() ) {
             // Update it
             updatePositionsAndControls();
 
-            envir.cubeCamera.update( envir.renderer, envir.scene );
+            //envir.cubeCamera.update( envir.renderer, envir.scene );
         }
 
         // UPDATE

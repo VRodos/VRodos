@@ -58,6 +58,8 @@ function vrodos_add_customroles() {
     
     $role = get_role( 'project_master' );
     
+    
+    
     //$role->add_cap('read');
     //$role->add_cap('level_0');
     
@@ -163,6 +165,37 @@ function vrodos_add_capabilities_to_admin() {
 
     unset( $role );
 
+}
+
+
+function extra_user_profile_field_mvnode_token( $user ) { ?>
+    <h3><?php _e("Extra profile information", "blank"); ?></h3>
+    
+    <table class="form-table">
+        <tr>
+            <th><label for="mvnode_token"><?php _e("MediaVerse Node Token"); ?></label></th>
+            <td>
+                <input type="text" name="mvnode_token" id="mvnode_token" value="<?php
+                      echo esc_attr( get_the_author_meta( 'mvnode_token', $user->ID ) );
+                      ?>" class="regular-text" /><br />
+                <span class="description"><?php _e("This value is taken from MV node."); ?></span>
+            </td>
+        </tr>
+        
+    </table>
+<?php }
+
+function save_extra_user_profile_field_mvnode_token( $user_id ) {
+	if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-user_' . $user_id ) ) {
+		return;
+	}
+	
+	if ( !current_user_can( 'edit_user', $user_id ) ) {
+		return false;
+	}
+ 
+	update_user_meta( $user_id, 'mvnode_token', $_POST['mvnode_token'] );
+	
 }
 
 

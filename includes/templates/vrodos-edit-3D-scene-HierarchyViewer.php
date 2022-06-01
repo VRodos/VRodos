@@ -100,7 +100,7 @@
 	</div>
 	
 	<!-- Set Clear Color -->
-	<div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0px; padding:0px; height:100px; background: rgba(255,255,255,0.5)">
+	<div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0px; padding:0px; height:70px; background: rgba(255,255,255,0.5)">
 
         <ul class="RadioButtonList" style="margin:0px">
             <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="" style="height:30px; margin:0px; font-size:xx-small">
@@ -115,24 +115,24 @@
                 </div>
                 <label id="sceneColorRadio-label" for="sceneColorRadio" style="margin-bottom: 0;">Color</label>
 
-                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0px;font-size: 10px;width: 50px;" disabled>
+                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0px;font-size: 10px;width: 50px;" >
 
                 <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px">
 
          
             </li>
 
-            <li class="mdc-form-field" id="sceneEnvMapRadioListItem" onclick="" style="height:30px; margin:0px; font-size:xx-small">
-                <div class="mdc-radio" >
-                    <input class="mdc-radio__native-control" type="radio" id="sceneEnvMapRadio"
-                           name="sceneEnvMapTypeRadio" value="envmap" checked>
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
-                </div>
-                <label id="sceneEnvMapRadio-label" for="sceneEnvMapRadio" style="margin-bottom: 0;">Environmental map</label>
-            </li>
+<!--            <li class="mdc-form-field" id="sceneEnvMapRadioListItem" onclick="" style="height:30px; margin:0px; font-size:xx-small">-->
+<!--                <div class="mdc-radio" >-->
+<!--                    <input class="mdc-radio__native-control" type="radio" id="sceneEnvMapRadio"-->
+<!--                           name="sceneEnvMapTypeRadio" value="envmap" checked>-->
+<!--                    <div class="mdc-radio__background">-->
+<!--                        <div class="mdc-radio__outer-circle"></div>-->
+<!--                        <div class="mdc-radio__inner-circle"></div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <label id="sceneEnvMapRadio-label" for="sceneEnvMapRadio" style="margin-bottom: 0;">Environmental map</label>-->
+<!--            </li>-->
         </ul>
 
 
@@ -157,7 +157,7 @@
 		
 		<label for="rendererToneMapping"
 		       class="mdc-theme--text-secondary-on-light"
-		       style="width:110px;font-size: 9px;padding-left: 5px;height:100%;padding-top:5px;line-height: 10px">Renderer Tone Mapping</label>
+		       style="width:110px;font-size: 9px;padding-left: 5px;height:100%;padding-top:12px;line-height: 10px">Renderer Tone Mapping</label>
 		
 		<input type="range" min="0" max="2" value="1" step="0.01"
 		       id="rendererToneMappingSlider" class="mdc-slider__input"

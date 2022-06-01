@@ -20,6 +20,8 @@ class VRodos_LightsLoader {
                 if(name === 'ClearColor') {
 
 
+                    //console.log("resources3D['ClearColor']", resources3D['ClearColor']);
+
                     envir.scene.background = new THREE.Color(resources3D['ClearColor']);             // this.isBackGroundNull ? null : new THREE.Color(this.back_3d_color);
 
 

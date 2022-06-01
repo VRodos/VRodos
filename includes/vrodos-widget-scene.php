@@ -594,7 +594,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
                 // Update it
                 envir.orbitControls.update();
 
-                envir.cubeCamera.update( envir.renderer, envir.scene );
+                //envir.cubeCamera.update( envir.renderer, envir.scene );
             }
         
             animate();
