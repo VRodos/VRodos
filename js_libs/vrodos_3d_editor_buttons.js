@@ -551,19 +551,35 @@ function loadButtonActions() {
 
 
     // Drag light: Add event listeners
-    var cols = document.querySelectorAll('.lightbuttons .lightbutton');
+    var cols = document.querySelectorAll('.lightPawnbuttons .lightbutton');
     [].forEach.call(cols, function (col) {
-        col.addEventListener('dragstart', handleLightDragStart, false);
+        col.addEventListener('dragstart', handleLightPawnDragStart, false);
     });
 
 
     // Handler for dragging light
-    function handleLightDragStart(e) {
+    function handleLightPawnDragStart(e) {
 
-        // lightSun or lightLamp or lightSpot
-        var dragData = {"categoryName": "light" + e.target.dataset.light, "title": "mylight" +
-                        e.target.dataset.light + "_" + Math.floor(Date.now() / 1000)
+        // Pawn or Sun or Lamp or Spot or Ambient
+
+        var dragData;
+        if (  e.target.dataset.lightPawn === "Sun" ||
+              e.target.dataset.lightPawn === "Spot" ||
+              e.target.dataset.lightPawn === "Lamp" ||
+              e.target.dataset.lightPawn === "Ambient"
+        ) {
+            dragData = { "categoryName": "light" + e.target.dataset.lightPawn,
+                         "title": "mylight" + e.target.dataset.lightPawn + "_" + Math.floor(Date.now() / 1000)
                         };
+
+        } else if (e.target.dataset.light === "Pawn") {
+            dragData = { "categoryName": "Pawn",
+                         "title": "myPawn" + e.target.dataset.lightPawn + "_" + Math.floor(Date.now() / 1000)
+                       };
+        }
+
+        // Todo: Here
+
 
         e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
         return false;

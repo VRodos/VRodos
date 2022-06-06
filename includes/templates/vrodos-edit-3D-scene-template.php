@@ -469,16 +469,18 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                         <a id="undo-scene-button" title="Undo last change"><i class="material-icons">undo</i></a>
                         <a id="save-scene-button" title="Save all changes you made to the current scene">All changes saved</a>
                         <a id="redo-scene-button" title="Redo last change"><i class="material-icons">redo</i></a>
+
+                        <!-- View Json code UI -->
+                        <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
+                           class="ToggleUIButtonStyle mdc-theme--secondary mdc-theme--text-hint-on-light"
+                           title="View json of scene"
+                           style="padding-top:1px; width:70px; left: calc(60% + 112px); position:absolute; top:5px">
+                            json:
+                            <i class="material-icons" style="background: none; opacity:1; font-size:11pt">visibility_off</i>
+                        </a>
                     </div>
 
-                    <!-- View Json code UI -->
-                    <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
-                       class="ToggleUIButtonStyle mdc-theme--secondary mdc-theme--text-hint-on-light"
-                       title="View json of scene"
-                       style="padding-top:1px;width:70px;left: calc(50% + 112px);">
-                        json:
-                        <i class="material-icons" style="background: none; opacity:1; font-size:11pt">visibility_off</i>
-                    </a>
+                    
 
                     <!-- Compile Button -->
                     <a id="compileGameBtn"
@@ -494,8 +496,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 </div>
 
                 <!-- Scene JSON content TextArea display and set input field -->
-                <div id="sceneJsonContent">
-                  <textarea id="vrodos_scene_json_input"
+                <div id="sceneJsonContent" >
+                      <textarea id="vrodos_scene_json_input"
                     name="vrodos_scene_json_input"
                     title="vrodos_scene_json_input"
                     rows="50" cols = "100"><?php echo json_encode(json_decode($sceneJSON), JSON_PRETTY_PRINT ); ?>
@@ -510,25 +512,38 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 </a>
 
                 <!-- Lights -->
-                <div class="lightbuttons hidable">
+                <div class="lightPawnbuttons hidable">
+
+                    <div class="lightbutton" data-lightPawn="Pawn" draggable="true">
+                        <header draggable="false" class="notdraggable">Actor</header>
+                        <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0px"
+                             src="<?php echo $pluginpath?>/images/lights/pawn.png"/>
+                    </div>
                     
-                    <div class="lightbutton" data-light="Sun" draggable="true">
+                    <div class="lightbutton" data-lightPawn="Sun" draggable="true">
                             <header draggable="false" class="notdraggable">Sun</header>
                             <img draggable="false" class="lighticon notdraggable"
                                  src="<?php echo $pluginpath?>/images/lights/sun.png"/>
                     </div>
                     
-                    <div class="lightbutton" data-light="Lamp" draggable="true">
+                    <div class="lightbutton" data-lightPawn="Lamp" draggable="true">
                         <header draggable="false" class="notdraggable">Lamp</header>
                           <img draggable="false" class="lighticon notdraggable"
                            src="<?php echo $pluginpath?>/images/lights/lamp.png" draggable="false"/>
                     </div>
                     
-                    <div class="lightbutton" data-light="Spot" draggable="true">
+                    <div class="lightbutton" data-lightPawn="Spot" draggable="true">
                         <header draggable="false" class="notdraggable">Spot</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/spot.png" draggable="false"/>
                     </div>
+
+                    <div class="lightbutton" data-lightPawn="Ambient" draggable="true">
+                        <header draggable="false" class="notdraggable" style="font-size: 7pt">Ambient</header>
+                        <img draggable="false" class="lighticon notdraggable"
+                             src="<?php echo $pluginpath?>/images/lights/ambient_light.png" draggable="false"/>
+                    </div>
+
                     
                 </div>
 

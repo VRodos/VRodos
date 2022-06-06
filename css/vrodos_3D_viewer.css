@@ -772,7 +772,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     z-index:100000;
     position:absolute;
     top:50px;
-    left:100px;
+    left:calc(60% + 112px);
     display:none
 }
 

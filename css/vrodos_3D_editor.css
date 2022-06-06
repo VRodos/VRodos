@@ -712,7 +712,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     -webkit-user-drag: element;
 }
 
-.lightbuttons {
+.lightPawnbuttons {
     position: absolute !important; /* Do not put relative because it breaks the raycaster of canvas */
     top:30px;
     left: 50%;
@@ -880,8 +880,8 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 #sceneJsonContent {
     z-index:100000;
     position:absolute;
-    top:50px;
-    left:100px;
+    top:0px;
+    left:calc(50%);
     display:none
 }
 
@@ -893,6 +893,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     top:50px;
     height: 25em;
     background: white;
+    resize:both;
 }
 
 #analyticsIframeContainer{
