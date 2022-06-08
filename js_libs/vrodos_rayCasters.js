@@ -263,6 +263,8 @@ function showProperties(event, object){
             break
         case 'lightSpot' :
             displaySpotProperties(event, name);
+        case 'lightAmbient' :
+            displayAmbientProperties(event, name);
             break;
     }
 }
@@ -529,6 +531,36 @@ function displaySpotProperties(event, name){
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
     ppPropertiesDiv[0].style.top  = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 }
+
+
+
+// LAMP PROPERTIES DIV show
+function displayAmbientProperties(event, name){
+
+    // The whole popup div
+    var ppPropertiesDiv = jQuery("#popUpAmbientPropertiesDiv");
+
+    for (var i=0; i<jQuery('#hierarchy-viewer')[0].childNodes.length; i++){
+        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).categoryName ){
+        var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
+        var scene_object = envir.scene.getChildByName(id_Hierarchy);
+        //spotTargetObject.appendChild(new Option(scene_object.name));
+        //}
+    }
+
+
+    jQuery("#ambientColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
+    jQuery("#ambientIntensity")[0].value = transform_controls.object.intensity;
+
+    document.getElementById("ambientColor").value = transform_controls.object.children[0].material.color.getHexString();
+    jQuery("#ambientColor")[0].style.background = "#" + jQuery("#ambientColor")[0].value;
+
+    // Show Selection
+    ppPropertiesDiv.show();
+    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
+    ppPropertiesDiv[0].style.top  = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+}
+
 
 
 

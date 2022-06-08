@@ -755,7 +755,7 @@ if ( $assets ) :?>
 
             jQuery('#unityTaskMemValue').html("0");
 
-            vrodos_assepileAjax();
+            vrodos_compileAjax();
         });
 
         var MDCSelect = mdc.select.MDCSelect;

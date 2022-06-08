@@ -256,16 +256,23 @@ if(vrodos_getUnity_local_or_remote() != 'remote') {
 
 
 
-$thepath = $pluginpath . '/js_libs/assemble_compile_commands/request_game_assepile.js';
-wp_enqueue_script( 'ajax-script_assepile', $thepath, array('jquery') );
-wp_localize_script( 'ajax-script_assepile', 'my_ajax_object_assepile',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php'),
-	       'id' => $project_id,
-	       'slug' => $projectSlug,
-	       'gameUnityProject_dirpath' => $gameUnityProject_dirpath,
-	       'gameUnityProject_urlpath' => $gameUnityProject_urlpath
-	)
+$thepath = $pluginpath . '/js_libs/assemble_compile_commands/request_game_compile.js';
+
+wp_enqueue_script( 'ajax-script_compile', $thepath, array('jquery') );
+
+wp_localize_script( 'ajax-script_compile',
+                'my_ajax_object_compile',
+
+                        array( 'ajax_url' => admin_url( 'admin-ajax.php'),
+                               'id' => $project_id,
+                               'slug' => $projectSlug,
+                               'sceneId' => $current_scene_id
+//                        ,
+//                               'gameUnityProject_dirpath' => $gameUnityProject_dirpath,
+//                               'gameUnityProject_urlpath' => $gameUnityProject_urlpath
+                        )
 );
+
 
 // DELETE SCENE AJAX
 wp_enqueue_script( 'ajax-script_deletescene', $pluginpath . '/js_libs/ajaxes/delete_scene.js', array('jquery') );
@@ -500,7 +507,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                       <textarea id="vrodos_scene_json_input"
                     name="vrodos_scene_json_input"
                     title="vrodos_scene_json_input"
-                    rows="50" cols = "100"><?php echo json_encode(json_decode($sceneJSON), JSON_PRETTY_PRINT ); ?>
+                    ><?php echo json_encode(json_decode($sceneJSON), JSON_PRETTY_PRINT ); ?>
                   </textarea>
                 </div>
 
@@ -514,31 +521,31 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 <!-- Lights -->
                 <div class="lightPawnbuttons hidable">
 
-                    <div class="lightbutton" data-lightPawn="Pawn" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
                         <header draggable="false" class="notdraggable">Actor</header>
                         <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0px"
                              src="<?php echo $pluginpath?>/images/lights/pawn.png"/>
                     </div>
                     
-                    <div class="lightbutton" data-lightPawn="Sun" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true">
                             <header draggable="false" class="notdraggable">Sun</header>
                             <img draggable="false" class="lighticon notdraggable"
                                  src="<?php echo $pluginpath?>/images/lights/sun.png"/>
                     </div>
                     
-                    <div class="lightbutton" data-lightPawn="Lamp" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Lamp" draggable="true">
                         <header draggable="false" class="notdraggable">Lamp</header>
                           <img draggable="false" class="lighticon notdraggable"
                            src="<?php echo $pluginpath?>/images/lights/lamp.png" draggable="false"/>
                     </div>
                     
-                    <div class="lightbutton" data-lightPawn="Spot" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Spot" draggable="true">
                         <header draggable="false" class="notdraggable">Spot</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/spot.png" draggable="false"/>
                     </div>
 
-                    <div class="lightbutton" data-lightPawn="Ambient" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Ambient" draggable="true">
                         <header draggable="false" class="notdraggable" style="font-size: 7pt">Ambient</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/ambient_light.png" draggable="false"/>
@@ -659,11 +666,11 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         deleteDialog.focusTrap_.deactivate();
         
         // // Compile dialogue
-        // var compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
-        // compileDialog.focusTrap_.deactivate();
-        //
-        // // Project Analytics
-        // loadAnalyticsTab(projectId, scene_id, project_keys, game_type, user_email, current_user_id, energy_stats);
+        var compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
+        compileDialog.focusTrap_.deactivate();
+        
+        // Project Analytics
+        /// loadAnalyticsTab(projectId, scene_id, project_keys, game_type, user_email, current_user_id, energy_stats);
     
         // Less top margin if not Admin
         // if (!isUserAdmin)
@@ -883,9 +890,12 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         
         function attachToControls(name, objItem){
 
+            
             let trs_tmp = resources3D[name]['trs'];
             transform_controls.attach(objItem);
 
+           
+            
             // highlight
             envir.outlinePass.selectedObjects = [objItem];
 
@@ -897,6 +907,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
             }
 
+  
+            
             jQuery('#object-manipulation-toggle').show();
             jQuery('#axis-manipulation-buttons').show();
             jQuery('#double-sided-switch').show();
@@ -934,7 +946,6 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 <?php
     // Add sceneType variable in js envir
     $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
-    echo $sceneType;
     if (count($sceneType)>0) {
         echo '<script>';
         echo 'envir.sceneType="' . $sceneType[0] . '";';

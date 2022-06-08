@@ -46,6 +46,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
     if (categoryName==='lightSun') {
 
+
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
         lightSun.name = nameModel;
@@ -253,14 +254,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         lightSpotHelper.categoryName = 'lightHelper';
         lightSpotHelper.parentLightName = lightSpot.name;
 
-
-
         envir.scene.add(lightSpot);
         envir.scene.add(lightSpotHelper);
 
-
         lightSpotHelper.update();
-
 
         // Add transform controls
         var insertedObject = envir.scene.getObjectByName(nameModel);
@@ -293,7 +290,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var sizeT = Math.max(...dims);
         transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-
         transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
         transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
@@ -304,8 +300,71 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         triggerAutoSave();
 
 
-    }
-    else {
+    } else if (categoryName==='lightAmbient') {
+
+        var lightAmbient = new THREE.AmbientLight( 0xffffff, 1 );
+
+        lightAmbient.name = nameModel;
+        lightAmbient.isDigiArt3DModel = true;
+        lightAmbient.categoryName = "lightAmbient";
+        lightAmbient.isLight = true;
+
+        //// Add Lamp Helper
+        var lampSphere = new THREE.Mesh(
+            new THREE.SphereBufferGeometry( 1, 16, 8 ), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
+            new THREE.MeshBasicMaterial({color: 0xffffff})
+        );
+        lampSphere.rotation.set(Math.PI/2, 0, 0);
+
+        lampSphere.isDigiArt3DMesh = true;
+        lampSphere.name = "LampSphere";
+
+        lightAmbient.add(lampSphere);
+
+        envir.scene.add(lightAmbient);
+
+        // Add transform controls
+        var insertedObject = envir.scene.getObjectByName(nameModel);
+        var trs_tmp = resources3D[nameModel]['trs'];
+
+        trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
+
+        insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
+        insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
+        insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+        insertedObject.parent = envir.scene;
+
+        // place controls to last inserted obj
+        transform_controls.attach(insertedObject);
+
+        // highlight
+        envir.outlinePass.selectedObjects = [insertedObject];
+        //envir.renderer.setClearColor(0xeeeeee, 1);
+        //envir.scene.add(transform_controls);
+
+        // Position
+        transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
+        transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
+        transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+
+        selected_object_name = nameModel;
+
+        // Dimensions
+        var dims = findDimensions(transform_controls.object);
+        var sizeT = Math.max(...dims);
+        transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+
+        transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
+
+        transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
+
+        // Add in scene
+        addInHierarchyViewer(insertedObject);
+
+
+        triggerAutoSave();
+
+    } else {
 
         // Add an object
 

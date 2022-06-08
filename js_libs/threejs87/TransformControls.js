@@ -885,20 +885,21 @@
         this.attach = function ( object ) {
             this.object = object;
 
-            if (object.name === 'avatarYawObject')
-                this.sphereCenter = new THREE.Vector3(0,0,0);
-            else
-                this.sphereCenter = computeSceneBoundingSphereAll ( object) [0] ;
-
+             this.sphereCenter = object.name === 'avatarYawObject' ? new THREE.Vector3(0,0,0) :
+                                                                           computeSceneBoundingSphereAll(object)[0];
 
             try {
                 //this.bboxX = new THREE.BoxHelper(this.object, 0xff0000);
 
                 this.bboxX = '';
 
-                if (this.object.type !== "PointLight" &&  this.object.type !== "PointLightHelper"
-                    &&  this.object.type !== "SpotLight") {
+                if (this.object.type !== "PointLight" &&
+                    this.object.type !== "PointLightHelper" &&
+                    this.object.type !== "SpotLight" &&
+                    this.object.type !== "AmbientLight") {
+
                     this.bboxX = new THREE.BoxHelper(this.object, 0xff00ff);
+
                     //console.log(this.bboxX);
                 } else {
 

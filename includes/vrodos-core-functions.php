@@ -1552,17 +1552,19 @@ function vrodos_update_expert_log_callback()
 
 //====================== GAME ASSEMBLY AND COMPILATION =================================================================
 
-function vrodos_assepile_action_callback(){
+function vrodos_compile_action_callback(){
 
 	//$fa = fopen("output_COMPILE.txt","w");
+ 
 
 
 	$DS = DIRECTORY_SEPARATOR;
-	$os = 'win';  // Linux Unity3D is crappy  //strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'? 'win':'lin';
+	
+    //$os = 'win';  // Linux Unity3D is crappy  //strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'? 'win':'lin';
 
-	$gameFormat = $_REQUEST['gameFormat'];
+	$outputFormat = $_REQUEST['outputFormat'];
 
-	switch($gameFormat){
+	switch($outputFormat){
 		case 'platform-windows':
 			$targetPlatform =  'StandaloneWindows'; //' -buildWindowsPlayer "builds'.$DS.'windows'.$DS.'mygame.exe"';
 			break;
@@ -1575,40 +1577,51 @@ function vrodos_assepile_action_callback(){
 		case 'platform-web':
 			$targetPlatform =  'WebGL'; //' -executeMethod WebGLBuilder.build';
 			break;
+		case 'platform-Aframe':
+			$targetPlatform = 'Aframe'; //' -executeMethod WebGLBuilder.build';
+			break;
 		default:
 			echo "you must select an output format";
 			wp_die();
 			break;
 	}
 
-	$gameId = $_REQUEST['gameId'];
+	$projectId = $_REQUEST['projectId'];
+	$sceneId = $_REQUEST['sceneId'];
+	$projectSlug = $_REQUEST['projectSlug'];
+ 
 
-//	fwrite($fa, "aaaa");
-//    fwrite($fa, "\n");
-//    fwrite($fa, $gameId);
-//    fwrite($fa, "\n");
-
-//    fwrite($fa, print_r(wp_get_post_terms($gameId), true));
-//    fwrite($fa, "1234566");
-//    fwrite($fa, $_REQUEST['gameId']);
-//    fwrite($fa, print_r($_REQUEST, true));
-
-	$gameType = wp_get_post_terms( $gameId, 'vrodos_game_type' );
-
-
-	$assemply_success = vrodos_assemble_the_unity_game_project($gameId, $_REQUEST['gameSlug'],
-		$targetPlatform, $gameType[0]->name);
-
-//    fwrite($fa, "bbbb");
+	$projectType = wp_get_post_terms( $projectId, 'vrodos_game_type' );
+	
+	$projectTypeName = $projectType[0]->name;
+    
+    // Phase 1 get JSON of the scene
+	
+    $assemply_result = vrodos_assemble_the_project($projectId,
+                                                    $projectSlug,
+                                                    $sceneId,
+	                                                $targetPlatform,
+	                                                $projectTypeName);
 
 	// Wait 2 seconds to erase previous project before starting compiling the new one
 	// to avoiding erroneously take previous files. This is not safe with sleep however.
 	// Do not delete library folder if it takes too long
-	sleep(2);
-
-//	wp_die();
-
-
+	
+//	fwrite($fa, $assemply_result);
+//	fclose($fa);
+	
+	
+	
+	echo "I have finished the assembly for the time being.";
+    
+    
+    
+    wp_die();
+	
+	
+	
+	// sleep(2);
+    // Phase 2
 	if ($assemply_success == 'true') {
 
 		$init_gcwd = getcwd(); // get cwd (wp-admin probably)
@@ -2064,7 +2077,7 @@ function vrodos_append_scenes_in_EditorBuildSettings_dot_asset($filepath, $scene
 
 function vrodos_save_scene_async_action_callback()
 {
-    // ToDo: Probably useful in Chemistry
+    // only for Chemistry labs
 	//$mole = update_post_meta( $_POST['scene_id'], 'vrodos_available_molecules',$_POST['available_molecules']);
 
 	// Save screenshot

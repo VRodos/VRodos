@@ -3,37 +3,82 @@
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-function vrodos_assemble_the_unity_game_project($gameID, $gameSlug, $targetPlatform, $gameType){
+function vrodos_assemble_the_project($gameID, $gameSlug, $sceneId, $targetPlatform, $gameType){
+	
+	require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
+	
+	$f = fopen("output_assemble_log.txt", "w");
+	
+	fwrite($f, $targetPlatform);
+	
+	If ($targetPlatform === "Aframe"){
 
-    //0. Delete everything in order to recreate them from scratch
-    vrodos_compile_folders_del($gameSlug);
-
-    //1. Create Default Folder Structure
-    vrodos_compile_folders_gen($gameSlug);
-
-    //1b. Create cs files before all data that give commands to editor and importer
-    // GeneralImportSettings is completed as it is whereas Handybuilder.cs is a template that should be filled with assets and scenes to import
-    vrodos_compile_cs_gen($gameSlug, $targetPlatform);
-    
-    //2. Create Project Settings files (16 files):
-    // ProjectSettings.asset is modified with the versioning system.
-    // EditorBuildSettings.asset is not modified. Just copied.
-    vrodos_compile_settings_gen($gameID,$gameSlug);
-
-    //3. Create models related files (go in Models and Resources)
-    vrodos_compile_models_gen($gameID, $gameSlug, $targetPlatform);
-
-    //4. Create Scenes.Unity files (at Assets/scenes)
-    vrodos_compile_scenes_gen($gameID,$gameSlug);
-
-    //5. Copy StandardAssets depending the Game Type
-    vrodos_compile_copy_StandardAssets($gameID, $gameSlug, $gameType);
-    
-    //6. If game is chemistry then make the molecule prefabs
-    if ($gameType == "Chemistry")
-        vrodos_compile_make_molecules_prefabs($gameID, $gameSlug);
-    
-    return 'true';
+		fwrite($f, "1");
+		
+		// Get scene content from post
+		$scene_post = get_post($sceneId);
+		
+		fwrite($f, "2");
+		
+		// Get the json of the scene
+		$sceneJSON = $scene_post->post_content;
+		
+		fwrite($f, "3");
+		
+		// Get also the upload dir location
+		$upload_url = wp_upload_dir()['baseurl'];
+		
+		fwrite($f, "4".chr(13));
+		
+		// Parson the Json
+		$SceneParserPHP = new ParseJSON($upload_url);
+		
+		
+		
+//		fwrite($f, "5".chr(13));
+//
+//		$resources3D = $SceneParserPHP->init($sceneJSON);
+//
+//		fwrite($f, print_r($resources3D, true));
+//
+//		fwrite($f, "6".chr(13));
+//
+//		//return print_r($resources3D, true);
+		
+		return 'true';
+		
+	} else {
+		//0. Delete everything in order to recreate them from scratch
+		vrodos_compile_folders_del( $gameSlug );
+		
+		//1. Create Default Folder Structure
+		vrodos_compile_folders_gen( $gameSlug );
+		
+		//1b. Create cs files before all data that give commands to editor and importer
+		// GeneralImportSettings is completed as it is whereas Handybuilder.cs is a template that should be filled with assets and scenes to import
+		vrodos_compile_cs_gen( $gameSlug, $targetPlatform );
+		
+		//2. Create Project Settings files (16 files):
+		// ProjectSettings.asset is modified with the versioning system.
+		// EditorBuildSettings.asset is not modified. Just copied.
+		vrodos_compile_settings_gen( $gameID, $gameSlug );
+		
+		//3. Create models related files (go in Models and Resources)
+		vrodos_compile_models_gen( $gameID, $gameSlug, $targetPlatform );
+		
+		//4. Create Scenes.Unity files (at Assets/scenes)
+		vrodos_compile_scenes_gen( $gameID, $gameSlug );
+		
+		//5. Copy StandardAssets depending the Game Type
+		vrodos_compile_copy_StandardAssets( $gameID, $gameSlug, $gameType );
+		
+		//6. If game is chemistry then make the molecule prefabs
+		if ( $gameType == "Chemistry" ) {
+			vrodos_compile_make_molecules_prefabs( $gameID, $gameSlug );
+		}
+		
+		return 'true';
+	}
 }
 
 function vrodos_compile_make_molecules_prefabs($gameID, $gameSlug){

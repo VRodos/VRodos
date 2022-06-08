@@ -29,7 +29,7 @@ echo ini_get('max_input_time').chr(10);
 // Set scope for the 3D editor (under construction feature):
 // VirtualTour: 0
 // VirtualLab: 1
-// VRExpo     : 2
+// Virtual Exhibition (VRExpo)    : 2
 // VirtualProduction (MediaVerse) : 3
 $project_scope = 3;
 
@@ -47,7 +47,7 @@ function vrodos_register_scripts() {
 		array('vrodos_jscolorpick', $pluginDirJS.'external_js_libraries/jscolor.js'),
 		array('vrodos_jsfontselect', $pluginDirJS.'external_js_libraries/jquery.fontselect.js'),
 		array('vrodos_html2canvas', $pluginDirJS.'external_js_libraries/html2canvas.min.js'),
-		array('vrodos_assepile_request', $pluginDirJS.'assemble_compile_commands/request_game_assepile.js'),
+		array('vrodos_compile_request', $pluginDirJS.'assemble_compile_commands/request_game_compile.js'),
 		array('vrodos_savescene_request', $pluginDirJS.'ajaxes/vrodos_save_scene_ajax.js'),
 		array('vrodos_content_interlinking_request', $pluginDirJS.'content_interlinking_commands/content_interlinking.js'),
 		array('vrodos_segmentation_request', $pluginDirJS.'semantics_commands/segmentation.js'),
@@ -1014,7 +1014,7 @@ add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_b
 // the ajax js is in js_lib/request_game.js (see main functions.php for registering js)
 // the ajax phps are on vrodos-core-functions.php
 
-//add_action( 'wp_ajax_vrodos_compile_action', 'vrodos_compile_action_callback' );
+
 add_action( 'wp_ajax_vrodos_monitor_compiling_action', 'vrodos_monitor_compiling_action_callback' );
 add_action( 'wp_ajax_vrodos_killtask_compiling_action', 'vrodos_killtask_compiling_action_callback' );
 add_action( 'wp_ajax_vrodos_game_zip_action', 'vrodos_game_zip_action_callback' );
@@ -1023,7 +1023,7 @@ add_action( 'wp_ajax_vrodos_game_zip_action', 'vrodos_game_zip_action_callback' 
 //add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' );
 // Add the assepile php
 
-add_action( 'wp_ajax_vrodos_assepile_action', 'vrodos_assepile_action_callback' );
+add_action( 'wp_ajax_vrodos_compile_action', 'vrodos_compile_action_callback' );
 
 
 

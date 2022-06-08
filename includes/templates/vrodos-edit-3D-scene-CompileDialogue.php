@@ -32,17 +32,24 @@
                         </li>
                         <?php
                         
-                        foreach (['Windows','Linux','Mac OS','Web','Android'] as $sPlatform){
-                            echo '<li class="mdc-list-item mdc-theme--text-primary-on-background"
-                                    role="option" id="platform-windows" tabindex="0">'.
-                                $sPlatform.'</li>';
+                        foreach (['Aframe'] as $sPlatform){ // ,'Windows','Linux','Mac OS','Web','Android'
+                            ?>
+                            <li class="mdc-list-item mdc-theme--text-primary-on-background"
+                                    role="option" id="platform-<?php echo $sPlatform?>" tabindex="0" aria-selected="true">
+                                <?php echo $sPlatform?>
+                            </li>
+                        <?php
                         }
                         ?>
                     </ul>
                 </div>
             </div>
-            <input id="platformInput" type="hidden">
+            <input id="platformInput" type="hidden" value="platform-Aframe">
             
+            <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background" style="float: left; margin-top:60px">
+                <i title="Instructions" class="material-icons AlignIconToBottom">help</i>
+                You can press "Proceed" in order to receive the link with the compile output scene
+            </div>
             
             <div class="mdc-typography--caption mdc-theme--text-primary-on-background" style="float: right;"> <i title="Memory Usage" class="material-icons AlignIconToBottom">memory</i> <span  id="unityTaskMemValue">0</span> KB </div>
             
@@ -75,7 +82,9 @@
         
         <footer class="mdc-dialog__footer">
             <a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Cancel</a>
-            <a id="compileProceedBtn" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised LinkDisabled">Proceed</a>
+            <a id="compileProceedBtn" type="button"
+               class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised ">Proceed</a>
+            <!--            LinkDisabled-->
         </footer>
     </div>
     <div class="mdc-dialog__backdrop"></div>

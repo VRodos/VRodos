@@ -54,7 +54,6 @@ THREE.SceneExporter.prototype = {
          */
         function createObjectsList( object, pad, whocalls ) {
 
-
             for ( var i = 0; i < object.children.length; i ++ ) {
 
                 var node = object.children[ i ];
@@ -62,11 +61,11 @@ THREE.SceneExporter.prototype = {
 //                console.log(node.name, node.categoryName);
 
 
-                if (node.name == 'rayLine' || node.name == 'rayLine' || node.name == 'mylightAvatar' ||
-                node.name == 'mylightOrbit' || node.name == 'SteveShieldMesh' || node.name =='Steve' ||
-                node.name =='SteveMesh' || node.name =='avatarCamera' || node.name =='avatarPitchObject' ||
-                node.name =='orbitCamera' || node.name =='myAxisHelper' || node.name =='myAxisHelper' ||
-                node.name =='myGridHelper' || node.name =='myTransformControls' || node.categoryName =='lightHelper' || node.categoryName =='lightTargetSpot' || node.name =='Camera3Dmodel' || node.name =='Camera3DmodelMesh' || typeof node.categoryName === 'undefined')
+                if (node.name === 'rayLine' || node.name === 'rayLine' || node.name === 'mylightAvatar' ||
+                node.name === 'mylightOrbit' || node.name === 'SteveShieldMesh' || node.name ==='Steve' ||
+                node.name ==='SteveMesh' || node.name ==='avatarCamera' || node.name ==='avatarPitchObject' ||
+                node.name ==='orbitCamera' || node.name ==='myAxisHelper' || node.name ==='myAxisHelper' ||
+                node.name ==='myGridHelper' || node.name ==='myTransformControls' || node.categoryName ==='lightHelper' || node.categoryName ==='lightTargetSpot' || node.name ==='Camera3Dmodel' || node.name ==='Camera3DmodelMesh' || typeof node.categoryName === 'undefined')
                            continue;
 
                 if (node instanceof THREE.Mesh)
@@ -308,11 +307,17 @@ THREE.SceneExporter.prototype = {
 
 
 
-            if (o.name != 'avatarYawObject' && !o.categoryName.includes('lightSun') &&
-                !o.categoryName.includes('lightTargetSpot') && !o.categoryName.includes('lightLamp')
+            if (o.name != 'avatarYawObject'
+                && !o.categoryName.includes('lightSun')
+                && !o.categoryName.includes('lightTargetSpot')
+                && !o.categoryName.includes('lightLamp')
                 && !o.categoryName.includes('lightSpot')
+                && !o.categoryName.includes('lightAmbient')
+
                 ){
                 // Asset
+
+
 
                 var quatR = new THREE.Quaternion();
 
@@ -443,6 +448,8 @@ THREE.SceneExporter.prototype = {
 
             } else if ( o.categoryName==="lightSpot" ){
 
+
+
                 var quatR_light = new THREE.Quaternion();
 
                 var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
@@ -472,6 +479,30 @@ THREE.SceneExporter.prototype = {
                     '	"categoryName" : "' + o.categoryName + '",',
                     '	"isLight"   : ' + '"' + 'true' + '"' + ( o.children.length ? ',' : '' )
                 ];
+
+            } else if ( o.categoryName === "lightAmbient" ){
+
+                var quatR_light = new THREE.Quaternion();
+
+                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                quatR_light.setFromEuler(eulerR_light);
+
+                var output = [
+                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
+                    '	"position" : ' + Vector3String(o.position) + ',',
+                    '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
+                    '	"quaternion" : ' + "[" + quatR_light._x + "," +
+                                                 quatR_light._y + "," +
+                                                 quatR_light._z + "," +
+                                                 quatR_light._w + "]" + ',',
+                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
+                    '	"lightintensity"	: "' + o.intensity + '",',
+                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
+                    '	"categoryName" : "' + o.categoryName + '",',
+                    '	"isLight"   : ' + '"' + 'true' + '"' + ( o.children.length ? ',' : '' )
+                ];
+
+                //console.log(output);
 
             } else if (o.name === 'avatarYawObject'){
 
@@ -541,7 +572,6 @@ THREE.SceneExporter.prototype = {
             ];
 
             return generateMultiLineString( output, '\n\t\t', n );
-
         }
 
         function GeometryString( g ) {

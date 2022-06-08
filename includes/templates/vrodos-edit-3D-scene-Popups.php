@@ -73,7 +73,15 @@
         // Spot as Sphere
         transform_controls.object.children[0].material.color.setHex(hexcol);
     }
-    
+
+    /// Ambient Color Selector
+    function updateAmbientColorPickerLight(picker){
+        var hexcol = "0x" + document.getElementById("ambientColor").value;
+        // AmbientLight as object
+        transform_controls.object.color.setHex(hexcol);
+        // AmbientLight as Sphere
+        transform_controls.object.children[0].material.color.setHex(hexcol);
+    }
 
     
     function initPopsVals(){
@@ -425,6 +433,41 @@
            value="0" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.penumbra = this.value;"/>
 
 </div>
+
+
+<!-- Spot @ Archaeology: Popup menu to for Lamp Decay, Power, Distance and Color -->
+<div id="popUpAmbientPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2" style="min-width: 250px;display:none; max-width:280px">
+
+    <!-- The close button-->
+    <a style="float: right;" type="button" class="mdc-theme--primary"
+       onclick='this.parentNode.style.display = "none";  return false;'>
+        <!--        clearAndUnbindCheckBoxProperties("poi_video_reward_checkbox");-->
+        <i class="material-icons" style="cursor: pointer; float: right;">close</i>
+    </a>
+
+    <!-- The intensity-->
+    <label for="ambientIntensity" class="mdc-textfield__label" style="top: 8px; font-size:10pt; position: initial; width: 100px; display: inline-block;margin-top: 15px;">
+        Set Ambient Light intensity:</label>
+
+    <input type="text" id="ambientIntensity" name="ambientIntensity" title="Set a number from 0 to infinite, 1 is the default"
+           value="1" maxlength="4"
+           class="mdc-textfield__input" style="width: 7ch;padding: 2px;display: inline; text-align: right;"
+           onkeyup="transform_controls.object.intensity = this.value;"/>
+
+    <br />
+    <!-- The Color of the Ambient light-->
+    <label for="ambientColor" class="mdc-textfield__label" style="top: 12px; position: relative;  font-size:10pt; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
+        Ambient Color in Hex:</label>
+
+    <input type="text" id="ambientColor" name="ambientColor" title="Set a hex number, ffffff is the default (white)"
+           value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateAmbientColorPickerLight(this)'}"
+           style="width: 70px;display: inline-block;padding: 2px;text-align: right;"/>
+
+</div>
+
+
+
+
 
 <!-- Door@Archaeology: Interface for Changing the door properties -->
 <div id="popUpDoorPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2"

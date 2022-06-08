@@ -47,7 +47,7 @@ function loadButtonActions() {
 
         jQuery('#unityTaskMemValue').html("0");
 
-        vrodos_assepileAjax();
+        vrodos_compileAjax();
     });
 
     // Compile Cancel
@@ -212,10 +212,11 @@ function loadButtonActions() {
             let categoryName = dataDrag.categoryName;
             let nameModel = dataDrag.title;
 
-            // SUN or LAMP or Spot
+            // SUN or LAMP or Spot or Ambient
             if (dataDrag.categoryName === "lightSun" ||
                 dataDrag.categoryName === "lightLamp" ||
-                dataDrag.categoryName === "lightSpot") {
+                dataDrag.categoryName === "lightSpot" ||
+                dataDrag.categoryName === "lightAmbient") {
 
                 var path = objFname = mtlFname = '';
                 dataDrag.objID = dataDrag.mtlID = dataDrag.assetid = dataDrag.categoryIcon = '';
@@ -248,7 +249,7 @@ function loadButtonActions() {
             showObjectPropertiesPanel(transform_controls.getMode());
 
             if (envir.is2d) {
-                transform_controls.setMode("translate");
+                transform_controls.setMode("rottrans");
                 jQuery("#translatePanelGui").show();
             }
 
@@ -426,7 +427,7 @@ function loadButtonActions() {
             jQuery("#dim-change-btn").text("2D").attr("title", "2D mode");
 
             envir.is2d = true;
-            transform_controls.setMode("translate");
+            transform_controls.setMode("rottrans");
 
             envir.scene.getObjectByName("SteveOld").visible = false;
             envir.scene.getObjectByName("Camera3Dmodel").visible = true;
@@ -474,6 +475,7 @@ function loadButtonActions() {
     jQuery("#popUpSunPropertiesDiv").bind('contextmenu', function(e) { return false; });
     jQuery("#popUpLampPropertiesDiv").bind('contextmenu', function(e) { return false; });
     jQuery("#popUpSpotPropertiesDiv").bind('contextmenu', function(e) { return false; });
+    jQuery("#popUpAmbientPropertiesDiv").bind('contextmenu', function(e) { return false; });
 
 
     // Toggle UIs to clear out vision
@@ -550,44 +552,38 @@ function loadButtonActions() {
     });
 
 
-    // Drag light: Add event listeners
-    var cols = document.querySelectorAll('.lightPawnbuttons .lightbutton');
+    // Drag light or Pawn: Add event listeners
+    var cols = document.querySelectorAll('.lightPawnbuttons .lightpawnbutton');
+
     [].forEach.call(cols, function (col) {
         col.addEventListener('dragstart', handleLightPawnDragStart, false);
     });
 
 
-    // Handler for dragging light
+    // Handler for dragging lights or Pawn
     function handleLightPawnDragStart(e) {
 
-        // Pawn or Sun or Lamp or Spot or Ambient
-
         var dragData;
-        if (  e.target.dataset.lightPawn === "Sun" ||
-              e.target.dataset.lightPawn === "Spot" ||
-              e.target.dataset.lightPawn === "Lamp" ||
-              e.target.dataset.lightPawn === "Ambient"
+        if (  e.target.dataset.lightpawn === "Sun" ||
+              e.target.dataset.lightpawn === "Spot" ||
+              e.target.dataset.lightpawn === "Lamp" ||
+              e.target.dataset.lightpawn === "Ambient"
         ) {
-            dragData = { "categoryName": "light" + e.target.dataset.lightPawn,
-                         "title": "mylight" + e.target.dataset.lightPawn + "_" + Math.floor(Date.now() / 1000)
+            dragData = { "categoryName": "light" + e.target.dataset.lightpawn,
+                         "title": "mylight" + e.target.dataset.lightpawn + "_" + Math.floor(Date.now() / 1000)
                         };
 
-        } else if (e.target.dataset.light === "Pawn") {
+        } else if (e.target.dataset.lightpawn === "Pawn") {
             dragData = { "categoryName": "Pawn",
-                         "title": "myPawn" + e.target.dataset.lightPawn + "_" + Math.floor(Date.now() / 1000)
+                         "title": "aPawn" + "_" + Math.floor(Date.now() / 1000)
                        };
         }
-
-        // Todo: Here
 
 
         e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
         return false;
     }
 }
-
-
-
 
 
 // ==================== Global scope functions ================
@@ -707,6 +703,7 @@ function triggerAutoSave(){
     envir.scene.dispatchEvent({type:"modificationPendingSave"});
     let clickEvent = document.createEvent ('MouseEvents');
     clickEvent.initEvent ("mouseup", true, true);
+
     jQuery("#vr_editor_main_div canvas").get(0).dispatchEvent(clickEvent);
 }
 

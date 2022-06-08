@@ -731,7 +731,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     border-bottom-right-radius: 10px;
 }
 
-.lightbutton {
+.lightpawnbutton {
     height: 42px;
     width: 40px;
     float: left;
@@ -750,11 +750,11 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     vertical-align: center ;
 }
 
-.lightbutton:not(:last-child){
+.lightpawnbutton:not(:last-child){
     margin-right: 2px;
 }
 
-.lightbutton header {
+.lightpawnbutton header {
     color: #fff;
     text-shadow: #000 0 1px;
     box-shadow: 5px;
@@ -780,7 +780,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 }
 
 
-.lightbutton.over {
+.lightpawnbutton.over {
     border: 2px dashed #000;
 }
 .lighticon{
@@ -880,18 +880,19 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 #sceneJsonContent {
     z-index:100000;
     position:absolute;
-    top:0px;
-    left:calc(50%);
+    top:15px;
+    left:calc(30%);
     display:none
 }
 
 #vrodos_scene_json_input {
     z-index: 100000;
     width: 800px;
-    height: 500px;
+    height: 50em;
+    font-size:10pt;
     position: absolute;
     top:50px;
-    height: 25em;
+
     background: white;
     resize:both;
 }
@@ -921,6 +922,4 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     -ms-user-select: none;
 }
 
-#compileGameBtn{
-    display:none;
-}
+

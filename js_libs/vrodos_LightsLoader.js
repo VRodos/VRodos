@@ -73,6 +73,8 @@ class VRodos_LightsLoader {
 
                 if (resources3D[name]['categoryName']==='lightSun' ){
 
+
+
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
                         resources3D[name]['lightcolor'][2]);
@@ -316,7 +318,65 @@ class VRodos_LightsLoader {
                         }
                     }
 
-                }
+                } else if (resources3D[name]['categoryName']==='lightAmbient' ){
+
+                    //console.log("resources3D", resources3D);
+
+                    var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
+                                                 resources3D[name]['lightcolor'][1],
+                                                 resources3D[name]['lightcolor'][2]);
+
+                    var lightintensity = resources3D[name]['lightintensity'];
+
+                    // LIGHT
+                    var lightAmbient = new THREE.AmbientLight(colora, lightintensity);
+                    lightAmbient.intensity = lightintensity;
+
+                    lightAmbient.position.set(
+                        resources3D[name]['trs']['translation'][0],
+                        resources3D[name]['trs']['translation'][1],
+                        resources3D[name]['trs']['translation'][2] );
+
+                    lightAmbient.rotation.set(
+                        resources3D[name]['trs']['rotation'][0],
+                        resources3D[name]['trs']['rotation'][1],
+                        resources3D[name]['trs']['rotation'][2] );
+
+                    lightAmbient.scale.set( resources3D[name]['trs']['scale'],
+                                            resources3D[name]['trs']['scale'],
+                                            resources3D[name]['trs']['scale']);
+
+                    lightAmbient.name = name;
+                    lightAmbient.categoryName = "lightAmbient";
+                    lightAmbient.isDigiArt3DModel = true;
+                    lightAmbient.isLight = true;
+
+
+                    //// Add Sun Helper
+                    var ambientSphere = new THREE.Mesh(
+                        new THREE.SphereBufferGeometry( 1, 16, 8 ),
+                        new THREE.MeshBasicMaterial( { color: colora } )
+                    );
+                    ambientSphere.isDigiArt3DMesh = true;
+                    ambientSphere.name = "ambientSphere";
+                    lightAmbient.add(ambientSphere);
+
+
+
+                    envir.scene.add(lightAmbient);
+
+
+                    // If we do not attach them, they are not visible in Editor !
+                    if (typeof transform_controls !== "undefined") {
+                        if (typeof attachToControls !== "undefined") {
+                            attachToControls(name, envir.scene.getObjectByName(name));
+
+                        }
+                    }
+
+            }
+
+
             })(n);
         }
 

@@ -432,5 +432,8 @@
 
 
 .addNewAsset3DEditor{
-	height:70px; position:absolute; bottom:0; right:0; margin-right:5px; display:block; background:transparent;z-index:2000;
+	height:70px; position:absolute; bottom:0; right:0; margin-right:5px;
+	display:block;
+	background:transparent;
+	z-index:500;
 }
