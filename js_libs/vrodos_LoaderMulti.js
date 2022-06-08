@@ -18,7 +18,7 @@ class VRodos_LoaderMulti {
                     return;
 
                 // Lights are in a different loop
-                if (resources3D[name]['categoryName'].startsWith("light"))
+                if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
                     return;
 
                 let mtlLoader = new THREE.MTLLoader();

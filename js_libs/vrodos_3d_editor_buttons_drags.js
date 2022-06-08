@@ -216,7 +216,8 @@ function loadButtonActions() {
             if (dataDrag.categoryName === "lightSun" ||
                 dataDrag.categoryName === "lightLamp" ||
                 dataDrag.categoryName === "lightSpot" ||
-                dataDrag.categoryName === "lightAmbient") {
+                dataDrag.categoryName === "lightAmbient" ||
+                dataDrag.categoryName === "Pawn" ) {
 
                 var path = objFname = mtlFname = '';
                 dataDrag.objID = dataDrag.mtlID = dataDrag.assetid = dataDrag.categoryIcon = '';
@@ -230,7 +231,8 @@ function loadButtonActions() {
                 dataDrag.hv_penalty = dataDrag.natural_penalty = '';
                 dataDrag.isreward = dataDrag.isCloned = dataDrag.isJoker = 0;
 
-            } else {
+            }
+            else {
 
                 var path = dataDrag.obj.substring(0, dataDrag.obj.lastIndexOf("/") + 1);
                 var objFname = dataDrag.obj.substring(dataDrag.obj.lastIndexOf("/") + 1);
@@ -553,9 +555,9 @@ function loadButtonActions() {
 
 
     // Drag light or Pawn: Add event listeners
-    var cols = document.querySelectorAll('.lightPawnbuttons .lightpawnbutton');
+    var allUpperToolbarButtons = document.querySelectorAll('.lightPawnbuttons .lightpawnbutton');
 
-    [].forEach.call(cols, function (col) {
+    [].forEach.call(allUpperToolbarButtons, function (col) {
         col.addEventListener('dragstart', handleLightPawnDragStart, false);
     });
 
@@ -573,12 +575,12 @@ function loadButtonActions() {
                          "title": "mylight" + e.target.dataset.lightpawn + "_" + Math.floor(Date.now() / 1000)
                         };
 
-        } else if (e.target.dataset.lightpawn === "Pawn") {
+        }
+        else if (e.target.dataset.lightpawn === "Pawn") {
             dragData = { "categoryName": "Pawn",
                          "title": "aPawn" + "_" + Math.floor(Date.now() / 1000)
                        };
         }
-
 
         e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
         return false;
@@ -700,10 +702,17 @@ function saveScene(e) {
 
 // trigger autosave for the automatic cases (insert, delete asset from scene)
 function triggerAutoSave(){
+
+    // Add an event listener to scene
     envir.scene.dispatchEvent({type:"modificationPendingSave"});
+
+    // Make a click event
     let clickEvent = document.createEvent ('MouseEvents');
+
+    // On mouse up initialize an event
     clickEvent.initEvent ("mouseup", true, true);
 
+    // Send the click with jQuery
     jQuery("#vr_editor_main_div canvas").get(0).dispatchEvent(clickEvent);
 }
 

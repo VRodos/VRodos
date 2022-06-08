@@ -68,11 +68,11 @@ function vrodos_load_custom_functions_vreditor(){
     wp_enqueue_script('vrodos_rayCasters');
     wp_enqueue_script('vrodos_auxControlers');
     wp_enqueue_script('vrodos_BordersFinder');
-	wp_enqueue_script('vrodos_LightsLoader');
+	wp_enqueue_script('vrodos_LightsPawn_Loader');
     wp_enqueue_script('vrodos_LoaderMulti');
     wp_enqueue_script('vrodos_movePointerLocker');
     wp_enqueue_script('vrodos_addRemoveOne');
-    wp_enqueue_script('vrodos_3d_editor_buttons');
+    wp_enqueue_script('vrodos_3d_editor_buttons_drags');
     wp_enqueue_script('vrodos_vr_editor_analytics');
     wp_enqueue_script('vrodos_fetch_asset_scenes_request');
 }
@@ -727,7 +727,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         controllerDatGuiOnChange();
 
         // Add lights on scene
-        var lightsLoader = new VRodos_LightsLoader();
+        var lightsLoader = new VRodos_LightsPawn_Loader();
         lightsLoader.load(resources3D);
 
 
@@ -886,15 +886,11 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
         // Set all buttons actions
         loadButtonActions();
-        
-        
-        function attachToControls(name, objItem){
 
+        function attachToControls(name, objItem){
             
             let trs_tmp = resources3D[name]['trs'];
             transform_controls.attach(objItem);
-
-           
             
             // highlight
             envir.outlinePass.selectedObjects = [objItem];
@@ -906,9 +902,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                     trs_tmp['rotation'][2]);
                 transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
             }
-
-  
-            
+          
             jQuery('#object-manipulation-toggle').show();
             jQuery('#axis-manipulation-buttons').show();
             jQuery('#double-sided-switch').show();

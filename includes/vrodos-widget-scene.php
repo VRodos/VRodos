@@ -47,7 +47,7 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_auxControlers');
     wp_enqueue_script('vrodos_BordersFinder');
 	wp_enqueue_script('vrodos_LoaderMulti');
-	wp_enqueue_script('vrodos_LightsLoader');
+	wp_enqueue_script('VRodos_LightsPawn_Loader');
 	wp_enqueue_script('vrodos_movePointerLocker');
 	wp_enqueue_script('vrodos_addRemoveOne');
 	wp_enqueue_script('vrodos_3d_editor_buttons');
@@ -488,7 +488,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
             
 
             // Add lights on scene
-            var lightsLoader = new VRodos_LightsLoader();
+            var lightsLoader = new VRodos_LightsPawn_Loader();
             lightsLoader.load(resources3D);
             
             // Load Manager

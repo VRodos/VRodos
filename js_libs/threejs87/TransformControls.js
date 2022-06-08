@@ -883,6 +883,7 @@
         };
 
         this.attach = function ( object ) {
+
             this.object = object;
 
              this.sphereCenter = object.name === 'avatarYawObject' ? new THREE.Vector3(0,0,0) :
@@ -896,7 +897,8 @@
                 if (this.object.type !== "PointLight" &&
                     this.object.type !== "PointLightHelper" &&
                     this.object.type !== "SpotLight" &&
-                    this.object.type !== "AmbientLight") {
+                    this.object.type !== "AmbientLight" &&
+                    this.object.categoryName !== "pawn") {
 
                     this.bboxX = new THREE.BoxHelper(this.object, 0xff00ff);
 
@@ -1137,7 +1139,7 @@
             {
                 if (object instanceof THREE.Mesh)
                 {
-                    object.geometry.computeBoundingSphere();
+                     object.geometry.computeBoundingSphere();
 
                     // Object radius
                     var radius = object.geometry.boundingSphere.radius;

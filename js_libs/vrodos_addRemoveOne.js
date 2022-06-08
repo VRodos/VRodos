@@ -364,7 +364,83 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         triggerAutoSave();
 
-    } else {
+    }  else if (categoryName==='Pawn') {
+
+        // Instantiate a loader
+        const loader = new THREE.GLTFLoader();
+
+        // Load a glTF resource
+        loader.load(
+            // resource URL
+            pluginPath + '/assets/pawn.glb',
+            // called when the resource is loaded
+            function ( gltf ) {
+
+
+                var Pawn = gltf.scene.children[0];
+                Pawn.name = nameModel;
+                Pawn.isDigiArt3DModel = true;
+                Pawn.categoryName = "pawn";
+                Pawn.isLight = false;
+
+                envir.scene.add( Pawn );
+
+                // Add transform controls
+                var insertedObject = envir.scene.getObjectByName(nameModel);
+
+                var trs_tmp = resources3D[nameModel]['trs'];
+
+                trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
+
+                insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
+                insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
+                insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+                insertedObject.parent = envir.scene;
+
+                // place controls to last inserted obj
+                transform_controls.attach(insertedObject);
+
+                // highlight
+                envir.outlinePass.selectedObjects = [insertedObject];
+                //envir.renderer.setClearColor(0xeeeeee, 1);
+                //envir.scene.add(transform_controls);
+
+                // Position
+                transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
+                transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
+                transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+
+                selected_object_name = nameModel;
+
+                // Dimensions
+                var dims = findDimensions(transform_controls.object);
+                var sizeT = Math.max(...dims);
+                transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+
+                transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
+
+                transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
+
+                // Add in scene
+                addInHierarchyViewer(insertedObject);
+
+
+                triggerAutoSave();
+
+            },
+            // called while loading is progressing
+            function ( xhr ) {
+                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+            // called when loading has errors
+            function ( error ) {
+                console.log( 'An error happened while loading Pawn. Error 455');
+            }
+        );
+
+
+    }
+    else {
 
         // Add an object
 

@@ -4,7 +4,7 @@
 
 "use strict";
 
-class VRodos_LightsLoader {
+class VRodos_LightsPawn_Loader {
 
     constructor(who){
     };
@@ -67,13 +67,12 @@ class VRodos_LightsLoader {
                 }
 
 
+                var clearToParse = resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn");
 
-                if (!resources3D[name]['categoryName'].startsWith("light"))
+                if(!clearToParse)
                     return;
 
                 if (resources3D[name]['categoryName']==='lightSun' ){
-
-
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -373,6 +372,65 @@ class VRodos_LightsLoader {
 
                         }
                     }
+
+                } else if (resources3D[name]['categoryName']==='pawn' ){
+
+
+                    // Instantiate a loader
+                    const loader = new THREE.GLTFLoader();
+
+                    // Load a glTF resource
+                    loader.load(
+                        // resource URL
+                        pluginPath + '/assets/pawn.glb',
+                        // called when the resource is loaded
+                        function ( gltf ) {
+
+                            var pawn = gltf.scene.children[0];
+
+
+                            pawn.position.set(
+                                resources3D[name]['trs']['translation'][0],
+                                resources3D[name]['trs']['translation'][1],
+                                resources3D[name]['trs']['translation'][2] );
+
+                            pawn.rotation.set(
+                                resources3D[name]['trs']['rotation'][0],
+                                resources3D[name]['trs']['rotation'][1],
+                                resources3D[name]['trs']['rotation'][2] );
+
+                            pawn.scale.set( resources3D[name]['trs']['scale'],
+                                resources3D[name]['trs']['scale'],
+                                resources3D[name]['trs']['scale']);
+
+                            pawn.name = name;
+                            pawn.categoryName = "pawn";
+                            pawn.isDigiArt3DModel = true;
+                            pawn.isLight = false;
+
+                            envir.scene.add(pawn);
+
+                            // If we do not attach them, they are not visible in Editor !
+                            if (typeof transform_controls !== "undefined") {
+                                if (typeof attachToControls !== "undefined") {
+                                    attachToControls(name, envir.scene.getObjectByName(name));
+                                }
+                            }
+
+
+                        },
+                        // called while loading is progressing
+                        function ( xhr ) {
+                            //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                        },
+                        // called when loading has errors
+                        function ( error ) {
+                            console.log( 'An error happened while loading Pawn. Error 455');
+                        }
+                    );
+
+
+
 
             }
 

@@ -196,14 +196,14 @@ class ParseJSON {
                 $lighttargetobjectname = $value->lighttargetobjectname;
     
             }
-            elseif ( strpos($name, 'lightAmbient') !== false ){
-   
+            elseif ( strpos($name, 'lightAmbient') !== false ) {
+    
                 $path = '';
-                $obj = '';
-                $mtl = '';
+                $obj  = '';
+                $mtl  = '';
     
                 $assetname = 'lightAmbient';
-                
+    
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
                 $r_z = $value->rotation[2];
@@ -216,13 +216,13 @@ class ParseJSON {
                 $light_color_g = $value->lightcolor[1];
                 $light_color_b = $value->lightcolor[2];
     
-                $categoryName = 'lightAmbient';
-                $isLight = "true";
+                $categoryName   = 'lightAmbient';
+                $isLight        = "true";
                 $lightintensity = $value->lightintensity;
-                $lightdecay = '';
-                $lightdistance = '';
+                $lightdecay     = '';
+                $lightdistance  = '';
     
-                $lightangle = '';
+                $lightangle    = '';
                 $lightpenumbra = '';
 
 //                $fp = fopen("output_saved.txt","w");
@@ -231,9 +231,31 @@ class ParseJSON {
     
     
                 $lighttargetobjectname = '';
+    
+            }
+            elseif ( strpos($name, 'Pawn') !== false ){
+   
+                $path = '';
+                $obj = '';
+                $mtl = '';
+    
+                $assetname = $name;
+                
+                $r_x = $value->rotation[0];
+                $r_y = $value->rotation[1];
+                $r_z = $value->rotation[2];
+    
+                $target_position_x = 0;
+                $target_position_y = 0;
+                $target_position_z = 0;
+                
+                $categoryName = 'pawn';
+                $isLight = "false";
+                
                 
             } else {
                 
+                echo $name;
                 
                 $path = $this->relativepath . $value->fnPath;
                 $assetid= $value->assetid;

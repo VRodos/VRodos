@@ -56,7 +56,7 @@ function vrodos_register_scripts() {
 		array('vrodos_qrcode_generator', $pluginDirJS.'external_js_libraries/qrcode.js'),
 		array('vrodos_inflate', $pluginDirJS.'external_js_libraries/inflate.min.js'),
 		array('vrodos_AssetViewer_3D_kernel', $pluginDirJS.'vrodos_AssetViewer_3D_kernel.js'),
-		array('vrodos_3d_editor_buttons', $pluginDirJS.'vrodos_3d_editor_buttons.js'),
+		array('vrodos_3d_editor_buttons_drags', $pluginDirJS.'vrodos_3d_editor_buttons_drags.js'),
 		array('vrodos_vr_editor_analytics', $pluginDirJS.'vrodos_3d_editor_analytics.js'),
 	);
 	
@@ -173,7 +173,7 @@ function vrodos_register_scripts() {
 			array( 'vrodos_auxControlers', $pluginDirJS.'vrodos_auxControlers.js'),
 		    array( 'vrodos_BordersFinder', $pluginDirJS.'vrodos_BordersFinder.js'),
 			array( 'vrodos_LoaderMulti', $pluginDirJS.'vrodos_LoaderMulti.js'),
-		    array( 'vrodos_LightsLoader', $pluginDirJS.'vrodos_LightsLoader.js'),
+		    array( 'vrodos_LightsPawn_Loader', $pluginDirJS.'vrodos_LightsPawn_Loader.js'),
 			array( 'vrodos_movePointerLocker', $pluginDirJS.'vrodos_movePointerLocker.js'),
 			array( 'vrodos_addRemoveOne', $pluginDirJS.'vrodos_addRemoveOne.js'),
 		    array( 'vrodos_HierarchyViewer', $pluginDirJS.'vrodos_HierarchyViewer.js')
