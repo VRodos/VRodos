@@ -21,7 +21,7 @@ echo ini_get('post_max_size').chr(10);
 echo ini_get('max_input_time').chr(10);
 --
  */
-
+//comment atempt
 // Only these variables can change with php
 // @ini_set( 'memory_limit', '512M');
 @ini_set( 'max_execution_time', '2400' );
