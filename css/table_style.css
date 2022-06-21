@@ -1,0 +1,124 @@
+/*html,*/
+/*body {*/
+/*    height: auto;*/
+/*}*/
+
+/*body {*/
+/*    margin: 0;*/
+/*    background: linear-gradient(45deg, #49a09d, #5f2c82);*/
+/*    font-family: sans-serif;*/
+/*    font-weight: 100;*/
+/*}*/
+
+/*.table_stuff {*/
+/*    position: fixed;*/
+/*    top: 60%;*/
+/*    left: 350%;*/
+/*    !*transform: translate(-50%, -50%);*!*/
+/*}*/
+
+/*table {*/
+/*    width: 10px;*/
+/*    border-collapse: collapse;*/
+/*    overflow: hidden;*/
+/*    box-shadow: 0 0 20px rgba(0,0,0,0.1);*/
+/*}*/
+
+/*table, th, td {*/
+/*    border: 1px solid;*/
+/*}*/
+
+.table_stuff table{
+    border: 1px solid #ccc;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.table_stuff table caption {
+    font-size: 1.5em;
+    color: #5f2c82;
+    margin: .5em 0 .75em;
+}
+
+.table_stuff table tr {
+    background: linear-gradient(45deg, #49a09d, #5f2c82);
+    /*background: white;*/
+    /*background-color: #f8f8f8;*/
+    border: 1px solid #ddd;
+    padding: .35em;
+}
+
+.table_stuff table th,
+table td {
+    color: white;
+    padding: .625em;
+    text-align: center;
+}
+
+.table_stuff table th {
+    border: #006ef5;
+    font-size: .85em;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+/*tr:hover {background-color: blueviolet;}*/
+
+@media screen and (max-width: 300px) {
+    .table_stuff table {
+        border: 0;
+    }
+
+    .table_stuff table caption {
+        font-size: 1.3em;
+    }
+
+    .table_stuff table thead {
+        border: none;
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 1px;
+        position: absolute;
+        width: 1px;
+    }
+
+    .table_stuff table tr {
+        border-bottom: 3px solid #fff;
+        display: block;
+        margin-bottom: .620em;
+    }
+
+    .table_stuff table td {
+        border-bottom: 1px solid #fff;
+        display: block;
+        font-size: .8em;
+        text-align: right;
+    }
+
+    .table_stuff table td::before {
+        /*
+        * aria-label has no advantage, it won't be read inside a table
+        content: attr(aria-label);
+        */
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .table_stuff table td:last-child {
+        border-bottom: 0;
+    }
+}
+
+/* general styling */
+.table_stuff body {
+    font-family: "Open Sans", sans-serif;
+    line-height: 1.25;
+
+}
