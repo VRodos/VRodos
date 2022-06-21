@@ -21,7 +21,6 @@ echo ini_get('post_max_size').chr(10);
 echo ini_get('max_input_time').chr(10);
 --
  */
-//comment atempt
 // Only these variables can change with php
 // @ini_set( 'memory_limit', '512M');
 @ini_set( 'max_execution_time', '2400' );
@@ -1162,28 +1161,42 @@ margin-right: 20px;">
 	</div>
 	</div>
         
+        <div class="table_stuff">
         <table>
+            <caption>Info of VRodos Types</caption>
+            <thead>
+
             <tr>
-                <td>
-                <?php
+                <th><!-- Intentionally Blank --></th>
+                <th>Total number</th>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Parent Project</th>
+            <tr>
+            </thead>
+            <tbody>
+            <tr>
+                <th>Scenes</th>
+                <td> <?php
 
+                    $args = array(
+                        'post_type' => 'vrodos_scene',
+                        'posts_per_page' => -1
+                    );
 
-                $args = array(
-	                'post_type' => 'vrodos_scene',
-	                'posts_per_page' => -1
-                );
-                
-                $query = new WP_Query($args);
+                    $query = new WP_Query($args);
 
-                echo 'Total number of Scenes:'. $query->found_posts;
+                    echo $query->found_posts . "</br>";
 
-                ?>
-                </td>
+                    ?></td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>
             <tr>
-                <td>
-                <?php
-                
+                <th>Assets</th>
+                <td> <?php
+
                 $args = array(
 	                'post_type' => 'vrodos_asset3d',
 	                'posts_per_page' => -1
@@ -1191,31 +1204,131 @@ margin-right: 20px;">
 
                 $query = new WP_Query($args);
 
-                echo 'Total number of Assets:'. $query->found_posts;
-                
-                echo "<br />";
-                if ($query->have_posts() ) :
-
-                    while ( $query->have_posts() ) : $query->the_post();
-                        echo "id: " . get_the_ID() . " title: " . get_the_title() .
-                             " Parent Project: ".
-                             wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame')[0]->name .
-                             " <br />";
-                        
-                    endwhile;
-	
-                    
-	
-	                
-                    
-                    wp_reset_postdata();
-                endif;
-
-                ?>
-
+                echo $query->found_posts;
+                    ?>
                 </td>
+                <td> <?php
+
+                    $args = array(
+                        'post_type' => 'vrodos_asset3d',
+                        'posts_per_page' => -1
+                    );
+
+                    $query = new WP_Query($args);
+
+                    //echo $query->found_posts;
+                    if ($query->have_posts() ) :
+
+                        while ( $query->have_posts() ) : $query->the_post();
+                            echo  get_the_ID() ." <br />";
+
+                        endwhile;
+
+                        wp_reset_postdata();
+                    endif;
+                    ?>
+                </td>
+                <td><?php
+
+                $args = array(
+	                'post_type' => 'vrodos_asset3d',
+	                'posts_per_page' => -1
+                );
+
+                $query = new WP_Query($args);
+
+                //echo $query->found_posts;
+                    if ($query->have_posts() ) :
+
+                        while ( $query->have_posts() ) : $query->the_post();
+                            echo  get_the_title() . "</br>";
+
+                        endwhile;
+                        wp_reset_postdata();
+                    endif;
+                    ?>
+                </td>
+                <td><?php
+
+                    $args = array(
+                        'post_type' => 'vrodos_asset3d',
+                        'posts_per_page' => -1
+                    );
+
+                    $query = new WP_Query($args);
+
+                   // echo $query->found_posts;
+                    if ($query->have_posts() ) :
+
+                        while ( $query->have_posts() ) : $query->the_post();
+                            echo wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame')[0]->name . " <br />";
+
+                        endwhile;
+
+                        wp_reset_postdata();
+                    endif;
+                    ?></td>
+
             </tr>
-        </table>
+            <tr>
+                <th>Games</th>
+                <td><?php
+
+                    $args = array(
+                        'post_type' => 'vrodos_game',
+                        'posts_per_page' => -1
+                    );
+
+                    $query = new WP_Query($args);
+
+                    echo $query->found_posts;
+                    ?></td>
+                <td><?php
+
+                    $args = array(
+                        'post_type' => 'vrodos_game',
+                        'posts_per_page' => -1
+                    );
+
+                    $query = new WP_Query($args);
+
+                    //echo $query->found_posts;
+
+                    //echo "<br />";
+                    if ($query->have_posts()) :
+
+                        while ( $query->have_posts() ) : $query->the_post();
+                            echo get_the_ID() . " <br />";
+                        endwhile;
+                        wp_reset_postdata();
+                    endif;
+                    ?></td>
+                <td><?php
+
+                    $args = array(
+                        'post_type' => 'vrodos_game',
+                        'posts_per_page' => -1
+                    );
+
+                    $query = new WP_Query($args);
+
+                    //echo $query->found_posts;
+
+                    //echo "<br />";
+                    if ($query->have_posts() ) :
+
+                        while ( $query->have_posts() ) : $query->the_post();
+                            echo  get_the_title() . " <br />";
+                        endwhile;
+
+                        wp_reset_postdata();
+                    endif;
+
+                    ?></td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table></div>
         
 	</div>
 	</div>
