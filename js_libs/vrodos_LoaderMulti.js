@@ -141,7 +141,7 @@ class VRodos_LoaderMulti {
                                         }
 
                                         if (node instanceof THREE.Mesh) {
-                                            node.isDigiArt3DMesh = true;
+                                            node.isSelectableMesh = true;
                                             node.castShadow = true;
                                             node.receiveShadow = true;
                                             if (node.name.includes("renderOrder")) {
@@ -225,7 +225,7 @@ class VRodos_LoaderMulti {
                                             }
 
                                             if (node instanceof THREE.Mesh) {
-                                                node.isDigiArt3DMesh = true;
+                                                node.isSelectableMesh = true;
                                                 node.castShadow = true;
                                                 node.receiveShadow = true;
                                                 if (node.name.includes("renderOrder")) {
@@ -326,7 +326,7 @@ class VRodos_LoaderMulti {
                                         }
                                         //
                                         object = setObjectProperties(object.scene, name, resources3D);
-                                        object.isDigiArt3DMesh = true;
+                                        object.isSelectableMesh = true;
                                         // //------------------------------
                                         envir.scene.add(object);
                                         jQuery("#progressWrapper").get(0).style.visibility= "hidden";
@@ -381,7 +381,7 @@ class VRodos_LoaderMulti {
 // Set loaded Object or Scene (for GLBs) properties
 function setObjectProperties(object, name, resources3D) {
 
-    object.isDigiArt3DModel = true;
+    object.isSelectableMesh = true;
     object.isLight = resources3D[name]['isLight'];
     object.name = name;
     object.assetname = resources3D[name]['assetname'];

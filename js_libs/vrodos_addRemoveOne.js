@@ -50,7 +50,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
         lightSun.name = nameModel;
-        lightSun.isDigiArt3DModel = true;
+        lightSun.isSelectableMesh = true;
         lightSun.categoryName = "lightSun";
         lightSun.isLight = true;
 
@@ -59,7 +59,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             new THREE.SphereBufferGeometry(1, 16, 8),
             new THREE.MeshBasicMaterial({color: 0xffff00})
         );
-        sunSphere.isDigiArt3DMesh = true;
+        sunSphere.isSelectableMesh = true;
         sunSphere.name = "SunSphere";
         lightSun.add(sunSphere);
         // end of sphere
@@ -79,7 +79,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             new THREE.MeshBasicMaterial({color: 0xffaa00})
         ));
 
-        lightTargetSpot.isDigiArt3DMesh = true;
+        lightTargetSpot.isSelectableMesh = true;
         lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
         lightTargetSpot.categoryName = "lightTargetSpot";
         lightTargetSpot.isLightTargetSpot = true;
@@ -155,7 +155,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
 
         lightLamp.name = nameModel;
-        lightLamp.isDigiArt3DModel = true;
+        lightLamp.isSelectableMesh = true;
         lightLamp.categoryName = "lightLamp";
         lightLamp.isLight = true;
         lightLamp.castShadow = true;
@@ -165,7 +165,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             new THREE.SphereBufferGeometry(0.5, 16, 8),
             new THREE.MeshBasicMaterial({color: 0xffff00})
         );
-        lampSphere.isDigiArt3DMesh = true;
+        lampSphere.isSelectableMesh = true;
         lampSphere.name = "LampSphere";
         lightLamp.add(lampSphere);
         // end of sphere
@@ -229,7 +229,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightSpot = new THREE.SpotLight( 0xffffff, 1, 5, 0.39, 0, 2 );
 
         lightSpot.name = nameModel;
-        lightSpot.isDigiArt3DModel = true;
+        lightSpot.isSelectableMesh = true;
         lightSpot.categoryName = "lightSpot";
         lightSpot.isLight = true;
 
@@ -240,7 +240,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         );
         lampSphere.rotation.set(Math.PI/2, 0, 0);
 
-        lampSphere.isDigiArt3DMesh = true;
+        lampSphere.isSelectableMesh = true;
         lampSphere.name = "LampSphere";
 
         lightSpot.add(lampSphere);
@@ -305,7 +305,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightAmbient = new THREE.AmbientLight( 0xffffff, 1 );
 
         lightAmbient.name = nameModel;
-        lightAmbient.isDigiArt3DModel = true;
+        lightAmbient.isSelectableMesh = true;
         lightAmbient.categoryName = "lightAmbient";
         lightAmbient.isLight = true;
 
@@ -316,7 +316,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         );
         lampSphere.rotation.set(Math.PI/2, 0, 0);
 
-        lampSphere.isDigiArt3DMesh = true;
+        lampSphere.isSelectableMesh = true;
         lampSphere.name = "LampSphere";
 
         lightAmbient.add(lampSphere);
@@ -379,9 +379,31 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
                 var Pawn = gltf.scene.children[0];
                 Pawn.name = nameModel;
-                Pawn.isDigiArt3DModel = true;
+                Pawn.isSelectableMesh = true;
                 Pawn.categoryName = "pawn";
                 Pawn.isLight = false;
+
+
+                // Give a number to Pawn
+                var indexPawn=1;
+                for (let ch of envir.scene.children){
+                    if (ch.name.includes("Pawn")){
+                        indexPawn += 1;
+                    }
+                }
+
+
+                var pawnLabelDiv = document.createElement( 'div' );
+                pawnLabelDiv.className = '';
+                pawnLabelDiv.textContent = 'Ηθοποιός ' +  indexPawn;
+                pawnLabelDiv.style.marginTop = '-1em';
+                pawnLabelDiv.style.fontSize = '22px';
+                pawnLabelDiv.style.letterSpacing = '4px';
+                var pawnLabel = new THREE.CSS2DObject( pawnLabelDiv );
+                pawnLabel.position.set( 0, 1.5, 0 );
+                Pawn.add( pawnLabel );
+                //pawnLabel.layers.set( 0 );
+
 
                 envir.scene.add( Pawn );
 

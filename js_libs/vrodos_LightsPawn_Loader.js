@@ -6,9 +6,10 @@
 
 class VRodos_LightsPawn_Loader {
 
+
+
     constructor(who){
     };
-
 
     load(resources3D) {
 
@@ -72,7 +73,7 @@ class VRodos_LightsPawn_Loader {
                 if(!clearToParse)
                     return;
 
-                if (resources3D[name]['categoryName']==='lightSun' ){
+                if (resources3D[name]['categoryName']==='lightSun'){
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -111,7 +112,7 @@ class VRodos_LightsPawn_Loader {
 
                     lightSun.name = name;
                     lightSun.categoryName = "lightSun";
-                    lightSun.isDigiArt3DModel = true;
+                    lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
 
                     lightSun.castShadow = true;
@@ -131,7 +132,7 @@ class VRodos_LightsPawn_Loader {
                         new THREE.SphereBufferGeometry( 1, 16, 8 ),
                         new THREE.MeshBasicMaterial( { color: colora } )
                     );
-                    sunSphere.isDigiArt3DMesh = true;
+                    sunSphere.isSelectableMesh = true;
                     sunSphere.name = "SunSphere";
                     lightSun.add(sunSphere);
 
@@ -158,7 +159,7 @@ class VRodos_LightsPawn_Loader {
                         new THREE.MeshBasicMaterial( { color: colora } )
                     ));
 
-                    lightTargetSpot.isDigiArt3DMesh = true;
+                    lightTargetSpot.isSelectableMesh = true;
                     lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
                     lightTargetSpot.categoryName = "lightTargetSpot";
                     lightTargetSpot.isLightTargetSpot = true;
@@ -180,7 +181,8 @@ class VRodos_LightsPawn_Loader {
                     lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
                     envir.scene.add( lightSunShadowhelper );
 
-                } else if (resources3D[name]['categoryName']==='lightLamp' ){
+                }
+                else if (resources3D[name]['categoryName']==='lightLamp'){
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -209,7 +211,7 @@ class VRodos_LightsPawn_Loader {
 
                     lightLamp.name = name;
                     lightLamp.categoryName = "lightLamp";
-                    lightLamp.isDigiArt3DModel = true;
+                    lightLamp.isSelectableMesh = true;
                     lightLamp.isLight = true;
                     lightLamp.castShadow = true;
                     lightLamp.shadow.radius = parseFloat( resources3D[name]['shadowRadius'] );
@@ -223,7 +225,7 @@ class VRodos_LightsPawn_Loader {
                         new THREE.SphereBufferGeometry(0.5, 16, 8),
                         new THREE.MeshBasicMaterial({color: colora})
                     );
-                    lampSphere.isDigiArt3DMesh = true;
+                    lampSphere.isSelectableMesh = true;
                     lampSphere.name = "LampSphere";
                     lightLamp.add(lampSphere);
 
@@ -243,7 +245,8 @@ class VRodos_LightsPawn_Loader {
                         }
                     }
 
-                } else if (resources3D[name]['categoryName']==='lightSpot' ){
+                }
+                else if (resources3D[name]['categoryName']==='lightSpot'){
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -275,7 +278,7 @@ class VRodos_LightsPawn_Loader {
 
                     lightSpot.name = name;
                     lightSpot.categoryName = "lightSpot";
-                    lightSpot.isDigiArt3DModel = true;
+                    lightSpot.isSelectableMesh = true;
                     lightSpot.isLight = true;
 
                     lightSpot.castShadow = true;
@@ -293,7 +296,7 @@ class VRodos_LightsPawn_Loader {
                         new THREE.SphereBufferGeometry( 1, 16, 8 ),
                         new THREE.MeshBasicMaterial({color: colora})
                     );
-                    spotSphere.isDigiArt3DMesh = true;
+                    spotSphere.isSelectableMesh = true;
                     spotSphere.name = "SpotSphere";
                     lightSpot.add(spotSphere);
                     // end of sphere
@@ -317,7 +320,8 @@ class VRodos_LightsPawn_Loader {
                         }
                     }
 
-                } else if (resources3D[name]['categoryName']==='lightAmbient' ){
+                }
+                else if (resources3D[name]['categoryName']==='lightAmbient'){
 
                     //console.log("resources3D", resources3D);
 
@@ -347,7 +351,7 @@ class VRodos_LightsPawn_Loader {
 
                     lightAmbient.name = name;
                     lightAmbient.categoryName = "lightAmbient";
-                    lightAmbient.isDigiArt3DModel = true;
+                    lightAmbient.isSelectableMesh = true;
                     lightAmbient.isLight = true;
 
 
@@ -356,7 +360,7 @@ class VRodos_LightsPawn_Loader {
                         new THREE.SphereBufferGeometry( 1, 16, 8 ),
                         new THREE.MeshBasicMaterial( { color: colora } )
                     );
-                    ambientSphere.isDigiArt3DMesh = true;
+                    ambientSphere.isSelectableMesh = true;
                     ambientSphere.name = "ambientSphere";
                     lightAmbient.add(ambientSphere);
 
@@ -373,8 +377,8 @@ class VRodos_LightsPawn_Loader {
                         }
                     }
 
-                } else if (resources3D[name]['categoryName']==='pawn' ){
-
+                }
+                else if (resources3D[name]['categoryName']==='pawn'){
 
                     // Instantiate a loader
                     const loader = new THREE.GLTFLoader();
@@ -405,8 +409,30 @@ class VRodos_LightsPawn_Loader {
 
                             pawn.name = name;
                             pawn.categoryName = "pawn";
-                            pawn.isDigiArt3DModel = true;
+                            pawn.isSelectableMesh = true;
                             pawn.isLight = false;
+
+                            // Give a number to Pawn
+                            var indexPawn=1;
+                            for (let ch of envir.scene.children){
+                                if (ch.name.includes("Pawn")){
+                                    indexPawn += 1;
+                                }
+                            }
+
+
+                            var pawnLabelDiv = document.createElement( 'div' );
+                            pawnLabelDiv.className = '';
+                            pawnLabelDiv.textContent = 'Ηθοποιός ' +  indexPawn;
+                            pawnLabelDiv.style.marginTop = '-1em';
+                            pawnLabelDiv.style.fontSize = '22px';
+                            pawnLabelDiv.style.letterSpacing = '4px';
+                            var pawnLabel = new THREE.CSS2DObject( pawnLabelDiv );
+                            pawnLabel.position.set( 0, 1.5, 0 );
+                            pawn.add( pawnLabel );
+                            //pawnLabel.layers.set( 0 );
+
+
 
                             envir.scene.add(pawn);
 
@@ -417,6 +443,7 @@ class VRodos_LightsPawn_Loader {
                                 }
                             }
 
+                            setHierarchyViewer();
 
                         },
                         // called while loading is progressing
@@ -438,6 +465,8 @@ class VRodos_LightsPawn_Loader {
             })(n);
         }
 
+
     }
+
 
 }

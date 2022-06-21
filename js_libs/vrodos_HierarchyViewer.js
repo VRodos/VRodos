@@ -1,24 +1,25 @@
-// Traverse to insert in Hierarchy Viewer
+// Traverse the entire scene to insert scene children in Hierarchy Viewer
 function setHierarchyViewer() {
 
     jQuery('#hierarchy-viewer').empty();
 
     envir.scene.traverse(function (obj) {
-        if (obj.isDigiArt3DModel || obj.name === "avatarYawObject") {
+        if (obj.isSelectableMesh || obj.name === "avatarYawObject") {
 
             // Make the html for the delete button Avatar should not be deleted
             var deleteButtonHTML = '';
             var resetButtonHTML = '';
 
+            // SunSphere mesh is not needed a handler to move
+            if (obj.name === "SunSphere")
+                return;
+
             // Normal assets (Non avatar, nor Sun)
-            if (obj.name != 'avatarYawObject' && obj.categoryName != 'lightSun') {
+            if (obj.name != 'avatarYawObject' && obj.categoryName != 'lightSun' && obj.categoryName != "lightTargetSpot") {
 
                 deleteButtonHTML =
                     '<a href="javascript:void(0);" class="mdc-list-item" aria-label="Delete asset"' +
-                    ' title="Delete asset object" onclick="' +
-                    // Delete object from scene and remove it from the hierarchy viewer
-                    'deleterFomScene(\'' + obj.name + '\');'
-                    + '">' +
+                    ' title="Delete asset object" onclick="' + 'deleterFomScene(\'' + obj.name + '\');' + '">' +
                     '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Delete">delete </i>' +
                     '</a>';
 
@@ -28,7 +29,7 @@ function setHierarchyViewer() {
                 var game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
 
-            } else if (obj.categoryName === 'lightSun') {
+            } else if (obj.categoryName === 'lightSun' ) {
                 // SUN
 
                 deleteButtonHTML =
@@ -62,6 +63,8 @@ function setHierarchyViewer() {
             } else if (obj.name === 'avatarYawObject') {
                 // AVATAR
 
+
+
                 resetButtonHTML =
                     '<a href="javascript:void(0);" class="mdc-list-item" aria-label="Reset asset"' +
                     ' title="Reset asset object" onclick="' +
@@ -76,19 +79,23 @@ function setHierarchyViewer() {
             }
 
 
+
             // Add as a list item
-            jQuery('#hierarchy-viewer').append(
-                '<li class="mdc-list-item" id="' + obj.name + '">' +
-                '<a href="javascript:void(0);" class="mdc-list-item" style="font-size: 9pt; line-height:12pt" ' +
-                'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
-                '<span id="" class="mdc-list-item__text">' +
-                game_object_nameA_assetName + '<br />' +
-                '<span style="font-size:7pt; color:grey">' + game_object_nameB_dateCreated + '</span>' +
-                '</span>' +
-                '</a>' +
-                deleteButtonHTML +
-                resetButtonHTML +
-                '</li>');
+
+            if (obj.categoryName != "lightTargetSpot") {
+                jQuery('#hierarchy-viewer').append(
+                    '<li class="mdc-list-item" id="' + obj.name + '">' +
+                    '<a href="javascript:void(0);" class="mdc-list-item" style="font-size: 9pt; line-height:12pt" ' +
+                    'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
+                    '<span id="" class="mdc-list-item__text">' +
+                    game_object_nameA_assetName + '<br />' +
+                    '<span style="font-size:7pt; color:grey">' + game_object_nameB_dateCreated + '</span>' +
+                    '</span>' +
+                    '</a>' +
+                    deleteButtonHTML +
+                    resetButtonHTML +
+                    '</li>');
+            }
         }
     });
 }
@@ -103,10 +110,13 @@ function setBackgroundColorHierarchyViewer(name) {
         }
     );
 
+
     jQuery('#hierarchy-viewer').find('#' + name)[0].style.background = '#a4addf';
 }
 
 
+
+// Single object add in Hierarchy
 function addInHierarchyViewer(obj) {
 
     // ALL but the lightTargetSpot

@@ -727,10 +727,11 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         controllerDatGuiOnChange();
 
         // Add lights on scene
-        var lightsLoader = new VRodos_LightsPawn_Loader();
-        lightsLoader.load(resources3D);
+        var lightsPawnLoader = new VRodos_LightsPawn_Loader();
+        lightsPawnLoader.load(resources3D);
 
-
+        
+        setHierarchyViewer();
         
         
 

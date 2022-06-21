@@ -4,11 +4,13 @@ function findIntersected(event){
     // All 3D meshes that can be clicked
     let activeMeshes = getActiveMeshes();
 
-    //console.log(activeMeshes);
 
-    if (activeMeshes.length === 0)
+
+    if (activeMeshes.length === 0) {
+
         return [];
-    else {
+
+    } else {
         //.concat([envir.scene.getObjectByName("Camera3Dmodel")]); //, , envir.avatarControls //envir.scene.getObjectByName("Camera3Dmodel"),
         //transform_controls.getObjectByName('trs_modeChanger')
 
@@ -115,9 +117,10 @@ function onLeftMouseDown( event ) {
         }
     }
 
+
     // If only one object is intersected
     if(intersects.length === 1){
-        selectorMajor(event, intersects[0].object.parent);
+            selectorMajor(event, intersects[0].object.parent);
         return;
     }
 
@@ -137,7 +140,9 @@ function onLeftMouseDown( event ) {
     if (!selectNext || i===intersects.length-1)
         i = -1;
 
-    selectorMajor(event, intersects[i+1].object.parent);
+    selectorMajor(event, intersects[i + 1].object.parent);
+
+
 }// onMouseDown
 
 
@@ -148,6 +153,8 @@ function onLeftMouseDown( event ) {
  * @param inters
  */
 function selectorMajor(event, objectSel){
+
+
 
     if (event.button === 0) {
 
@@ -901,7 +908,7 @@ function getActiveMeshes(){
 
     // ToDo: Is it possible to avoid traversing scene object in each drag event?
     envir.scene.traverse( function(child) {
-        if (child.hasOwnProperty('isDigiArt3DMesh')) {
+        if (child.hasOwnProperty('isSelectableMesh')) {
             activeMeshes.push(child);
         }
     });
