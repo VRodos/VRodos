@@ -14,8 +14,20 @@
 {"position":"1 0.5 -3","color":"yellow", "scale":"1 1 1", "rotation":"30 50 60"}]}
 -->
 <?php
-// define variables and set to empty values
-$scene_json = test_input($_GET["scene_json"]);
+
+$debug = 1;
+
+if ($debug) {
+            $sceneInput = '{"box":[{"position":"-3 0.5 -3", "color":"red", "scale":"1 1 1", "rotation":"30 50 60"},
+                            {"position":"-5 0.5 -3", "color":"blue", "scale":"1 1 1", "rotation":"30 50 60"},
+                            {"position":"3 0.5 -2", "color":"cyan", "scale":"1 1 1", "rotation":"60 50 60"},
+                            {"position":"-5 0.5 2","color":"green", "scale":"1 1 1", "rotation":"36 50 60"},
+                            {"position":"1 0.5 -3","color":"yellow", "scale":"1 1 1", "rotation":"30 50 60"}]}';
+} else {
+        $scene_json = test_input($_GET["scene_json"]);
+}
+
+$scene_json = $sceneInput;
 
 function test_input($data) {
 	$data = trim($data);
