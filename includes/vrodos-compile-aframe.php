@@ -1,11 +1,62 @@
-<!DOCTYPE HTML>
+<?php
+
+if ( get_option('permalink_structure') )
+    { $perma_structure = true; }
+else
+    {$perma_structure = false;}
+
+
+$parameter_assetpass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+$parameter_filename = $perma_structure ? '?vrodos_filename=' : '&vrodos_filename=';
+
+
+//$_GET['vrodos_scene']
+//$_GET['vrodos_generated_experience_filename']
+
+// Apache
+// vrodos/
+// https://vrodos.iti.gr/wp-content/plugins/vrodos/includes/vrodos-compile-aframe.php
+
+// Node.js
+// net-aframe/networked-aframe/examples/
+//https://vrodos-multiplaying.iti.gr/generated_experience.html
+
+function callback($buffer)
+{
+	// replace all the apples with oranges
+	//return (str_replace("apples", "oranges", $buffer));
+	
+	
+	$multiplayingDirector = '/var/www/html/net-aframe/networked-aframe/examples';
+ 
+	$filepath = $multiplayingDirector."/generated_experience.html";
+    
+    $f = fopen($filepath, "w");
+    fwrite($f, print_r($buffer, true));
+    fclose($f);
+    
+    
+    // @Sofia Todo : Check if $f is generated and display the below link if ok. Else say an error.
+    // @Sofia put generated_experience to be a variable name (Make a GET )
+    // @Sofia Get the scene json from post content by using scene id with a GET
+    // .php?filename=generated_experience&sceneid=125
+    //   wp_get_post_content ( 125)
+    
+    
+    echo '<a href="https://vrodos-multiplaying.iti.gr/generated_experience.html"/>';
+}
+
+ob_start("callback");
+
+?>
 <html>
 <!--  This is a php that can be used in combination with a json scene to produce a VR experience  -->
 <head>
-	<script src="https://aframe.io/aframe/dist/aframe-master.min.js">
-	</script>
+    <script src="https://aframe.io/aframe/dist/aframe-master.min.js">
+    </script>
 </head>
 <body>
+
 
 <!--simple json for test-->
 
@@ -20,7 +71,7 @@
 $debug = 1;
 
 if ($debug) {
-            $sceneInput = '{
+	$sceneInput = '{
   "metadata": {
     "formatVersion" : 4.0,
     "type"		: "scene",
@@ -155,34 +206,28 @@ if ($debug) {
 
 }';
 } else {
-        $scene_json = test_input($_GET["scene_json"]);
+	$scene_json = $_GET["scene_json"];
 }
 
-$scene_json = $sceneInput;
-
-function test_input($data) {
-	$data = trim($data);
-	$data = stripslashes($data);
-//  $data = htmlspecialchars($data);
-	return $data;
-}
+$scene_json = trim(preg_replace('/\s+/S', ' ', $sceneInput)); //   test_input($sceneInput);
 
 ?>
 
 
 <script type="text/javascript">
 
-    var data=<?php echo json_encode($scene_json); ?>;
+    var data='<?php echo $scene_json; ?>';
+    
     var data_object = JSON.parse(data);
 
-	// Add node elements to scene
+    // Add node elements to scene
     const ascene = document.createElement("a-scene");
     document.body.appendChild(ascene);
 
     // iterate through the json_from_scene json (for the time we only need the objects item)
 
     // array of glbs to load temporally
-    array_of_glbs = ["url(../assets/cubi.glb)","url(../assets/pawn.glb)"]
+    array_of_glbs = ["url(https://vrodos.iti.gr/wp-content/plugins/vrodos/assets/pawn.glb)","url(https://vrodos.iti.gr/wp-content/plugins/vrodos/assets/cube.glb)"]
     idx_of_glb = 0
 
     // iterate through the dataobject json (for the time we only need the objects item)
@@ -238,7 +283,7 @@ function test_input($data) {
         // console.log("glbs", glbs_fromJson)
 
     }
-	
+
     // load separate objects in scene
     const abox = document.createElement("a-box");
     const acylinder = document.createElement("a-entity");
@@ -256,7 +301,7 @@ function test_input($data) {
         intensity: 0.1
 
     });
-	
+
     // load separate entities
     const ass_entity = document.createElement("a-entity");
     const ass_entity_sky = document.createElement("a-entity");
@@ -295,6 +340,11 @@ function test_input($data) {
 </script>
 
 
+
 </body>
 </html>
+<?php
 
+ob_end_flush();
+
+?>
