@@ -1,14 +1,27 @@
 <?php
 
-if ( get_option('permalink_structure') )
-    { $perma_structure = true; }
-else
-    {$perma_structure = false;}
+echo "Step 0 <br/>";
 
+require_once($_SERVER['DOCUMENT_ROOT'].'/wp-config.php');
+$wp->init();
+$wp->parse_request();
+$wp->query_posts();
+$wp->register_globals();
+$wp->send_headers();
+
+
+echo "Step 1 <br/>";
+
+$scene_post = get_post(1483);
+
+
+$perma_structure = get_option('permalink_structure')?true:false;
 
 $parameter_assetpass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 $parameter_filename = $perma_structure ? '?vrodos_filename=' : '&vrodos_filename=';
 
+
+echo "Step 2 <br/>";
 
 //$_GET['vrodos_scene']
 //$_GET['vrodos_generated_experience_filename']
@@ -19,7 +32,7 @@ $parameter_filename = $perma_structure ? '?vrodos_filename=' : '&vrodos_filename
 
 // Node.js
 // net-aframe/networked-aframe/examples/
-//https://vrodos-multiplaying.iti.gr/generated_experience.html
+// https://vrodos-multiplaying.iti.gr/generated_experience.html
 
 function callback($buffer)
 {
@@ -43,8 +56,11 @@ function callback($buffer)
     //   wp_get_post_content ( 125)
     
     
-    echo '<a href="https://vrodos-multiplaying.iti.gr/generated_experience.html"/>';
+    
+	
+	
 }
+
 
 ob_start("callback");
 
@@ -241,8 +257,8 @@ $scene_json = trim(preg_replace('/\s+/S', ' ', $sceneInput)); //   test_input($s
 
             glbs_fromJson.setAttribute("gltf-model", array_of_glbs[idx_of_glb]);
             glbs_fromJson.setAttribute("position", {x: Object.values( data_object.objects)[i].position[0],
-                y: Object.values( data_object.objects)[i].position[1],
-                z: Object.values( data_object.objects)[i].position[2]});
+                                                    y: Object.values( data_object.objects)[i].position[1],
+                                                    z: Object.values( data_object.objects)[i].position[2]});
 
             glbs_fromJson.setAttribute("rotation",{x: Object.values( data_object.objects)[i].rotation[0],
                 y: Object.values( data_object.objects)[i].rotation[1],
@@ -347,4 +363,7 @@ $scene_json = trim(preg_replace('/\s+/S', ' ', $sceneInput)); //   test_input($s
 
 ob_end_flush();
 
+
+echo "Step Completed <br/>";
+echo '<a href="https://vrodos-multiplaying.iti.gr/generated_experience.html">Generated html</a>';
 ?>
