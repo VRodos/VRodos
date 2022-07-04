@@ -49,6 +49,8 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
+        lightSun.shadowMapHeight=200;
+        lightSun.shadowMapWidth=200;
         lightSun.name = nameModel;
         lightSun.isSelectableMesh = true;
         lightSun.categoryName = "lightSun";
@@ -395,10 +397,11 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
                 var pawnLabelDiv = document.createElement( 'div' );
                 pawnLabelDiv.className = '';
-                pawnLabelDiv.textContent = 'Ηθοποιός ' +  indexPawn;
+                pawnLabelDiv.textContent = 'Actor ' +  indexPawn;
                 pawnLabelDiv.style.marginTop = '-1em';
-                pawnLabelDiv.style.fontSize = '22px';
-                pawnLabelDiv.style.letterSpacing = '4px';
+                pawnLabelDiv.style.fontSize = '26px';
+                pawnLabelDiv.style.color = "yellow";
+                //pawnLabelDiv.style.letterSpacing = '2px';
                 var pawnLabel = new THREE.CSS2DObject( pawnLabelDiv );
                 pawnLabel.position.set( 0, 1.5, 0 );
                 Pawn.add( pawnLabel );
@@ -485,7 +488,13 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
+
+            console.log("nameModel", nameModel);
+
             var insertedObject = envir.scene.getObjectByName(nameModel);
+
+
+            console.log("insertedObject", insertedObject);
 
             if (!insertedObject) {
                 jQuery("#dialog-message").dialog("open");
@@ -499,17 +508,19 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             insertedObject.parent = envir.scene;
 
 
+            //console.log("ADDRE", insertedObject);
 
-            if(isNaN(insertedObject.children[0].material.metalness)){
-                let mat = insertedObject.children[0].material;
-                mat.metalness = 0;
-                mat.roughness = 0.5;
-                mat.emissiveIntensity = 0;
-                if(mat.color.r +
-                mat.color.g + mat.color.b === 0){
-                    mat.color = new THREE.Color("rgb(50%, 50%, 50%)");
+            if(insertedObject.children[0].isMesh) {
+                if (isNaN(insertedObject.children[0].material.metalness)) {
+                    let mat = insertedObject.children[0].material;
+                    mat.metalness = 0;
+                    mat.roughness = 0.5;
+                    mat.emissiveIntensity = 0;
+                    if (mat.color.r +
+                        mat.color.g + mat.color.b === 0) {
+                        mat.color = new THREE.Color("rgb(50%, 50%, 50%)");
+                    }
                 }
-
             }
 
             // place controls to last inserted obj

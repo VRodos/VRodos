@@ -314,7 +314,6 @@ class VRodos_LoaderMulti {
                                     function (object) {
 
 
-                                    //console.log(object);
 
 
                                         if (object.animations.length > 0) {
@@ -324,10 +323,9 @@ class VRodos_LoaderMulti {
                                             let action = object.mixer.clipAction(object.animations[0]);
                                             action.play();
                                         }
-                                        //
+
                                         object = setObjectProperties(object.scene, name, resources3D);
                                         object.isSelectableMesh = true;
-                                        // //------------------------------
                                         envir.scene.add(object);
                                         jQuery("#progressWrapper").get(0).style.visibility= "hidden";
                                     },
@@ -341,10 +339,7 @@ class VRodos_LoaderMulti {
                                     },
                                     // called when loading has errors
                                     function (error) {
-
-
                                         console.log('An GLB loading error happened. Error 1590', error);
-
                                     }
                                 );
                             }
@@ -399,17 +394,15 @@ function setObjectProperties(object, name, resources3D) {
     object.fbxID = resources3D[name]['fbxID'];
     object.glbID = resources3D[name]['glbID'];
 
-
-
-
-    object.children[0].material.color.setHex( "0x" +  resources3D[name]['color'] );
-    object.children[0].material.emissive.setHex( "0x" +  resources3D[name]['emissive'] );
-    object.children[0].material.roughness = parseFloat( resources3D[name]['roughness'] );
-    object.children[0].material.metalness = parseFloat( resources3D[name]['metalness'] );
-    object.children[0].material.emissiveIntensity = parseFloat( resources3D[name]['emissiveIntensity'] );
-
-    object.children[0].receiveShadow = true;
-    object.children[0].castShadow = true;
+    if(object.children[0].isMesh) {
+        object.children[0].material.color.setHex("0x" + resources3D[name]['color']);
+        object.children[0].material.emissive.setHex("0x" + resources3D[name]['emissive']);
+        object.children[0].material.roughness = parseFloat(resources3D[name]['roughness']);
+        object.children[0].material.metalness = parseFloat(resources3D[name]['metalness']);
+        object.children[0].material.emissiveIntensity = parseFloat(resources3D[name]['emissiveIntensity']);
+        object.children[0].receiveShadow = true;
+        object.children[0].castShadow = true;
+    }
 
     //============== Video texture ==========
     if(resources3D[name]['videoTextureSrc']!=='') {

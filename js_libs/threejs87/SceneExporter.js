@@ -333,7 +333,24 @@ THREE.SceneExporter.prototype = {
                 // ================ Ververidis Main =============: All objs
 
 
-                var vswitch  = o.children[0].material.map;
+
+                if (o.children[0].isMesh){
+                    var vswitch  =  o.children[0].material.map;
+                    var vcolor = o.children[0].material.color.getHexString() ; // : "0x000000";
+                    var vemissive = (o.children[0].material.emissive !== undefined ?
+                                        o.children[0].material.emissive.getHexString() : '000000');
+                    var vroughness = o.children[0].material.roughness;
+                    var vmetalness = o.children[0].material.metalness;
+                    var vemissiveIntensity = o.children[0].material.emissiveIntensity;
+                } else {
+                    var vswitch  =  false;
+                    var vcolor = "0x000000";
+                    var vemissive = 0;
+                    var vroughness = 0;
+                    var vmetalness = 0;
+                    var vemissiveIntensity = 0;
+                }
+
 
                 var output = [
                     '\t\t' + LabelString(getObjectName(o)) + ' : {',
@@ -360,12 +377,11 @@ THREE.SceneExporter.prototype = {
                     '	"categoryID" : ' + '"' + o.categoryID  + '"' + ',',
                     '   "fbxID" : ' + '"' + o.fbxID + '"' + ',',
                     '   "glbID" : ' + '"' + o.glbID + '"' + ',',
-                    '   "color" : ' + '"' + o.children[0].material.color.getHexString() + '"' + ',',
-                    '   "emissive" : ' + '"' + (o.children[0].material.emissive !== undefined ?
-                                                o.children[0].material.emissive.getHexString() : '000000') + '"' + ',',
-                    '   "roughness" : ' + '"' + o.children[0].material.roughness + '"' + ',',
-                    '   "metalness" : ' + '"' + o.children[0].material.metalness + '"' + ',',
-                    '   "emissiveIntensity" : ' + '"' + o.children[0].material.emissiveIntensity + '"' + ',',
+                    '   "color" : ' + '"' +  vcolor + '"' + ',',
+                    '   "emissive" : ' + '"' + vemissive + '"' + ',',
+                    '   "roughness" : ' + '"' + vroughness + '"' + ',',
+                    '   "metalness" : ' + '"' + vmetalness + '"' + ',',
+                    '   "emissiveIntensity" : ' + '"' + vemissiveIntensity + '"' + ',',
                     '   "videoTextureSrc" : ' + '"' + (vswitch? vswitch.image.src : '') + '"' + ',',
                     '   "videoTextureRepeatX" : ' + '"' + (vswitch? vswitch.repeat.x :'') + '"' + ',',
                     '   "videoTextureRepeatY" : ' + '"' + (vswitch? vswitch.repeat.y:'') + '"' + ',',

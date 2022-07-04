@@ -782,6 +782,23 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                     }
                 })(n);
             }
+
+
+            // Avoid culling by frustum
+            envir.scene.traverse(function (obj) {
+                obj.frustumCulled = false;
+            });
+
+            
+            // Remote shadows. Recheck in v141
+            envir.scene.children.forEach(function(item,index){
+                if(item.type ==="DirectionalLight" || item.type==="SpotLight" || item.type==="PointLight"){
+                    item.shadow.mapSize.width = 0;
+                    item.shadow.mapSize.height = 0;
+                }
+            });
+            
+            
         }; // End of manager
 
         // Loader of assets

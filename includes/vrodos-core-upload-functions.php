@@ -523,7 +523,9 @@ function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $The
     $upload_path = str_replace('/',$DS,$upload_dir['basedir']) . $DS .'Models'.$DS;
 	
 	// Make Models folder
-	mkdir($upload_path);
+	if (!is_dir($upload_path)) {
+		mkdir( $upload_path );
+	}
 	
     //$hashed_filename = md5( $textTitle . microtime() ) . '_' . $textTitle.'.txt';
     

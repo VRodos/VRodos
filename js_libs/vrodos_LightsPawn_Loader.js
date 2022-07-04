@@ -86,8 +86,6 @@ class VRodos_LightsPawn_Loader {
                     //lightSun.castShadow = true;
 
                     //Set up shadow properties for the light
-                    lightSun.shadow.mapSize.width = 2048;  // default
-                    lightSun.shadow.mapSize.height = 2048; // default
                     lightSun.shadow.camera.near = 0.5;    // default
                     lightSun.shadow.camera.far = 500;     // default
 
@@ -110,14 +108,15 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['targetposition'][1],
                         resources3D[name]['targetposition'][2]); // where it points
 
+                    console.log("name", name);
+
                     lightSun.name = name;
                     lightSun.categoryName = "lightSun";
                     lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
 
                     lightSun.castShadow = true;
-                    lightSun.shadow.mapSize.width = 512;
-                    lightSun.shadow.mapSize.height = 512;
+
 
                     lightSun.shadow.camera.near = 0.5;
                     lightSun.shadow.camera.far = 1000;
@@ -135,6 +134,13 @@ class VRodos_LightsPawn_Loader {
                     sunSphere.isSelectableMesh = true;
                     sunSphere.name = "SunSphere";
                     lightSun.add(sunSphere);
+
+
+
+                    // lightSun.shadow.mapSize.width = 200;
+                    // lightSun.shadow.mapSize.height = 200;
+
+
 
 
                     var lightSunHelper = new THREE.DirectionalLightHelper( lightSun, 3, colora);
@@ -180,6 +186,9 @@ class VRodos_LightsPawn_Loader {
                     var lightSunShadowhelper = new THREE.CameraHelper( lightSun.shadow.camera );
                     lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
                     envir.scene.add( lightSunShadowhelper );
+
+
+
 
                 }
                 else if (resources3D[name]['categoryName']==='lightLamp'){
@@ -287,9 +296,9 @@ class VRodos_LightsPawn_Loader {
                     lightSpot.shadow.bias = 0.0001;
 
 
-                    //
-                    lightSpot.shadow.mapSize.width = 1024;
-                    lightSpot.shadow.mapSize.height = 1024;
+
+                    // lightSpot.shadow.mapSize.width = 1024;
+                    // lightSpot.shadow.mapSize.height = 1024;
 
                     //// Add Spot Cone
                     var spotSphere = new THREE.Mesh(
@@ -412,6 +421,9 @@ class VRodos_LightsPawn_Loader {
                             pawn.isSelectableMesh = true;
                             pawn.isLight = false;
 
+                            pawn.material.transparent = true;
+                            pawn.material.opacity = 0.6;
+
                             // Give a number to Pawn
                             var indexPawn=1;
                             for (let ch of envir.scene.children){
@@ -423,10 +435,11 @@ class VRodos_LightsPawn_Loader {
 
                             var pawnLabelDiv = document.createElement( 'div' );
                             pawnLabelDiv.className = '';
-                            pawnLabelDiv.textContent = 'Ηθοποιός ' +  indexPawn;
+                            pawnLabelDiv.textContent = 'Actor ' +  indexPawn;
                             pawnLabelDiv.style.marginTop = '-1em';
-                            pawnLabelDiv.style.fontSize = '22px';
-                            pawnLabelDiv.style.letterSpacing = '4px';
+                            pawnLabelDiv.style.fontSize = '26px';
+                            pawnLabelDiv.style.color = "yellow";
+                            //pawnLabelDiv.style.letterSpacing = '4px';
                             var pawnLabel = new THREE.CSS2DObject( pawnLabelDiv );
                             pawnLabel.position.set( 0, 1.5, 0 );
                             pawn.add( pawnLabel );
