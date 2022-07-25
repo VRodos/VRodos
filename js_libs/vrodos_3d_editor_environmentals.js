@@ -252,7 +252,10 @@ class vrodos_3d_editor_environmentals {
         this.scene.add(this.cameraAvatar);
 
         // Avatar camera Controls is a PointerLockControls
+
         this.avatarControls = new THREE.PointerLockControls(this.cameraAvatar, this.renderer.domElement);
+
+
         this.avatarControls.name = "avatarControls";
 
         // Avatar Yaw controls

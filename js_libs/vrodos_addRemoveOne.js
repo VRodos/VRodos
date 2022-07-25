@@ -136,10 +136,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
 
-        transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
+        //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
 
-        transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
+        //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
 
 
         // Add in scene
@@ -216,9 +216,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
 
-        transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
+        //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
-        transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
+        //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
 
         // Add in scene
         addInHierarchyViewer(insertedObject);
@@ -292,9 +292,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var sizeT = Math.max(...dims);
         transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-        transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
+        //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
-        transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
+        //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
 
         // Add in scene
         addInHierarchyViewer(insertedObject);
@@ -356,9 +356,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var sizeT = Math.max(...dims);
         transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-        transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
+        //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
-        transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
+        //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
 
         // Add in scene
         addInHierarchyViewer(insertedObject);
@@ -442,9 +442,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
                 var sizeT = Math.max(...dims);
                 transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-                transform_controls.children[6].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
+                //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
-                transform_controls.children[6].children[0].children[1].visible = false; // ROTATE GIZMO
+                //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
 
                 // Add in scene
                 addInHierarchyViewer(insertedObject);
@@ -489,12 +489,11 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
 
-            console.log("nameModel", nameModel);
 
             var insertedObject = envir.scene.getObjectByName(nameModel);
 
 
-            console.log("insertedObject", insertedObject);
+
 
             if (!insertedObject) {
                 jQuery("#dialog-message").dialog("open");
@@ -545,7 +544,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
             // Make the default gizmo visible
-            transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
+            //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;
 
             if (categoryName === "Producer") {
 

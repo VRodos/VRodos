@@ -56,30 +56,60 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
     // For fbx binary
     wp_enqueue_script('vrodos_inflate'); // for binary fbx
     
-    // 1. Three js library
-    wp_enqueue_script('vrodos_load119_threejs');
-    wp_enqueue_script('vrodos_load124_statjs');
+    $versionThreeJS = "119";
     
-    // 2. Obj loader simple; For loading an uploaded obj
-    wp_enqueue_script('vrodos_load87_OBJloader');
+    if ($versionThreeJS === "119") {
+	 
+	    // 1. Three js library
+	    wp_enqueue_script( 'vrodos_load119_threejs' );
+	    wp_enqueue_script( 'vrodos_load124_statjs' );
+	
+	    // 2. Obj loader simple; For loading an uploaded obj
+	    wp_enqueue_script( 'vrodos_load87_OBJloader' );
+	
+	    // 3. Obj loader 2: For preview loading
+	    wp_enqueue_script( 'vrodos_load87_OBJloader2' );
+	    wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
+	
+	    wp_enqueue_script( 'vrodos_load87_MTLloader' );
+	    wp_enqueue_script( 'vrodos_load87_PDBloader' );
+	    wp_enqueue_script( 'vrodos_load119_FBXloader' );
+	    //wp_enqueue_script('vrodos_load119_TrackballControls');
+	
+	    wp_enqueue_script( 'vrodos_load119_OrbitControls' );
+	    wp_enqueue_script( 'vrodos_load119_GLTFLoader' );
+	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
+	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
+	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
+	    wp_enqueue_script( 'vrodos_load119_CSS2DRenderer' );
+     
+    } else if ($versionThreeJS === "141"){
+	    // 1. Three js library
+	    wp_enqueue_script( 'vrodos_load141_threejs' );
+	    //wp_enqueue_script( 'vrodos_load124_statjs' );
+	
+	    // 2. Obj loader simple; For loading an uploaded obj
+	    //wp_enqueue_script( 'vrodos_load87_OBJloader' );
+	
+	    // 3. Obj loader 2: For preview loading
+	    //wp_enqueue_script( 'vrodos_load87_OBJloader2' );
+	    //wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
+	
+	    //wp_enqueue_script( 'vrodos_load87_MTLloader' );
+	    //wp_enqueue_script( 'vrodos_load87_PDBloader' );
+	    //wp_enqueue_script( 'vrodos_load119_FBXloader' );
+	    
+	
+	    wp_enqueue_script( 'vrodos_load141_OrbitControls' );
+	    wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
+//	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
+//	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
+//	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
+	    wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
+    }
     
-    // 3. Obj loader 2: For preview loading
-    wp_enqueue_script('vrodos_load87_OBJloader2');
-    wp_enqueue_script('vrodos_load87_WWOBJloader2');
     
-    wp_enqueue_script('vrodos_load87_MTLloader');
-    wp_enqueue_script('vrodos_load87_PDBloader');
-    wp_enqueue_script('vrodos_load119_FBXloader');
-    //wp_enqueue_script('vrodos_load119_TrackballControls');
-    
-    wp_enqueue_script('vrodos_load119_OrbitControls');
-    wp_enqueue_script('vrodos_load119_GLTFLoader');
-    wp_enqueue_script('vrodos_load119_DRACOLoader');
-    wp_enqueue_script('vrodos_load119_DDSLoader');
-    wp_enqueue_script('vrodos_load119_KTXLoader');
-    wp_enqueue_script('vrodos_load119_CSS2DRenderer');
-    
-    // Load single asset
+    // Load single asset: Load existing asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
 
     // Load scripts for asset editor

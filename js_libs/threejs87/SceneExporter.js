@@ -58,12 +58,29 @@ THREE.SceneExporter.prototype = {
 
                 var node = object.children[i];
 
-                if (node.name === 'rayLine' || node.name === 'rayLine' || node.name === 'mylightAvatar' ||
-                    node.name === 'mylightOrbit' || node.name === 'SteveShieldMesh' || node.name === 'Steve' ||
-                    node.name === 'SteveMesh' || node.name === 'avatarCamera' || node.name === 'avatarPitchObject' ||
+                console.log("node", node.name + " " +  node.categoryName  );
+
+
+
+                if ((node.name === 'rayLine' ||
+                    node.name === 'rayLine' ||
+                    node.name === 'mylightAvatar' ||
+                    node.name === 'mylightOrbit' ||
+                    node.name === 'SteveShieldMesh' ||
+                    node.name === 'Steve' ||
+                    node.name === 'SteveMesh' || node.name === 'avatarPitchObject' ||
                     node.name === 'orbitCamera' || node.name === 'myAxisHelper' || node.name === 'myAxisHelper' ||
-                    node.name === 'myGridHelper' || node.name === 'myTransformControls' || node.categoryName === 'lightHelper' || node.categoryName === 'lightTargetSpot' || node.name === 'Camera3Dmodel' || node.name === 'Camera3DmodelMesh' || typeof node.categoryName === 'undefined')
+                    node.name === 'myGridHelper' || node.name === 'myTransformControls'
+                    || node.categoryName === 'lightHelper'
+                    || node.categoryName === 'lightTargetSpot'
+                    || node.name === 'Camera3Dmodel'
+                    || node.name === 'Camera3DmodelMesh'
+                    || typeof node.categoryName === 'undefined') && node.name != 'avatarCamera')
                     continue;
+
+
+
+
 
                 if (node instanceof THREE.Mesh  && node.categoryName !== "pawn" )
                     continue;
@@ -101,12 +118,15 @@ THREE.SceneExporter.prototype = {
 
                 } else if ( node instanceof THREE.Light ) {
 
+
                     linesArray.push(ObjectString(node, pad));
                     nobjects += 1;
 
 
                 } else if ( node instanceof THREE.Camera || node instanceof THREE.CameraHelper ) {
-                    // Cameras are not modifiable
+                    node.categoryName = "camera";
+                    linesArray.push(ObjectString(node, pad));
+
                     // linesArray.push( CameraString( node, pad ) );
                     // nobjects += 1;
                     continue;
@@ -119,6 +139,7 @@ THREE.SceneExporter.prototype = {
                     if (node.name === "bbox" || node.name === "xline" || node.name === "yline" ||
                         node.name === "zline" || node.name == 'SteveOld' )
                         continue;
+
 
                     linesArray.push(ObjectString(node, pad));
                     nobjects += 1;
@@ -136,10 +157,6 @@ THREE.SceneExporter.prototype = {
                     linesArray.push( PaddingString( pad + 1 ) + "\t\t}" );
 
                 }
-
-
-
-
 
                 linesArray.push( PaddingString( pad ) + "\t\t}" + ( i < object.children.length - 1 ? ",\n" : "" ) );
 
@@ -266,7 +283,11 @@ THREE.SceneExporter.prototype = {
 
         function CameraString( o, n ) {
 
+
+
             if ( o instanceof THREE.PerspectiveCamera ) {
+
+
 
                 var output = [
 
@@ -308,15 +329,16 @@ THREE.SceneExporter.prototype = {
 
         function ObjectString( o, n ) {
 
+            console.log("oo", o);
+
 
             if (o.name != 'avatarYawObject'
-                && !o.categoryName.includes('lightSun')
-                && !o.categoryName.includes('lightTargetSpot')
-                && !o.categoryName.includes('lightLamp')
-                && !o.categoryName.includes('lightSpot')
-                && !o.categoryName.includes('lightAmbient')
-                && !o.categoryName.includes('pawn')
-
+                                            && !o.categoryName.includes('lightSun')
+                                            && !o.categoryName.includes('lightTargetSpot')
+                                            && !o.categoryName.includes('lightLamp')
+                                            && !o.categoryName.includes('lightSpot')
+                                            && !o.categoryName.includes('lightAmbient')
+                                            && !o.categoryName.includes('pawn')
                 ){
                 // Asset
 
@@ -334,7 +356,7 @@ THREE.SceneExporter.prototype = {
 
 
 
-                if (o.children[0].isMesh){
+                if (o.children[0].isMesh ){
                     var vswitch  =  o.children[0].material.map;
                     var vcolor = o.children[0].material.color.getHexString() ; // : "0x000000";
                     var vemissive = (o.children[0].material.emissive !== undefined ?
@@ -543,7 +565,10 @@ THREE.SceneExporter.prototype = {
 
                 //console.log(output);
 
-            } else if (o.name === 'avatarYawObject'){
+            } else if (o.name === 'avatarCamera'){
+
+                console.log("OOOOO1111", o);
+
 
                 var quatCombined = new THREE.Quaternion();
                 var camEulerCombined = new THREE.Euler(- o.children[0].rotation._x, (Math.PI - o.rotation.y)%(2*Math.PI), 0, 'YXZ');

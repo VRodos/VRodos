@@ -1,12 +1,16 @@
 // Map of the Gizmos as Children of transform_controls.children
 
+
+// 0:  2D Rot Trans Delete        :  Delete
+// 1:  2D Rot Trans Delete         :  Move
+// 2:  2D Rot Trans Delete         :  Rotate
+// (.handleGizmos.XZY[0][0])
+
 // 3:  3D Translate
 // 4:  3D Rotate
 // 5:  3D Scale
 
-// 6:  2D Rot Trans Delete     .children[0].children[0]    :  Move
-// 6:  2D Rot Trans Delete     .children[0].children[1]    :  Rotate
-// 6:  2D Rot Trans Delete     .children[0].children[2]    :  Delete    (.handleGizmos.XZY[0][0])
+
 
 ( function () {
 
@@ -18,21 +22,9 @@
     // arrow width
     var arrWidth = 0.2;
 
-    // 2D info label
-    var textInfo = document.createElement('div');
-    textInfo.className = 'label';
-    textInfo.style.color = 'rgb(' + 255 + ',' + 255 + ',' + 255 + ')';
-    textInfo.style.background= 'rgb(' + 210 + ',' + 210 + ',' + 210 + ')';
-    textInfo.style.padding = "5px";
-    textInfo.style.borderRadius="20px";
-    textInfo.textContent = "";
 
-    var labelInfo = new THREE.CSS2DObject(textInfo);
 
-    // lines denoting angle for rotation mode
-    var angle_line_geometryX = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,1.1,0], 3 ) );
-    var angle_line_geometryY = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,0,1.1], 3 ) );
-    var angle_line_geometryZ = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,1.1,0], 3 ) );
+
 
     var GizmoMaterial = function ( parameters ) {
 
@@ -70,7 +62,7 @@
     GizmoMaterial.prototype.constructor = GizmoMaterial;
 
 
-    var GizmoLineMaterial = function ( parameters ) {
+    THREE.GizmoLineMaterial = function ( parameters ) {
 
         THREE.LineBasicMaterial.call( this );
 
@@ -102,20 +94,12 @@
 
     };
 
-    GizmoLineMaterial.prototype = Object.create( THREE.LineBasicMaterial.prototype );
-    GizmoLineMaterial.prototype.constructor = GizmoLineMaterial;
+    THREE.GizmoLineMaterial.prototype = Object.create( THREE.LineBasicMaterial.prototype );
+    THREE.GizmoLineMaterial.prototype.constructor = THREE.GizmoLineMaterial;
 
     var pickerMaterial = new GizmoMaterial( { visible: false, transparent: true } );
 
-    var angle_lineX = new THREE.Line( angle_line_geometryX, new GizmoLineMaterial( { color: 0xff0000 } ) );
-    angle_lineX.visible = false;
-    angle_lineX.renderOrder = 1;
-    var angle_lineY = new THREE.Line( angle_line_geometryY, new GizmoLineMaterial( { color: 0x00ff00 } ) );
-    angle_lineY.visible = false;
-    angle_lineY.renderOrder = 1;
-    var angle_lineZ = new THREE.Line( angle_line_geometryZ, new GizmoLineMaterial( { color: 0x0000ff } ) );
-    angle_lineZ.visible = false;
-    angle_lineZ.renderOrder = 1;
+
 
     THREE.TransformGizmo = function () {
 
@@ -287,17 +271,17 @@
         this.handleGizmos = {
             X: [
                 [ new THREE.Mesh( arrowGeometry, new GizmoMaterial( { color: 0xff0000 } ) ), [ 1.5, 0, 0 ], [ 0, 0, - Math.PI / 2 ] ],
-                [ new THREE.Line( lineGeometryX, new GizmoLineMaterial( { color: 0xff0000, opacity : 0 } ) ) ]
+                [ new THREE.Line( lineGeometryX, new THREE.GizmoLineMaterial( { color: 0xff0000, opacity : 0 } ) ) ]
             ],
 
             Y: [
                 [ new THREE.Mesh( arrowGeometry, new GizmoMaterial( { color: 0x00ff00 } ) ), [ 0, 1.5, 0 ] ],
-                [ new THREE.Line( lineGeometryY, new GizmoLineMaterial( { color: 0x00ff00, opacity : 0 } ) ) ]
+                [ new THREE.Line( lineGeometryY, new THREE.GizmoLineMaterial( { color: 0x00ff00, opacity : 0 } ) ) ]
             ],
 
             Z: [
                 [ new THREE.Mesh( arrowGeometry, new GizmoMaterial( { color: 0x0000ff } ) ), [ 0, 0, 1.5 ], [ Math.PI / 2, 0, 0 ] ],
-                [ new THREE.Line( lineGeometryZ, new GizmoLineMaterial( { color: 0x00ff00, opacity : 0 } ) ) ]
+                [ new THREE.Line( lineGeometryZ, new THREE.GizmoLineMaterial( { color: 0x00ff00, opacity : 0 } ) ) ]
             ],
         };
 
@@ -433,15 +417,15 @@
         this.handleGizmos = {
             X: [
                 [ new THREE.Mesh( rotGeometryOuter, new GizmoMaterial( { color: 0xff0000, opacity: 0.75 } ) ) ,  [ 0, 0, 0 ], [ 0, - Math.PI / 2, Math.PI / 4 ] ],
-                [ new THREE.Line( new CircleGeometry( 1, 'x', 2*Math.PI ), new GizmoLineMaterial( { color: 0xff0000, opacity : 0 } ) ) ]
+                [ new THREE.Line( new CircleGeometry( 1, 'x', 2*Math.PI ), new THREE.GizmoLineMaterial( { color: 0xff0000, opacity : 0 } ) ) ]
             ],
             Y: [
                 [ new THREE.Mesh( rotGeometryOuter, new GizmoMaterial( { color: 0x00ff00, opacity: 0.75 } ) ) ,  [ 0, 0, 0 ], [ Math.PI / 2, 0, - Math.PI / 4 ] ],
-                [ new THREE.Line( new CircleGeometry( 1, 'y', 2*Math.PI ), new GizmoLineMaterial( { color: 0x00ff00, opacity : 0 } ) ) ]
+                [ new THREE.Line( new CircleGeometry( 1, 'y', 2*Math.PI ), new THREE.GizmoLineMaterial( { color: 0x00ff00, opacity : 0 } ) ) ]
             ],
             Z: [
                 [ new THREE.Mesh( rotGeometryOuter, new GizmoMaterial( { color: 0x0000ff, opacity: 0.75 } ) ) , [ 0, 0, 0 ], [ 0,  0,  - Math.PI / 4 ] ],
-                [ new THREE.Line( new CircleGeometry( 1, 'z', 2*Math.PI ), new GizmoLineMaterial( { color: 0x0000ff, opacity : 0 } ) ) ]
+                [ new THREE.Line( new CircleGeometry( 1, 'z', 2*Math.PI ), new THREE.GizmoLineMaterial( { color: 0x0000ff, opacity : 0 } ) ) ]
             ]
         };
 
@@ -781,9 +765,9 @@
         var scope = this;
 
 
-        scope.add( angle_lineX );
-        scope.add( angle_lineY );
-        scope.add( angle_lineZ );
+
+
+
 
         var _mode = "translate";
         var _dragging = false;
@@ -1244,7 +1228,6 @@
 
             }
             _dragging = true;
-
 
 
             if (_mode === "rotate") {

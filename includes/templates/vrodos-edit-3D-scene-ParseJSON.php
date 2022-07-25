@@ -255,7 +255,6 @@ class ParseJSON {
                 
             } else {
                 
-                echo $name;
                 
                 $path = $this->relativepath . $value->fnPath;
                 $assetid= $value->assetid;

@@ -10,45 +10,96 @@ $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 function vrodos_load_vreditor_scripts()
 {
     wp_enqueue_script('jquery-ui-draggable');
+ 
+    $threejsVersion = "141";
     
-    wp_enqueue_script('vrodos_load119_threejs');
-    wp_enqueue_script('vrodos_load119_CSS2DRenderer');
-    wp_enqueue_script('vrodos_load119_CopyShader');
-    wp_enqueue_script('vrodos_load119_FXAAShader');
-    wp_enqueue_script('vrodos_load119_EffectComposer');
-    wp_enqueue_script('vrodos_load119_RenderPass');
-    wp_enqueue_script('vrodos_load119_OutlinePass');
-    wp_enqueue_script('vrodos_load119_ShaderPass');
+    if ($threejsVersion === "119") {
+	
+	    wp_enqueue_script( 'vrodos_load119_threejs' );
+	    wp_enqueue_script( 'vrodos_load119_CSS2DRenderer' );
+	    wp_enqueue_script( 'vrodos_load119_CopyShader' );
+	    wp_enqueue_script( 'vrodos_load119_FXAAShader' );
+	    wp_enqueue_script( 'vrodos_load119_EffectComposer' );
+	    wp_enqueue_script( 'vrodos_load119_RenderPass' );
+	    wp_enqueue_script( 'vrodos_load119_OutlinePass' );
+	    wp_enqueue_script( 'vrodos_load119_ShaderPass' );
+	
+	    wp_enqueue_script( 'vrodos_load119_FBXloader' );
+	
+	    wp_enqueue_script( 'vrodos_load119_RGBELoader' );
+	
+	
+	    wp_enqueue_script( 'vrodos_load119_GLTFLoader' );
+	
+	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
+	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
+	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
+	    wp_enqueue_script( 'vrodos_inflate' );
+	
+	    // Timestamp script
+	    wp_enqueue_script( 'vrodos_scripts' );
+	
+	    // Hierarchy Viewer
+	    wp_enqueue_script( 'vrodos_HierarchyViewer' );
+	
+	    // Fixed at 87 (forked of original 87)
+	    wp_enqueue_script( 'vrodos_load87_datgui' );
+	    wp_enqueue_script( 'vrodos_load87_OBJloader' );
+	    wp_enqueue_script( 'vrodos_load87_MTLloader' );
+	    wp_enqueue_script( 'vrodos_load87_OrbitControls' );
+	    wp_enqueue_script( 'vrodos_load87_TransformControls' );
+	    wp_enqueue_script( 'vrodos_load87_PointerLockControls' );
+	
+	    wp_enqueue_script( 'vrodos_load87_sceneexporterutils' );
+	    wp_enqueue_script( 'vrodos_load87_scene_importer_utils' );
+	    wp_enqueue_script( 'vrodos_load87_sceneexporter' );
     
-    wp_enqueue_script('vrodos_load119_FBXloader');
+    } else if ($threejsVersion==="141"){
 	
-    wp_enqueue_script('vrodos_load119_RGBELoader');
+	    wp_enqueue_script( 'vrodos_load141_threejs' );
+	    wp_enqueue_script( 'vrodos_load141_FontLoader' );
+	    wp_enqueue_script( 'vrodos_load141_TextGeometry' );
+     
+	    wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
+	    wp_enqueue_script( 'vrodos_load141_CopyShader' );
+	    wp_enqueue_script( 'vrodos_load141_FXAAShader' );
+	    wp_enqueue_script( 'vrodos_load141_EffectComposer' );
+	    wp_enqueue_script( 'vrodos_load141_RenderPass' );
+	    wp_enqueue_script( 'vrodos_load141_OutlinePass' );
+	    wp_enqueue_script( 'vrodos_load141_ShaderPass' );
 	
+	    //wp_enqueue_script( 'vrodos_load119_FBXloader' );
+	
+	    wp_enqueue_script( 'vrodos_load141_RGBELoader' );
+	
+	
+	    wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
+	
+//	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
+//	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
+//	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
+	    wp_enqueue_script( 'vrodos_inflate' );
+	
+	    // Timestamp script
+	    wp_enqueue_script( 'vrodos_scripts' );
+	
+	    // Hierarchy Viewer
+	    wp_enqueue_script( 'vrodos_HierarchyViewer' );
+	
+	    // Fixed at 87 (forked of original 87)
+	    wp_enqueue_script( 'vrodos_load87_datgui' );
+//	    wp_enqueue_script( 'vrodos_load87_OBJloader' );
+//	    wp_enqueue_script( 'vrodos_load87_MTLloader' );
+	    wp_enqueue_script( 'vrodos_load141_OrbitControls' );
+	    wp_enqueue_script( 'vrodos_load141_TransformControls' );
+	    wp_enqueue_script( 'vrodos_load141_PointerLockControls' );
+	
+	    wp_enqueue_script( 'vrodos_load87_sceneexporterutils' );
+	    wp_enqueue_script( 'vrodos_load87_scene_importer_utils' );
+	    wp_enqueue_script( 'vrodos_load87_sceneexporter' );
+     
+    }
     
-    wp_enqueue_script('vrodos_load119_GLTFLoader');
-	
-    wp_enqueue_script('vrodos_load119_DRACOLoader');
-    wp_enqueue_script('vrodos_load119_DDSLoader');
-    wp_enqueue_script('vrodos_load119_KTXLoader');
-    wp_enqueue_script('vrodos_inflate');
-	
-	// Timestamp script
-	wp_enqueue_script('vrodos_scripts');
-	
-	// Hierarchy Viewer
-	wp_enqueue_script('vrodos_HierarchyViewer');
-    
-    // Fixed at 87 (forked of original 87)
-    wp_enqueue_script('vrodos_load87_datgui');
-    wp_enqueue_script('vrodos_load87_OBJloader');
-    wp_enqueue_script('vrodos_load87_MTLloader');
-    wp_enqueue_script('vrodos_load87_OrbitControls');
-    wp_enqueue_script('vrodos_load87_TransformControls');
-    wp_enqueue_script('vrodos_load87_PointerLockControls');
-    
-    wp_enqueue_script('vrodos_load87_sceneexporterutils');
-    wp_enqueue_script('vrodos_load87_scene_importer_utils');
-    wp_enqueue_script('vrodos_load87_sceneexporter');
     
     // Colorpicker for the lights
     wp_enqueue_script('vrodos_jscolorpick');
@@ -714,9 +765,56 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
-        var transform_controls = new THREE.TransformControls( envir.renderer.domElement );
+
+
+
+        var transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
 
+
+        // ----------- Extend capabilities of Transform Controls ----------------
+
+        // // lines denoting angle for rotation mode
+        // angle_line_geometryX = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,1.1,0], 3 ) );
+        // angle_line_geometryY = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,0,1.1], 3 ) );
+        // angle_line_geometryZ = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,1.1,0], 3 ) );
+        //
+        //
+        //
+        // var angle_lineX = new THREE.Line( angle_line_geometryX, new THREE.GizmoLineMaterial( { color: 0xff0000 } ) );
+        // angle_lineX.visible = false;
+        // angle_lineX.renderOrder = 1;
+        // angle_lineX.name = "red";
+        // var angle_lineY = new THREE.Line( angle_line_geometryY, new THREE.GizmoLineMaterial( { color: 0x00ff00 } ) );
+        // angle_lineY.visible = false;
+        // angle_lineY.renderOrder = 1;
+        // angle_lineY.name = "green";
+        // var angle_lineZ = new THREE.Line( angle_line_geometryZ, new THREE.GizmoLineMaterial( { color: 0x0000ff } ) );
+        // angle_lineZ.visible = false;
+        // angle_lineZ.renderOrder = 1;
+        // angle_lineZ.name = "blue";
+        //
+        //
+        // transform_controls.children.unshift( angle_lineZ );
+        // transform_controls.children.unshift( angle_lineY );
+        // transform_controls.children.unshift( angle_lineX );
+        //
+        // // 2D info label
+        // var textInfo = document.createElement('div');
+        // textInfo.className = 'label';
+        // textInfo.style.color = 'rgb(' + 255 + ',' + 255 + ',' + 255 + ')';
+        // textInfo.style.background= 'rgb(' + 210 + ',' + 210 + ',' + 210 + ')';
+        // textInfo.style.padding = "5px";
+        // textInfo.style.borderRadius="20px";
+        // textInfo.textContent = "";
+        //
+        // var labelInfo = new THREE.CSS2DObject(textInfo);
+        //
+        // transform_controls.add(labelInfo);
+        
+        // ---------------------------------------------------------------------
+
+        
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
         var firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
@@ -881,7 +979,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             updatePointerLockControls();
 
-            transform_controls.update(); // update the axis controls based on the browse controls
+            //transform_controls.update(); // update the axis controls based on the browse controls
             //envir.stats.update();
 
             // Now update the translation and rotation input texts
@@ -928,7 +1026,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             showObjectPropertiesPanel(transform_controls.getMode());
 
             selected_object_name = name;
-            transform_controls.setMode("rottrans");
+            //transform_controls.setMode("rottrans");
+            transform_controls.setMode("translate");
 
             let sizeT = 1;
 
@@ -938,15 +1037,15 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 sizeT = Math.max(...dims);
 
                 // 6 is rotation
-                transform_controls.children[6].handleGizmos.XZY[0][0].visible = true;
+                //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;
 
                 if (selected_object_name.includes("lightSun") || selected_object_name.includes("lightLamp") ||
                     selected_object_name.includes("lightSpot")){
                     // ROTATE GIZMO: Sun and lamp can not be rotated
-                    transform_controls.children[6].children[0].children[1].visible = false;
+                    //transform_controls.children[3].children[0].children[1].visible = false;
                 }
             } else {
-                transform_controls.children[6].handleGizmos.XZY[0][0].visible = false;
+                //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
             }
 
             transform_controls.setSize( sizeT > 1 ? sizeT : 1 );

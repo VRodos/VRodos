@@ -11,8 +11,11 @@ class VRodos_LoaderMulti {
 
     load(manager, resources3D, pluginPath) {
 
+
         for (let n in resources3D) {
             (function (name) {
+
+
 
                 if(name==='ClearColor' || name==='toneMappingExposure' | name ==='enableEnvironmentTexture' )
                     return;
@@ -21,276 +24,102 @@ class VRodos_LoaderMulti {
                 if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
                     return;
 
-                let mtlLoader = new THREE.MTLLoader();
+                //let mtlLoader = new THREE.MTLLoader();
+                const loader = new THREE.GLTFLoader(manager);
+
 
                 // Load Steve
                 if (name == 'avatarYawObject') {
 
-                    //console.log('avatarYawObject');
-                    //mtlLoader.setPath(pluginPath+"/assets/Steve/");
-                    // STEVE is the CAMERA MESH
+                    loader.load(pluginPath + "/assets/Steve/camera.glb",
 
-                    // Load camera 3D model
-                    mtlLoader.load(pluginPath + "/assets/Steve/camera.mtl", function (materials) {
+                        // called when the resource is loaded
+                        function (objectMain) {
 
-                        materials.preload();
+                            let object = objectMain.scene.children[0];
+                            object.name = "Camera3Dmodel";
+                            object.children[0].name = "Camera3DmodelMesh";
 
-                        let objloader = new THREE.OBJLoader();
-                        objloader.setMaterials(materials);
+                            // Make a shield around Steve
+                            let geometry = new THREE.BoxGeometry(4.2, 4.2, 4.2);
+                            geometry.name = "SteveShieldGeometry";
+                            let material = new THREE.MeshBasicMaterial({
+                                color: 0xaaaaaa,
+                                transparent: true,
+                                opacity: 0.2,
+                                visible: false
+                            });
 
-                        objloader.load(pluginPath + '/assets/Steve/camera.obj', 'after',
-                            function (object) {
+                            let steveShieldMesh = new THREE.Mesh(geometry, material);
+                            steveShieldMesh.name = 'SteveShieldMesh';
+                            //--------------------------
 
-                                object.name = "Camera3Dmodel";
-                                object.children[0].name = "Camera3DmodelMesh";
+                            object.add(steveShieldMesh);
+                            object.renderOrder = 1;
 
-                                // Make a shield around Steve
-                                let geometry = new THREE.BoxGeometry(4.2, 4.2, 4.2);
-                                geometry.name = "SteveShieldGeometry";
-                                let material = new THREE.MeshBasicMaterial({
-                                    color: 0xaaaaaa,
-                                    transparent: true,
-                                    opacity: 0.2,
-                                    visible: false
-                                });
+                            envir.scene.add(object);
+                            envir.setCamMeshToAvatarControls();
 
-                                let steveShieldMesh = new THREE.Mesh(geometry, material);
-                                steveShieldMesh.name = 'SteveShieldMesh';
-                                //--------------------------
+                            // object = setObjectProperties(object.scene, name, resources3D);
+                            // object.isSelectableMesh = true;
+                            // envir.scene.add(object);
+                            // jQuery("#progressWrapper").get(0).style.visibility= "hidden";
+                        },
+                        // called while loading is progressing
+                        function (xhr) {
 
-                                object.add(steveShieldMesh);
 
-                                object.renderOrder = 1;
-
-                                envir.scene.add(object);
-                                envir.setCamMeshToAvatarControls();
-                                // envir.setSteveWorldPosition(resources3D[name]['trs']['translation'][0],
-                                //     resources3D[name]['trs']['translation'][1],
-                                //     resources3D[name]['trs']['translation'][2],
-                                //     resources3D[name]['trs']['rotation'][0],
-                                //     resources3D[name]['trs']['rotation'][1]
-                                // );
-                            }
-                        );
-                    });
+                        },
+                        // called when loading has errors
+                        function (error) {
+                            console.log('Can not load camera GLB, loading error happened. Error 1595', error);
+                        }
+                    );
 
 
                     // STEVE OLD IS THE HUMAN MESH
+                    loader.load(pluginPath + "/assets/Steve/Steve.glb",
 
-                    // Steve Final old is the Steve 3D model
-                    mtlLoader.load(pluginPath + "/assets/Steve/Steve.mtl", function (materials) {
+                        // called when the resource is loaded
+                        function (objectMain) {
 
-                        materials.preload();
+                            let object = objectMain.scene.children[0];
 
-                        let objloader = new THREE.OBJLoader();
-                        objloader.setMaterials(materials);
+                            let Steve = new THREE.Object3D();
+                            Steve.children.push(object);
 
-                        objloader.load(pluginPath + '/assets/Steve/Steve.obj', 'after',
-                            function (object) {
+                            Steve.name = "SteveOld";
+                            Steve.children[0].name = "SteveMeshOld";
+                            Steve.renderOrder = 1;
+                            Steve.visible = false;
 
-                                object.name = "SteveOld";
-                                object.children[0].name = "SteveMeshOld";
-                                object.renderOrder = 1;
-                                object.visible = false;
-
-                                envir.scene.add(object);
-                                envir.setSteveToAvatarControls();
-
-                                envir.setSteveWorldPosition(resources3D[name]['trs']['translation'][0],
-                                    resources3D[name]['trs']['translation'][1],
-                                    resources3D[name]['trs']['translation'][2],
-                                    resources3D[name]['trs']['rotation'][0],
-                                    resources3D[name]['trs']['rotation'][1]
-                                );
-                            }
-                        );
-                    });
-
-
-                }else {
-
-                    //------------------- OBJ Loading --------------------------
-                    if (resources3D[name]['mtl'] != '') {
-
-                        console.log("OBJ loading");
-
-                        mtlLoader.setPath(resources3D[name]['path']);
-                        mtlLoader.load(resources3D[name]['mtl'], function (materials) {
-
-                            materials.preload();
-
-                            var objLoader = new THREE.OBJLoader(manager);
-                            objLoader.setMaterials(materials);
-                            objLoader.setPath(resources3D[name]['path']);
-
-                            objLoader.load(resources3D[name]['obj'], 'after',
-
-                                // OnObjLoad
-                                function (object) {
-
-                                    object.traverse(function (node) {
-
-                                        if (node.material) {
-                                            if (node.material.name) {
-                                                if (node.material.name.includes("Transparent")) {
-                                                    node.material.transparent = true;
-                                                    // to make transparency behind transparency to work
-                                                    node.material.alphaTest = 0.5;
-                                                }
-                                            }
-                                        }
-
-                                        if (node instanceof THREE.Mesh) {
-                                            node.isSelectableMesh = true;
-                                            node.castShadow = true;
-                                            node.receiveShadow = true;
-                                            if (node.name.includes("renderOrder")) {
-                                                let iR = node.name.indexOf("renderOrder");
-                                                node.renderOrder = parseInt(node.name.substring(iR + 12, iR + 15));
-                                            }
-                                        }
-                                    });
-
-                                    object = setObjectProperties(object, name, resources3D);
-                                    envir.scene.add(object);
-
-                                    jQuery("#progressWrapper").get(0).style.visibility= "hidden";
-
-                                },
-
-                                //onObjProgressLoad
-                                function (xhr) {
-                                    var downloadedBytes = name.substring(0, name.length - 11) + " downloaded " +
-                                        Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
-                                    document.getElementById("result_download2").innerHTML = downloadedBytes;
-                                },
-
-                                //onObjErrorLoad
-                                function (xhr) {
-                                    console.log("Error in loading OBJ: Error code 1512");
-                                }
+                            envir.scene.add(Steve);
+                            envir.setSteveToAvatarControls();
+                            envir.setSteveWorldPosition(resources3D[name]['trs']['translation'][0],
+                                resources3D[name]['trs']['translation'][1],
+                                resources3D[name]['trs']['translation'][2],
+                                resources3D[name]['trs']['rotation'][0],
+                                resources3D[name]['trs']['rotation'][1]
                             );
-
-                        });
-
-
-
-                    } else if (resources3D[name]['fbxID'] !== "" && resources3D[name]['fbxID'] !== undefined) {
-
-                        console.log("FBX loading");
-                        // ------------------ FBX Loading ---------------------------------
-
-                        jQuery.ajax({
-                            url: my_ajax_object_fetchasset.ajax_url,
-                            type: 'POST',
-                            data: {
-                                'action': 'vrodos_fetch_fbx_asset_action',
-                                'asset_id': resources3D[name]['assetid']
-                            },
-                            success: function (res) {
-
-                                let resourcesFBX = JSON.parse(res);
-                                let textureFilesURLs = resourcesFBX['texturesURLs'];
-                                let fbxURL = resourcesFBX['fbxURL'];
-
-                                // let baseUrlPath = fbxURL.substring(0, fbxURL.lastIndexOf("/")+1);
-                                // let fbxFileName =  fbxURL.replace(/^.*[\\\/]/, '');
-                                // console.log(fbxFileName, baseUrlPath);
-
-                                let loader = new THREE.FBXLoader(manager);
-                                loader.load(fbxURL,
-
-                                    function ( object ) {
-
-                                    // Animation set
-                                    object.mixer = new THREE.AnimationMixer( object );
-                                    envir.animationMixers.push(object.mixer);
-
-                                    if (object.animations.length >0 ){
-                                        let action = object.mixer.clipAction( object.animations[ 0 ] );
-                                        action.play();
-                                    } else {
-                                        console.log("Your FBX does not have animation");
-                                    }
-
-                                    object.traverse(function (node) {
-                                            if (node.material) {
-                                                if (node.material.name) {
-                                                    if (node.material.name.includes("Transparent")) {
-                                                        node.material.transparent = true;
-                                                        // to make transparency behind transparency to work
-                                                        node.material.alphaTest = 0.5;
-                                                    }
-                                                }
-                                            }
-
-                                            if (node instanceof THREE.Mesh) {
-                                                node.isSelectableMesh = true;
-                                                node.castShadow = true;
-                                                node.receiveShadow = true;
-                                                if (node.name.includes("renderOrder")) {
-                                                    let iR = node.name.indexOf("renderOrder");
-                                                    node.renderOrder = parseInt(node.name.substring(iR + 12, iR + 15));
-                                                }
-                                            }
-                                        });
-
-                                        object = setObjectProperties(object, name, resources3D);
-
-                                        // -------- Sound --------------
-                                        // create the PositionalAudio object (passing in the listener)
-                                        let audioOf3DObject = new THREE.PositionalAudio( envir.audiolistener );
-
-                                        // load a sound and set it as the PositionalAudio object's buffer
-
-                                        //if(resourcesFBX['audioURL']){
-
-                                            const audioLoader = new THREE.AudioLoader();
-                                            audioLoader.load( resourcesFBX['audioURL'], function( buffer ) {
-                                                audioOf3DObject.setBuffer( buffer );
-                                                audioOf3DObject.setRefDistance( 2000 );
-                                                audioOf3DObject.setDirectionalCone(330, 230, 0.01);
-                                                audioOf3DObject.setLoop(true);
-                                                audioOf3DObject.play();
-                                            });
-
-                                            object.add(audioOf3DObject);
-                                        //}
-
-                                        //------------------------------
-
-                                        envir.scene.add( object );
-                                        jQuery("#progressWrapper").get(0).style.visibility= "hidden";
+                        },
+                        // called while loading is progressing
+                        function (xhr) {
 
 
-                                    },
-                                    //onFBXProgressLoad
-                                    function (xhr) {
-                                        var downloadedBytes = name.substring(0, name.length - 11) + " downloaded " +
-                                            Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
-
-                                        document.getElementById("result_download2").innerHTML = downloadedBytes;
-                                    },
-                                    // XHR error
-                                    function (xhr) {
-                                        console.log("Error in loading FBX: Error code 1513", xhr);
-                                    },
-
-                                    textureFilesURLs, resources3D[name]['assetname']
-
-                                    );
+                        },
+                        // called when loading has errors
+                        function (error) {
+                            console.log('Can not load Steve GLB, loading error happened. Error 1596', error);
+                        }
+                    );
 
 
-                            },
-                            // Ajax error
-                            error: function (xhr, ajaxOptions, thrownError) {
 
-                                alert("Could not fetch FBX asset. Probably deleted ?");
 
-                                console.log("Ajax Fetch FBX Asset: ERROR: 179" + thrownError);
-                            }
-                        });
-                    } else if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
+
+                } else { // GLB 3D models
+
+                     if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
 
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
@@ -306,15 +135,11 @@ class VRodos_LoaderMulti {
                                 let glbURL = resourcesGLB['glbURL'];
 
                                 // Instantiate a loader
-                                const loader = new THREE.GLTFLoader(manager);
 
                                 loader.load(glbURL,
 
                                     // called when the resource is loaded
                                     function (object) {
-
-
-
 
                                         if (object.animations.length > 0) {
                                             // Animation set

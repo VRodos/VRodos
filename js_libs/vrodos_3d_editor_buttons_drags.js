@@ -318,7 +318,7 @@ function loadButtonActions() {
     jQuery('#thirdPersonBlockerBtn').click(function() {
 
         envir.thirdPersonView = true;
-        envir.scene.getObjectByName("SteveOld").visible = true;
+        envir.scene.getObjectByName("SteveOld").visible = false;
         envir.scene.getObjectByName("Camera3Dmodel").visible = false;
 
         jQuery('#firstPersonBlockerBtn')[0].click();
@@ -429,7 +429,7 @@ function loadButtonActions() {
             jQuery("#dim-change-btn").text("2D").attr("title", "2D mode");
 
             envir.is2d = true;
-            transform_controls.setMode("rottrans");
+            transform_controls.setMode("translate");
 
             envir.scene.getObjectByName("SteveOld").visible = false;
             envir.scene.getObjectByName("Camera3Dmodel").visible = true;

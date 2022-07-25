@@ -198,9 +198,15 @@
 
 				this.axis = intersect.object.name;
 
+				// Ververidis
+				envir.orbitControls.enabled = false;
+
 			} else {
 
 				this.axis = null;
+
+				// Ververidis
+				envir.orbitControls.enabled = true;
 
 			}
 
@@ -679,6 +685,8 @@
 	}
 
 	function intersectObjectWithRay( object, raycaster, includeInvisible ) {
+
+		//console.log(object);
 
 		const allIntersections = raycaster.intersectObject( object, true );
 
