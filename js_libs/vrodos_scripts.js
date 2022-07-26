@@ -1,5 +1,13 @@
 'use strict';
 
+function setTransformControlsSize(){
+    // Dimensions
+    var dims = findDimensions(transform_controls.object);
+
+    var sizeT = Math.max(...dims) / 20;
+    transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+}
+
 function vrodos_read_url(input, id) {
 
     if (input.files && input.files[0]) {

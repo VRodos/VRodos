@@ -108,6 +108,8 @@ function findSceneDimensions(){
 
         if (envir.scene.children[i].name !== "myTransformControls" && envir.scene.children[i].name !== "myGridHelper") {
 
+            if ( envir.scene.children[i].categoryName === 'lightHelper')
+                continue;
 
             var sizeXYZ_Arr = findObjectLimits(envir.scene.children[i]);
 

@@ -11,8 +11,10 @@ function setHierarchyViewer() {
             var resetButtonHTML = '';
 
             // SunSphere mesh is not needed a handler to move
-            if (obj.name === "SunSphere")
+            if (obj.name === "SunSphere" || obj.name === "SpotSphere")
                 return;
+
+
 
             // Normal assets (Non avatar, nor Sun)
             if (obj.name != 'avatarCamera' && obj.categoryName != 'lightSun' && obj.categoryName != "lightTargetSpot") {
@@ -109,7 +111,6 @@ function setBackgroundColorHierarchyViewer(name) {
             jQuery(li)[0].style.background = 'rgb(244, 244, 244)';
         }
     );
-
 
     jQuery('#hierarchy-viewer').find('#' + name)[0].style.background = '#a4addf';
 }

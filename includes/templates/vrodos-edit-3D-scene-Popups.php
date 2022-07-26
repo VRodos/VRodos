@@ -1,6 +1,20 @@
 <!--Popups when right-clicking on 3D objects: included in vr_editor -->
 
 <script>
+    function updateSpot(){
+        envir.scene.traverse(function(child) {
+                if (child.light != undefined)
+                    if (child.light.name === transform_controls.object.name)
+                        child.update();
+            }
+        );
+    }
+    
+    function updateSpotConeHelper(value){
+        transform_controls.object.target = envir.scene.getObjectByName(value);
+        updateSpot();
+    }
+    
     function enableSceneEnvironmentTexture(value){
         envir.scene.environment = value ? envir.maintexture : null;
     }
@@ -68,10 +82,22 @@
     /// Spot Color Selector
     function updateSpotColorPickerLight(picker){
         var hexcol = "0x" + document.getElementById("spotColor").value;
+        
         // Spot as object
         transform_controls.object.color.setHex(hexcol);
+        
         // Spot as Sphere
         transform_controls.object.children[0].material.color.setHex(hexcol);
+
+        // Spot as Helper rays
+        envir.scene.traverse(function(child) {
+                if (child.light != undefined)
+                    if (child.light.name === transform_controls.object.name)
+                        child.color.setHex(hexcol);
+            }
+        );
+        
+        updateSpot();
     }
 
     /// Ambient Color Selector
@@ -97,6 +123,8 @@
 
     }
 
+    
+    
 
     
     // Set video texture when popup change
@@ -380,7 +408,7 @@
 
     <select id="spotTargetObject" name="spotTargetObject" title="Set object to place spot among the scene objects"
             class="mdc-select" style="padding: 2px; display: inline-block;"
-            onchange="transform_controls.object.target = envir.scene.getObjectByName(this.value);">
+            onchange="updateSpotConeHelper(this.value)">
     </select>
 
 
@@ -391,7 +419,7 @@
     <input type="text" id="spotPower" name="spotPower" title="Set a number from 0 to infinite, 1 is the default"
            value="1" maxlength="4"
            class="mdc-textfield__input" style="width: 7ch;padding: 2px;display: inline; text-align: right;"
-           onkeyup="transform_controls.object.power = this.value;"/>
+           onkeyup="transform_controls.object.power = this.value; updateSpot();"/>
 
     <!-- The Color of the Lamp-->
     <label for="spotColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
@@ -408,21 +436,21 @@
     <input type="text" id="spotDistance" name="spotDistance" title="Set a number from 0 to infinite, 100 is the default"
            value="100" maxlength="4"
            class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block; text-align: right;"
-           onkeyup="transform_controls.object.distance = this.value;"/>
+           onkeyup="transform_controls.object.distance = this.value; updateSpot();"/>
 
     <!-- The Decay -->
     <label for="spotDecay" class="mdc-textfield__label" style="position: initial; width: 150px; display: inline-block; margin-top: 15px;">
         Set Spot Decay:</label>
 
     <input type="text" id="spotDecay" name="spotDecay" title="Set a number from 0 to infinite, 2 is the default"
-           value="2" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.decay = this.value;"/>
+           value="2" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.decay = this.value; updateSpot();"/>
 
     <!-- The Angle -->
     <label for="spotAngle" class="mdc-textfield__label" style="position: initial; width: 150px; display: inline-block; margin-top: 15px;">
         Set Spot Angle:</label>
 
     <input type="text" id="spotAngle" name="spotAngle" title="Set a number from 0 to pi/2,  pi/4 is the default"
-           value="0.785" maxlength="5" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.angle = this.value;"/>
+           value="0.785" maxlength="5" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.angle = this.value; updateSpot();"/>
 
 
     <!-- The Penumbra -->
@@ -430,7 +458,7 @@
         Set Penumbra:</label>
 
     <input type="text" id="spotPenumbra" name="spotPenumbra" title="Set a number from 0 to 1,  0 is the default"
-           value="0" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.penumbra = this.value;"/>
+           value="0" maxlength="4" class="mdc-textfield__input" style="width: 7ch; padding: 2px; display: inline-block;text-align: right;" onkeyup="transform_controls.object.penumbra = this.value; updateSpot();"/>
 
 </div>
 

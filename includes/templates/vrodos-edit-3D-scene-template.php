@@ -13,49 +13,10 @@ function vrodos_load_vreditor_scripts()
  
     $threejsVersion = "141";
     
-    if ($threejsVersion === "119") {
+    if ($threejsVersion==="141"){
 	
-	    wp_enqueue_script( 'vrodos_load119_threejs' );
-	    wp_enqueue_script( 'vrodos_load119_CSS2DRenderer' );
-	    wp_enqueue_script( 'vrodos_load119_CopyShader' );
-	    wp_enqueue_script( 'vrodos_load119_FXAAShader' );
-	    wp_enqueue_script( 'vrodos_load119_EffectComposer' );
-	    wp_enqueue_script( 'vrodos_load119_RenderPass' );
-	    wp_enqueue_script( 'vrodos_load119_OutlinePass' );
-	    wp_enqueue_script( 'vrodos_load119_ShaderPass' );
-	
-	    wp_enqueue_script( 'vrodos_load119_FBXloader' );
-	
-	    wp_enqueue_script( 'vrodos_load119_RGBELoader' );
-	
-	
-	    wp_enqueue_script( 'vrodos_load119_GLTFLoader' );
-	
-	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
-	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
-	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
-	    wp_enqueue_script( 'vrodos_inflate' );
-	
-	    // Timestamp script
 	    wp_enqueue_script( 'vrodos_scripts' );
-	
-	    // Hierarchy Viewer
-	    wp_enqueue_script( 'vrodos_HierarchyViewer' );
-	
-	    // Fixed at 87 (forked of original 87)
-	    wp_enqueue_script( 'vrodos_load87_datgui' );
-	    wp_enqueue_script( 'vrodos_load87_OBJloader' );
-	    wp_enqueue_script( 'vrodos_load87_MTLloader' );
-	    wp_enqueue_script( 'vrodos_load87_OrbitControls' );
-	    wp_enqueue_script( 'vrodos_load87_TransformControls' );
-	    wp_enqueue_script( 'vrodos_load87_PointerLockControls' );
-	
-	    wp_enqueue_script( 'vrodos_load87_sceneexporterutils' );
-	    wp_enqueue_script( 'vrodos_load87_scene_importer_utils' );
-	    wp_enqueue_script( 'vrodos_load87_sceneexporter' );
-    
-    } else if ($threejsVersion==="141"){
-	
+     
 	    wp_enqueue_script( 'vrodos_load141_threejs' );
 	    wp_enqueue_script( 'vrodos_load141_FontLoader' );
 	    wp_enqueue_script( 'vrodos_load141_TextGeometry' );
@@ -897,6 +858,14 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                     item.shadow.mapSize.height = 0;
                 }
             });
+
+
+            // Update Light Helpers to point to each object (spot light)
+            envir.scene.traverse(function(child) {
+                    if (child.light != undefined)
+                        child.update();
+                }
+            );
             
             
         }; // End of manager
@@ -1035,8 +1004,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             // Resize controls based on object size
             if (selected_object_name != 'avatarCamera') {
-                let dims = findDimensions(transform_controls.object);
-                sizeT = Math.max(...dims);
+                // let dims = findDimensions(transform_controls.object);
+                // sizeT = Math.max(...dims);
 
                 // 6 is rotation
                 //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;
@@ -1050,7 +1019,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
             }
 
-            transform_controls.setSize( sizeT > 1 ? sizeT : 1 );
+            //transform_controls.setSize( sizeT > 1 ? sizeT : 1 );
+            setTransformControlsSize();
         }
         
     </script>

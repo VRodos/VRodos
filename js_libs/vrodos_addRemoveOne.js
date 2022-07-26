@@ -130,14 +130,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         selected_object_name = nameModel;
 
-        // Dimensions
-        var dims = findDimensions(transform_controls.object);
-        var sizeT = Math.max(...dims);
-        transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+        setTransformControlsSize();
 
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
-
 
         //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
 
@@ -211,9 +207,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         selected_object_name = nameModel;
 
         // Dimensions
-        var dims = findDimensions(transform_controls.object);
-        var sizeT = Math.max(...dims);
-        transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+        setTransformControlsSize();
+        // var dims = findDimensions(transform_controls.object);
+        // var sizeT = Math.max(...dims);
+        // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
@@ -226,7 +223,8 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         triggerAutoSave();
 
     }
-    else if (categoryName==='lightSpot') {
+    else if (categoryName==='lightSpot')
+    {
 
         var lightSpot = new THREE.SpotLight( 0xffffff, 1, 5, 0.39, 0, 2 );
 
@@ -288,9 +286,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         selected_object_name = nameModel;
 
         // Dimensions
-        var dims = findDimensions(transform_controls.object);
-        var sizeT = Math.max(...dims);
-        transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+        setTransformControlsSize();
+        // var dims = findDimensions(transform_controls.object);
+        // var sizeT = Math.max(...dims);
+        // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
@@ -352,9 +351,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         selected_object_name = nameModel;
 
         // Dimensions
-        var dims = findDimensions(transform_controls.object);
-        var sizeT = Math.max(...dims);
-        transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+        setTransformControlsSize();
+        // var dims = findDimensions(transform_controls.object);
+        // var sizeT = Math.max(...dims);
+        // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
@@ -438,9 +438,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
                 selected_object_name = nameModel;
 
                 // Dimensions
-                var dims = findDimensions(transform_controls.object);
-                var sizeT = Math.max(...dims);
-                transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+                setTransformControlsSize();
+                // var dims = findDimensions(transform_controls.object);
+                // var sizeT = Math.max(...dims);
+                // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
                 //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
@@ -538,10 +539,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             selected_object_name = nameModel;
 
             // Dimensions
-            var dims = findDimensions(transform_controls.object);
-
-            var sizeT = Math.max(...dims);
-            transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+            setTransformControlsSize();
+            // var dims = findDimensions(transform_controls.object);
+            // var sizeT = Math.max(...dims);
+            // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
             // Make the default gizmo visible
             //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;

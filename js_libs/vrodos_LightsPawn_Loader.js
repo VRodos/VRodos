@@ -20,11 +20,9 @@ class VRodos_LightsPawn_Loader {
                 // Scene Settings
                 if(name === 'ClearColor') {
 
-
                     //console.log("resources3D['ClearColor']", resources3D['ClearColor']);
 
                     envir.scene.background = new THREE.Color(resources3D['ClearColor']);             // this.isBackGroundNull ? null : new THREE.Color(this.back_3d_color);
-
 
                     //envir.renderer.setClearColor(resources3D['ClearColor']);
 
@@ -38,7 +36,6 @@ class VRodos_LightsPawn_Loader {
                 }
 
                 if(name === 'toneMappingExposure') {
-
 
                     let toneMappingExposure =  parseFloat(resources3D['toneMappingExposure']);
                     envir.renderer.toneMappingExposure = toneMappingExposure;
@@ -108,7 +105,7 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['targetposition'][1],
                         resources3D[name]['targetposition'][2]); // where it points
 
-                    console.log("name", name);
+                    //console.log("name", name);
 
                     lightSun.name = name;
                     lightSun.categoryName = "lightSun";
@@ -255,7 +252,9 @@ class VRodos_LightsPawn_Loader {
                     }
 
                 }
-                else if (resources3D[name]['categoryName']==='lightSpot'){
+                // SPOT
+                else if (resources3D[name]['categoryName']==='lightSpot')
+                {
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -292,15 +291,15 @@ class VRodos_LightsPawn_Loader {
 
                     lightSpot.castShadow = true;
 
-                    lightSpot.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 50, 1, 0.5, 100 ) );
-                    lightSpot.shadow.bias = 0.0001;
+                    // lightSpot.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 50, 1, 0.5, 100 ) );
+                    // lightSpot.shadow.bias = 0.0001;
 
 
 
                     // lightSpot.shadow.mapSize.width = 1024;
                     // lightSpot.shadow.mapSize.height = 1024;
 
-                    //// Add Spot Cone
+                    //// Add Spot Sphere
                     var spotSphere = new THREE.Mesh(
                         new THREE.SphereBufferGeometry( 1, 16, 8 ),
                         new THREE.MeshBasicMaterial({color: colora})
@@ -310,7 +309,7 @@ class VRodos_LightsPawn_Loader {
                     lightSpot.add(spotSphere);
                     // end of sphere
 
-                    // Helper
+                    // Add Spot cone Helper
                     var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, colora);
                     lightSpotHelper.isLightHelper = true;
                     lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
@@ -329,8 +328,13 @@ class VRodos_LightsPawn_Loader {
                         }
                     }
 
+                    updateSpot();
+
+
+
                 }
-                else if (resources3D[name]['categoryName']==='lightAmbient'){
+                else if (resources3D[name]['categoryName']==='lightAmbient')
+                {
 
                     //console.log("resources3D", resources3D);
 
@@ -475,8 +479,11 @@ class VRodos_LightsPawn_Loader {
             }
 
 
+
             })(n);
         }
+
+
 
 
     }

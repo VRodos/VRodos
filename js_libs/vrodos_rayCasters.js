@@ -4,15 +4,11 @@ function findIntersected(event){
     // All 3D meshes that can be clicked
     let activeMeshes = getActiveMeshes();
 
-
-
     if (activeMeshes.length === 0) {
 
         return [];
 
     } else {
-        //.concat([envir.scene.getObjectByName("Camera3Dmodel")]); //, , envir.avatarControls //envir.scene.getObjectByName("Camera3Dmodel"),
-        //transform_controls.getObjectByName('trs_modeChanger')
 
         // Find the intersections (it can be more than one)
         let intersectedObjects = raycasterPick.intersectObjects(activeMeshes, true);
@@ -154,8 +150,6 @@ function onLeftMouseDown( event ) {
  */
 function selectorMajor(event, objectSel){
 
-
-
     if (event.button === 0) {
 
         // set the selected color of the hierarchy viewer
@@ -171,9 +165,56 @@ function selectorMajor(event, objectSel){
         // Rotate GIZMO
         //transform_controls.children[3].children[0].children[1].visible = true; // ROTATE GIZMO
 
-        if (objectSel.categoryName === "lightSun" || objectSel.categoryName === "lightTargetSpot"
-            || objectSel.categoryName === "lightSpot" || objectSel.categoryName === "lightLamp") {
-           //transform_controls.children[3].children[0].children[1].visible = false; // 2D ROTATE GIZMO
+
+        //  console.log("objectSel.categoryName", objectSel.categoryName );
+
+        // if (node.isLightHelper){
+        //     node.position.setFromMatrixPosition(node.light.matrix);
+        //     node.updateMatrix();
+        //     node.update();
+        // }
+
+        // Move light direction
+        let lightDirectionalLightSpotMover = function () {
+            transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
+            transform_controls.object.parentLight.target.updateMatrixWorld();
+        }
+
+        let lightSpotLightMover = function () {
+            // transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
+            // transform_controls.object.parentLight.target.updateMatrixWorld();
+            envir.scene.traverse(function(child) {
+                    if (child.light != undefined)
+                        if (child.light.name === transform_controls.object.name)
+                            child.update();
+                }
+            );
+        }
+
+
+        if (objectSel.categoryName === "lightSun" ||
+            objectSel.categoryName === "lightTargetSpot" ||
+            objectSel.categoryName === "lightSpot" ||
+            objectSel.categoryName === "lightLamp") {
+
+            // Add event listener for lightSpotHelper
+
+
+            if (objectSel.categoryName === "lightTargetSpot") {
+                transform_controls.domElement.ownerDocument.addEventListener("pointermove",lightDirectionalLightSpotMover);
+            }
+
+
+            if(objectSel.categoryName === "lightSpot"){
+                transform_controls.domElement.ownerDocument.addEventListener("pointermove",lightSpotLightMover);
+            }
+
+            //transform_controls.children[3].children[0].children[1].visible = false; // 2D ROTATE GIZMO
+        } else {
+
+            // Remove event listener when lightSpotHelper is not clicked
+            transform_controls.domElement.ownerDocument.removeEventListener("pointermove", lightDirectionalLightSpotMover);
+            transform_controls.domElement.ownerDocument.removeEventListener("pointermove", lightSpotLightMover);
         }
 
         if (objectSel.name === "avatarCamera") {
@@ -187,11 +228,7 @@ function selectorMajor(event, objectSel){
 
         } else {
             // find dimensions of object in order to resize transform controls
-            var dims = findDimensions(transform_controls.object);
-
-            var sizeT = Math.max(...dims);
-
-            transform_controls.size = sizeT > 1 ? sizeT : 1;
+            setTransformControlsSize();
 
 
             //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;
@@ -218,7 +255,7 @@ function selectorMajor(event, objectSel){
 
 // Right Click: Show properties
 function contextMenuClick(event){
-
+    event.preventDefault();
     let intersected = findIntersected(event);
 
      if (intersected.length === 0)
@@ -228,6 +265,8 @@ function contextMenuClick(event){
     if (intersected[0].object.parent.name === transform_controls.object.name){
         showProperties(event, intersected[0].object.parent);
     }
+
+
 }
 
 // Right click raycast operations
@@ -268,9 +307,10 @@ function showProperties(event, object){
             break;
         case 'lightLamp' :
             displayLampProperties(event, name);
-            break
+            break;
         case 'lightSpot' :
             displaySpotProperties(event, name);
+            break;
         case 'lightAmbient' :
             displayAmbientProperties(event, name);
             break;
@@ -517,7 +557,7 @@ function displaySpotProperties(event, name){
     for (var i=0; i<jQuery('#hierarchy-viewer')[0].childNodes.length; i++){
         //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).categoryName ){
             var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
-            var scene_object = envir.scene.getChildByName(id_Hierarchy);
+            var scene_object = envir.scene.getObjectByName(id_Hierarchy);
             spotTargetObject.appendChild(new Option(scene_object.name));
         //}
     }
@@ -551,7 +591,7 @@ function displayAmbientProperties(event, name){
     for (var i=0; i<jQuery('#hierarchy-viewer')[0].childNodes.length; i++){
         //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).categoryName ){
         var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
-        var scene_object = envir.scene.getChildByName(id_Hierarchy);
+        var scene_object = envir.scene.getObjectByName(id_Hierarchy);
         //spotTargetObject.appendChild(new Option(scene_object.name));
         //}
     }
