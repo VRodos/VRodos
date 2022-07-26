@@ -15,8 +15,6 @@ class VRodos_LoaderMulti {
         for (let n in resources3D) {
             (function (name) {
 
-
-
                 if(name==='ClearColor' || name==='toneMappingExposure' | name ==='enableEnvironmentTexture' )
                     return;
 
@@ -27,9 +25,8 @@ class VRodos_LoaderMulti {
                 //let mtlLoader = new THREE.MTLLoader();
                 const loader = new THREE.GLTFLoader(manager);
 
-
                 // Load Steve
-                if (name == 'avatarYawObject') {
+                if (name == 'avatarCamera') {
 
                     loader.load(pluginPath + "/assets/Steve/camera.glb",
 

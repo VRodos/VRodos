@@ -47,13 +47,7 @@
 			</a>
 		</div>
 		
-		<!-- Third person button -->
-		<a type="button" id="thirdPersonBlockerBtn"
-		   class="ThirdPersonVrWalkInButtonStyle mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
-		   title="Change camera to Third Person View - Move: W,A,S,D,Q,E keys, Orientation: Mouse"
-		   data-mdc-auto-init="MDCRipple">
-			<i class="material-icons">person</i>
-		</a>
+
 	</div>
 	
 	<!--  Object Controls T,R,S -->

@@ -101,7 +101,7 @@ if ($debug) {
 
   "objects" :
           {
-            "avatarYawObject" : {
+            "avatarCamera" : {
               "position" : [-1.5073529542515,1.3,3.7404941859495],
               "rotation" : [0,-0.911,0],
               "quaternion" : [0.0000,0.8980,0.0000,-0.4399],

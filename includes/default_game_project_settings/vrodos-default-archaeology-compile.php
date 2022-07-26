@@ -138,7 +138,7 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
     $LF = chr(10) ;// line break
 
     foreach ($sceneJsonARR['objects'] as $key => $value ) {
-        if ($key == 'avatarYawObject') {
+        if ($key == 'avatarCamera') {
             //do something about AVATAR
         }else{
             if ($value['categoryName'] == 'Site'){
@@ -371,7 +371,7 @@ function vrodos_replace_wonderaround_unity($term_meta_wonder_around, $scene_id){
     $sceneJsonARR = json_decode($jsonScene, TRUE);
 
     foreach ($sceneJsonARR['objects'] as $key => $value ) {
-        if ($key == 'avatarYawObject') {
+        if ($key == 'avatarCamera') {
             $x_pos = - $value['position'][0]; // x is in the opposite site in unity
             $y_pos = $value['position'][1];
             $z_pos = $value['position'][2];

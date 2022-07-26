@@ -198,6 +198,8 @@ $scene_post = get_post($current_scene_id);
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
                                                     vrodos_getDefaultJSONscene(strtolower($project_type));
 
+
+
 // Load resources 3D
 $SceneParserPHP = new ParseJSON($upload_url);
 $SceneParserPHP->init($sceneJSON);
@@ -914,7 +916,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             resources3D = parseJSON_javascript(scene_json, uploadDir);
 
             // CLEAR SCENE
-            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarYawObject', 'myTransformControls'];
+            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
 
             for (let i = envir.scene.children.length - 1; i >=0 ; i--){
                 if (!preserveElements.includes(envir.scene.children[i].name))
@@ -924,7 +926,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             setHierarchyViewer();
 
             transform_controls = envir.scene.getObjectByName('myTransformControls');
-            transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));
+            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
@@ -1011,7 +1013,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             // highlight
             envir.outlinePass.selectedObjects = [objItem];
 
-            if (selected_object_name != 'avatarYawObject') {
+            if (selected_object_name != 'avatarCamera') {
                 transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
                     trs_tmp['translation'][2]);
                 transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
@@ -1032,7 +1034,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             let sizeT = 1;
 
             // Resize controls based on object size
-            if (selected_object_name != 'avatarYawObject') {
+            if (selected_object_name != 'avatarCamera') {
                 let dims = findDimensions(transform_controls.object);
                 sizeT = Math.max(...dims);
 

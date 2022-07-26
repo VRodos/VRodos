@@ -191,7 +191,7 @@ function vrodos_addAssets_chemistry_lab_unity($scene_id){
     $LF = chr(10) ;// line break
 
     foreach ($sceneJsonARR['objects'] as $key => $value ) {
-        if ($key == 'avatarYawObject') {
+        if ($key == 'avatarCamera') {
             //do something about AVATAR
         } else {
             if ($value['categoryName'] == 'Room') {
@@ -341,7 +341,7 @@ function vrodos_replace_chemistry_lab_unity($term_meta_wander_around_chem,$scene
     $sceneJsonARR = json_decode($jsonScene, TRUE);
 
     foreach ($sceneJsonARR['objects'] as $key => $value ) {
-        if ($key == 'avatarYawObject') {
+        if ($key == 'avatarCamera') {
             $x_pos = - $value['position'][0]; // x is in the opposite site in unity
             $y_pos = $value['position'][1];
             $z_pos = $value['position'][2];

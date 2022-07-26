@@ -10,7 +10,7 @@
   },
   "urlBaseType": "relativeToScene",
   "objects": {
-    "avatarYawObject": {
+    "avatarCamera": {
       "position": [
         -1.5073529542515,
         1.3,

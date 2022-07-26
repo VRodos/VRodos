@@ -543,7 +543,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
                 resources3D = parseJSON_javascript(scene_json, uploadDir);
         
                 // CLEAR SCENE
-                let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarYawObject', 'myTransformControls'];
+                let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
         
                 for (let i = envir.scene.children.length - 1; i >=0 ; i--){
                     if (!preserveElements.includes(envir.scene.children[i].name))

@@ -55,12 +55,16 @@ class ParseJSON {
         
         
         $sceneToLoad = htmlspecialchars_decode($sceneToLoad);
+       
+        
         $content_JSON = json_decode($sceneToLoad);
     
+        
     
         $json_metadata = $content_JSON->metadata;
     
-    
+        
+        
         
         
         echo '<script>';
@@ -99,7 +103,7 @@ class ParseJSON {
             
             $name = $key;
             
-            if ($name == 'avatarYawObject') {
+            if ($name == 'avatarCamera') {
                 $path = '';
                 $obj = '';
                 $mtl = '';
@@ -233,7 +237,8 @@ class ParseJSON {
                 $lighttargetobjectname = '';
     
             }
-            elseif ( strpos($name, 'Pawn') !== false ){
+            elseif ( strpos($name, 'Pawn') !== false )
+            {
    
                 $path = '';
                 $obj = '';

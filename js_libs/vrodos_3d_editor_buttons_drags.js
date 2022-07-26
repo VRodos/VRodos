@@ -251,7 +251,7 @@ function loadButtonActions() {
             showObjectPropertiesPanel(transform_controls.getMode());
 
             if (envir.is2d) {
-                transform_controls.setMode("rottrans");
+                transform_controls.setMode("translate");
                 jQuery("#translatePanelGui").show();
             }
 
@@ -314,17 +314,6 @@ function loadButtonActions() {
     });
 
 
-    // Toggle 3rd person view
-    jQuery('#thirdPersonBlockerBtn').click(function() {
-
-        envir.thirdPersonView = true;
-        envir.scene.getObjectByName("SteveOld").visible = false;
-        envir.scene.getObjectByName("Camera3Dmodel").visible = false;
-
-        jQuery('#firstPersonBlockerBtn')[0].click();
-        jQuery("#firstPersonBlockerBtn").toggleClass('mdc-theme--secondary-bg');
-        jQuery("#thirdPersonBlockerBtn").toggleClass('mdc-theme--secondary-bg');
-    });
 
     // Autorotate in 3D
     jQuery('#toggle-tour-around-btn').click(function() {

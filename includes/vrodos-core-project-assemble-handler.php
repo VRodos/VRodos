@@ -685,7 +685,7 @@ function vrodos_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug){
 
             $tempScenearr = $sceneJsonARR;
             foreach ($tempScenearr['objects'] as $key => $value ) {
-                if ($key != 'avatarYawObject') {
+                if ($key != 'avatarCamera') {
                     if($value['assetid'] == $asset_id) {
                         unset($tempScenearr['objects'][$key]);
                         $tempScenearr['metadata']['objects'] --;
@@ -755,7 +755,7 @@ function vrodos_fetch_assetids_in_scenes($gameSlug){
             
             $tempScenearr = $sceneJsonARR;
             foreach ($tempScenearr['objects'] as $key => $value ) {
-                if ($key != 'avatarYawObject') {
+                if ($key != 'avatarCamera') {
                     $assetsids[] =  $value['assetid'];
 
                     if(!in_array($value['fnObjID'], $tabClones))

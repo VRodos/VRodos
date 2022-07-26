@@ -58,9 +58,6 @@ THREE.SceneExporter.prototype = {
 
                 var node = object.children[i];
 
-                console.log("node", node.name + " " +  node.categoryName  );
-
-
 
                 if ((node.name === 'rayLine' ||
                     node.name === 'rayLine' ||
@@ -134,7 +131,7 @@ THREE.SceneExporter.prototype = {
 
                         // Everything is Object3D !
                         // What remains here is the (Groups) = 3d models obj to load
-                        // and Object3D avatarYawObject
+
 
                     if (node.name === "bbox" || node.name === "xline" || node.name === "yline" ||
                         node.name === "zline" || node.name == 'SteveOld' )
@@ -329,10 +326,7 @@ THREE.SceneExporter.prototype = {
 
         function ObjectString( o, n ) {
 
-            console.log("oo", o);
-
-
-            if (o.name != 'avatarYawObject'
+            if (o.name != 'avatarCamera'
                                             && !o.categoryName.includes('lightSun')
                                             && !o.categoryName.includes('lightTargetSpot')
                                             && !o.categoryName.includes('lightLamp')
@@ -340,9 +334,6 @@ THREE.SceneExporter.prototype = {
                                             && !o.categoryName.includes('lightAmbient')
                                             && !o.categoryName.includes('pawn')
                 ){
-                // Asset
-
-
 
                 var quatR = new THREE.Quaternion();
 
@@ -430,7 +421,9 @@ THREE.SceneExporter.prototype = {
                 ];
                 //===============================================
 
-            } else if ( o.categoryName==="lightSun" ){
+            }
+            else if ( o.categoryName==="lightSun" )
+            {
 
                 var quatR_light = new THREE.Quaternion();
 
@@ -456,8 +449,9 @@ THREE.SceneExporter.prototype = {
                     '	"categoryName" : "' + o.categoryName + '",',
                     '	"isLight"   : ' + '"' + 'true' + '"' + ( o.children.length ? ',' : '' )
                 ];
-            } else if ( o.categoryName==="lightLamp" ){
-
+            }
+            else if ( o.categoryName==="lightLamp" )
+            {
                 var quatR_light = new THREE.Quaternion();
 
                 var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
@@ -484,13 +478,9 @@ THREE.SceneExporter.prototype = {
                     '	"categoryName" : "' + o.categoryName + '",',
                     '	"isLight"   : ' + '"' + 'true' + '"' + ( o.children.length ? ',' : '' )
                 ];
-
-
-
-            } else if ( o.categoryName==="lightSpot" ){
-
-
-
+            }
+            else if ( o.categoryName==="lightSpot" )
+            {
                 var quatR_light = new THREE.Quaternion();
 
                 var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
@@ -521,7 +511,9 @@ THREE.SceneExporter.prototype = {
                     '	"isLight"   : ' + '"' + 'true' + '"' + ( o.children.length ? ',' : '' )
                 ];
 
-            } else if ( o.categoryName === "lightAmbient" ){
+            }
+            else if ( o.categoryName === "lightAmbient" )
+            {
 
                 var quatR_light = new THREE.Quaternion();
 
@@ -545,7 +537,9 @@ THREE.SceneExporter.prototype = {
 
                 //console.log(output);
 
-            } else if ( o.categoryName === "pawn" ){
+            }
+            else if ( o.categoryName === "pawn" )
+            {
 
 
                 var quatR_light = new THREE.Quaternion();
@@ -565,18 +559,16 @@ THREE.SceneExporter.prototype = {
 
                 //console.log(output);
 
-            } else if (o.name === 'avatarCamera'){
-
-                console.log("OOOOO1111", o);
-
-
+            }
+            else if ( o.name === 'avatarCamera' )
+            {
                 var quatCombined = new THREE.Quaternion();
                 var camEulerCombined = new THREE.Euler(- o.children[0].rotation._x, (Math.PI - o.rotation.y)%(2*Math.PI), 0, 'YXZ');
                 quatCombined.setFromEuler(camEulerCombined);
 
                 // player is only around y
                 var quatR_player = new THREE.Quaternion();
-                var eulerR_player = new THREE.Euler( 0, (Math.PI - o.rotation._y)%(2*Math.PI) , 0, 'YXZ')   ; // (Math.PI - o.rotation.y)%(2*Math.PI)
+                var eulerR_player = new THREE.Euler( 0, (Math.PI - o.rotation._y)%(2*Math.PI) , 0, 'YXZ');
                 quatR_player.setFromEuler(eulerR_player);
 
 
@@ -607,7 +599,7 @@ THREE.SceneExporter.prototype = {
                     quatR_camera._w.toFixed(4) + "]" + ',',
                     '	"scale"	   : ' + Vector3String(o.scale) + ',',
                     '	"categoryName" : "' + 'avatarYawObject' + '",',
-                    '	"visible"  : ' + o.visible + ( o.children.length ? ',' : '' )
+                    '	"visible"  : ' + o.visible + ( o.children.length ? '' : '' ) + '},'
                 ];
             }
 

@@ -32,7 +32,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
         var name = jo_key;
         var value = scene_json_obj[jo_key];
 
-        if (name === 'avatarYawObject') {
+        if (name === 'avatarCamera') {
 
             // var path = '';
             // var obj = '';

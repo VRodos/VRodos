@@ -101,12 +101,12 @@ function onLeftMouseDown( event ) {
         if( (intersects[0].object.name === 'Steve' || intersects[0].object.name === 'SteveShieldMesh'
                 || intersects[0].object.name === 'SteveMesh' ) && event.button === 0 ){
 
-            setBackgroundColorHierarchyViewer("avatarYawObject");
+            setBackgroundColorHierarchyViewer("avatarCamera");
 
             // highlight
             envir.outlinePass.selectedObjects = [intersects[0].object.parent.children[0]];
 
-            transform_controls.attach(envir.scene.getObjectByName("avatarYawObject"));
+            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
             //envir.renderer.setClearColor( 0xeeeeee, 1);
 
@@ -176,7 +176,7 @@ function selectorMajor(event, objectSel){
            //transform_controls.children[3].children[0].children[1].visible = false; // 2D ROTATE GIZMO
         }
 
-        if (objectSel.name === "avatarYawObject") {
+        if (objectSel.name === "avatarCamera") {
             // case of selecting by hierarchy viewer
 
             transform_controls.size = 1;

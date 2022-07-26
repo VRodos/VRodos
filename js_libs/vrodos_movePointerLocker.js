@@ -61,8 +61,6 @@ function firstPersonViewWithoutLock(){
         firstPersonBlocker.style.display = '-moz-box';
         firstPersonBlocker.style.display = 'box';
 
-        // firstPersonBlockerBtn.style.display = '';
-        // jQuery('#thirdPersonBlockerBtn')[0].style.display = '';
 
         envir.thirdPersonView = false;
 

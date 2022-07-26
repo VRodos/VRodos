@@ -275,7 +275,7 @@ function vrodos_windEnergy_scene_stats($scene_id){
 	if (isset($sceneJsonARR['objects']))
 		if (count($sceneJsonARR['objects']) > 0){
 			foreach ($sceneJsonARR['objects'] as $key => $value) {
-				if ($key !== 'avatarYawObject') {
+				if ($key !== 'avatarCamera') {
 					if ($value['categoryName'] === 'Producer') {
 
 						$optCosts = get_post_meta($value['assetid'],'vrodos_producerOptCosts',true);
@@ -1200,7 +1200,7 @@ function vrodos_get_all_doors_of_project_fastversion($parent_project_id_as_term_
             if ( $sceneJsonARR['objects'] != NULL)
                 if (count($sceneJsonARR['objects']) > 0)
                     foreach ($sceneJsonARR['objects'] as $key => $value) {
-                        if ($key !== 'avatarYawObject') {
+                        if ($key !== 'avatarCamera') {
                             if ($value['categoryName'] === 'Door') {
                                 $doorInfoGathered[] = ['door' => $value['doorName_source'],
                                                        'scene' => $sceneTitle,
@@ -1262,7 +1262,7 @@ function vrodos_get_all_scenesMarker_of_project_fastversion($parent_project_id_a
             if ( $sceneJsonARR['objects'] != NULL)
                 if (count($sceneJsonARR['objects']) > 0)
                     foreach ($sceneJsonARR['objects'] as $key => $value) {
-                        if ($key !== 'avatarYawObject') {
+                        if ($key !== 'avatarCamera') {
                             if ($value['categoryName'] === 'Door') {
                                 $doorInfoGathered[] = ['door' => $value['doorName_source'],
                                                        'scene' => $sceneTitle,

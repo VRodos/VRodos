@@ -9,7 +9,7 @@
 
 	"objects" :
 	{
-		"avatarYawObject" : {
+		"avatarCamera" : {
 			"position" : [0,200,500],
 			"rotation" : [0,0,0],
 			"quaternion": [0,0,0,1],

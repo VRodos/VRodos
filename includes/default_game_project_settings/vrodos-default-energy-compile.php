@@ -330,7 +330,7 @@ function vrodos_addAssets_educational_energy_unity($scene_id){
     
     
     foreach ($sceneJsonARR['objects'] as $key => $value ) {
-        if ($key == 'avatarYawObject') {
+        if ($key == 'avatarCamera') {
             //do something about AVATAR
         }else{
     
@@ -570,7 +570,7 @@ function vrodos_replace_educational_energy_unity($term_meta_educational_energy,$
     $sceneJsonARR = json_decode($jsonScene, TRUE);
 
     foreach ($sceneJsonARR['objects'] as $key => $value ) {
-        if ($key == 'avatarYawObject') {
+        if ($key == 'avatarCamera') {
             $x_pos = - $value['position'][0]; // x is in the opposite site in unity
             $y_pos = $value['position'][1];
             $z_pos = $value['position'][2];

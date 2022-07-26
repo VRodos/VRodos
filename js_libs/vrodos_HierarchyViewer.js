@@ -4,7 +4,7 @@ function setHierarchyViewer() {
     jQuery('#hierarchy-viewer').empty();
 
     envir.scene.traverse(function (obj) {
-        if (obj.isSelectableMesh || obj.name === "avatarYawObject") {
+        if (obj.isSelectableMesh || obj.name === "avatarCamera") {
 
             // Make the html for the delete button Avatar should not be deleted
             var deleteButtonHTML = '';
@@ -15,7 +15,7 @@ function setHierarchyViewer() {
                 return;
 
             // Normal assets (Non avatar, nor Sun)
-            if (obj.name != 'avatarYawObject' && obj.categoryName != 'lightSun' && obj.categoryName != "lightTargetSpot") {
+            if (obj.name != 'avatarCamera' && obj.categoryName != 'lightSun' && obj.categoryName != "lightTargetSpot") {
 
                 deleteButtonHTML =
                     '<a href="javascript:void(0);" class="mdc-list-item" aria-label="Delete asset"' +
@@ -60,7 +60,7 @@ function setHierarchyViewer() {
                     '</li>');
 
 
-            } else if (obj.name === 'avatarYawObject') {
+            } else if (obj.name === 'avatarCamera') {
                 // AVATAR
 
 
