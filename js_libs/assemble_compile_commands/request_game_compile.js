@@ -13,9 +13,10 @@ function vrodos_compileAjax() {
             "Transform to Aframe format",
             "Provide link"
         ];
+
         var totalSteps = steps.length;
         jQuery("#compileProgressTitle").html("Step: 1 / " + totalSteps);
-        compilationProgressText.append( '<p>'+ steps[0] + '</p>' );
+        compilationProgressText.append( '<p>' + steps[0] + '</p>' );
 
         jQuery("#constantUpdateUser").html(
 

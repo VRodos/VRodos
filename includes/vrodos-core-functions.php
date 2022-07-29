@@ -1550,7 +1550,7 @@ function vrodos_update_expert_log_callback()
 }
 
 
-//====================== GAME ASSEMBLY AND COMPILATION =================================================================
+//====================== PROJECT ASSEMBLY AND COMPILATION =================================================================
 
 function vrodos_compile_action_callback(){
 
@@ -1586,22 +1586,26 @@ function vrodos_compile_action_callback(){
 			break;
 	}
 
-	$projectId = $_REQUEST['projectId'];
-	$sceneId = $_REQUEST['sceneId'];
-	$projectSlug = $_REQUEST['projectSlug'];
+	$projectId = $_REQUEST['vrodos_game'];
+	$sceneId = $_REQUEST['vrodos_scene'];
+	//$projectSlug = $_REQUEST['projectSlug'];
  
 
-	$projectType = wp_get_post_terms( $projectId, 'vrodos_game_type' );
-	
-	$projectTypeName = $projectType[0]->name;
+//	$projectType = wp_get_post_terms( $projectId, 'vrodos_game_type' );
+//
+//	$projectTypeName = $projectType[0]->name;
     
     // Phase 1 get JSON of the scene
 	
-    $assemply_result = vrodos_assemble_the_project($projectId,
-                                                    $projectSlug,
-                                                    $sceneId,
-	                                                $targetPlatform,
-	                                                $projectTypeName);
+    $assemply_result = vrodos_compile_aframe($sceneId);
+        
+        
+        // Unity
+//        vrodos_assemble_the_project($projectId,
+//                                                    $projectSlug,
+//                                                    $sceneId,
+//	                                                $targetPlatform,
+//	                                                $projectTypeName);
 
 	// Wait 2 seconds to erase previous project before starting compiling the new one
 	// to avoiding erroneously take previous files. This is not safe with sleep however.
@@ -1619,235 +1623,238 @@ function vrodos_compile_action_callback(){
     wp_die();
 	
 	
-	
+
+    
+    // ================================= UNITY ========================================
+    
 	// sleep(2);
     // Phase 2
-	if ($assemply_success == 'true') {
-
-		$init_gcwd = getcwd(); // get cwd (wp-admin probably)
-		//-----------------------------
-
-//        fwrite($fa, "ccccc");
-//        fclose($fa);
-		//--Uploads/myGameProjectUnity--
-
-		// Todo: Add more option
-		$upload_dir = wp_upload_dir()['basedir']; //
-
-		$upload_dir = str_replace('\\','/',$upload_dir);
-		$game_dirpath = $upload_dir . '/' . $_REQUEST['gameSlug'] . 'Unity';
-
-//		$ff = fopen("outputFF.txt","w");
-//        fwrite($ff, print_r(vrodos_getUnity_local_or_remote(),true));
-//        fwrite($ff, print_r(vrodos_get_ftpCredentials(),true));
-//        fwrite($ff, print_r(vrodos_getUnity_exe_folder(),true)."\n");
-//        fwrite($ff, print_r(vrodos_getRemote_api_folder(),true)."\n");
-//        fwrite($ff, print_r(vrodos_getRemote_server_path(),true)."\n");
-
-
-//		fwrite($ff, print_r(vrodos_getUnity_local_or_remote(),true));
-
-		$remote_game_server_folder_dir = vrodos_getUnity_local_or_remote() =='local' ?
-			$game_dirpath : (vrodos_getRemote_server_path().$_REQUEST['gameSlug'] . 'Unity');
-
-
-//		fwrite($ff, $remote_game_server_folder_dir);
+//	if ($assemply_success == 'true') {
 //
-//        fwrite($ff, "\n");
-//        fwrite($ff, $os);
-//        fwrite($ff, "\n");
-
-
-		//'C:\xampp\htdocs\COMPILE_UNITY3D_GAMES\\'. $_REQUEST['gameSlug'] . 'Unity' ;
-
-		if ($os === 'win') {
-			$os_bin = 'bat';
-			$txt = '@echo off'."\n"; // change line always with double quote
-			$txt .= 'call :spawn "C:\Program Files\Unity\Editor\Unity.exe" -quit -batchmode -logFile "'.
-			        $remote_game_server_folder_dir.'\stdout.log" -projectPath "'. $remote_game_server_folder_dir . '" -executeMethod HandyBuilder.build';
-
-			$txt .= "\n";
-			$txt .= "ECHO %PID%";
-			$txt .= "\n";
-			$txt .= "exit"; // exit command useful for not showing again the command prompt
-			$txt .= "\n";
-			$txt .= '
-:spawn command args
-:: sets %PID% on completion
-@echo off
-setlocal
-set "PID="
-set "return="
-set "args=%*"
-set "args=%args:\=\\%"
-
-for /f "tokens=2 delims==;" %%I in (
-    \'wmic process call create "%args:"=\"%" ^| find "ProcessId"\'
-) do set "return=%%I"
-
-endlocal & set "PID=%return: =%"
-goto :EOF
-@echo on';
-
-			$compile_command = 'start /b '.$game_dirpath.$DS.'starter_artificial.bat /c';
-
-		} else {
-
-//		    // LINUX SERVER
-//			$os_bin = 'sh';
-//			$txt = "#/bin/bash"."\n".
-//			       "projectPath=`pwd`"."\n".
-//			       "xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24:32' /opt/Unity/Editor/Unity ".
-//			       "-batchmode -nographics -logfile stdout.log -force-opengl -quit -projectPath \${projectPath} -executeMethod HandyBuilder.build";// " -executeMethod HandyBuilder.build";  //;  //. ; "-buildWindowsPlayer ' build/mygame.exe'"; //
+//		$init_gcwd = getcwd(); // get cwd (wp-admin probably)
+//		//-----------------------------
 //
-//			// 2: run sh (nohup     '/dev ...' ensures that it is asynchronous called)
-//			$compile_command = 'nohup sh starter_artificial.sh> /dev/null 2>/dev/null & echo $! >>pid.txt';
-		}
-
-		// 1 : Generate bat or sh
-
-//        fwrite($ff, $game_dirpath.$DS."starter_artificial.".$os_bin);
-
-
-
-		$myfile = fopen($game_dirpath.$DS."starter_artificial.".$os_bin, "w") or die("Unable to open file!");
-		fwrite($myfile, $txt);
-		fclose($myfile);
-		chmod($game_dirpath.$DS."starter_artificial.".$os_bin, 0755);
-
-		chdir($game_dirpath);
-
-		if ($os === 'win') {
-			if(vrodos_getUnity_local_or_remote() != 'remote') {
-
-				// local compile
-				$unity_pid = shell_exec($compile_command);
-				$fga = fopen("execution_hint.txt", "w");
-				fwrite($fga, $compile_command);
-				fclose($fga);
-			} else {
-
-				// remote
-				$ftp_cre = vrodos_get_ftpCredentials();
-
-				$ftp_host = $ftp_cre['address'];
-				$ftp_user_name = $ftp_cre['username'];
-				$ftp_user_pass = $ftp_cre['password'];
-
-				$gameProject = $_REQUEST['gameSlug'] . 'Unity';
-
-				$zipFile = $gameProject.'.zip';
-
-				$gamesFolder = 'COMPILE_UNITY3D_GAMES';
-				$remote_file = $gamesFolder.'/'.$zipFile;
-
-				$unzip_url = "http://".$ftp_host."/".$gamesFolder.'/unzipper.php?game='.$gameProject."&action=unzip";
-				$startCompile_url = "http://".$ftp_host."/".$gamesFolder.'/unzipper.php?game='.$gameProject."&action=start";
-
-				// -------------- Zip the project to send it for remote compile -------------------
-
-				/* Exclude Files */
-				$exclude_files = array();
-				//$exclude_files[] = realpath($zip_file_name);
-				//$exclude_files[] = realpath('zip.php');
-
-				/* Path of current folder, need empty or null param for current folder */
-				$root_path = realpath($game_dirpath);
-
-				/* Initialize archive object */
-				$zip = new ZipArchive();
-				$zip_open = $zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE);
-
-				/* Create recursive files list */
-				$files = new RecursiveIteratorIterator(
-					new RecursiveDirectoryIterator($root_path),
-					RecursiveIteratorIterator::LEAVES_ONLY
-				);
-
-				/* For each files, get each path and add it in zip */
-				if (!empty($files)) {
-
-					foreach ($files as $name => $file) {
-
-						/* get path of the file */
-						$file_path = $file->getRealPath();
-
-						/* only if it's a file and not directory, and not excluded. */
-						if (!is_dir($file_path) && !in_array($file_path, $exclude_files)) {
-
-							/* get relative path */
-							//                $file_relative_path = str_replace($root_path, '', $file_path);
-
-							$file_relative_path = substr($file_path, strlen($root_path) + 1);
-
-							/* Add file to zip archive */
-							$zip_addfile = $zip->addFile($file_path, $file_relative_path);
-						}
-					}
-				} else {
-					return "ERROR 767: the folder was empty!";
-					wp_die();
-				}
-
-				/* Create ZIP after closing the object. */
-				$zip_close = $zip->close();
-
-				//--------------- FTP TRANSFER ------------------------------------------------
-
-				/* Connect using basic FTP */
-				$connect_it = ftp_connect($ftp_host);
-
-				/* Login to FTP */
-				$login_result = ftp_login($connect_it, $ftp_user_name, $ftp_user_pass);
-
-				$fileHandle = fopen($zipFile, "r");
-
-				if ($login_result === true) {
-					$ret = ftp_nb_fput($connect_it, $remote_file, $fileHandle, FTP_BINARY);
-
-					while ($ret == FTP_MOREDATA) {
-						// Do whatever you want
-						// Call some javascript
-						// Continue uploading...
-						$ret = ftp_nb_continue($connect_it);
-					}
-
-					/* Close the connection */
-					ftp_close($connect_it);
-
-					if ($ret == FTP_FAILED) {
-						echo "There was an error uploading the file...";
-						wp_die();
-					} else if ($ret == FTP_FINISHED) {
-						//return true;
-					}
-				}
-
-				//------------------ UNZIP AND COMPILE --------------------------
-				if (file_get_contents($unzip_url)) //, array("timeout"=>1), $info) )
-				{
-					// Start the compiling
-					$unity_pid = file_get_contents($startCompile_url);
-				} else {
-					echo "<br />Error 798: UNZIPing problem";
-					wp_die();
-				}
-
-			}
-		} else {
-			// LINUX
-//			$res = putenv("HOME=/home/jimver04");
-//			shell_exec($compile_command);
-//			$fpid = fopen("pid.txt","r");
-//			$unity_pid = fgets($fpid);
-//			fclose($fpid);
-		}
-		//---------------------------------------
-		chdir($init_gcwd);
-
-		echo $unity_pid;
-	}
-	wp_die();
+////        fwrite($fa, "ccccc");
+////        fclose($fa);
+//		//--Uploads/myGameProjectUnity--
+//
+//		// Todo: Add more option
+//		$upload_dir = wp_upload_dir()['basedir']; //
+//
+//		$upload_dir = str_replace('\\','/',$upload_dir);
+//		$game_dirpath = $upload_dir . '/' . $_REQUEST['gameSlug'] . 'Unity';
+//
+////		$ff = fopen("outputFF.txt","w");
+////        fwrite($ff, print_r(vrodos_getUnity_local_or_remote(),true));
+////        fwrite($ff, print_r(vrodos_get_ftpCredentials(),true));
+////        fwrite($ff, print_r(vrodos_getUnity_exe_folder(),true)."\n");
+////        fwrite($ff, print_r(vrodos_getRemote_api_folder(),true)."\n");
+////        fwrite($ff, print_r(vrodos_getRemote_server_path(),true)."\n");
+//
+//
+////		fwrite($ff, print_r(vrodos_getUnity_local_or_remote(),true));
+//
+//		$remote_game_server_folder_dir = vrodos_getUnity_local_or_remote() =='local' ?
+//			$game_dirpath : (vrodos_getRemote_server_path().$_REQUEST['gameSlug'] . 'Unity');
+//
+//
+////		fwrite($ff, $remote_game_server_folder_dir);
+////
+////        fwrite($ff, "\n");
+////        fwrite($ff, $os);
+////        fwrite($ff, "\n");
+//
+//
+//		//'C:\xampp\htdocs\COMPILE_UNITY3D_GAMES\\'. $_REQUEST['gameSlug'] . 'Unity' ;
+//
+//		if ($os === 'win') {
+//			$os_bin = 'bat';
+//			$txt = '@echo off'."\n"; // change line always with double quote
+//			$txt .= 'call :spawn "C:\Program Files\Unity\Editor\Unity.exe" -quit -batchmode -logFile "'.
+//			        $remote_game_server_folder_dir.'\stdout.log" -projectPath "'. $remote_game_server_folder_dir . '" -executeMethod HandyBuilder.build';
+//
+//			$txt .= "\n";
+//			$txt .= "ECHO %PID%";
+//			$txt .= "\n";
+//			$txt .= "exit"; // exit command useful for not showing again the command prompt
+//			$txt .= "\n";
+//			$txt .= '
+//:spawn command args
+//:: sets %PID% on completion
+//@echo off
+//setlocal
+//set "PID="
+//set "return="
+//set "args=%*"
+//set "args=%args:\=\\%"
+//
+//for /f "tokens=2 delims==;" %%I in (
+//    \'wmic process call create "%args:"=\"%" ^| find "ProcessId"\'
+//) do set "return=%%I"
+//
+//endlocal & set "PID=%return: =%"
+//goto :EOF
+//@echo on';
+//
+//			$compile_command = 'start /b '.$game_dirpath.$DS.'starter_artificial.bat /c';
+//
+//		} else {
+//
+////		    // LINUX SERVER
+////			$os_bin = 'sh';
+////			$txt = "#/bin/bash"."\n".
+////			       "projectPath=`pwd`"."\n".
+////			       "xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24:32' /opt/Unity/Editor/Unity ".
+////			       "-batchmode -nographics -logfile stdout.log -force-opengl -quit -projectPath \${projectPath} -executeMethod HandyBuilder.build";// " -executeMethod HandyBuilder.build";  //;  //. ; "-buildWindowsPlayer ' build/mygame.exe'"; //
+////
+////			// 2: run sh (nohup     '/dev ...' ensures that it is asynchronous called)
+////			$compile_command = 'nohup sh starter_artificial.sh> /dev/null 2>/dev/null & echo $! >>pid.txt';
+//		}
+//
+//		// 1 : Generate bat or sh
+//
+////        fwrite($ff, $game_dirpath.$DS."starter_artificial.".$os_bin);
+//
+//
+//
+//		$myfile = fopen($game_dirpath.$DS."starter_artificial.".$os_bin, "w") or die("Unable to open file!");
+//		fwrite($myfile, $txt);
+//		fclose($myfile);
+//		chmod($game_dirpath.$DS."starter_artificial.".$os_bin, 0755);
+//
+//		chdir($game_dirpath);
+//
+//		if ($os === 'win') {
+//			if(vrodos_getUnity_local_or_remote() != 'remote') {
+//
+//				// local compile
+//				$unity_pid = shell_exec($compile_command);
+//				$fga = fopen("execution_hint.txt", "w");
+//				fwrite($fga, $compile_command);
+//				fclose($fga);
+//			} else {
+//
+//				// remote
+//				$ftp_cre = vrodos_get_ftpCredentials();
+//
+//				$ftp_host = $ftp_cre['address'];
+//				$ftp_user_name = $ftp_cre['username'];
+//				$ftp_user_pass = $ftp_cre['password'];
+//
+//				$gameProject = $_REQUEST['gameSlug'] . 'Unity';
+//
+//				$zipFile = $gameProject.'.zip';
+//
+//				$gamesFolder = 'COMPILE_UNITY3D_GAMES';
+//				$remote_file = $gamesFolder.'/'.$zipFile;
+//
+//				$unzip_url = "http://".$ftp_host."/".$gamesFolder.'/unzipper.php?game='.$gameProject."&action=unzip";
+//				$startCompile_url = "http://".$ftp_host."/".$gamesFolder.'/unzipper.php?game='.$gameProject."&action=start";
+//
+//				// -------------- Zip the project to send it for remote compile -------------------
+//
+//				/* Exclude Files */
+//				$exclude_files = array();
+//				//$exclude_files[] = realpath($zip_file_name);
+//				//$exclude_files[] = realpath('zip.php');
+//
+//				/* Path of current folder, need empty or null param for current folder */
+//				$root_path = realpath($game_dirpath);
+//
+//				/* Initialize archive object */
+//				$zip = new ZipArchive();
+//				$zip_open = $zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+//
+//				/* Create recursive files list */
+//				$files = new RecursiveIteratorIterator(
+//					new RecursiveDirectoryIterator($root_path),
+//					RecursiveIteratorIterator::LEAVES_ONLY
+//				);
+//
+//				/* For each files, get each path and add it in zip */
+//				if (!empty($files)) {
+//
+//					foreach ($files as $name => $file) {
+//
+//						/* get path of the file */
+//						$file_path = $file->getRealPath();
+//
+//						/* only if it's a file and not directory, and not excluded. */
+//						if (!is_dir($file_path) && !in_array($file_path, $exclude_files)) {
+//
+//							/* get relative path */
+//							//                $file_relative_path = str_replace($root_path, '', $file_path);
+//
+//							$file_relative_path = substr($file_path, strlen($root_path) + 1);
+//
+//							/* Add file to zip archive */
+//							$zip_addfile = $zip->addFile($file_path, $file_relative_path);
+//						}
+//					}
+//				} else {
+//					return "ERROR 767: the folder was empty!";
+//					wp_die();
+//				}
+//
+//				/* Create ZIP after closing the object. */
+//				$zip_close = $zip->close();
+//
+//				//--------------- FTP TRANSFER ------------------------------------------------
+//
+//				/* Connect using basic FTP */
+//				$connect_it = ftp_connect($ftp_host);
+//
+//				/* Login to FTP */
+//				$login_result = ftp_login($connect_it, $ftp_user_name, $ftp_user_pass);
+//
+//				$fileHandle = fopen($zipFile, "r");
+//
+//				if ($login_result === true) {
+//					$ret = ftp_nb_fput($connect_it, $remote_file, $fileHandle, FTP_BINARY);
+//
+//					while ($ret == FTP_MOREDATA) {
+//						// Do whatever you want
+//						// Call some javascript
+//						// Continue uploading...
+//						$ret = ftp_nb_continue($connect_it);
+//					}
+//
+//					/* Close the connection */
+//					ftp_close($connect_it);
+//
+//					if ($ret == FTP_FAILED) {
+//						echo "There was an error uploading the file...";
+//						wp_die();
+//					} else if ($ret == FTP_FINISHED) {
+//						//return true;
+//					}
+//				}
+//
+//				//------------------ UNZIP AND COMPILE --------------------------
+//				if (file_get_contents($unzip_url)) //, array("timeout"=>1), $info) )
+//				{
+//					// Start the compiling
+//					$unity_pid = file_get_contents($startCompile_url);
+//				} else {
+//					echo "<br />Error 798: UNZIPing problem";
+//					wp_die();
+//				}
+//
+//			}
+//		} else {
+//			// LINUX
+////			$res = putenv("HOME=/home/jimver04");
+////			shell_exec($compile_command);
+////			$fpid = fopen("pid.txt","r");
+////			$unity_pid = fgets($fpid);
+////			fclose($fpid);
+//		}
+//		//---------------------------------------
+//		chdir($init_gcwd);
+//
+//		echo $unity_pid;
+//	}
+//	wp_die();
 }
 
 //---- AJAX MONITOR: read compile stdout.log file and return content.

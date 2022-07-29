@@ -524,6 +524,7 @@ register_activation_hook( __FILE__, 'vrodos_db_create_games_versions_table' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
 
 //------------------- For Compile ---------------------------------
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-compile-aframe.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
