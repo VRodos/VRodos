@@ -50,6 +50,8 @@ function vrodos_createProjectAjax(project_title, project_type, current_user_id, 
 
 function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass){
 
+    console.log("start fetch projects", Date.now()/1000);
+
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
         type: 'POST',
@@ -59,6 +61,8 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass){
             'parameter_Scenepass': parameter_Scenepass
         },
         success: function (res) {
+
+            console.log("success fetch projects", Date.now()/1000);
 
             // Add list to div
             document.getElementById('ExistingProjectsDivDOM').innerHTML = res;

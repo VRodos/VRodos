@@ -98,6 +98,14 @@ function vrodos_create_project_frontend_callback(){
 // Fetch list of project through ajax
 function vrodos_fetch_list_projects_callback(){
 
+
+//    $f = fopen("output_ajax_delay.txt", "w");
+//
+//    $mt = explode(' ', microtime());
+//    $t1 = ((int)$mt[1]) * 1000 + ((int)round($mt[0] * 1000));
+//
+//    fwrite($f, "Step 1:".$t1.chr(13));
+    
     $user_id = $_POST['current_user_id'];
     $parameter_Scenepass = $_POST['parameter_Scenepass'];
     
@@ -124,6 +132,7 @@ function vrodos_fetch_list_projects_callback(){
     
     // Instantiate custom query
     $custom_query = new WP_Query($custom_query_args);
+
     
     //$fp = fopen("output_ccq.txt","w");
     
@@ -135,9 +144,19 @@ function vrodos_fetch_list_projects_callback(){
     // Output custom query loop
     if ($custom_query->have_posts()){
     
+        $mt3 = explode(' ', microtime());
+        $t3 = ((int)$mt3[1]) * 1000 + ((int)round($mt3[0] * 1000));
+        
+        fwrite($f, "Step 3:".$t3.chr(13));
+        
        echo '<ul class="mdc-list mdc-list--two-line mdc-list--avatar-list" style="max-height: 460px; overflow-y: auto">';
        while ($custom_query->have_posts()) :
     
+           $mt4 = explode(' ', microtime());
+           $t4 = ((int)$mt4[1]) * 1000 + ((int)round($mt4[0] * 1000));
+           
+           fwrite($f, "Step 4:".$t4.chr(13));
+           
            $custom_query->the_post();
            
            if (current_user_can('administrator')){
@@ -213,7 +232,7 @@ function vrodos_fetch_list_projects_callback(){
                              '</span>';
                 echo '</span>';
     
-    
+
     
            // VR button: Go to 3D Editor
        
@@ -268,7 +287,9 @@ function vrodos_fetch_list_projects_callback(){
        endwhile;
        
        echo '</ul>';
-    
+
+       
+       
        wp_reset_postdata();
        //$wp_query = NULL;
        //$wp_query = $temp_query;

@@ -1,4 +1,5 @@
 <?php
+
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
 if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
@@ -9,8 +10,6 @@ global $project_scope;
 $editgamePage = vrodos_getEditpage('game');
 $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 $pluginpath = str_replace('\\','/',$pluginpath);
-
-
 
 // Define Ajax for the delete Game functionality
 $thepath = $pluginpath . '/js_libs/ajaxes/delete_game_scene_asset.js';
@@ -368,6 +367,7 @@ get_header();
     </div>
 </div>
 
+
 <script type="text/javascript">
     window.mdc.autoInit();
 
@@ -500,4 +500,4 @@ get_header();
     });
 
 </script>
-<?php get_footer(); ?>
+<?php get_footer();?>
