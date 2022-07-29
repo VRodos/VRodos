@@ -1,29 +1,88 @@
-<?php
+<html>
 
-echo "Step 0 <br/>";
+<body>
+
+<form action = "<?php $_PHP_SELF ?>" method = "GET">
+
+    scene id: <input type = "text" name = "scene_id" />
+    filename: <input type = "text" name = "filename" />
+
+    <input type = "submit" />
+
+</form>
+
+</body>
+
+</html>
+
+<?php
+//global $scene_id;
+//echo "Step 0 <br/>";
+if(isset($_GET["scene_id"]) || isset($_GET["filename"])) {
+
+    echo "Your scene id: ". $_GET['scene_id'] ."<br>";
+    $scene_id = $_GET['scene_id'];
+
+    echo "Your filename: ". $_GET['filename'] ."<br>";
+    $filename = $_GET['filename'];
+
+}
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/wp-config.php');
+//$scene_id = $GET['vrodos_scene'];
+
 $wp->init();
 $wp->parse_request();
 $wp->query_posts();
 $wp->register_globals();
 $wp->send_headers();
 
+//echo "Step 1 <br/>";
 
-echo "Step 1 <br/>";
+//echo $_SERVER["PHP_SELF"];
 
-$scene_post = get_post(1483);
+//
+//if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+//    $url = "https://";
+//else
+//    $url = "http://";
+//// Append the host(domain name, ip) to the URL.
+//$url.= $_SERVER['HTTP_HOST'];
+//
+//// Append the requested resource location to the URL
+//$url.= $_SERVER['REQUEST_URI'];
 
+//echo $url;
+
+$scene_post = get_post($id=$scene_id);
+
+
+$scene_content =  $scene_post->post_content;
+echo $scene_content;
+
+echo "<br/>";
+
+
+//print_r($scene_post);
 
 $perma_structure = get_option('permalink_structure')?true:false;
 
-$parameter_assetpass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
-$parameter_filename = $perma_structure ? '?vrodos_filename=' : '&vrodos_filename=';
+//$parameter_assetpass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+//$parameter_filename = $perma_structure ? '?vrodos_filename=' : '&vrodos_filename=';
+
+if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
+if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
+if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
+$parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 
-echo "Step 2 <br/>";
+//$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
+//    '&vrodos_scene=' .$current_scene_id . '&vrodos_asset=' );
 
-//$_GET['vrodos_scene']
+
+//echo "Step 2 <br/>";
+
+//$_GET['?vrodos_scene='];
 //$_GET['vrodos_generated_experience_filename']
 
 // Apache
@@ -34,33 +93,42 @@ echo "Step 2 <br/>";
 // net-aframe/networked-aframe/examples/
 // https://vrodos-multiplaying.iti.gr/generated_experience.html
 
+
 function callback($buffer)
 {
-	// replace all the apples with oranges
-	//return (str_replace("apples", "oranges", $buffer));
-	
-	
-	$multiplayingDirector = '/var/www/html/net-aframe/networked-aframe/examples';
- 
-	$filepath = $multiplayingDirector."/generated_experience.html";
-    
+
+    $multiplayingDirector = '/var/www/html/net-aframe/networked-aframe/examples/';
+
+    $scene_id = $_GET["scene_id"];
+    echo $scene_id;
+    $filename = $_GET["filename"];
+    echo $filename;
+    $filepath = $multiplayingDirector.'generated_experience'.$scene_id.".html";
+
     $f = fopen($filepath, "w");
     fwrite($f, print_r($buffer, true));
     fclose($f);
-    
-    
-    // @Sofia Todo : Check if $f is generated and display the below link if ok. Else say an error.
-    // @Sofia put generated_experience to be a variable name (Make a GET )
-    // @Sofia Get the scene json from post content by using scene id with a GET
-    // .php?filename=generated_experience&sceneid=125
-    //   wp_get_post_content ( 125)
-    
-    
-    
-	
-	
-}
 
+    $initial_path = "https://vrodos-multiplaying.iti.gr/";
+    $final_path = $initial_path.'generated_experience'.$scene_id.".html";
+
+    if (file_exists($filepath)){
+        return '<a href="'.$final_path.'">Generated html</a>';
+    }
+    else{
+        return "An error has occurred";
+    }
+
+    // @Sofia Todo : Check if $f is generated and display the below link if ok. Else say an error.
+
+    // @Sofia Todo : put generated_experience to be a variable name (Make a GET)
+    // @Sofia Todo : Get the scene json from post content by using scene id with a GET
+    // .php?filename=generated_experience&sceneid=125
+
+    //   wp_get_post_content ( 125)
+
+
+}
 
 ob_start("callback");
 
@@ -82,158 +150,23 @@ ob_start("callback");
 {"position":"-5 0.5 2","color":"green", "scale":"1 1 1", "rotation":"36 50 60"},
 {"position":"1 0.5 -3","color":"yellow", "scale":"1 1 1", "rotation":"30 50 60"}]}
 -->
+
+
 <?php
 
-$debug = 1;
+//else {
+//	$scene_json = $_GET["scene_json"];
+//}
 
-if ($debug) {
-	$sceneInput = '{
-  "metadata": {
-    "formatVersion" : 4.0,
-    "type"		: "scene",
-    "generatedBy"	: "SceneExporter.js",
-    "ClearColor" : "#eeeeee",
-    "toneMappingExposure" : "1",
-    "enableEnvironmentTexture" : "true",
-    "objects"       : 4	},
-
-  "urlBaseType": "relativeToScene",
-
-  "objects" :
-          {
-            "avatarCamera" : {
-              "position" : [-1.5073529542515,1.3,3.7404941859495],
-              "rotation" : [0,-0.911,0],
-              "quaternion" : [0.0000,0.8980,0.0000,-0.4399],
-              "quaternion_player" : [0.0000,0.8980,0.0000,-0.4399],
-              "quaternion_camera" : [0.0000,0.0000,0.0000,1.0000],
-              "scale"	   : [1,1,1],
-              "categoryName" : "avatarYawObject",
-              "visible"  : true,
-              "children" : {
-              }
-            },
-
-            "torus-smooth_1655803767" : {
-              "position" : [-6.237191481778497,0,-5.212510024060256],
-              "rotation" : [0,0,0],
-              "quaternion" : [0,0,0,1],
-              "scale"	   : [1,1,1],
-              "fnPath" : "",
-              "assetid" : "995",
-              "assetname" : "Torus Smooth",
-              "fnObj" : "",
-              "fnObjID" : "",
-              "categoryName" : "Artifact",
-              "categoryDescription" : "undefined",
-              "categoryIcon" : "undefined",
-              "categoryID" : "41",
-              "fbxID" : "",
-              "glbID" : "996",
-              "color" : "2bffef",
-              "emissive" : "000000",
-              "roughness" : "0.12",
-              "metalness" : "0.86",
-              "emissiveIntensity" : "0",
-              "videoTextureSrc" : "",
-              "videoTextureRepeatX" : "",
-              "videoTextureRepeatY" : "",
-              "videoTextureCenterX" : "",
-              "videoTextureCenterY" : "",
-              "videoTextureRotation" : "",
-              "audioID" : "",
-              "image1id" : "",
-              "doorName_source" : "",
-              "doorName_target" : "",
-              "sceneName_target" : "",
-              "sceneID_target" : "",
-              "archaeology_penalty" : "0",
-              "hv_penalty" : "0",
-              "natural_penalty" : "0",
-              "isreward" : "0",
-              "isCloned" : "false",
-              "isLight" : "false",
-              "fnMtl" : "",
-              "fnMtlID" : "",
-              "children" : {
-              }
-            },
-
-            "sphere_1655803772" : {
-              "position" : [6.549051055867418,0,-5.791677804511449],
-              "rotation" : [0,0,0],
-              "quaternion" : [0,0,0,1],
-              "scale"	   : [1,1,1],
-              "fnPath" : "",
-              "assetid" : "449",
-              "assetname" : "Sphere",
-              "fnObj" : "",
-              "fnObjID" : "",
-              "categoryName" : "Artifact",
-              "categoryDescription" : "undefined",
-              "categoryIcon" : "undefined",
-              "categoryID" : "41",
-              "fbxID" : "",
-              "glbID" : "450",
-              "color" : "7f7f7f",
-              "emissive" : "000000",
-              "roughness" : "0.5",
-              "metalness" : "0",
-              "emissiveIntensity" : "0",
-              "videoTextureSrc" : "",
-              "videoTextureRepeatX" : "",
-              "videoTextureRepeatY" : "",
-              "videoTextureCenterX" : "",
-              "videoTextureCenterY" : "",
-              "videoTextureRotation" : "",
-              "audioID" : "",
-              "image1id" : "",
-              "doorName_source" : "",
-              "doorName_target" : "",
-              "sceneName_target" : "",
-              "sceneID_target" : "",
-              "archaeology_penalty" : "0",
-              "hv_penalty" : "0",
-              "natural_penalty" : "0",
-              "isreward" : "0",
-              "isCloned" : "false",
-              "isLight" : "false",
-              "fnMtl" : "",
-              "fnMtlID" : "",
-              "children" : {
-              }
-            },
-
-            "mylightSun_1655803780" : {
-              "position" : [0,13.453206671125372,16.799161901784828],
-              "rotation" : [0,0,0],
-              "quaternion" : [0,0,0,1],
-              "scale"	    : [1,1,1],
-              "lightintensity"	: "1",
-              "lightcolor"	: [1.000,1.000,1.000],
-              "targetposition" : [0,0,0],
-              "categoryName" : "lightSun",
-              "isLight"   : "true",
-              "children" : {
-              }
-            }
-
-          }
-
-}';
-} else {
-	$scene_json = $_GET["scene_json"];
-}
-
-$scene_json = trim(preg_replace('/\s+/S', ' ', $sceneInput)); //   test_input($sceneInput);
-
+$scene_json = trim(preg_replace('/\s+/S', ' ', $scene_content)); //   test_input($sceneInput);
+//echo "THE SCENE CONTENT: ".$scene_content;
 ?>
 
 
 <script type="text/javascript">
 
     var data='<?php echo $scene_json; ?>';
-    
+    console.log(data);
     var data_object = JSON.parse(data);
 
     // Add node elements to scene
@@ -243,8 +176,23 @@ $scene_json = trim(preg_replace('/\s+/S', ' ', $sceneInput)); //   test_input($s
     // iterate through the json_from_scene json (for the time we only need the objects item)
 
     // array of glbs to load temporally
-    array_of_glbs = ["url(https://vrodos.iti.gr/wp-content/plugins/vrodos/assets/pawn.glb)","url(https://vrodos.iti.gr/wp-content/plugins/vrodos/assets/cube.glb)"]
+    array_of_glbs = ["url(https://vrodos.iti.gr/wp-content/plugins/vrodos/assets/cube.glb)"]
+    //"url(https://vrodos.iti.gr/wp-content/plugins/vrodos/assets/pawn.glb)"
     idx_of_glb = 0
+
+    function setAttributes(entity, data_object) {
+
+        entity.setAttribute("position", {x: Object.values( data_object.objects)[i].position[0],
+            y: Object.values( data_object.objects)[i].position[1],
+            z: Object.values( data_object.objects)[i].position[2]});
+        entity.setAttribute("rotation",{x: Object.values( data_object.objects)[i].rotation[0],
+            y: Object.values( data_object.objects)[i].rotation[1],
+            z: Object.values( data_object.objects)[i].rotation[2]});
+        entity.setAttribute("scale", {x: Object.values( data_object.objects)[i].scale[0],
+            y: Object.values( data_object.objects)[i].scale[1],
+            z: Object.values( data_object.objects)[i].scale[2]});
+    }
+
 
     // iterate through the dataobject json (for the time we only need the objects item)
     for (var i=0; i<Object.keys(data_object.objects).length; i++) {
@@ -254,46 +202,81 @@ $scene_json = trim(preg_replace('/\s+/S', ' ', $sceneInput)); //   test_input($s
         if (Object.values( data_object.objects)[i].categoryName==='Artifact'){
             // console.log(Object.values( json_from_scene.objects)[i].color)
             var glbs_fromJson = document.createElement("a-entity");
-
             glbs_fromJson.setAttribute("gltf-model", array_of_glbs[idx_of_glb]);
-            glbs_fromJson.setAttribute("position", {x: Object.values( data_object.objects)[i].position[0],
-                                                    y: Object.values( data_object.objects)[i].position[1],
-                                                    z: Object.values( data_object.objects)[i].position[2]});
 
-            glbs_fromJson.setAttribute("rotation",{x: Object.values( data_object.objects)[i].rotation[0],
-                y: Object.values( data_object.objects)[i].rotation[1],
-                z: Object.values( data_object.objects)[i].rotation[2]});
-            glbs_fromJson.setAttribute("scale", {x: Object.values( data_object.objects)[i].scale[0],
-                y: Object.values( data_object.objects)[i].scale[1],
-                z: Object.values( data_object.objects)[i].scale[2]});
-            // glbs_fromJson.setAttribute('material', `color: ${Object.values( json_from_scene.objects)[i].color}`);
+            setAttributes(glbs_fromJson, data_object)
+
             ascene.appendChild(glbs_fromJson);
             idx_of_glb+=1;
         }
 
-        // light seems ok
         else if (Object.values( data_object.objects)[i].categoryName==='lightSun'){
             // console.log(Object.values( json_from_scene.objects)[i].lightcolor)
 
-            sunlight = document.createElement('a-entity');
-            sunlight.setAttribute('light', {
+            var light = document.createElement('a-entity');
+            light.setAttribute('light', {
+                type: 'directional',
                 color: Object.values( data_object.objects)[i].lightcolor,
                 intensity: Object.values( data_object.objects)[i].lightintensity
             });
-            sunlight.setAttribute('position',{x: Object.values( data_object.objects)[i].position[0],
-                y: Object.values( data_object.objects)[i].position[1],
-                z: Object.values( data_object.objects)[i].position[2]});
-            sunlight.setAttribute('rotation',{x: Object.values( data_object.objects)[i].rotation[0],
-                y: Object.values( data_object.objects)[i].rotation[1],
-                z: Object.values( data_object.objects)[i].rotation[2]});
-            sunlight.setAttribute('scale',{x: Object.values( data_object.objects)[i].scale[0],
-                y: Object.values( data_object.objects)[i].scale[1],
-                z: Object.values( data_object.objects)[i].scale[2]});
-            ascene.appendChild(sunlight);
+            setAttributes(light, data_object)
+
+            ascene.appendChild(light);
 
         }
-        else if (Object.values( data_object.objects)[i].categoryName==='Pawn'){
-            pass;  }
+        else if (Object.values( data_object.objects)[i].categoryName==='lightSpot'){
+            // console.log(Object.values( json_from_scene.objects)[i].lightcolor)
+
+            var light = document.createElement('a-entity');
+            light.setAttribute('light', {
+                type: 'directional',
+                color: Object.values( data_object.objects)[i].lightcolor,
+                intensity: Object.values( data_object.objects)[i].lightintensity
+            });
+
+            setAttributes(light, data_object)
+
+            ascene.appendChild(light);
+
+        }
+        else if (Object.values( data_object.objects)[i].categoryName==='lightLamp'){
+            // console.log(Object.values( json_from_scene.objects)[i].lightcolor)
+
+            var light = document.createElement('a-entity');
+            light.setAttribute('light', {
+                type: 'point',
+                color: Object.values( data_object.objects)[i].lightcolor,
+                intensity: Object.values( data_object.objects)[i].lightintensity
+            });
+            setAttributes(light, data_object)
+
+            ascene.appendChild(light);
+
+        }
+        else if (Object.values( data_object.objects)[i].categoryName==='lightAmbient'){
+
+            var light = document.createElement('a-entity');
+            light.setAttribute('light', {
+                type: 'point',
+                color: Object.values( data_object.objects)[i].lightcolor,
+                intensity: Object.values( data_object.objects)[i].lightintensity
+            });
+
+            setAttributes(light, data_object)
+
+            ascene.appendChild(light);
+
+        }
+        else if (Object.values( data_object.objects)[i].categoryName==='pawn'){
+            var pawn_fromJson =  document.createElement("a-entity");
+            pawn_fromJson.setAttribute("gltf-model", "url(https://vrodos.iti.gr/wp-content/plugins/vrodos/assets/pawn.glb)");
+
+            setAttributes(pawn_fromJson, data_object)
+
+
+            ascene.appendChild(pawn_fromJson);
+
+        }
 
         // ascene.appendChild(glbs_fromJson);
         // console.log("glbs", glbs_fromJson)
@@ -363,7 +346,6 @@ $scene_json = trim(preg_replace('/\s+/S', ' ', $sceneInput)); //   test_input($s
 
 ob_end_flush();
 
-
-echo "Step Completed <br/>";
-echo '<a href="https://vrodos-multiplaying.iti.gr/generated_experience.html">Generated html</a>';
+//echo "Step Completed <br/>";
+//echo '<a href="https://vrodos-multiplaying.iti.gr/generated_experience.html">Generated html</a>';
 ?>
