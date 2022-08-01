@@ -1555,8 +1555,6 @@ function vrodos_update_expert_log_callback()
 function vrodos_compile_action_callback(){
 
 	//$fa = fopen("output_COMPILE.txt","w");
- 
-
 
 	$DS = DIRECTORY_SEPARATOR;
 	
@@ -1586,7 +1584,7 @@ function vrodos_compile_action_callback(){
 			break;
 	}
 
-	$projectId = $_REQUEST['vrodos_game'];
+	//$projectId = $_REQUEST['vrodos_game'];
 	$sceneId = $_REQUEST['vrodos_scene'];
 	//$projectSlug = $_REQUEST['projectSlug'];
  
@@ -1597,7 +1595,11 @@ function vrodos_compile_action_callback(){
     
     // Phase 1 get JSON of the scene
 	
-    $assemply_result = vrodos_compile_aframe($sceneId);
+//    fwrite($fa, $sceneId);
+//    fclose($fa);
+    
+    
+    $scene_json = vrodos_compile_aframe($sceneId);
         
         
         // Unity
@@ -1615,8 +1617,7 @@ function vrodos_compile_action_callback(){
 //	fclose($fa);
 	
 	
-	
-	echo "I have finished the assembly for the time being.";
+	echo $scene_json;
     
     
     

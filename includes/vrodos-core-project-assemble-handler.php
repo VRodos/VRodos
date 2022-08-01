@@ -99,7 +99,7 @@ function vrodos_create_project_frontend_callback(){
 function vrodos_fetch_list_projects_callback(){
 
 
-//    $f = fopen("output_ajax_delay.txt", "w");
+    $f = fopen("output_ajax_delay.txt", "w");
 //
 //    $mt = explode(' ', microtime());
 //    $t1 = ((int)$mt[1]) * 1000 + ((int)round($mt[0] * 1000));

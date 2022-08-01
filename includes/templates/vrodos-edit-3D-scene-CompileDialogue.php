@@ -11,7 +11,7 @@
        data-project-id="<?php echo $project_id; ?>"
        aria-labelledby="my-mdc-dialog-label"
        aria-describedby="my-mdc-dialog-description" data-mdc-auto-init="MDCDialog">
-    <div class="mdc-dialog__surface">
+    <div class="mdc-dialog__surface" id="compile_dialogue_div">
         
         <header class="mdc-dialog__header">
             <h2 class="mdc-dialog__header__title">
@@ -76,7 +76,12 @@
             <div class="CenterContents">
                 <a class="mdc-typography--title" href="" id="vrodos-ziplink" style="display:none;"> <i style="vertical-align: text-bottom" class="material-icons">file_download</i> Download Zip</a>
                 <a class="mdc-typography--title" href="" id="vrodos-weblink" style="display:none;margin-left:30px" target="_blank">Web link</a>
+                
+                
+               
             </div>
+
+
         
         </section>
         
@@ -88,6 +93,8 @@
         </footer>
     </div>
     <div class="mdc-dialog__backdrop"></div>
+
+
 </aside>
 
 

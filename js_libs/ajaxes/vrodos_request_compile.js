@@ -3,27 +3,27 @@ function vrodos_compileAjax() {
     // In which platform to compile, e.g. Aframe
     var platform = jQuery("#platformInput").attr("value");
 
+    // Change UI text label
     var compilationProgressText = jQuery("#compilationProgressText");
+
+    // Enable cancel button
     jQuery( "#compileCancelBtn" ).removeClass( "LinkDisabled" );
 
     if (platform === 'platform-Aframe'){
 
-        steps = [
-            "Get Scene Information from scene setup",
-            "Transform to Aframe format",
-            "Provide link"
-        ];
+        // steps = [
+        //     "Get Scene Information from scene setup",
+        //     "Transform to Aframe format",
+        //     "Provide link"
+        // ];
 
-        var totalSteps = steps.length;
-        jQuery("#compileProgressTitle").html("Step: 1 / " + totalSteps);
-        compilationProgressText.append( '<p>' + steps[0] + '</p>' );
+        jQuery("#compileProgressTitle").html("Step: 1 / 3");
+        compilationProgressText.append('<p>Get Scene Information from scene setup</p>');
 
         jQuery("#constantUpdateUser").html(
-
             '<i title="Instructions" class="material-icons AlignIconToBottom">info</i>' +
                     'Wait for the compiling to finish'
         );
-
 
         // ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
         jQuery.ajax({
@@ -33,11 +33,54 @@ function vrodos_compileAjax() {
                 'action': 'vrodos_compile_action',
                 'projectId': my_ajax_object_compile.projectId,
                 'projectSlug': my_ajax_object_compile.slug,
-                'sceneId' : my_ajax_object_compile.sceneId,
+                'vrodos_scene' : my_ajax_object_compile.sceneId,
                 'outputFormat': platform
             },
-            success : function(result) {
-                console.log("Ajax Aframe Success: " + result);
+            success : function(scene_json_as_text) {
+
+                console.log(scene_json_as_text);
+
+                // let frame = document.getElementById("iFramePreviewAframe");
+                //
+                //
+                //
+                // // Copy the new HTML document into the frame
+                // let destDocument = frame.contentDocument;
+                // let srcNode = doc.documentElement;
+                // let newNode = destDocument.importNode(srcNode, true);
+                // destDocument.replaceChild(newNode, destDocument.documentElement);
+
+                jQuery("#compileProgressTitle").html("Finished");
+                jQuery("#progressSliderSubLineDeterminateValue").width(1);
+                jQuery("#compileProgressDeterminate").show();
+                jQuery("#compileProgressSlider").hide();
+
+                jQuery("#constantUpdateUser").html(
+                    '<i title="Instructions" class="material-icons AlignIconToBottom">info</i>' +
+                    'Finished'
+                );
+
+
+                let compile_dialogue_div = document.getElementById("compile_dialogue_div");
+
+                var iFramePreviewAframe = document.createElement('iframe');
+                iFramePreviewAframe.style.background = "yellowBright";
+                iFramePreviewAframe.style.width="600px";
+                iFramePreviewAframe.style.height="400px";
+                iFramePreviewAframe.style.margin="auto";
+                iFramePreviewAframe.style.border="1px solid black";
+                iFramePreviewAframe.setAttribute('id', 'iFramePreviewAframe'); // assign an id
+                compile_dialogue_div.append(iFramePreviewAframe);
+
+                // ToDo
+                let experienceLink = "http://127.0.0.1/wordpress/generated_experience"+my_ajax_object_compile.sceneId+".html";
+
+
+                iFramePreviewAframe.src = experienceLink;
+
+                jQuery("#compilationProgressText").html("<a href='"+experienceLink+"' target='_blank'>"+experienceLink+"</a>");
+
+                console.log("Ajax Aframe Success");
             },
             error : function(xhr, ajaxOptions, thrownError) {
                 console.log("Ajax Aframe ERROR 189: " + thrownError);
@@ -45,11 +88,7 @@ function vrodos_compileAjax() {
                 hideCompileProgressSlider();
             }
         });
-
-
-
     }
-
 }
 //     window.unity_pid = -1;
 //

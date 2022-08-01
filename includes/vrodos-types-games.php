@@ -358,12 +358,12 @@ function vrodos_games_databox_show(){
 	$DS = DIRECTORY_SEPARATOR ;
 	
 	// load request_game.js script from js_libs
-	wp_enqueue_script( 'vrodos_compile_request');
+	wp_enqueue_script( 'vrodos_request_compile');
 	
 	$slug = $post->post_name;
 	
 	// Some parameters to pass in the request_game_compile.js  ajax
-	wp_localize_script('vrodos_compile_request', 'phpvarsA',
+	wp_localize_script('vrodos_request_compile', 'phpvarsA',
 		array('pluginsUrl' => plugins_url(),
 			'PHP_OS'     => PHP_OS,
 			'game_dirpath'=> realpath(dirname(__FILE__).'/..').$DS.'games_assemble'.$DS.$slug,

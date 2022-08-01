@@ -1,69 +1,47 @@
 <?php
 
-
-
 if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
 if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
-
 // Load VR_Editor Scripts
 function vrodos_load_vreditor_scripts()
 {
     wp_enqueue_script('jquery-ui-draggable');
- 
-    $threejsVersion = "141";
-    
-    if ($threejsVersion==="141"){
-	
-	    wp_enqueue_script( 'vrodos_scripts' );
-     
-	    wp_enqueue_script( 'vrodos_load141_threejs' );
-	    wp_enqueue_script( 'vrodos_load141_FontLoader' );
-	    wp_enqueue_script( 'vrodos_load141_TextGeometry' );
-     
-	    wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
-	    wp_enqueue_script( 'vrodos_load141_CopyShader' );
-	    wp_enqueue_script( 'vrodos_load141_FXAAShader' );
-	    wp_enqueue_script( 'vrodos_load141_EffectComposer' );
-	    wp_enqueue_script( 'vrodos_load141_RenderPass' );
-	    wp_enqueue_script( 'vrodos_load141_OutlinePass' );
-	    wp_enqueue_script( 'vrodos_load141_ShaderPass' );
-	
-	    //wp_enqueue_script( 'vrodos_load119_FBXloader' );
-	
-	    wp_enqueue_script( 'vrodos_load141_RGBELoader' );
-	
-	
-	    wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
-	
-//	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
-//	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
-//	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
-	    wp_enqueue_script( 'vrodos_inflate' );
-	
-	    // Timestamp script
-	    wp_enqueue_script( 'vrodos_scripts' );
-	
-	    // Hierarchy Viewer
-	    wp_enqueue_script( 'vrodos_HierarchyViewer' );
-	
-	    // Fixed at 87 (forked of original 87)
-	    wp_enqueue_script( 'vrodos_load87_datgui' );
-//	    wp_enqueue_script( 'vrodos_load87_OBJloader' );
-//	    wp_enqueue_script( 'vrodos_load87_MTLloader' );
-	    wp_enqueue_script( 'vrodos_load141_OrbitControls' );
-	    wp_enqueue_script( 'vrodos_load141_TransformControls' );
-	    wp_enqueue_script( 'vrodos_load141_PointerLockControls' );
-	
-	    wp_enqueue_script( 'vrodos_load87_sceneexporterutils' );
-	    wp_enqueue_script( 'vrodos_load87_scene_importer_utils' );
-	    wp_enqueue_script( 'vrodos_load87_sceneexporter' );
-     
-    }
-    
-    
+    wp_enqueue_script( 'vrodos_scripts' );
+
+    wp_enqueue_script( 'vrodos_load141_threejs' );
+    wp_enqueue_script( 'vrodos_load141_FontLoader' );
+    wp_enqueue_script( 'vrodos_load141_TextGeometry' );
+
+    wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
+    wp_enqueue_script( 'vrodos_load141_CopyShader' );
+    wp_enqueue_script( 'vrodos_load141_FXAAShader' );
+    wp_enqueue_script( 'vrodos_load141_EffectComposer' );
+    wp_enqueue_script( 'vrodos_load141_RenderPass' );
+    wp_enqueue_script( 'vrodos_load141_OutlinePass' );
+    wp_enqueue_script( 'vrodos_load141_ShaderPass' );
+
+    wp_enqueue_script( 'vrodos_load141_RGBELoader' );
+    wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
+    wp_enqueue_script( 'vrodos_inflate' );
+
+    // Timestamp script
+    wp_enqueue_script( 'vrodos_scripts' );
+
+    // Hierarchy Viewer
+    wp_enqueue_script( 'vrodos_HierarchyViewer' );
+
+    wp_enqueue_script( 'vrodos_load87_datgui' );
+    wp_enqueue_script( 'vrodos_load141_OrbitControls' );
+    wp_enqueue_script( 'vrodos_load141_TransformControls' );
+    wp_enqueue_script( 'vrodos_load141_PointerLockControls' );
+
+    wp_enqueue_script( 'vrodos_load87_sceneexporterutils' );
+    wp_enqueue_script( 'vrodos_load87_scene_importer_utils' );
+    wp_enqueue_script( 'vrodos_load87_sceneexporter' );
+
     // Colorpicker for the lights
     wp_enqueue_script('vrodos_jscolorpick');
 
@@ -71,7 +49,6 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_style('vrodos_3D_editor');
     wp_enqueue_style('vrodos_3D_editor_browser');
 }
-
 add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
 
 
@@ -91,7 +68,6 @@ function vrodos_load_custom_functions_vreditor(){
     wp_enqueue_script('vrodos_fetch_asset_scenes_request');
 }
 add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
-
 ?>
 
 <script type="text/javascript">
@@ -121,8 +97,6 @@ $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 
 // wpcontent/uploads/
 $upload_url = wp_upload_dir()['baseurl'];
-
-
 
 $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 
@@ -160,9 +134,6 @@ $scene_post = get_post($current_scene_id);
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
                                                     vrodos_getDefaultJSONscene(strtolower($project_type));
-
-
-
 // Load resources 3D
 $SceneParserPHP = new ParseJSON($upload_url);
 $SceneParserPHP->init($sceneJSON);
@@ -172,13 +143,11 @@ $sceneTitle = $scene_post->post_name;
 // Front End or Back end
 $isAdmin = is_admin() ? 'back' : 'front';
 
-
 $allProjectsPage = vrodos_getEditpage('allgames');
 $newAssetPage = vrodos_getEditpage('asset');
 $editscenePage = vrodos_getEditpage('scene');
 $editscene2DPage = vrodos_getEditpage('scene2D');
 $editsceneExamPage = vrodos_getEditpage('sceneExam');
-
 
 $videos = vrodos_getVideoAttachmentsFromMediaLibrary();
 
@@ -272,7 +241,7 @@ if(vrodos_getUnity_local_or_remote() != 'remote') {
 
 
 
-$thepath = $pluginpath . '/js_libs/assemble_compile_commands/request_game_compile.js';
+$thepath = $pluginpath . '/js_libs/ajaxes/vrodos_request_compile.js';
 
 wp_enqueue_script( 'ajax-script_compile', $thepath, array('jquery') );
 
@@ -512,12 +481,19 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                        title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
                         COMPILE
                     </a>
-        
+
+  
+
                     <?php // Compile Dialogue html
                     require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-CompileDialogue.php' );
                     ?>
+
+
+
                 </div>
 
+                
+                
                 <!-- Scene JSON content TextArea display and set input field -->
                 <div id="sceneJsonContent" >
                       <textarea id="vrodos_scene_json_input"
@@ -570,6 +546,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                     
                 </div>
 
+                
+                
                 <!-- Hierachy Viewer -->
 	            <?php
 	                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-HierarchyViewer.php');
@@ -667,7 +645,6 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
          //panelsAnalytics($project_type, $project_saved_keys);
        ?>
     </div>
-    
     
     <!-- Scripts part 1: The GUIs -->
     <script type="text/javascript">
@@ -1028,6 +1005,9 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
     </script>
 <?php } ?>
 
+
+
+
 <?php
     // Add sceneType variable in js envir
     $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
@@ -1042,3 +1022,27 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
     /*html { margin-top: 28px !important; }*/
     /** html body { margin-top: 28px !important; }*/
 </style>
+
+<script>
+    // // Create iFrame for Aframe
+    // let compile_dialogue_div = document.getElementById("compile_dialogue_div");
+    //
+    // var iFramePreviewAframe = document.createElement('iframe');
+    // iFramePreviewAframe.style.background = "brown";
+    // iFramePreviewAframe.setAttribute('id', 'iFramePreviewAframe'); // assign an id
+    // compile_dialogue_div.append(iFramePreviewAframe);
+
+    //iFramePreviewAframe.src = "http://127.0.0.1/wordpress/wp-content/plugins/VRodos/includes/simple_aframe.html";
+
+    
+    
+</script>
+
+
+<?php
+
+
+
+?>
+
+

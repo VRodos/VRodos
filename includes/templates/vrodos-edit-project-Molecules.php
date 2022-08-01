@@ -519,6 +519,7 @@ if ( $custom_query->have_posts() ) :?>
                     <footer class="mdc-dialog__footer">
                         <a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Cancel</a>
                         <a id="compileProceedBtn" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised LinkDisabled">Proceed</a>
+                     
                     </footer>
                 </div>
                 <div class="mdc-dialog__backdrop"></div>
