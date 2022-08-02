@@ -36,19 +36,9 @@ function vrodos_compileAjax() {
                 'vrodos_scene' : my_ajax_object_compile.sceneId,
                 'outputFormat': platform
             },
-            success : function(scene_json_as_text) {
+            success : function(scene_as_html_aframe) {
 
-                console.log(scene_json_as_text);
-
-                // let frame = document.getElementById("iFramePreviewAframe");
-                //
-                //
-                //
-                // // Copy the new HTML document into the frame
-                // let destDocument = frame.contentDocument;
-                // let srcNode = doc.documentElement;
-                // let newNode = destDocument.importNode(srcNode, true);
-                // destDocument.replaceChild(newNode, destDocument.documentElement);
+                console.log(scene_as_html_aframe);
 
                 jQuery("#compileProgressTitle").html("Finished");
                 jQuery("#progressSliderSubLineDeterminateValue").width(1);
@@ -60,21 +50,22 @@ function vrodos_compileAjax() {
                     'Finished'
                 );
 
-
                 let compile_dialogue_div = document.getElementById("compile_dialogue_div");
+                let iFramePreviewAframe = compile_dialogue_div.children['iFramePreviewAframe'];
 
-                var iFramePreviewAframe = document.createElement('iframe');
-                iFramePreviewAframe.style.background = "yellowBright";
-                iFramePreviewAframe.style.width="600px";
-                iFramePreviewAframe.style.height="400px";
-                iFramePreviewAframe.style.margin="auto";
-                iFramePreviewAframe.style.border="1px solid black";
-                iFramePreviewAframe.setAttribute('id', 'iFramePreviewAframe'); // assign an id
-                compile_dialogue_div.append(iFramePreviewAframe);
+                if (!iFramePreviewAframe) {
+                    iFramePreviewAframe = document.createElement('iframe');
+                    iFramePreviewAframe.style.background = "yellowBright";
+                    iFramePreviewAframe.style.width = "600px";
+                    iFramePreviewAframe.style.height = "400px";
+                    iFramePreviewAframe.style.margin = "auto";
+                    iFramePreviewAframe.style.border = "1px solid black";
+                    iFramePreviewAframe.setAttribute('id', 'iFramePreviewAframe'); // assign an id
+                    compile_dialogue_div.append(iFramePreviewAframe);
+                }
 
                 // ToDo
                 let experienceLink = "http://127.0.0.1/wordpress/generated_experience"+my_ajax_object_compile.sceneId+".html";
-
 
                 iFramePreviewAframe.src = experienceLink;
 

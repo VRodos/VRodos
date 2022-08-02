@@ -37,8 +37,8 @@ function loadButtonActions() {
         jQuery("#compileProgressSlider").show();
         jQuery("#compileProgressTitle").show();
 
-        jQuery("#compileProceedBtn").addClass("LinkDisabled");
-        jQuery("#compileCancelBtn").addClass("LinkDisabled");
+        // jQuery("#compileProceedBtn").addClass("LinkDisabled");
+        // jQuery("#compileCancelBtn").addClass("LinkDisabled");
 
         jQuery("#vrodos-ziplink").hide();
         jQuery("#vrodos-weblink").hide();

@@ -2,62 +2,222 @@
 
 function vrodos_compile_aframe($scene_id) {
 	
-	
         $scene_post         = get_post( $scene_id );
         $scene_content_text      = $scene_post->post_content;
-	
-//	    $scene_json_as_text = trim( preg_replace( '/\s+/S', '', $scene_content ) );
-	
+		$scene_content_text = trim( preg_replace( '/\s+/S', '', $scene_content_text ) );
 	    $scene_json = json_decode( $scene_content_text );
-	
-        
-        // Add glbURLs
+		
+        // Add glbURLs from glbID
         foreach ( $scene_json->objects as &$o ) {
             if ( $o->categoryName == "Artifact" ) {
                 $glbURL = get_the_guid( $o->glbID );
                 $o->glbURL = $glbURL;
             }
-            
         }
-        
-        
+
         // Start Creating Aframe page
-
-
-
 		// just some setup
 		$dom = new DOMDocument('1.0');
 		$dom->preserveWhiteSpace = false;
 		$dom->formatOutput = true;
 		@$dom->loadHTML("<html><head></head><body><a-scene></a-scene></body></html>");
 		
-		$html=$dom->documentElement;
-		$head=$dom->documentElement->childNodes[0];
+		//$html=$dom->documentElement;
+		$head = $dom->documentElement->childNodes[0];
 		$body=$dom->documentElement->childNodes[1];
-		$ascene=$dom->documentElement->childNodes[1]->childNodes[0];
+		$ascene = $dom->documentElement->childNodes[1]->childNodes[0];
 	
-		// Head script
-		$scriptLib = $dom->createElement("script");
-		$scriptLib->appendChild($dom->createTextNode(''));
-		$scriptLib->setAttribute("src", "https://aframe.io/releases/1.3.0/aframe.min.js");
-		$head->appendChild($scriptLib);
+		// Head scripts
+		function addScript($dom, $head, $src_url){
+			$scriptLib = $dom->createElement("script");
+			$scriptLib->appendChild($dom->createTextNode(''));
+			$scriptLib->setAttribute("src", $src_url);
+			$head->appendChild($scriptLib);
+		}
+
+		addScript($dom, $head, "https://aframe.io/releases/1.3.0/aframe.min.js");
+		
+
+		
+		// Scene Iteration kernel
+		$metadata = $scene_json->metadata;
+		$objects = $scene_json->objects;
+		
+		function setAffineTransformations($entity, $contentObject){
+			
+			$entity->setAttribute( "position", implode( " ", $contentObject->position ) );
+			$entity->setAttribute( "rotation", implode( " ", $contentObject->rotation ) );
+			$entity->setAttribute( "scale", implode( " ", $contentObject->scale ) );
+		}
+		
+		function colorRGB2Hex($colorRGB){
+			return sprintf("#%02x%02x%02x", 255*$colorRGB[0], 255*$colorRGB[1], 255*$colorRGB[2]);
+		}
+		
+		function setMaterial(&$material, $contentObject){
+			if ( $contentObject->color ) {
+				$material .= "color:#" . $contentObject->color.";";
+			}
+			if ( $contentObject->emissive ) {
+				$material .= "emissive:#" . $contentObject->emissive.";";
+			}
+			if ( $contentObject->emissiveIntensity ) {
+				$material .= "emissiveIntensity:" . $contentObject->emissiveIntensity . ";";
+			}
+			if ( $contentObject->roughness ) {
+				$material .= "roughness:" . $contentObject->roughness . ";";
+			}
+			if ( $contentObject->metalness ) {
+				$material .= "metalness:" . $contentObject->metalness . ";";
+			}
+			if ( $contentObject->videoTextureSrc ) {
+				$material .= "src:url(" . $contentObject->videoTextureSrc . ");";
+			}
+			if ( $contentObject->videoTextureRepeatX ) {
+				$material .= "repeat:".$contentObject->videoTextureRepeatX." ".$contentObject->videoTextureRepeatY.";";
+			}
+		}
+		
+		foreach($objects as $nameObject => $contentObject) {
+
+			// ===========  Artifact==============
+			if ( $contentObject->categoryName == 'Artifact' ) {
+				
+				$a_entity = $dom->createElement( "a-entity" );
+				$a_entity->appendChild( $dom->createTextNode( '' ) );
+				
+				// Affine transformations
+				setAffineTransformations($a_entity, $contentObject);
+				
+				// This overrides and updates glb materials according to material attribute
+				$a_entity->setAttribute("class", "override-materials");
+				
+				$a_entity->setAttribute("id", $nameObject);
+
+				// 3D Model
+				$a_entity->setAttribute("gltf-model", "url(".$contentObject->glbURL.")");
+				
+				// Material
+				$material = "";
+				setMaterial($material, $contentObject);
+				
+				$a_entity->setAttribute( "material", $material );
+				
+				$ascene->appendChild( $a_entity );
+				
+				//==================== Pawn =================
+			} else if ( $contentObject->categoryName == 'pawn' ) {
+				
+				$a_entity = $dom->createElement( "a-entity" );
+				$a_entity->appendChild( $dom->createTextNode( '' ) );
+				
+				// Affine transformations
+				setAffineTransformations($a_entity, $contentObject);
+				
+				// 3D Model
+				$a_entity->setAttribute("gltf-model", "url(http://127.0.0.1/wordpress/wp-content/plugins/VRodos/assets/pawn.glb)");
+				
+				// Add to scene
+				$ascene->appendChild( $a_entity );
+
+			} else if ( $contentObject->categoryName == 'lightSun' ) {
+				
+				$a_light = $dom->createElement( "a-light" );
+				$a_light->appendChild( $dom->createTextNode( '' ) );
+				
+				// Affine transformations
+				setAffineTransformations($a_light, $contentObject);
+				
+				$a_light->setAttribute("light", "type:directional;".
+				                                   "color:".colorRGB2Hex($contentObject->lightcolor).";".
+				                                   "intensity:".$contentObject->lightintensity.";"
+				                                 );
+				
+				$a_light->setAttribute("target", "#".$nameObject."target");
+				
+				
+				$a_light_target = $dom->createElement( "a-entity" );
+				$a_light_target->appendChild( $dom->createTextNode( '' ) );
+				
+				$a_light_target->setAttribute( "position", implode( " ", $contentObject->targetposition ) );
+				$a_light_target->setAttribute("id", $nameObject."target");
+				
+				$a_light->appendChild($a_light_target);
+				
+				//$a_light->setAttribute("target", "#".$contentObject->targetposition);
+				
+				// Add to scene
+				$ascene->appendChild( $a_light );
+				
+			} else if ( $contentObject->categoryName == 'lightSpot' ) {
+				
+				$a_light = $dom->createElement( "a-light" );
+				$a_light->appendChild( $dom->createTextNode(''));
+				
+				setAffineTransformations($a_light, $contentObject);
+				
+				$a_light->setAttribute("light", "type:spot;".
+				                                 "color:".colorRGB2Hex($contentObject->lightcolor).";".
+				                                 "intensity:".$contentObject->lightintensity.";".
+				                                 "distance:".$contentObject->lightdistance.";".
+				                                 "decay:".$contentObject->lightdecay.";".
+				                                 "angle:".$contentObject->lightangle.";".
+				                                 "penumbra:".$contentObject->lightpenumbra.";".
+				                                 "target:".$contentObject->lighttargetobjectname
+                                      );
+				
+				// Add to scene
+				$ascene->appendChild( $a_light );
+			
+			} else if ( $contentObject->categoryName == 'lightLamp' ) {
+				
+				$a_light = $dom->createElement( "a-light" );
+				$a_light->appendChild( $dom->createTextNode(''));
+				
+				setAffineTransformations($a_light, $contentObject);
+				
+				$a_light->setAttribute("light", "type:point;".
+				                                 "color:".colorRGB2Hex($contentObject->lightcolor).";".
+				                                 "intensity:".$contentObject->lightintensity.";".
+				                                 "distance:".$contentObject->lightdistance.";".
+				                                 "decay:".$contentObject->lightdecay.";"
+				                                 //."radius:".$contentObject->shadowRadius
+				                       );
+				
+				// Add to scene
+				$ascene->appendChild( $a_light );
+			
+			} else if ( $contentObject->categoryName == 'lightAmbient' ) {
+				
+				$a_light = $dom->createElement( "a-light" );
+				$a_light->appendChild( $dom->createTextNode(''));
+				setAffineTransformations($a_light, $contentObject);
+				
+				$a_light->setAttribute("light", "type:ambient;".
+				                                 "color:".colorRGB2Hex($contentObject->lightcolor).";".
+				                                 "intensity:".$contentObject->lightintensity);
+				
+				// Add to scene
+				$ascene->appendChild( $a_light );
+			}
+			
+			
+		}
 	
-		// Create a Box
-		$aBox = $dom->createElement("a-box");
-		$aBox->appendChild($dom->createTextNode(''));
-		$aBox->setAttribute("position", "-1 0.5 -3");
-		$aBox->setAttribute("rotation", "0 45 0");
-		$aBox->setAttribute("color", "#4CC3D9");
-		$ascene->appendChild($aBox);
 	
+	
+	
+		// Add script to body
+		addScript($dom, $body, "http://127.0.0.1/wordpress/wp-content/plugins/VRodos/js_libs/aframe_libs/glb_material_changer.js");
+		
+		
+		
 		// ----- print to output ----
 		echo $outXML = $dom->saveXML();
-	
-	
+		
         $debug_compile = true;
         
-        // Step 1. Open a file in file system for making the Aframe html file
-        
+        // Save to html
         $pathToAframe = $debug_compile ? 'C:\xampp8\htdocs\wordpress\\' :
             '/var/www/html/net-aframe/networked-aframe/examples/';
         
@@ -68,24 +228,7 @@ function vrodos_compile_aframe($scene_id) {
         fclose($f);
 
 
-        //
-        //
-        // let doc = document.implementation.createHTMLDocument("aframe_web_page");
-        //
-        // let header = doc.children[0].children[0];
-        // let body = doc.children[0].children[1];
-        //
-        // // Aframe library
-        // const script = document.createElement('script');
-        // script.type = 'text/javascript';
-        // script.src = "https://aframe.io/aframe/dist/aframe-master.min.js";
-        //
-        // // Append script lib to header
-        // header.appendChild(script);
-        //
-        // // Append a-scene to body
-        // let ascene = document.createElement("a-scene");
-        // body.appendChild(ascene);
+        
         //
         // let scene_json_keys = Object.keys(scene_json.objects);
         //
