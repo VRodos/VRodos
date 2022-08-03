@@ -1586,6 +1586,7 @@ function vrodos_compile_action_callback(){
 
 	//$projectId = $_REQUEST['vrodos_game'];
 	$sceneId = $_REQUEST['vrodos_scene'];
+    $projectId = $_REQUEST['projectId'];
 	//$projectSlug = $_REQUEST['projectSlug'];
  
 
@@ -1599,7 +1600,7 @@ function vrodos_compile_action_callback(){
 //    fclose($fa);
     
     
-    $scene_json = vrodos_compile_aframe($sceneId);
+    $scene_json = vrodos_compile_aframe($projectId, $sceneId);
         
         
         // Unity

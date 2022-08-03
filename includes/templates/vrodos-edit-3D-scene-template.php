@@ -249,7 +249,7 @@ wp_localize_script( 'ajax-script_compile',
                 'my_ajax_object_compile',
 
                         array( 'ajax_url' => admin_url( 'admin-ajax.php'),
-                               'id' => $project_id,
+                               'projectId' => $project_id,
                                'slug' => $projectSlug,
                                'sceneId' => $current_scene_id
 //                        ,
