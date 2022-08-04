@@ -71,231 +71,234 @@
   </div>
 
 
-<a-scene
-      fog="type: linear; color: #AAB; far: 230; near: 0"
-      renderer="antialias: true; sortObjects: true;" networked-scene="
-      room: roomname;
-      debug: true;
-      adapter: easyrtc;
-      audio: true;
-      video: false;
-    ">
+  <a-scene
+        fog="type: linear; color: #AAB; far: 230; near: 0"
+        renderer="antialias: true; sortObjects: true;" networked-scene="
+        room: roomname;
+        debug: true;
+        adapter: easyrtc;
+        audio: true;
+        video: false;
+      ">
 
-  <a-assets>
-    <!-- Avatar Template -->
-    <template id="avatar-template">
-      <a-entity class="avatar"
-                networked-audio-source>
+    <a-assets>
+      <!-- Avatar Template -->
+      <template id="avatar-template">
+        <a-entity class="avatar"
+                  networked-audio-source>
 
-        <a-plane id="videoPlaneGreen"
-                 class="videoPlaneGreenClass"
-                 color="#FFF"
-                 width="1"
-                 height="0.75"
-                 position="0 0.6 -0.15"
-                 material="side: double"
-                 networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video">
-        </a-plane>
+          <a-plane id="videoPlaneGreen"
+                   class="videoPlaneGreenClass"
+                   color="#FFF"
+                   width="1"
+                   height="0.75"
+                   position="0 0.6 -0.15"
+                   material="side: double"
+                   networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video">
+          </a-plane>
 
-        <a-plane id="screenPlane"
-                 color="#FFF"
-                 width="0"
-                 height="0"
-                 position="0 0.6 -0.15"
-                 material="side: double"
-                 networked-video-source="streamName:screen">
-        </a-plane>
-      </a-entity>
-    </template>
-  </a-assets>
-
-
-  <!-- Pawn -->
-  <a-entity id="player"
-            networked="template:#avatar-template;attachTemplateToLocal:false;"
-            position="0 0.6 0"
-            spawn-in-circle="radius:3"
-            wasd-controls="fly: true;"
-            show-position
-            look-controls>
-
-            <a-sphere class="head"
-                      visible="false"
-                      random-color>
-            </a-sphere>
-
-            <a-entity
-                    active="true"
-                    camera="near: 0.1; far: 7000.0;"
-                    position="0 0.6 0">
-            </a-entity>
-  </a-entity>
+          <a-plane id="screenPlane"
+                   color="#FFF"
+                   width="0"
+                   height="0"
+                   position="0 0.6 -0.15"
+                   material="side: double"
+                   networked-video-source="streamName:screen">
+          </a-plane>
+        </a-entity>
+      </template>
+    </a-assets>
 
 
-  <!-- Fixed scenery items -->
-  <a-entity light="type:directional; castShadow:true; intensity: 3; color: #ffffff" position="200 200 -60"  visible="">
+    <!-- Pawn -->
+    <a-entity id="player"
+              networked="template:#avatar-template;attachTemplateToLocal:false;"
+              position="0 0.6 0"
+              spawn-in-circle="radius:3"
+              wasd-controls="fly: true;"
+              show-position
+              look-controls>
 
-  <a-sun-sky material="side:back; sunPosition: 1.0 1.0 0.0"></a-sun-sky>
-  </a-entity>
+              <a-sphere class="head"
+                        visible="false"
+                        random-color>
+              </a-sphere>
 
-  <a-entity light="type:point; castShadow:false; intensity: 1; color: #ffffff" position="-2 1.7 -7"  visible=""></a-entity>
+              <a-entity
+                      active="true"
+                      camera="near: 0.1; far: 7000.0;"
+                      position="0 0.6 0">
+              </a-entity>
+    </a-entity>
 
-  <a-gltf-model src="url(assets/simpleboat.glb)" shadow="receive: true" clear-frustum-culling></a-gltf-model>
-  <!--    Liberty_v7_candle.glb-->
 
-  <a-ocean ocean-state="wind_velocity: 0.25 0.25;" shadow="receive: true" ocean-depth></a-ocean>
+    <!-- Fixed scenery items -->
+    <a-entity light="type:directional; castShadow:true; intensity: 3; color: #ffffff" position="200 200 -60"  visible="">
 
-</a-scene>
+    <a-sun-sky material="side:back; sunPosition: 1.0 1.0 0.0"></a-sun-sky>
+    </a-entity>
 
-<!-- Javascript -->
-<script>
+    <a-entity light="type:point; castShadow:false; intensity: 1; color: #ffffff" position="-2 1.7 -7"  visible=""></a-entity>
 
-  AFRAME.registerComponent('show-position', {
-    init: function () {
-      this.positionShow = document.getElementById("positionShow");
-      this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
-      /* this.occupantsShow = document.getElementById("occupantsShow");
-       this.entitiesShow = document.getElementById("entitiesShow"); */
-    }
-    ,
-    tick: function (time, timeDelta) {
-      var p = this.el.getAttribute('position');
-      this.positionShow.innerHTML = Math.round(p.x*100)/100 + ", " + Math.round(p.y*100)/100 + ", " + Math.round(p.z*100)/100;
+    <a-gltf-model src="url(assets/simpleboat.glb)" shadow="receive: true" clear-frustum-culling></a-gltf-model>
+    <!--    Liberty_v7_candle.glb-->
 
-      var occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
-      if(occupants) {
-        this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
+    <a-ocean ocean-state="wind_velocity: 0.25 0.25;" shadow="receive: true" ocean-depth></a-ocean>
+
+  </a-scene>
+
+  <!-- Javascript -->
+  <script>
+
+    AFRAME.registerComponent('show-position', {
+      init: function () {
+        this.positionShow = document.getElementById("positionShow");
+        this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
+        /* this.occupantsShow = document.getElementById("occupantsShow");
+         this.entitiesShow = document.getElementById("entitiesShow"); */
       }
-    }
-  });
+      ,
+      tick: function (time, timeDelta) {
+        var p = this.el.getAttribute('position');
+        this.positionShow.innerHTML = Math.round(p.x*100)/100 + ", " + Math.round(p.y*100)/100 + ", " + Math.round(p.z*100)/100;
+
+        var occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
+        if(occupants) {
+          this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
+        }
+      }
+    });
 
 
 
-  AFRAME.registerComponent('clear-frustum-culling', {
-    init: function(){
-      let el = this.el;
-      el.addEventListener("model-loaded", e =>{
-        let mesh = el.getObject3D('mesh');
-        if (!mesh){return;}
-        mesh.traverse(function(node){
-          if (node.isMesh){
-            node.frustumCulled = false;
-          }
+    AFRAME.registerComponent('clear-frustum-culling', {
+      init: function(){
+        let el = this.el;
+        el.addEventListener("model-loaded", e =>{
+          let mesh = el.getObject3D('mesh');
+          if (!mesh){return;}
+          mesh.traverse(function(node){
+            if (node.isMesh){
+              node.frustumCulled = false;
+            }
+          });
         });
-      });
-    }
-  });
+      }
+    });
 
-  /* ---------- The gui for configuring other clients inputs  ----------------- */
-  const api_pattern_single = {ThresholdMin: 0.106, ThresholdMax: 0.13, red: 48, green: 146, blue: 89, w: 1, h: 0.75};
-  const api_pattern_singleMin = {ThresholdMinLow: 0, ThresholdMaxLow: 0, redLow: 0, greenLow: 0, blueLow: 0, wLow: 0.1, hLow: 0.1};
-  const api_pattern_singleMax = {ThresholdMinHigh: 0.4, ThresholdMaxHigh: 0.4, redHigh: 255, greenHigh: 255, blueHigh: 255, wHigh: 5, hHigh: 5};
-  const api_pattern_singleStep = {ThresholdMinStep: 0.001, ThresholdMaxStep: 0.001, redStep: 1, greenStep: 1, blueStep: 1, wStep: 0.1, hStep: 0.1};
-  /* var gui = new dat.GUI( { width: 200 }); */
+    /* ---------- The gui for configuring other clients inputs  ----------------- */
+    const api_pattern_single = {ThresholdMin: 0.106, ThresholdMax: 0.13, red: 48, green: 146, blue: 89, w: 1, h: 0.75};
+    const api_pattern_singleMin = {ThresholdMinLow: 0, ThresholdMaxLow: 0, redLow: 0, greenLow: 0, blueLow: 0, wLow: 0.1, hLow: 0.1};
+    const api_pattern_singleMax = {ThresholdMinHigh: 0.4, ThresholdMaxHigh: 0.4, redHigh: 255, greenHigh: 255, blueHigh: 255, wHigh: 5, hHigh: 5};
+    const api_pattern_singleStep = {ThresholdMinStep: 0.001, ThresholdMaxStep: 0.001, redStep: 1, greenStep: 1, blueStep: 1, wStep: 0.1, hStep: 0.1};
+    /* var gui = new dat.GUI( { width: 200 }); */
 
-  var btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
-  btStatusControls.addEventListener('click', function(){
+    var btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
+    btStatusControls.addEventListener('click', function(){
 
-    var entities = window.NAF.connection.entities.entities;
-    var panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
+      var entities = window.NAF.connection.entities.entities;
+      var panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
 
-    /* Clear Panels Size  Controls */
-    panelsSizeControlsDiv.replaceChildren([]);
+      /* Clear Panels Size  Controls */
+      panelsSizeControlsDiv.replaceChildren([]);
 
-    /* DestroyGui */
-    try {
-      console.log("destroying");
-      btStatusControls.gui.destroy();
-    }catch (e){
+      /* DestroyGui */
+      try {
+        console.log("destroying");
+        btStatusControls.gui.destroy();
+      }catch (e){
 
-    }
+      }
 
-    btStatusControls.gui = new dat.GUI( { width: 200 });
-
+      btStatusControls.gui = new dat.GUI( { width: 200 });
 
 
-    var elementsDatGui = [];
-    var videoUserGui = [];
 
-    var nActor = 0;
+      var elementsDatGui = [];
+      var videoUserGui = [];
 
-    if(entities) {
-        /* Canvas Size Controls */
-        var inputH = [];
-        var inputW = [];
-        var buttonSubmit = [];
-        var panel = {};
-        for (let e in entities){
+      var nActor = 0;
 
-          console.log("e", e);
-          console.log("window.NAF.connection.entities.entities[e].childNodes[1]", window.NAF.connection.entities.entities[e].childNodes[1])
+      if(entities) {
+          /* Canvas Size Controls */
+          var inputH = [];
+          var inputW = [];
+          var buttonSubmit = [];
+          var panel = {};
+          for (let e in entities){
 
-          var h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
-          if (h) {
-            nActor++;
+            console.log("e", e);
+            console.log("window.NAF.connection.entities.entities[e].childNodes[1]", window.NAF.connection.entities.entities[e].childNodes[1])
 
-            var stringName = "Video Filtering: " + e;
+            var h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
+            if (h) {
+              nActor++;
 
-            /*  Thresholds Green */
-            videoUserGui[e] = btStatusControls.gui.addFolder(stringName);
+              var stringName = "Video Filtering: " + e;
 
-            /*  Panels  */
-            panel[e] = window.NAF.connection.entities.entities[e].childNodes[1] ;
+              /*  Thresholds Green */
+              videoUserGui[e] = btStatusControls.gui.addFolder(stringName);
 
-            elementsDatGui[e] = [];
-            for (var a in api_pattern_single) {
-              var L = a + "Low";
-              var H = a + "High";
-              var S = a + "Step";
+              /*  Panels  */
+              panel[e] = window.NAF.connection.entities.entities[e].childNodes[1] ;
 
-              elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L],
-                                                                                api_pattern_singleMax[H],
-                                                                                api_pattern_singleStep[S]);
-              if (a[0]==='w' || a[0]==='h') {
-                elementsDatGui[e][a].panelaki = panel[e];
-                if (a[0]==='h'){
-                    elementsDatGui[e][a].onChange(function () {
-                      this.panelaki.setAttribute('height', api_pattern_single[this.property]);
+              elementsDatGui[e] = [];
+              for (var a in api_pattern_single) {
+                var L = a + "Low";
+                var H = a + "High";
+                var S = a + "Step";
+
+                elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L],
+                                                                                  api_pattern_singleMax[H],
+                                                                                  api_pattern_singleStep[S]);
+                if (a[0]==='w' || a[0]==='h') {
+                  elementsDatGui[e][a].panelaki = panel[e];
+                  if (a[0]==='h'){
+                      elementsDatGui[e][a].onChange(function () {
+                        this.panelaki.setAttribute('height', api_pattern_single[this.property]);
+                      });
+                  } else if (a[0]==='w') {
+                     elementsDatGui[e][a].onChange(function () {
+                        this.panelaki.setAttribute('width', api_pattern_single[this.property]);
                     });
-                } else if (a[0]==='w') {
-                   elementsDatGui[e][a].onChange(function () {
-                      this.panelaki.setAttribute('width', api_pattern_single[this.property]);
+                  }
+                } else {
+                  elementsDatGui[e][a].onChange(function () {
+                    var domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
+                    domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
                   });
                 }
-              } else {
-                elementsDatGui[e][a].onChange(function () {
-                  var domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
-                  domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
-                });
+                elementsDatGui[e][a].nActor = nActor-1;
               }
-              elementsDatGui[e][a].nActor = nActor-1;
             }
           }
-        }
+      }
+    });
+
+    /* Define custom schema for syncing avatar color, set by random-color */
+    NAF.schemas.add({
+      template: '#avatar-template',
+      components: [
+        'position',
+        'rotation'
+      ]
+    });
+
+    /* Called by Networked-Aframe when connected to server */
+    function onConnect () {
+      console.log("onConnect", new Date());
+
+      const screenBtnEle = document.getElementById('screen-btn-sendscreen');
+      screenBtnEle.addEventListener('click', function() {
+        navigator.mediaDevices.getDisplayMedia().then((stream) => {
+          NAF.connection.adapter.addLocalMediaStream(stream, "screen");
+        });
+       });
     }
-  });
+  </script>
 
-  /* Define custom schema for syncing avatar color, set by random-color */
-  NAF.schemas.add({
-    template: '#avatar-template',
-    components: [
-      'position',
-      'rotation'
-    ]
-  });
+  <!-- This will change the glb materials -->
+  <script src="/js_libs/aframe_libs/glb_material_changer.js"></script>
 
-  /* Called by Networked-Aframe when connected to server */
-  function onConnect () {
-    console.log("onConnect", new Date());
-
-    const screenBtnEle = document.getElementById('screen-btn-sendscreen');
-    screenBtnEle.addEventListener('click', function() {
-      navigator.mediaDevices.getDisplayMedia().then((stream) => {
-        NAF.connection.adapter.addLocalMediaStream(stream, "screen");
-      });
-     });
-  }
-
-</script>
 </body>
 </html>

@@ -55,8 +55,10 @@ Chrome or Firefox
 ### Installation instructions ###
 
 - Download as zip
+- Rename VRodos-master.zip to VRodos.zip
+- Also rename the folder VRodos-master inside the zip file to VRodos.
 
-- Install in WordPress with "ADD from file" button.
+- Install VRodos.zip from WordPress dashboard with "ADD from file" button in install new plugins.
 
 - Download mdc and other node modules
 

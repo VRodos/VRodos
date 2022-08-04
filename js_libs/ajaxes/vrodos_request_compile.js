@@ -36,9 +36,9 @@ function vrodos_compileAjax() {
                 'vrodos_scene' : my_ajax_object_compile.sceneId,
                 'outputFormat': platform
             },
-            success : function(scene_as_html_aframe) {
+            success : function(res) {
 
-                console.log(scene_as_html_aframe);
+                console.log(res);
 
                 jQuery("#compileProgressTitle").html("Finished");
                 jQuery("#progressSliderSubLineDeterminateValue").width(1);
@@ -64,12 +64,15 @@ function vrodos_compileAjax() {
                     compile_dialogue_div.append(iFramePreviewAframe);
                 }
 
-                // ToDo
-                let experienceLink = "http://127.0.0.1/wordpress/generated_experience"+my_ajax_object_compile.sceneId+".html";
+                // Define the URL for calling the generated experience html aframe
+                let baseURL = "https://vrodos-multiplaying.iti.gr/";
 
-                iFramePreviewAframe.src = experienceLink;
+                let index_fname = baseURL + 'index_' + scene_id + ".html";
+                //let master_client_fname = baseURL + 'Master_Client_' + $scene_id + ".html";
 
-                jQuery("#compilationProgressText").html("<a href='"+experienceLink+"' target='_blank'>"+experienceLink+"</a>");
+                iFramePreviewAframe.src = index_fname;
+
+                jQuery("#compilationProgressText").html("<a href='"+index_fname+"' target='_blank'>"+index_fname+"</a>");
 
                 console.log("Ajax Aframe Success");
             },

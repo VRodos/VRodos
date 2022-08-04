@@ -275,8 +275,8 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 		}
 	
 	
-	// Add script to body (Already in template)
-	//	addScript($dom, $body, "http://127.0.0.1/wordpress/wp-content/plugins/VRodos/js_libs/aframe_libs/glb_material_changer.js");
+		// Add script to body (Already in template)
+		//	addScript($dom, $body, "http://127.0.0.1/wordpress/wp-content/plugins/VRodos/js_libs/aframe_libs/glb_material_changer.js");
 		
 		$contentNew = $dom->saveHTML();
 		
@@ -299,18 +299,8 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 	
 	// Step 2: Create the Master client file
 	$res = createMasterClient($project_title, $scene_id, $scene_title, $scene_json);
-		
 
-  
 
-	
-		
-		//        // Step 2. Define the URL for calling the generated experience html aframe
-		//        $baseURL = $debug_compile ? 'http://127.0.0.1/wordpress/' : "https://vrodos-multiplaying.iti.gr/";
-		//        $final_path = $baseURL.'generated_experience'.$scene_id.".html";
-		//
-		//        // Return the link
-		//        return  file_exists($filepath) ? '<a href="'.$final_path.'">Generated html</a>' : "An error has occurred";
 	
 
 	return "SuccessMe";
