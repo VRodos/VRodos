@@ -1,8 +1,5 @@
 
 
-
-
-
 <aside id="compile-dialog"
        class="mdc-dialog"
        role="alertdialog"
@@ -11,7 +8,8 @@
        data-project-id="<?php echo $project_id; ?>"
        aria-labelledby="my-mdc-dialog-label"
        aria-describedby="my-mdc-dialog-description" data-mdc-auto-init="MDCDialog">
-    <div class="mdc-dialog__surface" id="compile_dialogue_div">
+    
+    <div class="mdc-dialog__surface" id="compile_dialogue_div" style="max-width: 1100px;">
         
         <header class="mdc-dialog__header">
             <h2 class="mdc-dialog__header__title">
@@ -73,15 +71,24 @@
             
             <div id="compilationProgressText" class="CenterContents mdc-typography--title"></div>
             
-            <div class="CenterContents">
-                <a class="mdc-typography--title" href="" id="vrodos-ziplink" style="display:none;"> <i style="vertical-align: text-bottom" class="material-icons">file_download</i> Download Zip</a>
-                <a class="mdc-typography--title" href="" id="vrodos-weblink" style="display:none;margin-left:30px" target="_blank">Web link</a>
-                
-                
-               
+            <div id="previewApp" class="previewApp">
+            
             </div>
+            
+            <div class="" id="appResultDiv" style="margin-top:20px;display:none">
+<!--                <a class="mdc-typography--title" href="" id="vrodos-ziplink" style="display:none;"> <i style="vertical-align: text-bottom" class="material-icons">file_download</i> Download Zip</a>-->
 
 
+                <a class="mdc-typography--title" href="" id="vrodos-weblink" style="margin-left:30px" target="_blank">Web link</a>
+            
+                <div class="mdc-textfield FullWidth mdc-form-field mdc-textfield--upgraded mdc-textfield--invalid"    data-mdc-auto-init="MDCTextfield">
+                    <input id="webLinkInput" name="title" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" style="border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0;">
+                    <label for="webLinkInput" class="mdc-textfield__label mdc-textfield__label--shake" style="color: green !important; transform: translateY(-100%) scale(0.75, 0.75) !important;">The link for your experience</label>
+                    <div class="mdc-textfield__bottom-line" style="transform-origin: 122px center" style="color:green"></div>
+                </div>
+             
+                <button id="buttonCopyWebLink" class="ButtonFullWidth mdc-button mdc-elevation--z2 mdc-button--raised mdc-ripple-upgraded">Copy text</button>
+            </div>
         
         </section>
         
@@ -97,4 +104,23 @@
 
 </aside>
 
+<script>
+    // Make a Copy URL of Index_[scene_id].html field (like google does)
+    function myCopyLinkFunction() {
+        /* Get the text field */
+        var copyText = document.getElementById("webLinkInput");
+
+        /* Select the text field */
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); /* For mobile devices */
+
+        /* Copy the text inside the text field */
+        navigator.clipboard.writeText(copyText.value);
+
+        /* Alert the copied text */
+        alert("Copied the text: " + copyText.value);
+    }
+
+    document.querySelector("#buttonCopyWebLink").addEventListener("click", myCopyLinkFunction);
+</script>
 

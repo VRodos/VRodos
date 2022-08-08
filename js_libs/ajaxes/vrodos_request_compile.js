@@ -17,7 +17,7 @@ function vrodos_compileAjax() {
         //     "Provide link"
         // ];
 
-        jQuery("#compileProgressTitle").html("Step: 1 / 3");
+        jQuery("#compileProgressTitle").html("Step: 1 / 2");
         compilationProgressText.append('<p>Get Scene Information from scene setup</p>');
 
         jQuery("#constantUpdateUser").html(
@@ -36,43 +36,103 @@ function vrodos_compileAjax() {
                 'vrodos_scene' : my_ajax_object_compile.sceneId,
                 'outputFormat': platform
             },
-            success : function(res) {
+            success : function(urlExperienceSequenceJSON) {
 
-                console.log(res);
+                console.log(urlExperienceSequenceJSON);
 
-                jQuery("#compileProgressTitle").html("Finished");
+                let urlExperienceSequence = JSON.parse(urlExperienceSequenceJSON);
+
+                jQuery("#compileProgressTitle").hide();
                 jQuery("#progressSliderSubLineDeterminateValue").width(1);
-                jQuery("#compileProgressDeterminate").show();
+                jQuery("#compileProgressDeterminate").hide();
                 jQuery("#compileProgressSlider").hide();
+
+                jQuery("#compilationProgressText").hide();
 
                 jQuery("#constantUpdateUser").html(
                     '<i title="Instructions" class="material-icons AlignIconToBottom">info</i>' +
                     'Finished'
                 );
 
-                let compile_dialogue_div = document.getElementById("compile_dialogue_div");
-                let iFramePreviewAframe = compile_dialogue_div.children['iFramePreviewAframe'];
+                function previewerConstruct(urlAddress, iFrameId){
 
-                if (!iFramePreviewAframe) {
-                    iFramePreviewAframe = document.createElement('iframe');
-                    iFramePreviewAframe.style.background = "yellowBright";
-                    iFramePreviewAframe.style.width = "600px";
-                    iFramePreviewAframe.style.height = "400px";
-                    iFramePreviewAframe.style.margin = "auto";
-                    iFramePreviewAframe.style.border = "1px solid black";
-                    iFramePreviewAframe.setAttribute('id', 'iFramePreviewAframe'); // assign an id
-                    compile_dialogue_div.append(iFramePreviewAframe);
+                    let compile_dialogue_div = document.getElementById("previewApp");
+
+                    // Preview Index
+                    let iframe = compile_dialogue_div.children[iFrameId];
+
+                    if (!iframe) {
+                        iframe = document.createElement('iframe');
+                        iframe.style.background = "yellowBright";
+                        iframe.style.width = "320px";
+                        iframe.style.height = "200px";
+                        iframe.style.margin = "auto";
+                        iframe.style.border = "1px solid black";
+                        iframe.style.marginLeft = "10px";
+                        iframe.setAttribute('id', iFrameId); // assign an id
+                        compile_dialogue_div.append(iframe);
+                    }
+
+                    iframe.src = urlAddress;
+
+                    jQuery("#compilationProgressText").html("<a href='"+urlAddress+"' target='_blank'>"+urlAddress+"</a>");
+
+
+                    if(iFrameId==="iFramePreviewAframeIndex"){
+
+                        setTimeout(function (){
+
+                            // let iframe = document.getElementById(iFrameId);
+                            // let iframeStyle = iframe.contentWindow.document.body.style;
+                            //
+                            // //let iframeStyle = iframe.style;
+                            //
+                            // iframeStyle.scale=0.2;
+                            // iframeStyle.transformOrigin="0 0";
+                            // iframeStyle.width="1320px";
+                            // iframeStyle.overflow = "hidden";
+
+                        }, 500);
+
+                    } else if(iFrameId==="iFramePreviewAframeMasterClient"){
+
+                        setTimeout(function (){
+
+                            // let iframe = document.getElementById(iFrameId);
+                            // let iframeStyle = iframe.contentWindow.document.body.style;
+                            // iframeStyle.scale=0.2;
+                            // iframeStyle.transformOrigin="0 0";
+                            // iframeStyle.width="320px";
+                            // //iframeStyle.overflow = "hidden";
+
+                        }, 500);
+
+                    } else if(iFrameId==="iFramePreviewAframeSimpleClient"){
+
+                        setTimeout(function (){
+
+                            // let iframe = document.getElementById(iFrameId);
+                            // let iframeStyle = iframe.contentWindow.document.body.style;
+                            // iframeStyle.scale=1;
+                            // iframeStyle.transformOrigin="0 0";
+                            // iframeStyle.width="320px";
+                            // //iframeStyle.overflow = "hidden";
+
+                        }, 500);
+
+                    }
+
                 }
 
-                // Define the URL for calling the generated experience html aframe
-                let baseURL = "https://vrodos-multiplaying.iti.gr/";
+                previewerConstruct(urlExperienceSequence["index"], "iFramePreviewAframeIndex");
+                previewerConstruct(urlExperienceSequence["MasterClient"], "iFramePreviewAframeMasterClient");
+                previewerConstruct(urlExperienceSequence["SimpleClient"],"iFramePreviewAframeSimpleClient");
 
-                let index_fname = baseURL + 'index_' + scene_id + ".html";
-                //let master_client_fname = baseURL + 'Master_Client_' + $scene_id + ".html";
+                jQuery("#appResultDiv").show();
+                jQuery("#vrodos-weblink")[0].href=urlExperienceSequence["index"];
+                document.getElementById("webLinkInput").value = urlExperienceSequence["index"];
 
-                iFramePreviewAframe.src = index_fname;
 
-                jQuery("#compilationProgressText").html("<a href='"+index_fname+"' target='_blank'>"+index_fname+"</a>");
 
                 console.log("Ajax Aframe Success");
             },

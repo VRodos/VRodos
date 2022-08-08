@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="el">
 <head>
 
   <meta charset="utf-8"/>
@@ -29,7 +30,7 @@
 </head>
 <body name="myBody">
 
-  <div class="actions" name="actionsDiv">
+  <div class="actions" name="actionsDiv" id="actionsDiv">
 
     <div id="directorline" style=""></div>
 
@@ -191,7 +192,7 @@
     const api_pattern_singleMin = {ThresholdMinLow: 0, ThresholdMaxLow: 0, redLow: 0, greenLow: 0, blueLow: 0, wLow: 0.1, hLow: 0.1};
     const api_pattern_singleMax = {ThresholdMinHigh: 0.4, ThresholdMaxHigh: 0.4, redHigh: 255, greenHigh: 255, blueHigh: 255, wHigh: 5, hHigh: 5};
     const api_pattern_singleStep = {ThresholdMinStep: 0.001, ThresholdMaxStep: 0.001, redStep: 1, greenStep: 1, blueStep: 1, wStep: 0.1, hStep: 0.1};
-    /* var gui = new dat.GUI( { width: 200 }); */
+
 
     var btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
     btStatusControls.addEventListener('click', function(){
@@ -298,7 +299,7 @@
   </script>
 
   <!-- This will change the glb materials -->
-  <script src="/js_libs/aframe_libs/glb_material_changer.js"></script>
+  <script src="js/glb_material_changer.js"></script>
 
 </body>
 </html>

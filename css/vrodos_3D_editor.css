@@ -542,7 +542,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     width:auto;
     left:0;
     bottom:0;
-    z-index:1000;
+    z-index:500;
     background:rgba(0, 0, 0, 0.12);
     padding-left:60px !important;
     padding-top:5px;

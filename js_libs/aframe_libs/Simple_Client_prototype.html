@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="utf-8">
+    <title>Πύλη συμμετοχής</title>
+    <meta name="description" content="Πάρε μέρος στο έργο !">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script src="easyrtc/easyrtc.js"></script>
+    <script src="../dist/networked-aframe.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+<div class="actions" name="actionsDiv" id="actionsDiv">
+    <div id="reporting"></div>
+</div>
+
+
+<a-scene
+        background="color: black"
+        vr-mode-ui="enabled: false"
+        networked-scene="
+      room: roomname;
+      debug: true;
+      adapter: easyrtc;
+      audio: true;
+      video: true;
+    ">
+
+    <a-assets>
+        <!-- Avatar Template -->
+        <template id="avatar-template">
+            <a-entity class="avatar"
+                      networked-audio-source>
+
+                <a-plane id="videoPlane"
+                         color="#FFF"
+                         width="1"
+                         height="0.75"
+                         position="0 0.6 0.5" material="side: double"
+                         networked-video-source="streamName:video">
+                </a-plane>
+
+                <a-plane id="screenPlane"
+                         color="#FFF"
+                         width="8"
+                         height="6"
+                         position="0 0.6 0" material="side: double; shader:flat"
+                         networked-video-source="streamName:screen">
+                </a-plane>
+
+            </a-entity>
+        </template>
+    </a-assets>
+
+
+    <!-- Pawn -->
+    <a-entity id="player"
+              networked="template:#avatar-template;attachTemplateToLocal:false;"
+              position="0 0 0"
+              wasd-controls="fly:true"
+              look-controls>
+
+        <a-entity
+                active="true"
+                camera="near: 0.1; far: 7000.0;"
+                position="0 0 0">
+        </a-entity>
+
+    </a-entity>
+
+    <!-- Fixed Light -->
+    <a-entity
+            light="color: #ffaaff; intensity: 1.5"
+            position="5 5 5">
+    </a-entity>
+
+    <a-box position="0 0 -5" color="red"></a-box>
+
+
+
+</a-scene>
+
+
+
+<script>
+
+    /* Syncing avatar */
+    NAF.schemas.add({
+         template: '#avatar-template',
+         components: [
+             'position',
+             'rotation'
+         ]
+     });
+
+    /* Called by Networked-Aframe when connected to server */
+    function onConnect () {
+
+        let userName = Object.keys(window.NAF.entities.entities)[0];
+        let room = window.NAF.room;
+
+        function selectString(room, userName, lang, key, position){
+
+            let str = "Error unknown string";
+
+            switch (key) {
+                case "_connected":
+                    str = (lang==="el" ? "έχεις συνδεθεί στον διακομιστή στο δωμάτιο " : "you are now connected to server at room ") + room;
+                    break;
+                case "_selectPosition":
+                    str = lang==="el" ? "επέλεξε θέση στη σκηνή:" : "select a position in the scene:";
+                    break;
+                case "_position":
+                    str = (lang==="el" ? "έχεις πάρει τη Θέση " : "you are in position " ) + position;
+                    break;
+            }
+
+            return userName + ", " + str;
+        }
+
+        /* Get system language */
+        let userLang = navigator.language.substring(0,2);
+
+        /* Show some initial messages */
+        document.getElementById("reporting").innerText = selectString(room, userName, userLang, "_connected");
+
+        setTimeout(function (){
+            document.getElementById("reporting").innerText = selectString(room, userName, userLang, "_selectPosition");
+        }, 5000);
+
+
+        /* Clicking any button for changing position */
+        let buttonsArray = document.getElementsByClassName("positionalButtons");
+
+        for (let i=0; i < buttonsArray.length; i++){
+
+            let button = buttonsArray[i];
+            button.userLang = userLang;
+            button.userName = userName;
+            button.room = room;
+
+            let changeReporter = function(evt) {
+
+                console.log(this.dataset.rotation);
+                let rotation = JSON.parse(this.dataset.rotation);
+
+                console.log(this.dataset.position);
+                let position = JSON.parse(this.dataset.position);
+
+                document.getElementById("reporting").innerText = selectString(evt.currentTarget.room,
+                    evt.currentTarget.userName,
+                    evt.currentTarget.userLang,
+                    "_position", i+1);
+                let el = document.getElementById('player');
+                el.removeAttribute('look-controls');
+                el.setAttribute('rotation', rotation.x + " " + rotation.y + " " + rotation.z);
+                el.setAttribute('position', position.x + " " + position.y + " " + position.z);
+            };
+
+            /* bind the external function */
+            changeReporter.bind(selectString);
+
+            button.addEventListener('click', changeReporter);
+        }
+    }
+</script>
+</body>
+</html>
