@@ -74,7 +74,9 @@
 
   <a-scene
         fog="type: linear; color: #AAB; far: 230; near: 0"
-        renderer="antialias: true; sortObjects: true;" networked-scene="
+        renderer="antialias: true; sortObjects: true;"
+        vr-mode-ui="enabled: false"
+        networked-scene="
         room: roomname;
         debug: true;
         adapter: easyrtc;
@@ -229,7 +231,7 @@
           for (let e in entities){
 
             console.log("e", e);
-            console.log("window.NAF.connection.entities.entities[e].childNodes[1]", window.NAF.connection.entities.entities[e].childNodes[1])
+            console.log("window.NAF.connection.entities.entities[e].childNodes[1]", window.NAF.connection.entities.entities[e].childNodes[1]);
 
             var h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
             if (h) {
@@ -296,6 +298,17 @@
         });
        });
     }
+
+
+    (function() {
+      let actionsDiv = document.getElementById("actionsDiv");
+      let sc = 0.0004 * window.innerWidth + 0.072;
+
+      if (sc < 0.5) {
+        actionsDiv.style.transformOrigin="0px 200px";
+        actionsDiv.style.scale = "0.3";
+      }
+    })();
   </script>
 
   <!-- This will change the glb materials -->

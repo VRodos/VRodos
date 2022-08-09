@@ -2,6 +2,17 @@
 
 function vrodos_compile_aframe($project_id, $scene_id) {
 	
+	// Start node js server at 5832
+	$strCmd = "node ".WP_PLUGIN_DIR."/VRodos/networked-aframe/server/easyrtc-server.js";
+	
+	if ( PHP_OS == "WINNT"){
+		popen("start " . $strCmd, "r");
+	} else {
+		shell_exec($strCmd . " &");
+	}
+	
+	
+	// Get scene content
 	$project_post = get_post($project_id);
 	$project_title = $project_post->post_title;
 	$scene_post         = get_post( $scene_id );

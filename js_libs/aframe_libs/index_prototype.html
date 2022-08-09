@@ -2,7 +2,8 @@
 <html lang="el">
 <head>
     <title>Μηχανή Θεάτρου</title>
-    <meta name="description" content="Collection of examples for networked-aframe"></meta>
+    <meta name="description" content="Collection of examples for networked-aframe"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="UTF-8">
     <style>
         html {
@@ -41,7 +42,7 @@
         }
     </style>
 </head>
-<body>
+<body style="overflow: hidden; transform-origin: 0 0; width: 1320px">
 <script>
 
     document.addEventListener("DOMContentLoaded", function(event) {
@@ -92,6 +93,12 @@
             document.getElementById("langButtons").appendChild(link2);
         }
     });
+
+    (function() {
+        let body = document.getElementsByTagName("body")[0];
+        let sc = 0.0004 * window.innerWidth + 0.072;
+        body.style.scale = sc > 0.5 ? "1" : "0.2";
+    })();
 </script>
 
 
