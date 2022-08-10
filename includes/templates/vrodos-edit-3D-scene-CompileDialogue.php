@@ -87,7 +87,7 @@
                     <div class="mdc-textfield__bottom-line" style="transform-origin: 122px center" style="color:green"></div>
                 </div>
              
-                <button id="buttonCopyWebLink" class="ButtonFullWidth mdc-button mdc-elevation--z2 mdc-button--raised mdc-ripple-upgraded">Copy text</button>
+                <button id="buttonCopyWebLink" class="ButtonFullWidth mdc-button mdc-elevation--z2 mdc-button--raised mdc-ripple-upgraded">Copy link</button>
             </div>
         
         </section>

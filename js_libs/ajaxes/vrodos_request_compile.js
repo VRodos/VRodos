@@ -33,6 +33,7 @@ function vrodos_compileAjax() {
                 'action': 'vrodos_compile_action',
                 'projectId': my_ajax_object_compile.projectId,
                 'projectSlug': my_ajax_object_compile.slug,
+                'showPawnPositions': my_ajax_object_compile.showPawnPositions,
                 'vrodos_scene' : my_ajax_object_compile.sceneId,
                 'outputFormat': platform
             },
@@ -54,7 +55,7 @@ function vrodos_compileAjax() {
                     'Finished'
                 );
 
-                function previewerConstruct(urlAddress, iFrameId){
+                function previewerConstruct(urlAddress, iFrameId, captionText){
 
                     let compile_dialogue_div = document.getElementById("previewApp");
 
@@ -70,69 +71,26 @@ function vrodos_compileAjax() {
                         iframe.style.border = "1px solid black";
                         iframe.style.marginLeft = "10px";
                         iframe.setAttribute('id', iFrameId); // assign an id
+
+                        caption_iframe = document.createElement('span');
+                        caption_iframe.setAttribute("class", "captioniframe");
+                        caption_iframe.innerText = captionText;
+
+                        compile_dialogue_div.append(caption_iframe);
+
                         compile_dialogue_div.append(iframe);
                     }
 
                     iframe.src = urlAddress;
-
-                    jQuery("#compilationProgressText").html("<a href='"+urlAddress+"' target='_blank'>"+urlAddress+"</a>");
-
-
-                    if(iFrameId==="iFramePreviewAframeIndex"){
-
-                        setTimeout(function (){
-
-                            // let iframe = document.getElementById(iFrameId);
-                            // let iframeStyle = iframe.contentWindow.document.body.style;
-                            //
-                            // //let iframeStyle = iframe.style;
-                            //
-                            // iframeStyle.scale=0.2;
-                            // iframeStyle.transformOrigin="0 0";
-                            // iframeStyle.width="1320px";
-                            // iframeStyle.overflow = "hidden";
-
-                        }, 500);
-
-                    } else if(iFrameId==="iFramePreviewAframeMasterClient"){
-
-                        setTimeout(function (){
-
-                            // let iframe = document.getElementById(iFrameId);
-                            // let iframeStyle = iframe.contentWindow.document.body.style;
-                            // iframeStyle.scale=0.2;
-                            // iframeStyle.transformOrigin="0 0";
-                            // iframeStyle.width="320px";
-                            // //iframeStyle.overflow = "hidden";
-
-                        }, 500);
-
-                    } else if(iFrameId==="iFramePreviewAframeSimpleClient"){
-
-                        setTimeout(function (){
-
-                            // let iframe = document.getElementById(iFrameId);
-                            // let iframeStyle = iframe.contentWindow.document.body.style;
-                            // iframeStyle.scale=1;
-                            // iframeStyle.transformOrigin="0 0";
-                            // iframeStyle.width="320px";
-                            // //iframeStyle.overflow = "hidden";
-
-                        }, 500);
-
-                    }
-
                 }
 
-                previewerConstruct(urlExperienceSequence["index"], "iFramePreviewAframeIndex");
-                previewerConstruct(urlExperienceSequence["MasterClient"], "iFramePreviewAframeMasterClient");
-                previewerConstruct(urlExperienceSequence["SimpleClient"],"iFramePreviewAframeSimpleClient");
+                previewerConstruct(urlExperienceSequence["index"], "iFramePreviewAframeIndex", "Index");
+                previewerConstruct(urlExperienceSequence["MasterClient"], "iFramePreviewAframeMasterClient", "Director");
+                previewerConstruct(urlExperienceSequence["SimpleClient"],"iFramePreviewAframeSimpleClient", "Actor");
 
                 jQuery("#appResultDiv").show();
                 jQuery("#vrodos-weblink")[0].href=urlExperienceSequence["index"];
                 document.getElementById("webLinkInput").value = urlExperienceSequence["index"];
-
-
 
                 console.log("Ajax Aframe Success");
             },

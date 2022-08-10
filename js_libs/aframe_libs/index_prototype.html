@@ -33,16 +33,20 @@
             width:512px;
             margin:20px;
             float:left;
+            margin-top:0px;
         }
         #div2 {
             height:512px;
             width:512px;
             float:left;
             margin:20px;
+            margin-top:0px;
         }
+
+
     </style>
 </head>
-<body style="overflow: hidden; transform-origin: 0 0; width: 1320px">
+<body style="overflow: hidden; transform-origin: -20px -20px; width: 1320px">
 <script>
 
     document.addEventListener("DOMContentLoaded", function(event) {
@@ -94,10 +98,9 @@
         }
     });
 
+    /* Scale down body when in compile preview */
     (function() {
-        let body = document.getElementsByTagName("body")[0];
-        let sc = 0.0004 * window.innerWidth + 0.072;
-        body.style.scale = sc > 0.5 ? "1" : "0.2";
+        document.getElementsByTagName("body")[0].style.scale = window.innerWidth > 500 ? "1" : "0.21";
     })();
 </script>
 

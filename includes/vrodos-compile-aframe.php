@@ -1,6 +1,6 @@
 <?php
 
-function vrodos_compile_aframe($project_id, $scene_id) {
+function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	
 	// Start node js server at 5832
 	$strCmd = "node ".WP_PLUGIN_DIR."/VRodos/networked-aframe/server/easyrtc-server.js";
@@ -11,13 +11,13 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 		shell_exec($strCmd . " &");
 	}
 	
-	
 	// Get scene content
 	$project_post = get_post($project_id);
 	$project_title = $project_post->post_title;
 	$scene_post         = get_post( $scene_id );
 	$scene_content_text = $scene_post->post_content;
 	$scene_title = $scene_post->post_title;
+	
 	
 	// Transform JSON text into JSON objects by decode function
 	$scene_content_text = trim( preg_replace( '/\s+/S', '', $scene_content_text ) );
@@ -74,6 +74,7 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 			return $res;
 		}
 		
+		
 		function copier($filename){
 		
 		}
@@ -121,11 +122,7 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 			$dom = new DOMDocument("1.0", "utf-8");
 			$dom->resolveExternals = true;
 			
-			$content = preg_replace('/\>\s+\</m', '><', $content);
-			$content = preg_replace(['(\s+)u', '(^\s|\s$)u'], [' ', ''], $content);
-			
-			@$dom->loadHTML($content, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED);  //LIBXML_NOERROR
-			
+			@$dom->loadHTML($content, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  //LIBXML_NOERROR
 
 			$html = $dom->documentElement;
 			$head = $dom->documentElement->childNodes[0];
@@ -165,42 +162,25 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 			                   $project_title.", ".$scene_title." (".$scene_id.")",
 			                          $content);
 		
-//		$content = str_replace("img/actor_icon.png", 	$fileOperations->pathToResources()."/actor_icon.png"
-//			                           ,$content);
-//
-//		$content = str_replace("img/director_icon.jpg", $fileOperations->pathToResources()."/director_icon.jpg"
-//			,$content);
-		
 		// Write back to root
 		return $fileOperations->writer($fileOperations->pathSelector()."index_".$scene_id.".html", $content);
     }
-	
-	// Step 1: Create the index file
-	$resIndexCreate = createIndexFile($project_title, $scene_id, $scene_title, $fileOperations );
 
-	
 	
 	// STEP 2: Create the director file
-	function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations){
-
-		$filenameSource = WP_PLUGIN_DIR."/VRodos/js_libs/aframe_libs/Master_Client_prototype.html";
-		$filenameTarget = WP_PLUGIN_DIR."/VRodos/networked-aframe/examples/Master_Client_".$scene_id."_intermediate.html";
+	function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions){
 
 		// Read prototype
-		$content = $fileOperations->reader($filenameSource);
+		$content = $fileOperations->reader(WP_PLUGIN_DIR."/VRodos/js_libs/aframe_libs/Master_Client_prototype.html");
 
 		// Modify strings
 		$content = str_replace("roomname", "room".$scene_id, $content);
-
-		// Write back
-		$fileOperations->writer($filenameTarget, $content);
 		
 		$basicDomElements = $fileOperations->createBasicDomStructureAframe($content, $scene_json);
 		
 		$dom = $basicDomElements['dom'];
 		$objects = $basicDomElements['objects'];
 		$ascene = $basicDomElements['ascene'];
-	
 		
 		foreach($objects as $nameObject => $contentObject) {
 			
@@ -223,15 +203,14 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 				
 				//==================== Pawn =================
 			} else if ( $contentObject->categoryName == 'pawn' ) {
-				
-				$a_entity = $dom->createElement( "a-entity" );
-				$a_entity->appendChild( $dom->createTextNode( '' ) );
-				
-				$fileOperations->setAffineTransformations($a_entity, $contentObject);
-				
-				$a_entity->setAttribute("gltf-model", "url(http://127.0.0.1/wordpress/wp-content/plugins/VRodos/assets/pawn.glb)");
-				
-				$ascene->appendChild( $a_entity );
+
+				if($showPawnPositions=="true") {
+					$a_entity = $dom->createElement( "a-entity" );
+					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
+					$a_entity->setAttribute( "gltf-model", "url(http://127.0.0.1/wordpress/wp-content/plugins/VRodos/assets/pawn.glb)" );
+					$ascene->appendChild( $a_entity );
+				}
 				
 			} else if ( $contentObject->categoryName == 'lightSun' ||
 			            $contentObject->categoryName == 'lightSpot' ||
@@ -301,25 +280,18 @@ function vrodos_compile_aframe($project_id, $scene_id) {
         return $fileOperations->writer($fileOperations->pathSelector().'Master_Client_'.$scene_id.".html", $contentNew);
 	}
 	
-	// Step 2: Create the Master client file
-	$res = createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations);
+	
 	
 	
 	
 	// Step 3: Create the Simple client file
 	function createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations){
 
-		$filenameSource = WP_PLUGIN_DIR."/VRodos/js_libs/aframe_libs/Simple_Client_prototype.html";
-		$filenameTarget = WP_PLUGIN_DIR."/VRodos/networked-aframe/examples/Simple_Client_".$scene_id."_intermediate.html";
-
 		// Read prototype
-		$content = $fileOperations->reader($filenameSource);
+		$content = $fileOperations->reader(WP_PLUGIN_DIR."/VRodos/js_libs/aframe_libs/Simple_Client_prototype.html");
 
 		// Modify strings
 		$content = str_replace("roomname", "room".$scene_id, $content);
-
-		// Write back
-		$fileOperations->writer($filenameTarget, $content);
 		
 		// Create Basic dom structure for an aframe page
 		$basicDomElements = $fileOperations->createBasicDomStructureAframe($content, $scene_json);
@@ -328,6 +300,8 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 		$objects = $basicDomElements['objects'];
 		$ascene = $basicDomElements['ascene'];
 		$actionsDiv = $basicDomElements['actionsDiv'];
+		
+		$fileOperations->writer("output_simple_client.html", print_r($basicDomElements, true));
 		
 		$i = 0;
 		foreach($objects as $nameObject => $contentObject) {
@@ -342,7 +316,7 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 				
 				$buttonDiv->setAttribute("id", "screen-btn-".$i);
 				$buttonDiv->setAttribute("type", "button");
-				$buttonDiv->setAttribute("class", "positionButtons");
+				$buttonDiv->setAttribute("class", "positionalButtons");
 				
 				$pos_x = $contentObject->position[0];
 				$pos_y = $contentObject->position[1];
@@ -371,9 +345,16 @@ function vrodos_compile_aframe($project_id, $scene_id) {
 		// Write back to root
 		return $fileOperations->writer($fileOperations->pathSelector().'Simple_Client_'.$scene_id.".html", $contentNew);
 	}
-
+	
+	
+	// Step 1: Create the index file
+	createIndexFile($project_title, $scene_id, $scene_title, $fileOperations );
+	
+	// Step 2: Create the Master client file
+	createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions);
+	
 	// Step 3; Create Simple Client
-	$res = createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations);
+	createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations);
 
 	return json_encode(
 		                array("index" => $fileOperations->uriSelector()."index_".$scene_id.".html",

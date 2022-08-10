@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-
   <meta charset="utf-8"/>
   <title>Ζωντανή Παράσταση</title>
-
   <meta name="description" content="Dev Example — Networked-Aframe with Green Screen effect"/>
+
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -16,9 +15,9 @@
 
   <script src="../easyrtc/easyrtc.js"></script>
   <script src="../dist/networked-aframe.js"></script>
+
   <script src="js/a-water.master.min.js"></script>
   <script src="https://unpkg.com/aframe-sun-sky@3.0.3/dist/aframe-sun-sky.min.js"></script>
-
   <script src="https://unpkg.com/aframe-randomizer-components@^3.0.1/dist/aframe-randomizer-components.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@master/dist/aframe-particle-system-component.min.js"></script>
@@ -26,11 +25,8 @@
   <script src="js/spawn-in-circle.component.js"></script>
 
   <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
-
 </head>
-<body name="myBody">
-
-  <div class="actions" name="actionsDiv" id="actionsDiv">
+<body name="myBody"><div class="actions" name="actionsDiv" id="actionsDiv">
 
     <div id="directorline" style=""></div>
 
@@ -69,10 +65,7 @@
 
     <div id="panelsSizeControlsDiv">
     </div>
-  </div>
-
-
-  <a-scene
+  </div><a-scene
         fog="type: linear; color: #AAB; far: 230; near: 0"
         renderer="antialias: true; sortObjects: true;"
         vr-mode-ui="enabled: false"
@@ -300,11 +293,10 @@
     }
 
 
+    /* Scale down div when in compile preview */
     (function() {
-      let actionsDiv = document.getElementById("actionsDiv");
-      let sc = 0.0004 * window.innerWidth + 0.072;
-
-      if (sc < 0.5) {
+      if (window.innerWidth < 400) {
+        let actionsDiv = document.getElementById("actionsDiv");
         actionsDiv.style.transformOrigin="0px 200px";
         actionsDiv.style.scale = "0.3";
       }

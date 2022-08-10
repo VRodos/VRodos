@@ -1,3 +1,7 @@
+
+
+
+
 var elements = document.getElementsByClassName('override-materials');
 
 
@@ -17,12 +21,20 @@ function hexToRgbA(hex){
 
 for (let el of elements)
 {
-// wait until model is loaded
-    el.addEventListener('model-loaded', function (event) {
+    console.log("A, model loaded: changing materials now", el);
+
+    // wait until model is loaded
+    // el.addEventListener('model-loaded',
+    //     function (event) {
+
+        console.log("model loaded: changing materials now");
 
         let materialNew = el.getAttribute("material");
 
         el.object3D.traverse(function (object3D) {
+
+            console.log("model loaded: changing materials now for", object3D);
+
             let mat = object3D.material;
             if (mat) {
 
@@ -72,7 +84,11 @@ for (let el of elements)
                 }
 
             }
-        })
+        });
 
-    });
+  //   }
+  // );
 }
+
+
+

@@ -922,4 +922,11 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     -ms-user-select: none;
 }
 
+.captioniframe {
+    display:inline-block;
+    position:absolute;
+    color:white;
+    text-shadow:0px 0px 5px black;
+    margin-left:15px;
+}
 
