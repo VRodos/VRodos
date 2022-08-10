@@ -47,7 +47,7 @@ function loadButtonActions() {
 
         jQuery('#unityTaskMemValue').html("0");
 
-        vrodos_compileAjax();
+        vrodos_compileAjax("true");
     });
 
     // Compile Cancel

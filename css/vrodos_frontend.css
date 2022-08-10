@@ -124,6 +124,14 @@ i.ButtonIcon {
     height: 48px;
 }
 
+.ButtonHalfWidth {
+    margin-bottom: 24px;
+    width: 30%;
+    height: 48px;
+    display:inline-block !important;
+}
+
+
 /* Style the accordion panel. Note: hidden by default */
 .EditPageAccordionPanel {
     padding: 0 18px;

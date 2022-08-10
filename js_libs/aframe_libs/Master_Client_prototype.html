@@ -27,7 +27,7 @@
   <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 </head>
 <body name="myBody"><div class="actions" name="actionsDiv" id="actionsDiv">
-
+        <div id="toggle_show_clacket">Close <span style="color:green">("x" button to show again)</span></div>
     <div id="directorline" style=""></div>
 
     <div class="wrapperControlElement">
@@ -301,6 +301,51 @@
         actionsDiv.style.scale = "0.3";
       }
     })();
+
+    /* x button show clacket. key code 88 */
+    document.addEventListener('keydown', function(e){
+        if (e.keyCode === 88){
+            document.getElementById('actionsDiv').style.display='block';
+
+            if (document.getElementsByClassName('dg ac')[0]) {
+                document.getElementsByClassName('dg ac')[0].style.display = 'block';
+            }
+
+            if (document.cancelFullScreen) {
+                document.cancelFullScreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitCancelFullScreen) {
+                document.webkitCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    });
+
+    /* Make full screen and hide controls */
+    let clacket = document.getElementById("toggle_show_clacket");
+    clacket.onclick = function(){
+
+        document.getElementById('actionsDiv').style.display='none';
+
+        if (document.getElementsByClassName('dg ac')[0]) {
+            document.getElementsByClassName('dg ac')[0].style.display = 'none';
+        }
+
+        let elem = document.body;
+
+        if (elem.requestFullScreen) {
+            elem.requestFullScreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullScreen) {
+            elem.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    };
+
   </script>
 
   <!-- This will change the glb materials -->

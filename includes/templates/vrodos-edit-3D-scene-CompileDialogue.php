@@ -81,13 +81,15 @@
 
                 <a class="mdc-typography--title" href="" id="vrodos-weblink" style="margin-left:30px" target="_blank">Web link</a>
             
-                <div class="mdc-textfield FullWidth mdc-form-field mdc-textfield--upgraded mdc-textfield--invalid"    data-mdc-auto-init="MDCTextfield">
+                <div class="mdc-textfield FullWidth mdc-form-field mdc-textfield--upgraded mdc-textfield--invalid"    data-mdc-auto-init="MDCTextfield" style="width:50%">
                     <input id="webLinkInput" name="title" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" style="border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0;">
                     <label for="webLinkInput" class="mdc-textfield__label mdc-textfield__label--shake" style="color: green !important; transform: translateY(-100%) scale(0.75, 0.75) !important;">The link for your experience</label>
                     <div class="mdc-textfield__bottom-line" style="transform-origin: 122px center" style="color:green"></div>
                 </div>
              
-                <button id="buttonCopyWebLink" class="ButtonFullWidth mdc-button mdc-elevation--z2 mdc-button--raised mdc-ripple-upgraded">Copy link</button>
+                <button title="copy to clipboard" id="buttonCopyWebLink" class=" " style="background: white; color: darkslateblue" >
+                    <i class="material-icons" style="cursor: pointer; float: right;">content_copy</i></button>
+                <button id="openWebLink" title="open index.html in a new full window" class=" mdc-button mdc-elevation--z2 mdc-button--raised mdc-ripple-upgraded ButtonHalfWidth"><a id="openWebLinkhref" href="https://google.com" target="_blank" style="color:white">Open link</a></button>
             </div>
         
         </section>

@@ -1,4 +1,4 @@
-function vrodos_compileAjax() {
+function vrodos_compileAjax(showPawnPositions) {
 
     // In which platform to compile, e.g. Aframe
     var platform = jQuery("#platformInput").attr("value");
@@ -33,7 +33,7 @@ function vrodos_compileAjax() {
                 'action': 'vrodos_compile_action',
                 'projectId': my_ajax_object_compile.projectId,
                 'projectSlug': my_ajax_object_compile.slug,
-                'showPawnPositions': my_ajax_object_compile.showPawnPositions,
+                'showPawnPositions': showPawnPositions,
                 'vrodos_scene' : my_ajax_object_compile.sceneId,
                 'outputFormat': platform
             },
@@ -91,6 +91,10 @@ function vrodos_compileAjax() {
                 jQuery("#appResultDiv").show();
                 jQuery("#vrodos-weblink")[0].href=urlExperienceSequence["index"];
                 document.getElementById("webLinkInput").value = urlExperienceSequence["index"];
+
+                document.getElementById("openWebLinkhref").setAttribute("href", urlExperienceSequence["index"]);
+
+
 
                 console.log("Ajax Aframe Success");
             },
