@@ -85,6 +85,9 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 
     // For autosave after each action
     var mapActions = {}; // You could also use an array
+    
+    
+    var showPawnPositions = "false";
 </script>
 
 
@@ -239,7 +242,7 @@ if(vrodos_getUnity_local_or_remote() != 'remote') {
 	$gameUnityProject_urlpath = "http://".$ftp_host."/".$gamesFolder."/".$projectSlug."Unity";
 }
 
-$showPawnPositions = "false";
+
 
 $thepath = $pluginpath . '/js_libs/ajaxes/vrodos_request_compile.js';
 
@@ -251,7 +254,6 @@ wp_localize_script( 'ajax-script_compile',
                         array( 'ajax_url' => admin_url( 'admin-ajax.php'),
                                'projectId' => $project_id,
                                'slug' => $projectSlug,
-                               'showPawnPositions' => $showPawnPositions,
                                'sceneId' => $current_scene_id
 //                        ,
 //                               'gameUnityProject_dirpath' => $gameUnityProject_dirpath,

@@ -21,7 +21,7 @@
             
             <h3 class="mdc-typography--subheading2"> Platform </h3>
             
-            <div id="platform-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 40%;">
+            <div id="platform-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 40%; display:inline-block; float:left">
                 <span id="currently-selected" class="mdc-select__selected-text mdc-typography--subheading2">Select a platform</span>
                 <div class="mdc-simple-menu mdc-select__menu" style="position: initial; max-height: none; ">
                     <ul class="mdc-list mdc-simple-menu__items">
@@ -41,15 +41,37 @@
                         ?>
                     </ul>
                 </div>
+
+                
             </div>
             <input id="platformInput" type="hidden" value="platform-Aframe">
+
             
-            <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background" style="float: left; margin-top:60px">
+            <div class="" style="display:inline-block">
+                <label for="show_pawns_checkbox" class="" style="display:inline-block; margin-left:15px; margin-bottom:0px">Show Actor positions?</label>
+                <input id="show_pawns_checkbox" name="show_pawns_checkbox"
+                       type="checkbox" title="Show Actor positions in Aframe ? (true for debug purpose only)"
+                       class="mdc-textfield__input mdc-theme--text-primary-on-light"
+                       style="padding: 2px;display: inline-block; text-align: left; margin-left:15px;"/>
+
+                
+            </div>
+            
+            
+          
+            
+            <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background" style="float: left; margin-top:60px; margin-bottom:30px">
                 <i title="Instructions" class="material-icons AlignIconToBottom">help</i>
                 You can press "Proceed" in order to receive the link with the compile output scene
             </div>
             
-            <div class="mdc-typography--caption mdc-theme--text-primary-on-background" style="float: right;"> <i title="Memory Usage" class="material-icons AlignIconToBottom">memory</i> <span  id="unityTaskMemValue">0</span> KB </div>
+            <div class="mdc-typography--caption mdc-theme--text-primary-on-background"
+                 style="float: right;display:none">
+                <i title="Memory Usage" class="material-icons AlignIconToBottom">memory</i>
+                <span  id="unityTaskMemValue">0</span> KB
+            </div>
+            
+            
             
             <hr class="WhiteSpaceSeparator">
             
@@ -71,7 +93,7 @@
             
             <div id="compilationProgressText" class="CenterContents mdc-typography--title"></div>
             
-            <div id="previewApp" class="previewApp">
+            <div id="previewApp" class="previewApp" style="display:inline-block">
             
             </div>
             
@@ -89,7 +111,10 @@
              
                 <button title="copy to clipboard" id="buttonCopyWebLink" class=" " style="background: white; color: darkslateblue" >
                     <i class="material-icons" style="cursor: pointer; float: right;">content_copy</i></button>
-                <button id="openWebLink" title="open index.html in a new full window" class=" mdc-button mdc-elevation--z2 mdc-button--raised mdc-ripple-upgraded ButtonHalfWidth"><a id="openWebLinkhref" href="https://google.com" target="_blank" style="color:white">Open link</a></button>
+                <a id="openWebLinkhref" href="https://google.com" title="open index.html in a new full window" target="_blank" style="color:darkslateblue">Open link</a>
+
+               
+                
             </div>
         
         </section>

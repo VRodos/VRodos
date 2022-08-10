@@ -187,19 +187,39 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			// ===========  Artifact==============
 			if ( $contentObject->categoryName == 'Artifact' ) {
 				
-				$a_entity = $dom->createElement( "a-entity" );
-				$a_entity->appendChild( $dom->createTextNode( '' ) );
+				$fileOperations->writer("output_master.txt", $contentObject->assetname);
 				
-				$material = "";
-				$fileOperations->setMaterial($material, $contentObject);
-				$fileOperations->setAffineTransformations($a_entity, $contentObject);
-
-				$a_entity->setAttribute("class", "override-materials");
-				$a_entity->setAttribute("id", $nameObject);
-				$a_entity->setAttribute("gltf-model", "url(".$contentObject->glbURL.")");
-				$a_entity->setAttribute( "material", $material );
+				if ($contentObject->assetname != 'Water') {
+					
+					$a_entity = $dom->createElement( "a-entity" );
+					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					
+					$material = "";
+					$fileOperations->setMaterial( $material, $contentObject );
+					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
+					
+					$a_entity->setAttribute( "class", "override-materials" );
+					$a_entity->setAttribute( "id", $nameObject );
+					$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL . ")" );
+					$a_entity->setAttribute( "material", $material );
+					$a_entity->setAttribute( "clear-frustum-culling", "" );
+					
+					
+					$ascene->appendChild( $a_entity );
+					
+				} else {
 				
-				$ascene->appendChild( $a_entity );
+//					<a-ocean ocean-state="wind_velocity: 0.25 0.25;" shadow="receive: true" ocean-depth></a-ocean>
+					
+					$a_entity = $dom->createElement( "a-ocean" );
+					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					
+					$a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:-2;" );
+					$a_entity->setAttribute( "shadow", "receive: true" );
+					$a_entity->setAttribute( "ocean-depth", "" );
+					
+					$ascene->appendChild( $a_entity );
+				}
 				
 				//==================== Pawn =================
 			} else if ( $contentObject->categoryName == 'pawn' ) {
@@ -232,6 +252,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 						);
 						
 						$a_light->setAttribute("target", "#".$nameObject."target");
+						
 						$a_light_target = $dom->createElement( "a-entity" );
 						$a_light_target->appendChild( $dom->createTextNode( '' ) );
 						$a_light_target->setAttribute( "position", implode( " ", $contentObject->targetposition ) );
@@ -239,7 +260,24 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 						
 						$a_light->appendChild($a_light_target);
 						
-						//$a_light->setAttribute("target", "#".$contentObject->targetposition);
+						
+						// Define the sun at the sky and add it to scene
+						// <a-sun-sky material="side:back; sunPosition: 1.0 1.0 0.0"></a-sun-sky>
+					
+						$a_sun_sky = $dom->createElement( "a-sun-sky" );
+						$a_sun_sky->appendChild( $dom->createTextNode( '' ) );
+						
+						$SunPosVec = $contentObject->position;
+						$TargetVec = $contentObject->targetposition;
+						
+						$SkySun = array( $SunPosVec[0] - $TargetVec[0], $SunPosVec[1] - $TargetVec[1],
+							$SunPosVec[2] - $TargetVec[2]);
+						
+						$materialSunSky = 'side:back; sunPosition: ';
+						$materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
+						$a_sun_sky->setAttribute("material", $materialSunSky);
+						
+						$ascene->appendChild( $a_sun_sky );
 						
 						break;
 					case 'lightSpot':
@@ -322,12 +360,12 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 				$pos_y = $contentObject->position[1];
 				$pos_z = $contentObject->position[2];
 				
-				$rot_x = $contentObject->position[0];
-				$rot_y = $contentObject->position[1];
-				$rot_z = $contentObject->position[2];
+				$rot_x = $contentObject->rotation[0];
+				$rot_y = $contentObject->rotation[1];
+				$rot_z = $contentObject->rotation[2];
 				
-				$buttonDiv->setAttribute("data-rotation", '{"x":'.$pos_x.',"y":'.$pos_y.',"z":'.$pos_z.'}');
-				$buttonDiv->setAttribute("data-position", '{"x":'.$rot_x.',"y":'.$rot_y.',"z":'.$rot_z.'}');
+				$buttonDiv->setAttribute("data-position", '{"x":'.$pos_x.',"y":'.$pos_y.',"z":'.$pos_z.'}');
+				$buttonDiv->setAttribute("data-rotation", '{"x":'.$rot_x.',"y":'.$rot_y.',"z":'.$rot_z.'}');
 				
 				$iconSpan = $dom->createElement( "span" );
 				$iconSpan->appendChild( $dom->createTextNode( 'room' ) );
