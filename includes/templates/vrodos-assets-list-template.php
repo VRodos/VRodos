@@ -41,6 +41,8 @@ echo '</script>';
 
 $isUserloggedIn = is_user_logged_in();
 $current_user = wp_get_current_user();
+
+
 $login_username = $current_user->user_login;
 
 $isUserAdmin = $isUserloggedIn ? current_user_can('administrator'): false;
@@ -92,7 +94,7 @@ get_header();
 if($isUserloggedIn){ ?>
     <span style="float:right; margin-right:5px; font-family: 'Comic Sans MS'; display:inline-table;margin-top:10px">Welcome,
         <a href="<?php echo home_url(); ?>/account/" style="color:dodgerblue">
-              <?php echo $login_username;?>
+              <?php echo $current_user->display_name;?>
         </a>
     </span>
 <?php } ?>

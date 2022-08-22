@@ -1,10 +1,11 @@
 'use strict';
 
 function setTransformControlsSize(){
-    // Dimensions
+
     var dims = findDimensions(transform_controls.object);
 
-    var sizeT = Math.max(...dims) / 20;
+    var sizeT = Math.max(...dims) / 40;
+
     transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 }
 

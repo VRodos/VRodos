@@ -214,7 +214,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 					$a_entity = $dom->createElement( "a-ocean" );
 					$a_entity->appendChild( $dom->createTextNode( '' ) );
 					
-					$a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:-2;" );
+					$a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:0;" );
 					$a_entity->setAttribute( "shadow", "receive: true" );
 					$a_entity->setAttribute( "ocean-depth", "" );
 					

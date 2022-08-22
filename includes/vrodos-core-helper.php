@@ -57,7 +57,7 @@ echo '<div id="sceneInfoBreadcrump" '.
 
         // Project Scene path at breadcrump
         ' <div id="projectNameBreadcrump" >'.
-            '<a title="Back" style="margin-right:10px"'.
+            '<a title="Back" style="margin-left:10px; margin-right:10px"'.
                ' href="'.$goBackTo_AllProjects_link.'">'.
                 '<i class="material-icons mdc-theme--text-primary-on-dark sceneArrowBack">arrow_back</i>'.
             '</a>'.

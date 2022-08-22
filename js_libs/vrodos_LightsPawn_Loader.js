@@ -108,6 +108,7 @@ class VRodos_LightsPawn_Loader {
                     //console.log("name", name);
 
                     lightSun.name = name;
+                    lightSun.assetname = "mylightSun";
                     lightSun.categoryName = "lightSun";
                     lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
@@ -164,6 +165,7 @@ class VRodos_LightsPawn_Loader {
 
                     lightTargetSpot.isSelectableMesh = true;
                     lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
+                    lightTargetSpot.assetname = "lightTargetSpot_" + lightSun.assetname;
                     lightTargetSpot.categoryName = "lightTargetSpot";
                     lightTargetSpot.isLightTargetSpot = true;
 
@@ -216,6 +218,7 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['scale']);
 
                     lightLamp.name = name;
+                    lightLamp.assetname = "mylightLamp";
                     lightLamp.categoryName = "lightLamp";
                     lightLamp.isSelectableMesh = true;
                     lightLamp.isLight = true;
@@ -285,6 +288,7 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['scale']);
 
                     lightSpot.name = name;
+                    lightSpot.assetname = "mylightSpot";
                     lightSpot.categoryName = "lightSpot";
                     lightSpot.isSelectableMesh = true;
                     lightSpot.isLight = true;
@@ -363,6 +367,7 @@ class VRodos_LightsPawn_Loader {
                                             resources3D[name]['trs']['scale']);
 
                     lightAmbient.name = name;
+                    lightAmbient.assetname = "mylightAmbient";
                     lightAmbient.categoryName = "lightAmbient";
                     lightAmbient.isSelectableMesh = true;
                     lightAmbient.isLight = true;
@@ -421,6 +426,7 @@ class VRodos_LightsPawn_Loader {
                                 resources3D[name]['trs']['scale']);
 
                             pawn.name = name;
+                            pawn.assetname = "myActor";
                             pawn.categoryName = "pawn";
                             pawn.isSelectableMesh = true;
                             pawn.isLight = false;

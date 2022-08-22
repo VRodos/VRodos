@@ -50,21 +50,10 @@ class ParseJSON {
         $metalness = '';
         
         
-
-
-        
         
         $sceneToLoad = htmlspecialchars_decode($sceneToLoad);
-       
-        
         $content_JSON = json_decode($sceneToLoad);
-    
-        
-    
         $json_metadata = $content_JSON->metadata;
-    
-        
-        
         
         
         echo '<script>';

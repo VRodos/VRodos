@@ -1,20 +1,11 @@
 function findIntersected(event){
+
     let raycasterPick = raycasterSetter(event);
 
     // All 3D meshes that can be clicked
     let activeMeshes = getActiveMeshes();
 
-    if (activeMeshes.length === 0) {
-
-        return [];
-
-    } else {
-
-        // Find the intersections (it can be more than one)
-        let intersectedObjects = raycasterPick.intersectObjects(activeMeshes, true);
-
-        return intersectedObjects;
-    }
+    return activeMeshes.length === 0 ? [] : raycasterPick.intersectObjects(activeMeshes, true);
 }
 
 
@@ -57,15 +48,18 @@ function onMouseDoubleClickFocus( event , objectName) {
     }
 
     if (arguments.length === 2) {
-        selectorMajor(event, envir.scene.getObjectByName(objectName) );
+        if(envir.scene.getObjectByName(objectName))
+            selectorMajor(event, envir.scene.getObjectByName(objectName) , "1");
     }
 
-    // This makes the camera to go on top of the selected item
+    // This makes the camera (in 3D mode) to go on top of the selected item
     if (!envir.is2d) {
         envir.orbitControls.target.x = transform_controls.object.position.x;
         envir.orbitControls.target.y = transform_controls.object.position.y;
         envir.orbitControls.target.z = transform_controls.object.position.z;
     }
+
+
 
     envir.orbitControls.object.updateProjectionMatrix();
 }
@@ -77,6 +71,11 @@ function onMouseDoubleClickFocus( event , objectName) {
  * @param event
  */
 function onLeftMouseDown( event ) {
+
+    // If doing affine transformations with transform controls, then ignore select
+    if (transform_controls.dragging)
+        return;
+
 
     // Middle click return
     if(event.button === 1)
@@ -116,7 +115,7 @@ function onLeftMouseDown( event ) {
 
     // If only one object is intersected
     if(intersects.length === 1){
-            selectorMajor(event, intersects[0].object.parent);
+        selectorMajor(event, intersects[0].object.parent, "2");
         return;
     }
 
@@ -136,7 +135,9 @@ function onLeftMouseDown( event ) {
     if (!selectNext || i===intersects.length-1)
         i = -1;
 
-    selectorMajor(event, intersects[i + 1].object.parent);
+
+
+    selectorMajor(event, intersects[i + 1].object.parent, "3");
 
 
 }// onMouseDown
@@ -148,9 +149,12 @@ function onLeftMouseDown( event ) {
  * @param event
  * @param inters
  */
-function selectorMajor(event, objectSel){
+function selectorMajor(event, objectSel, whocalls){
 
     if (event.button === 0) {
+
+  //      console.log(whocalls);
+//        console.log(objectSel);
 
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.name);
@@ -176,11 +180,25 @@ function selectorMajor(event, objectSel){
 
         // Move light direction
         let lightDirectionalLightSpotMover = function () {
+
+            if(!transform_controls.object)
+                return;
+
+            if(!transform_controls.object.parentLight)
+                return;
+
             transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
             transform_controls.object.parentLight.target.updateMatrixWorld();
         }
 
         let lightSpotLightMover = function () {
+
+            if(!transform_controls.object)
+                return;
+
+            if(!transform_controls.object.parentLight)
+                return;
+
             // transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
             // transform_controls.object.parentLight.target.updateMatrixWorld();
             envir.scene.traverse(function(child) {
@@ -221,6 +239,8 @@ function selectorMajor(event, objectSel){
             // case of selecting by hierarchy viewer
 
             transform_controls.size = 1;
+
+            transform_controls.visible = false;
 
             // Can not be deleted
             //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;

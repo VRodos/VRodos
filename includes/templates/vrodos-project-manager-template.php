@@ -105,7 +105,8 @@ get_header();
     
     <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="float:right; right:0px; display:inline-table;margin-top:10px; margin-right:10px;">Welcome,
         <a href="<?php echo get_site_url() ?>/account/" style="color:dodgerblue">
-              <?php echo $login_username;?>
+              <?php
+              echo $current_user->display_name;?>
         </a>
     </span>
 

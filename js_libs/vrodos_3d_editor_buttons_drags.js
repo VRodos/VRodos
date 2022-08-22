@@ -211,6 +211,7 @@ function loadButtonActions() {
 
             let categoryName = dataDrag.categoryName;
             let nameModel = dataDrag.title;
+            let displayed_name = dataDrag.title;
 
             // SUN or LAMP or Spot or Ambient
             if (dataDrag.categoryName === "lightSun" ||
@@ -240,6 +241,8 @@ function loadButtonActions() {
             }
 
             let translation = dragDropVerticalRayCasting(ev);
+
+
 
             // Asset add to canvas
             addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag, translation, pluginPath);

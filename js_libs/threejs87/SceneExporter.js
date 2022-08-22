@@ -155,7 +155,9 @@ THREE.SceneExporter.prototype = {
 
                 }
 
-                linesArray.push( PaddingString( pad ) + "\t\t}" + ( i < object.children.length - 1 ? ",\n" : "" ) );
+                linesArray.push( PaddingString( pad ) + "\t\t}"
+                    // + ( i < object.children.length - 1 ? ",\n" : "" )
+                );
 
             }
 
@@ -366,7 +368,7 @@ THREE.SceneExporter.prototype = {
 
 
                 var output = [
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
+                    '\t\t' + ',' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
                     '	"rotation" : ' + "[" + o.rotation.x  + "," +
                                                o.rotation.y  + "," +
@@ -433,7 +435,7 @@ THREE.SceneExporter.prototype = {
 
                 // REM HERE Check with trailing comma
                 var output = [
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
+                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
                     '	"rotation" : ' + "[" + o.rotation.x + "," +
                     o.rotation.y + "," +
@@ -459,7 +461,7 @@ THREE.SceneExporter.prototype = {
 
                 // REM HERE Check with trailing comma
                 var output = [
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
+                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
                     '	"rotation" : ' + "[" + o.rotation.x + "," +
                     o.rotation.y + "," +
@@ -489,7 +491,7 @@ THREE.SceneExporter.prototype = {
 
                 // REM HERE Check with trailing comma
                 var output = [
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
+                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
                     '	"rotation" : ' + "[" + o.rotation.x + "," +
                     o.rotation.y + "," +
@@ -521,7 +523,7 @@ THREE.SceneExporter.prototype = {
                 quatR_light.setFromEuler(eulerR_light);
 
                 var output = [
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
+                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
                     '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
                     '	"quaternion" : ' + "[" + quatR_light._x + "," +
@@ -548,7 +550,7 @@ THREE.SceneExporter.prototype = {
                 quatR_light.setFromEuler(eulerR_light);
 
                 var output = [
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
+                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
                     '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
                     '	"quaternion" : ' + "[" + quatR_light._x + "," + quatR_light._y + "," + quatR_light._z + "," + quatR_light._w + "]" + ',',
@@ -599,7 +601,7 @@ THREE.SceneExporter.prototype = {
                     quatR_camera._w.toFixed(4) + "]" + ',',
                     '	"scale"	   : ' + Vector3String(o.scale) + ',',
                     '	"categoryName" : "' + 'avatarYawObject' + '",',
-                    '	"visible"  : ' + o.visible + ( o.children.length ? '' : '' ) + '},'
+                    '	"visible"  : ' + o.visible + ( o.children.length ? '' : '' ) + '}'
                 ];
             }
 

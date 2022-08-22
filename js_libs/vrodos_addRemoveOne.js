@@ -1,4 +1,5 @@
-function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag, translation, pluginPath){
+function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag,
+                          translation, pluginPath){
 
     // Add javascript variables for viewing the object correctly
     let selected_object_trs = {
@@ -52,6 +53,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         lightSun.shadowMapHeight=200;
         lightSun.shadowMapWidth=200;
         lightSun.name = nameModel;
+        lightSun.assetname = "mylightSun";
         lightSun.isSelectableMesh = true;
         lightSun.categoryName = "lightSun";
         lightSun.isLight = true;
@@ -153,6 +155,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
 
         lightLamp.name = nameModel;
+        lightLamp.assetname = "mylightLamp";
         lightLamp.isSelectableMesh = true;
         lightLamp.categoryName = "lightLamp";
         lightLamp.isLight = true;
@@ -229,6 +232,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightSpot = new THREE.SpotLight( 0xffffff, 1, 5, 0.39, 0, 2 );
 
         lightSpot.name = nameModel;
+        lightSpot.assetname = "mylightSpot";
         lightSpot.isSelectableMesh = true;
         lightSpot.categoryName = "lightSpot";
         lightSpot.isLight = true;
@@ -306,6 +310,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightAmbient = new THREE.AmbientLight( 0xffffff, 1 );
 
         lightAmbient.name = nameModel;
+        lightAmbient.assetname = "mylightAmbient";
         lightAmbient.isSelectableMesh = true;
         lightAmbient.categoryName = "lightAmbient";
         lightAmbient.isLight = true;
@@ -381,6 +386,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
                 var Pawn = gltf.scene.children[0];
                 Pawn.name = nameModel;
+                Pawn.assetname = "myActor";
                 Pawn.isSelectableMesh = true;
                 Pawn.categoryName = "pawn";
                 Pawn.isLight = false;
@@ -489,12 +495,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
-
-
             var insertedObject = envir.scene.getObjectByName(nameModel);
-
-
-
 
             if (!insertedObject) {
                 jQuery("#dialog-message").dialog("open");

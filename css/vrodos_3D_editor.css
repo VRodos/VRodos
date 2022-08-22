@@ -817,7 +817,8 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 }
 
 .scene_editor_upper_toolbar{
-    display:block;
+    /*display:block;*/
+    border-bottom: 1px solid darkviolet;
     position:fixed;
     z-index:1000;
 }
@@ -827,13 +828,15 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     margin:0;
     font-size: 14px;
     vertical-align: middle;
-    display:block
+    display:block;
+    line-height:2.1em !important;
+    border: solid 1px black;
 }
 
 #projectNameBreadcrump{
     float:left;
     max-width:50%;
-    line-height:1.8em;
+
 }
 
 .sceneArrowBack{
@@ -856,16 +859,18 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 
 #sceneTitleInput{
     display:block;
+    padding:0;
+    padding-left:5px;
+    margin-top:2px;
     float:left;
     width:15%;
-    margin-left:0px;
-    padding:0px;
-    border: none;
+    margin-left:0;
     font-size:14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
     box-shadow: none;
-    border-radius: 0;
+    border-radius: 4px;
     height: 25px !important;
+    min-height: 10px;
 }
 
 .titleLengthSuggest{

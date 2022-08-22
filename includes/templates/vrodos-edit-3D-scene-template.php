@@ -999,6 +999,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 }
             } else {
                 //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
+                transform_controls.visible = false;
             }
 
             //transform_controls.setSize( sizeT > 1 ? sizeT : 1 );
