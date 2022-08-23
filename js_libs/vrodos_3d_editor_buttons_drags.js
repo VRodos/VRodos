@@ -61,8 +61,6 @@ function loadButtonActions() {
         // Get Pid of compile process
         var pid = jQuery("#compileCancelBtn").attr("data-unity-pid");
 
-        console.log(pid);
-
         if (pid) {
             vrodos_killtask_compile(pid);
         }

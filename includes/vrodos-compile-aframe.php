@@ -246,19 +246,23 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 				
 				switch ($contentObject->categoryName){
 					case 'lightSun':
+						
+						
+						$a_light_target = $dom->createElement( "a-entity" );
+						$a_light_target->appendChild( $dom->createTextNode( '' ) );
+						$a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );
+						$a_light_target->setAttribute("id", $nameObject."target");
+						
+						$ascene->appendChild($a_light_target);
+						
 						$a_light->setAttribute("light", "type:directional;".
 						                                "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-						                                "intensity:".$contentObject->lightintensity.";"
+						                                "intensity:".($contentObject->lightintensity).";"
 						);
 						
 						$a_light->setAttribute("target", "#".$nameObject."target");
 						
-						$a_light_target = $dom->createElement( "a-entity" );
-						$a_light_target->appendChild( $dom->createTextNode( '' ) );
-						$a_light_target->setAttribute( "position", implode( " ", $contentObject->targetposition ) );
-						$a_light_target->setAttribute("id", $nameObject."target");
-						
-						$a_light->appendChild($a_light_target);
+					
 						
 						
 						// Define the sun at the sky and add it to scene

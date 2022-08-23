@@ -111,7 +111,8 @@
              
                 <button title="copy to clipboard" id="buttonCopyWebLink" class=" " style="background: white; color: darkslateblue" >
                     <i class="material-icons" style="cursor: pointer; float: right;">content_copy</i></button>
-                <a id="openWebLinkhref" href="https://google.com" title="open index.html in a new full window" target="_blank" style="color:darkslateblue">Open link</a>
+                
+                <a id="openWebLinkhref" href="https://google.com" title="open index.html in a new full window" target="_blank" style="color:darkslateblue" onclick="jQuery('#compileCancelBtn').click();">Open link</a>
 
                
                 
@@ -120,7 +121,7 @@
         </section>
         
         <footer class="mdc-dialog__footer">
-            <a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Cancel</a>
+            <a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Close</a>
             <a id="compileProceedBtn" type="button"
                class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised ">Proceed</a>
             <!--            LinkDisabled-->

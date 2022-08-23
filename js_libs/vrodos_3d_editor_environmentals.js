@@ -134,20 +134,22 @@ class vrodos_3d_editor_environmentals {
 
 
     // EffectComposer for 1) rendering; 2) Outline effect; 3) FXAA antializing
-    setComposerAndPasses() {
+    setComposerAndPasses(transform_controls) {
 
         // Get current camera
-        var curr_camera_input = avatarControlsEnabled ?
-            (this.thirdPersonView ? this.cameraThirdPerson : this.cameraAvatar) : this.cameraOrbit;
+        let camera = avatarControlsEnabled ? this.cameraAvatar : this.cameraOrbit;
+
+        if (transform_controls)
+           transform_controls.camera = camera;
 
         this.composer = new THREE.EffectComposer(this.renderer);
 
-        this.renderPass = new THREE.RenderPass(this.scene, curr_camera_input);
+        this.renderPass = new THREE.RenderPass(this.scene, camera);
 
         // Outline Pass
         this.outlinePass = [];
         this.outlinePass = new THREE.OutlinePass(
-            new THREE.Vector2(this.SCREEN_WIDTH, this.SCREEN_HEIGHT), this.scene, curr_camera_input);
+            new THREE.Vector2(this.SCREEN_WIDTH, this.SCREEN_HEIGHT), this.scene, camera);
         this.outlinePass.visibleEdgeColor = new THREE.Color(0x00aa00);
         this.outlinePass.depthMaterial.morphTargets = true;
         this.outlinePass.prepareMaskMaterial.morphTargets = true;
@@ -286,11 +288,11 @@ class vrodos_3d_editor_environmentals {
         this.avatarControls.getObject().add(CamMesh);
     }
 
-    setSteveToAvatarControls() {
-        var SteveOld = envir.scene.getObjectByName("SteveOld");
-        SteveOld.rotation.set(0, Math.PI / 2, 0);
-        this.avatarControls.getObject().add(SteveOld);
-    }
+    // setSteveToAvatarControls() {
+    //     var SteveOld = envir.scene.getObjectByName("SteveOld");
+    //     SteveOld.rotation.set(0, Math.PI / 2, 0);
+    //     this.avatarControls.getObject().add(SteveOld);
+    // }
 
     getSteveFrustum() {
         return envir.avatarControls.getObject();

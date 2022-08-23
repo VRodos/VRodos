@@ -24,7 +24,9 @@ function firstPersonViewWithoutLock(){
 
     if (!avatarControlsEnabled) {
 
-        // ----------- First person view ----------------------
+        console.log("STATE 1");
+
+        // // ----------- First person view ----------------------
         avatarControlsEnabled = true;
 
         // Mouse controls Avatar viewing
@@ -39,17 +41,25 @@ function firstPersonViewWithoutLock(){
         envir.avatarControls.getObject().children[0].position = envir.orbitControls.target;
         envir.avatarControls.getObject().children[1].position = envir.orbitControls.target;
 
-        transform_controls.visible = false;
-
-        // Glow effect change camera
+        //transform_controls.visible = false;
+        //
+        // // Glow effect change camera
         envir.composer = [];
-        envir.setComposerAndPasses();
+        envir.setComposerAndPasses(transform_controls);
 
         envir.isComposerOn = true;
 
-        // if in 3rd person view then show the cameraobject
+
+
+        // // if in 3rd person view then show the cameraobject
         envir.getSteveFrustum().visible = envir.thirdPersonView && avatarControlsEnabled;
+
+
+
     }else{
+
+        console.log("STATE 2");
+
         // ------------- ORBIT --------------------------
         avatarControlsEnabled = false;
 
@@ -64,12 +74,12 @@ function firstPersonViewWithoutLock(){
 
         envir.thirdPersonView = false;
 
-        envir.scene.getObjectByName("SteveOld").visible = false;
+        //envir.scene.getObjectByName("SteveOld").visible = false;
         envir.scene.getObjectByName("Camera3Dmodel").visible = true;
 
 
         envir.composer = [];
-        envir.setComposerAndPasses();
+        envir.setComposerAndPasses(transform_controls);
 
         envir.isComposerOn = true;
 

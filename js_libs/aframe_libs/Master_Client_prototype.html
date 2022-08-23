@@ -30,6 +30,25 @@
         <div id="toggle_show_clacket">Close <span style="color:green">("x" button to show again)</span></div>
     <div id="directorline" style=""></div>
 
+    <script>
+        AFRAME.registerComponent('clear-frustum-culling', {
+            init: function(){
+                let el = this.el;
+                el.addEventListener("model-loaded", e =>{
+                    let mesh = el.getObject3D('mesh');
+                    if (!mesh){return;}
+                    mesh.traverse(function(node){
+                        if (node.isMesh){
+                            console.log("node.isMesh", node.isMesh);
+                            node.frustumCulled = false;
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+
+
     <div class="wrapperControlElement">
       <label
               for="roomNameShow"
@@ -128,10 +147,6 @@
     </a-entity>
 
 
-
-
-
-
   </a-scene>
 
   <!-- Javascript -->
@@ -157,21 +172,6 @@
     });
 
 
-
-    AFRAME.registerComponent('clear-frustum-culling', {
-      init: function(){
-        let el = this.el;
-        el.addEventListener("model-loaded", e =>{
-          let mesh = el.getObject3D('mesh');
-          if (!mesh){return;}
-          mesh.traverse(function(node){
-            if (node.isMesh){
-              node.frustumCulled = false;
-            }
-          });
-        });
-      }
-    });
 
     /* ---------- The gui for configuring other clients inputs  ----------------- */
     const api_pattern_single = {ThresholdMin: 0.106, ThresholdMax: 0.13, red: 48, green: 146, blue: 89, w: 1, h: 0.75};

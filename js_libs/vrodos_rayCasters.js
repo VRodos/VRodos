@@ -24,7 +24,13 @@ function findIntersectedRaw(event) {
     // All 3D meshes that can be clicked
     let activeMeshes = getActiveMeshes();
 
-    return raycasterPick.intersectObjects(activeMeshes);
+
+
+    let raw = raycasterPick.intersectObjects(activeMeshes)
+
+    console.log("raw", raw);
+
+    return raw;
 }
 
 function findIntersected(event){
@@ -97,7 +103,8 @@ function onMouseDoubleClickFocus( event , objectName) {
  */
 function onLeftMouseDown( event ) {
 
-    console.log("drag", transform_controls.dragging);
+    // console.log("onLeftMouseDown");
+    // console.log("transform_controls.dragging", transform_controls.dragging);
 
     // If doing affine transformations with transform controls, then ignore select
     if (transform_controls.dragging)
@@ -112,6 +119,8 @@ function onLeftMouseDown( event ) {
     event.stopPropagation();
 
     let intersects = findIntersected(event);
+
+    console.log("intersects", intersects);
 
     if (intersects.length === 0)
         return;
