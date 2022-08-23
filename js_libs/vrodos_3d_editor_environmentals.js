@@ -244,6 +244,7 @@ class vrodos_3d_editor_environmentals {
         // Avatar camera is a Perspective camera
         this.cameraAvatar = new THREE.PerspectiveCamera(this.VIEW_ANGLE, this.ASPECT, 0.01, 4000);
         this.cameraAvatar.name = "avatarCamera";
+        this.cameraAvatar.isSelectableMesh = true;
         this.cameraAvatar.rotation.y = Math.PI;
 
         this.audiolistener = new THREE.AudioListener();

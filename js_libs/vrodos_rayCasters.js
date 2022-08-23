@@ -1,11 +1,35 @@
-function findIntersected(event){
+function normalizeIntersectedObjects(intersectedObjects){
+
+    let res = [];
+
+    for (let i=0; i<intersectedObjects.length; i++){
+
+        let examineObject = intersectedObjects[i].object;
+        if(examineObject.parent) {
+            while (examineObject.parent.name !== "vrodosScene") {
+                examineObject = examineObject.parent;
+            }
+            res.push(examineObject);
+        }
+    }
+
+    // remove duplicates
+    return Array.from(new Set(res));
+}
+
+function findIntersectedRaw(event) {
 
     let raycasterPick = raycasterSetter(event);
 
     // All 3D meshes that can be clicked
     let activeMeshes = getActiveMeshes();
 
-    return activeMeshes.length === 0 ? [] : raycasterPick.intersectObjects(activeMeshes, true);
+    return raycasterPick.intersectObjects(activeMeshes);
+}
+
+function findIntersected(event){
+
+    return normalizeIntersectedObjects(findIntersectedRaw(event));
 }
 
 
@@ -35,7 +59,8 @@ function raycasterSetter(event){
 // This raycasting is used for drag n droping objects into the scene in 2D mode in order to
 // find the correct y (height) to place the object
 function dragDropVerticalRayCasting (event){
-    let intersects = findIntersected(event);
+    let intersects = findIntersectedRaw(event);
+
     return intersects.length === 0 ? [0,0,0] : [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z];
 }
 
@@ -72,6 +97,8 @@ function onMouseDoubleClickFocus( event , objectName) {
  */
 function onLeftMouseDown( event ) {
 
+    console.log("drag", transform_controls.dragging);
+
     // If doing affine transformations with transform controls, then ignore select
     if (transform_controls.dragging)
         return;
@@ -89,24 +116,25 @@ function onLeftMouseDown( event ) {
     if (intersects.length === 0)
         return;
 
-    // ------------ in case Steve (camera) is clicked ---------
+
+
     if (intersects.length > 0) {
 
         // If Steve is selected
-        if( (intersects[0].object.name === 'Steve' || intersects[0].object.name === 'SteveShieldMesh'
-                || intersects[0].object.name === 'SteveMesh' ) && event.button === 0 ){
+        if( (intersects[0].name === 'Steve' || intersects[0].name === 'SteveShieldMesh'
+                || intersects[0].name === 'SteveMesh' ) && event.button === 0 ){
 
             setBackgroundColorHierarchyViewer("avatarCamera");
 
             // highlight
-            envir.outlinePass.selectedObjects = [intersects[0].object.parent.children[0]];
+            envir.outlinePass.selectedObjects = intersects[0];
 
             transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
             //envir.renderer.setClearColor( 0xeeeeee, 1);
 
             // Steve can not be deleted
-            transform_controls.size = 1;
+            transform_controls.size = 0.3;
             //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
             return;
         }
@@ -115,19 +143,24 @@ function onLeftMouseDown( event ) {
 
     // If only one object is intersected
     if(intersects.length === 1){
-        selectorMajor(event, intersects[0].object.parent, "2");
+
+
+        //let selObj = false ? intersects[0].object : ;
+
+        selectorMajor(event, intersects[0], "2");
         return;
     }
 
     // More than one objects intersected
 
-    var prevSelected = typeof transform_controls.object != 'undefined' ? typeof transform_controls.object.name : null;
+    var prevSelected = typeof transform_controls.object != 'undefined' ? transform_controls.object.name : null;
     var selectNext = false;
+
 
     var i = 0;
 
     for (i = 0; i<intersects.length; i++) {
-        selectNext = prevSelected === intersects[i].object.parent.name;
+        selectNext = prevSelected === intersects[i].name;
         if(selectNext)
             break;
     }
@@ -137,7 +170,7 @@ function onLeftMouseDown( event ) {
 
 
 
-    selectorMajor(event, intersects[i + 1].object.parent, "3");
+    selectorMajor(event, intersects[i + 1], "3");
 
 
 }// onMouseDown
@@ -155,6 +188,7 @@ function selectorMajor(event, objectSel, whocalls){
 
   //      console.log(whocalls);
 //        console.log(objectSel);
+
 
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.name);
@@ -282,8 +316,8 @@ function contextMenuClick(event){
          return;
 
     // Check if right-clicked is the one selected already with left-click
-    if (intersected[0].object.parent.name === transform_controls.object.name){
-        showProperties(event, intersected[0].object.parent);
+    if (intersected[0].name === transform_controls.object.name){
+        showProperties(event, intersected[0]);
     }
 
 
@@ -965,7 +999,7 @@ function clearAndUnbind(selectName=null, idstr=null, chkboxname=null){
  */
 function getActiveMeshes(){
 
-    var activeMeshes = [];
+    let activeMeshes = [];
 
     // ToDo: Is it possible to avoid traversing scene object in each drag event?
     envir.scene.traverse( function(child) {

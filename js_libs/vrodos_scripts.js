@@ -2,11 +2,11 @@
 
 function setTransformControlsSize(){
 
-    var dims = findDimensions(transform_controls.object);
+    let dims = findDimensions(transform_controls.object);
 
-    var sizeT = Math.max(...dims) / 40;
+    let sizeT = 0.25 * Math.log((Math.max(...dims) + 1)  + 1) ;
 
-    transform_controls.setSize(sizeT > 1 ? sizeT : 1);
+    transform_controls.setSize(sizeT );
 }
 
 function vrodos_read_url(input, id) {

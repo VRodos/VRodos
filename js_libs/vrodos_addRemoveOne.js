@@ -606,16 +606,16 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
  */
 function resetInScene(name){
 
-    if (game_type!="energy")
-        envir.avatarControls.getObject().position.set(0,1.3,0);
-    else {
-        envir.avatarControls.getObject().position.set(0, 200, 500);
-        envir.avatarControls.getObject().scale.set(1, 1, 1);
+    if (name === "avatarCamera") {
+        envir.avatarControls.getObject().position.set(0, 1.3, 0);
+        envir.avatarControls.getObject().quaternion.set(0, 0, 0, 1);
+        envir.avatarControls.getObject().children[0].rotation.set(0, 0, 0);
+        envir.avatarControls.getObject().children[0].scale.set(1, 1, 1);
+    } else {
+        envir.scene.getObjectByName(name).position.set(0, 1.3, 0);
+        envir.scene.getObjectByName(name).rotation.set(0, 0, 0);
+        envir.scene.getObjectByName(name).scale.set(1, 1, 1);
     }
-
-    envir.avatarControls.getObject().quaternion.set(0,0,0,1);
-    envir.avatarControls.getObject().children[0].rotation.set(0,0,0);
-    envir.avatarControls.getObject().children[0].scale.set(1,1,1);
 }
 
 

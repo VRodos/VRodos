@@ -74,41 +74,41 @@ class VRodos_LoaderMulti {
                     );
 
 
-                    // STEVE OLD IS THE HUMAN MESH
-                    loader.load(pluginPath + "/assets/Steve/Steve.glb",
-
-                        // called when the resource is loaded
-                        function (objectMain) {
-
-                            let object = objectMain.scene.children[0];
-
-                            let Steve = new THREE.Object3D();
-                            Steve.children.push(object);
-
-                            Steve.name = "SteveOld";
-                            Steve.children[0].name = "SteveMeshOld";
-                            Steve.renderOrder = 1;
-                            Steve.visible = false;
-
-                            envir.scene.add(Steve);
-                            envir.setSteveToAvatarControls();
-                            envir.setSteveWorldPosition(resources3D[name]['trs']['translation'][0],
-                                resources3D[name]['trs']['translation'][1],
-                                resources3D[name]['trs']['translation'][2],
-                                resources3D[name]['trs']['rotation'][0],
-                                resources3D[name]['trs']['rotation'][1]
-                            );
-                        },
-                        // called while loading is progressing
-                        function (xhr) {
-
-
-                        },
-                        // called when loading has errors
-                        function (error) {
-                            console.log('Can not load Steve GLB, loading error happened. Error 1596', error);
-                        }
-                    );
+                    // // STEVE OLD IS THE HUMAN MESH
+                    // loader.load(pluginPath + "/assets/Steve/Steve.glb",
+                    //
+                    //     // called when the resource is loaded
+                    //     function (objectMain) {
+                    //
+                    //         let object = objectMain.scene.children[0];
+                    //
+                    //         let Steve = new THREE.Object3D();
+                    //         Steve.children.push(object);
+                    //
+                    //         Steve.name = "SteveOld";
+                    //         Steve.children[0].name = "SteveMeshOld";
+                    //         Steve.renderOrder = 1;
+                    //         Steve.visible = false;
+                    //
+                    //         envir.scene.add(Steve);
+                    //         envir.setSteveToAvatarControls();
+                    //         envir.setSteveWorldPosition(resources3D[name]['trs']['translation'][0],
+                    //             resources3D[name]['trs']['translation'][1],
+                    //             resources3D[name]['trs']['translation'][2],
+                    //             resources3D[name]['trs']['rotation'][0],
+                    //             resources3D[name]['trs']['rotation'][1]
+                    //         );
+                    //     },
+                    //     // called while loading is progressing
+                    //     function (xhr) {
+                    //
+                    //
+                    //     },
+                    //     // called when loading has errors
+                    //     function (error) {
+                    //         console.log('Can not load Steve GLB, loading error happened. Error 1596', error);
+                    //     }
+                    // );
 
 
 
