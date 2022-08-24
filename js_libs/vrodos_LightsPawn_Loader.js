@@ -44,9 +44,6 @@ class VRodos_LightsPawn_Loader {
                         document.getElementById('rendererToneMapping').value = toneMappingExposure;
                     }
 
-                    if(document.getElementById('rendererToneMappingSlider')) {
-                        document.getElementById('rendererToneMappingSlider').value = toneMappingExposure;
-                    }
                     return;
                 }
 
@@ -225,8 +222,6 @@ class VRodos_LightsPawn_Loader {
                     lightLamp.castShadow = true;
                     lightLamp.shadow.radius = parseFloat( resources3D[name]['shadowRadius'] );
 
-
-
                     envir.scene.add(lightLamp);
 
                     // Add Lamp Sphere
@@ -234,7 +229,7 @@ class VRodos_LightsPawn_Loader {
                         new THREE.SphereBufferGeometry(0.5, 16, 8),
                         new THREE.MeshBasicMaterial({color: colora})
                     );
-                    lampSphere.isSelectableMesh = true;
+                    lampSphere.isSelectableMesh = false;
                     lampSphere.name = "LampSphere";
                     lightLamp.add(lampSphere);
 

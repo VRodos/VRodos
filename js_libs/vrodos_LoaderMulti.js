@@ -11,6 +11,7 @@ class VRodos_LoaderMulti {
 
     load(manager, resources3D, pluginPath) {
 
+        const loader = new THREE.GLTFLoader(manager);
 
         for (let n in resources3D) {
             (function (name) {
@@ -21,9 +22,6 @@ class VRodos_LoaderMulti {
                 // Lights are in a different loop
                 if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
                     return;
-
-                //let mtlLoader = new THREE.MTLLoader();
-                const loader = new THREE.GLTFLoader(manager);
 
                 // Load Steve
                 if (name == 'avatarCamera') {
@@ -73,47 +71,6 @@ class VRodos_LoaderMulti {
                         }
                     );
 
-
-                    // // STEVE OLD IS THE HUMAN MESH
-                    // loader.load(pluginPath + "/assets/Steve/Steve.glb",
-                    //
-                    //     // called when the resource is loaded
-                    //     function (objectMain) {
-                    //
-                    //         let object = objectMain.scene.children[0];
-                    //
-                    //         let Steve = new THREE.Object3D();
-                    //         Steve.children.push(object);
-                    //
-                    //         Steve.name = "SteveOld";
-                    //         Steve.children[0].name = "SteveMeshOld";
-                    //         Steve.renderOrder = 1;
-                    //         Steve.visible = false;
-                    //
-                    //         envir.scene.add(Steve);
-                    //         envir.setSteveToAvatarControls();
-                    //         envir.setSteveWorldPosition(resources3D[name]['trs']['translation'][0],
-                    //             resources3D[name]['trs']['translation'][1],
-                    //             resources3D[name]['trs']['translation'][2],
-                    //             resources3D[name]['trs']['rotation'][0],
-                    //             resources3D[name]['trs']['rotation'][1]
-                    //         );
-                    //     },
-                    //     // called while loading is progressing
-                    //     function (xhr) {
-                    //
-                    //
-                    //     },
-                    //     // called when loading has errors
-                    //     function (error) {
-                    //         console.log('Can not load Steve GLB, loading error happened. Error 1596', error);
-                    //     }
-                    // );
-
-
-
-
-
                 } else { // GLB 3D models
 
                      if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
@@ -133,6 +90,9 @@ class VRodos_LoaderMulti {
 
                                 // Instantiate a loader
 
+                                jQuery("#progressWrapper").get(0).style.visibility = "visible";
+                                document.getElementById("result_download").innerHTML = "Loading ...";
+
                                 loader.load(glbURL,
 
                                     // called when the resource is loaded
@@ -149,15 +109,13 @@ class VRodos_LoaderMulti {
                                         object = setObjectProperties(object.scene, name, resources3D);
                                         object.isSelectableMesh = true;
                                         envir.scene.add(object);
-                                        jQuery("#progressWrapper").get(0).style.visibility= "hidden";
                                     },
                                     // called while loading is progressing
                                     function (xhr) {
 
-                                        var downloadedBytes = name.substring(0, name.length - 11) + " downloaded " +
-                                            Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
-
-                                        document.getElementById("result_download2").innerHTML = downloadedBytes;
+                                        document.getElementById("result_download").innerHTML = "'"  +
+                                                                       resources3D[name].assetname + "' downloaded " +
+                                                                      Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
                                     },
                                     // called when loading has errors
                                     function (error) {
@@ -178,20 +136,14 @@ class VRodos_LoaderMulti {
                     } else {
 
                         alert("Unsupported 3D model format. Error 118.");
-                        //
                         console.log("name", name);
-                        // console.log("fbxID", resources3D[name]['fbxID']);
                         // console.log("glbID", resources3D[name]['glbID']);
-                        //
                         console.log("Unsupported 3D model format: ERROR: 118");
 
                     }
                 }
             })(n);
         }
-
-
-
     }
 }
 

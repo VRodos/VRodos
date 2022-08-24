@@ -464,7 +464,6 @@ class vrodos_3d_widget_scene extends WP_Widget {
                 </div>
         
                 <div id="result_download" class="result"></div>
-                <div id="result_download2" class="result"></div>
             </div>
         </div>   <!--   VR DIV   -->
         

@@ -24,8 +24,6 @@ function firstPersonViewWithoutLock(){
 
     if (!avatarControlsEnabled) {
 
-        console.log("STATE 1");
-
         // // ----------- First person view ----------------------
         avatarControlsEnabled = true;
 
@@ -57,8 +55,6 @@ function firstPersonViewWithoutLock(){
 
 
     }else{
-
-        console.log("STATE 2");
 
         // ------------- ORBIT --------------------------
         avatarControlsEnabled = false;

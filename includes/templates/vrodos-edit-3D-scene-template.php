@@ -507,19 +507,18 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 </div>
 
 
-                <!-- Close all 2D UIs-->
-                <a id="toggleUIBtn" data-toggle='on' type="button"
-                   class="ToggleUIButtonStyle mdc-theme--secondary" title="Toggle interface">
-                    <i class="material-icons" style="background: #ffffff; opacity:0.2">visibility</i>
-                </a>
+             
 
                 <!-- Lights -->
-                <div class="lightPawnbuttons hidable">
+                <div class="environmentBar hidable">
 
                     <div class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
                         <header draggable="false" class="notdraggable">Actor</header>
                         <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0px"
                              src="<?php echo $pluginpath?>/images/lights/pawn.png"/>
+                    </div>
+
+                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
                     </div>
                     
                     <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true">
@@ -546,10 +545,83 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                              src="<?php echo $pluginpath?>/images/lights/ambient_light.png" draggable="false"/>
                     </div>
 
+                    <!-- Set RendererToneMapping  -->
+                    <div id="rendererToneMappingDiv"
+                         class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
+                         style="width:60px; margin:0px; padding:0px; height:42px; background: rgba(255,255,255,0.5);float:left;display:block">
+
+                        <label for="rendererToneMapping"
+                               class=""
+                               style="font-size: 9pt;padding-left: 5px;margin:0;">Tone</label>
+
+                        <input type="number" id="rendererToneMapping" name="rendererToneMapping"
+                               min="0" max="2" step="0.01"
+                               style="width:45px;font-size:10px;min-height: 10px;margin-left:5px;height:20px;margin-bottom:4px;padding:0;"
+                               onchange="changeRendererToneMapping(this.value);">
+                    </div>
+                    
+                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
+                    </div>
+                    
+                   
+
+                    <div class="environmentButton">
+                    <!--  Dimensionality 2D 3D toggle -->
+                    <a id="dim-change-btn" data-mdc-auto-init="MDCRipple"
+                       title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
+                       class="EditorDimensionToggleBtn mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"
+                       style="width:45px;height:35px;min-width:20px">
+                        2D
+                    </a>
+                    </div>
+
+                    <!-- The button to start walking in the 3d environment -->
+                    <div class="environmentButton">
+                        <div id="firstPersonBlocker" class="VrWalkInButtonStyle" style="display:inline-block">
+                            <a type="button" id="firstPersonBlockerBtn" data-toggle='on'
+                               class="mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
+                               title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys"
+                               data-mdc-auto-init="MDCRipple"
+                            style="width:45px; height:35px; min-width:20px; padding:5px">
+                                <i class="material-icons">person</i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!--  Toggle Around Tour -->
+                    <div class="environmentButton">
+                        <a type="button" id="toggle-tour-around-btn" data-toggle='off' data-mdc-auto-init="MDCRipple"
+                           title="Auto-rotate 3D tour"
+                           class="EditorTourToggleBtn mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"
+                           style="width:45px;height:35px;min-width:20px">
+                            <i class="material-icons">rotate_90_degrees_ccw</i>
+                        </a>
+                    </div>
+                    
+                    
+                    <!-- Cogwheel options -->
+                    <div class="environmentButton">
+                        <div id="row_cogwheel" class="row-right-panel" style="display:inline-block">
+                            <a type="button" id="optionsPopupBtn"
+                               class="VrEditorOptionsBtnStyle mdc-button mdc-button--raised mdc-button--primary mdc-button--dense"
+                               style="width:45px;min-width:20px;height:35px;padding:2px"
+                               title="Edit scene options" data-mdc-auto-init="MDCRipple">
+                                <i class="material-icons">settings</i>
+                            </a>
+                        </div>
+                    </div>
+
+                    
                     
                 </div>
 
-                
+                <!-- Close all 2D UIs-->
+                <div class="environmentButton">
+                    <a id="toggleUIBtn" data-toggle='on' type="button"
+                       class="ToggleUIButtonStyle mdc-theme--secondary" title="Toggle interface">
+                        <i class="material-icons" style="background: #ffffff; opacity:0.2; z-index:100000">visibility</i>
+                    </a>
+                </div>
                 
                 <!-- Hierachy Viewer -->
 	            <?php
@@ -571,7 +643,6 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                     </div>
 
                     <div id="result_download" class="result"></div>
-                    <div id="result_download2" class="result"></div>
                 </div>
 
 
@@ -701,9 +772,9 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
         // Add 3D gui widgets to gui vr_editor_main_div
         let guiContainer = document.getElementById('numerical_gui-container');
-        guiContainer.appendChild(controlInterface.translate.domElement);
-        guiContainer.appendChild(controlInterface.rotate.domElement);
-        guiContainer.appendChild(controlInterface.scale.domElement);
+        guiContainer.appendChild(controlInterface.domElement);
+        // guiContainer.appendChild(controlInterface.rotate.domElement);
+        // guiContainer.appendChild(controlInterface.scale.domElement);
 
         // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
         var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
@@ -773,30 +844,29 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         var lightsPawnLoader = new VRodos_LightsPawn_Loader();
         lightsPawnLoader.load(resources3D);
 
-        
+        // Add all in hierarchy viewer
         setHierarchyViewer();
         
-        
-
+        // Add transform controls to scene
         envir.scene.add(transform_controls);
         
         // Load Manager
         // Make progress bar visible
         jQuery("#progress").get(0).style.display = "block";
+        jQuery("#progressWrapper").get(0).style.visibility = "visible";
+        document.getElementById("result_download").innerHTML = "Loading";
 
+        // Make a Loading Manager
         let manager = new THREE.LoadingManager();
 
-        manager.onProgress = function ( item, loaded, total ) {
-            if (total >= 2)
-                document.getElementById("result_download").innerHTML = "Loading " + (loaded-1) + " out of " + (total-2);
+        // On progress messages (loading)
+        manager.onProgress = function ( url, loaded, total ) {
+            document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
         };
-
-        
+      
         
         // When all are finished loading place them in the correct position
         manager.onLoad = function () {
-
-            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
             // Get the last inserted object
             let l = Object.keys(resources3D).length;
@@ -826,12 +896,10 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 })(n);
             }
 
-
             // Avoid culling by frustum
             envir.scene.traverse(function (obj) {
                 obj.frustumCulled = false;
             });
-
             
             // Remote shadows. Recheck in v141
             envir.scene.children.forEach(function(item,index){
@@ -841,25 +909,20 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                 }
             });
 
-
             // Update Light Helpers to point to each object (spot light)
             envir.scene.traverse(function(child) {
                     if (child.light != undefined)
                         child.update();
                 }
             );
-            
-            
+
+            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
         }; // End of manager
 
         // Loader of assets
         var loaderMulti = new VRodos_LoaderMulti();
-
         loaderMulti.load(manager, resources3D, pluginPath);
-        
-        if (resources3D.length === 0) {
-            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
-        }
+       
         
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json){
@@ -932,21 +995,17 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             updatePointerLockControls();
 
-            //transform_controls.update(); // update the axis controls based on the browse controls
-            //envir.stats.update();
-
             // Now update the translation and rotation input texts
             if (transform_controls.object) {
-
-                for (let i in controlInterface.translate.__controllers)
-                    controlInterface.translate.__controllers[i].updateDisplay();
-
-                for (let i in controlInterface.rotate.__controllers)
-                    controlInterface.rotate.__controllers[i].updateDisplay();
-
-                for (let i in controlInterface.scale.__controllers)
-                    controlInterface.scale.__controllers[i].updateDisplay();
-
+                const affines = ['position', 'rotation', 'scale'];
+                for (let j=0; j<3; j++ ) {
+                     for (let i = 0; i < 3; i++) {
+                        if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
+                            controlInterface.__controllers[j*3+i].updateDisplay();
+                        }
+                     }
+                }
+                
                 updatePositionsPhpAndJavsFromControlsAxes();
             }
         }
@@ -979,40 +1038,24 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             showObjectPropertiesPanel(transform_controls.getMode());
 
             selected_object_name = name;
-            //transform_controls.setMode("rottrans");
             transform_controls.setMode("translate");
-
-            let sizeT = 1;
 
             // Resize controls based on object size
             if (selected_object_name != 'avatarCamera') {
-                // let dims = findDimensions(transform_controls.object);
-                // sizeT = Math.max(...dims);
-
-                // 6 is rotation
-                //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;
 
                 if (selected_object_name.includes("lightSun") || selected_object_name.includes("lightLamp") ||
                     selected_object_name.includes("lightSpot")){
-                    // ROTATE GIZMO: Sun and lamp can not be rotated
-                    //transform_controls.children[3].children[0].children[1].visible = false;
                 }
             } else {
-                //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
                 transform_controls.visible = false;
             }
 
-            //transform_controls.setSize( sizeT > 1 ? sizeT : 1 );
             setTransformControlsSize();
         }
         
     </script>
-<?php } ?>
+<?php }
 
-
-
-
-<?php
     // Add sceneType variable in js envir
     $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
     if (count($sceneType)>0) {
@@ -1021,32 +1064,3 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         echo '</script>';
     }
 ?>
-
-<style type="text/css" media="screen">
-    /*html { margin-top: 28px !important; }*/
-    /** html body { margin-top: 28px !important; }*/
-</style>
-
-<script>
-    // // Create iFrame for Aframe
-    // let compile_dialogue_div = document.getElementById("compile_dialogue_div");
-    //
-    // var iFramePreviewAframe = document.createElement('iframe');
-    // iFramePreviewAframe.style.background = "brown";
-    // iFramePreviewAframe.setAttribute('id', 'iFramePreviewAframe'); // assign an id
-    // compile_dialogue_div.append(iFramePreviewAframe);
-
-    //iFramePreviewAframe.src = "http://127.0.0.1/wordpress/wp-content/plugins/VRodos/includes/simple_aframe.html";
-
-    
-    
-</script>
-
-
-<?php
-
-
-
-?>
-
-

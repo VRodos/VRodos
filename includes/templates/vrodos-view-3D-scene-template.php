@@ -225,7 +225,6 @@ if(is_user_logged_in() ) {
                     </div>
 
                     <div id="result_download" class="result"></div>
-                    <div id="result_download2" class="result"></div>
                 </div>
 
             </div>   <!--   VR DIV   -->

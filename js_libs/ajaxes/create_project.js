@@ -17,18 +17,16 @@ function vrodos_createProjectAjax(project_title, project_type, current_user_id, 
             'project_title': project_title,
             'project_type_radio': project_type
         },
-        success: function (res) {
+        success: function (new_project_id) {
 
             console.log("Game project has been successfully created");
 
             jQuery('#createNewProjectBtn').show();
             jQuery('#create-game-progress-bar').hide();
 
-            // ajax add project to list
+            fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_project_id);
 
-            //location.reload();
 
-            fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass);
     },
         error: function (xhr, ajaxOptions, thrownError) {
 
@@ -48,9 +46,7 @@ function vrodos_createProjectAjax(project_title, project_type, current_user_id, 
 }
 
 
-function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass){
-
-    console.log("start fetch projects", Date.now()/1000);
+function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_project_id=-1){
 
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
@@ -60,12 +56,16 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass){
             'current_user_id': current_user_id,
             'parameter_Scenepass': parameter_Scenepass
         },
-        success: function (res) {
-
-            console.log("success fetch projects", Date.now()/1000);
+        success: function (domhtml) {
 
             // Add list to div
-            document.getElementById('ExistingProjectsDivDOM').innerHTML = res;
+            document.getElementById('ExistingProjectsDivDOM').innerHTML = domhtml;
+
+            // Open the project automatically
+            if(new_project_id > -1){
+                jQuery("#3d-editor-bt-"+new_project_id)[0].click();
+            }
+
         },
         error: function (xhr, ajaxOptions, thrownError) {
             console.log("Ajax Fetch List Projects Error: ERROR: 170" + thrownError);

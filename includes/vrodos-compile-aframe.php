@@ -247,7 +247,6 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 				switch ($contentObject->categoryName){
 					case 'lightSun':
 						
-						
 						$a_light_target = $dom->createElement( "a-entity" );
 						$a_light_target->appendChild( $dom->createTextNode( '' ) );
 						$a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );

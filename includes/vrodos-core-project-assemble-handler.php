@@ -270,7 +270,7 @@ function vrodos_fetch_list_projects_callback(){
            
            
            // --------- 3D editor button -----------
-           echo '<a href="'.$loadMainSceneLink.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
+           echo '<a id="3d-editor-bt-'.$game_id.'" href="'.$loadMainSceneLink.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
                  'title="Open 3D Editor for '.$game_title.'">';
            echo '<span id="'.$game_id.'-vr-button" class="mdc-button" >3D_Editor</span>';
            echo '</a>';

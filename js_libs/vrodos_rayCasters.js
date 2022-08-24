@@ -24,13 +24,7 @@ function findIntersectedRaw(event) {
     // All 3D meshes that can be clicked
     let activeMeshes = getActiveMeshes();
 
-
-
-    let raw = raycasterPick.intersectObjects(activeMeshes)
-
-    console.log("raw", raw);
-
-    return raw;
+    return raycasterPick.intersectObjects(activeMeshes);
 }
 
 function findIntersected(event){
@@ -120,12 +114,8 @@ function onLeftMouseDown( event ) {
 
     let intersects = findIntersected(event);
 
-    console.log("intersects", intersects);
-
     if (intersects.length === 0)
         return;
-
-
 
     if (intersects.length > 0) {
 

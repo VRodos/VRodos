@@ -421,7 +421,7 @@ function loadButtonActions() {
             envir.is2d = true;
             transform_controls.setMode("translate");
 
-            envir.scene.getObjectByName("SteveOld").visible = false;
+            // envir.scene.getObjectByName("SteveOld").visible = false;
             envir.scene.getObjectByName("Camera3Dmodel").visible = true;
         }
 
@@ -545,7 +545,7 @@ function loadButtonActions() {
 
 
     // Drag light or Pawn: Add event listeners
-    var allUpperToolbarButtons = document.querySelectorAll('.lightPawnbuttons .lightpawnbutton');
+    var allUpperToolbarButtons = document.querySelectorAll('.environmentBar .lightpawnbutton');
 
     [].forEach.call(allUpperToolbarButtons, function (col) {
         col.addEventListener('dragstart', handleLightPawnDragStart, false);

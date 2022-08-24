@@ -445,20 +445,12 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
                 // Dimensions
                 setTransformControlsSize();
-                // var dims = findDimensions(transform_controls.object);
-                // var sizeT = Math.max(...dims);
-                // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
-
-                //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
-
-                //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
 
                 // Add in scene
                 addInHierarchyViewer(insertedObject);
 
-
+                // autosave
                 triggerAutoSave();
-
             },
             // called while loading is progressing
             function ( xhr ) {
@@ -474,33 +466,27 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
     }
     else {
 
-        // Add an object
+        // Add a GLB object
 
         // Make progress bar visible
         jQuery("#progress").get(0).style.display = "block";
-
-        var manager = new THREE.LoadingManager();
-
         jQuery("#progressWrapper").get(0).style.visibility = "visible";
         document.getElementById("result_download").innerHTML = "Loading";
 
-        manager.onProgress = function (item, loaded, total) {
-            //console.log( item, loaded, total );
+        // Make a manager for the GLB
+        var manager = new THREE.LoadingManager();
 
-            document.getElementById("result_download").innerHTML = "Loading";
+        // On progress messages
+        manager.onProgress = function (item, loaded, total) {
+            document.getElementById("result_download").innerHTML = resources3D[nameModel].assetname + " loading part " + loaded + " / " + total ;
         };
 
         // When all are finished loading
         manager.onLoad = function () {
 
-            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
+            let insertedObject = envir.scene.getObjectByName(nameModel);
 
-            var insertedObject = envir.scene.getObjectByName(nameModel);
-
-            if (!insertedObject) {
-                jQuery("#dialog-message").dialog("open");
-            }
-
+            // Affine transformations
             var trs_tmp = resources3D[nameModel]['trs'];
 
             insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
@@ -508,9 +494,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
             insertedObject.parent = envir.scene;
 
+            // place controls to last inserted obj
+            transform_controls.attach(insertedObject);
 
-            //console.log("ADDRE", insertedObject);
-
+            // Make object gray if does not have any material
             if(insertedObject.children[0].isMesh) {
                 if (isNaN(insertedObject.children[0].material.metalness)) {
                     let mat = insertedObject.children[0].material;
@@ -524,103 +511,35 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
                 }
             }
 
-            // place controls to last inserted obj
-            transform_controls.attach(insertedObject);
-
             // highlight
             envir.composer = [];
             envir.setComposerAndPasses();
             envir.outlinePass.selectedObjects = [insertedObject];
 
-            // Position
-            transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
-            transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-            transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
-
             selected_object_name = nameModel;
 
             // Dimensions
             setTransformControlsSize();
-            // var dims = findDimensions(transform_controls.object);
-            // var sizeT = Math.max(...dims);
-            // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-            // Make the default gizmo visible
-            //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;
-
-            if (categoryName === "Producer") {
-
-                var clonos = [];
-
-                var NClones = 6;
-                for (var i = 0; i < NClones; i++) {
-
-                    clonos[i] = new THREE.Mesh();
-                    clonos[i].copy(insertedObject);
-                    clonos[i].position.set((i + 1) * 100, 0, 0);
-                    clonos[i].children[0].material = new THREE.MeshBasicMaterial({
-                        color: 0xffff00,
-                        transparent: true,
-                        opacity: 0.8 / (i + 1)
-                    });
-                    clonos[i].children[1].material = new THREE.MeshBasicMaterial({
-                        color: 0xffff00,
-                        transparent: true,
-                        opacity: 0.8 / (i + 1)
-                    });
-                    clonos[i].name = "clonosTurbine1";
-                }
-
-                for (var i = 0; i < NClones; i++) {
-                    insertedObject.add(clonos[i]);
-                }
-
-
-                insertedObject.position.set(0, 100, 0);
-            }
-
-            // Add in scene
+            // Add in hierarchy browser
             addInHierarchyViewer(insertedObject);
 
             // Auto-save
             triggerAutoSave();
+
+            // Hide progress dialogue
+            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
         };
 
 
-        var extraResource = {};
-        extraResource[nameModel] = resources3D[nameModel];
-
+        // Init downloading only the added model
         let loaderMulti = new VRodos_LoaderMulti();
-        loaderMulti.load(manager, extraResource, pluginPath);
+        loaderMulti.load(manager, {[nameModel]: resources3D[nameModel]}, pluginPath);
 
-
-        envir.composer = [];
-        envir.setComposerAndPasses();
-
+        // envir.composer = [];
+        // envir.setComposerAndPasses();
     }
 }
-
-
-/**
- *   Reset object in scene
- */
-function resetInScene(name){
-
-    if (name === "avatarCamera") {
-        envir.avatarControls.getObject().position.set(0, 1.3, 0);
-        envir.avatarControls.getObject().quaternion.set(0, 0, 0, 1);
-        envir.avatarControls.getObject().children[0].rotation.set(0, 0, 0);
-        envir.avatarControls.getObject().children[0].scale.set(1, 1, 1);
-    } else {
-        envir.scene.getObjectByName(name).position.set(0, 1.3, 0);
-        envir.scene.getObjectByName(name).rotation.set(0, 0, 0);
-        envir.scene.getObjectByName(name).scale.set(1, 1, 1);
-    }
-}
-
-
-
-
 
 /**
  *
@@ -629,6 +548,9 @@ function resetInScene(name){
  * @param nameToRemove
  */
 function deleterFomScene(nameToRemove){
+
+    if (nameToRemove === "avatarCamera")
+        return;
 
     delete resources3D[nameToRemove];
 

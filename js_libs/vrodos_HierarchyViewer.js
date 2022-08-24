@@ -1,3 +1,20 @@
+/**
+ *   Reset object in scene
+ */
+function resetInScene(name){
+
+    if (name === "avatarCamera") {
+        envir.avatarControls.getObject().position.set(0, 1.3, 0);
+        envir.avatarControls.getObject().quaternion.set(0, 0, 0, 1);
+        envir.avatarControls.getObject().children[0].rotation.set(0, 0, 0);
+        envir.avatarControls.getObject().children[0].scale.set(1, 1, 1);
+    } else {
+        envir.scene.getObjectByName(name).position.set(0, 1.3, 0);
+        envir.scene.getObjectByName(name).rotation.set(0, 0, 0);
+        envir.scene.getObjectByName(name).scale.set(1, 1, 1);
+    }
+}
+
 function AppendObject(obj, game_object_nameA_assetName, game_object_nameB_dateCreated, deleteButtonHTML, resetButtonHTML){
 
     jQuery('#hierarchy-viewer').append(
