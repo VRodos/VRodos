@@ -157,67 +157,59 @@ function controllerDatGuiOnChange() {
  */
 function updatePositionsPhpAndJavsFromControlsAxes(){
 
+
     //--------- translate_x ---------------
     if (transform_controls.object.position.x !== gui_controls_funs[0]){
-
         gui_controls_funs[0] = transform_controls.object.position.x;
-
-        // Auto-save
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
-//     //--------- translate_y ---------------
-//     if (transform_controls.object.position.y!= gui_controls_funs.dg_t2){
-//         gui_controls_funs.dg_t2 = transform_controls.object.position.y;
-//
-//         // Auto-save
-//         envir.scene.dispatchEvent({type:"modificationPendingSave"});
-//     }
-//
-//     //--------- translate_z ---------------
-//     if (transform_controls.object.position.z!= gui_controls_funs.dg_t3){
-//         gui_controls_funs.dg_t3 = transform_controls.object.position.z;
-//
-//         // Auto-save
-//         envir.scene.dispatchEvent({type:"modificationPendingSave"});
-//     }
-//
-//     //--------- rotate_x ----------------------
-//     if (transform_controls.object.rotation._x*180/Math.PI != gui_controls_funs.dg_r1){
-//         gui_controls_funs.dg_r1 = transform_controls.object.rotation._x * 180/Math.PI;
-//
-//         // Auto-save
-//         envir.scene.dispatchEvent({type:"modificationPendingSave"});
-//     }
-//
-//     //---------rotate_y -------------------------------
-//     if (transform_controls.object.rotation._y*180/Math.PI != this.dg_r2){
-//         gui_controls_funs.dg_r2 = transform_controls.object.rotation._y * 180/Math.PI;
-//         envir.scene.dispatchEvent({type:"modificationPendingSave"});
-//     }
-//
-//     //---------rotate_z -------------------------------
-//     if (transform_controls.object.rotation._z*180/Math.PI != gui_controls_funs.dg_r3){
-//         gui_controls_funs.dg_r3 = transform_controls.object.rotation._z * 180/Math.PI;
-//         envir.scene.dispatchEvent({type:"modificationPendingSave"});
-//     }
-//
-//     //---------scale_x -------------------------------
-//     if (transform_controls.object.scale.x != gui_controls_funs.dg_s1){
-//         gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
-//         envir.scene.dispatchEvent({type:"modificationPendingSave"});
-//     }
-//
-//     //---------scale_y -------------------------------
-//     if (transform_controls.object.scale.y != gui_controls_funs.dg_s2){
-//         gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
-//         envir.scene.dispatchEvent({type:"modificationPendingSave"});
-//     }
-//
-//     //---------scale_z -------------------------------
-//     if (transform_controls.object.scale.z != gui_controls_funs.dg_s3){
-//         gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
-//         envir.scene.dispatchEvent({type:"modificationPendingSave"});
-//     }
-//
+    //--------- translate_y ---------------
+    if (transform_controls.object.position.y !== gui_controls_funs[1]){
+        gui_controls_funs[1] = transform_controls.object.position.y;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //--------- translate_z ---------------
+    if (transform_controls.object.position.z !== gui_controls_funs[2]){
+        gui_controls_funs[2] = transform_controls.object.position.z;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //--------- rotate_x ----------------------
+    if (transform_controls.object.rotation._x*180/Math.PI !== gui_controls_funs[3]){
+        gui_controls_funs[3] = transform_controls.object.rotation._x * 180/Math.PI;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //---------rotate_y -------------------------------
+    if (transform_controls.object.rotation._y*180/Math.PI !== gui_controls_funs[4]){
+        gui_controls_funs[4] = transform_controls.object.rotation._y * 180/Math.PI;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //---------rotate_z -------------------------------
+    if (transform_controls.object.rotation._z*180/Math.PI !== gui_controls_funs[5]){
+        gui_controls_funs[5] = transform_controls.object.rotation._z * 180/Math.PI;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //---------scale_x -------------------------------
+    if (transform_controls.object.scale.x !== gui_controls_funs[6]){
+        gui_controls_funs[6] = transform_controls.object.scale.x;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //---------scale_y -------------------------------
+    if (transform_controls.object.scale.y !== gui_controls_funs[7]){
+        gui_controls_funs[7] = transform_controls.object.scale.y;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
+    //---------scale_z -------------------------------
+    if (transform_controls.object.scale.z !== gui_controls_funs[8]){
+        gui_controls_funs[8] = transform_controls.object.scale.z;
+        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    }
+
 }

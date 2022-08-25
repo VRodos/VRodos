@@ -995,12 +995,13 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             updatePointerLockControls();
 
-            // Now update the translation and rotation input texts
+            // Now update the translation and rotation input texts at datgui from transform controls
             if (transform_controls.object) {
                 const affines = ['position', 'rotation', 'scale'];
                 for (let j=0; j<3; j++ ) {
                      for (let i = 0; i < 3; i++) {
                         if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
+                            
                             controlInterface.__controllers[j*3+i].updateDisplay();
                         }
                      }
