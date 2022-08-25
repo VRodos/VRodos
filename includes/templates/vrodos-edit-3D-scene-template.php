@@ -837,7 +837,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         // Hide (right click) panel
         hideObjectPropertiesPanels();
 
-        // When Dat.Gui changes update php, javascript vars and transform_controls
+        // Add Listeners for: When Dat.Gui changes update php, javascript vars and transform_controls
         controllerDatGuiOnChange();
 
         // Add lights on scene
