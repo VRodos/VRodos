@@ -20,7 +20,7 @@ class vrodos_3d_editor_environmentals {
         this.vr_editor_main_div = vr_editor_main_div;
 
         this.SCREEN_WIDTH = this.vr_editor_main_div.clientWidth; // 500; //window.innerWidth;
-        this.SCREEN_HEIGHT = this.vr_editor_main_div.clientHeight; // 500; //window.innerHeight;
+            this.SCREEN_HEIGHT = this.vr_editor_main_div.clientHeight; // 500; //window.innerHeight;
         this.VIEW_ANGLE = 60;
 
         this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
@@ -57,6 +57,8 @@ class vrodos_3d_editor_environmentals {
         this.labelRenderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
 
         this.renderer.sortObjects = true;
+
+        console.log(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
 
 

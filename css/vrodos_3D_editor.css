@@ -734,9 +734,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 .environmentButton{
     float:left;
     width: 45px;
-    height: 35px;
     min-width:20px;
-    margin-top:5px;
     margin-left:2px;
 }
 

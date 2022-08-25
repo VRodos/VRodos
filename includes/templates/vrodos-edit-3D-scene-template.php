@@ -1053,7 +1053,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             setTransformControlsSize();
         }
-        
+
+        document.getElementsByTagName("html")[0].style.overflow="hidden";
     </script>
 <?php }
 
