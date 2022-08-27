@@ -739,7 +739,7 @@ if($asset_id != null) {
             <?php print_r($_FILES, true) ?>
 
             <!-- Select type of 3D format files -->
-            <ul class="RadioButtonList">
+            <ul class="RadioButtonList" style="display:none">
                 <li class="mdc-form-field" id="glbRadioListItem" onclick="loadFileInputLabel('glb')">
                     <div class="mdc-radio">
                         <input class="mdc-radio__native-control" type="radio" id="glbRadio"
@@ -752,41 +752,41 @@ if($asset_id != null) {
                     <label id="glbRadio-label" for="glbRadio" style="margin-bottom: 0;">Khronos GLB file</label>
                 </li>
 
-                <li class="mdc-form-field" id="fbxRadioListItem" onclick="loadFileInputLabel('fbx')">
-                    <div class="mdc-radio" >
-                        <input class="mdc-radio__native-control" type="radio" id="fbxRadio"
-                               name="objectTypeRadio" value="fbx">
-                        <div class="mdc-radio__background">
-                            <div class="mdc-radio__outer-circle"></div>
-                            <div class="mdc-radio__inner-circle"></div>
-                        </div>
-                    </div>
-                    <label id="fbxRadio-label" for="fbxRadio" style="margin-bottom: 0;">FBX file</label>
-                </li>
-
-                <li class="mdc-form-field" id="pdbRadioListItem" onclick="loadFileInputLabel('pdb')">
-                    <div class="mdc-radio">
-                        <input class="mdc-radio__native-control" type="radio" id="pdbRadio"
-                               name="objectTypeRadio" value="pdb">
-                        <div class="mdc-radio__background">
-                            <div class="mdc-radio__outer-circle"></div>
-                            <div class="mdc-radio__inner-circle"></div>
-                        </div>
-                    </div>
-                    <label id="pdbRadio-label" for="pdbRadio" style="margin-bottom: 0;">Protein Data Bank (PDB) file</label>
-                </li>
-
-                <li class="mdc-form-field" id="mtlRadioListItem" onclick="loadFileInputLabel('obj')">
-                    <div class="mdc-radio">
-                        <input class="mdc-radio__native-control" type="radio" id="mtlRadio"
-                               name="objectTypeRadio" value="mtl">
-                        <div class="mdc-radio__background">
-                            <div class="mdc-radio__outer-circle"></div>
-                            <div class="mdc-radio__inner-circle"></div>
-                        </div>
-                    </div>
-                    <label id="mtlRadio-label" for="mtlRadio" style="margin-bottom: 0;">MTL & OBJ files</label>
-                </li>
+<!--                <li class="mdc-form-field" id="fbxRadioListItem" onclick="loadFileInputLabel('fbx')">-->
+<!--                    <div class="mdc-radio" >-->
+<!--                        <input class="mdc-radio__native-control" type="radio" id="fbxRadio"-->
+<!--                               name="objectTypeRadio" value="fbx">-->
+<!--                        <div class="mdc-radio__background">-->
+<!--                            <div class="mdc-radio__outer-circle"></div>-->
+<!--                            <div class="mdc-radio__inner-circle"></div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <label id="fbxRadio-label" for="fbxRadio" style="margin-bottom: 0;">FBX file</label>-->
+<!--                </li>-->
+<!---->
+<!--                <li class="mdc-form-field" id="pdbRadioListItem" onclick="loadFileInputLabel('pdb')">-->
+<!--                    <div class="mdc-radio">-->
+<!--                        <input class="mdc-radio__native-control" type="radio" id="pdbRadio"-->
+<!--                               name="objectTypeRadio" value="pdb">-->
+<!--                        <div class="mdc-radio__background">-->
+<!--                            <div class="mdc-radio__outer-circle"></div>-->
+<!--                            <div class="mdc-radio__inner-circle"></div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <label id="pdbRadio-label" for="pdbRadio" style="margin-bottom: 0;">Protein Data Bank (PDB) file</label>-->
+<!--                </li>-->
+<!---->
+<!--                <li class="mdc-form-field" id="mtlRadioListItem" onclick="loadFileInputLabel('obj')">-->
+<!--                    <div class="mdc-radio">-->
+<!--                        <input class="mdc-radio__native-control" type="radio" id="mtlRadio"-->
+<!--                               name="objectTypeRadio" value="mtl">-->
+<!--                        <div class="mdc-radio__background">-->
+<!--                            <div class="mdc-radio__outer-circle"></div>-->
+<!--                            <div class="mdc-radio__inner-circle"></div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <label id="mtlRadio-label" for="mtlRadio" style="margin-bottom: 0;">MTL & OBJ files</label>-->
+<!--                </li>-->
             </ul>
 
 

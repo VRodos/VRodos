@@ -937,7 +937,7 @@ class VRodos_AssetViewer_3D_kernel {
                 function ( xhr ) {
 
                     scope.previewProgressLabel.innerHTML =
-                        Math.round( xhr.loaded / xhr.total * 100 ) + '% loaded';
+                        Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
 
                 },
                 // called when loading has errors

@@ -3,7 +3,12 @@
 function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	
 	// Start node js server at 5832
-	$strCmd = "node ".WP_PLUGIN_DIR."/VRodos/networked-aframe/server/easyrtc-server.js";
+	$strCmd = "node ".plugin_dir_path( __DIR__  )."/networked-aframe/server/easyrtc-server.js";
+	
+//    		$f = fopen("output_compile.txt", "w");
+//			fwrite($f, $strCmd . chr(13));
+//
+//			fclose($f);
 	
 	if ( PHP_OS == "WINNT"){
 		popen("start " . $strCmd, "r");
@@ -33,32 +38,41 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	
 	class FileOperations {
 	
-		public bool $debug_compile = true;
-//		public array $pathsDir = array("c:/xampp8/htdocs/wordpress/", "/var/www/html/vrodos/networked-aframe/examples/");
-//		public array $pathsURL = array("http://127.0.0.1/wordpress", "https://vrodos.iti.gr/");
-		
-		function uriSelector(){
+		public string $server_protocol;
+		public string $portNodeJs;
+	 
+		function __construct(){
+			$this->server_protocol = is_ssl() ? "https":"http";
 			
-			return $this->debug_compile ? "http://127.0.0.1:5832/" :
-										  "https://vrodos-multiplaying.iti.gr/";
-				
+			// Define current url path of plugin including plugin name
+			$this->plugin_path_url = plugin_dir_url( __DIR__  );
+			
+			// Define current dir path of plugin including plugin name
+			$this->plugin_path_dir = plugin_dir_path( __DIR__  );
+			
+			$this->website_root_url = parse_url( get_site_url(), PHP_URL_HOST );
+			
+			$this->portNodeJs = "5832";
+			
+//			$f = fopen("output_compile.txt", "w");
+//			fwrite($f, $plugin_path_url . chr(13));
+//			fwrite($f, $plugin_path_dir . chr(13));
+//			fwrite($f, $website_root_url . chr(13));
+//			fwrite($f, $server_protocol . chr(13));
+//			fclose($f);
 		}
 		
-//		function pathToResources(){
-//
-//			return $this->debug_compile ?
-//				"http://127.0.0.1/wordpress/wp-content/plugins/VRodos/images/aframe/" :
-//									    	"https://vrodos-multiplaying.iti.gr/img/";
-//
-//		}
-		
-		function pathSelector(){
+		function nodeJSpath(){
 			
-			// Save to file (Windows vs Linux)
-			return $this->debug_compile ?
-				'C:/xampp8/htdocs/wordpress/wp-content/plugins/VRodos/networked-aframe/examples/' :
-										     	 '/var/www/html/net-aframe/networked-aframe/examples/';
+			if ( PHP_OS == "WINNT"){
+				return $this->server_protocol."://".$this->website_root_url.":".$this->portNodeJs."/";
+			} else {
+				return "https://vrodos-multiplaying.iti.gr/";
+			}
+			
+			
 		}
+	
 		
 		function reader($filename){
 			$f = fopen( $filename, "r");
@@ -74,13 +88,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			return $res;
 		}
 		
-		
-		function copier($filename){
-		
-		}
-		
 		function setAffineTransformations($entity, $contentObject){
-			
 			$entity->setAttribute( "position", implode( " ", $contentObject->position ) );
 			$entity->setAttribute( "rotation", implode( " ", $contentObject->rotation ) );
 			$entity->setAttribute( "scale", implode( " ", $contentObject->scale ) );
@@ -113,7 +121,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 				$material .= "repeat:".$contentObject->videoTextureRepeatX." ".$contentObject->videoTextureRepeatY.";";
 			}
 		}
-		
+	
 		
 		function createBasicDomStructureAframe($content, $scene_json){
 			
@@ -141,6 +149,10 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	
 	$fileOperations = new FileOperations();
 	
+	
+	
+	
+	
 	// Step 1: Create the index.html file by replacing certain parts only
 	/**
 	 * Read the index prototype, replace html links of Master and Simple client with scene_id and write back the result to another file
@@ -150,7 +162,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	 */
 	function createIndexFile($project_title, $scene_id, $scene_title, $fileOperations){
 		
-		$filenameSource = WP_PLUGIN_DIR."/VRodos/js_libs/aframe_libs/index_prototype.html";
+		$filenameSource = $fileOperations->plugin_path_dir."/js_libs/aframe_libs/index_prototype.html";
 		
 		// Read prototype
 		$content = $fileOperations->reader($filenameSource);
@@ -163,7 +175,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			                          $content);
 		
 		// Write back to root
-		return $fileOperations->writer($fileOperations->pathSelector()."index_".$scene_id.".html", $content);
+		return $fileOperations->writer($fileOperations->plugin_path_dir."/networked-aframe/examples/"."index_".$scene_id.".html", $content);
     }
 
 	
@@ -171,7 +183,8 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions){
 
 		// Read prototype
-		$content = $fileOperations->reader(WP_PLUGIN_DIR."/VRodos/js_libs/aframe_libs/Master_Client_prototype.html");
+		$content = $fileOperations->reader($fileOperations->plugin_path_dir
+		                                                 ."/js_libs/aframe_libs/Master_Client_prototype.html");
 
 		// Modify strings
 		$content = str_replace("roomname", "room".$scene_id, $content);
@@ -204,12 +217,9 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 					$a_entity->setAttribute( "material", $material );
 					$a_entity->setAttribute( "clear-frustum-culling", "" );
 					
-					
 					$ascene->appendChild( $a_entity );
 					
 				} else {
-				
-//					<a-ocean ocean-state="wind_velocity: 0.25 0.25;" shadow="receive: true" ocean-depth></a-ocean>
 					
 					$a_entity = $dom->createElement( "a-ocean" );
 					$a_entity->appendChild( $dom->createTextNode( '' ) );
@@ -228,7 +238,9 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 					$a_entity = $dom->createElement( "a-entity" );
 					$a_entity->appendChild( $dom->createTextNode( '' ) );
 					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
-					$a_entity->setAttribute( "gltf-model", "url(http://127.0.0.1/wordpress/wp-content/plugins/VRodos/assets/pawn.glb)" );
+					$a_entity->setAttribute( "gltf-model",
+						"url(" . $fileOperations->plugin_path_url .  "/assets/pawn.glb)" );
+					
 					$ascene->appendChild( $a_entity );
 				}
 				
@@ -260,9 +272,6 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 						);
 						
 						$a_light->setAttribute("target", "#".$nameObject."target");
-						
-					
-						
 						
 						// Define the sun at the sky and add it to scene
 						// <a-sun-sky material="side:back; sunPosition: 1.0 1.0 0.0"></a-sun-sky>
@@ -318,7 +327,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		$contentNew = $dom->saveHTML();
 	
 		// Write back to root
-        return $fileOperations->writer($fileOperations->pathSelector().'Master_Client_'.$scene_id.".html", $contentNew);
+        return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/examples/Master_Client_'.$scene_id.".html", $contentNew);
 	}
 	
 	
@@ -329,7 +338,8 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	function createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations){
 
 		// Read prototype
-		$content = $fileOperations->reader(WP_PLUGIN_DIR."/VRodos/js_libs/aframe_libs/Simple_Client_prototype.html");
+		$content = $fileOperations->reader($fileOperations->plugin_path_dir
+		                                   ."/js_libs/aframe_libs/Simple_Client_prototype.html");
 
 		// Modify strings
 		$content = str_replace("roomname", "room".$scene_id, $content);
@@ -384,12 +394,12 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		$contentNew = $dom->saveHTML();
 		
 		// Write back to root
-		return $fileOperations->writer($fileOperations->pathSelector().'Simple_Client_'.$scene_id.".html", $contentNew);
+		return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/examples/Simple_Client_'.$scene_id.".html", $contentNew);
 	}
 	
 	
 	// Step 1: Create the index file
-	createIndexFile($project_title, $scene_id, $scene_title, $fileOperations );
+	createIndexFile($project_title, $scene_id, $scene_title, $fileOperations);
 	
 	// Step 2: Create the Master client file
 	createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions);
@@ -398,26 +408,9 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations);
 
 	return json_encode(
-		                array("index" => $fileOperations->uriSelector()."index_".$scene_id.".html",
-		                     "MasterClient" => $fileOperations->uriSelector()."Master_Client_".$scene_id.".html",
-		                     "SimpleClient" => $fileOperations->uriSelector()."Simple_Client_".$scene_id.".html",
-			                )
-					  );
+                array("index" => $fileOperations->nodeJSpath()."index_".$scene_id.".html",
+                     "MasterClient" => $fileOperations->nodeJSpath()."Master_Client_".$scene_id.".html",
+                     "SimpleClient" => $fileOperations->nodeJSpath()."Simple_Client_".$scene_id.".html",
+	                )
+			  );
 }
-
-
-// -------- Obsolete ---------
-
-// Already Included
-// Head scripts
-//		function addScript($dom, $head, $src_url){
-//			$scriptLib = $dom->createElement("script");
-//			$scriptLib->appendChild($dom->createTextNode(''));
-//			$scriptLib->setAttribute("src", $src_url);
-//			$head->appendChild($scriptLib);
-//		}
-//
-//		addScript($dom, $head, "https://aframe.io/releases/1.3.0/aframe.min.js");
-
-// Add script to body (Already in template)
-//	addScript($dom, $body, "http://127.0.0.1/wordpress/wp-content/plugins/VRodos/js_libs/aframe_libs/glb_material_changer.js");

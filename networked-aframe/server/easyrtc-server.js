@@ -24,21 +24,25 @@ const app = express();
 
 
 
+
+
 app.use(express.static(path.resolve(__dirname, "..", "examples")));
 
 
-
+// app.get("/", (req, res) => {
+//     res.render("index.ejs");
+// });
 
 
 
 // enable cors
-//app.use(cors())
+//app.use(cors());
 
-// app.use(function(req, res, next) {
-//     res.header("Access-Control-Allow-Origin", "*");
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//     next();
-// });
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 //
 // app.get('/', function(req, res, next) {
 //     // Handle the get for this route
@@ -150,5 +154,6 @@ easyrtc.listen(app, socketServer, null, (err, rtcRef) => {
 // Listen on port
 webServer.listen(port, () => {
     //console.log('CORS-enabled web server listening on port ' + port);
-    console.log("listening on http://127.0.0.1:" + port);
+    console.log("listening on port:" + port);
 });
+

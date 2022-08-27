@@ -57,10 +57,7 @@ class vrodos_3d_editor_environmentals {
         this.labelRenderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
 
         this.renderer.sortObjects = true;
-
-        console.log(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-
 
         // This works well for outlining objects in white background
         //this.renderer.setClearColor(0xeeeeee, 1);
@@ -84,7 +81,7 @@ class vrodos_3d_editor_environmentals {
         // // Add a background to the scene
         var rgbeloader = new THREE.RGBELoader();
 
-        rgbeloader.setPath( siteurl + '/wp-content/plugins/VRodos/images/hdr/' )
+        rgbeloader.setPath( pluginPath + '/images/hdr/' )
             .load( 'Stonewall_Ref.hdr', function ( texture ) {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 envir.maintexture = texture;
@@ -317,7 +314,7 @@ class vrodos_3d_editor_environmentals {
         loader.scene = this.scene;
         // var pathn = window.location.pathname.replace(/[^/]*$/, '');
         // pathn = pathn.split('/').slice(0,-2).join('/');
-        loader.load(siteurl + '/wp-content/plugins/VRodos/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts);
+        loader.load(pluginPath + '/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts);
     }
 
     loadtexts(font) {

@@ -5,8 +5,12 @@
  * Description: Make your wordpress website a VR site
  * Author: Dimitrios Ververidis, ververid@iti.gr
  * Author URI: https://vrodos.iti.gr
- * Version: 0.7
+ * Version: 0.71
+ *   - Fix relative paths
  */
+
+
+
 /*
  * Please change root .htaccess for uploading big 3D model files
  *

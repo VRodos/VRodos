@@ -169,11 +169,13 @@ function vrodos_combineGameStrategies($project_id){
 function vrodos_getUnity_local_or_remote(){
 	$generaloptions = get_option( 'vrodos_general_settings' );
 
-	if($generaloptions["vrodos_unity_local_or_remote"]) {
-		return $generaloptions["vrodos_unity_local_or_remote"];
-	}else{
-		return 'local';
-	}
+//	if(!is_null($generaloptions["vrodos_unity_local_or_remote"])) {
+//		return $generaloptions["vrodos_unity_local_or_remote"];
+//	}else{
+//		return 'local';
+//	}
+	
+	return $generaloptions["vrodos_unity_local_or_remote"] ?? 'local';
 }
 
 function vrodos_getUnity_exe_folder(){

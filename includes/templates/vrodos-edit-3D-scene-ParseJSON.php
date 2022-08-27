@@ -7,9 +7,9 @@ class ParseJSON {
 
     public function init($sceneToLoad) {
 	
-        $f = fopen("output_Parse_json.txt","w");
-        fwrite($f, "1");
-        
+//        $f = fopen("output_Parse_json.txt","w");
+//        fwrite($f, "1");
+     
 	    $resources3D = [];
 		
 //        $fp = fopen("output_saved2.txt","w");
@@ -444,11 +444,11 @@ class ParseJSON {
 //	                                          'scale' => [$s_x,$s_y,$s_z]
 //                                             ]
 //	                        ];
-    
-    
-            fwrite($f, "4");
-            
-            
+
+
+//            fwrite($f, "4");
+        
+        
         }
         
         return $resources3D;

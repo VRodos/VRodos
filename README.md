@@ -47,12 +47,23 @@ Interface Pages
 
 ### Do you have a demo?
 
-https://vrodos.iti.gr
+* https://vrodos.iti.gr
 
-Chrome or Firefox
+* (Use Chrome or Firefox)
 
 
 ### Installation instructions ###
+
+**Prerequisites:** 
+* Apache 2, 
+* MySQL 5, 
+* WordPress 6, 
+* Php 7, 
+* Node.js 16, 
+* Express 4 for Node.js 
+
+
+**Instructions**
 
 - Download as zip
 - Rename VRodos-master.zip to VRodos.zip
@@ -85,6 +96,29 @@ Chrome or Firefox
 
 [comment]: <> (* I am coordinating and contributing to this repository: Dimitrios Ververidis, ververid [at] iti.gr, jimver04 [at] gmail.com)
 
-### Help
+### Troubleshooting
 
-Wordpress API is not working :  Settings -> Permalinks -> Post name (as Structure)  
+* Wordpress API is not working :  Settings -> Permalinks -> Post name (as Structure)  
+
+
+* CORS
+  You need wordpress at port 80 (apache2 standard) to allow to give content to aframe at node.js server at port 5832
+
+Add this to .htaccess
+
+<IfModule mod_headers.c>
+	Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+* Big 3D models
+ 
+  Add these to .htaccess to allow big files to be uploaded to wordpress 
+
+  php_value upload_max_filesize 512M
+  php_value post_max_size 512M
+  php_value memory_limit 1024M
+  php_value max_execution_time 1800
+  php_value max_input_time 1800
+  php_value max_input_vars 4000
+
+
