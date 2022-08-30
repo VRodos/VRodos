@@ -94,6 +94,27 @@
             tick: null
         });
 
+
+        AFRAME.registerComponent('render-order2000', {
+            init: function(){
+                let el = this.el;
+                // el.addEventListener("model-loaded", e => {
+                let mesh = el.getObject3D('mesh');
+                if (!mesh) {
+                    return;
+                }
+                mesh.traverse( node => {
+                    if(!node.isMesh){
+                        return;
+                    }
+                    node.renderOrder = 2000;
+
+                });
+                //  });
+            },
+            tick: null
+        });
+
     </script>
 
 
@@ -157,7 +178,8 @@
                    height="0.75"
                    position="0 0.6 -0.15"
                    material="side: double"
-                   networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video">
+                   networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                   render-order2000>
           </a-plane>
 
           <a-plane id="screenPlane"
