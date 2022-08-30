@@ -185,31 +185,11 @@ function selectorMajor(event, objectSel, whocalls){
 
     if (event.button === 0) {
 
-  //      console.log(whocalls);
-//        console.log(objectSel);
-
-
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.name);
 
         transform_controls.attach( objectSel );
 
-        // envir.renderer.setClearColor( 0xeeeeee  );
-
-        // X for deleting object is visible (only Steve can not be deleted)
-       //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;
-
-        // Rotate GIZMO
-        //transform_controls.children[3].children[0].children[1].visible = true; // ROTATE GIZMO
-
-
-        //  console.log("objectSel.categoryName", objectSel.categoryName );
-
-        // if (node.isLightHelper){
-        //     node.position.setFromMatrixPosition(node.light.matrix);
-        //     node.updateMatrix();
-        //     node.update();
-        // }
 
         // Move light direction
         let lightDirectionalLightSpotMover = function () {
@@ -282,16 +262,10 @@ function selectorMajor(event, objectSel, whocalls){
         } else {
             // find dimensions of object in order to resize transform controls
             setTransformControlsSize();
-
-
-            //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true;
         }
 
-        if (objectSel.categoryName === "lightTargetSpot"){
-            //transform_controls.children[3].children[0].children[2].visible = false; // 2D DELETE GIZMO
-        }
 
-        transform_controls.setMode( envir.is2d ? "translate" : "translate" );
+        transform_controls.setMode( "translate" );
 
 
         if (!envir.is2d) {
@@ -302,6 +276,7 @@ function selectorMajor(event, objectSel, whocalls){
         envir.outlinePass.selectedObjects = [objectSel];
 
         selected_object_name = objectSel.name;
+        setDatGuiInitialVales(selected_object_name);
     }
 }
 

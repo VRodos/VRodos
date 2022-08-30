@@ -3,8 +3,6 @@
  *
  * @type {gui_controls_funs}
  */
-
-
 var dg_s1_prev;
 var dg_s2_prev;
 var dg_s3_prev;
@@ -39,7 +37,6 @@ var gui_controls_funs = new function() {
 let i = 0;
 for (let key in gui_controls_funs){
 
-    // Label
     let label = actionLabel[i] + " " + coordLabel[i%3];
 
     // Controller          // Interface        // UI_Vars      // var
@@ -49,9 +46,7 @@ for (let key in gui_controls_funs){
 
 /**
  *  Add listeners: Update php, javascript and transform_controls when dat.gui changes
- *
  *  Triggered once initially
- *
  */
 function controllerDatGuiOnChange() {
 
@@ -341,4 +336,34 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
+}
+
+
+function setDatGuiInitialVales(objectName){
+
+    gui_controls_funs.dg_t1 = transform_controls.object.position.x;
+    gui_controls_funs.dg_t2 = transform_controls.object.position.y;
+    gui_controls_funs.dg_t3 = transform_controls.object.position.z;
+
+    gui_controls_funs.dg_r1 = transform_controls.object.rotation.x;
+    gui_controls_funs.dg_r2 = transform_controls.object.rotation.y;
+    gui_controls_funs.dg_r3 = transform_controls.object.rotation.z;
+
+    gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
+    gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
+    gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
+
+    dg_controller[0].domElement.children[0].value = transform_controls.object.position.x;
+    dg_controller[1].domElement.children[0].value = transform_controls.object.position.y;
+    dg_controller[2].domElement.children[0].value = transform_controls.object.position.z;
+
+    dg_controller[3].domElement.children[0].value = transform_controls.object.rotation.x;
+    dg_controller[4].domElement.children[0].value = transform_controls.object.rotation.y;
+    dg_controller[5].domElement.children[0].value = transform_controls.object.rotation.z;
+
+    dg_controller[6].domElement.children[0].value = transform_controls.object.scale.x;
+    dg_controller[7].domElement.children[0].value = transform_controls.object.scale.y;
+    dg_controller[8].domElement.children[0].value = transform_controls.object.scale.z;
+
+    updatePositionsPhpAndJavsFromControlsAxes();
 }

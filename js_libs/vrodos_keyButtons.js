@@ -7,6 +7,7 @@ var moveDown = false;
 var viewUp = false;
 var viewDown = false;
 
+var avatar_movement_speed_factor = 0.1;
 
 var prevTime = performance.now();
 var velocity = new THREE.Vector3();
@@ -122,14 +123,16 @@ function updatePointerLockControls(){
     torgue.x = torgue.x * 0.7; // * delta;
 
 
-    if (moveForward) velocity.z -= 0.3 * delta;
-    if (moveBackward) velocity.z += 0.3 * delta;
-    if (moveLeft) torgue.y += 0.3 * delta;
-    if (moveRight) torgue.y -= 0.3 * delta;
-    if ( moveUp ) velocity.y -= 0.3 * delta;
-    if ( moveDown ) velocity.y += 0.3 * delta;
-    if ( viewUp ) torgue.x -= 0.3 * delta;
-    if ( viewDown ) torgue.x += 0.3 * delta;
+
+
+    if (moveForward) velocity.z -= avatar_movement_speed_factor * delta;
+    if (moveBackward) velocity.z += avatar_movement_speed_factor * delta;
+    if (moveLeft) torgue.y += avatar_movement_speed_factor * delta;
+    if (moveRight) torgue.y -= avatar_movement_speed_factor * delta;
+    if ( moveUp ) velocity.y -= avatar_movement_speed_factor * delta;
+    if ( moveDown ) velocity.y += avatar_movement_speed_factor * delta;
+    if ( viewUp ) torgue.x -= avatar_movement_speed_factor * delta;
+    if ( viewDown ) torgue.x += avatar_movement_speed_factor * delta;
 
     // Move avatar
     envir.avatarControls.getObject().translateX( velocity.x );

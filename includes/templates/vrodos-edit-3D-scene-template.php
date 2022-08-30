@@ -885,7 +885,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             envir.updateCameraGivenSceneLimits();
 
             setHierarchyViewer();
-
+            setDatGuiInitialVales();
+            
             // Set Target light for Spots
             for (let n in resources3D) {
                 (function (name) {
@@ -941,7 +942,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             transform_controls = envir.scene.getObjectByName('myTransformControls');
             transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
-
+            
+            
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
         }

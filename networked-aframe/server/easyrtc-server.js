@@ -2,7 +2,6 @@
 const http = require("http");                 // http server core module
 const path = require("path");
 const express = require("express");           // web framework external module
-//const cors = require('cors');
 const socketIo = require("socket.io");        // web socket external module
 const easyrtc = require("open-easyrtc");      // EasyRTC external module
 
@@ -27,16 +26,6 @@ const app = express();
 
 
 app.use(express.static(path.resolve(__dirname, "..", "examples")));
-
-
-// app.get("/", (req, res) => {
-//     res.render("index.ejs");
-// });
-
-
-
-// enable cors
-//app.use(cors());
 
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");

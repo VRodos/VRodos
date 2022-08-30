@@ -1,19 +1,29 @@
 <?php
 
 function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
+
+	// Check if a process is running on linux server
+	function processExists($processName) {
+		$exists= false;
+		exec("ps -A | grep -i $processName | grep -v grep", $pids);
+		if (count($pids) > 0) {
+			$exists = true;
+		}
+		return $exists;
+	}
+	
 	
 	// Start node js server at 5832
 	$strCmd = "node ".plugin_dir_path( __DIR__  )."/networked-aframe/server/easyrtc-server.js";
 	
-//    		$f = fopen("output_compile.txt", "w");
-//			fwrite($f, $strCmd . chr(13));
-//
-//			fclose($f);
-	
 	if ( PHP_OS == "WINNT"){
 		popen("start " . $strCmd, "r");
 	} else {
-		shell_exec($strCmd . " &");
+		// if not already running (linux)
+		if (!processExists("networked-afr")) {
+			shell_exec( $strCmd . " > /dev/null 2>/dev/null &" );
+		}
+		sleep(2);
 	}
 	
 	// Get scene content
@@ -69,10 +79,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			} else {
 				return "https://vrodos-multiplaying.iti.gr/";
 			}
-			
-			
 		}
-	
 		
 		function reader($filename){
 			$f = fopen( $filename, "r");
@@ -90,7 +97,9 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		
 		function setAffineTransformations($entity, $contentObject){
 			$entity->setAttribute( "position", implode( " ", $contentObject->position ) );
-			$entity->setAttribute( "rotation", implode( " ", $contentObject->rotation ) );
+			$entity->setAttribute( "rotation", implode( " ", [180/pi() * $contentObject->rotation[0], 180/pi() * $contentObject->rotation[1],
+																		180/pi() * $contentObject->rotation[2] ] ));
+			
 			$entity->setAttribute( "scale", implode( " ", $contentObject->scale ) );
 		}
 		
@@ -202,7 +211,39 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 				
 				$fileOperations->writer("output_master.txt", $contentObject->assetname);
 				
-				if ($contentObject->assetname != 'Water') {
+				if (strcasecmp($contentObject->assetname, 'water')==0) {
+					
+					$a_entity = $dom->createElement( "a-ocean" );
+					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					
+					$a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:0; large_normal_map: img/water-normal-1.png; small_normal_map: img/water-normal-2.png" );
+					$a_entity->setAttribute( "shadow", "receive: true" );
+					$a_entity->setAttribute( "render-order1000", "" );
+					
+					
+					$ascene->appendChild( $a_entity );
+					
+					
+					
+				} else if (strcasecmp($contentObject->assetname, 'mask')==0) {
+						
+						$a_entity = $dom->createElement( "a-plane" );
+						$a_entity->appendChild( $dom->createTextNode( '' ) );
+						
+						$material = "";
+						$fileOperations->setMaterial( $material, $contentObject );
+						$fileOperations->setAffineTransformations( $a_entity, $contentObject );
+						
+						$a_entity->setAttribute( "class", "override-materials" );
+						$a_entity->setAttribute( "id", $nameObject );
+						$a_entity->setAttribute( "height", "1" );
+						$a_entity->setAttribute( "width", "1" );
+						$a_entity->setAttribute( "material", $material );
+						$a_entity->setAttribute( "static-mask-me", "" );
+						
+						$ascene->appendChild( $a_entity );
+				
+				} else {
 					
 					$a_entity = $dom->createElement( "a-entity" );
 					$a_entity->appendChild( $dom->createTextNode( '' ) );
@@ -219,16 +260,6 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 					
 					$ascene->appendChild( $a_entity );
 					
-				} else {
-					
-					$a_entity = $dom->createElement( "a-ocean" );
-					$a_entity->appendChild( $dom->createTextNode( '' ) );
-					
-					$a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:0;" );
-					$a_entity->setAttribute( "shadow", "receive: true" );
-					$a_entity->setAttribute( "ocean-depth", "" );
-					
-					$ascene->appendChild( $a_entity );
 				}
 				
 				//==================== Pawn =================

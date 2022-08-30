@@ -9,14 +9,14 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
 
   <script src="../easyrtc/easyrtc.js"></script>
   <script src="../dist/networked-aframe.js"></script>
 
-  <script src="js/a-water.master.min.js"></script>
+  <script src="js/a-water_alphamask_master.js"></script>
   <script src="https://unpkg.com/aframe-sun-sky@3.0.3/dist/aframe-sun-sky.min.js"></script>
   <script src="https://unpkg.com/aframe-randomizer-components@^3.0.1/dist/aframe-randomizer-components.min.js"></script>
 
@@ -39,13 +39,61 @@
                     if (!mesh){return;}
                     mesh.traverse(function(node){
                         if (node.isMesh){
-                            console.log("node.isMesh", node.isMesh);
                             node.frustumCulled = false;
                         }
                     });
                 });
             }
         });
+
+        AFRAME.registerComponent('render-order1000', {
+            init: function(){
+                let el = this.el;
+                // el.addEventListener("model-loaded", e => {
+                let mesh = el.getObject3D('mesh');
+                if (!mesh) {
+                    return;
+                }
+                mesh.traverse( node => {
+                    if(!node.isMesh){
+                        return;
+                    }
+                    node.renderOrder = 1000;
+
+                });
+                //  });
+            },
+            tick: null
+        });
+
+
+
+        AFRAME.registerComponent('static-mask-me', {
+            init: function(){
+                let el = this.el;
+                // el.addEventListener("model-loaded", e => {
+                const maskMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x00ffff,
+                    transparent: false,
+                    colorWrite: false,
+                });
+                maskMaterial.needsUpdate = true;
+                let mesh = el.getObject3D('mesh');
+                if (!mesh) {
+                    return;
+                }
+                mesh.traverse( node => {
+                    if(!node.isMesh){
+                        return;
+                    }
+                    node.material = maskMaterial;
+                    node.renderOrder = 999;
+                });
+                //  });
+            },
+            tick: null
+        });
+
     </script>
 
 
@@ -130,9 +178,9 @@
               networked="template:#avatar-template;attachTemplateToLocal:false;"
               position="0 0.6 0"
               spawn-in-circle="radius:3"
-              wasd-controls="fly: true;"
+              wasd-controls="fly: true; acceleration:5"
               show-position
-              look-controls>
+              look-controls="pointerLockEnabled: true;">
 
               <a-sphere class="head"
                         visible="false"
@@ -174,10 +222,60 @@
 
 
     /* ---------- The gui for configuring other clients inputs  ----------------- */
-    const api_pattern_single = {ThresholdMin: 0.106, ThresholdMax: 0.13, red: 48, green: 146, blue: 89, w: 1, h: 0.75};
-    const api_pattern_singleMin = {ThresholdMinLow: 0, ThresholdMaxLow: 0, redLow: 0, greenLow: 0, blueLow: 0, wLow: 0.1, hLow: 0.1};
-    const api_pattern_singleMax = {ThresholdMinHigh: 0.4, ThresholdMaxHigh: 0.4, redHigh: 255, greenHigh: 255, blueHigh: 255, wHigh: 5, hHigh: 5};
-    const api_pattern_singleStep = {ThresholdMinStep: 0.001, ThresholdMaxStep: 0.001, redStep: 1, greenStep: 1, blueStep: 1, wStep: 0.1, hStep: 0.1};
+    const api_pattern_single = {
+        ThresholdMin: 0.106,
+        ThresholdMax: 0.13,
+        red: 48, green: 146, blue: 89,
+        w: 1, h: 0.75,
+        x: 0, y:0, z:0,
+        rx: 0, ry: 0, rz:0
+    };
+
+    const api_pattern_singleMin = {
+        ThresholdMinLow: 0,
+        ThresholdMaxLow: 0,
+        redLow: 0,
+        greenLow: 0,
+        blueLow: 0,
+        wLow: 0.1,
+        hLow: 0.1,
+        xLow:-1000,
+        yLow:-1000,
+        zLow:-100,
+        rxLow:-100,
+        ryLow:-100,
+        rzLow:-100
+    };
+    const api_pattern_singleMax = {
+        ThresholdMinHigh: 0.4,
+        ThresholdMaxHigh: 0.4,
+        redHigh: 255,
+        greenHigh: 255,
+        blueHigh: 255,
+        wHigh: 5,
+        hHigh: 5,
+        xHigh: 1000,
+        yHigh: 1000,
+        zHigh: 1000,
+        rxHigh: 100,
+        ryHigh: 100,
+        rzHigh: 100
+    };
+    const api_pattern_singleStep = {
+        ThresholdMinStep: 0.001,
+        ThresholdMaxStep: 0.001,
+        redStep: 1,
+        greenStep: 1,
+        blueStep: 1,
+        wStep: 0.1,
+        hStep: 0.1,
+        xStep: 0.1,
+        yStep: 0.1,
+        zStep: 0.1,
+        rxStep: 0.1,
+        ryStep: 0.1,
+        rzStep: 0.1
+    };
 
 
     var btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
@@ -227,7 +325,10 @@
               videoUserGui[e] = btStatusControls.gui.addFolder(stringName);
 
               /*  Panels  */
-              panel[e] = window.NAF.connection.entities.entities[e].childNodes[1] ;
+              panel[e] = window.NAF.connection.entities.entities[e].childNodes[0].id === "videoPlaneGreen" ?
+                                        window.NAF.connection.entities.entities[e].childNodes[0] :
+                                        window.NAF.connection.entities.entities[e].childNodes[1] ;
+
 
               elementsDatGui[e] = [];
               for (var a in api_pattern_single) {
@@ -238,17 +339,66 @@
                 elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L],
                                                                                   api_pattern_singleMax[H],
                                                                                   api_pattern_singleStep[S]);
-                if (a[0]==='w' || a[0]==='h') {
-                  elementsDatGui[e][a].panelaki = panel[e];
-                  if (a[0]==='h'){
-                      elementsDatGui[e][a].onChange(function () {
-                        this.panelaki.setAttribute('height', api_pattern_single[this.property]);
-                      });
-                  } else if (a[0]==='w') {
-                     elementsDatGui[e][a].onChange(function () {
-                        this.panelaki.setAttribute('width', api_pattern_single[this.property]);
-                    });
-                  }
+                  if (a[0] === 'w' || a[0] === 'h' || a[0] === 'x' || a[0] === 'y' || a[0] === 'z' ||
+                      a.substring(0,2) === 'rx' ||
+                      a.substring(0,2) === 'ry' ||
+                      a.substring(0,2) === 'rz') {
+
+                      elementsDatGui[e][a].panelaki = panel[e];
+                      if (a[0] === 'h') {
+                          elementsDatGui[e][a].onChange(function () {
+                              this.panelaki.setAttribute('height', api_pattern_single[this.property]);
+                          });
+                      } else if (a[0] === 'w') {
+                          elementsDatGui[e][a].onChange(function () {
+                              this.panelaki.setAttribute('width', api_pattern_single[this.property]);
+                          });
+                      } else if (a[0] === 'x'){
+                          elementsDatGui[e][a].onChange(function () {
+                              this.panelaki.getAttribute('position').x = api_pattern_single[this.property] / 100;
+                          });
+                      } else if (a[0] === 'y'){
+                          elementsDatGui[e][a].onChange(function () {
+                              this.panelaki.getAttribute('position').y = api_pattern_single[this.property] / 100;
+                          });
+                      } else if (a[0] === 'z'){
+                          elementsDatGui[e][a].onChange(function () {
+                              this.panelaki.getAttribute('position').z = api_pattern_single[this.property] / 100;
+                          });
+                      } else if (a.substring(0,2) === 'rx'){
+
+                          elementsDatGui[e][a].onChange(function () {
+
+                              let xStr = api_pattern_single[this.property];
+                              let yStr = this.panelaki.getAttribute('rotation').y;
+                              let zStr = this.panelaki.getAttribute('rotation').z;
+
+                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+
+                          });
+                      } else if (a.substring(0,2) === 'ry'){
+                          elementsDatGui[e][a].onChange(function () {
+
+                              let xStr = this.panelaki.getAttribute('rotation').x;
+                              let yStr = api_pattern_single[this.property];
+                              let zStr = this.panelaki.getAttribute('rotation').z;
+
+                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+
+                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                          });
+                      } else if (a.substring(0,2) === 'rz'){
+                          elementsDatGui[e][a].onChange(function () {
+
+                              let xStr = this.panelaki.getAttribute('rotation').x;
+                              let yStr = this.panelaki.getAttribute('rotation').y;
+                              let zStr = api_pattern_single[this.property];
+
+                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+
+                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                          });
+                      }
                 } else {
                   elementsDatGui[e][a].onChange(function () {
                     var domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
