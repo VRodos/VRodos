@@ -112,7 +112,7 @@
                 <button title="copy to clipboard" id="buttonCopyWebLink" class=" " style="background: white; color: darkslateblue" >
                     <i class="material-icons" style="cursor: pointer; float: right;">content_copy</i></button>
                 
-                <a id="openWebLinkhref" href="https://google.com" title="open index.html in a new full window" target="_blank" style="color:darkslateblue" onclick="jQuery('#compileCancelBtn').click();">Open link</a>
+                <a id="openWebLinkhref" href="https://google.com" title="open index.html in a new full window" target="_blank" style="color:darkslateblue" onclick="jQuery('#compileCancelBtn')[0].click();">Open link</a>
 
                
                 

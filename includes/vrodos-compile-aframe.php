@@ -218,7 +218,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 					
 					$a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:0; large_normal_map: img/water-normal-1.png; small_normal_map: img/water-normal-2.png" );
 					$a_entity->setAttribute( "shadow", "receive: true" );
-					$a_entity->setAttribute( "render-order1000", "" );
+					$a_entity->setAttribute( "render-order-change", "1000" );
 					
 					
 					$ascene->appendChild( $a_entity );

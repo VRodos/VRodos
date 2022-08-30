@@ -46,27 +46,6 @@
             }
         });
 
-        AFRAME.registerComponent('render-order1000', {
-            init: function(){
-                let el = this.el;
-                // el.addEventListener("model-loaded", e => {
-                let mesh = el.getObject3D('mesh');
-                if (!mesh) {
-                    return;
-                }
-                mesh.traverse( node => {
-                    if(!node.isMesh){
-                        return;
-                    }
-                    node.renderOrder = 1000;
-
-                });
-                //  });
-            },
-            tick: null
-        });
-
-
 
         AFRAME.registerComponent('static-mask-me', {
             init: function(){
@@ -95,7 +74,10 @@
         });
 
 
-        AFRAME.registerComponent('render-order2000', {
+        AFRAME.registerComponent('render-order-change', {
+            schema: {
+                renderingOrderArg: {type: 'string', default: '2000'}
+            },
             init: function(){
                 let el = this.el;
                 // el.addEventListener("model-loaded", e => {
@@ -107,7 +89,7 @@
                     if(!node.isMesh){
                         return;
                     }
-                    node.renderOrder = 2000;
+                    node.renderOrder = this.data.renderingOrderArg;
 
                 });
                 //  });
@@ -179,7 +161,7 @@
                    position="0 0.6 -0.15"
                    material="side: double"
                    networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
-                   render-order2000>
+                   render-order-change="2000">
           </a-plane>
 
           <a-plane id="screenPlane"
