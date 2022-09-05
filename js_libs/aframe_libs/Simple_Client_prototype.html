@@ -15,11 +15,12 @@
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body><div class="actions" name="actionsDiv" id="actionsDiv">
+
+<body><div class="actionsActor" name="actionsDiv" id="actionsDiv">
     <div id="reporting"></div>
 </div>
-<a-scene
-        background="color: black"
+
+<a-scene background="color: black"
         vr-mode-ui="enabled: false"
         networked-scene="
       room: roomname;
@@ -164,7 +165,31 @@
         }
 
 
+        // Hide 3D scene canvas
+        document.getElementsByTagName('a-scene')[0].style.display='none'
+
+
+
+
     }
+
+
+    function scanForStreamsAndShowInFullScreen(){
+
+        for (let e in window.NAF.entities.entities){
+            for (let i=0; i < window.NAF.entities.entities[e].children.length; i++){
+                let nvs = window.NAF.entities.entities[e].children[i].components['networked-video-source'];
+                if(nvs!==undefined){
+                    if(nvs.videoTexture!==undefined && nvs.videoTexture!==null) {
+                        if (nvs.el.id === 'screenPlane'){
+                            document.getElementById("reporting").appendChild(nvs.videoTexture.image);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 </script>
 </body>
 </html>
