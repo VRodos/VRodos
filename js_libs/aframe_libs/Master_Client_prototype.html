@@ -433,9 +433,11 @@
       screenBtnEle.addEventListener('click', function() {
         navigator.mediaDevices.getDisplayMedia().then((stream) => {
           NAF.connection.adapter.addLocalMediaStream(stream, "screen");
+
         });
        });
     }
+
 
 
     /* Scale down div when in compile preview */

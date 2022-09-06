@@ -16,11 +16,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
-<body><div class="actionsActor" name="actionsDiv" id="actionsDiv">
-    <div id="reporting"></div>
-</div>
-
-<a-scene background="color: black"
+<body style="background: gray"><div id="renderFeedback" class="renderFeedback"><div class="renderFeedbackText" id="renderFeedbackText">Waiting for the rendered scene ...</div></div><div class="actionsActor" name="actionsDiv" id="actionsDiv"><div id="reporting"></div></div><a-scene background="color: black"
         vr-mode-ui="enabled: false"
         networked-scene="
       room: roomname;
@@ -93,6 +89,8 @@
          ]
      });
 
+    //NAF.connection.adapter.on   onaddtrack = function(){console.log("Track was added");};
+
     /* Called by Networked-Aframe when connected to server */
     function onConnect () {
 
@@ -142,16 +140,13 @@
 
             let changeReporter = function(evt) {
 
-                console.log(this.dataset.rotation);
                 let rotation = JSON.parse(this.dataset.rotation);
-
-                console.log(this.dataset.position);
                 let position = JSON.parse(this.dataset.position);
 
                 document.getElementById("reporting").innerText = selectString(evt.currentTarget.room,
-                    evt.currentTarget.userName,
-                    evt.currentTarget.userLang,
-                    "_position", i+1);
+                                                                                evt.currentTarget.userName,
+                                                                                evt.currentTarget.userLang,
+                                                                                "_position", i+1);
                 let el = document.getElementById('player');
                 el.removeAttribute('look-controls');
                 el.setAttribute('rotation', rotation.x + " " + rotation.y + " " + rotation.z);
@@ -174,6 +169,7 @@
     }
 
 
+    // Add to a div the input stream of the rendered screen
     function scanForStreamsAndShowInFullScreen(){
 
         for (let e in window.NAF.entities.entities){
@@ -182,13 +178,22 @@
                 if(nvs!==undefined){
                     if(nvs.videoTexture!==undefined && nvs.videoTexture!==null) {
                         if (nvs.el.id === 'screenPlane'){
-                            document.getElementById("reporting").appendChild(nvs.videoTexture.image);
+                            // If it has only the text element
+                            if(document.getElementById("renderFeedback").children.length === 1) {
+                                document.getElementById("renderFeedback").appendChild(nvs.videoTexture.image);
+                                document.getElementById("renderFeedback").children[1].style.width = "100%";
+                                document.getElementById("renderFeedback").children[1].style.height = "100%";
+                                document.getElementById("renderFeedbackText").style.visibility = "hidden";
+                            }
                         }
                     }
                 }
             }
         }
     }
+
+    // Check every 3 secs if the rendered screen has arrived.
+    let timerForScreenFeedback = setInterval(scanForStreamsAndShowInFullScreen, 3000);
 
 </script>
 </body>

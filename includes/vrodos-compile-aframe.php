@@ -132,7 +132,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		}
 	
 		
-		function createBasicDomStructureAframe($content, $scene_json){
+		function createBasicDomStructureAframeActor($content, $scene_json){
 			
 			// Start Creating Aframe page
 			// just some setup
@@ -144,8 +144,54 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			$html = $dom->documentElement;
 			$head = $dom->documentElement->childNodes[0];
 			$body = $dom->documentElement->childNodes[1];
-			$actionsDiv = $dom->documentElement->childNodes[1]->childNodes[0];
-			$ascene = $dom->documentElement->childNodes[1]->childNodes[1];
+			
+			$actionsDiv = $body->childNodes[1];
+			
+			
+			$ascene = $body->childNodes[2];
+			
+			$f = fopen("output_compile_actor.txt","w");
+			fwrite($f, "----------------".chr(13));
+			fwrite($f, "ActionsDiv".chr(13));
+			fwrite($f, print_r($actionsDiv, true));
+			fwrite($f, "ASCENE".chr(13));
+			fwrite($f, print_r($ascene, true));
+			fwrite($f, "----------------".chr(13));
+			fclose($f);
+			
+			
+			// ============ Scene Iteration kernel ==============
+			$metadata = $scene_json->metadata;
+			$objects = $scene_json->objects;
+			
+			return array("dom"=>$dom, "html"=>$html, "head"=>$head, "body"=>$body, "ascene"=>$ascene, "metadata"=>$metadata, "objects"=>$objects, "actionsDiv"=>$actionsDiv);
+		}
+		
+		
+		function createBasicDomStructureAframeDirector($content, $scene_json){
+			
+			// Start Creating Aframe page
+			// just some setup
+			$dom = new DOMDocument("1.0", "utf-8");
+			$dom->resolveExternals = true;
+			
+			@$dom->loadHTML($content, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  //LIBXML_NOERROR
+			
+			$html = $dom->documentElement;
+			$head = $dom->documentElement->childNodes[0];
+			$body = $dom->documentElement->childNodes[1];
+			$actionsDiv = $body->childNodes[0];
+			$ascene = $body->childNodes[1];
+			
+//			$f = fopen("output_compile_director.txt","w");
+//			fwrite($f, "----------------".chr(13));
+//			fwrite($f, "ActionsDiv".chr(13));
+//			fwrite($f, print_r($actionsDiv, true));
+//			fwrite($f, "ASCENE".chr(13));
+//			fwrite($f, print_r($ascene, true));
+//			fwrite($f, "----------------");
+//			fclose($f);
+			
 			
 			// ============ Scene Iteration kernel ==============
 			$metadata = $scene_json->metadata;
@@ -198,7 +244,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		// Modify strings
 		$content = str_replace("roomname", "room".$scene_id, $content);
 		
-		$basicDomElements = $fileOperations->createBasicDomStructureAframe($content, $scene_json);
+		$basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json);
 		
 		$dom = $basicDomElements['dom'];
 		$objects = $basicDomElements['objects'];
@@ -299,7 +345,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 						
 						$a_light->setAttribute("light", "type:directional;".
 						                                "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-						                                "intensity:".($contentObject->lightintensity).";"
+						                                "intensity:".(6*$contentObject->lightintensity).";"
 						);
 						
 						$a_light->setAttribute("target", "#".$nameObject."target");
@@ -376,7 +422,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		$content = str_replace("roomname", "room".$scene_id, $content);
 		
 		// Create Basic dom structure for an aframe page
-		$basicDomElements = $fileOperations->createBasicDomStructureAframe($content, $scene_json);
+		$basicDomElements = $fileOperations->createBasicDomStructureAframeActor($content, $scene_json);
 		
 		$dom = $basicDomElements['dom'];
 		$objects = $basicDomElements['objects'];
