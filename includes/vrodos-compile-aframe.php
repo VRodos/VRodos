@@ -136,7 +136,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			
 			// Start Creating Aframe page
 			// just some setup
-			$dom = new DOMDocument("1.0", "utf-8");
+			$dom = new DOMDocument("1.0", "UTF-8");
 			$dom->resolveExternals = true;
 			
 			@$dom->loadHTML($content, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  //LIBXML_NOERROR
@@ -250,6 +250,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		$objects = $basicDomElements['objects'];
 		$ascene = $basicDomElements['ascene'];
 		
+		
 		foreach($objects as $nameObject => $contentObject) {
 			
 			// ===========  Artifact==============
@@ -310,10 +311,16 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 				
 				//==================== Pawn =================
 			} else if ( $contentObject->categoryName == 'pawn' ) {
-
+				
+				
 				if($showPawnPositions=="true") {
 					$a_entity = $dom->createElement( "a-entity" );
 					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					
+					$f = fopen("output_actor_rot.txt","w");
+					fwrite($f, print_r($contentObject, true));
+					fclose($f);
+					
 					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
 					$a_entity->setAttribute( "gltf-model",
 						"url(" . $fileOperations->plugin_path_url .  "/assets/pawn.glb)" );
@@ -468,7 +475,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			}
 		}
 		
-		$contentNew = $dom->saveHTML();
+		$contentNew = $dom->saveHTML($dom->documentElement);
 		
 		// Write back to root
 		return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/examples/Simple_Client_'.$scene_id.".html", $contentNew);

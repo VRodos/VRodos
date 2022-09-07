@@ -149,7 +149,7 @@
                                                                                 "_position", i+1);
                 let el = document.getElementById('player');
                 el.removeAttribute('look-controls');
-                el.setAttribute('rotation', rotation.x + " " + rotation.y + " " + rotation.z);
+                el.setAttribute('rotation', rotation.x * 180 /3.14 + " " + rotation.y * 180 /3.14 + " " + rotation.z * 180 /3.14);
                 el.setAttribute('position', position.x + " " + position.y + " " + position.z);
             };
 
