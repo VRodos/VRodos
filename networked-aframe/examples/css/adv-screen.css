@@ -17,10 +17,11 @@
     position: absolute;
     background: rgba(0,0,0,0.5);
     display: block;
+    top:35px;
     bottom: 3%;
-    left:50%;
-    width:250px;
-    transform: translate(-50%, 0%);
+    right:0;
+    width:100px;
+    /*transform: translate(-50%, 0%);*/
     z-index:1000;
     text-align: center;
     color: white;

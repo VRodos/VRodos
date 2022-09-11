@@ -49,6 +49,8 @@ label {
 
 .CenterContents {
     text-align: center;
+    float: left;
+    margin: 15pt;
 }
 
 .SectionSwitchItemStyle {
