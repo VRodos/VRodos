@@ -243,9 +243,9 @@
         blueLow: 0,
         wLow: 0.1,
         hLow: 0.1,
-        xLow:-1000,
-        yLow:-1000,
-        zLow:-100,
+        xLow:-100000,
+        yLow:-100000,
+        zLow:-100000,
         rxLow:-100,
         ryLow:-100,
         rzLow:-100
@@ -258,9 +258,9 @@
         blueHigh: 255,
         wHigh: 5,
         hHigh: 5,
-        xHigh: 1000,
-        yHigh: 1000,
-        zHigh: 1000,
+        xHigh: 100000,
+        yHigh: 100000,
+        zHigh: 100000,
         rxHigh: 100,
         ryHigh: 100,
         rzHigh: 100
@@ -271,11 +271,11 @@
         redStep: 1,
         greenStep: 1,
         blueStep: 1,
-        wStep: 0.1,
-        hStep: 0.1,
-        xStep: 0.1,
-        yStep: 0.1,
-        zStep: 0.1,
+        wStep: 0.05,
+        hStep: 0.05,
+        xStep: 10,
+        yStep: 10,
+        zStep: 10,
         rxStep: 0.1,
         ryStep: 0.1,
         rzStep: 0.1
@@ -308,112 +308,140 @@
 
       var nActor = 0;
 
-      if(entities) {
-          /* Canvas Size Controls */
-          var inputH = [];
-          var inputW = [];
-          var buttonSubmit = [];
-          var panel = {};
-          for (let e in entities){
+        if(entities) {
 
-            console.log("e", e);
-            console.log("window.NAF.connection.entities.entities[e].childNodes[1]", window.NAF.connection.entities.entities[e].childNodes[1]);
+            /* Canvas Size Controls */
+            var inputH = [];
+            var inputW = [];
+            var buttonSubmit = [];
+            var panel = {};
+            for (let e in entities){
 
-            var h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
-            if (h) {
-              nActor++;
+                var h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
+                if (h) {
+                    nActor++;
 
-              var stringName = "Video Filtering: " + e;
+                    var stringName = e;
 
-              /*  Thresholds Green */
-              videoUserGui[e] = btStatusControls.gui.addFolder(stringName);
+                    /*  Thresholds Green */
+                    videoUserGui[e] = btStatusControls.gui.addFolder(stringName);
 
-              /*  Panels  */
-              panel[e] = window.NAF.connection.entities.entities[e].childNodes[0].id === "videoPlaneGreen" ?
-                                        window.NAF.connection.entities.entities[e].childNodes[0] :
-                                        window.NAF.connection.entities.entities[e].childNodes[1] ;
+                    /*  Panels  */
+                    panel[e] = window.NAF.connection.entities.entities[e].childNodes[0].id === "videoPlaneGreen" ?
+                        window.NAF.connection.entities.entities[e].childNodes[0] :
+                        window.NAF.connection.entities.entities[e].childNodes[1] ;
 
 
-              elementsDatGui[e] = [];
-              for (var a in api_pattern_single) {
-                var L = a + "Low";
-                var H = a + "High";
-                var S = a + "Step";
+                    elementsDatGui[e] = [];
+                    for (var a in api_pattern_single) {
 
-                elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L],
-                                                                                  api_pattern_singleMax[H],
-                                                                                  api_pattern_singleStep[S]);
-                  if (a[0] === 'w' || a[0] === 'h' || a[0] === 'x' || a[0] === 'y' || a[0] === 'z' ||
-                      a.substring(0,2) === 'rx' ||
-                      a.substring(0,2) === 'ry' ||
-                      a.substring(0,2) === 'rz') {
 
-                      elementsDatGui[e][a].panelaki = panel[e];
-                      if (a[0] === 'h') {
-                          elementsDatGui[e][a].onChange(function () {
-                              this.panelaki.setAttribute('height', api_pattern_single[this.property]);
-                          });
-                      } else if (a[0] === 'w') {
-                          elementsDatGui[e][a].onChange(function () {
-                              this.panelaki.setAttribute('width', api_pattern_single[this.property]);
-                          });
-                      } else if (a[0] === 'x'){
-                          elementsDatGui[e][a].onChange(function () {
-                              this.panelaki.getAttribute('position').x = api_pattern_single[this.property] / 100;
-                          });
-                      } else if (a[0] === 'y'){
-                          elementsDatGui[e][a].onChange(function () {
-                              this.panelaki.getAttribute('position').y = api_pattern_single[this.property] / 100;
-                          });
-                      } else if (a[0] === 'z'){
-                          elementsDatGui[e][a].onChange(function () {
-                              this.panelaki.getAttribute('position').z = api_pattern_single[this.property] / 100;
-                          });
-                      } else if (a.substring(0,2) === 'rx'){
+                        var L = a + "Low";
+                        var H = a + "High";
+                        var S = a + "Step";
 
-                          elementsDatGui[e][a].onChange(function () {
+                        elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L],
+                            api_pattern_singleMax[H],
+                            api_pattern_singleStep[S]);
 
-                              let xStr = api_pattern_single[this.property];
-                              let yStr = this.panelaki.getAttribute('rotation').y;
-                              let zStr = this.panelaki.getAttribute('rotation').z;
+                        if (   a[0] === 'w'
+                            || a[0] === 'h'
+                            || a[0] === 'x'
+                            || a[0] === 'y'
+                            || a[0] === 'z'
+                            || a.substring(0,2) === 'rx'
+                            || a.substring(0,2) === 'ry'
+                            || a.substring(0,2) === 'rz') {
 
-                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
 
-                          });
-                      } else if (a.substring(0,2) === 'ry'){
-                          elementsDatGui[e][a].onChange(function () {
+                            elementsDatGui[e][a].panelaki = panel[e];
 
-                              let xStr = this.panelaki.getAttribute('rotation').x;
-                              let yStr = api_pattern_single[this.property];
-                              let zStr = this.panelaki.getAttribute('rotation').z;
+                            elementsDatGui[e][a].domElement.pName = e;
 
-                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                            if (a[0] === 'h') {
+                                elementsDatGui[e][a].onChange(function () {
 
-                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                          });
-                      } else if (a.substring(0,2) === 'rz'){
-                          elementsDatGui[e][a].onChange(function () {
+                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[6].panelaki;
 
-                              let xStr = this.panelaki.getAttribute('rotation').x;
-                              let yStr = this.panelaki.getAttribute('rotation').y;
-                              let zStr = api_pattern_single[this.property];
+                                    p.setAttribute('height', api_pattern_single[this.property]);
+                                });
+                            } else if (a[0] === 'w') {
+                                elementsDatGui[e][a].onChange(function () {
 
-                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[5].panelaki;
 
-                              this.panelaki.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                          });
-                      }
-                } else {
-                  elementsDatGui[e][a].onChange(function () {
-                    var domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
-                    domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
-                  });
+                                    p.setAttribute('width', api_pattern_single[this.property]);
+                                });
+                            } else if (a[0] === 'x'){
+                                elementsDatGui[e][a].onChange(function () {
+
+                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[7].panelaki;
+
+                                    p.getAttribute('position').x = api_pattern_single[this.property] / 10000;
+                                });
+                            } else if (a[0] === 'y'){
+                                elementsDatGui[e][a].onChange(function () {
+
+                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[8].panelaki;
+
+                                    p.getAttribute('position').y = api_pattern_single[this.property] / 10000;
+                                });
+                            } else if (a[0] === 'z'){
+
+                                elementsDatGui[e][a].onChange(function () {
+                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[9].panelaki;
+
+                                    p.getAttribute('position').z = api_pattern_single[this.property] / 10000;
+                                });
+
+                            } else if (a.substring(0,2) === 'rx'){
+
+                                elementsDatGui[e][a].onChange(function () {
+
+                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[10].panelaki;
+
+                                    let xStr = api_pattern_single[this.property];
+                                    let yStr = p.getAttribute('rotation').y;
+                                    let zStr = p.getAttribute('rotation').z;
+
+                                    p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+
+                                });
+                            } else if (a.substring(0,2) === 'ry'){
+                                elementsDatGui[e][a].onChange(function () {
+
+                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[11].panelaki;
+
+                                    let xStr = p.getAttribute('rotation').x;
+                                    let yStr = api_pattern_single[this.property];
+                                    let zStr = p.getAttribute('rotation').z;
+
+                                    p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+
+                                });
+                            } else if (a.substring(0,2) === 'rz'){
+                                elementsDatGui[e][a].onChange(function () {
+
+                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[12].panelaki;
+
+                                    let xStr = p.getAttribute('rotation').x;
+                                    let yStr = p.getAttribute('rotation').y;
+                                    let zStr = api_pattern_single[this.property];
+
+                                    p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                });
+                            }
+                        } else {
+                            elementsDatGui[e][a].onChange(function () {
+                                var domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
+                                domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
+                            });
+                        }
+                        elementsDatGui[e][a].nActor = nActor-1;
+                    }
                 }
-                elementsDatGui[e][a].nActor = nActor-1;
-              }
             }
-          }
-      }
+        }
     });
 
     /* Define custom schema for syncing avatar color, set by random-color */
