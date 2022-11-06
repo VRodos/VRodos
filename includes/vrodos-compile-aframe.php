@@ -139,8 +139,16 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			$dom = new DOMDocument("1.0", "UTF-8");
 			$dom->resolveExternals = true;
 			
-			@$dom->loadHTML($content, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  //LIBXML_NOERROR
+			$xpath = new DOMXPath($dom);
+			
+			
+			//$xpath->registerNamespace("aframe","");
+			
+			// Load predefined template for a-scene.
+			@$dom->loadHTML($content,  LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  //LIBXML_NOERROR , LIBXML_HTML_NODEFDTD
 
+			
+			
 			$html = $dom->documentElement;
 			$head = $dom->documentElement->childNodes[0];
 			$body = $dom->documentElement->childNodes[1];
@@ -150,21 +158,21 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			
 			$ascene = $body->childNodes[2];
 			
-			$f = fopen("output_compile_actor.txt","w");
-			fwrite($f, "----------------".chr(13));
-			fwrite($f, "ActionsDiv".chr(13));
-			fwrite($f, print_r($actionsDiv, true));
-			fwrite($f, "ASCENE".chr(13));
-			fwrite($f, print_r($ascene, true));
-			fwrite($f, "----------------".chr(13));
-			fclose($f);
+//			$f = fopen("output_compile_actor.txt","w");
+//			fwrite($f, "----------------".chr(13));
+//			fwrite($f, "ActionsDiv".chr(13));
+//			fwrite($f, print_r($dom, true));
+//			fwrite($f, "ASCENE".chr(13));
+//			fwrite($f, print_r($ascene, true));
+//			fwrite($f, "----------------".chr(13));
+//			fclose($f);
 			
 			
 			// ============ Scene Iteration kernel ==============
 			$metadata = $scene_json->metadata;
 			$objects = $scene_json->objects;
 			
-			return array("dom"=>$dom, "html"=>$html, "head"=>$head, "body"=>$body, "ascene"=>$ascene, "metadata"=>$metadata, "objects"=>$objects, "actionsDiv"=>$actionsDiv);
+			return array("dom"=>$dom, "html"=>$html, "head"=>$head, "body"=>$body, "ascene"=>$ascene, "metadata"=>$metadata, "objects"=>$objects, "actionsDiv"=>$actionsDiv, "xpath"=>$xpath);
 		}
 		
 		
@@ -175,7 +183,9 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			$dom = new DOMDocument("1.0", "utf-8");
 			$dom->resolveExternals = true;
 			
-			@$dom->loadHTML($content, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  //LIBXML_NOERROR
+			
+			
+			@$dom->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  // LIBXML_HTML_NODEFDTD, LIBXML_NOERROR
 			
 			$html = $dom->documentElement;
 			$head = $dom->documentElement->childNodes[0];
@@ -185,10 +195,18 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			
 //			$f = fopen("output_compile_director.txt","w");
 //			fwrite($f, "----------------".chr(13));
-//			fwrite($f, "ActionsDiv".chr(13));
-//			fwrite($f, print_r($actionsDiv, true));
-//			fwrite($f, "ASCENE".chr(13));
-//			fwrite($f, print_r($ascene, true));
+////
+////			foreach ($dom->getElementsByTagName('a-scene') as $node) {
+////
+////				$string_ascene = $dom->saveHtml($node);
+////				$string_ascene = str_replace('background="color: #aaaaaa"','background="color: #00ff00"', $string_ascene);
+////				$ascene = $dom->loadHTML($string_ascene);
+////
+////			}
+////
+////     			fwrite($f, print_r($scene_json->metadata->ClearColor, true));
+//////			fwrite($f, "ASCENE".chr(13));
+//////			fwrite($f, print_r($ascene, true));
 //			fwrite($f, "----------------");
 //			fclose($f);
 			
@@ -243,6 +261,20 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 
 		// Modify strings
 		$content = str_replace("roomname", "room".$scene_id, $content);
+		
+		$content = str_replace('background="color: #000000"', 'background="color: '.$scene_json->metadata->ClearColor.'"' , $content);
+
+		$content = str_replace('fog="type: linear; color: #AAB; far: 230; near: 0"',
+								
+								'fog="type: '.$scene_json->metadata->fogtype.
+								'; color: '.$scene_json->metadata->fogcolor.
+								'; far: '.$scene_json->metadata->fogfar.
+								'; density: '.$scene_json->metadata->fogdensity.
+								'; near: '.$scene_json->metadata->fognear.'"' ,
+					
+							$content);
+		
+		
 		
 		$basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json);
 		
@@ -382,9 +414,9 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 						                                "intensity:".$contentObject->lightintensity.";".
 						                                "distance:".$contentObject->lightdistance.";".
 						                                "decay:".$contentObject->lightdecay.";".
-						                                "angle:".$contentObject->lightangle.";".
+						                                "angle:".($contentObject->lightangle * 180 / 3.141) .";".
 						                                "penumbra:".$contentObject->lightpenumbra.";".
-						                                "target:".$contentObject->lighttargetobjectname
+						                                "target:#".$contentObject->lighttargetobjectname
 						);
 						break;
 					case 'lightLamp':
@@ -434,6 +466,21 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		$dom = $basicDomElements['dom'];
 		$objects = $basicDomElements['objects'];
 		$ascene = $basicDomElements['ascene'];
+		$xpath = $basicDomElements['xpath'];
+		
+		
+		
+		$f = fopen("output_scene_compile_debug.txt", "w");
+		fwrite($f, print_r($ascene,true));
+		fwrite($f, " --- start ----". chr(13));
+
+		fwrite($f, print_r($xpath->document, true));
+		
+		fwrite($f, chr(13));
+		fwrite($f, "--- end ---- ". chr(13));
+		fclose($f);
+		
+		
 		$actionsDiv = $basicDomElements['actionsDiv'];
 		
 		$fileOperations->writer("output_simple_client.html", print_r($basicDomElements, true));

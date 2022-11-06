@@ -509,22 +509,28 @@ function displayArtifactProperties(event, name){
     var ppPropertiesDiv = jQuery("#popUpArtifactPropertiesDiv");
 
     // The checkbox only
-    var chbox = jQuery("#artifact_reward_checkbox");
+    var chboxReward = jQuery("#artifact_reward_checkbox");
+
+    var chboxOverrideMaterial = jQuery("#artifact_override_material_checkbox");
 
     // Save the previous artifact properties values (in case of  direct mouse click on another item)
-    chbox.trigger("change");
+    chboxReward.trigger("change");
+
+    chboxOverrideMaterial.trigger("change");
 
     clearAndUnbind(null,null,"artifact_reward_checkbox");
 
-    chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
+    clearAndUnbind(null,null,"artifact_override_material_checkbox");
+
+    chboxReward.prop('checked', envir.scene.getObjectByName(name).isreward === 1);
+    chboxOverrideMaterial.prop('checked', envir.scene.getObjectByName(name).overrideMaterial === "true");
 
     // Show Selection
     ppPropertiesDiv.show(function(){initPopsVals();});
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
     ppPropertiesDiv[0].style.top  = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
-    // Add change listener
-    //chbox.change(function(e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
+
 }
 
 /**

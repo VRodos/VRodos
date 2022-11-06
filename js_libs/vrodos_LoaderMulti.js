@@ -19,6 +19,11 @@ class VRodos_LoaderMulti {
                 if(name==='ClearColor' || name==='toneMappingExposure' | name ==='enableEnvironmentTexture' )
                     return;
 
+                // Fog is not parsed here but in LightsPawn_Loader
+                if(name === 'fogtype' || name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity'){
+                    return;
+                }
+
                 // Lights are in a different loop
                 if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
                     return;
@@ -73,7 +78,11 @@ class VRodos_LoaderMulti {
 
                 } else { // GLB 3D models
 
+                    console.log("GLB", "1");
+
                      if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
+
+                        console.log("GLB", "2");
 
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
@@ -168,20 +177,24 @@ function setObjectProperties(object, name, resources3D) {
     object.fbxID = resources3D[name]['fbxID'];
     object.glbID = resources3D[name]['glbID'];
 
-    if(object.children[0].isMesh) {
-        object.children[0].material.color.setHex("0x" + resources3D[name]['color']);
-        object.children[0].material.emissive.setHex("0x" + resources3D[name]['emissive']);
-        object.children[0].material.roughness = parseFloat(resources3D[name]['roughness']);
-        object.children[0].material.metalness = parseFloat(resources3D[name]['metalness']);
-        object.children[0].material.emissiveIntensity = parseFloat(resources3D[name]['emissiveIntensity']);
-        object.children[0].receiveShadow = true;
-        object.children[0].castShadow = true;
+
+    if (resources3D[name]['overrideMaterial'] === "true") {
+        if (object.children[0].isMesh) {
+            object.children[0].material.color.setHex("0x" + resources3D[name]['color']);
+            object.children[0].material.emissive.setHex("0x" + resources3D[name]['emissive']);
+            object.children[0].material.roughness = parseFloat(resources3D[name]['roughness']);
+            object.children[0].material.metalness = parseFloat(resources3D[name]['metalness']);
+            object.children[0].material.emissiveIntensity = parseFloat(resources3D[name]['emissiveIntensity']);
+            object.children[0].receiveShadow = true;
+            object.children[0].castShadow = true;
+        }
     }
-
     //============== Video texture ==========
-    if(resources3D[name]['videoTextureSrc']!=='') {
 
-        //console.log("resources3D[name]['videoTextureSrc']", resources3D[name]['videoTextureSrc']);
+
+    if(resources3D[name]['videoTextureSrc'] !== "") {
+
+       console.log("The object has video texture:", resources3D[name]['videoTextureSrc'])
        startVideo(resources3D, name);
     }
 
@@ -233,8 +246,6 @@ function setObjectProperties(object, name, resources3D) {
 
 function startVideo (resources3D, name){
 
-    //console.log("startVideo");
-
     var videoDom = Array();
     var videoTexture = Array();
 
@@ -264,6 +275,8 @@ function startVideo (resources3D, name){
 
 
 
+
+
     setTimeout(function () {
 
         envir.scene.getObjectByName(name).children[0].material = movieMaterial;
@@ -280,7 +293,6 @@ function startVideo (resources3D, name){
         // }
 
         document.body.addEventListener("mousemove", function () {
-            //videoDom[name].muted = false;
             videoDom[name].play();
         });
 

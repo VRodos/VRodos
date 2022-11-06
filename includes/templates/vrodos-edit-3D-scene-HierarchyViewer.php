@@ -133,7 +133,93 @@
 		
 		<label for="sceneEnvironmentTexture"
 		       class="mdc-textfield__label mdc-textfield__label--float-above"
-		       style="background: none;font-size:10px; width: 70%;padding:5px;font-weight:bold">Enable environment texture</label>
+		       style="background: none; font-size:10px; width: 70%;padding:5px;font-weight:bold">Enable environment texture</label>
 	</div>
+
+    <!-- Enable Environmental texture  -->
+    <div id="sceneFogDiv"
+         style="border: 1px black solid; width:100%; margin:0; padding:0; height:180px; background: rgba(255,255,255,0.5); overflow:scroll">
+
+        <div style="background: none; margin:5px; font-size:10px; width: 70%; font-weight: bold; color:gray ">Fog</div>
+        
+        
+<!--        <input type="checkbox"-->
+<!--               id="sceneEnvironmentTexture"-->
+<!--               style="width:15px;display:flex !important;float:right;position:absolute;right:5px;top:10px;padding:0;"-->
+<!--               name="sceneEnvironmentTexture" form="3dAssetForm"-->
+<!--               onchange="enableSceneEnvironmentTexture(this.checked)">-->
+
+<!--        loadProjectTypeDescription();-->
+        <ul class="RadioButtonList" onclick="" style="margin-bottom:0;display:block">
+		    
+                <li class="mdc-form-field">
+                    <div class="mdc-radio">
+                        <input class="mdc-radio__native-control" type="radio" id="RadioNoFog"
+                               checked="" name="projectTypeRadio" value="1">
+                        <div class="mdc-radio__background">
+                            <div class="mdc-radio__outer-circle"></div>
+                            <div class="mdc-radio__inner-circle"></div>
+                        </div>
+                    </div>
+                    <label id="gameTypeArchRadio-label" for="RadioNoFog" style="font-size: 9pt !important;">
+                        No Fog
+                    </label>
+                </li>
+            
+                <li class="mdc-form-field">
+                    <div class="mdc-radio">
+                        <input class="mdc-radio__native-control" type="radio" id="RadioLinearFog"
+                               name="projectTypeRadio" value="2">
+                        <div class="mdc-radio__background">
+                            <div class="mdc-radio__outer-circle"></div>
+                            <div class="mdc-radio__inner-circle"></div>
+                        </div>
+                    </div>
+                    <label id="gameTypeChemistryRadio-label" for="RadioLinearFog" style="font-size: 9pt !important;">
+                        Linear Fog
+                    </label>
+                </li>
+
+                <li class="mdc-form-field">
+                    <div class="mdc-radio">
+                        <input class="mdc-radio__native-control" type="radio" id="RadioExponentialFog"
+                                name="projectTypeRadio" value="3">
+                        <div class="mdc-radio__background">
+                            <div class="mdc-radio__outer-circle"></div>
+                            <div class="mdc-radio__inner-circle"></div>
+                        </div>
+                    </div>
+                    <label id="gameTypeEnergyRadio-label" for="RadioExponentialFog" style="font-size: 9pt !important;">Exponential                    </label>
+                </li>
+        </ul>
+
+        <div id="fogvalues" style="display:block">
+
+            
+            
+
+            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Color:
+                <input type="text" id="FogColor" class="mdc-textfield__input" name="FogColor" form="3dAssetForm" value="#000000" style="height: 20px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px"/>
+            </span>
+
+            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Near limit (linear only):
+                <input type="text" id="FogNear" class="mdc-textfield__input" name="FogNear" form="3dAssetForm" value="0" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
+            </span>
+
+            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Far limit (linear only):
+                <input type="text" id="FogFar" class="mdc-textfield__input" name="FogFar" form="3dAssetForm" value="230" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
+            </span>
+
+            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Density (exponential only):
+                <input type="text" id="FogDensity" class="mdc-textfield__input" name="FogDensity" form="3dAssetForm" value="0.00025" style="height: 10px; border: 1px black solid;display:inline-block; width:70px; margin-left:5px">
+            </span>
+            
+        </div>
+        
+        
+       
+        
+    </div>
+    
 
 </div>

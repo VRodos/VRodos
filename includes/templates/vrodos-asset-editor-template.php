@@ -315,7 +315,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         <?php
         
         //It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
-        $asset_id = vrodos_create_asset_frontend($assetPGameID,$assetCatID, $gameSlug, $assetCatIPRID,
+        $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID,
             $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     }else {
         ?>

@@ -20,9 +20,13 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
         var name = jo_key;
         var value = scene_json_metadata[jo_key];
         if (name == 'ClearColor') {
-            resources3D_local["SceneSettings"]= {'ClearColor': value };
+            resources3D_local["SceneSettings"] = { 'ClearColor': value };
         }
+
+
     }
+
+
 
 
     scene_json_obj = scene_json_obj['objects'];
@@ -106,6 +110,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             var r_z = 0;
 
             var scale = 1;
+
 
             var color = value['color'];
             var lightintensity = value['lightintensity'];
@@ -314,6 +319,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             var mtlID = value['fnMtlID'];
             var fbxID = value['fbxID'];
             var glbID = value['glbID'];
+            var overrideMaterial = value['overrideMaterial'];
             var color = value['color'];
             var emissive = value['emissive'];
             var emissiveIntensity = value['emissiveIntensity'];
@@ -372,6 +378,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
                 "mtlID":mtlID,
                 "fbxID":fbxID,
                 "glbID":glbID,
+                "overrideMaterial":overrideMaterial,
                 "color":color,
                 "emissive":emissive,
                 "emissiveIntensity":emissiveIntensity,

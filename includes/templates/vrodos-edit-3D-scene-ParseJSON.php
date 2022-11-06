@@ -58,6 +58,16 @@ class ParseJSON {
         
         echo '<script>';
         echo 'resources3D["ClearColor"]= "'.$json_metadata->ClearColor.'";';
+  
+        if (property_exists($json_metadata, "fogtype"))
+        {
+            echo 'resources3D["fogtype"]= "' . $json_metadata->fogtype . '";';
+            echo 'resources3D["fogcolor"]= "' . $json_metadata->fogcolor . '";';
+            echo 'resources3D["fognear"]= "' . $json_metadata->fognear . '";';
+            echo 'resources3D["fogfar"]= "' . $json_metadata->fogfar . '";';
+            echo 'resources3D["fogdensity"]= "' . $json_metadata->fogdensity . '";';
+        }
+        
         echo 'resources3D["toneMappingExposure"]= "'.$json_metadata->toneMappingExposure.'";';
         echo 'resources3D["enableEnvironmentTexture"]= "'.$json_metadata->enableEnvironmentTexture.'";';
         echo '</script>';
@@ -85,6 +95,7 @@ class ParseJSON {
     
         $lighttargetobjectname = '';
         
+        $overrideMaterial = "false";
         
         
         
@@ -258,6 +269,7 @@ class ParseJSON {
                 $mtl = $value->fnMtl;
                 $mtlID = $value->fnMtlID;
     
+                $overrideMaterial = $value->overrideMaterial;
                 $color = $value->color;
                 $emissive = $value->emissive;
                 $emissiveIntensity = $value->emissiveIntensity;
@@ -336,6 +348,7 @@ class ParseJSON {
                                             '","mtlID":"'.$mtlID.
                                             '","fbxID":"'.$fbxID.
                                             '","glbID":"'.$glbID.
+                                            '","overrideMaterial":"'.$overrideMaterial,
                                             '","color":"'.$color.
                                             '","emissive":"'.$emissive.
                                             '","emissiveIntensity":"'.$emissiveIntensity.

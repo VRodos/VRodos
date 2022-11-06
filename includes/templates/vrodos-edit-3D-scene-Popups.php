@@ -1,6 +1,13 @@
 <!--Popups when right-clicking on 3D objects: included in vr_editor -->
 
 <script>
+
+    function changeOverrideMaterial() {
+        transform_controls.object.children[0].overrideMaterial = 'true';
+    }
+    
+    
+    
     function updateSpot(){
         envir.scene.traverse(function(child) {
                 if (child.light != undefined)
@@ -167,12 +174,21 @@
     <!-- The close button-->
     <a style="position:absolute;right:35px;top:10px" type="button" class="mdc-theme--primary"
        onclick='this.parentNode.style.display = "none"; return false;'>
-        <!-- clearAndUnbindCheckBoxProperties("artifact_reward_checkbox"); -->
         <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
     
     <div id="popup_artifact_scroller" style="overflow-y: scroll; height:300px;padding: 15px;margin: 0px;">
-    
+
+
+        <label for="artifact_override_material_checkbox" class="mdc-textfield__label"
+               style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">Override glb material?</label>
+        <input type="checkbox" title="Select if you want to set custom colors"
+               id="artifact_override_material_checkbox" name="artifact_override_material_checkbox"
+               class="mdc-textfield__input mdc-theme--text-primary-on-light"
+               style="width: 1ch;padding: 2px;display: inline-block; text-align: right;"
+                oninput="changeOverrideMaterial(this);">
+        <br />
+        
         <!-- The Color of the object -->
         <label for="ObjectColor" class="mdc-textfield__label" style="top: 12px; position: relative; bottom: 5px; margin-bottom: 15px; width: 150px; display: inline-block; vertical-align: bottom;">
             Object Color:</label>
@@ -305,7 +321,7 @@
                style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">Is a reward item?</label>
         <input type="checkbox" title="Select if it is a reward item"  id="artifact_reward_checkbox" name="artifact_reward_checkbox"
                class="mdc-textfield__input mdc-theme--text-primary-on-light"
-               style="width: 6ch;padding: 2px;display: inline-block; text-align: right;">
+               style="width: 1ch;padding: 2px;display: inline-block; text-align: right;">
         <br />
     </div>
 </div>
@@ -316,7 +332,6 @@
     <!-- The close button-->
     <a style="float: right;" type="button" class="mdc-theme--primary"
        onclick='this.parentNode.style.display = "none";  return false;'>
-        <!--        clearAndUnbindCheckBoxProperties("poi_video_reward_checkbox");-->
         <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
 
@@ -346,7 +361,6 @@
     <!-- The close button-->
     <a style="float: right;" type="button" class="mdc-theme--primary"
        onclick='this.parentNode.style.display = "none";  return false;'>
-        <!--        clearAndUnbindCheckBoxProperties("poi_video_reward_checkbox");-->
         <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
 
@@ -397,7 +411,6 @@
     <!-- The close button-->
     <a style="float: right;" type="button" class="mdc-theme--primary"
        onclick='this.parentNode.style.display = "none";  return false;'>
-        <!--        clearAndUnbindCheckBoxProperties("poi_video_reward_checkbox");-->
         <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
 
@@ -469,7 +482,6 @@
     <!-- The close button-->
     <a style="float: right;" type="button" class="mdc-theme--primary"
        onclick='this.parentNode.style.display = "none";  return false;'>
-        <!--        clearAndUnbindCheckBoxProperties("poi_video_reward_checkbox");-->
         <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
 

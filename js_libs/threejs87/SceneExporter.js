@@ -348,9 +348,12 @@ THREE.SceneExporter.prototype = {
                 // ================ Ververidis Main =============: All objs
 
 
+                var overrideMaterial = "false";
 
                 if (o.children[0].isMesh ){
                     var vswitch  =  o.children[0].material.map;
+
+                    overrideMaterial = o.children[0].overrideMaterial;
                     var vcolor = o.children[0].material.color.getHexString() ; // : "0x000000";
                     var vemissive = (o.children[0].material.emissive !== undefined ?
                                         o.children[0].material.emissive.getHexString() : '000000');
@@ -365,6 +368,8 @@ THREE.SceneExporter.prototype = {
                     var vmetalness = 0;
                     var vemissiveIntensity = 0;
                 }
+
+
 
 
                 var output = [
@@ -392,17 +397,18 @@ THREE.SceneExporter.prototype = {
                     '	"categoryID" : ' + '"' + o.categoryID  + '"' + ',',
                     '   "fbxID" : ' + '"' + o.fbxID + '"' + ',',
                     '   "glbID" : ' + '"' + o.glbID + '"' + ',',
+                    '   "overrideMaterial" : ' + '"' + o.overrideMaterial + '"' + ',',
                     '   "color" : ' + '"' +  vcolor + '"' + ',',
                     '   "emissive" : ' + '"' + vemissive + '"' + ',',
                     '   "roughness" : ' + '"' + vroughness + '"' + ',',
                     '   "metalness" : ' + '"' + vmetalness + '"' + ',',
                     '   "emissiveIntensity" : ' + '"' + vemissiveIntensity + '"' + ',',
-                    '   "videoTextureSrc" : ' + '"' + (vswitch? vswitch.image.src : '') + '"' + ',',
-                    '   "videoTextureRepeatX" : ' + '"' + (vswitch? vswitch.repeat.x :'') + '"' + ',',
-                    '   "videoTextureRepeatY" : ' + '"' + (vswitch? vswitch.repeat.y:'') + '"' + ',',
-                    '   "videoTextureCenterX" : ' + '"' + (vswitch? vswitch.center.x:'') + '"' + ',',
-                    '   "videoTextureCenterY" : ' + '"' + (vswitch? vswitch.center.y:'') + '"' + ',',
-                    '   "videoTextureRotation" : ' + '"' + (vswitch? vswitch.rotation:'') + '"' + ',',
+                    '   "videoTextureSrc" : ' + '"' + (o.overrideMaterial === "true"? vswitch.image.src : '') + '"' + ',',
+                    '   "videoTextureRepeatX" : ' + '"' + (o.overrideMaterial === "true"? vswitch.repeat.x :'') + '"' + ',',
+                    '   "videoTextureRepeatY" : ' + '"' + (o.overrideMaterial === "true"? vswitch.repeat.y:'') + '"' + ',',
+                    '   "videoTextureCenterX" : ' + '"' + (o.overrideMaterial === "true"? vswitch.center.x:'') + '"' + ',',
+                    '   "videoTextureCenterY" : ' + '"' + (o.overrideMaterial === "true"? vswitch.center.y:'') + '"' + ',',
+                    '   "videoTextureRotation" : ' + '"' + (o.overrideMaterial === "true"? vswitch.rotation:'') + '"' + ',',
                     '   "audioID" : ' + '"' + o.audioID + '"' + ',',
                     '	"image1id" : ' + '"' + o.image1id  + '"' + ',',
                     '   "doorName_source" : ' + '"' + o.doorName_source  + '"' + ',',
@@ -913,6 +919,11 @@ THREE.SceneExporter.prototype = {
             '		"type"		: "scene",',
             '		"generatedBy"	: "SceneExporter.js",',
             '		"ClearColor" : "#' + (envir.scene.background.isColor?envir.scene.background.getHexString():'000000') + '",',
+            envir.scene.fog ? '		"fogtype" : "' + (envir.scene.fog.isFog?"linear":"exponential") + '",' : '',
+            envir.scene.fog ? '		"fogcolor" : "#' + (envir.scene.fog.color?envir.scene.fog.color.getHexString():'000000') + '",' : '',
+            envir.scene.fog ? '		"fogfar" : "' + (envir.scene.fog.far?envir.scene.fog.far:'1000000') + '",' : '',
+            envir.scene.fog ? '		"fognear" : "' + (envir.scene.fog.near?envir.scene.fog.near:'1000000') + '",' : '',
+            envir.scene.fog ? '		"fogdensity" : "' + (envir.scene.fog.density?envir.scene.fog.density:'0.00000001') + '",' : '',
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableEnvironmentTexture" : "' + (!!envir.scene.environment) + '",',
             '		"objects"       : ' + nobjects + //+  ',',

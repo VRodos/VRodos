@@ -238,6 +238,9 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
 function vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID,
                                        $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
     
+    
+    
+    
     $asset_taxonomies = array(
         'vrodos_asset3d_pgame' => array($assetPGameID,),
         'vrodos_asset3d_cat' => array($assetCatID,),

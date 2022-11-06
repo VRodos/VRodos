@@ -4,6 +4,11 @@
     "type": "scene",
     "generatedBy": "SceneExporter.js",
     "ClearColor" : "#eeeeee",
+    "fogtype" : "linear",
+    "fogcolor": "#AAB",
+    "fogfar": "230",
+    "fognear": "0",
+    "fogdensity": "0.00025",
     "toneMappingExposure" : "1",
     "enableEnvironmentTexture" : "false",
     "objects": 9
