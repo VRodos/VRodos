@@ -1,5 +1,6 @@
 'use strict';
 
+// Only for Undo-Redo !
 function parseJSON_javascript(scene_json, UPLOAD_DIR){
 
     console.error("Not all properties are supported by undo: 115");

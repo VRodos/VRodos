@@ -17,25 +17,28 @@ class VRodos_LightsPawn_Loader {
         for (let n in resources3D) {
             (function (name) {
 
-                if(name === 'fogtype' || name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity') {
 
-
-
+                if(name === 'fogtype' ) {
                     if( resources3D[name] === 'linear'){
 
-                        console.log("resources3D['fogcolor']", resources3D['fogcolor']);
+                        envir.scene.fog = new THREE.Fog( resources3D['fogcolor'],
+                                                          parseFloat(resources3D['fognear']),
+                                                          parseFloat, resources3D['fogfar']
+                                                        );
 
-                        // envir.scene.fog = new THREE.Fog( resources3D['fogcolor'], parseFloat(resources3D['fognear']), parseFloat(resources3D['fogfar']) );
                     } else if( resources3D[name] === 'exponential') {
 
+                        envir.scene.fog = new THREE.FogExp2( resources3D['fogcolor'],
+                                                             parseFloat(resources3D['fogdensity'])
+                                                           );
 
-                        //envir.scene.fog = new THREE.FogExp2( resources3D['fogcolor'], parseFloat(resources3D['fogdensity']) );
                     }
-
-
                     return;
                 }
 
+
+                if(name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity')
+                    return;
 
 
 

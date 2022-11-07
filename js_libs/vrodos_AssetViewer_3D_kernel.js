@@ -645,6 +645,12 @@ class VRodos_AssetViewer_3D_kernel {
 
         let glbLoader = new THREE.GLTFLoader( manager );
 
+
+        // const dracoLoader = new THREE.DRACOLoader();
+        // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs119/draco/' );
+        // glbLoader.setDRACOLoader( dracoLoader );
+
+
         // Load a glTF resource
         glbLoader.load(
             GlbBuffer,
@@ -896,6 +902,12 @@ class VRodos_AssetViewer_3D_kernel {
 
             // Instantiate a loader
             const loader = new THREE.GLTFLoader();
+
+            loader.setDRACOLoader( new THREE.DRACOLoader() );
+
+            // const dracoLoader = new THREE.DRACOLoader();
+            // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs119/draco/' );
+            // loader.setDRACOLoader( dracoLoader );
 
             let scope = this;
 

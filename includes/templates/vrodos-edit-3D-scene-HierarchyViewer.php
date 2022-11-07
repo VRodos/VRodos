@@ -29,7 +29,7 @@
 	</div>
 	
 	<!-- Numerical input for Move rotate scale -->
-	<div id="row4" class="row-right-panel">
+	<div id="row4" class="row-right-panel" style="height:30%; overflow: scroll">
 		<div id="numerical_gui-container" class="VrGuiContainerStyle mdc-typography mdc-elevation--z1"></div>
 	</div>
 	
@@ -138,7 +138,7 @@
 
     <!-- Enable Environmental texture  -->
     <div id="sceneFogDiv"
-         style="border: 1px black solid; width:100%; margin:0; padding:0; height:180px; background: rgba(255,255,255,0.5); overflow:scroll">
+         style="border: 1px black solid; width:100%; margin:0; padding:0; height:140px; background: rgba(255,255,255,0.5); overflow:scroll">
 
         <div style="background: none; margin:5px; font-size:10px; width: 70%; font-weight: bold; color:gray ">Fog</div>
         
@@ -150,7 +150,7 @@
 <!--               onchange="enableSceneEnvironmentTexture(this.checked)">-->
 
 <!--        loadProjectTypeDescription();-->
-        <ul class="RadioButtonList" onclick="" style="margin-bottom:0;display:block">
+        <ul class="RadioButtonList" onclick="loadFogType()" style="margin-bottom:0;display:block">
 		    
                 <li class="mdc-form-field">
                     <div class="mdc-radio">
@@ -193,25 +193,34 @@
                 </li>
         </ul>
 
+        <input type="text" id="FogType" name="FogType" class="mdc-textfield__input"
+                                                            form="3dAssetForm" value="none" style="visibility:hidden;display:none"/>
+
         <div id="fogvalues" style="display:block">
 
-            
-            
+            <span style="display:block; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px">Color:
+<!--                <input type="text" id="FogColor" class="mdc-textfield__input" name="FogColor" form="3dAssetForm" value="#000000" style="height: 20px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px"/>-->
+                
+                <input id="jscolorpickFog" class="mdc-textfield__input jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px" >
 
-            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Color:
-                <input type="text" id="FogColor" class="mdc-textfield__input" name="FogColor" form="3dAssetForm" value="#000000" style="height: 20px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px"/>
+                <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
             </span>
 
+            
+            
+            
+            
+            
             <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Near limit (linear only):
-                <input type="text" id="FogNear" class="mdc-textfield__input" name="FogNear" form="3dAssetForm" value="0" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
+                <input type="text" id="FogNear" class="mdc-textfield__input" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="0" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
             </span>
 
             <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Far limit (linear only):
-                <input type="text" id="FogFar" class="mdc-textfield__input" name="FogFar" form="3dAssetForm" value="230" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
+                <input type="text" id="FogFar" class="mdc-textfield__input" name="FogFar" form="3dAssetForm" value="230"  onchange="updateFog()" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
             </span>
 
             <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Density (exponential only):
-                <input type="text" id="FogDensity" class="mdc-textfield__input" name="FogDensity" form="3dAssetForm" value="0.00025" style="height: 10px; border: 1px black solid;display:inline-block; width:70px; margin-left:5px">
+                <input type="text" id="FogDensity" class="mdc-textfield__input" name="FogDensity" form="3dAssetForm" value="0.00025" onchange="updateFog()" style="height: 10px; border: 1px black solid;display:inline-block; width:70px; margin-left:5px">
             </span>
             
         </div>
