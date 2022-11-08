@@ -97,7 +97,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		
 		function setAffineTransformations($entity, $contentObject){
 			$entity->setAttribute( "position", implode( " ", $contentObject->position ) );
-			$entity->setAttribute( "rotation", implode( " ", [180/pi() * $contentObject->rotation[0], 180/pi() * $contentObject->rotation[1],
+			$entity->setAttribute( "rotation", implode( " ", [- 180/pi() * $contentObject->rotation[0], 180/pi() * $contentObject->rotation[1],
 																		180/pi() * $contentObject->rotation[2] ] ));
 			
 			$entity->setAttribute( "scale", implode( " ", $contentObject->scale ) );
@@ -263,15 +263,18 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		$content = str_replace("roomname", "room".$scene_id, $content);
 		
 		$content = str_replace('background="color: #000000"', 'background="color: '.$scene_json->metadata->ClearColor.'"' , $content);
-
-		$content = str_replace('fog="type: linear; color: #AAB; far: 230; near: 0"',
-								
+		
+		$fogstring = substr($content, strpos($content, 'fog='), strpos($content, 'renderer=')-9-strpos($content, 'fog='));
+		
+		// Replace Fog string
+		$content = str_replace($fogstring,
+		
 								'fog="type: '.$scene_json->metadata->fogtype.
 								'; color: '.$scene_json->metadata->fogcolor.
 								'; far: '.$scene_json->metadata->fogfar.
-								'; density: '.$scene_json->metadata->fogdensity.
+								'; density: '.(1.5*$scene_json->metadata->fogdensity).
 								'; near: '.$scene_json->metadata->fognear.'"' ,
-					
+
 							$content);
 		
 		

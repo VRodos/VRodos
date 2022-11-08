@@ -268,8 +268,13 @@ class ParseJSON {
                 $objID = $value->fnObjID;
                 $mtl = $value->fnMtl;
                 $mtlID = $value->fnMtlID;
-    
-                $overrideMaterial = $value->overrideMaterial;
+                
+                if(isset($value->overrideMaterial)) {
+                    $overrideMaterial = $value->overrideMaterial;
+                } else {
+                    $overrideMaterial = "false";
+                }
+                
                 $color = $value->color;
                 $emissive = $value->emissive;
                 $emissiveIntensity = $value->emissiveIntensity;

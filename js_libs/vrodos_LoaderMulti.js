@@ -78,11 +78,9 @@ class VRodos_LoaderMulti {
 
                 } else { // GLB 3D models
 
-                    console.log("GLB", "1");
 
                      if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
 
-                        console.log("GLB", "2");
 
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
@@ -193,9 +191,10 @@ function setObjectProperties(object, name, resources3D) {
 
 
     if(resources3D[name]['videoTextureSrc'] !== "") {
-
-       console.log("The object has video texture:", resources3D[name]['videoTextureSrc'])
-       startVideo(resources3D, name);
+        if(resources3D[name]['videoTextureSrc'] !== "undefined") {
+            console.log("The object has video texture:", resources3D[name]['videoTextureSrc'])
+            startVideo(resources3D, name);
+        }
     }
 
     //=======================================

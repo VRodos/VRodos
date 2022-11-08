@@ -185,10 +185,10 @@
     <a-entity id="player"
               networked="template:#avatar-template;attachTemplateToLocal:false;"
               position="0 0.6 0"
-              spawn-in-circle="radius:3"
               wasd-controls="fly: true; acceleration:5"
               show-position
-              look-controls="pointerLockEnabled: true;">
+              look-controls="pointerLockEnabled: true;"
+              >
 
               <a-sphere class="head"
                         visible="false"
@@ -198,7 +198,8 @@
               <a-entity
                       active="true"
                       camera="near: 0.1; far: 7000.0;"
-                      position="0 0.6 0">
+                      position="0 0.6 0"
+                      >
               </a-entity>
     </a-entity>
 

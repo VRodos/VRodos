@@ -29,7 +29,7 @@
 	</div>
 	
 	<!-- Numerical input for Move rotate scale -->
-	<div id="row4" class="row-right-panel" style="height:30%; overflow: scroll">
+	<div id="row4" class="row-right-panel" style="max-height:25%;; overflow: scroll">
 		<div id="numerical_gui-container" class="VrGuiContainerStyle mdc-typography mdc-elevation--z1"></div>
 	</div>
 	
@@ -60,7 +60,7 @@
 	</div>
 	
 	<!-- Hierarchy viewer -->
-	<div id="row6" class="row-right-panel" style="max-height:50%;">
+	<div id="row6" class="row-right-panel" style="max-height:30%;">
 		<div class="HierarchyViewerStyle mdc-card" id="hierarchy-viewer-container">
 			<span class="hierarchyViewerTitle mdc-typography--subheading1 mdc-theme--text-primary-on-background" style="">Hierarchy Viewer</span>
 			<hr class="mdc-list-divider">
@@ -211,16 +211,16 @@
             
             
             
-            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Near limit (linear only):
+            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Near limit (linear only):
                 <input type="text" id="FogNear" class="mdc-textfield__input" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="0" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
             </span>
 
-            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Far limit (linear only):
+            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Far limit (linear only):
                 <input type="text" id="FogFar" class="mdc-textfield__input" name="FogFar" form="3dAssetForm" value="230"  onchange="updateFog()" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
             </span>
 
-            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:gray">Density (exponential only):
-                <input type="text" id="FogDensity" class="mdc-textfield__input" name="FogDensity" form="3dAssetForm" value="0.00025" onchange="updateFog()" style="height: 10px; border: 1px black solid;display:inline-block; width:70px; margin-left:5px">
+            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Density (exponential only):
+                <input type="text" id="FogDensity" class="mdc-textfield__input" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()" style="height: 10px; border: 1px black solid;display:inline-block; width:70px; margin-left:5px">
             </span>
             
         </div>
