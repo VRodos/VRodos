@@ -81,19 +81,24 @@ function updateFog(){
     let fogNear = document.getElementById('FogNear').value
     let fogFar = document.getElementById('FogFar').value;
     let fogDensity = document.getElementById('FogDensity').value;
-    let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
 
-    console.log("fogType", fogType);
+
+
+
+
+    let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
 
     if(fogType === 'linear') {
         envir.scene.fog = new THREE.Fog(hex, fogNear, fogFar);
     } else if(fogType === 'exponential') {
         envir.scene.fog = new THREE.FogExp2(hex, fogDensity);
     } else {
-        envir.scene.fog = new THREE.Fog(0x000000, 0, 0.1);
+        envir.scene.fog = null;
     }
 
-    console.log("envir.scene.fog", envir.scene.fog);
+
+
+    triggerAutoSave();
 }
 
 

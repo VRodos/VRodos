@@ -267,15 +267,19 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		$fogstring = substr($content, strpos($content, 'fog='), strpos($content, 'renderer=')-9-strpos($content, 'fog='));
 		
 		// Replace Fog string
-		$content = str_replace($fogstring,
-		
-								'fog="type: '.$scene_json->metadata->fogtype.
-								'; color: '.$scene_json->metadata->fogcolor.
-								'; far: '.$scene_json->metadata->fogfar.
-								'; density: '.(1.5*$scene_json->metadata->fogdensity).
-								'; near: '.$scene_json->metadata->fognear.'"' ,
-
-							$content);
+		if ($scene_json->metadata->fogtype != "none") {
+			$content = str_replace( $fogstring,
+				
+				'fog="type: ' . $scene_json->metadata->fogtype .
+				'; color: ' . $scene_json->metadata->fogcolor .
+				'; far: ' . $scene_json->metadata->fogfar .
+				'; density: ' . ( 1.5 * $scene_json->metadata->fogdensity ) .
+				'; near: ' . $scene_json->metadata->fognear . '"',
+				
+				$content );
+		} else {
+			$content = str_replace( $fogstring, " ", $content );
+		}
 		
 		
 		

@@ -150,7 +150,7 @@
 <!--               onchange="enableSceneEnvironmentTexture(this.checked)">-->
 
 <!--        loadProjectTypeDescription();-->
-        <ul class="RadioButtonList" onclick="loadFogType()" style="margin-bottom:0;display:block">
+        <ul class="RadioButtonList" id="FogTypeRadioButtonList" onclick="loadFogType()" style="margin-bottom:0;display:block">
 		    
                 <li class="mdc-form-field">
                     <div class="mdc-radio">
@@ -199,17 +199,11 @@
         <div id="fogvalues" style="display:block">
 
             <span style="display:block; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px">Color:
-<!--                <input type="text" id="FogColor" class="mdc-textfield__input" name="FogColor" form="3dAssetForm" value="#000000" style="height: 20px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px"/>-->
                 
                 <input id="jscolorpickFog" class="mdc-textfield__input jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px" >
 
                 <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
             </span>
-
-            
-            
-            
-            
             
             <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Near limit (linear only):
                 <input type="text" id="FogNear" class="mdc-textfield__input" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="0" style="height: 10px; border: 1px black solid;display:inline-block; width:60px; margin-left:5px">
