@@ -43,63 +43,63 @@ $isAdmin = is_admin() ? 'back' : 'front';
 
 // Load Scripts
 function vrodos_loadAsset3DManagerScriptsAndStyles() {
-    
+
     // Stylesheet
     wp_enqueue_style('vrodos_asseteditor_stylesheet');
-    
+
     // QR code generator
     wp_enqueue_script('vrodos_qrcode_generator');
-    
+
     // Three js : for simple rendering
     wp_enqueue_script('vrodos_scripts');
-    
+
     // For fbx binary
     wp_enqueue_script('vrodos_inflate'); // for binary fbx
-    
+
     $versionThreeJS = "119";
-    
+
     if ($versionThreeJS === "119") {
-	 
+
 	    // 1. Three js library
 	    wp_enqueue_script( 'vrodos_load119_threejs' );
 	    wp_enqueue_script( 'vrodos_load124_statjs' );
-	
+
 	    // 2. Obj loader simple; For loading an uploaded obj
 	    wp_enqueue_script( 'vrodos_load87_OBJloader' );
-	
+
 	    // 3. Obj loader 2: For preview loading
 	    wp_enqueue_script( 'vrodos_load87_OBJloader2' );
 	    wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
-	
+
 	    wp_enqueue_script( 'vrodos_load87_MTLloader' );
 	    wp_enqueue_script( 'vrodos_load87_PDBloader' );
 	    wp_enqueue_script( 'vrodos_load119_FBXloader' );
 	    //wp_enqueue_script('vrodos_load119_TrackballControls');
-	
+
 	    wp_enqueue_script( 'vrodos_load119_OrbitControls' );
 	    wp_enqueue_script( 'vrodos_load119_GLTFLoader' );
 	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
 	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
 	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
 	    wp_enqueue_script( 'vrodos_load119_CSS2DRenderer' );
-     
+
     } else if ($versionThreeJS === "141"){
 	    // 1. Three js library
 	    wp_enqueue_script( 'vrodos_load141_threejs' );
 	    //wp_enqueue_script( 'vrodos_load124_statjs' );
-	
+
 	    // 2. Obj loader simple; For loading an uploaded obj
 	    //wp_enqueue_script( 'vrodos_load87_OBJloader' );
-	
+
 	    // 3. Obj loader 2: For preview loading
 	    //wp_enqueue_script( 'vrodos_load87_OBJloader2' );
 	    //wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
-	
+
 	    //wp_enqueue_script( 'vrodos_load87_MTLloader' );
 	    //wp_enqueue_script( 'vrodos_load87_PDBloader' );
 	    //wp_enqueue_script( 'vrodos_load119_FBXloader' );
-	    
-	
+
+
 	    wp_enqueue_script( 'vrodos_load141_OrbitControls' );
 	    wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
 //	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
@@ -107,25 +107,25 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
 //	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
 	    wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
     }
-    
-    
+
+
     // Load single asset: Load existing asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
 
     // Load scripts for asset editor
     wp_enqueue_script('vrodos_asset_editor_scripts');
-    
+
     // scroll for images thumnbnails (in clone)
     wp_enqueue_script('vrodos_lightslider');
-    
+
     // Select colors
     wp_enqueue_script('vrodos_jscolorpick');
-    wp_enqueue_script('vrodos_jsfontselect');
-    
+//    wp_enqueue_script('vrodos_jsfontselect');
+
     // to capture screenshot of the 3D molecule and its tags
     wp_enqueue_script('vrodos_html2canvas');
-  
-    
+
+
     // Content Interlinking
 //    $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 
@@ -198,12 +198,12 @@ if(isset($_GET['vrodos_asset'])) {
 
 if ($isUserloggedIn) {
     $user_id = get_current_user_id();
-    
+
     if (!isset($_GET['vrodos_asset'])) {
         // NEW ASSET
         $isEditable = true;
         $author_id = $user_id;
-        
+
     } else if ($isUserAdmin || $isOwner){
         // OLD ASSET
         $isEditable = true;
@@ -245,12 +245,12 @@ $goBackToLink = '';
 
 // If coming from scene then go to scene editor
 if($scene_id != 0 ) {
-    
+
     $goBackToLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' .
         $project_id . '&scene_type=' . $_GET['scene_type'];
-    
+
 }else {
-    
+
     // Goto shared assets
     $goBackToLink = home_url()."/vrodos-assets-list-page/?".
         (!isset($_GET['singleproject'])?"vrodos_game=":"vrodos_project_id=").$project_id;
@@ -271,39 +271,39 @@ if($scene_id != 0 ) {
 //=============================================
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'],
         'post_nonce')) {
-    
+
 //    $fp = fopen("output_check_files.txt","w");
 //    fwrite($fp, print_r($_FILES, true));
 //    fclose($fp);
-    
+
     $asset_language_pack = vrodos_asset3d_languages_support1($_POST);
     //include 'edit-vrodos_asset3d_languages_support1.php';
-    
+
     // Fonts Selected
     $assetFonts = esc_attr(strip_tags($_POST['assetFonts']));
-    
+
     // 3D background color
     $assetback3dcolor=  esc_attr(strip_tags($_POST['assetback3dcolor']));
-    
+
     // Asset trs
     $assettrs=  esc_attr(strip_tags($_POST['assettrs']));
-    
+
     //fwrite($fp, print_r($_POST,true));
-    
+
     // Asset category
     $assetCatID = intval($_POST['term_id']);//ID of Asset Category (hidden input)
-    
+
     // Term
     $assetCatTerm = get_term_by('id', $assetCatID, 'vrodos_asset3d_cat');
-    
+
     // IPR Term id
     $assetCatIPRID = intval($_POST['term_id_ipr']); //ID of Asset Category IPR (hidden input)
-    
+
     // IPR Term id cat
     $assetCatIPRTerm = get_term_by('id', $assetCatIPRID, 'vrodos_asset3d_ipr_cat');
-    
+
     // show an icon while waiting
-    
+
     $asset_updatedConf = 0;
     // NEW Asset: submit info to backend
     if($asset_id == null){
@@ -311,9 +311,9 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
         <!-- css ref is not recognized in the following, therefore CSS should be written inline -->
         <div style="position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%);font-size: x-large">Creating asset...</div>
-        
+
         <?php
-        
+
         //It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
         $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID,
             $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
@@ -321,36 +321,36 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         ?>
         <div class='centerMessageAssetSubmit'>Updating asset...</div>
         <?php
-        
+
         // Edit an existing asset: Return true if updated, false if failed
         $asset_updatedConf = vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
             $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     }
-    
+
     // Upload 3D files
     if($asset_id != 0 || $asset_updatedConf == 1) {
-        
+
         // NoCloning: Upload files from POST but check first
         // if any 3D files have been selected for upload
         if (count($_FILES['multipleFilesInput']['name']) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ){
             vrodos_create_asset_3DFilesExtra_frontend($asset_id, $asset_language_pack['assetTitleForm'],
                 $gameSlug);
         }
-        
+
         update_post_meta($asset_id, 'vrodos_asset3d_isCloned', 'false');
         update_post_meta($asset_id, 'vrodos_asset3d_isJoker', $isJoker);
     }
-    
+
     // SCREENSHOT: upload and add id of uploaded file to postmeta vrodos_asset3d_screenimage of asset
 //    $f = fopen("output_fscr.txt","w");
 //    fwrite($f, $_POST['sshotFileInput']);
 //    fclose($f);
 //
-    
+
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
         vrodos_upload_asset_screenshot($_POST['sshotFileInput'], $asset_language_pack['assetTitleForm'], $asset_id);
     }
-    
+
     // Save parameters
     switch ($assetCatTerm->slug){
         case 'consumer':
@@ -372,7 +372,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
             vrodos_create_asset_addVideo_frontend($asset_id);
             break;
     }
-    
+
     if($scene_id == 0) {
         // Redirect to central otherwise the form is not loaded with the new data
         echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'&vrodos_asset='.$asset_id.'#English'.'";</script>';
@@ -394,21 +394,21 @@ if (!empty($project_scope)) {
 
 // When asset was created in the past and now we want to edit it. We should get the attachments obj, mtl
 if($asset_id != null) {
-    
+
     // Get post
     $asset_post    = get_post($asset_id);
-    
+
     // Get post meta
     $assetpostMeta = get_post_meta($asset_id);
-    
+
     // Background color in canvas
     $back_3d_color = $assetpostMeta['vrodos_asset3d_back3dcolor'][0];
-    
+
     // Font type for text
     $fonts = $assetpostMeta['vrodos_asset3d_fonts'][0];
-    
+
     $curr_font = str_replace("+", " ", $fonts);
-    
+
     $asset_3d_files = get_3D_model_files($assetpostMeta, $asset_id);
     ?>
 
@@ -421,7 +421,7 @@ if($asset_id != null) {
         fbx_file_name= "<?php echo $asset_3d_files['fbx'];    ?>";
         textures_fbx_string_connected = "<?php echo $asset_3d_files['texturesFbx']; ?>";
     </script>
-    
+
     <?php
 }
 //--------------------------------------------------------
@@ -461,34 +461,34 @@ $images_urls = [null, null, null, null, null];
 
 //Check if its new/saved and get data for artifact and Terrain
 if($asset_id != null) {
-    
+
     $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
-    
+
 //    $fp = fopen("output_savedterm.txt","w");
 //    fwrite($fp, print_r($saved_term, true));
 //    fclose($fp);
-    
+
     if($saved_term[0]->slug == 'terrain'){
-        
+
         // Wind Energy Terrain
         include 'vrodos-asset-editor-WindEnergy.php';
-        
+
     }elseif (in_array($saved_term[0]->slug , ['artifact'])) {
         // Image 1 : Featured image
         $images_urls[0] = get_the_post_thumbnail_url($asset_id);
-        
+
         // Image 1,2,3,4
         for ($i=1; $i <= 4; $i++){
-            
+
             $image_id = get_post_meta($asset_id, "vrodos_asset3d_image".$i);
-            
+
             if(!empty($image_id[0])) {
                 $images_urls[$i] = wp_get_attachment_metadata($image_id[0]);
                 $images_urls[$i] = $images_urls[$i]['file'] == '' ? null :
                     wp_get_upload_dir()['baseurl'] . "/" . $images_urls[$i]['file'];
             }
         }
-        
+
     }
 }
 
@@ -521,7 +521,7 @@ if($asset_id != null) {
 
 
 <div id="text-asset-sidebar" class="asset_editor_textpanel">
-    
+
     <?php
     if ($isUserloggedIn && $isEditMode) {
         ?>
@@ -530,24 +530,24 @@ if($asset_id != null) {
             <em class="material-icons arrowback" >arrow_back</em>Assets Manager</a>
         <?php
     }
-    
+
     // UPPER BUTTONS
     if($isUserloggedIn && $asset_id != null ){
-        
+
         if ( $isEditMode) {
             $previewLink = ( empty( $_SERVER['HTTPS'] ) ? 'http://' : 'https://' ) .
                 $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-            
+
             // FROM NEW ASSET ONLY
             if ( !strpos($_SERVER['REQUEST_URI'],"vrodos_asset")) {
                 $previewLink = $previewLink . '&vrodos_asset=' . $asset_id;
             }
-            
+
             // IF from single project
             if (isset($_GET['singleproject'])) {
                 $previewLink = $previewLink . '&singleproject=true';
             }
-            
+
             $previewLink = $previewLink . '&preview=1#English';
             ?>
 
@@ -555,9 +555,9 @@ if($asset_id != null) {
                href="<?php echo $previewLink; ?>"
                data-mdc-auto-init="MDCRipple">Preview</a>
         <?php }  else {
-            
+
             // Display EDIT BUTTON
-            
+
             $curr_uri = $_SERVER['REQUEST_URI'];
             $targetparams = str_replace("preview=1","preview=0",$curr_uri);
             $editLink2 = ( empty( $_SERVER['HTTPS'] ) ? 'http://' : 'https://' ).
@@ -579,7 +579,7 @@ if($asset_id != null) {
                     </span>
                 </span>
             </div>
-        
+
         <?php }
     }?>
 
@@ -595,13 +595,13 @@ if($asset_id != null) {
 
             <div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
                 <em class="material-icons mdc-theme--text-hint-on-light">label</em>&nbsp;
-                
+
                 <?php
-                
+
                 $myGameType = 0;
                 $all_game_types = get_the_terms( $project_id, 'vrodos_game_type' );
                 $game_type_slug = $all_game_types[0]->slug;
-                
+
                 switch ($game_type_slug) {
                     default:
                     case 'archaeology_games':
@@ -614,7 +614,7 @@ if($asset_id != null) {
                         $myGameType=3;
                         break;
                 }
-                
+
                 $args = array(
                     'hide_empty' => false,
                     'meta_query' => array(
@@ -627,11 +627,11 @@ if($asset_id != null) {
                     'orderby' => 'name',
                     'order' => 'DESC',
                 );
-                
+
                 $cat_terms = get_terms('vrodos_asset3d_cat', $args);
                 $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
                 ?>
-                
+
                 <?php if($asset_id == null) { ?>
                     <span id="currently-selected" class="mdc-select__selected-text mdc-typography--subheading2">
                         No category selected
@@ -652,9 +652,9 @@ if($asset_id != null) {
                             tabindex="-1" style="pointer-events: none;">
                             No category selected
                         </li>
-                        
+
                         <?php foreach ( $cat_terms as $term ) {
-                            
+
                             if (  strpos($term->name, "Points") !== false ) {
                                 continue;
                             } ?>
@@ -666,7 +666,7 @@ if($asset_id != null) {
                                 tabindex="0">
                                 <?php echo $term->name; ?>
                             </li>
-                        
+
                         <?php } ?>
 
                     </ul>
@@ -794,19 +794,19 @@ if($asset_id != null) {
             <div id="sshotFileInputContainer">
                 <h4 class="mdc-typography--title">Screenshot</h4>
                 <?php
-                
+
                 if($asset_id==null) {
-                    
+
                     // If asset is not created load a predefault image
                     echo '<img id = "sshotPreviewImg" src="'.
                         plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ).'">';
-                    
+
                 } else {
-                    
+
                     // if asset is edited load the existing screenshot url
                     $scrnImageURL = wp_get_attachment_url(
                         get_post_meta($asset_id, "vrodos_asset3d_screenimage",true) );
-                    
+
                     echo '<img id = "sshotPreviewImg" src="'.$scrnImageURL.'">';
                 }
                 ?>
@@ -829,21 +829,21 @@ if($asset_id != null) {
 
                 <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
                        name="assetback3dcolor" form="3dAssetForm" value="<?php echo trim($asset_back_3d_color_saved); ?>" />
-                
+
                 <label for="assetback3dcolor" class="mdc-textfield__label"
                        style="background: none;">3D viewer background color</label>
 
 
-                
+
             </div>
-    
-    
-            
-            
+
+
+
+
             <input type="hidden" id="assettrs" class="mdc-textfield__input"
                    name="assettrs" form="3dAssetForm" value="<?php echo trim($assettrs_saved); ?>" />
-            
-            
+
+
 
             <!-- Audio -->
             <div id="audioDetailsPanel">
@@ -855,7 +855,7 @@ if($asset_id != null) {
                     $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
                     $attachment_post = get_post( $audioID );
                     $attachment_file = $attachment_post->guid;
-                    
+
                     if(strpos($attachment_file, "mp3" )!==false || strpos($attachment_file, "wav" )!==false){
                         ?>
                         <audio controls loop preload="auto" id ='audioFile'>
@@ -948,7 +948,7 @@ if($asset_id != null) {
                 $attachment_post = get_post($videoID);
                 $attachment_file = $attachment_post->guid;
                 ?>
-                
+
                 <?php if(strpos($attachment_file, "mp4" )!==false || strpos($attachment_file, "ogg" )!==false){?>
                     <?php echo $attachment_file; ?>
                     <video width="320" height="240"
@@ -966,8 +966,8 @@ if($asset_id != null) {
                 <span id="video-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp4 is recommended </span>
             </div>
         </div>
-        
-        
+
+
         <?php } else { ?>  <!-- PREVIEW READ ONLY DATA -->
 
             <div id="assetTitleView"><?php echo $assetLangPack2['asset_title_saved'];?></div>
@@ -994,11 +994,11 @@ if($asset_id != null) {
 
                             <div id="videoFileInputContainer" class="">
                                 <?php
-                                
+
                                 $attachment_post = get_post($videoID);
                                 $attachment_file = $attachment_post->guid;
                                 ?>
-                                
+
                                 <?php if( strpos($attachment_file, "mp4" )!==false || strpos($attachment_file, "ogg" )!==false){?>
                                     <video style="height:auto" controls>
                                         <source src="<?php echo $attachment_file;?>" type="video/mp4">
@@ -1053,8 +1053,8 @@ if($asset_id != null) {
                     <?php if(strpos($attachment_file, "mp3" )!==false || strpos($attachment_file, "wav" )!==false){?>
                         <source src="<?php echo $attachment_file;?>" type="audio/mp3">
                         <source src="<?php echo $attachment_file;?>" type="audio/wav">
-                    
-                    
+
+
                     <?php } ?>
                 </audio>
             </div>
@@ -1088,7 +1088,7 @@ if($asset_id != null) {
                     <div id="plustext" title="Increase text size"  onclick="resizeText(1)">A+</div>
                     <div id="minustext" title="Decrease text size" onclick="resizeText(-1)">A-</div>
                 </div>
-                
+
                 <?php $images_accessIcons_path = plugins_url( '../images/accessibility_icons/', dirname(__FILE__)  );?>
 
                 <!-- Different texts buttons -->
@@ -1120,13 +1120,13 @@ if($asset_id != null) {
                 // Presentation of textual descriptions per language and accessibility level
                 $languages = ["English","Greek","Spanish","French","German","Russian"];
                 $accessLevel = ["","Kids","Experts","Perception"];
-                
+
                 foreach ($languages as $l){
                     foreach ($accessLevel as $a){
-                        
+
                         $l2 = ($l === 'English') ? '' : '_'.strtolower($l);
                         $a2 = ($a === '')? '' : '_'.strtolower($a);
-                        
+
                         echo '<div id="'.$l.$a.'" class="tabcontent2 active" style="font-family:'.$curr_font.'">'.
                             trim($assetLangPack2['asset_desc'.$l2.$a2.'_saved']).'</div>';
                     }
@@ -1145,21 +1145,21 @@ if($asset_id != null) {
                 <p>Video-conference with the museum expert!</p>
                 <button type="button" onclick="startConf()">Call</button>
             </div>
-            
-            
+
+
             <?php
             // Peer calls: audiovisual conferencing, answer to calls directly (for museum operators)
             if (isset($_GET['directcall'])) {
                 echo '<script>startConf()</script>';
             }
             ?>
-        
+
         <?php } ?>
         <!--  End of Edit or Show  -->
 
         <!-- MOLECULES  only-->
         <?php include 'vrodos-asset-editor-ChemistrySupport.php'; ?>
-        
+
         <?php
         // Obsolete virtual labs code
         //  if ($project_scope == 1) {
@@ -1175,10 +1175,10 @@ if($asset_id != null) {
             <h3 class="mdc-typography--title">Select an IPR plan</h3>
             <div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0">
                 <i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
-                
+
                 <?php
                 $saved_ipr_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_ipr_cat');
-                
+
                 if($asset_id == null || empty($saved_ipr_term) ) { ?>
                     <!-- Empty IPR -->
                     <span id="currently-ipr-selected"
@@ -1210,7 +1210,7 @@ if($asset_id != null) {
                         <!-- Add other options -->
                         <?php
                         $cat_ipr_terms = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
-                        
+
                         foreach ( $cat_ipr_terms as $term_ipr ) { ?>
                             <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
                                 title="<?php echo $term_ipr->description; ?>"
@@ -1232,7 +1232,7 @@ if($asset_id != null) {
 
         <!-- Submit Button -->
         <?php if(($isOwner || $isUserAdmin) && $isEditMode) {
-            
+
             wp_nonce_field('post_nonce', 'post_nonce_field');
             ?>
 
@@ -1243,7 +1243,7 @@ if($asset_id != null) {
                     data-mdc-auto-init="MDCRipple" type="submit" <?php echo $isEditable?'':' disabled' ?> >
                 <?php echo $asset_id == null ? "Create asset" : "Update asset"; ?>
             </button>
-        
+
         <?php } ?>
 </div>
 
@@ -1287,25 +1287,25 @@ if($asset_id != null) {
 
     let back_3d_color = "<?php echo $back_3d_color; ?>";
 
-    
+
     document.getElementById("jscolorpick").value = back_3d_color;
-    
-    
+
+
     generateQRcode();
 
-    
+
     let audio_file = document.getElementById( 'audioFile' );
-    
+
     let isEditMode = 0;
     let isLoggedIn= <?php echo $isUserloggedIn ? 1: 0; ?>;
-   
+
     if (isLoggedIn === 1) {
         isEditMode = <?php echo $_GET['preview'] === '1' ? 0 : 1; ?>;
     } else {
         isEditMode = 0;
     }
-    
-    
+
+
     console.log("isEditModeA:", isEditMode);
 
     // Reset 3D canvas if not preview
@@ -1314,23 +1314,23 @@ if($asset_id != null) {
 //        vrodos_reset_panels(asset_viewer_3d_kernel, "initial script");
 
         // Get the Default Screenshot image for reference;
-        
-        
+
+
         var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg").src;
-        
+
     }
 
     // Set the functionality of the screenshot button;
     screenshotHandlerSet();
 
-    
+
     let multipleFilesInputElem = document.getElementById( 'fileUploadInput' );
 
-    
-    
+
+
     let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
-    
-    
+
+
 
     // ------- Class to load 3D model ---------
     let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById( 'previewCanvas' ),
@@ -1355,8 +1355,8 @@ if($asset_id != null) {
                                                             document.getElementById('boundSphButton'));
 
 
-    
-    
+
+
     // Load existing 3D models
     // asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,
     //                                                      glb_file_name, textures_fbx_string_connected);
@@ -1373,7 +1373,7 @@ if($asset_id != null) {
             let MDCSelect = mdc.select.MDCSelect;
 
             // Category of asset change
-            
+
             let categoryDropdown = document.getElementById('category-select');
             let categorySelect = MDCSelect.attachTo(categoryDropdown);
             let selectedCatId = jQuery('#currently-selected').attr("data-cat-id");
@@ -1458,7 +1458,7 @@ if($asset_id != null) {
     } else {
 
         console.log("isEditMode:" + isEditMode);
-        
+
         // View mode: Show only the description mentioned in anchor #
         let url = window.location.href;
         let langcurr = url.substring(url.indexOf("#") + 1);

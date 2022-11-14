@@ -82,18 +82,20 @@ function updateFog(){
     let fogFar = document.getElementById('FogFar').value;
     let fogDensity = document.getElementById('FogDensity').value;
 
-
-
-
-
     let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
 
     if(fogType === 'linear') {
         envir.scene.fog = new THREE.Fog(hex, fogNear, fogFar);
     } else if(fogType === 'exponential') {
         envir.scene.fog = new THREE.FogExp2(hex, fogDensity);
-    } else {
-        envir.scene.fog = null;
+    } else if(fogType === 'none') {
+        if (envir.scene.fog){
+            envir.scene.fog = null;
+            console.log("fog exists");
+        } else {
+            console.log("fog does not exists");
+        }
+
     }
 
 
