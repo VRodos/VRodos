@@ -114,11 +114,26 @@ Add this to .htaccess
  
   Add these to .htaccess to allow big files to be uploaded to wordpress 
 
-  php_value upload_max_filesize 512M
-  php_value post_max_size 512M
-  php_value memory_limit 1024M
-  php_value max_execution_time 1800
-  php_value max_input_time 1800
-  php_value max_input_vars 4000
+  - php_value upload_max_filesize 512M
+  - php_value post_max_size 512M
+  - php_value memory_limit 1024M
+  - php_value max_execution_time 1800
+  - php_value max_input_time 1800
+  - php_value max_input_vars 4000
 
 
+### Start servers
+
+Two types of servers are needed:
+
+  - Apache server, e.g. locally using a xampp (Windows and Linux are supported).
+    - It can run on http://127.0.0.1:80
+  - Node.js server for Networked-Aframe. To start Node.js server 
+    1) Go to networked-aframe/server and type: 
+        > npm install --force
+        
+        - Force is needed because some packages are obsolete
+    2) Run server:
+        > start node .\easyrtc-server.js
+        
+        - Go to http://127.0.0.1:5832/index_60.html - where 60 should be replaced with the id of your scene - to see if your server is delivering anything. Xampp server should be up and running as a prerequisite because the content is fetched from http://127.0.0.1:80 as Node.js handles only streaming data for the multiplaying. 
