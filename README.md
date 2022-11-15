@@ -63,7 +63,7 @@ Interface Pages
 * Express 4 for Node.js 
 
 
-**Instructions**
+**Instructions for installation in WordPress**
 
 - Download as zip
 - Rename VRodos-master.zip to VRodos.zip
@@ -122,12 +122,14 @@ Add this to .htaccess
   - php_value max_input_vars 4000
 
 
-### Start servers
+### Servers install and run
 
 Two types of servers are needed:
 
-  - Apache server, e.g. locally using a xampp (Windows and Linux are supported).
+  - Apache server, e.g. locally using Xampp (Windows and Linux are supported).
     - It can run on http://127.0.0.1:80
+    - Xampp server is used for the content of the scenes.
+    - Xampp contains also mysql server which is needed for WordPress to work (and somewhere to save the data).
   - Node.js server for Networked-Aframe. To start Node.js server 
     1) Go to networked-aframe/server and type: 
         > npm install --force
@@ -136,4 +138,4 @@ Two types of servers are needed:
     2) Run server:
         > start node .\easyrtc-server.js
         
-        - Go to http://127.0.0.1:5832/index_60.html - where 60 should be replaced with the id of your scene - to see if your server is delivering anything. Xampp server should be up and running as a prerequisite because the content is fetched from http://127.0.0.1:80 as Node.js handles only streaming data for the multiplaying. 
+        - Go to http://127.0.0.1:5832/index_60.html - where 60 should be replaced with the id of your scene - to see if your server is delivering anything. Xampp server should be up and running as a prerequisite because the content is fetched from http://127.0.0.1:80 as Node.js handles only streaming data for the multi-playing.
