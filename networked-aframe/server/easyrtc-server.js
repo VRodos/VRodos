@@ -1,5 +1,6 @@
 // Load required modules
 const http = require("http");                 // http server core module
+
 const path = require("path");
 const express = require("express");           // web framework external module
 const socketIo = require("socket.io");        // web socket external module
@@ -13,6 +14,21 @@ const port = process.env.PORT || 5832;
 
 // Setup and configure Express http server.
 const app = express();
+
+// var fs = require('fs');
+// var https_options = {
+//     key: fs.readFileSync("/path/to/private.key"),
+//     cert: fs.readFileSync("/path/to/your_domain_name.crt"),
+//     ca: [
+//         fs.readFileSync('path/to/CA_root.crt'),
+//         fs.readFileSync('path/to/ca_bundle_certificate.crt')
+//     ]
+// };
+
+
+
+
+
 
 // var corsOptions = {
 //     origin: '*',
@@ -84,8 +100,19 @@ const webServer = http.createServer(app);
 // Start Socket.io so it attaches itself to Express server
 const socketServer = socketIo.listen(webServer, {"log level": 1});
 const myIceServers = [
-  {"urls":"stun:stun1.l.google.com:19302"},
-  {"urls":"stun:stun2.l.google.com:19302"},
+    {
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+    }
+
+     // Turn servers are needed for mobile devices in public networks !!!!
+
+
+    // {"urls":"stun:openrelay.metered.ca:80"},
+    // {"urls":"stun.nextcloud.com:443"}
+  //  {"urls":"stun:stun1.l.google.com:19302"}
+  //{"urls":"stun:stun2.l.google.com:19302"},
   // {
   //   "urls":"turn:[ADDRESS]:[PORT]",
   //   "username":"[USERNAME]",
