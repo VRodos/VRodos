@@ -54,12 +54,12 @@ add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
 
 function vrodos_load_custom_functions_vreditor(){
     wp_enqueue_script('vrodos_3d_editor_environmentals');
-	wp_enqueue_script('vrodos_jscolorpick');
+    wp_enqueue_script('vrodos_jscolorpick');
     wp_enqueue_script('vrodos_keyButtons');
     wp_enqueue_script('vrodos_rayCasters');
     wp_enqueue_script('vrodos_auxControlers');
     wp_enqueue_script('vrodos_BordersFinder');
-	wp_enqueue_script('vrodos_LightsPawn_Loader');
+    wp_enqueue_script('vrodos_LightsPawn_Loader');
     wp_enqueue_script('vrodos_LoaderMulti');
     wp_enqueue_script('vrodos_movePointerLocker');
     wp_enqueue_script('vrodos_addRemoveOne');
@@ -85,8 +85,8 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 
     // For autosave after each action
     var mapActions = {}; // You could also use an array
-    
-    
+
+
     var showPawnPositions = "false";
 </script>
 
@@ -104,21 +104,21 @@ $upload_url = wp_upload_dir()['baseurl'];
 $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 
 // Scene
-$current_scene_id = sanitize_text_field( intval( $_GET['vrodos_scene'] ));
+$current_scene_id = isset($_GET['vrodos_scene']) ? sanitize_text_field( intval( $_GET['vrodos_scene'] )) : null;
 
 // Project
-$project_id    = sanitize_text_field( intval( $_GET['vrodos_game'] ) );
+$project_id    = isset($_GET['vrodos_game']) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
 $project_post  = get_post($project_id);
 $projectSlug   = $project_post->post_name;
 
 // Get if project is : 'Archaeology' or 'Energy' or 'Chemistry'
-$project_type = vrodos_return_project_type($project_id)->string;
+$project_type = $project_id ? vrodos_return_project_type($project_id)->string : null;
 
 // Get project type icon
-$project_type_icon = vrodos_return_project_type($project_id)->icon;
+$project_type_icon = $project_id ? vrodos_return_project_type($project_id)->icon : null;
 
 // Get Joker project id
-$joker_project_id = get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID;
+$joker_project_id = $project_type ? get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID : null;
 
 // Wind Energy Only
 if ($project_type === 'Energy') {
@@ -136,7 +136,7 @@ $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
-                                                    vrodos_getDefaultJSONscene(strtolower($project_type));
+    vrodos_getDefaultJSONscene(strtolower($project_type));
 // Load resources 3D
 $SceneParserPHP = new ParseJSON($upload_url);
 $SceneParserPHP->init($sceneJSON);
@@ -156,11 +156,15 @@ $videos = vrodos_getVideoAttachmentsFromMediaLibrary();
 
 // for vr_editor
 $urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
-                                '&vrodos_scene=' .$current_scene_id . '&vrodos_asset=' );
+    '&vrodos_scene=' .$current_scene_id . '&vrodos_asset=' );
 
 // User data
-$user_data = get_userdata( get_current_user_id() );
-$user_email = $user_data->user_email;
+$current_user = wp_get_current_user();
+if ($current_user->exists()) {
+    $user_data = get_userdata( get_current_user_id() );
+    $user_email = $user_data->user_email;
+}
+
 
 
 // Shift vars to Javascript side
@@ -215,7 +219,7 @@ $allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
 //fwrite($ff, "2:".print_r($projectSlug,true));
 //fclose($ff);
 
-$parent_project_id_as_term_id = $allScenePGame->term_id;
+$parent_project_id_as_term_id = $allScenePGame ? $allScenePGame->term_id : null;
 
 if ($project_type === "Chemistry") {
     $analytics_molecule_checklist = vrodos_derive_molecules_checklist();
@@ -227,19 +231,19 @@ if ($project_type === "Chemistry") {
 if(vrodos_getUnity_local_or_remote() != 'remote') {
 
     // Local compile
-	$gameUnityProject_dirpath = $upload_dir . '\\' . $projectSlug . 'Unity';
-	$gameUnityProject_urlpath = $pluginpath . '/../../uploads/' . $projectSlug . 'Unity/';
+    $gameUnityProject_dirpath = $upload_dir . '\\' . $projectSlug . 'Unity';
+    $gameUnityProject_urlpath = $pluginpath . '/../../uploads/' . $projectSlug . 'Unity/';
 
 } else {
 
     // Remote compile
-	$ftp_cre = vrodos_get_ftpCredentials();
-	$ftp_host = $ftp_cre['address'];
+    $ftp_cre = vrodos_get_ftpCredentials();
+    $ftp_host = $ftp_cre['address'];
 
-	$gamesFolder = 'COMPILE_UNITY3D_GAMES';
+    $gamesFolder = 'COMPILE_UNITY3D_GAMES';
 
-	$gameUnityProject_dirpath = $gamesFolder."/".$projectSlug."Unity";
-	$gameUnityProject_urlpath = "http://".$ftp_host."/".$gamesFolder."/".$projectSlug."Unity";
+    $gameUnityProject_dirpath = $gamesFolder."/".$projectSlug."Unity";
+    $gameUnityProject_urlpath = "http://".$ftp_host."/".$gamesFolder."/".$projectSlug."Unity";
 }
 
 
@@ -249,29 +253,29 @@ $thepath = $pluginpath . '/js_libs/ajaxes/vrodos_request_compile.js';
 wp_enqueue_script( 'ajax-script_compile', $thepath, array('jquery') );
 
 wp_localize_script( 'ajax-script_compile',
-                'my_ajax_object_compile',
+    'my_ajax_object_compile',
 
-                        array( 'ajax_url' => admin_url( 'admin-ajax.php'),
-                               'projectId' => $project_id,
-                               'slug' => $projectSlug,
-                               'sceneId' => $current_scene_id
+    array( 'ajax_url' => admin_url( 'admin-ajax.php'),
+        'projectId' => $project_id,
+        'slug' => $projectSlug,
+        'sceneId' => $current_scene_id
 //                        ,
 //                               'gameUnityProject_dirpath' => $gameUnityProject_dirpath,
 //                               'gameUnityProject_urlpath' => $gameUnityProject_urlpath
-                        )
+    )
 );
 
 
 // DELETE SCENE AJAX
 wp_enqueue_script( 'ajax-script_deletescene', $pluginpath . '/js_libs/ajaxes/delete_scene.js', array('jquery') );
 wp_localize_script( 'ajax-script_deletescene', 'my_ajax_object_deletescene',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php'))
+    array( 'ajax_url' => admin_url( 'admin-ajax.php'))
 );
 
 //FOR SAVING extra keys
 wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
 wp_localize_script( 'ajax-script_savegio', 'my_ajax_object_savegio',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'project_id' => $project_id )
+    array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'project_id' => $project_id )
 );
 
 // Asset Browser
@@ -281,14 +285,14 @@ wp_localize_script( 'ajax-script_filebrowse', 'my_ajax_object_fbrowse', array( '
 // Save scene
 wp_enqueue_script( 'ajax-script_savescene', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
 wp_localize_script( 'ajax-script_savescene', 'my_ajax_object_savescene',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
+    array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
 );
 
 // Delete Asset
 wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.
     '/js_libs/ajaxes/delete_asset.js', array('jquery') );
 wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+    array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );
 
 // Fetch Asset
@@ -309,24 +313,24 @@ wp_head();
 //==========================================
 
 if ($project_type === 'Archaeology') {
-	$single_lowercase = "tour";
-	$single_first = "Tour";
+    $single_lowercase = "tour";
+    $single_first = "Tour";
 } else if ($project_type === 'Energy' || $project_type === 'Chemistry'){
-	$single_lowercase = "lab";
-	$single_first = "Lab";
+    $single_lowercase = "lab";
+    $single_first = "Lab";
 } else {
-	$single_lowercase = "project";
-	$single_first = "Project";
+    $single_lowercase = "project";
+    $single_first = "Project";
 }
 
 // For Chemistry only
 if(isset($_POST['submitted2']) && isset($_POST['post_nonce_field2']) && wp_verify_nonce($_POST['post_nonce_field2'], 'post_nonce')) {
-	$expID = $_POST['exp-id'];
-	update_post_meta( $project_id, 'vrodos_project_expID', $expID);
+    $expID = $_POST['exp-id'];
+    update_post_meta( $project_id, 'vrodos_project_expID', $expID);
 
-	$loadMainSceneLink = get_permalink($editscenePage[0]->ID) . $parameter_Scenepass . $current_scene_id . '&vrodos_game=' . $project_id . '&scene_type=scene';
-	wp_redirect( $loadMainSceneLink );
-	exit;
+    $loadMainSceneLink = get_permalink($editscenePage[0]->ID) . $parameter_Scenepass . $current_scene_id . '&vrodos_game=' . $project_id . '&scene_type=scene';
+    wp_redirect( $loadMainSceneLink );
+    exit;
 }
 
 
@@ -334,91 +338,91 @@ if(isset($_POST['submitted2']) && isset($_POST['post_nonce_field2']) && wp_verif
 // ADD NEW SCENE
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
 
-	$newSceneType = $_POST['sceneTypeRadio'];
+    $newSceneType = $_POST['sceneTypeRadio'];
 
-	$sceneMetaType = 'scene';//default 'scene' MetaType (3js)
-	$game_type_chosen_slug = '';
+    $sceneMetaType = 'scene';//default 'scene' MetaType (3js)
+    $game_type_chosen_slug = '';
 
-	$default_json = '';
-	$thegameType = wp_get_post_terms($project_id, 'vrodos_game_type');
-	if($thegameType[0]->slug == 'archaeology_games'){
-	    
-	    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
-	    
-	    $game_type_chosen_slug = 'archaeology_games';
-	    $default_json = vrodos_getDefaultJSONscene('archaeology');
-	    
-	} elseif($thegameType[0]->slug == 'energy_games'){
-	    
-	    $newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');
-	    $game_type_chosen_slug = 'energy_games';
-	    $default_json = vrodos_getDefaultJSONscene('energy');
-	
-	}elseif($thegameType[0]->slug == 'chemistry_games'){
-	 
-		$game_type_chosen_slug = 'chemistry_games';
-		
-		$default_json = vrodos_getDefaultJSONscene('chemistry');
-		
-		if($newSceneType == 'lab'){
-		
-		    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');
-		
-		} elseif($newSceneType == '2d'){
-		
-		    $newscene_yaml_tax = get_term_by('slug', 'exam2d-chem-yaml', 'vrodos_scene_yaml');
-		    $sceneMetaType = 'sceneExam2d';
-		
-		} elseif($newSceneType == '3d'){
-		
-		    $newscene_yaml_tax = get_term_by('slug', 'exam3d-chem-yaml', 'vrodos_scene_yaml');
-		    $sceneMetaType = 'sceneExam3d';
-		}
-	}
+    $default_json = '';
+    $thegameType = wp_get_post_terms($project_id, 'vrodos_game_type');
+    if($thegameType[0]->slug == 'archaeology_games'){
 
-	$scene_taxonomies = array(
-		'vrodos_scene_pgame' => array(
-			$parent_project_id_as_term_id,
-		),
-		'vrodos_scene_yaml' => array(
-			$newscene_yaml_tax->term_id,
-		)
-	);
+        $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
 
-	$scene_metas = array(
-		'vrodos_scene_default' => 0,
+        $game_type_chosen_slug = 'archaeology_games';
+        $default_json = vrodos_getDefaultJSONscene('archaeology');
+
+    } elseif($thegameType[0]->slug == 'energy_games'){
+
+        $newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');
+        $game_type_chosen_slug = 'energy_games';
+        $default_json = vrodos_getDefaultJSONscene('energy');
+
+    }elseif($thegameType[0]->slug == 'chemistry_games'){
+
+        $game_type_chosen_slug = 'chemistry_games';
+
+        $default_json = vrodos_getDefaultJSONscene('chemistry');
+
+        if($newSceneType == 'lab'){
+
+            $newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');
+
+        } elseif($newSceneType == '2d'){
+
+            $newscene_yaml_tax = get_term_by('slug', 'exam2d-chem-yaml', 'vrodos_scene_yaml');
+            $sceneMetaType = 'sceneExam2d';
+
+        } elseif($newSceneType == '3d'){
+
+            $newscene_yaml_tax = get_term_by('slug', 'exam3d-chem-yaml', 'vrodos_scene_yaml');
+            $sceneMetaType = 'sceneExam3d';
+        }
+    }
+
+    $scene_taxonomies = array(
+        'vrodos_scene_pgame' => array(
+            $parent_project_id_as_term_id,
+        ),
+        'vrodos_scene_yaml' => array(
+            $newscene_yaml_tax->term_id,
+        )
+    );
+
+    $scene_metas = array(
+        'vrodos_scene_default' => 0,
         'vrodos_scene_caption' => esc_attr(strip_tags($_POST['scene-caption']))
-	);
+    );
 
-	//REGIONAL SCENE EXTRA TYPE FOR ENERGY GAMES
-	$isRegional = 0;//default value
-	if($thegameType[0]->slug == 'energy_games'){
-		if($_POST['regionalSceneCheckbox'] == 'on'){$isRegional = 1;}
-		$scene_metas['vrodos_isRegional']= $isRegional;
-		$scene_metas['vrodos_scene_environment'] = 'fields';
-	}
+    //REGIONAL SCENE EXTRA TYPE FOR ENERGY GAMES
+    $isRegional = 0;//default value
+    if($thegameType[0]->slug == 'energy_games'){
+        if($_POST['regionalSceneCheckbox'] == 'on'){$isRegional = 1;}
+        $scene_metas['vrodos_isRegional']= $isRegional;
+        $scene_metas['vrodos_scene_environment'] = 'fields';
+    }
 
-	//Add the final MetaType of the Scene
-	$scene_metas['vrodos_scene_metatype']= $sceneMetaType;
+    //Add the final MetaType of the Scene
+    $scene_metas['vrodos_scene_metatype']= $sceneMetaType;
 
-	$scene_information = array(
-		'post_title' => esc_attr(strip_tags($_POST['scene-title'])),
-		'post_content' => $default_json,
-		'post_type' => 'vrodos_scene',
-		'post_status' => 'publish',
-		'tax_input' => $scene_taxonomies,
-		'meta_input' => $scene_metas,
-	);
+    $scene_information = array(
+        'post_title' => esc_attr(strip_tags($_POST['scene-title'])),
+        'post_content' => $default_json,
+        'post_type' => 'vrodos_scene',
+        'post_status' => 'publish',
+        'tax_input' => $scene_taxonomies,
+        'meta_input' => $scene_metas,
+    );
 
-	$scene_id = wp_insert_post($scene_information);
+    $scene_id = wp_insert_post($scene_information);
 
-	if($scene_id){
-		if($sceneMetaType == 'sceneExam2d' || $sceneMetaType == 'sceneExam3d'){$edit_scene_page_id = $editsceneExamPage[0]->ID;}
-		else{$edit_scene_page_id = $editscenePage[0]->ID;}
-		$loadMainSceneLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $sceneMetaType;
-		wp_redirect( $loadMainSceneLink );
-		exit;
-	}
+    if($scene_id){
+        if($sceneMetaType == 'sceneExam2d' || $sceneMetaType == 'sceneExam3d'){$edit_scene_page_id = $editsceneExamPage[0]->ID;}
+        else{$edit_scene_page_id = $editscenePage[0]->ID;}
+        $loadMainSceneLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $sceneMetaType;
+        wp_redirect( $loadMainSceneLink );
+        exit;
+    }
 }
 
 $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
@@ -431,7 +435,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
     <div class="DisplayBlock CenterContents">
         <i style="font-size: 64px; padding-top: 80px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
         <p class="mdc-typography--title"> Please <a class="mdc-theme--secondary"
-               href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform</p>
+                                                    href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform</p>
         <p class="mdc-typography--title"> Or
             <a class="mdc-theme--secondary" href="<?php echo wp_registration_url(); ?>">register</a>
             if you don't have an account</p>
@@ -439,19 +443,19 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
     <hr class="WhiteSpaceSeparator">
 
-    
-    
+
+
 <?php } else { ?>
 
     <!-- PANELS -->
     <div class="panels">
-        
+
         <!-- Panel 1 is the vr enivironment -->
         <div class="panel active" id="panel-1" role="tabpanel" aria-hidden="false">
-            
+
             <!-- 3D editor  -->
             <div id="vr_editor_main_div">
-                
+
                 <!-- Upper Toolbar -->
                 <div class="mdc-toolbar hidable scene_editor_upper_toolbar">
 
@@ -475,7 +479,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                         </a>
                     </div>
 
-                    
+
 
                     <!-- Compile Button -->
                     <a id="compileGameBtn"
@@ -485,7 +489,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                         COMPILE
                     </a>
 
-  
+
 
                     <?php // Compile Dialogue html
                     require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-CompileDialogue.php' );
@@ -495,19 +499,19 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
                 </div>
 
-                
-                
+
+
                 <!-- Scene JSON content TextArea display and set input field -->
                 <div id="sceneJsonContent" >
                       <textarea id="vrodos_scene_json_input"
-                    name="vrodos_scene_json_input"
-                    title="vrodos_scene_json_input"
-                    ><?php echo json_encode(json_decode($sceneJSON), JSON_PRETTY_PRINT ); ?>
+                                name="vrodos_scene_json_input"
+                                title="vrodos_scene_json_input"
+                      ><?php echo json_encode(json_decode($sceneJSON), JSON_PRETTY_PRINT ); ?>
                   </textarea>
                 </div>
 
 
-             
+
 
                 <!-- Lights -->
                 <div class="environmentBar hidable">
@@ -520,19 +524,19 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
                     <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
                     </div>
-                    
+
                     <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true">
-                            <header draggable="false" class="notdraggable">Sun</header>
-                            <img draggable="false" class="lighticon notdraggable"
-                                 src="<?php echo $pluginpath?>/images/lights/sun.png"/>
+                        <header draggable="false" class="notdraggable">Sun</header>
+                        <img draggable="false" class="lighticon notdraggable"
+                             src="<?php echo $pluginpath?>/images/lights/sun.png"/>
                     </div>
-                    
+
                     <div class="lightpawnbutton" data-lightPawn="Lamp" draggable="true">
                         <header draggable="false" class="notdraggable">Lamp</header>
-                          <img draggable="false" class="lighticon notdraggable"
-                           src="<?php echo $pluginpath?>/images/lights/lamp.png" draggable="false"/>
+                        <img draggable="false" class="lighticon notdraggable"
+                             src="<?php echo $pluginpath?>/images/lights/lamp.png" draggable="false"/>
                     </div>
-                    
+
                     <div class="lightpawnbutton" data-lightPawn="Spot" draggable="true">
                         <header draggable="false" class="notdraggable">Spot</header>
                         <img draggable="false" class="lighticon notdraggable"
@@ -559,20 +563,20 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                                style="width:45px;font-size:10px;min-height: 10px;margin-left:5px;height:20px;margin-bottom:4px;padding:0;"
                                onchange="changeRendererToneMapping(this.value);">
                     </div>
-                    
+
                     <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
                     </div>
-                    
-                   
+
+
 
                     <div class="environmentButton">
-                    <!--  Dimensionality 2D 3D toggle -->
-                    <a id="dim-change-btn" data-mdc-auto-init="MDCRipple"
-                       title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-                       class="EditorDimensionToggleBtn mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"
-                       style="width:45px;height:35px;min-width:20px">
-                        2D
-                    </a>
+                        <!--  Dimensionality 2D 3D toggle -->
+                        <a id="dim-change-btn" data-mdc-auto-init="MDCRipple"
+                           title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
+                           class="EditorDimensionToggleBtn mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"
+                           style="width:45px;height:35px;min-width:20px">
+                            2D
+                        </a>
                     </div>
 
                     <!-- The button to start walking in the 3d environment -->
@@ -582,7 +586,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                                class="mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
                                title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys"
                                data-mdc-auto-init="MDCRipple"
-                            style="width:45px; height:35px; min-width:20px; padding:5px">
+                               style="width:45px; height:35px; min-width:20px; padding:5px">
                                 <i class="material-icons">person</i>
                             </a>
                         </div>
@@ -597,8 +601,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                             <i class="material-icons">rotate_90_degrees_ccw</i>
                         </a>
                     </div>
-                    
-                    
+
+
                     <!-- Cogwheel options -->
                     <div class="environmentButton">
                         <div id="row_cogwheel" class="row-right-panel" style="display:inline-block">
@@ -611,8 +615,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                         </div>
                     </div>
 
-                    
-                    
+
+
                 </div>
 
                 <!-- Close all 2D UIs-->
@@ -622,11 +626,11 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                         <i class="material-icons" style="background: #ffffff; opacity:0.2; z-index:100000">visibility</i>
                     </a>
                 </div>
-                
+
                 <!-- Hierachy Viewer -->
-	            <?php
-	                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-HierarchyViewer.php');
-	            ?>
+                <?php
+                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-HierarchyViewer.php');
+                ?>
 
                 <!-- Pause rendering-->
                 <div id="divPauseRendering" class="pauseRenderingDivStyle">
@@ -682,79 +686,79 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                     </a>
 
                 </div>
-        
+
                 <!-- Popups -->
                 <?php
-                    require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-Popups.php');
-                 ?>
-                
+                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-Popups.php');
+                ?>
+
                 <!--  Open/Close Scene list panel-->
                 <a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable mdc-button mdc-button--raised mdc-button--primary mdc-button--dense" title="Toggle scenes list" data-mdc-auto-init="MDCRipple">
                     <i class="material-icons" style="margin:auto">menu</i>
                 </a>
 
                 <!-- Scenes Credits and Main menu List -->
-	            <?php
-	                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-OtherScenes.php');
-	            ?>
-             
+                <?php
+                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-OtherScenes.php');
+                ?>
+
 
             </div>   <!--   VR DIV   -->
 
 
 
             <?php
-           
-    
-                // Options dialogue
-                require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' );
-        
-                // Information for Wind Energy scenes
-                sceneDetailsInfo($project_type);
-           ?>
-      </div>
 
-       <?php
-         // Panels 2,3,4 are Analytics for Chemistry and WindEnergy projects
-         //panelsAnalytics($project_type, $project_saved_keys);
-       ?>
+
+            // Options dialogue
+            require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' );
+
+            // Information for Wind Energy scenes
+            sceneDetailsInfo($project_type);
+            ?>
+        </div>
+
+        <?php
+        // Panels 2,3,4 are Analytics for Chemistry and WindEnergy projects
+        //panelsAnalytics($project_type, $project_saved_keys);
+        ?>
     </div>
-    
+
     <!-- Scripts part 1: The GUIs -->
     <script type="text/javascript">
-    
+
         var mdc = window.mdc;
         var MDCSelect = mdc.select.MDCSelect;
-        
+
         mdc.autoInit();
-        
+
         // Delete scene dialogue
         var deleteDialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
         deleteDialog.focusTrap_.deactivate();
-        
+
         // // Compile dialogue
         var compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
         compileDialog.focusTrap_.deactivate();
-        
+
         // Project Analytics
         /// loadAnalyticsTab(projectId, scene_id, project_keys, game_type, user_email, current_user_id, energy_stats);
-    
+
         // Less top margin if not Admin
         // if (!isUserAdmin)
         //     document.getElementById("vr_editor_main_div").style.top = "28px";
-    
+
         // load asset browser with data
         jQuery(document).ready(function(){
-            
+
             vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
 
-            
+
             // make asset browser draggable: not working without get_footer
             //jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
         });
 
 
-        
+
     </script>
 
 
@@ -827,10 +831,10 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         // var labelInfo = new THREE.CSS2DObject(textInfo);
         //
         // transform_controls.add(labelInfo);
-        
+
         // ---------------------------------------------------------------------
 
-        
+
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
         var firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
@@ -846,10 +850,10 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
         // Add all in hierarchy viewer
         setHierarchyViewer();
-        
+
         // Add transform controls to scene
         envir.scene.add(transform_controls);
-        
+
         // Load Manager
         // Make progress bar visible
         jQuery("#progress").get(0).style.display = "block";
@@ -863,8 +867,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         manager.onProgress = function ( url, loaded, total ) {
             document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
         };
-      
-        
+
+
         // When all are finished loading place them in the correct position
         manager.onLoad = function () {
 
@@ -873,7 +877,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             let name = Object.keys(resources3D)[l - 1]; //Object.keys(resources3D).pop();
 
             let objItem = envir.scene.getObjectByName(name);
-            
+
             if (objItem === undefined){
                 return;
             } else {
@@ -886,7 +890,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             setHierarchyViewer();
             setDatGuiInitialVales();
-            
+
             // Set Target light for Spots
             for (let n in resources3D) {
                 (function (name) {
@@ -901,7 +905,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             envir.scene.traverse(function (obj) {
                 obj.frustumCulled = false;
             });
-            
+
             // Remote shadows. Recheck in v141
             envir.scene.children.forEach(function(item,index){
                 if(item.type ==="DirectionalLight" || item.type==="SpotLight" || item.type==="PointLight"){
@@ -923,8 +927,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         // Loader of assets
         var loaderMulti = new VRodos_LoaderMulti();
         loaderMulti.load(manager, resources3D, pluginPath);
-       
-        
+
+
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json){
 
@@ -942,8 +946,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             transform_controls = envir.scene.getObjectByName('myTransformControls');
             transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
-            
-            
+
+
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
         }
@@ -966,7 +970,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             // Render it
             //envir.renderer.render( envir.scene, curr_camera);
-            
+
             // Label is for setting labels to objects
             envir.labelRenderer.render( envir.scene, curr_camera);
 
@@ -982,8 +986,8 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
             if (envir.isComposerOn)
                 envir.composer.render();
-           
-            
+
+
             // Update it
             updatePositionsAndControls();
 
@@ -1001,14 +1005,14 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
             if (transform_controls.object) {
                 const affines = ['position', 'rotation', 'scale'];
                 for (let j=0; j<3; j++ ) {
-                     for (let i = 0; i < 3; i++) {
+                    for (let i = 0; i < 3; i++) {
                         if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
-                            
+
                             controlInterface.__controllers[j*3+i].updateDisplay();
                         }
-                     }
+                    }
                 }
-                
+
                 updatePositionsPhpAndJavsFromControlsAxes();
             }
         }
@@ -1019,10 +1023,10 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
         loadButtonActions();
 
         function attachToControls(name, objItem){
-            
+
             let trs_tmp = resources3D[name]['trs'];
             transform_controls.attach(objItem);
-            
+
             // highlight
             envir.outlinePass.selectedObjects = [objItem];
 
@@ -1033,7 +1037,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
                     trs_tmp['rotation'][2]);
                 transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
             }
-          
+
             jQuery('#object-manipulation-toggle').show();
             jQuery('#axis-manipulation-buttons').show();
             jQuery('#double-sided-switch').show();
@@ -1060,11 +1064,14 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
     </script>
 <?php }
 
-    // Add sceneType variable in js envir
-    $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
+// Add sceneType variable in js envir
+$sceneType = isset($_GET['vrodos_scene']) ? get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment") : null;
+
+if ($sceneType) {
     if (count($sceneType)>0) {
         echo '<script>';
         echo 'envir.sceneType="' . $sceneType[0] . '";';
         echo '</script>';
     }
+}
 ?>

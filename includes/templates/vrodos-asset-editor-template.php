@@ -60,52 +60,52 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
 
     if ($versionThreeJS === "119") {
 
-	    // 1. Three js library
-	    wp_enqueue_script( 'vrodos_load119_threejs' );
-	    wp_enqueue_script( 'vrodos_load124_statjs' );
+        // 1. Three js library
+        wp_enqueue_script( 'vrodos_load119_threejs' );
+        wp_enqueue_script( 'vrodos_load124_statjs' );
 
-	    // 2. Obj loader simple; For loading an uploaded obj
-	    wp_enqueue_script( 'vrodos_load87_OBJloader' );
+        // 2. Obj loader simple; For loading an uploaded obj
+        wp_enqueue_script( 'vrodos_load87_OBJloader' );
 
-	    // 3. Obj loader 2: For preview loading
-	    wp_enqueue_script( 'vrodos_load87_OBJloader2' );
-	    wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
+        // 3. Obj loader 2: For preview loading
+        wp_enqueue_script( 'vrodos_load87_OBJloader2' );
+        wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
 
-	    wp_enqueue_script( 'vrodos_load87_MTLloader' );
-	    wp_enqueue_script( 'vrodos_load87_PDBloader' );
-	    wp_enqueue_script( 'vrodos_load119_FBXloader' );
-	    //wp_enqueue_script('vrodos_load119_TrackballControls');
+        wp_enqueue_script( 'vrodos_load87_MTLloader' );
+        wp_enqueue_script( 'vrodos_load87_PDBloader' );
+        wp_enqueue_script( 'vrodos_load119_FBXloader' );
+        //wp_enqueue_script('vrodos_load119_TrackballControls');
 
-	    wp_enqueue_script( 'vrodos_load119_OrbitControls' );
-	    wp_enqueue_script( 'vrodos_load119_GLTFLoader' );
-	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
-	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
-	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
-	    wp_enqueue_script( 'vrodos_load119_CSS2DRenderer' );
+        wp_enqueue_script( 'vrodos_load119_OrbitControls' );
+        wp_enqueue_script( 'vrodos_load119_GLTFLoader' );
+        wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
+        wp_enqueue_script( 'vrodos_load119_DDSLoader' );
+        wp_enqueue_script( 'vrodos_load119_KTXLoader' );
+        wp_enqueue_script( 'vrodos_load119_CSS2DRenderer' );
 
     } else if ($versionThreeJS === "141"){
-	    // 1. Three js library
-	    wp_enqueue_script( 'vrodos_load141_threejs' );
-	    //wp_enqueue_script( 'vrodos_load124_statjs' );
+        // 1. Three js library
+        wp_enqueue_script( 'vrodos_load141_threejs' );
+        //wp_enqueue_script( 'vrodos_load124_statjs' );
 
-	    // 2. Obj loader simple; For loading an uploaded obj
-	    //wp_enqueue_script( 'vrodos_load87_OBJloader' );
+        // 2. Obj loader simple; For loading an uploaded obj
+        //wp_enqueue_script( 'vrodos_load87_OBJloader' );
 
-	    // 3. Obj loader 2: For preview loading
-	    //wp_enqueue_script( 'vrodos_load87_OBJloader2' );
-	    //wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
+        // 3. Obj loader 2: For preview loading
+        //wp_enqueue_script( 'vrodos_load87_OBJloader2' );
+        //wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
 
-	    //wp_enqueue_script( 'vrodos_load87_MTLloader' );
-	    //wp_enqueue_script( 'vrodos_load87_PDBloader' );
-	    //wp_enqueue_script( 'vrodos_load119_FBXloader' );
+        //wp_enqueue_script( 'vrodos_load87_MTLloader' );
+        //wp_enqueue_script( 'vrodos_load87_PDBloader' );
+        //wp_enqueue_script( 'vrodos_load119_FBXloader' );
 
 
-	    wp_enqueue_script( 'vrodos_load141_OrbitControls' );
-	    wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
+        wp_enqueue_script( 'vrodos_load141_OrbitControls' );
+        wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
 //	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
 //	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
 //	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
-	    wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
+        wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
     }
 
 
@@ -163,12 +163,12 @@ $game_type_obj = vrodos_return_project_type($project_id);
 $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
 
 //echo $assetPGame;
-$assetPGameID = $assetPGame->term_id;
-$assetPGameSlug = $assetPGame->slug;
+$assetPGameID = $assetPGame ? $assetPGame->term_id : null;
+$assetPGameSlug = $assetPGame ? $assetPGame->slug : null;
 
 $isJoker = (strpos($assetPGameSlug, 'joker') !== false) ? "true":"false";
 
-$asset_id_avail_joker = vrodos_get_assetids_joker($game_type_obj->string);
+$asset_id_avail_joker = $game_type_obj ? vrodos_get_assetids_joker($game_type_obj->string) : null;
 
 $isUserloggedIn = is_user_logged_in();
 $current_user = wp_get_current_user();
@@ -176,7 +176,11 @@ $current_user = wp_get_current_user();
 $login_username = $current_user->user_login;
 $isUserAdmin = current_user_can('administrator');
 
-$isEditMode = $_GET['preview'] == '1' ? FALSE : TRUE;
+$isEditMode = null;
+if (isset($_GET['preview'])) {
+    $isEditMode = !($_GET['preview'] == '1');
+}
+
 
 // Default image to show when there are no images for the asset
 $defaultImage = plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  );
@@ -196,6 +200,7 @@ if(isset($_GET['vrodos_asset'])) {
     $author_id = get_post_field('post_author', $asset_id);
 }
 
+$author_id = null;
 if ($isUserloggedIn) {
     $user_id = get_current_user_id();
 
@@ -228,7 +233,7 @@ $archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
 
 $all_game_category = get_the_terms( $project_id, 'vrodos_game_type' );
 
-$game_category  = $all_game_category[0]->slug;
+$game_category = $all_game_category ? $all_game_category[0]->slug : null;
 
 $scene_data = vrodos_getFirstSceneID_byProjectID($project_id,$game_category);//first 3D scene id
 
@@ -752,41 +757,41 @@ if($asset_id != null) {
                     <label id="glbRadio-label" for="glbRadio" style="margin-bottom: 0;">Khronos GLB file</label>
                 </li>
 
-<!--                <li class="mdc-form-field" id="fbxRadioListItem" onclick="loadFileInputLabel('fbx')">-->
-<!--                    <div class="mdc-radio" >-->
-<!--                        <input class="mdc-radio__native-control" type="radio" id="fbxRadio"-->
-<!--                               name="objectTypeRadio" value="fbx">-->
-<!--                        <div class="mdc-radio__background">-->
-<!--                            <div class="mdc-radio__outer-circle"></div>-->
-<!--                            <div class="mdc-radio__inner-circle"></div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                    <label id="fbxRadio-label" for="fbxRadio" style="margin-bottom: 0;">FBX file</label>-->
-<!--                </li>-->
-<!---->
-<!--                <li class="mdc-form-field" id="pdbRadioListItem" onclick="loadFileInputLabel('pdb')">-->
-<!--                    <div class="mdc-radio">-->
-<!--                        <input class="mdc-radio__native-control" type="radio" id="pdbRadio"-->
-<!--                               name="objectTypeRadio" value="pdb">-->
-<!--                        <div class="mdc-radio__background">-->
-<!--                            <div class="mdc-radio__outer-circle"></div>-->
-<!--                            <div class="mdc-radio__inner-circle"></div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                    <label id="pdbRadio-label" for="pdbRadio" style="margin-bottom: 0;">Protein Data Bank (PDB) file</label>-->
-<!--                </li>-->
-<!---->
-<!--                <li class="mdc-form-field" id="mtlRadioListItem" onclick="loadFileInputLabel('obj')">-->
-<!--                    <div class="mdc-radio">-->
-<!--                        <input class="mdc-radio__native-control" type="radio" id="mtlRadio"-->
-<!--                               name="objectTypeRadio" value="mtl">-->
-<!--                        <div class="mdc-radio__background">-->
-<!--                            <div class="mdc-radio__outer-circle"></div>-->
-<!--                            <div class="mdc-radio__inner-circle"></div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                    <label id="mtlRadio-label" for="mtlRadio" style="margin-bottom: 0;">MTL & OBJ files</label>-->
-<!--                </li>-->
+                <!--                <li class="mdc-form-field" id="fbxRadioListItem" onclick="loadFileInputLabel('fbx')">-->
+                <!--                    <div class="mdc-radio" >-->
+                <!--                        <input class="mdc-radio__native-control" type="radio" id="fbxRadio"-->
+                <!--                               name="objectTypeRadio" value="fbx">-->
+                <!--                        <div class="mdc-radio__background">-->
+                <!--                            <div class="mdc-radio__outer-circle"></div>-->
+                <!--                            <div class="mdc-radio__inner-circle"></div>-->
+                <!--                        </div>-->
+                <!--                    </div>-->
+                <!--                    <label id="fbxRadio-label" for="fbxRadio" style="margin-bottom: 0;">FBX file</label>-->
+                <!--                </li>-->
+                <!---->
+                <!--                <li class="mdc-form-field" id="pdbRadioListItem" onclick="loadFileInputLabel('pdb')">-->
+                <!--                    <div class="mdc-radio">-->
+                <!--                        <input class="mdc-radio__native-control" type="radio" id="pdbRadio"-->
+                <!--                               name="objectTypeRadio" value="pdb">-->
+                <!--                        <div class="mdc-radio__background">-->
+                <!--                            <div class="mdc-radio__outer-circle"></div>-->
+                <!--                            <div class="mdc-radio__inner-circle"></div>-->
+                <!--                        </div>-->
+                <!--                    </div>-->
+                <!--                    <label id="pdbRadio-label" for="pdbRadio" style="margin-bottom: 0;">Protein Data Bank (PDB) file</label>-->
+                <!--                </li>-->
+                <!---->
+                <!--                <li class="mdc-form-field" id="mtlRadioListItem" onclick="loadFileInputLabel('obj')">-->
+                <!--                    <div class="mdc-radio">-->
+                <!--                        <input class="mdc-radio__native-control" type="radio" id="mtlRadio"-->
+                <!--                               name="objectTypeRadio" value="mtl">-->
+                <!--                        <div class="mdc-radio__background">-->
+                <!--                            <div class="mdc-radio__outer-circle"></div>-->
+                <!--                            <div class="mdc-radio__inner-circle"></div>-->
+                <!--                        </div>-->
+                <!--                    </div>-->
+                <!--                    <label id="mtlRadio-label" for="mtlRadio" style="margin-bottom: 0;">MTL & OBJ files</label>-->
+                <!--                </li>-->
             </ul>
 
 
@@ -977,11 +982,14 @@ if($asset_id != null) {
             <!--Carousel slideshow slides-->
 
             <!-- Video -->
-            <?php $showVid = in_array( $saved_term[0]->slug , ['artifact'])?'':'none';
+            <?php
+            $showVid = $saved_term ? in_array( $saved_term[0]->slug, ['artifact'])?'':'none' : null;
             $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
             ?>
             <!-- Image -->
-            <?php $showImageFields = in_array($saved_term[0]->slug,['artifact'])?'':'none';  ?>
+            <?php
+                $showImageFields = $saved_term ? in_array($saved_term[0]->slug,['artifact'])?'':'none' : null;
+            ?>
 
             <div class="slideshow-container">
 
@@ -1334,25 +1342,25 @@ if($asset_id != null) {
 
     // ------- Class to load 3D model ---------
     let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById( 'previewCanvas' ),
-                                                            document.getElementById( 'previewCanvasLabels' ),
-                                                            document.getElementById('animButton1'),
-                                                            document.getElementById('previewProgressLabel'),
-                                                            document.getElementById('previewProgressSliderLine'),
-                                                            back_3d_color,
-                                                            audio_file,
-                                                            path_url, // OBJ textures path
-                                                            mtl_file_name,
-                                                            obj_file_name,
-                                                            pdb_file_name,
-                                                            fbx_file_name,
-                                                            glb_file_name,
-                                                            textures_fbx_string_connected,
-                                                            true,
-                                                            false,
-                                                            false,
-                                                            true,
-                                                            assettrs,
-                                                            document.getElementById('boundSphButton'));
+        document.getElementById( 'previewCanvasLabels' ),
+        document.getElementById('animButton1'),
+        document.getElementById('previewProgressLabel'),
+        document.getElementById('previewProgressSliderLine'),
+        back_3d_color,
+        audio_file,
+        path_url, // OBJ textures path
+        mtl_file_name,
+        obj_file_name,
+        pdb_file_name,
+        fbx_file_name,
+        glb_file_name,
+        textures_fbx_string_connected,
+        true,
+        false,
+        false,
+        true,
+        assettrs,
+        document.getElementById('boundSphButton'));
 
 
 
