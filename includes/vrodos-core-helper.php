@@ -41,7 +41,7 @@ function vrodos_return_project_type($id) {
 
 	$all_project_category = get_the_terms( $id, 'vrodos_game_type' );
 
-	$project_category = $all_project_category[0]->name;
+	$project_category = $all_project_category ? $all_project_category[0]->name : null;
 	
 	$project_type_icon = vrodos_project_type_icon($project_category);
 
