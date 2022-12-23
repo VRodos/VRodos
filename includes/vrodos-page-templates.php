@@ -46,8 +46,8 @@ class vrodosTemplate {
             '/templates/vrodos-edit-3D-scene-template.php'     => 'Scene 3D Editor Template',
             '/templates/vrodos-view-3D-scene-template.php'     => 'Scene 3D Viewer Template',
             '/templates/vrodos-asset-editor-template.php'     => 'Asset Editor Template',
-            '/templates/vrodos-edit-2D-scene-template.php'     => 'Scene 2D Editor Template ',
-            '/templates/vrodos-edit-sceneExam-template.php'     => 'Scene Exam Editor Template',
+            /*'/templates/vrodos-edit-2D-scene-template.php'     => 'Scene 2D Editor Template ',
+            '/templates/vrodos-edit-sceneExam-template.php'     => 'Scene Exam Editor Template',*/
         );
         
     }
@@ -195,7 +195,7 @@ function vrodos_create_pages() {
     }
     
     // 4.  2D Scene editor
-    if (! vrodos_get_page_by_slug('vrodos-edit-2d-scene-page')) {
+  /*  if (! vrodos_get_page_by_slug('vrodos-edit-2d-scene-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Scene 2D Editor Page',
             'post_type' => 'page',
@@ -212,11 +212,11 @@ function vrodos_create_pages() {
         }
         
         update_option('hclpage', $new_page_id);
-    }
+    }*/
 
     
     // 5. Exam page
-    if (! vrodos_get_page_by_slug('vrodos-edit-exam-scene-page')) {
+ /*   if (! vrodos_get_page_by_slug('vrodos-edit-exam-scene-page')) {
         $new_page_id = wp_insert_post(array(
             'post_title' => 'Edit Exam Scene Page',
             'post_type' => 'page',
@@ -233,7 +233,7 @@ function vrodos_create_pages() {
         }
         
         update_option('hclpage', $new_page_id);
-    }
+    }*/
 
     
     // 6. Asset Editor
