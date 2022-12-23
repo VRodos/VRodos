@@ -483,7 +483,7 @@ function vrodos_projects_taxtypes_define(){
     wp_insert_term('archaeology','vrodos_game_type',       array('description'=> 'Archaeology Projects', 'slug' => 'archaeology_games'));
     wp_insert_term('chemistry',  'vrodos_game_type',       array('description'=> 'Chemistry Projects',   'slug' => 'chemistry_games'));
 	wp_insert_term('vrexpo',     'vrodos_game_type',       array('description'=> 'Exhibition Projects', 'slug' => 'vrexpo_games'));
-	wp_insert_term('virtualproduction','vrodos_game_type', array('description'=> 'Archaeology Projects', 'slug' => 'virtualproduction_games'));
+	wp_insert_term('virtualproduction','vrodos_game_type', array('description'=> 'Virtual Production Projects', 'slug' => 'virtualproduction_games'));
 }
 
 

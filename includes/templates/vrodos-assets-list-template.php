@@ -68,29 +68,14 @@ $newAssetPage = vrodos_getEditpage('asset');
 //$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&vrodos_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
 get_header();
-
 ?>
 
 
 
 <?php
 
-// Display Login name at right
-if($isUserloggedIn){ ?>
-    <span style="float:right; margin-right:5px; display:inline-table;margin-top:10px">Welcome,
-        <a href="<?php echo home_url(); ?>/account/" style="color:dodgerblue">
-              <?php echo $current_user->display_name;?>
-        </a>
-    </span>
-<?php } ?>
-
-
-<?php
-
 $user_id = get_current_user_id();
-
 $current_project = '';
-
 
 $single_project_asset_list = false;
 if(isset($_GET['vrodos_project_id'])) {
@@ -121,19 +106,25 @@ $link_to_edit = home_url().'/vrodos-asset-editor-page/?';
 if ($single_project_asset_list)
     $link_to_edit = $link_to_edit. "singleproject=true&";
 
-
-
 ?>
 
 
 <!-- Display assets Grid-->
-<div class="assets-list-front mdc-layout-grid" style="min-height:900px;">
+<div class="assets-list-front mdc-layout-grid">
 
     <span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">Assets Manager</span>
 
-
     <?php
-    if ($isUserloggedIn){
+    if ($isUserloggedIn){ ?>
+
+        <span style="float:right; margin-right:5px; display:inline-table;margin-top:10px">Welcome,
+        <a href="<?php echo home_url(); ?>/account/" style="color:dodgerblue">
+              <?php echo $current_user->display_name;?>
+        </a>
+        </span>
+
+        <?php
+
         if( $single_project_asset_list){
             $helpMessage = 'A list of your private Assets belonging to [ '.$current_game_project_post->post_title.' ]. First tab allows to add a new private one.';
         } else {
@@ -252,22 +243,23 @@ if ($single_project_asset_list)
                 </div>
             </div>
         <?php } ?>
-
     </div>
 
     <!--  No Assets Empty Repo-->
     <?php if ( !$assets ) :  ?>
-        <hr class="WhiteSpaceSeparator">
-        <div class="CenterContents" style="width:70%; min-height:800px;">
-            <i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true" title="No assets available">
-                insert_photo
-            </i>
-            <h3 class="mdc-typography--headline">No Assets available</h3>
+        <div class="mdc-layout-grid__inner grid-system-custom">
             <hr class="WhiteSpaceSeparator">
+            <div class="CenterContents" style="width:70%; min-height:800px;">
+                <i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true" title="No assets available">
+                    insert_photo
+                </i>
+                <h3 class="mdc-typography--headline">No Assets available</h3>
+                <hr class="WhiteSpaceSeparator">
+            </div>
         </div>
     <?php endif; ?>
-
 </div>
+
 
 
 <!--<div class="sidebar-shared-assets-front">
