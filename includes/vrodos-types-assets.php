@@ -164,19 +164,19 @@ function vrodos_assets_taxcategory_ipr(){
 
 
 
-//Create PathData for each asset as custom field in order to upload files at pathdata/Models folder
-function vrodos_create_pathdata_asset( $post_id ){
-    
+// Create PathData for each asset as custom field in order to upload files at pathdata/Models folder
+function vrodos_create_pathdata_asset( $post_id ) {
+
     if (get_post_type($post_id) === 'vrodos_asset3d') {
-        
-        $parentGameID = $_GET['vrodos_game'];
-        
+
+        $parentGameID = $_GET['vrodos_game'] ?? null;
+
         if (!is_numeric($parentGameID)) {
             echo "ERROR 455: ParentGameID is not numeric.";
             return;
         }
         
-        $parentGameID = intval($parentGameID, 10);
+        $parentGameID = intval($parentGameID);
         $parentGameSlug = ( $parentGameID > 0 ) ? get_post( $parentGameID)->post_name : NULL;
         
         update_post_meta($post_id,'vrodos_asset3d_pathData', $parentGameSlug);
