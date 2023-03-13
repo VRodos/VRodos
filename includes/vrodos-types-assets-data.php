@@ -1,7 +1,6 @@
 <?php
 
 
-
 // Create metabox with Custom Fields for Asset3D ($vrodos_databox1)
 $table_of_asset_fields = array(
     
@@ -157,10 +156,15 @@ function vrodos_assets_databox_show(){
         <?php
         //Hide-Show custom fields purpose
         $categoryAsset = wp_get_post_terms($post->ID, 'vrodos_asset3d_cat');
-        $categoryAssetSlug = $categoryAsset[0]->name;
-        $doorhideshow = 'none';$mediahideshow = 'none';
-        if ($categoryAssetSlug == 'Doors') {$doorhideshow = 'block';$mediahideshow = 'none';}
-        if ($categoryAssetSlug != 'Doors') {$doorhideshow = 'none';$mediahideshow = 'block';}
+
+        $doorhideshow = 'none';
+        $mediahideshow = 'none';
+
+        if ($categoryAsset) {
+            $categoryAssetSlug = $categoryAsset[0]->name;
+            $doorhideshow = ($categoryAssetSlug == 'Doors') ? 'block' : 'none';
+            $mediahideshow = ($categoryAssetSlug == 'Doors') ? 'none' : 'block';
+        }
         
         foreach ($vrodos_databox1['fields'] as $field) {
             if ($field['id']=='vrodos_asset3d_mtl'){

@@ -236,17 +236,14 @@ function vrodos_assets_tax_select_project_box_content($post){
         // Use nonce for verification
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_pgame_noncename' );
         $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_pgame', array('fields' => 'ids') );
-        
-        if(!$type_IDs) {
-            echo "term not found setting 0";
-            $type_IDs = 0;
-        }
+
+        $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
         
         $args = array(
             'show_option_none'   => 'Select Category',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $type_ID,
             'name'               => 'vrodos_asset3d_pgame',
             'taxonomy'           => 'vrodos_asset3d_pgame',
             'echo'               => 0,
@@ -305,16 +302,13 @@ function vrodos_assets_tax_select_category_box_content($post){
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_cat_noncename' );
         $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_cat', array('fields' => 'ids') );
 
-        if(!$type_IDs) {
-            echo "term not found setting 0";
-            $type_IDs = 0;
-        }
+        $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
         
         $args = array(
             'show_option_none'   => 'Select Category',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $type_ID,
             'name'               => 'vrodos_asset3d_cat',
             'taxonomy'           => 'vrodos_asset3d_cat',
             'echo'               => 0,
@@ -351,16 +345,13 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
         
         $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_ipr_cat', array('fields' => 'ids') );
 
-        if(!$type_IDs) {
-            echo "term not found setting 0";
-            $type_IDs = 0;
-        }
-        
+        $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
+
         $args = array(
             'show_option_none'   => 'Select IPR Category',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $type_ID,
             'name'               => 'vrodos_asset3d_ipr_cat',
             'taxonomy'           => 'vrodos_asset3d_ipr_cat',
             'echo'               => 0,
