@@ -173,11 +173,12 @@ function vrodos_create_pathdata_asset( $post_id ) {
 
         if (!is_numeric($parentGameID)) {
             echo "ERROR 455: ParentGameID is not numeric.";
+            echo '<br>';
             return;
         }
         
         $parentGameID = intval($parentGameID);
-        $parentGameSlug = ( $parentGameID > 0 ) ? get_post( $parentGameID)->post_name : NULL;
+        $parentGameSlug = ( $parentGameID > 0 ) ? get_post( $parentGameID )->post_name : NULL;
         
         update_post_meta($post_id,'vrodos_asset3d_pathData', $parentGameSlug);
     }
