@@ -838,10 +838,11 @@ function vrodos_assets_databox_save($post_id) {
     }
     
     foreach ($vrodos_databox1['fields'] as $field) {
-        
+
         $old = get_post_meta($post_id, $field['id'], true);
-        $new = $_POST[$field['id']];
-        
+
+        $new = isset($_POST[$field['id']]);
+
         update_post_meta($post_id, $field['id'], $new);
         
         if ($new && $new != $old) {
