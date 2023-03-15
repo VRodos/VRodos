@@ -397,7 +397,7 @@ function vrodos_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $ty
 
 
 // Asset: Used to save screenshot
-function vrodos_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id) {
+function vrodos_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id, $project_id) {
 
     $DS = DIRECTORY_SEPARATOR;
 
@@ -435,7 +435,7 @@ function vrodos_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id) 
 //    require_once(ABSPATH . 'wp-admin/includes/admin.php');
     
     // Get upload directory and do some sanitization
-    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'Models'.$DS;
+    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS . 'models' . $DS . $project_id . $DS;
     
     // Write file string to a file in server
     file_put_contents($upload_path . $hashed_filename,
