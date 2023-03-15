@@ -506,7 +506,7 @@ function vrodos_upload_asset_screenshot($imagefile, $imgTitle, $parent_post_id, 
 
 
 // Immitation of $_FILE through $_POST . This is for objs, fbx and mtls
-function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $TheFiles, $index_file) {
+function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $TheFiles, $index_file, $project_id) {
     
     $DS = DIRECTORY_SEPARATOR;
     
@@ -520,7 +520,7 @@ function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $The
     
     $upload_dir = wp_upload_dir();
 
-    $upload_path = str_replace('/',$DS,$upload_dir['basedir']) . $DS .'Models'.$DS;
+    $upload_path = str_replace('/',$DS,$upload_dir['basedir']) . $DS . 'models' . $DS . $project_id . $DS;
 	
 	// Make Models folder
 	if (!is_dir($upload_path)) {
@@ -542,7 +542,7 @@ function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $The
     }
 
     //------------------- 2 Add post to DB as 'attachment' ----------------------------
-    $file_url = $upload_dir['baseurl'].'/Models/'.$hashed_filename;
+    $file_url = $upload_dir['baseurl'].'/models/'. $project_id . '/'.$hashed_filename;
     
     $attachment = array(
         'post_mime_type' => $type,

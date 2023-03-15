@@ -1,4 +1,4 @@
-input#title.mdc-textfield__input,
+/*input#title.mdc-textfield__input,
 input, textarea,
 input[type="text"],
 input[type="text"].mdc-textfield__input,
@@ -17,7 +17,7 @@ border-radius: 0; !important
 border: 0; !important
 background: transparent; !important
 border-color: transparent; !important
-}
+}*/
 
 textarea.mdc-textfield__input {
     resize: none;
@@ -909,8 +909,6 @@ video {
 
 
 
-
-
 /*Peer calls css*/
 
 .phonering-alo-phone.phonering-alo-static {
@@ -1408,8 +1406,6 @@ video {
         height:60%;
     }
 }
-
-
 
 
 
