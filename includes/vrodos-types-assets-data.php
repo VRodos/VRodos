@@ -540,34 +540,34 @@ function vrodos_assets_databox_show(){
             let set_to_post_id = <?php echo $post->ID; ?>; // Set this
 
             document.getElementById("vrodos_asset3d_mtl_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_mtl_btn', 'MTL');
+                uploadAssetToPage('vrodos_asset3d_mtl', 'MTL');
             }
             document.getElementById("vrodos_asset3d_obj_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_obj_btn', 'OBJ');
+                uploadAssetToPage('vrodos_asset3d_obj', 'OBJ');
             }
             document.getElementById("vrodos_asset3d_fbx_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_fbx_btn', 'FBX');
+                uploadAssetToPage('vrodos_asset3d_fbx', 'FBX');
             }
             document.getElementById("vrodos_asset3d_pdb_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_pdb_btn', 'PDB');
+                uploadAssetToPage('vrodos_asset3d_pdb', 'PDB');
             }
             document.getElementById("vrodos_asset3d_glb_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_glb_btn', 'GLB');
+                uploadAssetToPage('vrodos_asset3d_glb', 'GLB');
             }
             document.getElementById("vrodos_asset3d_diffimage_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_diffimage_btn', 'Diffusion Image');
+                uploadAssetToPage('vrodos_asset3d_diffimage', 'Diffusion Image');
             }
             document.getElementById("vrodos_asset3d_screenimage_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_screenimage_btn', 'Screenshot Image');
+                uploadAssetToPage('vrodos_asset3d_screenimage', 'Screenshot Image');
             }
             document.getElementById("vrodos_asset3d_image1_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_image1_btn', 'Image 1');
+                uploadAssetToPage('vrodos_asset3d_image1', 'Image 1');
             }
             document.getElementById("vrodos_asset3d_audio_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_audio_btn', 'Audio');
+                uploadAssetToPage('vrodos_asset3d_audio', 'Audio');
             }
             document.getElementById("vrodos_asset3d_video_btn").onclick = function() {
-                uploadAssetToPage('#vrodos_asset3d_video_btn', 'Video');
+                uploadAssetToPage('vrodos_asset3d_video', 'Video');
             }
 
             // TODO filter window by data type
@@ -586,11 +586,11 @@ function vrodos_assets_databox_show(){
                 });
 
                 // When a file is selected, run a callback.
-                file_frame.on( 'select', function(html) {
+                file_frame.on( 'select', function() {
                     // We set multiple to false so only get one file from the uploader
                     let attachment = file_frame.state().get('selection').first().toJSON();
 
-                    jQuery(id).val(attachment.id);
+                    jQuery('#'+id).val(attachment.id);
 
                     switch (type) {
                         case 'Diffusion Image':
