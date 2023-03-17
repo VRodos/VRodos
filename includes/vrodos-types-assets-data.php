@@ -3,35 +3,35 @@
 
 // Create metabox with Custom Fields for Asset3D ($vrodos_databox1)
 $table_of_asset_fields = array(
-    
+
     // Short , full, id, type, default, single, show_in_rest
     array('MTL File', 'MTL File', 'vrodos_asset3d_mtl', 'string',  '', true, true),
     array('Obj File', 'Obj File', 'vrodos_asset3d_obj', 'string',  '', true, true),
     array('Fbx File', 'Fbx File', 'vrodos_asset3d_fbx', 'string',  '', true, true),
     array('PDB File', 'PDB File', 'vrodos_asset3d_pdb', 'string',  '', true, true),
     array('GLB File', 'GLB File', 'vrodos_asset3d_glb', 'string',  '', true, true),
-    
+
     array('Audio File'                 , 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'string', '', true, true),
-    
+
     array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asset3d_diffimage', 'string', '', false, true),
     array('Screenshot Image'           ,'Screenshot Image'            , 'vrodos_asset3d_screenimage','string', '', true, true),
     array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_next_scene','string', '', true, true),
     array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'string', '', true, true),
     array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'string', '0', true, true),
-    
+
     array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'string', '', true, true),
     array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'string', '', true, true),
     array('Image 3', 'Image 3', 'vrodos_asset3d_image3', 'string', '', true, true),
     array('Image 4', 'Image 4', 'vrodos_asset3d_image4', 'string', '', true, true),
-    
+
     array('isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'string', 'false', true, true),
     array('isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'string', 'false', true, true),
-    
+
     array('fonts', 'fonts', 'vrodos_asset3d_fonts', 'string', '', true, true),
     array('back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'string', "rgb(221, 185, 155)", true, true),
-    
+
     array('Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'string', '0,0,0,0,0,0,0,0,0', true, true),
-    
+
     array('KidsDescription', 'Description in English for kids', 'vrodos_asset3d_description_kids', 'string', '', true, true),
     array('ExpertsDescription', 'Description in English for experts', 'vrodos_asset3d_description_experts','string', '', true, true),
     array('PerceptionDescription', 'Description in English for people with perception disabilities', 'vrodos_asset3d_description_perception', 'string', '', true, true)
@@ -42,23 +42,23 @@ $table_of_asset_fields = array(
 $languages = ['Greek', 'Spanish', 'French', 'German', 'Russian'];
 
 for ($i = 0; $i < count($languages); $i++){
-    
+
     // Title per language
     $table_of_asset_fields[] = array( $languages[$i].'Title', 'Title in '.$languages[$i],
         'vrodos_asset3d_title_'.strtolower($languages[$i]), 'string', '', true, true);
-    
+
     // Description per language
     $table_of_asset_fields[] = array($languages[$i], 'Description in '.$languages[$i],
         'vrodos_asset3d_description_'.strtolower($languages[$i]), 'string', '', true, true);
-    
+
     // Description for kids per language
     $table_of_asset_fields[] = array('GreekKidsDescription', 'Description in '.$languages[$i].' for kids',
         'vrodos_asset3d_description_'.strtolower($languages[$i]).'_kids', 'string', '', true, true);
-    
+
     // Description for experts per language
     $table_of_asset_fields[] = array($languages[$i].'ExpertsDescription', 'Description in '.$languages[$i].' for experts',
         'vrodos_asset3d_description_'.strtolower($languages[$i]).'_experts', 'string', '', true, true);
-    
+
     // Description for disabilities per language
     $table_of_asset_fields[] = array($languages[$i].'PerceptionDescription',
         'Description in '.$languages[$i].' for people with perception disabilities',
@@ -67,7 +67,7 @@ for ($i = 0; $i < count($languages); $i++){
 
 $asset_fields = [];
 for ($i = 0; $i < count($table_of_asset_fields); $i++){
-    
+
     $asset_fields[] = array(
         'name'     => $table_of_asset_fields[$i][0],
         'desc'     => $table_of_asset_fields[$i][1],
@@ -76,25 +76,25 @@ for ($i = 0; $i < count($table_of_asset_fields); $i++){
         'std'      => $table_of_asset_fields[$i][4],
         'single'      => $table_of_asset_fields[$i][5],
         'show_in_rest'      => $table_of_asset_fields[$i][6],
-        );
+    );
 }
 
 global $vrodos_databox1;
 //All information about our meta box
 $vrodos_databox1 = array('id' => 'vrodos-assets-databox',
-                        'page' => 'vrodos_asset3d',
-                        'context' => 'normal',
-                        'priority' => 'high',
-                        'fields' => $asset_fields
+    'page' => 'vrodos_asset3d',
+    'context' => 'normal',
+    'priority' => 'high',
+    'fields' => $asset_fields
 );
 
 
 function vrodos_asset3d_metas_description() {
     global $vrodos_databox1;
-    
+
     foreach ($vrodos_databox1['fields'] as $meta_entry) {
-      
-        
+
+
         $meta_id = $meta_entry['id'];
         $meta_properties = array(
             'type'      => $meta_entry['type'], // Validate and sanitize the meta value as a string.
@@ -114,9 +114,9 @@ function vrodos_asset3d_metas_description() {
 // Add and Show the metabox with Custom Field for Project ($vrodos_databox1)
 function vrodos_assets_databox_add() {
     global $vrodos_databox1;
-    
+
     add_meta_box('vrodos-assets-infobox', 'Description Tips for Image-Text', 'vrodos_assets_infobox_show', 'vrodos_asset3d','normal','high' );
-    
+
     add_meta_box($vrodos_databox1['id'], 'Asset Data', 'vrodos_assets_databox_show', $vrodos_databox1['page'], $vrodos_databox1['context'], $vrodos_databox1['priority']);
 }
 
@@ -134,15 +134,15 @@ function vrodos_assets_infobox_show(){
     &lt;i&gt;Renders the text in italics.&lt;/i&gt;<br/>
     &lt;size=20&gt;Sets the size of the text according to the parameter value, given in pixels.&lt;/size&gt;<br/>
     &lt;color=blue&gt;Sets the color of the text according to the parameter value.&lt;/color&gt;<br/>
-    
+
     <?php
 }
 
 // Backend form
 function vrodos_assets_databox_show(){
-    
+
     global $vrodos_databox1, $post;
-    
+
     $post_title = $post->post_title;
     if($post->post_status == 'publish'){$hideshow = 'none';}else{$hideshow = 'block';}
     ?>
@@ -152,7 +152,7 @@ function vrodos_assets_databox_show(){
     <input type="hidden" name="vrodos_assets_databox_nonce" value="<?php echo wp_create_nonce(basename(__FILE__)); ?>" />
     <table class="form-table" id="vrodos-custom-fields-table">
         <tbody>
-        
+
         <?php
         //Hide-Show custom fields purpose
         $categoryAsset = wp_get_post_terms($post->ID, 'vrodos_asset3d_cat');
@@ -165,14 +165,23 @@ function vrodos_assets_databox_show(){
             $doorhideshow = ($categoryAssetSlug == 'Doors') ? 'block' : 'none';
             $mediahideshow = ($categoryAssetSlug == 'Doors') ? 'none' : 'block';
         }
-        
+
         foreach ($vrodos_databox1['fields'] as $field) {
+
+
+            echo '<br>';
+
             if ($field['id']=='vrodos_asset3d_mtl'){
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
                     <td>
-                        <?php $meta_mtl_id = get_post_meta($post->ID, $field['id'], true); ?>
+                        <?php $meta_mtl_id = get_post_meta($post->ID, $field['id'], true);
+
+                        print_r(esc_attr($meta_mtl_id));
+                        ?>
+
+
 
                         <input type="text" name="<?php echo esc_attr($field['id']); ?>"
                                id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta_mtl_id ? $meta_mtl_id : $field['std']); ?>" size="30" style="width:65%"/>
@@ -181,10 +190,20 @@ function vrodos_assets_databox_show(){
 
 
                         <br /><br />
-                        Pathfile: <?php echo wp_get_attachment_url($meta_mtl_id); ?><br />
-                        Preview mtl:<br />
+                        Pathfile: <?php
+                        if ($meta_mtl_id) {
+                            echo wp_get_attachment_url($meta_mtl_id);
+                        }
+                        else {
+                            echo 'No MTL file.';
+                        } ?>
+
+
+                        Preview mtl: <br />
                         <textarea id="vrodos_asset3d_mtl_preview" readonly style="width:100%;height:200px;"><?php
-                            
+
+                            print_r($meta_mtl_id);
+
                             if(!$meta_mtl_id){
                                 echo "mtl is not defined";
                             }else{
@@ -194,13 +213,11 @@ function vrodos_assets_databox_show(){
                             </textarea>
                     </td>
                 </tr>
-                
-                
-                
-                
+
+
                 <?php
             }elseif ($field['id'] == 'vrodos_asset3d_obj') {
-                
+
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
@@ -234,7 +251,7 @@ function vrodos_assets_databox_show(){
                             </textarea>
                     </td>
                 </tr>
-                
+
                 <?php
             }elseif ($field['id'] == 'vrodos_asset3d_fbx') {?>
 
@@ -270,8 +287,8 @@ function vrodos_assets_databox_show(){
                             </textarea>
                     </td>
                 </tr>
-                
-                
+
+
                 <?php
             }elseif ($field['id'] == 'vrodos_asset3d_pdb') {?>
 
@@ -307,8 +324,8 @@ function vrodos_assets_databox_show(){
                                 </textarea>
                     </td>
                 </tr>
-                
-                
+
+
                 <?php
             }elseif ($field['id'] == 'vrodos_asset3d_glb') {?>
 
@@ -344,8 +361,8 @@ function vrodos_assets_databox_show(){
                                 </textarea>
                     </td>
                 </tr>
-                
-                
+
+
                 <?php
             }elseif ($field['id'] == 'vrodos_asset3d_audio') {?>
 
@@ -381,9 +398,9 @@ function vrodos_assets_databox_show(){
                             </textarea>
                     </td>
                 </tr>
-                
-                
-                
+
+
+
                 <?php
             }elseif ($field['id'] == 'vrodos_asset3d_diffimage') {
                 ?>
@@ -814,12 +831,12 @@ function vrodos_assets_databox_show(){
 // Save data from this metabox with Custom Field for Asset3D ($vrodos_databox)
 // This should be done with register_meta = https://torquemag.io/2015/03/staying-safe-and-dry-with-register_meta/
 function vrodos_assets_databox_save($post_id) {
-    
+
     global $vrodos_databox1;
-    
+
     if (!isset($_POST['vrodos_assets_databox_nonce']))
         return;
-    
+
     // verify nonce
     if (!wp_verify_nonce($_POST['vrodos_assets_databox_nonce'], basename(__FILE__))) {
         return $post_id;
@@ -836,7 +853,7 @@ function vrodos_assets_databox_save($post_id) {
     } elseif (!current_user_can('edit_post', $post_id)) {
         return $post_id;
     }
-    
+
     foreach ($vrodos_databox1['fields'] as $field) {
 
         $old = get_post_meta($post_id, $field['id'], true);
@@ -844,13 +861,13 @@ function vrodos_assets_databox_save($post_id) {
         $new = isset($_POST[$field['id']]);
 
         update_post_meta($post_id, $field['id'], $new);
-        
+
         if ($new && $new != $old) {
             update_post_meta($post_id, $field['id'], $new);
         } elseif ('' == $new && $old) {
             delete_post_meta($post_id, $field['id'], $old);
         }
-        
+
     }
 }
 
@@ -861,7 +878,7 @@ function vrodos_assets_databox_save($post_id) {
 // ----------------- Obsolete ------------------------------
 // Functions for segmentation and classfication of 3D models
 function vrodos_assets_create_right_metaboxes() {
-    
+
     // These function should be passed to front-end
 
 //    add_meta_box( 'autofnc-vrodos_asset3d_fetch_description','Fetch description','vrodos_assets_fetch_description_box_content', 'vrodos_asset3d', 'side' , 'low');
@@ -872,7 +889,7 @@ function vrodos_assets_create_right_metaboxes() {
 }
 
 function vrodos_assets_fetch_description_box_content($post){
-    
+
     echo '<div id="vrodos_fetchDescription_bt" class="vrodos_fetchContentButton"
      onclick="vrodos_fetchDescriptionAjax()">Fetch Description</div>';
     ?>
@@ -904,13 +921,13 @@ function vrodos_assets_fetch_description_box_content($post){
     <br />
 
     Full text:<input type="checkbox" name="vrodos_fulltext_chkbox" id="vrodos_fulltext_chkbox" value="">
-    
-    
+
+
     <?php
 }
 
 function vrodos_assets_fetch_image_box_content($post){
-    
+
     echo '<div id="vrodos_fetchImage_bt" class="vrodos_fetchContentButton" onclick="vrodos_fetchImageAjax()">Fetch Image</div>';
     ?>
 
@@ -944,24 +961,24 @@ function vrodos_assets_fetch_image_box_content($post){
 
     <div id="image_find_results">
         <?php
-        
+
         echo '<div id="display_img_res" class="imageresbin" style="display:none">';
         for ($i=0;$i<10;$i++) {
             echo '<img id = "image_res_'.$i.'" class="image_fetch_img" />';
             echo '<div id = "image_res_'.$i.'_url" class="image_fetch_div_url" style="margin-bottom:5px"></div >';
             echo '<a href="" id = "image_res_'.$i.'_title" class="img_res_title_f" target = "_blank" style="margin-bottom:10px"></a >';
         }
-        
+
         echo '</div>';
         ?>
     </div>
-    
-    
+
+
     <?php
 }
 
 function vrodos_assets_fetch_video_box_content($post){
-    
+
     echo '<div id="vrodos_fetchVideo_bt" class="vrodos_fetchContentButton" onclick="vrodos_fetchVideoAjax()">Fetch Video</div>';
     ?>
 
@@ -1002,12 +1019,12 @@ function vrodos_assets_fetch_video_box_content($post){
         <div id="video_res_1_title" class="video_res_title_f"></div><br />
 
     </div>
-    
+
     <?php
 }
 
 function vrodos_assets_segment_obj_box_content($post){
-    
+
     ?>
 
     <div id="vrodos_segmentButton" class="vrodos_fetchContentButton"
@@ -1047,12 +1064,12 @@ function vrodos_assets_segment_obj_box_content($post){
 
     <br />
     <div id="vrodos-segmentation-log" name="vrodos-segmentation-log">Log file</div>
-    
+
     <?php
 }
 
 function vrodos_assets_classify_obj_box_content($post){
-    
+
     echo '<div id="vrodos_classifyObj_bt" class="vrodos_fetchContentButton"
                                 onclick="vrodos_classifyObjAjax()">Classify obj</div>';
     ?>
@@ -1097,6 +1114,6 @@ function vrodos_assets_classify_obj_box_content($post){
     <div id="vrodos-classification-report" name="vrodos-classification-report">Status</div><br />
     <div id="vrodos-classification-status" name="vrodos-classification-status">Report</div><br />
     <div id="vrodos-segmentation-log" name="vrodos-segmentation-log">Log file</div>
-    
+
     <?php
 }
