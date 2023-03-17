@@ -147,7 +147,7 @@ function vrodos_assets_databox_show(){
     if($post->post_status == 'publish'){$hideshow = 'none';}else{$hideshow = 'block';}
     ?>
     <div id="vrodos_assets_box_wrapper" style="display:<?php echo $hideshow; ?>;">
-        <span class="dashicons dashicons-lock">You must create the Asset in order to fill data</span>
+        <span class="dashicons dashicons-lock">You must publish the Asset first, in order to fill its data</span>
     </div>
     <input type="hidden" name="vrodos_assets_databox_nonce" value="<?php echo wp_create_nonce(basename(__FILE__)); ?>" />
     <table class="form-table" id="vrodos-custom-fields-table">
@@ -168,7 +168,6 @@ function vrodos_assets_databox_show(){
 
         foreach ($vrodos_databox1['fields'] as $field) {
 
-
             echo '<br>';
 
             if ($field['id']=='vrodos_asset3d_mtl'){
@@ -176,9 +175,11 @@ function vrodos_assets_databox_show(){
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
                     <td>
-                        <?php $meta_mtl_id = get_post_meta($post->ID, $field['id'], true);
+                        <?php
 
-                        print_r(esc_attr($meta_mtl_id));
+                        $meta_mtl_id = metadata_exists('post', $post->ID, $field['id']) ? get_post_meta($post->ID , $field['id'],true) : null;
+
+
                         ?>
 
 
@@ -858,16 +859,15 @@ function vrodos_assets_databox_save($post_id) {
 
         $old = get_post_meta($post_id, $field['id'], true);
 
-        $new = isset($_POST[$field['id']]);
+        if(isset($_POST[$field['id']])) {
+            $new = $_POST[$field['id']];
 
-        update_post_meta($post_id, $field['id'], $new);
-
-        if ($new && $new != $old) {
-            update_post_meta($post_id, $field['id'], $new);
-        } elseif ('' == $new && $old) {
-            delete_post_meta($post_id, $field['id'], $old);
+            if ($new && $new != $old) {
+                update_post_meta($post_id, $field['id'], $new);
+            } elseif ('' == $new && $old) {
+                delete_post_meta($post_id, $field['id'], $old);
+            }
         }
-
     }
 }
 
