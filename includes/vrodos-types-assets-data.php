@@ -535,248 +535,82 @@ function vrodos_assets_databox_show(){
         jQuery(document).ready(function ($) {
 
             // Uploading files
-            var file_frame;
-            var wp_media_post_id = wp.media.model.settings.post.id; // Store the old id
-            var set_to_post_id = <?php echo $post->ID; ?>; // Set this
+            let file_frame;
+            let wp_media_post_id = wp.media.model.settings.post.id; // Store the old id
+            let set_to_post_id = <?php echo $post->ID; ?>; // Set this
 
-            jQuery('#vrodos_asset3d_mtl_btn').on('click', function( event ){
+            document.getElementById("vrodos_asset3d_mtl_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_mtl_btn', 'MTL');
+            }
+            document.getElementById("vrodos_asset3d_obj_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_obj_btn', 'OBJ');
+            }
+            document.getElementById("vrodos_asset3d_fbx_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_fbx_btn', 'FBX');
+            }
+            document.getElementById("vrodos_asset3d_pdb_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_pdb_btn', 'PDB');
+            }
+            document.getElementById("vrodos_asset3d_glb_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_glb_btn', 'GLB');
+            }
+            document.getElementById("vrodos_asset3d_diffimage_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_diffimage_btn', 'Diffusion Image');
+            }
+            document.getElementById("vrodos_asset3d_screenimage_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_screenimage_btn', 'Screenshot Image');
+            }
+            document.getElementById("vrodos_asset3d_image1_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_image1_btn', 'Image 1');
+            }
+            document.getElementById("vrodos_asset3d_audio_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_audio_btn', 'Audio');
+            }
+            document.getElementById("vrodos_asset3d_video_btn").onclick = function() {
+                uploadAssetToPage('#vrodos_asset3d_video_btn', 'Video');
+            }
 
-                event.preventDefault();
-
-                wp.media.model.settings.post.id = set_to_post_id;
-
-                // Create the media frame.
-                file_frame = wp.media.frames.file_frame = wp.media({
-                    title: 'Select MTL file to upload',
-                    button: {
-                        text: 'Use this file',
-                    },
-                    multiple: false	// Set to true to allow multiple files to be selected
-                });
-
-                // When an image is selected, run a callback.
-                file_frame.on( 'select', function(html) {
-                    // We set multiple to false so only get one image from the uploader
-                    attachment = file_frame.state().get('selection').first().toJSON();
-
-                    // Do something with attachment.id and/or attachment.url here
-                    jQuery('#vrodos_asset3d_mtl').val(attachment.id);
-                    //jQuery('#vrodos_asset3d_mtl_preview').
-
-                    // Restore the main post ID
-                    wp.media.model.settings.post.id = wp_media_post_id;
-                });
-
-                // Finally, open the modal
-                file_frame.open();
-            });
-
-            jQuery('#vrodos_asset3d_obj_btn').on('click', function( event ){
-
-                event.preventDefault();
+            // TODO filter window by data type
+            let uploadAssetToPage = (id, type) => {
 
                 // Set the wp.media post id so the uploader grabs the ID we want when initialised
                 wp.media.model.settings.post.id = set_to_post_id;
 
-                // Create the media frame.
+                // Create the media frame
                 file_frame = wp.media.frames.file_frame = wp.media({
-                    title: 'Select OBJ file to upload',
+                    title: 'Select ' + type + ' file to upload',
                     button: {
-                        text: 'Use this file',
+                        text: 'Use this ' + type + ' file',
                     },
                     multiple: false	// Set to true to allow multiple files to be selected
                 });
 
-                // When an image is selected, run a callback.
+                // When a file is selected, run a callback.
                 file_frame.on( 'select', function(html) {
-                    // We set multiple to false so only get one image from the uploader
-                    attachment = file_frame.state().get('selection').first().toJSON();
+                    // We set multiple to false so only get one file from the uploader
+                    let attachment = file_frame.state().get('selection').first().toJSON();
 
-                    // Do something with attachment.id and/or attachment.url here
-                    jQuery('#vrodos_asset3d_obj').val(attachment.id);
-                    //jQuery('#vrodos_asset3d_mtl_preview').
+                    jQuery(id).val(attachment.id);
 
+                    switch (type) {
+                        case 'Diffusion Image':
+                        case 'Screenshot Image':
+                        case 'Image 1':
+                            document.getElementById(id + '_preview').setAttribute('src', attachment.url);
+                            break;
+                    }
                     // Restore the main post ID
                     wp.media.model.settings.post.id = wp_media_post_id;
                 });
 
                 // Finally, open the modal
                 file_frame.open();
-            });
-
-            jQuery('#vrodos_asset3d_fbx_btn').on('click', function( event ){
-
-                event.preventDefault();
-
-                // Set the wp.media post id so the uploader grabs the ID we want when initialised
-                wp.media.model.settings.post.id = set_to_post_id;
-
-                // Create the media frame.
-                file_frame = wp.media.frames.file_frame = wp.media({
-                    title: 'Select FBX file to upload',
-                    button: {
-                        text: 'Use this file',
-                    },
-                    multiple: false	// Set to true to allow multiple files to be selected
-                });
-
-                // When an image is selected, run a callback.
-                file_frame.on( 'select', function(html) {
-                    // We set multiple to false so only get one image from the uploader
-                    attachment = file_frame.state().get('selection').first().toJSON();
-
-                    // Do something with attachment.id and/or attachment.url here
-                    jQuery('#vrodos_asset3d_fbx').val(attachment.id);
-
-
-                    // Restore the main post ID
-                    wp.media.model.settings.post.id = wp_media_post_id;
-                });
-
-                // Finally, open the modal
-                file_frame.open();
-            });
-
-
-            jQuery('#vrodos_asset3d_diffimage_btn').on('click', function( event ){
-
-                event.preventDefault();
-
-                // Set the wp.media post id so the uploader grabs the ID we want when initialised
-                wp.media.model.settings.post.id = set_to_post_id;
-
-                // Create the media frame.
-                file_frame = wp.media.frames.file_frame = wp.media({
-                    title: 'Select photo to upload',
-                    button: {
-                        text: 'Use this photo',
-                    },
-                    multiple: false	// Set to true to allow multiple files to be selected
-                });
-
-                // When an image is selected, run a callback.
-                file_frame.on( 'select', function(html) {
-                    // We set multiple to false so only get one image from the uploader
-                    attachment = file_frame.state().get('selection').first().toJSON();
-
-                    // Do something with attachment.id and/or attachment.url here
-                    jQuery('#vrodos_asset3d_diffimage').val(attachment.id);
-                    jQuery('#vrodos_asset3d_diffimage_preview').attr( 'src', attachment.url );
-
-                    // Restore the main post ID
-                    wp.media.model.settings.post.id = wp_media_post_id;
-                });
-
-                // Finally, open the modal
-                file_frame.open();
-            });
-
-            jQuery('#vrodos_asset3d_screenimage_btn').on('click', function( event ){
-
-                event.preventDefault();
-
-                // Set the wp.media post id so the uploader grabs the ID we want when initialised
-                wp.media.model.settings.post.id = set_to_post_id;
-
-                // Create the media frame.
-                file_frame = wp.media.frames.file_frame = wp.media({
-                    title: 'Select photo to upload',
-                    button: {
-                        text: 'Use this photo',
-                    },
-                    multiple: false	// Set to true to allow multiple files to be selected
-                });
-
-                // When an image is selected, run a callback.
-                file_frame.on( 'select', function(html) {
-                    // We set multiple to false so only get one image from the uploader
-                    attachment = file_frame.state().get('selection').first().toJSON();
-
-                    // Do something with attachment.id and/or attachment.url here
-                    jQuery('#vrodos_asset3d_screenimage').val(attachment.id);
-                    jQuery('#vrodos_asset3d_screenimage_preview').attr( 'src', attachment.url );
-
-                    // Restore the main post ID
-                    wp.media.model.settings.post.id = wp_media_post_id;
-                });
-
-                // Finally, open the modal
-                file_frame.open();
-            });
-
-            jQuery('#vrodos_asset3d_image1_btn').on('click', function( event ){
-
-                event.preventDefault();
-
-                // Set the wp.media post id so the uploader grabs the ID we want when initialised
-                wp.media.model.settings.post.id = set_to_post_id;
-
-                // Create the media frame.
-                file_frame = wp.media.frames.file_frame = wp.media({
-                    title: 'Select photo to upload',
-                    button: {
-                        text: 'Use this photo',
-                    },
-                    multiple: false	// Set to true to allow multiple files to be selected
-                });
-
-                // When an image is selected, run a callback.
-                file_frame.on( 'select', function(html) {
-                    // We set multiple to false so only get one image from the uploader
-                    attachment = file_frame.state().get('selection').first().toJSON();
-
-                    // Do something with attachment.id and/or attachment.url here
-                    jQuery('#vrodos_asset3d_image1').val(attachment.id);
-                    jQuery('#vrodos_asset3d_image1_preview').attr( 'src', attachment.url );
-
-                    // Restore the main post ID
-                    wp.media.model.settings.post.id = wp_media_post_id;
-                });
-
-                // Finally, open the modal
-                file_frame.open();
-            });
-
-            jQuery('#vrodos_asset3d_video_btn').on('click', function( event ){
-
-                event.preventDefault();
-
-                // Set the wp.media post id so the uploader grabs the ID we want when initialised
-                wp.media.model.settings.post.id = set_to_post_id;
-
-                // Create the media frame.
-                file_frame = wp.media.frames.file_frame = wp.media({
-                    title: 'Select video to upload',
-                    button: {
-                        text: 'Use this video',
-                    },
-                    multiple: false	// Set to true to allow multiple files to be selected
-                });
-
-                // When an image is selected, run a callback.
-                file_frame.on( 'select', function(html) {
-                    // We set multiple to false so only get one image from the uploader
-                    attachment = file_frame.state().get('selection').first().toJSON();
-
-                    // Do something with attachment.id and/or attachment.url here
-                    jQuery('#vrodos_asset3d_video').val(attachment.id);
-                    //jQuery('#vrodos_asset3d_image3_preview').attr( 'src', attachment.url );
-
-                    // Restore the main post ID
-                    wp.media.model.settings.post.id = wp_media_post_id;
-                });
-
-                // Finally, open the modal
-                file_frame.open();
-            });
-
+            };
 
             // Restore the main ID when the add media button is pressed
             jQuery( 'a.add_media' ).on( 'click', function() {
                 wp.media.model.settings.post.id = wp_media_post_id;
             });
-
-
         });
     </script>
     <?php
