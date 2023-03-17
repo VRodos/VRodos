@@ -38,32 +38,6 @@ $table_of_asset_fields = array(
 
 );
 
-// Add the fields that are related to language procedurally
-$languages = ['Greek', 'Spanish', 'French', 'German', 'Russian'];
-
-for ($i = 0; $i < count($languages); $i++){
-
-    // Title per language
-    $table_of_asset_fields[] = array( $languages[$i].'Title', 'Title in '.$languages[$i],
-        'vrodos_asset3d_title_'.strtolower($languages[$i]), 'string', '', true, true);
-
-    // Description per language
-    $table_of_asset_fields[] = array($languages[$i], 'Description in '.$languages[$i],
-        'vrodos_asset3d_description_'.strtolower($languages[$i]), 'string', '', true, true);
-
-    // Description for kids per language
-    $table_of_asset_fields[] = array('GreekKidsDescription', 'Description in '.$languages[$i].' for kids',
-        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_kids', 'string', '', true, true);
-
-    // Description for experts per language
-    $table_of_asset_fields[] = array($languages[$i].'ExpertsDescription', 'Description in '.$languages[$i].' for experts',
-        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_experts', 'string', '', true, true);
-
-    // Description for disabilities per language
-    $table_of_asset_fields[] = array($languages[$i].'PerceptionDescription',
-        'Description in '.$languages[$i].' for people with perception disabilities',
-        'vrodos_asset3d_description_'.strtolower($languages[$i]).'_perception', 'string', '', true, true);
-}
 
 $asset_fields = [];
 for ($i = 0; $i < count($table_of_asset_fields); $i++){
@@ -87,7 +61,6 @@ $vrodos_databox1 = array('id' => 'vrodos-assets-databox',
     'priority' => 'high',
     'fields' => $asset_fields
 );
-
 
 function vrodos_asset3d_metas_description() {
     global $vrodos_databox1;
@@ -168,27 +141,17 @@ function vrodos_assets_databox_show(){
 
         foreach ($vrodos_databox1['fields'] as $field) {
 
-            echo '<br>';
-
             if ($field['id']=='vrodos_asset3d_mtl'){
                 ?>
                 <tr>
                     <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
                     <td>
-                        <?php
-
-                        $meta_mtl_id = metadata_exists('post', $post->ID, $field['id']) ? get_post_meta($post->ID , $field['id'],true) : null;
-
-
-                        ?>
-
-
+                        <?php $meta_mtl_id = get_post_meta($post->ID , $field['id'],true); ?>
 
                         <input type="text" name="<?php echo esc_attr($field['id']); ?>"
                                id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta_mtl_id ? $meta_mtl_id : $field['std']); ?>" size="30" style="width:65%"/>
 
                         <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-
 
                         <br /><br />
                         Pathfile: <?php
@@ -476,12 +439,7 @@ function vrodos_assets_databox_show(){
                 </tr>
                 <?php
             }elseif (in_array($field['id'],[
-                'vrodos_asset3d_description_kids','vrodos_asset3d_description_experts','vrodos_asset3d_description_perception',  // English
-                'vrodos_asset3d_title_greek','vrodos_asset3d_description_greek','vrodos_asset3d_description_greek_kids','vrodos_asset3d_description_greek_experts', 'vrodos_asset3d_description_greek_perception',   // Greek
-                'vrodos_asset3d_title_spanish','vrodos_asset3d_description_spanish','vrodos_asset3d_description_spanish_kids','vrodos_asset3d_description_spanish_experts','vrodos_asset3d_description_spanish_perception', // Spanish
-                'vrodos_asset3d_title_french','vrodos_asset3d_description_french','vrodos_asset3d_description_french_kids','vrodos_asset3d_description_french_experts','vrodos_asset3d_description_french_perception', // French
-                'vrodos_asset3d_title_german', 'vrodos_asset3d_description_german','vrodos_asset3d_description_german_kids','vrodos_asset3d_description_german_experts','vrodos_asset3d_description_german_perception', // German
-                'vrodos_asset3d_title_russian','vrodos_asset3d_description_russian','vrodos_asset3d_description_russian_kids','vrodos_asset3d_description_russian_experts','vrodos_asset3d_description_russian_perception' // Russion
+                'vrodos_asset3d_description_kids','vrodos_asset3d_description_experts','vrodos_asset3d_description_perception'  // English
             ]  )) {
                 ?>
                 <tr>
