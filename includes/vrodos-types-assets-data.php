@@ -540,49 +540,50 @@ function vrodos_assets_databox_show(){
             let set_to_post_id = <?php echo $post->ID; ?>; // Set this
 
             document.getElementById("vrodos_asset3d_mtl_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_mtl', 'MTL');
+                uploadAssetToPage('vrodos_asset3d_mtl', 'application/octet-stream', 'MTL');
             }
             document.getElementById("vrodos_asset3d_obj_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_obj', 'OBJ');
+                uploadAssetToPage('vrodos_asset3d_obj', 'application/octet-stream', 'OBJ');
             }
             document.getElementById("vrodos_asset3d_fbx_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_fbx', 'FBX');
+                uploadAssetToPage('vrodos_asset3d_fbx', 'application/octet-stream', 'FBX');
             }
             document.getElementById("vrodos_asset3d_pdb_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_pdb', 'PDB');
+                uploadAssetToPage('vrodos_asset3d_pdb', 'application/octet-stream', 'PDB');
             }
             document.getElementById("vrodos_asset3d_glb_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_glb', 'GLB');
+                uploadAssetToPage('vrodos_asset3d_glb', 'model/gltf-binary', 'GLB');
             }
             document.getElementById("vrodos_asset3d_diffimage_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_diffimage', 'Diffusion Image');
+                uploadAssetToPage('vrodos_asset3d_diffimage', 'image', 'Diffusion Image');
             }
             document.getElementById("vrodos_asset3d_screenimage_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_screenimage', 'Screenshot Image');
+                uploadAssetToPage('vrodos_asset3d_screenimage', 'image', 'Screenshot Image');
             }
             document.getElementById("vrodos_asset3d_image1_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_image1', 'Image 1');
+                uploadAssetToPage('vrodos_asset3d_image1', 'image', 'Image 1');
             }
             document.getElementById("vrodos_asset3d_audio_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_audio', 'Audio');
+                uploadAssetToPage('vrodos_asset3d_audio', 'audio', 'Audio');
             }
             document.getElementById("vrodos_asset3d_video_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_video', 'Video');
+                uploadAssetToPage('vrodos_asset3d_video', 'video', 'Video');
             }
 
             // TODO filter window by data type
-            let uploadAssetToPage = (id, type) => {
+            let uploadAssetToPage = (id, type, type_string) => {
 
                 // Set the wp.media post id so the uploader grabs the ID we want when initialised
                 wp.media.model.settings.post.id = set_to_post_id;
 
                 // Create the media frame
                 file_frame = wp.media.frames.file_frame = wp.media({
-                    title: 'Select ' + type + ' file to upload',
+                    title: 'Select ' + type_string + ' file to upload',
                     button: {
-                        text: 'Use this ' + type + ' file',
+                        text: 'Use this ' + type_string + ' file',
                     },
-                    multiple: false	// Set to true to allow multiple files to be selected
+                    multiple: false, // Set to true to allow multiple files to be selected
+                    library: { type: type }
                 });
 
                 // When a file is selected, run a callback.
@@ -593,9 +594,7 @@ function vrodos_assets_databox_show(){
                     jQuery('#'+id).val(attachment.id);
 
                     switch (type) {
-                        case 'Diffusion Image':
-                        case 'Screenshot Image':
-                        case 'Image 1':
+                        case 'image':
                             document.getElementById(id + '_preview').setAttribute('src', attachment.url);
                             break;
                     }
