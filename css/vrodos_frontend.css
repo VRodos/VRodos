@@ -1363,38 +1363,35 @@ video {
 
 .asset_editor_textpanel{
     background:#ffffff;
-    padding:15px;
-    padding-top:0px;
-
-    border:0px;
-
-    z-index:1000;
+    padding: 0 2px 15px 15px;
+    border:0;
+    z-index: 1000;
     overflow-y:auto;
 }
 
 .asset_editor_3dpanel{
     position: fixed;
-    top:0;
-    right:0;
-    z-index:1
+    top: 0;
+    right: 0;
+    z-index: 1;
 }
 
 @media only screen and (orientation: landscape) {
     .asset_editor_textpanel{
         height: 100% !important;
-        width:40%;
+        width: 40%;
     }
 
     .asset_editor_3dpanel{
-        width:60%;
-        height:100%;
+        width: 59%;
+        height: 100%;
      }
 }
 
 @media only screen and (orientation: portrait) {
     .asset_editor_textpanel{
         height: 40%;
-        width:100%;
+        width: 100%;
         border-top: 5px solid;
         position:fixed;
         bottom:0;

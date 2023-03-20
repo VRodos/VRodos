@@ -505,9 +505,9 @@ if($asset_id != null) {
             $previewLink = $previewLink . '&preview=1#English';
             ?>
 
-            <a class="mdc-button mdc-button--primary mdc-theme--primary"
-               href="<?php echo $previewLink; ?>"
-               data-mdc-auto-init="MDCRipple">Preview</a>
+           <!-- <a class="mdc-button mdc-button--primary mdc-theme--primary"
+               href="<?php /*echo $previewLink; */?>"
+               data-mdc-auto-init="MDCRipple">Preview</a>-->
         <?php }  else {
 
             // Display EDIT BUTTON
@@ -642,7 +642,7 @@ if($asset_id != null) {
             <!-- 3D Models -->
             <div id="object3DPropertiesPanel"">
 
-            <h3 class="mdc-typography--title">3D Model of the Asset</h3>
+            <h3 class="mdc-typography--title">3D Model</h3>
             <img alt="3D model section"
                  src="<?php echo plugins_url( '../images/cube.png', dirname(__FILE__)  );?>">
             <label id="fileUploadInputLabel" for="multipleFilesInput"> Select files </label>
