@@ -1,6 +1,6 @@
 <?php
 
-function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm, $gameSlug){
+function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm, $gameSlug, $project_id){
 
     // Clear out all previous
     
@@ -143,7 +143,7 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
                     'material' .                 // it should have the keyword material in finale basename
                             $assetTitleForm,            // It should have also the title of Asset
                             $asset_newID,               // Asset id
-                            null, null
+                            null, null, $project_id
             );
             
             // 2. Add id of mtl as post meta on asset
@@ -194,7 +194,7 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
             if ($index_file_fbx != -1) {
                 // 1. Upload FBX file as BINARY
                 $fbxFile_id = vrodos_upload_AssetText(null, 'fbx' . $assetTitleForm, $asset_newID,
-                    $_FILES, $index_file_fbx);
+                    $_FILES, $index_file_fbx, $project_id);
             
                 // 2. Set value of attachment IDs at custom fields
                 update_post_meta($asset_newID, 'vrodos_asset3d_fbx', $fbxFile_id);
@@ -204,7 +204,7 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
         
             // Upload FBX file as TEXT
             $fbxFile_id = vrodos_upload_AssetText($fbx_content, 'fbx' . $assetTitleForm, $asset_newID,
-                null, null);
+                null, null, $project_id);
         
             // 2. Set value of attachment IDs at custom fields
             update_post_meta($asset_newID, 'vrodos_asset3d_fbx', $fbxFile_id);
@@ -214,7 +214,7 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
         
         if (strlen($_POST['pdbFileInput']) > 0) {
             $pdbFile_id = vrodos_upload_AssetText($_POST['pdbFileInput'], 'pdb' . $assetTitleForm,
-                                                                    $asset_newID, null, null);
+                                                                    $asset_newID, null, null, $project_id);
             
             update_post_meta($asset_newID, 'vrodos_asset3d_pdb', $pdbFile_id);
         }
@@ -222,10 +222,12 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
     } else if ($_POST['glbFileInput']) {
     
         // GLB upload and add id of uploaded file to postmeta  vrodos_asset3d_glb of asset
-        
+
+
+
         if (strlen($_POST['glbFileInput']) > 0) {
             $glbFile_id = vrodos_upload_AssetText(null, 'glb' . $assetTitleForm, $asset_newID,
-                $_FILES, 0);
+                $_FILES, 0, $project_id);
             
             update_post_meta($asset_newID, 'vrodos_asset3d_glb', $glbFile_id);
         }

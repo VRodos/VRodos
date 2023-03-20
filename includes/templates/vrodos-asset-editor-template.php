@@ -1,42 +1,13 @@
-<!--<script type="module" src="/wordpress/wp-content/plugins/wordpressunity3deditor/js_libs/threejs124/stats.module.js">-->
-<!--    import Stats from "./stats,module.js";-->
-<!--    var stats = new Stats();-->
-<!--    console.log("stats", stats);-->
-<!--    console.log("aaaa");-->
-<!--</script>-->
-
-
 <?php
 // Remove the admin bar
 add_action('get_header', 'vrodos_remove_admin_login_header');
-
-//Create asset interfaces
-
-//ini_set('disp lay_errors', 1);
-//ini_set('display_startup_errors', 1);
-//error_reporting(E_ALL);
-
-// For auto-translation by Google
-$hasTranslator = false;
-//if ($hasTranslator) {
-//    putenv("GOOGLE_APPLICATION_CREDENTIALS=".get_option( 'general_settings' )['vrodos_google_application_credentials']);
-//    if (file_exists(plugin_dir_path(__DIR__) . '/translate/vendor/autoload.php')) {
-//        // Include Google Cloud dependendencies using Composer
-//        require(plugin_dir_path(__DIR__) . '/translate/vendor/autoload.php');
-//        $hasTranslator = true;
-//    }
-//}
-//// [START translate_translate_text]
-//use Google\Cloud\Translate\TranslateClient;
-
-
 
 // Is on back or front end ?
 $isAdmin = is_admin() ? 'back' : 'front';
 ?>
 
 <script>
-    var isAdmin="<?php echo $isAdmin; ?>";
+    let isAdmin="<?php echo $isAdmin; ?>";
 </script>
 
 <?php
@@ -127,16 +98,16 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
 
 
     // Content Interlinking
-//    $pluginpath = dirname (plugin_dir_url( __DIR__  ));
+    $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 
-//    // content interlinking ajax
-//    wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
-//        $pluginpath.'/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
-//
-//    // ajax php admin url
-//    wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
-//        array( 'ajax_url' => admin_url( 'admin-ajax.php' ), null )
-//    );
+    // Content interlinking ajax
+    wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
+        $pluginpath.'/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
+
+    // ajax php admin url
+    wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
+        array( 'ajax_url' => admin_url( 'admin-ajax.php' ), null )
+    );
 
 }
 add_action('wp_enqueue_scripts', 'vrodos_loadAsset3DManagerScriptsAndStyles' );
@@ -320,8 +291,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         <?php
 
         //It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
-        $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID,
-            $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
+        $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     }else {
         ?>
         <div class='centerMessageAssetSubmit'>Updating asset...</div>
@@ -339,7 +309,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         // if any 3D files have been selected for upload
         if (count($_FILES['multipleFilesInput']['name']) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ){
             vrodos_create_asset_3DFilesExtra_frontend($asset_id, $asset_language_pack['assetTitleForm'],
-                $gameSlug);
+                $gameSlug, $assetPGameID);
         }
 
         update_post_meta($asset_id, 'vrodos_asset3d_isCloned', 'false');
@@ -437,7 +407,6 @@ get_header();
 $dropdownHeading = ($asset_id == null ? "Select a category" : "Category");
 
 // Languages fields show
-//include 'edit-vrodos_asset3d_languages_support2.php';
 $assetLangPack2 = vrodos_asset3d_languages_support2($asset_id);
 
 echo '<script>';
@@ -468,10 +437,6 @@ $images_urls = [null, null, null, null, null];
 if($asset_id != null) {
 
     $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
-
-//    $fp = fopen("output_savedterm.txt","w");
-//    fwrite($fp, print_r($saved_term, true));
-//    fclose($fp);
 
     if($saved_term[0]->slug == 'terrain'){
 
@@ -562,7 +527,6 @@ if($asset_id != null) {
         <?php }  else {
 
             // Display EDIT BUTTON
-
             $curr_uri = $_SERVER['REQUEST_URI'];
             $targetparams = str_replace("preview=1","preview=0",$curr_uri);
             $editLink2 = ( empty( $_SERVER['HTTPS'] ) ? 'http://' : 'https://' ).
@@ -593,9 +557,7 @@ if($asset_id != null) {
     <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data">
 
         <!-- CATEGORY -->
-        <!-- <div class="" style="display:--><?php //echo ((!$isUserAdmin && !$isOwner) || $isPreviewMode) ? "none":""; ?><!--">-->
-        <!-- Hide category selection for simplicity. Use artifact for all. -->
-        <div class="" style="display:none">
+        <div>
             <h3 class="mdc-typography--title" style="margin-top:30px;"><?php echo $dropdownHeading; ?></h3>
 
             <div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
@@ -603,37 +565,7 @@ if($asset_id != null) {
 
                 <?php
 
-                $myGameType = 0;
-                $all_game_types = get_the_terms( $project_id, 'vrodos_game_type' );
-                $game_type_slug = $all_game_types[0]->slug;
-
-                switch ($game_type_slug) {
-                    default:
-                    case 'archaeology_games':
-                        $myGameType=1;
-                        break;
-                    case 'energy_games':
-                        $myGameType=2;
-                        break;
-                    case 'chemistry_games':
-                        $myGameType=3;
-                        break;
-                }
-
-                $args = array(
-                    'hide_empty' => false,
-                    'meta_query' => array(
-                        array(
-                            'key'       => 'vrodos_assetcat_gamecat',
-                            'value'     => $myGameType,
-                            'compare'   => '='
-                        )
-                    ),
-                    'orderby' => 'name',
-                    'order' => 'DESC',
-                );
-
-                $cat_terms = get_terms('vrodos_asset3d_cat', $args);
+                $cat_terms = get_terms('vrodos_asset3d_cat', ['hide_empty' => false]);
                 $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
                 ?>
 
@@ -988,7 +920,7 @@ if($asset_id != null) {
             ?>
             <!-- Image -->
             <?php
-                $showImageFields = $saved_term ? in_array($saved_term[0]->slug,['artifact'])?'':'none' : null;
+            $showImageFields = $saved_term ? in_array($saved_term[0]->slug,['artifact'])?'':'none' : null;
             ?>
 
             <div class="slideshow-container">

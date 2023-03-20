@@ -126,9 +126,9 @@ if ($single_project_asset_list)
         <?php
 
         if( $single_project_asset_list){
-            $helpMessage = 'A list of your private Assets belonging to [ '.$current_game_project_post->post_title.' ]. First tab allows to add a new private one.';
+            $helpMessage = 'A list of your private Assets belonging to <b> '.$current_game_project_post->post_title.' </b>. <br> First button allows you to add a new private one.';
         } else {
-            $helpMessage = 'Add a Shared Asset here. If you want to be private, make a project and add them there.';
+            $helpMessage = 'Add a Shared Asset here. If you want it to be private, make a project and add the asset there.';
         }
     } else {
         $helpMessage = 'Login to a) add a Shared Asset or b) to create a Project and add your private Assets there';
@@ -136,8 +136,6 @@ if ($single_project_asset_list)
     ?>
     <br />
     <p><?php echo $helpMessage ?></p>
-
-    <br />
 
     <?php if ($single_project_asset_list){ ?>
         <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $current_game_project_post->post_title;?></span>
