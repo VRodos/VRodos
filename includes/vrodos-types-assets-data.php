@@ -571,7 +571,7 @@ function vrodos_assets_databox_show(){
             }
 
             // TODO filter window by data type
-            let uploadAssetToPage = (id, type, type_string) => {
+            let uploadAssetToPage = (id, mime_type, type_string) => {
 
                 // Set the wp.media post id so the uploader grabs the ID we want when initialised
                 wp.media.model.settings.post.id = set_to_post_id;
@@ -583,7 +583,7 @@ function vrodos_assets_databox_show(){
                         text: 'Use this ' + type_string + ' file',
                     },
                     multiple: false, // Set to true to allow multiple files to be selected
-                    library: { type: type }
+                    library: { type: mime_type }
                 });
 
                 // When a file is selected, run a callback.
@@ -593,7 +593,7 @@ function vrodos_assets_databox_show(){
 
                     jQuery('#'+id).val(attachment.id);
 
-                    switch (type) {
+                    switch (mime_type) {
                         case 'image':
                             document.getElementById(id + '_preview').setAttribute('src', attachment.url);
                             break;

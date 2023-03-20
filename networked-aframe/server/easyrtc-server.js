@@ -1,10 +1,17 @@
 // Load required modules
 const http = require("http");                 // http server core module
-
 const path = require("path");
 const express = require("express");           // web framework external module
-const socketIo = require("socket.io");        // web socket external module
+//const socketIo = require("socket.io");        // web socket external module
+
+
+
 const easyrtc = require("open-easyrtc");      // EasyRTC external module
+
+// socketIo.origins(["http://localhost:3000"]); // for local development
+
+
+
 
 // Set process name
 process.title = "networked-aframe-server";
@@ -14,6 +21,7 @@ const port = process.env.PORT || 5832;
 
 // Setup and configure Express http server.
 const app = express();
+
 
 // var fs = require('fs');
 // var https_options = {
@@ -26,18 +34,12 @@ const app = express();
 // };
 
 
-
-
-
-
 // var corsOptions = {
 //     origin: '*',
 //     optionsSuccessStatus: 200,
 // }
-// app.use(cors(corsOptions));
-// app.use(express.json());
-
-
+ //app.use(cors(corsOptions));
+ //app.use(express.json());
 
 
 
@@ -58,7 +60,7 @@ app.use(function(req, res, next) {
 // });
 
 //
-// var whitelist = ['http://127.0.0.1/'];
+// var whitelist = ['http://http://160.40.52.199/'];
 // var corsOptions = {
 //     origin: function (origin, callback) {
 //         if (whitelist.indexOf(origin) !== -1) {
@@ -73,10 +75,10 @@ app.use(function(req, res, next) {
 //     res.json({msg: 'This is CORS-enabled for a whitelisted domain.'})
 // })
 
-// app.options('*', (req, res) => {
+//app.options('*', (req, res) => {
 //     res.writeHead(200, '', {
 //         'Access-Control-Allow-Origin': '*',
-//         'Access-Control-Allow-Methods': 'OPTIONS',
+//        'Access-Control-Allow-Methods': 'OPTIONS',
 //     }).end();
 // });
 
@@ -97,8 +99,24 @@ if (process.env.NODE_ENV === "development") {
 // Start Express http server
 const webServer = http.createServer(app);
 
+const socketServer = require("socket.io")(webServer, {
+	
+	origins: ["http://localhost:5832"],
+	
+    handlePreflightRequest: (req, res) => {
+        const headers = {
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Allow-Origin": "http://localhost:5832", //or the specific origin you want to give access to,
+            "Access-Control-Allow-Credentials": true
+        };
+        res.writeHead(200, headers);
+        res.end();
+    }
+});
+ 
+
 // Start Socket.io so it attaches itself to Express server
-const socketServer = socketIo.listen(webServer, {"log level": 1});
+//const socketServer = socketIo.listen(webServer, {"log level": 1});
 const myIceServers = [
     {
         urls: "turn:openrelay.metered.ca:80",
@@ -164,12 +182,8 @@ easyrtc.listen(app, socketServer, null, (err, rtcRef) => {
 
 
 
-
-
-
 // Listen on port
 webServer.listen(port, () => {
-    //console.log('CORS-enabled web server listening on port ' + port);
     console.log("listening on port:" + port);
 });
 
