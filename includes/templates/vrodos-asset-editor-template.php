@@ -210,27 +210,17 @@ $scene_data = vrodos_getFirstSceneID_byProjectID($project_id,$game_category);//f
 
 $edit_scene_page_id = $editscenePage[0]->ID;
 
-$path_url = wp_upload_dir()['baseurl'].'/Models/';
+$upload_dir = wp_upload_dir();
+$DS = DIRECTORY_SEPARATOR;
+$path_url = str_replace('/', $DS, $upload_dir['basedir']) . $DS . 'models' . $DS . $project_id . $DS;
 
 // Asset preview 3D background color
 $back_3d_color = 'rgb(0,0,0)';
 
-
-// GoBack link
-$goBackToLink = '';
-
-// If coming from scene then go to scene editor
-if($scene_id != 0 ) {
-
-    $goBackToLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' .
-        $project_id . '&scene_type=' . $_GET['scene_type'];
-
-}else {
-
-    // Goto shared assets
-    $goBackToLink = home_url()."/vrodos-assets-list-page/?".
-        (!isset($_GET['singleproject'])?"vrodos_game=":"vrodos_project_id=").$project_id;
-}
+$goBackToLink = $scene_id != 0 ?
+    get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $_GET['scene_type'] // Scene editor
+    :
+    home_url()."/vrodos-assets-list-page/?". (!isset($_GET['singleproject'])?"vrodos_game=":"vrodos_project_id=").$project_id; // Shared assets
 
 
 ?>
@@ -309,18 +299,12 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         // if any 3D files have been selected for upload
         if (count($_FILES['multipleFilesInput']['name']) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ){
             vrodos_create_asset_3DFilesExtra_frontend($asset_id, $asset_language_pack['assetTitleForm'],
-                $gameSlug, $assetPGameID);
+                $gameSlug, $project_id);
         }
 
         update_post_meta($asset_id, 'vrodos_asset3d_isCloned', 'false');
         update_post_meta($asset_id, 'vrodos_asset3d_isJoker', $isJoker);
     }
-
-    // SCREENSHOT: upload and add id of uploaded file to postmeta vrodos_asset3d_screenimage of asset
-//    $f = fopen("output_fscr.txt","w");
-//    fwrite($f, $_POST['sshotFileInput']);
-//    fclose($f);
-//
 
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
         vrodos_upload_asset_screenshot($_POST['sshotFileInput'], $asset_language_pack['assetTitleForm'], $asset_id, $project_id);

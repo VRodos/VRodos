@@ -166,7 +166,7 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
             $objFile_id = vrodos_upload_AssetText($obj_content, // the OBJ content
                                            'obj' .$assetTitleForm, // it should have the obj and title as name
                                                   $asset_newID,
-                                                  null, null
+                                                  null, null, $project_id
                                                 );
 
             // 6. Add id of obj as post meta on asset

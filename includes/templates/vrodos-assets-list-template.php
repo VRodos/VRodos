@@ -126,7 +126,7 @@ if ($single_project_asset_list)
         <?php
 
         if( $single_project_asset_list){
-            $helpMessage = 'A list of your private Assets belonging to <b> '.$current_game_project_post->post_title.' </b>. <br> First button allows you to add a new private one.';
+            $helpMessage = 'A list of your private Assets belonging to <b>'.$current_game_project_post->post_title.'</b>.';
         } else {
             $helpMessage = 'Add a Shared Asset here. If you want it to be private, make a project and add the asset there.';
         }
