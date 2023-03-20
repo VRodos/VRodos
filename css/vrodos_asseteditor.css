@@ -60,7 +60,10 @@
 }
 
 #jscolorpick {
-    width:40%;margin-left:60%;
+    display: block;
+    padding: 6px 0 6px 0;
+    margin: 42px 16px 0 16px;
+    width: 30%;
 }
 
 #assetFontsLabel{
@@ -244,25 +247,21 @@ a.boundingSphereButton{
     position:absolute;
     left:10px;
     bottom:0;
+    padding: 8px;
     z-index: 10000;
-    /*padding:0.35em 1.2em;*/
-    /*border:0.1em solid white;*/
-    /*margin:0 0.3em 0.3em 0;*/
-    /*border-radius:0.12em;*/
     box-sizing: border-box;
     text-decoration:none;
     font-family:'Roboto',sans-serif;
-    font-weight:200;
-    color:#FFFFFF;
+    font-weight: 300;
+    color: #000000;
+    background-color: #FFFFFF;
     text-align:center;
     transition: all 0.2s;
-    /*transform: translate(-50%, -50%);*/
-    display:inline-block;
 }
 
 .boundingSphereButton:hover{
-    color:#000000;
-    background-color:#FFFFFF;
+    color: #FFFFFF;
+    background-color: #000000;
 }
 @media all and (max-width:30em){
     a.boundingSphereButton{

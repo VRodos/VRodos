@@ -167,8 +167,8 @@ function updateColorPicker(picker, asset_viewer_3d_kernel_local){
     asset_viewer_3d_kernel_local.scene.background.b = picker.rgb[2]/255;
 
     // Change top border line color for portrait mode
-    document.getElementById('text-asset-sidebar').style.borderTop="5px solid " +
-        rgbToHex(picker.rgb[0]-40, picker.rgb[1]-40, picker.rgb[2]-40) ;
+    /*document.getElementById('text-asset-sidebar').style.borderTop="5px solid " +
+        rgbToHex(picker.rgb[0]-40, picker.rgb[1]-40, picker.rgb[2]-40) ;*/
 
     asset_viewer_3d_kernel_local.render();
 }

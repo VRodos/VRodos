@@ -505,7 +505,7 @@ if($asset_id != null) {
             $previewLink = $previewLink . '&preview=1#English';
             ?>
 
-           <!-- <a class="mdc-button mdc-button--primary mdc-theme--primary"
+            <!-- <a class="mdc-button mdc-button--primary mdc-theme--primary"
                href="<?php /*echo $previewLink; */?>"
                data-mdc-auto-init="MDCRipple">Preview</a>-->
         <?php }  else {
@@ -542,7 +542,7 @@ if($asset_id != null) {
 
         <!-- CATEGORY -->
         <div>
-            <h3 class="mdc-typography--title" style="margin-top:30px;"><?php echo $dropdownHeading; ?></h3>
+            <h3 class="mdc-typography--title" style="margin-top:20px;"><?php echo $dropdownHeading; ?></h3>
 
             <div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
                 <em class="material-icons mdc-theme--text-hint-on-light">label</em>&nbsp;
@@ -618,787 +618,763 @@ if($asset_id != null) {
             <!-- EDIT MODE -->
             <?php if(($isOwner || $isUserAdmin) && $isEditMode) { ?>
 
-            <!-- Title -->
-            <div class="mdc-textfield FullWidth mdc-form-field" data-mdc-auto-init="MDCTextfield" >
-                <input id="assetTitle" type="text"
-                       class="changablefont mdc-textfield__input mdc-theme--text-primary-on-light"
-                       name="assetTitle"
-                       aria-controls="title-validation-msg" required minlength="3" maxlength="40"
-                       style="font-family: <?php echo $curr_font?>;"
-                       value="<?php echo trim($assetLangPack2['asset_title_saved']); ?>">
+                <!-- Title -->
+                <h3 class="mdc-typography--title" style="margin-bottom: 0;">Title</h3>
+                <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0;">
+                    <input id="assetTitle" type="text"
+                           class="changablefont mdc-textfield__input mdc-theme--text-primary-on-light"
+                           name="assetTitle"
+                           aria-controls="title-validation-msg" required minlength="3" maxlength="40"
+                           style="font-family: <?php echo $curr_font?>;"
+                           value="<?php echo trim($assetLangPack2['asset_title_saved']); ?>">
 
-                <label for="assetTitle" class="mdc-textfield__label">
-                    <?php echo $assetLangPack2['asset_title_label']; ?>
-                </label>
+                    <label for="assetTitle" class="mdc-textfield__label">
+                        <?php echo $assetLangPack2['asset_title_label']; ?>
+                    </label>
 
-                <div class="mdc-textfield__bottom-line"></div>
-            </div>
+                    <div class="mdc-textfield__bottom-line"></div>
+                </div>
 
-            <p class="mdc-textfield-helptext  mdc-textfield-helptext--validation-msg" id="title-validation-msg">
-                Between 3 - 25 characters
-            </p>
-            <!-- End of Title -->
+                <p class="mdc-textfield-helptext  mdc-textfield-helptext--validation-msg" id="title-validation-msg">
+                    Between 3 - 25 characters
+                </p>
+                <!-- End of Title -->
 
-            <!-- 3D Models -->
-            <div id="object3DPropertiesPanel"">
 
-            <h3 class="mdc-typography--title">3D Model</h3>
-            <img alt="3D model section"
-                 src="<?php echo plugins_url( '../images/cube.png', dirname(__FILE__)  );?>">
-            <label id="fileUploadInputLabel" for="multipleFilesInput"> Select files </label>
+                <!-- 3D Models -->
+                <div id="object3DPropertiesPanel">
 
-            <input id="fileUploadInput"
-                   class="FullWidth" type="file"
-                   name="multipleFilesInput[]"
-                   value="" multiple accept=".obj,.mtl,.jpg,.png,.fbx,.pdb,.glb"
-                   onclick="clearList()"/>
+                    <h3 class="mdc-typography--title">3D Model</h3>
 
-            <!-- For currently selected -->
-            <div id="fileList3D" style="margin-left:5px"></div>
+                    <!-- Select type of 3D format files -->
+                    <!--TODO Create a different 3d type handler-->
+                    <!--<ul class="RadioButtonList">
+                        <li class="mdc-form-field" id="glbRadioListItem" onclick="loadFileInputLabel('glb')">
+                            <div class="mdc-radio">
+                                <input class="mdc-radio__native-control" type="radio" id="glbRadio"
+                                       name="objectTypeRadio" value="glb">
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                            </div>
+                            <label id="glbRadio-label" for="glbRadio" style="margin-bottom: 0;">Khronos GLB file</label>
+                        </li>
+                        <li class="mdc-form-field" id="fbxRadioListItem" onclick="loadFileInputLabel('fbx')">
+                            <div class="mdc-radio" >
+                                <input class="mdc-radio__native-control" type="radio" id="fbxRadio"
+                                       name="objectTypeRadio" value="fbx">
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                            </div>
+                            <label id="fbxRadio-label" for="fbxRadio" style="margin-bottom: 0;">FBX file</label>
+                        </li>
 
-            <!-- For already stored files -->
-            <?php print_r($_FILES, true) ?>
+                        <li class="mdc-form-field" id="pdbRadioListItem" onclick="loadFileInputLabel('pdb')">
+                            <div class="mdc-radio">
+                                <input class="mdc-radio__native-control" type="radio" id="pdbRadio"
+                                       name="objectTypeRadio" value="pdb">
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                            </div>
+                            <label id="pdbRadio-label" for="pdbRadio" style="margin-bottom: 0;">Protein Data Bank (PDB) file</label>
+                        </li>
 
-            <!-- Select type of 3D format files -->
-            <ul class="RadioButtonList" style="display:none">
-                <li class="mdc-form-field" id="glbRadioListItem" onclick="loadFileInputLabel('glb')">
-                    <div class="mdc-radio">
-                        <input class="mdc-radio__native-control" type="radio" id="glbRadio"
-                               name="objectTypeRadio" value="glb">
-                        <div class="mdc-radio__background">
-                            <div class="mdc-radio__outer-circle"></div>
-                            <div class="mdc-radio__inner-circle"></div>
+                        <li class="mdc-form-field" id="mtlRadioListItem" onclick="loadFileInputLabel('obj')">
+                            <div class="mdc-radio">
+                                <input class="mdc-radio__native-control" type="radio" id="mtlRadio"
+                                       name="objectTypeRadio" value="mtl">
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                            </div>
+                            <label id="mtlRadio-label" for="mtlRadio" style="margin-bottom: 0;">MTL & OBJ files</label>
+                        </li>
+                    </ul>-->
+
+                    <img alt="3D model section"
+                         src="<?php echo plugins_url( '../images/cube.png', dirname(__FILE__)  );?>">
+                    <label id="fileUploadInputLabel" for="multipleFilesInput"> File selection </label>
+
+                    <!--<input id="fileUploadInput"
+                           class="FullWidth" type="file"
+                           name="multipleFilesInput[]"
+                           value="" multiple accept=".obj,.mtl,.jpg,.png,.fbx,.pdb,.glb"
+                           onclick="clearList()"/>-->
+
+                    <input id="fileUploadInput"
+                           class="FullWidth" type="file"
+                           name="multipleFilesInput[]"
+                           value="" accept=".glb"
+                           onclick="clearList()"/>
+
+                    <!-- For currently selected -->
+                    <div id="fileList3D" style="margin-left:5px"></div>
+
+                    <!-- For already stored files -->
+                    <?php print_r($_FILES, true) ?>
+
+                    <div id="sshotFileInputContainer">
+                        <h4 class="mdc-typography--title">Screenshot</h4>
+                        <?php
+
+                        if($asset_id==null) {
+
+                            // If asset is not created load a predefault image
+                            echo '<img id = "sshotPreviewImg" src="'.
+                                plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ).'">';
+
+                        } else {
+
+                            // if asset is edited load the existing screenshot url
+                            $scrnImageURL = wp_get_attachment_url(
+                                get_post_meta($asset_id, "vrodos_asset3d_screenimage",true) );
+
+                            echo '<img id = "sshotPreviewImg" src="'.$scrnImageURL.'">';
+                        }
+                        ?>
+
+                        <input class="FullWidth" type="hidden" name="sshotFileInput" value=""
+                               id="sshotFileInput" accept="image/png"/>
+
+                        <a id="createModelScreenshotBtn" type="button"
+                           class="mdc-button mdc-button--primary mdc-theme--primary"
+                           data-mdc-auto-init="MDCRipple">
+                            Create screenshot
+                        </a>
+                    </div>
+
+                    <div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea"
+                         data-mdc-auto-init="MDCTextfield">
+                        <label for="jscolorpick" style="display:none">Color pick</label>
+                        <input id="jscolorpick"
+                               class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
+
+                        <label for="assetback3dcolor" class="mdc-textfield__label">3D viewer background color</label>
+                        <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
+                               name="assetback3dcolor" form="3dAssetForm" value="<?php echo trim($asset_back_3d_color_saved); ?>" />
+                    </div>
+
+
+                    <input type="hidden" id="assettrs" class="mdc-textfield__input"
+                           name="assettrs" form="3dAssetForm" value="<?php echo trim($assettrs_saved); ?>" />
+
+
+                    <!-- Audio -->
+                    <div id="audioDetailsPanel">
+
+                        <h4 class="mdc-typography--title">3D audio file</h4>
+                        <img alt="Audio Section" src="<?php echo plugins_url( '../images/audio.png', dirname(__FILE__)  );?>">
+                        <div id="audioFileInputContainer">
+                            <?php
+                            $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
+                            $attachment_post = get_post( $audioID );
+                            $attachment_file = $attachment_post->guid;
+
+                            if(strpos($attachment_file, "mp3" )!==false || strpos($attachment_file, "wav" )!==false){
+                                ?>
+                                <audio controls loop preload="auto" id ='audioFile'>
+                                    <source src="<?php echo $attachment_file;?>" type="audio/mp3">
+                                    <source src="<?php echo $attachment_file;?>" type="audio/wav">
+                                    Your browser does not support the audio tag.
+                                </audio>
+                            <?php } ?>
+
+                            <label for="audioFileInput"> Select a new audio</label>
+                            <input class="FullWidth" type="file" name="audioFileInput" value="" id="audioFileInput" accept="audio/mp3,audio/wav"/>
+                            <br />
+                            <span id="audio-description-label"
+                                  class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp3 or wav</span>
                         </div>
                     </div>
-                    <label id="glbRadio-label" for="glbRadio" style="margin-bottom: 0;">Khronos GLB file</label>
-                </li>
 
-                <!--                <li class="mdc-form-field" id="fbxRadioListItem" onclick="loadFileInputLabel('fbx')">-->
-                <!--                    <div class="mdc-radio" >-->
-                <!--                        <input class="mdc-radio__native-control" type="radio" id="fbxRadio"-->
-                <!--                               name="objectTypeRadio" value="fbx">-->
-                <!--                        <div class="mdc-radio__background">-->
-                <!--                            <div class="mdc-radio__outer-circle"></div>-->
-                <!--                            <div class="mdc-radio__inner-circle"></div>-->
-                <!--                        </div>-->
-                <!--                    </div>-->
-                <!--                    <label id="fbxRadio-label" for="fbxRadio" style="margin-bottom: 0;">FBX file</label>-->
-                <!--                </li>-->
-                <!---->
-                <!--                <li class="mdc-form-field" id="pdbRadioListItem" onclick="loadFileInputLabel('pdb')">-->
-                <!--                    <div class="mdc-radio">-->
-                <!--                        <input class="mdc-radio__native-control" type="radio" id="pdbRadio"-->
-                <!--                               name="objectTypeRadio" value="pdb">-->
-                <!--                        <div class="mdc-radio__background">-->
-                <!--                            <div class="mdc-radio__outer-circle"></div>-->
-                <!--                            <div class="mdc-radio__inner-circle"></div>-->
-                <!--                        </div>-->
-                <!--                    </div>-->
-                <!--                    <label id="pdbRadio-label" for="pdbRadio" style="margin-bottom: 0;">Protein Data Bank (PDB) file</label>-->
-                <!--                </li>-->
-                <!---->
-                <!--                <li class="mdc-form-field" id="mtlRadioListItem" onclick="loadFileInputLabel('obj')">-->
-                <!--                    <div class="mdc-radio">-->
-                <!--                        <input class="mdc-radio__native-control" type="radio" id="mtlRadio"-->
-                <!--                               name="objectTypeRadio" value="mtl">-->
-                <!--                        <div class="mdc-radio__background">-->
-                <!--                            <div class="mdc-radio__outer-circle"></div>-->
-                <!--                            <div class="mdc-radio__inner-circle"></div>-->
-                <!--                        </div>-->
-                <!--                    </div>-->
-                <!--                    <label id="mtlRadio-label" for="mtlRadio" style="margin-bottom: 0;">MTL & OBJ files</label>-->
-                <!--                </li>-->
-            </ul>
+                </div>
+                <!-- End of 3D -->
+
+                <!-- Languages -->
+                <h3 class="mdc-typography--title">Description</h3>
+
+                <!-- All language fields are in the following -->
+            <?php vrodos_asset3d_languages_support3($curr_font, $assetLangPack2);?>
+
+                <!--  Select font for text -->
+                <!--<div id="assetFontsDiv">
+                    <h3 id="assetFontsLabel" for="assetFonts" class="mdc-typography--title">Fonts</h3>
+                    <input id="assetFonts" class="mdc-textfield__input"
+                           name="assetFonts" form="3dAssetForm" value="<?php /*echo trim($asset_fonts_saved); */?>">
+                    <script>
+                        jQuery('#assetFonts').fontselect().on('change', function() { applyFont(this.value); });
+                    </script>
+                </div>-->
 
 
+            <hr class="whiteSpaceSeparatorAssetEditor" />
 
-            <div id="sshotFileInputContainer">
-                <h4 class="mdc-typography--title">Screenshot</h4>
+                <!--   MULTIMEDIA -->
+                <h3 class="mdc-typography--title">Multimedia</h3>
+
+                <!-- Images Input Fields-->
+                <div id="imgDetailsPanel">
+                    <?php
+                    for ($i=0; $i<=4; $i++){
+                        ?>
+                        <h3 class="mdc-typography--title">Image <?php echo $i;?></h3>
+
+                        <img alt="Image placeholder" id="img<?php echo $i; ?>Preview"
+                             src="<?php echo ($asset_id == null || $images_urls[$i] == null) ? $defaultImage : $images_urls[$i] ; ?>">
+
+                        <input type="file" name="image<?php echo $i;?>Input" title="Image <?php echo $i;?>" value=""
+                               id="img<?php echo $i;?>Input" accept="image/x-png,image/gif,image/jpeg">
+
+                        <br />
+                        <span  class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">jpg is recommended</span>
+                    <?php }?>
+                </div>
+
+                <script>
+                    // On select image alter preview thumbnail
+                    for (let i=0; i<=4; i++){
+                        jQuery("#img"+i.toString()+"Input").change(function() {
+                            vrodos_read_url(this, "#img"+i.toString()+"Preview");
+                        });
+                    }
+                </script>
+
+            <hr class="WhiteSpaceSeparator">
+
+                <!-- End of Images -->
+
+
+                <!-- Video -->
+                <div id="videoDetailsPanel">
+                    <h3 class="mdc-typography--title">Video</h3>
+
+                    <img alt="Video section"
+                         src="<?php echo plugins_url( '../images/ic_video_section.png', dirname(__FILE__)  );?>">
+                    <div id="videoFileInputContainer" class="">
+                        <?php
+                        $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
+                        $attachment_post = get_post($videoID);
+                        $attachment_file = $attachment_post->guid;
+                        ?>
+
+                        <?php if(strpos($attachment_file, "mp4" )!==false || strpos($attachment_file, "ogg" )!==false){?>
+                            <?php echo $attachment_file; ?>
+                            <video width="320" height="240"
+                                   poster="<?php echo plugins_url( '../images/', dirname(__FILE__)  ).'/video_img.png'?>" controls preload="auto">
+
+                                <source src="<?php echo $attachment_file;?>" type="video/mp4">
+                                <source src="<?php echo $attachment_file;?>" type="video/ogg">
+                                Your browser does not support the video tag.
+                            </video>
+                        <?php } ?>
+
+                        <label for="videoFileInput"> Select a new video</label>
+                        <input class="FullWidth" type="file" name="videoFileInput" value="" id="videoFileInput" accept="video/mp4"/>
+                        <br />
+                        <span id="video-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp4 is recommended </span>
+                    </div>
+                </div>
+
+
+            <?php } else { ?>  <!-- PREVIEW READ ONLY DATA -->
+
+                <div id="assetTitleView"><?php echo $assetLangPack2['asset_title_saved'];?></div>
+
+            <hr />
+
+                <!--Carousel slideshow slides-->
+
+                <!-- Video -->
                 <?php
-
-                if($asset_id==null) {
-
-                    // If asset is not created load a predefault image
-                    echo '<img id = "sshotPreviewImg" src="'.
-                        plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ).'">';
-
-                } else {
-
-                    // if asset is edited load the existing screenshot url
-                    $scrnImageURL = wp_get_attachment_url(
-                        get_post_meta($asset_id, "vrodos_asset3d_screenimage",true) );
-
-                    echo '<img id = "sshotPreviewImg" src="'.$scrnImageURL.'">';
-                }
+                $showVid = $saved_term ? in_array( $saved_term[0]->slug, ['artifact'])?'':'none' : null;
+                $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
+                ?>
+                <!-- Image -->
+                <?php
+                $showImageFields = $saved_term ? in_array($saved_term[0]->slug,['artifact'])?'':'none' : null;
                 ?>
 
-                <input class="FullWidth" type="hidden" name="sshotFileInput" value=""
-                       id="sshotFileInput" accept="image/png"/>
+                <div class="slideshow-container">
 
-                <a id="createModelScreenshotBtn" type="button"
-                   class="mdc-button mdc-button--primary mdc-theme--primary"
-                   data-mdc-auto-init="MDCRipple">
-                    Create screenshot
-                </a>
-            </div>
+                    <!-- Check if video slide should be shown -->
+                    <?php if ($showVid=='' && $asset_id != null && $videoID!=null){ ?>
+                        <div class="">
+                            <!-- Video slide -->
+                            <!--<div class="numbertext">1 / 2</div>-->
+                            <div id="videoDetailsPanel" style="display:<?php echo ($asset_id == null)?'none':$showVid; ?>;">
 
-            <div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea"
-                 data-mdc-auto-init="MDCTextfield">
-                <label for="jscolorpick" style="display:none">Color pick</label>
-                <input id="jscolorpick"
-                       class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
+                                <div id="videoFileInputContainer" class="">
+                                    <?php
 
-                <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
-                       name="assetback3dcolor" form="3dAssetForm" value="<?php echo trim($asset_back_3d_color_saved); ?>" />
+                                    $attachment_post = get_post($videoID);
+                                    $attachment_file = $attachment_post->guid;
+                                    ?>
 
-                <label for="assetback3dcolor" class="mdc-textfield__label"
-                       style="background: none;">3D viewer background color</label>
-
-
-
-            </div>
-
-
-
-
-            <input type="hidden" id="assettrs" class="mdc-textfield__input"
-                   name="assettrs" form="3dAssetForm" value="<?php echo trim($assettrs_saved); ?>" />
+                                    <?php if( strpos($attachment_file, "mp4" )!==false || strpos($attachment_file, "ogg" )!==false){?>
+                                        <video style="height:auto" controls>
+                                            <source src="<?php echo $attachment_file;?>" type="video/mp4">
+                                            <source src="<?php echo $attachment_file;?>" type="video/ogg">
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                            <!-- Caption -->
+                            <div class="text"></div>
+                        </div>
+                    <?php } ?>
 
 
+                    <!--  Image 0,1,2,3,4,5 check if should be shown -->
+                    <?php
+                    for ($i=0; $i<=4; $i++){
+                        if ($showImageFields=='' && $asset_id != null && $images_urls[$i]!=null){ ?>
+                            <div class="">
+                                <div id="imgDetailsPanel_preview" style="display: <?php echo ($asset_id == null)?'none':$showImageFields; ?>">
+                                    <?php if($asset_id != null){ ?>
+                                        <img alt="Related images"
+                                             id="img<?php echo $i;?>Preview"
+                                             style="width:100%" src="<?php echo $images_urls[$i]; ?>">
+                                    <?php } ?>
+                                </div>
+                                <div class="text"></div>
+                            </div>
+                        <?php } ?>
+                    <?php } ?>
 
-            <!-- Audio -->
-            <div id="audioDetailsPanel">
 
-                <h4 class="mdc-typography--title">3D audio file</h4>
-                <img alt="Audio Section" src="<?php echo plugins_url( '../images/audio.png', dirname(__FILE__)  );?>">
-                <div id="audioFileInputContainer">
+                    <!--   Sliders prev next -->
+                    <?php if ($showVid=='' && $showImageFields=='' && $asset_id != null && $images_urls[0]!=null){ ?>
+                        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+                        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+                    <?php } ?>
+                </div>
+            <br>
+
+
+                <!-- Audio hidden object -->
+                <div id="audioFileInputContainer" style="display:none">
                     <?php
                     $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
                     $attachment_post = get_post( $audioID );
                     $attachment_file = $attachment_post->guid;
+                    ?>
 
-                    if(strpos($attachment_file, "mp3" )!==false || strpos($attachment_file, "wav" )!==false){
-                        ?>
-                        <audio controls loop preload="auto" id ='audioFile'>
+                    <audio loop preload="auto" id ='audioFile'>
+                        <?php if(strpos($attachment_file, "mp3" )!==false || strpos($attachment_file, "wav" )!==false){?>
                             <source src="<?php echo $attachment_file;?>" type="audio/mp3">
                             <source src="<?php echo $attachment_file;?>" type="audio/wav">
-                            Your browser does not support the audio tag.
-                        </audio>
-                    <?php } ?>
 
-                    <label for="audioFileInput"> Select a new audio</label>
-                    <input class="FullWidth" type="file" name="audioFileInput" value="" id="audioFileInput" accept="audio/mp3,audio/wav"/>
-                    <br />
-                    <span id="audio-description-label"
-                          class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp3 or wav</span>
+
+                        <?php } ?>
+                    </audio>
                 </div>
-            </div>
-
-        </div>
-        <!-- End of 3D -->
-
-        <!-- Languages -->
-        <h3 class="mdc-typography--title">Description</h3>
-
-        <img alt="Languages section" class="sectionIcon"
-             src="<?php echo plugins_url( '../images/language_icon.jpg', dirname(__FILE__)  );?>">
-
-        <!-- All language fields are in the following -->
-        <?php vrodos_asset3d_languages_support3($curr_font, $assetLangPack2);?>
-
-        <!--  Select font for text -->
-        <div id="assetFontsDiv">
-            <span id="assetFontsLabel" for="assetFonts" class="mdc-textfield" >Fonts</span>
-            <input id="assetFonts" type="hidden" class="mdc-textfield__input"
-                   name="assetFonts" form="3dAssetForm" value="<?php echo trim($asset_fonts_saved); ?>">
-            <script>
-                jQuery('#assetFonts').fontselect().on('change', function() { applyFont(this.value); });
-            </script>
-        </div>
 
 
-        <hr class="whiteSpaceSeparatorAssetEditor" />
+                <!-- Languages -->
+                <ul class="langul" style="margin:5px;text-align:center;display:inline-block;width:100%">
+                    <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('English')">English</button>
+                    <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('Greek')" >ΕΛΛΗΝΙΚΑ</button>
+                    <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('Spanish')">Español</button>
+                    <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('French')">Français</button>
+                    <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('German')">Deutsch</button>
+                    <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('Russian')">Pусский</button>
+                </ul>
 
-        <!--   MULTIMEDIA -->
-        <h3 class="mdc-typography--title">Multimedia</h3>
+                <!-- Accessibility -->
+                <div style="display:inline-block; margin-left:10px; width:100%; margin-top:10px; margin-bottom:10px" >
 
-        <img alt="Images section" class="sectionIcon"
-             src="<?php echo plugins_url( '../images/ic_images_section.png', dirname(__FILE__)  );?>">
+                    <!-- Background color -->
+                    <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
+                           name="assetback3dcolor" form="3dAssetForm"
+                           value="<?php echo trim($asset_back_3d_color_saved); ?>" />
 
-        <!-- Images Input Fields-->
-        <div id="imgDetailsPanel">
-            <?php
-            for ($i=0; $i<=4; $i++){
-                ?>
-                <h3 class="mdc-typography--title">Image <?php echo $i;?></h3>
+                    <button id="jscolorpick"
+                            class="jscolor {valueElement:null,value:'<?php echo $back_3d_color; ?>',onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="cccccc"
+                            style="padding:10px;width:20px;height:40px;max-height:40px;min-height:40px;left:0;display:inline-block;vertical-align:bottom">
+                    </button>
 
-                <img alt="Image placeholder" id="img<?php echo $i; ?>Preview"
-                     src="<?php echo ($asset_id == null || $images_urls[$i] == null) ? $defaultImage : $images_urls[$i] ; ?>">
-
-                <input type="file" name="image<?php echo $i;?>Input" title="Image <?php echo $i;?>" value=""
-                       id="img<?php echo $i;?>Input" accept="image/x-png,image/gif,image/jpeg">
-
-                <br />
-                <span  class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">jpg is recommended</span>
-            <?php }?>
-        </div>
-
-        <script>
-            // On select image alter preview thumbnail
-            for (let i=0; i<=4; i++){
-                jQuery("#img"+i.toString()+"Input").change(function() {
-                    vrodos_read_url(this, "#img"+i.toString()+"Preview");
-                });
-            }
-        </script>
-
-        <hr class="WhiteSpaceSeparator">
-
-        <!-- End of Images -->
-
-
-        <!-- Video -->
-        <div id="videoDetailsPanel">
-            <h3 class="mdc-typography--title">Video</h3>
-
-            <img alt="Video section"
-                 src="<?php echo plugins_url( '../images/ic_video_section.png', dirname(__FILE__)  );?>">
-            <div id="videoFileInputContainer" class="">
-                <?php
-                $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
-                $attachment_post = get_post($videoID);
-                $attachment_file = $attachment_post->guid;
-                ?>
-
-                <?php if(strpos($attachment_file, "mp4" )!==false || strpos($attachment_file, "ogg" )!==false){?>
-                    <?php echo $attachment_file; ?>
-                    <video width="320" height="240"
-                           poster="<?php echo plugins_url( '../images/', dirname(__FILE__)  ).'/video_img.png'?>" controls preload="auto">
-
-                        <source src="<?php echo $attachment_file;?>" type="video/mp4">
-                        <source src="<?php echo $attachment_file;?>" type="video/ogg">
-                        Your browser does not support the video tag.
-                    </video>
-                <?php } ?>
-
-                <label for="videoFileInput"> Select a new video</label>
-                <input class="FullWidth" type="file" name="videoFileInput" value="" id="videoFileInput" accept="video/mp4"/>
-                <br />
-                <span id="video-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp4 is recommended </span>
-            </div>
-        </div>
-
-
-        <?php } else { ?>  <!-- PREVIEW READ ONLY DATA -->
-
-            <div id="assetTitleView"><?php echo $assetLangPack2['asset_title_saved'];?></div>
-
-            <hr />
-
-            <!--Carousel slideshow slides-->
-
-            <!-- Video -->
-            <?php
-            $showVid = $saved_term ? in_array( $saved_term[0]->slug, ['artifact'])?'':'none' : null;
-            $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
-            ?>
-            <!-- Image -->
-            <?php
-            $showImageFields = $saved_term ? in_array($saved_term[0]->slug,['artifact'])?'':'none' : null;
-            ?>
-
-            <div class="slideshow-container">
-
-                <!-- Check if video slide should be shown -->
-                <?php if ($showVid=='' && $asset_id != null && $videoID!=null){ ?>
-                    <div class="">
-                        <!-- Video slide -->
-                        <!--<div class="numbertext">1 / 2</div>-->
-                        <div id="videoDetailsPanel" style="display:<?php echo ($asset_id == null)?'none':$showVid; ?>;">
-
-                            <div id="videoFileInputContainer" class="">
-                                <?php
-
-                                $attachment_post = get_post($videoID);
-                                $attachment_file = $attachment_post->guid;
-                                ?>
-
-                                <?php if( strpos($attachment_file, "mp4" )!==false || strpos($attachment_file, "ogg" )!==false){?>
-                                    <video style="height:auto" controls>
-                                        <source src="<?php echo $attachment_file;?>" type="video/mp4">
-                                        <source src="<?php echo $attachment_file;?>" type="video/ogg">
-                                        Your browser does not support the video tag.
-                                    </video>
-                                <?php } ?>
-                            </div>
-                        </div>
-                        <!-- Caption -->
-                        <div class="text"></div>
+                    <!-- Font size -->
+                    <div id="font-size-selector" style="display:inline-block; right: 10%;font-size: 1.5em;">
+                        <div id="plustext" title="Increase text size"  onclick="resizeText(1)">A+</div>
+                        <div id="minustext" title="Decrease text size" onclick="resizeText(-1)">A-</div>
                     </div>
-                <?php } ?>
 
+                    <?php $images_accessIcons_path = plugins_url( '../images/accessibility_icons/', dirname(__FILE__)  );?>
 
-                <!--  Image 0,1,2,3,4,5 check if should be shown -->
-                <?php
-                for ($i=0; $i<=4; $i++){
-                    if ($showImageFields=='' && $asset_id != null && $images_urls[$i]!=null){ ?>
-                        <div class="">
-                            <div id="imgDetailsPanel_preview" style="display: <?php echo ($asset_id == null)?'none':$showImageFields; ?>">
-                                <?php if($asset_id != null){ ?>
-                                    <img alt="Related images"
-                                         id="img<?php echo $i;?>Preview"
-                                         style="width:100%" src="<?php echo $images_urls[$i]; ?>">
-                                <?php } ?>
-                            </div>
-                            <div class="text"></div>
-                        </div>
-                    <?php } ?>
-                <?php } ?>
+                    <!-- Different texts buttons -->
+                    <div class="accessBtDiv">
+                        <a type='button' class="mdc-button accessButton" onclick="openAccess('')">
+                            <img alt="General" src="<?php echo $images_accessIcons_path.'/general_population_icon.png';?>"
+                                 class="accessIcons"/>
+                        </a>
 
+                        <a type='button' class="mdc-button accessButton" onclick="openAccess('Experts')" >
+                            <img alt="Experts" src="<?php echo $images_accessIcons_path.'/graduation_icon.png';?>"
+                                 class="accessIcons"/>
+                        </a>
 
-                <!--   Sliders prev next -->
-                <?php if ($showVid=='' && $showImageFields=='' && $asset_id != null && $images_urls[0]!=null){ ?>
-                    <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
-                    <a class="next" onclick="plusSlides(1)">&#10095;</a>
-                <?php } ?>
-            </div>
-            <br>
+                        <a type='button' class="mdc-button accessButton" onclick="openAccess('Perception')">
+                            <img alt="Perception disabilities" src="<?php echo $images_accessIcons_path.'/heart_icon.png';?>"
+                                 class="accessIcons"/>
+                        </a>
 
-
-            <!-- Audio hidden object -->
-            <div id="audioFileInputContainer" style="display:none">
-                <?php
-                $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
-                $attachment_post = get_post( $audioID );
-                $attachment_file = $attachment_post->guid;
-                ?>
-
-                <audio loop preload="auto" id ='audioFile'>
-                    <?php if(strpos($attachment_file, "mp3" )!==false || strpos($attachment_file, "wav" )!==false){?>
-                        <source src="<?php echo $attachment_file;?>" type="audio/mp3">
-                        <source src="<?php echo $attachment_file;?>" type="audio/wav">
-
-
-                    <?php } ?>
-                </audio>
-            </div>
-
-
-            <!-- Languages -->
-            <ul class="langul" style="margin:5px;text-align:center;display:inline-block;width:100%">
-                <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('English')">English</button>
-                <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('Greek')" >ΕΛΛΗΝΙΚΑ</button>
-                <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('Spanish')">Español</button>
-                <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('French')">Français</button>
-                <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('German')">Deutsch</button>
-                <button class="tablinks2 mdc-button" type='button' onclick="openLanguage('Russian')">Pусский</button>
-            </ul>
-
-            <!-- Accessibility -->
-            <div style="display:inline-block; margin-left:10px; width:100%; margin-top:10px; margin-bottom:10px" >
-
-                <!-- Background color -->
-                <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
-                       name="assetback3dcolor" form="3dAssetForm"
-                       value="<?php echo trim($asset_back_3d_color_saved); ?>" />
-
-                <button id="jscolorpick"
-                        class="jscolor {valueElement:null,value:'<?php echo $back_3d_color; ?>',onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="cccccc"
-                        style="padding:10px;width:20px;height:40px;max-height:40px;min-height:40px;left:0;display:inline-block;vertical-align:bottom">
-                </button>
-
-                <!-- Font size -->
-                <div id="font-size-selector" style="display:inline-block; right: 10%;font-size: 1.5em;">
-                    <div id="plustext" title="Increase text size"  onclick="resizeText(1)">A+</div>
-                    <div id="minustext" title="Decrease text size" onclick="resizeText(-1)">A-</div>
+                        <a type='button' class="mdc-button accessButton" onclick="openAccess('Kids')">
+                            <img alt="Children" src="<?php echo $images_accessIcons_path.'/children_icon.png';?>"
+                                 class="accessIcons"/>
+                        </a>
+                    </div>
                 </div>
 
-                <?php $images_accessIcons_path = plugins_url( '../images/accessibility_icons/', dirname(__FILE__)  );?>
+                <div class="wrapper_lang">
+                    <?php
+                    // Presentation of textual descriptions per language and accessibility level
+                    $languages = ["English","Greek","Spanish","French","German","Russian"];
+                    $accessLevel = ["","Kids","Experts","Perception"];
 
-                <!-- Different texts buttons -->
-                <div class="accessBtDiv">
-                    <a type='button' class="mdc-button accessButton" onclick="openAccess('')">
-                        <img alt="General" src="<?php echo $images_accessIcons_path.'/general_population_icon.png';?>"
-                             class="accessIcons"/>
-                    </a>
+                    foreach ($languages as $l){
+                        foreach ($accessLevel as $a){
 
-                    <a type='button' class="mdc-button accessButton" onclick="openAccess('Experts')" >
-                        <img alt="Experts" src="<?php echo $images_accessIcons_path.'/graduation_icon.png';?>"
-                             class="accessIcons"/>
-                    </a>
+                            $l2 = ($l === 'English') ? '' : '_'.strtolower($l);
+                            $a2 = ($a === '')? '' : '_'.strtolower($a);
 
-                    <a type='button' class="mdc-button accessButton" onclick="openAccess('Perception')">
-                        <img alt="Perception disabilities" src="<?php echo $images_accessIcons_path.'/heart_icon.png';?>"
-                             class="accessIcons"/>
-                    </a>
-
-                    <a type='button' class="mdc-button accessButton" onclick="openAccess('Kids')">
-                        <img alt="Children" src="<?php echo $images_accessIcons_path.'/children_icon.png';?>"
-                             class="accessIcons"/>
-                    </a>
-                </div>
-            </div>
-
-            <div class="wrapper_lang">
-                <?php
-                // Presentation of textual descriptions per language and accessibility level
-                $languages = ["English","Greek","Spanish","French","German","Russian"];
-                $accessLevel = ["","Kids","Experts","Perception"];
-
-                foreach ($languages as $l){
-                    foreach ($accessLevel as $a){
-
-                        $l2 = ($l === 'English') ? '' : '_'.strtolower($l);
-                        $a2 = ($a === '')? '' : '_'.strtolower($a);
-
-                        echo '<div id="'.$l.$a.'" class="tabcontent2 active" style="font-family:'.$curr_font.'">'.
-                            trim($assetLangPack2['asset_desc'.$l2.$a2.'_saved']).'</div>';
+                            echo '<div id="'.$l.$a.'" class="tabcontent2 active" style="font-family:'.$curr_font.'">'.
+                                trim($assetLangPack2['asset_desc'.$l2.$a2.'_saved']).'</div>';
+                        }
                     }
+                    ?>
+                </div>
+
+                <!-- Peer calls -->
+                <div id="confwindow" >
+                    <iframe id="iframeConf" width="100%" height="350px" src=""
+                            allow="camera;microphone"></iframe>
+                </div>
+
+                <div id="confwindow_helper">
+                    <h1><img src="<?php echo plugins_url( '../peer-calls/src/res/', dirname(__FILE__)  ).'/peer-calls.svg';?>" alt="Peer Calls" ></h1>
+                    <p>Video-conference with the museum expert!</p>
+                    <button type="button" onclick="startConf()">Call</button>
+                </div>
+
+
+                <?php
+                // Peer calls: audiovisual conferencing, answer to calls directly (for museum operators)
+                if (isset($_GET['directcall'])) {
+                    echo '<script>startConf()</script>';
                 }
                 ?>
-            </div>
 
-            <!-- Peer calls -->
-            <div id="confwindow" >
-                <iframe id="iframeConf" width="100%" height="350px" src=""
-                        allow="camera;microphone"></iframe>
-            </div>
+            <?php } ?>
+            <!--  End of Edit or Show  -->
 
-            <div id="confwindow_helper">
-                <h1><img src="<?php echo plugins_url( '../peer-calls/src/res/', dirname(__FILE__)  ).'/peer-calls.svg';?>" alt="Peer Calls" ></h1>
-                <p>Video-conference with the museum expert!</p>
-                <button type="button" onclick="startConf()">Call</button>
-            </div>
-
+            <!-- MOLECULES  only-->
+            <?php include 'vrodos-asset-editor-ChemistrySupport.php'; ?>
 
             <?php
-            // Peer calls: audiovisual conferencing, answer to calls directly (for museum operators)
-            if (isset($_GET['directcall'])) {
-                echo '<script>startConf()</script>';
-            }
+            // Obsolete virtual labs code
+            //  if ($project_scope == 1) {
+            //        require(plugin_dir_path(__DIR__) . '/templates/vrodos-asset-editor-vlabsWidgets.php');
+            //  }
             ?>
 
-        <?php } ?>
-        <!--  End of Edit or Show  -->
+            <hr class="WhiteSpaceSeparator" />
 
-        <!-- MOLECULES  only-->
-        <?php include 'vrodos-asset-editor-ChemistrySupport.php'; ?>
+            <!-- CATEGORY IPR -->
+            <div id="ipr-div" style="display:<?php echo (($isOwner || $isUserAdmin) && $isEditMode)?'':'none';?>">
 
-        <?php
-        // Obsolete virtual labs code
-        //  if ($project_scope == 1) {
-        //        require(plugin_dir_path(__DIR__) . '/templates/vrodos-asset-editor-vlabsWidgets.php');
-        //  }
-        ?>
+                <h3 class="mdc-typography--title">Select an IPR plan</h3>
+                <div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0">
+                    <i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
 
-        <hr class="WhiteSpaceSeparator" />
+                    <?php
+                    $saved_ipr_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_ipr_cat');
 
-        <!-- CATEGORY IPR -->
-        <div id="ipr-div" style="display:<?php echo (($isOwner || $isUserAdmin) && $isEditMode)?'':'none';?>">
-
-            <h3 class="mdc-typography--title">Select an IPR plan</h3>
-            <div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0">
-                <i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
-
-                <?php
-                $saved_ipr_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_ipr_cat');
-
-                if($asset_id == null || empty($saved_ipr_term) ) { ?>
-                    <!-- Empty IPR -->
-                    <span id="currently-ipr-selected"
-                          class="mdc-select__selected-text mdc-typography--subheading2">
+                    if($asset_id == null || empty($saved_ipr_term) ) { ?>
+                        <!-- Empty IPR -->
+                        <span id="currently-ipr-selected"
+                              class="mdc-select__selected-text mdc-typography--subheading2">
                             No IPR category selected
                             </span>
-                <?php } else { ?>
-                    <!-- Saved IPR -->
-                    <span
-                            data-cat-ipr-desc="<?php echo $saved_ipr_term[0]->description; ?>"
-                            data-cat-ipr-slug="<?php echo $saved_ipr_term[0]->slug; ?>"
-                            data-cat-ipr-id="<?php echo $saved_ipr_term[0]->term_ipr_id; ?>"
-                            id="currently-ipr-selected"
-                            class="mdc-select__selected-text mdc-typography--subheading2">
+                    <?php } else { ?>
+                        <!-- Saved IPR -->
+                        <span
+                                data-cat-ipr-desc="<?php echo $saved_ipr_term[0]->description; ?>"
+                                data-cat-ipr-slug="<?php echo $saved_ipr_term[0]->slug; ?>"
+                                data-cat-ipr-id="<?php echo $saved_ipr_term[0]->term_ipr_id; ?>"
+                                id="currently-ipr-selected"
+                                class="mdc-select__selected-text mdc-typography--subheading2">
                                 <?php echo $saved_ipr_term[0]->name; ?>
                              </span>
-                <?php } ?>
+                    <?php } ?>
 
 
-                <div class="mdc-simple-menu mdc-select__menu">
-                    <ul class="mdc-list mdc-simple-menu__items">
-                        <!-- First option is none -->
-                        <li class="mdc-list-item mdc-theme--text-hint-on-light"
-                            role="option" aria-disabled="true" tabindex="-1"
-                            style="pointer-events: none;">
-                            No IPR category selected
-                        </li>
-
-                        <!-- Add other options -->
-                        <?php
-                        $cat_ipr_terms = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
-
-                        foreach ( $cat_ipr_terms as $term_ipr ) { ?>
-                            <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
-                                title="<?php echo $term_ipr->description; ?>"
-                                data-cat-ipr-desc="<?php echo $term_ipr->description; ?>"
-                                data-cat-ipr-slug="<?php echo $term_ipr->slug; ?>" id="<?php echo $term_ipr->term_id?>" tabindex="0">
-                                <?php echo $term_ipr->name; ?>
+                    <div class="mdc-simple-menu mdc-select__menu">
+                        <ul class="mdc-list mdc-simple-menu__items">
+                            <!-- First option is none -->
+                            <li class="mdc-list-item mdc-theme--text-hint-on-light"
+                                role="option" aria-disabled="true" tabindex="-1"
+                                style="pointer-events: none;">
+                                No IPR category selected
                             </li>
-                        <?php } ?>
 
-                    </ul>
+                            <!-- Add other options -->
+                            <?php
+                            $cat_ipr_terms = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
+
+                            foreach ( $cat_ipr_terms as $term_ipr ) { ?>
+                                <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
+                                    title="<?php echo $term_ipr->description; ?>"
+                                    data-cat-ipr-desc="<?php echo $term_ipr->description; ?>"
+                                    data-cat-ipr-slug="<?php echo $term_ipr->slug; ?>" id="<?php echo $term_ipr->term_id?>" tabindex="0">
+                                    <?php echo $term_ipr->name; ?>
+                                </li>
+                            <?php } ?>
+
+                        </ul>
+                    </div>
                 </div>
-            </div>
 
-            <span class="mdc-typography--subheading2 mdc-theme--text-secondary-on-light" id="categoryIPRDescription">
+                <span class="mdc-typography--subheading2 mdc-theme--text-secondary-on-light" id="categoryIPRDescription">
                 </span>
 
-            <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
+                <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
+            </div>
+
+            <!-- Submit Button -->
+            <?php if(($isOwner || $isUserAdmin) && $isEditMode) {
+                wp_nonce_field('post_nonce', 'post_nonce_field'); ?>
+                <input type="hidden" name="submitted" id="submitted" value="true"/>
+                <button id="formSubmitBtn" style="display:none"
+                        class="ButtonFullWidth mdc-button mdc-elevation--z2 mdc-button--raised mdc-button--primary"
+                        data-mdc-auto-init="MDCRipple" type="submit" <?php echo $isEditable?'':' disabled' ?> >
+                    <?php echo $asset_id == null ? "Create asset" : "Update asset"; ?>
+                </button>
+            <?php } ?>
+
         </div>
 
-        <!-- Submit Button -->
-        <?php if(($isOwner || $isUserAdmin) && $isEditMode) {
 
-            wp_nonce_field('post_nonce', 'post_nonce_field');
-            ?>
+        <!-- Author -->
+        <table id="vrodos-asset-author" class="mdc-typography--caption">
+            <caption>Author</caption>
+            <tr>
 
-            <input type="hidden" name="submitted" id="submitted" value="true"/>
+                <th id="authorImageRow" rowspan="2">
+                    <img alt="Author image" id="vrodos-authorImg"
+                         src="<?php echo get_avatar_url($author_id);?>">
+                </th>
 
-            <button id="formSubmitBtn" style="display:none"
-                    class="ButtonFullWidth mdc-button mdc-elevation--z2 mdc-button--raised mdc-button--primary"
-                    data-mdc-auto-init="MDCRipple" type="submit" <?php echo $isEditable?'':' disabled' ?> >
-                <?php echo $asset_id == null ? "Create asset" : "Update asset"; ?>
-            </button>
+                <td style="padding: 0;">
+                    <a href="<?php echo home_url().'/user/'.$author_username; ?>"
+                       style="color:black">
+                        <?php  echo $author_displayname;?>
+                    </a>
+                </td>
 
-        <?php } ?>
-</div>
+            </tr>
 
-
-<!-- Author -->
-<table id="vrodos-asset-author" description="Author details" class="mdc-typography--caption">
-    <caption>Author</caption>
-    <tr>
-
-        <th id="authorImageRow" rowspan="2">
-            <img alt="Author image" id="vrodos-authorImg"
-                 src="<?php echo get_avatar_url($author_id);?>">
-        </th>
-
-        <td style="padding: 0;">
-            <a href="<?php echo home_url().'/user/'.$author_username; ?>"
-               style="color:black">
-                <?php  echo $author_displayname;?>
-            </a>
-        </td>
-
-    </tr>
-
-    <tr>
-        <td><span style=""><?php echo $author_country;?></span></td>
-    </tr>
-</table>
+            <tr>
+                <td><span style=""><?php echo $author_country;?></span></td>
+            </tr>
+        </table>
 
 
-</form>
+    </form>
 
 
-<!--                     Javascript                             -->
-<script type="text/javascript">
-    'use strict';
+    <script type="text/javascript">
+        'use strict';
 
-    hideAdminBar();
+        hideAdminBar();
 
-    var mdc = window.mdc;
-    mdc.autoInit();
+        var mdc = window.mdc;
+        mdc.autoInit();
 
-    let back_3d_color = "<?php echo $back_3d_color; ?>";
+        let back_3d_color = "<?php echo $back_3d_color; ?>";
 
+        document.getElementById("jscolorpick").value = back_3d_color;
 
-    document.getElementById("jscolorpick").value = back_3d_color;
+        generateQRcode();
 
+        let audio_file = document.getElementById( 'audioFile' );
 
-    generateQRcode();
+        let isEditMode = 0;
+        let isLoggedIn= <?php echo $isUserloggedIn ? 1: 0; ?>;
 
+        if (isLoggedIn === 1) {
+            isEditMode = <?php echo $_GET['preview'] === '1' ? 0 : 1; ?>;
+        } else {
+            isEditMode = 0;
+        }
 
-    let audio_file = document.getElementById( 'audioFile' );
+        console.log("isEditModeA:", isEditMode);
 
-    let isEditMode = 0;
-    let isLoggedIn= <?php echo $isUserloggedIn ? 1: 0; ?>;
-
-    if (isLoggedIn === 1) {
-        isEditMode = <?php echo $_GET['preview'] === '1' ? 0 : 1; ?>;
-    } else {
-        isEditMode = 0;
-    }
-
-
-    console.log("isEditModeA:", isEditMode);
-
-    // Reset 3D canvas if not preview
-    if (isEditMode) {
-        // clear canvas and divs for fields
+        // Reset 3D canvas if not preview
+        if (isEditMode) {
+            // clear canvas and divs for fields
 //        vrodos_reset_panels(asset_viewer_3d_kernel, "initial script");
 
-        // Get the Default Screenshot image for reference;
+            // Get the Default Screenshot image for reference;
+            var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg").src;
 
+        }
 
-        var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg").src;
+        // Set the functionality of the screenshot button;
+        screenshotHandlerSet();
 
-    }
+        let multipleFilesInputElem = document.getElementById( 'fileUploadInput' );
 
-    // Set the functionality of the screenshot button;
-    screenshotHandlerSet();
-
-
-    let multipleFilesInputElem = document.getElementById( 'fileUploadInput' );
-
-
-
-    let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
+        let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
 
 
 
-    // ------- Class to load 3D model ---------
-    let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById( 'previewCanvas' ),
-        document.getElementById( 'previewCanvasLabels' ),
-        document.getElementById('animButton1'),
-        document.getElementById('previewProgressLabel'),
-        document.getElementById('previewProgressSliderLine'),
-        back_3d_color,
-        audio_file,
-        path_url, // OBJ textures path
-        mtl_file_name,
-        obj_file_name,
-        pdb_file_name,
-        fbx_file_name,
-        glb_file_name,
-        textures_fbx_string_connected,
-        true,
-        false,
-        false,
-        true,
-        assettrs,
-        document.getElementById('boundSphButton'));
+        // ------- Class to load 3D model ---------
+        let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById( 'previewCanvas' ),
+            document.getElementById( 'previewCanvasLabels' ),
+            document.getElementById('animButton1'),
+            document.getElementById('previewProgressLabel'),
+            document.getElementById('previewProgressSliderLine'),
+            back_3d_color,
+            audio_file,
+            path_url, // OBJ textures path
+            mtl_file_name,
+            obj_file_name,
+            pdb_file_name,
+            fbx_file_name,
+            glb_file_name,
+            textures_fbx_string_connected,
+            false,
+            false,
+            false,
+            true,
+            assettrs,
+            document.getElementById('boundSphButton'));
 
 
 
 
-    // Load existing 3D models
-    // asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,
-    //                                                      glb_file_name, textures_fbx_string_connected);
+        // Load existing 3D models
+        // asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,
+        //                                                      glb_file_name, textures_fbx_string_connected);
 
-    //------------------------------------------
+        //------------------------------------------
 
-    // For selecting files
-    addHandlerFor3Dfiles(asset_viewer_3d_kernel, multipleFilesInputElem);
+        // For selecting files
+        addHandlerFor3Dfiles(asset_viewer_3d_kernel, multipleFilesInputElem);
 
-    // Select category handler
-    if( isEditMode === 1){
-        (function() {
+        // Select category handler
+        if( isEditMode === 1){
+            (function() {
 
-            let MDCSelect = mdc.select.MDCSelect;
+                let MDCSelect = mdc.select.MDCSelect;
 
-            // Category of asset change
+                // Category of asset change
 
-            let categoryDropdown = document.getElementById('category-select');
-            let categorySelect = MDCSelect.attachTo(categoryDropdown);
-            let selectedCatId = jQuery('#currently-selected').attr("data-cat-id");
+                let categoryDropdown = document.getElementById('category-select');
+                let categorySelect = MDCSelect.attachTo(categoryDropdown);
+                let selectedCatId = jQuery('#currently-selected').attr("data-cat-id");
 
-            categoryDropdown.addEventListener('MDCSelect:change', function() {
-                loadLayout(true);
-            });
+                categoryDropdown.addEventListener('MDCSelect:change', function() {
+                    loadLayout(true);
+                });
 
-            // IPR category change
-            let categoryIPRDropdown = document.getElementById('category-ipr-select');
-            let categoryIPRSelect = MDCSelect.attachTo(categoryIPRDropdown);
-            let selectedCatIPRId = jQuery('#currently-ipr-selected').attr("data-cat-ipr-id");
+                // IPR category change
+                let categoryIPRDropdown = document.getElementById('category-ipr-select');
+                let categoryIPRSelect = MDCSelect.attachTo(categoryIPRDropdown);
+                let selectedCatIPRId = jQuery('#currently-ipr-selected').attr("data-cat-ipr-id");
 
-            categoryIPRDropdown.addEventListener('MDCSelect:change', function() {
-                // Change the description of the popup
-                jQuery("#categoryIPRDescription")[0].innerHTML =  categoryIPRSelect.selectedOptions[0].getAttribute("data-cat-ipr-desc");
+                categoryIPRDropdown.addEventListener('MDCSelect:change', function() {
+                    // Change the description of the popup
+                    jQuery("#categoryIPRDescription")[0].innerHTML =  categoryIPRSelect.selectedOptions[0].getAttribute("data-cat-ipr-desc");
 
-                // Change the value of termIdInputIPR
-                jQuery("#termIdInputIPR").attr( "value", categoryIPRSelect.selectedOptions[0].getAttribute("id") );
-            });
+                    // Change the value of termIdInputIPR
+                    jQuery("#termIdInputIPR").attr( "value", categoryIPRSelect.selectedOptions[0].getAttribute("id") );
+                });
 
-            // This fires on start to clear layout if no category is selected
-            jQuery( document ).ready(function() {
+                // This fires on start to clear layout if no category is selected
+                jQuery( document ).ready(function() {
 
-                // No asset category selected
-                if (jQuery('#currently-selected').attr("data-cat-id")) {
-                    jQuery('#'+ selectedCatId).attr("aria-selected", true);
-                    jQuery('#category-select').addClass('mdc-select--disabled').attr( "aria-disabled", true);
-                    loadLayout(false);
+                    // No asset category selected
+                    if (jQuery('#currently-selected').attr("data-cat-id")) {
+                        jQuery('#'+ selectedCatId).attr("aria-selected", true);
+                        jQuery('#category-select').addClass('mdc-select--disabled').attr( "aria-disabled", true);
+                        loadLayout(false);
+                    }
+
+                    // IPR category
+                    if (jQuery('#currently-ipr-selected').attr("data-cat-ipr-id")) {
+                        jQuery('#'+ selectedCatIPRId).attr("aria-selected", true);
+                        jQuery('#category-ipr-select').addClass('mdc-select--disabled').attr( "aria-disabled", true);
+                    }
+
+                });
+
+                // Function to initialize layout
+                // paramter denotes if new asset or edit asset
+                function loadLayout(hasCategory) {
+
+                    asset_viewer_3d_kernel.resizeDisplayGL();
+
+                    //vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
+
+                    let cat;
+                    let descText = document.getElementById('categoryDescription');
+
+                    if(hasCategory) {
+                        descText.innerHTML = categorySelect.selectedOptions[0].getAttribute("data-cat-desc");
+                        cat = categorySelect.selectedOptions[0].getAttribute("data-cat-slug");
+                        jQuery("#termIdInput").attr( "value", categorySelect.selectedOptions[0].getAttribute("id") );
+                    } else {
+                        let jq = jQuery("#currently-selected");
+                        descText.innerHTML = jq.attr("data-cat-desc");
+                        cat = jq.attr("data-cat-slug");
+                        jQuery("#termIdInput").attr( "value", selectedCatId );
+                    }
+
+                    mdc.radio.MDCRadio.attachTo(document.querySelector('.mdc-radio'));
                 }
 
-                // IPR category
-                if (jQuery('#currently-ipr-selected').attr("data-cat-ipr-id")) {
-                    jQuery('#'+ selectedCatIPRId).attr("aria-selected", true);
-                    jQuery('#category-ipr-select').addClass('mdc-select--disabled').attr( "aria-disabled", true);
-                }
+            })();
 
-            });
+            // Select artifact, Remove category menu
+            setTimeout(function () {
+                //jQuery("#category-select").click(); // Expand category
+                jQuery('li[data-cat-slug="artifact"]').click();
+                //jQuery('#assetTitle')[0].value = 'a12'; // Set title
+                //jQuery("#objRadio-label").click(); // Set fbx type
+                //jQuery("#fileUploadInput").click(); // Click browse files
 
-            // Function to initialize layout
-            // paramter denotes if new asset or edit asset
-            function loadLayout(hasCategory) {
+                loadFileInputLabel('glb');
 
-                asset_viewer_3d_kernel.resizeDisplayGL();
+            }, 500);
 
-                //vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
+            //jQuery("#glbRadio").prop("checked", true);
+            jQuery("#formSubmitBtn").show();
 
-                let cat;
-                let descText = document.getElementById('categoryDescription');
+        } else {
 
-                if(hasCategory) {
-                    descText.innerHTML = categorySelect.selectedOptions[0].getAttribute("data-cat-desc");
-                    cat = categorySelect.selectedOptions[0].getAttribute("data-cat-slug");
-                    jQuery("#termIdInput").attr( "value", categorySelect.selectedOptions[0].getAttribute("id") );
-                } else {
-                    let jq = jQuery("#currently-selected");
-                    descText.innerHTML = jq.attr("data-cat-desc");
-                    cat = jq.attr("data-cat-slug");
-                    jQuery("#termIdInput").attr( "value", selectedCatId );
-                }
+            console.log("isEditMode:" + isEditMode);
 
-                mdc.radio.MDCRadio.attachTo(document.querySelector('.mdc-radio'));
-            }
+            // View mode: Show only the description mentioned in anchor #
+            let url = window.location.href;
+            let langcurr = url.substring(url.indexOf("#") + 1);
+            jQuery("#" + langcurr + ".tabcontent2")[0].style.display = "block";
 
-        })();
+            // Show slide 0 of images sequence
+            showSlides(slideIndex);
+        }
 
-        // Select artifact, Remove category menu
-        setTimeout(function () {
-            //jQuery("#category-select").click(); // Expand category
-            jQuery('li[data-cat-slug="artifact"]').click();
-            //jQuery('#assetTitle')[0].value = 'a12'; // Set title
-            //jQuery("#objRadio-label").click(); // Set fbx type
-            //jQuery("#fileUploadInput").click(); // Click browse files
-
-            loadFileInputLabel('glb');
-
-        }, 500);
-
-        //jQuery("#glbRadio").prop("checked", true);
-        jQuery("#formSubmitBtn").show();
-
-    } else {
-
-        console.log("isEditMode:" + isEditMode);
-
-        // View mode: Show only the description mentioned in anchor #
-        let url = window.location.href;
-        let langcurr = url.substring(url.indexOf("#") + 1);
-        jQuery("#" + langcurr + ".tabcontent2")[0].style.display = "block";
-
-        // Show slide 0 of images sequence
-        showSlides(slideIndex);
-    }
-
-
-    // Scroll to top
-    window.onload = function () {
-        setTimeout(function () {
-            document.getElementById("text-asset-sidebar").scrollTo(0,0)
-        }, 0);
-    };
-
-
-</script>
+        // Scroll to top
+        window.onload = function () {
+            setTimeout(function () {
+                document.getElementById("text-asset-sidebar").scrollTo(0,0)
+            }, 0);
+        };
+    </script>

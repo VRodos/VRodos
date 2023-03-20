@@ -1380,6 +1380,7 @@ video {
     .asset_editor_textpanel{
         height: 100% !important;
         width: 40%;
+        border: 0;
     }
 
     .asset_editor_3dpanel{
@@ -1390,9 +1391,9 @@ video {
 
 @media only screen and (orientation: portrait) {
     .asset_editor_textpanel{
+        border: 0;
         height: 40%;
         width: 100%;
-        border-top: 5px solid;
         position:fixed;
         bottom:0;
     }
