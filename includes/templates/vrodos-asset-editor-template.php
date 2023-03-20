@@ -323,7 +323,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 //
 
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
-        vrodos_upload_asset_screenshot($_POST['sshotFileInput'], $asset_language_pack['assetTitleForm'], $asset_id);
+        vrodos_upload_asset_screenshot($_POST['sshotFileInput'], $asset_language_pack['assetTitleForm'], $asset_id, $project_id);
     }
 
     // Save parameters
