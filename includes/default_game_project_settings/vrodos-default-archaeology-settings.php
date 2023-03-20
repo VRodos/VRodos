@@ -69,7 +69,7 @@ function vrodos_assets_taxcategory_archaeology_fill(){
         'Artifact', // the term
         'vrodos_asset3d_cat', // the taxonomy
         array(
-            'description'=> 'Artifacts are 3d models that can be clicked and inspected. They have also a textual description, e.g. a 3D scanned bone.',
+            'description'=> 'Artifacts are 3D models that can be clicked and inspected. They have also a textual description.',
             'slug' => 'artifact',
         )
     );
@@ -84,7 +84,7 @@ function vrodos_assets_taxcategory_archaeology_fill(){
         'Points of Interest (Image-Text)', // the term
         'vrodos_asset3d_cat', // the taxonomy
         array(
-            'description'=> 'Points of interest (POIs) when clicked information pops up as an image with a textual description, e.g. a star 3D model with an image and text field.',
+            'description'=> 'When clicking on a POI, information pops up as an image with a textual description.',
             'slug' => 'pois_imagetext',
         )
     );
@@ -110,7 +110,7 @@ function vrodos_assets_taxcategory_archaeology_fill(){
         'Site', // the term
         'vrodos_asset3d_cat', // the taxonomy
         array(
-            'description'=> 'Site models are static 3D models that can not be clicked and can not be moved (e.g. ground, wall, cave, house)',
+            'description'=> 'Site models are static 3D models that can not be interacted with (e.g. ground, house).',
             'slug' => 'site',
         )
     );

@@ -1405,19 +1405,12 @@ video {
     }
 }
 
-
-
-
 .centerMessageAssetSubmit {
     position: absolute;
     top: 50%;
     left: 50%;
     margin-right: -50%;
     transform: translate(-50%, -50%);
-}
-
-#informationPanel {
-    padding-top:15px;
 }
 
 .assetDescSt {border: 1px solid rgba(0, 0, 0, 0.3);width:100%;}
