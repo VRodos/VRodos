@@ -717,7 +717,7 @@ if($asset_id != null) {
                     <input id="fileUploadInput"
                            class="FullWidth" type="file"
                            name="multipleFilesInput[]"
-                           value="" accept=".glb"
+                           value="" accept=".glb, .fbx"
                            onclick="clearList()"/>
 
                     <!-- For currently selected -->

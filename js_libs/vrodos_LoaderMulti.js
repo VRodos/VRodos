@@ -28,6 +28,8 @@ class VRodos_LoaderMulti {
                 if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
                     return;
 
+                //console.log(name);
+
                 // Load Steve
                 if (name == 'avatarCamera') {
 
@@ -78,8 +80,9 @@ class VRodos_LoaderMulti {
 
                 } else { // GLB 3D models
 
+                    //console.log(resources3D[name]);
 
-                     if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
+                    if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
 
 
                         jQuery.ajax({
@@ -121,8 +124,8 @@ class VRodos_LoaderMulti {
                                     function (xhr) {
 
                                         document.getElementById("result_download").innerHTML = "'"  +
-                                                                       resources3D[name].assetname + "' downloaded " +
-                                                                      Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
+                                            resources3D[name].assetname + "' downloaded " +
+                                            Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
                                     },
                                     // called when loading has errors
                                     function (error) {
