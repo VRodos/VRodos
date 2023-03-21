@@ -544,7 +544,7 @@ if($asset_id != null) {
         <?php if(($isOwner || $isUserAdmin) && $isEditMode) {
             wp_nonce_field('post_nonce', 'post_nonce_field'); ?>
             <input type="hidden" name="submitted" id="submitted" value="true"/>
-            <button id="formSubmitBtn" style="display:none; float: right;"
+            <button id="formSubmitBtn" style="float: right;"
                     class="mdc-button mdc-elevation--z2 mdc-button--raised mdc-button--primary"
                     data-mdc-auto-init="MDCRipple" type="submit" <?php echo $isEditable?'':' disabled' ?> >
                 <?php echo $asset_id == null ? "Create asset" : "Update asset"; ?>
@@ -614,9 +614,9 @@ if($asset_id != null) {
 
                             <?php foreach ( $cat_terms as $term ) {
 
-                                if (  strpos($term->name, "Points") !== false ) {
+                               /* if (  strpos($term->name, "Points") !== false ) {
                                     continue;
-                                } ?>
+                                } */?>
 
                                 <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
                                     data-cat-desc="<?php echo $term->description; ?>"
@@ -1279,6 +1279,8 @@ if($asset_id != null) {
                 let categorySelect = MDCSelect.attachTo(categoryDropdown);
                 let selectedCatId = jQuery('#currently-selected').attr("data-cat-id");
 
+                console.log(selectedCatId);
+
                 categoryDropdown.addEventListener('MDCSelect:change', function() {
                     loadLayout(true);
                 });
@@ -1341,7 +1343,7 @@ if($asset_id != null) {
 
             })();
 
-            // Select artifact, Remove category menu
+            /*// Select artifact, Remove category menu
             setTimeout(function () {
                 //jQuery("#category-select").click(); // Expand category
                 jQuery('li[data-cat-slug="artifact"]').click();
@@ -1354,7 +1356,7 @@ if($asset_id != null) {
             }, 500);
 
             //jQuery("#glbRadio").prop("checked", true);
-            jQuery("#formSubmitBtn").show();
+            jQuery("#formSubmitBtn").show();*/
 
         } else {
 

@@ -10,9 +10,6 @@ function vrodos_project_type_icon($project_category){
  
 	// Set game type icon
 	switch($project_category){
-		case 'Archaeology':
-			$project_type_icon = "account_balance";
-			break;
 		case 'Energy':
 			$project_type_icon = "power";
 			break;
@@ -25,11 +22,11 @@ function vrodos_project_type_icon($project_category){
 		case 'virtualproduction':
 			$project_type_icon = "theaters";
 			break;
+        case 'Archaeology':
         default:
 	        $project_type_icon = "account_balance";
 	        break;
 	}
-    
     return $project_type_icon;
 }
 
