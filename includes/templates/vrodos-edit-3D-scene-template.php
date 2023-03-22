@@ -349,7 +349,6 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         case 'virtualproduction_games':
         case 'vrexpo_games':
             $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
-
             $game_type_chosen_slug = 'archaeology_games';
             $default_json = vrodos_getDefaultJSONscene('archaeology');
 
@@ -365,7 +364,6 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         case 'chemistry_games':
 
             $game_type_chosen_slug = 'chemistry_games';
-
             $default_json = vrodos_getDefaultJSONscene('chemistry');
 
             if($newSceneType == 'lab'){
@@ -492,26 +490,17 @@ wp_head();
                     </div>
 
 
-
                     <!-- Compile Button -->
                     <a id="compileGameBtn"
                        class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right"
                        data-mdc-auto-init="MDCRipple"
                        title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
-                        COMPILE
+                        Build Project
                     </a>
 
-
-
-                    <?php // Compile Dialogue html
-                    require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-CompileDialogue.php' );
-                    ?>
-
-
-
                 </div>
-
-
+                <!--Compile Dialogue html-->
+                <?php require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-CompileDialogue.php' ); ?>
 
                 <!-- Scene JSON content TextArea display and set input field -->
                 <div id="sceneJsonContent" >

@@ -422,27 +422,30 @@ if($asset_id != null) {
 
     $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
 
-    if($saved_term[0]->slug == 'terrain'){
+    if ($saved_term) {
 
-        // Wind Energy Terrain
-        include 'vrodos-asset-editor-WindEnergy.php';
+        if($saved_term[0]->slug == 'terrain'){
 
-    }elseif (in_array($saved_term[0]->slug , ['artifact'])) {
-        // Image 1 : Featured image
-        $images_urls[0] = get_the_post_thumbnail_url($asset_id);
+            // Wind Energy Terrain
+            include 'vrodos-asset-editor-WindEnergy.php';
 
-        // Image 1,2,3,4
-        for ($i=1; $i <= 4; $i++){
+        }elseif (in_array($saved_term[0]->slug , ['artifact'])) {
+            // Image 1 : Featured image
+            $images_urls[0] = get_the_post_thumbnail_url($asset_id);
 
-            $image_id = get_post_meta($asset_id, "vrodos_asset3d_image".$i);
+            // Image 1,2,3,4
+            for ($i=1; $i <= 4; $i++){
 
-            if(!empty($image_id[0])) {
-                $images_urls[$i] = wp_get_attachment_metadata($image_id[0]);
-                $images_urls[$i] = $images_urls[$i]['file'] == '' ? null :
-                    wp_get_upload_dir()['baseurl'] . "/" . $images_urls[$i]['file'];
+                $image_id = get_post_meta($asset_id, "vrodos_asset3d_image".$i);
+
+                if(!empty($image_id[0])) {
+                    $images_urls[$i] = wp_get_attachment_metadata($image_id[0]);
+                    $images_urls[$i] = $images_urls[$i]['file'] == '' ? null :
+                        wp_get_upload_dir()['baseurl'] . "/" . $images_urls[$i]['file'];
+                }
             }
-        }
 
+        }
     }
 }
 
@@ -595,7 +598,7 @@ if($asset_id != null) {
                         <span id="currently-selected" class="mdc-select__selected-text mdc-typography--subheading2">
                         No category selected
                     </span>
-                    <?php } else { ?>
+                    <?php } else {  ?>
                         <span data-cat-desc="<?php echo $saved_term[0]->description; ?>"
                               data-cat-slug="<?php echo $saved_term[0]->slug; ?>"
                               data-cat-id="<?php echo $saved_term[0]->term_id; ?>"
@@ -614,9 +617,9 @@ if($asset_id != null) {
 
                             <?php foreach ( $cat_terms as $term ) {
 
-                               /* if (  strpos($term->name, "Points") !== false ) {
-                                    continue;
-                                } */?>
+                                /* if (  strpos($term->name, "Points") !== false ) {
+                                     continue;
+                                 } */?>
 
                                 <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
                                     data-cat-desc="<?php echo $term->description; ?>"
@@ -717,7 +720,7 @@ if($asset_id != null) {
                     <input id="fileUploadInput"
                            class="FullWidth" type="file"
                            name="multipleFilesInput[]"
-                           value="" accept=".glb, .fbx"
+                           value="" accept=".glb"
                            onclick="clearList()"/>
 
                     <!-- For currently selected -->

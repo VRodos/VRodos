@@ -78,7 +78,7 @@ class vrodos_3d_editor_environmentals {
 
 
 
-        // // Add a background to the scene
+        // Add a background to the scene
         var rgbeloader = new THREE.RGBELoader();
 
         rgbeloader.setPath( pluginPath + '/images/hdr/' )

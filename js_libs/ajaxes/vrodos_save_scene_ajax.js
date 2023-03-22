@@ -1,6 +1,6 @@
 function vrodos_saveSceneAjax() {
 
-    var postdata = {
+    let postdata = {
         'action': 'vrodos_save_scene_async_action',
         'scene_id': isAdmin == "back" ? phpmyvarC.scene_id : my_ajax_object_savescene.scene_id,
         'scene_json': document.getElementById("vrodos_scene_json_input").value,
@@ -34,7 +34,7 @@ function vrodos_saveSceneAjax() {
 
 function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 
-    var postdata = {
+    let postdata = {
         'action': 'vrodos_undo_scene_async_action',
         'scene_id': isAdmin == "back" ? phpmyvarC.scene_id : my_ajax_object_savescene.scene_id,
         'UPLOAD_DIR': UPLOAD_DIR,
@@ -64,25 +64,6 @@ function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
     });
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

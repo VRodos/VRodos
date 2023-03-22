@@ -3,16 +3,19 @@
 function vrodos_getDefaultJSONscene($mygameType){
 	
 	$p = plugin_dir_path( __DIR__ );
-	
-	if($mygameType == 'archaeology') {
-		$def_json = file_get_contents($p . "/assets/standard_scene.json");
-	}else if($mygameType == 'energy') {
-		$def_json = file_get_contents($p . "/assets/standard_scene_energy.json");
-	}elseif($mygameType == 'chemistry'){
-		$def_json = file_get_contents($p . "/assets/standard_scene_chemistry.json");
-	} else {
-		$def_json = file_get_contents($p . "/assets/standard_scene.json");
-	}
+
+    switch ($mygameType) {
+        case 'energy':
+            $def_json = file_get_contents($p . "/assets/standard_scene_energy.json");
+            break;
+        case 'chemistry':
+            $def_json = file_get_contents($p . "/assets/standard_scene_chemistry.json");
+            break;
+        case 'archaeology':
+        default:
+        $def_json = file_get_contents($p . "/assets/standard_scene.json");
+            break;
+    }
 
 	return $def_json;
 }
