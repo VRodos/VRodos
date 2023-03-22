@@ -54,13 +54,13 @@
                                 ?>
                                 
                                 <div id="featureImgContainer" class="ImageContainer">
-                                    <img id="vrodos_scene_sshot" name="vrodos_scene_sshot"
+                                    <img width="300" id="vrodos_scene_sshot" name="vrodos_scene_sshot"
                                          src="<?php echo $dataScreenshotbase64;?>">
                                 </div>
                             
                             <?php } else { ?>
                                 <div id="featureImgContainer">
-                                    <img style="width: 160px;" id="vrodos_scene_sshot" name="vrodos_scene_sshot" src="<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ); ?>">
+                                    <img width="300" id="vrodos_scene_sshot" name="vrodos_scene_sshot" src="<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ); ?>">
                                 </div>
                             <?php } ?>
                             

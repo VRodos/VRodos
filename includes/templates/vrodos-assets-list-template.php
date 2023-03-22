@@ -138,7 +138,7 @@ if ($single_project_asset_list)
     <p><?php echo $helpMessage ?></p>
 
     <?php if ($single_project_asset_list){ ?>
-        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $current_game_project_post->post_title;?></span>
+        <!--<span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php /*echo $current_game_project_post->post_title;*/?></span>-->
     <?php } else if (!$isUserloggedIn) { ?>
         <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for shared <?php echo $isUserloggedIn?" and private": ""; ?> assets </span>
     <?php } else if ($isUserloggedIn) { ?>
@@ -206,10 +206,10 @@ if ($single_project_asset_list)
                     // For joker assets, If the user is not administrator he should not be able to delete or edit them.
                     if( $isUserAdmin || ($user_id == $asset['author_id'])) {  ?>
 
-                        <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" style="color:white; background: rgba(214,30,30,0.7);"
+                        <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" style="background: rgba(214,30,30,0.7);"
                            class="deleteAssetListButton mdc-button mdc-button--compact mdc-card__action"
                            onclick="vrodos_deleteAssetAjax(<?php echo $asset['assetid'];?>,'<?php echo $joker_project_slug ?>',<?php echo $asset['isCloned'];?>)"
-                        >DEL</a>
+                        ><i class="material-icons mdc-theme--text-hint-on-light">delete</i></a>
 
                     <?php } ?>
 
