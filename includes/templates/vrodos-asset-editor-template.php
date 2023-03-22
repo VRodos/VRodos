@@ -469,7 +469,8 @@ if($asset_id != null) {
     <canvas id="previewCanvas" >3D canvas</canvas>
 
     <a href="#" class="animationButton" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();">Animation 1</a>
-    <a href="#" class="boundingSphereButton" id="boundSphButton" onclick="asset_viewer_3d_kernel.showHideBoundSphere();">Bounds</a>
+    <!--Bounds not working...-->
+    <!--<a href="#" class="boundingSphereButton" id="boundSphButton" onclick="asset_viewer_3d_kernel.showHideBoundSphere();">Bounds</a>-->
 
     <!-- QR code -->
     <?php include 'vrodos-QRCodeGenerator.php'; ?>
