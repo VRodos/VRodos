@@ -87,7 +87,7 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
     wp_enqueue_script('vrodos_asset_editor_scripts');
 
     // scroll for images thumnbnails (in clone)
-    wp_enqueue_script('vrodos_lightslider');
+    //wp_enqueue_script('vrodos_lightslider');
 
     // Select colors
     wp_enqueue_script('vrodos_jscolorpick');
@@ -734,22 +734,18 @@ if($asset_id != null) {
 
                     <h3 class="mdc-typography--title">Screenshot</h3>
                     <?php
-
                     if($asset_id==null) {
-
-                        // If asset is not created load a predefault image
-                        echo '<img id = "sshotPreviewImg" src="'.
-                            plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ).'">';
-
+                        $scrnImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
                     } else {
+                        $scrnImageURL = wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_screenimage",true) );
 
-                        // if asset is edited load the existing screenshot url
-                        $scrnImageURL = wp_get_attachment_url(
-                            get_post_meta($asset_id, "vrodos_asset3d_screenimage",true) );
-
-                        echo '<img id = "sshotPreviewImg" src="'.$scrnImageURL.'">';
+                        if ($scrnImageURL == false) {
+                            $scrnImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
+                        }
                     }
                     ?>
+                    <img id = "sshotPreviewImg" src="<?php echo $scrnImageURL ?>" alt="Asset Screenshot image">
+
 
                     <input type="hidden" name="sshotFileInput" value=""
                            id="sshotFileInput" accept="image/png"/>
@@ -766,7 +762,7 @@ if($asset_id != null) {
                         <input id="jscolorpick"
                                class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
 
-                        <label for="assetback3dcolor" class="mdc-textfield__label">3D viewer background color</label>
+                        <label for="assetback3dcolor" class="mdc-textfield__label">BG color</label>
                         <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
                                name="assetback3dcolor" form="3dAssetForm" value="<?php echo trim($asset_back_3d_color_saved); ?>" />
                     </div>

@@ -47,22 +47,17 @@
             <input id="platformInput" type="hidden" value="platform-Aframe">
 
 
-            <div class="" style="display:inline-block">
-                <label for="show_pawns_checkbox" class="" style="display:inline-block; margin-left:15px; margin-bottom:0px">Show Actor positions?</label>
+<!--            <div style="display:inline-block">
+                <label for="show_pawns_checkbox" class="" style="display:inline-block; margin-left:15px; margin-bottom:0">Show Actor positions?</label>
                 <input id="show_pawns_checkbox" name="show_pawns_checkbox"
                        type="checkbox" title="Show Actor positions in Aframe ? (true for debug purpose only)"
                        class="mdc-textfield__input mdc-theme--text-primary-on-light"
                        style="padding: 2px;display: inline-block; text-align: left; margin-left:15px;"/>
-
-
-            </div>
-
-
-
+            </div>-->
 
             <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background" style="float: left; margin-top:60px; margin-bottom:30px">
                 <i title="Instructions" class="material-icons AlignIconToBottom">help</i>
-                You can press "Proceed" in order to receive the link with the compile output scene
+                Click on "Proceed" in order to build the output project scene
             </div>
 
             <div class="mdc-typography--caption mdc-theme--text-primary-on-background"

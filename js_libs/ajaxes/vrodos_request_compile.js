@@ -21,8 +21,8 @@ function vrodos_compileAjax(showPawnPositions) {
         compilationProgressText.append('<p>Get Scene Information from scene setup</p>');
 
         jQuery("#constantUpdateUser").html(
-            '<i title="Instructions" class="material-icons AlignIconToBottom">info</i>' +
-                    'Wait for the compiling to finish'
+            '<i title="Instructions" class="material-icons AlignIconToBottom">info</i> ' +
+                    'Please wait while we build your scene'
         );
 
         // ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
@@ -51,7 +51,7 @@ function vrodos_compileAjax(showPawnPositions) {
                 jQuery("#compilationProgressText").hide();
 
                 jQuery("#constantUpdateUser").html(
-                    '<i title="Instructions" class="material-icons AlignIconToBottom">info</i>' +
+                    '<i title="Instructions" class="material-icons AlignIconToBottom">info</i> ' +
                     'Finished'
                 );
 
