@@ -20,9 +20,9 @@
 
 #previewCanvasLabels {height:100%; width:100%; position: absolute}
 
-#assetback3dcolordiv{border: 0px solid rgba(0, 0, 0, 0.3);width:100%; margin-top:0px;}
+#assetback3dcolordiv{border: 0 solid rgba(0, 0, 0, 0.3);width:100%; margin-top:0;}
 
-#assetTitle {border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0; font-size:24px; padding: 0em;}
+#assetTitle {border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0; font-size:24px; padding: 0;}
 
 #assetback3dcolor {box-shadow: none; display:none;}
 
@@ -52,7 +52,7 @@
 .whiteSpaceSeparatorAssetEditor {
     margin-top:30px;
     margin-bottom: 30px;
-    border:0px;
+    border:0;
     color:white;
     display:table;
 }
@@ -139,7 +139,7 @@
     margin-top:30px;
     color: dimgray;
     white-space:pre-line;
-    text-shadow: 1px #0bb697;
+    text-shadow: 1px 1px #0bb697;
 }
 
 #plustext{
@@ -180,7 +180,6 @@
 #category-ipr-select{
     min-width: 100%;
 }
-
 
 #categoryIPRDescription{
     "font-style: italic;"
@@ -293,11 +292,8 @@ a.boundingSphereButton{
 
 .qrcode_img{
     width: 128px;
-    margin-left: auto;
-    margin-right: auto;
     text-align: center;
-    margin-top: 15px;
-    margin-bottom: 10px;
+    margin: 15px auto 10px;
 }
 
 .qrcode_button {
@@ -305,9 +301,7 @@ a.boundingSphereButton{
     right:0;
     position:absolute;
     z-index:15;
-    padding:0;
-    padding-left:3px;
-    padding-right:5px;
+    padding: 0 5px 0 3px;
     margin-bottom:5px;
     font-family: Arial, sans-serif;
 }

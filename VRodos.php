@@ -509,9 +509,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-edi
 // 1. Project Manager
 // 2. Assets List Page
 // 3. 3D Editor
-// 4. 2D Scene editor
-// 5. Exam page
-// 6. Asset Editor
+// 4. Asset Editor
 register_activation_hook(__FILE__,'vrodos_create_pages');
 
 // Add Project Manager and Assets List pages to menu automatically;

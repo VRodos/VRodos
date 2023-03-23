@@ -1274,12 +1274,9 @@ if($asset_id != null) {
                 let MDCSelect = mdc.select.MDCSelect;
 
                 // Category of asset change
-
                 let categoryDropdown = document.getElementById('category-select');
                 let categorySelect = MDCSelect.attachTo(categoryDropdown);
                 let selectedCatId = jQuery('#currently-selected').attr("data-cat-id");
-
-                console.log(selectedCatId);
 
                 categoryDropdown.addEventListener('MDCSelect:change', function() {
                     loadLayout(true);
