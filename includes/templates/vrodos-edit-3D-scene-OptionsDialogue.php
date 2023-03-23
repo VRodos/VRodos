@@ -37,7 +37,6 @@
                         <br>
                         <div class="CenterContents">
                             <?php
-                            
                             $screenshotImgUrl = get_the_post_thumbnail_url( $current_scene_id );
                             if($screenshotImgUrl=='') {
                                 echo '<script type="application/javascript">'.
@@ -49,28 +48,21 @@
                             
                             if ($screenshotImgUrl) {
                                 $dataScreenshot = file_get_contents($screenshotImgUrl);
-                                $dataScreenshotbase64 = 'data:image/jpeg;base64,' .
-                                    base64_encode($dataScreenshot);
-                                ?>
-                                
-                                <div id="featureImgContainer" class="ImageContainer">
-                                    <img width="300" id="vrodos_scene_sshot" name="vrodos_scene_sshot"
-                                         src="<?php echo $dataScreenshotbase64;?>">
-                                </div>
-                            
-                            <?php } else { ?>
-                                <div id="featureImgContainer">
-                                    <img width="300" id="vrodos_scene_sshot" name="vrodos_scene_sshot" src="<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  ); ?>">
-                                </div>
-                            <?php } ?>
-                            
+                                $scene_screenshot_bin = 'data:image/jpeg;base64,' . base64_encode($dataScreenshot);
+                            } else {
+                                $scene_screenshot_bin = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
+                            }   ?>
+
+                            <div id="featureImgContainer" class="ImageContainer">
+                                <img width="300" id="vrodos_scene_sshot" alt="VROdos scene screenshot"
+                                     src="<?php echo $scene_screenshot_bin;?>">
+                            </div>
                             
                             <input type="file"
                                    style="margin: auto;"
                                    name="vrodos_scene_sshot_manual_select"
                                    title="Featured image"
                                    value=""
-                            
                                    id="vrodos_scene_sshot_manual_select"
                                    accept="image/x-png,image/gif,image/jpeg" >
                             
@@ -82,10 +74,8 @@
                                    id="takeScreenshotBtn" class="mdc-button mdc-button--primary mdc-button--raised">Take a screenshot</a>
                             
                             </div>
-                        
                         </div>
                     </div>
-                
                 </div>
             </div>
         </section>
