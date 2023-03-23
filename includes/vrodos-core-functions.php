@@ -933,8 +933,10 @@ function vrodos_registrationhook_createAssets($user_id,$username,$game_id){
 
 	$artifact_tax = get_term_by('slug', 'artifact', 'vrodos_asset3d_cat');
 	$artifact_tax_id = $artifact_tax->term_id;
-	$artifactTitle = $username . ' Sample Artifact';
-	$artifactDesc = 'Artifact item created as sample';
+    $artifact_text_obj = (object) [
+        'assetTitleForm' => $username . ' Sample Artifact',
+        'assetDescForm' => 'Artifact item created as sample'
+    ];
 
 	$door_tax = get_term_by('slug', 'door', 'vrodos_asset3d_cat');
 	$door_tax_id = $door_tax->term_id;
@@ -956,11 +958,11 @@ function vrodos_registrationhook_createAssets($user_id,$username,$game_id){
 	$siteTitle = $username . ' Sample Site';
 	$siteDesc = 'Site item created as sample';
 
-	$newArtifact_ID = vrodos_create_asset_frontend($parentGame_tax_id,$artifact_tax_id,$artifactTitle,$artifactDesc,$game_slug);
-	$newDoor_ID = vrodos_create_asset_frontend($parentGame_tax_id,$door_tax_id,$doorTitle,$doorDesc,$game_slug);
-	$newPOIimage_ID = vrodos_create_asset_frontend($parentGame_tax_id,$poiImage_tax_id,$poiImageTitle,$poiImageDesc,$game_slug);
-	$newPOIvideo_ID = vrodos_create_asset_frontend($parentGame_tax_id,$poiVideo_tax_id,$poiVideoTitle,$poiVideoDesc,$game_slug);
-	$newSite_ID = vrodos_create_asset_frontend($parentGame_tax_id,$site_tax_id,$siteTitle,$siteDesc,$game_slug);
+	$newArtifact_ID = vrodos_create_asset_frontend($parentGame_tax_id, $artifact_tax_id, $game_slug, null, $artifact_text_obj, null, null, null );
+	$newDoor_ID = vrodos_create_asset_frontend($parentGame_tax_id, $door_tax_id, $game_slug);
+	$newPOIimage_ID = vrodos_create_asset_frontend($parentGame_tax_id, $poiImage_tax_id, $game_slug);
+	$newPOIvideo_ID = vrodos_create_asset_frontend($parentGame_tax_id, $poiVideo_tax_id, $game_slug);
+	$newSite_ID = vrodos_create_asset_frontend($parentGame_tax_id, $site_tax_id, $game_slug);
 
 	vrodos_registrationhook_uploadAssets_noTexture($artifactTitle,$newArtifact_ID,$game_slug,'artifact');
 	vrodos_registrationhook_uploadAssets_noTexture($doorTitle,$newDoor_ID,$game_slug,'door');

@@ -98,7 +98,6 @@ function vrodos_plugin_menu(){
 		plugin_dir_url( __FILE__ ) . '../images/vrodos_icon_20_w.png',
 		25);
 	
-	
 	add_submenu_page('vrodos-plugin',
 		'Projects',
 		'Projects',
@@ -125,6 +124,12 @@ function vrodos_plugin_menu(){
         'manage_options',
         'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_yaml');
 
+    add_submenu_page('vrodos-plugin',
+        'Scenes Grouped by Project',
+        'Scenes Grouped by Project',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_pgame');
+
 	add_submenu_page('vrodos-plugin',
 		'Assets',
 		'Assets',
@@ -143,8 +148,13 @@ function vrodos_plugin_menu(){
         'manage_options',
         'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_ipr_cat');
 
-}
+    add_submenu_page('vrodos-plugin',
+        'Assets Grouped by Project',
+        'Assets Grouped by Project',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_pgame');
 
+}
 
 function keep_taxonomy_menu_open($parent_file) {
 	global $current_screen;

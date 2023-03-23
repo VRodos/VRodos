@@ -117,7 +117,7 @@ function vrodos_scenes_construct(){
 
 
 // Create Scene Taxonomy, namely the game that the scene belongs
-function vrodos_scenes_parent_project_tax_define(){
+function vrodos_scenes_parent_project_tax_define() {
 
 //    $ff = fopen("output_order_log.txt","a");
 //    fwrite($ff, '12 vrodos_scenes_taxpgame'.chr(13));
