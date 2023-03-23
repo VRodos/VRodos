@@ -1,51 +1,5 @@
 <?php
 
-//
-//echo print("<pre>".print_r(array_keys(get_role( 'adv_project_master6' )->capabilities), true)."</pre>");
-
-//
-//$role = get_role( 'adv_project_master6' );
-//
-//
-//
-//
-
-//remove_role( 'adv_project_master3');
-//remove_role( 'adv_project_master2');
-//remove_role( 'adv_project_master1');
-
-
-
-//$role->add_cap('read');
-
-//$role->remove_cap('read');
-//$role->remove_cap('level_0');
-
-
-//$role->remove_cap('edit_vrodos_game');
-//$role->remove_cap('read_vrodos_game');
-//$role->remove_cap('read_private_vrodos_game ');
-//$role->remove_cap('delete_others_vrodos_game');
-//$role->remove_cap('delete_vrodos_game');
-//$role->remove_cap('edit_others_vrodos_game');
-//
-//$role->remove_cap('manage_game_type');
-//$role->remove_cap('edit_game_type');
-//$role->remove_cap('read_private_vrodos_game');
-//$role->remove_cap('manage_game_cat');
-//$role->remove_cap('edit_game_cat');
-//$role->remove_cap('manage_game_type');
-//$role->remove_cap('edit_game_type');
-//
-//echo "<br />";
-//foreach ( $role->capabilities as $key => $value ) {
-//    echo "{$key} => {$value} "."<br />";
-//}
-
-
-
-
-
 function vrodos_add_customroles() {
     
     // These two roles to be removed it is for old version overlap
@@ -93,8 +47,6 @@ function vrodos_add_customroles() {
     
     unset( $role );
 }
-
-
 
 function vrodos_add_capabilities_to_admin() {
     $role = get_role( 'administrator' );
