@@ -181,7 +181,6 @@ function vrodos_scenes_taxyaml() {
 }
 
 
-
 // Create Scene's Game Box @ scene's backend
 function vrodos_scenes_taxgame_box() {
 
@@ -190,7 +189,7 @@ function vrodos_scenes_taxgame_box() {
     remove_meta_box( 'vrodos_scene_yamldiv', 'vrodos_scene', 'side' );
 
     // Adds a Project selection custom metabox
-    add_meta_box( 'tagsdiv-vrodos_scene_pgame','Scene Game','vrodos_scenes_taxgame_box_content', 'vrodos_scene', 'side' , 'high');
+    add_meta_box( 'tagsdiv-vrodos_scene_pgame','Parent Project','vrodos_scenes_taxgame_box_content', 'vrodos_scene', 'side' , 'high');
     // Adds a YAML selection custom metabox
     add_meta_box( 'tagsdiv-vrodos_scene_yamldiv','Scene YAML','vrodos_scenes_taxyaml_box_content', 'vrodos_scene', 'side' , 'high');
 }
@@ -203,7 +202,7 @@ function vrodos_scenes_taxgame_box_content($post){
     
     <div class="tagsdiv" id="<?php echo $tax_name; ?>">
         
-        <p class="howto"><?php echo 'Select Game for current Scene' ?></p>
+        <p class="howto"><?php echo 'Select Project for current Scene' ?></p>
         
         <?php
         // Use nonce for verification
@@ -212,7 +211,7 @@ function vrodos_scenes_taxgame_box_content($post){
         $selected_type = empty($type_ids) ? '' : $type_ids[0];
 
         $args = array(
-            'show_option_none'   => 'Select Game',
+            'show_option_none'   => 'Select Project',
             'orderby'            => 'name',
             'hide_empty'         => 0,
             'selected'           => $selected_type,
@@ -229,7 +228,7 @@ function vrodos_scenes_taxgame_box_content($post){
         $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
         
         $old_option = "<option value='-1'>";
-        $new_option = "<option disabled selected value=''>".'Select category'."</option>";
+        $new_option = "<option disabled selected value=''>".'Select project'."</option>";
         $select = str_replace($old_option, $new_option, $select);
         
         echo $select;
@@ -287,7 +286,7 @@ function vrodos_scenes_taxyaml_box_content($post){
  *
  */
 function vrodos_scenes_taxgame_box_content_save( $post_id ) {
-    
+
     global $wpdb;
     
     // verify if this is an auto save routine.
@@ -307,12 +306,12 @@ function vrodos_scenes_taxgame_box_content_save( $post_id ) {
     // Check permissions
     if ( 'vrodos_scene' == $_POST['post_type'] )
     {
-        if ( ! ( current_user_can( 'edit_page', $post_id )  ) )
+        if ( ! ( current_user_can( 'edit_pages', $post_id )  ) )
             return;
     }
     else
     {
-        if ( ! ( current_user_can( 'edit_post', $post_id ) ) )
+        if ( ! ( current_user_can( 'edit_posts', $post_id ) ) )
             return;
     }
     
@@ -348,12 +347,12 @@ function vrodos_scenes_taxyaml_box_content_save( $post_id ) {
     // Check permissions
     if ( 'vrodos_scene' == $_POST['post_type'] )
     {
-        if ( ! ( current_user_can( 'edit_page', $post_id )  ) )
+        if ( ! ( current_user_can( 'edit_pages', $post_id )  ) )
             return;
     }
     else
     {
-        if ( ! ( current_user_can( 'edit_post', $post_id ) ) )
+        if ( ! ( current_user_can( 'edit_posts', $post_id ) ) )
             return;
     }
     
@@ -489,10 +488,10 @@ function vrodos_scenes_metas_save($post_id) {
     }
     // check permissions
     if ('page' == $_POST['post_type']) {
-        if (!current_user_can('edit_page', $post_id)) {
+        if (!current_user_can('edit_pages', $post_id)) {
             return $post_id;
         }
-    } elseif (!current_user_can('edit_post', $post_id)) {
+    } elseif (!current_user_can('edit_posts', $post_id)) {
         return $post_id;
     }
     foreach ($vrodos_scenes_metas_definition['fields'] as $field) {
