@@ -123,8 +123,8 @@ function vrodos_project_taxtype_create(){
 }
 
 
-// Generate Taxonomy (for scenes & assets) with Game's slug/name
-// Create Default Scenes for this "Game"
+// Generate Taxonomy (for scenes & assets) with Project's slug/name
+// Create Default Scenes for this "Project"
 function vrodos_on_create_project( $new_status, $old_status, $post){
 
     $post_type = get_post_type($post);
@@ -132,42 +132,47 @@ function vrodos_on_create_project( $new_status, $old_status, $post){
     if ($post_type == 'vrodos_game' && $new_status == 'publish') {
 
         $projectSlug = $post->post_name;
-        $gameTitle = $post->post_title;
+        $projectTitle = empty($post->post_title) ? 'project-'.$projectSlug : $post->post_title;
+
+        $project_type_id = $_POST['vrodos_game_type'];
+        $project_type = get_term($project_type_id, 'vrodos_game_type');
 
         // If project is not a joker one
         if(!str_contains($projectSlug,'-joker')) {
 
-            $gameID = $post->ID;
-
             // Create a parent game tax category for the scenes
-            wp_insert_term($gameTitle,'vrodos_scene_pgame', array(
+            wp_insert_term($projectTitle,'vrodos_scene_pgame', array(
                     'description'=> '-',
                     'slug' => $projectSlug,
                 )
             );
 
             // Create a parent game tax category for the assets
-            wp_insert_term($gameTitle,'vrodos_asset3d_pgame',array(
+            wp_insert_term($projectTitle,'vrodos_asset3d_pgame',array(
                     'description'=> '-',
                     'slug' => $projectSlug,
                 )
             );
 
-            // Create Default Scenes for this "Game"
-            vrodos_create_default_scenes_for_game($projectSlug, $gameID);
+            // Link project to game type
+            wp_set_object_terms(  $post->ID, intval($project_type_id), 'vrodos_game_type' );
+
+
+            // Create Default Scenes for this "Project"
+            vrodos_create_default_scenes_for_game($projectSlug, $project_type_id);
 
             // Create Sample Data (assets) for the game that auto-created
-            $current_user = wp_get_current_user();
+           /* $current_user = wp_get_current_user();
             $user_id = $current_user->ID;
-            $username = $current_user->user_login;
+            $username = $current_user->user_login;*/
             // TODO (+) CREATE DEFAULT ASSETS
             //vrodos_registrationhook_createAssets($user_id, $username, $gameID);
 
         }
         else {
-            $gameTitle = $post->post_title;
+            $projectTitle = $post->post_title;
             // Create a parent game tax category for the assets
-            wp_insert_term($gameTitle,'vrodos_asset3d_pgame', $projectSlug);
+            wp_insert_term($projectTitle,'vrodos_asset3d_pgame', $projectSlug);
         }
     }
 }

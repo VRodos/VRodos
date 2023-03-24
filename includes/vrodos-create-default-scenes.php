@@ -545,10 +545,10 @@ function vrodos_create_virtualproduction_default_scenes($projectSlug){
 }
 
 // Main
-function vrodos_create_default_scenes_for_game($projectSlug, $projectID){
+function vrodos_create_default_scenes_for_game($projectSlug, $gameTypeId){
 
-	$project_type = get_the_terms( $projectID, 'vrodos_game_type' );
-	$project_type_slug  = $project_type[0]->slug;
+    $project_type = get_term($gameTypeId, 'vrodos_game_type');
+	$project_type_slug  = $project_type->slug;
 
 	switch ($project_type_slug){
 
