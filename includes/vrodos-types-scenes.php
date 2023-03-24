@@ -113,23 +113,22 @@ function vrodos_scenes_construct() {
 
 // Create Scene Taxonomy, namely the game that the scene belongs
 function vrodos_scenes_parent_project_tax_define() {
-
     $labels = array(
-        'name' => _x('Parent Project', 'taxonomy general name'),
-        'singular_name' => _x('Parent Project', 'taxonomy singular name'),
-        'menu_name' => _x('Parent Projects', 'admin menu'),
-        'search_items' => __('Search Parent Projects'),
-        'all_items' => __('All Parent Projects'),
-        'parent_item' => __('Parent Project'),
-        'parent_item_colon' => __('Parent Project:'),
-        'edit_item' => __('Edit Parent Project'),
-        'update_item' => __('Update Parent Project'),
-        'add_new_item' => __('Add New Parent Project'),
-        'new_item_name' => __('New Parent Project')
+        'name' => _x('Scene Parent Project - WARNING: New Taxonomy is not a new Project!', 'taxonomy general name'),
+        'singular_name' => _x('Parent Taxonomy', 'taxonomy singular name'),
+        'menu_name' => _x('Parent Taxonomies', 'admin menu'),
+        'search_items' => __('Search Parent Taxonomies'),
+        'all_items' => __('All Scene Parent Taxonomies'),
+        'parent_item' => __('Scene Parent Taxonomy'),
+        'parent_item_colon' => __('Scene Parent Taxonomy:'),
+        'edit_item' => __('Edit Parent Taxonomy'),
+        'update_item' => __('Update Parent Taxonomy'),
+        'add_new_item' => __('Add New Parent Taxonomy'),
+        'new_item_name' => __('New Parent Taxonomy')
     );
     
     $args = array(
-        'description' => 'Project that the Scene belongs',
+        'description' => 'Parent Taxonomy that the Scene belongs to',
         'labels' => $labels,
         'public' => true,
         'show_ui' => true,
