@@ -378,8 +378,8 @@ add_filter( 'manage_vrodos_scene_posts_columns', 'vrodos_set_custom_vrodos_scene
 add_action( 'manage_vrodos_scene_posts_custom_column' , 'vrodos_set_custom_vrodos_scene_columns_fill', 10, 2 );
 
 // 41
+// Help scene box
 add_action('admin_menu', 'vrodos_scenes_meta_definitions_add');
-
 // Save metas
 add_action('save_post', 'vrodos_scenes_metas_save');
 
@@ -391,7 +391,6 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scen
 
 // 14
 add_action('init', 'vrodos_assets_construct'); // vrodos_asset3d 'ASSETS 3D'
-
 
 // 15
 add_action('init', 'vrodos_assets_taxcategory'); // vrodos_asset3d_cat 'ASSET TYPES'

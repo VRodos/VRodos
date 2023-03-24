@@ -388,7 +388,7 @@ function vrodos_set_custom_vrodos_scene_columns_fill( $column, $post_id ) {
 
 // Add and Show the metabox with Custom Field for Scene - ($vrodos_databox4)
 function vrodos_scenes_meta_definitions_add() {
-    global $vrodos_scenes_metas_definition,$vrodos_scenes_metas_helpdata, $post;
+    global $vrodos_scenes_metas_definition, $vrodos_scenes_metas_helpdata, $post;
     
     
     add_meta_box($vrodos_scenes_metas_definition['id'],
