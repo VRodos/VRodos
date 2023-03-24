@@ -160,6 +160,7 @@ function vrodos_on_create_project( $new_status, $old_status, $post){
             $current_user = wp_get_current_user();
             $user_id = $current_user->ID;
             $username = $current_user->user_login;
+            // TODO (+) CREATE DEFAULT ASSETS
             //vrodos_registrationhook_createAssets($user_id, $username, $gameID);
 
         }
@@ -174,16 +175,17 @@ function vrodos_on_create_project( $new_status, $old_status, $post){
 
 //Create Game Category Box @ Game's backend
 function vrodos_games_taxcategory_box() {
-
-    remove_meta_box( 'vrodos_game_typediv', 'vrodos_game', 'side' ); //Removes the default metabox at side
-    add_meta_box( 'tagsdiv-vrodos_game_type','Game Type','vrodos_projects_taxtype_box_content', 'vrodos_game', 'side' , 'high'); //Adds the custom metabox with select box
+    // Removes the default metabox at side
+    remove_meta_box( 'vrodos_game_typediv', 'vrodos_game', 'side' );
+    // Adds the custom metabox with select box
+    add_meta_box( 'tagsdiv-vrodos_game_type','Project Type','vrodos_projects_taxtype_box_content', 'vrodos_game', 'side' , 'high');
 }
 
 
 
 function vrodos_projects_taxtype_box_content($post){
-    $tax_name = 'vrodos_game_type';
-    ?>
+    $tax_name = 'vrodos_game_type'; ?>
+
     <div class="tagsdiv" id="<?php echo $tax_name; ?>">
 
         <p class="howto"><?php echo 'Select type for current project' ?></p>
@@ -192,18 +194,15 @@ function vrodos_projects_taxtype_box_content($post){
         // Use nonce for verification
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_game_type_noncename' );
 
-        $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_game_type', array('fields' => 'ids') );
+        $type_ids = wp_get_object_terms( $post->ID, 'vrodos_game_type', array('fields' => 'ids') );
+        $selected_type = empty($type_ids) ? '' : $type_ids[0];
 
-        //		$ff = fopen("output_p1.txt","w");
-        //		fwrite($ff, print_r($type_IDs, true));
-        //		fclose($ff);
-        //		//echo $type_IDs;
 
         $args = array(
             'show_option_none'   => 'Select Type',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $selected_type,
             'name'               => 'vrodos_game_type',
             'taxonomy'           => 'vrodos_game_type',
             'echo'               => 0,
@@ -266,8 +265,7 @@ function vrodos_games_taxtype_box_content_save( $post_id ) {
 }
 
 function vrodos_set_custom_vrodos_game_columns($columns) {
-    $columns['game_slug'] = 'Game Slug';
-
+    $columns['game_slug'] = 'Project Slug';
     return $columns;
 }
 

@@ -319,7 +319,6 @@ add_action('init', 'vrodos_project_taxtype_create', 2);
 add_action( 'init', 'vrodos_projects_taxtypes_define', 3 );
 
 
-
 // 28
 add_action('transition_post_status','vrodos_on_create_project', 9 , 3);
 
