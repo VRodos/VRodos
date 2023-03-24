@@ -328,7 +328,7 @@ add_filter( 'manage_vrodos_game_posts_columns', 'vrodos_set_custom_vrodos_game_c
 
 //Create Game Category Box @ Game's backend
 // 51
-add_action('add_meta_boxes','vrodos_games_taxcategory_box');
+add_action('add_meta_boxes', 'vrodos_games_taxcategory_box');
 
 
 /* Do something with the data entered */
@@ -340,10 +340,11 @@ add_action( 'save_post', 'vrodos_games_taxtype_box_content_save' );
 add_action( 'manage_vrodos_game_posts_custom_column' , 'vrodos_set_custom_vrodos_game_columns_fill', 10, 2 );
 
 // 40
-add_action('admin_menu', 'vrodos_games_databox_add');
-
+// Don't create Assembler & Compiles boxes in project backend
+// Compile project only from front.
+//add_action('admin_menu', 'vrodos_games_databox_add');
 // 32
-add_action('save_post', 'vrodos_games_databox_save');
+//add_action('save_post', 'vrodos_games_databox_save');
 
 //---------------------- Scenes ----------------------------------------------------
 

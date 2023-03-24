@@ -67,7 +67,8 @@ function vrodos_project_cpt_construct(){
         'menu_position'     => 26,
         'menu_icon'         =>'dashicons-media-interactive',
         'taxonomies'        => array('vrodos_game_type'),
-        'supports'          => array('title','author','editor','custom-fields','revisions'),
+        //'supports'          => array('title','author','editor','custom-fields','revisions'),
+        'supports'          => array('title','author','editor','revisions'),
         'hierarchical'      => false,
         'has_archive'       => false,
         'capabilities' => array(
@@ -236,7 +237,7 @@ function vrodos_games_taxtype_box_content_save( $post_id ) {
 
     global $wpdb;
 
-    // verify if this is an auto save routine.
+    // Verify if this is an auto save routine.
     // If it is our form has not been submitted, so we dont want to do anything
     if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) )
         return;
