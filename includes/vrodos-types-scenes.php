@@ -58,13 +58,8 @@ $vrodos_scenes_metas_helpdata = array(
 
 
 // Create Scene - Scene as custom type 'vrodos_scene'
-function vrodos_scenes_construct(){
+function vrodos_scenes_construct() {
 
-//    $ff = fopen("output_order_log.txt","a");
-//    fwrite($ff, '11 vrodos_scenes_construct'.chr(13));
-//    fclose($ff);
-    
-    
     $labels = array(
         'name' => _x('Scenes', 'post type general name'),
         'singular_name' => _x('Scene', 'post type singular name'),
@@ -86,7 +81,7 @@ function vrodos_scenes_construct(){
     );
     $args = array(
         'labels' => $labels,
-        'description' => 'Displays several Scenes of a Game',
+        'description' => 'Displays all the Scenes of a Game',
         'public' => true,
         'exclude_from_search' => true,
         'publicly_queryable' => false,
@@ -96,7 +91,8 @@ function vrodos_scenes_construct(){
         'menu_position' => 25,
         'menu_icon' => 'dashicons-media-default',
         'taxonomies' => array('vrodos_scene_pgame','vrodos_scene_yaml'),
-        'supports' => array('title', 'author', 'editor', 'custom-fields', 'thumbnail','revisions'),
+        //'supports' => array('title', 'author', 'editor', 'custom-fields', 'thumbnail','revisions'),
+        'supports' => array('title', 'author', 'editor', 'thumbnail','revisions'),
         'hierarchical' => false,
         'has_archive' => false,
         //'map_meta_cap' => true,
@@ -115,14 +111,9 @@ function vrodos_scenes_construct(){
     register_post_type('vrodos_scene', $args);
 }
 
-
 // Create Scene Taxonomy, namely the game that the scene belongs
 function vrodos_scenes_parent_project_tax_define() {
 
-//    $ff = fopen("output_order_log.txt","a");
-//    fwrite($ff, '12 vrodos_scenes_taxpgame'.chr(13));
-//    fclose($ff);
-    
     $labels = array(
         'name' => _x('Parent Project', 'taxonomy general name'),
         'singular_name' => _x('Parent Project', 'taxonomy singular name'),
@@ -157,7 +148,7 @@ function vrodos_scenes_parent_project_tax_define() {
 }
 
 // Create Scene YAML Template - YAML Template that the Scene belongs as custom taxonomy 'vrodos_scene_yaml'
-function vrodos_scenes_taxyaml(){
+function vrodos_scenes_taxyaml() {
     $labels = array(
         'name' => _x('Scene Type', 'taxonomy general name'),
         'singular_name' => _x('Scene Type', 'taxonomy singular name'),
@@ -193,12 +184,15 @@ function vrodos_scenes_taxyaml(){
 
 // Create Scene's Game Box @ scene's backend
 function vrodos_scenes_taxgame_box() {
-    
-    remove_meta_box( 'vrodos_scene_pgamediv', 'vrodos_scene', 'side' ); //Removes the default metabox at side
-    remove_meta_box( 'vrodos_scene_yamldiv', 'vrodos_scene', 'side' ); //Removes the default metabox at side
-    
-    add_meta_box( 'tagsdiv-vrodos_scene_pgame','Scene Game','vrodos_scenes_taxgame_box_content', 'vrodos_scene', 'side' , 'high'); //Adds the custom metabox with select box
-    add_meta_box( 'tagsdiv-vrodos_scene_yamldiv','Scene YAML','vrodos_scenes_taxyaml_box_content', 'vrodos_scene', 'side' , 'high'); //Adds the custom metabox with select box
+
+    // Removes default side metaboxes
+    remove_meta_box( 'vrodos_scene_pgamediv', 'vrodos_scene', 'side' );
+    remove_meta_box( 'vrodos_scene_yamldiv', 'vrodos_scene', 'side' );
+
+    // Adds a Project selection custom metabox
+    add_meta_box( 'tagsdiv-vrodos_scene_pgame','Scene Game','vrodos_scenes_taxgame_box_content', 'vrodos_scene', 'side' , 'high');
+    // Adds a YAML selection custom metabox
+    add_meta_box( 'tagsdiv-vrodos_scene_yamldiv','Scene YAML','vrodos_scenes_taxyaml_box_content', 'vrodos_scene', 'side' , 'high');
 }
 
 
@@ -214,13 +208,14 @@ function vrodos_scenes_taxgame_box_content($post){
         <?php
         // Use nonce for verification
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_scene_pgame_noncename' );
-        $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_scene_pgame', array('fields' => 'ids') );
-        
+        $type_ids = wp_get_object_terms( $post->ID, 'vrodos_scene_pgame', array('fields' => 'ids') );
+        $selected_type = empty($type_ids) ? '' : $type_ids[0];
+
         $args = array(
             'show_option_none'   => 'Select Game',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $selected_type,
             'name'               => 'vrodos_scene_pgame',
             'taxonomy'           => 'vrodos_scene_pgame',
             'echo'               => 0,
@@ -256,13 +251,14 @@ function vrodos_scenes_taxyaml_box_content($post){
         <?php
         // Use nonce for verification
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_scene_yaml_noncename' );
-        $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_scene_yaml', array('fields' => 'ids') );
-        
+        $type_ids = wp_get_object_terms( $post->ID, 'vrodos_scene_yaml', array('fields' => 'ids') );
+        $selected_type = empty($type_ids) ? '' : $type_ids[0];
+
         $args = array(
             'show_option_none'   => 'Select YAML',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $selected_type,
             'name'               => 'vrodos_scene_yaml',
             'taxonomy'           => 'vrodos_scene_yaml',
             'echo'               => 0,
