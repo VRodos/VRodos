@@ -1603,7 +1603,7 @@ function vrodos_compile_action_callback(){
 //    fclose($fa);
     
     
-    $scene_json = vrodos_compile_aframe($projectId, $sceneId, $showPawnPositions);
+    //$scene_json = vrodos_compile_aframe($projectId, $sceneId, $showPawnPositions);
         
         
         // Unity
@@ -1619,17 +1619,36 @@ function vrodos_compile_action_callback(){
 	
 //	fwrite($fa, $assemply_result);
 //	fclose($fa);
-	
-	
-	echo $scene_json;
-    
-    
-    
-    wp_die();
-	
+
 	
 
     
+	//print_r(get_the_ID());
+	$asset_id_temp = get_the_ID();
+	//$parent_id_temp = wp_get_post_terms($asset_id_temp, 'vrodos_asset3d_pgame');
+	
+	//print_r(get_the_ID());
+
+	$sceneIdList = vrodos_get_all_sceneids_of_game(139);
+	//
+	//foreach (array_reverse($sceneIdList) as &$value) {
+	//print_r ();
+	//}	
+	//var_dump($sceneIdList);
+	//echo $scene_json;
+    
+    
+    
+    //wp_die();
+	$scene_json = vrodos_compile_aframe($projectId, $sceneIdList, $showPawnPositions);
+    echo $scene_json;
+    wp_die();
+
+	
+	
+	//$scene_json3 = vrodos_compile_aframe($projectId, 935, $showPawnPositions);
+    //echo $scene_json3;
+    //wp_die();
     // ================================= UNITY ========================================
     
 	// sleep(2);

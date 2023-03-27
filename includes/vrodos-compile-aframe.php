@@ -1,6 +1,6 @@
 <?php
 
-function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
+function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) {
 
 	// Check if a process is running on linux server
 	function processExists($processName) {
@@ -25,24 +25,25 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		}
 		sleep(2);
 	}
-	
-	// Get scene content
-	$project_post = get_post($project_id);
-	$project_title = $project_post->post_title;
-	$scene_post         = get_post( $scene_id );
-	$scene_content_text = $scene_post->post_content;
-	$scene_title = $scene_post->post_title;
-	
-	
-	// Transform JSON text into JSON objects by decode function
-	$scene_content_text = trim( preg_replace( '/\s+/S', '', $scene_content_text ) );
-	$scene_json = json_decode( $scene_content_text );
-	
-	// Add glbURLs from glbID
-	foreach ( $scene_json->objects as &$o ) {
-		if ( $o->categoryName == "Artifact" ) {
-			$glbURL = get_the_guid( $o->glbID );
-			$o->glbURL = $glbURL;
+	foreach (array_reverse($scene_id_list) as $key => &$value) {
+		// Get scene content
+		$project_post[$key] = get_post($project_id);
+		$project_title = $project_post[$key]->post_title;
+		$scene_post[$key] = get_post( $value );
+		$scene_content_text[$key] = $scene_post[$key]->post_content;
+		$scene_title[$key] = $scene_post[$key]->post_title;
+		
+		
+		// Transform JSON text into JSON objects by decode function
+		$scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
+		$scene_json[$key] = json_decode( $scene_content_text[$key] );
+		
+		// Add glbURLs from glbID
+		foreach ( $scene_json[$key]->objects as &$o ) {
+			if ( $o->categoryName == "Artifact" ) {
+				$glbURL[$key] = get_the_guid( $o->glbID );
+				$o->glbURL[$key] = $glbURL[$key];
+			}
 		}
 	}
 	
@@ -253,7 +254,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 
 	
 	// STEP 2: Create the director file
-	function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions){
+	function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index){
 
 		// Read prototype
 		$content = $fileOperations->reader($fileOperations->plugin_path_dir
@@ -340,9 +341,14 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 					
 					$a_entity->setAttribute( "class", "override-materials" );
 					$a_entity->setAttribute( "id", $nameObject );
-					$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL . ")" );
+					$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
 					$a_entity->setAttribute( "material", $material );
 					$a_entity->setAttribute( "clear-frustum-culling", "" );
+					
+					
+					includeDoorFunctionality($a_entity, "http://localhost:5832/Master_Client_935.html");
+					
+					
 					
 					$ascene->appendChild( $a_entity );
 					
@@ -454,7 +460,9 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	}
 	
 	
-	
+	function includeDoorFunctionality($a_entity, $door_link){
+		$a_entity->setAttribute('door-listener',$door_link);
+	}
 	
 	
 	// Step 3: Create the Simple client file
@@ -537,18 +545,23 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	
 	
 	// Step 1: Create the index file
-	createIndexFile($project_title, $scene_id, $scene_title, $fileOperations);
+	//createIndexFile($project_title, $scene_id, $scene_title, $fileOperations);
+	//createMasterClient($project_title, 926, $scene_title, $scene_json0, $fileOperations, $showPawnPositions, $key);
 	
 	// Step 2: Create the Master client file
-	createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions);
+	foreach (array_reverse($scene_id_list) as $key => &$value){
+		createIndexFile($project_title, $value, $scene_title, $fileOperations);
+		createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key);
+		createSimpleClient($project_title, $value, $scene_title, $$scene_json[$key], $fileOperations);
+	}
 	
 	// Step 3; Create Simple Client
-	createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations);
+	
 
 	return json_encode(
-                array("index" => $fileOperations->nodeJSpath()."index_".$scene_id.".html",
-                     "MasterClient" => $fileOperations->nodeJSpath()."Master_Client_".$scene_id.".html",
-                     "SimpleClient" => $fileOperations->nodeJSpath()."Simple_Client_".$scene_id.".html",
+                array("index" => $fileOperations->nodeJSpath()."index_".end($scene_id_list).".html",
+                     "MasterClient" => $fileOperations->nodeJSpath()."Master_Client_".end($scene_id_list).".html",
+                     "SimpleClient" => $fileOperations->nodeJSpath()."Simple_Client_".end($scene_id_list).".html",
 	                )
 			  );
 }

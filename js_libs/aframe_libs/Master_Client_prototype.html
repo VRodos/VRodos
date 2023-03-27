@@ -31,6 +31,15 @@
     <div id="directorline" style=""></div>
 
     <script>
+		AFRAME.registerComponent('door-listener', {
+				schema: {type: "string", default: "default value"},
+				init: function(){
+				  this.el.addEventListener("click", e =>{
+					//console.log();
+					window.location.replace(this.data);
+					});
+				}
+			});
         AFRAME.registerComponent('clear-frustum-culling', {
             init: function(){
                 let el = this.el;
@@ -150,7 +159,7 @@
         audio: true;
         video: false;
       ">
-
+	<a-entity cursor="rayOrigin:mouse"></a-entity>
     <a-assets>
       <!-- Avatar Template -->
       <template id="avatar-template">
@@ -187,7 +196,7 @@
               position="0 0.6 0"
               wasd-controls="fly: true; acceleration:5"
               show-position
-              look-controls="pointerLockEnabled: true;"
+              look-controls="pointerLockEnabled: false;"
               >
 
               <a-sphere class="head"
