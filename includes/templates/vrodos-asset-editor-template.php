@@ -427,7 +427,7 @@ if($asset_id != null) {
         if($saved_term[0]->slug == 'terrain'){
 
             // Wind Energy Terrain
-            include 'vrodos-asset-editor-WindEnergy.php';
+            // include 'vrodos-asset-editor-WindEnergy.php';
 
         }elseif (in_array($saved_term[0]->slug , ['artifact'])) {
             // Image 1 : Featured image
@@ -1086,7 +1086,7 @@ if($asset_id != null) {
         <!--  End of Edit or Show  -->
 
         <!-- MOLECULES  only-->
-        <?php include 'vrodos-asset-editor-ChemistrySupport.php'; ?>
+
 
         <?php
         // Obsolete virtual labs code

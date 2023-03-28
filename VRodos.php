@@ -528,24 +528,6 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemb
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
 
-//-------------------- Energy related ----------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-energy-settings.php' );
-
-
-
-// 20
-add_action( 'init', 'vrodos_assets_taxcategory_energy_fill' );
-
-// 21
-add_action( 'init', 'vrodos_scenes_types_energy_standard_cre' );
-
-
-
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-energy-yamls.php' );
-
-
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-energy-compile.php' );
-
 
 
 //------------------- Archaeology related -----------------------
@@ -560,35 +542,9 @@ add_action( 'init', 'vrodos_scenes_types_archaeology_standard_cre' );
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-compile.php' );
 
-//-------------------- Chemistry related ------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-chemistry-settings.php' );
-
-// 24
-add_action( 'init', 'vrodos_assets_taxcategory_chemistry_fill' );
-
-// 25
-add_action( 'init', 'vrodos_scenes_types_chemistry_standard_cre' );
-
-
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-chemistry-yamls.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-chemistry-compile.php' );
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-PDBLoader.php' );
 
-
-
-// For Envisage only
-if ($project_scope === 1) {
-    // Add a new form element...
-    add_action('register_form', 'vrodos_extrapass_register_form');
-    // Finally, save our extra registration user meta.
-    add_action('user_register', 'vrodos_extrapass_user_register', 10, 1);
-
-    add_action('show_user_profile', 'vrodos_extrapass_profile_fields');
-    add_action('edit_user_profile', 'vrodos_extrapass_profile_fields');
-
-    add_action( 'user_register', 'vrodos_registrationUser_save', 10, 2 );
-}
 
 
 // ---- Content interlinking ----------
@@ -616,7 +572,6 @@ function vrodos_mime_types($mime_types){
     $mime_types['mtl'] = 'text/plain';
     $mime_types['mat'] = 'text/plain';
     $mime_types['pdb'] = 'text/plain';
-//	$mime_types['fbx'] = 'text/plain';
     $mime_types['fbx'] = 'application/octet-stream';
     $mime_types['glb'] = 'application/octet-stream';
     return $mime_types;
@@ -1098,6 +1053,7 @@ function vrodos_remove_db_residues(){
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%_games%'");
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%pois_%'");
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%decoration%'");
+
 
 
     // +++
