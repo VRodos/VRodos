@@ -53,7 +53,7 @@ for ($i = 0; $i < count($table_of_asset_fields); $i++){
 }
 
 global $vrodos_databox1;
-//All information about our meta box
+// All information about our meta box
 $vrodos_databox1 = array('id' => 'vrodos-assets-databox',
     'page' => 'vrodos_asset3d',
     'context' => 'normal',
@@ -125,18 +125,6 @@ function vrodos_assets_databox_show(){
         <tbody>
 
         <?php
-        // Hide-Show custom fields purpose
-        $categoryAsset = wp_get_post_terms($post->ID, 'vrodos_asset3d_cat');
-
-        $doorhideshow = 'none';
-        $mediahideshow = 'none';
-
-        if ($categoryAsset) {
-            $categoryAssetSlug = $categoryAsset[0]->name;
-            $doorhideshow = ($categoryAssetSlug == 'Doors') ? 'block' : 'none';
-            $mediahideshow = ($categoryAssetSlug == 'Doors') ? 'none' : 'block';
-        }
-
         foreach ($vrodos_databox1['fields'] as $field) {
 
             $post_meta_id = get_post_meta($post->ID , $field['id'],true);
@@ -239,9 +227,6 @@ function vrodos_assets_databox_show(){
             let e = document.getElementById("vrodos-select-asset3d-cat-dropdown");
             let value = e.options[e.selectedIndex].value;
             let text = e.options[e.selectedIndex].text;
-
-            // TODO (The door field may be redundant) - By default dont show doors.
-            document.getElementById('vrodos_asset3d_scene_field').style.display = 'none';
 
             if(text == 'Doors'){
                 // SHOW Next Scene Custom field - Hide others
@@ -427,21 +412,6 @@ function vrodos_assets_databox_save($post_id) {
 
 
 
-
-
-// ----------------- Obsolete ------------------------------
-// Functions for segmentation and classfication of 3D models
-function vrodos_assets_create_right_metaboxes() {
-
-    // These function should be passed to front-end
-
-//    add_meta_box( 'autofnc-vrodos_asset3d_fetch_description','Fetch description','vrodos_assets_fetch_description_box_content', 'vrodos_asset3d', 'side' , 'low');
-//	add_meta_box( 'autofnc-vrodos_asset3d_fetch_image','Fetch image','vrodos_assets_fetch_image_box_content', 'vrodos_asset3d', 'side' , 'low');
-//	add_meta_box( 'autofnc-vrodos_asset3d_fetch_video','Fetch video','vrodos_assets_fetch_video_box_content', 'vrodos_asset3d', 'side' , 'low');
-//	add_meta_box( 'autofnc-vrodos_asset3d_segment_obj','Segment obj','vrodos_assets_segment_obj_box_content', 'vrodos_asset3d', 'side' , 'low');
-//	add_meta_box( 'autofnc-vrodos_asset3d_classify_obj','Classify obj','vrodos_assets_classify_obj_box_content', 'vrodos_asset3d', 'side' , 'low');
-}
-
 function vrodos_assets_fetch_description_box_content($post){
 
     echo '<div id="vrodos_fetchDescription_bt" class="vrodos_fetchContentButton"
@@ -573,101 +543,6 @@ function vrodos_assets_fetch_video_box_content($post){
         <div id="video_res_1_title" class="video_res_title_f"></div><br />
 
     </div>
-
-    <?php
-}
-
-function vrodos_assets_segment_obj_box_content($post){
-
-    ?>
-
-    <div id="vrodos_segmentButton" class="vrodos_fetchContentButton"
-         onclick="vrodos_segmentObjAjax(document.getElementById('vrodos_titles_segment_obj_iter').value,
-                                         document.getElementById('vrodos_titles_segment_obj_min_dist').value,
-                                         document.getElementById('vrodos_titles_segment_obj_max_dist').value,
-                                         document.getElementById('vrodos_titles_segment_obj_min_points').value,
-                                         document.getElementById('vrodos_titles_segment_obj_max_points').value
-                                            )">Segment obj</div>;
-
-    <br />
-    Parameters<br />
-    <table>
-        <tbody>
-        <tr><td>Algorithm iterations</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_iter" id="vrodos_titles_segment_obj_iter" value="100"></td></tr>
-        <tr><td>Min distance</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_min_dist" id="vrodos_titles_segment_obj_min_dist" value="0.01"></td></tr>
-        <tr><td>Max distance</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_max_dist" id="vrodos_titles_segment_obj_max_dist" value="0.2"></td></tr>
-        <tr><td>Min points</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_min_points" id="vrodos_titles_segment_obj_min_points" value="100"></td></tr>
-        <tr><td>Max points</td><td><input type="text" size="5" name="vrodos_titles_segment_obj_max_points" id="vrodos_titles_segment_obj_max_points" value="25000"></td></tr>
-        </tbody>
-    </table>
-
-    <br />
-    <div id="vrodos-segmentation-report" name="vrodos-segmentation-report">Status</div><br />
-    <div id="vrodos-segmentation-status" name="vrodos-segmentation-status">Report</div><br />
-
-    <br />
-    Results<br />
-    <div id="vrodos-segmentation-results" name="vrodos-segmentation-results">
-        <a href="" id="vrodos-segmentation-res1"></a>
-        <a href="" id="vrodos-segmentation-res2"></a>
-        <a href="" id="vrodos-segmentation-res3"></a>
-        <a href="" id="vrodos-segmentation-res4"></a>
-        <a href="" id="vrodos-segmentation-res5"></a>
-        <a href="" id="vrodos-segmentation-res6"></a>
-    </div>
-
-    <br />
-    <div id="vrodos-segmentation-log" name="vrodos-segmentation-log">Log file</div>
-
-    <?php
-}
-
-function vrodos_assets_classify_obj_box_content($post){
-
-    echo '<div id="vrodos_classifyObj_bt" class="vrodos_fetchContentButton"
-                                onclick="vrodos_classifyObjAjax()">Classify obj</div>';
-    ?>
-
-    <br />
-    Results<br />
-    <table>
-        <tbody>
-        <tr>
-            <td>#</td>
-            <td>Tag</td>
-            <td>Probability</td>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td><input type="text" size="5" name="vrodos_tag1_classification_obj"
-                       id="vrodos_tag1_classification_obj" value=""></td>
-            <td><input type="text" size="5" name="vrodos_prob1_classification_obj"
-                       id="vrodos_prob1_classification_obj" value=""></td>
-            </td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td><input type="text" size="5" name="vrodos_tag2_classification_obj"
-                       id="vrodos_tag2_classification_obj" value=""></td>
-            <td><input type="text" size="5" name="vrodos_prob2_classification_obj"
-                       id="vrodos_prob2_classification_obj" value=""></td>
-            </td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td><input type="text" size="5" name="vrodos_tag3_classification_obj"
-                       id="vrodos_tag3_classification_obj" value=""></td>
-            <td><input type="text" size="5" name="vrodos_prob3_classification_obj"
-                       id="vrodos_prob3_classification_obj" value=""></td>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
-    <br />
-    <div id="vrodos-classification-report" name="vrodos-classification-report">Status</div><br />
-    <div id="vrodos-classification-status" name="vrodos-classification-status">Report</div><br />
-    <div id="vrodos-segmentation-log" name="vrodos-segmentation-log">Log file</div>
 
     <?php
 }
