@@ -135,8 +135,8 @@ function vrodos_assets_taxcategory_ipr(){
         'name' => _x('Asset IPR', 'taxonomy general name'),
         'singular_name' => _x('Asset IPR', 'taxonomy singular name'),
         'menu_name' => _x('Asset IPR', 'admin menu'),
-        'search_items' => __('Search Asset bu IPR'),
-        'all_items' => __('All Asset IPR'),
+        'search_items' => __('Search Asset by IPR'),
+        'all_items' => __('All Asset IPRs'),
         'parent_item' => __('Parent Asset IPR'),
         'parent_item_colon' => __('Parent Asset IPR:'),
         'edit_item' => __('Edit Asset IPR'),
@@ -162,25 +162,23 @@ function vrodos_assets_taxcategory_ipr(){
 }
 
 
+// Create PathData for each asset as custom field in order to upload files at pathdata/models folder
+function vrodos_create_pathdata_asset( $post_ID, $post, $update ) {
 
-
-// Create PathData for each asset as custom field in order to upload files at pathdata/Models folder
-function vrodos_create_pathdata_asset( $post_id ) {
-
-    if (get_post_type($post_id) === 'vrodos_asset3d') {
+    if (get_post_type($post_ID) === 'vrodos_asset3d' ) {
 
         $parentGameID = $_GET['vrodos_game'] ?? null;
 
         if (!is_numeric($parentGameID)) {
-            echo "ERROR 455: ParentGameID is not numeric.";
-            echo '<br>';
+          /*  echo "ERROR 455: ParentGameID is not numeric.";
+            echo '<br>';*/
             return;
         }
 
         $parentGameID = intval($parentGameID);
         $parentGameSlug = ( $parentGameID > 0 ) ? get_post( $parentGameID )->post_name : NULL;
 
-        update_post_meta($post_id,'vrodos_asset3d_pathData', $parentGameSlug);
+        update_post_meta($post_ID,'vrodos_asset3d_pathData', $parentGameSlug);
     }
 }
 

@@ -11,10 +11,8 @@ A plugin for WordPress to transform your website into a multipurpose 3D media ma
 
 Features
 
-- Formats support: FBX, GLB, OBJ, PDB.
-- Animation support* 
+- Formats support:  GLB.
 - Support sound
-- Eco-friendly with rendering-on-demand
 
 Interface Pages
 
@@ -24,7 +22,7 @@ Interface Pages
 - Asset Editor
 
 
-*Currently only one animation per 3D model is supported.
+
 
 [comment]: <> (##Basic Interfaces)
 

@@ -3,10 +3,9 @@
  * Plugin Name: VRodos
  * Plugin URI: https://vrodos.iti.gr
  * Description: Make your wordpress website a VR site
- * Author: Dimitrios Ververidis, ververid@iti.gr
+ * Author: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
  * Author URI: https://vrodos.iti.gr
- * Version: 0.71
- *   - Fix relative paths
+ * Version: 2.0
  */
 
 
@@ -399,7 +398,7 @@ add_action('init', 'vrodos_assets_taxcategory'); // vrodos_asset3d_cat 'ASSET TY
 add_action('init', 'vrodos_assets_taxpgame'); // vrodos_asset3d_pgame 'ASSET GAMES'
 
 // 17
-add_action('init', 'vrodos_assets_taxcategory_ipr'); // vrodos_asset3d_ipr_cat 'ASSET IPR CATEG'
+add_action('init', 'vrodos_assets_taxcategory_ipr'); // vrodos_asset3d_ipr_cat 'ASSET IPR'
 
 // Register asset metas
 add_action( 'init', 'vrodos_asset3d_metas_description', 1);
@@ -412,7 +411,6 @@ add_action('init','vrodos_allowAuthorEditing');
 
 // 58
 add_filter( 'wp_dropdown_users_args', 'change_user_dropdown', 10, 2 );
-
 
 // 36
 add_action( 'save_post', 'vrodos_asset_tax_category_box_content_save');

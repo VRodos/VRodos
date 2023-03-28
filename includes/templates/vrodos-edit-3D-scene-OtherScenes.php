@@ -42,8 +42,8 @@
 			$default_scene = get_post_meta( $scene_id, 'vrodos_scene_default', true );
 			
 			// Create the link when scene is clicked to be edited (permalink depending on the scene yaml category 2D or 3D)
-			$edit_scene_page_id = ( $scene_type == 'scene' ? $editscenePage[0]->ID : $editscene2DPage[0]->ID);
-			
+			$edit_scene_page_id = $editscenePage ? $editscenePage[0]->ID : '';
+
             // Chemistry
 			if($scene_type == 'sceneExam2d' ||  $scene_type == 'sceneExam3d'){
 				$edit_scene_page_id = $editsceneExamPage[0]->ID;

@@ -49,12 +49,9 @@ class ParseJSON {
         $roughness = '';
         $metalness = '';
         
-        
-        
         $sceneToLoad = htmlspecialchars_decode($sceneToLoad);
         $content_JSON = json_decode($sceneToLoad);
         $json_metadata = $content_JSON->metadata;
-        
         
         echo '<script>';
         echo 'resources3D["ClearColor"]= "'.$json_metadata->ClearColor.'";';

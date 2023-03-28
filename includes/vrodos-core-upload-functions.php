@@ -14,7 +14,7 @@ function vrodos_upload_dir_forScenesOrAssets( $args ) {
 
     $newdir = get_post_type($post_id) === 'vrodos_scene' ?
         '/' . get_the_terms($post_id, 'vrodos_scene_pgame')[0]->slug . '/Scenes'  // 'vrodos_scene'
-        :  '/' . get_post_meta($post_id, 'vrodos_asset3d_pathData', true) . '/Models'; // 'vrodos_asset3d'
+        :  '/' . get_post_meta($post_id, 'vrodos_asset3d_pathData', true) . '/models'; // 'vrodos_asset3d'
 
     $args['subdir'] = $newdir;
     $args['path'] .= $newdir;

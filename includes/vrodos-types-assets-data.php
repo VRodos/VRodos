@@ -1,6 +1,5 @@
 <?php
 
-
 // Create metabox with Custom Fields for Asset3D ($vrodos_databox1)
 $table_of_asset_fields = array(
 
@@ -15,7 +14,7 @@ $table_of_asset_fields = array(
 
     array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asset3d_diffimage', 'string', '', false, true),
     array('Screenshot Image'           , 'Screenshot Image'            , 'vrodos_asset3d_screenimage','string', '', true, true),
-    array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_next_scene','string', '', true, true),
+    array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_scene','string', '', true, true),
     array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'string', '', true, true),
     array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'string', '0', true, true),
 
@@ -67,7 +66,6 @@ function vrodos_asset3d_metas_description() {
 
     foreach ($vrodos_databox1['fields'] as $meta_entry) {
 
-
         $meta_id = $meta_entry['id'];
         $meta_properties = array(
             'type'      => $meta_entry['type'], // Validate and sanitize the meta value as a string.
@@ -115,10 +113,10 @@ function vrodos_assets_infobox_show(){
 function vrodos_assets_databox_show(){
 
     global $vrodos_databox1, $post;
-
     $post_title = $post->post_title;
-    if($post->post_status == 'publish'){$hideshow = 'none';}else{$hideshow = 'block';}
+    $hideshow = $post->post_status == 'publish' ? 'none' : 'block';
     ?>
+
     <div id="vrodos_assets_box_wrapper" style="display:<?php echo $hideshow; ?>;">
         <span class="dashicons dashicons-lock">You must publish the Asset first, in order to fill its data</span>
     </div>
@@ -127,7 +125,7 @@ function vrodos_assets_databox_show(){
         <tbody>
 
         <?php
-        //Hide-Show custom fields purpose
+        // Hide-Show custom fields purpose
         $categoryAsset = wp_get_post_terms($post->ID, 'vrodos_asset3d_cat');
 
         $doorhideshow = 'none';
@@ -141,351 +139,113 @@ function vrodos_assets_databox_show(){
 
         foreach ($vrodos_databox1['fields'] as $field) {
 
-            if ($field['id']=='vrodos_asset3d_mtl'){
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php $meta_mtl_id = get_post_meta($post->ID , $field['id'],true); ?>
+            $post_meta_id = get_post_meta($post->ID , $field['id'],true);
 
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>"
-                               id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta_mtl_id ? $meta_mtl_id : $field['std']); ?>" size="30" style="width:65%"/>
-
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-
-                        <br /><br />
-                        Pathfile: <?php
-                        if ($meta_mtl_id) {
-                            echo wp_get_attachment_url($meta_mtl_id);
-                        }
-                        else {
-                            echo 'No MTL file.';
-                        } ?>
-
-
-                        Preview mtl: <br />
-                        <textarea id="vrodos_asset3d_mtl_preview" readonly style="width:100%;height:200px;"><?php
-
-                            print_r($meta_mtl_id);
-
-                            if(!$meta_mtl_id){
-                                echo "mtl is not defined";
-                            }else{
-                                readfile(wp_get_attachment_url($meta_mtl_id));
-                            }
-                            ?>
-                            </textarea>
-                    </td>
-                </tr>
-
-
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_obj') {
-
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php
-                        $valMaxUpload = intval(ini_get('upload_max_filesize'));
-                        if ($valMaxUpload < 100){
-                            echo "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br />";
-                            echo "Add to .htaccess the following two lines<br/>";
-                            echo "php_value upload_max_filesize 256M <br />";
-                            echo "php_value post_max_size 512M";
-                        }
-                        $meta_obj_id = get_post_meta($post->ID, $field['id'], true); ?>
-
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                               value="<?php echo esc_attr($meta_obj_id ? $meta_obj_id : $field['std']); ?>" size="30" style="width:65%"/>
-
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-
-                        <br /><br />
-                        Pathfile: <?php echo wp_get_attachment_url($meta_obj_id); ?><br />
-                        Preview obj:<br />
-                        <textarea id="vrodos_asset3d_obj_preview" readonly style="width:100%;height:200px;"><?php
-                            if(!$meta_obj_id){
-                                echo "obj is not defined";
-                            }else{
-                                echo "obj text is too big to state here.";
-                                //readfile(wp_get_attachment_url($meta_obj_id), "100");
-                            }
-                            ?>
-                            </textarea>
-                    </td>
-                </tr>
-
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_fbx') {?>
-
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php
-                        $valMaxUpload = intval(ini_get('upload_max_filesize'));
-                        if ($valMaxUpload < 100){
-                            echo "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br />";
-                            echo "Add to .htaccess the following two lines<br/>";
-                            echo "php_value upload_max_filesize 256M <br />";
-                            echo "php_value post_max_size 512M";
-                        }
-                        $meta_fbx_id = get_post_meta($post->ID, $field['id'], true); ?>
-
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                               value="<?php echo esc_attr($meta_fbx_id ? $meta_fbx_id : $field['std']); ?>" size="30" style="width:65%"/>
-
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-
-                        <br /><br />
-                        Pathfile: <?php echo wp_get_attachment_url($meta_fbx_id); ?><br />
-                        Preview fbx:<br />
-                        <textarea id="vrodos_asset3d_fbx_preview" readonly style="width:100%;height:200px;"><?php
-                            if(!$meta_fbx_id){
-                                echo "fbx is not defined";
-                            }else{
-                                echo "fbx text is too big to state here.";
-                                //readfile(wp_get_attachment_url($meta_fbx_id), "100");
-                            }
-                            ?>
-                            </textarea>
-                    </td>
-                </tr>
-
-
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_pdb') {?>
-
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php
-                        $valMaxUpload = intval(ini_get('upload_max_filesize'));
-                        if ($valMaxUpload < 100){
-                            echo "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br />";
-                            echo "Add to .htaccess the following two lines<br/>";
-                            echo "php_value upload_max_filesize 256M <br />";
-                            echo "php_value post_max_size 512M";
-                        }
-                        $meta_pdb_id = get_post_meta($post->ID, $field['id'], true); ?>
-
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                               value="<?php echo esc_attr($meta_pdb_id ? $meta_pdb_id : $field['std']); ?>" size="30" style="width:65%"/>
-
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-
-                        <br /><br />
-                        Pathfile: <?php echo wp_get_attachment_url($meta_pdb_id); ?><br />
-                        Preview Pdb:<br />
-                        <textarea id="vrodos_asset3d_pdb_preview" readonly style="width:100%;height:200px;"><?php
-                            if(!$meta_pdb_id){
-                                echo "pdb is not defined";
-                            }else{
-                                echo "pdb text is too big to state here.";
-                                //readfile(wp_get_attachment_url($meta_fbx_id), "100");
-                            }
-                            ?>
-                                </textarea>
-                    </td>
-                </tr>
-
-
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_glb') {?>
-
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php
-                        $valMaxUpload = intval(ini_get('upload_max_filesize'));
-                        if ($valMaxUpload < 100){
-                            echo "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br />";
-                            echo "Add to .htaccess the following two lines<br/>";
-                            echo "php_value upload_max_filesize 256M <br />";
-                            echo "php_value post_max_size 512M";
-                        }
-                        $meta_glb_id = get_post_meta($post->ID, $field['id'], true); ?>
-
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                               value="<?php echo esc_attr($meta_glb_id ? $meta_glb_id : $field['std']); ?>" size="30" style="width:65%"/>
-
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-
-                        <br /><br />
-                        Pathfile: <?php echo wp_get_attachment_url($meta_glb_id); ?><br />
-                        Preview glb:<br />
-                        <textarea id="vrodos_asset3d_glb_preview" readonly style="width:100%;height:200px;"><?php
-                            if(!$meta_glb_id){
-                                echo "glb is not defined";
-                            }else{
-                                echo "glb text is too big to state here.";
-                                //readfile(wp_get_attachment_url($meta_fbx_id), "100");
-                            }
-                            ?>
-                                </textarea>
-                    </td>
-                </tr>
-
-
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_audio') {?>
-
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php
-                        $valMaxUpload = intval(ini_get('upload_max_filesize'));
-                        if ($valMaxUpload < 100){
-                            echo "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br />";
-                            echo "Add to .htaccess the following two lines<br/>";
-                            echo "php_value upload_max_filesize 256M <br />";
-                            echo "php_value post_max_size 512M";
-                        }
-                        $meta_audio_id = get_post_meta($post->ID, $field['id'], true); ?>
-
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                               value="<?php echo esc_attr($meta_audio_id ? $meta_audio_id : $field['std']); ?>" size="30" style="width:65%"/>
-
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-
-                        <br /><br />
-                        Pathfile: <?php echo wp_get_attachment_url($meta_audio_id); ?><br />
-                        Preview Audio:<br />
-                        <textarea id="vrodos_asset3d_audio_preview" readonly style="width:100%;height:200px;"><?php
-                            if(!$meta_audio_id){
-                                echo "Audio is not defined";
-                            }else{
-                                echo "Audio text is too big to state here.";
-                                //readfile(wp_get_attachment_url($meta_audio_id), "100");
-                            }
-                            ?>
-                            </textarea>
-                    </td>
-                </tr>
-
-
-
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_diffimage') {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php $meta_diff_id = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                               value="<?php
-                               echo esc_attr($meta_diff_id ? $meta_diff_id : $field['std']);
-                               ?>" size="30" style="width:65%"/>
-
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-                        <br />
-                        Pathfile: <?php echo wp_get_attachment_url($meta_diff_id); ?><br />
-                        <img id="vrodos_asset3d_diffimage_preview" style="width:50%;height:auto" src="<?php echo wp_get_attachment_url($meta_diff_id); ?>"/>
-                    </td>
-                </tr>
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_screenimage') {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php $meta_scr_id = get_post_meta($post->ID, $field['id'], true); ?>
-
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                               value="<?php echo esc_attr($meta_scr_id ? $meta_scr_id : $field['std']); ?>" size="30" style="width:65%"/>
-
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-                        <br />
-                        Pathfile: <?php echo wp_get_attachment_url($meta_scr_id); ?><br />
-                        <img id="vrodos_asset3d_screenimage_preview" style="width:50%;height:auto" src="<?php echo wp_get_attachment_url($meta_scr_id); ?>"/>
-                    </td>
-                </tr>
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_next_scene') {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td id="vrodos_asset3d_next_scene_field" style="display:<?php echo $doorhideshow; ?>;margin-bottom:0;">
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta ? $meta : $field['std']); ?>" size="30" style="width:65%"/>
-                    </td>
-                </tr>
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_image1') {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php $meta_image1_id = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta_image1_id ? $meta_image1_id : $field['std']); ?>" size="30" style="width:65%;float:left;display:<?php echo $mediahideshow; ?>;"/>
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>" style="display:<?php echo $mediahideshow; ?>;" />
-
-                        Pathfile: <?php echo wp_get_attachment_url($meta_image1_id); ?><br />
-                        <img id="vrodos_asset3d_image1_preview" style="width:50%;height:auto;display:<?php echo $mediahideshow; ?>;"
-                             src="<?php echo wp_get_attachment_url($meta_image1_id); ?>"/>
-                    </td>
-                </tr>
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_video') {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta ? $meta : $field['std']); ?>" size="30" style="width:65%;float:left;display:<?php echo $mediahideshow; ?>;"/>
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"  style="display:<?php echo $mediahideshow; ?>;" />
-                        <?php //TODO preview of the video ?>
-                    </td>
-                </tr>
-                <?php
-            }elseif (in_array($field['id'],[
-                'vrodos_asset3d_description_kids','vrodos_asset3d_description_experts','vrodos_asset3d_description_perception'  // English
-            ]  )) {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td id="<?php echo $field['id'] ?>" style="margin-bottom:0;">
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <textarea name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                                  value="" style="width:100%;height:auto"><?php echo esc_attr($meta ? $meta : $field['std']); ?></textarea>
-                    </td>
-                </tr>
-                <?php
-            }elseif (in_array($field['id'],['vrodos_asset3d_fonts'])) {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td id="<?php echo $field['id'] ?>" style="margin-bottom:0;">
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta ? $meta : $field['std']); ?>" size="30" style="width:65%"/>
-                    </td>
-                </tr>
-                <?php
-            }elseif (in_array($field['id'],['vrodos_asset3d_back3dcolor'])) {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td id="<?php echo $field['id'] ?>" style="margin-bottom:0;">
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta ? $meta : $field['std']); ?>" size="30" style="width:65%"/>
-                    </td>
-                </tr>
-                <?php
+            if ($post_meta_id != false) {
+                continue;
             }
-        }
-        ?>
+
+            $valMaxUpload = intval(ini_get('upload_max_filesize'));
+            $attacmentSizeMessage = $valMaxUpload < 100 ? "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br/> Add to .htaccess the following two lines <br/> php_value upload_max_filesize 256M<br>php_value post_max_size 512M" : '';
+            $extension = substr($field['id'], strrpos($field['id'], "_") + 1);
+
+            $showSection = 'table-row';
+            switch ($extension) {
+                case 'mtl':
+                case 'obj':
+                case 'fbx':
+                case 'pdb':
+                case 'diffimage':
+                case 'image1':
+                case 'image2':
+                case 'image3':
+                case 'image4':
+                case 'kids':
+                case 'experts':
+                case 'perception':
+                case 'audio':
+                case 'scene': // TODO Uncomment this to connect the scene to a next scene
+                case 'video':
+                case 'fonts':
+                case 'isreward':
+                    $showSection = 'none';
+                    break;
+
+            } ?>
+
+            <tr id="<?php echo esc_attr($field['id']); ?>_field" style="display: <?php echo $showSection ?>" >
+                <th style="width:15%">
+                    <label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label>
+                    <p> <?php echo $attacmentSizeMessage; ?> </p>
+                </th>
+                <td>
+
+                    <?php
+                    $attachment_url = $post_meta_id ? wp_get_attachment_url($post_meta_id) : 'No '.$field['name'];
+                    $preview_id = 'vrodos_asset3d_'.$extension.'_preview';
+                    $preview_content = $post_meta_id ? "3D object too big to show here" : $extension." is not defined."; // TODO SHOW CONTENTS BASED ON TYPE
+                    switch ($extension) {
+                        case 'mtl':
+                        case 'obj':
+                        case 'fbx':
+                        case 'pdb':
+                        case 'glb':
+                        case 'audio': ?>
+
+                            <input type="text" name="<?php echo esc_attr($field['id']); ?> readonly"
+                                   id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($post_meta_id ? $post_meta_id : $field['std']); ?>" size="30" style="width:65%"/>
+
+                            <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
+                            <p>Pathfile: <?php echo $attachment_url; ?></p>
+
+                            <label for="<?php echo $preview_id ?>">Preview <?php echo $extension ?>: </label>
+                            <textarea id="<?php echo $preview_id ?>" readonly style=" width:100%; height:200px;"><?php echo $preview_content ?></textarea>
+                            <?php break;
+
+                        case 'diffimage':
+                        case 'screenimage':
+                        case 'image1':
+                            ?>
+                            <input type="text" name="<?php echo esc_attr($field['id']); ?> readonly"
+                                   id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($post_meta_id ? $post_meta_id : $field['std']); ?>" size="30" style="width:65%"/>
+
+                            <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
+                            <p>Pathfile: <?php echo $attachment_url; ?></p>
+                            <img id="<?php echo $preview_id ?>" style="width:50%; height:auto" src="<?php echo wp_get_attachment_url($post_meta_id); ?>" alt="<?php echo $extension ?> preview image"/>
+
+                            <?php break;
+
+                        case 'scene': // TODO Add a mechanism to connect scene to another.
+                            break;
+                        case 'video': // TODO Add a mechanism to add a video.
+                            break;
+                        case 'fonts': // TODO Add a component to select custom fonts.
+                            break;
+                        case 'back3dcolor': // TODO Add a component to select front end asset editor background color.
+                            break;
+
+                    } ?>
+                </td>
+            </tr>
+            <?php
+        }   ?>
+
         </tbody>
     </table>
 
     <script>
+
         function vrodos_hidecfields_asset3d() {
-            var e = document.getElementById("vrodos-select-asset3d-cat-dropdown");
-            var value = e.options[e.selectedIndex].value;
-            var text = e.options[e.selectedIndex].text;
+            let e = document.getElementById("vrodos-select-asset3d-cat-dropdown");
+            let value = e.options[e.selectedIndex].value;
+            let text = e.options[e.selectedIndex].text;
+
+            // TODO (The door field may be redundant) - By default dont show doors.
+            document.getElementById('vrodos_asset3d_scene_field').style.display = 'none';
 
             if(text == 'Doors'){
-                //SHOW Next Scene Custom field - Hide others
-                document.getElementById('vrodos_asset3d_next_scene_field').style.display = 'block';
+                // SHOW Next Scene Custom field - Hide others
+                document.getElementById('vrodos_asset3d_scene_field').style.display = 'block';
                 document.getElementById('vrodos_asset3d_image1').style.display = 'none';
                 document.getElementById('vrodos_asset3d_image1_btn').style.display = 'none';
                 document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
@@ -494,7 +254,7 @@ function vrodos_assets_databox_show(){
                 document.getElementById('vrodos-assets-infobox').style.display = 'none';
                 document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
             }else{
-                var link = document.getElementById('vrodos_asset3d_next_scene_field');
+                var link = document.getElementById('vrodos_asset3d_scene_field');
                 link.style.display = 'none';
                 if(text == 'Points of Interest (Video)'){
                     document.getElementById('vrodos_asset3d_image1').style.display = 'none';
@@ -610,7 +370,10 @@ function vrodos_assets_databox_show(){
             jQuery( 'a.add_media' ).on( 'click', function() {
                 wp.media.model.settings.post.id = wp_media_post_id;
             });
+
         });
+
+
     </script>
     <?php
 }
