@@ -289,7 +289,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 		$dom = $basicDomElements['dom'];
 		$objects = $basicDomElements['objects'];
 		$ascene = $basicDomElements['ascene'];
-		
+		//print($scene_id)
+
+		//$i = array_search($scene_id, array_keys($scene_id_list));
+		//print_r($i);
+
 		
 		foreach($objects as $nameObject => $contentObject) {
 			
@@ -330,10 +334,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 						
 						$ascene->appendChild( $a_entity );
 				
-				} else {
-					
+				}else if ( str_contains($contentObject->assetname, 'Door')) {
 					$a_entity = $dom->createElement( "a-entity" );
 					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					//rint_r($contentObject->assetname);
 					
 					$material = "";
 					$fileOperations->setMaterial( $material, $contentObject );
@@ -346,16 +350,35 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 					$a_entity->setAttribute( "clear-frustum-culling", "" );
 					
 					
-					includeDoorFunctionality($a_entity, "http://localhost:5832/Master_Client_935.html");
+					includeDoorFunctionality($a_entity, $scene_id);
 					
 					
+					
+					$ascene->appendChild( $a_entity );
+				}
+
+				
+				else {
+					
+					$a_entity = $dom->createElement( "a-entity" );
+					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					
+					$material = "";
+					$fileOperations->setMaterial( $material, $contentObject );
+					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
+					$a_entity->setAttribute( "class", "override-materials" );
+					$a_entity->setAttribute( "id", $nameObject );
+					$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
+					$a_entity->setAttribute( "material", $material );
+					$a_entity->setAttribute( "clear-frustum-culling", "" );
 					
 					$ascene->appendChild( $a_entity );
 					
 				}
 				
 				//==================== Pawn =================
-			} else if ( $contentObject->categoryName == 'pawn' ) {
+			}	
+			else if ( $contentObject->categoryName == 'pawn' ) {
 				
 				
 				if($showPawnPositions=="true") {
@@ -461,7 +484,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 	
 	
 	function includeDoorFunctionality($a_entity, $door_link){
-		$a_entity->setAttribute('door-listener',$door_link);
+		$a_entity->setAttribute('door-listener',"http://localhost:5832/Master_Client_{$door_link}.html");
+	
 	}
 	
 	

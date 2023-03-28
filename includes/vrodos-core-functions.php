@@ -1623,13 +1623,12 @@ function vrodos_compile_action_callback(){
 	
 
     
-	//print_r(get_the_ID());
-	$asset_id_temp = get_the_ID();
-	//$parent_id_temp = wp_get_post_terms($asset_id_temp, 'vrodos_asset3d_pgame');
-	
-	//print_r(get_the_ID());
+	//
+	//$asset_id_temp = get_the_ID();
+	$parent_id = wp_get_post_terms($sceneId, 'vrodos_scene_pgame');
+	$parent_id = reset($parent_id)->term_id;
 
-	$sceneIdList = vrodos_get_all_sceneids_of_game(139);
+	$sceneIdList = vrodos_get_all_sceneids_of_game($parent_id);
 	//
 	//foreach (array_reverse($sceneIdList) as &$value) {
 	//print_r ();
