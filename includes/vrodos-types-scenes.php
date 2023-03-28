@@ -114,7 +114,7 @@ function vrodos_scenes_construct() {
 // Create Scene Taxonomy, namely the game that the scene belongs
 function vrodos_scenes_parent_project_tax_define() {
     $labels = array(
-        'name' => _x('Scene Parent Project - WARNING: New Taxonomy is not a new Project!', 'taxonomy general name'),
+        'name' => _x('Scene Parent Taxonomy', 'taxonomy general name'),
         'singular_name' => _x('Parent Taxonomy', 'taxonomy singular name'),
         'menu_name' => _x('Parent Taxonomies', 'admin menu'),
         'search_items' => __('Search Parent Taxonomies'),

@@ -98,7 +98,7 @@ function vrodos_assets_taxcategory(){
 function vrodos_assets_taxpgame(){
 
     $labels = array(
-        'name' => _x('Asset Parent Taxonomy - WARNING: New Taxonomy is not a new Project!', 'taxonomy general name'),
+        'name' => _x('Asset Parent Taxonomy', 'taxonomy general name'),
         'singular_name' => _x('Parent Taxonomy', 'taxonomy singular name'),
         'menu_name' => _x('Parent Taxonomies', 'admin menu'),
         'search_items' => __('Search Parent Taxonomies'),

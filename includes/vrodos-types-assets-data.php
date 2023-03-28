@@ -13,7 +13,7 @@ $table_of_asset_fields = array(
     array('Audio File'                 , 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'string', '', true, true),
 
     array('Diffusion Image'            , 'Diffusion Image'            , 'vrodos_asset3d_diffimage', 'string', '', false, true),
-    array('Screenshot Image'           , 'Screenshot Image'            , 'vrodos_asset3d_screenimage','string', '', true, true),
+    array('Screenshot Image'           , 'Screenshot Image'           , 'vrodos_asset3d_screenimage','string', '', true, true),
     array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_scene','string', '', true, true),
     array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'string', '', true, true),
     array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'string', '0', true, true),

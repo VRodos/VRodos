@@ -125,8 +125,8 @@ function vrodos_plugin_menu(){
         'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_yaml');
 
     add_submenu_page('vrodos-plugin',
-        'Scenes Grouped by Project',
-        'Scenes Grouped by Project',
+        'Scenes Grouped by Parent Taxonomy',
+        'Scenes Grouped by Parent Taxonomy',
         'manage_options',
         'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_pgame');
 
