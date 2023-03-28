@@ -3,7 +3,7 @@
  * Plugin Name: VRodos
  * Plugin URI: https://vrodos.iti.gr
  * Description: Make your wordpress website a VR site
- * Author: Dimitrios Ververidis, ververid@iti.gr
+ * Author: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
  * Author URI: https://vrodos.iti.gr
  * Version: 2.0
  */
