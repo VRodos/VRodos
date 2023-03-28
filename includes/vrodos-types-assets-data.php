@@ -150,7 +150,6 @@ function vrodos_assets_databox_show(){
             $extension = substr($field['id'], strrpos($field['id'], "_") + 1);
 
             $showSection = 'table-row';
-            var_dump($extension);
             switch ($extension) {
                 case 'mtl':
                 case 'obj':
