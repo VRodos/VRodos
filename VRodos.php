@@ -29,8 +29,6 @@ echo ini_get('max_input_time').chr(10);
 @ini_set( 'max_execution_time', '2400' );
 
 // Set scope for the 3D editor (under construction feature):
-// VirtualTour: 0
-// VirtualLab: 1
 // Virtual Exhibition (VRExpo)    : 2
 // VirtualProduction (MediaVerse) : 3
 $project_scope = 3;
@@ -45,7 +43,6 @@ function vrodos_register_scripts() {
     $scriptsA = array(
         array('vrodos_asset_editor_scripts', $pluginDirJS.'vrodos_asset_editor_scripts.js'),
         array('vrodos_scripts', $pluginDirJS.'vrodos_scripts.js'),
-        array('vrodos_lightslider', $pluginDirJS.'external_js_libraries/lightslider.min.js'),
         array('vrodos_jscolorpick', $pluginDirJS.'external_js_libraries/jscolor.js'),
 //		array('vrodos_jsfontselect', $pluginDirJS.'external_js_libraries/jquery.fontselect.js'),
         array('vrodos_html2canvas', $pluginDirJS.'external_js_libraries/html2canvas.min.js'),
@@ -217,8 +214,6 @@ function vrodos_register_styles() {
 
     wp_register_style( 'vrodos_frontend_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_frontend.css' );
 
-    wp_register_style( 'vrodos_lightslider_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/lightslider.min.css' );
-
     //wp_register_style( 'vrodos_materialize_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/materialize.css' );
 
     wp_register_style( 'vrodos_asseteditor_stylesheet',  plugin_dir_url( __FILE__ ) . 'css/vrodos_asseteditor.css' );
@@ -234,8 +229,6 @@ function vrodos_register_styles() {
     wp_enqueue_style( 'vrodos_material_icons', plugin_dir_url( __FILE__ ) . 'css/material-icons/material-icons.css' );
 //    wp_enqueue_style( 'vrodos_glyphter_icons', plugin_dir_url( __FILE__ ) . 'css/glyphter-font/Glyphter.css' );
     wp_enqueue_style('vrodos_frontend_stylesheet');
-
-    wp_enqueue_style( 'vrodos_lightslider_stylesheet');
 
     wp_enqueue_style('vrodos_backend');
 
@@ -713,10 +706,6 @@ add_action( 'init', 'vrodos_3d_register_block' );
 //});
 
 
-
-
-
-
 //function getAssetsRest($data) {
 //
 //    $assets = get_assets($data['slug']);
@@ -1013,7 +1002,6 @@ function vrodos_remove_db_residues(){
     global $wpdb;
     $del_prefix = $wpdb->prefix;
 
-
     // 1. Options
     delete_option('vrodos_scene_yaml_children');
     delete_option('vrodos_game_type_children');
@@ -1023,26 +1011,8 @@ function vrodos_remove_db_residues(){
     // 2. Postmeta
     $wpdb->query("DELETE FROM ".$del_prefix."postmeta WHERE meta_value LIKE '%vrodos%'");
 
-    //Deletes these:
-    //    vrodos-project-manager-template.php
-    //    vrodos-assets-list-template.php
-    //    vrodos-edit-3D-scene-template.php
-    //    vrodos-edit-2D-scene-template.php
-    //    vrodos-edit-sceneExam-template.php
-    //    vrodos-asset-editor-template.php
-
-
     // 2. Posts
     $wpdb->query("DELETE FROM ".$del_prefix."posts WHERE post_name LIKE '%vrodos%' OR post_name LIKE '%joker%'");
-//	vrodos-project-manager-page
-//	vrodos-assets-list-page
-//	vrodos-edit-3d-scene-page
-//    vrodos-edit-2d-scene-page
-//    vrodos-edit-exam-scene-page
-//    vrodos-asset-editor-page
-//    archaeology-joker
-//    energy-joker
-//    chemistry-joker
 
     // 3. Termmeta
     $wpdb->query("DELETE FROM ".$del_prefix."termmeta WHERE meta_key LIKE '%vrodos%'");
@@ -1053,7 +1023,6 @@ function vrodos_remove_db_residues(){
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%_games%'");
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%pois_%'");
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%decoration%'");
-
 
 
     // +++
@@ -1077,8 +1046,6 @@ function vrodos_remove_db_residues(){
     // 7. wp__games_versions table
     $wpdb->query("DROP TABLE ".$del_prefix."_games_versions");
 }
-
-
 
 
 

@@ -101,6 +101,7 @@ $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 // wpcontent/uploads/
 $upload_url = wp_upload_dir()['baseurl'];
 
+
 $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 
 // Scene
@@ -166,7 +167,6 @@ if ($current_user->exists()) {
 }
 
 
-
 // Shift vars to Javascript side
 echo '<script>';
 echo 'var pluginPath="'.$pluginpath.'";';
@@ -181,7 +181,6 @@ echo 'let game_type ="'.strtolower($project_type).'";';
 echo 'let project_keys ="'.json_encode(vrodos_getProjectKeys($project_id, $project_type)).'";';
 echo 'user_email = "'.$user_email.'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
-echo 'energy_stats = '.json_encode(vrodos_windEnergy_scene_stats($current_scene_id)).';';
 echo 'var siteurl="'.site_url().'";';
 
 if ($project_type === 'Archaeology') {
@@ -196,7 +195,6 @@ if ($project_type === 'Chemistry') {
     echo "var scenesTargetChemistry=" . json_encode(vrodos_getAllexams_byGame($joker_project_id, true)) . ";";
 }
 echo '</script>';
-
 
 
 // For analytics

@@ -384,7 +384,7 @@ function vrodos_registrationhook_createAssets($user_id,$username,$game_id){
 	$newPOIvideo_ID = vrodos_create_asset_frontend($parentGame_tax_id, $poiVideo_tax_id, $game_slug);
 	$newSite_ID = vrodos_create_asset_frontend($parentGame_tax_id, $site_tax_id, $game_slug);
 
-	vrodos_registrationhook_uploadAssets_noTexture($artifactTitle,$newArtifact_ID,$game_slug,'artifact');
+	vrodos_registrationhook_uploadAssets_noTexture($artifact_text_obj['assetTitleForm'],$newArtifact_ID,$game_slug,'artifact');
 	vrodos_registrationhook_uploadAssets_noTexture($doorTitle,$newDoor_ID,$game_slug,'door');
 	vrodos_registrationhook_uploadAssets_noTexture($poiImageTitle,$newPOIimage_ID,$game_slug,'poi_image');
 	vrodos_registrationhook_uploadAssets_noTexture($poiVideoTitle,$newPOIvideo_ID,$game_slug,'poi_video');
@@ -491,90 +491,7 @@ function vrodos_get_all_Available_molecules_of_game($scene_id){
 }
 
 
-// Chemistry: Get molecule list for analytics
-function vrodos_derive_molecules_checklist(){
-    
-    $analytics_molecule_list = array('HCL','H2O','NaF','NaCl','KBr','CH4','CaCl2','CF4');
-	$analytics_molecule_checklist = array(0,0,0,0,0,0,0,0);
-	$molecules = vrodos_get_all_molecules_of_game($project_id);
-	$molecule_list = [];
-	foreach ($molecules as $molecule) {
-		array_push($molecule_list, $molecule['moleculeType']);
-	}
 
-	foreach ($analytics_molecule_list as $idx => $molecule) {
-		if (in_array( $molecule, $molecule_list)) {
-			$analytics_molecule_checklist[$idx] = 1;
-		}
-	}
-	$analytics_molecule_checklist = implode("", $analytics_molecule_checklist);
- 
-	return $analytics_molecule_checklist;
-}
-
-
-//Get All MOLECULES of specific game by given project ID
-function vrodos_get_all_molecules_of_game($project_id) {
-
-	$game_post = get_post($project_id);
-	$gameSlug = $game_post->post_name;
-	$assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
-	$assetPGameID = $assetPGame->term_id;
-
-
-	$my_posts = get_page_by_path("chemistry-joker",ARRAY_A,'vrodos_game');
-
-	$assetJokerGameId = $my_posts['ID'];
-
-	$moleculesIds = array();
-
-
-	// Define custom query parameters
-	$custom_query_args = array(
-		'post_type' => 'vrodos_asset3d',
-		'posts_per_page' => -1,
-		'tax_query' => array(
-			'relation' => 'AND',
-			array(
-				'taxonomy' => 'vrodos_asset3d_pgame',
-				'field'    => 'slug', //'term_id',
-				'terms'    => array($gameSlug, "chemistry-joker") //array($assetPGameID, $assetJokerGameId)
-			),
-			array(
-				'taxonomy' => 'vrodos_asset3d_cat',
-				'field'    => 'slug',
-				'terms'    => 'molecule',
-			),
-		),
-		'orderby' => 'ID',
-		'order' => 'DESC',
-	);
-
-	$custom_query = new WP_Query( $custom_query_args );
-
-	// Output custom query loop
-	if ( $custom_query->have_posts() ) {
-		while ($custom_query->have_posts()) {
-			$custom_query->the_post();
-
-
-
-			$molecule_id = get_the_ID();
-
-			$molecule_type = get_post_meta($molecule_id, 'vrodos_molecule_ChemicalTypeVal', true);
-			$molecule_title = get_the_title();
-			$the_featured_image_ID = $screenimgID = get_post_meta($molecule_id, 'vrodos_asset3d_screenimage', true);
-			$the_featured_image_url = wp_get_attachment_url( $the_featured_image_ID );
-
-			$moleculesIds[] = ['moleculeID'=>$molecule_id, 'moleculeName'=>$molecule_title, 'moleculeImage'=>$the_featured_image_url, 'moleculeType'=>$molecule_type  ];
-		}
-	}
-
-	wp_reset_postdata();
-	$wp_query = NULL;
-
-	return $moleculesIds;
-}
 
 //Get All DOORS of specific game (from all scenes) by given project ID (parent game ID)
 function vrodos_get_all_doors_of_project_fastversion($parent_project_id_as_term_id){
@@ -736,9 +653,6 @@ function vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id){
 
 	return $sceneIds;
 }
-
-
-
 
 
 //=============================== SEMANTICS ON 3D ============================================================
@@ -1619,7 +1533,6 @@ function vrodos_redo_scene_async_action_callback()
 
 
 
-
 // Save analytics keys
 function vrodos_save_gio_async_action_callback()
 {
@@ -1729,6 +1642,4 @@ function addMoleculePrefabToAssets($projectLocalPath, $projectName, $molecule_po
 	// Make the prefab and its meta
 	$pdbloader->makeThePrefab($molecule_post_id, $molecule_post_name, $molecule['atoms'], $molecule['verticesBonds'], $dirMolecules);
 }
-
-
 ?>
