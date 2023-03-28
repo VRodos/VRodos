@@ -1,6 +1,5 @@
 <?php
 
-
 // Create metabox with Custom Fields for Asset3D ($vrodos_databox1)
 $table_of_asset_fields = array(
 
@@ -149,17 +148,26 @@ function vrodos_assets_databox_show(){
             $valMaxUpload = intval(ini_get('upload_max_filesize'));
             $attacmentSizeMessage = $valMaxUpload < 100 ? "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br/> Add to .htaccess the following two lines <br/> php_value upload_max_filesize 256M<br>php_value post_max_size 512M" : '';
             $extension = substr($field['id'], strrpos($field['id'], "_") + 1);
+
             $showSection = 'table-row';
-
             var_dump($extension);
-
             switch ($extension) {
                 case 'mtl':
                 case 'obj':
                 case 'fbx':
                 case 'pdb':
+                case 'diffimage':
+                case 'image1':
+                case 'image2':
+                case 'image3':
+                case 'image4':
+                case 'kids':
+                case 'experts':
+                case 'perception':
                 case 'audio':
-                case 'scene':
+                case 'scene': // TODO Uncomment this to connect the scene to a next scene
+                case 'video':
+                case 'fonts':
                 case 'isreward':
                     $showSection = 'none';
                     break;
@@ -177,7 +185,6 @@ function vrodos_assets_databox_show(){
                     $attachment_url = $post_meta_id ? wp_get_attachment_url($post_meta_id) : 'No '.$field['name'];
                     $preview_id = 'vrodos_asset3d_'.$extension.'_preview';
                     $preview_content = $post_meta_id ? "3D object too big to show here" : $extension." is not defined."; // TODO SHOW CONTENTS BASED ON TYPE
-
                     switch ($extension) {
                         case 'mtl':
                         case 'obj':
@@ -190,14 +197,15 @@ function vrodos_assets_databox_show(){
                                    id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($post_meta_id ? $post_meta_id : $field['std']); ?>" size="30" style="width:65%"/>
 
                             <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
-
                             <p>Pathfile: <?php echo $attachment_url; ?></p>
-                            <p>Preview <?php echo $extension ?>: </p>
+
+                            <label for="<?php echo $preview_id ?>">Preview <?php echo $extension ?>: </label>
                             <textarea id="<?php echo $preview_id ?>" readonly style=" width:100%; height:200px;"><?php echo $preview_content ?></textarea>
                             <?php break;
 
                         case 'diffimage':
                         case 'screenimage':
+                        case 'image1':
                             ?>
                             <input type="text" name="<?php echo esc_attr($field['id']); ?> readonly"
                                    id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($post_meta_id ? $post_meta_id : $field['std']); ?>" size="30" style="width:65%"/>
@@ -207,80 +215,22 @@ function vrodos_assets_databox_show(){
                             <img id="<?php echo $preview_id ?>" style="width:50%; height:auto" src="<?php echo wp_get_attachment_url($post_meta_id); ?>" alt="<?php echo $extension ?> preview image"/>
 
                             <?php break;
-                        case 'scene':
+
+                        case 'scene': // TODO Add a mechanism to connect scene to another.
+                            break;
+                        case 'video': // TODO Add a mechanism to add a video.
+                            break;
+                        case 'fonts': // TODO Add a component to select custom fonts.
+                            break;
+                        case 'back3dcolor': // TODO Add a component to select front end asset editor background color.
                             break;
 
-                        case '':
-                    }
-                    ?>
-
-
+                    } ?>
                 </td>
             </tr>
+            <?php
+        }   ?>
 
-            <?php if ($field['id'] == 'vrodos_asset3d_image1') {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php $meta_image1_id = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta_image1_id ? $meta_image1_id : $field['std']); ?>" size="30" style="width:65%;float:left;display:<?php echo $mediahideshow; ?>;"/>
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>" style="display:<?php echo $mediahideshow; ?>;" />
-
-                        Pathfile: <?php echo wp_get_attachment_url($meta_image1_id); ?><br />
-                        <img id="vrodos_asset3d_image1_preview" style="width:50%;height:auto;display:<?php echo $mediahideshow; ?>;"
-                             src="<?php echo wp_get_attachment_url($meta_image1_id); ?>"/>
-                    </td>
-                </tr>
-                <?php
-            }elseif ($field['id'] == 'vrodos_asset3d_video') {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td>
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta ? $meta : $field['std']); ?>" size="30" style="width:65%;float:left;display:<?php echo $mediahideshow; ?>;"/>
-                        <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"  style="display:<?php echo $mediahideshow; ?>;" />
-                        <?php //TODO preview of the video ?>
-                    </td>
-                </tr>
-                <?php
-            }elseif (in_array($field['id'],[
-                'vrodos_asset3d_description_kids','vrodos_asset3d_description_experts','vrodos_asset3d_description_perception'  // English
-            ]  )) {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td id="<?php echo $field['id'] ?>" style="margin-bottom:0;">
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <textarea name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>"
-                                  value="" style="width:100%;height:auto"><?php echo esc_attr($meta ? $meta : $field['std']); ?></textarea>
-                    </td>
-                </tr>
-                <?php
-            }elseif (in_array($field['id'],['vrodos_asset3d_fonts'])) {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td id="<?php echo $field['id'] ?>" style="margin-bottom:0;">
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta ? $meta : $field['std']); ?>" size="30" style="width:65%"/>
-                    </td>
-                </tr>
-                <?php
-            }elseif (in_array($field['id'],['vrodos_asset3d_back3dcolor'])) {
-                ?>
-                <tr>
-                    <th style="width:20%"><label for="<?php echo esc_attr($field['id']); ?>"> <?php echo esc_html($field['name']); ?> </label></th>
-                    <td id="<?php echo $field['id'] ?>" style="margin-bottom:0;">
-                        <?php $meta = get_post_meta($post->ID, $field['id'], true); ?>
-                        <input type="text" name="<?php echo esc_attr($field['id']); ?>" id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($meta ? $meta : $field['std']); ?>" size="30" style="width:65%"/>
-                    </td>
-                </tr>
-                <?php
-            }
-        }
-        ?>
         </tbody>
     </table>
 
