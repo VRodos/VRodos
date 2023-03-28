@@ -5,7 +5,7 @@
  * Description: Make your wordpress website a VR site
  * Author: Dimitrios Ververidis, ververid@iti.gr
  * Author URI: https://vrodos.iti.gr
- * Version: 1.5
+ * Version: 2.0
  */
 
 
