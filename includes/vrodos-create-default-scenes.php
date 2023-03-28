@@ -545,27 +545,22 @@ function vrodos_create_virtualproduction_default_scenes($projectSlug){
 }
 
 // Main
-function vrodos_create_default_scenes_for_game($projectSlug, $projectID){
+function vrodos_create_default_scenes_for_game($projectSlug, $gameTypeId){
 
-	$project_type = get_the_terms( $projectID, 'vrodos_game_type' );
-
-	$project_type_slug  = $project_type[0]->slug;
+    $project_type = get_term($gameTypeId, 'vrodos_game_type');
+	$project_type_slug  = $project_type->slug;
 
 	switch ($project_type_slug){
-		case "archaeology_games":
-			vrodos_create_archaeology_default_scenes($projectSlug);
-			break;
-		case 'energy_games':
-			vrodos_create_energy_default_scenes($projectSlug);
-			break;
-		case 'chemistry_games':
-			vrodos_create_chemistry_default_scenes($projectSlug);
-			break;
-		case "vrexpo_games":
+
+		case 'vrexpo_games':
 			vrodos_create_vrexpo_default_scenes($projectSlug);
 			break;
 		case 'virtualproduction_games':
 			vrodos_create_virtualproduction_default_scenes($projectSlug);
 			break;
+        case 'archaeology_games':
+        default:
+            vrodos_create_archaeology_default_scenes($projectSlug);
+            break;
 	}
 }

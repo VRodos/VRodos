@@ -48,11 +48,7 @@ function vrodos_add_scene_id_to_scene_as_menu_item($item_id ) {
 				}
 				?>
 			</select>
-		
-		
-		
-		
-		
+
 		</div>
 	</div>
 	<?php
@@ -64,13 +60,11 @@ function save_menu_item_desc( $menu_id, $menu_item_db_id ) {
 	if ( isset( $_POST['scene_id'][$menu_item_db_id]  ) ) {
 		
 		$sanitized_data = sanitize_text_field( $_POST['scene_id'][$menu_item_db_id] );
-		
 		update_post_meta( $menu_item_db_id, '_scene_id', $sanitized_data );
 		
 	} else {
 		
 		delete_post_meta( $menu_item_db_id, '_scene_id' );
-		
 	}
 }
 
@@ -104,78 +98,79 @@ function vrodos_plugin_menu(){
 		plugin_dir_url( __FILE__ ) . '../images/vrodos_icon_20_w.png',
 		25);
 	
-	
 	add_submenu_page('vrodos-plugin',
 		'Projects',
 		'Projects',
 		'manage_options',
 		'edit.php?post_type=vrodos_game'
 	);
-	
+
+    add_submenu_page('vrodos-plugin',
+        'Project Types',
+        'Project Types',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_game&taxonomy=vrodos_game_type');
+
 	add_submenu_page('vrodos-plugin',
 		'Scenes',
 		'Scenes',
 		'manage_options',
 		'edit.php?post_type=vrodos_scene'
 	);
-	
-	
+
+    add_submenu_page('vrodos-plugin',
+        'Scene Types',
+        'Scene Types',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_yaml');
+
+    add_submenu_page('vrodos-plugin',
+        'Scenes Grouped by Project',
+        'Scenes Grouped by Project',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_pgame');
+
 	add_submenu_page('vrodos-plugin',
 		'Assets',
 		'Assets',
 		'manage_options',
 		'edit.php?post_type=vrodos_asset3d');
-	
-	
-	add_submenu_page('vrodos-plugin',
-		'Scene Types',
-		'Scene Types',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_yaml');
-	
-	
-	add_submenu_page('vrodos-plugin',
-		'Scenes Parent Projects',
-		'Scenes Parent Projects',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_pgame');
-	
-	
-	add_submenu_page('vrodos-plugin',
-		'Project Types',
-		'Project Types',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_game&taxonomy=vrodos_game_type');
-	
-	add_submenu_page('vrodos-plugin',
-		'Asset Types',
-		'Asset Types',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_cat');
-	
-	add_submenu_page('vrodos-plugin',
-		'Asset Projects',
-		'Asset Projects',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_pgame');
-	
-	add_submenu_page('vrodos-plugin',
-		'Asset IPR',
-		'Asset IPR',
-		'manage_options',
-		'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_ipr_cat');
-	
-}
 
+    add_submenu_page('vrodos-plugin',
+        'Asset Types',
+        'Asset Types',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_cat');
+
+    add_submenu_page('vrodos-plugin',
+        'Asset IPR Categories',
+        'Asset IPR Categories',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_ipr_cat');
+
+    add_submenu_page('vrodos-plugin',
+        'Assets Grouped by Parent Taxonomy',
+        'Assets Grouped by Parent Taxonomy',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_pgame');
+
+}
 
 function keep_taxonomy_menu_open($parent_file) {
 	global $current_screen;
 	$taxonomy = $current_screen->taxonomy;
-	if ($taxonomy == 'vrodos_scene_yaml' || $taxonomy == 'vrodos_scene_pgame' || $taxonomy == 'vrodos_game_type' ||
-	    $taxonomy == 'vrodos_asset3d_cat' || $taxonomy == 'vrodos_asset3d_cat' ||  $taxonomy == 'vrodos_asset3d_pgame' ||
-	    $taxonomy == 'vrodos_asset3d_ipr_cat'
-	)
-		$parent_file = 'vrodos-plugin';
+
+    switch ($taxonomy) {
+        case 'vrodos_scene_yaml':
+        case 'vrodos_scene_pgame':
+        case 'vrodos_game_type':
+        case 'vrodos_asset3d_cat':
+        case 'vrodos_asset3d_pgame':
+        case 'vrodos_asset3d_ipr_cat':
+        $parent_file = 'vrodos-plugin';
+            break;
+
+    }
 	return $parent_file;
 }
 

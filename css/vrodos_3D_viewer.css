@@ -10,7 +10,7 @@
 /* Three js */
 #vr_editor_main_div {
     position:fixed;
-    top:0px; /* Important */
+    top:0; /* Important */
     left:0;
     right:0;
     bottom:0;
@@ -69,7 +69,7 @@
 /* rightPanelToggleOnOff*/
 .scenesListToggleStyle {
     position:absolute;
-    bottom:0px;
+    bottom:0;
     width: 40px;
     left:0;
     z-index: 1001;
@@ -94,15 +94,10 @@
 
 
 
-
-
-
-
-
 #compileGameBtn {
     position: absolute;
     top: 5px;
-    right: 0px;
+    right: 0;
     height: 20px;
     line-height: 1.4em;
 }
@@ -177,8 +172,7 @@ canvas { pointer-events:none; z-index:10; }
 .AssetsToggleStyle {
     position:absolute;
     top:1px;
-    width: 20%;
-    left:0;
+    width: 20%;    left:0;
     top:30px;
     z-index: 999;
     cursor: pointer;
@@ -201,13 +195,13 @@ canvas { pointer-events:none; z-index:10; }
 #assetCategTab{
     margin-top:60px;
     background-color:black;
-    padding:0px;
+    padding:0;
 }
 
 
 .affineSwitch{
     width:33% !important;
-    margin-bottom:0px;
+    margin-bottom:0;
 }
 
 
@@ -275,8 +269,7 @@ canvas { pointer-events:none; z-index:10; }
 .EditorTourToggleBtn {
     width:20%;
     min-width: 20px;
-    padding:0px;
-    padding-top:3px;
+    padding: 3px 0 0;
     /*display:inline;*/
     /*position: absolute;*/
     /*right: 15%;*/
@@ -286,7 +279,7 @@ canvas { pointer-events:none; z-index:10; }
 .EditorDimensionToggleBtn {
     width:20%;
     min-width: 20px;
-    padding:0px;
+    padding:0;
     /*position: absolute;*/
     /*right: 10%;*/
     /*top: 4%;*/
@@ -349,7 +342,6 @@ canvas { pointer-events:none; z-index:10; }
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
     -webkit-transition: all 0.1s ease-in-out;
     -moz-transition:    all 0.1s ease-in-out;
-    -ms-transition:     all 0.1s ease-in-out;
     -o-transition:      all 0.1s ease-in-out;
     transition:         all 0.1s ease-in-out;
 }
@@ -366,11 +358,11 @@ canvas { pointer-events:none; z-index:10; }
 }
 
 .ObjectManipulationToggle label:first-of-type {
-    border-radius: 0px 0 0 0px;
+    border-radius: 0 0 0 0;
 }
 
 .ObjectManipulationToggle label:last-of-type {
-    border-radius: 0px 0 0 0px;
+    border-radius: 0 0 0 0;
 }
 
 /*row5 Axis size*/
@@ -398,7 +390,7 @@ canvas { pointer-events:none; z-index:10; }
 }
 
 #hierarchy-viewer{
-    padding:0px;
+    padding:0;
 
 }
 
@@ -496,7 +488,7 @@ canvas { pointer-events:none; z-index:10; }
 
 .AxisManipulationBtns a {
     min-width: 0;
-    margin: 0 0 0 0px;
+    margin: 0 0 0 0;
     height: 18px;
     vertical-align: top;
     line-height: 1.5em;
@@ -504,13 +496,10 @@ canvas { pointer-events:none; z-index:10; }
 
 
 
-
 button, html [type="button"], [type="reset"], [type="submit"] {
     -moz-appearance: none;
     -webkit-appearance: none;
 }
-
-
 
 
 /*CARD STYLING*/
@@ -648,7 +637,6 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     display: block;
     text-align: center;
     vertical-align: middle;
-    height: 100%;
 }
 
 
@@ -700,7 +688,7 @@ button, html [type="button"], [type="reset"], [type="submit"] {
 .custom-header { display:none; }
 .main-navigation a { padding: 0.2em 1em; font-size:9pt !important;}
 .site-branding {display:none;}
-#content {padding:0px;}
+#content {padding:0;}
 
 
 #vr_editor_right_panel_title{
@@ -748,8 +736,8 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     display:block;
     float:left;
     width:15%;
-    margin-left:0px;
-    padding:0px;
+    margin-left:0;
+    padding:0;
     border: none;
     font-size:14px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
@@ -814,18 +802,15 @@ button, html [type="button"], [type="reset"], [type="submit"] {
     z-index: 10000;
     position:absolute;
     margin-left:45px;
-    margin-top:0px;
+    margin-top:0;
     list-style: none;
 }
 
 .menu-3d-class ul{
     list-style: none;
     margin-left:15px;
-    margin-top:0px;
-    border-top-left-radius: 15px;
-    border-bottom-left-radius: 15px;
-    border-top-right-radius: 15px;
-    border-bottom-right-radius: 15px;
+    margin-top:0;
+    border-radius: 15px;
     overflow: hidden;
     padding: 15px;
     border: 2px solid #21A0AD;

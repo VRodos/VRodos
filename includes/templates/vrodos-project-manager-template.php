@@ -15,7 +15,7 @@ $pluginpath = str_replace('\\','/',$pluginpath);
 $thepath = $pluginpath . '/js_libs/ajaxes/delete_game_scene_asset.js';
 wp_enqueue_script( 'ajax-script_delete_game', $thepath, array('jquery') );
 wp_localize_script( 'ajax-script_delete_game', 'my_ajax_object_deletegame',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php'))
+    array( 'ajax_url' => admin_url( 'admin-ajax.php'))
 );
 
 // Define Ajax for the delete Game functionality
@@ -37,9 +37,9 @@ $isAdmin = is_admin() ? 'back' : 'front';
 $current_user_id = get_current_user_id();
 
 echo '<script>';
-    echo 'isAdmin="'.$isAdmin.'";'; // This variable is used in the request_game_assemble.js
-    echo 'current_user_id="'.$current_user_id.'";';
-    echo 'parameter_Scenepass="'.$parameter_Scenepass.'";';
+echo 'isAdmin="'.$isAdmin.'";'; // This variable is used in the request_game_assemble.js
+echo 'current_user_id="'.$current_user_id.'";';
+echo 'parameter_Scenepass="'.$parameter_Scenepass.'";';
 echo '</script>';
 
 $full_title = "Projects";
@@ -69,13 +69,9 @@ get_header();
 
 <span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-left:10px;margin-top:20px"><?php echo $full_title; ?> Manager</span>
 
-<!--<p class="mdc-typography--subheading1 mdc-theme--text-secondary-on-light"> Not sure what to do?-->
-<!--    <a target="_blank" href="--><?php //echo plugin_dir_url( __DIR__ ); ?><!--files/usage-scenario.pdf" class="mdc-button mdc-button--primary" data-mdc-auto-init="MDCRipple">Read the Usage Scenario</a>-->
-<!--</p>-->
-
 <!-- if user not logged in then show a hint to login -->
 <?php if ( !is_user_logged_in() ) {
-	$pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
+    $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
     ?>
 
     <div class="DisplayBlock CenterContents">
@@ -85,31 +81,28 @@ get_header();
         <br />
         <i style="font-size: 64px; padding-top: 10px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
         <p class="mdc-typography--title"> Please <a class="mdc-theme--secondary" href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform
-         Or <a class="mdc-theme--secondary" href="<?php echo wp_registration_url(); ?>">register</a> if you don't have an account</p>
+            Or <a class="mdc-theme--secondary" href="<?php echo wp_registration_url(); ?>">register</a> if you don't have an account</p>
     </div>
 
     <hr class="WhiteSpaceSeparator">
 
 <?php } else {
-    
-    $current_user = wp_get_current_user();
-    $login_username = $current_user->user_login;
-    
-    ?>
 
-    <!-- HELP button -->
-    <a href="#" class="helpButton" onclick="alert('Create a new <?php echo $full_title_lowercase; ?> or edit an existing one')">
-        ?
-    </a>
-    <p >
-    
-    <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="float:right; right:0px; display:inline-table;margin-top:10px; margin-right:10px;">Welcome,
+$current_user = wp_get_current_user();
+$login_username = $current_user->user_login;
+
+?>
+
+<!-- HELP button -->
+<br/>
+    <i class="mdc-typography--subheading2 mdc-theme--text-primary-on-light"> Create a new <?php echo $single; ?> or edit an existing one</i>
+
+    <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="float:right; right:0; display:inline-table;margin-top:10px; margin-right:10px;">Welcome,
         <a href="<?php echo get_site_url() ?>/account/" style="color:dodgerblue">
               <?php
               echo $current_user->display_name;?>
         </a>
     </span>
-
 
 
 <div class="mdc-layout-grid FrontPageStyle">
@@ -118,9 +111,9 @@ get_header();
             <span>
             <span class="mdc-typography--title mdc-theme--text-primary-on-background">Existing <?php echo $multiple; ?></span>
             <?php
-                echo '<a href="'.get_site_url().'/vrodos-assets-list-page/" class="" style="float:right" data-mdc-auto-init="MDCRipple" title="View or add shared assets">';
-                echo '<span id="shared-assets-button" class="mdc-button" >All Assets</span>';
-                echo '</a>';
+            echo '<a href="'.get_site_url().'/vrodos-assets-list-page/" class="" style="float:right" data-mdc-auto-init="MDCRipple" title="View or add shared assets">';
+            echo '<span id="shared-assets-button" class="mdc-button" >All Assets</span>';
+            echo '</a>';
             ?>
             </span>
             <hr class="mdc-list-divider" style="width:100%; float:right">
@@ -151,26 +144,26 @@ get_header();
                         <ul class="RadioButtonList" onclick="loadProjectTypeDescription();">
                             <!-- Virtual Tour -->
                             <?php if ($project_scope===0){?>
-                            <li class="mdc-form-field">
-                                <div class="mdc-radio">
-                                    <input class="mdc-radio__native-control" type="radio" id="gameTypeArchRadio"
-                                           checked="" name="projectTypeRadio" value="1">
-                                    <div class="mdc-radio__background">
-                                        <div class="mdc-radio__outer-circle"></div>
-                                        <div class="mdc-radio__inner-circle"></div>
+                                <li class="mdc-form-field">
+                                    <div class="mdc-radio">
+                                        <input class="mdc-radio__native-control" type="radio" id="gameTypeArchRadio"
+                                               checked="" name="projectTypeRadio" value="1">
+                                        <div class="mdc-radio__background">
+                                            <div class="mdc-radio__outer-circle"></div>
+                                            <div class="mdc-radio__inner-circle"></div>
+                                        </div>
                                     </div>
-                                </div>
-                                <label id="gameTypeArchRadio-label" for="gameTypeArchRadio">
-                                    <i class="material-icons">
-		                                <?php echo vrodos_project_type_icon('archaeology') ?>
-                                    </i>
-                                    <span style="vertical-align: super">Virtual Tour</span>
-                                </label>
-                            </li>
+                                    <label id="gameTypeArchRadio-label" for="gameTypeArchRadio">
+                                        <i class="material-icons">
+                                            <?php echo vrodos_project_type_icon('archaeology') ?>
+                                        </i>
+                                        <span style="vertical-align: super">Virtual Tour</span>
+                                    </label>
+                                </li>
                             <?php }?>
-	
+
                             <!-- Virtual Labs -->
-	                        <?php if ($project_scope===1){?>
+                            <?php if ($project_scope===1){?>
                                 <li class="mdc-form-field">
                                     <div class="mdc-radio">
                                         <input class="mdc-radio__native-control" type="radio" id="gameTypeChemistryRadio"
@@ -182,7 +175,7 @@ get_header();
                                     </div>
                                     <label id="gameTypeChemistryRadio-label" for="gameTypeChemistryRadio">
                                         <i class="material-icons">
-		                                    <?php echo vrodos_project_type_icon('Chemistry') ?>
+                                            <?php echo vrodos_project_type_icon('Chemistry') ?>
                                         </i>
                                         <span style="vertical-align: super">Chemistry</span>
                                     </label>
@@ -204,10 +197,10 @@ get_header();
                                         <span style="vertical-align: super">Energy</span>
                                     </label>
                                 </li>
-	                        <?php }?>
-                         
-	                        <!-- VR Expo -->
-	                        <?php if ($project_scope===2){?>
+                            <?php }?>
+
+                            <!-- VR Expo -->
+                            <?php if ($project_scope===2){?>
                                 <li class="mdc-form-field">
                                     <div class="mdc-radio">
                                         <input class="mdc-radio__native-control" type="radio" id="gameTypeVRExpoRadio"
@@ -224,10 +217,10 @@ get_header();
                                         <span style="vertical-align: super">VR Expo</span>
                                     </label>
                                 </li>
-	                        <?php }?>
-	
+                            <?php }?>
+
                             <!-- Virtual Production -->
-	                        <?php if ($project_scope===3){?>
+                            <?php if ($project_scope===3){?>
                                 <li class="mdc-form-field">
                                     <div class="mdc-radio">
                                         <input class="mdc-radio__native-control" type="radio" id="gameTypeVirtualProductionRadio"
@@ -239,29 +232,29 @@ get_header();
                                     </div>
                                     <label id="gameTypeVirtualProductionRadio-label" for="gameTypeVirtualProductionRadio">
                                         <i class="material-icons">
-		                                    <?php echo vrodos_project_type_icon('virtualproduction') ?>
+                                            <?php echo vrodos_project_type_icon('virtualproduction') ?>
                                         </i>
                                         <span style="vertical-align: super">Virtual Production</span>
                                     </label>
                                 </li>
-	                        <?php }?>
+                            <?php }?>
                         </ul>
 
                         <!-- Description for project : Initialized with Javascript in below -->
                         <span id="project-description-label"
-                                      class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">
+                              class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">
                         </span>
 
                         <hr class="WhiteSpaceSeparator">
 
                         <!-- Create project button -->
                         <?php wp_nonce_field('post_nonce', 'post_nonce_field'); ?>
-                        
-                            <input type="hidden" name="submitted" id="submitted" value="true" />
+
+                        <input type="hidden" name="submitted" id="submitted" value="true" />
                         <button id="createNewProjectBtn"  type="button"
                                 class="ButtonFullWidth mdc-button mdc-elevation--z2 mdc-button--raised"
-                                    data-mdc-auto-init="MDCRipple">CREATE</button>
-                            
+                                data-mdc-auto-init="MDCRipple">CREATE</button>
+
                         <section id="create-game-progress-bar" class="CenterContents" style="display: none;">
                             <h3 class="mdc-typography--title">Creating <?php echo $single; ?>...</h3>
 
@@ -276,26 +269,26 @@ get_header();
                 </div>
             </div>
         </div>
-<!--        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-1"></div>-->
+        <!--        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-1"></div>-->
 
-		<?php } ?>
+        <?php } ?>
 
-        
+
         <!--Delete Project Dialog-->
         <aside id="delete-dialog"
                class="mdc-dialog"
                role="alertdialog"
                aria-labelledby="Delete project dialog"
                aria-describedby="Delete project dialog" data-mdc-auto-init="MDCDialog">
-               
+
             <div class="mdc-dialog__surface">
-            
+
                 <header class="mdc-dialog__header">
                     <h2 id="delete-dialog-title" class="mdc-dialog__header__title">
                         Delete project?
                     </h2>
                 </header>
-            
+
                 <section id="delete-dialog-description" class="mdc-dialog__body mdc-typography--body1">
                     Are you sure you want to delete your <?php echo $full_title_lowercase; ?>? There is no Undo functionality once you delete it.
                 </section>
@@ -330,7 +323,7 @@ get_header();
                         Collaborators on project
                     </h2>
                 </header>
-                
+
                 <section id="collaborate-dialog-description" class="mdc-dialog__body mdc-typography--body1">
                     Current collaborators for <?php echo $full_title_lowercase; ?>?
                 </section>
@@ -347,15 +340,15 @@ get_header();
                     </div>
                 </div>
 
-<!--                <section id="delete-dialog-progress-bar" class="CenterContents mdc-dialog__body" style="display: none;">-->
-<!--                    <h3 class="mdc-typography--title">Deleting...</h3>-->
-<!---->
-<!--                    <div class="progressSlider">-->
-<!--                        <div class="progressSliderLine"></div>-->
-<!--                        <div class="progressSliderSubLine progressIncrease"></div>-->
-<!--                        <div class="progressSliderSubLine progressDecrease"></div>-->
-<!--                    </div>-->
-<!--                </section>-->
+                <!--                <section id="delete-dialog-progress-bar" class="CenterContents mdc-dialog__body" style="display: none;">-->
+                <!--                    <h3 class="mdc-typography--title">Deleting...</h3>-->
+                <!---->
+                <!--                    <div class="progressSlider">-->
+                <!--                        <div class="progressSliderLine"></div>-->
+                <!--                        <div class="progressSliderSubLine progressIncrease"></div>-->
+                <!--                        <div class="progressSliderSubLine progressDecrease"></div>-->
+                <!--                    </div>-->
+                <!--                </section>-->
 
                 <footer class="mdc-dialog__footer">
                     <a class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" id="cancelCollabsBtn">Cancel</a>
@@ -364,7 +357,7 @@ get_header();
             </div>
             <div class="mdc-dialog__backdrop"></div>
         </aside>
-        
+
     </div>
 </div>
 
@@ -373,7 +366,7 @@ get_header();
     window.mdc.autoInit();
 
     fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass);
-    
+
     // Delete Dialogue
     var dialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
     dialog.focusTrap_.deactivate();
@@ -381,10 +374,10 @@ get_header();
     // Collaborators Dialogue
     var dialogCollaborators = new mdc.dialog.MDCDialog(document.querySelector('#collaborate-dialog'));
     dialogCollaborators.focusTrap_.deactivate();
-    
+
     // Descriptions for each Project
     function loadProjectTypeDescription() {
-        
+
         var checked = parseInt(jQuery( ":checked" ).val(), 10);
 
         if (checked === 1) {
@@ -407,16 +400,16 @@ get_header();
         var title_vrodos_project = document.getElementById('title').value;
         if (title_vrodos_project.length > 2) {
             var project_type = document.getElementsByName("projectTypeRadio")[0].value;
-            
+
             // CREATE THE PROJECT !
             vrodos_createProjectAjax(title_vrodos_project, project_type, current_user_id, parameter_Scenepass);
-            
+
             jQuery('#createNewProjectBtn').hide();
             jQuery('#create-game-progress-bar').show();
         }
     });
 
-    
+
 
     function deleteProject(id) {
         var dialogTitle = document.getElementById("delete-dialog-title");
@@ -431,23 +424,23 @@ get_header();
         dialog.show();
     }
 
-    
+
     jQuery('#deleteProjectBtn').click( function (e) {
-        
+
         jQuery('#delete-dialog-progress-bar').show();
-        
+
         // Disable buttons
         jQuery( "#deleteProjectBtn" ).addClass( "LinkDisabled" );
-        
+
         jQuery( "#canceldeleteProjectBtn" ).addClass( "LinkDisabled" );
-        
+
         //console.log("ID:", dialog.id);
         vrodos_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
 
         // Enable buttons after 3 secs
         setTimeout(function(){
-            jQuery( "#deleteProjectBtn" ).removeClass( "LinkDisabled" );
-            jQuery( "#canceldeleteProjectBtn" ).removeClass( "LinkDisabled" );
+                jQuery( "#deleteProjectBtn" ).removeClass( "LinkDisabled" );
+                jQuery( "#canceldeleteProjectBtn" ).removeClass( "LinkDisabled" );
             },
             3000);
     });
@@ -465,15 +458,15 @@ get_header();
         var projectTitle = document.getElementById(project_id+"-title").innerHTML;
         projectTitle = projectTitle.substring(0, projectTitle.indexOf('<'));
         projectTitle = projectTitle.trim();
-        
+
         dialogTitle.innerHTML = "<b>Collaborators on " + projectTitle+"?</b>";
-        
+
         dialogDescription.innerHTML = "Make your selection for  '" +projectTitle + "'. For example 'mail1@gmail.com'";
 
         dialogCollaborators.project_id = project_id;
 
         //jQuery('.chips-initial').material_chip({data: [], placeholder: 'Your collaborator email'});
-        
+
         // Fetch collaborators and insert to "textarea-collaborators"
         vrodos_fetchCollabsAjax(project_id);
     }
@@ -491,11 +484,11 @@ get_header();
         currCollabsEmails = currCollabsEmails.map(function(elem){return elem.tag}).join(";");
 
         console.log("currCollabsEmails2", currCollabsEmails);
-        
+
         // 2. Update ids of collaborators ;15;5;4;
         vrodos_updateCollabsAjax(dialogCollaborators.project_id, dialogCollaborators, currCollabsEmails);
     });
-    
+
     jQuery('#cancelCollabsBtn').click( function (e) {
         dialogCollaborators.close();
     });

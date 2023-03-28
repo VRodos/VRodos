@@ -167,16 +167,18 @@ function updateColorPicker(picker, asset_viewer_3d_kernel_local){
     asset_viewer_3d_kernel_local.scene.background.b = picker.rgb[2]/255;
 
     // Change top border line color for portrait mode
-    document.getElementById('text-asset-sidebar').style.borderTop="5px solid " +
-        rgbToHex(picker.rgb[0]-40, picker.rgb[1]-40, picker.rgb[2]-40) ;
+    /*document.getElementById('text-asset-sidebar').style.borderTop="5px solid " +
+        rgbToHex(picker.rgb[0]-40, picker.rgb[1]-40, picker.rgb[2]-40) ;*/
 
     asset_viewer_3d_kernel_local.render();
 }
 
 function rgbToHex(r, g, b) {
-    if(r<0){r=0;}
-    if(g<0){g=0;}
-    if (b<0){b=0};
+
+    /*If values are negative make them zero*/
+    r = Math.max(r, 0);
+    g = Math.max(g, 0);
+    b = Math.max(b, 0);
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
@@ -189,8 +191,8 @@ function applyFont(font) {
     // Split font into family and weight
     font = font.split(':');
 
-    var fontFamily = font[0];
-    var fontWeight = font[1] || 400;
+    let fontFamily = font[0];
+    let fontWeight = font[1] || 400;
 
     // Set selected font on paragraphs
     jQuery('.changablefont').css({fontFamily:"'"+fontFamily+"'", fontWeight:fontWeight});
@@ -256,16 +258,14 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
         document.getElementById("sshotPreviewImg").src = canvas.toDataURL("image/png");
 
         //------------ Resize ---------------------------------------
-        var resizedCanvas = document.createElement("canvas");
-        var resizedContext = resizedCanvas.getContext("2d");
-        var context = canvas.getContext("2d");
+        let resizedCanvas = document.createElement("canvas");
+        let resizedContext = resizedCanvas.getContext("2d");
+        let context = canvas.getContext("2d");
         resizedCanvas.height = "150";
         resizedCanvas.width = "265";
         resizedContext.drawImage(canvas, 0, 0, resizedCanvas.width, resizedCanvas.height);
-        var myResizedData = resizedCanvas.toDataURL();
-        //-----------------------------------------------------------
 
-        document.getElementById("sshotFileInput").value = myResizedData;
+        document.getElementById("sshotFileInput").value = resizedCanvas.toDataURL();
     });
 }
 
@@ -273,8 +273,8 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
 
 function loadFileInputLabel(objectType) {
 
-    var inputLabel = document.getElementById('fileUploadInputLabel');
-    var input = document.getElementById('fileUploadInput');
+    let inputLabel = document.getElementById('fileUploadInputLabel');
+    let input = document.getElementById('fileUploadInput');
 
     if (inputLabel)
         if (objectType === 'pdb') {

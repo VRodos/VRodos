@@ -52,7 +52,7 @@
 }
 
 .table_stuff table th,
-table td {
+.table_stuff table td {
     color: white;
     padding: .625em;
     text-align: center;
@@ -120,5 +120,4 @@ table td {
 .table_stuff body {
     font-family: "Open Sans", sans-serif;
     line-height: 1.25;
-
 }

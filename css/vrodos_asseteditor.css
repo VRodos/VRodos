@@ -20,11 +20,9 @@
 
 #previewCanvasLabels {height:100%; width:100%; position: absolute}
 
-#sshotFileInputContainer{width:100%; padding:5px;}
+#assetback3dcolordiv{border: 0 solid rgba(0, 0, 0, 0.3);width:100%; margin-top:0;}
 
-#assetback3dcolordiv{border: 0px solid rgba(0, 0, 0, 0.3);width:100%; margin-top:0px;}
-
-#assetTitle {border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0; font-size:24px; padding: 0em;}
+#assetTitle {border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0; font-size:24px; padding: 0;}
 
 #assetback3dcolor {box-shadow: none; display:none;}
 
@@ -54,13 +52,16 @@
 .whiteSpaceSeparatorAssetEditor {
     margin-top:30px;
     margin-bottom: 30px;
-    border:0px;
+    border:0;
     color:white;
     display:table;
 }
 
 #jscolorpick {
-    width:40%;margin-left:60%;
+    display: block;
+    padding: 6px 0 6px 0;
+    margin: 42px 16px 0 16px;
+    width: 30%;
 }
 
 #assetFontsLabel{
@@ -138,7 +139,7 @@
     margin-top:30px;
     color: dimgray;
     white-space:pre-line;
-    text-shadow: 1px #0bb697;
+    text-shadow: 1px 1px #0bb697;
 }
 
 #plustext{
@@ -179,7 +180,6 @@
 #category-ipr-select{
     min-width: 100%;
 }
-
 
 #categoryIPRDescription{
     "font-style: italic;"
@@ -244,25 +244,21 @@ a.boundingSphereButton{
     position:absolute;
     left:10px;
     bottom:0;
+    padding: 8px;
     z-index: 10000;
-    /*padding:0.35em 1.2em;*/
-    /*border:0.1em solid white;*/
-    /*margin:0 0.3em 0.3em 0;*/
-    /*border-radius:0.12em;*/
     box-sizing: border-box;
     text-decoration:none;
     font-family:'Roboto',sans-serif;
-    font-weight:200;
-    color:#FFFFFF;
+    font-weight: 300;
+    color: #000000;
+    background-color: #FFFFFF;
     text-align:center;
     transition: all 0.2s;
-    /*transform: translate(-50%, -50%);*/
-    display:inline-block;
 }
 
 .boundingSphereButton:hover{
-    color:#000000;
-    background-color:#FFFFFF;
+    color: #FFFFFF;
+    background-color: #000000;
 }
 @media all and (max-width:30em){
     a.boundingSphereButton{
@@ -296,11 +292,8 @@ a.boundingSphereButton{
 
 .qrcode_img{
     width: 128px;
-    margin-left: auto;
-    margin-right: auto;
     text-align: center;
-    margin-top: 15px;
-    margin-bottom: 10px;
+    margin: 15px auto 10px;
 }
 
 .qrcode_button {
@@ -308,9 +301,7 @@ a.boundingSphereButton{
     right:0;
     position:absolute;
     z-index:15;
-    padding:0;
-    padding-left:3px;
-    padding-right:5px;
+    padding: 0 5px 0 3px;
     margin-bottom:5px;
     font-family: Arial, sans-serif;
 }

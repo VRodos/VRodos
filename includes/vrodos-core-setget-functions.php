@@ -3,16 +3,19 @@
 function vrodos_getDefaultJSONscene($mygameType){
 	
 	$p = plugin_dir_path( __DIR__ );
-	
-	if($mygameType == 'archaeology') {
-		$def_json = file_get_contents($p . "/assets/standard_scene.json");
-	}else if($mygameType == 'energy') {
-		$def_json = file_get_contents($p . "/assets/standard_scene_energy.json");
-	}elseif($mygameType == 'chemistry'){
-		$def_json = file_get_contents($p . "/assets/standard_scene_chemistry.json");
-	} else {
-		$def_json = file_get_contents($p . "/assets/standard_scene.json");
-	}
+
+    switch ($mygameType) {
+        case 'energy':
+            $def_json = file_get_contents($p . "/assets/standard_scene_energy.json");
+            break;
+        case 'chemistry':
+            $def_json = file_get_contents($p . "/assets/standard_scene_chemistry.json");
+            break;
+        case 'archaeology':
+        default:
+        $def_json = file_get_contents($p . "/assets/standard_scene.json");
+            break;
+    }
 
 	return $def_json;
 }
@@ -341,12 +344,9 @@ function get_assets($games_slugs){
 
             $image1id = get_post_meta($asset_id, 'vrodos_asset3d_image1', true);
 
-            
             $categoryAsset = wp_get_post_terms($asset_id, 'vrodos_asset3d_cat');
 
-            
-            
-            $categIcon = get_term_meta($categoryAsset[0]->term_id, 'vrodos_assetcat_icon');
+            $categIcon = $categoryAsset ? get_term_meta($categoryAsset[0]->term_id, 'vrodos_assetcat_icon') : 'delete';
 
             $isCloned = get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true);
             $isJoker = get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true);
@@ -361,10 +361,10 @@ function get_assets($games_slugs){
                 'assetName'=>$asset_name,
                 'assetSlug'=>get_post()->post_name,
                 'assetid'=>$asset_id,
-                'categoryName'=>$categoryAsset[0]->name,
-                'categoryDescription'=>$categoryAsset[0]->description,
+                'categoryName'=> $categoryAsset ? $categoryAsset[0]->name : 'undefined',
+                'categoryDescription'=>$categoryAsset ? $categoryAsset[0]->description : 'undefined',
                 'categoryIcon'=>$categIcon,
-                'categoryID'=>$categoryAsset[0]->term_id,
+                'categoryID'=>$categoryAsset ? $categoryAsset[0]->term_id: 'undefined',
                 'objID'=>$objID,
                 'objPath'=>$objPath,
                 'mtlID'=>$mtlID,
@@ -799,8 +799,11 @@ function get_3D_model_files($assetpostMeta, $asset_id){
 		$textures_fbx_string_connected = trim($textures_fbx_string_connected, "|");
 		
 		$fbxpost = get_post($assetpostMeta['vrodos_asset3d_fbx'][0]);
-		$fbx_file_name = basename($fbxpost->guid);
-		$path_url = pathinfo($fbxpost->guid)['dirname'];
+
+		if ($fbxpost) {
+            $fbx_file_name = basename($fbxpost->guid);
+            $path_url = pathinfo($fbxpost->guid)['dirname'];
+        }
 	}
 	
 	

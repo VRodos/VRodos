@@ -1,4 +1,4 @@
-input#title.mdc-textfield__input,
+/*input#title.mdc-textfield__input,
 input, textarea,
 input[type="text"],
 input[type="text"].mdc-textfield__input,
@@ -17,7 +17,7 @@ border-radius: 0; !important
 border: 0; !important
 background: transparent; !important
 border-color: transparent; !important
-}
+}*/
 
 textarea.mdc-textfield__input {
     resize: none;
@@ -828,7 +828,7 @@ video {
 }
 
 .assets-list-front {
-    width:60%;
+    /*width:60%;*/
     float:left;
     padding-top:5px;
     padding-left:5px;
@@ -905,8 +905,6 @@ video {
 
     background-color: #fff !important;
 }
-
-
 
 
 
@@ -1365,39 +1363,37 @@ video {
 
 .asset_editor_textpanel{
     background:#ffffff;
-    padding:15px;
-    padding-top:0px;
-
-    border:0px;
-
-    z-index:1000;
+    padding: 0 2px 15px 15px;
+    border:0;
+    z-index: 1000;
     overflow-y:auto;
 }
 
 .asset_editor_3dpanel{
     position: fixed;
-    top:0;
-    right:0;
-    z-index:1
+    top: 0;
+    right: 0;
+    z-index: 1;
 }
 
 @media only screen and (orientation: landscape) {
     .asset_editor_textpanel{
         height: 100% !important;
-        width:40%;
+        width: 40%;
+        border: 0;
     }
 
     .asset_editor_3dpanel{
-        width:60%;
-        height:100%;
+        width: 59%;
+        height: 100%;
      }
 }
 
 @media only screen and (orientation: portrait) {
     .asset_editor_textpanel{
+        border: 0;
         height: 40%;
-        width:100%;
-        border-top: 5px solid;
+        width: 100%;
         position:fixed;
         bottom:0;
     }
@@ -1409,21 +1405,12 @@ video {
     }
 }
 
-
-
-
-
-
 .centerMessageAssetSubmit {
     position: absolute;
     top: 50%;
     left: 50%;
     margin-right: -50%;
     transform: translate(-50%, -50%);
-}
-
-#informationPanel {
-    padding-top:15px;
 }
 
 .assetDescSt {border: 1px solid rgba(0, 0, 0, 0.3);width:100%;}

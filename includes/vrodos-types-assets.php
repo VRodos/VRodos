@@ -2,7 +2,7 @@
 
 // Create Asset3D as custom type 'vrodos_asset3d'
 function vrodos_assets_construct(){
-    
+
     $labels = array(
         'name' => _x('Assets 3D', 'post type general name'),
         'singular_name' => _x('Asset 3D', 'post type singular name'),
@@ -22,16 +22,16 @@ function vrodos_assets_construct(){
         'not_found' => __('No Assets 3D found.'),
         'not_found_in_trash' => __('No Assets 3D found in Trash.')
     );
-    
+
     $args = array(
-         'labels' => $labels,
+        'labels' => $labels,
         'description' => 'Displays Assets 3D',
         'public' => true,
         'exclude_from_search' => true,
         'publicly_queryable' => false,
         'show_in_nav_menus' => false,
-         'show_ui'               => true, // (bool) Whether to generate and allow a UI for managing this post type in the admin. Default is value of $public.
-         'show_in_menu'          => false, // Where to show the post type in the admin menu. To work, $show_ui must be true. If true, the post type is shown in its own top level menu. If false, no menu is shown. If a string of an existing top level menu ('tools.php' or 'edit.php?post_type=page', for example), the post type will be placed as a sub-menu of that. Default is value of $show_ui.
+        'show_ui'               => true, // (bool) Whether to generate and allow a UI for managing this post type in the admin. Default is value of $public.
+        'show_in_menu'          => false, // Where to show the post type in the admin menu. To work, $show_ui must be true. If true, the post type is shown in its own top level menu. If false, no menu is shown. If a string of an existing top level menu ('tools.php' or 'edit.php?post_type=page', for example), the post type will be placed as a sub-menu of that. Default is value of $show_ui.
         'menu_position' => 25,
         'menu_icon' => 'dashicons-editor-textcolor',
         'taxonomies' => array('vrodos_asset3d_cat', 'vrodos_asset3d_pgame', 'vrodos_asset3d_ipr_cat'),
@@ -59,7 +59,7 @@ function vrodos_assets_construct(){
 
 // Create custom taxonomy "Asset Type"
 function vrodos_assets_taxcategory(){
-    
+
     $labels = array(
         'name' => _x('Asset Type', 'taxonomy general name'),
         'singular_name' => _x('Asset Type', 'taxonomy singular name'),
@@ -73,7 +73,7 @@ function vrodos_assets_taxcategory(){
         'add_new_item' => __('Add New Asset Type'),
         'new_item_name' => __('New Asset Type')
     );
-    
+
     $args = array(
         'description' => 'Type of 3D asset',
         'labels' => $labels,
@@ -96,23 +96,23 @@ function vrodos_assets_taxcategory(){
 
 // Create Asset Project as custom taxonomy
 function vrodos_assets_taxpgame(){
-    
+
     $labels = array(
-        'name' => _x('Asset Project', 'taxonomy general name'),
-        'singular_name' => _x('Asset Project', 'taxonomy singular name'),
-        'menu_name' => _x('Assets Projects', 'admin menu'),
-        'search_items' => __('Search Assets Projects'),
-        'all_items' => __('All Assets Projects'),
-        'parent_item' => __('Asset Project'),
-        'parent_item_colon' => __('Parent Asset Project:'),
-        'edit_item' => __('Edit Asset Project'),
-        'update_item' => __('Update Asset Project'),
-        'add_new_item' => __('Add New Asset Project'),
-        'new_item_name' => __('New Asset Project')
+        'name' => _x('Asset Parent Taxonomy - WARNING: New Taxonomy is not a new Project!', 'taxonomy general name'),
+        'singular_name' => _x('Parent Taxonomy', 'taxonomy singular name'),
+        'menu_name' => _x('Parent Taxonomies', 'admin menu'),
+        'search_items' => __('Search Parent Taxonomies'),
+        'all_items' => __('All Asset Parent Taxonomies'),
+        'parent_item' => __('Asset Parent Taxonomy'),
+        'parent_item_colon' => __('Asset Parent Taxonomy:'),
+        'edit_item' => __('Edit Parent Taxonomy'),
+        'update_item' => __('Update Parent Taxonomy'),
+        'add_new_item' => __('Add New Parent Taxonomy'),
+        'new_item_name' => __('New Parent Taxonomy')
     );
-    
+
     $args = array(
-        'description' => 'Project assignment of Asset 3D',
+        'description' => 'Parent Taxonomy assignment of a 3D Asset',
         'labels' => $labels,
         'public' => false,
         'show_ui' => true,
@@ -135,8 +135,8 @@ function vrodos_assets_taxcategory_ipr(){
         'name' => _x('Asset IPR', 'taxonomy general name'),
         'singular_name' => _x('Asset IPR', 'taxonomy singular name'),
         'menu_name' => _x('Asset IPR', 'admin menu'),
-        'search_items' => __('Search Asset bu IPR'),
-        'all_items' => __('All Asset IPR'),
+        'search_items' => __('Search Asset by IPR'),
+        'all_items' => __('All Asset IPRs'),
         'parent_item' => __('Parent Asset IPR'),
         'parent_item_colon' => __('Parent Asset IPR:'),
         'edit_item' => __('Edit Asset IPR'),
@@ -162,24 +162,23 @@ function vrodos_assets_taxcategory_ipr(){
 }
 
 
+// Create PathData for each asset as custom field in order to upload files at pathdata/models folder
+function vrodos_create_pathdata_asset( $post_ID, $post, $update ) {
 
+    if (get_post_type($post_ID) === 'vrodos_asset3d' ) {
 
-//Create PathData for each asset as custom field in order to upload files at pathdata/Models folder
-function vrodos_create_pathdata_asset( $post_id ){
-    
-    if (get_post_type($post_id) === 'vrodos_asset3d') {
-        
-        $parentGameID = $_GET['vrodos_game'];
-        
+        $parentGameID = $_GET['vrodos_game'] ?? null;
+
         if (!is_numeric($parentGameID)) {
-            echo "ERROR 455: ParentGameID is not numeric.";
+          /*  echo "ERROR 455: ParentGameID is not numeric.";
+            echo '<br>';*/
             return;
         }
-        
-        $parentGameID = intval($parentGameID, 10);
-        $parentGameSlug = ( $parentGameID > 0 ) ? get_post( $parentGameID)->post_name : NULL;
-        
-        update_post_meta($post_id,'vrodos_asset3d_pathData', $parentGameSlug);
+
+        $parentGameID = intval($parentGameID);
+        $parentGameSlug = ( $parentGameID > 0 ) ? get_post( $parentGameID )->post_name : NULL;
+
+        update_post_meta($post_ID,'vrodos_asset3d_pathData', $parentGameSlug);
     }
 }
 
@@ -189,17 +188,17 @@ function vrodos_allowAuthorEditing()
 }
 
 function change_user_dropdown( $query_args, $r ){
-    
+
     // get screen object
     $screen = get_current_screen();
-    
+
     // list users whose role is e.g. 'Editor' for 'post' post type
     if( $screen->post_type == 'vrodos_asset3d' ) {
-    
+
         if (isset($query_args['who'])) {
             unset($query_args['who']);
         }
-    
+
         $query_args['role__in'] = array('administrator', 'project_master');
     }
 
@@ -211,57 +210,54 @@ function change_user_dropdown( $query_args, $r ){
 
 // Remove standard boxes and add custom in the admin back-end
 function vrodos_assets_taxcategory_box() {
-    
+
     remove_meta_box( 'tagsdiv-vrodos_asset3d_pgame', 'vrodos_asset3d', 'side' );
     remove_meta_box( 'tagsdiv-vrodos_asset3d_cat', 'vrodos_asset3d', 'side' );
     remove_meta_box( 'tagsdiv-vrodos_asset3d_ipr_cat', 'vrodos_asset3d', 'side' );
-    
+
     add_meta_box( 'vrodos_asset_project_selectbox','Project', 'vrodos_assets_tax_select_project_box_content', 'vrodos_asset3d', 'side' , 'high');
-    
+
     add_meta_box( 'vrodos_asset3d_category_selectbox','Asset Category', 'vrodos_assets_tax_select_category_box_content', 'vrodos_asset3d', 'side' , 'high');
-    
+
     add_meta_box( 'vrodos_asset3d_ipr_cat_selectbox','Asset IPR Category', 'vrodos_assets_tax_select_iprcategory_box_content', 'vrodos_asset3d', 'side' , 'high');
 }
 
 function vrodos_assets_tax_select_project_box_content($post){
-    
+
     $tax_name = 'vrodos_asset3d_pgame';
     ?>
     <div class="tagsdiv" id="<?php echo $tax_name; ?>">
-        
+
         <p class="howto"><?php echo 'Select project that this asset belongs to' ?></p>
-        
+
         <?php
         // Use nonce for verification
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_pgame_noncename' );
         $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_pgame', array('fields' => 'ids') );
-        
-        if(!$type_IDs) {
-            echo "term not found setting 0";
-            $type_IDs = 0;
-        }
-        
+
+        $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
+
         $args = array(
             'show_option_none'   => 'Select Category',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $type_ID,
             'name'               => 'vrodos_asset3d_pgame',
             'taxonomy'           => 'vrodos_asset3d_pgame',
             'echo'               => 0,
             'option_none_value'  => '-1',
             'id' => 'vrodos-select-category-dropdown'
         );
-        
+
         $select = wp_dropdown_categories($args);
-        
+
         $replace = "<select$1 required>";
         $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
-        
+
         $old_option = "<option value='-1'>";
         $new_option = "<option disabled selected value=''>".'Select Game'."</option>";
         $select = str_replace($old_option, $new_option, $select);
-        
+
         echo $select;
         ?>
     </div>
@@ -270,7 +266,7 @@ function vrodos_assets_tax_select_project_box_content($post){
 
 // Save vrodos_asset3d_cat
 function vrodos_asset_tax_category_box_content_save( $post_id ) {
-    
+
     // verify if this is an auto save routine.
     // If it is our form has not been submitted, so we dont want to do anything
     if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) ||
@@ -283,7 +279,7 @@ function vrodos_asset_tax_category_box_content_save( $post_id ) {
     ) {
         return;
     }
-    
+
     // OK, we're authenticated: we need to find and save the data
     $type_ID = intval($_POST['vrodos_asset3d_cat'], 10);
     $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_asset3d_cat' )->slug : NULL;
@@ -296,40 +292,37 @@ function vrodos_assets_tax_select_category_box_content($post){
     $tax_name = 'vrodos_asset3d_cat';
     ?>
     <div class="tagsdiv" id="<?php echo $tax_name; ?>">
-        
+
         <p class="howto"><?php echo 'Select category for current Asset' ?></p>
-        
+
         <?php
         // Use nonce for verification
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_cat_noncename' );
         $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_cat', array('fields' => 'ids') );
 
-        if(!$type_IDs) {
-            echo "term not found setting 0";
-            $type_IDs = 0;
-        }
-        
+        $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
+
         $args = array(
             'show_option_none'   => 'Select Category',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $type_ID,
             'name'               => 'vrodos_asset3d_cat',
             'taxonomy'           => 'vrodos_asset3d_cat',
             'echo'               => 0,
             'option_none_value'  => '-1',
             'id'                 => 'vrodos-select-asset3d-cat-dropdown',
         );
-        
+
         $select = wp_dropdown_categories($args);
-        
+
         //        $replace = "<select$1 onchange='vrodos_hidecfields_asset3d();' required>";
         //        $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
         //
         //        $old_option = "<option value='-1'>";
         //        $new_option = "<option disabled selected value=''>".'Select category'."</option>";
         //        $select = str_replace($old_option, $new_option, $select);
-        
+
         echo $select;
         ?>
     </div>
@@ -341,32 +334,29 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
     $tax_name = 'vrodos_asset3d_ipr_cat';
     ?>
     <div class="tagsdiv" id="<?php echo $tax_name; ?>">
-        
+
         <p class="howto"><?php echo 'Select IPR category for current Asset' ?></p>
-        
+
         <?php
         // Use nonce for verification
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_ipr_cat_noncename' );
-        
+
         $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_ipr_cat', array('fields' => 'ids') );
 
-        if(!$type_IDs) {
-            echo "term not found setting 0";
-            $type_IDs = 0;
-        }
-        
+        $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
+
         $args = array(
             'show_option_none'   => 'Select IPR Category',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_IDs[0],
+            'selected'           => $type_ID,
             'name'               => 'vrodos_asset3d_ipr_cat',
             'taxonomy'           => 'vrodos_asset3d_ipr_cat',
             'echo'               => 0,
             'option_none_value'  => '-1',
             'id' => 'vrodos-select-asset3d-ipr-cat-dropdown',
         );
-        
+
         //if (term_exists( 'visible to all', 'vrodos_asset3d_ipr_cat')!=0) {
         wp_insert_term(
             'Private', // the term
@@ -377,7 +367,7 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
             )
         );
         //}
-        
+
         $terms_ipr = [
             ['Shared Type A', 'Others can view only', 'asset_shared_type_a'],
             ['Shared Type B','Others can view, comment, and clone asset with custom descriptions','asset_shared_type_b'],
@@ -385,28 +375,28 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
             ['Shared Type D','Others can view, comment, clone, use in experiences, and download','asset_shared_type_d'],
             ['Shared Type E','','']
         ];
-        
+
         foreach ($terms_ipr as $ti) {
             wp_insert_term($ti[0], 'vrodos_asset3d_ipr_cat', array('description' => $ti[1], 'slug' => $ti[2]));
         }
-        
+
         $select = wp_dropdown_categories($args);
-        
+
         //        $replace = "<select$1 onchange='vrodos_hidecfields_asset3d();' required>";
         //        $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
         //
         //        $old_option = "<option value='-1'>";
         //        $new_option = "<option disabled selected value=''>".'Select IPR category'."</option>";
         //        $select = str_replace($old_option, $new_option, $select);
-        
-        
+
+
         $replace = "<select$1 required>";
         $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
-        
+
         $old_option = "<option value='-1'>";
         $new_option = "<option disabled value=''>".'Select IPR category'."</option>";
         $select = str_replace($old_option, $new_option, $select);
-        
+
         echo $select;
         ?>
     </div>
@@ -415,7 +405,7 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
 
 // Save IPR category
 function vrodos_assets_taxcategory_ipr_box_content_save( $post_id ) {
-    
+
     // verify if this is an auto save routine.
     // If it is our form has not been submitted, so we dont want to do anything
     if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
@@ -427,7 +417,7 @@ function vrodos_assets_taxcategory_ipr_box_content_save( $post_id ) {
     ) {
         return;
     }
-    
+
     // OK, we're authenticated: we need to find and save the data
     $type_ID = intval($_POST['vrodos_asset3d_ipr_cat'], 10);
     $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_asset3d_ipr_cat' )->slug : NULL;
@@ -440,7 +430,7 @@ function vrodos_asset_project_box_content_save($post_id ) {
 
 //    $fg = fopen("output_gg.txt","w");
 //    fwrite($fg, "1".chr(13));
-    
+
     // verify if this is an auto save routine.
     // If it is our form has not been submitted, so we dont want to do anything
     if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
@@ -452,7 +442,7 @@ function vrodos_asset_project_box_content_save($post_id ) {
     ) {
         return;
     }
-    
+
     // OK, we're authenticated: we need to find and save the data
     $type_ID = intval($_POST['vrodos_asset3d_pgame'], 10);
     $type = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_asset3d_pgame' )->slug : NULL;
@@ -489,7 +479,7 @@ function vrodos_assets_category_yamlFields($tag) {
     // Check for existing taxonomy meta for the term you're editing
     //$term_meta_yaml_assetcat = get_term_meta( $tag->term_id, 'vrodos_yamlmeta_assetcat_pat', true );
     ?>
-    
+
     <!--    <tr class="form-field term-assetcat_pat">-->
     <!--        <th scope="row" valign="top">-->
     <!--            <label for="vrodos_yamlmeta_wonderaround_pat">Asset's YAML</label>-->
@@ -499,7 +489,7 @@ function vrodos_assets_category_yamlFields($tag) {
     <!--            <p class="description">vrodos_yamlmeta_assetcat_pat</p>-->
     <!--        </td>-->
     <!--    </tr>-->
-    
+
     <tr class="form-field term-assetcat_pat">
         <th scope="row" valign="top">
             <label for="vrodos_assetcat_gamecat">Asset's Game</label>
@@ -509,7 +499,7 @@ function vrodos_assets_category_yamlFields($tag) {
             <p class="description">1=Archaeology - 2=Energy - 3=Chemistry</p>
         </td>
     </tr>
-    
+
     <?php
 }
 
