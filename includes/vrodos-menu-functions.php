@@ -143,16 +143,16 @@ function vrodos_plugin_menu(){
         'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_cat');
 
     add_submenu_page('vrodos-plugin',
-        'Asset IPR Categories',
-        'Asset IPR Categories',
-        'manage_options',
-        'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_ipr_cat');
-
-    add_submenu_page('vrodos-plugin',
         'Assets Grouped by Parent Taxonomy',
         'Assets Grouped by Parent Taxonomy',
         'manage_options',
         'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_pgame');
+
+    add_submenu_page('vrodos-plugin',
+        'Asset IPR Categories',
+        'Asset IPR Categories',
+        'manage_options',
+        'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_ipr_cat');
 
 }
 

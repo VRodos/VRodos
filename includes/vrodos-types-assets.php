@@ -159,6 +159,19 @@ function vrodos_assets_taxcategory_ipr(){
         ),
     );
     register_taxonomy('vrodos_asset3d_ipr_cat', 'vrodos_asset3d', $args);
+
+    $terms_ipr = [
+        ['Private','Nobody can view or edit the asset','asset_private'],
+        ['Shared_A - View','Others can view only', 'asset_shared_type_a'],
+        ['Shared_B - (A) & Clone','Others can view, comment, and clone asset with custom descriptions','asset_shared_type_b'],
+        ['Shared_C - (A,B) & Use ','Others can view, comment, clone and use in experiences','asset_shared_type_c'],
+        ['Shared_D - (A,B,C) & Download','Others can view, comment, clone, use in experiences and download','asset_shared_type_d'],
+        ['Shared_E - Free to reuse in any way','Others can reuse in any way they see fit','asset_shared_type_e']
+    ];
+
+    foreach ($terms_ipr as $ti) {
+        wp_insert_term($ti[0], 'vrodos_asset3d_ipr_cat', array('description' => $ti[1], 'slug' => $ti[2]));
+    }
 }
 
 
@@ -170,8 +183,8 @@ function vrodos_create_pathdata_asset( $post_ID, $post, $update ) {
         $parentGameID = $_GET['vrodos_game'] ?? null;
 
         if (!is_numeric($parentGameID)) {
-          /*  echo "ERROR 455: ParentGameID is not numeric.";
-            echo '<br>';*/
+            /*  echo "ERROR 455: ParentGameID is not numeric.";
+              echo '<br>';*/
             return;
         }
 
@@ -316,12 +329,12 @@ function vrodos_assets_tax_select_category_box_content($post){
 
         $select = wp_dropdown_categories($args);
 
-        //        $replace = "<select$1 onchange='vrodos_hidecfields_asset3d();' required>";
-        //        $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
-        //
-        //        $old_option = "<option value='-1'>";
-        //        $new_option = "<option disabled selected value=''>".'Select category'."</option>";
-        //        $select = str_replace($old_option, $new_option, $select);
+                $replace = "<select$1 onchange='vrodos_hidecfields_asset3d();' required>";
+                $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
+
+                $old_option = "<option value='-1'>";
+                $new_option = "<option disabled selected value=''>".'Select Category'."</option>";
+                $select = str_replace($old_option, $new_option, $select);
 
         echo $select;
         ?>
@@ -340,16 +353,14 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
         <?php
         // Use nonce for verification
         wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_ipr_cat_noncename' );
-
-        $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_ipr_cat', array('fields' => 'ids') );
-
-        $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
+        $type_ids = wp_get_object_terms( $post->ID, 'vrodos_asset3d_ipr_cat', array('fields' => 'ids') );
+        $selected_type = empty($type_ids) ? '' : $type_ids[0];
 
         $args = array(
             'show_option_none'   => 'Select IPR Category',
             'orderby'            => 'name',
             'hide_empty'         => 0,
-            'selected'           => $type_ID,
+            'selected'           => $selected_type,
             'name'               => 'vrodos_asset3d_ipr_cat',
             'taxonomy'           => 'vrodos_asset3d_ipr_cat',
             'echo'               => 0,
@@ -357,44 +368,15 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
             'id' => 'vrodos-select-asset3d-ipr-cat-dropdown',
         );
 
-        //if (term_exists( 'visible to all', 'vrodos_asset3d_ipr_cat')!=0) {
-        wp_insert_term(
-            'Private', // the term
-            'vrodos_asset3d_ipr_cat', // the taxonomy
-            array(
-                'description' => 'Nobody can view or edit the asset',
-                'slug' => 'asset_private',
-            )
-        );
-        //}
 
-        $terms_ipr = [
-            ['Shared Type A', 'Others can view only', 'asset_shared_type_a'],
-            ['Shared Type B','Others can view, comment, and clone asset with custom descriptions','asset_shared_type_b'],
-            ['Shared Type C','Others can view, comment, clone and use in experiences','asset_shared_type_c'],
-            ['Shared Type D','Others can view, comment, clone, use in experiences, and download','asset_shared_type_d'],
-            ['Shared Type E','','']
-        ];
-
-        foreach ($terms_ipr as $ti) {
-            wp_insert_term($ti[0], 'vrodos_asset3d_ipr_cat', array('description' => $ti[1], 'slug' => $ti[2]));
-        }
 
         $select = wp_dropdown_categories($args);
-
-        //        $replace = "<select$1 onchange='vrodos_hidecfields_asset3d();' required>";
-        //        $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
-        //
-        //        $old_option = "<option value='-1'>";
-        //        $new_option = "<option disabled selected value=''>".'Select IPR category'."</option>";
-        //        $select = str_replace($old_option, $new_option, $select);
-
 
         $replace = "<select$1 required>";
         $select  = preg_replace( '#<select([^>]*)>#', $replace, $select );
 
         $old_option = "<option value='-1'>";
-        $new_option = "<option disabled value=''>".'Select IPR category'."</option>";
+        $new_option = "<option disabled selected value=''>".'Select IPR category'."</option>";
         $select = str_replace($old_option, $new_option, $select);
 
         echo $select;
