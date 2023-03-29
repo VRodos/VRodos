@@ -233,24 +233,6 @@ function vrodos_default_page() {
 add_filter('login_redirect', 'vrodos_default_page');
 
 
-//Function to get ALL necessary keys about GIO Analytics
-function vrodos_getProjectKeys($project_id, $project_type) {
-
-	$mykeys = array();
-
-	if ($project_type === 'Energy' || $project_type === 'Chemistry' || $project_type === 1) {
-		$myGioID = get_post_meta( $project_id, 'vrodos_project_gioApKey', true);
-		$myExpID = get_post_meta( $project_id, 'vrodos_project_expID', true);
-		$extraPass = get_the_author_meta( 'extra_pass', get_current_user_id() );
-		$mykeys = array('projectID' => $project_id, 'gioID' => $myGioID, 'expID' => $myExpID, 'extraPass' => $extraPass);
-	}
-
-	return $mykeys;
-}
-
-
-//==========================================================================================================================================
-//==========================================================================================================================================
 //GUIDs & FIDs
 
 // 32 chars Hex (identifier for the resource)
@@ -1423,8 +1405,6 @@ function vrodos_append_scenes_in_EditorBuildSettings_dot_asset($filepath, $scene
 
 function vrodos_save_scene_async_action_callback()
 {
-    // only for Chemistry labs
-	//$mole = update_post_meta( $_POST['scene_id'], 'vrodos_available_molecules',$_POST['available_molecules']);
 
 	// Save screenshot
 	if (isset($_POST['scene_screenshot']))

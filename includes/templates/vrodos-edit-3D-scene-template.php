@@ -1,8 +1,8 @@
 <?php
 
-if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
-if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
+$perma_structure = (bool)get_option('permalink_structure');
+$parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
+$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 // Load VR_Editor Scripts
@@ -101,7 +101,6 @@ $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 // wpcontent/uploads/
 $upload_url = wp_upload_dir()['baseurl'];
 
-
 $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 
 // Scene
@@ -121,12 +120,6 @@ $project_type_icon = $project_id ? vrodos_return_project_type($project_id)->icon
 // Get Joker project id
 $joker_project_id = $project_type ? get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID : null;
 
-// Wind Energy Only
-if ($project_type === 'Energy') {
-    $scenesNonRegional = vrodos_getNonRegionalScenes($_REQUEST['vrodos_game']);
-    $scenesMarkerAllInfo = vrodos_get_all_scenesMarker_of_project_fastversion($project_id);
-}
-
 // Archaeology only
 if ($project_type === 'Archaeology') {
     $doorsAllInfo = vrodos_get_all_doors_of_project_fastversion($project_id);
@@ -138,6 +131,7 @@ $scene_post = get_post($current_scene_id);
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
     vrodos_getDefaultJSONscene(strtolower($project_type));
+
 // Load resources 3D
 $SceneParserPHP = new ParseJSON($upload_url);
 $SceneParserPHP->init($sceneJSON);
@@ -150,8 +144,6 @@ $isAdmin = is_admin() ? 'back' : 'front';
 $allProjectsPage = vrodos_getEditpage('allgames');
 $newAssetPage = vrodos_getEditpage('asset');
 $editscenePage = vrodos_getEditpage('scene');
-$editscene2DPage = vrodos_getEditpage('scene2D');
-$editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 $videos = vrodos_getVideoAttachmentsFromMediaLibrary();
 
@@ -178,7 +170,6 @@ echo 'let isUserAdmin="'.current_user_can('administrator').'";';
 echo 'let urlforAssetEdit="'.$urlforAssetEdit.'";';
 echo 'let scene_id ="'.$current_scene_id.'";';
 echo 'let game_type ="'.strtolower($project_type).'";';
-echo 'let project_keys ="'.json_encode(vrodos_getProjectKeys($project_id, $project_type)).'";';
 echo 'user_email = "'.$user_email.'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
 echo 'var siteurl="'.site_url().'";';
@@ -186,45 +177,15 @@ echo 'var siteurl="'.site_url().'";';
 if ($project_type === 'Archaeology') {
     echo "var doorsAll=" . json_encode($doorsAllInfo) . ";";
 }
-if ($project_type === 'Energy') {
-    echo "var scenesMarkerAll=" . json_encode($scenesMarkerAllInfo) . ";";
-    echo "var scenesNonRegional=".json_encode($scenesNonRegional).";";
-}
-
-if ($project_type === 'Chemistry') {
-    echo "var scenesTargetChemistry=" . json_encode(vrodos_getAllexams_byGame($joker_project_id, true)) . ";";
-}
 echo '</script>';
 
-
-// For analytics
-$project_saved_keys = vrodos_getProjectKeys($project_id, $project_type);
-
-// if Virtual Lab
-if($project_type === 'Energy' || $project_type === 'Chemistry') {
-    if (!array_key_exists('gioID', $project_saved_keys)) {
-        echo "<script type='text/javascript'>alert(\"APP KEY not found." .
-            " Please make sure that your user account has been registered correctly, " .
-            "and you have loaded the correct page\");</script>";
-    }
-}
 
 // Get 'parent-game' taxonomy with the same slug as Game (in order to show scenes that belong here)
 $allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
 
-//$ff = fopen('output_merger.txt',"w");
-//fwrite($ff, "1:".print_r($project_post)         .chr(13));
-//fwrite($ff, "2:".print_r($projectSlug,true));
-//fclose($ff);
-
 $parent_project_id_as_term_id = $allScenePGame ? $allScenePGame->term_id : null;
 
-if ($project_type === "Chemistry") {
-    $analytics_molecule_checklist = vrodos_derive_molecules_checklist();
-}
-
 // Ajax for fetching game's assets within asset browser widget at vr_editor // user must be logged in to work, otherwise ajax has no privileges
-
 // COMPILE Ajax
 if(vrodos_getUnity_local_or_remote() != 'remote') {
 
@@ -311,76 +272,34 @@ require_once(ABSPATH . "wp-admin" . '/includes/media.php');
 if ($project_type === 'Archaeology') {
     $single_lowercase = "tour";
     $single_first = "Tour";
-} else if ($project_type === 'Energy' || $project_type === 'Chemistry'){
-    $single_lowercase = "lab";
-    $single_first = "Lab";
-} else {
+}
+else {
     $single_lowercase = "project";
     $single_first = "Project";
 }
-
-// For Chemistry only
-if(isset($_POST['submitted2']) && isset($_POST['post_nonce_field2']) && wp_verify_nonce($_POST['post_nonce_field2'], 'post_nonce')) {
-    $expID = $_POST['exp-id'];
-    update_post_meta( $project_id, 'vrodos_project_expID', $expID);
-
-    $loadMainSceneLink = get_permalink($editscenePage[0]->ID) . $parameter_Scenepass . $current_scene_id . '&vrodos_game=' . $project_id . '&scene_type=scene';
-    wp_redirect( $loadMainSceneLink );
-    exit;
-}
-
-
 
 // ADD NEW SCENE
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
 
     $newSceneType = $_POST['sceneTypeRadio'] ?? null;
 
-    $sceneMetaType = 'scene';//default 'scene' MetaType (3js)
+    $sceneMetaType = 'scene'; //default 'scene' MetaType (3js)
     $game_type_chosen_slug = '';
 
     $default_json = '';
     $thegameType = wp_get_post_terms($project_id, 'vrodos_game_type');
 
+
+    $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
     switch ($thegameType[0]->slug) {
         case 'archaeology_games':
         case 'virtualproduction_games':
         case 'vrexpo_games':
-            $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
-            $game_type_chosen_slug = 'archaeology_games';
-            $default_json = vrodos_getDefaultJSONscene('archaeology');
-
+            $game_type_chosen_slug = $thegameType[0]->slug;
+            $default_json = vrodos_getDefaultJSONscene(strtolower($project_type));
             break;
 
-        case 'energy_games':
-
-            $newscene_yaml_tax = get_term_by('slug', 'educational-energy', 'vrodos_scene_yaml');
-            $game_type_chosen_slug = 'energy_games';
-            $default_json = vrodos_getDefaultJSONscene('energy');
-            break;
-
-        case 'chemistry_games':
-
-            $game_type_chosen_slug = 'chemistry_games';
-            $default_json = vrodos_getDefaultJSONscene('chemistry');
-
-            if($newSceneType == 'lab'){
-
-                $newscene_yaml_tax = get_term_by('slug', 'wonderaround-lab-yaml', 'vrodos_scene_yaml');
-
-            } elseif($newSceneType == '2d'){
-
-                $newscene_yaml_tax = get_term_by('slug', 'exam2d-chem-yaml', 'vrodos_scene_yaml');
-                $sceneMetaType = 'sceneExam2d';
-
-            } elseif($newSceneType == '3d'){
-
-                $newscene_yaml_tax = get_term_by('slug', 'exam3d-chem-yaml', 'vrodos_scene_yaml');
-                $sceneMetaType = 'sceneExam3d';
-            }
-            break;
     }
-
 
     $scene_taxonomies = array(
         'vrodos_scene_pgame' => array(
@@ -396,15 +315,10 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         'vrodos_scene_caption' => esc_attr(strip_tags($_POST['scene-caption'] ?? null))
     );
 
-    //REGIONAL SCENE EXTRA TYPE FOR ENERGY GAMES
-    $isRegional = 0;//default value
-    if($thegameType[0]->slug == 'energy_games'){
-        if($_POST['regionalSceneCheckbox'] == 'on'){$isRegional = 1;}
-        $scene_metas['vrodos_isRegional']= $isRegional;
-        $scene_metas['vrodos_scene_environment'] = 'fields';
-    }
+    // REGIONAL SCENE EXTRA TYPE FOR ENERGY GAMES
+    $isRegional = 0; //default value
 
-    //Add the final MetaType of the Scene
+    // Add the final MetaType of the Scene
     $scene_metas['vrodos_scene_metatype']= $sceneMetaType;
 
     $scene_information = array(
@@ -419,8 +333,9 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     $scene_id = wp_insert_post($scene_information);
 
     if($scene_id){
-        if($sceneMetaType == 'sceneExam2d' || $sceneMetaType == 'sceneExam3d'){$edit_scene_page_id = $editsceneExamPage[0]->ID;}
-        else{$edit_scene_page_id = $editscenePage[0]->ID;}
+
+        $edit_scene_page_id = $editscenePage[0]->ID;
+
         $loadMainSceneLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $sceneMetaType;
         //wp_redirect( $loadMainSceneLink );
         echo("<script>location.href = '".$loadMainSceneLink."'</script>");

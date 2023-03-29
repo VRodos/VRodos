@@ -1,69 +1,69 @@
 <?php
-if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
-if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else {$parameter_Scenepass = '&vrodos_scene=';}
+
+$perma_structure = (bool)get_option('permalink_structure');
+$parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
+$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 // Load VR_Editor Scripts
 function vrodos_load_vreditor_scripts()
 {
-	wp_enqueue_script('jquery-ui-draggable');
-	
-	wp_enqueue_script('vrodos_load119_threejs');
-	wp_enqueue_script('vrodos_load119_CSS2DRenderer');
-	wp_enqueue_script('vrodos_load119_CopyShader');
-	wp_enqueue_script('vrodos_load119_FXAAShader');
-	wp_enqueue_script('vrodos_load119_EffectComposer');
-	wp_enqueue_script('vrodos_load119_RenderPass');
-	wp_enqueue_script('vrodos_load119_OutlinePass');
-	wp_enqueue_script('vrodos_load119_ShaderPass');
-	wp_enqueue_script('vrodos_load119_FBXloader');
-	wp_enqueue_script('vrodos_load119_RGBELoader');
-	wp_enqueue_script('vrodos_load119_GLTFLoader');
-	wp_enqueue_script('vrodos_load119_DRACOLoader');
-	wp_enqueue_script('vrodos_load119_DDSLoader');
-	wp_enqueue_script('vrodos_load119_KTXLoader');
-	wp_enqueue_script('vrodos_inflate');
-	
-	// Timestamp script
-	wp_enqueue_script('vrodos_scripts');
-	
-	// Hierarchy Viewer
-	wp_enqueue_script('vrodos_HierarchyViewer');
-	
-	// Fixed at 87 (forked of original 87)
-	wp_enqueue_script('vrodos_load87_OBJloader');
-	wp_enqueue_script('vrodos_load87_MTLloader');
-	wp_enqueue_script('vrodos_load87_OrbitControls');
-	wp_enqueue_script('vrodos_load87_TransformControls');
-	wp_enqueue_script('vrodos_load87_PointerLockControls');
-	
-	wp_enqueue_script('vrodos_load87_scene_importer_utils');
-	
-	wp_enqueue_script( 'vrodos_load119_Font');
-	wp_enqueue_script( 'vrodos_load119_Cache');
-	wp_enqueue_script( 'vrodos_load119_Loader');
-	wp_enqueue_script( 'vrodos_load119_FileLoader');
-	wp_enqueue_script( 'vrodos_load119_LoadingManager');
-	wp_enqueue_script( 'vrodos_load119_FontLoader');
-	wp_enqueue_script( 'vrodos_load119_FileLoader');
-	
-	// Style
-	wp_enqueue_style('vrodos_3D_viewer');
+    wp_enqueue_script('jquery-ui-draggable');
+    wp_enqueue_script('vrodos_load119_threejs');
+    wp_enqueue_script('vrodos_load119_CSS2DRenderer');
+    wp_enqueue_script('vrodos_load119_CopyShader');
+    wp_enqueue_script('vrodos_load119_FXAAShader');
+    wp_enqueue_script('vrodos_load119_EffectComposer');
+    wp_enqueue_script('vrodos_load119_RenderPass');
+    wp_enqueue_script('vrodos_load119_OutlinePass');
+    wp_enqueue_script('vrodos_load119_ShaderPass');
+    wp_enqueue_script('vrodos_load119_FBXloader');
+    wp_enqueue_script('vrodos_load119_RGBELoader');
+    wp_enqueue_script('vrodos_load119_GLTFLoader');
+    wp_enqueue_script('vrodos_load119_DRACOLoader');
+    wp_enqueue_script('vrodos_load119_DDSLoader');
+    wp_enqueue_script('vrodos_load119_KTXLoader');
+    wp_enqueue_script('vrodos_inflate');
+
+    // Timestamp script
+    wp_enqueue_script('vrodos_scripts');
+
+    // Hierarchy Viewer
+    wp_enqueue_script('vrodos_HierarchyViewer');
+
+    // Fixed at 87 (forked of original 87)
+    wp_enqueue_script('vrodos_load87_OBJloader');
+    wp_enqueue_script('vrodos_load87_MTLloader');
+    wp_enqueue_script('vrodos_load87_OrbitControls');
+    wp_enqueue_script('vrodos_load87_TransformControls');
+    wp_enqueue_script('vrodos_load87_PointerLockControls');
+
+    wp_enqueue_script('vrodos_load87_scene_importer_utils');
+
+    wp_enqueue_script( 'vrodos_load119_Font');
+    wp_enqueue_script( 'vrodos_load119_Cache');
+    wp_enqueue_script( 'vrodos_load119_Loader');
+    wp_enqueue_script( 'vrodos_load119_FileLoader');
+    wp_enqueue_script( 'vrodos_load119_LoadingManager');
+    wp_enqueue_script( 'vrodos_load119_FontLoader');
+    wp_enqueue_script( 'vrodos_load119_FileLoader');
+
+    // Style
+    wp_enqueue_style('vrodos_3D_viewer');
 }
 
 add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
 
 
 function vrodos_load_custom_functions_vreditor(){
-	wp_enqueue_script('vrodos_3d_editor_environmentals');
-	wp_enqueue_script('vrodos_keyButtons');
-	wp_enqueue_script('vrodos_rayCasters');
-	wp_enqueue_script('vrodos_BordersFinder');
-	wp_enqueue_script('VRodos_LightsPawn_Loader');
-	wp_enqueue_script('vrodos_LoaderMulti');
-	wp_enqueue_script('vrodos_movePointerLocker');
-	wp_enqueue_script('vrodos_3d_editor_buttons');
+    wp_enqueue_script('vrodos_3d_editor_environmentals');
+    wp_enqueue_script('vrodos_keyButtons');
+    wp_enqueue_script('vrodos_rayCasters');
+    wp_enqueue_script('vrodos_BordersFinder');
+    wp_enqueue_script('VRodos_LightsPawn_Loader');
+    wp_enqueue_script('vrodos_LoaderMulti');
+    wp_enqueue_script('vrodos_movePointerLocker');
+    wp_enqueue_script('vrodos_3d_editor_buttons');
 }
 add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 
@@ -91,15 +91,11 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 // resources3D class
 require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
 
-
-
 // Define current path of plugin
 $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 
 // wpcontent/uploads/
 $upload_url = wp_upload_dir()['baseurl'];
-
-
 
 $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 
@@ -109,18 +105,19 @@ $current_scene_id = sanitize_text_field( intval( $_GET['vrodos_scene'] ));
 // Get scene content from post
 $scene_post = get_post($current_scene_id);
 
+// Get project type
+$project_obj = vrodos_return_project_type(intval( $_GET['vrodos_game'] ));
+$project_type_str = substr($project_obj->string, strpos($project_obj->string, "_") - 1);
+
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
-	vrodos_getDefaultJSONscene(strtolower('archaeology'));
+    vrodos_getDefaultJSONscene(strtolower($project_type_str));
 
 // Load resources 3D
-
 
 $SceneParserPHP = new ParseJSON($upload_url);
 
 $SceneParserPHP->init($sceneJSON);
-
-
 
 $sceneTitle = $scene_post->post_name;
 
@@ -130,8 +127,6 @@ $isAdmin = is_admin() ? 'back' : 'front';
 $allProjectsPage = vrodos_getEditpage('allgames');
 $newAssetPage = vrodos_getEditpage('asset');
 $editscenePage = vrodos_getEditpage('scene');
-$editscene2DPage = vrodos_getEditpage('scene2D');
-$editsceneExamPage = vrodos_getEditpage('sceneExam');
 
 
 $videos = vrodos_getVideoAttachmentsFromMediaLibrary();
@@ -153,9 +148,9 @@ echo '</script>';
 
 // Fetch Asset
 wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
-                                             '/js_libs/ajaxes/fetch_asset.js', array('jquery') );
+    '/js_libs/ajaxes/fetch_asset.js', array('jquery') );
 wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
-	array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+    array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );
 
 
@@ -164,14 +159,14 @@ wp_enqueue_media($scene_post->ID);
 require_once(ABSPATH . "wp-admin" . '/includes/media.php');
 
 if(is_user_logged_in() ) {
-	wp_nav_menu( array(
-			'theme_location'  => '3d-menu',
-			'container_class' => 'menu-3d-class'
-		)
-	);
-	
-	wp_head();
-	
+    wp_nav_menu( array(
+            'theme_location'  => '3d-menu',
+            'container_class' => 'menu-3d-class'
+        )
+    );
+
+    wp_head();
+
 } else {
 
 //	wp_nav_menu( array(
@@ -179,19 +174,19 @@ if(is_user_logged_in() ) {
 //            'menu' => 'menu-adventure-flyout-menu'
 //    ));
 
-	get_header();
+    get_header();
 }
 ?>
 
 <?php if ( !is_user_logged_in() ) {
-	
-	?>
+
+    ?>
 
     <!-- if user not logged in, then prompt to log in -->
     <div class="DisplayBlock CenterContents">
         <i style="font-size: 64px; padding-top: 0px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
         <p class="mdc-typography--title mdc-theme--text-primary-on-light"> Please <a class="mdc-theme--secondary"
-                                                    href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform</p>
+                                                                                     href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform</p>
         <p class="mdc-typography--title mdc-theme--text-primary-on-light"> Or
             <a class="mdc-theme--secondary" href="<?php echo wp_registration_url(); ?>">register</a>
             if you don't have an account</p>
@@ -199,15 +194,15 @@ if(is_user_logged_in() ) {
 
         <p class="mdc-typography--title mdc-theme--text-primary-on-light"> Or
             <a class="mdc-theme--secondary" href="<?php echo site_url(); ?>">return to home page</a>
-            </p>
-        
+        </p>
+
     </div>
 
     <hr class="WhiteSpaceSeparator">
 
 <?php } else {
-    
-    
+
+
     ?>
 
     <!-- PANELS -->
@@ -228,23 +223,23 @@ if(is_user_logged_in() ) {
                 </div>
 
             </div>   <!--   VR DIV   -->
-			
-			
-			
-			<?php
-                // Add sceneType variable in js envir
-                $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
-                if (count($sceneType)>0) {
-                    echo '<script>';
-                    echo 'envir.sceneType="' . $sceneType[0] . '";';
-                    echo '</script>';
-                }
-			?>
+
+
+
+            <?php
+            // Add sceneType variable in js envir
+            $sceneType = get_post_meta($_GET['vrodos_scene'], "vrodos_scene_environment");
+            if (count($sceneType)>0) {
+                echo '<script>';
+                echo 'envir.sceneType="' . $sceneType[0] . '";';
+                echo '</script>';
+            }
+            ?>
         </div>
-		
+
     </div>
 
-    
+
 
     <!-- Scripts part 1: The GUIs -->
     <script type="text/javascript">
@@ -254,7 +249,7 @@ if(is_user_logged_in() ) {
 
         mdc.autoInit();
 
-      
+
 
     </script>
 
@@ -282,7 +277,7 @@ if(is_user_logged_in() ) {
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
         var firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
- 
+
 
         // Add lights on scene
         var lightsLoader = new VRodos_LightsPawn_Loader();

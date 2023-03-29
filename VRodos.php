@@ -1197,8 +1197,10 @@ margin-right: 20px;">
                             if ($query->have_posts() ) :
 
                                 while ( $query->have_posts() ) : $query->the_post();
-                                    echo wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame')[0]->name . " <br />";
-
+                                    $post_terms = wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame');
+                                    if($post_terms){
+                                        echo $post_terms[0]->name . " <br />";
+                                    }
                                 endwhile;
 
                                 wp_reset_postdata();
