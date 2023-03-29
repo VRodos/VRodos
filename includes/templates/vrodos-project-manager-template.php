@@ -1,8 +1,9 @@
 <?php
 
-if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
-if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
+
+$perma_structure = (bool)get_option('permalink_structure');
+$parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
+$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 global $project_scope;
@@ -331,31 +332,24 @@ $login_username = $current_user->user_login;
     fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass);
 
     // Delete Dialogue
-    var dialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
+    let dialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
     dialog.focusTrap_.deactivate();
 
     // Collaborators Dialogue
-    var dialogCollaborators = new mdc.dialog.MDCDialog(document.querySelector('#collaborate-dialog'));
+    let dialogCollaborators = new mdc.dialog.MDCDialog(document.querySelector('#collaborate-dialog'));
     dialogCollaborators.focusTrap_.deactivate();
 
     // Descriptions for each Project
     function loadProjectTypeDescription() {
-
-        var checked = parseInt(jQuery( ":checked" ).val(), 10);
-
-        if (checked === 1) {
+        let checked = document.querySelector('input[name="projectTypeRadio"]:checked').value;
+        if (checked === 'archaeology_games') {
             jQuery("#project-description-label").html("Design a virtual tour of your own place");
-        } else if (checked === 2) {
-            jQuery("#project-description-label").html("A Wind Energy park simulation with many areas and parameters");
-        } else if (checked === 3) {
-            jQuery("#project-description-label").html("A Chemistry lab with 2D and 3D puzzles about molecules");
-        } else if (checked === 4){
+        } else if (checked === 'vrexpo_games'){
             jQuery("#project-description-label").html("Create a VR expo space");
-        } else if (checked === 5){
+        } else if (checked === 'virtualproduction_games'){
             jQuery("#project-description-label").html("Create a Multiuser Virtual Production project");
         }
     }
-
     loadProjectTypeDescription();
 
     jQuery('#createNewProjectBtn').click( function (e) {
@@ -364,17 +358,13 @@ $login_username = $current_user->user_login;
         if (title_vrodos_project.length > 2) {
             let project_type = document.querySelector('input[name="projectTypeRadio"]:checked').value;
 
-            console.log(project_type);
-
-             // CREATE THE PROJECT !
+            // CREATE THE PROJECT !
             vrodos_createProjectAjax(title_vrodos_project, project_type, current_user_id, parameter_Scenepass);
 
             jQuery('#createNewProjectBtn').hide();
             jQuery('#create-game-progress-bar').show();
         }
     });
-
-
 
     function deleteProject(id) {
         let dialogTitle = document.getElementById("delete-dialog-title");
