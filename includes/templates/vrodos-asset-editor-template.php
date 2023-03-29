@@ -242,7 +242,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     //include 'edit-vrodos_asset3d_languages_support1.php';
 
     // Fonts Selected
-    $assetFonts = esc_attr(strip_tags($_POST['assetFonts']));
+    $assetFonts = isset($_POST['assetFonts']) ? esc_attr(strip_tags($_POST['assetFonts'])) : '';
 
     // 3D background color
     $assetback3dcolor=  esc_attr(strip_tags($_POST['assetback3dcolor']));
@@ -276,8 +276,9 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
         <?php
 
-        //It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
+        // It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
         $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
+
     }else {
         ?>
         <div class='centerMessageAssetSubmit'>Updating asset...</div>
@@ -308,18 +309,6 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
     // Save parameters
     switch ($assetCatTerm->slug){
-        case 'consumer':
-            vrodos_create_asset_consumerExtra_frontend($asset_id);
-            break;
-        case 'terrain':
-            vrodos_create_asset_terrainExtra_frontend($asset_id);
-            break;
-        case 'producer':
-            vrodos_create_asset_producerExtra_frontend($asset_id);
-            break;
-        case 'molecule':
-            vrodos_create_asset_moleculeExtra_frontend($asset_id);
-            break;
         case 'artifact':
         default:
             vrodos_create_asset_addImages_frontend($asset_id);
@@ -327,13 +316,8 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
             vrodos_create_asset_addVideo_frontend($asset_id);
             break;
     }
-
-    if($scene_id == 0) {
-        // Redirect to central otherwise the form is not loaded with the new data
-        echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'&vrodos_asset='.$asset_id.'#English'.'";</script>';
-    }
-    // Avoid loading the old page
-    return;
+    echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'&vrodos_asset='.$asset_id.'#English'.'";</script>';
+    return ;
 }
 
 //---------------------------- End of handle Submit  -------------------------
@@ -346,6 +330,8 @@ if (!empty($project_scope)) {
         $single_first = "Project";
     }
 }
+
+
 
 // When asset was created in the past and now we want to edit it. We should get the attachments obj, mtl
 if($asset_id != null) {
@@ -420,12 +406,7 @@ if($asset_id != null) {
 
     if ($saved_term) {
 
-        if($saved_term[0]->slug == 'terrain'){
-
-            // Wind Energy Terrain
-            // include 'vrodos-asset-editor-WindEnergy.php';
-
-        }elseif (in_array($saved_term[0]->slug , ['artifact'])) {
+        if (in_array($saved_term[0]->slug , ['artifact'])) {
             // Image 1 : Featured image
             $images_urls[0] = get_the_post_thumbnail_url($asset_id);
 
@@ -440,7 +421,6 @@ if($asset_id != null) {
                         wp_get_upload_dir()['baseurl'] . "/" . $images_urls[$i]['file'];
                 }
             }
-
         }
     }
 }

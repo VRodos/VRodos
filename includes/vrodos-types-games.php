@@ -128,6 +128,11 @@ function vrodos_project_taxtype_create(){
 // Create Default Scenes for this "Project"
 function vrodos_on_create_project( $new_status, $old_status, $post){
 
+    // Dont run this if from front-end
+    if (!isset($_POST['vrodos_game_type'])){
+        return;
+    }
+
     $post_type = get_post_type($post);
 
     if ($post_type == 'vrodos_game' && $new_status == 'publish') {

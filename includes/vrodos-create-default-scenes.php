@@ -50,39 +50,7 @@ function vrodos_create_default_scene_kernel($title,
 
 // Create scenes as posts in WordPress
 function vrodos_create_archaeology_default_scenes($projectSlug){
-	
-	// Main Menu
-	$mainmenuSceneData = vrodos_create_default_scene_kernel(
-		'Main Menu',
-		'Main Menu of the Game',
-		$projectSlug.'-main-menu' ,
-		$projectSlug,
-		'mainmenu-arch-yaml',
-		1,
-		'menu',
-		1,
-		1,
-		1,
-		'',
-		0,
-    	'');
-	
-	// Credentials
-	$credentialsSceneData = vrodos_create_default_scene_kernel(
-		'Credits',
-		'Credits of the Game',
-		$projectSlug . '-credits-scene',
-		$projectSlug,
-		'credentials-arch-yaml',
-		1,
-		'credits',
-		0,
-		0,
-		0,
-		'',
-		0,
-		'');
-	
+
 	// First Scene Data
 	$firstSceneData = vrodos_create_default_scene_kernel(
 		'Place',
@@ -90,18 +58,16 @@ function vrodos_create_archaeology_default_scenes($projectSlug){
 		$projectSlug . '-first-scene',
 		$projectSlug,
 		'wonderaround-yaml',
-		1,
+		0,
 		'scene',
 		0,
 		0,
-		0,
+		1,
 		'Auto-created scene',
 		0,
 		'');
 
 	// Add the scenes as post to WordPress
-	wp_insert_post( $mainmenuSceneData );
-	wp_insert_post( $credentialsSceneData );
 	wp_insert_post( $firstSceneData );
 }
 
@@ -110,7 +76,7 @@ function vrodos_create_archaeology_default_scenes($projectSlug){
 function vrodos_create_vrexpo_default_scenes($projectSlug){
 
 	// Default scene JSON.
-	$default_json = vrodos_getDefaultJSONscene( 'archaeology' );
+	$default_json = vrodos_getDefaultJSONscene( 'vrexpo' );
 	
 	// First Scene
 	// Create Lobby Scene Data
@@ -120,7 +86,7 @@ function vrodos_create_vrexpo_default_scenes($projectSlug){
 		$projectSlug . '-lobby-scene',
 		$projectSlug,
 		'wonderaround-yaml',
-		1,
+		0,
 		'scene',
 		0,
 		0,
@@ -136,7 +102,7 @@ function vrodos_create_vrexpo_default_scenes($projectSlug){
 		$projectSlug . '-auditorium-scene',
 		$projectSlug,
 		'wonderaround-yaml',
-		1,
+		0,
 		'scene',
 		0,
 		0,
@@ -152,7 +118,7 @@ function vrodos_create_vrexpo_default_scenes($projectSlug){
 		$projectSlug . '-cafe-scene',
 		$projectSlug,
 		'wonderaround-yaml',
-		1,
+		0,
 		'scene',
 		0,
 		0,
@@ -168,7 +134,7 @@ function vrodos_create_vrexpo_default_scenes($projectSlug){
 		$projectSlug . '-expo-scene',
 		$projectSlug,
 		'wonderaround-yaml',
-		1,
+		0,
 		'scene',
 		0,
 		0,
@@ -190,11 +156,11 @@ function vrodos_create_virtualproduction_default_scenes($projectSlug){
 	// Create Lobby Scene Data
 	$firstSceneData = vrodos_create_default_scene_kernel(
 		'Chapter 1',
-		vrodos_getDefaultJSONscene( 'archaeology' ),
+		vrodos_getDefaultJSONscene( 'virtualproduction' ),
 		$projectSlug . '-chapter1-scene',
 		$projectSlug,
 		'wonderaround-yaml',
-		1,
+		0,
 		'scene',
 		0,
 		0,
@@ -209,24 +175,23 @@ function vrodos_create_virtualproduction_default_scenes($projectSlug){
 // Main
 function vrodos_create_default_scenes_for_game($projectSlug, $gameTypeId){
 
-    $project_type = get_term($gameTypeId, 'vrodos_game_type');
-	$project_type_slug  = $project_type->slug;
+    if ($gameTypeId) {
 
-	var_dump("ETETETETET");
+        $project_type = get_term($gameTypeId, 'vrodos_game_type');
+        $project_type_slug  = $project_type->slug;
 
-	return 0;
+        switch ($project_type_slug){
 
-	switch ($project_type_slug){
-
-		case 'vrexpo_games':
-			vrodos_create_vrexpo_default_scenes($projectSlug);
-			break;
-		case 'virtualproduction_games':
-			vrodos_create_virtualproduction_default_scenes($projectSlug);
-			break;
-        case 'archaeology_games':
-        default:
-            vrodos_create_archaeology_default_scenes($projectSlug);
-            break;
-	}
+            case 'vrexpo_games':
+                vrodos_create_vrexpo_default_scenes($projectSlug);
+                break;
+            case 'virtualproduction_games':
+                vrodos_create_virtualproduction_default_scenes($projectSlug);
+                break;
+            case 'archaeology_games':
+            default:
+                vrodos_create_archaeology_default_scenes($projectSlug);
+                break;
+        }
+    }
 }
