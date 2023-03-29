@@ -5,9 +5,7 @@
   *
  *  All the above are encompassed in     vrodos_create_gameproject_frontend($game_id)
  */
-function vrodos_createProjectAjax(project_title, project_type, current_user_id, parameter_Scenepass) {
-
-    console.log("project_type", project_type);
+function vrodos_createProjectAjax(project_title, project_type_slug, current_user_id, parameter_Scenepass) {
 
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
@@ -15,7 +13,7 @@ function vrodos_createProjectAjax(project_title, project_type, current_user_id, 
         data: {
             'action': 'vrodos_create_project_action',
             'project_title': project_title,
-            'project_type_radio': project_type
+            'project_type_slug': project_type_slug
         },
         success: function (new_project_id) {
 
@@ -25,7 +23,6 @@ function vrodos_createProjectAjax(project_title, project_type, current_user_id, 
             jQuery('#create-game-progress-bar').hide();
 
             fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_project_id);
-
 
     },
         error: function (xhr, ajaxOptions, thrownError) {
@@ -38,7 +35,6 @@ function vrodos_createProjectAjax(project_title, project_type, current_user_id, 
             //alert("Could not create game");
 
             console.log("Ajax Create Game: ERROR: 169" + thrownError);
-
             console.log(thrownError)
 
         }

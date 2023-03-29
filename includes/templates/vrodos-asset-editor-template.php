@@ -79,15 +79,11 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
         wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
     }
 
-
     // Load single asset: Load existing asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
 
     // Load scripts for asset editor
     wp_enqueue_script('vrodos_asset_editor_scripts');
-
-    // scroll for images thumnbnails (in clone)
-    //wp_enqueue_script('vrodos_lightslider');
 
     // Select colors
     wp_enqueue_script('vrodos_jscolorpick');
@@ -427,7 +423,7 @@ if($asset_id != null) {
         if($saved_term[0]->slug == 'terrain'){
 
             // Wind Energy Terrain
-            include 'vrodos-asset-editor-WindEnergy.php';
+            // include 'vrodos-asset-editor-WindEnergy.php';
 
         }elseif (in_array($saved_term[0]->slug , ['artifact'])) {
             // Image 1 : Featured image
@@ -1086,7 +1082,7 @@ if($asset_id != null) {
         <!--  End of Edit or Show  -->
 
         <!-- MOLECULES  only-->
-        <?php include 'vrodos-asset-editor-ChemistrySupport.php'; ?>
+
 
         <?php
         // Obsolete virtual labs code

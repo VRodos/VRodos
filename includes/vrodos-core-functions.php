@@ -5,151 +5,6 @@ function vrodos_remove_admin_login_header() {
     remove_action('wp_head', '_admin_bar_bump_cb');
 }
 
-function vrodos_addStrategy_APIcall($project_id, $strategy){
-
-	global $project_scope;
-
-	$user_id = get_current_user_id();
-	$user_info = get_userdata($user_id);
-	$userEmail = $user_info->user_email;
-	$extraPass = get_the_author_meta( 'extra_pass', $user_id );
-
-	$project_keys = vrodos_getProjectKeys($project_id, $project_scope);
-
-	$args = array(
-		'method' => 'POST',
-		'timeout' => 45,
-		'redirection' => 5,
-		'httpversion' => '1.0',
-		'blocking' => true,
-		'sslverify' => false,
-		'headers' => array( 'content-type' => 'application/json' ),
-		'body' => json_encode(array(
-			'email' => $userEmail,
-			'password' => $extraPass
-		) ),
-		'cookies' => array()
-	);
-
-	$token_request = wp_remote_post( "http://api-staging.goedle.io/token/", $args);
-
-	if (is_wp_error( $token_request ) ) {
-
-		$error_message = $token_request->get_error_message();
-		echo "<script type='text/javascript'>alert(\"$error_message\");</script>";
-
-	} else {
-
-		$code = (string)(int)$token_request['response']['code'];
-
-		if ( strcmp($code,"200") || strcmp($code,"201") ) {
-
-			$token = json_decode( $token_request[ 'body' ] );
-			$token = $token->token;
-
-			$hash = hash('crc32b', json_encode($strategy));
-
-			// Create ID from game name, user_id and strategy hash
-			$strategy_id = $hash;
-
-			$args = array(
-				'method'      => 'POST',
-				'timeout'     => 45,
-				'redirection' => 5,
-				'httpversion' => '1.0',
-				'blocking'    => true,
-				'sslverify'   => 0,
-				'headers'     => array( 'content-type' => 'application/json', 'Authorization' => $token ),
-				'body'        => json_encode( array(
-					'data' => array(
-						'type'       => 'strategy',
-						'id'         => $strategy_id,
-						'attributes' => array(
-							'config' => array($strategy)
-						)
-					)
-				) ),
-				'cookies'     => array()
-			);
-
-			$request = wp_remote_post( "https://api-staging.goedle.io/apps/" . $project_keys['gioID'] . "/strategies/", $args );
-
-			if ( is_wp_error( $request ) ) {
-
-				$error_message = $request->get_error_message();
-
-				echo "<script type='text/javascript'>alert(\"$error_message\");</script>";
-
-			} else {
-
-				$code = (string)(int)$request['response']['code'];
-				if ( strcmp($code,"200") || strcmp($code,"201") ) {
-
-					$args = array(
-						'method'      => 'POST',
-						'timeout'     => 45,
-						'redirection' => 5,
-						'httpversion' => '1.0',
-						'blocking'    => true,
-						'sslverify'   => 0,
-						'headers'     => array( 'content-type' => 'application/json', 'Authorization' => $token ),
-						'body'        => json_encode( array(
-							'data' => array(
-								'type'       => 'test',
-								'attributes' => array(
-									'count' => 1000
-								)
-							)
-
-						) ),
-						'cookies'     => array()
-					);
-
-					$request = wp_remote_post( "https://api-staging.goedle.io/apps/" . $project_keys['gioID'] . "/strategies/" . $strategy_id . "/test/", $args );
-
-					if ( is_wp_error( $request ) ) {
-
-						$error_message = $request->get_error_message();
-						echo "<script type='text/javascript'>alert(\"$error_message\");</script>";
-
-					} else {
-
-						$code = (string)(int)$request['response']['code'];
-						if ( strcmp($code,"200") || strcmp($code,"201") ) {}
-						else {
-
-							$code = $request['response']['code'];
-							$msg = $request['response']['message'];
-							$body = json_decode( wp_remote_retrieve_body( $request ), true );
-							print_r($code." - ".$msg.". ".$body['error']);
-							die();
-						}
-					}
-
-				} else {
-
-					$code = $request['response']['code'];
-					$msg = $request['response']['message'];
-					$body = json_decode( wp_remote_retrieve_body( $request ), true );
-					print_r($code." - ".$msg.". ".$body['error']);
-					die();
-				}
-			}
-
-		} else {
-
-			$code = $token_request['response']['code'];
-			$msg = $token_request['response']['message'];
-			$body = json_decode( wp_remote_retrieve_body( $token_request ), true );
-			print_r($code." - ".$msg.". ".$body['error']);
-			die();
-		}
-
-	}
-}
-
-//==========================================================================================================================================
-//==========================================================================================================================================
 
 function vrodos_getVideoAttachmentsFromMediaLibrary(){
 
@@ -170,48 +25,6 @@ function vrodos_getVideoAttachmentsFromMediaLibrary(){
     return $videos;
 }
 
-
-function vrodos_getExamScenes_byProjectID($project_id){
-	$gamePost = get_post($project_id);
-	$gameSlug = $gamePost->post_name;
-
-	$scene_type_slug = array( 'exam2d-chem-yaml', 'exam3d-chem-yaml' );
-
-	$custom_query_args = array(
-		'post_type' => 'vrodos_scene',
-		'posts_per_page' => -1,
-		'tax_query' => array(
-			'relation' => 'AND',
-			array(
-				'taxonomy' => 'vrodos_scene_pgame',
-				'field'    => 'slug',
-				'terms'    => $gameSlug
-			),
-			array(
-				'taxonomy' => 'vrodos_scene_yaml',
-				'field'    => 'slug',
-				'terms'    => $scene_type_slug,
-			),
-		),
-		'orderby' => 'ID',
-		'order' => 'DESC',
-	);
-
-	$scene_data = array();
-	$custom_query = new WP_Query( $custom_query_args );
-
-	if ( $custom_query->have_posts() ) {
-		while ($custom_query->have_posts()) {
-			$custom_query->the_post();
-
-			$scene_data[] = get_the_ID();
-			//$scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
-		}
-	}
-
-	return $scene_data;
-
-}
 
 
 function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
@@ -259,56 +72,7 @@ function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
 }
 
 
-//==========================================================================================================================================
-//==========================================================================================================================================
 
-function vrodos_windEnergy_scene_stats($scene_id){
-
-	$turbinesInfoGathered = [];
-	$scene_json = get_post($scene_id)->post_content; //, 'vrodos_scene_json_input', true);
-	$scene_env = get_post_meta($scene_id, 'vrodos_scene_environment', true);
-
-	$jsonScene = htmlspecialchars_decode($scene_json);
-	$sceneJsonARR = json_decode($jsonScene, TRUE);
-
-
-	if (isset($sceneJsonARR['objects']))
-		if (count($sceneJsonARR['objects']) > 0){
-			foreach ($sceneJsonARR['objects'] as $key => $value) {
-				if ($key !== 'avatarCamera') {
-					if ($value['categoryName'] === 'Producer') {
-
-						$optCosts = get_post_meta($value['assetid'],'vrodos_producerOptCosts',true);
-						if($optCosts) {
-							$optCosts_size = $optCosts['size'];
-							$optCosts_cost = $optCosts['cost'];
-						}
-						$optGen = get_post_meta($value['assetid'],'vrodos_producerOptGen',true);
-						if($optGen) {
-							$optGen_power = $optGen['power'];
-						}
-
-						$turbinesInfoGathered[] = ['producerID' => $value['assetid'],
-						                           'proWatts' => $optGen_power,
-						                           'proArea' => $optCosts_size * 3,
-						                           'proCost' => $optCosts_cost
-						];
-					}
-				}
-			}
-		}
-	$totalWatts = 0;$totalArea = 0;$totalCost = 0;$totalItems = 0;
-	foreach ($turbinesInfoGathered as $prod) {
-		$totalWatts += $prod['proWatts'];
-		$totalArea += $prod['proArea'];
-		$totalCost += $prod['proCost'];
-		$totalItems++;
-	}
-
-	$scene_stats = array('env' => $scene_env, 'map' => $scene_id, 'watts' => $totalWatts, 'area' => $totalArea, 'cost' => $totalCost, 'totalProducers' =>  $totalItems);
-
-	return $scene_stats;
-}
 
 
 //==========================================================================================================================================
@@ -405,8 +169,6 @@ function create_post_project_joker($tax_slug, $post_title, $post_name, $userID){
 
 
 
-
-
 function vrodos_getNonRegionalScenes($project_id) {
 	$game_post = get_post($project_id);
 	$gameSlug = $game_post->post_name;
@@ -454,173 +216,6 @@ function vrodos_getNonRegionalScenes($project_id) {
 //==========================================================================================================================================
 //==========================================================================================================================================
 
-//Add new Field at registration form (3 steps)
-
-
-
-function vrodos_extrapass_register_form() {
-
-	$extrapass = ( ! empty( $_POST['extra_pass'] ) ) ? sanitize_text_field( $_POST['extra_pass'] ) : '';
-
-	?>
-
-    <input type="hidden" name="extra_pass" id="extra_pass" class="input" value="<?php echo esc_attr(  $extrapass  ); ?>" size="25" readonly />
-
-    <script type="text/javascript">
-        jQuery(document).ready(
-            function vrodosGenerateExtraPass(){
-                var rString = vrodos_randomString(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
-                document.getElementById('extra_pass').value  = rString;
-            }
-        );
-
-        jQuery( "#registerform" ).focus(function() {
-            alert( "Handler for .focus() called." );
-        });
-
-
-        function vrodos_randomString(length, chars) {
-            var result = '';
-            for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-            return result;
-        }
-
-
-        //		function vrodosGenerateExtraPass(){
-        //			var rString = vrodos_randomString(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
-        //			document.getElementById('extra_pass').value  = rString;
-        //		}
-    </script>
-	<?php
-}
-
-//2. Add validation. In this case, we make sure extra_pass is required.
-// For Envisage only
-if ($project_scope === 1) {
-    add_filter('registration_errors', 'vrodos_extrapass_registration_errors', 10, 3);
-}
-function vrodos_extrapass_registration_errors( $errors, $sanitized_user_login, $user_email ) {
-
-	if ( empty( $_POST['extra_pass'] ) || ! empty( $_POST['extra_pass'] ) && trim( $_POST['extra_pass'] ) == '' ) {
-		$errors->add( 'extra_pass_error', sprintf('<strong>%s</strong>: %s','ERROR','You must include an extra pass.', 'mydomain' ));
-
-	}
-
-	return $errors;
-}
-
-//3. Finally, save our extra registration user meta. For Envisage only.
-function vrodos_extrapass_user_register( $user_id ) {
-	if ( ! empty( $_POST['extra_pass'] ) ) {
-		update_user_meta( $user_id, 'extra_pass', sanitize_text_field( $_POST['extra_pass'] ) );
-	}
-}
-
-
-
-function vrodos_extrapass_profile_fields( $user ) {
-	?>
-    <h3><?php esc_html_e('Extra Information'); ?></h3>
-
-    <table class="form-table">
-        <tr>
-            <th><label for="extra_pass"><?php esc_html_e( 'Extra Password'); ?></label></th>
-            <td><?php echo esc_html( get_the_author_meta( 'extra_pass', $user->ID ) ); ?></td>
-        </tr>
-    </table>
-	<?php
-}
-
-//==========================================================================================================================================
-//==========================================================================================================================================
-// Assets
-//function vrodos_assets_menu_link( $menu, $args ) {
-//    $menu .= '<li class="nav-menu" class="menu-item">' .
-//        '<a href="'.get_permalink( get_page_by_path( 'vrodos-list-shared-assets/' ) ).'">Assets</a>'
-//        . '</li>';
-//    return $menu;
-//}
-//add_filter( 'wp_nav_menu_items','vrodos_assets_menu_link', 1, 2 );
-//
-//// Projects
-//function vrodos_projects_menu_link( $menu, $args ) {
-//    $menu .= '<li class="nav-menu" class="menu-item">' .
-//        '<a href="'.get_permalink( get_page_by_path( 'vrodos-main/' ) ).'">Projects</a></li>';
-//    return $menu;
-//}
-//add_filter( 'wp_nav_menu_items','vrodos_projects_menu_link', 2, 2 );
-//
-//
-//// Projects
-//function vrodos_compiled_projects_menu_link( $menu, $args ) {
-//    $menu .= '<li class="nav-menu" class="menu-item">' .
-//        '<a href="'.get_permalink( get_page_by_path( 'compiled-projects/' ) ).'">Compiled Projects</a></li>';
-//    return $menu;
-//}
-//add_filter( 'wp_nav_menu_items','vrodos_compiled_projects_menu_link', 2, 3 );
-//
-//
-//
-//
-//// Display Members as menu item (Ultimatemember plugin)
-//function vrodos_members_menu_link( $menu, $args ) {
-//    $menu .= '<li class="nav-menu" class="menu-item">' .
-//        '<a href="'.get_permalink( get_page_by_path( 'members/' ) ).'">Members</a></li>';
-//    return $menu;
-//}
-//
-//
-//// Display Feedback page as menu item (Ultimatemember plugin)
-//function vrodos_feedback_menu_link( $menu, $args ) {
-//    $menu .= '<li class="nav-menu" class="menu-item">' .
-//        '<a href="'.get_permalink( get_page_by_path( 'feedback/' ) ).'">Feedback</a></li>';
-//    return $menu;
-//}
-//add_filter( 'wp_nav_menu_items','vrodos_feedback_menu_link', 4, 4 );
-//
-//function vrodos_contact_menu_link( $menu, $args ) {
-//    $menu .= '<li class="nav-menu" class="menu-item">' .
-//        '<a href="'.get_permalink( get_page_by_path( 'contact/' ) ).'">Contact</a>'
-//        . '</li>';
-//    return $menu;
-//}
-//add_filter( 'wp_nav_menu_items','vrodos_contact_menu_link', 5, 2 );
-//
-//include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-//if ( is_plugin_active( 'ultimate-member/ultimate-member.php' ) ) {
-//    add_filter( 'wp_nav_menu_items','vrodos_members_menu_link', 3, 2 );
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-//function add_login_logout_register_menu( $items, $args ) {
-////    if ( $args->theme_location != 'primary' ) {
-////        return $items;
-////    }
-//
-//    if ( is_user_logged_in() ) {
-//        $items .= '' . __( 'Log Out' ) . '';
-//    } else {
-//        $items .= '' . __( 'Login In' ) . '';
-//        $items .= '' . __( 'Sign Up' ) . '';
-//    }
-//
-//    return $items;
-//}
-//
-//add_filter( 'wp_nav_menu_items', 'add_login_logout_register_menu', 199, 2 );
-
-
 
 
 function vrodos_remove_admin_bar() {
@@ -638,199 +233,6 @@ function vrodos_default_page() {
 add_filter('login_redirect', 'vrodos_default_page');
 
 
-//Function to get ALL necessary keys about GIO Analytics
-function vrodos_getProjectKeys($project_id, $project_type) {
-
-	$mykeys = array();
-
-	if ($project_type === 'Energy' || $project_type === 'Chemistry' || $project_type === 1) {
-		$myGioID = get_post_meta( $project_id, 'vrodos_project_gioApKey', true);
-		$myExpID = get_post_meta( $project_id, 'vrodos_project_expID', true);
-		$extraPass = get_the_author_meta( 'extra_pass', get_current_user_id() );
-		$mykeys = array('projectID' => $project_id, 'gioID' => $myGioID, 'expID' => $myExpID, 'extraPass' => $extraPass);
-	}
-
-	return $mykeys;
-}
-
-// STEP 1 for GIO data
-if ($project_scope === 1) {
-
-}
-
-function vrodos_registrationUser_save( $user_id ) {
-
-	$user_info = get_userdata($user_id);
-
-	$userEmail = $user_info->user_email;
-	$extraPass = get_the_author_meta( 'extra_pass', $user_id );
-	$userName = $user_info->user_login;
-
-	if ($extraPass) {
-
-		$args = array(
-			'method' => 'POST',
-			'timeout' => 45,
-			'redirection' => 5,
-			'httpversion' => '1.0',
-			'blocking' => true,
-			'sslverify' => 0,
-			'headers' => array( 'content-type' => 'application/json' ),
-			'body' => json_encode(array(
-				'user' => array(
-					'email' => $userEmail,
-					'password' => $extraPass,
-					'first_name' => $userName,
-					'company' => 'ENVISAGE'
-				),
-				'app' => array(
-					'add' => false
-				)
-			) ),
-			'cookies' => array()
-		);
-
-		$response = wp_remote_post( "https://api-staging.goedle.io/users/", $args);
-
-		if ( is_wp_error( $response ) ) {
-			$error_message = $response->get_error_message();
-			echo "<script type='text/javascript'>alert(\"$error_message\");</script>";
-			die();
-		}
-
-		$code = (string)(int)$response['response']['code'];
-		if ( strcmp($code,"200") || strcmp($code,"201") ) {
-
-		} else {
-
-			$code = $response['response']['code'];
-			$msg = $response['response']['message'];
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			print_r($code." - ".$msg.". ".$body['error']);
-			die();
-		}
-
-
-	} else {
-
-		echo "<script type='text/javascript'>alert(\"No extra pass provided\");</script>";
-		die();
-	}
-}
-
-//STEP 2 for GIO data
-function vrodos_createGame_GIO_request($project_id, $user_id){
-	$user_info = get_userdata($user_id);
-	$userEmail = $user_info->user_email;
-	$extraPass = get_the_author_meta( 'extra_pass', $user_id );
-
-	if ($extraPass) {
-
-		$args = array(
-			'method' => 'POST',
-			'timeout' => 45,
-			'redirection' => 5,
-			'httpversion' => '1.0',
-			'blocking' => true,
-			'sslverify' => false,
-			'headers' => array( 'content-type' => 'application/json' ),
-			'body' => json_encode(array(
-				'email' => $userEmail,
-				'password' => $extraPass
-			) ),
-			'cookies' => array()
-		);
-
-		$token_request = wp_remote_post( "http://api-staging.goedle.io/token/", $args);
-
-		if (is_wp_error( $token_request ) ) {
-
-			$error_message = $token_request->get_error_message();
-			echo "<script type='text/javascript'>alert(\"$error_message\");</script>";
-			die();
-
-		} else {
-
-			$code = (string)(int)$token_request['response']['code'];
-			if ( strcmp($code,"200") || strcmp($code,"201") ) {
-
-				$token = json_decode($token_request[body]);
-
-				$token = $token->token;
-
-				$args = array(
-					'method' => 'POST',
-					'timeout' => 45,
-					'redirection' => 5,
-					'httpversion' => '1.0',
-					'blocking' => true,
-					'sslverify' => 0,
-					'headers' => array( 'content-type' => 'application/json', 'Authorization' => $token ),
-					'body' =>json_encode(array() ),
-					'cookies' => array()
-				);
-
-
-				$request = wp_remote_post( "http://api-staging.goedle.io/apps/", $args);
-
-				if (is_wp_error( $request ) ) {
-
-					$error_message = $request->get_error_message();
-					echo "<script type='text/javascript'>alert(\" $error_message\");</script>";
-					die();
-
-				} else {
-
-					$code = (string)(int)$request['response']['code'];
-					if ( strcmp($code,"200") || strcmp($code,"201") ) {
-
-						$keys = json_decode($request[body]);
-
-						$app_key = $keys->app->app_key; //the return value for GIO id
-						$api_key = $keys->app->api_key;
-
-						// Save values to our DB
-						update_post_meta( $project_id, 'vrodos_project_gioApKey', $app_key);
-						update_post_meta( $project_id, 'vrodos_project_gioAPIKey', $api_key);
-
-
-					} else {
-
-						$code = $request['response']['code'];
-						$msg = $request['response']['message'];
-						$body = json_decode( wp_remote_retrieve_body( $request ), true );
-						print_r($code." - ".$msg.". ".$body['error']);
-						die();
-
-					}
-				}
-
-			} else {
-
-				$code = $token_request['response']['code'];
-				$msg = $token_request['response']['message'];
-				$body = json_decode( wp_remote_retrieve_body( $token_request ), true );
-				print_r($code." - ".$msg.". ".$body['error']);
-				die();
-
-			}
-		}
-	}
-}
-
-
-
-
-
-//==========================================================================================================================================
-//==========================================================================================================================================
-
-
-
-
-
-//==========================================================================================================================================
-//==========================================================================================================================================
 //GUIDs & FIDs
 
 // 32 chars Hex (identifier for the resource)
@@ -964,7 +366,7 @@ function vrodos_registrationhook_createAssets($user_id,$username,$game_id){
 	$newPOIvideo_ID = vrodos_create_asset_frontend($parentGame_tax_id, $poiVideo_tax_id, $game_slug);
 	$newSite_ID = vrodos_create_asset_frontend($parentGame_tax_id, $site_tax_id, $game_slug);
 
-	vrodos_registrationhook_uploadAssets_noTexture($artifactTitle,$newArtifact_ID,$game_slug,'artifact');
+	vrodos_registrationhook_uploadAssets_noTexture($artifact_text_obj['assetTitleForm'],$newArtifact_ID,$game_slug,'artifact');
 	vrodos_registrationhook_uploadAssets_noTexture($doorTitle,$newDoor_ID,$game_slug,'door');
 	vrodos_registrationhook_uploadAssets_noTexture($poiImageTitle,$newPOIimage_ID,$game_slug,'poi_image');
 	vrodos_registrationhook_uploadAssets_noTexture($poiVideoTitle,$newPOIvideo_ID,$game_slug,'poi_video');
@@ -1071,90 +473,7 @@ function vrodos_get_all_Available_molecules_of_game($scene_id){
 }
 
 
-// Chemistry: Get molecule list for analytics
-function vrodos_derive_molecules_checklist(){
-    
-    $analytics_molecule_list = array('HCL','H2O','NaF','NaCl','KBr','CH4','CaCl2','CF4');
-	$analytics_molecule_checklist = array(0,0,0,0,0,0,0,0);
-	$molecules = vrodos_get_all_molecules_of_game($project_id);
-	$molecule_list = [];
-	foreach ($molecules as $molecule) {
-		array_push($molecule_list, $molecule['moleculeType']);
-	}
 
-	foreach ($analytics_molecule_list as $idx => $molecule) {
-		if (in_array( $molecule, $molecule_list)) {
-			$analytics_molecule_checklist[$idx] = 1;
-		}
-	}
-	$analytics_molecule_checklist = implode("", $analytics_molecule_checklist);
- 
-	return $analytics_molecule_checklist;
-}
-
-
-//Get All MOLECULES of specific game by given project ID
-function vrodos_get_all_molecules_of_game($project_id) {
-
-	$game_post = get_post($project_id);
-	$gameSlug = $game_post->post_name;
-	$assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
-	$assetPGameID = $assetPGame->term_id;
-
-
-	$my_posts = get_page_by_path("chemistry-joker",ARRAY_A,'vrodos_game');
-
-	$assetJokerGameId = $my_posts['ID'];
-
-	$moleculesIds = array();
-
-
-	// Define custom query parameters
-	$custom_query_args = array(
-		'post_type' => 'vrodos_asset3d',
-		'posts_per_page' => -1,
-		'tax_query' => array(
-			'relation' => 'AND',
-			array(
-				'taxonomy' => 'vrodos_asset3d_pgame',
-				'field'    => 'slug', //'term_id',
-				'terms'    => array($gameSlug, "chemistry-joker") //array($assetPGameID, $assetJokerGameId)
-			),
-			array(
-				'taxonomy' => 'vrodos_asset3d_cat',
-				'field'    => 'slug',
-				'terms'    => 'molecule',
-			),
-		),
-		'orderby' => 'ID',
-		'order' => 'DESC',
-	);
-
-	$custom_query = new WP_Query( $custom_query_args );
-
-	// Output custom query loop
-	if ( $custom_query->have_posts() ) {
-		while ($custom_query->have_posts()) {
-			$custom_query->the_post();
-
-
-
-			$molecule_id = get_the_ID();
-
-			$molecule_type = get_post_meta($molecule_id, 'vrodos_molecule_ChemicalTypeVal', true);
-			$molecule_title = get_the_title();
-			$the_featured_image_ID = $screenimgID = get_post_meta($molecule_id, 'vrodos_asset3d_screenimage', true);
-			$the_featured_image_url = wp_get_attachment_url( $the_featured_image_ID );
-
-			$moleculesIds[] = ['moleculeID'=>$molecule_id, 'moleculeName'=>$molecule_title, 'moleculeImage'=>$the_featured_image_url, 'moleculeType'=>$molecule_type  ];
-		}
-	}
-
-	wp_reset_postdata();
-	$wp_query = NULL;
-
-	return $moleculesIds;
-}
 
 //Get All DOORS of specific game (from all scenes) by given project ID (parent game ID)
 function vrodos_get_all_doors_of_project_fastversion($parent_project_id_as_term_id){
@@ -1316,9 +635,6 @@ function vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id){
 
 	return $sceneIds;
 }
-
-
-
 
 
 //=============================== SEMANTICS ON 3D ============================================================
@@ -2107,8 +1423,6 @@ function vrodos_append_scenes_in_EditorBuildSettings_dot_asset($filepath, $scene
 
 function vrodos_save_scene_async_action_callback()
 {
-    // only for Chemistry labs
-	//$mole = update_post_meta( $_POST['scene_id'], 'vrodos_available_molecules',$_POST['available_molecules']);
 
 	// Save screenshot
 	if (isset($_POST['scene_screenshot']))
@@ -2213,7 +1527,6 @@ function vrodos_redo_scene_async_action_callback()
     echo $res!=0 ? 'true' : 'false';
     wp_die();
 }
-
 
 
 
@@ -2327,6 +1640,4 @@ function addMoleculePrefabToAssets($projectLocalPath, $projectName, $molecule_po
 	// Make the prefab and its meta
 	$pdbloader->makeThePrefab($molecule_post_id, $molecule_post_name, $molecule['atoms'], $molecule['verticesBonds'], $dirMolecules);
 }
-
-
 ?>

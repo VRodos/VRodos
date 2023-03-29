@@ -38,8 +38,8 @@ $current_user_id = get_current_user_id();
 
 echo '<script>';
 echo 'isAdmin="'.$isAdmin.'";'; // This variable is used in the request_game_assemble.js
-echo 'current_user_id="'.$current_user_id.'";';
-echo 'parameter_Scenepass="'.$parameter_Scenepass.'";';
+echo 'let current_user_id="'.$current_user_id.'";';
+echo 'let parameter_Scenepass="'.$parameter_Scenepass.'";';
 echo '</script>';
 
 $full_title = "Projects";
@@ -141,103 +141,66 @@ $login_username = $current_user->user_login;
 
                         <!-- Radio buttons for Selecting Project type -->
                         <label class="mdc-typography--title mdc-theme--text-primary-on-light NewGameLabel">Choose <?php echo $single;?> type</label>
+
                         <ul class="RadioButtonList" onclick="loadProjectTypeDescription();">
                             <!-- Virtual Tour -->
-                            <?php if ($project_scope===0){?>
-                                <li class="mdc-form-field">
-                                    <div class="mdc-radio">
-                                        <input class="mdc-radio__native-control" type="radio" id="gameTypeArchRadio"
-                                               checked="" name="projectTypeRadio" value="1">
-                                        <div class="mdc-radio__background">
-                                            <div class="mdc-radio__outer-circle"></div>
-                                            <div class="mdc-radio__inner-circle"></div>
-                                        </div>
-                                    </div>
-                                    <label id="gameTypeArchRadio-label" for="gameTypeArchRadio">
-                                        <i class="material-icons">
-                                            <?php echo vrodos_project_type_icon('archaeology') ?>
-                                        </i>
-                                        <span style="vertical-align: super">Virtual Tour</span>
-                                    </label>
-                                </li>
-                            <?php }?>
 
-                            <!-- Virtual Labs -->
-                            <?php if ($project_scope===1){?>
-                                <li class="mdc-form-field">
-                                    <div class="mdc-radio">
-                                        <input class="mdc-radio__native-control" type="radio" id="gameTypeChemistryRadio"
-                                               name="projectTypeRadio" value="3">
-                                        <div class="mdc-radio__background">
-                                            <div class="mdc-radio__outer-circle"></div>
-                                            <div class="mdc-radio__inner-circle"></div>
-                                        </div>
+                            <li class="mdc-form-field">
+                                <div class="mdc-radio">
+                                    <input class="mdc-radio__native-control" type="radio" id="gameTypeArchRadio"
+                                           checked="" name="projectTypeRadio" value="archaeology_games">
+                                    <div class="mdc-radio__background">
+                                        <div class="mdc-radio__outer-circle"></div>
+                                        <div class="mdc-radio__inner-circle"></div>
                                     </div>
-                                    <label id="gameTypeChemistryRadio-label" for="gameTypeChemistryRadio">
-                                        <i class="material-icons">
-                                            <?php echo vrodos_project_type_icon('Chemistry') ?>
-                                        </i>
-                                        <span style="vertical-align: super">Chemistry</span>
-                                    </label>
-                                </li>
+                                </div>
+                                <label id="gameTypeArchRadio-label" for="gameTypeArchRadio">
+                                    <i class="material-icons">
+                                        <?php echo vrodos_project_type_icon('archaeology') ?>
+                                    </i>
+                                    <span style="vertical-align: super">Default</span>
+                                </label>
+                            </li>
 
-                                <li class="mdc-form-field">
-                                    <div class="mdc-radio">
-                                        <input class="mdc-radio__native-control" type="radio" id="gameTypeEnergyRadio"
-                                               checked="" name="projectTypeRadio" value="2">
-                                        <div class="mdc-radio__background">
-                                            <div class="mdc-radio__outer-circle"></div>
-                                            <div class="mdc-radio__inner-circle"></div>
-                                        </div>
-                                    </div>
-                                    <label id="gameTypeEnergyRadio-label" for="gameTypeEnergyRadio">
-                                        <i class="material-icons">
-                                            <?php echo vrodos_project_type_icon('Energy');?>
-                                        </i>
-                                        <span style="vertical-align: super">Energy</span>
-                                    </label>
-                                </li>
-                            <?php }?>
 
                             <!-- VR Expo -->
-                            <?php if ($project_scope===2){?>
-                                <li class="mdc-form-field">
-                                    <div class="mdc-radio">
-                                        <input class="mdc-radio__native-control" type="radio" id="gameTypeVRExpoRadio"
-                                               checked="" name="projectTypeRadio" value="4">
-                                        <div class="mdc-radio__background">
-                                            <div class="mdc-radio__outer-circle"></div>
-                                            <div class="mdc-radio__inner-circle"></div>
-                                        </div>
+
+                            <li class="mdc-form-field">
+                                <div class="mdc-radio">
+                                    <input class="mdc-radio__native-control" type="radio" id="gameTypeVRExpoRadio"
+                                           checked="" name="projectTypeRadio" value="vrexpo_games">
+                                    <div class="mdc-radio__background">
+                                        <div class="mdc-radio__outer-circle"></div>
+                                        <div class="mdc-radio__inner-circle"></div>
                                     </div>
-                                    <label id="gameTypeVRExpoRadio-label" for="gameTypeVRExpoRadio">
-                                        <i class="material-icons">
-                                            <?php echo vrodos_project_type_icon('vrexpo') ?>
-                                        </i>
-                                        <span style="vertical-align: super">VR Expo</span>
-                                    </label>
-                                </li>
-                            <?php }?>
+                                </div>
+                                <label id="gameTypeVRExpoRadio-label" for="gameTypeVRExpoRadio">
+                                    <i class="material-icons">
+                                        <?php echo vrodos_project_type_icon('vrexpo') ?>
+                                    </i>
+                                    <span style="vertical-align: super">VR Expo</span>
+                                </label>
+                            </li>
+
 
                             <!-- Virtual Production -->
-                            <?php if ($project_scope===3){?>
-                                <li class="mdc-form-field">
-                                    <div class="mdc-radio">
-                                        <input class="mdc-radio__native-control" type="radio" id="gameTypeVirtualProductionRadio"
-                                               checked="" name="projectTypeRadio" value="5">
-                                        <div class="mdc-radio__background">
-                                            <div class="mdc-radio__outer-circle"></div>
-                                            <div class="mdc-radio__inner-circle"></div>
-                                        </div>
+
+                            <li class="mdc-form-field">
+                                <div class="mdc-radio">
+                                    <input class="mdc-radio__native-control" type="radio" id="gameTypeVirtualProductionRadio"
+                                           checked="" name="projectTypeRadio" value="virtualproduction_games">
+                                    <div class="mdc-radio__background">
+                                        <div class="mdc-radio__outer-circle"></div>
+                                        <div class="mdc-radio__inner-circle"></div>
                                     </div>
-                                    <label id="gameTypeVirtualProductionRadio-label" for="gameTypeVirtualProductionRadio">
-                                        <i class="material-icons">
-                                            <?php echo vrodos_project_type_icon('virtualproduction') ?>
-                                        </i>
-                                        <span style="vertical-align: super">Virtual Production</span>
-                                    </label>
-                                </li>
-                            <?php }?>
+                                </div>
+                                <label id="gameTypeVirtualProductionRadio-label" for="gameTypeVirtualProductionRadio">
+                                    <i class="material-icons">
+                                        <?php echo vrodos_project_type_icon('virtualproduction') ?>
+                                    </i>
+                                    <span style="vertical-align: super">Virtual Production</span>
+                                </label>
+                            </li>
                         </ul>
 
                         <!-- Description for project : Initialized with Javascript in below -->
@@ -397,11 +360,13 @@ $login_username = $current_user->user_login;
 
     jQuery('#createNewProjectBtn').click( function (e) {
         // Title of game project
-        var title_vrodos_project = document.getElementById('title').value;
+        let title_vrodos_project = document.getElementById('title').value;
         if (title_vrodos_project.length > 2) {
-            var project_type = document.getElementsByName("projectTypeRadio")[0].value;
+            let project_type = document.querySelector('input[name="projectTypeRadio"]:checked').value;
 
-            // CREATE THE PROJECT !
+            console.log(project_type);
+
+             // CREATE THE PROJECT !
             vrodos_createProjectAjax(title_vrodos_project, project_type, current_user_id, parameter_Scenepass);
 
             jQuery('#createNewProjectBtn').hide();
