@@ -31,6 +31,29 @@
     <div id="directorline" style=""></div>
 
     <script>
+		AFRAME.registerComponent('video-controls', {
+
+                init: function () {
+                    let video = document.querySelector("#video");
+
+                    let videoDisplay = document.querySelector("#video-display");
+                    let videoBorder = document.querySelector("#video-border");
+                    let videoMesh = videoDisplay.getObject3D("mesh");
+                    let borderMesh = videoBorder.getObject3D("mesh");
+
+                    videoBorder.addEventListener("mousedown", function (event) {
+                        if (video.paused) {
+                            video.play();
+                            //borderMesh.material.color.set("#004400");
+                        }
+                        else {
+                            video.pause();
+                            //borderMesh.material.color.set("#440000");
+                        }
+                    });
+                }
+
+        });
 		AFRAME.registerComponent('door-listener', {
 				schema: {type: "string", default: "default value"},
 				init: function(){
@@ -188,7 +211,17 @@
         </a-entity>
       </template>
     </a-assets>
+	 <a-assets timeout="10000">
+            <video id="video" loop="true" src="http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4"
+                ></video>
+        </a-assets>
 
+		<!--
+        <a-plane id="video-border" width="17" height="10" position="0 5 -20" color="#440000" video-controls>
+            <a-video id="video-display" width="16" height="9" position="0 0 0.1" src="#video">
+            </a-video>
+        </a-plane>
+		-->
 
     <!-- Pawn -->
     <a-entity id="player"

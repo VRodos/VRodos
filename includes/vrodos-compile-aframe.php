@@ -43,6 +43,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 			if ( $o->categoryName == "Artifact" ) {
 				$glbURL[$key] = get_the_guid( $o->glbID );
 				$o->glbURL[$key] = $glbURL[$key];
+				//print_r($glbURL[$key]);
 			}
 		}
 	}
@@ -296,12 +297,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 
 		
 		foreach($objects as $nameObject => $contentObject) {
-			
+			//print_r($contentObject->categoryName);
 			// ===========  Artifact==============
 			if ( $contentObject->categoryName == 'Artifact' ) {
 				
 				$fileOperations->writer("output_master.txt", $contentObject->assetname);
-				
+				/*
 				if (strcasecmp($contentObject->assetname, 'water')==0) {
 					
 					$a_entity = $dom->createElement( "a-ocean" );
@@ -334,7 +335,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 						
 						$ascene->appendChild( $a_entity );
 				
-				}else if ( str_contains($contentObject->assetname, 'Door')) {
+				}
+				*/
+				if ( str_contains($contentObject->assetname, 'Door')) {
 					$a_entity = $dom->createElement( "a-entity" );
 					$a_entity->appendChild( $dom->createTextNode( '' ) );
 					//rint_r($contentObject->assetname);
@@ -355,11 +358,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 					
 					
 					$ascene->appendChild( $a_entity );
-				}
-
-				
-				else {
-					
+				}else {
+					//print_r($contentObject->categoryName);
 					$a_entity = $dom->createElement( "a-entity" );
 					$a_entity->appendChild( $dom->createTextNode( '' ) );
 					
@@ -377,8 +377,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 				}
 				
 				//==================== Pawn =================
-			}	
-			else if ( $contentObject->categoryName == 'pawn' ) {
+			}else if ( $contentObject->categoryName == 'pawn' ) {
 				
 				
 				if($showPawnPositions=="true") {
@@ -469,11 +468,49 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 						                                "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
 						                                "intensity:".$contentObject->lightintensity);
 						break;
-				}
+					}   
 				
 				// Add to scene
 				$ascene->appendChild( $a_light );
-			}
+				}else if ( $contentObject->categoryName == 'Door' ) {
+					//print_r($contentObject->categoryName);
+					$a_entity = $dom->createElement( "a-entity" );
+					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					
+					$material = "";
+					$fileOperations->setMaterial( $material, $contentObject );
+					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
+					$a_entity->setAttribute( "class", "override-materials" );
+					$a_entity->setAttribute( "id", $nameObject );
+					$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
+					$a_entity->setAttribute( "material", $material );
+					$a_entity->setAttribute( "clear-frustum-culling", "" );
+					
+					$ascene->appendChild( $a_entity );
+
+						//includeDoorFunctionality($a_entity, $door_link)
+				}	
+				else if ( $contentObject->categoryName == 'PointsofInterest' ) {
+					print_r($contentObject->categoryName);
+					$a_entity = $dom->createElement( "a-plane" );
+					$a_entity->appendChild( $dom->createTextNode( '' ) );
+					
+					$material = "";
+					$fileOperations->setMaterial( $material, $contentObject );
+					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
+					
+					//$a_entity->setAttribute( "class", "override-materials" );
+					$a_entity->setAttribute( "id", "video-border");
+					$a_entity->setAttribute( "height", "20" );
+					$a_entity->setAttribute( "width", "20" );
+					$a_entity->setAttribute( "position", "0 5 -20" );
+					$a_entity->setAttribute('video-controls',"");
+					
+					$ascene->appendChild( $a_entity );
+
+						//includeDoorFunctionality($a_entity, $door_link)
+				}
+			
 		}
 		
 		$contentNew = $dom->saveHTML();
