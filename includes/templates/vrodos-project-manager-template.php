@@ -377,9 +377,9 @@ $login_username = $current_user->user_login;
 
 
     function deleteProject(id) {
-        var dialogTitle = document.getElementById("delete-dialog-title");
-        var dialogDescription = document.getElementById("delete-dialog-description");
-        var projectTitle = document.getElementById(id+"-title").innerHTML;
+        let dialogTitle = document.getElementById("delete-dialog-title");
+        let dialogDescription = document.getElementById("delete-dialog-description");
+        let projectTitle = document.getElementById(id+"-title").innerHTML;
         projectTitle = projectTitle.substring(0, projectTitle.indexOf('<'));
         projectTitle = projectTitle.trim();
 
@@ -389,25 +389,9 @@ $login_username = $current_user->user_login;
         dialog.show();
     }
 
-
     jQuery('#deleteProjectBtn').click( function (e) {
-
         jQuery('#delete-dialog-progress-bar').show();
-
-        // Disable buttons
-        jQuery( "#deleteProjectBtn" ).addClass( "LinkDisabled" );
-
-        jQuery( "#canceldeleteProjectBtn" ).addClass( "LinkDisabled" );
-
-        //console.log("ID:", dialog.id);
         vrodos_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
-
-        // Enable buttons after 3 secs
-        setTimeout(function(){
-                jQuery( "#deleteProjectBtn" ).removeClass( "LinkDisabled" );
-                jQuery( "#canceldeleteProjectBtn" ).removeClass( "LinkDisabled" );
-            },
-            3000);
     });
 
     jQuery('#canceldeleteProjectBtn').click( function (e) {
@@ -418,9 +402,9 @@ $login_username = $current_user->user_login;
 
     // ------- Collaborators -------------------
     function collaborateProject(project_id) {
-        var dialogTitle = document.getElementById("collaborate-dialog-title");
-        var dialogDescription = document.getElementById("collaborate-dialog-description");
-        var projectTitle = document.getElementById(project_id+"-title").innerHTML;
+        let dialogTitle = document.getElementById("collaborate-dialog-title");
+        let dialogDescription = document.getElementById("collaborate-dialog-description");
+        let projectTitle = document.getElementById(project_id+"-title").innerHTML;
         projectTitle = projectTitle.substring(0, projectTitle.indexOf('<'));
         projectTitle = projectTitle.trim();
 

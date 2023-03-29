@@ -38,10 +38,10 @@ function vrodos_create_project_frontend_callback() {
     $project_type_slug = $_POST['project_type_slug'];
 
     $taxonomy = get_term_by('slug', $project_type_slug, 'vrodos_game_type');
-    $tax_id = $taxonomy->term_id;
+    $project_type_id = $taxonomy->term_id;
     $project_taxonomies = array(
         'vrodos_game_type' => array(
-            $tax_id,
+            $project_type_id,
         )
     );
 
@@ -57,6 +57,9 @@ function vrodos_create_project_frontend_callback() {
 
     $post = get_post($project_id);
 
+    // Link project to game type
+    wp_set_object_terms(  $post->ID, $project_type_slug, 'vrodos_game_type' );
+
     // Create a parent game tax category for the scenes
     wp_insert_term($post->post_title,'vrodos_scene_pgame', array(
             'description'=> '-',
@@ -71,8 +74,7 @@ function vrodos_create_project_frontend_callback() {
         )
     );
 
-    // Link project to game type
-    wp_set_object_terms(  $post->ID, $project_type_slug, 'vrodos_game_type' );
+    vrodos_create_default_scenes_for_game($post->post_name, $project_type_id);
 
     echo $project_id;
     wp_die();
