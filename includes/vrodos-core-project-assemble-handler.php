@@ -169,13 +169,6 @@ function vrodos_fetch_list_projects_callback() {
             $game_date = get_the_date();
             //$game_link = get_permalink();
 
-            //if ($project_scope==0)
-            //if ($game_title == 'Energy Joker' || $game_title == 'Chemistry Joker' )
-            //   continue;
-
-            //if ($project_scope==1)
-            //   if ($game_title == 'Archaeology Joker')
-            //       continue;
 
             // Do not show Joker projects
             if (str_contains($game_title, ' Joker'))
@@ -190,7 +183,6 @@ function vrodos_fetch_list_projects_callback() {
             $editscenePage = vrodos_getEditpage('scene');
 
             $edit_scene_page_id = $editscenePage[0]->ID;
-
 
             $loadMainSceneLink = esc_url( (get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type']));
 
@@ -255,7 +247,7 @@ function vrodos_fetch_list_projects_callback() {
             // -------- Delete button ----------------
             echo '<a href="javascript:void(0)" class="" style="" aria-label="Delete game" title="Delete project" '.
                 'onclick="deleteProject('.$game_id.')">';
-            echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color:orangered" '
+            echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color: crimson" '
                 .'aria-hidden="true" title="Delete project">delete</i>';
             echo '</a>';
 
@@ -827,9 +819,6 @@ function vrodos_compile_append_scene_to_s_selector($scene_id, $scene_name, $scen
     if ($gameType == 'Archaeology') {
         $taxterm_suffix = '-arch';
         $taxnamemeta_suffix = '_arch';
-    }else if ($gameType == 'Chemistry') {
-        $taxterm_suffix = '-chem';
-        $taxnamemeta_suffix = '_chem';
     }
 
     $mainMenuTerm = get_term_by('slug', 'mainmenu'.$taxterm_suffix.'-yaml',

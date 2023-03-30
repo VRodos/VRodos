@@ -140,7 +140,6 @@ echo 'let isUserAdmin="'.current_user_can('administrator').'";';
 echo 'let scene_id ="'.$current_scene_id.'";';
 echo 'let game_type ="'.strtolower('archaeology').'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
-echo 'energy_stats = '.json_encode(vrodos_windEnergy_scene_stats($current_scene_id)).';';
 echo 'var siteurl="'.site_url().'";';
 echo '</script>';
 

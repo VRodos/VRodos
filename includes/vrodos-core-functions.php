@@ -32,10 +32,6 @@ function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
 	$gameSlug = $gamePost->post_name;
 
 	$scene_type_slug = 'wonderaround-yaml';
-	if($project_type == 'chemistry_games'){$scene_type_slug='wonderaround-lab-yaml';}
-	if($project_type == 'energy_games'){$scene_type_slug='educational-energy';}
-
-
 
 	$custom_query_args = array(
 		'post_type' => 'vrodos_scene',
@@ -104,25 +100,6 @@ function vrodos_create_joker_projects() {
 		
 		create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
 	}
-
-	if (!vrodos_the_slug_exists('energy-joker')) {
-		
-		$tax_slug = 'energy_games';
-		$post_title = 'Energy Joker';
-		$post_name = 'energy-joker';
-		
-		create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
-	}
- 
-	if (!vrodos_the_slug_exists('chemistry-joker')) {
-		
-		$tax_slug = 'chemistry_games';
-		$post_title = 'Chemistry Joker';
-		$post_name = 'chemistry-joker';
-		
-		create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
-	}
- 
 
 	if (!vrodos_the_slug_exists('vrexpo-joker')) {
 

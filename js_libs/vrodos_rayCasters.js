@@ -121,7 +121,7 @@ function onLeftMouseDown( event ) {
 
         // If Steve is selected
         if( (intersects[0].name === 'Steve' || intersects[0].name === 'SteveShieldMesh'
-                || intersects[0].name === 'SteveMesh' ) && event.button === 0 ){
+            || intersects[0].name === 'SteveMesh' ) && event.button === 0 ){
 
             setBackgroundColorHierarchyViewer("avatarCamera");
 
@@ -286,8 +286,8 @@ function contextMenuClick(event){
     event.preventDefault();
     let intersected = findIntersected(event);
 
-     if (intersected.length === 0)
-         return;
+    if (intersected.length === 0)
+        return;
 
     // Check if right-clicked is the one selected already with left-click
     if (intersected[0].name === transform_controls.object.name){
@@ -590,9 +590,9 @@ function displaySpotProperties(event, name){
 
     for (var i=0; i<jQuery('#hierarchy-viewer')[0].childNodes.length; i++){
         //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).categoryName ){
-            var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
-            var scene_object = envir.scene.getObjectByName(id_Hierarchy);
-            spotTargetObject.appendChild(new Option(scene_object.name));
+        var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
+        var scene_object = envir.scene.getObjectByName(id_Hierarchy);
+        spotTargetObject.appendChild(new Option(scene_object.name));
         //}
     }
 
@@ -729,196 +729,6 @@ function displayDoorProperties(event, name){
 }
 
 
-/**
- * Display marker properties
- *
- * @param event
- * @param name
- */
-function displayMarkerProperties(event, name){
-
-    var popUpMarkerPropertiesDiv = jQuery("#popUpMarkerPropertiesDiv");
-
-    // The three select penalties
-    var selectArchPenalty   = jQuery("#archaeology_penalty");
-    var selectHVPenalty     = jQuery("#hv_distance_penalty");
-    var selectNaturalPenalty= jQuery("#natural_resource_proximity_penalty");
-
-    // Save the previous marker values (in case of  direct mouse click on another marker)
-    selectArchPenalty.trigger("change");
-    selectHVPenalty.trigger("change");
-    selectNaturalPenalty.trigger("change");
-
-    // Clear values and unbind and select function
-    clearAndUnbind("archaeology_penalty", null, null);
-    clearAndUnbind("hv_distance_penalty", null, null);
-    clearAndUnbind("natural_resource_proximity_penalty", null, null);
-
-    // Create options
-    createOption(selectArchPenalty[0], "0", "0", true, false, "#fff");
-    createOption(selectArchPenalty[0], "2", "2", false, false, "#fff");
-
-    createOption(selectHVPenalty[0], "0", "0", true, false, "#fff");
-    createOption(selectHVPenalty[0], "2", "2", false, false, "#fff");
-
-    createOption(selectNaturalPenalty[0], "0", "0", true, false, "#fff");
-    createOption(selectNaturalPenalty[0], "2", "2", false, false, "#fff");
-
-    // Load selected values from 3D scene
-    selectArchPenalty.val( envir.scene.getObjectByName(name).archaeology_penalty );
-    selectHVPenalty.val( envir.scene.getObjectByName(name).hv_penalty );
-    selectNaturalPenalty.val( envir.scene.getObjectByName(name).natural_penalty );
-
-    // Show the whole popup div
-    showWholePopupDiv(popUpMarkerPropertiesDiv, event);
-
-    // Load PISA diagram for selected marker
-    loadPISAMarkerIframes(envir.scene.getObjectByName(name).archaeology_penalty, envir.scene.getObjectByName(name).hv_penalty, envir.scene.getObjectByName(name).natural_penalty);
-
-    function loadPISAMarkerIframes(arch_penalty, hv_penalty, natural_penalty) {
-
-        var scene_elements = envir.scene.children;
-        var energy_fields = [];
-        var penalties = [];
-        var turbine_small =[];
-        var turbine_medium = [];
-        var turbine_large = [];
-
-        energy_fields.env = envir.sceneType;
-        if (!energy_fields.env) {energy_fields.env = 'mountains';}
-
-        switch(energy_fields.env) {
-
-            // Wind Class I
-            case 'mountains':
-                turbine_small.power = 0.9;
-                turbine_small.area = 52;
-                turbine_small.cost = 1;
-
-                turbine_medium.power = 3;
-                turbine_medium.area = 90;
-                turbine_medium.cost = 3;
-
-                turbine_large.power = 6;
-                turbine_large.area = 128;
-                turbine_large.cost = 5;
-
-                break;
-
-            // Wind Class II
-            case 'fields':
-                turbine_small.power = 0.85;
-                turbine_small.area = 60;
-                turbine_small.cost = 1;
-
-                turbine_medium.power = 2;
-                turbine_medium.area = 90;
-                turbine_medium.cost = 2;
-
-                turbine_large.power = 3;
-                turbine_large.area = 90;
-                turbine_large.cost = 3;
-
-                break;
-
-            // Wind Class III
-            case 'seashore':
-                turbine_small.power = 0.85;
-                turbine_small.area = 60;
-                turbine_small.cost = 1;
-
-                turbine_medium.power = 2;
-                turbine_medium.area = 90;
-                turbine_medium.cost = 2;
-
-                turbine_large.power = 3;
-                turbine_large.area = 126;
-                turbine_large.cost = 4;
-
-                break;
-
-            default:
-        }
-
-        penalties.arch_penalty = (parseInt(arch_penalty, 10) === 0) ? 0 : 1;
-        penalties.hv_penalty = (parseInt(hv_penalty, 10) === 0) ? 0 : 1;
-        penalties.natural_penalty = (parseInt(natural_penalty, 10) === 0) ? 0 : 1;
-
-        energy_fields.mapId = parseInt(calculateMapId(penalties.arch_penalty, penalties.natural_penalty, penalties.hv_penalty), 10);
-
-        var url1 = createIframeUrl(energy_fields.env, energy_fields.mapId, turbine_small);
-        var url2 = createIframeUrl(energy_fields.env, energy_fields.mapId, turbine_medium);
-        var url3 = createIframeUrl(energy_fields.env, energy_fields.mapId, turbine_large);
-
-
-        var iframe1 = jQuery('#turbine1-iframe');
-        iframe1.attr('src', url1);
-
-        var iframe2 = jQuery('#turbine2-iframe');
-        iframe2.attr('src', url2);
-
-        var iframe3 = jQuery('#turbine3-iframe');
-        iframe3.attr('src', url3);
-
-    }
-
-    function calculateMapId(arch, natural, hv) {
-
-        var penalty = {
-            hv: 1,
-            natural: 2,
-            arch: 4
-        };
-
-        return (hv * penalty.hv) + (natural * penalty.natural) + (arch * penalty.arch);
-    }
-
-    function createIframeUrl(env, id, turbine) {
-
-        return "https://analytics.envisage-h2020.eu/?" +
-            "lab=energytool" +
-            "&env=" + env +
-            "&map=" + id.toString() +
-            "&watts=" + turbine.power.toString() +
-            "&area=" +  turbine.area.toString() +
-            "&cost=" +  turbine.cost.toString();
-
-    }
-
-    function clearIframes() {
-        var iframe1 = jQuery('#turbine1-iframe');
-        iframe1.attr('src', 'about:blank');
-
-        var iframe2 = jQuery('#turbine2-iframe');
-        iframe2.attr('src', 'about:blank');
-
-        var iframe3 = jQuery('#turbine3-iframe');
-        iframe3.attr('src', 'about:blank');
-    }
-
-    // On popup change
-    selectArchPenalty.change(function(e) {
-        envir.scene.getObjectByName(name).archaeology_penalty = selectArchPenalty.val();
-        clearIframes();
-        loadPISAMarkerIframes(jQuery("#archaeology_penalty").val(), jQuery("#hv_distance_penalty"), jQuery("#natural_resource_proximity_penalty"));
-    });
-
-    selectHVPenalty.change(function(e) {
-        envir.scene.getObjectByName(name).hv_penalty = selectHVPenalty.val();
-        clearIframes();
-        loadPISAMarkerIframes(jQuery("#archaeology_penalty").val(), jQuery("#hv_distance_penalty"), jQuery("#natural_resource_proximity_penalty"));
-    });
-
-    selectNaturalPenalty.change(function(e) {
-        envir.scene.getObjectByName(name).natural_penalty = selectNaturalPenalty.val();
-        clearIframes();
-        loadPISAMarkerIframes(jQuery("#archaeology_penalty").val(), jQuery("#hv_distance_penalty"), jQuery("#natural_resource_proximity_penalty"));
-    });
-}
-
-
-
-
 
 // ----------------- Aux ----------------------------------------------------------
 // /**
@@ -1053,50 +863,6 @@ function showWholePopupDiv(popUpDiv, event) {
 
     event.preventDefault();
 }
-
-//------------------------ OBSO -------------------------
-
-// Clear past options
-// function clearAndUnbindCheckBoxProperties( chkboxname ) {
-//     var chbox = jQuery("#" + chkboxname);
-//     chbox.prop('checked',false);
-//     chbox.unbind('change');     // Remove listeners
-// }
-
-//
-
-//
-// function clearAndUnbindMarkerProperties() {
-//     // marker target scene
-//     var popupMarkerSelect = document.getElementById("popupMarkerSelect");
-//     for (var i = popupMarkerSelect.options.length; i-->0;)
-//         popupMarkerSelect.options[i] = null;
-//
-//     jQuery("#popupMarkerSelect").unbind('change');
-// }
-//
-//
-// function clearAndUnbindMicroscopeTextbookProperties(){
-//
-//     var ppSelect = document.getElementById("chemistrySceneSelectComponent");
-//
-//     for (var i = ppSelect.options.length; i-->0;)
-//         ppSelect.options[i] = null;
-//
-//     jQuery("#chemistrySceneSelectComponent").unbind('change');
-// }
-//
-//
-// function clearAndUnbindBoxProperties(){
-//
-//     var ppSelect = document.getElementById("chemistryGateComponent");
-//
-//     for (var i = ppSelect.options.length; i-->0;)
-//         ppSelect.options[i] = null;
-//
-//     jQuery("#chemistryGateComponent").unbind('change');
-// }
-
 
 /**
  //  * Poi image text properties

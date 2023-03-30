@@ -1063,14 +1063,6 @@ if($asset_id != null) {
 
         <!-- MOLECULES  only-->
 
-
-        <?php
-        // Obsolete virtual labs code
-        //  if ($project_scope == 1) {
-        //        require(plugin_dir_path(__DIR__) . '/templates/vrodos-asset-editor-vlabsWidgets.php');
-        //  }
-        ?>
-
         <hr class="WhiteSpaceSeparator" />
 
         <!-- CATEGORY IPR -->

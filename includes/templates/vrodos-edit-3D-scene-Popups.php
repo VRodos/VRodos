@@ -5,8 +5,7 @@
     function changeOverrideMaterial() {
         transform_controls.object.children[0].overrideMaterial = 'true';
     }
-    
-    
+
     
     function updateSpot(){
         envir.scene.traverse(function(child) {
@@ -130,10 +129,7 @@
 
     }
 
-    
-    
 
-    
     // Set video texture when popup change
     function textureChangeFunction() {
         var url = document.getElementById("ObjectVideoTexture").value;
@@ -550,52 +546,6 @@
 
     <div class="mdc-layout-grid">
         <div class="mdc-layout-grid__inner">
-            
-            <?php if ($project_scope == 1) { ?>
-
-                <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
-                    <table>
-                        <tr>
-                            <td>
-                                <label for="archaeology_penalty" class="mdc-textfield__label" style="position:inherit">Archaeology penalty</label>
-                            </td>
-                            <td>
-                                <select title="" id="archaeology_penalty" name="archaeology_penalty" style="width:50px" ></select>
-                            </td>
-                            <td>
-                                <i title="Define penalties" class="material-icons mdc-theme--text-icon-on-background" style="vertical-align: text-bottom;">attach_money</i>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>
-                                <label for="hv_distance_penalty" class="mdc-textfield__label" style="position:inherit">Distance from High voltage lines penalty</label>
-                            </td>
-                            <td>
-                                <select title="" id="hv_distance_penalty" name="hv_distance_penalty" style="width:50px">
-                                </select>
-                            </td>
-                            <td>
-                                <i title="Define penalties" class="material-icons mdc-theme--text-icon-on-background" style="vertical-align: text-bottom;">attach_money</i>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>
-                                <label for="natural_resource_proximity_penalty" class="mdc-textfield__label" style="position:inherit">Natural park proximity penalty</label>
-                            </td>
-                            <td>
-                                <select title="" id="natural_resource_proximity_penalty" name="natural_resource_proximity_penalty" style="width:50px">
-                                </select>
-                            </td>
-                            <td>
-                                <i title="Define penalties" class="material-icons mdc-theme--text-icon-on-background" style="vertical-align: text-bottom;">attach_money</i>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            
-            <?php } ?>
 
             <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2">
                 <!--                <p class="mdc-typography--title">Small Turbine</p>-->
@@ -620,37 +570,6 @@
     <!--        </select>-->
 
 </div>
-
-<!-- Microscope or Textbook @ Chemistry: Popup menu to Select a scene to go, from  -->
-<?php if ($project_scope == 1) { ?>
-    <div id="chemistrySceneSelectPopupDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2" style="min-width: 360px; display:none">
-
-        <a style="float: right;" type="button" class="mdc-theme--primary"
-           onclick='this.parentNode.style.display = "none"; clearAndUnbindMicroscopeTextbookProperties(); return false;'>
-            <i class="material-icons" style="cursor: pointer; float: right;">close</i>
-        </a>
-
-        <i title="Select a scene to load" class="material-icons mdc-theme--text-icon-on-background" style="vertical-align: text-bottom">directions</i>
-        <select title="Select a scene" id="chemistrySceneSelectComponent" class="mdc-select">
-        </select>
-    </div>
-<?php } ?>
-
-<!-- Gate @ Chemistry: Popup menu to Select a scene to go, from -->
-<div id="chemistryGatePopupDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2" style="min-width: 360px; display:none">
-
-    <a style="float: right;" type="button" class="mdc-theme--primary"
-       onclick='this.parentNode.style.display = "none"; clearAndUnbindBoxProperties(); return false;'>
-        <i class="material-icons" style="cursor: pointer; float: right;">close</i>
-    </a>
-
-    <i title="Select a functional Category label" class="material-icons mdc-theme--text-icon-on-background" style="vertical-align: text-bottom">label</i>
-    <select title="Select a functional category label" id="chemistryGateComponent" class="mdc-select">
-    </select>
-</div>
-
-
-
 
 
 <!-- POI IT @ Archaeology: Popup menu to for Reward item checkbox, from  -->

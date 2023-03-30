@@ -48,23 +48,6 @@ $full_title_lowercase = "projects";
 $single = "project";
 $multiple = "projects";
 
-//if ($project_scope == 0) {
-//	$full_title = "Virtual Tour";
-//	$full_title_lowercase = "virtual tour";
-//	$single = "tour";
-//	$multiple = "tours";
-//} else if ($project_scope == 1){
-//	$full_title = "Virtual Lab";
-//	$full_title_lowercase = "virtual lab";
-//	$single = "lab";
-//	$multiple = "labs";
-//} else {
-//	$full_title = "Game Project";
-//	$full_title_lowercase = "game project";
-//	$single = "project";
-//	$multiple = "projects";
-//}
-
 get_header();
 ?>
 
@@ -91,12 +74,11 @@ get_header();
 
 $current_user = wp_get_current_user();
 $login_username = $current_user->user_login;
-
 ?>
 
 <!-- HELP button -->
 <br/>
-    <i class="mdc-typography--subheading2 mdc-theme--text-primary-on-light"> Create a new <?php echo $single; ?> or edit an existing one</i>
+    <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light"> <i>Create a new <?php echo $single; ?> or edit an existing one</i></span>
 
     <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="float:right; right:0; display:inline-table;margin-top:10px; margin-right:10px;">Welcome,
         <a href="<?php echo get_site_url() ?>/account/" style="color:dodgerblue">
@@ -117,9 +99,8 @@ $login_username = $current_user->user_login;
             echo '</a>';
             ?>
             </span>
-            <hr class="mdc-list-divider" style="width:100%; float:right">
-            <div id="ExistingProjectsDivDOM" style="width:100%; float:right">
-            </div>
+            <hr class="mdc-list-divider" style="width:100%; float:left">
+            <div id="ExistingProjectsDivDOM" style="width:100%; float: left"></div>
         </div>
 
         <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-1"></div>
@@ -144,8 +125,8 @@ $login_username = $current_user->user_login;
                         <label class="mdc-typography--title mdc-theme--text-primary-on-light NewGameLabel">Choose <?php echo $single;?> type</label>
 
                         <ul class="RadioButtonList" onclick="loadProjectTypeDescription();">
-                            <!-- Virtual Tour -->
 
+                            <!-- Virtual Tour -->
                             <li class="mdc-form-field">
                                 <div class="mdc-radio">
                                     <input class="mdc-radio__native-control" type="radio" id="gameTypeArchRadio"
@@ -165,7 +146,6 @@ $login_username = $current_user->user_login;
 
 
                             <!-- VR Expo -->
-
                             <li class="mdc-form-field">
                                 <div class="mdc-radio">
                                     <input class="mdc-radio__native-control" type="radio" id="gameTypeVRExpoRadio"
@@ -179,13 +159,12 @@ $login_username = $current_user->user_login;
                                     <i class="material-icons">
                                         <?php echo vrodos_project_type_icon('vrexpo') ?>
                                     </i>
-                                    <span style="vertical-align: super">VR Expo</span>
+                                    <span style="vertical-align: super">VR Exposition</span>
                                 </label>
                             </li>
 
 
                             <!-- Virtual Production -->
-
                             <li class="mdc-form-field">
                                 <div class="mdc-radio">
                                     <input class="mdc-radio__native-control" type="radio" id="gameTypeVirtualProductionRadio"
@@ -204,7 +183,7 @@ $login_username = $current_user->user_login;
                             </li>
                         </ul>
 
-                        <!-- Description for project : Initialized with Javascript in below -->
+                        <!-- Description for project : Initialized with Javascript below -->
                         <span id="project-description-label"
                               class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">
                         </span>
@@ -343,7 +322,7 @@ $login_username = $current_user->user_login;
     function loadProjectTypeDescription() {
         let checked = document.querySelector('input[name="projectTypeRadio"]:checked').value;
         if (checked === 'archaeology_games') {
-            jQuery("#project-description-label").html("Design a virtual tour of your own place");
+            jQuery("#project-description-label").html("Design a virtual tour of your own");
         } else if (checked === 'vrexpo_games'){
             jQuery("#project-description-label").html("Create a VR expo space");
         } else if (checked === 'virtualproduction_games'){

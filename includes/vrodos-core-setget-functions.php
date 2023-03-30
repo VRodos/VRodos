@@ -333,7 +333,7 @@ function vrodos_getAllassets_byGameProject($gameProjectSlug, $gameProjectID){
 			array(
 				'taxonomy' => 'vrodos_asset3d_pgame',
 				'field' => 'slug',
-				'terms' => array($gameProjectSlug, 'vrexpo-joker', 'archaeology-joker', 'virtualproduction-joker', 'energy-joker', 'chemistry-joker')
+				'terms' => array($gameProjectSlug, 'vrexpo-joker', 'archaeology-joker', 'virtualproduction-joker')
 			)
 		)
 	);

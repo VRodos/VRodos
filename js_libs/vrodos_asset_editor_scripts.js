@@ -305,15 +305,9 @@ function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
 
     jQuery("#assetDescription").show();
     jQuery("#doorDetailsPanel").hide();
-    jQuery("#terrainPanel").hide();
-    jQuery("#consumerPanel").hide();
-    jQuery("#producerPanel").hide();
     //jQuery("#imgDetailsPanel").hide();
     //jQuery("#videoDetailsPanel").hide();
     jQuery("#objectPreviewTitle").hide();
-    //jQuery("#moleculeOptionsPanel").hide();
-    jQuery("#moleculeFluidPanel").hide();
-    jQuery("#chemistryBoxOptionsPanel").hide();
 }
 
 function clearList() {

@@ -111,7 +111,6 @@ $project_id    = isset($_GET['vrodos_game']) ? sanitize_text_field( intval( $_GE
 $project_post  = get_post($project_id);
 $projectSlug   = $project_post->post_name;
 
-// Get if project is : 'Archaeology' or 'Energy' or 'Chemistry'
 $project_type = $project_id ? vrodos_return_project_type($project_id)->string : null;
 
 // Get project type icon
@@ -622,20 +621,12 @@ wp_head();
 
 
             <?php
-
-
             // Options dialogue
             require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' );
 
-            // Information for Wind Energy scenes
-            sceneDetailsInfo($project_type);
             ?>
         </div>
 
-        <?php
-        // Panels 2,3,4 are Analytics for Chemistry and WindEnergy projects
-        //panelsAnalytics($project_type, $project_saved_keys);
-        ?>
     </div>
 
     <!-- Scripts part 1: The GUIs -->
@@ -654,8 +645,6 @@ wp_head();
         var compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
         compileDialog.focusTrap_.deactivate();
 
-        // Project Analytics
-        /// loadAnalyticsTab(projectId, scene_id, project_keys, game_type, user_email, current_user_id, energy_stats);
 
         // Less top margin if not Admin
         // if (!isUserAdmin)
