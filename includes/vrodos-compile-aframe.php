@@ -40,7 +40,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 		
 		// Add glbURLs from glbID
 		foreach ( $scene_json[$key]->objects as &$o ) {
-			if ( $o->categoryName == "Artifact" ) {
+			if ( $o->categoryName == "Artifact" ||  $o->categoryName == "Door") {
 				$glbURL[$key] = get_the_guid( $o->glbID );
 				$o->glbURL[$key] = $glbURL[$key];
 				//print_r($glbURL[$key]);
@@ -488,26 +488,43 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 					
 					$ascene->appendChild( $a_entity );
 
-						//includeDoorFunctionality($a_entity, $door_link)
+					includeDoorFunctionality($a_entity, $scene_id);
 				}	
-				else if ( $contentObject->categoryName == 'PointsofInterest' ) {
-					print_r($contentObject->categoryName);
+				else if ( $contentObject->categoryName == 'PointsofInterest(Video)' ) {
+					//print_r($contentObject->categoryName);
+	
+	
+					$a_asset = $dom->createElement( "a-assets" );
+					$a_asset->setAttribute( "timeout", "10000");
+	
+					$a_video_asset = $dom->createElement( "video" );
+					$a_video_asset->setAttribute( "id", "video");
+					$a_video_asset->setAttribute( "loop", "true");
+					$a_video_asset->setAttribute( "src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
+	
+					$a_asset->appendChild( $a_video_asset );
+					$ascene->appendChild( $a_asset );
+	
+					
+	
+	
 					$a_entity = $dom->createElement( "a-plane" );
-					$a_entity->appendChild( $dom->createTextNode( '' ) );
-					
-					$material = "";
-					$fileOperations->setMaterial( $material, $contentObject );
-					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
-					
-					//$a_entity->setAttribute( "class", "override-materials" );
 					$a_entity->setAttribute( "id", "video-border");
 					$a_entity->setAttribute( "height", "20" );
 					$a_entity->setAttribute( "width", "20" );
 					$a_entity->setAttribute( "position", "0 5 -20" );
 					$a_entity->setAttribute('video-controls',"");
+	
+					$a_video = $dom->createElement( "a-video" );
+					$a_video->setAttribute( "id", "video-display");
+					$a_video->setAttribute( "height", "19" );
+					$a_video->setAttribute( "width", "19" );
+					$a_video->setAttribute( "position", "0 0 0.1" );
+					$a_video->setAttribute( "src", "#video" );
 					
+					$a_entity->appendChild( $a_video );
 					$ascene->appendChild( $a_entity );
-
+	
 						//includeDoorFunctionality($a_entity, $door_link)
 				}
 			
