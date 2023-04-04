@@ -128,4 +128,33 @@ function save_extra_user_profile_field_mvnode_token( $user_id ) {
     return true;
 }
 
+function extra_user_profile_field_mvnode_url( $user ) { ?>
+
+    <table class="form-table">
+        <tr>
+            <th><label for="mvnode_url"><?php _e("MediaVerse Node URL"); ?></label></th>
+            <td>
+                <input type="text" name="mvnode_url" id="mvnode_url" value="<?php
+                echo esc_attr( get_the_author_meta( 'mvnode_url', $user->ID ) );
+                ?>" class="regular-text" /><br />
+                <span class="description"><?php _e("The Registered MV node url."); ?></span>
+            </td>
+        </tr>
+
+    </table>
+<?php }
+
+function save_extra_user_profile_field_mvnode_url( $user_id ) {
+    if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-user_' . $user_id ) ) {
+        return false;
+    }
+
+    if ( !current_user_can( 'edit_user', $user_id ) ) {
+        return false;
+    }
+
+    update_user_meta( $user_id, 'mvnode_url', $_POST['mvnode_url'] );
+    return true;
+}
+
 ?>

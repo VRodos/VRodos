@@ -249,13 +249,19 @@ require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
 // Order : 4
 add_action( 'init', 'vrodos_add_customroles');
 
-// Order: 5  -> Add extra field (meta for user actually) to view in backend named as 'mvnode_token'
+// Order: 5  -> Add extra field (meta for user actually) to view in backend named as 'mvnode_token' & mvnode_url
 add_action( 'show_user_profile', 'extra_user_profile_field_mvnode_token' );
 add_action( 'edit_user_profile', 'extra_user_profile_field_mvnode_token' );
 
-// Order: 5.5  -> Save mvnode_token for user in backend
+add_action( 'show_user_profile', 'extra_user_profile_field_mvnode_url' );
+add_action( 'edit_user_profile', 'extra_user_profile_field_mvnode_url' );
+
+// Order: 5.5  -> Save mvnode_token & mvnode_url for user in backend
 add_action( 'personal_options_update', 'save_extra_user_profile_field_mvnode_token' );
 add_action( 'edit_user_profile_update', 'save_extra_user_profile_field_mvnode_token' );
+
+add_action( 'personal_options_update', 'save_extra_user_profile_field_mvnode_url' );
+add_action( 'edit_user_profile_update', 'save_extra_user_profile_field_mvnode_url' );
 
 // Order: 6
 add_action( 'init', 'vrodos_add_capabilities_to_admin');
