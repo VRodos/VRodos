@@ -99,7 +99,7 @@ function vrodos_add_capabilities_to_admin() {
 }
 
 function extra_user_profile_field_mvnode_token( $user ) { ?>
-    <h3><?php _e("Extra profile information", "blank"); ?></h3>
+    <h3><?php _e("MediaVerse extra information", "blank"); ?></h3>
     
     <table class="form-table">
         <tr>
