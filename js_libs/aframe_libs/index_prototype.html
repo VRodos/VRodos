@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="el">
+<html lang="en">
 <head>
-    <title>Μηχανή Θεάτρου</title>
-    <meta name="description" content="Collection of examples for networked-aframe"/>
+    <title>VROdos Collaborative Environment</title>
+    <meta name="description" content="Main page of VR collaborative environment"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="UTF-8">
     <style>
@@ -25,22 +25,19 @@
             margin: 20px 0;
         }
 
-
         #wrapper {
 
         }
         #div1 {
             width:512px;
-            margin:20px;
             float:left;
-            margin-top:0px;
+            margin: 0 20px 20px;
         }
         #div2 {
             height:512px;
             width:512px;
             float:left;
-            margin:20px;
-            margin-top:0px;
+            margin: 0 20px 20px;
         }
     </style>
 </head>
@@ -52,13 +49,13 @@
         const urlSearchParams = new URLSearchParams(window.location.search);
         const params = Object.fromEntries(urlSearchParams.entries());
 
-        var lang = "el";
+        let lang = "en";
         if (params['lang']) {
             lang = params['lang'];
         }
 
         _selectYourAttribute = [];
-        _selectYourAttribute['en'] = "Select your attribute";
+        _selectYourAttribute['en'] = "Select your role";
         _selectYourAttribute['el'] = "Διάλεξε την ιδιότητά σου";
         document.getElementById("_selectYourAttribute").innerHTML = _selectYourAttribute[lang];
 
@@ -84,13 +81,13 @@
         document.getElementById("_youNeedDirector").innerHTML = _youNeedDirector[lang];
 
         if (lang === 'el') {
-            var link1 = document.createElement('a');
+            let link1 = document.createElement('a');
             link1.href =  window.location.href.substring(0, window.location.href.indexOf("?")) + "?lang=en";
             link1.innerHTML = "English";
             document.getElementById("langButtons").appendChild(link1);
         } else {
-            var link2 = document.createElement('a');
-            link2.href = window.location.href.substring(0, window.location.href.indexOf("?"));
+            let link2 = document.createElement('a');
+            link2.href = window.location.href.substring(0, window.location.href.indexOf("?")) + "?lang=el";
             link2.innerHTML = "Ελληνικά";
             document.getElementById("langButtons").appendChild(link2);
         }

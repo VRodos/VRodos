@@ -108,7 +108,7 @@ function extra_user_profile_field_mvnode_token( $user ) { ?>
                 <input type="text" name="mvnode_token" id="mvnode_token" value="<?php
                       echo esc_attr( get_the_author_meta( 'mvnode_token', $user->ID ) );
                       ?>" class="regular-text" /><br />
-                <span class="description"><?php _e("This value is taken from MV node."); ?></span>
+                <span class="description"><?php _e("The registered MV node token."); ?></span>
             </td>
         </tr>
         
@@ -137,7 +137,7 @@ function extra_user_profile_field_mvnode_url( $user ) { ?>
                 <input type="text" name="mvnode_url" id="mvnode_url" value="<?php
                 echo esc_attr( get_the_author_meta( 'mvnode_url', $user->ID ) );
                 ?>" class="regular-text" /><br />
-                <span class="description"><?php _e("The Registered MV node url."); ?></span>
+                <span class="description"><?php _e("The registered MV node url."); ?></span>
             </td>
         </tr>
 

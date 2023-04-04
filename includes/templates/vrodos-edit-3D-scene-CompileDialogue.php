@@ -13,7 +13,7 @@
 
         <header class="mdc-dialog__header">
             <h2 class="mdc-dialog__header__title">
-                Compile <?php echo $single_lowercase; ?>
+                Build <?php echo $single_lowercase; ?>
             </h2>
         </header>
 
@@ -30,7 +30,7 @@
                         </li>
                         <?php
 
-                        foreach (['Aframe'] as $sPlatform){ // ,'Windows','Linux','Mac OS','Web','Android'
+                        foreach (['Aframe'] as $sPlatform) { // ,'Windows','Linux','Mac OS','Web','Android'
                             ?>
                             <li class="mdc-list-item mdc-theme--text-primary-on-background"
                                 role="option" id="platform-<?php echo $sPlatform?>" tabindex="0" aria-selected="true">
@@ -118,7 +118,7 @@
         <footer class="mdc-dialog__footer">
             <a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Close</a>
             <a id="compileProceedBtn" type="button"
-               class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised ">Proceed</a>
+               class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised ">Build</a>
             <!--            LinkDisabled-->
         </footer>
     </div>

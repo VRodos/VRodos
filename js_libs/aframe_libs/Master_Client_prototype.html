@@ -1,33 +1,33 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="utf-8"/>
-  <title>Ζωντανή Παράσταση</title>
-  <meta name="description" content="Dev Example — Networked-Aframe with Green Screen effect"/>
+    <meta charset="utf-8"/>
+    <title>Ζωντανή Παράσταση</title>
+    <meta name="description" content="Dev Example — Networked-Aframe with Green Screen effect"/>
 
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 
-  <script src="js/aframe/1.3.0/aframe.min.js"></script>
-  <script src="js/socketio/2.3.0/socket.io.slim.js"></script>
-  <script src="js/datgui/0.7.7/dat.gui.min.js"></script>
+    <script src="js/aframe/1.3.0/aframe.min.js"></script>
+    <script src="js/socketio/2.3.0/socket.io.slim.js"></script>
+    <script src="js/datgui/0.7.7/dat.gui.min.js"></script>
 
-  <script src="../easyrtc/easyrtc.js"></script>
-  <script src="../dist/networked-aframe.js"></script>
+    <script src="../easyrtc/easyrtc.js"></script>
+    <script src="../dist/networked-aframe.js"></script>
 
-  <script src="js/a-water_alphamask_master.js"></script>
-  <script src="js/sunsky/3.0.3/aframe-sun-sky.min.js"></script>
-  <script src="js/randomizer/3.0.1/aframe-randomizer-components.min.js"></script>
+    <script src="js/a-water_alphamask_master.js"></script>
+    <script src="js/sunsky/3.0.3/aframe-sun-sky.min.js"></script>
+    <script src="js/randomizer/3.0.1/aframe-randomizer-components.min.js"></script>
 
-  <script src="js/particles/aframe-particle-system-component.min.js"></script>
+    <script src="js/particles/aframe-particle-system-component.min.js"></script>
 
-  <script src="js/spawn-in-circle.component.js"></script>
+    <script src="js/spawn-in-circle.component.js"></script>
 
-  <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
+    <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 </head>
 <body name="myBody"><div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-        <div id="toggle_show_clacket">Close <span style="color:green">("x" button to show again)</span></div>
+    <div id="toggle_show_clacket">Close <span style="color:green">("x" button to show again)</span></div>
     <div id="directorline" style=""></div>
 
     <script>
@@ -101,36 +101,44 @@
 
 
     <div class="wrapperControlElement">
-      <label
-              for="roomNameShow"
-              title="Name of Room">&#127917;</label>
-      <span id="roomNameShow">roomname</span>
+        <label
+                for="roomNameShow"
+                title="Name of Room">&#127917;</label>
+        <span id="roomNameShow">roomname</span>
     </div>
 
     <div class="wrapperControlElement">
-      <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
-      <span id="occupantsNumberShow"/>
+        <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
+        <span id="occupantsNumberShow"></span>
     </div>
 
     <div class="wrapperControlElement">
-      <button id="obtainStatusAndSetSizeControls"
-              class="buttonMultiplaying"
-              title="Obtain status and control green screens">
-        &#128260;  &#9989;
-      </button>
+        <button id="obtainStatusAndSetSizeControls"
+                class="buttonMultiplaying"
+                title="Obtain status and control green screens">
+            &#128260;  &#9989;
+        </button>
     </div>
 
     <div class="wrapperControlElement">
-      <button id="screen-btn-sendscreen"
-              class="buttonMultiplaying"
-              title="Send scene stream back to actors">
-        &#127909; &#9654;  &#128101;
-      </button>
+        <button id="screen-btn-sendscreen"
+                class="buttonMultiplaying"
+                title="Send scene stream back to actors">
+            &#127909; &#9654; &#128101;
+        </button>
     </div>
 
     <div class="wrapperControlElement">
-      <label for="positionShow" title="Camera Position">&#127909;</label>
-      <span id="positionShow"></span>
+        <button id="screen-btn-record"
+                class="buttonRecord"
+                title="Record session">
+            ⚪️
+        </button>
+    </div>
+
+    <div class="wrapperControlElement">
+        <label for="positionShow" title="Camera Position">&#127909;</label>
+        <span id="positionShow"></span>
     </div>
 
     <div id="panelsSizeControlsDiv">
@@ -138,7 +146,7 @@
 
 
 
-  </div><a-scene
+</div><a-scene
         fog="type: linear; color: #AAB; far: 230; near: 0"
         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic"
         background="color: #000000"
@@ -152,32 +160,32 @@
       ">
 
     <a-assets>
-      <!-- Avatar Template -->
-      <template id="avatar-template">
-        <a-entity class="avatar"
-                  networked-audio-source>
+        <!-- Avatar Template -->
+        <template id="avatar-template">
+            <a-entity class="avatar"
+                      networked-audio-source>
 
-          <a-plane id="videoPlaneGreen"
-                   class="videoPlaneGreenClass"
-                   color="#FFF"
-                   width="1"
-                   height="0.75"
-                   position="0 0.6 -0.15"
-                   material="side: double"
-                   networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
-                   render-order-change="2000">
-          </a-plane>
+                <a-plane id="videoPlaneGreen"
+                         class="videoPlaneGreenClass"
+                         color="#FFF"
+                         width="1"
+                         height="0.75"
+                         position="0 0.6 -0.15"
+                         material="side: double"
+                         networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                         render-order-change="2000">
+                </a-plane>
 
-          <a-plane id="screenPlane"
-                   color="#FFF"
-                   width="0"
-                   height="0"
-                   position="0 0.6 -0.15"
-                   material="side: double"
-                   networked-video-source="streamName:screen">
-          </a-plane>
-        </a-entity>
-      </template>
+                <a-plane id="screenPlane"
+                         color="#FFF"
+                         width="0"
+                         height="0"
+                         position="0 0.6 -0.15"
+                         material="side: double"
+                         networked-video-source="streamName:screen">
+                </a-plane>
+            </a-entity>
+        </template>
     </a-assets>
 
 
@@ -188,44 +196,44 @@
               wasd-controls="fly: true; acceleration:5"
               show-position
               look-controls="pointerLockEnabled: true;"
-              >
+    >
 
-              <a-sphere class="head"
-                        visible="false"
-                        random-color>
-              </a-sphere>
+        <a-sphere class="head"
+                  visible="false"
+                  random-color>
+        </a-sphere>
 
-              <a-entity
-                      active="true"
-                      camera="near: 0.1; far: 7000.0;"
-                      position="0 0.6 0"
-                      >
-              </a-entity>
+        <a-entity
+                active="true"
+                camera="near: 0.1; far: 7000.0;"
+                position="0 0.6 0"
+        >
+        </a-entity>
     </a-entity>
 
 
-  </a-scene>
+</a-scene>
 
-  <!-- Javascript -->
-  <script>
+<!-- Javascript -->
+<script>
 
     AFRAME.registerComponent('show-position', {
-      init: function () {
-        this.positionShow = document.getElementById("positionShow");
-        this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
-        /* this.occupantsShow = document.getElementById("occupantsShow");
-         this.entitiesShow = document.getElementById("entitiesShow"); */
-      }
-      ,
-      tick: function (time, timeDelta) {
-        var p = this.el.getAttribute('position');
-        this.positionShow.innerHTML = Math.round(p.x*100)/100 + ", " + Math.round(p.y*100)/100 + ", " + Math.round(p.z*100)/100;
-
-        var occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
-        if(occupants) {
-          this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
+        init: function () {
+            this.positionShow = document.getElementById("positionShow");
+            this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
+            /* this.occupantsShow = document.getElementById("occupantsShow");
+             this.entitiesShow = document.getElementById("entitiesShow"); */
         }
-      }
+        ,
+        tick: function (time, timeDelta) {
+            var p = this.el.getAttribute('position');
+            this.positionShow.innerHTML = Math.round(p.x*100)/100 + ", " + Math.round(p.y*100)/100 + ", " + Math.round(p.z*100)/100;
+
+            var occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
+            if(occupants) {
+                this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
+            }
+        }
     });
 
 
@@ -288,30 +296,31 @@
 
 
     var btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
+
     btStatusControls.addEventListener('click', function(){
 
-      var entities = window.NAF.connection.entities.entities;
-      var panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
+        var entities = window.NAF.connection.entities.entities;
+        var panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
 
-      /* Clear Panels Size  Controls */
-      panelsSizeControlsDiv.replaceChildren([]);
+        /* Clear Panels Size  Controls */
+        panelsSizeControlsDiv.replaceChildren([]);
 
-      /* DestroyGui */
-      try {
-        console.log("destroying");
-        btStatusControls.gui.destroy();
-      }catch (e){
+        /* DestroyGui */
+        try {
+            console.log("destroying");
+            btStatusControls.gui.destroy();
+        }catch (e){
 
-      }
+        }
 
-      btStatusControls.gui = new dat.GUI( { width: 200 });
+        btStatusControls.gui = new dat.GUI( { width: 200 });
 
 
 
-      var elementsDatGui = [];
-      var videoUserGui = [];
+        var elementsDatGui = [];
+        var videoUserGui = [];
 
-      var nActor = 0;
+        var nActor = 0;
 
         if(entities) {
 
@@ -451,35 +460,35 @@
 
     /* Define custom schema for syncing avatar color, set by random-color */
     NAF.schemas.add({
-      template: '#avatar-template',
-      components: [
-        'position',
-        'rotation'
-      ]
+        template: '#avatar-template',
+        components: [
+            'position',
+            'rotation'
+        ]
     });
 
     /* Called by Networked-Aframe when connected to server */
     function onConnect () {
-      console.log("onConnect", new Date());
+        console.log("onConnect", new Date());
 
-      const screenBtnEle = document.getElementById('screen-btn-sendscreen');
-      screenBtnEle.addEventListener('click', function() {
-        navigator.mediaDevices.getDisplayMedia().then((stream) => {
-          NAF.connection.adapter.addLocalMediaStream(stream, "screen");
+        const screenBtnEle = document.getElementById('screen-btn-sendscreen');
+        screenBtnEle.addEventListener('click', function() {
+            navigator.mediaDevices.getDisplayMedia().then((stream) => {
+                NAF.connection.adapter.addLocalMediaStream(stream, "screen");
 
+            });
         });
-       });
     }
 
 
 
     /* Scale down div when in compile preview */
     (function() {
-      if (window.innerWidth < 400) {
-        let actionsDiv = document.getElementById("actionsDiv");
-        actionsDiv.style.transformOrigin="0px 200px";
-        actionsDiv.style.scale = "0.3";
-      }
+        if (window.innerWidth < 400) {
+            let actionsDiv = document.getElementById("actionsDiv");
+            actionsDiv.style.transformOrigin="0px 200px";
+            actionsDiv.style.scale = "0.3";
+        }
     })();
 
     /* x button show clacket. key code 88 */
@@ -526,10 +535,10 @@
         }
     };
 
-  </script>
+</script>
 
-  <!-- This will change the glb materials -->
-  <script src="js/glb_material_changer.js"></script>
+<!-- This will change the glb materials -->
+<script src="js/glb_material_changer.js"></script>
 
 </body>
 </html>
