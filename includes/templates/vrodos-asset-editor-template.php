@@ -268,7 +268,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
     $asset_updatedConf = 0;
     // NEW Asset: submit info to backend
-    if($asset_id == null){
+    if($asset_id == null) {
         ?>
 
         <!-- css ref is not recognized in the following, therefore CSS should be written inline -->

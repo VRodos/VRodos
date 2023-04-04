@@ -452,7 +452,7 @@ function vrodos_get_all_Available_molecules_of_game($scene_id){
 
 
 
-//Get All DOORS of specific game (from all scenes) by given project ID (parent game ID)
+// Get All DOORS of specific game (from all scenes) by given project ID (parent game ID)
 function vrodos_get_all_doors_of_project_fastversion($parent_project_id_as_term_id){
 
 	$sceneIds = [];

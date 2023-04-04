@@ -89,9 +89,9 @@ function vrodos_remove_allthumbs_sizes( $sizes, $metadata ) {
 // Change directory for images and videos to uploads/Models
 function vrodos_upload_img_vid_aud_directory( $dir ) {
     return array(
-            'path'   => $dir['basedir'] . '/Models',
-            'url'    => $dir['baseurl'] . '/Models',
-            'subdir' => '/Models',
+            'path'   => $dir['basedir'] . '/models',
+            'url'    => $dir['baseurl'] . '/models',
+            'subdir' => '/models',
         ) + $dir;
 }
 
@@ -99,7 +99,7 @@ function vrodos_upload_img_vid_aud_directory( $dir ) {
 // Change general upload directory to Models
 function vrodos_upload_filter( $args  ) {
 
-    $newdir =  '/Models';
+    $newdir =  '/models';
 
     $args['path']    = str_replace( $args['subdir'], '', $args['path'] ); //remove default subdir
     $args['url']     = str_replace( $args['subdir'], '', $args['url'] );
@@ -242,7 +242,7 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, 
     require_once(ABSPATH . 'wp-admin/includes/admin.php');
 
     // Get upload directory and do some sanitization
-    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'Models'.$DS;
+    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'models'.$DS;
 
 
     // Write file string to a file in server
@@ -524,7 +524,7 @@ function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $The
 
     // Make Models folder
     if (!is_dir($upload_path)) {
-        mkdir( $upload_path );
+        mkdir( $upload_path, 0777, true );
     }
 
     //$hashed_filename = md5( $textTitle . microtime() ) . '_' . $textTitle.'.txt';

@@ -11,7 +11,7 @@ function vrodos_assemble_the_project($gameID, $gameSlug, $sceneId, $targetPlatfo
 
     fwrite($f, $targetPlatform);
 
-    If ($targetPlatform === "Aframe"){
+    if ($targetPlatform === "Aframe"){
 
         fwrite($f, "1");
 
@@ -127,7 +127,7 @@ function vrodos_compile_folders_gen($gameSlug){
 
     //--Uploads/myGameProjectUnity--
     $myGameProjectUnityF = $upload_dir . '/' . $gameSlug . 'Unity';
-    if (!is_dir($myGameProjectUnityF)) {mkdir($myGameProjectUnityF, 0755) or wp_die("Unable to create the folder ".$myGameProjectUnityF);}
+    if (!is_dir($myGameProjectUnityF)) {mkdir($myGameProjectUnityF, 0777, true) or wp_die("Unable to create the folder ".$myGameProjectUnityF);}
 
     //--Uploads/myGameProjectUnity/ProjectSettings--
     //--Uploads/myGameProjectUnity/Assets--
@@ -135,9 +135,9 @@ function vrodos_compile_folders_gen($gameSlug){
     $ProjectSettingsF = $myGameProjectUnityF . "/" . 'ProjectSettings';
     $AssetsF = $myGameProjectUnityF . "/" . 'Assets';
     $buildF = $myGameProjectUnityF . "/" . 'builds';
-    if (!is_dir($ProjectSettingsF)) {mkdir($ProjectSettingsF, 0755) or wp_die("Unable to create the folder".$ProjectSettingsF);}
-    if (!is_dir($AssetsF)) {mkdir($AssetsF, 0755) or wp_die("Unable to create the folder".$AssetsF);}
-    if (!is_dir($buildF)) {mkdir($buildF, 0755) or wp_die("Unable to create the folder".$buildF);}
+    if (!is_dir($ProjectSettingsF)) {mkdir($ProjectSettingsF, 0777, true) or wp_die("Unable to create the folder".$ProjectSettingsF);}
+    if (!is_dir($AssetsF)) {mkdir($AssetsF, 0777, true) or wp_die("Unable to create the folder".$AssetsF);}
+    if (!is_dir($buildF)) {mkdir($buildF, 0777, true) or wp_die("Unable to create the folder".$buildF);}
 
     //--Uploads/myGameProjectUnity/Assets/Editor--
     //--Uploads/myGameProjectUnity/Assets/scenes--
@@ -148,11 +148,11 @@ function vrodos_compile_folders_gen($gameSlug){
     $scenesF = $AssetsF . "/" . 'scenes';
     $modelsF = $AssetsF . "/" . 'models';
     $StandardAssetsF = $AssetsF . "/" . 'StandardAssets';
-    if (!is_dir($EditorF)) {mkdir($EditorF, 0755) or wp_die("Unable to create the folder".$EditorF);}
-    if (!is_dir($ResourcesF)) {mkdir($ResourcesF, 0755) or wp_die("Unable to create the folder".$ResourcesF);}
-    if (!is_dir($scenesF)) {mkdir($scenesF, 0755) or wp_die("Unable to create the folder".$scenesF);}
-    if (!is_dir($modelsF)) {mkdir($modelsF, 0755) or wp_die("Unable to create the folder".$modelsF);}
-    if (!is_dir($StandardAssetsF)) {mkdir($StandardAssetsF, 0755) or wp_die("Unable to create the folder".$StandardAssetsF);}
+    if (!is_dir($EditorF)) {mkdir($EditorF, 0777, true) or wp_die("Unable to create the folder".$EditorF);}
+    if (!is_dir($ResourcesF)) {mkdir($ResourcesF, 0777, true) or wp_die("Unable to create the folder".$ResourcesF);}
+    if (!is_dir($scenesF)) {mkdir($scenesF, 0777, true) or wp_die("Unable to create the folder".$scenesF);}
+    if (!is_dir($modelsF)) {mkdir($modelsF, 0777, true) or wp_die("Unable to create the folder".$modelsF);}
+    if (!is_dir($StandardAssetsF)) {mkdir($StandardAssetsF, 0777, true) or wp_die("Unable to create the folder".$StandardAssetsF);}
 }
 
 //==========================================================================================================================================
@@ -396,7 +396,7 @@ function vrodos_compile_assets_cre($game_path, $asset_id, $handybuilder_file, $g
     //Create the folder of the Model(Asset)
     $asset_post = get_post($asset_id);
     $folder = $game_path . '/' . $asset_post->post_name;
-    if (!is_dir($folder)) {mkdir($folder, 0755) or wp_die("Unable to create the folder ".$folder);}
+    if (!is_dir($folder)) {mkdir($folder, 0777, true) or wp_die("Unable to create the folder ".$folder);}
 
     //Copy files of the Model
 
@@ -660,7 +660,7 @@ function vrodos_compile_copy_StandardAssets($gameID, $gameSlug,$gameType){
     $pluginSlug = substr($pluginSlug, 0, strpos($pluginSlug, "/"));
     $source = $pluginpath . '/plugins/' . $pluginSlug . '/StandardAssets/' . $gameType;
 
-    mkdir($dest, 0755);
+    mkdir($dest, 0777, true);
     foreach (
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
@@ -669,7 +669,7 @@ function vrodos_compile_copy_StandardAssets($gameID, $gameSlug,$gameType){
         if ($item->isDir()) {
             $sbpath = $iterator->getSubPathName();
             $dirtomake = $dest . DIRECTORY_SEPARATOR . $sbpath;
-            mkdir($dirtomake);
+            mkdir($dirtomake, 0777, true);
         } else {
             copy($item, $dest . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
         }
