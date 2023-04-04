@@ -295,6 +295,7 @@ function vrodos_compile_settings_gen($gameID,$gameSlug){
 
     switch($gameType[0]->slug) {
         case 'archaeology_games':
+        default:
             $fileFolder = 'archaeology';
             break;
     }
@@ -591,6 +592,7 @@ function vrodos_compile_scenes_static_cre($game_path, $gameSlug, $fileEditorBuil
 
     switch($gameType[0]->slug){
         case 'archaeology_games':
+        default:
 
             $mainMenuTerm = get_term_by('slug', 'mainmenu-arch-yaml', 'vrodos_scene_yaml');
             $term_meta_s_reward = vrodos_getSceneYAML_archaeology('reward');
