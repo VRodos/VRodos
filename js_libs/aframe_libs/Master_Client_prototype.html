@@ -96,6 +96,7 @@
 <div>
     <div class="wrapperVideoElement">
         <video id="video-preview" width="300" height="200" autoplay muted></video>
+        <video id="recording" hidden></video>
     </div>
 
     <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
@@ -144,11 +145,11 @@
                 ◼️️
             </button>
 
-            <button id="download-recording-btn"
+            <a id="download-recording-btn"
                     class="buttonDownloadRecording"
                     title="Download video">
                 ⬇️️
-            </button>
+            </a>
         </div>
 
         <div class="wrapperControlElement">
@@ -497,8 +498,9 @@
     let video_preview = document.getElementById('video-preview');
     let stop_button = document.getElementById('stop-recording-btn');
     let download_button = document.getElementById('download-recording-btn');
+    let recording = document.getElementById("recording");
 
-    function startRecording(stream, lengthInMS) {
+    function startRecording(stream) {
         let recorder = new MediaRecorder(stream);
         let data = [];
 
@@ -511,13 +513,13 @@
             recorder.onerror = event => reject(event.name);
         });
 
-        let recorded = wait(lengthInMS).then(
+        /*let recorded = wait(lengthInMS).then(
             () => recorder.state == "recording" && recorder.stop()
-        );
+        );*/
 
         return Promise.all([
-            stopped,
-            recorded
+            stopped/*,
+            recorded*/
         ])
             .then(() => data);
     }
@@ -529,15 +531,15 @@
         navigator.mediaDevices.getDisplayMedia({
             preferCurrentTab: true,
             selfBrowserSurface: 'include',
-            surfaceSwitching: 'include',
             video: true,
             audio: true
         }).then(stream => {
+            video_preview.style.display = 'block';
             video_preview.srcObject = stream;
             download_button.href = stream;
             video_preview.captureStream = video_preview.captureStream || video_preview.mozCaptureStream;
             return new Promise(resolve => video_preview.onplaying = resolve);
-        }).then(() => startRecording(video_preview.captureStream(), recordingTimeMS))
+        }).then(() => startRecording(video_preview.captureStream()))
             .then (recordedChunks => {
                 let recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
                 recording.src = URL.createObjectURL(recordedBlob);
@@ -546,12 +548,12 @@
 
                 console.log("Successfully recorded " + recordedBlob.size + " bytes of " +
                     recordedBlob.type + " media.");
-            })
-            .catch(log);
+            });
     }, false);
 
     stop_button.addEventListener("click", function() {
         stop(video_preview.srcObject);
+        video_preview.style.display = 'none';
     }, false);
 
 
