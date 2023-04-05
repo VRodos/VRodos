@@ -26,127 +26,139 @@
 
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 </head>
-<body name="myBody"><div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-    <div id="toggle_show_clacket">Close <span style="color:green">("x" button to show again)</span></div>
-    <div id="directorline" style=""></div>
-
-    <script>
-        AFRAME.registerComponent('clear-frustum-culling', {
-            init: function(){
-                let el = this.el;
-                el.addEventListener("model-loaded", e =>{
-                    let mesh = el.getObject3D('mesh');
-                    if (!mesh){return;}
-                    mesh.traverse(function(node){
-                        if (node.isMesh){
-                            node.frustumCulled = false;
-                        }
-                    });
+<body id="master-client-body">
+<script>
+    AFRAME.registerComponent('clear-frustum-culling', {
+        init: function(){
+            let el = this.el;
+            el.addEventListener("model-loaded", e =>{
+                let mesh = el.getObject3D('mesh');
+                if (!mesh){return;}
+                mesh.traverse(function(node){
+                    if (node.isMesh){
+                        node.frustumCulled = false;
+                    }
                 });
+            });
+        }
+    });
+
+    AFRAME.registerComponent('static-mask-me', {
+        init: function(){
+            let el = this.el;
+            // el.addEventListener("model-loaded", e => {
+            const maskMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: false,
+                colorWrite: false,
+            });
+            maskMaterial.needsUpdate = true;
+            let mesh = el.getObject3D('mesh');
+            if (!mesh) {
+                return;
             }
-        });
-
-
-        AFRAME.registerComponent('static-mask-me', {
-            init: function(){
-                let el = this.el;
-                // el.addEventListener("model-loaded", e => {
-                const maskMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ffff,
-                    transparent: false,
-                    colorWrite: false,
-                });
-                maskMaterial.needsUpdate = true;
-                let mesh = el.getObject3D('mesh');
-                if (!mesh) {
+            mesh.traverse( node => {
+                if(!node.isMesh){
                     return;
                 }
-                mesh.traverse( node => {
-                    if(!node.isMesh){
-                        return;
-                    }
-                    node.material = maskMaterial;
-                    node.renderOrder = 999;
-                });
-                //  });
-            },
-            tick: null
-        });
+                node.material = maskMaterial;
+                node.renderOrder = 999;
+            });
+            //  });
+        },
+        tick: null
+    });
 
-
-        AFRAME.registerComponent('render-order-change', {
-            schema: {
-                renderingOrderArg: {type: 'string', default: '2000'}
-            },
-            init: function(){
-                let el = this.el;
-                // el.addEventListener("model-loaded", e => {
-                let mesh = el.getObject3D('mesh');
-                if (!mesh) {
+    AFRAME.registerComponent('render-order-change', {
+        schema: {
+            renderingOrderArg: {type: 'string', default: '2000'}
+        },
+        init: function(){
+            let el = this.el;
+            // el.addEventListener("model-loaded", e => {
+            let mesh = el.getObject3D('mesh');
+            if (!mesh) {
+                return;
+            }
+            mesh.traverse( node => {
+                if(!node.isMesh){
                     return;
                 }
-                mesh.traverse( node => {
-                    if(!node.isMesh){
-                        return;
-                    }
-                    node.renderOrder = this.data.renderingOrderArg;
+                node.renderOrder = this.data.renderingOrderArg;
 
-                });
-                //  });
-            },
-            tick: null
-        });
+            });
+            //  });
+        },
+        tick: null
+    });
+</script>
 
-    </script>
-
-
-    <div class="wrapperControlElement">
-        <label
-                for="roomNameShow"
-                title="Name of Room">&#127917;</label>
-        <span id="roomNameShow">roomname</span>
+<div>
+    <div class="wrapperVideoElement">
+        <video id="video-preview" width="300" height="200" autoplay muted></video>
     </div>
 
-    <div class="wrapperControlElement">
-        <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
-        <span id="occupantsNumberShow"></span>
+    <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
+        <div id="toggle_show_clacket">Close <span style="color:green">("x" button to show again)</span></div>
+        <div id="directorline" style=""></div>
+
+
+        <div class="wrapperControlElement">
+            <label
+                    for="roomNameShow"
+                    title="Name of Room">&#127917;</label>
+            <span id="roomNameShow">roomname</span>
+        </div>
+
+        <div class="wrapperControlElement">
+            <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
+            <span id="occupantsNumberShow"></span>
+        </div>
+
+        <div class="wrapperControlElement">
+            <button id="obtainStatusAndSetSizeControls"
+                    class="buttonMultiplaying"
+                    title="Obtain status and control green screens">
+                &#128260;  &#9989;
+            </button>
+        </div>
+
+        <div class="wrapperControlElement">
+            <button id="screen-btn-sendscreen"
+                    class="buttonMultiplaying"
+                    title="Send scene stream back to actors">
+                &#127909; &#9654; &#128101;
+            </button>
+        </div>
+
+        <div class="wrapperControlElement">
+            <button id="screen-btn-record"
+                    class="buttonRecord"
+                    title="Record session">
+                ⚪️
+            </button>
+
+            <button id="sfdgsdfd"
+                    class="buttonRecord"
+                    title="test">
+                ⚪️
+            </button>
+
+        </div>
+
+        <div class="wrapperControlElement">
+            <label for="positionShow" title="Camera Position">&#127909;</label>
+            <span id="positionShow"></span>
+        </div>
+
+        <div id="panelsSizeControlsDiv">
+        </div>
     </div>
-
-    <div class="wrapperControlElement">
-        <button id="obtainStatusAndSetSizeControls"
-                class="buttonMultiplaying"
-                title="Obtain status and control green screens">
-            &#128260;  &#9989;
-        </button>
-    </div>
-
-    <div class="wrapperControlElement">
-        <button id="screen-btn-sendscreen"
-                class="buttonMultiplaying"
-                title="Send scene stream back to actors">
-            &#127909; &#9654; &#128101;
-        </button>
-    </div>
-
-    <div class="wrapperControlElement">
-        <button id="screen-btn-record"
-                class="buttonRecord"
-                title="Record session">
-            ⚪️
-        </button>
-    </div>
-
-    <div class="wrapperControlElement">
-        <label for="positionShow" title="Camera Position">&#127909;</label>
-        <span id="positionShow"></span>
-    </div>
-
-    <div id="panelsSizeControlsDiv">
-    </div>
+</div>
 
 
-
-</div><a-scene
+<a-scene
+        id="aframe-scene-container"
         fog="type: linear; color: #AAB; far: 230; near: 0"
         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic"
         background="color: #000000"
@@ -210,7 +222,6 @@
         >
         </a-entity>
     </a-entity>
-
 
 </a-scene>
 
@@ -475,11 +486,61 @@
         screenBtnEle.addEventListener('click', function() {
             navigator.mediaDevices.getDisplayMedia().then((stream) => {
                 NAF.connection.adapter.addLocalMediaStream(stream, "screen");
-
             });
         });
     }
 
+    const record_button = document.getElementById('screen-btn-record');
+    let video_preview = document.getElementById('video-preview');
+
+    function startRecording(stream, lengthInMS) {
+        let recorder = new MediaRecorder(stream);
+        let data = [];
+
+        recorder.ondataavailable = event => data.push(event.data);
+        recorder.start();
+        // log(recorder.state + " for " + (lengthInMS/1000) + " seconds...");
+
+        let stopped = new Promise((resolve, reject) => {
+            recorder.onstop = resolve;
+            recorder.onerror = event => reject(event.name);
+        });
+
+        let recorded = wait(lengthInMS).then(
+            () => recorder.state == "recording" && recorder.stop()
+        );
+
+        return Promise.all([
+            stopped,
+            recorded
+        ])
+            .then(() => data);
+    }
+    function stop(stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+
+    record_button.addEventListener("click", function() {
+        navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: true
+        }).then(stream => {
+            video_preview.srcObject = stream;
+            downloadButton.href = stream;
+            video_preview.captureStream = video_preview.captureStream || preview.mozCaptureStream;
+            return new Promise(resolve => video_preview.onplaying = resolve);
+        }).then(() => startRecording(video_preview.captureStream(), recordingTimeMS))
+            .then (recordedChunks => {
+                let recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
+                recording.src = URL.createObjectURL(recordedBlob);
+                downloadButton.href = recording.src;
+                downloadButton.download = "RecordedVideo.webm";
+
+                log("Successfully recorded " + recordedBlob.size + " bytes of " +
+                    recordedBlob.type + " media.");
+            })
+            .catch(log);
+    }, false);
 
 
     /* Scale down div when in compile preview */

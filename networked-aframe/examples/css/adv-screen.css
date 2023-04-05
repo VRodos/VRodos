@@ -59,6 +59,13 @@
     margin:5px;
 }
 
+.wrapperVideoElement {
+    position: absolute;
+    display: block;
+    top: 5px;
+    left: 5px;
+    z-index:1001;
+}
 
 .buttonMultiplaying {
     display:block;

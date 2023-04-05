@@ -182,17 +182,17 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			// just some setup
 			$dom = new DOMDocument("1.0", "utf-8");
 			$dom->resolveExternals = true;
-			
-			
-			
+
 			@$dom->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  // LIBXML_HTML_NODEFDTD, LIBXML_NOERROR
 			
 			$html = $dom->documentElement;
 			$head = $dom->documentElement->childNodes[0];
-			$body = $dom->documentElement->childNodes[1];
-			$actionsDiv = $body->childNodes[0];
-			$ascene = $body->childNodes[1];
-			
+
+			$body = $dom->getElementById('master-client-body');
+			$actionsDiv = $dom->getElementById('actionsDiv');
+			$ascene = $dom->getElementById('aframe-scene-container');
+
+
 //			$f = fopen("output_compile_director.txt","w");
 //			fwrite($f, "----------------".chr(13));
 ////
@@ -214,7 +214,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			// ============ Scene Iteration kernel ==============
 			$metadata = $scene_json->metadata;
 			$objects = $scene_json->objects;
-			
+
 			return array("dom"=>$dom, "html"=>$html, "head"=>$head, "body"=>$body, "ascene"=>$ascene, "metadata"=>$metadata, "objects"=>$objects, "actionsDiv"=>$actionsDiv);
 		}
 		
@@ -258,7 +258,6 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		// Read prototype
 		$content = $fileOperations->reader($fileOperations->plugin_path_dir
 		                                                 ."/js_libs/aframe_libs/Master_Client_prototype.html");
-
 		// Modify strings
 		$content = str_replace("roomname", "room".$scene_id, $content);
 		
@@ -280,11 +279,9 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 		} else {
 			$content = str_replace( $fogstring, " ", $content );
 		}
-		
-		
+
 		
 		$basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json);
-		
 		$dom = $basicDomElements['dom'];
 		$objects = $basicDomElements['objects'];
 		$ascene = $basicDomElements['ascene'];
