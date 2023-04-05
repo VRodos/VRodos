@@ -59,6 +59,12 @@
     margin:5px;
 }
 
+.wrapperControlLineElement{
+    position: relative;
+    display: inline-block;
+    margin:5px;
+}
+
 .wrapperVideoElement {
     position: absolute;
     display: block;
@@ -78,13 +84,31 @@
     margin-right:auto;
 }
 
-.buttonRecord {
-    display:block;
+.buttonStartRecord {
+    display: inline-block;
     margin-top: 10px;
     padding: 5px;
     cursor: pointer;
     background: crimson;
     border-radius: 20px;
+    margin-left:auto;
+    margin-right:auto;
+    border: none;
+}
+
+.buttonStopRecord {
+    display: inline-block;
+    cursor: pointer;
+    background: none;
+    margin-left:auto;
+    margin-right:auto;
+    border: none;
+}
+
+.buttonDownloadRecording {
+    display: inline-block;
+    cursor: pointer;
+    background: none;
     margin-left:auto;
     margin-right:auto;
     border: none;

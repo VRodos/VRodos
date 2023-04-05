@@ -131,19 +131,24 @@
             </button>
         </div>
 
-        <div class="wrapperControlElement">
-            <button id="screen-btn-record"
-                    class="buttonRecord"
-                    title="Record session">
+        <div class="wrapperControlLineElement">
+            <button id="start-recording-btn"
+                    class="buttonStartRecord"
+                    title="Start capturing video">
                 ⚪️
             </button>
 
-            <button id="sfdgsdfd"
-                    class="buttonRecord"
-                    title="test">
-                ⚪️
+            <button id="stop-recording-btn"
+                    class="buttonStopRecord"
+                    title="Stop capture">
+                ◼️️
             </button>
 
+            <button id="download-recording-btn"
+                    class="buttonDownloadRecording"
+                    title="Download video">
+                ⬇️️
+            </button>
         </div>
 
         <div class="wrapperControlElement">
@@ -151,8 +156,7 @@
             <span id="positionShow"></span>
         </div>
 
-        <div id="panelsSizeControlsDiv">
-        </div>
+        <div id="panelsSizeControlsDiv"></div>
     </div>
 </div>
 
@@ -168,8 +172,7 @@
         debug: true;
         adapter: easyrtc;
         audio: true;
-        video: false;
-      ">
+        video: true;">
 
     <a-assets>
         <!-- Avatar Template -->
@@ -207,8 +210,7 @@
               position="0 0.6 0"
               wasd-controls="fly: true; acceleration:5"
               show-position
-              look-controls="pointerLockEnabled: true;"
-    >
+              look-controls="pointerLockEnabled: true;">
 
         <a-sphere class="head"
                   visible="false"
@@ -218,14 +220,13 @@
         <a-entity
                 active="true"
                 camera="near: 0.1; far: 7000.0;"
-                position="0 0.6 0"
-        >
+                position="0 0.6 0">
         </a-entity>
     </a-entity>
 
 </a-scene>
 
-<!-- Javascript -->
+
 <script>
 
     AFRAME.registerComponent('show-position', {
@@ -246,8 +247,6 @@
             }
         }
     });
-
-
 
     /* ---------- The gui for configuring other clients inputs  ----------------- */
     const api_pattern_single = {
@@ -306,12 +305,12 @@
     };
 
 
-    var btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
+    let btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
 
     btStatusControls.addEventListener('click', function(){
 
-        var entities = window.NAF.connection.entities.entities;
-        var panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
+        let entities = window.NAF.connection.entities.entities;
+        let panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
 
         /* Clear Panels Size  Controls */
         panelsSizeControlsDiv.replaceChildren([]);
@@ -328,25 +327,25 @@
 
 
 
-        var elementsDatGui = [];
-        var videoUserGui = [];
+        let elementsDatGui = [];
+        let videoUserGui = [];
 
-        var nActor = 0;
+        let nActor = 0;
 
         if(entities) {
 
             /* Canvas Size Controls */
-            var inputH = [];
-            var inputW = [];
-            var buttonSubmit = [];
-            var panel = {};
+            let inputH = [];
+            let inputW = [];
+            let buttonSubmit = [];
+            let panel = {};
             for (let e in entities){
 
-                var h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
+                let h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
                 if (h) {
                     nActor++;
 
-                    var stringName = e;
+                    let stringName = e;
 
                     /*  Thresholds Green */
                     videoUserGui[e] = btStatusControls.gui.addFolder(stringName);
@@ -358,12 +357,12 @@
 
 
                     elementsDatGui[e] = [];
-                    for (var a in api_pattern_single) {
+                    for (let a in api_pattern_single) {
 
 
-                        var L = a + "Low";
-                        var H = a + "High";
-                        var S = a + "Step";
+                        let L = a + "Low";
+                        let H = a + "High";
+                        let S = a + "Step";
 
                         elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L],
                             api_pattern_singleMax[H],
@@ -458,7 +457,7 @@
                             }
                         } else {
                             elementsDatGui[e][a].onChange(function () {
-                                var domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
+                                let domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
                                 domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
                             });
                         }
@@ -484,14 +483,20 @@
 
         const screenBtnEle = document.getElementById('screen-btn-sendscreen');
         screenBtnEle.addEventListener('click', function() {
-            navigator.mediaDevices.getDisplayMedia().then((stream) => {
+            navigator.mediaDevices.getDisplayMedia({
+                preferCurrentTab: true,
+                video: true,
+                audio: true
+            }).then((stream) => {
                 NAF.connection.adapter.addLocalMediaStream(stream, "screen");
             });
         });
     }
 
-    const record_button = document.getElementById('screen-btn-record');
+    let record_button = document.getElementById('start-recording-btn');
     let video_preview = document.getElementById('video-preview');
+    let stop_button = document.getElementById('stop-recording-btn');
+    let download_button = document.getElementById('download-recording-btn');
 
     function startRecording(stream, lengthInMS) {
         let recorder = new MediaRecorder(stream);
@@ -522,24 +527,31 @@
 
     record_button.addEventListener("click", function() {
         navigator.mediaDevices.getDisplayMedia({
+            preferCurrentTab: true,
+            selfBrowserSurface: 'include',
+            surfaceSwitching: 'include',
             video: true,
             audio: true
         }).then(stream => {
             video_preview.srcObject = stream;
-            downloadButton.href = stream;
-            video_preview.captureStream = video_preview.captureStream || preview.mozCaptureStream;
+            download_button.href = stream;
+            video_preview.captureStream = video_preview.captureStream || video_preview.mozCaptureStream;
             return new Promise(resolve => video_preview.onplaying = resolve);
         }).then(() => startRecording(video_preview.captureStream(), recordingTimeMS))
             .then (recordedChunks => {
                 let recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
                 recording.src = URL.createObjectURL(recordedBlob);
-                downloadButton.href = recording.src;
-                downloadButton.download = "RecordedVideo.webm";
+                download_button.href = recording.src;
+                download_button.download = "RecordedVideo.webm";
 
-                log("Successfully recorded " + recordedBlob.size + " bytes of " +
+                console.log("Successfully recorded " + recordedBlob.size + " bytes of " +
                     recordedBlob.type + " media.");
             })
             .catch(log);
+    }, false);
+
+    stop_button.addEventListener("click", function() {
+        stop(video_preview.srcObject);
     }, false);
 
 
