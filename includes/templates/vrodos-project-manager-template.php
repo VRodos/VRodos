@@ -112,7 +112,7 @@ $login_username = $current_user->user_login;
                     <form name="newProjectForm" action="" id="newProjectForm" method="POST" enctype="multipart/form-data">
                         <div class="mdc-textfield FullWidth mdc-form-field" data-mdc-auto-init="MDCTextfield">
                             <input id="title" name="title" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" aria-controls="title-validation-msg"
-                                   required="" minlength="3" style="border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0;">
+                                   required minlength="3" style="border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0;">
                             <label for="title" class="mdc-textfield__label">Enter a title for your <?php echo $single; ?></label>
                             <div class="mdc-textfield__bottom-line"></div>
                         </div>

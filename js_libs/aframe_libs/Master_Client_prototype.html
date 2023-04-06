@@ -28,6 +28,7 @@
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 </head>
 <body id="master-client-body">
+
 <script>
     AFRAME.registerComponent('clear-frustum-culling', {
         init: function(){
@@ -133,7 +134,7 @@
             </button>
         </div>
 
-        <div class="wrapperControlLineElement">
+        <div class="wrapperControlLineElement" id="video_capture_section">
             <button id="start-recording-btn"
                     class="buttonStartRecord"
                     title="Start capturing video">
@@ -151,6 +152,13 @@
                title="Download video">
                 ⬇️️
             </a>
+
+            <button id="upload-recording-btn"
+                    class="buttonUploadRecording"
+                    style="visibility: hidden"
+                    title="Upload Recording to MediaVerse">
+                ⬆️️️
+            </button>
         </div>
 
         <div class="wrapperControlElement">
@@ -434,6 +442,7 @@
     let video_preview = document.getElementById('video-preview');
     let stop_button = document.getElementById('stop-recording-btn');
     let download_button = document.getElementById('download-recording-btn');
+    let upload_button = document.getElementById('upload-recording-btn');
     let recording = document.getElementById('recording');
 
     function startRecording(stream) {
@@ -470,6 +479,11 @@
             video_preview.srcObject = stream;
             download_button.href = stream;
             video_preview.captureStream = video_preview.captureStream || video_preview.mozCaptureStream;
+
+            stream.getVideoTracks()[0].onended = function () {
+                video_preview.style.display = 'none';
+            };
+
             return new Promise(resolve => video_preview.onplaying = resolve);
         }).then(() => startRecording(video_preview.captureStream()))
             .then (recordedChunks => {
@@ -485,7 +499,6 @@
 
     stop_button.addEventListener("click", function() {
         stopRecording(video_preview.srcObject);
-        video_preview.style.display = 'none';
     }, false);
 
 

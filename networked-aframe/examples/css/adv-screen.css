@@ -112,6 +112,17 @@
     margin-left:auto;
     margin-right:auto;
     border: none;
+    text-decoration: none;
+}
+
+.buttonUploadRecording {
+    display: inline-block;
+    cursor: pointer;
+    background: none;
+    margin-left:auto;
+    margin-right:auto;
+    border: none;
+    text-decoration: none;
 }
 
 #positionShow{

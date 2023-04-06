@@ -178,7 +178,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
         }
 
 
-        function createBasicDomStructureAframeDirector($content, $scene_json){
+        function createBasicDomStructureAframeDirector($content, $scene_json, $project_id){
 
             // Start Creating Aframe page
             // just some setup
@@ -194,6 +194,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
             $actionsDiv = $dom->getElementById('actionsDiv');
             $ascene = $dom->getElementById('aframe-scene-container');
 
+            // If MediaVerse project, then enable upload to MV Node.
+            $recording_controls = $dom->getElementById('upload-recording-btn');
+            $project_type = wp_get_post_terms( $project_id, 'vrodos_game_type');
+            if ($project_type[0]->slug == 'virtualproduction_games') {
+                $recording_controls->setAttribute('style', 'visibility: visible;');
+                $dom->saveHTML();
+            }
 
 //			$f = fopen("output_compile_director.txt","w");
 //			fwrite($f, "----------------".chr(13));
@@ -229,12 +236,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 
 
     // Step 1: Create the index.html file by replacing certain parts only
-    /**
-     * Read the index prototype, replace html links of Master and Simple client with scene_id and write back the result to another file
-     * @param $scene_id
-     *
-     * @return false|int
-     */
     function createIndexFile($project_title, $scene_id, $scene_title, $fileOperations){
 
         $filenameSource = $fileOperations->plugin_path_dir."/js_libs/aframe_libs/index_prototype.html";
@@ -255,7 +256,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 
 	
 	// STEP 2: Create the director file
-	function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index){
+	function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index, $project_id){
 
 		// Read prototype
 		$content = $fileOperations->reader($fileOperations->plugin_path_dir
@@ -282,10 +283,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 		} else {
 			$content = str_replace( $fogstring, " ", $content );
 		}
-		
-		
-		
-		$basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json);
+
+
+		$basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json, $project_id);
 		
 		$dom = $basicDomElements['dom'];
 		$objects = $basicDomElements['objects'];
@@ -506,8 +506,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 					$ascene->appendChild( $a_asset );
 
 
-
-
 					$a_entity = $dom->createElement( "a-plane" );
 					$a_entity->setAttribute( "id", "video-border");
 					$a_entity->setAttribute( "height", "20" );
@@ -629,7 +627,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 	// Step 2: Create the Master client file
 	foreach (array_reverse($scene_id_list) as $key => &$value){
 		createIndexFile($project_title, $value, $scene_title, $fileOperations);
-		createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key);
+		createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id);
 		createSimpleClient($project_title, $value, $scene_title, $$scene_json[$key], $fileOperations);
 	}
 
