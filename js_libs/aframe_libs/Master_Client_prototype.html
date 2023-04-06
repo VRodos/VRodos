@@ -23,6 +23,7 @@
     <script src="js/particles/aframe-particle-system-component.min.js"></script>
 
     <script src="js/spawn-in-circle.component.js"></script>
+    <script type="module"  src="js/helper.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 </head>
@@ -100,7 +101,7 @@
     </div>
 
     <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-        <div id="toggle_show_clacket">Close <span style="color:green">("x" button to show again)</span></div>
+        <div id="toggle_controls">Close <span style="color:green">("x" button to show again)</span></div>
         <div id="directorline" style=""></div>
 
 
@@ -146,8 +147,8 @@
             </button>
 
             <a id="download-recording-btn"
-                    class="buttonDownloadRecording"
-                    title="Download video">
+               class="buttonDownloadRecording"
+               title="Download video">
                 ⬇️️
             </a>
         </div>
@@ -203,17 +204,17 @@
             </a-entity>
         </template>
     </a-assets>
-	 <a-assets timeout="10000">
-            <video id="video" loop="true" src="http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4"
-                ></video>
-     </a-assets>
+    <a-assets timeout="10000">
+        <video id="video" loop="true" src="http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4"
+        ></video>
+    </a-assets>
 
-		<!--
-        <a-plane id="video-border" width="17" height="10" position="0 5 -20" color="#440000" video-controls>
-            <a-video id="video-display" width="16" height="9" position="0 0 0.1" src="#video">
-            </a-video>
-        </a-plane>
-		-->
+    <!--
+    <a-plane id="video-border" width="17" height="10" position="0 5 -20" color="#440000" video-controls>
+        <a-video id="video-display" width="16" height="9" position="0 0 0.1" src="#video">
+        </a-video>
+    </a-plane>
+    -->
 
     <!-- Pawn -->
     <a-entity id="player"
@@ -221,8 +222,7 @@
               position="0 0.6 0"
               wasd-controls="fly: true; acceleration:5"
               show-position
-              look-controls="pointerLockEnabled: false;"
-              >
+              look-controls="pointerLockEnabled: false;">
 
         <a-sphere class="head"
                   visible="false"
@@ -247,79 +247,20 @@
             this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
             /* this.occupantsShow = document.getElementById("occupantsShow");
              this.entitiesShow = document.getElementById("entitiesShow"); */
-        }
-        ,
+        },
         tick: function (time, timeDelta) {
-            var p = this.el.getAttribute('position');
+            let p = this.el.getAttribute('position');
             this.positionShow.innerHTML = Math.round(p.x*100)/100 + ", " + Math.round(p.y*100)/100 + ", " + Math.round(p.z*100)/100;
 
-            var occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
+            let occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
             if(occupants) {
                 this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
             }
         }
     });
 
-    /* ---------- The gui for configuring other clients inputs  ----------------- */
-    const api_pattern_single = {
-        ThresholdMin: 0.106,
-        ThresholdMax: 0.13,
-        red: 48, green: 146, blue: 89,
-        w: 1, h: 0.75,
-        x: 0, y:0, z:0,
-        rx: 0, ry: 0, rz:0
-    };
-
-    const api_pattern_singleMin = {
-        ThresholdMinLow: 0,
-        ThresholdMaxLow: 0,
-        redLow: 0,
-        greenLow: 0,
-        blueLow: 0,
-        wLow: 0.1,
-        hLow: 0.1,
-        xLow:-100000,
-        yLow:-100000,
-        zLow:-100000,
-        rxLow:-100,
-        ryLow:-100,
-        rzLow:-100
-    };
-    const api_pattern_singleMax = {
-        ThresholdMinHigh: 0.4,
-        ThresholdMaxHigh: 0.4,
-        redHigh: 255,
-        greenHigh: 255,
-        blueHigh: 255,
-        wHigh: 5,
-        hHigh: 5,
-        xHigh: 100000,
-        yHigh: 100000,
-        zHigh: 100000,
-        rxHigh: 100,
-        ryHigh: 100,
-        rzHigh: 100
-    };
-    const api_pattern_singleStep = {
-        ThresholdMinStep: 0.001,
-        ThresholdMaxStep: 0.001,
-        redStep: 1,
-        greenStep: 1,
-        blueStep: 1,
-        wStep: 0.05,
-        hStep: 0.05,
-        xStep: 10,
-        yStep: 10,
-        zStep: 10,
-        rxStep: 0.1,
-        ryStep: 0.1,
-        rzStep: 0.1
-    };
-
-
     let btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
-
-    btStatusControls.addEventListener('click', function(){
+    btStatusControls.addEventListener('click', function() {
 
         let entities = window.NAF.connection.entities.entities;
         let panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
@@ -331,13 +272,12 @@
         try {
             console.log("destroying");
             btStatusControls.gui.destroy();
-        }catch (e){
-
+        }
+        catch (e) {
+            console.log(e);
         }
 
         btStatusControls.gui = new dat.GUI( { width: 200 });
-
-
 
         let elementsDatGui = [];
         let videoUserGui = [];
@@ -347,9 +287,6 @@
         if(entities) {
 
             /* Canvas Size Controls */
-            let inputH = [];
-            let inputW = [];
-            let buttonSubmit = [];
             let panel = {};
             for (let e in entities){
 
@@ -357,28 +294,22 @@
                 if (h) {
                     nActor++;
 
-                    let stringName = e;
-
                     /*  Thresholds Green */
-                    videoUserGui[e] = btStatusControls.gui.addFolder(stringName);
+                    videoUserGui[e] = btStatusControls.gui.addFolder(e);
 
                     /*  Panels  */
                     panel[e] = window.NAF.connection.entities.entities[e].childNodes[0].id === "videoPlaneGreen" ?
                         window.NAF.connection.entities.entities[e].childNodes[0] :
                         window.NAF.connection.entities.entities[e].childNodes[1] ;
 
-
                     elementsDatGui[e] = [];
                     for (let a in api_pattern_single) {
-
 
                         let L = a + "Low";
                         let H = a + "High";
                         let S = a + "Step";
 
-                        elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L],
-                            api_pattern_singleMax[H],
-                            api_pattern_singleStep[S]);
+                        elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L], api_pattern_singleMax[H], api_pattern_singleStep[S]);
 
                         if (   a[0] === 'w'
                             || a[0] === 'h'
@@ -387,86 +318,80 @@
                             || a[0] === 'z'
                             || a.substring(0,2) === 'rx'
                             || a.substring(0,2) === 'ry'
-                            || a.substring(0,2) === 'rz') {
-
+                            || a.substring(0,2) === 'rz')
+                        {
 
                             elementsDatGui[e][a].panelaki = panel[e];
-
                             elementsDatGui[e][a].domElement.pName = e;
 
-                            if (a[0] === 'h') {
-                                elementsDatGui[e][a].onChange(function () {
+                            switch (a[0]) {
+                                case 'w':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[5].panelaki;
+                                        p.setAttribute('width', api_pattern_single[this.property]);
+                                    });
+                                    break;
+                                case 'h':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[6].panelaki;
+                                        p.setAttribute('height', api_pattern_single[this.property]);
+                                    });
+                                    break;
+                                case 'x':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[7].panelaki;
+                                        p.getAttribute('position').x = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
+                                case 'y':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[8].panelaki;
+                                        p.getAttribute('position').y = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
+                                case 'z':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[9].panelaki;
+                                        p.getAttribute('position').z = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
 
-                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[6].panelaki;
 
-                                    p.setAttribute('height', api_pattern_single[this.property]);
-                                });
-                            } else if (a[0] === 'w') {
-                                elementsDatGui[e][a].onChange(function () {
-
-                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[5].panelaki;
-
-                                    p.setAttribute('width', api_pattern_single[this.property]);
-                                });
-                            } else if (a[0] === 'x'){
-                                elementsDatGui[e][a].onChange(function () {
-
-                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[7].panelaki;
-
-                                    p.getAttribute('position').x = api_pattern_single[this.property] / 10000;
-                                });
-                            } else if (a[0] === 'y'){
-                                elementsDatGui[e][a].onChange(function () {
-
-                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[8].panelaki;
-
-                                    p.getAttribute('position').y = api_pattern_single[this.property] / 10000;
-                                });
-                            } else if (a[0] === 'z'){
-
-                                elementsDatGui[e][a].onChange(function () {
-                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[9].panelaki;
-
-                                    p.getAttribute('position').z = api_pattern_single[this.property] / 10000;
-                                });
-
-                            } else if (a.substring(0,2) === 'rx'){
-
-                                elementsDatGui[e][a].onChange(function () {
-
-                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[10].panelaki;
-
-                                    let xStr = api_pattern_single[this.property];
-                                    let yStr = p.getAttribute('rotation').y;
-                                    let zStr = p.getAttribute('rotation').z;
-
-                                    p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-
-                                });
-                            } else if (a.substring(0,2) === 'ry'){
-                                elementsDatGui[e][a].onChange(function () {
-
-                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[11].panelaki;
-
-                                    let xStr = p.getAttribute('rotation').x;
-                                    let yStr = api_pattern_single[this.property];
-                                    let zStr = p.getAttribute('rotation').z;
-
-                                    p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-
-                                });
-                            } else if (a.substring(0,2) === 'rz'){
-                                elementsDatGui[e][a].onChange(function () {
-
-                                    let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[12].panelaki;
-
-                                    let xStr = p.getAttribute('rotation').x;
-                                    let yStr = p.getAttribute('rotation').y;
-                                    let zStr = api_pattern_single[this.property];
-
-                                    p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                                });
                             }
+
+                            switch (a.substring(0,2)) {
+
+                                case 'rx':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[10].panelaki;
+                                        let xStr = api_pattern_single[this.property];
+                                        let yStr = p.getAttribute('rotation').y;
+                                        let zStr = p.getAttribute('rotation').z;
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+
+                                case 'ry':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[11].panelaki;
+                                        let xStr = p.getAttribute('rotation').x;
+                                        let yStr = api_pattern_single[this.property];
+                                        let zStr = p.getAttribute('rotation').z;
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+
+                                case 'rz':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[12].panelaki;
+                                        let xStr = p.getAttribute('rotation').x;
+                                        let yStr = p.getAttribute('rotation').y;
+                                        let zStr = api_pattern_single[this.property];
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+                            }
+
                         } else {
                             elementsDatGui[e][a].onChange(function () {
                                 let domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
@@ -509,32 +434,28 @@
     let video_preview = document.getElementById('video-preview');
     let stop_button = document.getElementById('stop-recording-btn');
     let download_button = document.getElementById('download-recording-btn');
-    let recording = document.getElementById("recording");
+    let recording = document.getElementById('recording');
 
     function startRecording(stream) {
+
         let recorder = new MediaRecorder(stream);
         let data = [];
 
         recorder.ondataavailable = event => data.push(event.data);
         recorder.start();
-        // log(recorder.state + " for " + (lengthInMS/1000) + " seconds...");
 
         let stopped = new Promise((resolve, reject) => {
             recorder.onstop = resolve;
             recorder.onerror = event => reject(event.name);
         });
 
-        /*let recorded = wait(lengthInMS).then(
-            () => recorder.state == "recording" && recorder.stop()
-        );*/
-
         return Promise.all([
-            stopped/*,
-            recorded*/
+            stopped
         ])
             .then(() => data);
     }
-    function stop(stream) {
+
+    function stopRecording(stream) {
         stream.getTracks().forEach(track => track.stop());
     }
 
@@ -563,7 +484,7 @@
     }, false);
 
     stop_button.addEventListener("click", function() {
-        stop(video_preview.srcObject);
+        stopRecording(video_preview.srcObject);
         video_preview.style.display = 'none';
     }, false);
 
@@ -599,13 +520,13 @@
     });
 
     /* Make full screen and hide controls */
-    let clacket = document.getElementById("toggle_show_clacket");
-    clacket.onclick = function(){
+    let director_controls = document.getElementById("toggle_controls");
+    director_controls.onclick = function(){
 
         document.getElementById('actionsDiv').style.display='none';
 
         if (document.getElementsByClassName('dg ac')[0]) {
-            document.getElementsByClassName('dg ac')[0].style.display = 'none';
+            document.getElementsByClassName('dg ac')[0].style.display = 'none';Η
         }
 
         let elem = document.body;
