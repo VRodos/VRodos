@@ -1,5 +1,6 @@
 <!--Popups when right-clicking on 3D objects: included in vr_editor -->
 
+
 <script>
 
     function changeOverrideMaterial() {
@@ -128,6 +129,13 @@
         document.getElementById("ObjectColor").style.backgroundColor = "#" + currentColor;
 
     }
+    
+
+    function doorLinkFunction(e){
+            
+        console.log("hey", e.value);
+    
+    }
 
 
     // Set video texture when popup change
@@ -161,6 +169,8 @@
              transform_controls.object.children[0].material = movieMaterial;
              videoDom.play();
         }, 1000 );
+
+       
     }
 </script>
 
@@ -508,30 +518,47 @@
 <!-- Door@Archaeology: Interface for Changing the door properties -->
 <div id="popUpDoorPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2"
      style="min-width: 240px; max-width:300px; display:none">
-
+               
     <a style="float: right;" type="button" class="mdc-theme--primary"
-       onclick='this.parentNode.style.display = "none"; clearAndUnbind("popupDoorSelect", "doorid", ""); return false;'>
+       onclick='this.parentNode.style.display = "none";'>
        <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
-
-    <p class="mdc-typography--subheading1" style=""> Door options </p>
+    
+    <p class="mdc-typography--subheading1" style=""> Select Door Destination </p>
+    <!--
     <div class="mdc-textfield FullWidth" data-mdc-auto-init="MDCTextfield" id="doorInputTextfield">
         <input id="doorid" name="doorid" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light FullWidth"
                style="border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0;">
         <label for="doorid" class="mdc-textfield__label">Enter a door name </label>
         <div class="mdc-textfield__bottom-line"></div>
     </div>
-
+    
     <i title="Select a destination" class="material-icons mdc-theme--text-icon-on-background"
        style="vertical-align: text-bottom;">directions</i>
-
-    <select title="Select a destination" id="popupDoorSelect" name="popupDoorSelect"
+    -->
+    
+    <select title="Select a destination"id="popupDoorSelect" name="popupDoorSelect" 
             class="mdc-select--subheading1" style="min-width: 70%; max-width:85%; overflow:hidden; border: none; border-bottom: 1px solid rgba(0,0,0,.23);">
-    </select>
+           
+            <?php
+                //option.text = txt;
+                //$val = "Default";
+                $def = "Default";
+                $sel = true;
+                echo "<option value='$def' selected='$sel' disabled='$sel'>$def</option>";
 
+                $sceneIdList = vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id);
+                foreach($sceneIdList as $sc){
+                echo "<option value='$sc'>$sc</option>";
+                }
+            ?>
+        </select>
+    </select>
+    <!-- 
     <input type="checkbox" title="Select if it is a reward item" id="door_reward_checkbox" name="door_reward_checkbox"
            class="mdc-textfield__input mdc-theme--text-primary-on-light" style="margin-top:20px; margin-left:10px;">
     <label for="door_reward_checkbox" class="mdc-textfield__label" style="margin-left:15px;">Is a reward item?</label>
+    -->
 </div>
 
 <!-- Marker@WindEnergy: Interface for Changing the Marker properties :  -->

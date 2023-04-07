@@ -297,7 +297,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 
 
 		foreach($objects as $nameObject => $contentObject) {
-			//print_r($contentObject->categoryName);
+			//print_r($contentObject->sceneID_target);
 			// ===========  Artifact==============
 			if ( $contentObject->categoryName == 'Artifact' ) {
 
@@ -488,7 +488,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 
 					$ascene->appendChild( $a_entity );
 
-					includeDoorFunctionality($a_entity, $scene_id);
+					if (!empty($contentObject->sceneID_target))
+						includeDoorFunctionality($a_entity, $contentObject->sceneID_target);
 				}
 				else if ( $contentObject->categoryName == 'PointsofInterest(Video)' ) {
 					//print_r($contentObject->categoryName);
