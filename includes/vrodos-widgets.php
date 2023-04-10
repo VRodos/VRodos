@@ -33,9 +33,6 @@ function vrodos_widget_preamp_scripts() {
     // 4. Mtl loader
     wp_enqueue_script('vrodos_load87_MTLloader');
     
-    // 5. Pdb loader for molecules
-    wp_enqueue_script('vrodos_load87_PDBloader');
-    
     // 6. Fbx loader
     wp_enqueue_script('vrodos_load119_FBXloader');
     
@@ -48,9 +45,6 @@ function vrodos_widget_preamp_scripts() {
     wp_enqueue_script('vrodos_load119_DRACOLoader');
     wp_enqueue_script('vrodos_load119_DDSLoader');
     wp_enqueue_script('vrodos_load119_KTXLoader');
-    
-    // For the PDB files to annotate molecules in 3D
-    wp_enqueue_script('vrodos_load119_CSS2DRenderer');
     
     // Load single asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');

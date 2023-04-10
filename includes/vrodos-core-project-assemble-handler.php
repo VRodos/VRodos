@@ -1,35 +1,5 @@
 <?php
 
-// ==========================================================================================================
-
-//Convert PDB into the molecule YAML
-function vrodos_convert_pdbYAML(){
-
-    // 1. from molecule_asset_id get the pdb file
-    //$pdb_text = json_encode(file_get_contents(wp_get_attachment_url(get_post_meta(4773,"vrodos_asset3d_pdb")[0])));
-
-    // 2. Parse pdb as json. Call javascript parser
-
-    //    // Transform the following into ajax in order to get back the response from js to php
-    //    echo '<script type="text/javascript" src="../wp-content/plugins/wordpressunity3deditor/js_libs/threejs87/three.js"></script>';
-    //    echo '<script type="text/javascript" src="../wp-content/plugins/wordpressunity3deditor/js_libs/threejs87/PDBLoader.js"></script>';
-    //    echo '<script>';
-    //    echo 'var pdb_text='. $pdb_text.';';
-    //    echo 'console.log(pdb_text);';
-    //    echo 'var loader = new THREE.PDBLoader();';
-    //    echo 'var res = loader.parse(pdb_text) ;';
-    //    echo '</script>';
-
-    // 2a. Atoms xyz translation of atoms e.g. {"H": [10,20,30], O:[], H:[]}
-    // 2b. Bonds to conect atoms e.g. {[1,2],[2,3]}
-    // 3. Get Molecule YAMLS
-    // 3a. Find id of tax of Molecule
-    //$molecule_term_meta = get_term_meta(wp_get_post_terms( 4773,  'vrodos_asset3d_cat' )[0]->term_taxonomy_id);
-    // 3b. Get YAMLS of $id_tax_term_mol
-    //print_r($product_terms);
-}
-
-
 // CREATE PROJECT
 function vrodos_create_project_frontend_callback() {
 

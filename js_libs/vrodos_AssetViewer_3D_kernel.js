@@ -2,8 +2,8 @@
 class VRodos_AssetViewer_3D_kernel {
 
     // asset_viewer_3d_kernel.scene.children :
-        // 0: root (pdb, audio, fbx, GLB, OBJ)
-        // 1,2,3,4: Directional light 1,2,3, 4: Ambient light
+    // 0: root (pdb, audio, fbx, GLB, OBJ)
+    // 1,2,3,4: Directional light 1,2,3, 4: Ambient light
 
     // PDB is the same loader for url and client side
     // OBJ, FBX, and GLB call first an xhr loader in editor_scripts.js and then the streaming version here
@@ -105,12 +105,12 @@ class VRodos_AssetViewer_3D_kernel {
 
             //scope.raylineShow(raycaster);
 
-             if (intersects.length > 0) {
-                 selectedObject = intersects[0];
-                 if ( scope.mixers.length > 0 ) {
-                     scope.playStopAnimation();
-                 }
-             }
+            if (intersects.length > 0) {
+                selectedObject = intersects[0];
+                if ( scope.mixers.length > 0 ) {
+                    scope.playStopAnimation();
+                }
+            }
         }
 
 
@@ -216,8 +216,8 @@ class VRodos_AssetViewer_3D_kernel {
         let c = 1000;
         points.push(raycasterPick.ray.origin);
         points.push(new THREE.Vector3((raycasterPick.ray.origin.x + c*raycasterPick.ray.direction.x),
-                              (raycasterPick.ray.origin.y + c*raycasterPick.ray.direction.y),
-                              (raycasterPick.ray.origin.z + c*raycasterPick.ray.direction.z))
+            (raycasterPick.ray.origin.y + c*raycasterPick.ray.direction.y),
+            (raycasterPick.ray.origin.z + c*raycasterPick.ray.direction.z))
         );
 
         let geolinecast = new THREE.BufferGeometry().setFromPoints( points );
@@ -703,124 +703,6 @@ class VRodos_AssetViewer_3D_kernel {
 
     }
 
-    /* Molecule loader */
-    loadMolecule(url_or_text_pdb, calledFromWhere) {
-
-        // Clear Previous
-        this.clearAllAssets("loadMolecule");
-
-        let loader = new THREE.PDBLoader();
-
-        let scope = this;
-
-        // Load new
-        loader.load(url_or_text_pdb, function (pdb) {
-
-            let geometryAtoms = pdb.geometryAtoms;
-            let geometryBonds = pdb.geometryBonds;
-            let positionsBonds = geometryBonds.getAttribute('position');
-
-            let positions = geometryAtoms.attributes.position.array;
-            let colors = geometryAtoms.getAttribute('color').array;
-
-            let json = pdb.json;
-
-            let sphereGeometry = new THREE.IcosahedronBufferGeometry(0.4, 4);
-
-            for (let i = 0; i < positions.length ; i += 3) {
-
-                // Atom position and color
-                let atomPosition = new THREE.Vector3(positions[i], positions[i + 1], positions[ i + 2 ]);
-                let atomColor    = new THREE.Color  (   colors[i], colors   [i + 1], colors   [ i + 2 ]);
-
-                let material = new THREE.MeshPhongMaterial({color: atomColor, flatShading: false});
-                let atomObject = new THREE.Mesh(sphereGeometry, material);
-
-                let atomName = json.atoms[i/3][4];
-
-                atomObject.name = "AtomBall:" + atomName;
-                atomObject.position.copy(atomPosition);
-
-                // atomObject.position.multiplyScalar(75);
-                // atomObject.scale.multiplyScalar(25);
-
-                scope.scene.getChildByName('root').add(atomObject);
-
-
-                // Make the Atom Text CSS2D label
-                let atomLabelCSS = document.createElement('div');
-                atomLabelCSS.className = 'label';
-                atomLabelCSS.style.color = 'rgb(' + atomColor.r* 255 + ',' + atomColor.g* 255+ ',' + atomColor.b * 255 + ')';
-                atomLabelCSS.textContent =  atomName;
-
-                let atomlabelObj = new THREE.CSS2DObject(atomLabelCSS);
-                atomlabelObj.name = "Label:" + atomLabelCSS.textContent;
-                atomlabelObj.position.copy( atomObject.position );
-
-                scope.scene.getChildByName('root').add(atomlabelObj);
-            }
-
-            // Make the bonds
-
-            positionsBonds.count = positionsBonds.array.length;
-
-            let colorsStart = geometryBonds.getAttribute('colorStart');
-            let colorsEnd = geometryBonds.getAttribute('colorEnd');
-
-            for (let i = 0; i < positionsBonds.count; i += 6) {
-
-
-
-                let start = new THREE.Vector3( positionsBonds.array[i], positionsBonds.array[i+1], positionsBonds.array[i+2]);
-                let end   = new THREE.Vector3( positionsBonds.array[i+3],positionsBonds.array[i+4],positionsBonds.array[i+5]);
-
-                let HALF_PI = + Math.PI * .5;
-                let distance = start.distanceTo(end);
-
-                let cylinder = new THREE.CylinderGeometry(0.2, 0.2, distance/2, 10, 4, false);
-
-                let orientation = new THREE.Matrix4();//a new orientation matrix to offset pivot
-                let offsetRotation = new THREE.Matrix4();//a matrix to fix pivot rotation
-                let offsetPosition = new THREE.Matrix4();//a matrix to fix pivot position
-
-                orientation.lookAt( start, end, new THREE.Vector3(0,1,0));//look at destination
-                offsetRotation.makeRotationX(HALF_PI);//rotate 90 degs on X
-                orientation.multiply(offsetRotation);//combine orientation with rotation transformations
-                cylinder.applyMatrix4(orientation);
-
-
-
-                let bond1 = new THREE.Mesh(cylinder, new THREE.MeshPhongMaterial({
-                    color: new THREE.Color(colorsStart[i/6][0], colorsStart[i/6][1], colorsStart[i/6][2]),
-                    flatShading: false,
-                }));
-
-                bond1.name = "Bond:" + i;
-                bond1.position.copy(start);
-                bond1.position.lerp(end, 0.25);
-
-                scope.scene.getChildByName('root').add(bond1);
-
-
-                let bond2 = new THREE.Mesh(cylinder, new THREE.MeshPhongMaterial({
-                    color: new THREE.Color(colorsEnd[i/6][0], colorsEnd[i/6][1], colorsEnd[i/6][2]),
-                    flatShading: false,
-                }));
-
-                bond2.name = "Bond:" + (i+1);
-                bond2.position.copy(start);
-                bond2.position.lerp(end, 0.75);
-                scope.scene.getChildByName('root').add(bond2);
-            }
-
-            // zoom to molecule
-            scope.zoomer(scope.scene.getChildByName('root'));
-
-            // kick renderer
-            scope.kickRendererOnDemand();
-        });
-    }
-
     /*  Auto zoom on obj with multiple meshes */
     computeSceneBoundingSphereAll(myGroupObj)
     {
@@ -855,7 +737,7 @@ class VRodos_AssetViewer_3D_kernel {
 
 
                 if (radius) {
-                     sceneBSRadius = Math.max(sceneBSRadius, radius + object.position.length());
+                    sceneBSRadius = Math.max(sceneBSRadius, radius + object.position.length());
                 }
             }
         } );
@@ -880,23 +762,20 @@ class VRodos_AssetViewer_3D_kernel {
 
     //-------------------- loading from saved data --------------------------------------
     loader_asset_exists( pathUrl = null, mtlFilename = null,
-                                 objFilename= null, pdbFileContent = null,
-                                 fbxFilename = null, glbFilename = null,
-                                 textures_fbx_string_connected = null) {
+                         objFilename= null, pdbFileContent = null,
+                         fbxFilename = null, glbFilename = null,
+                         textures_fbx_string_connected = null) {
 
         if (this.scene != null) {
             if (this.renderer)
                 this.clearAllAssets("loader_asset_exists");
         }
 
-        // PDB
-        if (pdbFileContent) {
-            //console.log("Loading from existing resource","PDB");
 
-            this.loadMolecule(pdbFileContent, "loader_asset_exists");
 
-            // GLB
-        } else if (glbFilename){
+
+        // GLB
+        if (glbFilename){
             //console.log("Loading from existing resource","GLB");
             //console.log("glbFilename", glbFilename);
 
@@ -1091,8 +970,8 @@ class VRodos_AssetViewer_3D_kernel {
                     xhr.onload = function (e) {
                         if (this.status === 200) {
 
-                             let file = new File([this.response], basename);
-                             scope.file_reader_cortex2(file);
+                            let file = new File([this.response], basename);
+                            scope.file_reader_cortex2(file);
                         }
                     };
 
@@ -1174,14 +1053,8 @@ class VRodos_AssetViewer_3D_kernel {
                         break;
                 }
 
-                // Check if everything is loaded
-                if ( type === 'mtl' || type==='obj' || type==='jpg' || type==='png' || type==='fbx' || type==='gif' || type==='glb') {
-
-                    // console.log("TYPE", type + " " + file);
-                    scope.checkerCompleteReading( type );
-                }else if ( type==='pdb') {
-                    scope.loadMolecule(fileContent, "file_reader_cortex");
-                }
+                // console.log("TYPE", type + " " + file);
+                scope.checkerCompleteReading( type );
             };
         })(reader);
     }
