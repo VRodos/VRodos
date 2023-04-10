@@ -536,7 +536,8 @@
     <i title="Select a destination" class="material-icons mdc-theme--text-icon-on-background"
        style="vertical-align: text-bottom;">directions</i>
     -->
-    
+   
+   
     <select title="Select a destination"id="popupDoorSelect" name="popupDoorSelect" 
             class="mdc-select--subheading1" style="min-width: 70%; max-width:85%; overflow:hidden; border: none; border-bottom: 1px solid rgba(0,0,0,.23);">
            
@@ -549,7 +550,9 @@
 
                 $sceneIdList = vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id);
                 foreach($sceneIdList as $sc){
-                echo "<option value='$sc'>$sc</option>";
+                //echo "<option value='$sc'>$sc</option>";
+                    $scene_title = get_the_title($sc);
+                    echo "<option value='$sc'>$scene_title</option>";
                 }
             ?>
         </select>

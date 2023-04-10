@@ -353,7 +353,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 					$a_entity->setAttribute( "clear-frustum-culling", "" );
 
 
-					includeDoorFunctionality($a_entity, $scene_id);
+					//includeDoorFunctionality($a_entity, $scene_id);
 
 
 

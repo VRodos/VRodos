@@ -724,7 +724,7 @@ function displayDoorProperties(event, name) {
     popupDoorSelect.change(function (e) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        console.log(updName);
+        console.log(this.value);
         //envir.scene.getObjectByName('scenesInsideVREditor').children;
         //tempFunc.call(this, updName);
 
@@ -739,8 +739,7 @@ function displayDoorProperties(event, name) {
             envir.scene.getObjectByName(updName).sceneID_target = this.value;
         //envir.scene.getObjectByName(name).sceneName_target = this.value;
 
-
-        //}
+        //
     });
 
 }
