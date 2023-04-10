@@ -425,30 +425,9 @@ function vrodos_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_n
 //}
 
 //==========================================================================================================================================
-//==========================================================================================================================================
+
+
 //Important GET functions
-
-function vrodos_get_all_Available_molecules_of_game($scene_id){
-
-	$saved_available_moleculeIDs = get_post_meta($scene_id, 'vrodos_available_molecules', true);
-	$available_moleculeIDs = substr($saved_available_moleculeIDs, 1, -1);
-	$available_moleculeIDs = explode(',',$available_moleculeIDs);
-	$moleculesData = array();
-	foreach ($available_moleculeIDs as $moleculeID) {
-		$moleculeID = substr($moleculeID, 1, -1);
-		$molecule_post = get_post($moleculeID);
-
-		$molecule_type = get_post_meta($moleculeID, 'vrodos_molecule_ChemicalTypeVal', true);
-		$molecule_title = $molecule_post->post_title;
-		$the_featured_image_ID = $screenimgID = get_post_meta($moleculeID, 'vrodos_asset3d_screenimage', true);
-		$the_featured_image_url = wp_get_attachment_url( $the_featured_image_ID );
-
-		$moleculesData[] = ['moleculeID'=>$moleculeID, 'moleculeName'=>$molecule_title, 'moleculeImage'=>$the_featured_image_url, 'moleculeType'=>$molecule_type  ];
-	}
-
-	return	$moleculesData;
-}
-
 
 
 
@@ -1479,9 +1458,6 @@ function vrodos_undo_scene_async_action_callback()
 // Redo button for scenes
 function vrodos_redo_scene_async_action_callback()
 {
-    $mole = update_post_meta( $_POST['scene_id'], 'vrodos_available_molecules',
-                                                        $_POST['available_molecules']);
-    
     if (isset($_POST['scene_screenshot'])){
         $attachment_id = vrodos_upload_scene_screenshot(
             $_POST['scene_screenshot'],
@@ -1567,54 +1543,4 @@ function fake_compile_for_a_test_project()
 	fclose($h);
 }
 
-//==========================================================================================================================================
-
-/**
- * Make the molecule prefab
- *
- * @param $projectLocalPath :  "C:\\xampp7\htdocs\wordpress\wp-content\uploads\\"
- * @param $projectName      :  "chemtest"
- * @param $molecule_post_id :   "123"
- * @param $molecule_post_name :  "water"
- * @param $pdb_str           :   The string of the pdb file
- */
-function addMoleculePrefabToAssets($projectLocalPath, $projectName, $molecule_post_id, $molecule_post_name, $pdb_str ){
-
-	//$prefab_path = "C:\\xampp7\htdocs\wordpress\wp-content\uploads\chemtestUnity\Assets\StandardAssets\Prefabs\\";
-	$prefab_path = $projectLocalPath."\\".$projectName."Unity\Assets\StandardAssets\Prefabs\\";
-
-	$dirMaterials =  $prefab_path."Elements\Transparent";
-	$dirMolecules =  $prefab_path."Molecules";
-
-	$dirMaterials = str_replace('\\', '/', $dirMaterials);
-	$dirMolecules = str_replace('\\', '/', $dirMolecules);
-
-
-	$fh = fopen("outputPREKA.txt","w");
-
-
-	fwrite($fh, print_r($pdb_str,true));
-
-	fwrite($fh,"\n");
-	fwrite($fh, "dirMaterials:" . $dirMaterials);
-	fwrite($fh,"\n");
-
-	// Create the parser class
-	$pdbloader = new PDBLoader($pdb_str);
-
-
-
-	// parse the pdb into atoms and verticesBonds
-	$molecule = $pdbloader->parser();
-
-	//fwrite($fh, print_r($molecule,true));
-	fclose($fh);
-
-
-	// Make the materials and their metas
-	$pdbloader->saveTheMaterial($molecule['atoms'], $dirMaterials);
-
-	// Make the prefab and its meta
-	$pdbloader->makeThePrefab($molecule_post_id, $molecule_post_name, $molecule['atoms'], $molecule['verticesBonds'], $dirMolecules);
-}
 ?>

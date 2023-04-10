@@ -46,6 +46,9 @@ function vrodos_return_project_type($id) {
 function vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
                                    $project_type, $project_type_icon, $project_post){
 
+
+    $scene_title = $scene_post ? $scene_post->post_title : ' ';
+
     echo '<div id="sceneInfoBreadcrump" '.
         ' class="mdc-textfield mdc-theme--text-primary-on-dark mdc-form-field"'.
         ' data-mdc-auto-init="MDCTextfield">'.
@@ -69,7 +72,7 @@ function vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
         //Title Name at breadcrumps
         '<input id="sceneTitleInput" name="sceneTitleInput"'.
         ' title="Scene title" placeholder="Scene title"'.
-        ' value="'.$scene_post->post_title.'" type="text"'.
+        ' value="'.$scene_title.'" type="text"'.
         ' class="mdc-textfield__input mdc-theme--text-primary-on-dark"'.
         ' aria-controls="title-validation-msg" minlength="3" required>'.
         '<p id="title-validation-msg"'.

@@ -28,8 +28,8 @@ function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
 
     // Clear add texture hidden fields
     while ( jQuery("[id^=textureFileInput]").length > 0) {
-         jQuery("[id^=textureFileInput]")[0].remove();
-   }
+        jQuery("[id^=textureFileInput]")[0].remove();
+    }
 
     // Clear select 3D files input
     if (document.getElementById("fileUploadInput"))
@@ -98,14 +98,9 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local){
                     break;
             }
 
-            // Check if everything is loaded
-            if ( type === 'mtl' || type==='obj' || type==='jpg' || type==='png' || type==='fbx' || type==='gif' || type==='glb') {
+            // console.log("TYPE", type + " " + file);
+            asset_viewer_3d_kernel_local.checkerCompleteReading( type );
 
-                // console.log("TYPE", type + " " + file);
-                asset_viewer_3d_kernel_local.checkerCompleteReading( type );
-            }else if ( type==='pdb') {
-                asset_viewer_3d_kernel_local.loadMolecule(fileContent, "file_reader_cortex");
-            }
         };
     })(reader);
 }
