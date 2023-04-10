@@ -97,7 +97,7 @@
 
 <div>
     <div class="wrapperVideoElement">
-        <video id="video-preview" width="300" height="200" autoplay muted></video>
+        <video id="video-preview" width="300" height="200" autoplay muted hidden></video>
         <video id="recording" hidden></video>
     </div>
 
@@ -134,7 +134,7 @@
             </button>
         </div>
 
-        <div class="wrapperControlLineElement" id="video_capture_section">
+        <div class="wrapperControlLineElement">
             <button id="start-recording-btn"
                     class="buttonStartRecord"
                     title="Start capturing video">
@@ -143,8 +143,8 @@
 
             <button id="stop-recording-btn"
                     class="buttonStopRecord"
-                    title="Stop capture">
-                ◼️️
+                    title="Save capture">
+                💾
             </button>
 
             <a id="download-recording-btn"
@@ -160,13 +160,17 @@
                 ⬆️️️
             </button>
         </div>
-
+        <div class="wrapperControlElement">
+            <span id="captured-video-label"></span>
+        </div>
         <div class="wrapperControlElement">
             <label for="positionShow" title="Camera Position">&#127909;</label>
             <span id="positionShow"></span>
         </div>
 
         <div id="panelsSizeControlsDiv"></div>
+        <input id="node-url-input" hidden disabled />
+        <input id="node-token-input" hidden disabled />
     </div>
 </div>
 
@@ -443,6 +447,7 @@
     let stop_button = document.getElementById('stop-recording-btn');
     let download_button = document.getElementById('download-recording-btn');
     let upload_button = document.getElementById('upload-recording-btn');
+    let capture_label = document.getElementById('captured-video-label');
     let recording = document.getElementById('recording');
 
     function startRecording(stream) {
@@ -468,11 +473,19 @@
         stream.getTracks().forEach(track => track.stop());
     }
 
+    let recordedBlob;
+
     record_button.addEventListener("click", function() {
+
+        capture_label.innerHTML = '';
+
         navigator.mediaDevices.getDisplayMedia({
             preferCurrentTab: true,
             selfBrowserSurface: 'include',
-            video: true,
+            systemAudio: 'include',
+            video: {
+                cursor: "never"
+            },
             audio: true
         }).then(stream => {
             video_preview.style.display = 'block';
@@ -487,13 +500,15 @@
             return new Promise(resolve => video_preview.onplaying = resolve);
         }).then(() => startRecording(video_preview.captureStream()))
             .then (recordedChunks => {
-                let recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
+                recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
                 recording.src = URL.createObjectURL(recordedBlob);
                 download_button.href = recording.src;
                 download_button.download = "RecordedVideo.webm";
 
-                console.log("Successfully recorded " + recordedBlob.size + " bytes of " +
-                    recordedBlob.type + " media.");
+                upload_button.href = recording.src;
+                capture_label.innerHTML = "Recorded " + formatBytes(recordedBlob.size) + " of " +
+                    recordedBlob.type + " media.";
+
             });
     }, false);
 
@@ -501,6 +516,38 @@
         stopRecording(video_preview.srcObject);
     }, false);
 
+    upload_button.addEventListener("click", function() {
+        let mv_url = document.getElementById('node-url-input').value;
+        let mv_token = document.getElementById('node-token-input').value;
+
+        console.log(mv_url, mv_token);
+
+        console.log(recordedBlob);
+        const blobToBinary = async (blob) => {
+            const buffer = await blob.arrayBuffer();
+
+            const view = new Int8Array(buffer);
+
+            return [...view].map((n) => n.toString()).join(' ');
+        };
+
+        blobToBinary(recordedBlob).then(binary_string => {
+
+            fetch(mv_url + '/dam/assets?description=' + 'testDescription' + '&externalUrl=' + 'testUrl' + '&externalTool=VRodos', {
+                method: 'POST',
+                headers: {
+                    /*'Content-Type': 'multipart/form-data',*/
+                    'Authorization': `Bearer ${mv_token}`
+                },
+                body: JSON.stringify({
+                    "file": binary_string
+                })
+            })
+                /*.then(response => response.json())*/
+                .then(response => console.log(response));
+
+        });
+    });
 
     /* Scale down div when in compile preview */
     (function() {
@@ -553,6 +600,18 @@
         } else if (elem.msRequestFullscreen) {
             elem.msRequestFullscreen();
         }
+    };
+
+    let formatBytes = (bytes, decimals = 2) => {
+        if (!+bytes) return '0 Bytes'
+
+        const k = 1024
+        const dm = decimals < 0 ? 0 : decimals
+        const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
     };
 
 </script>

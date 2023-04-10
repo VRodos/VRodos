@@ -39,18 +39,22 @@ global $parameter_Scenepass;
             // Create the link when scene is clicked to be edited (permalink depending on the scene yaml category 2D or 3D)
             $edit_scene_page_id = $editscenePage ? $editscenePage[0]->ID : '';
 
+            //var_dump($scene_id);
+            /*var_dump($default_scene);
+            exit;*/
+
             // Url when the scene is deleted
             $url_redirect_delete_scene = get_permalink($edit_scene_page_id) . $parameter_Scenepass .
                 $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_type;
 
+
             // Create redirect javascript
-            if($scene_type !== 'menu' && $scene_type !== 'credits') {
-                if ($default_scene) {
-                    echo '<script>';
-                    echo 'var url_scene_redirect="' . $url_redirect_delete_scene . '";'; // not possible with escape
-                    echo '</script>';
-                }
+            if ($default_scene) {
+                echo '<script>';
+                echo 'let url_scene_redirect="' . $url_redirect_delete_scene . '";';
+                echo '</script>';
             }
+
 
             $edit_page_link = esc_url( $url_redirect_delete_scene );
 

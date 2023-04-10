@@ -199,8 +199,21 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
             $project_type = wp_get_post_terms( $project_id, 'vrodos_game_type');
             if ($project_type[0]->slug == 'virtualproduction_games') {
                 $recording_controls->setAttribute('style', 'visibility: visible;');
+
+                // If MediaVerse project, get MV node url, in order to upload video and update project
+                $user_id = get_current_user_id();
+                if ($user_id) {
+                    $token = get_the_author_meta( 'mvnode_token', $user_id );
+                    $url = get_the_author_meta( 'mvnode_url', $user_id );
+                    $node_url_input = $dom->getElementById('node-url-input');
+                    $node_url_input->setAttribute('value', $url);
+                    $node_token_input = $dom->getElementById('node-token-input');
+                    $node_token_input->setAttribute('value', $token);
+                }
                 $dom->saveHTML();
             }
+
+
 
 //			$f = fopen("output_compile_director.txt","w");
 //			fwrite($f, "----------------".chr(13));

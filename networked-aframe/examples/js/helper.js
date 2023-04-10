@@ -1,4 +1,4 @@
-let api_pattern_single = {
+const api_pattern_single = {
     ThresholdMin: 0.106,
     ThresholdMax: 0.13,
     red: 48, green: 146, blue: 89,
@@ -7,7 +7,7 @@ let api_pattern_single = {
     rx: 0, ry: 0, rz:0
 };
 
-let api_pattern_singleMin = {
+const api_pattern_singleMin = {
     ThresholdMinLow: 0,
     ThresholdMaxLow: 0,
     redLow: 0,
@@ -22,7 +22,7 @@ let api_pattern_singleMin = {
     ryLow:-100,
     rzLow:-100
 };
-let api_pattern_singleMax = {
+const api_pattern_singleMax = {
     ThresholdMinHigh: 0.4,
     ThresholdMaxHigh: 0.4,
     redHigh: 255,
@@ -37,7 +37,7 @@ let api_pattern_singleMax = {
     ryHigh: 100,
     rzHigh: 100
 };
-let api_pattern_singleStep = {
+const api_pattern_singleStep = {
     ThresholdMinStep: 0.001,
     ThresholdMaxStep: 0.001,
     redStep: 1,
