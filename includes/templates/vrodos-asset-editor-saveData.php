@@ -7,7 +7,7 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
     // 1. DELETE ATTACHMENTS OF PARENT POST (ASSET POST)
     $attachments = get_children( array('post_parent' => $asset_newID, 'post_type' => 'attachment') );
 
-    foreach ($attachments as $attachment){
+    foreach ($attachments as $attachment) {
 
         // Delete attachment post (apart from screenshot)
         if (!strpos($attachment->post_title, 'screenshot')) {
@@ -222,7 +222,6 @@ function vrodos_create_asset_3DFilesExtra_frontend($asset_newID, $assetTitleForm
     } else if ($_POST['glbFileInput']) {
 
         // GLB upload and add id of uploaded file to postmeta  vrodos_asset3d_glb of asset
-
         if (strlen($_POST['glbFileInput']) > 0) {
             $glbFile_id = vrodos_upload_AssetText(null, 'glb' . $assetTitleForm, $asset_newID,
                 $_FILES, 0, $project_id);

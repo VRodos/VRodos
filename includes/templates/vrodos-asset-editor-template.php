@@ -1200,7 +1200,6 @@ if($asset_id != null) {
         let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
 
 
-
         // ------- Class to load 3D model ---------
         let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById( 'previewCanvas' ),
             document.getElementById( 'previewCanvasLabels' ),
