@@ -669,13 +669,13 @@ wp_head();
     <script>
 
         // id of animation frame is used for canceling animation when dat-gui changes
-        var id_animation_frame;
+        let id_animation_frame;
 
         // all 3d dom
         let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 
         // Selected object name
-        var selected_object_name = '';
+        let selected_object_name = '';
 
         // Add 3D gui widgets to gui vr_editor_main_div
         let guiContainer = document.getElementById('numerical_gui-container');
@@ -684,14 +684,14 @@ wp_head();
         // guiContainer.appendChild(controlInterface.scale.domElement);
 
         // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
-        var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
+        let envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
 
 
 
-        var transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
+        let transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
 
 
@@ -739,7 +739,7 @@ wp_head();
 
 
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
-        var firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+        let firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
         // Hide (right click) panel
         hideObjectPropertiesPanels();
@@ -748,7 +748,7 @@ wp_head();
         controllerDatGuiOnChange();
 
         // Add lights on scene
-        var lightsPawnLoader = new VRodos_LightsPawn_Loader();
+        let lightsPawnLoader = new VRodos_LightsPawn_Loader();
         lightsPawnLoader.load(resources3D);
 
         // Add all in hierarchy viewer
@@ -828,7 +828,7 @@ wp_head();
         }; // End of manager
 
         // Loader of assets
-        var loaderMulti = new VRodos_LoaderMulti();
+        let loaderMulti = new VRodos_LoaderMulti();
         loaderMulti.load(manager, resources3D, pluginPath);
 
 
