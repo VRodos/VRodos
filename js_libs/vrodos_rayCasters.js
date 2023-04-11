@@ -916,26 +916,26 @@ function showWholePopupDiv(popUpDiv, event) {
 //  * @param event
 //  * @param name
 //  */
-// function displayPoiVideoProperties(event, name){
-//
-//     // The whole popup div
-//     var ppPropertiesDiv = jQuery("#popUpPoiVideoPropertiesDiv");
-//
-//     // The checkbox only
-//     var chbox = jQuery("#poi_video_reward_checkbox");
-//
-//     // Save the previous artifact properties values (in case of  direct mouse click on another item)
-//     chbox.trigger("change");
-//
-//     clearAndUnbind(null, null, "poi_video_reward_checkbox");
-//
-//     chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
-//
-//     // Show Selection
-//     ppPropertiesDiv.show();
-//     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-//     ppPropertiesDiv[0].style.top  = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-//
-//     // Add change listener
-//     chbox.change(function(e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
-// }
+function displayPoiVideoProperties(event, name) {
+
+    // The whole popup div
+    var ppPropertiesDiv = jQuery("#popUpPoiVideoPropertiesDiv");
+
+    // The checkbox only
+    var chbox = jQuery("#poi_video_reward_checkbox");
+
+    // Save the previous artifact properties values (in case of  direct mouse click on another item)
+    chbox.trigger("change");
+
+    clearAndUnbind(null, null, "poi_video_reward_checkbox");
+
+    chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
+
+    // Show Selection
+    ppPropertiesDiv.show();
+    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
+    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+
+    // Add change listener
+    chbox.change(function (e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
+}
