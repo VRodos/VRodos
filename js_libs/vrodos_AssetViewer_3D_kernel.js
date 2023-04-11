@@ -10,7 +10,7 @@ class VRodos_AssetViewer_3D_kernel {
 
 
     // noinspection DuplicatedCode
-    setZeroVars(){
+    setZeroVars() {
         this.nObj = 0;
         this.nFbx = 0;
         this.nMtl = 0;
@@ -682,9 +682,6 @@ class VRodos_AssetViewer_3D_kernel {
                 }
 
                 scope.scene.getChildByName('root').add( gltf.scene );
-
-
-
 
                 scope.zoomer(scope.scene.getChildByName('root'));
 

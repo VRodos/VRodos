@@ -60,7 +60,11 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local){
         case 'mtl': asset_viewer_3d_kernel_local.nMtl = 1; reader.readAsText(file);        break;
         case 'obj': asset_viewer_3d_kernel_local.nObj = 1; reader.readAsArrayBuffer(file); break;
         case 'fbx': asset_viewer_3d_kernel_local.nFbx = 1; reader.readAsArrayBuffer(file); break;
-        case 'glb': asset_viewer_3d_kernel_local.nGlb = 1; reader.readAsArrayBuffer(file); break;
+        case 'glb':
+            asset_viewer_3d_kernel_local.nGlb = 1;
+            reader.readAsArrayBuffer(file);
+            document.getElementById('glbFileInput').value = file;
+            break;
         case 'jpg': reader.readAsDataURL(file);     break;
         case 'png': reader.readAsDataURL(file);     break;
         case 'gif': reader.readAsDataURL(file);     break;
@@ -85,7 +89,7 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local){
                     asset_viewer_3d_kernel_local.FbxBuffer =  fileContent;
                     break;
                 case 'glb':
-                    document.getElementById('glbFileInput').value = dec.decode(fileContent);
+                    //document.getElementById('glbFileInput').value = dec.decode(fileContent);
                     asset_viewer_3d_kernel_local.GlbBuffer =  fileContent;
                     break;
                 case 'pdb': document.getElementById('pdbFileInput').value = fileContent; break;
