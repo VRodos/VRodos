@@ -164,14 +164,14 @@ echo 'var pluginPath="'.$pluginpath.'";';
 echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
 echo 'let projectId="'.$project_id.'";';
 echo 'let projectSlug="'.$projectSlug.'";';
-echo 'var isAdmin="'.$isAdmin.'";';
+echo 'let isAdmin="'.$isAdmin.'";';
 echo 'let isUserAdmin="'.current_user_can('administrator').'";';
 echo 'let urlforAssetEdit="'.$urlforAssetEdit.'";';
 echo 'let scene_id ="'.$current_scene_id.'";';
 echo 'let game_type ="'.strtolower($project_type).'";';
 echo 'user_email = "'.$user_email.'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
-echo 'var siteurl="'.site_url().'";';
+echo 'let siteurl="'.site_url().'";';
 
 if ($project_type === 'Archaeology') {
     echo "var doorsAll=" . json_encode($doorsAllInfo) . ";";
@@ -632,17 +632,17 @@ wp_head();
     <!-- Scripts part 1: The GUIs -->
     <script type="text/javascript">
 
-        var mdc = window.mdc;
-        var MDCSelect = mdc.select.MDCSelect;
+        let mdc = window.mdc;
+        let MDCSelect = mdc.select.MDCSelect;
 
         mdc.autoInit();
 
         // Delete scene dialogue
-        var deleteDialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
+        let deleteDialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
         deleteDialog.focusTrap_.deactivate();
 
-        // // Compile dialogue
-        var compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
+        // Compile dialogue
+        let compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
         compileDialog.focusTrap_.deactivate();
 
 
@@ -657,7 +657,7 @@ wp_head();
 
 
             // make asset browser draggable: not working without get_footer
-            //jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
+            // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
         });
 
 

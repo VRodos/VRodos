@@ -134,6 +134,17 @@
 	text-shadow: 1px 1px 1px #fff;
 }
 
+.FileListItemImg {
+	border-radius: 0;
+	top:0;
+}
+
+.FileListItemFooter {
+	width:100%;
+	position: absolute;
+	bottom: 0;
+	left:0;
+}
 
 
 .assetCategoryNameInList{
@@ -164,21 +175,12 @@
 	top: 0;
 	bottom: 0;
 	padding: 0;
+	object-fit: cover;
 }
 
 
 
-.FileListItemImg {
-	border-radius: 0;
-	top:0;
-}
 
-.FileListItemFooter {
-	width:100%;
-	position: absolute;
-	bottom: 0;
-	left:0;
-}
 
 .editAssetbutton{
 	height: 30px;
