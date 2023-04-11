@@ -595,7 +595,7 @@ wp_head();
                        title="Add new private asset"
                        href="<?php echo esc_url( get_permalink($newAssetPage[0]->ID) .
                            $parameter_pass . $project_id . '&vrodos_scene=' .  $current_scene_id. '&scene_type=scene&preview=false'); ?>">
-                        <i class="material-icons" style="cursor: pointer; font-size:54px; color:orangered; ">add_circle</i>
+                        <i class="material-icons">add_circle</i>
                     </a>
 
                 </div>
