@@ -2,70 +2,70 @@
 
 function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) {
 
-	// Check if a process is running on linux server
-	function processExists($processName) {
-		$exists= false;
-		exec("ps -A | grep -i $processName | grep -v grep", $pids);
-		if (count($pids) > 0) {
-			$exists = true;
-		}
-		return $exists;
-	}
-	
-	
-	// Start node js server at 5832
-	$strCmd = "node ".plugin_dir_path( __DIR__  )."/networked-aframe/server/easyrtc-server.js";
-	
-	if ( PHP_OS == "WINNT"){
-		popen("start " . $strCmd, "r");
-	} else {
-		// if not already running (linux)
-		if (!processExists("networked-afr")) {
-			shell_exec( $strCmd . " > /dev/null 2>/dev/null &" );
-		}
-		sleep(2);
-	}
-	foreach (array_reverse($scene_id_list) as $key => &$value) {
-		// Get scene content
-		$project_post[$key] = get_post($project_id);
-		$project_title = $project_post[$key]->post_title;
-		$scene_post[$key] = get_post( $value );
-		$scene_content_text[$key] = $scene_post[$key]->post_content;
-		$scene_title[$key] = $scene_post[$key]->post_title;
+    // Check if a process is running on linux server
+    function processExists($processName) {
+        $exists= false;
+        exec("ps -A | grep -i $processName | grep -v grep", $pids);
+        if (count($pids) > 0) {
+            $exists = true;
+        }
+        return $exists;
+    }
 
 
-		// Transform JSON text into JSON objects by decode function
-		$scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
-		$scene_json[$key] = json_decode( $scene_content_text[$key] );
+    // Start node js server at 5832
+    $strCmd = "node ".plugin_dir_path( __DIR__  )."/networked-aframe/server/easyrtc-server.js";
 
-		// Add glbURLs from glbID
-		foreach ( $scene_json[$key]->objects as &$o ) {
-			if ( $o->categoryName == "Artifact" ||  $o->categoryName == "Door") {
-				$glbURL[$key] = get_the_guid( $o->glbID );
-				$o->glbURL[$key] = $glbURL[$key];
-				//print_r($glbURL[$key]);
-			}
-		}
-	}
-	
-	class FileOperations {
-	
-		public string $server_protocol;
-		public string $portNodeJs;
-	 
-		function __construct(){
-			$this->server_protocol = is_ssl() ? "https":"http";
-			
-			// Define current url path of plugin including plugin name
-			$this->plugin_path_url = plugin_dir_url( __DIR__  );
-			
-			// Define current dir path of plugin including plugin name
-			$this->plugin_path_dir = plugin_dir_path( __DIR__  );
-			
-			$this->website_root_url = parse_url( get_site_url(), PHP_URL_HOST );
-			
-			$this->portNodeJs = "5832";
-			
+    if ( PHP_OS == "WINNT"){
+        popen("start " . $strCmd, "r");
+    } else {
+        // if not already running (linux)
+        if (!processExists("networked-afr")) {
+            shell_exec( $strCmd . " > /dev/null 2>/dev/null &" );
+        }
+        sleep(2);
+    }
+    foreach (array_reverse($scene_id_list) as $key => &$value) {
+        // Get scene content
+        $project_post[$key] = get_post($project_id);
+        $project_title = $project_post[$key]->post_title;
+        $scene_post[$key] = get_post( $value );
+        $scene_content_text[$key] = $scene_post[$key]->post_content;
+        $scene_title[$key] = $scene_post[$key]->post_title;
+
+
+        // Transform JSON text into JSON objects by decode function
+        $scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
+        $scene_json[$key] = json_decode( $scene_content_text[$key] );
+
+        // Add glbURLs from glbID
+        foreach ( $scene_json[$key]->objects as &$o ) {
+            if ( $o->categoryName == "Artifact" ||  $o->categoryName == "Door") {
+                $glbURL[$key] = get_the_guid( $o->glbID );
+                $o->glbURL[$key] = $glbURL[$key];
+                //print_r($glbURL[$key]);
+            }
+        }
+    }
+
+    class FileOperations {
+
+        public string $server_protocol;
+        public string $portNodeJs;
+
+        function __construct(){
+            $this->server_protocol = is_ssl() ? "https":"http";
+
+            // Define current url path of plugin including plugin name
+            $this->plugin_path_url = plugin_dir_url( __DIR__  );
+
+            // Define current dir path of plugin including plugin name
+            $this->plugin_path_dir = plugin_dir_path( __DIR__  );
+
+            $this->website_root_url = parse_url( get_site_url(), PHP_URL_HOST );
+
+            $this->portNodeJs = "5832";
+
 //			$f = fopen("output_compile.txt", "w");
 //			fwrite($f, $plugin_path_url . chr(13));
 //			fwrite($f, $plugin_path_dir . chr(13));
@@ -204,15 +204,24 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
                 $user_id = get_current_user_id();
                 if ($user_id) {
                     $token = get_the_author_meta( 'mvnode_token', $user_id );
+                    $node_token_input = $dom->getElementById('node-token-input');
+                    $node_token_input->setAttribute('value', $token);
+
                     $url = get_the_author_meta( 'mvnode_url', $user_id );
                     $node_url_input = $dom->getElementById('node-url-input');
                     $node_url_input->setAttribute('value', $url);
-                    $node_token_input = $dom->getElementById('node-token-input');
-                    $node_token_input->setAttribute('value', $token);
+
                 }
+
+                // If there is a MV project id, then forward it to client
+                $mv_project_id = get_post_meta($project_id, 'mv_project_id');
+                if ($mv_project_id) {
+                    $mv_project_id_input = $dom->getElementById('mv-project-id-input');
+                    $mv_project_id_input->setAttribute('value', $mv_project_id[0]);
+                }
+
                 $dom->saveHTML();
             }
-
 
 
 //			$f = fopen("output_compile_director.txt","w");
@@ -267,295 +276,295 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
         return $fileOperations->writer($fileOperations->plugin_path_dir."/networked-aframe/examples/"."index_".$scene_id.".html", $content);
     }
 
-	
-	// STEP 2: Create the director file
-	function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index, $project_id){
 
-		// Read prototype
-		$content = $fileOperations->reader($fileOperations->plugin_path_dir
-		                                                 ."/js_libs/aframe_libs/Master_Client_prototype.html");
+    // STEP 2: Create the director file
+    function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index, $project_id){
 
-		// Modify strings
-		$content = str_replace("roomname", "room".$scene_id, $content);
-		
-		$content = str_replace('background="color: #000000"', 'background="color: '.$scene_json->metadata->ClearColor.'"' , $content);
-		
-		$fogstring = substr($content, strpos($content, 'fog='), strpos($content, 'renderer=')-9-strpos($content, 'fog='));
-		
-		// Replace Fog string
-		if ($scene_json->metadata->fogtype != "none") {
-			$content = str_replace( $fogstring,
-				
-				'fog="type: ' . $scene_json->metadata->fogtype .
-				'; color: ' . $scene_json->metadata->fogcolor .
-				'; far: ' . $scene_json->metadata->fogfar .
-				'; density: ' . ( 1.5 * $scene_json->metadata->fogdensity ) .
-				'; near: ' . $scene_json->metadata->fognear . '"',
-				
-				$content );
-		} else {
-			$content = str_replace( $fogstring, " ", $content );
-		}
+        // Read prototype
+        $content = $fileOperations->reader($fileOperations->plugin_path_dir
+            ."/js_libs/aframe_libs/Master_Client_prototype.html");
 
+        // Modify strings
+        $content = str_replace("roomname", "room".$scene_id, $content);
 
-		$basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json, $project_id);
-		
-		$dom = $basicDomElements['dom'];
-		$objects = $basicDomElements['objects'];
-		$ascene = $basicDomElements['ascene'];
-		//print($scene_id)
+        $content = str_replace('background="color: #000000"', 'background="color: '.$scene_json->metadata->ClearColor.'"' , $content);
 
-		//$i = array_search($scene_id, array_keys($scene_id_list));
-		//print_r($i);
+        $fogstring = substr($content, strpos($content, 'fog='), strpos($content, 'renderer=')-9-strpos($content, 'fog='));
 
+        // Replace Fog string
+        if ($scene_json->metadata->fogtype != "none") {
+            $content = str_replace( $fogstring,
 
-		foreach($objects as $nameObject => $contentObject) {
-			//print_r($contentObject->categoryName);
-			// ===========  Artifact==============
-			if ( $contentObject->categoryName == 'Artifact' ) {
+                'fog="type: ' . $scene_json->metadata->fogtype .
+                '; color: ' . $scene_json->metadata->fogcolor .
+                '; far: ' . $scene_json->metadata->fogfar .
+                '; density: ' . ( 1.5 * $scene_json->metadata->fogdensity ) .
+                '; near: ' . $scene_json->metadata->fognear . '"',
 
-				$fileOperations->writer("output_master.txt", $contentObject->assetname);
-				/*
-				if (strcasecmp($contentObject->assetname, 'water')==0) {
+                $content );
+        } else {
+            $content = str_replace( $fogstring, " ", $content );
+        }
 
-					$a_entity = $dom->createElement( "a-ocean" );
-					$a_entity->appendChild( $dom->createTextNode( '' ) );
 
-					$a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:0; large_normal_map: img/water-normal-1.png; small_normal_map: img/water-normal-2.png" );
-					$a_entity->setAttribute( "shadow", "receive: true" );
-					$a_entity->setAttribute( "render-order-change", "1000" );
+        $basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json, $project_id);
 
+        $dom = $basicDomElements['dom'];
+        $objects = $basicDomElements['objects'];
+        $ascene = $basicDomElements['ascene'];
+        //print($scene_id)
 
-					$ascene->appendChild( $a_entity );
+        //$i = array_search($scene_id, array_keys($scene_id_list));
+        //print_r($i);
 
 
+        foreach($objects as $nameObject => $contentObject) {
+            //print_r($contentObject->categoryName);
+            // ===========  Artifact==============
+            if ( $contentObject->categoryName == 'Artifact' ) {
 
-				} else if (strcasecmp($contentObject->assetname, 'mask')==0) {
+                $fileOperations->writer("output_master.txt", $contentObject->assetname);
+                /*
+                if (strcasecmp($contentObject->assetname, 'water')==0) {
 
-						$a_entity = $dom->createElement( "a-plane" );
-						$a_entity->appendChild( $dom->createTextNode( '' ) );
+                    $a_entity = $dom->createElement( "a-ocean" );
+                    $a_entity->appendChild( $dom->createTextNode( '' ) );
 
-						$material = "";
-						$fileOperations->setMaterial( $material, $contentObject );
-						$fileOperations->setAffineTransformations( $a_entity, $contentObject );
+                    $a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:0; large_normal_map: img/water-normal-1.png; small_normal_map: img/water-normal-2.png" );
+                    $a_entity->setAttribute( "shadow", "receive: true" );
+                    $a_entity->setAttribute( "render-order-change", "1000" );
 
-						$a_entity->setAttribute( "class", "override-materials" );
-						$a_entity->setAttribute( "id", $nameObject );
-						$a_entity->setAttribute( "height", "1" );
-						$a_entity->setAttribute( "width", "1" );
-						$a_entity->setAttribute( "material", $material );
-						$a_entity->setAttribute( "static-mask-me", "" );
 
-						$ascene->appendChild( $a_entity );
+                    $ascene->appendChild( $a_entity );
 
-				}
-				*/
-				if ( str_contains($contentObject->assetname, 'Door')) {
-					$a_entity = $dom->createElement( "a-entity" );
-					$a_entity->appendChild( $dom->createTextNode( '' ) );
-					//rint_r($contentObject->assetname);
 
-					$material = "";
-					$fileOperations->setMaterial( $material, $contentObject );
-					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
 
-					$a_entity->setAttribute( "class", "override-materials" );
-					$a_entity->setAttribute( "id", $nameObject );
-					$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
-					$a_entity->setAttribute( "material", $material );
-					$a_entity->setAttribute( "clear-frustum-culling", "" );
+                } else if (strcasecmp($contentObject->assetname, 'mask')==0) {
 
+                        $a_entity = $dom->createElement( "a-plane" );
+                        $a_entity->appendChild( $dom->createTextNode( '' ) );
 
-					includeDoorFunctionality($a_entity, $scene_id);
+                        $material = "";
+                        $fileOperations->setMaterial( $material, $contentObject );
+                        $fileOperations->setAffineTransformations( $a_entity, $contentObject );
 
+                        $a_entity->setAttribute( "class", "override-materials" );
+                        $a_entity->setAttribute( "id", $nameObject );
+                        $a_entity->setAttribute( "height", "1" );
+                        $a_entity->setAttribute( "width", "1" );
+                        $a_entity->setAttribute( "material", $material );
+                        $a_entity->setAttribute( "static-mask-me", "" );
 
+                        $ascene->appendChild( $a_entity );
 
-					$ascene->appendChild( $a_entity );
-				}else {
-					//print_r($contentObject->categoryName);
-					$a_entity = $dom->createElement( "a-entity" );
-					$a_entity->appendChild( $dom->createTextNode( '' ) );
+                }
+                */
+                if ( str_contains($contentObject->assetname, 'Door')) {
+                    $a_entity = $dom->createElement( "a-entity" );
+                    $a_entity->appendChild( $dom->createTextNode( '' ) );
+                    //rint_r($contentObject->assetname);
 
-					$material = "";
-					$fileOperations->setMaterial( $material, $contentObject );
-					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
-					$a_entity->setAttribute( "class", "override-materials" );
-					$a_entity->setAttribute( "id", $nameObject );
-					$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
-					$a_entity->setAttribute( "material", $material );
-					$a_entity->setAttribute( "clear-frustum-culling", "" );
-
-					$ascene->appendChild( $a_entity );
-
-				}
-
-				//==================== Pawn =================
-			}else if ( $contentObject->categoryName == 'pawn' ) {
-
-
-				if($showPawnPositions=="true") {
-					$a_entity = $dom->createElement( "a-entity" );
-					$a_entity->appendChild( $dom->createTextNode( '' ) );
-
-					$f = fopen("output_actor_rot.txt","w");
-					fwrite($f, print_r($contentObject, true));
-					fclose($f);
-
-					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
-					$a_entity->setAttribute( "gltf-model",
-						"url(" . $fileOperations->plugin_path_url .  "/assets/pawn.glb)" );
-
-					$ascene->appendChild( $a_entity );
-				}
-
-			} else if ( $contentObject->categoryName == 'lightSun' ||
-			            $contentObject->categoryName == 'lightSpot' ||
-			            $contentObject->categoryName == 'lightLamp' ||
-			            $contentObject->categoryName == 'lightAmbient'
-			) {
-
-				$a_light = $dom->createElement( "a-light" );
-				$a_light->appendChild( $dom->createTextNode( '' ) );
-
-				// Affine transformations
-				$fileOperations->setAffineTransformations($a_light, $contentObject);
-
-				switch ($contentObject->categoryName){
-					case 'lightSun':
-
-						$a_light_target = $dom->createElement( "a-entity" );
-						$a_light_target->appendChild( $dom->createTextNode( '' ) );
-						$a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );
-						$a_light_target->setAttribute("id", $nameObject."target");
-
-						$ascene->appendChild($a_light_target);
-
-						$a_light->setAttribute("light", "type:directional;".
-						                                "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-						                                "intensity:".(6*$contentObject->lightintensity).";"
-						);
-
-						$a_light->setAttribute("target", "#".$nameObject."target");
-
-						// Define the sun at the sky and add it to scene
-						// <a-sun-sky material="side:back; sunPosition: 1.0 1.0 0.0"></a-sun-sky>
-
-						$a_sun_sky = $dom->createElement( "a-sun-sky" );
-						$a_sun_sky->appendChild( $dom->createTextNode( '' ) );
-
-						$SunPosVec = $contentObject->position;
-						$TargetVec = $contentObject->targetposition;
-
-						$SkySun = array( $SunPosVec[0] - $TargetVec[0], $SunPosVec[1] - $TargetVec[1],
-							$SunPosVec[2] - $TargetVec[2]);
-
-						$materialSunSky = 'side:back; sunPosition: ';
-						$materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
-						$a_sun_sky->setAttribute("material", $materialSunSky);
-
-						$ascene->appendChild( $a_sun_sky );
-
-						break;
-					case 'lightSpot':
-						$a_light->setAttribute("light", "type:spot;".
-						                                "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-						                                "intensity:".$contentObject->lightintensity.";".
-						                                "distance:".$contentObject->lightdistance.";".
-						                                "decay:".$contentObject->lightdecay.";".
-						                                "angle:".($contentObject->lightangle * 180 / 3.141) .";".
-						                                "penumbra:".$contentObject->lightpenumbra.";".
-						                                "target:#".$contentObject->lighttargetobjectname
-						);
-						break;
-					case 'lightLamp':
-						$a_light->setAttribute("light", "type:point;".
-						                                "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-						                                "intensity:".$contentObject->lightintensity.";".
-						                                "distance:".$contentObject->lightdistance.";".
-						                                "decay:".$contentObject->lightdecay.";"
-						//."radius:".$contentObject->shadowRadius
-						);
-						break;
-					case 'lightAmbient':
-						$a_light->setAttribute("light", "type:ambient;".
-						                                "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-						                                "intensity:".$contentObject->lightintensity);
-						break;
-					}
-
-				// Add to scene
-				$ascene->appendChild( $a_light );
-				}else if ( $contentObject->categoryName == 'Door' ) {
-					//print_r($contentObject->categoryName);
-					$a_entity = $dom->createElement( "a-entity" );
-					$a_entity->appendChild( $dom->createTextNode( '' ) );
-
-					$material = "";
-					$fileOperations->setMaterial( $material, $contentObject );
-					$fileOperations->setAffineTransformations( $a_entity, $contentObject );
-					$a_entity->setAttribute( "class", "override-materials" );
-					$a_entity->setAttribute( "id", $nameObject );
-					$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
-					$a_entity->setAttribute( "material", $material );
-					$a_entity->setAttribute( "clear-frustum-culling", "" );
-
-					$ascene->appendChild( $a_entity );
-
-					includeDoorFunctionality($a_entity, $scene_id);
-				}
-				else if ( $contentObject->categoryName == 'PointsofInterest(Video)' ) {
-					//print_r($contentObject->categoryName);
-
-
-					$a_asset = $dom->createElement( "a-assets" );
-					$a_asset->setAttribute( "timeout", "10000");
-
-					$a_video_asset = $dom->createElement( "video" );
-					$a_video_asset->setAttribute( "id", "video");
-					$a_video_asset->setAttribute( "loop", "true");
-					$a_video_asset->setAttribute( "src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
-
-					$a_asset->appendChild( $a_video_asset );
-					$ascene->appendChild( $a_asset );
-
-
-					$a_entity = $dom->createElement( "a-plane" );
-					$a_entity->setAttribute( "id", "video-border");
-					$a_entity->setAttribute( "height", "20" );
-					$a_entity->setAttribute( "width", "20" );
-					$a_entity->setAttribute( "position", "0 5 -20" );
-					$a_entity->setAttribute('video-controls',"");
-
-					$a_video = $dom->createElement( "a-video" );
-					$a_video->setAttribute( "id", "video-display");
-					$a_video->setAttribute( "height", "19" );
-					$a_video->setAttribute( "width", "19" );
-					$a_video->setAttribute( "position", "0 0 0.1" );
-					$a_video->setAttribute( "src", "#video" );
-
-					$a_entity->appendChild( $a_video );
-					$ascene->appendChild( $a_entity );
-
-						//includeDoorFunctionality($a_entity, $door_link)
-				}
-
-		}
-		
-		$contentNew = $dom->saveHTML();
-	
-		// Write back to root
+                    $material = "";
+                    $fileOperations->setMaterial( $material, $contentObject );
+                    $fileOperations->setAffineTransformations( $a_entity, $contentObject );
+
+                    $a_entity->setAttribute( "class", "override-materials" );
+                    $a_entity->setAttribute( "id", $nameObject );
+                    $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
+                    $a_entity->setAttribute( "material", $material );
+                    $a_entity->setAttribute( "clear-frustum-culling", "" );
+
+
+                    includeDoorFunctionality($a_entity, $scene_id);
+
+
+
+                    $ascene->appendChild( $a_entity );
+                }else {
+                    //print_r($contentObject->categoryName);
+                    $a_entity = $dom->createElement( "a-entity" );
+                    $a_entity->appendChild( $dom->createTextNode( '' ) );
+
+                    $material = "";
+                    $fileOperations->setMaterial( $material, $contentObject );
+                    $fileOperations->setAffineTransformations( $a_entity, $contentObject );
+                    $a_entity->setAttribute( "class", "override-materials" );
+                    $a_entity->setAttribute( "id", $nameObject );
+                    $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
+                    $a_entity->setAttribute( "material", $material );
+                    $a_entity->setAttribute( "clear-frustum-culling", "" );
+
+                    $ascene->appendChild( $a_entity );
+
+                }
+
+                //==================== Pawn =================
+            }else if ( $contentObject->categoryName == 'pawn' ) {
+
+
+                if($showPawnPositions=="true") {
+                    $a_entity = $dom->createElement( "a-entity" );
+                    $a_entity->appendChild( $dom->createTextNode( '' ) );
+
+                    $f = fopen("output_actor_rot.txt","w");
+                    fwrite($f, print_r($contentObject, true));
+                    fclose($f);
+
+                    $fileOperations->setAffineTransformations( $a_entity, $contentObject );
+                    $a_entity->setAttribute( "gltf-model",
+                        "url(" . $fileOperations->plugin_path_url .  "/assets/pawn.glb)" );
+
+                    $ascene->appendChild( $a_entity );
+                }
+
+            } else if ( $contentObject->categoryName == 'lightSun' ||
+                $contentObject->categoryName == 'lightSpot' ||
+                $contentObject->categoryName == 'lightLamp' ||
+                $contentObject->categoryName == 'lightAmbient'
+            ) {
+
+                $a_light = $dom->createElement( "a-light" );
+                $a_light->appendChild( $dom->createTextNode( '' ) );
+
+                // Affine transformations
+                $fileOperations->setAffineTransformations($a_light, $contentObject);
+
+                switch ($contentObject->categoryName){
+                    case 'lightSun':
+
+                        $a_light_target = $dom->createElement( "a-entity" );
+                        $a_light_target->appendChild( $dom->createTextNode( '' ) );
+                        $a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );
+                        $a_light_target->setAttribute("id", $nameObject."target");
+
+                        $ascene->appendChild($a_light_target);
+
+                        $a_light->setAttribute("light", "type:directional;".
+                            "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
+                            "intensity:".(6*$contentObject->lightintensity).";"
+                        );
+
+                        $a_light->setAttribute("target", "#".$nameObject."target");
+
+                        // Define the sun at the sky and add it to scene
+                        // <a-sun-sky material="side:back; sunPosition: 1.0 1.0 0.0"></a-sun-sky>
+
+                        $a_sun_sky = $dom->createElement( "a-sun-sky" );
+                        $a_sun_sky->appendChild( $dom->createTextNode( '' ) );
+
+                        $SunPosVec = $contentObject->position;
+                        $TargetVec = $contentObject->targetposition;
+
+                        $SkySun = array( $SunPosVec[0] - $TargetVec[0], $SunPosVec[1] - $TargetVec[1],
+                            $SunPosVec[2] - $TargetVec[2]);
+
+                        $materialSunSky = 'side:back; sunPosition: ';
+                        $materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
+                        $a_sun_sky->setAttribute("material", $materialSunSky);
+
+                        $ascene->appendChild( $a_sun_sky );
+
+                        break;
+                    case 'lightSpot':
+                        $a_light->setAttribute("light", "type:spot;".
+                            "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
+                            "intensity:".$contentObject->lightintensity.";".
+                            "distance:".$contentObject->lightdistance.";".
+                            "decay:".$contentObject->lightdecay.";".
+                            "angle:".($contentObject->lightangle * 180 / 3.141) .";".
+                            "penumbra:".$contentObject->lightpenumbra.";".
+                            "target:#".$contentObject->lighttargetobjectname
+                        );
+                        break;
+                    case 'lightLamp':
+                        $a_light->setAttribute("light", "type:point;".
+                            "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
+                            "intensity:".$contentObject->lightintensity.";".
+                            "distance:".$contentObject->lightdistance.";".
+                            "decay:".$contentObject->lightdecay.";"
+                        //."radius:".$contentObject->shadowRadius
+                        );
+                        break;
+                    case 'lightAmbient':
+                        $a_light->setAttribute("light", "type:ambient;".
+                            "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
+                            "intensity:".$contentObject->lightintensity);
+                        break;
+                }
+
+                // Add to scene
+                $ascene->appendChild( $a_light );
+            }else if ( $contentObject->categoryName == 'Door' ) {
+                //print_r($contentObject->categoryName);
+                $a_entity = $dom->createElement( "a-entity" );
+                $a_entity->appendChild( $dom->createTextNode( '' ) );
+
+                $material = "";
+                $fileOperations->setMaterial( $material, $contentObject );
+                $fileOperations->setAffineTransformations( $a_entity, $contentObject );
+                $a_entity->setAttribute( "class", "override-materials" );
+                $a_entity->setAttribute( "id", $nameObject );
+                $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
+                $a_entity->setAttribute( "material", $material );
+                $a_entity->setAttribute( "clear-frustum-culling", "" );
+
+                $ascene->appendChild( $a_entity );
+
+                includeDoorFunctionality($a_entity, $scene_id);
+            }
+            else if ( $contentObject->categoryName == 'PointsofInterest(Video)' ) {
+                //print_r($contentObject->categoryName);
+
+
+                $a_asset = $dom->createElement( "a-assets" );
+                $a_asset->setAttribute( "timeout", "10000");
+
+                $a_video_asset = $dom->createElement( "video" );
+                $a_video_asset->setAttribute( "id", "video");
+                $a_video_asset->setAttribute( "loop", "true");
+                $a_video_asset->setAttribute( "src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
+
+                $a_asset->appendChild( $a_video_asset );
+                $ascene->appendChild( $a_asset );
+
+
+                $a_entity = $dom->createElement( "a-plane" );
+                $a_entity->setAttribute( "id", "video-border");
+                $a_entity->setAttribute( "height", "20" );
+                $a_entity->setAttribute( "width", "20" );
+                $a_entity->setAttribute( "position", "0 5 -20" );
+                $a_entity->setAttribute('video-controls',"");
+
+                $a_video = $dom->createElement( "a-video" );
+                $a_video->setAttribute( "id", "video-display");
+                $a_video->setAttribute( "height", "19" );
+                $a_video->setAttribute( "width", "19" );
+                $a_video->setAttribute( "position", "0 0 0.1" );
+                $a_video->setAttribute( "src", "#video" );
+
+                $a_entity->appendChild( $a_video );
+                $ascene->appendChild( $a_entity );
+
+                //includeDoorFunctionality($a_entity, $door_link)
+            }
+
+        }
+
+        $contentNew = $dom->saveHTML();
+
+        // Write back to root
         return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/examples/Master_Client_'.$scene_id.".html", $contentNew);
-	}
-	
-	
-	function includeDoorFunctionality($a_entity, $door_link){
-		$a_entity->setAttribute('door-listener',"http://localhost:5832/Master_Client_{$door_link}.html");
+    }
 
-	}
-	
-	
-	// Step 3: Create the Simple client file
-	function createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations){
+
+    function includeDoorFunctionality($a_entity, $door_link){
+        $a_entity->setAttribute('door-listener',"http://localhost:5832/Master_Client_{$door_link}.html");
+
+    }
+
+
+    // Step 3: Create the Simple client file
+    function createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations){
 
         // Read prototype
         $content = $fileOperations->reader($fileOperations->plugin_path_dir
@@ -595,62 +604,62 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 //			$f = fopen("output_simple_client.txt", "w");
 //			fwrite($f, print_r($basicDomElements['actionsDiv'], true));
 //			fclose($f);
-			
-			if ( $contentObject->categoryName == 'pawn' ) {
-				$i++;
-				$buttonDiv = $dom->createElement( "button" );
-				
-				$buttonDiv->setAttribute("id", "screen-btn-".$i);
-				$buttonDiv->setAttribute("type", "button");
-				$buttonDiv->setAttribute("class", "positionalButtons");
-				
-				$pos_x = $contentObject->position[0];
-				$pos_y = $contentObject->position[1];
-				$pos_z = $contentObject->position[2];
-				
-				$rot_x = $contentObject->rotation[0];
-				$rot_y = $contentObject->rotation[1];
-				$rot_z = $contentObject->rotation[2];
-				
-				$buttonDiv->setAttribute("data-position", '{"x":'.$pos_x.',"y":'.$pos_y.',"z":'.$pos_z.'}');
-				$buttonDiv->setAttribute("data-rotation", '{"x":'.$rot_x.',"y":'.$rot_y.',"z":'.$rot_z.'}');
-				
-				$iconSpan = $dom->createElement( "span" );
-				$iconSpan->appendChild( $dom->createTextNode( 'room' ) );
-				$iconSpan->setAttribute("class", "material-icons");
-				
-				$buttonDiv->appendChild($iconSpan);
-				
-				$buttonDiv->appendChild( $dom->createTextNode( $i ) );
-				$actionsDiv->appendChild( $buttonDiv );
-			}
-		}
-		
-		$contentNew = $dom->saveHTML($dom->documentElement);
-		
-		// Write back to root
-		return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/examples/Simple_Client_'.$scene_id.".html", $contentNew);
-	}
-	
-	
-	// Step 1: Create the index file
-	//createIndexFile($project_title, $scene_id, $scene_title, $fileOperations);
-	//createMasterClient($project_title, 926, $scene_title, $scene_json0, $fileOperations, $showPawnPositions, $key);
 
-	// Step 2: Create the Master client file
-	foreach (array_reverse($scene_id_list) as $key => &$value){
-		createIndexFile($project_title, $value, $scene_title, $fileOperations);
-		createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id);
-		createSimpleClient($project_title, $value, $scene_title, $$scene_json[$key], $fileOperations);
-	}
+            if ( $contentObject->categoryName == 'pawn' ) {
+                $i++;
+                $buttonDiv = $dom->createElement( "button" );
 
-	// Step 3; Create Simple Client
+                $buttonDiv->setAttribute("id", "screen-btn-".$i);
+                $buttonDiv->setAttribute("type", "button");
+                $buttonDiv->setAttribute("class", "positionalButtons");
+
+                $pos_x = $contentObject->position[0];
+                $pos_y = $contentObject->position[1];
+                $pos_z = $contentObject->position[2];
+
+                $rot_x = $contentObject->rotation[0];
+                $rot_y = $contentObject->rotation[1];
+                $rot_z = $contentObject->rotation[2];
+
+                $buttonDiv->setAttribute("data-position", '{"x":'.$pos_x.',"y":'.$pos_y.',"z":'.$pos_z.'}');
+                $buttonDiv->setAttribute("data-rotation", '{"x":'.$rot_x.',"y":'.$rot_y.',"z":'.$rot_z.'}');
+
+                $iconSpan = $dom->createElement( "span" );
+                $iconSpan->appendChild( $dom->createTextNode( 'room' ) );
+                $iconSpan->setAttribute("class", "material-icons");
+
+                $buttonDiv->appendChild($iconSpan);
+
+                $buttonDiv->appendChild( $dom->createTextNode( $i ) );
+                $actionsDiv->appendChild( $buttonDiv );
+            }
+        }
+
+        $contentNew = $dom->saveHTML($dom->documentElement);
+
+        // Write back to root
+        return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/examples/Simple_Client_'.$scene_id.".html", $contentNew);
+    }
 
 
-	return json_encode(
-                array("index" => $fileOperations->nodeJSpath()."index_".end($scene_id_list).".html",
-                     "MasterClient" => $fileOperations->nodeJSpath()."Master_Client_".end($scene_id_list).".html",
-                     "SimpleClient" => $fileOperations->nodeJSpath()."Simple_Client_".end($scene_id_list).".html",
-	                )
-			  );
+    // Step 1: Create the index file
+    //createIndexFile($project_title, $scene_id, $scene_title, $fileOperations);
+    //createMasterClient($project_title, 926, $scene_title, $scene_json0, $fileOperations, $showPawnPositions, $key);
+
+    // Step 2: Create the Master client file
+    foreach (array_reverse($scene_id_list) as $key => &$value){
+        createIndexFile($project_title, $value, $scene_title, $fileOperations);
+        createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id);
+        createSimpleClient($project_title, $value, $scene_title, $$scene_json[$key], $fileOperations);
+    }
+
+    // Step 3; Create Simple Client
+
+
+    return json_encode(
+        array("index" => $fileOperations->nodeJSpath()."index_".end($scene_id_list).".html",
+            "MasterClient" => $fileOperations->nodeJSpath()."Master_Client_".end($scene_id_list).".html",
+            "SimpleClient" => $fileOperations->nodeJSpath()."Simple_Client_".end($scene_id_list).".html",
+        )
+    );
 }

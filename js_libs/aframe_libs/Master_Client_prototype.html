@@ -171,6 +171,7 @@
         <div id="panelsSizeControlsDiv"></div>
         <input id="node-url-input" hidden disabled />
         <input id="node-token-input" hidden disabled />
+        <input id="mv-project-id-input" hidden disabled />
     </div>
 </div>
 
@@ -484,7 +485,7 @@
             selfBrowserSurface: 'include',
             systemAudio: 'include',
             video: {
-                cursor: "never"
+                cursor: 'never'
             },
             audio: true
         }).then(stream => {
@@ -495,11 +496,13 @@
 
             stream.getVideoTracks()[0].onended = function () {
                 video_preview.style.display = 'none';
+                stopRecording(video_preview.srcObject);
             };
 
             return new Promise(resolve => video_preview.onplaying = resolve);
         }).then(() => startRecording(video_preview.captureStream()))
             .then (recordedChunks => {
+
                 recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
                 recording.src = URL.createObjectURL(recordedBlob);
                 download_button.href = recording.src;
@@ -519,34 +522,36 @@
     upload_button.addEventListener("click", function() {
         let mv_url = document.getElementById('node-url-input').value;
         let mv_token = document.getElementById('node-token-input').value;
+        let mv_project_id = document.getElementById('mv-project-id-input').value;
 
-        console.log(mv_url, mv_token);
-
-        console.log(recordedBlob);
-        const blobToBinary = async (blob) => {
-            const buffer = await blob.arrayBuffer();
-
-            const view = new Int8Array(buffer);
-
-            return [...view].map((n) => n.toString()).join(' ');
-        };
-
-        blobToBinary(recordedBlob).then(binary_string => {
-
-            fetch(mv_url + '/dam/assets?description=' + 'testDescription' + '&externalUrl=' + 'testUrl' + '&externalTool=VRodos', {
-                method: 'POST',
-                headers: {
-                    /*'Content-Type': 'multipart/form-data',*/
-                    'Authorization': `Bearer ${mv_token}`
-                },
-                body: JSON.stringify({
-                    "file": binary_string
-                })
-            })
-                /*.then(response => response.json())*/
-                .then(response => console.log(response));
-
+        const video_file = new File([recordedBlob], recordedBlob.size +'.webm', {
+            type: recordedBlob.type,
         });
+
+        let formData = new FormData();
+        formData.append('file', video_file);
+
+        console.log(mv_project_id);
+
+        return 0;
+
+        fetch(mv_url + '/dam/assets?description=' + 'Recorded video from VROdos' + '&externalTool=VRodos', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${mv_token}`
+            },
+            body: formData
+        })
+            /*.then(response => response.json())*/
+            .then(response => {
+                console.log(response);
+
+                if (response.ok) {
+
+                }
+
+            });
+
     });
 
     /* Scale down div when in compile preview */
