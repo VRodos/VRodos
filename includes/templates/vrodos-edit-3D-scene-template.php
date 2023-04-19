@@ -581,7 +581,7 @@ wp_head();
                     </div>
 
                     <!-- Search bar -->
-                    <div class="mdc-textfield search" data-mdc-auto-init="MDCTextfield" style="margin-top:0px; height:40px;margin-left:10px;">
+                    <div class="mdc-textfield search" data-mdc-auto-init="MDCTextfield" style="margin-top:0; height:40px; margin-left:10px;">
                         <input type="search" class="mdc-textfield__input mdc-typography--subheading2" placeholder="Find...">
                         <i class="material-icons mdc-theme--text-primary-on-background">search</i>
                         <div class="mdc-textfield__bottom-line"></div>
@@ -601,9 +601,7 @@ wp_head();
                 </div>
 
                 <!-- Popups -->
-                <?php
-                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-Popups.php');
-                ?>
+                <?php require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-Popups.php'); ?>
 
                 <!--  Open/Close Scene list panel-->
                 <a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable mdc-button mdc-button--raised mdc-button--primary mdc-button--dense" title="Toggle scenes list" data-mdc-auto-init="MDCRipple">
@@ -611,20 +609,13 @@ wp_head();
                 </a>
 
                 <!-- Scenes Credits and Main menu List -->
-                <?php
-                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-OtherScenes.php');
-                ?>
-
+                <?php require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-OtherScenes.php'); ?>
 
             </div>   <!--   VR DIV   -->
 
+            <!--Options dialogue-->
+            <?php require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' ); ?>
 
-
-            <?php
-            // Options dialogue
-            require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' );
-
-            ?>
         </div>
 
     </div>

@@ -520,20 +520,16 @@
     }, false);
 
     upload_button.addEventListener("click", function() {
-        let mv_url = document.getElementById('node-url-input').value;
-        let mv_token = document.getElementById('node-token-input').value;
-        let mv_project_id = document.getElementById('mv-project-id-input').value;
+        const mv_url = document.getElementById('node-url-input').value;
+        const mv_token = document.getElementById('node-token-input').value;
+        const mv_project_id = document.getElementById('mv-project-id-input').value;
 
-        const video_file = new File([recordedBlob], recordedBlob.size +'.webm', {
+        const video_file = new File([recordedBlob], 'vrodos-'+ recordedBlob.size +'.webm', {
             type: recordedBlob.type,
         });
 
         let formData = new FormData();
         formData.append('file', video_file);
-
-        console.log(mv_project_id);
-
-        return 0;
 
         fetch(mv_url + '/dam/assets?description=' + 'Recorded video from VROdos' + '&externalTool=VRodos', {
             method: 'POST',
@@ -541,17 +537,34 @@
                 'Authorization': `Bearer ${mv_token}`
             },
             body: formData
-        })
-            /*.then(response => response.json())*/
-            .then(response => {
+        }).then(function (response) {
+            if (response.ok) {
+                return response.json();
+            } else {
+                alert("There has been a problem uploading your video to MediaVerse platform");
+            }
+        }).then(function (data) {
+
+            fetch(mv_url + '/dam/project/' + mv_project_id, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${mv_token}`
+                },
+                body: JSON.stringify({
+                    "projectOutput": [data.key]
+                })
+            }).then(function (response) {
+
                 console.log(response);
 
                 if (response.ok) {
-
+                    alert('The video has been successfully uploaded to MediaVerse!');
+                } else {
+                    alert("There has been a problem uploading your video to MediaVerse platform");
                 }
 
-            });
-
+            })
+        });
     });
 
     /* Scale down div when in compile preview */
