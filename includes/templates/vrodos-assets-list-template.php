@@ -30,7 +30,7 @@ $current_user = wp_get_current_user();
 
 $login_username = $current_user->user_login;
 
-$isUserAdmin = $isUserloggedIn ? current_user_can('administrator'): false;
+$isUserAdmin = $isUserloggedIn && current_user_can('administrator');
 
 
 $pluginpath = dirname (plugin_dir_url( __DIR__  ));
@@ -128,7 +128,8 @@ if ($single_project_asset_list)
         if( $single_project_asset_list){
             $helpMessage = 'A list of your private Assets belonging to <b>'.$current_game_project_post->post_title.'</b>.';
         } else {
-            $helpMessage = 'Add a Shared Asset here. If you want it to be private, make a project and add the asset there.';
+            //$helpMessage = 'Add a Shared Asset here. If you want it to be private, make a project and add the asset there.';
+            $helpMessage = 'Manage your assets across all projects.';
         }
     } else {
         $helpMessage = 'Login to a) add a Shared Asset or b) to create a Project and add your private Assets there';
@@ -140,23 +141,28 @@ if ($single_project_asset_list)
     <?php if ($single_project_asset_list){ ?>
         <!--<span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php /*echo $current_game_project_post->post_title;*/?></span>-->
     <?php } else if (!$isUserloggedIn) { ?>
-        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for shared <?php echo $isUserloggedIn?" and private": ""; ?> assets </span>
+        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $isUserloggedIn?" private": ""; ?> assets </span>
     <?php } else if ($isUserloggedIn) { ?>
-        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for shared <?php echo $isUserloggedIn?" and private": ""; ?> assets in own projects</span>
+        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $isUserloggedIn?" private": ""; ?> assets in own projects</span>
     <?php } ?>
 
     <div class="mdc-layout-grid__inner grid-system-custom">
 
+
         <!-- Card to add asset -->
-        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="" >
-            <div class="asset-shared-thumbnail mdc-card mdc-theme--background"
-                 style="height:100%;min-height:120px;position:relative;background:<?php echo $single_project_asset_list? 'lightgreen': 'orangered';?>">
-                <a href="<?php echo $link_to_add; ?>">
-                    <i class="addAssetCardIcon material-icons" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>">add_circle</i>
-                    <span class="addAssetCardWords" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>"><?php echo $single_project_asset_list? 'Private Asset': 'Shared Asset';?></span>
-                </a>
+        <?php if ($single_project_asset_list) { ?>
+            <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="" >
+                <div class="asset-shared-thumbnail mdc-card mdc-theme--background"
+                     style="height:100%;min-height:120px;position:relative;background:<?php echo $single_project_asset_list? 'lightgreen': 'orangered';?>">
+                    <a href="<?php echo $link_to_add; ?>">
+                        <i class="addAssetCardIcon material-icons" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>">add_circle</i>
+                        <span class="addAssetCardWords" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>"><?php echo $single_project_asset_list? 'Private Asset': 'Shared Asset';?></span>
+                    </a>
+                </div>
             </div>
-        </div>
+        <?php } ?>
+
+
 
         <!-- Each Asset -->
         <?php foreach ($assets as $asset) {    ?>
