@@ -125,20 +125,13 @@ $game_post = get_post($project_id);
 $gameSlug = $game_post->post_name;
 $game_type_obj = vrodos_return_project_type($project_id);
 
-
 // Get 'parent-game' taxonomy with the same slug as Game
 $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
-
-
-
-$isJoker = $assetPGame ? 'false' : 'true';
-// Check that in "joker games" (which do not exist anymore)
-// $isJoker = (strpos($assetPGameSlug, 'joker') !== false) ? "true":"false";
 
 $assetPGameID = $assetPGame ? $assetPGame->term_id : null;
 $assetPGameSlug = $assetPGame ? $assetPGame->slug : null;
 
-// $asset_id_avail_joker = $game_type_obj ? vrodos_get_assetids_joker($game_type_obj->string) : null;
+$isJoker = (strpos($assetPGameSlug, 'joker') !== false) ? "true":"false";
 
 $isUserloggedIn = is_user_logged_in();
 $current_user = wp_get_current_user();
@@ -199,9 +192,7 @@ $newAssetPage = vrodos_getEditpage('asset');
 
 $all_game_category = get_the_terms( $project_id, 'vrodos_game_type' );
 
-
 $game_category = $all_game_category ? $all_game_category[0]->slug : null;
-
 
 $scene_data = vrodos_getFirstSceneID_byProjectID($project_id, $game_category);//first 3D scene id
 

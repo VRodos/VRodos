@@ -548,21 +548,19 @@
             fetch(mv_url + '/dam/project/' + mv_project_id, {
                 method: 'PUT',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${mv_token}`
                 },
                 body: JSON.stringify({
                     "projectOutput": [data.key]
                 })
             }).then(function (response) {
-
-                console.log(response);
-
                 if (response.ok) {
                     alert('The video has been successfully uploaded to MediaVerse!');
                 } else {
                     alert("There has been a problem uploading your video to MediaVerse platform");
+                    console.log(response.json());
                 }
-
             })
         });
     });

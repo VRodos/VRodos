@@ -126,10 +126,9 @@ if ($single_project_asset_list)
         <?php
 
         if( $single_project_asset_list){
-            $helpMessage = 'A list of your private Assets belonging to <b>'.$current_game_project_post->post_title.'</b>.';
+            $helpMessage = 'A list of your private Assets belonging to the project <b>'.$current_game_project_post->post_title.'</b>.';
         } else {
-            //$helpMessage = 'Add a Shared Asset here. If you want it to be private, make a project and add the asset there.';
-            $helpMessage = 'Manage your assets across all projects.';
+            $helpMessage = 'Add a Shared Asset here. If you want it to be private, make a project and add the asset there.';
         }
     } else {
         $helpMessage = 'Login to a) add a Shared Asset or b) to create a Project and add your private Assets there';
@@ -150,17 +149,16 @@ if ($single_project_asset_list)
 
 
         <!-- Card to add asset -->
-        <?php if ($single_project_asset_list) { ?>
-            <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="" >
-                <div class="asset-shared-thumbnail mdc-card mdc-theme--background"
-                     style="height:100%;min-height:120px;position:relative;background:<?php echo $single_project_asset_list? 'lightgreen': 'orangered';?>">
-                    <a href="<?php echo $link_to_add; ?>">
-                        <i class="addAssetCardIcon material-icons" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>">add_circle</i>
-                        <span class="addAssetCardWords" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>"><?php echo $single_project_asset_list? 'Private Asset': 'Shared Asset';?></span>
-                    </a>
-                </div>
+
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="" >
+            <div class="asset-shared-thumbnail mdc-card mdc-theme--background"
+                 style="height:100%;min-height:120px;position:relative;background:<?php echo $single_project_asset_list? 'lightgreen': 'orangered';?>">
+                <a href="<?php echo $link_to_add; ?>">
+                    <i class="addAssetCardIcon material-icons" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>">add_circle</i>
+                    <span class="addAssetCardWords" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>"><?php echo $single_project_asset_list? 'Private Asset': 'Shared Asset';?></span>
+                </a>
             </div>
-        <?php } ?>
+        </div>
 
 
 

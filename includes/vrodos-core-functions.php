@@ -140,8 +140,15 @@ function create_post_project_joker($tax_slug, $post_title, $post_name, $userID){
 		'post_author'   => $userID,
 	);
 	
-	wp_insert_post($project_information_arch);
- 
+	$post_id = wp_insert_post($project_information_arch);
+	$post = get_post($post_id);
+
+	wp_insert_term($post->post_title,'vrodos_asset3d_pgame',array(
+			'description'=> '-',
+			'slug' => $post->post_name,
+		)
+	);
+
 }
 
 
