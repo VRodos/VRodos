@@ -173,14 +173,15 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 			$ascene = $body->childNodes[2];
 
-			//			$f = fopen("output_compile_actor.txt","w");
-//			fwrite($f, "----------------".chr(13));
-//			fwrite($f, "ActionsDiv".chr(13));
-//			fwrite($f, print_r($dom, true));
-//			fwrite($f, "ASCENE".chr(13));
-//			fwrite($f, print_r($ascene, true));
-//			fwrite($f, "----------------".chr(13));
-//			fclose($f);
+
+			// $f = fopen("D:\output_compile_actor.txt", "w");
+			// fwrite($f, "----------------" . chr(13));
+			// fwrite($f, "ActionsDiv" . chr(13));
+			// fwrite($f, print_r($dom, true));
+			// fwrite($f, "ASCENE" . chr(13));
+			// fwrite($f, print_r($asceneA, true));
+			// fwrite($f, "----------------" . chr(13));
+			// fclose($f);
 
 
 			// ============ Scene Iteration kernel ==============
@@ -207,6 +208,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 			$body = $dom->getElementById('master-client-body');
 			$actionsDiv = $dom->getElementById('actionsDiv');
 			$ascene = $dom->getElementById('aframe-scene-container');
+			$ascenePlayer = $dom->getElementById('player');
+			//$ascenePlayer = $ascene->childNodes[2];
 
 			// If MediaVerse project, then enable upload to MV Node.
 			$recording_controls = $dom->getElementById('upload-recording-btn');
@@ -229,29 +232,29 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
 
-			//			$f = fopen("output_compile_director.txt","w");
-//			fwrite($f, "----------------".chr(13));
-////
-////			foreach ($dom->getElementsByTagName('a-scene') as $node) {
-////
-////				$string_ascene = $dom->saveHtml($node);
-////				$string_ascene = str_replace('background="color: #aaaaaa"','background="color: #00ff00"', $string_ascene);
-////				$ascene = $dom->loadHTML($string_ascene);
-////
-////			}
-////
-////     			fwrite($f, print_r($scene_json->metadata->ClearColor, true));
-//////			fwrite($f, "ASCENE".chr(13));
-//////			fwrite($f, print_r($ascene, true));
-//			fwrite($f, "----------------");
-//			fclose($f);
+			$f = fopen("D:\output_compile_director.txt", "w");
+			fwrite($f, "----------------" . chr(13));
+
+			// foreach ($dom->getElementsByTagName('a-scene') as $node) {
+
+			// 	$string_ascene = $dom->saveHtml($node);
+			// 	$string_ascene = str_replace('background="color: #aaaaaa"','background="color: #00ff00"', $string_ascene);
+			// 	$ascene = $dom->loadHTML($string_ascene);
+
+			// }
+
+			//fwrite($f, print_r($scene_json->metadata->ClearColor, true));
+			fwrite($f, "ASCENE" . chr(13));
+			fwrite($f, print_r($ascenePlayer, true));
+			fwrite($f, "----------------");
+			fclose($f);
 
 
 			// ============ Scene Iteration kernel ==============
 			$metadata = $scene_json->metadata;
 			$objects = $scene_json->objects;
 
-			return array("dom" => $dom, "html" => $html, "head" => $head, "body" => $body, "ascene" => $ascene, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv);
+			return array("dom" => $dom, "html" => $html, "head" => $head, "body" => $body, "ascene" => $ascene, "ascenePlayer" => $ascenePlayer, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv);
 		}
 
 	}
@@ -323,7 +326,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 		$dom = $basicDomElements['dom'];
 		$objects = $basicDomElements['objects'];
 		$ascene = $basicDomElements['ascene'];
-		//print($scene_id)
+		$ascenePlayer = $basicDomElements['ascenePlayer'];
+		//print_r($ascenePlayer);
+
+		foreach ($objects as $nameObject => $contentObject) {
+			if ($contentObject->categoryName == 'avatarYawObject') {
+				$cameraPosition = $contentObject->position;
+				$cameraRotation = $contentObject->rotation;
+			}
+
+		}
 
 		//$i = array_search($scene_id, array_keys($scene_id_list));
 		//print_r($i);
@@ -519,41 +531,70 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 				if (!empty($contentObject->sceneID_target))
 					includeDoorFunctionality($a_entity, $contentObject->sceneID_target);
+			} else if ($contentObject->categoryName == 'avatarYawObject') {
+
+				continue;
+
+
+
 			} else if ($contentObject->categoryName == 'PointsofInterest(Video)') {
-				//print_r($contentObject->categoryName);
+				//print_r($contentObject);
 
 
 				$a_asset = $dom->createElement("a-assets");
 				$a_asset->setAttribute("timeout", "10000");
 
 				$a_video_asset = $dom->createElement("video");
-				$a_video_asset->setAttribute("id", "video");
+				$a_video_asset->setAttribute("id", "video_$nameObject");
 				$a_video_asset->setAttribute("loop", "true");
 				$a_video_asset->setAttribute("src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
 
+
 				$a_asset->appendChild($a_video_asset);
+				//$ascenePlayer->appendChild($a_video_asset);
 				$ascene->appendChild($a_asset);
+				//$cameraPosition[0] = 5;
+				//$cameraPosition[2] = -20;
+
+				//print_r($cameraPosition);
 
 
 				$a_entity = $dom->createElement("a-plane");
-				$a_entity->setAttribute("id", "video-border");
-				$fileOperations->setAffineTransformations($a_entity, $contentObject);
-				//$a_entity->setAttribute( "height", "20" );
-				//$a_entity->setAttribute( "width", "20" );
-				//$a_entity->setAttribute( "position", "0 5 -20" );
-				$a_entity->setAttribute('video-controls', "");
+				$a_entity->setAttribute("id", "video-border_$nameObject");
+				$a_entity->setAttribute('video-controls', $nameObject);
+				$a_entity->setAttribute("camera-listener", "");
 
 				$a_video = $dom->createElement("a-video");
-				$a_video->setAttribute("id", "video-display");
+				$a_video->setAttribute("id", "video-display_$nameObject");
 				$a_video->setAttribute("height", "19");
 				$a_video->setAttribute("width", "19");
-				$a_video->setAttribute("position", "0 0 0.1");
-				$a_video->setAttribute("src", "#video");
+				//$a_video->setAttribute("position", "0 0 0.1");
+				$a_video->setAttribute("src", "#video_$nameObject");
 
-				$a_entity->appendChild($a_video);
-				$ascene->appendChild($a_entity);
+				if ($contentObject->isreward) {
+					$cameraPosition[0] = $contentObject->hv_penalty;
+					$cameraPosition[2] = $contentObject->natural_penalty;
 
-				//includeDoorFunctionality($a_entity, $door_link)
+					//print_r($cameraPosition[2]);
+
+					$a_entity->setAttribute("position", "$cameraPosition[0]  $cameraPosition[1]  $cameraPosition[2]");
+					$a_entity->appendChild($a_video);
+					$ascenePlayer->appendChild($a_entity);
+				} else {
+					$fileOperations->setAffineTransformations($a_entity, $contentObject);
+					$a_entity->appendChild($a_video);
+					$ascene->appendChild($a_entity);
+				}
+				//
+				//$a_entity->setAttribute( "height", "20" );
+				//$a_entity->setAttribute( "width", "20" );
+
+
+
+
+				//
+
+
 			}
 
 		}

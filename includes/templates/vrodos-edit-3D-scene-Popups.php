@@ -662,21 +662,49 @@
 <!---->
 
 <!-- POI Video @ Archaeology: Popup menu to for Reward item checkbox, from -->
-<!--<div id="popUpPoiVideoPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2" style="min-width: 200px;display:none">-->
-<!---->
-<!--    The close button-->
-<!--    <a style="float: right;" type="button" class="mdc-theme--primary"-->
-<!--       onclick='this.parentNode.style.display = "none"; clearAndUnbindCheckBoxProperties("poi_video_reward_checkbox"); return false;'>-->
-<!--        <i class="material-icons" style="cursor: pointer; float: right;">close</i>-->
-<!--    </a>-->
-<!---->
+<div id="popUpPoiVideoPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2"
+    style="min-width: 200px;display:none">
+    <!---->
+    <!--    The close button-->
+    <a style="float: right;" type="button" class="mdc-theme--primary"
+        onclick='this.parentNode.style.display = "none";  return false;'>
+        <i class="material-icons" style="cursor: pointer; float: right;">close</i>
+    </a>
+    <input type="checkbox" id="poi_video_reward_checkbox" name="poi_video_reward_checkbox" value="center_video"
+        checked="true">
+    <label for="center_video_1"> Center Video</label><br>
 
-<!--    The checkbox-->
-<!---->
-<!--    <input type="checkbox" title="Select if it is a reward item"  id="poi_video_reward_checkbox" name="poi_image_text_reward_checkbox"-->
-<!--           class="mdc-textfield__input mdc-theme--text-primary-on-light"-->
-<!--           style="margin-left: 29px; width: 150px !important; float: right;">-->
-<!--    <label for="poi_video_reward_checkbox" class="mdc-textfield__label" style="margin-left: 10px; bottom: 8px; margin-bottom: 0px;">-->
-<!--        Is a reward item?</label>-->
-<!---->
-<!--</div>-->
+    <!--
+    <select name="poi_video_focus_dropdown" id="poi_video_focus_dropdown">
+        <option value="none" selected>None</option>
+        <option value="center">Center</option>
+        <option value="up">Up</option>
+        <option value="down">down</option>
+        <option value="left">left</option>
+        <option value="right">right</option>
+    </select>
+    -->
+    <div class="slidecontainer">
+        <label for="slidecontainer_1"> X Coordinates:</label><br>
+
+        <span class="limit">-30</span>
+        <input type="range" min="-30" max="30" value="0" class="slider" id="focus_X" disabled="false">
+        <span class="limit">30</span>
+    </div>
+
+    <div class="slidecontainer">
+        <label for="slidecontainer_2"> Z Coordinates:</label><br>
+        <span class="limit">-50</span>
+        <input type="range" min="-50" max="0" value="0" class="slider" id="focus_Z" disabled="false">
+        <span class="limit">0</span>
+    </div>
+
+    <!--
+    <input type="checkbox" title="Select if it is a reward item" id="poi_video_reward_checkbox"
+        name="poi_image_text_reward_checkbox" class="mdc-textfield__input mdc-theme--text-primary-on-light"
+        style="margin-left: 29px; width: 150px !important; float: right;">
+    <label for="poi_video_reward_checkbox" class="mdc-textfield__label"
+        style="margin-left: 10px; bottom: 8px; margin-bottom: 0px;">
+        Is a reward item?</label>-->
+
+</div>
