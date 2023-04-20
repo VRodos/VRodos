@@ -918,18 +918,49 @@ function showWholePopupDiv(popUpDiv, event) {
 //  */
 function displayPoiVideoProperties(event, name) {
 
+
     // The whole popup div
     var ppPropertiesDiv = jQuery("#popUpPoiVideoPropertiesDiv");
 
     // The checkbox only
     var chbox = jQuery("#poi_video_reward_checkbox");
+    //var popupFocusSelect = jQuery("#poi_video_focus_dropdown");
 
+    var setFocusX = document.getElementById('focus_X');
+    var setFocusZ = document.getElementById('focus_Z');
+
+
+    var sliderFocusX = jQuery("#focus_X");
+    var sliderFocusZ = jQuery("#focus_Z");
     // Save the previous artifact properties values (in case of  direct mouse click on another item)
-    chbox.trigger("change");
+    //chbox.trigger("change");
+    //popupFocusSelect.trigger("change");
+
+    //sliderFocusX.trigger("change");
+    //sliderFocusZ.trigger("change");
+    //sliderFocusX.slider('value', -50);
+
 
     clearAndUnbind(null, null, "poi_video_reward_checkbox");
 
+    clearAndUnbind(null, null, "poi_video_focus_dropdown");
+
+    clearAndUnbind(null, null, "focus_X");
+
+    clearAndUnbind(null, null, "focus_Z");
+
     chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
+
+    setFocusX.value = envir.scene.getObjectByName(name).hv_penalty;
+    setFocusZ.value = envir.scene.getObjectByName(name).natural_penalty;
+
+
+    console.log(setFocusX.value);
+
+
+
+    sliderFocusX.prop('disabled', envir.scene.getObjectByName(name).isreward == 0);
+    sliderFocusZ.prop('disabled', envir.scene.getObjectByName(name).isreward == 0);
 
     // Show Selection
     ppPropertiesDiv.show();
@@ -937,5 +968,64 @@ function displayPoiVideoProperties(event, name) {
     ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
     // Add change listener
-    chbox.change(function (e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
+    chbox.change(function (e) {
+
+
+        envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
+
+        if (this.checked) {
+            envir.scene.getObjectByName(name).hv_penalty = setFocusX.value;
+            envir.scene.getObjectByName(name).natural_penalty = setFocusZ.value;
+            console.log(envir.scene.getObjectByName(name).hv_penalty);
+        }
+
+        sliderFocusX.prop("disabled", (!this.checked));
+        sliderFocusZ.prop("disabled", (!this.checked));
+
+
+    });
+    //sliderFocusRight.prop("disabled", true);
+    //sliderFocusUp.prop("disabled", true);
+
+
+
+    sliderFocusX.change(function (e) {
+        //var valDoorScene = popupDoorSelect.val();
+        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+        envir.scene.getObjectByName(name).hv_penalty = this.value;
+        console.log(this.value);
+
+    });
+
+    sliderFocusZ.change(function (e) {
+        //var valDoorScene = popupDoorSelect.val();
+        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+        envir.scene.getObjectByName(name).natural_penalty = this.value;
+        console.log(this.value);
+
+    });
+
+    /*
+    popupFocusSelect.change(function (e) {
+        //var valDoorScene = popupDoorSelect.val();
+        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+        console.log(this.value);
+        envir.scene.getObjectByName(name).isreward = this.value;
+        //envir.scene.getObjectByName('scenesInsideVREditor').children;
+        //tempFunc.call(this, updName);
+
+        //if (!valDoorScene)
+        //    return;
+
+        //if (valDoorScene && valDoorScene != "Select a door") {
+
+        //    var nameDoor_Target = valDoorScene.split(" at ")[0];
+        //    var sceneName_Target = valDoorScene.split(" at ")[1];
+        //if (this.value != "Default" && this.value)
+        //    envir.scene.getObjectByName(updName).sceneID_target = this.value;
+        //envir.scene.getObjectByName(name).sceneName_target = this.value;
+
+        //
+    });
+    */
 }
