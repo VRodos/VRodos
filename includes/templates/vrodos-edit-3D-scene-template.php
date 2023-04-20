@@ -401,7 +401,6 @@ wp_head();
                         </a>
                     </div>
 
-
                     <!-- Compile Button -->
                     <a id="compileGameBtn"
                        class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right"
@@ -528,15 +527,13 @@ wp_head();
                         </div>
                     </div>
 
-
-
                 </div>
 
                 <!-- Close all 2D UIs-->
                 <div class="environmentButton">
                     <a id="toggleUIBtn" data-toggle='on' type="button"
                        class="ToggleUIButtonStyle mdc-theme--secondary" title="Toggle interface">
-                        <i class="material-icons" style="background: #ffffff; opacity:0.2; z-index:100000">visibility</i>
+                        <i class="material-icons" style="opacity:0.4; z-index: 100000">visibility</i>
                     </a>
                 </div>
 
