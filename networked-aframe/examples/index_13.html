@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <title>Μηχανή Θεάτρου</title>
+    <meta name="description" content="Collection of examples for networked-aframe"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <style>
+        html {
+            background: #33425B;
+            color: #FAFAFA;
+            font-family: monospace;
+            font-size: 50px;
+            padding: 25px 50px;
+        }
+        h1 {
+            font-weight: 300;
+        }
+        a {
+            color: #FAFAFA;
+            /*display: block;*/
+            padding: 15px 0;
+        }
+        body > div {
+            margin: 20px 0;
+        }
+
+
+        #wrapper {
+
+        }
+        #div1 {
+            width:512px;
+            margin:20px;
+            float:left;
+            margin-top:0px;
+        }
+        #div2 {
+            height:512px;
+            width:512px;
+            float:left;
+            margin:20px;
+            margin-top:0px;
+        }
+    </style>
+</head>
+<body style="transform-origin: -20px -20px; width: 1320px">
+<script>
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+
+        const urlSearchParams = new URLSearchParams(window.location.search);
+        const params = Object.fromEntries(urlSearchParams.entries());
+
+        var lang = "el";
+        if (params['lang']) {
+            lang = params['lang'];
+        }
+
+        _selectYourAttribute = [];
+        _selectYourAttribute['en'] = "Select your attribute";
+        _selectYourAttribute['el'] = "Διάλεξε την ιδιότητά σου";
+        document.getElementById("_selectYourAttribute").innerHTML = _selectYourAttribute[lang];
+
+        _actor = [];
+        _actor['en'] = "Actor";
+        _actor['el'] = "Ηθοποιός";
+        document.getElementById("_actor").innerHTML = _actor[lang];
+
+        _youNeed = [];
+        _youNeed['en'] = "You will need a smartphone, a tripod, and a green background";
+        _youNeed['el'] = "Θα χρειαστείς ένα κινητό, ένα τρίποδο για κινητό, και ένα πράσινο φόντο";
+        document.getElementById("_youNeed").innerHTML = _youNeed[lang];
+
+        _director = [];
+        _director['en'] = "Director";
+        _director['el'] = "Σκηνοθέτης";
+        document.getElementById("_director").innerHTML = _director[lang];
+
+
+        _youNeedDirector = [];
+        _youNeedDirector['en'] = "You will need a high-end PC, e.g. with an NVidia 3080 GPU";
+        _youNeedDirector['el'] = "Θα χρειαστείς ένα δυνατό PC desktop, π.χ. με κάρτα γραφικών NVidia 3080";
+        document.getElementById("_youNeedDirector").innerHTML = _youNeedDirector[lang];
+
+        if (lang === 'el') {
+            var link1 = document.createElement('a');
+            link1.href =  window.location.href.substring(0, window.location.href.indexOf("?")) + "?lang=en";
+            link1.innerHTML = "English";
+            document.getElementById("langButtons").appendChild(link1);
+        } else {
+            var link2 = document.createElement('a');
+            link2.href = window.location.href.substring(0, window.location.href.indexOf("?"));
+            link2.innerHTML = "Ελληνικά";
+            document.getElementById("langButtons").appendChild(link2);
+        }
+    });
+
+    /* Scale down body when in compile preview */
+    (function() {
+        document.getElementsByTagName("body")[0].style.scale = window.innerWidth > 500 ? "1" : "0.21";
+    })();
+</script>
+
+
+<div id="langButtons" style="float:right; position: absolute; top: 5px; right: 25px;"></div>
+<h1 id="_selectYourAttribute"></h1>
+<h2 id="_sceneName">test, Chapter 1 (13)</h2>
+<div id="wrapper">
+    <div id="div1">
+        <h2>
+            <a href="Simple_Client_13.html">&#128241;
+                <span id="_actor"></span>
+                <div style="background: #2c70e0">
+                    <img src="img/actor_icon.png" style="height:512px"/>
+                </div>
+                <span id="_youNeed"></span>
+            </a>
+        </h2>
+    </div>
+    <div id="div2">
+        <h2>
+            <a href="Master_Client_13.html" target="_blank">&#128421;
+                <span id="_director"></span>
+                <img src="img/director_icon.jpg" style="height:512px;"/>
+                <span id="_youNeedDirector"></span>
+            </a>
+        </h2>
+    </div>
+</div>
+</body>
+</html>
