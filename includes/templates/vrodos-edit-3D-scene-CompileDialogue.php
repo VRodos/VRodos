@@ -1,13 +1,13 @@
 
 
 <div id="compile-dialog"
-       class="mdc-dialog"
-       role="alertdialog"
-       style="z-index: 1000;"
-       data-game-slug="<?php echo $projectSlug; ?>"
-       data-project-id="<?php echo $project_id; ?>"
-       aria-labelledby="my-mdc-dialog-label"
-       aria-describedby="my-mdc-dialog-description" data-mdc-auto-init="MDCDialog">
+     class="mdc-dialog"
+     role="alertdialog"
+     style="z-index: 1000;"
+     data-game-slug="<?php echo $projectSlug; ?>"
+     data-project-id="<?php echo $project_id; ?>"
+     aria-labelledby="my-mdc-dialog-label"
+     aria-describedby="my-mdc-dialog-description" data-mdc-auto-init="MDCDialog">
 
     <div class="mdc-dialog__surface" id="compile_dialogue_div" style="max-width: 1100px;">
 
@@ -47,7 +47,7 @@
             <input id="platformInput" type="hidden" value="platform-Aframe">
 
 
-<!--            <div style="display:inline-block">
+            <!--<div style="display:inline-block">
                 <label for="show_pawns_checkbox" class="" style="display:inline-block; margin-left:15px; margin-bottom:0">Show Actor positions?</label>
                 <input id="show_pawns_checkbox" name="show_pawns_checkbox"
                        type="checkbox" title="Show Actor positions in Aframe ? (true for debug purpose only)"

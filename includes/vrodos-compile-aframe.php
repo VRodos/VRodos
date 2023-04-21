@@ -150,24 +150,21 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
             @$dom->loadHTML($content,  LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  //LIBXML_NOERROR , LIBXML_HTML_NODEFDTD
 
 
-
             $html = $dom->documentElement;
             $head = $dom->documentElement->childNodes[0];
-            $body = $dom->documentElement->childNodes[1];
+            $body = $dom->getElementById('simple-client-body');
+            $actionsDiv = $dom->getElementById('actionsDiv');
+            $ascene = $dom->getElementById('aframe-scene-container');
 
-            $actionsDiv = $body->childNodes[1];
 
-
-            $ascene = $body->childNodes[2];
-
-//			$f = fopen("output_compile_actor.txt","w");
-//			fwrite($f, "----------------".chr(13));
-//			fwrite($f, "ActionsDiv".chr(13));
-//			fwrite($f, print_r($dom, true));
-//			fwrite($f, "ASCENE".chr(13));
-//			fwrite($f, print_r($ascene, true));
-//			fwrite($f, "----------------".chr(13));
-//			fclose($f);
+			/*$f = fopen("output_compile_actor.txt","w");
+			fwrite($f, "----------------".chr(13));
+			fwrite($f, "ActionsDiv".chr(13));
+			fwrite($f, print_r($dom, true));
+			fwrite($f, "ASCENE".chr(13));
+			fwrite($f, print_r($ascene, true));
+			fwrite($f, "----------------".chr(13));
+			fclose($f);*/
 
 
             // ============ Scene Iteration kernel ==============
@@ -587,7 +584,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
         fwrite($f, print_r($ascene,true));
         fwrite($f, " --- start ----". chr(13));
 
-        fwrite($f, print_r($xpath->document, true));
+        fwrite($f, print_r($scene_json, true));
 
         fwrite($f, chr(13));
         fwrite($f, "--- end ---- ". chr(13));
@@ -601,9 +598,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
         $i = 0;
         foreach($objects as $nameObject => $contentObject) {
 
-//			$f = fopen("output_simple_client.txt", "w");
-//			fwrite($f, print_r($basicDomElements['actionsDiv'], true));
-//			fclose($f);
+			/*$f = fopen("output_simple_client.txt", "w");
+			fwrite($f, print_r($basicDomElements['actionsDiv'], true));
+			fclose($f);*/
 
             if ( $contentObject->categoryName == 'pawn' ) {
                 $i++;
@@ -650,7 +647,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
     foreach (array_reverse($scene_id_list) as $key => &$value){
         createIndexFile($project_title, $value, $scene_title, $fileOperations);
         createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id);
-        createSimpleClient($project_title, $value, $scene_title, $$scene_json[$key], $fileOperations);
+        createSimpleClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations);
     }
 
     // Step 3; Create Simple Client
