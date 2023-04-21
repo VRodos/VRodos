@@ -96,7 +96,7 @@
 
 <div>
     <div class="wrapperVideoElement">
-        <video id="video-preview" width="300" height="200" muted hidden style="display: none;"></video>
+        <video id="video-preview" width="300" height="200" autoplay muted hidden></video>
         <video id="recording" hidden></video>
     </div>
 
@@ -219,6 +219,13 @@
             </a-entity>
         </template>
     </a-assets>
+
+    <!--
+    <a-plane id="video-border" width="17" height="10" position="0 5 -20" color="#440000" video-controls>
+        <a-video id="video-display" width="16" height="9" position="0 0 0.1" src="#video">
+        </a-video>
+    </a-plane>
+    -->
 
     <!-- Pawn -->
     <a-entity id="player"

@@ -97,9 +97,13 @@ const webServer = http.createServer(app);
 
 const socketServer = require("socket.io")(webServer, {
 	
-	origins: ["http://localhost:5832"],
+	origins: [
+	    'http://localhost:5832',
+        'https://vrodos-multiplaying.iti.gr/',
+        '*:*'
+    ],
 	
-    handlePreflightRequest: (req, res) => {
+    /*handlePreflightRequest: (req, res) => {
         const headers = {
             "Access-Control-Allow-Headers": "Content-Type, Authorization",
             "Access-Control-Allow-Origin": "http://localhost:5832", //or the specific origin you want to give access to,
@@ -107,7 +111,7 @@ const socketServer = require("socket.io")(webServer, {
         };
         res.writeHead(200, headers);
         res.end();
-    }
+    }*/
 });
  
 
@@ -174,8 +178,6 @@ easyrtc.listen(app, socketServer, null, (err, rtcRef) => {
         appObj.events.defaultListeners.roomCreate(appObj, creatorConnectionObj, roomName, roomOptions, callback);
     });
 });
-
-
 
 
 // Listen on port
