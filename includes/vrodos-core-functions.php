@@ -148,7 +148,6 @@ function create_post_project_joker($tax_slug, $post_title, $post_name, $userID){
 			'slug' => $post->post_name,
 		)
 	);
-
 }
 
 

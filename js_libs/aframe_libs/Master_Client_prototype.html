@@ -23,7 +23,6 @@
     <script src="js/particles/aframe-particle-system-component.min.js"></script>
 
     <script src="js/spawn-in-circle.component.js"></script>
-    <script type="module"  src="js/helper.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 </head>
@@ -102,7 +101,7 @@
     </div>
 
     <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-        <div id="toggle_controls">Close <span style="color:green">("x" button to show again)</span></div>
+        <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
         <div id="directorline" style=""></div>
 
 
@@ -143,20 +142,23 @@
 
             <button id="stop-recording-btn"
                     class="buttonStopRecord"
-                    title="Save capture">
-                💾
+                    title="Save capture"
+                    disabled >
+                ◼️
             </button>
 
             <a id="download-recording-btn"
                class="buttonDownloadRecording"
-               title="Download video">
-                ⬇️️
+               title="Download video"
+               disabled >
+                💾️️
             </a>
 
             <button id="upload-recording-btn"
                     class="buttonUploadRecording"
                     style="visibility: hidden"
-                    title="Upload Recording to MediaVerse">
+                    title="Upload Recording to MediaVerse"
+                    disabled >
                 ⬆️️️
             </button>
         </div>
@@ -217,10 +219,6 @@
             </a-entity>
         </template>
     </a-assets>
-    <a-assets timeout="10000">
-        <video id="video" loop="true" src="http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4"
-        ></video>
-    </a-assets>
 
     <!--
     <a-plane id="video-border" width="17" height="10" position="0 5 -20" color="#440000" video-controls>
@@ -271,6 +269,61 @@
             }
         }
     });
+
+    const api_pattern_single = {
+        ThresholdMin: 0.106,
+        ThresholdMax: 0.13,
+        red: 48, green: 146, blue: 89,
+        w: 1, h: 0.75,
+        x: 0, y:0, z:0,
+        rx: 0, ry: 0, rz:0
+    };
+
+    const api_pattern_singleMin = {
+        ThresholdMinLow: 0,
+        ThresholdMaxLow: 0,
+        redLow: 0,
+        greenLow: 0,
+        blueLow: 0,
+        wLow: 0.1,
+        hLow: 0.1,
+        xLow:-100000,
+        yLow:-100000,
+        zLow:-100000,
+        rxLow:-100,
+        ryLow:-100,
+        rzLow:-100
+    };
+    const api_pattern_singleMax = {
+        ThresholdMinHigh: 0.4,
+        ThresholdMaxHigh: 0.4,
+        redHigh: 255,
+        greenHigh: 255,
+        blueHigh: 255,
+        wHigh: 5,
+        hHigh: 5,
+        xHigh: 100000,
+        yHigh: 100000,
+        zHigh: 100000,
+        rxHigh: 100,
+        ryHigh: 100,
+        rzHigh: 100
+    };
+    const api_pattern_singleStep = {
+        ThresholdMinStep: 0.001,
+        ThresholdMaxStep: 0.001,
+        redStep: 1,
+        greenStep: 1,
+        blueStep: 1,
+        wStep: 0.05,
+        hStep: 0.05,
+        xStep: 10,
+        yStep: 10,
+        zStep: 10,
+        rxStep: 0.1,
+        ryStep: 0.1,
+        rzStep: 0.1
+    };
 
     let btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
     btStatusControls.addEventListener('click', function() {
@@ -466,12 +519,15 @@
 
         return Promise.all([
             stopped
-        ])
-            .then(() => data);
+        ]).then(() => data);
     }
 
     function stopRecording(stream) {
         stream.getTracks().forEach(track => track.stop());
+        record_button.disabled = false;
+        stop_button.disabled = true;
+        download_button.disabled = false;
+        upload_button.disabled = false;
     }
 
     let recordedBlob;
@@ -489,6 +545,10 @@
             },
             audio: true
         }).then(stream => {
+
+            record_button.disabled = true;
+            stop_button.disabled = false;
+
             video_preview.style.display = 'block';
             video_preview.srcObject = stream;
             download_button.href = stream;
@@ -499,7 +559,7 @@
                 stopRecording(video_preview.srcObject);
             };
 
-            return new Promise(resolve => video_preview.onplaying = resolve);
+            return new Promise( resolve => video_preview.onplaying = resolve );
         }).then(() => startRecording(video_preview.captureStream()))
             .then (recordedChunks => {
 
@@ -520,6 +580,9 @@
     }, false);
 
     upload_button.addEventListener("click", function() {
+
+        upload_button.disabled = true;
+
         const mv_url = document.getElementById('node-url-input').value;
         const mv_token = document.getElementById('node-token-input').value;
         const mv_project_id = document.getElementById('mv-project-id-input').value;
@@ -541,6 +604,7 @@
             if (response.ok) {
                 return response.json();
             } else {
+                upload_button.disabled = false;
                 alert("There has been a problem uploading your video to MediaVerse platform");
             }
         }).then(function (data) {
@@ -555,6 +619,7 @@
                     "projectOutput": [data.key]
                 })
             }).then(function (response) {
+                upload_button.disabled = false;
                 if (response.ok) {
                     alert('The video has been successfully uploaded to MediaVerse!');
                 } else {

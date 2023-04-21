@@ -4,13 +4,9 @@ const path = require("path");
 const express = require("express");           // web framework external module
 //const socketIo = require("socket.io");        // web socket external module
 
-
-
 const easyrtc = require("open-easyrtc");      // EasyRTC external module
 
 // socketIo.origins(["http://localhost:3000"]); // for local development
-
-
 
 
 // Set process name
