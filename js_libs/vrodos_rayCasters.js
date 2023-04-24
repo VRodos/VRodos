@@ -724,7 +724,7 @@ function displayDoorProperties(event, name) {
     popupDoorSelect.change(function (e) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        console.log(this.value);
+        //console.log(this.value);
         //envir.scene.getObjectByName('scenesInsideVREditor').children;
         //tempFunc.call(this, updName);
 
@@ -955,7 +955,7 @@ function displayPoiVideoProperties(event, name) {
     setFocusZ.value = envir.scene.getObjectByName(name).natural_penalty;
 
 
-    console.log(setFocusX.value);
+    //console.log(setFocusX.value);
 
 
 
@@ -976,7 +976,7 @@ function displayPoiVideoProperties(event, name) {
         if (this.checked) {
             envir.scene.getObjectByName(name).hv_penalty = setFocusX.value;
             envir.scene.getObjectByName(name).natural_penalty = setFocusZ.value;
-            console.log(envir.scene.getObjectByName(name).hv_penalty);
+            //console.log(envir.scene.getObjectByName(name).hv_penalty);
         }
 
         sliderFocusX.prop("disabled", (!this.checked));
@@ -993,7 +993,7 @@ function displayPoiVideoProperties(event, name) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).hv_penalty = this.value;
-        console.log(this.value);
+        //console.log(this.value);
 
     });
 
@@ -1001,7 +1001,7 @@ function displayPoiVideoProperties(event, name) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).natural_penalty = this.value;
-        console.log(this.value);
+        //console.log(this.value);
 
     });
 

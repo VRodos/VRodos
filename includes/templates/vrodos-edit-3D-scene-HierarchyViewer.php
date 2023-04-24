@@ -145,7 +145,7 @@
                         <div class="mdc-radio__inner-circle"></div>
                     </div>
                 </div>
-                <label id="gameTypeArchRadio-label" for="RadioNoFog" style="font-size: 9pt !important;">
+                <label for="RadioNoFog" style="font-size: 9pt !important;">
                     No Fog
                 </label>
             </li>
@@ -159,7 +159,7 @@
                         <div class="mdc-radio__inner-circle"></div>
                     </div>
                 </div>
-                <label id="gameTypeChemistryRadio-label" for="RadioLinearFog" style="font-size: 9pt !important;">
+                <label for="RadioLinearFog" style="font-size: 9pt !important;">
                     Linear Fog
                 </label>
             </li>
@@ -173,7 +173,7 @@
                         <div class="mdc-radio__inner-circle"></div>
                     </div>
                 </div>
-                <label id="gameTypeEnergyRadio-label" for="RadioExponentialFog" style="font-size: 9pt !important;">Exponential                    </label>
+                <label for="RadioExponentialFog" style="font-size: 9pt !important;">Exponential</label>
             </li>
         </ul>
 

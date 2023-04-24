@@ -94,8 +94,6 @@ function vrodos_compileAjax(showPawnPositions) {
 
                 document.getElementById("openWebLinkhref").setAttribute("href", urlExperienceSequence["index"]);
 
-
-
                 console.log("Ajax Aframe Success");
             },
             error : function(xhr, ajaxOptions, thrownError) {

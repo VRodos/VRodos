@@ -72,7 +72,7 @@ function vrodos_get_ftpCredentials(){
 /* Get all game projects of the user */
 function vrodos_get_user_game_projects($user_id, $isUserAdmin){
     
-    $games_slugs = ['archaeology-joker','energy-joker','chemistry-joker'];
+    $games_slugs = ['archaeology-joker'];
     
     // user is not logged in return only joker game
     if($user_id==0)

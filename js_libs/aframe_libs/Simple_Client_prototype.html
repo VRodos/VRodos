@@ -17,12 +17,21 @@
     <script src="../dist/networked-aframe.js"></script>
     <script src="../js/NoSleep.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
-<!--    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
+    <!--    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
 </head>
 
-<body style="background: gray"><div id="renderFeedback" class="renderFeedback"><div class="renderFeedbackText" id="renderFeedbackText">Waiting for the rendered scene ...</div></div><div class="actionsActor" name="actionsDiv" id="actionsDiv"><div id="reporting"></div></div><a-scene background="color: black"
-        vr-mode-ui="enabled: false"
-        networked-scene="
+<body style="background: gray" id="simple-client-body">
+<div id="renderFeedback" class="renderFeedback">
+    <div class="renderFeedbackText" id="renderFeedbackText">Waiting for the rendered scene ...</div>
+</div>
+<div class="actionsActor" name="actionsDiv" id="actionsDiv">
+    <div id="reporting"></div>
+</div>
+<a-scene
+        id="aframe-scene-container"
+        background="color: black"
+         vr-mode-ui="enabled: false"
+         networked-scene="
       room: roomname;
       debug: true;
       adapter: easyrtc;
@@ -86,12 +95,12 @@
 
     /* Syncing avatar */
     NAF.schemas.add({
-         template: '#avatar-template',
-         components: [
-             'position',
-             'rotation'
-         ]
-     });
+        template: '#avatar-template',
+        components: [
+            'position',
+            'rotation'
+        ]
+    });
 
     //NAF.connection.adapter.on   onaddtrack = function(){console.log("Track was added");};
 
@@ -148,9 +157,9 @@
                 let position = JSON.parse(this.dataset.position);
 
                 document.getElementById("reporting").innerText = selectString(evt.currentTarget.room,
-                                                                                evt.currentTarget.userName,
-                                                                                evt.currentTarget.userLang,
-                                                                                "_position", i+1);
+                    evt.currentTarget.userName,
+                    evt.currentTarget.userLang,
+                    "_position", i+1);
                 let el = document.getElementById('player');
                 el.removeAttribute('look-controls');
                 el.setAttribute('rotation', rotation.x * 180 /3.14 + " " + rotation.y * 180 /3.14 + " " + rotation.z * 180 /3.14);

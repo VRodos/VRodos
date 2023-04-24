@@ -178,7 +178,10 @@ function vrodos_on_create_project( $new_status, $old_status, $post){
         else {
             $projectTitle = $post->post_title;
             // Create a parent game tax category for the assets
-            wp_insert_term($projectTitle,'vrodos_asset3d_pgame', $projectSlug);
+            wp_insert_term($projectTitle,'vrodos_asset3d_pgame', array(
+                'description'=> '-',
+                'slug' => $projectSlug
+            ));
         }
     }
 }

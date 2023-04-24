@@ -29,10 +29,10 @@ function vrodos_fetchListAvailableAssetsAjax(isAdmin, gameProjectSlug, urlforAss
  */
 function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
-    var filemanager = jQuery('#assetBrowserToolbar');
-        // breadcrumbs = jQuery('.breadcrumbs'),
-    var fileList = filemanager.find('.data');
-        // closeButton = jQuery('#bt_close_file_toolbar');
+    let filemanager = jQuery('#assetBrowserToolbar');
+    // breadcrumbs = jQuery('.breadcrumbs'),
+    let fileList = filemanager.find('.data');
+    // closeButton = jQuery('#bt_close_file_toolbar');
 
 
 
@@ -55,8 +55,6 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     }
     var dragImg = createDragImage();
 
-
-
     render(responseData, gameProjectSlug, urlforAssetEdit );
 
     // Hiding and showing the search box
@@ -72,13 +70,16 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
     filemanager.find('input').on('input', function(e){
 
-        var value = this.value.trim();
+        let value = this.value.trim();
 
         if(value.length) {
             filemanager.addClass('searching');
 
+            fileList.empty();
+
             // Filter the responseData according to value.trim()
-            filteredResponseData = selectByTitleComparizon(responseData, value.trim());
+            let filteredResponseData = selectByTitleComparizon(responseData, value.trim());
+
             render(filteredResponseData, gameProjectSlug, urlforAssetEdit);
         } else {
             filemanager.removeClass('searching');
@@ -165,22 +166,19 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     // Here we make the list
     function render(enlistData, gameProjectSlug, urlforAssetEdit) {
 
-        var i, f, name;
-
-        // Empty the old result and make the new one
-        //fileList.empty().hide();
+        var f, name;
 
         if (enlistData) {
 
             // allAssetsViewBt
             document.getElementById("assetCategTab").children[0].addEventListener("click",
                 function(event){openCategoryTab(event, this  );  }
-                );
+            );
 
-            for (i = 0; i < enlistData.length; i++) {
+            for (let i = 0; i < enlistData.length; i++) {
                 f = enlistData[i];
 
-                var fileSize = ''; //bytesToSize(f.size);
+                let fileSize = ''; //bytesToSize(f.size);
 
                 name = escapeHTML(f.name);
 
@@ -203,9 +201,9 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 f.screenImagePath = f.screenImagePath ? f.screenImagePath : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
 
                 let img = '<span class="mdc-list-item__start-detail CenterContents">'+
-                            '<img class="assetImg" draggable="false" style="-webkit-user-drag: none" src=' + encodeURI(f.screenImagePath) + '>'+
-                            // '<span class="megabytesAsset mdc-typography--caption mdc-theme--text-secondary-on-light">'+ fileSize + '</span>'+
-                      '</span>';
+                    '<img class="assetImg" draggable="false" style="-webkit-user-drag: none" src=' + encodeURI(f.screenImagePath) + '>'+
+                    // '<span class="megabytesAsset mdc-typography--caption mdc-theme--text-secondary-on-light">'+ fileSize + '</span>'+
+                    '</span>';
 
 
 
@@ -242,7 +240,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     '" >' + img +
                     '<span class="FileListItemName mdc-list-item__text" title="Drag the card into the plane">'+ name +
                     '<i class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption material-icons">'+ f.categoryIcon
-                          +'</i></span>' +
+                    +'</i></span>' +
                     '<span class="FileListItemFooter">' +
 
                     (f.isJoker==='false'?
@@ -274,9 +272,6 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
                 file.appendTo(fileList);
             }
-
-
-
             // Don't delete. Needed to auto init the mdc components after they have loaded.
             mdc.autoInit(document, () => {});
         }
@@ -320,23 +315,23 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         var categName = b.id;
 
         // Declare all variables
-        var i, tabcontent, tablinks;
+        var tabcontent, tablinks;
 
         // Get all elements with class="tabcontent" and hide them
         tabcontent = document.getElementsByClassName("tabcontent");
-        for (i = 0; i < tabcontent.length; i++) {
+        for (let i = 0; i < tabcontent.length; i++) {
             tabcontent[i].style.display = "none";
         }
 
         // Get all elements with class="tablinks" and remove the class "active"
         tablinks = document.getElementsByClassName("tablinks");
-        for (i = 0; i < tablinks.length; i++) {
+        for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(" active", "");
         }
 
         // Show the current tab, and add an "active" class to the button that opened the tab
         var items = fileList[0].getElementsByTagName("li");
-        for (var i = 0; i < items.length; ++i) {
+        for (let i = 0; i < items.length; ++i) {
             if (categName == "allAssetsViewBt")
                 items[i].style.display = '';
             else {
@@ -345,10 +340,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 else
                     items[i].style.display = 'none';
             }
-
         }
-
         evt.currentTarget.className += " active";
     }
-
 }

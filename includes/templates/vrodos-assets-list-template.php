@@ -1,8 +1,8 @@
 <?php
 
-if ( get_option('permalink_structure') ) { $perma_structure = true; } else {$perma_structure = false;}
-if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
-if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
+$perma_structure = (bool)get_option('permalink_structure');
+$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+$parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 $joker_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'vrodos_game' )->ID;
@@ -27,11 +27,9 @@ echo '</script>';
 $isUserloggedIn = is_user_logged_in();
 $current_user = wp_get_current_user();
 
-
 $login_username = $current_user->user_login;
 
-$isUserAdmin = $isUserloggedIn ? current_user_can('administrator'): false;
-
+$isUserAdmin = $isUserloggedIn && current_user_can('administrator');
 
 $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 $pluginpath = str_replace('\\','/',$pluginpath);
@@ -68,11 +66,6 @@ $newAssetPage = vrodos_getEditpage('asset');
 //$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&vrodos_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
 get_header();
-?>
-
-
-
-<?php
 
 $user_id = get_current_user_id();
 $current_project = '';
@@ -126,7 +119,7 @@ if ($single_project_asset_list)
         <?php
 
         if( $single_project_asset_list){
-            $helpMessage = 'A list of your private Assets belonging to <b>'.$current_game_project_post->post_title.'</b>.';
+            $helpMessage = 'A list of your private Assets belonging to the project <b>'.$current_game_project_post->post_title.'</b>.';
         } else {
             $helpMessage = 'Add a Shared Asset here. If you want it to be private, make a project and add the asset there.';
         }
@@ -140,14 +133,16 @@ if ($single_project_asset_list)
     <?php if ($single_project_asset_list){ ?>
         <!--<span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php /*echo $current_game_project_post->post_title;*/?></span>-->
     <?php } else if (!$isUserloggedIn) { ?>
-        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for shared <?php echo $isUserloggedIn?" and private": ""; ?> assets </span>
+        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $isUserloggedIn?" private": ""; ?> assets </span>
     <?php } else if ($isUserloggedIn) { ?>
-        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for shared <?php echo $isUserloggedIn?" and private": ""; ?> assets in own projects</span>
+        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $isUserloggedIn?" private": ""; ?> assets in own projects</span>
     <?php } ?>
 
     <div class="mdc-layout-grid__inner grid-system-custom">
 
+
         <!-- Card to add asset -->
+
         <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="" >
             <div class="asset-shared-thumbnail mdc-card mdc-theme--background"
                  style="height:100%;min-height:120px;position:relative;background:<?php echo $single_project_asset_list? 'lightgreen': 'orangered';?>">
@@ -157,6 +152,8 @@ if ($single_project_asset_list)
                 </a>
             </div>
         </div>
+
+
 
         <!-- Each Asset -->
         <?php foreach ($assets as $asset) {    ?>

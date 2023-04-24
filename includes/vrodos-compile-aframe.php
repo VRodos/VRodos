@@ -163,25 +163,21 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 			@$dom->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS); //LIBXML_NOERROR , LIBXML_HTML_NODEFDTD
 
 
-
 			$html = $dom->documentElement;
 			$head = $dom->documentElement->childNodes[0];
-			$body = $dom->documentElement->childNodes[1];
-
-			$actionsDiv = $body->childNodes[1];
-
-
-			$ascene = $body->childNodes[2];
+			$body = $dom->getElementById('simple-client-body');
+			$actionsDiv = $dom->getElementById('actionsDiv');
+			$ascene = $dom->getElementById('aframe-scene-container');
 
 
-			// $f = fopen("D:\output_compile_actor.txt", "w");
-			// fwrite($f, "----------------" . chr(13));
-			// fwrite($f, "ActionsDiv" . chr(13));
-			// fwrite($f, print_r($dom, true));
-			// fwrite($f, "ASCENE" . chr(13));
-			// fwrite($f, print_r($asceneA, true));
-			// fwrite($f, "----------------" . chr(13));
-			// fclose($f);
+			/*$f = fopen("output_compile_actor.txt","w");
+			fwrite($f, "----------------".chr(13));
+			fwrite($f, "ActionsDiv".chr(13));
+			fwrite($f, print_r($dom, true));
+			fwrite($f, "ASCENE".chr(13));
+			fwrite($f, print_r($ascene, true));
+			fwrite($f, "----------------".chr(13));
+			fclose($f);*/
 
 
 			// ============ Scene Iteration kernel ==============
@@ -209,7 +205,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 			$actionsDiv = $dom->getElementById('actionsDiv');
 			$ascene = $dom->getElementById('aframe-scene-container');
 			$ascenePlayer = $dom->getElementById('player');
-			//$ascenePlayer = $ascene->childNodes[2];
 
 			// If MediaVerse project, then enable upload to MV Node.
 			$recording_controls = $dom->getElementById('upload-recording-btn');
@@ -221,33 +216,42 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 				$user_id = get_current_user_id();
 				if ($user_id) {
 					$token = get_the_author_meta('mvnode_token', $user_id);
+					$node_token_input = $dom->getElementById('node-token-input');
+					$node_token_input->setAttribute('value', $token);
+
 					$url = get_the_author_meta('mvnode_url', $user_id);
 					$node_url_input = $dom->getElementById('node-url-input');
 					$node_url_input->setAttribute('value', $url);
-					$node_token_input = $dom->getElementById('node-token-input');
-					$node_token_input->setAttribute('value', $token);
+
 				}
+
+				// If there is a MV project id, then forward it to client
+				$mv_project_id = get_post_meta($project_id, 'mv_project_id');
+				if ($mv_project_id) {
+					$mv_project_id_input = $dom->getElementById('mv-project-id-input');
+					$mv_project_id_input->setAttribute('value', $mv_project_id[0]);
+				}
+
 				$dom->saveHTML();
 			}
 
 
-
-			$f = fopen("D:\output_compile_director.txt", "w");
-			fwrite($f, "----------------" . chr(13));
-
-			// foreach ($dom->getElementsByTagName('a-scene') as $node) {
-
-			// 	$string_ascene = $dom->saveHtml($node);
-			// 	$string_ascene = str_replace('background="color: #aaaaaa"','background="color: #00ff00"', $string_ascene);
-			// 	$ascene = $dom->loadHTML($string_ascene);
-
-			// }
-
-			//fwrite($f, print_r($scene_json->metadata->ClearColor, true));
-			fwrite($f, "ASCENE" . chr(13));
-			fwrite($f, print_r($ascenePlayer, true));
-			fwrite($f, "----------------");
-			fclose($f);
+			//			$f = fopen("output_compile_director.txt","w");
+//			fwrite($f, "----------------".chr(13));
+////
+////			foreach ($dom->getElementsByTagName('a-scene') as $node) {
+////
+////				$string_ascene = $dom->saveHtml($node);
+////				$string_ascene = str_replace('background="color: #aaaaaa"','background="color: #00ff00"', $string_ascene);
+////				$ascene = $dom->loadHTML($string_ascene);
+////
+////			}
+////
+////     			fwrite($f, print_r($scene_json->metadata->ClearColor, true));
+//////			fwrite($f, "ASCENE".chr(13));
+//////			fwrite($f, print_r($ascene, true));
+//			fwrite($f, "----------------");
+//			fclose($f);
 
 
 			// ============ Scene Iteration kernel ==============
@@ -327,22 +331,14 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 		$objects = $basicDomElements['objects'];
 		$ascene = $basicDomElements['ascene'];
 		$ascenePlayer = $basicDomElements['ascenePlayer'];
-		//print_r($ascenePlayer);
-
-		foreach ($objects as $nameObject => $contentObject) {
-			if ($contentObject->categoryName == 'avatarYawObject') {
-				$cameraPosition = $contentObject->position;
-				$cameraRotation = $contentObject->rotation;
-			}
-
-		}
+		//print($scene_id)
 
 		//$i = array_search($scene_id, array_keys($scene_id_list));
 		//print_r($i);
 
 
 		foreach ($objects as $nameObject => $contentObject) {
-			//print_r($contentObject->sceneID_target);
+			//print_r($contentObject->categoryName);
 			// ===========  Artifact==============
 			if ($contentObject->categoryName == 'Artifact') {
 
@@ -386,7 +382,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 					$a_entity->setAttribute("clear-frustum-culling", "");
 
 
-					//includeDoorFunctionality($a_entity, $scene_id);
+					includeDoorFunctionality($a_entity, $scene_id);
 
 
 
@@ -547,7 +543,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 				$a_video_asset = $dom->createElement("video");
 				$a_video_asset->setAttribute("id", "video_$nameObject");
 				$a_video_asset->setAttribute("loop", "true");
-				$a_video_asset->setAttribute("src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
+				//$a_video_asset->setAttribute("src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
 
 
 				$a_asset->appendChild($a_video_asset);
@@ -577,7 +573,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 					//print_r($cameraPosition[2]);
 
-					$a_entity->setAttribute("position", "$cameraPosition[0]  $cameraPosition[1]  $cameraPosition[2]");
+					$a_entity->setAttribute("position", "$cameraPosition[0]  0  $cameraPosition[2]");
 					$a_entity->appendChild($a_video);
 					$ascenePlayer->appendChild($a_entity);
 				} else {
@@ -596,7 +592,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
 			}
-
 		}
 
 		$contentNew = $dom->saveHTML();
@@ -638,7 +633,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 		fwrite($f, print_r($ascene, true));
 		fwrite($f, " --- start ----" . chr(13));
 
-		fwrite($f, print_r($xpath->document, true));
+		fwrite($f, print_r($scene_json, true));
 
 		fwrite($f, chr(13));
 		fwrite($f, "--- end ---- " . chr(13));
@@ -652,9 +647,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 		$i = 0;
 		foreach ($objects as $nameObject => $contentObject) {
 
-			//			$f = fopen("output_simple_client.txt", "w");
-//			fwrite($f, print_r($basicDomElements['actionsDiv'], true));
-//			fclose($f);
+			/*$f = fopen("output_simple_client.txt", "w");
+			fwrite($f, print_r($basicDomElements['actionsDiv'], true));
+			fclose($f);*/
 
 			if ($contentObject->categoryName == 'pawn') {
 				$i++;
@@ -701,7 +696,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 	foreach (array_reverse($scene_id_list) as $key => &$value) {
 		createIndexFile($project_title, $value, $scene_title, $fileOperations);
 		createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id);
-		createSimpleClient($project_title, $value, $scene_title, $$scene_json[$key], $fileOperations);
+		createSimpleClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations);
 	}
 
 	// Step 3; Create Simple Client

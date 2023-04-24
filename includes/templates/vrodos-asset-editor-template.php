@@ -125,17 +125,13 @@ $game_post = get_post($project_id);
 $gameSlug = $game_post->post_name;
 $game_type_obj = vrodos_return_project_type($project_id);
 
-
-//Get 'parent-game' taxonomy with the same slug as Game
+// Get 'parent-game' taxonomy with the same slug as Game
 $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
 
-//echo $assetPGame;
 $assetPGameID = $assetPGame ? $assetPGame->term_id : null;
 $assetPGameSlug = $assetPGame ? $assetPGame->slug : null;
 
 $isJoker = (strpos($assetPGameSlug, 'joker') !== false) ? "true":"false";
-
-$asset_id_avail_joker = $game_type_obj ? vrodos_get_assetids_joker($game_type_obj->string) : null;
 
 $isUserloggedIn = is_user_logged_in();
 $current_user = wp_get_current_user();
@@ -192,17 +188,13 @@ $editgamePage = vrodos_getEditpage('game');
 $allGamesPage = vrodos_getEditpage('allgames');
 $editscenePage = vrodos_getEditpage('scene');
 $newAssetPage = vrodos_getEditpage('asset');
-$editscene2DPage = vrodos_getEditpage('scene2D');
-$editsceneExamPage = vrodos_getEditpage('sceneExam');
 
-
-$archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
 
 $all_game_category = get_the_terms( $project_id, 'vrodos_game_type' );
 
 $game_category = $all_game_category ? $all_game_category[0]->slug : null;
 
-$scene_data = vrodos_getFirstSceneID_byProjectID($project_id,$game_category);//first 3D scene id
+$scene_data = vrodos_getFirstSceneID_byProjectID($project_id, $game_category);//first 3D scene id
 
 $edit_scene_page_id = $editscenePage[0]->ID;
 
@@ -277,6 +269,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         <?php
 
         // It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
+
         $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
 
     }else {
@@ -321,17 +314,6 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 }
 
 //---------------------------- End of handle Submit  -------------------------
-if (!empty($project_scope)) {
-    if ($project_scope == 0) {
-        $single_first = "Tour";
-    } else if ($project_scope == 1){
-        $single_first = "Lab";
-    } else {
-        $single_first = "Project";
-    }
-}
-
-
 
 // When asset was created in the past and now we want to edit it. We should get the attachments obj, mtl
 if($asset_id != null) {

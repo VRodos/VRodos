@@ -164,14 +164,14 @@ echo 'var pluginPath="'.$pluginpath.'";';
 echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
 echo 'let projectId="'.$project_id.'";';
 echo 'let projectSlug="'.$projectSlug.'";';
-echo 'var isAdmin="'.$isAdmin.'";';
+echo 'let isAdmin="'.$isAdmin.'";';
 echo 'let isUserAdmin="'.current_user_can('administrator').'";';
 echo 'let urlforAssetEdit="'.$urlforAssetEdit.'";';
 echo 'let scene_id ="'.$current_scene_id.'";';
 echo 'let game_type ="'.strtolower($project_type).'";';
 echo 'user_email = "'.$user_email.'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
-echo 'var siteurl="'.site_url().'";';
+echo 'let siteurl="'.site_url().'";';
 
 if ($project_type === 'Archaeology') {
     echo "var doorsAll=" . json_encode($doorsAllInfo) . ";";
@@ -401,7 +401,6 @@ wp_head();
                         </a>
                     </div>
 
-
                     <!-- Compile Button -->
                     <a id="compileGameBtn"
                        class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right"
@@ -528,15 +527,13 @@ wp_head();
                         </div>
                     </div>
 
-
-
                 </div>
 
                 <!-- Close all 2D UIs-->
                 <div class="environmentButton">
                     <a id="toggleUIBtn" data-toggle='on' type="button"
                        class="ToggleUIButtonStyle mdc-theme--secondary" title="Toggle interface">
-                        <i class="material-icons" style="background: #ffffff; opacity:0.2; z-index:100000">visibility</i>
+                        <i class="material-icons" style="opacity:0.4; z-index: 100000">visibility</i>
                     </a>
                 </div>
 
@@ -581,7 +578,7 @@ wp_head();
                     </div>
 
                     <!-- Search bar -->
-                    <div class="mdc-textfield search" data-mdc-auto-init="MDCTextfield" style="margin-top:0px; height:40px;margin-left:10px;">
+                    <div class="mdc-textfield search" data-mdc-auto-init="MDCTextfield" style="margin-top:0; height:40px; margin-left:10px;">
                         <input type="search" class="mdc-textfield__input mdc-typography--subheading2" placeholder="Find...">
                         <i class="material-icons mdc-theme--text-primary-on-background">search</i>
                         <div class="mdc-textfield__bottom-line"></div>
@@ -595,15 +592,13 @@ wp_head();
                        title="Add new private asset"
                        href="<?php echo esc_url( get_permalink($newAssetPage[0]->ID) .
                            $parameter_pass . $project_id . '&vrodos_scene=' .  $current_scene_id. '&scene_type=scene&preview=false'); ?>">
-                        <i class="material-icons" style="cursor: pointer; font-size:54px; color:orangered; ">add_circle</i>
+                        <i class="material-icons">add_circle</i>
                     </a>
 
                 </div>
 
                 <!-- Popups -->
-                <?php
-                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-Popups.php');
-                ?>
+                <?php require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-Popups.php'); ?>
 
                 <!--  Open/Close Scene list panel-->
                 <a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable mdc-button mdc-button--raised mdc-button--primary mdc-button--dense" title="Toggle scenes list" data-mdc-auto-init="MDCRipple">
@@ -611,20 +606,13 @@ wp_head();
                 </a>
 
                 <!-- Scenes Credits and Main menu List -->
-                <?php
-                require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-OtherScenes.php');
-                ?>
-
+                <?php require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-OtherScenes.php'); ?>
 
             </div>   <!--   VR DIV   -->
 
+            <!--Options dialogue-->
+            <?php require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' ); ?>
 
-
-            <?php
-            // Options dialogue
-            require( plugin_dir_path( __DIR__ ) .  '/templates/vrodos-edit-3D-scene-OptionsDialogue.php' );
-
-            ?>
         </div>
 
     </div>
@@ -632,17 +620,17 @@ wp_head();
     <!-- Scripts part 1: The GUIs -->
     <script type="text/javascript">
 
-        var mdc = window.mdc;
-        var MDCSelect = mdc.select.MDCSelect;
+        let mdc = window.mdc;
+        let MDCSelect = mdc.select.MDCSelect;
 
         mdc.autoInit();
 
         // Delete scene dialogue
-        var deleteDialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
+        let deleteDialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
         deleteDialog.focusTrap_.deactivate();
 
-        // // Compile dialogue
-        var compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
+        // Compile dialogue
+        let compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
         compileDialog.focusTrap_.deactivate();
 
 
@@ -657,7 +645,7 @@ wp_head();
 
 
             // make asset browser draggable: not working without get_footer
-            //jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
+            // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
         });
 
 
@@ -669,13 +657,13 @@ wp_head();
     <script>
 
         // id of animation frame is used for canceling animation when dat-gui changes
-        var id_animation_frame;
+        let id_animation_frame;
 
         // all 3d dom
         let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 
         // Selected object name
-        var selected_object_name = '';
+        let selected_object_name = '';
 
         // Add 3D gui widgets to gui vr_editor_main_div
         let guiContainer = document.getElementById('numerical_gui-container');
@@ -684,14 +672,14 @@ wp_head();
         // guiContainer.appendChild(controlInterface.scale.domElement);
 
         // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
-        var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
+        let envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
 
 
 
-        var transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
+        let transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
 
 
@@ -739,7 +727,7 @@ wp_head();
 
 
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
-        var firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+        let firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
         // Hide (right click) panel
         hideObjectPropertiesPanels();
@@ -748,7 +736,7 @@ wp_head();
         controllerDatGuiOnChange();
 
         // Add lights on scene
-        var lightsPawnLoader = new VRodos_LightsPawn_Loader();
+        let lightsPawnLoader = new VRodos_LightsPawn_Loader();
         lightsPawnLoader.load(resources3D);
 
         // Add all in hierarchy viewer
@@ -828,7 +816,7 @@ wp_head();
         }; // End of manager
 
         // Loader of assets
-        var loaderMulti = new VRodos_LoaderMulti();
+        let loaderMulti = new VRodos_LoaderMulti();
         loaderMulti.load(manager, resources3D, pluginPath);
 
 

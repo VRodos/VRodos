@@ -94,7 +94,7 @@
     left: 0;
     z-index: 1001;
     min-width: 30px;
-    max-height: 400px;
+    height: 120px;
     padding: 0;
     display: flex;
 }
@@ -105,7 +105,7 @@
 }
 
 .scenesListToggleOn {
-    height: 17%;
+    height: 120px;
 }
 
 .scenesListToggleOff {
@@ -444,7 +444,7 @@ canvas { pointer-events:none; z-index:10; }
 
 .ToggleUIButtonStyle {
     position: absolute;
-    top: 40px;
+    top: 50px;
     left: 25%;
     z-index: 1000;
     background: transparent;
@@ -546,7 +546,7 @@ html [type="button"],
 #scenesInsideVREditor {
     position: absolute;
     display: inline-flex;
-    height: 17%;
+    height: 120px;
     width: auto;
     left: 0;
     bottom: 0;
