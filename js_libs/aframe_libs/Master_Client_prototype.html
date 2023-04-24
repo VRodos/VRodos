@@ -187,9 +187,9 @@
         networked-scene="
         room: roomname;
         debug: true;
-        adapter: easyrtc;
         audio: true;
-        video: true;">
+        adapter: easyrtc;
+       ">
     <a-entity cursor="rayOrigin:mouse"></a-entity>
     <a-assets>
         <!-- Avatar Template -->
@@ -337,7 +337,9 @@
         /* DestroyGui */
         try {
             console.log("destroying");
-            btStatusControls.gui.destroy();
+            if (btStatusControls.gui){
+                btStatusControls.gui.destroy();
+            }
         }
         catch (e) {
             console.log(e);
@@ -488,7 +490,7 @@
         screenBtnEle.addEventListener('click', function() {
             navigator.mediaDevices.getDisplayMedia({
                 preferCurrentTab: true,
-                video: true,
+                selfBrowserSurface: 'include',
                 audio: true
             }).then((stream) => {
                 NAF.connection.adapter.addLocalMediaStream(stream, "screen");
