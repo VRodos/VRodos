@@ -666,6 +666,10 @@ function displayDoorProperties(event, name) {
     //doorid.trigger("change");
     popupDoorSelect.trigger("change");
 
+    if (envir.scene.getObjectByName(updName).sceneID_target)
+        popupDoorSelect.val(envir.scene.getObjectByName(updName).sceneID_target);
+    else
+        popupDoorSelect.val("Default");
 
     //chbox.trigger("change");
     //clearAndUnbind("popupDoorSelect");
@@ -699,9 +703,11 @@ function displayDoorProperties(event, name) {
     //if (envir.scene.getObjectByName(name).doorName_source)
     //    doorid.val(envir.scene.getObjectByName(name).doorName_source);
 
+
     if (envir.scene.getObjectByName(name).doorName_target)
         popupDoorSelect.val(envir.scene.getObjectByName(name).doorName_target + " at " +
             envir.scene.getObjectByName(name).sceneName_target);
+
 
     // Show Selection
     popUpDoorPropertiesDiv.show();
