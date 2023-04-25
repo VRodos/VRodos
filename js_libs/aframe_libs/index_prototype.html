@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <title>VROdos Collaborative Environment</title>
-    <meta name="description" content="Main page of VR collaborative environment"/>
+    <meta name="description" content="VR Collaborative environment"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="UTF-8">
     <style>
@@ -44,83 +44,32 @@
 <body style="transform-origin: -20px -20px; width: 1320px">
 <script>
 
-    document.addEventListener("DOMContentLoaded", function(event) {
-
-        const urlSearchParams = new URLSearchParams(window.location.search);
-        const params = Object.fromEntries(urlSearchParams.entries());
-
-        let lang = "en";
-        if (params['lang']) {
-            lang = params['lang'];
-        }
-
-        _selectYourAttribute = [];
-        _selectYourAttribute['en'] = "Select your role";
-        _selectYourAttribute['el'] = "Διάλεξε την ιδιότητά σου";
-        document.getElementById("_selectYourAttribute").innerHTML = _selectYourAttribute[lang];
-
-        _actor = [];
-        _actor['en'] = "Actor";
-        _actor['el'] = "Ηθοποιός";
-        document.getElementById("_actor").innerHTML = _actor[lang];
-
-        _youNeed = [];
-        _youNeed['en'] = "You will need a smartphone, a tripod, and a green background";
-        _youNeed['el'] = "Θα χρειαστείς ένα κινητό, ένα τρίποδο για κινητό, και ένα πράσινο φόντο";
-        document.getElementById("_youNeed").innerHTML = _youNeed[lang];
-
-        _director = [];
-        _director['en'] = "Director";
-        _director['el'] = "Σκηνοθέτης";
-        document.getElementById("_director").innerHTML = _director[lang];
-
-
-        _youNeedDirector = [];
-        _youNeedDirector['en'] = "You will need a high-end PC, e.g. with an NVidia 3080 GPU";
-        _youNeedDirector['el'] = "Θα χρειαστείς ένα δυνατό PC desktop, π.χ. με κάρτα γραφικών NVidia 3080";
-        document.getElementById("_youNeedDirector").innerHTML = _youNeedDirector[lang];
-
-        if (lang === 'el') {
-            let link1 = document.createElement('a');
-            link1.href =  window.location.href.substring(0, window.location.href.indexOf("?")) + "?lang=en";
-            link1.innerHTML = "English";
-            document.getElementById("langButtons").appendChild(link1);
-        } else {
-            let link2 = document.createElement('a');
-            link2.href = window.location.href.substring(0, window.location.href.indexOf("?")) + "?lang=el";
-            link2.innerHTML = "Ελληνικά";
-            document.getElementById("langButtons").appendChild(link2);
-        }
-    });
-
     /* Scale down body when in compile preview */
     (function() {
         document.getElementsByTagName("body")[0].style.scale = window.innerWidth > 500 ? "1" : "0.21";
     })();
 </script>
 
+<h1 id="_sceneName">project_sceneId</h1>
+<h2>Please select the appropriate icon according to your role!</h2>
+<h4>Actors should join first, and the Director last.</h4>
 
-<div id="langButtons" style="float:right; position: absolute; top: 5px; right: 25px;"></div>
-<h1 id="_selectYourAttribute"></h1>
-<h2 id="_sceneName">ProjectAndSceneId</h2>
 <div id="wrapper">
     <div id="div1">
         <h2>
             <a href="Simple_Client.html">&#128241;
-                <span id="_actor"></span>
-                <div style="background: #2c70e0">
-                    <img src="img/actor_icon.png" style="height:512px"/>
-                </div>
-                <span id="_youNeed"></span>
+                <span>Actor</span>
+                <img src="img/actor_icon.png" style="height: 500px;"/>
+                <span>You will need a smartphone, a tripod, and a green screen background</span>
             </a>
         </h2>
     </div>
     <div id="div2">
         <h2>
-            <a href="Master_Client.html" target="_blank">&#128421;
-                <span id="_director"></span>
-                <img src="img/director_icon.jpg" style="height:512px;"/>
-                <span id="_youNeedDirector"></span>
+            <a href="Master_Client.html" target="_blank">🖥️
+                <span>Director</span>
+                <img src="img/director_icon.jpg" style="height: 500px;"/>
+                <span>You will need a high-end PC</span>
             </a>
         </h2>
     </div>

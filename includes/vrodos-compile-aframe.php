@@ -264,10 +264,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 
         // Modify strings
         $content = str_replace("Client.html","Client_".$scene_id.".html",$content);
-
-        $content = str_replace("ProjectAndSceneId",
-            $project_title.", ".$scene_title." (".$scene_id.")",
-            $content);
+        //$content = str_replace("ProjectAndSceneId", $project_title.", ".$scene_title[0]." (".$scene_id.")", $content);
+        $content = str_replace("project_sceneId", $project_title." - ".$scene_title[0], $content);
 
         // Write back to root
         return $fileOperations->writer($fileOperations->plugin_path_dir."/networked-aframe/examples/"."index_".$scene_id.".html", $content);
