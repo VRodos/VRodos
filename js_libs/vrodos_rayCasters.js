@@ -745,6 +745,7 @@ function displayDoorProperties(event, name) {
             envir.scene.getObjectByName(updName).sceneID_target = this.value;
         //envir.scene.getObjectByName(name).sceneName_target = this.value;
 
+        saveChanges();
         //
     });
 
@@ -922,6 +923,20 @@ function showWholePopupDiv(popUpDiv, event) {
 //  * @param event
 //  * @param name
 //  */
+
+function saveChanges() {
+    jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
+
+    // Export using a custom variant of the old deprecated class SceneExporter
+    let exporter = new THREE.SceneExporter();
+
+    document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
+
+    //console.log(document.getElementById('vrodos_scene_json_input').value);
+
+    vrodos_saveSceneAjax();
+    //.forEach(element => console.log(element));
+}
 function displayPoiVideoProperties(event, name) {
 
 
@@ -973,6 +988,8 @@ function displayPoiVideoProperties(event, name) {
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
     ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
+
+
     // Add change listener
     chbox.change(function (e) {
 
@@ -987,6 +1004,10 @@ function displayPoiVideoProperties(event, name) {
 
         sliderFocusX.prop("disabled", (!this.checked));
         sliderFocusZ.prop("disabled", (!this.checked));
+        var sceneJson = document.getElementById("vrodos_scene_json_input").value;
+
+        saveChanges();
+
 
 
     });
@@ -1000,6 +1021,7 @@ function displayPoiVideoProperties(event, name) {
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).hv_penalty = this.value;
         //console.log(this.value);
+        saveChanges();
 
     });
 
@@ -1008,6 +1030,7 @@ function displayPoiVideoProperties(event, name) {
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).natural_penalty = this.value;
         //console.log(this.value);
+        saveChanges();
 
     });
 
