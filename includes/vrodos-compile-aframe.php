@@ -1,6 +1,7 @@
 <?php
 
-function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) {
+function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
+{
 
     // Check if a process is running on linux server
     function processExists($processName) {
@@ -72,82 +73,91 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 //			fwrite($f, $website_root_url . chr(13));
 //			fwrite($f, $server_protocol . chr(13));
 //			fclose($f);
-        }
+		}
 
-        function nodeJSpath(){
+		function nodeJSpath()
+		{
 
-            if ( PHP_OS == "WINNT"){
-                return $this->server_protocol."://".$this->website_root_url.":".$this->portNodeJs."/";
-            } else {
-                return "https://vrodos-multiplaying.iti.gr/";
-            }
-        }
+			if (PHP_OS == "WINNT") {
+				return $this->server_protocol . "://" . $this->website_root_url . ":" . $this->portNodeJs . "/";
+			} else {
+				return "https://vrodos-multiplaying.iti.gr/";
+			}
+		}
 
-        function reader($filename){
-            $f = fopen( $filename, "r");
-            $content = fread($f, filesize($filename));
-            fclose($f);
-            return $content;
-        }
+		function reader($filename)
+		{
+			$f = fopen($filename, "r");
+			$content = fread($f, filesize($filename));
+			fclose($f);
+			return $content;
+		}
 
-        function writer($filename, $content){
-            $f = fopen( $filename, "w");
-            $res = fwrite($f, $content);
-            fclose($f);
-            return $res;
-        }
+		function writer($filename, $content)
+		{
+			$f = fopen($filename, "w");
+			$res = fwrite($f, $content);
+			fclose($f);
+			return $res;
+		}
 
-        function setAffineTransformations($entity, $contentObject){
-            $entity->setAttribute( "position", implode( " ", $contentObject->position ) );
-            $entity->setAttribute( "rotation", implode( " ", [- 180/pi() * $contentObject->rotation[0], 180/pi() * $contentObject->rotation[1],
-                180/pi() * $contentObject->rotation[2] ] ));
+		function setAffineTransformations($entity, $contentObject)
+		{
+			$entity->setAttribute("position", implode(" ", $contentObject->position));
+			$entity->setAttribute("rotation", implode(" ", [
+				-180 / pi() * $contentObject->rotation[0], 180 / pi() * $contentObject->rotation[1],
+				180 / pi() * $contentObject->rotation[2]
+			]));
 
-            $entity->setAttribute( "scale", implode( " ", $contentObject->scale ) );
-        }
+			$entity->setAttribute("scale", implode(" ", $contentObject->scale));
+		}
 
-        function colorRGB2Hex($colorRGB){
-            return sprintf("#%02x%02x%02x", 255*$colorRGB[0], 255*$colorRGB[1], 255*$colorRGB[2]);
-        }
+		function colorRGB2Hex($colorRGB)
+		{
+			return sprintf("#%02x%02x%02x", 255 * $colorRGB[0], 255 * $colorRGB[1], 255 * $colorRGB[2]);
+		}
 
-        function setMaterial(&$material, $contentObject){
-            if ( $contentObject->color ) {
-                $material .= "color:#" . $contentObject->color.";";
-            }
-            if ( $contentObject->emissive ) {
-                $material .= "emissive:#" . $contentObject->emissive.";";
-            }
-            if ( $contentObject->emissiveIntensity ) {
-                $material .= "emissiveIntensity:" . $contentObject->emissiveIntensity . ";";
-            }
-            if ( $contentObject->roughness ) {
-                $material .= "roughness:" . $contentObject->roughness . ";";
-            }
-            if ( $contentObject->metalness ) {
-                $material .= "metalness:" . $contentObject->metalness . ";";
-            }
-            if ( $contentObject->videoTextureSrc ) {
-                $material .= "src:url(" . $contentObject->videoTextureSrc . ");";
-            }
-            if ( $contentObject->videoTextureRepeatX ) {
-                $material .= "repeat:".$contentObject->videoTextureRepeatX." ".$contentObject->videoTextureRepeatY.";";
-            }
-        }
-
-
-        function createBasicDomStructureAframeActor($content, $scene_json){
-
-            // Start Creating Aframe page
-            // just some setup
-            $dom = new DOMDocument("1.0", "UTF-8");
-            $dom->resolveExternals = true;
-
-            $xpath = new DOMXPath($dom);
+		function setMaterial(&$material, $contentObject)
+		{
+			if ($contentObject->color) {
+				$material .= "color:#" . $contentObject->color . ";";
+			}
+			if ($contentObject->emissive) {
+				$material .= "emissive:#" . $contentObject->emissive . ";";
+			}
+			if ($contentObject->emissiveIntensity) {
+				$material .= "emissiveIntensity:" . $contentObject->emissiveIntensity . ";";
+			}
+			if ($contentObject->roughness) {
+				$material .= "roughness:" . $contentObject->roughness . ";";
+			}
+			if ($contentObject->metalness) {
+				$material .= "metalness:" . $contentObject->metalness . ";";
+			}
+			if ($contentObject->videoTextureSrc) {
+				$material .= "src:url(" . $contentObject->videoTextureSrc . ");";
+			}
+			if ($contentObject->videoTextureRepeatX) {
+				$material .= "repeat:" . $contentObject->videoTextureRepeatX . " " . $contentObject->videoTextureRepeatY . ";";
+			}
+		}
 
 
-            //$xpath->registerNamespace("aframe","");
+		function createBasicDomStructureAframeActor($content, $scene_json)
+		{
 
-            // Load predefined template for a-scene.
-            @$dom->loadHTML($content,  LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  //LIBXML_NOERROR , LIBXML_HTML_NODEFDTD
+			// Start Creating Aframe page
+			// just some setup
+			$dom = new DOMDocument("1.0", "UTF-8");
+			$dom->resolveExternals = true;
+
+			$xpath = new DOMXPath($dom);
+
+
+			//$xpath->registerNamespace("aframe","");
+
+			// Load predefined template for a-scene.
+			@$dom->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS); //LIBXML_NOERROR , LIBXML_HTML_NODEFDTD
 
 
             $html = $dom->documentElement;
@@ -167,35 +177,37 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 			fclose($f);*/
 
 
-            // ============ Scene Iteration kernel ==============
-            $metadata = $scene_json->metadata;
-            $objects = $scene_json->objects;
+			// ============ Scene Iteration kernel ==============
+			$metadata = $scene_json->metadata;
+			$objects = $scene_json->objects;
 
-            return array("dom"=>$dom, "html"=>$html, "head"=>$head, "body"=>$body, "ascene"=>$ascene, "metadata"=>$metadata, "objects"=>$objects, "actionsDiv"=>$actionsDiv, "xpath"=>$xpath);
-        }
+			return array("dom" => $dom, "html" => $html, "head" => $head, "body" => $body, "ascene" => $ascene, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv, "xpath" => $xpath);
+		}
 
 
-        function createBasicDomStructureAframeDirector($content, $scene_json, $project_id){
+		function createBasicDomStructureAframeDirector($content, $scene_json, $project_id)
+		{
 
-            // Start Creating Aframe page
-            // just some setup
-            $dom = new DOMDocument("1.0", "utf-8");
-            $dom->resolveExternals = true;
+			// Start Creating Aframe page
+			// just some setup
+			$dom = new DOMDocument("1.0", "utf-8");
+			$dom->resolveExternals = true;
 
-            @$dom->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS);  // LIBXML_HTML_NODEFDTD, LIBXML_NOERROR
+			@$dom->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS); // LIBXML_HTML_NODEFDTD, LIBXML_NOERROR
 
-            $html = $dom->documentElement;
-            $head = $dom->documentElement->childNodes[0];
+			$html = $dom->documentElement;
+			$head = $dom->documentElement->childNodes[0];
 
-            $body = $dom->getElementById('master-client-body');
-            $actionsDiv = $dom->getElementById('actionsDiv');
-            $ascene = $dom->getElementById('aframe-scene-container');
+			$body = $dom->getElementById('master-client-body');
+			$actionsDiv = $dom->getElementById('actionsDiv');
+			$ascene = $dom->getElementById('aframe-scene-container');
+			$ascenePlayer = $dom->getElementById('player');
 
-            // If MediaVerse project, then enable upload to MV Node.
-            $recording_controls = $dom->getElementById('upload-recording-btn');
-            $project_type = wp_get_post_terms( $project_id, 'vrodos_game_type');
-            if ($project_type[0]->slug == 'virtualproduction_games') {
-                $recording_controls->setAttribute('style', 'visibility: visible;');
+			// If MediaVerse project, then enable upload to MV Node.
+			$recording_controls = $dom->getElementById('upload-recording-btn');
+			$project_type = wp_get_post_terms($project_id, 'vrodos_game_type');
+			if ($project_type[0]->slug == 'virtualproduction_games') {
+				$recording_controls->setAttribute('style', 'visibility: visible;');
 
                 // If MediaVerse project, get MV node url, in order to upload video and update project
                 $user_id = get_current_user_id();
@@ -239,37 +251,38 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 //			fclose($f);
 
 
-            // ============ Scene Iteration kernel ==============
-            $metadata = $scene_json->metadata;
-            $objects = $scene_json->objects;
+			// ============ Scene Iteration kernel ==============
+			$metadata = $scene_json->metadata;
+			$objects = $scene_json->objects;
 
-            return array("dom"=>$dom, "html"=>$html, "head"=>$head, "body"=>$body, "ascene"=>$ascene, "metadata"=>$metadata, "objects"=>$objects, "actionsDiv"=>$actionsDiv);
-        }
+			return array("dom" => $dom, "html" => $html, "head" => $head, "body" => $body, "ascene" => $ascene, "ascenePlayer" => $ascenePlayer, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv);
+		}
 
-    }
+	}
 
-    $fileOperations = new FileOperations();
-
-
+	$fileOperations = new FileOperations();
 
 
 
-    // Step 1: Create the index.html file by replacing certain parts only
-    function createIndexFile($project_title, $scene_id, $scene_title, $fileOperations){
+
+
+	// Step 1: Create the index.html file by replacing certain parts only
+	function createIndexFile($project_title, $scene_id, $scene_title, $fileOperations)
+	{
 
         $filenameSource = $fileOperations->plugin_path_dir."/js_libs/aframe_libs/index_prototype.html";
 
-        // Read prototype
-        $content = $fileOperations->reader($filenameSource);
+		// Read prototype
+		$content = $fileOperations->reader($filenameSource);
 
         // Modify strings
         $content = str_replace("Client.html","Client_".$scene_id.".html",$content);
         //$content = str_replace("ProjectAndSceneId", $project_title.", ".$scene_title[0]." (".$scene_id.")", $content);
         $content = str_replace("project_sceneId", $project_title." - ".$scene_title[0], $content);
 
-        // Write back to root
-        return $fileOperations->writer($fileOperations->plugin_path_dir."/networked-aframe/examples/"."index_".$scene_id.".html", $content);
-    }
+		// Write back to root
+		return $fileOperations->writer($fileOperations->plugin_path_dir . "/networked-aframe/examples/" . "index_" . $scene_id . ".html", $content);
+	}
 
 
     // STEP 2: Create the director file
@@ -307,6 +320,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
         $dom = $basicDomElements['dom'];
         $objects = $basicDomElements['objects'];
         $ascene = $basicDomElements['ascene'];
+        $ascenePlayer = $basicDomElements['ascenePlayer'];
         //print($scene_id)
 
         //$i = array_search($scene_id, array_keys($scene_id_list));
@@ -505,44 +519,64 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions) 
 
                 $ascene->appendChild( $a_entity );
 
-                includeDoorFunctionality($a_entity, $scene_id);
-            }
-            else if ( $contentObject->categoryName == 'PointsofInterest(Video)' ) {
-                //print_r($contentObject->categoryName);
+                if (!empty($contentObject->sceneID_target))
+                    includeDoorFunctionality($a_entity, $contentObject->sceneID_target);
+            } else if ($contentObject->categoryName == 'avatarYawObject') {
+
+                continue;
+
+
+
+            } else if ($contentObject->categoryName == 'PointsofInterest(Video)') {
+                //print_r($contentObject);
 
 
                 $a_asset = $dom->createElement( "a-assets" );
                 $a_asset->setAttribute( "timeout", "10000");
 
                 $a_video_asset = $dom->createElement( "video" );
-                $a_video_asset->setAttribute( "id", "video");
+                $a_video_asset->setAttribute("id", "video_$nameObject");
                 $a_video_asset->setAttribute( "loop", "true");
-                $a_video_asset->setAttribute( "src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
+                //$a_video_asset->setAttribute("src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
 
-                $a_asset->appendChild( $a_video_asset );
-                $ascene->appendChild( $a_asset );
+				$a_asset->appendChild($a_video_asset);
+				//$ascenePlayer->appendChild($a_video_asset);
+				$ascene->appendChild($a_asset);
+				//$cameraPosition[0] = 5;
+				//$cameraPosition[2] = -20;
 
+				//print_r($cameraPosition);
 
-                $a_entity = $dom->createElement( "a-plane" );
-                $a_entity->setAttribute( "id", "video-border");
-                $a_entity->setAttribute( "height", "20" );
-                $a_entity->setAttribute( "width", "20" );
-                $a_entity->setAttribute( "position", "0 5 -20" );
-                $a_entity->setAttribute('video-controls',"");
+				$a_entity = $dom->createElement("a-plane");
+				$a_entity->setAttribute("id", "video-border_$nameObject");
+				$a_entity->setAttribute('video-controls', $nameObject);
+				$a_entity->setAttribute("camera-listener", "");
 
-                $a_video = $dom->createElement( "a-video" );
-                $a_video->setAttribute( "id", "video-display");
-                $a_video->setAttribute( "height", "19" );
-                $a_video->setAttribute( "width", "19" );
-                $a_video->setAttribute( "position", "0 0 0.1" );
-                $a_video->setAttribute( "src", "#video" );
+				$a_video = $dom->createElement("a-video");
+				$a_video->setAttribute("id", "video-display_$nameObject");
+				$a_video->setAttribute("height", "19");
+				$a_video->setAttribute("width", "19");
+				//$a_video->setAttribute("position", "0 0 0.1");
+				$a_video->setAttribute("src", "#video_$nameObject");
 
-                $a_entity->appendChild( $a_video );
-                $ascene->appendChild( $a_entity );
+                if ($contentObject->isreward) {
+                    $cameraPosition[0] = $contentObject->hv_penalty;
+                    $cameraPosition[2] = $contentObject->natural_penalty;
 
-                //includeDoorFunctionality($a_entity, $door_link)
+                    //print_r($cameraPosition[2]);
+
+                    $a_entity->setAttribute("position", "$cameraPosition[0]  0  $cameraPosition[2]");
+                    $a_entity->appendChild($a_video);
+                    $ascenePlayer->appendChild($a_entity);
+                } else {
+                    $fileOperations->setAffineTransformations($a_entity, $contentObject);
+                    $a_entity->appendChild($a_video);
+                    $ascene->appendChild($a_entity);
+                }
+                //
+                //$a_entity->setAttribute( "height", "20" );
+                //$a_entity->setAttribute( "width", "20" );
             }
-
         }
 
         $contentNew = $dom->saveHTML();

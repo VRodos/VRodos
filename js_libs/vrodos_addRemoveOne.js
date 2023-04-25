@@ -1,18 +1,18 @@
 function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag,
-                          translation, pluginPath){
+    translation, pluginPath) {
 
     // Add javascript variables for viewing the object correctly
     let selected_object_trs = {
         "translation": [translation[0], translation[1], translation[2]],
-        "rotation": [0,0,0],
-        "scale": [1,1,1]
+        "rotation": [0, 0, 0],
+        "scale": [1, 1, 1]
     };
 
 
     resources3D[nameModel] = {
         "path": path,
         "assetid": dataDrag.assetid,
-        "assetname":dataDrag.assetname,
+        "assetname": dataDrag.assetname,
         "obj": objFname,
         "objID": dataDrag.objID,
         "mtl": mtlFname,
@@ -26,32 +26,32 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "categoryIcon": dataDrag.categoryIcon,
         "categoryID": dataDrag.categoryID,
         "image1id": dataDrag.image1id,
-        "videoTextureSrc":"",
-        "videoTextureRepeatX":"1",
-        "videoTextureRepeatY":"1",
-        "videoTextureCenterX":"0",
-        "videoTextureCenterY":"0",
-        "videoTextureRotation":"0",
-        "doorName_source":dataDrag.doorName_source,
-        "doorName_target":dataDrag.doorName_target,
-        "sceneName_target":dataDrag.sceneName_target,
-        "sceneID_target":dataDrag.sceneID_target,
-        "archaeology_penalty":dataDrag.archaeology_penalty,
-        "hv_penalty":dataDrag.hv_penalty,
-        "natural_penalty":dataDrag.natural_penalty,
-        "isreward":dataDrag.isreward,
-        "isCloned":dataDrag.isCloned,
-        "isJoker":dataDrag.isJoker,
+        "videoTextureSrc": "",
+        "videoTextureRepeatX": "1",
+        "videoTextureRepeatY": "1",
+        "videoTextureCenterX": "0",
+        "videoTextureCenterY": "0",
+        "videoTextureRotation": "0",
+        "doorName_source": dataDrag.doorName_source,
+        "doorName_target": dataDrag.doorName_target,
+        "sceneName_target": dataDrag.sceneName_target,
+        "sceneID_target": dataDrag.sceneID_target,
+        "archaeology_penalty": dataDrag.archaeology_penalty,
+        "hv_penalty": dataDrag.hv_penalty,
+        "natural_penalty": dataDrag.natural_penalty,
+        "isreward": dataDrag.isreward,
+        "isCloned": dataDrag.isCloned,
+        "isJoker": dataDrag.isJoker,
         "trs": selected_object_trs
     };
 
-    if (categoryName==='lightSun') {
+    if (categoryName === 'lightSun') {
 
 
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
-        lightSun.shadowMapHeight=200;
-        lightSun.shadowMapWidth=200;
+        lightSun.shadowMapHeight = 200;
+        lightSun.shadowMapWidth = 200;
         lightSun.name = nameModel;
         lightSun.assetname = "mylightSun";
         lightSun.isSelectableMesh = true;
@@ -61,7 +61,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         //// Add Sun Helper
         var sunSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(1, 16, 8),
-            new THREE.MeshBasicMaterial({color: 0xffff00})
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
         sunSphere.isSelectableMesh = true;
         sunSphere.name = "SunSphere";
@@ -80,7 +80,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         lightTargetSpot.add(new THREE.Mesh(
             new THREE.SphereBufferGeometry(0.5, 16, 8),
-            new THREE.MeshBasicMaterial({color: 0xffaa00})
+            new THREE.MeshBasicMaterial({ color: 0xffaa00 })
         ));
 
         lightTargetSpot.isSelectableMesh = true;
@@ -95,7 +95,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         lightSun.target.position = lightTargetSpot.position;
 
         // Add shadow helper
-        var lightSunShadowhelper = new THREE.CameraHelper( lightSun.shadow.camera );
+        var lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
         lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
 
         envir.scene.add(lightSun);
@@ -149,9 +149,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         triggerAutoSave();
 
     }
-    else if (categoryName==='lightLamp') {
+    else if (categoryName === 'lightLamp') {
 
-        var lightLamp = new THREE.PointLight( 0xffffff, 1, 100, 2 );
+        var lightLamp = new THREE.PointLight(0xffffff, 1, 100, 2);
 
 
         lightLamp.name = nameModel;
@@ -164,7 +164,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         //// Add Lamp Helper
         var lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(0.5, 16, 8),
-            new THREE.MeshBasicMaterial({color: 0xffff00})
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
         lampSphere.isSelectableMesh = true;
         lampSphere.name = "LampSphere";
@@ -226,10 +226,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         triggerAutoSave();
 
     }
-    else if (categoryName==='lightSpot')
-    {
+    else if (categoryName === 'lightSpot') {
 
-        var lightSpot = new THREE.SpotLight( 0xffffff, 1, 5, 0.39, 0, 2 );
+        var lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
 
         lightSpot.name = nameModel;
         lightSpot.assetname = "mylightSpot";
@@ -239,10 +238,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         //// Add Lamp Helper
         var lampSphere = new THREE.Mesh(
-            new THREE.SphereBufferGeometry( 1, 16, 8 ), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
-            new THREE.MeshBasicMaterial({color: 0xffff00})
+            new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
-        lampSphere.rotation.set(Math.PI/2, 0, 0);
+        lampSphere.rotation.set(Math.PI / 2, 0, 0);
 
         lampSphere.isSelectableMesh = true;
         lampSphere.name = "LampSphere";
@@ -305,9 +304,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         triggerAutoSave();
 
 
-    } else if (categoryName==='lightAmbient') {
+    } else if (categoryName === 'lightAmbient') {
 
-        var lightAmbient = new THREE.AmbientLight( 0xffffff, 1 );
+        var lightAmbient = new THREE.AmbientLight(0xffffff, 1);
 
         lightAmbient.name = nameModel;
         lightAmbient.assetname = "mylightAmbient";
@@ -317,10 +316,10 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         //// Add Lamp Helper
         var lampSphere = new THREE.Mesh(
-            new THREE.SphereBufferGeometry( 1, 16, 8 ), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
-            new THREE.MeshBasicMaterial({color: 0xffffff})
+            new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
+            new THREE.MeshBasicMaterial({ color: 0xffffff })
         );
-        lampSphere.rotation.set(Math.PI/2, 0, 0);
+        lampSphere.rotation.set(Math.PI / 2, 0, 0);
 
         lampSphere.isSelectableMesh = true;
         lampSphere.name = "LampSphere";
@@ -371,7 +370,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         triggerAutoSave();
 
-    }  else if (categoryName==='Pawn') {
+    } else if (categoryName === 'Pawn') {
 
         // Instantiate a loader
         const loader = new THREE.GLTFLoader();
@@ -381,7 +380,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             // resource URL
             pluginPath + '/assets/pawn.glb',
             // called when the resource is loaded
-            function ( gltf ) {
+            function (gltf) {
 
 
                 var Pawn = gltf.scene.children[0];
@@ -393,28 +392,28 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
 
                 // Give a number to Pawn
-                var indexPawn=1;
-                for (let ch of envir.scene.children){
-                    if (ch.name.includes("Pawn")){
+                var indexPawn = 1;
+                for (let ch of envir.scene.children) {
+                    if (ch.name.includes("Pawn")) {
                         indexPawn += 1;
                     }
                 }
 
 
-                var pawnLabelDiv = document.createElement( 'div' );
+                var pawnLabelDiv = document.createElement('div');
                 pawnLabelDiv.className = '';
-                pawnLabelDiv.textContent = 'Actor ' +  indexPawn;
+                pawnLabelDiv.textContent = 'Actor ' + indexPawn;
                 pawnLabelDiv.style.marginTop = '-1em';
                 pawnLabelDiv.style.fontSize = '26px';
                 pawnLabelDiv.style.color = "yellow";
                 //pawnLabelDiv.style.letterSpacing = '2px';
-                var pawnLabel = new THREE.CSS2DObject( pawnLabelDiv );
-                pawnLabel.position.set( 0, 1.5, 0 );
-                Pawn.add( pawnLabel );
+                var pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
+                pawnLabel.position.set(0, 1.5, 0);
+                Pawn.add(pawnLabel);
                 //pawnLabel.layers.set( 0 );
 
 
-                envir.scene.add( Pawn );
+                envir.scene.add(Pawn);
 
                 // Add transform controls
                 var insertedObject = envir.scene.getObjectByName(nameModel);
@@ -453,12 +452,12 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
                 triggerAutoSave();
             },
             // called while loading is progressing
-            function ( xhr ) {
+            function (xhr) {
                 //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
             },
             // called when loading has errors
-            function ( error ) {
-                console.log( 'An error happened while loading Pawn. Error 455');
+            function (error) {
+                console.log('An error happened while loading Pawn. Error 455');
             }
         );
 
@@ -478,7 +477,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         // On progress messages
         manager.onProgress = function (item, loaded, total) {
-            document.getElementById("result_download").innerHTML = resources3D[nameModel].assetname + " loading part " + loaded + " / " + total ;
+            document.getElementById("result_download").innerHTML = resources3D[nameModel].assetname + " loading part " + loaded + " / " + total;
         };
 
         // When all are finished loading
@@ -498,7 +497,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
             transform_controls.attach(insertedObject);
 
             // Make object gray if does not have any material
-            if(insertedObject.children[0].isMesh) {
+            if (insertedObject.children[0].isMesh) {
                 if (isNaN(insertedObject.children[0].material.metalness)) {
                     let mat = insertedObject.children[0].material;
                     mat.metalness = 0;
@@ -534,7 +533,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         // Init downloading only the added model
         let loaderMulti = new VRodos_LoaderMulti();
-        loaderMulti.load(manager, {[nameModel]: resources3D[nameModel]}, pluginPath);
+        loaderMulti.load(manager, { [nameModel]: resources3D[nameModel] }, pluginPath);
 
         // envir.composer = [];
         // envir.setComposerAndPasses();
@@ -547,7 +546,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
  *
  * @param nameToRemove
  */
-function deleterFomScene(nameToRemove){
+function deleterFomScene(nameToRemove) {
 
     if (nameToRemove === "avatarCamera")
         return;
@@ -566,7 +565,7 @@ function deleterFomScene(nameToRemove){
     isPaused = false;
 
     // If deleting light then remove also its LightHelper and lightTargetSpot and Shadow Helper
-    if (objectSelected.isLight){
+    if (objectSelected.isLight) {
 
         // Sun Shadow Helper
         envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + nameToRemove));

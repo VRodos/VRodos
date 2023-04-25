@@ -87,12 +87,49 @@
                 }
                 node.renderOrder = this.data.renderingOrderArg;
 
-            });
-            //  });
-        },
-        tick: null
-    });
-</script>
+                });
+                //  });
+            },
+            tick: null
+        });
+        AFRAME.registerComponent('video-controls', {
+            schema: { type: "string", default: "default value" },
+            init: function () {
+                let data = this.data;
+                let video_id = "#video_" + data;
+                let video = document.querySelector(video_id);
+
+                let video_display_id = "#video-display_" + data;
+                let video_border_id = "#video-border_" + data;
+
+                let videoDisplay = document.querySelector(video_display_id);
+                let videoBorder = document.querySelector(video_border_id);
+                let videoMesh = videoDisplay.getObject3D("mesh");
+                let borderMesh = videoBorder.getObject3D("mesh");
+
+                videoBorder.addEventListener("mousedown", function (event) {
+                    if (video.paused) {
+                        video.play();
+                        //borderMesh.material.color.set("#004400");
+                    }
+                    else {
+                        video.pause();
+                        //borderMesh.material.color.set("#440000");
+                    }
+                });
+            }
+
+        });
+        AFRAME.registerComponent('door-listener', {
+            schema: { type: "string", default: "default value" },
+            init: function () {
+                this.el.addEventListener("click", e => {
+                    //console.log();
+                    window.location.replace(this.data);
+                });
+            }
+        });
+    </script>
 
 <div>
     <div class="wrapperVideoElement" style="visibility: hidden">
