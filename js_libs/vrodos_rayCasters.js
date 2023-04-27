@@ -744,8 +744,15 @@ function displayDoorProperties(event, name) {
         if (this.value != "Default" && this.value)
             envir.scene.getObjectByName(updName).sceneID_target = this.value;
         //envir.scene.getObjectByName(name).sceneName_target = this.value;
+        //envir.scene.getObjectByName(updName).tempValue = 0;
 
-        saveChanges();
+        //Object.defineProperty(envir.scene.getObjectByName(updName), 'tempValue', {
+        //    value: 1
+        //})
+
+        //console.log(envir.scene.getObjectByName(updName));
+
+        saveChanges(envir.scene, updName);
         //
     });
 
@@ -924,15 +931,19 @@ function showWholePopupDiv(popUpDiv, event) {
 //  * @param name
 //  */
 
-function saveChanges() {
+function saveChanges(env, name) {
     jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
     // Export using a custom variant of the old deprecated class SceneExporter
     let exporter = new THREE.SceneExporter();
+    env.getObjectByName(name).follow_camera = 2;
+    //document.getElementById('vrodos_scene_json_input').value = exporter.parse(env);
 
-    document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
+    let test = document.getElementById('vrodos_scene_json_input').value;
 
-    //console.log(document.getElementById('vrodos_scene_json_input').value);
+    //var json = JSON.stringify(test);
+
+    console.log(test);
 
     vrodos_saveSceneAjax();
     //.forEach(element => console.log(element));
@@ -1006,7 +1017,7 @@ function displayPoiVideoProperties(event, name) {
         sliderFocusZ.prop("disabled", (!this.checked));
         var sceneJson = document.getElementById("vrodos_scene_json_input").value;
 
-        saveChanges();
+        saveChanges(envir.scene, name);
 
 
 
@@ -1021,7 +1032,7 @@ function displayPoiVideoProperties(event, name) {
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).hv_penalty = this.value;
         //console.log(this.value);
-        saveChanges();
+        saveChanges(envir.scene, name);
 
     });
 
@@ -1030,7 +1041,7 @@ function displayPoiVideoProperties(event, name) {
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).natural_penalty = this.value;
         //console.log(this.value);
-        saveChanges();
+        saveChanges(envir.scene, name);
 
     });
 
