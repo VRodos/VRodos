@@ -25,8 +25,11 @@ class VRodos_LoaderMulti {
                 }
 
                 // Lights are in a different loop
-                if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
-                    return;
+                if(resources3D[name]['categoryName']) {
+                    if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
+                        return;
+                }
+
 
                 //console.log(name);
 
@@ -145,11 +148,10 @@ class VRodos_LoaderMulti {
 
                     } else {
 
-                        alert("Unsupported 3D model format. Error 118.");
-                        console.log("name", name);
+                        //alert("Unsupported 3D model format. Error 118.");
+                        // console.log("name", name);
                         // console.log("glbID", resources3D[name]['glbID']);
-                        console.log("Unsupported 3D model format: ERROR: 118");
-
+                        // console.log("Unsupported 3D model format: ERROR: 118");
                     }
                 }
             })(n);

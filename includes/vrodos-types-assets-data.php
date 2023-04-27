@@ -125,13 +125,10 @@ function vrodos_assets_databox_show(){
         <tbody>
 
         <?php
+
         foreach ($vrodos_databox1['fields'] as $field) {
 
             $post_meta_id = get_post_meta($post->ID , $field['id'],true);
-
-            if ($post_meta_id != false) {
-                continue;
-            }
 
             $valMaxUpload = intval(ini_get('upload_max_filesize'));
             $attacmentSizeMessage = $valMaxUpload < 100 ? "Files bigger than ".$valMaxUpload. " MB can not be uploaded <br/> Add to .htaccess the following two lines <br/> php_value upload_max_filesize 256M<br>php_value post_max_size 512M" : '';
@@ -152,10 +149,11 @@ function vrodos_assets_databox_show(){
                 case 'experts':
                 case 'perception':
                 case 'audio':
-                case 'scene': // TODO Uncomment this to connect the scene to a next scene
+                case 'scene':
                 case 'video':
                 case 'fonts':
                 case 'isreward':
+                case 'back3dcolor':
                     $showSection = 'none';
                     break;
 
@@ -180,7 +178,7 @@ function vrodos_assets_databox_show(){
                         case 'glb':
                         case 'audio': ?>
 
-                            <input type="text" name="<?php echo esc_attr($field['id']); ?> readonly"
+                            <input type="text" name="<?php echo esc_attr($field['id']); ?>" readonly
                                    id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($post_meta_id ? $post_meta_id : $field['std']); ?>" size="30" style="width:65%"/>
 
                             <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
@@ -194,7 +192,7 @@ function vrodos_assets_databox_show(){
                         case 'screenimage':
                         case 'image1':
                             ?>
-                            <input type="text" name="<?php echo esc_attr($field['id']); ?> readonly"
+                            <input type="text" name="<?php echo esc_attr($field['id']); ?>" readonly
                                    id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($post_meta_id ? $post_meta_id : $field['std']); ?>" size="30" style="width:65%"/>
 
                             <input id="<?php echo esc_attr($field['id']); ?>_btn" type="button" value="Upload <?php echo esc_html($field['name']); ?>"/>
@@ -203,13 +201,20 @@ function vrodos_assets_databox_show(){
 
                             <?php break;
 
+                        case 'isCloned':
+                        case 'isJoker':
+                        case 'assettrs':
+                            ?>
+                            <input type="text" name="<?php echo esc_attr($field['id']); ?>" readonly
+                                   id="<?php echo esc_attr($field['id']); ?>" value="<?php echo esc_attr($post_meta_id ? $post_meta_id : $field['std']); ?>" size="30" style="width:65%"/>
+
+                            <?php break;
+
                         case 'scene': // TODO Add a mechanism to connect scene to another.
                             break;
                         case 'video': // TODO Add a mechanism to add a video.
                             break;
                         case 'fonts': // TODO Add a component to select custom fonts.
-                            break;
-                        case 'back3dcolor': // TODO Add a component to select front end asset editor background color.
                             break;
 
                     } ?>
@@ -234,10 +239,10 @@ function vrodos_assets_databox_show(){
                 document.getElementById('vrodos_asset3d_image1').style.display = 'none';
                 document.getElementById('vrodos_asset3d_image1_btn').style.display = 'none';
                 document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
-                document.getElementById('vrodos_asset3d_video').style.display = 'none';
-                document.getElementById('vrodos_asset3d_video_btn').style.display = 'none';
+                /*document.getElementById('vrodos_asset3d_video').style.display = 'none';
+                document.getElementById('vrodos_asset3d_video_btn').style.display = 'none';*/
                 document.getElementById('vrodos-assets-infobox').style.display = 'none';
-                document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
+                /*document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';*/
             }else{
                 var link = document.getElementById('vrodos_asset3d_scene_field');
                 link.style.display = 'none';
@@ -245,34 +250,34 @@ function vrodos_assets_databox_show(){
                     document.getElementById('vrodos_asset3d_image1').style.display = 'none';
                     document.getElementById('vrodos_asset3d_image1_btn').style.display = 'none';
                     document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
-                    document.getElementById('vrodos_asset3d_video').style.display = 'block';
-                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
+                    /*document.getElementById('vrodos_asset3d_video').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';*/
                     document.getElementById('vrodos-assets-infobox').style.display = 'none';
-                    document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
+                    /*document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';*/
                 }else if(text == 'Points of Interest (Image-Text)'){
                     document.getElementById('vrodos_asset3d_image1').style.display = 'block';
                     document.getElementById('vrodos_asset3d_image1_btn').style.display = 'block';
                     document.getElementById('vrodos_asset3d_image1_preview').style.display = 'block';
-                    document.getElementById('vrodos_asset3d_video').style.display = 'none';
-                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'none';
+                    /*document.getElementById('vrodos_asset3d_video').style.display = 'none';
+                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'none';*/
                     document.getElementById('vrodos-assets-infobox').style.display = 'block';
                     document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
                 }else if(text == 'Points of Interest'){
                     document.getElementById('vrodos_asset3d_image1').style.display = 'block';
                     document.getElementById('vrodos_asset3d_image1_btn').style.display = 'block';
                     document.getElementById('vrodos_asset3d_image1_preview').style.display = 'block';
-                    document.getElementById('vrodos_asset3d_video').style.display = 'block';
-                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
+                    /*document.getElementById('vrodos_asset3d_video').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';*/
                     document.getElementById('vrodos-assets-infobox').style.display = 'none';
-                    document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';
+                    /*document.getElementById('vrodos_asset3d_description_greek').style.display = 'block';*/
                 }else{
                     document.getElementById('vrodos_asset3d_image1').style.display = 'none';
                     document.getElementById('vrodos_asset3d_image1_btn').style.display = 'none';
                     document.getElementById('vrodos_asset3d_image1_preview').style.display = 'none';
-                    document.getElementById('vrodos_asset3d_video').style.display = 'block';
-                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';
+                    /*document.getElementById('vrodos_asset3d_video').style.display = 'block';
+                    document.getElementById('vrodos_asset3d_video_btn').style.display = 'block';*/
                     document.getElementById('vrodos-assets-infobox').style.display = 'none';
-                    document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';
+                    /*document.getElementById('vrodos_asset3d_description_greek').style.display = 'none';*/
                 }
             }
         }
@@ -284,7 +289,7 @@ function vrodos_assets_databox_show(){
             let wp_media_post_id = wp.media.model.settings.post.id; // Store the old id
             let set_to_post_id = <?php echo $post->ID; ?>; // Set this
 
-            document.getElementById("vrodos_asset3d_mtl_btn").onclick = function() {
+            /*document.getElementById("vrodos_asset3d_mtl_btn").onclick = function() {
                 uploadAssetToPage('vrodos_asset3d_mtl', 'application/octet-stream', 'MTL');
             }
             document.getElementById("vrodos_asset3d_obj_btn").onclick = function() {
@@ -295,17 +300,17 @@ function vrodos_assets_databox_show(){
             }
             document.getElementById("vrodos_asset3d_pdb_btn").onclick = function() {
                 uploadAssetToPage('vrodos_asset3d_pdb', 'application/octet-stream', 'PDB');
-            }
+            }*/
             document.getElementById("vrodos_asset3d_glb_btn").onclick = function() {
                 uploadAssetToPage('vrodos_asset3d_glb', 'model/gltf-binary', 'GLB');
-            }
-            document.getElementById("vrodos_asset3d_diffimage_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_diffimage', 'image', 'Diffusion Image');
             }
             document.getElementById("vrodos_asset3d_screenimage_btn").onclick = function() {
                 uploadAssetToPage('vrodos_asset3d_screenimage', 'image', 'Screenshot Image');
             }
-            document.getElementById("vrodos_asset3d_image1_btn").onclick = function() {
+           /* document.getElementById("vrodos_asset3d_diffimage_btn").onclick = function() {
+                uploadAssetToPage('vrodos_asset3d_diffimage', 'image', 'Diffusion Image');
+            }*/
+            /*document.getElementById("vrodos_asset3d_image1_btn").onclick = function() {
                 uploadAssetToPage('vrodos_asset3d_image1', 'image', 'Image 1');
             }
             document.getElementById("vrodos_asset3d_audio_btn").onclick = function() {
@@ -313,7 +318,7 @@ function vrodos_assets_databox_show(){
             }
             document.getElementById("vrodos_asset3d_video_btn").onclick = function() {
                 uploadAssetToPage('vrodos_asset3d_video', 'video', 'Video');
-            }
+            }*/
 
             // TODO filter window by data type
             let uploadAssetToPage = (id, mime_type, type_string) => {
@@ -336,7 +341,7 @@ function vrodos_assets_databox_show(){
                     // We set multiple to false so only get one file from the uploader
                     let attachment = file_frame.state().get('selection').first().toJSON();
 
-                    jQuery('#'+id).val(attachment.id);
+                    document.getElementById(id).value = attachment.id;
 
                     switch (mime_type) {
                         case 'image':

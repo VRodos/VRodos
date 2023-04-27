@@ -321,13 +321,15 @@ $login_username = $current_user->user_login;
     // Descriptions for each Project
     function loadProjectTypeDescription() {
         let checked = document.querySelector('input[name="projectTypeRadio"]:checked').value;
+        let content = '';
         if (checked === 'archaeology_games') {
-            jQuery("#project-description-label").html("Design a virtual tour of your own");
+            content = "Design a virtual tour of your own";
         } else if (checked === 'vrexpo_games'){
-            jQuery("#project-description-label").html("Create a VR expo space");
+            content = "Create a VR expo space";
         } else if (checked === 'virtualproduction_games'){
-            jQuery("#project-description-label").html("Create a Multiuser Virtual Production project");
+            content = "Create a Multiuser Virtual Production project";
         }
+        document.getElementById('project-description-label').innerHTML = content;
     }
     loadProjectTypeDescription();
 
@@ -339,9 +341,8 @@ $login_username = $current_user->user_login;
 
             // CREATE THE PROJECT !
             vrodos_createProjectAjax(title_vrodos_project, project_type, current_user_id, parameter_Scenepass);
-
-            jQuery('#createNewProjectBtn').hide();
-            jQuery('#create-game-progress-bar').show();
+            document.getElementById('createNewProjectBtn').style.display = 'none';
+            document.getElementById('create-game-progress-bar').style.display = '';
         }
     });
 

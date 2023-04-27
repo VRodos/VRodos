@@ -3,7 +3,7 @@
 // Only for Undo-Redo !
 function parseJSON_javascript(scene_json, UPLOAD_DIR){
 
-    console.error("Not all properties are supported by undo: 115");
+    //console.error("Not all properties are supported by undo: 115");
 
     if (scene_json.length==0)
         return [];
@@ -11,8 +11,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
     var resources3D_local =[];
 
     var scene_json_obj = JSON.parse(scene_json);
-
-
 
     var scene_json_metadata = scene_json_obj['metadata'];
 
@@ -24,11 +22,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
             resources3D_local["SceneSettings"] = { 'ClearColor': value };
         }
 
-
     }
-
-
-
 
     scene_json_obj = scene_json_obj['objects'];
 
