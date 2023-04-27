@@ -65,39 +65,6 @@ function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 }
 
 
-
-
-function vrodos_saveGIOApKeyAjax() {
-
-    jQuery.ajax({
-        url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savegio.ajax_url,
-        type: 'POST',
-        data: {
-            'action': 'vrodos_save_gio_async_action',
-            'project_id': isAdmin == "back" ? phpmyvarC.project_id : my_ajax_object_savegio.project_id,
-            'project_gioApKey': document.getElementById("app-key").value,
-            //'scene_screenshot': document.getElementById("vrodos_scene_sshot").value,
-            //'scene_title':   document.getElementById("sceneTitleInput").value,
-            //'scene_description':   document.getElementById("sceneCaptionInput").value
-        },
-        success: function (data) {
-            //console.log("Ajax Save GIO:" + data);
-            //jQuery('#save-scene-button').html("Save scene").removeClass("LinkDisabled");
-
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            console.log("Ajax Save GIO: ERROR: 156" + thrownError);
-
-            //jQuery('#save-scene-button').html("Save scene").removeClass("LinkDisabled");
-
-            //document.getElementById('save-scene-button').style.backgroundColor = '#FF0000';
-
-            alert("Ajax Save GIO: ERROR: 156" + thrownError);
-        }
-    });
-
-}
-
 function vrodos_saveExpIDAjax() {
 
     jQuery.ajax({
