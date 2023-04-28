@@ -522,8 +522,15 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 if (!empty($contentObject->sceneID_target))
                     includeDoorFunctionality($a_entity, $contentObject->sceneID_target);
             } else if ($contentObject->categoryName == 'avatarYawObject') {
-
-                continue;
+               //$ascenePlayer->setAttribute("position", "0 16 0.1");
+               $fileOperations->setAffineTransformations( $ascenePlayer, $contentObject );
+               $rotation_change_x = $contentObject->rotation[0];
+               $rotation_change_y = $contentObject->rotation[1];
+               $rotation_change_z = $contentObject->rotation[2];
+               $full_rotation = " $rotation_change_x  $rotation_change_y  $rotation_change_z";
+               //print_r($full_rotation);
+               $ascenePlayer->setAttribute( "rotate",  $full_rotation);
+                //$fileOperations->setAffineTransformations( $a_entity, $contentObject );
 
 
 

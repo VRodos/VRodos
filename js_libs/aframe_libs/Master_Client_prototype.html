@@ -46,6 +46,23 @@
             }
         });
 
+        AFRAME.registerComponent("rotate", {
+            schema: {
+                renderingOrderArg: { type: 'string', default: '0 0 0' }
+            },
+            init: function () {
+
+                //this.el.components['look-controls'].yawObject.rotation.set(0, 90, 0);
+                console.log(this.data);
+                document.getElementById('cam').setAttribute("rotation", this.data);
+                //this.el.components['look-controls'].yawObject.rotation.y += 90;
+                //el.removeAttribute('look-controls')
+                //this.el.components["look-controls"].pitchObject.rotation.x = 0.7
+                //this.el.components["look-controls"].yawObject.rotation.y = 0.8
+            }
+
+        });
+
         AFRAME.registerComponent('static-mask-me', {
             init: function () {
                 let el = this.el;
@@ -275,13 +292,14 @@
     -->
 
         <!-- Pawn -->
-        <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" position="0 0.6 0"
-            wasd-controls="fly: true; acceleration:5" show-position look-controls="pointerLockEnabled: false;">
+        <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" rotate
+            position="0 -6 0" rotation="0 0 0" wasd-controls="fly: true; acceleration:5" show-position
+            look-controls="pointerLockEnabled: false;">
 
             <a-sphere class="head" visible="false" random-color>
             </a-sphere>
 
-            <a-entity active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
+            <a-entity active="true" camera="near: 0.1; far: 7000.0;" id="cam" position="0 0.6 0" rotation="0 0 0">
             </a-entity>
         </a-entity>
 
