@@ -372,7 +372,7 @@ wp_head();
     <!-- PANELS -->
     <div class="panels">
 
-        <!-- Panel 1 is the vr enivironment -->
+        <!-- Panel 1 is the vr environment -->
         <div class="panel active" id="panel-1" role="tabpanel" aria-hidden="false">
 
             <!-- 3D editor  -->
@@ -823,12 +823,14 @@ wp_head();
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json){
 
+
             resources3D = parseJSON_javascript(scene_json, uploadDir);
 
             // CLEAR SCENE
             let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
 
-            for (let i = envir.scene.children.length - 1; i >=0 ; i--){
+            for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
+
                 if (!preserveElements.includes(envir.scene.children[i].name))
                     envir.scene.remove(envir.scene.children[i]);
             }
