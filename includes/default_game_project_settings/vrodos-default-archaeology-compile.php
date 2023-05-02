@@ -187,6 +187,15 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_it_scale_z = $value['scale'][2];
                 $poi_it_isreward = $value['isreward'];
                 $poi_it_follow_camera = $value['follow_camera'];
+                $poi_it_image_link = $value['image_link'];
+                $poi_it_video_link = $value['video_link'];
+                $poi_it_follow_camera_x = $value['follow_camera_x'];
+                $poi_it_follow_camera_y = $value['follow_camera_y'];
+                $poi_it_follow_camera_z = $value['follow_camera_z'];
+
+
+
+                
                 $poi_it_title = html_entity_decode(get_the_title($poi_img_id));
 
                 $post_featuredimage_url = get_the_post_thumbnail_url($poi_img_id, 'full'); // http:// ..... /image.jpg
@@ -241,6 +250,11 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_v_scale_z = $value['scale'][2];
                 $poi_v_isreward = $value['isreward'];
                 $poi_v_follow_camera = $value['follow_camera'];
+                $poi_v_image_link = $value['image_link'];
+                $poi_v_video_link = $value['video_link'];
+                $poi_v_follow_camera_x = $value['follow_camera_x'];
+                $poi_v_follow_camera_y = $value['follow_camera_y'];
+                $poi_v_follow_camera_z = $value['follow_camera_z'];
                 $poi_v_title = get_the_title($poi_vid_id);
                 $poi_v_trans_fid = vrodos_create_fids($current_fid++);
                 $poi_v_obj_fid = vrodos_create_fids($current_fid++);
@@ -275,6 +289,11 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $door_scale_z = $value['scale'][2];
                 $door_isreward = $value['isreward'];
                 $door_follow_camera = $value['follow_camera'];
+                $door_image_link = $value['image_link'];
+                $door_video_link = $value['video_link'];
+                $door_follow_camera_x = $value['follow_camera_x'];
+                $door_follow_camera_y = $value['follow_camera_y'];
+                $door_follow_camera_z = $value['follow_camera_z'];
                 $door_title = $value['doorName_source'];
 
                 $door_scene_arrival =  explode("(", $value['sceneName_target'])[1]; // After ( is the slug. Before is the name
@@ -312,6 +331,11 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_a_scale_z = $value['scale'][2];
                 $poi_a_isreward = $value['isreward'];
                 $poi_a_follow_camera = $value['follow_camera'];
+                $poi_a_image_link = $value['image_link'];
+                $poi_a_video_link = $value['video_link'];
+                $poi_a_follow_camera_x = $value['follow_camera_x'];
+                $poi_a_follow_camera_y = $value['follow_camera_y'];
+                $poi_a_follow_camera_z = $value['follow_camera_z'];
                 
                 $poi_a_title = get_the_title($artifact_id);
                 $poi_a_transform_fid = vrodos_create_fids($current_fid++);
@@ -437,7 +461,7 @@ function vrodos_replace_decoration_arch_unity($decorarch_yaml,$decor_fid,$decor_
 function vrodos_replace_artifact_unity($artifact_yaml, $poi_a_fid, $poi_a_pos_x, $poi_a_pos_y, $poi_a_pos_z, $poi_a_rot_x,
                                         $poi_a_rot_y,$poi_a_rot_z,$poi_a_rot_w,$poi_a_scale_x,$poi_a_scale_y,
                                         $poi_a_scale_z,$poi_a_title,$poi_a_transform_fid,$poi_a_obj_fid,$poi_a_obj_guid, $poi_a_text,
-                                        $poi_a_isreward, $poi_a_follow_camera){
+                                        $poi_a_isreward, $poi_a_follow_camera, $poi_a_image_link, $poi_a_video_link, $poi_a_follow_camera_x, $poi_a_follow_camera_y, $poi_a_follow_camera_z){
 
     $file_content_return = str_replace("___[poi_a_fid]___",$poi_a_fid,$artifact_yaml);
     $file_content_return = str_replace("___[poi_a_pos_x]___",$poi_a_pos_x,$file_content_return);
@@ -457,6 +481,11 @@ function vrodos_replace_artifact_unity($artifact_yaml, $poi_a_fid, $poi_a_pos_x,
     $file_content_return = str_replace("___[poi_a_text]___",  json_encode($poi_a_text, JSON_UNESCAPED_SLASHES), $file_content_return);
     $file_content_return = str_replace("___[poi_a_isreward]___", $poi_a_isreward , $file_content_return);
     $file_content_return = str_replace("___[poi_a_follow_camera]___", $poi_a_follow_camera , $file_content_return);
+    $file_content_return = str_replace("___[poi_a_image_link]___", $poi_a_image_link , $file_content_return);
+    $file_content_return = str_replace("___[poi_a_video_link]___", $poi_a_video_link , $file_content_return);
+    $file_content_return = str_replace("___[poi_a_follow_camera_x]___", $poi_a_follow_camera_x , $file_content_return);
+    $file_content_return = str_replace("___[poi_a_follow_camera_y]___", $poi_a_follow_camera_y , $file_content_return);
+    $file_content_return = str_replace("___[poi_a_follow_camera_z]___", $poi_a_follow_camera_z , $file_content_return);
 
 
     $ff = fopen("output_title.txt","a");
@@ -469,7 +498,8 @@ function vrodos_replace_artifact_unity($artifact_yaml, $poi_a_fid, $poi_a_pos_x,
 function vrodos_replace_door_unity($door_yaml,$door_fid,$door_pos_x,$door_pos_y,$door_pos_z,$door_rot_x,$door_rot_y,$door_rot_z,
                                     $door_rot_w,$door_scale_x,$door_scale_y,$door_scale_z,
                                     $door_title,
-                                    $door_scene_arrival,$door_door_arrival,$door_transform_fid,$door_obj_fid,$door_guid, $door_isreward){
+                                    $door_scene_arrival,$door_door_arrival,$door_transform_fid,$door_obj_fid,$door_guid, $door_isreward
+                                    ,$door_follow_camera, $door_image_link, $door_video_link, $door_follow_camera_x, $door_follow_camera_y, $door_follow_camera_z){
 
     $file_content_return = str_replace("___[door_fid]___",$door_fid,$door_yaml);
     $file_content_return = str_replace("___[door_pos_x]___",$door_pos_x,$file_content_return);
@@ -492,12 +522,20 @@ function vrodos_replace_door_unity($door_yaml,$door_fid,$door_pos_x,$door_pos_y,
     $file_content_return = str_replace("___[door_obj_fid]___",$door_obj_fid,$file_content_return);
     $file_content_return = str_replace("___[door_guid]___",$door_guid,$file_content_return);
 
+    $file_content_return = str_replace("___[door_follow_camera]___", $door_follow_camera , $file_content_return);
+    $file_content_return = str_replace("___[door_image_link]___", $door_image_link , $file_content_return);
+    $file_content_return = str_replace("___[door_video_link]___", $door_video_link , $file_content_return);
+    $file_content_return = str_replace("___[door_follow_camera_x]___", $door_follow_camera_x , $file_content_return);
+    $file_content_return = str_replace("___[door_follow_camera_y]___", $door_follow_camera_y , $file_content_return);
+    $file_content_return = str_replace("___[door_follow_camera_z]___", $door_follow_camera_z , $file_content_return);
+
     return $file_content_return;
 }
 
 function vrodos_replace_poi_vid_unity($poi_vid_yaml,$poi_v_fid,$poi_v_pos_x,$poi_v_pos_y,$poi_v_pos_z,$poi_v_rot_x,$poi_v_rot_y,$poi_v_rot_z,
                                        $poi_v_rot_w,$poi_v_scale_x,$poi_v_scale_y,$poi_v_scale_z,$poi_v_title,$poi_v_trans_fid,
-                                       $poi_v_obj_fid,$poi_v_obj_guid,$poi_v_v_name, $poi_v_v_url, $poi_v_isreward){
+                                       $poi_v_obj_fid,$poi_v_obj_guid,$poi_v_v_name, $poi_v_v_url, $poi_v_isreward,
+ $poi_v_follow_camera, $poi_v_image_link, $poi_v_video_link, $poi_v_follow_camera_x, $poi_v_follow_camera_y, $poi_v_follow_camera_z){
 
     $file_content_return = str_replace("___[poi_v_fid]___",$poi_v_fid,$poi_vid_yaml);
     $file_content_return = str_replace("___[poi_v_pos_x]___",$poi_v_pos_x,$file_content_return);
@@ -518,6 +556,12 @@ function vrodos_replace_poi_vid_unity($poi_vid_yaml,$poi_v_fid,$poi_v_pos_x,$poi
     $file_content_return = str_replace("___[poi_v_v_url]___",$poi_v_v_url,$file_content_return);
     
     $file_content_return = str_replace("___[poi_v_isreward]___", $poi_v_isreward, $file_content_return);
+    $file_content_return = str_replace("___[poi_v_follow_camera]___", $poi_v_follow_camera , $file_content_return);
+    $file_content_return = str_replace("___[poi_v_image_link]___", $poi_v_image_link , $file_content_return);
+    $file_content_return = str_replace("___[poi_v_video_link]___", $poi_v_video_link , $file_content_return);
+    $file_content_return = str_replace("___[poi_v_follow_camera_x]___", $poi_v_follow_camera_x , $file_content_return);
+    $file_content_return = str_replace("___[poi_v_follow_camera_y]___", $poi_v_follow_camera_y , $file_content_return);
+    $file_content_return = str_replace("___[poi_v_follow_camera_z]___", $poi_v_follow_camera_z , $file_content_return);
 
     return $file_content_return;
 }
@@ -526,7 +570,8 @@ function vrodos_replace_poi_img_unity($poi_img_yaml,$poi_it_fid,
                                        $poi_it_pos_x,$poi_it_pos_y,$poi_it_pos_z,$poi_it_rot_x,$poi_it_rot_y,$poi_it_rot_z,$poi_it_rot_w,
                                        $poi_it_scale_x,$poi_it_scale_y,$poi_it_scale_z,
                                        $poi_it_title,$poi_it_sprite_name,
-                                       $poi_it_text,$poi_it_connector_fid,$poi_it_obj_fid,$poi_it_obj_guid, $poi_it_isreward){
+                                       $poi_it_text,$poi_it_connector_fid,$poi_it_obj_fid,$poi_it_obj_guid, $poi_it_isreward,
+$poi_it_follow_camera, $poi_it_image_link, $poi_it_video_link, $poi_it_follow_camera_x, $poi_it_follow_camera_y, $poi_it_follow_camera_z){
 
     $file_content_return = str_replace("___[poi_it_fid]___",$poi_it_fid,$poi_img_yaml);
     $file_content_return = str_replace("___[poi_it_pos_x]___",$poi_it_pos_x,$file_content_return);
@@ -544,6 +589,13 @@ function vrodos_replace_poi_img_unity($poi_img_yaml,$poi_it_fid,
     $file_content_return = str_replace("___[poi_it_text]___",$poi_it_text,$file_content_return);
     
     $file_content_return = str_replace("___[poi_it_isreward]___",$poi_it_isreward,$file_content_return);
+    $file_content_return = str_replace("___[poi_it_follow_camera]___", $poi_it_follow_camera , $file_content_return);
+    $file_content_return = str_replace("___[poi_it_image_link]___", $poi_it_image_link , $file_content_return);
+    $file_content_return = str_replace("___[poi_it_video_link]___", $poi_it_video_link , $file_content_return);
+    $file_content_return = str_replace("___[poi_it_follow_camera_x]___", $poi_it_follow_camera_x , $file_content_return);
+    $file_content_return = str_replace("___[poi_it_follow_camera_y]___", $poi_it_follow_camera_y , $file_content_return);
+    $file_content_return = str_replace("___[poi_it_follow_camera_z]___", $poi_it_follow_camera_z , $file_content_return);
+
     
     $file_content_return = str_replace("___[poi_it_connector_fid]___",$poi_it_connector_fid,$file_content_return);
     $file_content_return = str_replace("___[poi_it_obj_fid]___",$poi_it_obj_fid,$file_content_return);

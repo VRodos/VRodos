@@ -981,19 +981,19 @@ function displayPoiVideoProperties(event, name) {
 
     clearAndUnbind(null, null, "focus_Z");
 
-    chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
+    chbox.prop('checked', envir.scene.getObjectByName(name).follow_camera == 1);
     //chbox.prop('checked', envir.scene.getObjectByName(name).follow_camera == 1);
 
-    setFocusX.value = envir.scene.getObjectByName(name).hv_penalty;
-    setFocusZ.value = envir.scene.getObjectByName(name).natural_penalty;
+    setFocusX.value = envir.scene.getObjectByName(name).follow_camera_x;
+    setFocusZ.value = envir.scene.getObjectByName(name).follow_camera_z;
 
 
     //console.log(setFocusX.value);
 
 
 
-    sliderFocusX.prop('disabled', envir.scene.getObjectByName(name).isreward == 0);
-    sliderFocusZ.prop('disabled', envir.scene.getObjectByName(name).isreward == 0);
+    sliderFocusX.prop('disabled', envir.scene.getObjectByName(name).follow_camera == 0);
+    sliderFocusZ.prop('disabled', envir.scene.getObjectByName(name).follow_camera == 0);
 
     // Show Selection
     ppPropertiesDiv.show();
@@ -1006,13 +1006,13 @@ function displayPoiVideoProperties(event, name) {
     chbox.change(function (e) {
 
 
-        envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
+        //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
         envir.scene.getObjectByName(name).follow_camera = this.checked ? 1 : 0;
 
         if (this.checked) {
-            envir.scene.getObjectByName(name).hv_penalty = setFocusX.value;
-            envir.scene.getObjectByName(name).natural_penalty = setFocusZ.value;
-            console.log(envir.scene.getObjectByName(name).follow_camera);
+            envir.scene.getObjectByName(name).follow_camera_x = setFocusX.value;
+            envir.scene.getObjectByName(name).follow_camera_z = setFocusZ.value;
+            //console.log(envir.scene.getObjectByName(name).follow_camera);
         }
 
         sliderFocusX.prop("disabled", (!this.checked));
@@ -1032,7 +1032,7 @@ function displayPoiVideoProperties(event, name) {
     sliderFocusX.change(function (e) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        envir.scene.getObjectByName(name).hv_penalty = this.value;
+        envir.scene.getObjectByName(name).follow_camera_x = this.value;
         //console.log(this.value);
         saveChanges();
 
@@ -1041,7 +1041,7 @@ function displayPoiVideoProperties(event, name) {
     sliderFocusZ.change(function (e) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        envir.scene.getObjectByName(name).natural_penalty = this.value;
+        envir.scene.getObjectByName(name).follow_camera_z = this.value;
         //console.log(this.value);
         saveChanges();
 

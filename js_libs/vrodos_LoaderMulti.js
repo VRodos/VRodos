@@ -227,6 +227,11 @@ function setObjectProperties(object, name, resources3D) {
 
     object.isreward = resources3D[name]['isreward'];
     object.follow_camera = resources3D[name]['follow_camera'];
+    object.image_link = resources3D[name]['image_link'];
+    object.video_link = resources3D[name]['video_link'];
+    object.follow_camera_x = resources3D[name]['follow_camera_x'];
+    object.follow_camera_y = resources3D[name]['follow_camera_y'];
+    object.follow_camera_z = resources3D[name]['follow_camera_z'];
     object.isCloned = resources3D[name]['isCloned'];
 
     //object.type_behavior = resources3D[name]['type_behavior'];

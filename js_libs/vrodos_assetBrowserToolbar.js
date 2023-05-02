@@ -142,6 +142,11 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 "doorName_target": e.target.attributes.getNamedItem("data-doorName_target").value,
                 "isreward": e.target.attributes.getNamedItem("data-isreward").value,
                 "follow_camera": e.target.attributes.getNamedItem("data-follow_camera").value,
+                "image_link": e.target.attributes.getNamedItem("data-image_link").value,
+                "video_link": e.target.attributes.getNamedItem("data-video_link").value,
+                "follow_camera_x": e.target.attributes.getNamedItem("data-follow_camera_x").value,
+                "follow_camera_y": e.target.attributes.getNamedItem("data-follow_camera_y").value,
+                "follow_camera_z": e.target.attributes.getNamedItem("data-follow_camera_z").value,
                 "sceneName_target": e.target.attributes.getNamedItem("data-sceneName_target").value,
                 "sceneID_target": e.target.attributes.getNamedItem("data-sceneID_target").value,
                 "archaeology_penalty": e.target.attributes.getNamedItem("data-archaeology_penalty").value,
@@ -237,6 +242,11 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     '" data-sshot-url="' + f.screenImagePath +
                     '" data-isreward="' + f.isreward +
                     '" data-follow_camera="' + f.follow_camera +
+                    '" data-image_link="' + f.image_link +
+                    '" data-video_link="' + f.video_link +
+                    '" data-follow_camera_x="' + f.follow_camera_x +
+                    '" data-follow_camera_y="' + f.follow_camera_y +
+                    '" data-follow_camera_z="' + f.follow_camera_z +
                     '" data-isCloned="' + f.isCloned +
                     '" data-isJoker="' + f.isJoker +
                     '" >' + img +

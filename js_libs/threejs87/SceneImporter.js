@@ -84,7 +84,8 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "doorName_source": '',
                 "doorName_target": '',
                 "sceneName_target": '', "sceneID_target": '', "archaeology_penalty": '',
-                "hv_penalty": '', "natural_penalty": '', "isreward": 0, "follow_camera": 0, "isCloned": 0,
+                "hv_penalty": '', "natural_penalty": '', "isreward": 0, "follow_camera": 0, "image_link": '', "video_link": '',
+                "follow_camera_x": '', "follow_camera_y": '', "follow_camera_z": '', "isCloned": 0,
                 "isJoker": 0,
                 "isLight": "true",
                 "trs": selected_object_trs
@@ -142,6 +143,11 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "natural_penalty": '',
                 "isreward": 0,
                 "follow_camera": 0,
+                "image_link": '',
+                "video_link": '',
+                "follow_camera_x": '',
+                "follow_camera_y": '',
+                "follow_camera_z": '',
                 "isCloned": 0,
                 "isJoker": 0,
                 "isLight": "true",
@@ -202,6 +208,11 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "natural_penalty": '',
                 "isreward": 0,
                 "follow_camera": 0,
+                "image_link": '',
+                "video_link": '',
+                "follow_camera_x": '',
+                "follow_camera_y": '',
+                "follow_camera_z": '',
                 "isCloned": 0,
                 "isJoker": 0,
                 "isLight": "true",
@@ -254,6 +265,11 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "natural_penalty": '',
                 "isreward": 0,
                 "follow_camera": 0,
+                "image_link": '',
+                "video_link": '',
+                "follow_camera_x": '',
+                "follow_camera_y": '',
+                "follow_camera_z": '',
                 "isCloned": 0,
                 "isJoker": 0,
                 "isLight": "true",
@@ -305,6 +321,11 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "natural_penalty": '',
                 "isreward": 0,
                 "follow_camera": 0,
+                "image_link": '',
+                "video_link": '',
+                "follow_camera_x": '',
+                "follow_camera_y": '',
+                "follow_camera_z": '',
                 "isCloned": 0,
                 "isJoker": 0,
                 "isLight": "true",
@@ -348,6 +369,12 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
             var isreward = value['isreward'];
             var follow_camera = value['follow_camera'];
+
+            var image_link = value['image_link'];
+            var video_link = value['video_link'];
+            var follow_camera_x = value['follow_camera_x'];
+            var follow_camera_y = value['follow_camera_y'];
+            var follow_camera_z = value['follow_camera_z'];
 
             var isCloned = value['isCloned'];
             var isJoker = value['isJoker'];
@@ -404,6 +431,11 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "sceneName_target": sceneName_target, "sceneID_target": sceneID_target, "archaeology_penalty": archaeology_penalty,
                 "hv_penalty": hv_penalty, "natural_penalty": natural_penalty, "isreward": isreward, "isCloned": isCloned,
                 "follow_camera": follow_camera,
+                "image_link": image_link,
+                "video_link": video_link,
+                "follow_camera_x": follow_camera_x,
+                "follow_camera_y": follow_camera_y,
+                "follow_camera_z": follow_camera_z,
                 "isJoker": isJoker,
                 "isLight": "false",
                 "trs": selected_object_trs

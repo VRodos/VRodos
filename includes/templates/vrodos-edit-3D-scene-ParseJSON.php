@@ -45,6 +45,11 @@ class ParseJSON
         $natural_penalty = '';
         $isreward = '';
         $follow_camera = '';
+        $image_link = '';
+        $video_link = '';
+        $follow_camera_x = '';
+        $follow_camera_y = '';
+        $follow_camera_z = '';
         $isCloned = '';
         $isJoker = '';
         $color = ''; // object color override
@@ -302,6 +307,13 @@ class ParseJSON
 
                 $isreward = $value->isreward;
                 $follow_camera = $value->follow_camera;
+                $image_link = $value->image_link;
+                $video_link = $value->video_link;
+                $follow_camera_x = $value->follow_camera_x;
+                $follow_camera_y = $value->follow_camera_y;
+                $follow_camera_z = $value->follow_camera_z;
+
+
                 $isCloned = $value->isCloned;
 
                 if (property_exists($value, 'isJoker'))
@@ -373,6 +385,11 @@ class ParseJSON
                 '","natural_penalty":"' . $natural_penalty .
                 '","isreward":"' . $isreward .
                 '","follow_camera":"' . $follow_camera .
+                '","image_link":"' . $image_link .
+                '","video_link":"' . $video_link .
+                '","follow_camera_x":"' . $follow_camera_x .
+                '","follow_camera_y":"' . $follow_camera_y .
+                '","follow_camera_z":"' . $follow_camera_z .
                 '","isCloned":"' . $isCloned .
                 '","isJoker":"' . $isJoker .
                 '","isLight":"' . $isLight .

@@ -41,6 +41,11 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "natural_penalty": dataDrag.natural_penalty,
         "isreward": dataDrag.isreward,
         "follow_camera": dataDrag.follow_camera,
+        "image_link": dataDrag.image_link,
+        "video_link": dataDrag.video_link,
+        "follow_camera_x": dataDrag.follow_camera_x,
+        "follow_camera_y": dataDrag.follow_camera_y,
+        "follow_camera_z": dataDrag.follow_camera_z,
         "isCloned": dataDrag.isCloned,
         "isJoker": dataDrag.isJoker,
         "trs": selected_object_trs

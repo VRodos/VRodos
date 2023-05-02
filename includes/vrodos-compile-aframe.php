@@ -1,5 +1,4 @@
 <?php
-
 function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 {
 
@@ -262,6 +261,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 	$fileOperations = new FileOperations();
 
+    
 
 
 
@@ -535,7 +535,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
             } else if ($contentObject->categoryName == 'PointsofInterest(Video)') {
-                print_r($contentObject);
+                //print_r(empty($contentObject->video_link));
 
 
                 $a_asset = $dom->createElement( "a-assets" );
@@ -544,6 +544,14 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_video_asset = $dom->createElement( "video" );
                 $a_video_asset->setAttribute("id", "video_$nameObject");
                 $a_video_asset->setAttribute( "loop", "true");
+
+                $contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4";
+                //if (empty($contentObject->video_link) == 1){
+                $a_video_asset->setAttribute("src", $contentObject->video_link);
+                //    console_log("Video link found"); 
+                //}
+
+                
                 //$a_video_asset->setAttribute("src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
 
 				$a_asset->appendChild($a_video_asset);
@@ -559,16 +567,21 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 				$a_entity->setAttribute('video-controls', $nameObject);
 				$a_entity->setAttribute("camera-listener", "");
 
+
+                //$a_entity->setAttribute("material", "side: double");
+
+
 				$a_video = $dom->createElement("a-video");
 				$a_video->setAttribute("id", "video-display_$nameObject");
-				$a_video->setAttribute("height", "19");
-				$a_video->setAttribute("width", "19");
+				//$a_video->setAttribute("height", "19");
+				//$a_video->setAttribute("width", "19");
 				//$a_video->setAttribute("position", "0 0 0.1");
 				$a_video->setAttribute("src", "#video_$nameObject");
+                $a_video->setAttribute("material", "side: double");
 
-                if ($contentObject->isreward) {
-                    $cameraPosition[0] = $contentObject->hv_penalty;
-                    $cameraPosition[2] = $contentObject->natural_penalty;
+                if ($contentObject->follow_camera) {
+                    $cameraPosition[0] = $contentObject->follow_camera_x;
+                    $cameraPosition[2] = $contentObject->follow_camera_z;
 
                     //print_r($cameraPosition[2]);
 
