@@ -102,13 +102,27 @@
 
 
 
-  </div><a-scene fog="type: ; color: ; far: ; density: 0; near: " renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: #eeeeee" vr-mode-ui="enabled: false" networked-scene="
+  </div><a-scene fog="type: ; color: ; far: ; density: 0; near: " renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: #ffffff" vr-mode-ui="enabled: true" networked-scene="
         room: room13;
         debug: true;
         adapter: easyrtc;
         audio: true;
         video: false;
-      "><a-assets><!-- Avatar Template --><template id="avatar-template"><a-entity class="avatar" networked-audio-source><a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="1" height="0.75" position="0 0.6 -0.15" material="side: double" networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video" render-order-change="2000"></a-plane><a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15" material="side: double" networked-video-source="streamName:screen"></a-plane></a-entity></template></a-assets><!-- Pawn --><a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" position="0 0.6 0" wasd-controls="fly: true; acceleration:5" show-position look-controls="pointerLockEnabled: true;"><a-sphere class="head" visible="false" random-color></a-sphere><a-entity active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0"></a-entity></a-entity><a-entity position="1.4456672256115 5.9285292041634E-7 -0.5928265702457" rotation="-0 0 0" scale="1 1 1" class="override-materials" id="dasdsa_1680526063" gltf-model="url(http://localhost/wp_vrodos/wp-content/uploads/models/12/41_glbdasdsa.txt)" material="color:#0x000000;" clear-frustum-culling=""></a-entity></a-scene><!-- Javascript --><script>
+      "><a-assets><!-- Avatar Template --><template id="avatar-template"><a-entity class="avatar" networked-audio-source><a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="1" height="0.75" position="0 0.6 -0.15" material="side: double" networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video" render-order-change="2000"></a-plane><a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15" material="side: double" networked-video-source="streamName:screen"></a-plane></a-entity></template></a-assets><!-- Pawn --><a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" position="0 0.6 0" wasd-controls="fly: true; acceleration:5" show-position look-controls="pointerLockEnabled: true;"><a-sphere class="head" visible="false" random-color></a-sphere><a-entity active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0"></a-entity></a-entity><!-- VR rendered stuff--><a-entity id="left-hand" hand-controls="hand: left"></a-entity><a-entity id="left-hand" hand-controls="hand: left"><a-entity line="start: 0 0 0; end: 0 0 -1; color: red"></a-entity></a-entity><a-entity id="right-hand" hand-controls="hand: right"><a-entity line="start: 0 0 0; end: 0 0 -1; color: blue"></a-entity></a-entity><a-entity camera movement-controls></a-entity><a-entity id="camera-rig" movement-controls="speed: 0.1"><a-entity camera look-controls></a-entity></a-entity><a-entity id="left-hand" hand-controls="hand: left"></a-entity><script>
+      AFRAME.registerComponent('left-thumbstick', {
+        init: function () {
+          var hand = this.el;
+          var cameraRig = document.querySelector('#camera-rig');
+
+          hand.addEventListener('thumbstickmoved', function (event) {
+            var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
+            cameraRig.object3D.position.add(movementVector.multiplyScalar(cameraRig.getAttribute('movement-controls').data.speed));
+          });
+        }
+      });
+
+      document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
+    </script><a-entity position="3.1436760544989 -3.8069715282143 0.52149172371109" rotation="-0 0 0" scale="1 1 1" class="override-materials" id="dasdsa_1680526063" gltf-model="url(http://localhost/wp_vrodos/wp-content/uploads/models/12/41_glbdasdsa.txt)" material="color:#0x000000;" clear-frustum-culling=""></a-entity></a-scene><!-- Javascript --><script>
 
     AFRAME.registerComponent('show-position', {
       init: function () {

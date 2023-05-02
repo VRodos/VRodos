@@ -193,22 +193,7 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 			$actionsDiv = $body->childNodes[0];
 			$ascene = $body->childNodes[1];
 			
-//			$f = fopen("output_compile_director.txt","w");
-//			fwrite($f, "----------------".chr(13));
-////
-////			foreach ($dom->getElementsByTagName('a-scene') as $node) {
-////
-////				$string_ascene = $dom->saveHtml($node);
-////				$string_ascene = str_replace('background="color: #aaaaaa"','background="color: #00ff00"', $string_ascene);
-////				$ascene = $dom->loadHTML($string_ascene);
-////
-////			}
-////
-////     			fwrite($f, print_r($scene_json->metadata->ClearColor, true));
-//////			fwrite($f, "ASCENE".chr(13));
-//////			fwrite($f, print_r($ascene, true));
-//			fwrite($f, "----------------");
-//			fclose($f);
+
 			
 			
 			// ============ Scene Iteration kernel ==============
@@ -223,16 +208,6 @@ function vrodos_compile_aframe($project_id, $scene_id, $showPawnPositions) {
 	$fileOperations = new FileOperations();
 	
 	
-	
-	
-	
-	// Step 1: Create the index.html file by replacing certain parts only
-	/**
-	 * Read the index prototype, replace html links of Master and Simple client with scene_id and write back the result to another file
-	 * @param $scene_id
-	 *
-	 * @return false|int
-	 */
 	function createIndexFile($project_title, $scene_id, $scene_title, $fileOperations){
 		
 		$filenameSource = $fileOperations->plugin_path_dir."/js_libs/aframe_libs/index_prototype.html";

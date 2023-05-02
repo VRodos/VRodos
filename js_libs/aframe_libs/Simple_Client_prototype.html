@@ -36,8 +36,6 @@
             <a-entity class="avatar"
                       networked-audio-source>
 
-
-
                 <a-plane id="videoPlane"
                          color="#FFF"
                          width="1"
@@ -81,6 +79,54 @@
     </a-entity>
 
 
+    <!-- VR STUFF -->
+   <!-- <script type="module">
+
+    / XR globals. Several additional reference spaces are required because of
+      // how the teleportation mechanic in onSelect works.
+      let xrButton = null;
+      let xrImmersiveRefSpaceBase = null;
+      let xrImmersiveRefSpaceOffset = null;
+      let xrInlineRefSpaceBase = null;
+      let xrInlineRefSpaceOffset = null;
+      let xrViewerSpaces = {};
+
+      let trackingSpaceOriginInWorldSpace = vec3.create();
+      let trackingSpaceHeadingDegrees = 0;  // around +Y axis, positive angles rotate left
+      let floorSize = 10;
+      let floorPosition = [0, -floorSize / 2 + 0.01, 0];
+      let floorNode = null;
+
+      // WebGL scene globals.
+      let gl = null;
+      let renderer = null;
+      let scene = new Scene();
+      if (hideStats) {
+        scene.enableStats(false);
+      }
+
+
+      
+
+      let boxes = [];
+
+      function initXR() {
+        xrButton = new WebXRButton({
+          onRequestSession: onRequestSession,
+          onEndSession: onEndSession
+        });
+        document.querySelector('header').appendChild(xrButton.domElement);
+
+        if (navigator.xr) {
+          navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+            xrButton.enabled = supported;
+          });
+
+          navigator.xr.requestSession('inline').then(onSessionStarted);
+        }
+      }
+      initXR();
+    </script>-->
 
 
 </a-scene>
