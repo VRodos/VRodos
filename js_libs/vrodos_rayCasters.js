@@ -752,7 +752,7 @@ function displayDoorProperties(event, name) {
 
         //console.log(envir.scene.getObjectByName(updName));
 
-        saveChanges(envir.scene, updName);
+        saveChanges();
         //
     });
 
@@ -931,19 +931,19 @@ function showWholePopupDiv(popUpDiv, event) {
 //  * @param name
 //  */
 
-function saveChanges(env, name) {
+function saveChanges() {
     jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
     // Export using a custom variant of the old deprecated class SceneExporter
     let exporter = new THREE.SceneExporter();
-    env.getObjectByName(name).follow_camera = 2;
-    //document.getElementById('vrodos_scene_json_input').value = exporter.parse(env);
+    //env.getObjectByName(name).follow_camera = 2;
+    document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-    let test = document.getElementById('vrodos_scene_json_input').value;
+    //let test = document.getElementById('vrodos_scene_json_input').value;
 
     //var json = JSON.stringify(test);
 
-    console.log(test);
+    //console.log(test);
 
     vrodos_saveSceneAjax();
     //.forEach(element => console.log(element));
@@ -982,6 +982,7 @@ function displayPoiVideoProperties(event, name) {
     clearAndUnbind(null, null, "focus_Z");
 
     chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
+    //chbox.prop('checked', envir.scene.getObjectByName(name).follow_camera == 1);
 
     setFocusX.value = envir.scene.getObjectByName(name).hv_penalty;
     setFocusZ.value = envir.scene.getObjectByName(name).natural_penalty;
@@ -1006,18 +1007,19 @@ function displayPoiVideoProperties(event, name) {
 
 
         envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
+        envir.scene.getObjectByName(name).follow_camera = this.checked ? 1 : 0;
 
         if (this.checked) {
             envir.scene.getObjectByName(name).hv_penalty = setFocusX.value;
             envir.scene.getObjectByName(name).natural_penalty = setFocusZ.value;
-            //console.log(envir.scene.getObjectByName(name).hv_penalty);
+            console.log(envir.scene.getObjectByName(name).follow_camera);
         }
 
         sliderFocusX.prop("disabled", (!this.checked));
         sliderFocusZ.prop("disabled", (!this.checked));
         var sceneJson = document.getElementById("vrodos_scene_json_input").value;
 
-        saveChanges(envir.scene, name);
+        saveChanges();
 
 
 
@@ -1032,7 +1034,7 @@ function displayPoiVideoProperties(event, name) {
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).hv_penalty = this.value;
         //console.log(this.value);
-        saveChanges(envir.scene, name);
+        saveChanges();
 
     });
 
@@ -1041,7 +1043,7 @@ function displayPoiVideoProperties(event, name) {
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).natural_penalty = this.value;
         //console.log(this.value);
-        saveChanges(envir.scene, name);
+        saveChanges();
 
     });
 

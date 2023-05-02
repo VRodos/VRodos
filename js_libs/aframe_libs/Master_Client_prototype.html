@@ -53,8 +53,13 @@
             init: function () {
 
                 //this.el.components['look-controls'].yawObject.rotation.set(0, 90, 0);
-                console.log(this.data);
+                var pos = document.querySelector('#cam').getAttribute('position');
+                console.log(pos);
                 document.getElementById('cam').setAttribute("rotation", this.data);
+                var cameraEl = document.querySelector('#cam');
+                var worldPos = new THREE.Vector3();
+                worldPos.setFromMatrixPosition(cameraEl.object3D.matrixWorld);
+                console.log(worldPos.x);
                 //this.el.components['look-controls'].yawObject.rotation.y += 90;
                 //el.removeAttribute('look-controls')
                 //this.el.components["look-controls"].pitchObject.rotation.x = 0.7

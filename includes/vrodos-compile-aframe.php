@@ -504,7 +504,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 // Add to scene
                 $ascene->appendChild( $a_light );
             }else if ( $contentObject->categoryName == 'Door' ) {
-                //print_r($contentObject->categoryName);
+                print_r($contentObject);
                 $a_entity = $dom->createElement( "a-entity" );
                 $a_entity->appendChild( $dom->createTextNode( '' ) );
 
@@ -529,13 +529,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                $rotation_change_z = $contentObject->rotation[2];
                $full_rotation = " $rotation_change_x  $rotation_change_y  $rotation_change_z";
                //print_r($full_rotation);
-               $ascenePlayer->setAttribute( "rotate",  $full_rotation);
+               $ascenePlayer->setAttribute( "rotate",  $full_rotation );
                 //$fileOperations->setAffineTransformations( $a_entity, $contentObject );
 
 
 
             } else if ($contentObject->categoryName == 'PointsofInterest(Video)') {
-                //print_r($contentObject);
+                print_r($contentObject);
 
 
                 $a_asset = $dom->createElement( "a-assets" );

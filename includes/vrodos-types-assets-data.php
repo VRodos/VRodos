@@ -17,6 +17,7 @@ $table_of_asset_fields = array(
     array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_scene','string', '', true, true),
     array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'string', '', true, true),
     array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'string', '0', true, true),
+    array('follow_camera'                   , 'follow_camera'                   , 'vrodos_asset3d_follow_camera', 'string', '0', true, true),
 
     array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'string', '', true, true),
     array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'string', '', true, true),

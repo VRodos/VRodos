@@ -44,6 +44,7 @@ class ParseJSON
         $hv_penalty = '';
         $natural_penalty = '';
         $isreward = '';
+        $follow_camera = '';
         $isCloned = '';
         $isJoker = '';
         $color = ''; // object color override
@@ -300,6 +301,7 @@ class ParseJSON
                 $natural_penalty = $value->natural_penalty;
 
                 $isreward = $value->isreward;
+                $follow_camera = $value->follow_camera;
                 $isCloned = $value->isCloned;
 
                 if (property_exists($value, 'isJoker'))
@@ -370,6 +372,7 @@ class ParseJSON
                 '","hv_penalty":"' . $hv_penalty .
                 '","natural_penalty":"' . $natural_penalty .
                 '","isreward":"' . $isreward .
+                '","follow_camera":"' . $follow_camera .
                 '","isCloned":"' . $isCloned .
                 '","isJoker":"' . $isJoker .
                 '","isLight":"' . $isLight .
