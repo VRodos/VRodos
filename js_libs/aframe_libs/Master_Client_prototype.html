@@ -46,6 +46,8 @@
             }
         });
 
+
+
         AFRAME.registerComponent("rotate", {
             schema: {
                 renderingOrderArg: { type: 'string', default: '0 0 0' }
@@ -180,22 +182,43 @@
 
 
                     var entity_main = document.createElement('a-plane');
+                    var title_main = document.createElement('a-text');
+
+                    var desc_main = document.createElement('a-text');
 
                     let entitycheck = document.getElementById(this.data.id_img);
                     if (!entitycheck) {
 
-                        // Set the color to the assigned value.
                         entity_main.setAttribute("src", '#' + this.data.main_img);
                         entity_main.setAttribute("id", this.data.id_img);
-                        // Set the position of the box to the click intersection.
                         entity_main.setAttribute("height", "8");
                         entity_main.setAttribute("width", "8");
                         entity_main.setAttribute("position", "0  2  -10");
                         entity_main.setAttribute("material", "shader: flat");
                         entity_main.setAttribute("overlay", "");
 
-                        // Append the box element to the scene.
+                        title_main.setAttribute("value", "Title of the image");
+                        title_main.setAttribute("position", "-3  6  -9");
+                        title_main.setAttribute("color", "black");
+                        title_main.setAttribute("transparent", "true");
+                        title_main.setAttribute("anchor", "left");
+                        title_main.setAttribute("overlay", "");
+                        title_main.setAttribute("width", "8");
+
+                        desc_main.setAttribute("value", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis, odio in vulputate interdum, sapien neque interdum mi, et suscipit elit sem non risus. Sed rutrum augue sed lectus convallis vehicula. Maecenas orci neque, rutrum in blandit eget, ultricies sit amet turpis. Curabitur maximus purus vel auctor faucibus.");
+                        desc_main.setAttribute("position", "-3  0  -9");
+                        desc_main.setAttribute("color", "white");
+                        desc_main.setAttribute("transparent", "true");
+                        desc_main.setAttribute("anchor", "left");
+                        desc_main.setAttribute("overlay", "");
+                        desc_main.setAttribute("width", "6");
+                        desc_main.setAttribute("wrapCount", "40");
+
+
+
                         cam.appendChild(entity_main);
+                        cam.appendChild(title_main);
+                        cam.appendChild(desc_main);
 
                         var entity_esc = document.createElement('a-plane');
 
@@ -207,7 +230,7 @@
                         entity_esc.setAttribute("position", "3  7 -9");
                         entity_esc.setAttribute("material", "shader: flat");
                         entity_esc.setAttribute("overlay", "");
-                        entity_esc.addEventListener("click", e => { cam.removeChild(entity_main); cam.removeChild(entity_esc); });
+                        entity_esc.addEventListener("click", e => { cam.removeChild(entity_main); cam.removeChild(entity_esc); cam.removeChild(title_main); cam.removeChild(desc_main); });
 
                         // Append the box element to the scene.
                         cam.appendChild(entity_esc);
