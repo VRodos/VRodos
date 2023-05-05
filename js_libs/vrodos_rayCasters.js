@@ -96,10 +96,8 @@ function onMouseDoubleClickFocus(event, objectName) {
  * @param event
  */
 function onLeftMouseDown(event) {
-
     // console.log("onLeftMouseDown");
     // console.log("transform_controls.dragging", transform_controls.dragging);
-
     // If doing affine transformations with transform controls, then ignore select
     if (transform_controls.dragging)
         return;

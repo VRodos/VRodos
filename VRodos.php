@@ -29,6 +29,7 @@ echo ini_get('max_input_time').chr(10);
 @ini_set( 'max_execution_time', '2400' );
 
 // Set scope for the 3D editor (under construction feature):
+// Default    : 1
 // Virtual Exhibition (VRExpo)    : 2
 // VirtualProduction (MediaVerse) : 3
 $project_scope = 3;
@@ -1031,13 +1032,11 @@ function vrodos_remove_db_residues(){
     // +++
     //terrain
     //marker
-    //educational-energy
     //artifact
     //site
     //door
     //room
     //gate
-    //molecule
 
     // 5. Term relationships
     // +++

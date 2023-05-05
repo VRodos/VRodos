@@ -5,28 +5,25 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR){
 
     //console.error("Not all properties are supported by undo: 115");
 
-    if (scene_json.length==0)
+    if (scene_json.length===0)
         return [];
 
-    var resources3D_local =[];
+    let resources3D_local =[];
 
-    var scene_json_obj = JSON.parse(scene_json);
+    let scene_json_obj = JSON.parse(scene_json);
 
-    var scene_json_metadata = scene_json_obj['metadata'];
+    let scene_json_metadata = scene_json_obj['metadata'];
 
-    for (var jo_key in scene_json_metadata) {
-
-        var name = jo_key;
-        var value = scene_json_metadata[jo_key];
-        if (name == 'ClearColor') {
+    for (let key in scene_json_metadata) {
+        let value = scene_json_metadata[key];
+        if (key === 'ClearColor') {
             resources3D_local["SceneSettings"] = { 'ClearColor': value };
         }
-
     }
 
     scene_json_obj = scene_json_obj['objects'];
 
-    for (var jo_key in scene_json_obj){
+    for (let jo_key in scene_json_obj){
 
         var name = jo_key;
         var value = scene_json_obj[jo_key];

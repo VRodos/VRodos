@@ -61,11 +61,6 @@ class VRodos_LoaderMulti {
                             object.add(steveShieldMesh);
                             object.renderOrder = 1;
 
-                            //object.position.x = resources3D[name].trs.translation[0] === 0 ? resources3D[name].trs.translation[0] : (-1) * parseFloat(resources3D[name].trs.translation[0]);
-                            //object.position.y = parseFloat(resources3D[name].trs.translation[1]);
-                            //object.position.z = resources3D[name].trs.translation[2] === 0 ? resources3D[name].trs.translation[2] : (-1) * parseFloat(resources3D[name].trs.translation[2]);
-
-
                             envir.scene.add(object);
                             envir.setCamMeshToAvatarControls();
 

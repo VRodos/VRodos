@@ -857,7 +857,10 @@ wp_head();
 
 
             // Update it
-            updatePositionsAndControls();
+            envir.orbitControls.update();
+            updatePointerLockControls();
+
+            //updatePositionsAndControls();
 
             //envir.cubeCamera.update( envir.renderer, envir.scene );
         }
@@ -865,9 +868,9 @@ wp_head();
         // UPDATE
         function updatePositionsAndControls()
         {
-            envir.orbitControls.update();
+            // envir.orbitControls.update();
+            // updatePointerLockControls();
 
-            updatePointerLockControls();
 
             // Now update the translation and rotation input texts at datgui from transform controls
             if (transform_controls.object) {

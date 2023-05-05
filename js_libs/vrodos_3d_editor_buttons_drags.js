@@ -443,6 +443,11 @@ function loadButtonActions() {
 
     let canvas3D = jQuery("#vr_editor_main_div canvas").get(0);
 
+    // Update DAT GUI only when mouse pointer is active.
+    canvas3D.addEventListener("mousemove", (event) => {
+        updatePositionsAndControls();
+    });
+
     // Left click
     canvas3D.addEventListener('mousedown', onLeftMouseDown, false);
 
@@ -454,7 +459,6 @@ function loadButtonActions() {
 
     // Right Click
     canvas3D.addEventListener('contextmenu', contextMenuClick, false);
-
 
     // Auto-Saving
     // Detect enter button press for saving scene
@@ -680,6 +684,7 @@ function takeScreenshot(){
 
 // Save scene
 function saveScene(e) {
+
     // A change has been made and mouseup then save
     if (e.type ==  'modificationPendingSave')
         mapActions[e.type] = true;
