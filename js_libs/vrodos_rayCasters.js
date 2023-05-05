@@ -190,9 +190,8 @@ function selectorMajor(event, objectSel, whocalls) {
 
         transform_controls.attach(objectSel);
 
-
         // Move light direction
-        let lightDirectionalLightSpotMover = function () {
+        let lightDirectionalLightSpotMover = () => {
 
             if (!transform_controls.object)
                 return;
@@ -202,9 +201,9 @@ function selectorMajor(event, objectSel, whocalls) {
 
             transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
             transform_controls.object.parentLight.target.updateMatrixWorld();
-        }
+        };
 
-        let lightSpotLightMover = function () {
+        let lightSpotLightMover = () => {
 
             if (!transform_controls.object)
                 return;
@@ -215,12 +214,12 @@ function selectorMajor(event, objectSel, whocalls) {
             // transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
             // transform_controls.object.parentLight.target.updateMatrixWorld();
             envir.scene.traverse(function (child) {
-                if (child.light != undefined)
-                    if (child.light.name === transform_controls.object.name)
-                        child.update();
-            }
+                    if (child.light != undefined)
+                        if (child.light.name === transform_controls.object.name)
+                            child.update();
+                }
             );
-        }
+        };
 
 
         if (objectSel.categoryName === "lightSun" ||
@@ -249,10 +248,10 @@ function selectorMajor(event, objectSel, whocalls) {
         }
 
         if (objectSel.name === "avatarCamera") {
+
             // case of selecting by hierarchy viewer
 
             transform_controls.size = 1;
-
             transform_controls.visible = false;
 
             // Can not be deleted
@@ -275,8 +274,7 @@ function selectorMajor(event, objectSel, whocalls) {
         // highlight
         envir.outlinePass.selectedObjects = [objectSel];
 
-        selected_object_name = objectSel.name;
-        setDatGuiInitialVales(selected_object_name);
+        setDatGuiInitialVales(objectSel);
     }
 }
 

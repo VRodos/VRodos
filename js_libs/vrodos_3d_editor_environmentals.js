@@ -63,8 +63,6 @@ class vrodos_3d_editor_environmentals {
         //this.renderer.setClearColor(0xeeeeee, 1);
 
 
-
-
         // ------ Create Scene -------
         this.scene = new THREE.Scene();
         this.scene.name = "vrodosScene";
@@ -73,8 +71,6 @@ class vrodos_3d_editor_environmentals {
         //this.scene.background = new THREE.Color( 0xeeeeee );
 
         //this.scene.background = new THREE.Color(this.back_3d_color);
-
-
 
 
 
@@ -109,9 +105,6 @@ class vrodos_3d_editor_environmentals {
         this.scene.add(this.axesHelper);
         this.setAxisText();
         this.axesHelper.visible = false;
-
-
-
 
 
 
@@ -247,7 +240,7 @@ class vrodos_3d_editor_environmentals {
         this.cameraAvatar.name = "avatarCamera";
         this.cameraAvatar.categoryName = "avatarCamera";
         this.cameraAvatar.isSelectableMesh = true;
-        this.cameraAvatar.rotation.y = Math.PI;
+        this.cameraAvatar.rotation.y = Math.PI*2;
 
         this.audiolistener = new THREE.AudioListener();
         this.cameraAvatar.add(this.audiolistener);
@@ -314,6 +307,7 @@ class vrodos_3d_editor_environmentals {
         loader.scene = this.scene;
         // var pathn = window.location.pathname.replace(/[^/]*$/, '');
         // pathn = pathn.split('/').slice(0,-2).join('/');
+
         loader.load(pluginPath + '/js_libs/threejs87/helvetiker_bold.typeface.json', this.loadtexts);
     }
 

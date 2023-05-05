@@ -31,9 +31,8 @@ class VRodos_LoaderMulti {
                 }
 
 
-                //console.log(name);
 
-                // Load Steve
+                // Load Camera object
                 if (name == 'avatarCamera') {
 
                     loader.load(pluginPath + "/assets/Steve/camera.glb",
@@ -62,13 +61,18 @@ class VRodos_LoaderMulti {
                             object.add(steveShieldMesh);
                             object.renderOrder = 1;
 
+                            //object.position.x = resources3D[name].trs.translation[0] === 0 ? resources3D[name].trs.translation[0] : (-1) * parseFloat(resources3D[name].trs.translation[0]);
+                            //object.position.y = parseFloat(resources3D[name].trs.translation[1]);
+                            //object.position.z = resources3D[name].trs.translation[2] === 0 ? resources3D[name].trs.translation[2] : (-1) * parseFloat(resources3D[name].trs.translation[2]);
+
+
                             envir.scene.add(object);
                             envir.setCamMeshToAvatarControls();
 
-                            // object = setObjectProperties(object.scene, name, resources3D);
-                            // object.isSelectableMesh = true;
-                            // envir.scene.add(object);
-                            // jQuery("#progressWrapper").get(0).style.visibility= "hidden";
+                            //object = setObjectProperties(object.scene, name, resources3D);
+                            //object.isSelectableMesh = true;
+                            //envir.scene.add(object);
+                            //jQuery("#progressWrapper").get(0).style.visibility= "hidden";
                         },
                         // called while loading is progressing
                         function (xhr) {
@@ -135,8 +139,7 @@ class VRodos_LoaderMulti {
                                         console.log('An GLB loading error happened. Error 1590', error);
                                     }
                                 );
-                            }
-                            ,
+                            },
                             // Ajax error
                             error: function (xhr, ajaxOptions, thrownError) {
 
@@ -240,9 +243,10 @@ function setObjectProperties(object, name, resources3D) {
         resources3D[name]['trs']['rotation'][1],
         resources3D[name]['trs']['rotation'][2] );
 
-    object.scale.set( resources3D[name]['trs']['scale'][0],
+    object.scale.set(
+        resources3D[name]['trs']['scale'][0],
         resources3D[name]['trs']['scale'][1],
-        resources3D[name]['trs']['scale'][2]);
+        resources3D[name]['trs']['scale'][2] );
 
 
     return object;

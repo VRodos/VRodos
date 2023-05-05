@@ -648,8 +648,6 @@ wp_head();
             // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
         });
 
-
-
     </script>
 
 
@@ -676,8 +674,6 @@ wp_head();
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
-
-
 
         let transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
@@ -780,11 +776,13 @@ wp_head();
             envir.updateCameraGivenSceneLimits();
 
             setHierarchyViewer();
-            setDatGuiInitialVales();
+            setDatGuiInitialVales(objItem);
 
-            // Set Target light for Spots
+
             for (let n in resources3D) {
                 (function (name) {
+
+                    // Set Target light for Spots
                     if (resources3D[name]['categoryName'] === 'lightSpot') {
                         let lightSpot = envir.scene.getObjectByName(name);
                         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
@@ -820,30 +818,7 @@ wp_head();
         loaderMulti.load(manager, resources3D, pluginPath);
 
 
-        // Only in Undo redo as javascript not php!
-        function parseJSON_LoadScene(scene_json){
 
-
-            resources3D = parseJSON_javascript(scene_json, uploadDir);
-
-            // CLEAR SCENE
-            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
-
-            for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
-
-                if (!preserveElements.includes(envir.scene.children[i].name))
-                    envir.scene.remove(envir.scene.children[i]);
-            }
-
-            setHierarchyViewer();
-
-            transform_controls = envir.scene.getObjectByName('myTransformControls');
-            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
-
-
-            loaderMulti = new VRodos_LoaderMulti("2");
-            loaderMulti.load(manager, resources3D);
-        }
 
         //--- initiate PointerLockControls ---------------
         initPointerLock();
@@ -905,7 +880,6 @@ wp_head();
                         }
                     }
                 }
-
                 updatePositionsPhpAndJavsFromControlsAxes();
             }
         }
@@ -923,13 +897,12 @@ wp_head();
             // highlight
             envir.outlinePass.selectedObjects = [objItem];
 
-            if (selected_object_name != 'avatarCamera') {
-                transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
-                    trs_tmp['translation'][2]);
-                transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
-                    trs_tmp['rotation'][2]);
-                transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
-            }
+            transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
+                trs_tmp['translation'][2]);
+            transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
+                trs_tmp['rotation'][2]);
+            transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+
 
             jQuery('#object-manipulation-toggle').show();
             jQuery('#axis-manipulation-buttons').show();
@@ -941,16 +914,31 @@ wp_head();
             transform_controls.setMode("translate");
 
             // Resize controls based on object size
-            if (selected_object_name != 'avatarCamera') {
+            setTransformControlsSize();
+        }
 
-                if (selected_object_name.includes("lightSun") || selected_object_name.includes("lightLamp") ||
-                    selected_object_name.includes("lightSpot")){
-                }
-            } else {
-                transform_controls.visible = false;
+        // Only in Undo redo as javascript not php!
+        function parseJSON_LoadScene(scene_json){
+
+            resources3D = parseJSON_javascript(scene_json, uploadDir);
+
+            // CLEAR SCENE
+            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
+
+            for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
+
+                if (!preserveElements.includes(envir.scene.children[i].name))
+                    envir.scene.remove(envir.scene.children[i]);
             }
 
-            setTransformControlsSize();
+            setHierarchyViewer();
+
+            transform_controls = envir.scene.getObjectByName('myTransformControls');
+            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
+
+
+            loaderMulti = new VRodos_LoaderMulti("2");
+            loaderMulti.load(manager, resources3D);
         }
 
         document.getElementsByTagName("html")[0].style.overflow="hidden";

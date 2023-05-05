@@ -35,7 +35,7 @@ var gui_controls_funs = new function() {
 
 // Add variables to GUI
 let i = 0;
-for (let key in gui_controls_funs){
+for (let key in gui_controls_funs) {
 
     let label = actionLabel[i] + " " + coordLabel[i%3];
 
@@ -50,9 +50,11 @@ for (let key in gui_controls_funs){
  */
 function controllerDatGuiOnChange() {
 
-    let actionLabel = ['translate','translate','translate','rotate','rotate','rotate','scale', 'scale', 'scale'];
+    // The following code might be obsolete.
+    /*let actionLabel = ['translate','translate','translate','rotate','rotate','rotate','scale', 'scale', 'scale'];
     let k = 0;
-    for (let key in gui_controls_funs){
+    for (let key in gui_controls_funs) {
+
         // When gui values changes then stop animating else won't be able to type with keyboard
         dg_controller[0].onChange(function(value) {
 
@@ -66,19 +68,13 @@ function controllerDatGuiOnChange() {
                 animate();
             }
         );
-    }
+    }*/
 
 
     // When gui values changes then stop animating else won't be able to type with keyboard
     dg_controller[0].onChange(function(value) {
-
-            // Stop animating
             cancelAnimationFrame( id_animation_frame );
-
-            // update object position
             transform_controls.object.position.x = gui_controls_funs.dg_t1;
-
-            // start animating again
             animate();
         }
     );
@@ -132,7 +128,6 @@ function controllerDatGuiOnChange() {
             animate();
         }
     );
-
 
     dg_controller[7].onChange( function(value) {
 
@@ -276,14 +271,14 @@ function setEventListenerKeyPressControllerConstrained(element) {
 function updatePositionsPhpAndJavsFromControlsAxes(){
 
     //--------- translate_x ---------------
-    if (transform_controls.object.position.x!= gui_controls_funs.dg_t1){
+    if ( transform_controls.object.position.x!== gui_controls_funs.dg_t1) {
         gui_controls_funs.dg_t1 = transform_controls.object.position.x;
         // Auto-save
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //--------- translate_y ---------------
-    if (transform_controls.object.position.y!= gui_controls_funs.dg_t2){
+    if (transform_controls.object.position.y!== gui_controls_funs.dg_t2) {
         gui_controls_funs.dg_t2 = transform_controls.object.position.y;
 
         // Auto-save
@@ -291,7 +286,7 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
     }
 
     //--------- translate_z ---------------
-    if (transform_controls.object.position.z!= gui_controls_funs.dg_t3){
+    if (transform_controls.object.position.z!== gui_controls_funs.dg_t3) {
         gui_controls_funs.dg_t3 = transform_controls.object.position.z;
 
         // Auto-save
@@ -299,7 +294,7 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
     }
 
     //--------- rotate_x ----------------------
-    if (transform_controls.object.rotation._x*180/Math.PI != gui_controls_funs.dg_r1){
+    if (transform_controls.object.rotation._x*180/Math.PI !== gui_controls_funs.dg_r1){
         gui_controls_funs.dg_r1 = transform_controls.object.rotation._x * 180/Math.PI;
 
         // Auto-save
@@ -307,31 +302,31 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
     }
 
     //---------rotate_y -------------------------------
-    if (transform_controls.object.rotation._y*180/Math.PI != this.dg_r2){
+    if (transform_controls.object.rotation._y*180/Math.PI !== this.dg_r2){
         gui_controls_funs.dg_r2 = transform_controls.object.rotation._y * 180/Math.PI;
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //---------rotate_z -------------------------------
-    if (transform_controls.object.rotation._z*180/Math.PI != gui_controls_funs.dg_r3){
+    if (transform_controls.object.rotation._z*180/Math.PI !== gui_controls_funs.dg_r3){
         gui_controls_funs.dg_r3 = transform_controls.object.rotation._z * 180/Math.PI;
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //---------scale_x -------------------------------
-    if (transform_controls.object.scale.x != gui_controls_funs.dg_s1){
+    if (transform_controls.object.scale.x !== gui_controls_funs.dg_s1){
         gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //---------scale_y -------------------------------
-    if (transform_controls.object.scale.y != gui_controls_funs.dg_s2){
+    if (transform_controls.object.scale.y !== gui_controls_funs.dg_s2){
         gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //---------scale_z -------------------------------
-    if (transform_controls.object.scale.z != gui_controls_funs.dg_s3){
+    if (transform_controls.object.scale.z !== gui_controls_funs.dg_s3){
         gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
@@ -339,7 +334,7 @@ function updatePositionsPhpAndJavsFromControlsAxes(){
 }
 
 
-function setDatGuiInitialVales(objectName){
+function setDatGuiInitialVales(object){
 
     gui_controls_funs.dg_t1 = transform_controls.object.position.x;
     gui_controls_funs.dg_t2 = transform_controls.object.position.y;
