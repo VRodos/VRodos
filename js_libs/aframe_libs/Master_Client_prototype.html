@@ -154,30 +154,72 @@
             }
         });
 
-        AFRAME.registerComponent('image-display', {
-            schema: { type: "string", default: "default value" },
+        AFRAME.registerComponent("overlay", {
+            dependencies: ['material'],
             init: function () {
-                this.el.addEventListener("click", e => {
-                    //this.el.object3D.visible = false;
-                    //this.el.object3D.animation = "property: rotation; from: 90 0 0; to: 0 0 0; dur: 750; delay: 500";
+                this.el.sceneEl.renderer.sortObjects = true;
+                this.el.object3D.renderOrder = 100;
+                this.el.components.material.material.depthTest = false;
+            }
+        })
 
-                    //this.el.setAttribute("animation", " property: rotation; from: 0 0 0; to: 180 0 0; startEvents: event1; dur: 750;");
+        AFRAME.registerComponent('image-display', {
+            schema: {
+                id_img: { default: "default value" },
+                main_img: { default: "default value" },
+                esc_img: { default: "default value" }
+            },
+            init: function () {
 
-                    //this.el.setAttribute("src", "#search");
-                    //this.el.setAttribute("rotation", "120 0 0");
-                    this.el.emit("event1");
 
-                    //this.el.setAttribute("animation", " property: rotation; from: 90 0 0; to: 0 0 0; dur: 750; delay: 500");
-                    //console.log(this.data);
-                    //window.location.replace(this.data);
-                    //console.log(this.data);
-                    //window.location.replace(this.data);
+
+                let click_event = this.el.addEventListener("click", e => {
+                    this.el.emit("img_open");
+                    let cam = document.getElementById("player");
+                    //this.el.emit("event1");
+
+
+                    var entity_main = document.createElement('a-plane');
+
+                    let entitycheck = document.getElementById(this.data.id_img);
+                    if (!entitycheck) {
+
+                        // Set the color to the assigned value.
+                        entity_main.setAttribute("src", '#' + this.data.main_img);
+                        entity_main.setAttribute("id", this.data.id_img);
+                        // Set the position of the box to the click intersection.
+                        entity_main.setAttribute("height", "8");
+                        entity_main.setAttribute("width", "8");
+                        entity_main.setAttribute("position", "0  2  -10");
+                        entity_main.setAttribute("material", "shader: flat");
+                        entity_main.setAttribute("overlay", "");
+
+                        // Append the box element to the scene.
+                        cam.appendChild(entity_main);
+
+                        var entity_esc = document.createElement('a-plane');
+
+                        entity_esc.setAttribute("src", '#' + this.data.esc_img);
+
+                        // Set the position of the box to the click intersection.
+                        entity_esc.setAttribute("height", "1");
+                        entity_esc.setAttribute("width", "1");
+                        entity_esc.setAttribute("position", "3  7 -9");
+                        entity_esc.setAttribute("material", "shader: flat");
+                        entity_esc.setAttribute("overlay", "");
+                        entity_esc.addEventListener("click", e => { cam.removeChild(entity_main); cam.removeChild(entity_esc); });
+
+                        // Append the box element to the scene.
+                        cam.appendChild(entity_esc);
+                    }
                 });
-                this.el.addEventListener("event1", e => {
+
+                this.el.addEventListener("img_open", e => {
                     //this.el.object3D.visible = false;
 
                     //this.el.emit("imageClick");
                     console.log("Clicked");
+                    removeEventListener('click', click_event, false);
                     //this.el.setAttribute("src", "#search");
                     //window.location.replace(this.data);
                 });

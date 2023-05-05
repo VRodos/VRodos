@@ -600,78 +600,47 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //print_r($contentObject);
 
                 
-                $a_image_asset = $dom->createElement( "a-assets" );
-                //$a_image_asset2 = $dom->createElement( "a-assets" );
+                $a_image_asset_exp = $dom->createElement( "a-assets" );
+                $a_image_asset_main = $dom->createElement( "a-assets" );
+                $a_image_asset_esc = $dom->createElement( "a-assets" );
+
                 
                
-                $a_image_asset->setAttribute("id", "image_$nameObject");
-                $a_image_asset->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/search.png");
+                $a_image_asset_exp->setAttribute("id", "exp_img_$nameObject");
+                $a_image_asset_exp->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/search.png");
 
-                //$a_image_asset2->setAttribute("id", "search");
-                //$a_image_asset2->setAttribute("src","http://localhost/wp_vrodos/wp-content/uploads//Models/Elias.jpg");
+                $a_image_asset_main->setAttribute("id", "main_img_$nameObject");
+                $a_image_asset_main->setAttribute("src","http://localhost/wp_vrodos/wp-content/uploads//Models/Elias.jpg");
+
+                $a_image_asset_esc->setAttribute("id", "esc_img_$nameObject");
+                $a_image_asset_esc->setAttribute("src","http://localhost/wp_vrodos/wp-content/uploads//Models/x.png");
 
 				//$a_asset->appendChild(a_image_asset);
 				
 				
-                $ascene->appendChild($a_image_asset);
+                $ascene->appendChild($a_image_asset_exp);
+                $ascene->appendChild($a_image_asset_main);
+                $ascene->appendChild($a_image_asset_esc);
 				
                 
-				$a_image_entity = $dom->createElement("a-box");
-                $fileOperations->setAffineTransformations($a_image_entity, $contentObject);
-				$a_image_entity->setAttribute("src", "#image_$nameObject");
+				
+                //$a_image_entity->setAttribute("animation", " property: rotation; from: 0 0 0; to: 180 0 0; startEvents: event1; dur: 750;");
+                
+                
+
+                $a_image_entity = $dom->createElement("a-plane");
+				$a_image_entity->setAttribute("src", "#exp_img_$nameObject");
                 $a_image_entity->setAttribute("scale", "1 1 1");
-                //$a_image_entity->emit("imageClick");
-                $a_image_entity->setAttribute("image-display", "foo");
-                $a_image_entity->setAttribute("animation", " property: rotation; from: 0 0 0; to: 180 0 0; startEvents: event1; dur: 750;");
-               
-
-                //$ascene->appendChild($a_image_asset);
-                /*
-                $a_image_entity2 = $dom->createElement("a-plane");
-				$a_image_entity2->setAttribute("src", "#search");
-                $a_image_entity2->setAttribute("scale", "1 1 1");
+                $a_image_entity->setAttribute("image-display", "id_img: id_img_$nameObject; main_img: main_img_$nameObject; esc_img:esc_img_$nameObject");
                 //$a_image_entity->emit("imageClick");
 
-                $a_image_entity2->setAttribute("image-display", "foo");
-                $a_image_entity2->setAttribute("animation", " property: rotation; from: 180 0 0; to: 0 0 0; startEvents: event2; dur: 750;");
+                $fileOperations->setAffineTransformations($a_image_entity, $contentObject);
+                //$a_image_entity->setAttribute("animation", " property: rotation; from: 180 0 0; to: 0 0 0; startEvents: event2; dur: 750;");
                 
                
-                $a_image_animation = $dom->createElement("a-animation");
-                $a_image_animation->setAttribute("begin", "imageClick");
-                $a_image_animation->setAttribute("attribute", "position");
-                $a_image_animation->setAttribute("from", "1.6994807312141 5.7007411959395 -11.246563662441");
-                $a_image_animation->setAttribute("to", "-2 1 -4");
-
-                
-
-                //$a_image_animation->setAttribute("animation", "property: rotation; from: 90 0 0; to: 0 0 0; dur: 750; delay: 500");
-                
-                $a_image_entity->appendChild($a_image_animation);
-                
-                //$a_image_entity->setAttribute("animation", " property: rotation; from: 90 0 0; to: 0 0 0; dur: 750; delay: 500");
-                //$a_image_entity->setAttribute("animation", " property: rotation; enabled:false; from: 90 0 0; to: 0 0 0; dur: 750; delay: 500");
-                //$a_image_entity->setAttribute("visible", "false");
-
-                
-                $fileOperations->setAffineTransformations($a_image_entity2, $contentObject);
-				
-
-				//$a_video = $dom->createElement("a-video");
-				//$a_video->setAttribute("id", "video-display_$nameObject");
-				//$a_video->setAttribute("height", "19");
-				//$a_video->setAttribute("width", "19");
-				//$a_video->setAttribute("position", "0 0 0.1");
-				//$a_video->setAttribute("src", "#video_$nameObject");
-                */
-                //$fileOperations->setAffineTransformations($a_entity, $contentObject);
-                //$a_entity->appendChild($a_video);
+               
                 $ascene->appendChild($a_image_entity);
-                //$ascenePlayer->appendChild($a_image_entity2);
-                //$ascene->appendChild($a_image_entity2);
-                
-                //
-                //$a_entity->setAttribute( "height", "20" );
-                //$a_entity->setAttribute( "width", "20" );
+               
             }
         }
 
