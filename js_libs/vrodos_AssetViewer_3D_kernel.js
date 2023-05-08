@@ -652,8 +652,8 @@ class VRodos_AssetViewer_3D_kernel {
 
 
         // Load a glTF resource
-        glbLoader.load(
-            GlbBuffer,
+        glbLoader.parse(
+            GlbBuffer, '',
             // called when the resource is loaded
             function ( gltf ) {
 
@@ -681,9 +681,9 @@ class VRodos_AssetViewer_3D_kernel {
 
                 }
 
-                scope.scene.getChildByName('root').add( gltf.scene );
+                scope.scene.getObjectByName('root').add( gltf.scene );
 
-                scope.zoomer(scope.scene.getChildByName('root'));
+                scope.zoomer(scope.scene.getObjectByName('root'));
 
                 setTimeout(function(){scope.kickRendererOnDemand();} , 1);
 
@@ -779,7 +779,7 @@ class VRodos_AssetViewer_3D_kernel {
             // Instantiate a loader
             const loader = new THREE.GLTFLoader();
 
-            loader.setDRACOLoader( new THREE.DRACOLoader() );
+            //loader.setDRACOLoader( new THREE.DRACOLoader() );
 
             // const dracoLoader = new THREE.DRACOLoader();
             // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs119/draco/' );
@@ -814,8 +814,8 @@ class VRodos_AssetViewer_3D_kernel {
                     }
 
                     // Add to root
-                    scope.scene.getChildByName('root').add(gltf.scene);
-                    scope.zoomer(scope.scene.getChildByName('root'));
+                    scope.scene.getObjectByName('root').add(gltf.scene);
+                    scope.zoomer(scope.scene.getObjectByName('root'));
                     scope.kickRendererOnDemand();
 
                     //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";

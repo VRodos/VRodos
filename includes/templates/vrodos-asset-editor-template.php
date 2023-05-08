@@ -27,57 +27,12 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
     // For fbx binary
     wp_enqueue_script('vrodos_inflate'); // for binary fbx
 
-    $versionThreeJS = "119";
+    // 1. Three js library
+    wp_enqueue_script( 'vrodos_load141_threejs' );
+    wp_enqueue_script( 'vrodos_load141_OrbitControls' );
+    wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
+    wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
 
-    if ($versionThreeJS === "119") {
-
-        // 1. Three js library
-        wp_enqueue_script( 'vrodos_load119_threejs' );
-        wp_enqueue_script( 'vrodos_load124_statjs' );
-
-        // 2. Obj loader simple; For loading an uploaded obj
-        wp_enqueue_script( 'vrodos_load87_OBJloader' );
-
-        // 3. Obj loader 2: For preview loading
-        wp_enqueue_script( 'vrodos_load87_OBJloader2' );
-        wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
-
-        wp_enqueue_script( 'vrodos_load87_MTLloader' );
-        wp_enqueue_script( 'vrodos_load87_PDBloader' );
-        wp_enqueue_script( 'vrodos_load119_FBXloader' );
-        //wp_enqueue_script('vrodos_load119_TrackballControls');
-
-        wp_enqueue_script( 'vrodos_load119_OrbitControls' );
-        wp_enqueue_script( 'vrodos_load119_GLTFLoader' );
-        wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
-        wp_enqueue_script( 'vrodos_load119_DDSLoader' );
-        wp_enqueue_script( 'vrodos_load119_KTXLoader' );
-        wp_enqueue_script( 'vrodos_load119_CSS2DRenderer' );
-
-    } else if ($versionThreeJS === "141"){
-        // 1. Three js library
-        wp_enqueue_script( 'vrodos_load141_threejs' );
-        //wp_enqueue_script( 'vrodos_load124_statjs' );
-
-        // 2. Obj loader simple; For loading an uploaded obj
-        //wp_enqueue_script( 'vrodos_load87_OBJloader' );
-
-        // 3. Obj loader 2: For preview loading
-        //wp_enqueue_script( 'vrodos_load87_OBJloader2' );
-        //wp_enqueue_script( 'vrodos_load87_WWOBJloader2' );
-
-        //wp_enqueue_script( 'vrodos_load87_MTLloader' );
-        //wp_enqueue_script( 'vrodos_load87_PDBloader' );
-        //wp_enqueue_script( 'vrodos_load119_FBXloader' );
-
-
-        wp_enqueue_script( 'vrodos_load141_OrbitControls' );
-        wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
-//	    wp_enqueue_script( 'vrodos_load119_DRACOLoader' );
-//	    wp_enqueue_script( 'vrodos_load119_DDSLoader' );
-//	    wp_enqueue_script( 'vrodos_load119_KTXLoader' );
-        wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
-    }
 
     // Load single asset: Load existing asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
@@ -91,7 +46,6 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
 
     // to capture screenshot of the 3D molecule and its tags
     wp_enqueue_script('vrodos_html2canvas');
-
 
     // Content Interlinking
     $pluginpath = dirname (plugin_dir_url( __DIR__  ));
@@ -1142,7 +1096,7 @@ if($asset_id != null) {
 
         hideAdminBar();
 
-        var mdc = window.mdc;
+        let mdc = window.mdc;
         mdc.autoInit();
 
         let back_3d_color = "<?php echo $back_3d_color; ?>";
@@ -1153,26 +1107,10 @@ if($asset_id != null) {
 
         let audio_file = document.getElementById( 'audioFile' );
 
-        let isEditMode = 0;
-        let isLoggedIn= <?php echo $isUserloggedIn ? 1: 0; ?>;
-
-        if (isLoggedIn === 1) {
-            isEditMode = <?php echo $_GET['preview'] === '1' ? 0 : 1; ?>;
-        } else {
-            isEditMode = 0;
-        }
+        let isLoggedIn = <?php echo $isUserloggedIn ? 1: 0; ?>;
+        let isEditMode = (isLoggedIn === 1) ? <?php echo $_GET['preview'] === '1' ? 0 : 1; ?> : 0 ;
 
         console.log("isEditModeA:", isEditMode);
-
-        // Reset 3D canvas if not preview
-        if (isEditMode) {
-            // clear canvas and divs for fields
-//        vrodos_reset_panels(asset_viewer_3d_kernel, "initial script");
-
-            // Get the Default Screenshot image for reference;
-            var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg").src;
-
-        }
 
         // Set the functionality of the screenshot button;
         screenshotHandlerSet();
@@ -1204,9 +1142,6 @@ if($asset_id != null) {
             assettrs,
             document.getElementById('boundSphButton'));
 
-
-
-
         // Load existing 3D models
         // asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,
         //                                                      glb_file_name, textures_fbx_string_connected);
@@ -1217,13 +1152,16 @@ if($asset_id != null) {
         addHandlerFor3Dfiles(asset_viewer_3d_kernel, multipleFilesInputElem);
 
         // Select category handler
-        if( isEditMode === 1){
+        if( isEditMode === 1) {
+            // clear canvas and divs for fields
+            // vrodos_reset_panels(asset_viewer_3d_kernel, "initial script");
+            var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg").src;
+
             (function() {
 
                 let MDCSelect = mdc.select.MDCSelect;
                 const categoryDropdown = new MDCSelect(document.getElementById('category-select'));
                 const IPRDropdown = new MDCSelect(document.getElementById('category-ipr-select'));
-
 
                 let selectedCatId = jQuery('#currently-selected-category').attr("data-cat-id");
                 categoryDropdown.listen('MDCSelect:change', () => {
@@ -1243,14 +1181,12 @@ if($asset_id != null) {
                 // This fires on start to clear layout if no category is selected
                 jQuery( document ).ready(function() {
 
-                    // No asset category selected
                     if (jQuery('#currently-selected-category').attr("data-cat-id")) {
                         jQuery('#'+ selectedCatId).attr("aria-selected", true);
                         jQuery('#category-select-category').addClass('mdc-select--disabled').attr( "aria-disabled", true);
                         loadLayout(false);
                     }
 
-                    // IPR category
                     if (jQuery('#currently-ipr-selected').attr("data-cat-ipr-id")) {
                         jQuery('#'+ selectedCatIPRId).attr("aria-selected", true);
                         jQuery('#category-ipr-select').addClass('mdc-select--disabled').attr( "aria-disabled", true);
@@ -1259,7 +1195,7 @@ if($asset_id != null) {
                 });
 
                 // Function to initialize layout
-                // paramter denotes if new asset or edit asset
+                // parameter denotes if new asset or edit asset
                 function loadLayout(hasCategory) {
 
                     asset_viewer_3d_kernel.resizeDisplayGL();
