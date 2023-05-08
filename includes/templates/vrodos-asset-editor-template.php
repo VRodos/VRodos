@@ -32,6 +32,7 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
     wp_enqueue_script( 'vrodos_load141_OrbitControls' );
     wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
     wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
+    wp_enqueue_script( 'vrodos_load141_DRACOLoader' );
 
 
     // Load single asset: Load existing asset

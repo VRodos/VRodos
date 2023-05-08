@@ -633,7 +633,7 @@ class VRodos_AssetViewer_3D_kernel {
         setTimeout(function(){scope.kickRendererOnDemand();} , 500);
     }
 
-    /* GLB loader */
+    /* GLB GLTF loader */
     loadGlbStream(GlbBuffer) {
         let scope = this;
 
@@ -645,10 +645,9 @@ class VRodos_AssetViewer_3D_kernel {
 
         let glbLoader = new THREE.GLTFLoader( manager );
 
-
-        // const dracoLoader = new THREE.DRACOLoader();
-        // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs119/draco/' );
-        // glbLoader.setDRACOLoader( dracoLoader );
+        const dracoLoader = new THREE.DRACOLoader();
+        dracoLoader.setDecoderPath( '/wp-content/plugins/vrodos/js_libs/threejs141/draco/' );
+        glbLoader.setDRACOLoader( dracoLoader );
 
 
         // Load a glTF resource
@@ -656,14 +655,6 @@ class VRodos_AssetViewer_3D_kernel {
             GlbBuffer, '',
             // called when the resource is loaded
             function ( gltf ) {
-
-                //scene.add( gltf.scene );
-
-                // gltf.animations; // Array<THREE.AnimationClip>
-                // gltf.scene; // THREE.Group
-                // gltf.scenes; // Array<THREE.Group>
-                // gltf.cameras; // Array<THREE.Camera>
-                // gltf.asset; // Object
 
                 if ( gltf.animations.length > 0) {
 
@@ -682,11 +673,9 @@ class VRodos_AssetViewer_3D_kernel {
                 }
 
                 scope.scene.getObjectByName('root').add( gltf.scene );
-
                 scope.zoomer(scope.scene.getObjectByName('root'));
-
-                setTimeout(function(){scope.kickRendererOnDemand();} , 1);
-
+                scope.kickRendererOnDemand();
+                //setTimeout(function(){scope.kickRendererOnDemand();} , 1);
 
             },
             '',

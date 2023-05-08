@@ -104,6 +104,7 @@ function vrodos_register_scripts() {
         array( 'vrodos_load119_GLTFLoader', $pluginDirJS.'threejs119/GLTFLoader.js'),
         array( 'vrodos_load141_GLTFLoader', $pluginDirJS.'threejs141/GLTFLoader.js'),
         array( 'vrodos_load119_DRACOLoader', $pluginDirJS.'threejs119/DRACOLoader.js'),
+        array( 'vrodos_load141_DRACOLoader', $pluginDirJS.'threejs141/DRACOLoader.js'),
         array( 'vrodos_load119_DDSLoader', $pluginDirJS.'threejs119/DDSLoader.js'),
         array( 'vrodos_load119_KTXLoader', $pluginDirJS.'threejs119/KTXLoader.js'),
 
