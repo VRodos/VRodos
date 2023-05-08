@@ -554,14 +554,14 @@ if($asset_id != null) {
                     ?>
 
                     <?php if($asset_id == null) { ?>
-                        <span id="currently-selected" class="mdc-select__selected-text mdc-typography--subheading2">
+                        <span id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
                         No category selected
                     </span>
                     <?php } else {  ?>
                         <span data-cat-desc="<?php echo $saved_term[0]->description; ?>"
                               data-cat-slug="<?php echo $saved_term[0]->slug; ?>"
                               data-cat-id="<?php echo $saved_term[0]->term_id; ?>"
-                              id="currently-selected" class="mdc-select__selected-text mdc-typography--subheading2">
+                              id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
                         <?php echo $saved_term[0]->name; ?>
                     </span>
                     <?php } ?>
@@ -1221,36 +1221,32 @@ if($asset_id != null) {
             (function() {
 
                 let MDCSelect = mdc.select.MDCSelect;
+                const categoryDropdown = new MDCSelect(document.getElementById('category-select'));
+                const IPRDropdown = new MDCSelect(document.getElementById('category-ipr-select'));
 
-                // Category of asset change
-                let categoryDropdown = document.getElementById('category-select');
-                let categorySelect = MDCSelect.attachTo(categoryDropdown);
-                let selectedCatId = jQuery('#currently-selected').attr("data-cat-id");
 
-                categoryDropdown.addEventListener('MDCSelect:change', function() {
+                let selectedCatId = jQuery('#currently-selected-category').attr("data-cat-id");
+                categoryDropdown.listen('MDCSelect:change', () => {
                     loadLayout(true);
+                    console.log(`Selected option at index ${categoryDropdown.selectedIndex} with value "${categoryDropdown.value}"`);
                 });
 
-                // IPR category change
-                let categoryIPRDropdown = document.getElementById('category-ipr-select');
-                let categoryIPRSelect = MDCSelect.attachTo(categoryIPRDropdown);
                 let selectedCatIPRId = jQuery('#currently-ipr-selected').attr("data-cat-ipr-id");
-
-                categoryIPRDropdown.addEventListener('MDCSelect:change', function() {
+                IPRDropdown.listen('MDCSelect:change', () => {
                     // Change the description of the popup
-                    jQuery("#categoryIPRDescription")[0].innerHTML =  categoryIPRSelect.selectedOptions[0].getAttribute("data-cat-ipr-desc");
+                    jQuery("#categoryIPRDescription")[0].innerHTML =  IPRDropdown.selectedOptions[0].getAttribute("data-cat-ipr-desc");
 
                     // Change the value of termIdInputIPR
-                    jQuery("#termIdInputIPR").attr( "value", categoryIPRSelect.selectedOptions[0].getAttribute("id") );
+                    jQuery("#termIdInputIPR").attr( "value", IPRDropdown.selectedOptions[0].getAttribute("id") );
                 });
 
                 // This fires on start to clear layout if no category is selected
                 jQuery( document ).ready(function() {
 
                     // No asset category selected
-                    if (jQuery('#currently-selected').attr("data-cat-id")) {
+                    if (jQuery('#currently-selected-category').attr("data-cat-id")) {
                         jQuery('#'+ selectedCatId).attr("aria-selected", true);
-                        jQuery('#category-select').addClass('mdc-select--disabled').attr( "aria-disabled", true);
+                        jQuery('#category-select-category').addClass('mdc-select--disabled').attr( "aria-disabled", true);
                         loadLayout(false);
                     }
 
@@ -1270,39 +1266,20 @@ if($asset_id != null) {
 
                     //vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
 
-                    let cat;
                     let descText = document.getElementById('categoryDescription');
 
                     if(hasCategory) {
-                        descText.innerHTML = categorySelect.selectedOptions[0].getAttribute("data-cat-desc");
-                        cat = categorySelect.selectedOptions[0].getAttribute("data-cat-slug");
-                        jQuery("#termIdInput").attr( "value", categorySelect.selectedOptions[0].getAttribute("id") );
+                        descText.innerHTML = categoryDropdown.selectedOptions[0].getAttribute("data-cat-desc");
+                        jQuery("#termIdInput").attr( "value", categoryDropdown.selectedOptions[0].getAttribute("id") );
+
                     } else {
-                        let jq = jQuery("#currently-selected");
+                        let jq = jQuery("#currently-selected-category");
                         descText.innerHTML = jq.attr("data-cat-desc");
-                        cat = jq.attr("data-cat-slug");
                         jQuery("#termIdInput").attr( "value", selectedCatId );
                     }
-
-                    mdc.radio.MDCRadio.attachTo(document.querySelector('.mdc-radio'));
                 }
 
             })();
-
-            /*// Select artifact, Remove category menu
-            setTimeout(function () {
-                //jQuery("#category-select").click(); // Expand category
-                jQuery('li[data-cat-slug="artifact"]').click();
-                //jQuery('#assetTitle')[0].value = 'a12'; // Set title
-                //jQuery("#objRadio-label").click(); // Set fbx type
-                //jQuery("#fileUploadInput").click(); // Click browse files
-
-                loadFileInputLabel('glb');
-
-            }, 500);
-
-            //jQuery("#glbRadio").prop("checked", true);
-            jQuery("#formSubmitBtn").show();*/
 
         } else {
 
