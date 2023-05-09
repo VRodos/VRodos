@@ -394,18 +394,26 @@ function startConf(){
 // }
 
 function generateQRcode(){
-
     // Generate QR Code
-    const qrcode = new QRCode(
-        document.getElementById("qrcode_img"), {
-            text: window.location.href.replace('#','&qrcode=none#'),
-            width: 128,
-            height: 128,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
+    let opts = {
+        errorCorrectionLevel: 'H',
+        type: 'image/png',
+        quality: 1.0,
+        margin: 1,
+        color: {
+            dark:"#010599FF",
+            light:"#FFBF60FF"
+        }
+    };
+    /*let data = window.location.href.replace('#','&qrcode=none#');*/
+    let data = window.location.href;
+    console.log(data);
 
+    QRCode.toDataURL(data, opts, function (err, url) {
+        if (err) throw err
+        let img = document.getElementById('qrcode_img')
+        img.src = url;
+    })
 }
 
 function screenshotHandlerSet(){

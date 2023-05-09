@@ -51,9 +51,7 @@ function vrodos_register_scripts() {
         array('vrodos_savescene_request', $pluginDirJS.'ajaxes/vrodos_save_scene_ajax.js'),
         array('vrodos_content_interlinking_request', $pluginDirJS.'content_interlinking_commands/content_interlinking.js'),
         array('vrodos_segmentation_request', $pluginDirJS.'semantics_commands/segmentation.js'),
-
         array('vrodos_classification_request', $pluginDirJS.'semantics_commands/classification.js'),
-        array('vrodos_qrcode_generator', $pluginDirJS.'external_js_libraries/qrcode.js'),
         array('vrodos_inflate', $pluginDirJS.'external_js_libraries/inflate.min.js'),
         array('vrodos_AssetViewer_3D_kernel', $pluginDirJS.'vrodos_AssetViewer_3D_kernel.js'),
         array('vrodos_3d_editor_buttons_drags', $pluginDirJS.'vrodos_3d_editor_buttons_drags.js'),
@@ -192,7 +190,11 @@ function vrodos_register_scripts() {
         wp_register_script($scriptsD[$i][0] , $scriptsD[$i][1], null, null, false );
     }
 }
+
 // 45
+
+
+
 
 // Register in front-end
 add_action('wp_enqueue_scripts', 'vrodos_register_scripts' );

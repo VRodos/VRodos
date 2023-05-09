@@ -10,6 +10,9 @@ $isAdmin = is_admin() ? 'back' : 'front';
     let isAdmin="<?php echo $isAdmin; ?>";
 </script>
 
+<!--Load external library to create QR code-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
+
 <?php
 
 // Load Scripts
@@ -17,9 +20,6 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
 
     // Stylesheet
     wp_enqueue_style('vrodos_asseteditor_stylesheet');
-
-    // QR code generator
-    wp_enqueue_script('vrodos_qrcode_generator');
 
     // Three js : for simple rendering
     wp_enqueue_script('vrodos_scripts');
@@ -224,7 +224,6 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         <?php
 
         // It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
-
         $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
 
     }else {
@@ -461,7 +460,7 @@ if($asset_id != null) {
         <?php if(($isOwner || $isUserAdmin) && $isEditMode) {
             wp_nonce_field('post_nonce', 'post_nonce_field'); ?>
             <input type="hidden" name="submitted" id="submitted" value="true"/>
-            <button id="formSubmitBtn" style="float: right;"
+            <button id="formSubmitBtn" style="float: right;" disabled
                     class="mdc-button mdc-elevation--z2 mdc-button--raised mdc-button--primary"
                     data-mdc-auto-init="MDCRipple" type="submit" <?php echo $isEditable?'':' disabled' ?> >
                 <?php echo $asset_id == null ? "Create asset" : "Update asset"; ?>
@@ -1092,6 +1091,7 @@ if($asset_id != null) {
     </form>
 
 
+
     <script type="text/javascript">
         'use strict';
 
@@ -1199,6 +1199,7 @@ if($asset_id != null) {
                 // parameter denotes if new asset or edit asset
                 function loadLayout(hasCategory) {
 
+                    document.getElementById('formSubmitBtn').disabled = false;
                     asset_viewer_3d_kernel.resizeDisplayGL();
 
                     //vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
@@ -1210,6 +1211,7 @@ if($asset_id != null) {
                         jQuery("#termIdInput").attr( "value", categoryDropdown.selectedOptions[0].getAttribute("id") );
 
                     } else {
+
                         let jq = jQuery("#currently-selected-category");
                         descText.innerHTML = jq.attr("data-cat-desc");
                         jQuery("#termIdInput").attr( "value", selectedCatId );

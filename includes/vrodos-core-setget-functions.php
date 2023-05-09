@@ -614,8 +614,10 @@ function get_3D_model_files($assetpostMeta, $asset_id){
 		$pdb_file_name = get_post($assetpostMeta['vrodos_asset3d_pdb'][0])->guid;
 		
 		// GLB
-	} else if (array_key_exists('vrodos_asset3d_glb', $assetpostMeta)){
-		$glb_file_name = get_post($assetpostMeta['vrodos_asset3d_glb'][0])->guid;
+	} else if (array_key_exists('vrodos_asset3d_glb', $assetpostMeta)) {
+
+        $glb_file_name = get_post($assetpostMeta['vrodos_asset3d_glb'][0]) ? get_post($assetpostMeta['vrodos_asset3d_glb'][0])->guid : null;
+
 		
 		// FBX
 	} else if (array_key_exists('vrodos_asset3d_fbx', $assetpostMeta)) {
