@@ -260,22 +260,20 @@ function vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $as
 
 
 // Update asset
-function vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
-                                      $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs){
+function vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs) {
+
     $asset_taxonomies = array(
-        'vrodos_asset3d_pgame' => array($assetPGameID,),
-        'vrodos_asset3d_cat' => array($assetCatID,),
-        'vrodos_asset3d_ipr_cat' => array($assetCatIPRID,)
+        'vrodos_asset3d_pgame' => array($assetPGameID),
+        'vrodos_asset3d_cat' => array($assetCatID),
+        'vrodos_asset3d_ipr_cat' => array($assetCatIPRID)
     );
-    $asset_new_info = array(
+    $data = array(
         'ID' => $asset_id,
         'post_title' => $asset_language_pack['assetTitleForm'],
         'post_content' => $asset_language_pack['assetDescForm'],
         'tax_input' => $asset_taxonomies,
     );
-
-    wp_update_post($asset_new_info);
-
+    wp_update_post($data);
     vrodos_update_asset_texts($asset_id, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
 
     return 1;
