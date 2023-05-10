@@ -1212,7 +1212,6 @@ if($asset_id != null) {
 
                     if(hasCategory) {
                         descText.innerHTML = categoryDropdown.selectedOptions[0].getAttribute("data-cat-desc");
-                        console.log(categoryDropdown.value);
                         jQuery("#termIdInput").attr( "value", categoryDropdown.value );
 
                     } else {
