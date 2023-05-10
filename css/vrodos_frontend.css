@@ -1361,18 +1361,38 @@ video {
 
 /* ----------- Asset Editor -----------------*/
 
+.asset_editor_style {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    padding: 0;
+    margin: 0 auto;
+    overflow: hidden;
+    display: block;
+    height: 100%;
+    background: white;
+}
+
 .asset_editor_textpanel{
-    background:#ffffff;
-    padding: 0 2px 15px 15px;
-    border:0;
+    padding: 16px;
+    border: 0;
     z-index: 1000;
-    overflow-y:auto;
+    overflow-y: auto;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    display: block;
+    height: 100%;
 }
 
 .asset_editor_3dpanel{
-    position: fixed;
-    top: 0;
+    position: absolute;
     right: 0;
+    height: 100%;
+    display: block;
     z-index: 1;
 }
 
@@ -1394,7 +1414,7 @@ video {
         border: 0;
         height: 40%;
         width: 100%;
-        position:fixed;
+        position: fixed;
         bottom:0;
     }
 
