@@ -232,8 +232,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         <?php
 
         // Edit an existing asset: Return true if updated, false if failed
-        $asset_updatedConf = vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID,
-            $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
+        $asset_updatedConf = vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $asset_language_pack, $assetFonts, $assetback3dcolor, $assettrs);
     }
 
     // Upload 3D files
@@ -263,7 +262,12 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
             vrodos_create_asset_addVideo_frontend($asset_id);
             break;
     }
-    echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'&vrodos_asset='.$asset_id.'#English'.'";</script>';
+
+    if (isset($_GET['vrodos_asset'])) {
+        echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'"</script>';
+    } else {
+        echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'&vrodos_asset='.$asset_id.'";</script>';
+    }
     return ;
 }
 

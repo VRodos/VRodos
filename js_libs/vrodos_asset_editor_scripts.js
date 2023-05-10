@@ -407,11 +407,10 @@ function generateQRcode(){
     };
     /*let data = window.location.href.replace('#','&qrcode=none#');*/
     let data = window.location.href;
-    console.log(data);
 
     QRCode.toDataURL(data, opts, function (err, url) {
         if (err) throw err
-        let img = document.getElementById('qrcode_img')
+        let img = document.getElementById('qrcode_img');
         img.src = url;
     })
 }
