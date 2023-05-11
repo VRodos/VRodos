@@ -179,5 +179,4 @@ function vrodos_scenes_types_archaeology_standard_cre(){
         );
     }
 }
-
 ?>

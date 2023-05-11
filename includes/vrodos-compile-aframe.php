@@ -41,7 +41,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         // Add glbURLs from glbID
         foreach ( $scene_json[$key]->objects as &$o ) {
-            if ( $o->categoryName == "Artifact" ||  $o->categoryName == "Door") {
+            if ( $o->categoryName == "Decoration" ||  $o->categoryName == "Door") {
                 $glbURL[$key] = get_the_guid( $o->glbID );
                 $o->glbURL[$key] = $glbURL[$key];
                 //print_r($glbURL[$key]);
@@ -329,8 +329,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         foreach($objects as $nameObject => $contentObject) {
             //print_r($contentObject->categoryName);
-            // ===========  Artifact==============
-            if ( $contentObject->categoryName == 'Artifact' ) {
+            // ===========  Artifact - Decoration ==============
+            if ( $contentObject->categoryName == 'Decoration' ) {
 
                 $fileOperations->writer("output_master.txt", $contentObject->assetname);
                 /*
