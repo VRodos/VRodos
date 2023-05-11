@@ -398,11 +398,15 @@ if($asset_id != null) {
 
     <div id="text-asset-sidebar" class="asset_editor_textpanel">
 
-        <div style="display: inline-block">
+        <div style="display: inline-block; width: 100%;">
+            <h2 class="mdc-typography--headline mdc-theme--text-primary-on-light" >Asset editor</h2>
+        </div>
+
+        <div style="display: inline-block; width: 100%;">
             <?php if ($isUserloggedIn && $isEditMode) { ?>
 
                 <a title="Back" class="vrodos-back-button hideAtLocked mdc-button" href="<?php echo $goBackToLink;?>">
-                    <em class="material-icons arrowback" >arrow_back</em>Assets Manager</a>
+                    <em class="material-icons arrowback">arrow_back</em> Back</a>
                 <?php
             }
 
@@ -458,24 +462,17 @@ if($asset_id != null) {
             }?>
 
             <!-- Author -->
-            <div id="vrodos-asset-author" class="mdc-typography--caption">
-                <div id="authorImageRow" rowspan="2">
-                    <img alt="Author image" id="vrodos-authorImg"
-                         src="<?php echo get_avatar_url($author_id);?>">
-                </div>
-
-                <div style="padding: 0;">
-                    <a href="<?php echo home_url().'/user/'.$author_username; ?>"
-                       style="color:black">
-                        <?php  echo $author_displayname;?>
-                    </a>
-                </div>
-                <span style=""><?php echo $author_country;?></span>
-
+            <div class="mdc-typography--caption" style="display: inline-block; float: right;" >
+                <img alt="Author image" class="AssetEditorAuthorImageStyle"
+                     src="<?php echo get_avatar_url($author_id);?>">
+                <a href="#" style="color:black; line-height: 48px; vertical-align: text-bottom">
+                    <?php echo $author_displayname;?>
+                </a>
             </div>
 
-
         </div>
+
+        <hr/>
 
         <!-- Form to submit data -->
         <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data">
@@ -1232,10 +1229,4 @@ if($asset_id != null) {
             showSlides(slideIndex);
         }
 
-        // Scroll to top
-        window.onload = function () {
-            setTimeout(function () {
-                document.getElementById("text-asset-sidebar").scrollTo(0,0)
-            }, 0);
-        };
     </script>

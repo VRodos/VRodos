@@ -376,23 +376,6 @@ function startConf(){
     vrodos_notify_confpeers();
 }
 
-// function setCanvasDivSize(){
-//
-//     // Responsive Layout (text panel vs 3D model panel
-//     if (window.innerWidth < window.innerHeight) {
-//
-//         const initCH = document.getElementById('text-asset-sidebar').clientHeight;
-//         const initCH2 = document.getElementById('wrapper_3d_inner').clientHeight;
-//
-//         document.getElementById('text-asset-sidebar').addEventListener('scroll', function () {
-//             document.getElementById("text-asset-sidebar").style.height = (initCH + this.scrollTop / 2 + 5).toString();
-//             document.getElementById("wrapper_3d_inner").style.height = (initCH2 - this.scrollTop / 2 + 5).toString();
-//             asset_viewer_3d_kernel.resizeDisplayGL();
-//         });
-//     }
-//
-// }
-
 function generateQRcode(){
     // Generate QR Code
     let opts = {
