@@ -104,13 +104,6 @@ function loadButtonActions() {
         jQuery("#scenesInsideVREditor").toggle("slow");
     });
 
-
-    // Save experiment id: Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
-    jQuery('#save-expid-button').click(function () {
-        vrodos_saveExpIDAjax();
-    });
-
-
     // Take SCREENSHOT OF SCENE
     jQuery("#takeScreenshotBtn").click(function () {
         takeScreenshot();

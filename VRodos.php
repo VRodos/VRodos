@@ -521,7 +521,6 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
 
 //------------------- For Compile ---------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-compile-aframe.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
 
@@ -529,7 +528,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemb
 
 //------------------- Archaeology related -----------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-yamls.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-settings.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
 
 // 22
 add_action( 'init', 'vrodos_create_asset_categories');
@@ -912,11 +911,6 @@ add_action('wp_ajax_vrodos_undo_scene_async_action','vrodos_undo_scene_async_act
 add_action('wp_ajax_vrodos_redo_scene_async_action','vrodos_redo_scene_async_action_callback');
 
 
-add_action('wp_ajax_vrodos_save_expid_async_action','vrodos_save_expid_async_action_callback');
-
-// Ajax for saving gio asynchronoysly
-add_action('wp_ajax_vrodos_save_gio_async_action','vrodos_save_gio_async_action_callback');
-
 // Ajax for deleting scene
 add_action('wp_ajax_vrodos_delete_scene_action','vrodos_delete_scene_frontend_callback');
 
@@ -964,14 +958,6 @@ add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_ass
 add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_backend_callback');
 
 // ------- Ajaxes for compiling ---------
-
-// the ajax js is in js_lib/request_game.js (see main functions.php for registering js)
-// the ajax phps are on vrodos-core-functions.php
-
-
-add_action( 'wp_ajax_vrodos_monitor_compiling_action', 'vrodos_monitor_compiling_action_callback' );
-add_action( 'wp_ajax_vrodos_killtask_compiling_action', 'vrodos_killtask_compiling_action_callback' );
-add_action( 'wp_ajax_vrodos_game_zip_action', 'vrodos_game_zip_action_callback' );
 
 // Assemble php from ajax call
 //add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' );

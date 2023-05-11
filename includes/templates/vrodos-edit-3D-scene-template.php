@@ -184,28 +184,7 @@ $allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
 
 $parent_project_id_as_term_id = $allScenePGame ? $allScenePGame->term_id : null;
 
-// Ajax for fetching game's assets within asset browser widget at vr_editor // user must be logged in to work, otherwise ajax has no privileges
 // COMPILE Ajax
-if(vrodos_getUnity_local_or_remote() != 'remote') {
-
-    // Local compile
-    $gameUnityProject_dirpath = $upload_dir . '\\' . $projectSlug . 'Unity';
-    $gameUnityProject_urlpath = $pluginpath . '/../../uploads/' . $projectSlug . 'Unity/';
-
-} else {
-
-    // Remote compile
-    $ftp_cre = vrodos_get_ftpCredentials();
-    $ftp_host = $ftp_cre['address'];
-
-    $gamesFolder = 'COMPILE_UNITY3D_GAMES';
-
-    $gameUnityProject_dirpath = $gamesFolder."/".$projectSlug."Unity";
-    $gameUnityProject_urlpath = "http://".$ftp_host."/".$gamesFolder."/".$projectSlug."Unity";
-}
-
-
-
 $thepath = $pluginpath . '/js_libs/ajaxes/vrodos_request_compile.js';
 
 wp_enqueue_script( 'ajax-script_compile', $thepath, array('jquery') );
@@ -217,9 +196,6 @@ wp_localize_script( 'ajax-script_compile',
         'projectId' => $project_id,
         'slug' => $projectSlug,
         'sceneId' => $current_scene_id
-//                        ,
-//                               'gameUnityProject_dirpath' => $gameUnityProject_dirpath,
-//                               'gameUnityProject_urlpath' => $gameUnityProject_urlpath
     )
 );
 
@@ -228,12 +204,6 @@ wp_localize_script( 'ajax-script_compile',
 wp_enqueue_script( 'ajax-script_deletescene', $pluginpath . '/js_libs/ajaxes/delete_scene.js', array('jquery') );
 wp_localize_script( 'ajax-script_deletescene', 'my_ajax_object_deletescene',
     array( 'ajax_url' => admin_url( 'admin-ajax.php'))
-);
-
-//FOR SAVING extra keys
-wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
-wp_localize_script( 'ajax-script_savegio', 'my_ajax_object_savegio',
-    array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'project_id' => $project_id )
 );
 
 // Asset Browser
