@@ -57,95 +57,83 @@ function vrodos_getSceneYAML_archaeology($myscene_type){
 
 
 
-/***************************************************************************************************************/
-// CREATE ASSETS' TYPES with default values (ARCHAEOLOGY GAMES)
-/***************************************************************************************************************/
+// Create the default asset types for all types of projects
+function vrodos_create_asset_categories(){
 
-
-
-function vrodos_assets_taxcategory_archaeology_fill(){
-
-    $res= wp_insert_term(
-        'Artifact', // the term
-        'vrodos_asset3d_cat', // the taxonomy
-        array(
-            'description'=> 'Artifacts are 3D models that can be clicked and inspected. They have also a textual description.',
+    $categories = [
+        'artifact' => [
+            'name' => 'Artifact',
             'slug' => 'artifact',
-        )
-    );
-    
-    $inserted_term1 = get_term_by('slug', 'artifact', 'vrodos_asset3d_cat');
-    
-    //update_term_meta($inserted_term1->term_id, 'vrodos_yamlmeta_assetcat_pat', vrodos_default_value_artifact_get(), true);
-    update_term_meta($inserted_term1->term_id, 'vrodos_assetcat_gamecat', 1 , true);
-    update_term_meta($inserted_term1->term_id, 'vrodos_assetcat_icon', "pets" );
-
-    wp_insert_term(
-        'Points of Interest (Image-Text)', // the term
-        'vrodos_asset3d_cat', // the taxonomy
-        array(
-            'description'=> 'When clicking on a POI, information pops up as an image with a textual description.',
-            'slug' => 'pois_imagetext',
-        )
-    );
-    $inserted_term2 = get_term_by('slug', 'pois_imagetext', 'vrodos_asset3d_cat');
-    //update_term_meta($inserted_term2->term_id, 'vrodos_yamlmeta_assetcat_pat', vrodos_default_value_poi_get(), true);
-    update_term_meta($inserted_term2->term_id, 'vrodos_assetcat_gamecat', 1 , true);
-    update_term_meta($inserted_term2->term_id, 'vrodos_assetcat_icon', 'image');
-    
-    wp_insert_term(
-        'Points of Interest (Video)', // the term
-        'vrodos_asset3d_cat', // the taxonomy
-        array(
-            'description'=> 'Points of interest (POIs) that open up a video',
-            'slug' => 'pois_video',
-        )
-    );
-    $inserted_term3 = get_term_by('slug', 'pois_video', 'vrodos_asset3d_cat');
-    //update_term_meta($inserted_term3->term_id, 'vrodos_yamlmeta_assetcat_pat', vrodos_default_value_poi_video_get(), true);
-    update_term_meta($inserted_term3->term_id, 'vrodos_assetcat_gamecat', 1 , true);
-    update_term_meta($inserted_term3->term_id, 'vrodos_assetcat_icon', 'videocam');
-
-    wp_insert_term(
-        'Site', // the term
-        'vrodos_asset3d_cat', // the taxonomy
-        array(
-            'description'=> 'Site models are static 3D models that can not be interacted with (e.g. ground, house).',
-            'slug' => 'site',
-        )
-    );
-    $inserted_term4 = get_term_by('slug', 'site', 'vrodos_asset3d_cat');
-    //update_term_meta($inserted_term4->term_id, 'vrodos_yamlmeta_assetcat_pat', vrodos_default_value_site_get(), true);
-    update_term_meta($inserted_term4->term_id, 'vrodos_assetcat_gamecat', 1 , true);
-    update_term_meta($inserted_term4->term_id, 'vrodos_assetcat_icon', 'place');
-    
-    
-    wp_insert_term(
-        'Door', // the term
-        'vrodos_asset3d_cat', // the taxonomy
-        array(
-            'description'=> 'Doors are gates to other scenes',
+            'description' => 'Artifacts are 3D models that serve as decorations in the 3D space. They are not interactable.',
+            'ic' => 'grid_view'
+        ],
+        'door' => [
+            'name' => 'Door',
             'slug' => 'door',
-        )
-    );
-    $inserted_term5 = get_term_by('slug', 'door', 'vrodos_asset3d_cat');
-    //update_term_meta($inserted_term5->term_id, 'vrodos_yamlmeta_assetcat_pat', vrodos_default_value_door_get(), true);
-    add_term_meta($inserted_term5->term_id, 'vrodos_assetcat_gamecat', 1 , true);
-    update_term_meta($inserted_term5->term_id, 'vrodos_assetcat_icon', 'input');
+            'description' => 'Doors are 3D objects that serve as entry points to other scenes.',
+            'ic' => 'door'
+        ],
+        'video' => [
+            'name' => 'Video',
+            'slug' => 'video',
+            'description' => 'A video canvas that can be placed inside the 3D space. The user can maximize it to full screen.',
+            'ic' => 'movie'
 
-    wp_insert_term(
-        'Decoration (Archaeology)', // the term
-        'vrodos_asset3d_cat', // the taxonomy
-        array(
-            'description'=> 'A Decoration is a 3D object that can improve the immersiveness such as a tree, a furniture, etc.',
-            'slug' => 'decoration_arch',
-        )
-    );
-    $inserted_term6 = get_term_by('slug', 'decoration_arch', 'vrodos_asset3d_cat');
-    //update_term_meta($inserted_term6->term_id, 'vrodos_yamlmeta_assetcat_pat', vrodos_default_value_decoration_arch_get(), true);
-    update_term_meta($inserted_term6->term_id, 'vrodos_assetcat_gamecat', 1 , true);
-    update_term_meta($inserted_term6->term_id, 'vrodos_assetcat_icon', 'local_florist');
-    
+        ],
+        'poi-imagetext' => [
+            'name' => 'POI - Image / Text',
+            'slug' => 'poi-imagetext',
+            'description' => 'An interactable 3D object. Launches a popup window on click that features an image and a description.',
+            'ic' => 'image'
+        ],
+        'poi-help' => [
+            'name' => 'POI - Help',
+            'slug' => 'poi-help',
+            'description' => 'An interactable 3D object. Launches a popup window on click that features a contact form.',
+            'ic' => 'help'
+        ],
+        'chat' => [
+            'name' => 'Chat',
+            'slug' => 'chat',
+            'description' => 'A chatbox component.',
+            'ic' => 'chat'
+        ],
+        'poi-link' => [
+            'name' => 'POI - Link',
+            'slug' => 'poi-link',
+            'description' => 'An interactable 3D object. Launches an external url, for example a website or a document file.',
+            'ic' => 'open_in_new'
+        ]
+    ];
+
+    foreach ($categories as $cat) {
+        $inserted_cat = wp_insert_term(
+            $cat['name'], // the term
+            'vrodos_asset3d_cat', // the taxonomy
+            array(
+                'description'=> $cat['description'],
+                'slug' => $cat['slug'],
+            )
+        );
+        if ( !is_wp_error($inserted_cat) ) {
+            update_term_meta($inserted_cat['term_id'], 'vrodos_assetcat_gamecat', 1 , true);
+            update_term_meta($inserted_cat['term_id'], 'vrodos_assetcat_icon', $cat['ic'] );
+        } else {
+            //var_dump($inserted_cat->get_error_messages());
+        }
+
+    }
+
+    //$inserted_term1 = get_term_by('slug', 'artifact', 'vrodos_asset3d_cat');
+
+    // Backup of previous slugs
+    /*  'slug' => 'artifact',
+        'slug' => 'decoration_arch',
+        'slug' => 'door',
+        'slug' => 'site',
+        'slug' => 'pois_video',
+        'slug' => 'pois_imagetext',*/
+
 }
 
 

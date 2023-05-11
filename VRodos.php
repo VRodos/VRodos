@@ -32,7 +32,7 @@ echo ini_get('max_input_time').chr(10);
 // Default    : 1
 // Virtual Exhibition (VRExpo)    : 2
 // VirtualProduction (MediaVerse) : 3
-$project_scope = 3;
+$project_scope = 2;
 
 
 
@@ -162,8 +162,6 @@ function vrodos_register_scripts() {
         array( 'vrodos_load119_FileLoader', $pluginDirJS.'threejs119/FileLoader.js'),
         array( 'vrodos_load119_LoadingManager', $pluginDirJS.'threejs119/LoadingManager.js'),
 
-
-
     );
 
     for ( $i = 0 ; $i < count($scriptsC); $i ++){
@@ -190,10 +188,6 @@ function vrodos_register_scripts() {
         wp_register_script($scriptsD[$i][0] , $scriptsD[$i][1], null, null, false );
     }
 }
-
-// 45
-
-
 
 
 // Register in front-end
@@ -538,7 +532,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_setti
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-settings.php' );
 
 // 22
-add_action( 'init', 'vrodos_assets_taxcategory_archaeology_fill' );
+add_action( 'init', 'vrodos_create_asset_categories');
 
 // 23
 add_action( 'init', 'vrodos_scenes_types_archaeology_standard_cre' );
