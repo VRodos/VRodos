@@ -537,9 +537,6 @@ add_action( 'init', 'vrodos_create_asset_categories');
 // 23
 add_action( 'init', 'vrodos_scenes_types_archaeology_standard_cre' );
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-compile.php' );
-
-
 
 // ---- Content interlinking ----------
 
