@@ -1024,16 +1024,9 @@ function vrodos_remove_db_residues(){
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%_games%'");
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%pois_%'");
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%decoration%'");
-
-
-    // +++
-    //terrain
-    //marker
-    //artifact
-    //site
-    //door
-    //room
-    //gate
+    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%door%'");
+    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%video%'");
+    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%chat%'");
 
     // 5. Term relationships
     // +++
