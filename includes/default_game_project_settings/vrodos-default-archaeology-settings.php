@@ -61,10 +61,10 @@ function vrodos_getSceneYAML_archaeology($myscene_type){
 function vrodos_create_asset_categories(){
 
     $categories = [
-        'artifact' => [
-            'name' => 'Artifact',
-            'slug' => 'artifact',
-            'description' => 'Artifacts are 3D models that serve as decorations in the 3D space. They are not interactable.',
+        'decoration' => [
+            'name' => 'Decoration',
+            'slug' => 'decoration',
+            'description' => 'Decorations are 3D models that serve to build the 3D space. They are not interactable.',
             'ic' => 'grid_view'
         ],
         'door' => [
@@ -180,7 +180,4 @@ function vrodos_scenes_types_archaeology_standard_cre(){
     }
 }
 
-/***************************************************************************************************************/
-//
-/***************************************************************************************************************/
 ?>
