@@ -8,13 +8,13 @@ function vrodos_create_asset_categories(){
             'name' => 'Decoration',
             'slug' => 'decoration',
             'description' => 'Decorations are 3D models that serve to build the 3D space. They are not interactable.',
-            'ic' => 'grid_view'
+            'ic' => 'grid_on'
         ],
         'door' => [
             'name' => 'Door',
             'slug' => 'door',
             'description' => 'Doors are 3D objects that serve as entry points to other scenes.',
-            'ic' => 'door'
+            'ic' => 'exit_to_app'
         ],
         'video' => [
             'name' => 'Video',

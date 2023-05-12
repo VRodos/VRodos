@@ -400,7 +400,7 @@ wp_head();
 
                     <div class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
                         <header draggable="false" class="notdraggable">Actor</header>
-                        <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0px"
+                        <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0"
                              src="<?php echo $pluginpath?>/images/lights/pawn.png"/>
                     </div>
 
@@ -416,25 +416,25 @@ wp_head();
                     <div class="lightpawnbutton" data-lightPawn="Lamp" draggable="true">
                         <header draggable="false" class="notdraggable">Lamp</header>
                         <img draggable="false" class="lighticon notdraggable"
-                             src="<?php echo $pluginpath?>/images/lights/lamp.png" draggable="false"/>
+                             src="<?php echo $pluginpath?>/images/lights/lamp.png"/>
                     </div>
 
                     <div class="lightpawnbutton" data-lightPawn="Spot" draggable="true">
                         <header draggable="false" class="notdraggable">Spot</header>
                         <img draggable="false" class="lighticon notdraggable"
-                             src="<?php echo $pluginpath?>/images/lights/spot.png" draggable="false"/>
+                             src="<?php echo $pluginpath?>/images/lights/spot.png"/>
                     </div>
 
                     <div class="lightpawnbutton" data-lightPawn="Ambient" draggable="true">
                         <header draggable="false" class="notdraggable" style="font-size: 7pt">Ambient</header>
                         <img draggable="false" class="lighticon notdraggable"
-                             src="<?php echo $pluginpath?>/images/lights/ambient_light.png" draggable="false"/>
+                             src="<?php echo $pluginpath?>/images/lights/ambient_light.png"/>
                     </div>
 
                     <!-- Set RendererToneMapping  -->
                     <div id="rendererToneMappingDiv"
                          class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
-                         style="width:60px; margin:0px; padding:0px; height:42px; background: rgba(255,255,255,0.5);float:left;display:block">
+                         style="width:60px; margin:0; padding:0; height:42px; background: rgba(255,255,255,0.5);float:left;display:block">
 
                         <label for="rendererToneMapping"
                                class=""
@@ -446,9 +446,8 @@ wp_head();
                                onchange="changeRendererToneMapping(this.value);">
                     </div>
 
-                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
+                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;padding:0;margin: 0 2px;">
                     </div>
-
 
 
                     <div class="environmentButton">
