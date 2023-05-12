@@ -542,8 +542,8 @@ wp_head();
                 <div class="filemanager" id="assetBrowserToolbar">
 
                     <!-- Categories of assets -->
-                    <div id="assetCategTab">
-                        <button id="allAssetsViewBt" class="tablinks active">All</button>
+                    <div id="assetCategTab" class="AssetCategoryTabStyle">
+                        <button id="allAssetsViewBt" class="tablinks mdc-button active">All</button>
                     </div>
 
                     <!-- Search bar -->

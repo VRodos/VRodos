@@ -218,16 +218,16 @@ canvas { pointer-events:none; z-index:10; }
     width: 4%;
 }
 
-#assetCategTab {
+.AssetCategoryTabStyle {
     margin-top: 60px;
-    background-color: black;
-    padding: 0px;
+    background-color: rgba(255,255,255,0.12);
+    padding: 0;
 }
 
 
 .affineSwitch {
     width: 33% !important;
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
 
