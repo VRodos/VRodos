@@ -417,16 +417,10 @@ canvas { pointer-events:none; z-index:10; }
     background-color: #dfdfdf;
 }
 
-#hierarchy-viewer {
-    padding: 0px;
-
+.HierarchyViewerTitle {
+    padding-left: 14px;
+    font-weight: 500;
 }
-
-#hierarchy-viewer li {
-    padding-left: 5px;
-
-}
-
 
 .hierarchyItem {
     width: 100%

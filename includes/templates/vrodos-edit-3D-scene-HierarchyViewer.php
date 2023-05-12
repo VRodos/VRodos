@@ -21,7 +21,7 @@
     </div>
 
     <!-- Numerical input for Move rotate scale -->
-    <div id="row4" class="row-right-panel" style="max-height:25%;; overflow: scroll">
+    <div id="row4" class="row-right-panel" style="max-height:25%; overflow-y: auto">
         <div id="numerical_gui-container" class="VrGuiContainerStyle mdc-typography mdc-elevation--z1"></div>
     </div>
 
@@ -54,17 +54,17 @@
     <!-- Hierarchy viewer -->
     <div id="row6" class="row-right-panel" style="max-height:30%;">
         <div class="HierarchyViewerStyle mdc-card" id="hierarchy-viewer-container">
-            <span class="hierarchyViewerTitle mdc-typography--subheading1 mdc-theme--text-primary-on-background" style="">Hierarchy Viewer</span>
+            <span class="HierarchyViewerTitle mdc-typography--subheading1 mdc-theme--text-primary-on-background">Hierarchy Viewer</span>
             <hr class="mdc-list-divider">
-            <ul class="mdc-list" id="hierarchy-viewer" style="max-height: 300px; overflow-y: scroll"></ul>
+            <ul class="mdc-list" id="hierarchy-viewer" style="max-height: 300px; overflow-y: auto; padding-left: 14px;"></ul>
         </div>
     </div>
 
     <!-- Set Clear Color -->
     <div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0px; padding:0px; height:70px; background: rgba(255,255,255,0.5)">
 
-        <ul class="RadioButtonList" style="margin:0px">
-            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="" style="height:30px; margin:0px; font-size:xx-small">
+        <ul class="RadioButtonList" style="margin:0">
+            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="" style="height:30px; margin:0; font-size:xx-small">
                 <div class="mdc-radio">
                     <input class="mdc-radio__native-control" type="radio" id="sceneColorRadio"
                            name="sceneColorTypeRadio" value="color">
@@ -122,7 +122,7 @@
 
     <!-- Enable Environmental texture  -->
     <div id="sceneFogDiv"
-         style="border: 1px black solid; width:100%; margin:0; padding:0; height:140px; background: rgba(255,255,255,0.5); overflow:scroll">
+         style="border: 1px black solid; width:100%; margin:0; padding:0; height:140px; background: rgba(255,255,255,0.5); overflow-y: auto;">
 
         <div style="background: none; margin:5px; font-size:10px; width: 70%; font-weight: bold; color:gray ">Fog</div>
 
