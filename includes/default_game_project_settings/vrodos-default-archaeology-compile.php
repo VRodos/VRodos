@@ -192,6 +192,17 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_it_follow_camera_x = $value['follow_camera_x'];
                 $poi_it_follow_camera_y = $value['follow_camera_y'];
                 $poi_it_follow_camera_z = $value['follow_camera_z'];
+                $poi_it_poi_img_title = $value['poi_img_title'];
+                $poi_it_poi_img_desc = $value['poi_img_desc'];
+                $poi_it_poi_img_link = $value['poi_img_link'];
+                $poi_it_poi_onlyimg = $value['poi_onlyimg'];
+
+
+
+
+                
+
+  
 
 
 
@@ -255,6 +266,10 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_v_follow_camera_x = $value['follow_camera_x'];
                 $poi_v_follow_camera_y = $value['follow_camera_y'];
                 $poi_v_follow_camera_z = $value['follow_camera_z'];
+                $poi_v_poi_img_title = $value['poi_img_title'];
+                $poi_v_poi_img_desc = $value['poi_img_desc'];
+                $poi_v_poi_img_link = $value['poi_img_link'];
+                $poi_v_poi_onlyimg = $value['poi_onlyimg'];
                 $poi_v_title = get_the_title($poi_vid_id);
                 $poi_v_trans_fid = vrodos_create_fids($current_fid++);
                 $poi_v_obj_fid = vrodos_create_fids($current_fid++);
@@ -294,6 +309,10 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $door_follow_camera_x = $value['follow_camera_x'];
                 $door_follow_camera_y = $value['follow_camera_y'];
                 $door_follow_camera_z = $value['follow_camera_z'];
+                $door_poi_img_title = $value['poi_img_title'];
+                $door_poi_img_desc = $value['poi_img_desc'];
+                $door_poi_img_link = $value['poi_img_link'];
+                $door_poi_onlyimg = $value['poi_onlyimg'];
                 $door_title = $value['doorName_source'];
 
                 $door_scene_arrival =  explode("(", $value['sceneName_target'])[1]; // After ( is the slug. Before is the name
@@ -336,6 +355,11 @@ function vrodos_addAssets_wonderaround_unity($scene_id){
                 $poi_a_follow_camera_x = $value['follow_camera_x'];
                 $poi_a_follow_camera_y = $value['follow_camera_y'];
                 $poi_a_follow_camera_z = $value['follow_camera_z'];
+                $poi_a_poi_img_title = $value['poi_img_title'];
+                $poi_a_poi_img_desc = $value['poi_img_desc'];
+                $poi_a_poi_img_link = $value['poi_img_link'];
+                $poi_a_poi_onlyimg = $value['poi_onlyimg'];
+
                 
                 $poi_a_title = get_the_title($artifact_id);
                 $poi_a_transform_fid = vrodos_create_fids($current_fid++);
@@ -486,6 +510,7 @@ function vrodos_replace_artifact_unity($artifact_yaml, $poi_a_fid, $poi_a_pos_x,
     $file_content_return = str_replace("___[poi_a_follow_camera_x]___", $poi_a_follow_camera_x , $file_content_return);
     $file_content_return = str_replace("___[poi_a_follow_camera_y]___", $poi_a_follow_camera_y , $file_content_return);
     $file_content_return = str_replace("___[poi_a_follow_camera_z]___", $poi_a_follow_camera_z , $file_content_return);
+    $file_content_return = str_replace("___[poi_a_poi_img_title]___", $poi_a_poi_img_title , $file_content_return);
 
 
     $ff = fopen("output_title.txt","a");

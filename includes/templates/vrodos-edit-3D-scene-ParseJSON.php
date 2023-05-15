@@ -50,6 +50,10 @@ class ParseJSON
         $follow_camera_x = '';
         $follow_camera_y = '';
         $follow_camera_z = '';
+        $poi_img_title = '';
+        $poi_img_desc = '';
+        $poi_img_link = '';
+        $poi_onlyimg = '';
         $isCloned = '';
         $isJoker = '';
         $color = ''; // object color override
@@ -312,6 +316,11 @@ class ParseJSON
                 $follow_camera_x = $value->follow_camera_x;
                 $follow_camera_y = $value->follow_camera_y;
                 $follow_camera_z = $value->follow_camera_z;
+                $poi_img_title = $value->poi_img_title;
+                $poi_img_desc = $value->poi_img_desc;
+                $poi_img_link = $value->poi_img_link;
+                $poi_onlyimg = $value->poi_onlyimg;
+
 
 
                 $isCloned = $value->isCloned;
@@ -390,6 +399,10 @@ class ParseJSON
                 '","follow_camera_x":"' . $follow_camera_x .
                 '","follow_camera_y":"' . $follow_camera_y .
                 '","follow_camera_z":"' . $follow_camera_z .
+                '","poi_img_title":"' . $poi_img_title .
+                '","poi_img_desc":"' . $poi_img_desc .
+                '","poi_img_link":"' . $poi_img_link .
+                '","poi_onlyimg":"' . $poi_onlyimg .
                 '","isCloned":"' . $isCloned .
                 '","isJoker":"' . $isJoker .
                 '","isLight":"' . $isLight .
@@ -403,7 +416,6 @@ class ParseJSON
                 '","lightcolor":[' . $light_color_r . ',' . $light_color_g . ',' . $light_color_b . ']' .
                 ',"targetposition":[' . $target_position_x . ',' . $target_position_y . ',' . $target_position_z . ']' .
                 ',"trs":selected_object_trs};';
-
 
             //echo 'console.log("resources3D");';
             echo '</script>';

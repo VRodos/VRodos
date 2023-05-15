@@ -426,6 +426,10 @@ THREE.SceneExporter.prototype = {
                     '   "follow_camera_y" : ' + '"' + o.follow_camera_y + '"' + ',',
                     '   "follow_camera_z" : ' + '"' + o.follow_camera_z + '"' + ',',
                     '   "isCloned" : ' + '"' + o.isCloned + '"' + ',',
+                    '   "poi_img_title" : ' + '"' + o.poi_img_title + '"' + ',',
+                    '   "poi_img_desc" : ' + '"' + o.poi_img_desc + '"' + ',',
+                    '   "poi_img_link" : ' + '"' + o.poi_img_link + '"' + ',',
+                    '   "poi_onlyimg" : ' + '"' + o.poi_onlyimg + '"' + ',',
                     '   "isLight" : ' + '"' + 'false' + '"' + ',',
                     '	"fnMtl" : ' + '"' + o.fnMtl + '"' + ',',
                     '	"fnMtlID" : ' + '"' + o.fnMtlID + '"' + (o.children.length ? ',' : '')

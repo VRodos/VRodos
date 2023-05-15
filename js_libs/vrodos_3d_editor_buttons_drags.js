@@ -227,8 +227,10 @@ function loadButtonActions() {
 
                 dataDrag.categoryID = dataDrag.diffImages = dataDrag.diffImageIDs = dataDrag.image1id = dataDrag.doorName_source = '';
                 dataDrag.doorName_target = dataDrag.sceneName_target = dataDrag.sceneID_target = dataDrag.archaeology_penalty = '';
-                dataDrag.hv_penalty = dataDrag.natural_penalty = dataDrag.image_link = dataDrag.video_link = dataDrag.follow_camera_x = dataDrag.follow_camera_y = dataDrag.follow_camera_z = '';
-                dataDrag.isreward = dataDrag.follow_camera = dataDrag.isCloned = dataDrag.isJoker = 0;
+                dataDrag.hv_penalty = dataDrag.natural_penalty = dataDrag.image_link = dataDrag.video_link = dataDrag.follow_camera_x = dataDrag.follow_camera_y = dataDrag.follow_camera_z = dataDrag.poi_img_title = dataDrag.poi_img_desc = dataDrag.poi_img_link = '';
+                dataDrag.isreward = dataDrag.follow_camera = dataDrag.isCloned = dataDrag.isJoker = dataDrag.poi_onlyimg = 0;
+
+
 
 
             }

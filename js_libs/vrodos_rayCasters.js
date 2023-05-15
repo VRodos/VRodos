@@ -900,29 +900,98 @@ function showWholePopupDiv(popUpDiv, event) {
  //  * @param event
  //  * @param name
  //  */
-// function displayPoiImageTextProperties(event, name){
-//
-//     // The whole popup div
-//     var ppPropertiesDiv = jQuery("#popUpPoiImageTextPropertiesDiv");
-//
-//     // The checkbox only
-//     var chbox = jQuery("#poi_image_text_reward_checkbox");
-//
-//     // Save the previous artifact properties values (in case of  direct mouse click on another item)
-//     chbox.trigger("change");
-//
-//     clearAndUnbind(null, null, "poi_image_text_reward_checkbox");
-//
-//     chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
-//
-//     // Show Selection
-//     ppPropertiesDiv.show();
-//     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-//     ppPropertiesDiv[0].style.top  = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-//
-//     // Add change listener
-//     chbox.change(function(e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
-// }
+function displayPoiImageTextProperties(event, name) {
+
+    // The whole popup div
+    var ppPropertiesDiv = jQuery("#popUpPoiImageTextPropertiesDiv");
+
+    var chboxImg = jQuery("#poi_image_desc_checkbox");
+    var setTitle = document.getElementById('poi_image_title_text');
+    var setDesc = document.getElementById('poi_image_desc_text');
+    var titleArea = jQuery("#poi_image_title_text");
+    var descArea = jQuery("#poi_image_desc_text");
+
+    clearAndUnbind(null, null, "poi_image_desc_checkbox");
+
+    clearAndUnbind(null, null, "poi_image_title_text");
+
+    clearAndUnbind(null, null, "poi_image_desc_text");
+
+
+    // Save the previous artifact properties values (in case of  direct mouse click on another item)
+
+    chboxImg.prop('checked', envir.scene.getObjectByName(name).poi_onlyimg == 1);
+    if (envir.scene.getObjectByName(name).poi_onlyimg == 1) {
+        setDesc.style.display = "block";
+    } else {
+        setDesc.style.display = "none";
+    }
+
+    //descArea.prop('disabled', envir.scene.getObjectByName(name).poi_onlyimg == 1);
+
+
+    //clearAndUnbind(null, null, "poi_image_desc_checkbox");
+
+    //clearAndUnbind(null, null, "poi_image_title_text");
+
+    //clearAndUnbind(null, null, "poi_image_desc_text");
+
+    setDesc.value = envir.scene.getObjectByName(name).poi_img_desc;
+    setTitle.value = envir.scene.getObjectByName(name).poi_img_title;
+
+
+    // Show Selection
+    ppPropertiesDiv.show();
+    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
+    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+
+    // Add change listener
+    //chbox.change(function (e) { envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0; });
+
+    chboxImg.change(function (e) {
+
+
+        //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
+        envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0;
+        console.log(envir.scene.getObjectByName(name).poi_onlyimg);
+
+        if (this.checked) {
+            envir.scene.getObjectByName(name).poi_img_desc = setDesc.value;
+            setDesc.style.display = "block";
+        } else {
+            setDesc.style.display = "none";
+        }
+        envir.scene.getObjectByName(name).poi_img_title = setTitle.value;
+
+
+
+        //descArea.prop("disabled", (this.checked));
+        //var sceneJson = document.getElementById("vrodos_scene_json_input").value;
+
+        saveChanges();
+
+
+
+    });
+
+    titleArea.change(function (e) {
+        //var valDoorScene = popupDoorSelect.val();
+        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+        envir.scene.getObjectByName(name).poi_img_title = this.value;
+        //console.log(this.value);
+        saveChanges();
+
+    });
+
+    descArea.change(function (e) {
+        //var valDoorScene = popupDoorSelect.val();
+        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+        envir.scene.getObjectByName(name).poi_img_desc = this.value;
+        console.log(this.value);
+        saveChanges();
+
+    });
+}
 //
 // /**
 //  * Poi video properties

@@ -25,6 +25,10 @@
 
     <script src="js/spawn-in-circle.component.js"></script>
 
+    <script src="js/highlight_img.js"></script>
+
+    <script src="js/img_panel.js"></script>
+
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 </head>
 
@@ -179,15 +183,17 @@
                     this.el.emit("img_open");
                     let cam = document.getElementById("player");
                     //this.el.emit("event1");
-
+                    /*
 
                     var entity_main = document.createElement('a-plane');
                     var title_main = document.createElement('a-text');
 
                     var desc_main = document.createElement('a-text');
+                    */
 
                     let entitycheck = document.getElementById(this.data.id_img);
                     if (!entitycheck) {
+                        /*
 
                         entity_main.setAttribute("src", '#' + this.data.main_img);
                         entity_main.setAttribute("id", this.data.id_img);
@@ -219,6 +225,7 @@
                         cam.appendChild(entity_main);
                         cam.appendChild(title_main);
                         cam.appendChild(desc_main);
+                        */
 
                         var entity_esc = document.createElement('a-plane');
 
@@ -251,6 +258,7 @@
 
                     //this.el.emit("event2");
                     //console.log(this.el.animation);
+                    console.log("Animation completed");
                     //this.el.setAttribute("src", "#search");
                     //this.el.setAttribute("src", "#search");
                     //window.location.replace(this.data);
@@ -334,9 +342,12 @@
         debug: true;
         audio: true;
         adapter: easyrtc;
-       ">
-        <a-entity cursor="rayOrigin:mouse"></a-entity>
+       " background="color: #212" environment cursor="rayOrigin: mouse; fuse: false">
+
         <a-assets>
+            <img id="kazetachinu" src="https://cdn.aframe.io/examples/ui/kazetachinu.jpg" crossorigin="anonymous" />
+            <img id="kazetachinuPoster" src="https://cdn.aframe.io/examples/ui/kazetachinuPoster.jpg"
+                crossorigin="anonymous" />
             <!-- Avatar Template -->
             <template id="avatar-template">
                 <a-entity class="avatar" networked-audio-source>
@@ -352,6 +363,23 @@
                     </a-plane>
                 </a-entity>
             </template>
+
+
+
+
+
+            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                material="color: white; shader: flat"
+                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
+                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
+            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
+                material="color: white; shader: flat" material="shader: flat" position="0 0 0.005"></a-mixin>
+            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.5; height: 0.81"
+                material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin>
+            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5"
+                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
+            <a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2"
+                material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
         </a-assets>
 
         <!--
@@ -360,7 +388,10 @@
         </a-video>
     </a-plane>
     -->
-
+        <a-entity id="background" position="0 0 0" geometry="primitive: sphere; radius: 2.0"
+            material="color: red; side: back; shader: flat" scale="0.001 0.001 0.001" visible="false"
+            class="raycastable">
+        </a-entity>
         <!-- Pawn -->
         <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" rotate
             position="0 -6 0" rotation="0 0 0" wasd-controls="fly: true; acceleration:5" show-position
@@ -371,7 +402,12 @@
 
             <a-entity active="true" camera="near: 0.1; far: 7000.0;" id="cam" position="0 0.6 0" rotation="0 0 0">
             </a-entity>
+            <!--<a-entity id="fadeBackground" geometry="primitive: sphere; radius: 2.5"
+                material="color: black; side: back; shader: flat; transparent: true; opacity: 0.6" visible="false">
+            </a-entity>-->
         </a-entity>
+
+
 
     </a-scene>
 
@@ -382,8 +418,6 @@
             init: function () {
                 this.positionShow = document.getElementById("positionShow");
                 this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
-                /* this.occupantsShow = document.getElementById("occupantsShow");
-                 this.entitiesShow = document.getElementById("entitiesShow"); */
             },
             tick: function (time, timeDelta) {
                 let p = this.el.getAttribute('position');

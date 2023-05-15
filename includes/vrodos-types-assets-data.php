@@ -24,6 +24,12 @@ $table_of_asset_fields = array(
     array('follow_camera_y'                   , 'follow_camera_y'                   , 'vrodos_asset3d_follow_camera_y', 'string', '', true, true),
     array('follow_camera_z'                   , 'follow_camera_z'                   , 'vrodos_asset3d_follow_camera_z', 'string', '', true, true),
 
+    array('poi_img_title'                   , 'poi_img_title'                   , 'vrodos_asset3d_poi_img_title', 'string', '', true, true),
+    array('poi_img_desc'                   , 'poi_img_desc'                   , 'vrodos_asset3d_poi_img_desc', 'string', '', true, true),
+    array('poi_img_link'                   , 'poi_img_link'                   , 'vrodos_asset3d_poi_img_link', 'string', '', true, true),
+    array('poi_onlyimg'                   , 'poi_onlyimg'                   , 'vrodos_asset3d_poi_onlyimg', 'string', '0', true, true),
+
+
     array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'string', '', true, true),
     array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'string', '', true, true),
     array('Image 3', 'Image 3', 'vrodos_asset3d_image3', 'string', '', true, true),

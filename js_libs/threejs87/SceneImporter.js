@@ -86,10 +86,12 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "sceneName_target": '', "sceneID_target": '', "archaeology_penalty": '',
                 "hv_penalty": '', "natural_penalty": '', "isreward": 0, "follow_camera": 0, "image_link": '', "video_link": '',
                 "follow_camera_x": '', "follow_camera_y": '', "follow_camera_z": '', "isCloned": 0,
+                "poi_img_title": '', "poi_img_desc": '', "poi_img_link": '', "poi_onlyimg": 0,
                 "isJoker": 0,
                 "isLight": "true",
                 "trs": selected_object_trs
             };
+
 
         } else if (name.includes('lightLamp')) {
 
@@ -149,6 +151,10 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "follow_camera_y": '',
                 "follow_camera_z": '',
                 "isCloned": 0,
+                "poi_img_title": '',
+                "poi_img_desc": '',
+                "poi_img_link": '',
+                "poi_onlyimg": 0,
                 "isJoker": 0,
                 "isLight": "true",
                 "trs": selected_object_trs
@@ -214,6 +220,10 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "follow_camera_y": '',
                 "follow_camera_z": '',
                 "isCloned": 0,
+                "poi_img_title": '',
+                "poi_img_desc": '',
+                "poi_img_link": '',
+                "poi_onlyimg": 0,
                 "isJoker": 0,
                 "isLight": "true",
                 "trs": selected_object_trs
@@ -271,6 +281,10 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "follow_camera_y": '',
                 "follow_camera_z": '',
                 "isCloned": 0,
+                "poi_img_title": '',
+                "poi_img_desc": '',
+                "poi_img_link": '',
+                "poi_onlyimg": 0,
                 "isJoker": 0,
                 "isLight": "true",
                 "trs": object_trs
@@ -327,6 +341,10 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "follow_camera_y": '',
                 "follow_camera_z": '',
                 "isCloned": 0,
+                "poi_img_title": '',
+                "poi_img_desc": '',
+                "poi_img_link": '',
+                "poi_onlyimg": 0,
                 "isJoker": 0,
                 "isLight": "true",
                 "trs": object_trs
@@ -377,6 +395,14 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
             var follow_camera_z = value['follow_camera_z'];
 
             var isCloned = value['isCloned'];
+
+            var poi_img_title = value['poi_img_title'];
+            var poi_img_desc = value['poi_img_desc'];
+            var poi_img_link = value['poi_img_link'];
+
+
+            var poi_onlyimg = value['poi_onlyimg'];
+
             var isJoker = value['isJoker'];
 
             var r_x = value['rotation'][0];
@@ -436,6 +462,10 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "follow_camera_x": follow_camera_x,
                 "follow_camera_y": follow_camera_y,
                 "follow_camera_z": follow_camera_z,
+                "poi_img_title": poi_img_title,
+                "poi_img_desc": poi_img_desc,
+                "poi_img_link": poi_img_link,
+                "poi_onlyimg": poi_onlyimg,
                 "isJoker": isJoker,
                 "isLight": "false",
                 "trs": selected_object_trs

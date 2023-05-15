@@ -147,6 +147,10 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 "follow_camera_x": e.target.attributes.getNamedItem("data-follow_camera_x").value,
                 "follow_camera_y": e.target.attributes.getNamedItem("data-follow_camera_y").value,
                 "follow_camera_z": e.target.attributes.getNamedItem("data-follow_camera_z").value,
+                "poi_img_title": e.target.attributes.getNamedItem("data-poi_img_title").value,
+                "poi_img_desc": e.target.attributes.getNamedItem("data-poi_img_desc").value,
+                "poi_img_link": e.target.attributes.getNamedItem("data-poi_img_link").value,
+                "poi_onlyimg": e.target.attributes.getNamedItem("data-poi_onlyimg").value,
                 "sceneName_target": e.target.attributes.getNamedItem("data-sceneName_target").value,
                 "sceneID_target": e.target.attributes.getNamedItem("data-sceneID_target").value,
                 "archaeology_penalty": e.target.attributes.getNamedItem("data-archaeology_penalty").value,
@@ -155,6 +159,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 "isCloned": e.target.attributes.getNamedItem("data-isCloned").value,
                 "isJoker": e.target.attributes.getNamedItem("data-isJoker").value
             };
+
 
             var jsonDataDrag = JSON.stringify(dragData);
             e.originalEvent.dataTransfer.setData("text/plain", jsonDataDrag);
@@ -248,6 +253,10 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     '" data-follow_camera_y="' + f.follow_camera_y +
                     '" data-follow_camera_z="' + f.follow_camera_z +
                     '" data-isCloned="' + f.isCloned +
+                    '" data-poi_img_title="' + f.poi_img_title +
+                    '" data-poi_img_desc="' + f.poi_img_desc +
+                    '" data-poi_img_link="' + f.poi_img_link +
+                    '" data-poi_onlyimg="' + f.poi_onlyimg +
                     '" data-isJoker="' + f.isJoker +
                     '" >' + img +
                     '<span class="FileListItemName mdc-list-item__text" title="Drag the card into the plane">' + name +
