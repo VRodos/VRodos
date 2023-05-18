@@ -21,7 +21,6 @@ function vrodos_create_asset_categories(){
             'slug' => 'video',
             'description' => 'A video canvas that can be placed inside the 3D space. The user can maximize it to full screen.',
             'ic' => 'movie'
-
         ],
         'poi-imagetext' => [
             'name' => 'POI - Image / Text',
@@ -58,25 +57,13 @@ function vrodos_create_asset_categories(){
                 'slug' => $cat['slug'],
             )
         );
+
         if ( !is_wp_error($inserted_cat) ) {
-            update_term_meta($inserted_cat['term_id'], 'vrodos_assetcat_gamecat', 1 , true);
+            // update_term_meta($inserted_cat['term_id'], 'vrodos_assetcat_gamecat', 1 , true);
             update_term_meta($inserted_cat['term_id'], 'vrodos_assetcat_icon', $cat['ic'] );
-        } else {
-            //var_dump($inserted_cat->get_error_messages());
         }
-
     }
-
     //$inserted_term1 = get_term_by('slug', 'artifact', 'vrodos_asset3d_cat');
-
-    // Backup of previous slugs
-    /*  'slug' => 'artifact',
-        'slug' => 'decoration_arch',
-        'slug' => 'door',
-        'slug' => 'site',
-        'slug' => 'pois_video',
-        'slug' => 'pois_imagetext',*/
-
 }
 
 

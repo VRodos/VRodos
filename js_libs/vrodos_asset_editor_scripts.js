@@ -358,7 +358,7 @@ function openLanguage(lang) {
     //console.log(titLang);
 
     if (titLang === '')
-        titLang = eval('asset_title_english_saved');
+        titLang = eval('asset_title');
 
     document.getElementById("assetTitleView").innerHTML = titLang;
 

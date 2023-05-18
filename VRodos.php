@@ -538,8 +538,7 @@ add_action( 'init', 'vrodos_scenes_types_archaeology_standard_cre' );
 
 
 // ---- Content interlinking ----------
-
-add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description_action_callback' );
+//add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description_action_callback' );
 
 // Translate
 //add_action( 'wp_ajax_vrodos_translate_action', 'vrodos_translate_action_callback' );
