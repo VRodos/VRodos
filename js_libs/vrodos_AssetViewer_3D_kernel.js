@@ -174,21 +174,12 @@ class VRodos_AssetViewer_3D_kernel {
         root.name = "root";
         this.scene.add( root );
 
-
         // const size = 10;
         // const divisions = 10;
         //
         // const gridHelper = new THREE.GridHelper( size, divisions );
         // this.scene.add( gridHelper );
 
-
-        // - OBJ Specific - Setup loader
-        try {
-            this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
-            this.wwObjLoader2.setCrossOrigin('anonymous');
-        } catch (e) {
-            console.log("ERROR WW15", "Web Workers for OBJ not found")
-        }
 
         this.boundRender = this.render.bind( this );
         this.initGL();
@@ -203,7 +194,6 @@ class VRodos_AssetViewer_3D_kernel {
         this.canvasResizeBounded = this.onCanvasResize.bind(this);
         window.addEventListener( 'resize', this.canvasResizeBounded, true );
     }
-
 
     onCanvasResize(){
         this.resizeDisplayGL();
@@ -459,9 +449,7 @@ class VRodos_AssetViewer_3D_kernel {
     // Initialize Scene
     initGL(){
 
-
         this.scene.background = this.isBackGroundNull ? null : new THREE.Color(this.back_3d_color);
-
 
         // - Label renderer -
         this.labelRenderer = new THREE.CSS2DRenderer();
@@ -508,54 +496,6 @@ class VRodos_AssetViewer_3D_kernel {
         this.scene.add(directionalLight2);
         this.scene.add(directionalLight3);
         this.scene.add(ambientLight);
-
-        // ---- OBJ asynch loader ---------
-
-        let scope = this;
-
-        // Function for OBJ: Function to load materials
-        let materialsLoaded = function (materials) {
-            for (let k in materials) {
-                if(materials.hasOwnProperty(k)) {
-                    materials[k].transparent = true;
-                    materials[k].alphaTest = 0.1;
-                }
-            }
-        };
-
-        // Function for OBJ: Report for meshes
-        let meshLoaded = function (name, bufferGeometry, material) {};
-
-        // Function on Completed Loading
-        let completedLoading = function () {
-            console.log('Loading complete for OBJ WW!');
-
-            if (scope.previewProgressLabel) {
-                scope.previewProgressLine.style.width = '0';
-                scope.previewProgressLabel.innerHTML = "";
-            }
-
-            scope.zoomer(scope.scene.getChildByName('root'));
-
-            scope.kickRendererOnDemand();
-
-            //scope.controls.target(scope.scene.getChildByName('root'));
-
-            // // Auto create screenshot;
-            // setTimeout(function(){
-            //     jQuery("#button_qrcode").click(); // close qr code
-            //     jQuery("#createModelScreenshotBtn").click();
-            // },1000);
-        };
-
-        try {
-            this.wwObjLoader2.registerCallbackProgress(this._reportProgress);
-            this.wwObjLoader2.registerCallbackCompletedLoading(completedLoading);
-            this.wwObjLoader2.registerCallbackMaterialsLoaded(materialsLoaded);
-            this.wwObjLoader2.registerCallbackMeshLoaded(meshLoaded);
-        } catch (e){
-            console.log("Can load OBJ", "ERROR O151");
-        }
 
         return true;
     }
