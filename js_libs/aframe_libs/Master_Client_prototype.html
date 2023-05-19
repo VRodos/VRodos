@@ -394,15 +394,14 @@
             class="raycastable">
         </a-entity>
         <!-- Pawn -->
-        <a-entity id="player" visible="false" networked="template:#avatar-template;attachTemplateToLocal:false;" rotate
+        <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" rotate
             position="0 -6 0" rotation="0 0 0" wasd-controls="fly: true; acceleration:5" show-position
             look-controls="pointerLockEnabled: false;">
 
             <a-sphere class="head" visible="false" random-color>
             </a-sphere>
 
-            <a-entity active="true" transparency="true" visible="false" camera="near: 0.1; far: 7000.0;" id="cam"
-                position="0 0.6 0" rotation="0 0 0">
+            <a-entity active="true" camera="near: 0.1; far: 7000.0;" id="cam" position="0 0.6 0" rotation="0 0 0">
             </a-entity>
             <!--<a-entity id="fadeBackground" geometry="primitive: sphere; radius: 2.5"
                 material="color: black; side: back; shader: flat; transparent: true; opacity: 0.6" visible="false">
