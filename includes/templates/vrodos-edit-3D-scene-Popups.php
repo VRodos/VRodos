@@ -129,13 +129,9 @@
         document.getElementById("ObjectColor").style.backgroundColor = "#" + currentColor;
 
     }
+ 
 
-
-    function doorLinkFunction(e) {
-
-        console.log("hey", e.value);
-
-    }
+ 
 
     
     // Set video texture when popup change
@@ -664,7 +660,9 @@ style="width: 250px;" maxlength="100" value="" />
 class="mdc-theme--primary" type="file"
        name="ImgloadInput"
        value="" multiple accept=".jpg,.png"
+       onclick=""
        disabled
+       
        />
        </div>
 <!---->

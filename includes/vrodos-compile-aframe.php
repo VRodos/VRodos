@@ -425,7 +425,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_entity->appendChild( $dom->createTextNode( '' ) );
 
                     $material = "";
-                    $fileOperations->setMaterial( $material, $contentObject );
+                    //$fileOperations->setMaterial( $material, $contentObject );
                     $fileOperations->setAffineTransformations( $a_entity, $contentObject );
                     $a_entity->setAttribute( "class", "override-materials" );
                     $a_entity->setAttribute( "id", $nameObject );
@@ -675,6 +675,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_ui_entity = $dom->createElement("a-entity");
                 $a_ui_entity->setAttribute("id", "ui");
+                
+               
                 //$a_ui_entity->setAttribute("position", "0 0 -5");
                 $fileOperations->setAffineTransformations($a_ui_entity, $contentObject);
 
@@ -696,11 +698,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_menu_entity->setAttribute("id", "menu");
                 $a_menu_entity->setAttribute("highlight", "$nameObject");
                 
+                
                 $a_button_entity = $dom->createElement("a-entity");
                 $a_button_entity->setAttribute("id", "button_poi_$nameObject");
-                $a_button_entity->setAttribute("position", "0 0 0");
+                //$a_button_entity->setAttribute("position", "0 0 0");
                 $a_button_entity->setAttribute("mixin", "frame");
+                $a_button_entity->setAttribute("glow", "");
                 $a_button_entity->setAttribute("class", "raycastable menu-button");
+                $a_button_entity->setAttribute("indicator", "$nameObject");
+                
+                
 
                 $a_button_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
                 $a_button_entity->setAttribute( "material", $material );
@@ -719,6 +726,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 //$ascene->appendChild($a_entity);
 
+              
+
 
 
 
@@ -733,6 +742,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_panel_entity->setAttribute("geometry", "primitive: plane; width: 1.5; height: 1.8");
                 $a_panel_entity->setAttribute("material", "color: #333333; shader: flat; transparent: false");
                 $a_panel_entity->setAttribute("class", "clickable");
+                $a_panel_entity->setAttribute("outline", "");
 
 
                 $a_main_img_entity = $dom->createElement("a-entity");
@@ -789,7 +799,39 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $ascenePlayer->appendChild($a_panel_entity);
 
 
+                $a_exc_entity = $dom->createElement( "a-entity" );
+                $a_exc_entity->appendChild( $dom->createTextNode( '' ) );
+
+                $material = "";
+                //$fileOperations->setMaterial( $material, $contentObject );
                 
+                $a_exc_entity->setAttribute( "class", "override-materials" );
+                $a_exc_entity->setAttribute( "id", "excMark_$nameObject" );
+                $a_exc_entity->setAttribute( "gltf-model", "url(http://localhost/wp_vrodos/wp-content/uploads//Models/exp_or.glb)" );
+                $a_exc_entity->setAttribute( "clear-frustum-culling", "" );
+                $a_exc_entity->setAttribute( "scale", "0.0001 0.0001 0.0001" );
+                $a_exc_entity->setAttribute( "visible", "false" );
+                //$a_exc_entity->setAttribute("position", "0 0 0");
+
+                $offset_ic_x = $contentObject->position[0];
+                $offset_ic_z = $contentObject->position[2];
+                $offset_ic_y = $contentObject->position[1] + 1;
+
+                //print_r("$offset_ic_x $offset_ic_y $offset_ic_z");
+
+                $a_exc_entity->setAttribute("position", "$offset_ic_x $offset_ic_y $offset_ic_z");
+                //$a_entity->setAttribute("rotation", implode(" ", [
+                //    -180 / pi() * $contentObject->rotation[0], 180 / pi() * $contentObject->rotation[1],
+                //    180 / pi() * $contentObject->rotation[2]
+                //]));
+                
+
+
+                $a_exc_entity->setAttribute( "material", $material );
+                
+
+
+                $ascene->appendChild( $a_exc_entity );
 
 
 

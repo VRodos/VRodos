@@ -22,12 +22,16 @@
     <script src="js/randomizer/3.0.1/aframe-randomizer-components.min.js"></script>
 
     <script src="js/particles/aframe-particle-system-component.min.js"></script>
-
     <script src="js/spawn-in-circle.component.js"></script>
 
     <script src="js/highlight_img.js"></script>
+    <script src="js/indicators_aframe.js"></script>
+
+
 
     <script src="js/img_panel.js"></script>
+
+
 
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 </head>
@@ -367,7 +371,6 @@
 
 
 
-
             <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
                 material="color: white; shader: flat"
                 animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
@@ -388,6 +391,7 @@
         </a-video>
     </a-plane>
     -->
+        <a-plane outline="color:green ; pulse:false"></a-plane>
         <a-entity id="background" position="0 0 0" geometry="primitive: sphere; radius: 2.0"
             material="color: red; side: back; shader: flat" scale="0.001 0.001 0.001" visible="false"
             class="raycastable">
