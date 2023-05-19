@@ -452,100 +452,93 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             <!-- EDIT MODE -->
             <?php if(($isOwner || $isUserAdmin) && $isEditMode) { ?>
 
-                <!-- Title -->
-                <div style="display:inline-block; width: 40%; float: left;">
-                    <h3 class="mdc-typography--title" style="margin-bottom: 0;">Title</h3>
-                    <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0;">
-                        <input id="assetTitle" type="text"
-                               class="changablefont mdc-textfield__input mdc-theme--text-primary-on-light"
-                               name="assetTitle"
-                               aria-controls="title-validation-msg" required minlength="3" maxlength="40"
-                               style="font-family: <?php echo $curr_font?>;"
-                               value="<?php echo $asset_title_value; ?>">
+                <div style="display:flex; width: 100%;">
+                    <!-- Title -->
+                    <div class="assetEditorColumn" style="float: left;">
+                        <h3 class="mdc-typography--title" style="margin-bottom: 5px;">Title</h3>
+                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0;">
+                            <input id="assetTitle" type="text"
+                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
+                                   name="assetTitle"
+                                   aria-controls="title-validation-msg" required minlength="3" maxlength="25"
+                                   value="<?php echo $asset_title_value; ?>">
 
-                        <label for="assetTitle" class="mdc-textfield__label">
-                            Title of the asset
-                        </label>
+                            <label for="assetTitle" class="mdc-textfield__label">
+                                Title of the asset
+                            </label>
 
-                        <div class="mdc-textfield__bottom-line"></div>
+                            <div class="mdc-textfield__bottom-line"></div>
+                        </div>
+
+                        <p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-validation-msg">
+                            Between 3 - 25 characters
+                        </p>
                     </div>
+                    <!-- End of Title -->
 
-                    <p class="mdc-textfield-helptext  mdc-textfield-helptext--validation-msg" id="title-validation-msg">
-                        Between 3 - 25 characters
-                    </p>
-                </div>
-                <!-- End of Title -->
+                    <!-- CATEGORY -->
+                    <div class="assetEditorColumn" style="float: right;">
 
-                <!-- CATEGORY -->
-                <div style="display:inline-block; width: 40%;float: right;">
-                    <h3 class="mdc-typography--title" style="margin-top:20px;"><?php echo $dropdownHeading; ?></h3>
-                    <div id="category-select" class="mdc-select" role="listbox" tabindex="0" style=" display:flex; position: relative; min-width: 100%;">
-                        <em class="material-icons mdc-theme--text-hint-on-light ">label</em>&nbsp;<!--icon-->
-
-                        <?php
-                        $cat_terms = get_terms('vrodos_asset3d_cat', ['hide_empty' => false]);
-                        $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
-                        ?>
-
-                        <?php if($asset_id == null) { ?>
-                            <span id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
-                        No category selected
-                    </span>
-                        <?php } else {  ?>
-                            <span data-cat-desc="<?php echo $saved_term[0]->description; ?>"
-                                  data-cat-slug="<?php echo $saved_term[0]->slug; ?>"
-                                  data-cat-id="<?php echo $saved_term[0]->term_id; ?>"
-                                  id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
-                        <?php echo $saved_term[0]->name; ?>
-                    </span>
-                        <?php } ?>
-
-                        <div class="mdc-simple-menu mdc-select__menu">
-                            <ul class="mdc-list mdc-simple-menu__items">
-
-                                <li class="mdc-list-item mdc-theme--text-hint-on-light" role="option" aria-disabled="true"
-                                    tabindex="-1" style="pointer-events: none;">
+                        <h3 class="mdc-typography--title"><?php echo $dropdownHeading; ?></h3>
+                        <div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
+                            <em class="material-icons mdc-theme--text-hint-on-light ">label</em>&nbsp;<!--icon-->
+                            <?php
+                            $cat_terms = get_terms('vrodos_asset3d_cat', ['hide_empty' => false]);
+                            $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
+                            if($asset_id == null) { ?>
+                                <span id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
                                     No category selected
-                                </li>
+                                </span>
+                            <?php } else {  ?>
+                                <span data-cat-desc="<?php echo $saved_term[0]->description; ?>"
+                                      data-cat-slug="<?php echo $saved_term[0]->slug; ?>"
+                                      data-cat-id="<?php echo $saved_term[0]->term_id; ?>"
+                                      id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
+                                        <?php echo $saved_term[0]->name; ?>
+                                </span>
+                            <?php } ?>
 
-                                <?php foreach ( $cat_terms as $term ) {
+                            <div class="mdc-simple-menu mdc-select__menu">
+                                <ul class="mdc-list mdc-simple-menu__items">
 
-                                    /* if (  strpos($term->name, "Points") !== false ) {
-                                         continue;
-                                     } */?>
-
-                                    <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
-                                        data-cat-desc="<?php echo $term->description; ?>"
-                                        data-cat-slug="<?php echo $term->slug; ?>"
-                                        id="<?php echo $term->term_id?>"
-                                        tabindex="0">
-                                        <?php echo $term->name; ?>
+                                    <li class="mdc-list-item mdc-theme--text-hint-on-light" role="option" aria-disabled="true"
+                                        tabindex="-1" style="pointer-events: none;">
+                                        No category selected
                                     </li>
 
-                                <?php } ?>
+                                    <?php foreach ( $cat_terms as $term ) {
 
-                            </ul>
+                                        /* if (  strpos($term->name, "Points") !== false ) {
+                                             continue;
+                                         } */?>
+
+                                        <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
+                                            data-cat-desc="<?php echo $term->description; ?>"
+                                            data-cat-slug="<?php echo $term->slug; ?>"
+                                            id="<?php echo $term->term_id?>"
+                                            tabindex="0">
+                                            <?php echo $term->name; ?>
+                                        </li>
+
+                                    <?php } ?>
+
+                                </ul>
+                            </div>
                         </div>
+
+                        <span style="font-style: italic; min-width: 100%;"
+                              class="mdc-typography--caption mdc-theme--text-secondary-on-light"
+                              id="categoryDescription"></span>
+                        <input id="termIdInput" type="hidden" name="term_id" value="">
                     </div>
 
-                    <span style="font-style: italic; display:flex; position: relative; min-width: 100%;"
-                          class="mdc-typography--caption mdc-theme--text-secondary-on-light"
-                          id="categoryDescription"></span>
-                    <input id="termIdInput" type="hidden" name="term_id" value="">
                 </div>
-
-
                 <!-- 3D Models -->
-                <!-- Hidden fields for 3D models -->
-                <input type="hidden" name="objFileInput" value="" id="objFileInput" />
-                <input type="hidden" name="mtlFileInput" value="" id="mtlFileInput" />
-                <input type="hidden" name="pdbFileInput" value="" id="pdbFileInput" />
-                <input type="hidden" name="fbxFileInput" value="" id="fbxFileInput" />
-                <input type="hidden" name="glbFileInput" value="" id="glbFileInput" />
+
 
                 <div style="display:flex; width: 100%;">
 
-                    <div style="display:inline-block; width: 40%;float: left;">
+                    <div class="assetEditorColumn" style="float: left;">
 
                         <h3 class="mdc-typography--title">3D Model</h3>
 
@@ -574,8 +567,9 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         <!-- For already stored files -->
                         <?php print_r($_FILES, true) ?>
                     </div>
+                    <input type="hidden" name="glbFileInput" value="" id="glbFileInput" />
 
-                    <div style="display:inline-block; width: 40%;float: right;">
+                    <div class="assetEditorColumn" style="float: right;">
 
                         <h3 class="mdc-typography--title">Screenshot</h3>
                         <?php
@@ -589,36 +583,98 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                             }
                         }
                         ?>
-                        <img id = "sshotPreviewImg" src="<?php echo $scrnImageURL ?>" alt="Asset Screenshot image">
+                        <div style="display: grid; float: left; width: 48%">
+                            <img id="sshotPreviewImg" src="<?php echo $scrnImageURL ?>" alt="Asset Screenshot image">
 
 
-                        <input type="hidden" name="sshotFileInput" value=""
-                               id="sshotFileInput" accept="image/png"/>
+                            <input type="hidden" name="sshotFileInput" value=""
+                                   id="sshotFileInput" accept="image/png"/>
 
-                        <a id="createModelScreenshotBtn" type="button"
-                           class="mdc-button mdc-button--primary mdc-theme--primary"
+                        </div>
+                        <div style="float:right; width: 48%">
+                            <div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea"
+                                 data-mdc-auto-init="MDCTextfield">
+                                <label for="jscolorpick" style="display:none">Color pick</label>
+                                <input id="jscolorpick" style="width:100%"
+                                       class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
+
+                                <label for="assetback3dcolor" class="mdc-textfield__label">BG color</label>
+                                <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
+                                       name="assetback3dcolor" form="3dAssetForm" value="<?php echo trim($asset_back_3d_color_saved); ?>" />
+                            </div>
+                        </div>
+                        <a id="createModelScreenshotBtn" type="button" style="margin-top:16px;"
+                           class="mdc-button mdc-button--primary mdc-theme--primary FullWidth"
                            data-mdc-auto-init="MDCRipple">
                             Create screenshot
                         </a>
-
-                        <div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea"
-                             data-mdc-auto-init="MDCTextfield">
-                            <label for="jscolorpick" style="display:none">Color pick</label>
-                            <input id="jscolorpick"
-                                   class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
-
-                            <label for="assetback3dcolor" class="mdc-textfield__label">BG color</label>
-                            <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
-                                   name="assetback3dcolor" form="3dAssetForm" value="<?php echo trim($asset_back_3d_color_saved); ?>" />
-                        </div>
-
                     </div>
-
                 </div>
-
 
                 <input type="hidden" id="assettrs" class="mdc-textfield__input"
                        name="assettrs" form="3dAssetForm" value="<?php echo trim($assettrs_saved); ?>" />
+
+
+                <div style="display:flex; width: 100%;">
+                    <!-- CATEGORY IPR -->
+                    <div class="assetEditorColumn" style="display:<?php echo (($isOwner || $isUserAdmin) && $isEditMode)?'block':'none';?> float: left; padding-bottom: 24px;">
+                        <h3 class="mdc-typography--title">Select an IPR plan</h3>
+                        <div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 80%;">
+                            <i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
+
+                            <?php
+                            $saved_ipr_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_ipr_cat');
+
+                            if($asset_id == null || empty($saved_ipr_term) ) { ?>
+                                <!-- Empty IPR -->
+                                <span id="currently-ipr-selected"
+                                      class="mdc-select__selected-text mdc-typography--subheading2">
+                            No IPR category selected
+                            </span>
+                            <?php } else { ?>
+                                <!-- Saved IPR -->
+                                <span
+                                        data-cat-ipr-desc="<?php echo $saved_ipr_term[0]->description; ?>"
+                                        data-cat-ipr-slug="<?php echo $saved_ipr_term[0]->slug; ?>"
+                                        data-cat-ipr-id="<?php echo $saved_ipr_term[0]->term_ipr_id; ?>"
+                                        id="currently-ipr-selected"
+                                        class="mdc-select__selected-text mdc-typography--subheading2">
+                                <?php echo $saved_ipr_term[0]->name; ?>
+                             </span>
+                            <?php } ?>
+
+
+                            <div class="mdc-simple-menu mdc-select__menu">
+                                <ul class="mdc-list mdc-simple-menu__items">
+                                    <!-- First option is none -->
+                                    <li class="mdc-list-item mdc-theme--text-hint-on-light"
+                                        role="option" aria-disabled="true" tabindex="-1"
+                                        style="pointer-events: none;">
+                                        No IPR category selected
+                                    </li>
+
+                                    <!-- Add other options -->
+                                    <?php
+                                    $cat_ipr_terms = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
+
+                                    foreach ( $cat_ipr_terms as $term_ipr ) { ?>
+                                        <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
+                                            title="<?php echo $term_ipr->description; ?>"
+                                            data-cat-ipr-desc="<?php echo $term_ipr->description; ?>"
+                                            data-cat-ipr-slug="<?php echo $term_ipr->slug; ?>" id="<?php echo $term_ipr->term_id?>" tabindex="0">
+                                            <?php echo $term_ipr->name; ?>
+                                        </li>
+                                    <?php } ?>
+
+                                </ul>
+                            </div>
+                        </div>
+
+                        <span class="mdc-typography--caption mdc-theme--text-secondary-on-light" id="categoryIPRDescription"></span>
+                        <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
+
+                    </div>
+                </div>
 
 
                 <!-- Audio -->
@@ -649,19 +705,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     </div>
                 </div>
 
-                <!-- End of 3D -->
-
-                <h3 class="mdc-typography--title">Description</h3>
-                <div class="mdc-textfield mdc-textfield--textarea"
-                     data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3);">
-                    <label for="assetDescription" class="mdc-textfield__label"
-                           style="background: none;">Add a description</label>
-                    <textarea id="assetDescription" name="assetDescription"
-                              class="mdc-textfield__input"
-                              rows="4"  style="box-shadow: none;"
-                              type="text" form=""><?php echo $asset_description_value; ?></textarea>
-
-                </div>
 
                 <!--  Select font for text -->
                 <!--<div id="assetFontsDiv">
@@ -674,17 +717,8 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 </div>-->
 
 
-                <hr class="whiteSpaceSeparatorAssetEditor" />
-
-
-
-                <hr class="WhiteSpaceSeparator">
-
-                <!-- End of Images -->
-
-
                 <!-- Video -->
-                <div id="videoDetailsPanel">
+                <div id="videoDetailsPanel" style="display: none;">
                     <h3 class="mdc-typography--title">Video</h3>
 
                     <img alt="Video section"
@@ -714,77 +748,28 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     </div>
                 </div>
 
+                <div style="display:none; width: 100%;">
+                    <div style="display:inline-block; width: 40%;float: left;">
+
+                        <h3 class="mdc-typography--title">Description</h3>
+                        <div class="mdc-textfield mdc-textfield--textarea"
+                             data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3);">
+                            <label for="assetDescription" class="mdc-textfield__label"
+                                   style="background: none;">Add a description</label>
+                            <textarea id="assetDescription" name="assetDescription"
+                                      class="mdc-textfield__input"
+                                      rows="4"  style="box-shadow: none;"
+                                      type="text" form=""><?php echo $asset_description_value; ?></textarea>
+
+                        </div>
+                    </div>
+                </div>
+
+
 
             <?php } else { ?>  <!-- PREVIEW READ ONLY DATA -->
 
                 <div id="assetTitleView"><?php echo $asset_title_value;?></div>
-
-                <hr />
-
-                <!--Carousel slideshow slides-->
-
-                <!-- Video -->
-                <?php
-                $showVid = $saved_term ? in_array( $saved_term[0]->slug, ['artifact'])?'':'none' : null;
-                $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
-                ?>
-                <!-- Image -->
-                <?php
-                $showImageFields = $saved_term ? in_array($saved_term[0]->slug,['artifact'])?'':'none' : null;
-                ?>
-
-                <div class="slideshow-container">
-
-                    <!-- Check if video slide should be shown -->
-                    <?php if ($showVid=='' && $asset_id != null && $videoID!=null){ ?>
-                        <div class="">
-                            <!-- Video slide -->
-                            <!--<div class="numbertext">1 / 2</div>-->
-                            <div id="videoDetailsPanel" style="display:<?php echo ($asset_id == null)?'none':$showVid; ?>;">
-
-                                <div id="videoFileInputContainer" class="">
-                                    <?php
-
-                                    $attachment_post = get_post($videoID);
-                                    $attachment_file = $attachment_post->guid;
-                                    ?>
-
-                                    <?php if( strpos($attachment_file, "mp4" )!==false || strpos($attachment_file, "ogg" )!==false){?>
-                                        <video style="height:auto" controls>
-                                            <source src="<?php echo $attachment_file;?>" type="video/mp4">
-                                            <source src="<?php echo $attachment_file;?>" type="video/ogg">
-                                            Your browser does not support the video tag.
-                                        </video>
-                                    <?php } ?>
-                                </div>
-                            </div>
-                            <!-- Caption -->
-                            <div class="text"></div>
-                        </div>
-                    <?php } ?>
-
-                </div>
-                <br>
-
-
-                <!-- Audio hidden object -->
-                <div id="audioFileInputContainer" style="display:none">
-                    <?php
-                    $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
-                    $attachment_post = get_post( $audioID );
-                    $attachment_file = $attachment_post->guid;
-                    ?>
-
-                    <audio loop preload="auto" id ='audioFile'>
-                        <?php if(strpos($attachment_file, "mp3" )!==false || strpos($attachment_file, "wav" )!==false){?>
-                            <source src="<?php echo $attachment_file;?>" type="audio/mp3">
-                            <source src="<?php echo $attachment_file;?>" type="audio/wav">
-
-
-                        <?php } ?>
-                    </audio>
-                </div>
-
 
                 <!-- Accessibility -->
                 <div style="display:inline-block; margin-left:10px; width:100%; margin-top:10px; margin-bottom:10px" >
@@ -799,124 +784,11 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                             style="padding:10px;width:20px;height:40px;max-height:40px;min-height:40px;left:0;display:inline-block;vertical-align:bottom">
                     </button>
 
-                    <!-- Font size -->
-                    <div id="font-size-selector" style="display:inline-block; right: 10%;font-size: 1.5em;">
-                        <div id="plustext" title="Increase text size"  onclick="resizeText(1)">A+</div>
-                        <div id="minustext" title="Decrease text size" onclick="resizeText(-1)">A-</div>
-                    </div>
-
-                    <?php $images_accessIcons_path = plugins_url( '../images/accessibility_icons/', dirname(__FILE__)  );?>
-
-                    <!-- Different texts buttons -->
-                    <div class="accessBtDiv">
-                        <a type='button' class="mdc-button accessButton" onclick="openAccess('')">
-                            <img alt="General" src="<?php echo $images_accessIcons_path.'/general_population_icon.png';?>"
-                                 class="accessIcons"/>
-                        </a>
-
-                        <a type='button' class="mdc-button accessButton" onclick="openAccess('Experts')" >
-                            <img alt="Experts" src="<?php echo $images_accessIcons_path.'/graduation_icon.png';?>"
-                                 class="accessIcons"/>
-                        </a>
-
-                        <a type='button' class="mdc-button accessButton" onclick="openAccess('Perception')">
-                            <img alt="Perception disabilities" src="<?php echo $images_accessIcons_path.'/heart_icon.png';?>"
-                                 class="accessIcons"/>
-                        </a>
-
-                        <a type='button' class="mdc-button accessButton" onclick="openAccess('Kids')">
-                            <img alt="Children" src="<?php echo $images_accessIcons_path.'/children_icon.png';?>"
-                                 class="accessIcons"/>
-                        </a>
-                    </div>
                 </div>
-
-
-                <!-- Peer calls -->
-                <div id="confwindow" >
-                    <iframe id="iframeConf" width="100%" height="350px" src=""
-                            allow="camera;microphone"></iframe>
-                </div>
-
-                <div id="confwindow_helper">
-                    <h1><img src="<?php echo plugins_url( '../peer-calls/src/res/', dirname(__FILE__)  ).'/peer-calls.svg';?>" alt="Peer Calls" ></h1>
-                    <p>Video-conference with the museum expert!</p>
-                    <button type="button" onclick="startConf()">Call</button>
-                </div>
-
-
-                <?php
-                // Peer calls: audiovisual conferencing, answer to calls directly (for museum operators)
-                if (isset($_GET['directcall'])) {
-                    echo '<script>startConf()</script>';
-                }
-                ?>
 
             <?php } ?>
             <!--  End of Edit or Show  -->
 
-
-            <!-- CATEGORY IPR -->
-            <div style="display:<?php echo (($isOwner || $isUserAdmin) && $isEditMode)?'inline-block':'none';?> width: 40%; float: left; padding-bottom: 24px;">
-                <div id="ipr-div">
-
-                    <h3 class="mdc-typography--title">Select an IPR plan</h3>
-                    <div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0">
-                        <i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
-
-                        <?php
-                        $saved_ipr_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_ipr_cat');
-
-                        if($asset_id == null || empty($saved_ipr_term) ) { ?>
-                            <!-- Empty IPR -->
-                            <span id="currently-ipr-selected"
-                                  class="mdc-select__selected-text mdc-typography--subheading2">
-                            No IPR category selected
-                            </span>
-                        <?php } else { ?>
-                            <!-- Saved IPR -->
-                            <span
-                                    data-cat-ipr-desc="<?php echo $saved_ipr_term[0]->description; ?>"
-                                    data-cat-ipr-slug="<?php echo $saved_ipr_term[0]->slug; ?>"
-                                    data-cat-ipr-id="<?php echo $saved_ipr_term[0]->term_ipr_id; ?>"
-                                    id="currently-ipr-selected"
-                                    class="mdc-select__selected-text mdc-typography--subheading2">
-                                <?php echo $saved_ipr_term[0]->name; ?>
-                             </span>
-                        <?php } ?>
-
-
-                        <div class="mdc-simple-menu mdc-select__menu">
-                            <ul class="mdc-list mdc-simple-menu__items">
-                                <!-- First option is none -->
-                                <li class="mdc-list-item mdc-theme--text-hint-on-light"
-                                    role="option" aria-disabled="true" tabindex="-1"
-                                    style="pointer-events: none;">
-                                    No IPR category selected
-                                </li>
-
-                                <!-- Add other options -->
-                                <?php
-                                $cat_ipr_terms = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
-
-                                foreach ( $cat_ipr_terms as $term_ipr ) { ?>
-                                    <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
-                                        title="<?php echo $term_ipr->description; ?>"
-                                        data-cat-ipr-desc="<?php echo $term_ipr->description; ?>"
-                                        data-cat-ipr-slug="<?php echo $term_ipr->slug; ?>" id="<?php echo $term_ipr->term_id?>" tabindex="0">
-                                        <?php echo $term_ipr->name; ?>
-                                    </li>
-                                <?php } ?>
-
-                            </ul>
-                        </div>
-                    </div>
-
-                    <span class="mdc-typography--subheading2 mdc-theme--text-secondary-on-light" id="categoryIPRDescription"></span>
-                    <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
-
-                </div>
-            </div>
 
         </form>
 
@@ -935,8 +807,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
         document.getElementById("jscolorpick").value = back_3d_color;
 
         generateQRcode();
-
-        let audio_file = document.getElementById( 'audioFile' );
 
         let isLoggedIn = <?php echo $isUserloggedIn ? 1: 0; ?>;
         let isEditMode = (isLoggedIn === 1) ? <?php echo $_GET['preview'] === '1' ? 0 : 1; ?> : 0 ;
@@ -958,7 +828,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             document.getElementById('previewProgressLabel'),
             document.getElementById('previewProgressSliderLine'),
             back_3d_color,
-            audio_file,
+            null,
             path_url, // OBJ textures path
             null,
             null,
@@ -1049,17 +919,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
             })();
 
-        } else {
-
-            console.log("isEditMode:" + isEditMode);
-
-            // View mode: Show only the description mentioned in anchor #
-            let url = window.location.href;
-            let langcurr = url.substring(url.indexOf("#") + 1);
-            jQuery("#" + langcurr + ".tabcontent2")[0].style.display = "block";
-
-            // Show slide 0 of images sequence
-            showSlides(slideIndex);
         }
 
     </script>

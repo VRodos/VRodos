@@ -1,5 +1,4 @@
-function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag,
-    translation, pluginPath) {
+function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag, translation, pluginPath) {
 
     // Add javascript variables for viewing the object correctly
     let selected_object_trs = {
@@ -13,11 +12,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "path": path,
         "assetid": dataDrag.assetid,
         "assetname": dataDrag.assetname,
-        "obj": objFname,
-        "objID": dataDrag.objID,
-        "mtl": mtlFname,
-        "mtlID": dataDrag.mtlID,
-        "fbxID": dataDrag.fbxID,
         "glbID": dataDrag.glbID,
         "color": "",
         "audioID": dataDrag.audioID,
@@ -36,9 +30,6 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "doorName_target": dataDrag.doorName_target,
         "sceneName_target": dataDrag.sceneName_target,
         "sceneID_target": dataDrag.sceneID_target,
-        "archaeology_penalty": dataDrag.archaeology_penalty,
-        "hv_penalty": dataDrag.hv_penalty,
-        "natural_penalty": dataDrag.natural_penalty,
         "isreward": dataDrag.isreward,
         "isCloned": dataDrag.isCloned,
         "isJoker": dataDrag.isJoker,

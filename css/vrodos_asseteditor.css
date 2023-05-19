@@ -1,5 +1,5 @@
 .fusion-row {
-    margin-left: 0px !important;
+    margin-left: 0 !important;
     display: inline
 }
 
@@ -155,12 +155,6 @@
     /*margin-left:0%;*/
 }
 
-#ipr-div {
-    margin-bottom: 20px;
-}
-
-#assetTitleView {}
-
 #assetTitleView {
     width: 100%;
     display: flex;
@@ -197,18 +191,6 @@
     text-shadow: 1px 1px #0bb697;
 }
 
-#plustext {
-    margin-left: 10px;
-    display: inline-block;
-    font-size: 18pt;
-}
-
-#minustext {
-    margin-left: 10px;
-    display: inline-block;
-    font-size: 14pt;
-}
-
 .accessButton {
     background-color: white;
     padding: 0;
@@ -228,30 +210,13 @@
     background-color: white;
 }
 
-#confwindow {
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    display: none;
-}
-
-#iframeConf {
-    margin-bottom: 0;
-}
-
-#confwindow_helper {
-    padding-top: 20px;
-    text-align: center;
-    width: 200px;
-    margin: 0 auto;
-}
 
 #category-ipr-select {
     min-width: 100%;
 }
 
 #categoryIPRDescription {
-    "font-style: italic;"
+    font-style: italic;
 }
 
 .AssetEditorAuthorImageStyle {
@@ -367,4 +332,10 @@ a.boundingSphereButton {
     margin-bottom: 5px;
     font-family: Arial, sans-serif;
     cursor: pointer;
+}
+
+.assetEditorColumn {
+    display:block;
+    width: 44%;
+    padding: 0 32px 0 0;
 }
