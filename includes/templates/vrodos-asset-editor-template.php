@@ -358,14 +358,14 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
     <div id="text-asset-sidebar" class="asset_editor_textpanel">
 
         <div style="display: inline-block; width: 100%;">
-            <h2 class="mdc-typography--headline mdc-theme--text-primary-on-light" >Asset editor</h2>
+
         </div>
 
-        <div style="display: inline-block; width: 100%;">
+        <div style="text-align: left; width: 100%;">
             <?php if ($isUserloggedIn && $isEditMode) { ?>
 
-                <a title="Back" class="vrodos-back-button hideAtLocked mdc-button" href="<?php echo $goBackToLink;?>">
-                    <em class="material-icons arrowback">arrow_back</em> Back</a>
+                <a title="Back" class="vrodos-back-button hideAtLocked mdc-button" style="float:left; min-width: 0;" href="<?php echo $goBackToLink;?>">
+                    <em style="font-size:32px;" class="material-icons arrowback">arrow_back</em></a>
                 <?php
             }
 
@@ -373,61 +373,30 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             if($isUserloggedIn && $asset_id != null ){
 
                 if ( $isEditMode) {
-                    $previewLink = ( empty( $_SERVER['HTTPS'] ) ? 'http://' : 'https://' ) .
-                        $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 
-                    // FROM NEW ASSET ONLY
-                    if ( !strpos($_SERVER['REQUEST_URI'],"vrodos_asset")) {
-                        $previewLink = $previewLink . '&vrodos_asset=' . $asset_id;
-                    }
-
-                    // IF from single project
-                    if (isset($_GET['singleproject'])) {
-                        $previewLink = $previewLink . '&singleproject=true';
-                    }
-
-                    $previewLink = $previewLink . '&preview=1#English';
-                    ?>
-
-                    <!-- <a class="mdc-button mdc-button--primary mdc-theme--primary"
-               href="<?php /*echo $previewLink; */?>"
-               data-mdc-auto-init="MDCRipple">Preview</a>-->
-                <?php }  else {
+                }  else {
 
                     // Display EDIT BUTTON
                     $curr_uri = $_SERVER['REQUEST_URI'];
                     $targetparams = str_replace("preview=1","preview=0",$curr_uri);
                     $editLink2 = ( empty( $_SERVER['HTTPS'] ) ? 'http://' : 'https://' ).
-                        $_SERVER['HTTP_HOST'].$targetparams.'#English';
+                        $_SERVER['HTTP_HOST'].$targetparams;
                     ?>
 
                     <a class="mdc-button mdc-button--primary mdc-theme--primary"
                        href="<?php echo $editLink2; ?>" data-mdc-auto-init="MDCRipple">EDIT Asset</a>
 
-
-                    <!-- Prompt 'Edit' or 'Create asset' -->
-                    <div id="edit-asset-header">
-                <span class="mdc-typography--headline mdc-theme--text-primary-on-light">
-                    <span>
-                        <?php
-                        $promptString = $asset_id == null ? "Create a new asset" : "Edit an existing asset";
-                        echo ($isEditable && $isEditMode) ? $promptString:"";
-                        ?>
-                    </span>
-                </span>
-                    </div>
-
                 <?php }
             }?>
-
+            <h2 style="display: inline-block; margin: 0  " class="mdc-typography--headline mdc-theme--text-primary-on-light" >Asset editor</h2>
             <!-- Author -->
-            <div class="mdc-typography--caption" style="display: inline-block; float: right;" >
+            <!--<div class="mdc-typography--caption" style="display: inline-block; float: right;" >
                 <img alt="Author image" class="AssetEditorAuthorImageStyle"
-                     src="<?php echo get_avatar_url($author_id);?>">
+                     src="<?php /*echo get_avatar_url($author_id);*/?>">
                 <a href="#" style="color:black; line-height: 48px; vertical-align: text-bottom">
-                    <?php echo $author_displayname;?>
+                    <?php /*echo $author_displayname;*/?>
                 </a>
-            </div>
+            </div>-->
 
         </div>
 
@@ -503,21 +472,17 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                                     <li class="mdc-list-item mdc-theme--text-hint-on-light" role="option" aria-disabled="true"
                                         tabindex="-1" style="pointer-events: none;">
-                                        No category selected
+                                        <span class="mdc-list-item__text">No category selected</span>
                                     </li>
 
-                                    <?php foreach ( $cat_terms as $term ) {
-
-                                        /* if (  strpos($term->name, "Points") !== false ) {
-                                             continue;
-                                         } */?>
+                                    <?php foreach ( $cat_terms as $term ) {?>
 
                                         <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
                                             data-cat-desc="<?php echo $term->description; ?>"
-                                            data-cat-slug="<?php echo $term->slug; ?>"
+                                            data-value="<?php echo $term->slug; ?>"
                                             id="<?php echo $term->term_id?>"
                                             tabindex="0">
-                                            <?php echo $term->name; ?>
+                                            <span class="mdc-list-item__text"><?php echo $term->name; ?></span>
                                         </li>
 
                                     <?php } ?>
@@ -545,24 +510,15 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         <!-- Select type of 3D format files -->
                         <!--TODO Create a different 3d type handler-->
 
-                        <img alt="3D model section"
+                        <img alt="3D model section" style="height: 64px;"
                              src="<?php echo plugins_url( '../images/cube.png', dirname(__FILE__)  );?>">
                         <label id="fileUploadInputLabel" for="multipleFilesInput"> File selection </label>
-
-                        <!--<input id="fileUploadInput"
-                               class="FullWidth" type="file"
-                               name="multipleFilesInput[]"
-                               value="" multiple accept=".obj,.mtl,.jpg,.png,.fbx,.pdb,.glb"
-                               onclick="clearList()"/>-->
 
                         <input id="fileUploadInput"
                                class="FullWidth" type="file"
                                name="multipleFilesInput[]"
                                value="" accept=".glb"
                                onclick="clearList()"/>
-
-                        <!-- For currently selected -->
-                        <div id="fileList3D" style="margin-left:5px"></div>
 
                         <!-- For already stored files -->
                         <?php print_r($_FILES, true) ?>
@@ -618,6 +574,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 <div style="display:flex; width: 100%;">
                     <!-- CATEGORY IPR -->
                     <div class="assetEditorColumn" style="display:<?php echo (($isOwner || $isUserAdmin) && $isEditMode)?'block':'none';?> float: left; padding-bottom: 24px;">
+
                         <h3 class="mdc-typography--title">Select an IPR plan</h3>
                         <div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 80%;">
                             <i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
@@ -672,8 +629,12 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         <span class="mdc-typography--caption mdc-theme--text-secondary-on-light" id="categoryIPRDescription"></span>
                         <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
+                    </div>
+
+                    <div id="" class="assetEditorColumn" style="float: right;">
 
                     </div>
+
                 </div>
 
 
@@ -864,12 +825,14 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 const categoryDropdown = new MDCSelect(document.getElementById('category-select'));
                 const IPRDropdown = new MDCSelect(document.getElementById('category-ipr-select'));
 
-                let selectedCatElement = document.getElementById('currently-selected-category');
-                let selectedCatId = selectedCatElement.getAttribute("data-cat-id");
+                let preSelectedCatId = document.getElementById('currently-selected-category').getAttribute("data-cat-id");
 
                 categoryDropdown.listen('MDCSelect:change', () => {
-                    loadLayout(true);
+
+                    let currentSlug = updateSelectComponent(true);
                     console.log(`Selected option at index ${categoryDropdown.selectedIndex} with value "${categoryDropdown.value}"`);
+                    console.log(currentSlug);
+
                 });
 
                 let selectedCatIPRId = jQuery('#currently-ipr-selected').attr("data-cat-ipr-id");
@@ -884,9 +847,9 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 // This fires on start to clear layout if no category is selected
                 jQuery( document ).ready(function() {
 
-                    if (selectedCatId) {
-                        document.getElementById(selectedCatId).setAttribute("aria-selected", true);
-                        loadLayout(false);
+                    if (preSelectedCatId) {
+                        document.getElementById(preSelectedCatId).setAttribute("aria-selected", true);
+                        updateSelectComponent(false);
                     }
 
                     if (jQuery('#currently-ipr-selected').attr("data-cat-ipr-id")) {
@@ -898,27 +861,28 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                 // Function to initialize layout
                 // parameter denotes if new asset or edit asset
-                function loadLayout(hasCategory) {
+                function updateSelectComponent(hasValue) {
 
                     //vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
                     asset_viewer_3d_kernel.resizeDisplayGL();
-
                     document.getElementById('formSubmitBtn').disabled = false;
-
                     let descText = document.getElementById('categoryDescription');
 
-                    if(hasCategory) {
-                        descText.innerHTML = categoryDropdown.selectedOptions[0].getAttribute("data-cat-desc");
+                    let slug = '';
+
+                    if(hasValue) {
                         document.getElementById('termIdInput').setAttribute('value', categoryDropdown.value);
+                        descText.innerHTML = document.getElementById(categoryDropdown.value).getAttribute("data-cat-desc");
+                        slug = document.getElementById(categoryDropdown.value).getAttribute("data-value");
 
                     } else {
+                        document.getElementById('termIdInput').setAttribute('value', preSelectedCatId);
                         descText.innerHTML = document.getElementById('currently-selected-category').getAttribute("data-cat-desc");
-                        document.getElementById('termIdInput').setAttribute('value', selectedCatId);
+                        slug = document.getElementById('currently-selected-category').getAttribute("data-cat-slug");
                     }
+                    return slug;
                 }
 
             })();
-
         }
-
     </script>

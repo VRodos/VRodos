@@ -858,7 +858,7 @@ video {
 
 
 .hideAtLocked{
-    font-size: large;
+
 }
 
 
@@ -1404,7 +1404,7 @@ video {
     }
 
     .asset_editor_3dpanel{
-        width: 59%;
+        width: 58%;
         height: 100%;
      }
 }

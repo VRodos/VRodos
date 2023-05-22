@@ -104,13 +104,11 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
     let _handleFileSelect = function ( event ) {
 
         let input = document.getElementById('fileUploadInput');
-        let output = document.getElementById('fileList3D');
         let children = "";
 
         for (let i = 0; i < input.files.length; ++i) {
             children += '<li>' + input.files.item(i).name + '</li>';
         }
-        output.innerHTML = '<ul>'+children+'</ul>';
 
         // Reset Screenshot
         document.getElementById("sshotPreviewImg").src = sshotPreviewDefaultImg;
