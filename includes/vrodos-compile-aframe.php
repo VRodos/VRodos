@@ -564,11 +564,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_asset = $dom->createElement( "a-assets" );
                 $a_asset->setAttribute( "timeout", "10000");
 
+                $a_asset_fs = $dom->createElement( "a-assets" );
+                $a_asset_fs->setAttribute("mixin", "vid_panel");
+                $a_asset_fs->setAttribute("id", "video_fullScreen_$nameObject");
+                //$a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/search.png");
+
+
+
                 $a_video_asset = $dom->createElement( "video" );
                 $a_video_asset->setAttribute("id", "video_$nameObject");
                 $a_video_asset->setAttribute( "loop", "true");
 
-                $contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4";
+                $contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
                 //if (empty($contentObject->video_link) == 1){
                 $a_video_asset->setAttribute("src", $contentObject->video_link);
                 //    console_log("Video link found"); 
@@ -580,33 +587,119 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 				$a_asset->appendChild($a_video_asset);
 				//$ascenePlayer->appendChild($a_video_asset);
 				$ascene->appendChild($a_asset);
+                $ascene->appendChild($a_asset_fs);
 				//$cameraPosition[0] = 5;
 				//$cameraPosition[2] = -20;
 
-				//print_r($cameraPosition);
+				
+                $fov = 2 * atan( 19 / ( 2 * $contentObject->follow_camera_z) ) * ( 180 / pi() );
 
 				$a_entity = $dom->createElement("a-plane");
 				$a_entity->setAttribute("id", "video-border_$nameObject");
-				$a_entity->setAttribute('video-controls', $nameObject);
-				$a_entity->setAttribute("camera-listener", "");
+                $pos_x = $contentObject->position[0];
+                $pos_y = $contentObject->position[1];
+                $pos_z = $contentObject->position[2];
 
+                $rot_x = $contentObject->rotation[0];
+                $rot_y = $contentObject->rotation[1];
+                $rot_z = $contentObject->rotation[2];
+                
+                //print_r($pos_x);
+
+				$a_entity->setAttribute('video-controls', "id: $nameObject; orig_pos:$pos_x,$pos_y,$pos_z; orig_rot:$rot_x,$rot_y,$rot_z");
+				$a_entity->setAttribute("camera-listener", "");
+                $a_entity->setAttribute("class", "clickable");    
+
+                //$a_entity_fs = $dom->createElement("a-plane");
+                //$a_entity_fs->setAttribute("id", "ent_fs_$nameObject");
+                //$a_entity_fs->setAttribute("height", "2");
+				//$a_entity_fs->setAttribute("width", "2");
+				//$a_entity_fs->setAttribute("src", "#video_fullScreen_$nameObject");
+                //$a_entity_fs->setAttribute("renderOrder", "9999999");
+                //$fileOperations->setAffineTransformations($a_entity_fs, $contentObject);
+                //$ascene->appendChild($a_entity_fs);
+
+                $a_entity_panel = $dom->createElement("a-plane");
+                $a_entity_panel->setAttribute("id", "vid-panel_$nameObject");
+                $a_entity_panel->setAttribute("height", "4");
+				$a_entity_panel->setAttribute("width", "3");
+				$a_entity_panel->setAttribute("color", "red");
+                $a_entity_panel->setAttribute("position", "9999 9999 9999");
+                $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
+                $a_entity_panel->setAttribute("visible", "false");
+
+                /*
+                $a_entity_gui = $dom->createElement("a-plane");
+                $a_entity_gui->setAttribute("id", "vid-gui_$nameObject");
+                $a_entity_gui->setAttribute("flex-direction", "column");
+				$a_entity_gui->setAttribute("justify-content", "center");
+				$a_entity_gui->setAttribute("align-items", "normal");
+                $a_entity_gui->setAttribute("opacity", "0.7");
+                $a_entity_gui->setAttribute("width", "7.5");
+                $a_entity_gui->setAttribute("height", "9.5");
+                $a_entity_gui->setAttribute("color", "#072B73");
+                $a_entity_gui->setAttribute("shadow", "receive: false");
+                $a_entity_gui->setAttribute("position", "10 15 -25");
+                $a_entity_gui->setAttribute("rotation", "0 0 0");
+               
+
+                $a_entity_but = $dom->createElement("a-box");
+                $a_entity_but->setAttribute("id", "but-gui_$nameObject");         
+                $a_entity_but->setAttribute("width", "2.5");
+                $a_entity_but->setAttribute("height", "0.7"); 
+                $a_entity_but->setAttribute("base-depth", "0.025");
+                $a_entity_but->setAttribute("depth", "0.1");
+                $a_entity_but->setAttribute("gap", "0.1");         
+                $a_entity_but->setAttribute("value", "Sample Button");
+                $a_entity_but->setAttribute("font-size", "0.25"); 
+                $a_entity_but->setAttribute("margin", "0 0 0.05 0");
+                $a_entity_but->setAttribute("font-color", "black");
+                $a_entity_but->setAttribute("active-color", "red"); 
+                $a_entity_but->setAttribute("hover-color", "yellow");
+                $a_entity_but->setAttribute("border-color", "white");
+                $a_entity_but->setAttribute("focus-color", "black"); 
+                $a_entity_but->setAttribute("background-color", "orange");
+                $a_entity_but->setAttribute("bevel", "true");
+                $a_entity_but->setAttribute("shadow", "receive: false");
+                
+                //$a_entity_but->setAttribute("position", "15 0 -25");
+
+
+  
+
+                $a_entity_gui->appendChild($a_entity_but);
+                $ascenePlayer->appendChild($a_entity_gui);
+                */
+
+
+                $a_entity_panel->setAttribute("overlay", "");
+
+//$a_entity_panel->setAttribute("renderOrder", "9999999");
+                //$a_entity_panel->setAttribute("visible", "false");
+                //$a_entity_panel->setAttribute("scale", "0.00001 0.000001 0.000001");
+               
+                $ascenePlayer->appendChild($a_entity_panel);
 
                 //$a_entity->setAttribute("material", "side: double");
 
 
 				$a_video = $dom->createElement("a-video");
 				$a_video->setAttribute("id", "video-display_$nameObject");
-				$a_video->setAttribute("height", "19");
-				$a_video->setAttribute("width", "19");
+				$a_video->setAttribute("height", "15");
+				$a_video->setAttribute("width", "20");
 				$a_video->setAttribute("position", "0 0 0.1");
 				$a_video->setAttribute("src", "#video_$nameObject");
                 $a_video->setAttribute("material", "side: double");
+                //$a_video->setAttribute("renderOrder", "9");
+
+
+                
 
                 if ($contentObject->follow_camera) {
                     $cameraPosition[0] = $contentObject->follow_camera_x;
                     $cameraPosition[2] = $contentObject->follow_camera_z;
-
-                    //print_r($cameraPosition[2]);
+                   
+                    //print_r($fov);
 
                     $a_entity->setAttribute("position", "$cameraPosition[0]  0  $cameraPosition[2]");
                     $a_entity->appendChild($a_video);
