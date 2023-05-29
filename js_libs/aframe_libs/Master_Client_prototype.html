@@ -139,9 +139,9 @@
                 //videoMesh.material.wireframe = true;
                 let cam = document.querySelector("#cameraA");
 
-                const entCollection = document.getElementsByClassName("override-materials");
+                const entCollection = document.getElementsByClassName("hideable");
 
-                console.log(entCollection[0]);
+
 
                 //full_screen_el.setAttribute('height', "1");
                 //full_screen_el.setAttribute('width', "1");
@@ -181,11 +181,11 @@
 
 
 
-                    videoDisplay.setAttribute("renderOrder", "1");
-                    videoBorder.setAttribute("renderOrder", "1");
+                    //videoDisplay.setAttribute("renderOrder", "1");
+                    //videoBorder.setAttribute("renderOrder", "1");
 
-                    videoDisplay.components.material.material.depthTest = false;
-                    videoBorder.components.material.material.depthTest = false;
+                    //videoDisplay.components.material.material.depthTest = false;
+                    //videoBorder.components.material.material.depthTest = false;
 
 
 
@@ -241,19 +241,7 @@
                 //backgroundEl.getObject3D('mesh').material.depthTest = false;
 
                 //console.log(full_screen_el.getAttribute("position"));
-                videoBorder.addEventListener("mousedown", function (event) {
 
-                    //console.log(2 * Math.atan((width / 2) / (dist)) * (180 / Math.PI));
-                    //videoBorder.setAttribute("position", "0 0 -25");
-
-                    //cam.add(videoBorder);
-
-                    //console.log(videoBorder);
-                    //videoDisplay.setAttribute("height", "19");
-                    //videoDisplay.setAttribute("width", "19");
-
-
-                });
 
                 let visCollection = [];
                 let origPosBorder;
@@ -281,13 +269,18 @@
                             entCollection[i].setAttribute("visible", "false");
                             console.log(entCollection[i].getAttribute("visible"));
                             entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
-                            player.setAttribute("wasd-controls", "acceleration: 0");
+                            playerEl.setAttribute("wasd-controls", "acceleration: 0");
                             cam.add(videoBorder);
                             cam.add(videoDisplay);
                             videoBorder.setAttribute("position", "0 0 -25");
                             videoDisplay.setAttribute("position", "0 0 -25");
+
+                            videoBorder.setAttribute("rotation", "0 0 0");
+                            videoDisplay.setAttribute("rotation", "0 0 0");
                             visCollection.push(i);
-                            console.log(visCollection);
+                            //console.log(entCollection[i]);
+                            //console.log(entCollection[i].getAttribute("original-scale"));
+                            //console.log(visCollection);
                         }
 
 
@@ -311,7 +304,7 @@
 
                         //videoDisplay.setAttribute("height", "19");
                         //videoDisplay.setAttribute("width", "19");
-                        console.log(visCollection);
+                        //console.log(visCollection);
 
                     }
                     else {
@@ -319,13 +312,15 @@
                         video.pause();
                         cam.setAttribute("position", "0 0.6 0");
                         cam.setAttribute("camera", "fov", 80);
-                        backgroundEl.setAttribute("background", "color", "white");
+                        backgroundEl.setAttribute("background", "color", "#eeeeee");
                         console.log(visCollection);
                         //borderMesh.material.color.set("#440000");
                         for (let i = 0; i < visCollection.length; i++) {
                             entCollection[visCollection[i]].setAttribute("visible", "true");
 
-                            entCollection[visCollection[i]].setAttribute("scale", "1 1 1");
+                            console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
+
+                            entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
 
                             //videoDisplay.setAttribute("position", origPosDisplay);
 
@@ -334,7 +329,7 @@
                         backgroundEl.add(videoBorder);
                         backgroundEl.add(videoDisplay);
                         let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
-                        let r_x = data.orig_rot[0] + ' ' + data.orig_rot[1] + ' ' + data.orig_rot[2];
+                        let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
 
                         videoBorder.setAttribute("position", p_x);
                         videoDisplay.setAttribute("position", p_x);
@@ -542,7 +537,7 @@
         debug: true;
         audio: true;
         adapter: easyrtc;
-       " environment cursor="rayOrigin: mouse; fuse: false">
+       " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
 
         <a-assets>
             <!-- Avatar Template -->
