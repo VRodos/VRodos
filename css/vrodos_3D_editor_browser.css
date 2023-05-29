@@ -376,10 +376,14 @@
 .AssetCategoryTabStyle {
 	height: 36px;
 	width: 100%;
-	overflow: auto;
+	overflow: hidden;
 	white-space: nowrap;
 	background-color: rgba(255,255,255,0.12);
 	color: #fff;
+}
+
+button.tablinks {
+	min-width: 24px;
 }
 
 /*!* Style the buttons that are used to open the tab content *!*/

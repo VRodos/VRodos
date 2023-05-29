@@ -113,10 +113,10 @@
 }
 
 #jscolorpick {
-    display: block;
+
     padding: 6px 0 6px 0;
-    margin: 42px 16px 0 16px;
-    width: 30%;
+    margin: 42px 0 0 0;
+
 }
 
 #assetFontsLabel {
@@ -335,7 +335,7 @@ a.boundingSphereButton {
 }
 
 .assetEditorColumn {
-    display:block;
-    width: 44%;
-    padding: 0 32px 0 0;
+    display: block;
+    width: 46%;
+    margin: 0 8px 0 8px;
 }

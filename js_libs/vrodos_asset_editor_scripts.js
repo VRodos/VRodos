@@ -223,12 +223,6 @@ function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
     if (jQuery("ProducerPlotTooltip")) {
         jQuery("div.ProducerPlotTooltip").remove();
     }
-
-    jQuery("#assetDescription").show();
-    jQuery("#doorDetailsPanel").hide();
-    //jQuery("#imgDetailsPanel").hide();
-    //jQuery("#videoDetailsPanel").hide();
-    jQuery("#objectPreviewTitle").hide();
 }
 
 function clearList() {
@@ -258,7 +252,7 @@ function generateQRcode(){
     })
 }
 
-function screenshotHandlerSet(){
+function setScreenshotHandler(){
 
     // Screenshot handler
     if (document.getElementById("sshotPreviewImg")) {
