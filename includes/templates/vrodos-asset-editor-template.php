@@ -242,9 +242,11 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         case 'poi-help':
 
             break;
-        case 'chat':
 
+        case 'chat':
+            update_post_meta($asset_id, 'vrodos_asset3d_chat_type', $_POST['chatTypeRadio']);
             break;
+
         case 'poi-link':
 
             break;
@@ -535,60 +537,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     </div>
                 </div>
 
-                <div id="chat_section" class="assetEditorColumn" style="display: none;">
-                    <h3 class="mdc-typography--title">Chat Type</h3>
-                    <ul class="RadioButtonList" onclick="loadChatTypeDescription();">
-
-                        <li class="mdc-form-field">
-                            <div class="mdc-radio">
-                                <input class="mdc-radio__native-control" type="radio" id="chatTypeP2P"
-                                       checked="" name="chatTypeRadio" value="p2p">
-                                <div class="mdc-radio__background">
-                                    <div class="mdc-radio__outer-circle"></div>
-                                    <div class="mdc-radio__inner-circle"></div>
-                                </div>
-                            </div>
-                            <label id="chatTypeP2P-label" for="chatTypeP2P">
-                                <i class="material-icons">group</i>
-                                <span style="vertical-align: super">P2P</span>
-                            </label>
-                        </li>
-
-                        <li class="mdc-form-field">
-                            <div class="mdc-radio">
-                                <input class="mdc-radio__native-control" type="radio" id="chatTypeBroadcast"
-                                       checked="" name="chatTypeRadio" value="broadcast">
-                                <div class="mdc-radio__background">
-                                    <div class="mdc-radio__outer-circle"></div>
-                                    <div class="mdc-radio__inner-circle"></div>
-                                </div>
-                            </div>
-                            <label id="chatTypeBroadcast-label" for="chatTypeBroadcast">
-                                <i class="material-icons">public</i>
-                                <span style="vertical-align: super">Broadcast</span>
-                            </label>
-                        </li>
-
-                        <li class="mdc-form-field">
-                            <div class="mdc-radio">
-                                <input class="mdc-radio__native-control" type="radio" id="chatTypeHelp"
-                                       checked="" name="chatTypeRadio" value="help">
-                                <div class="mdc-radio__background">
-                                    <div class="mdc-radio__outer-circle"></div>
-                                    <div class="mdc-radio__inner-circle"></div>
-                                </div>
-                            </div>
-                            <label id="chatTypeHelp-label" for="chatTypeHelp">
-                                <i class="material-icons">help</i>
-                                <span style="vertical-align: super">Help</span>
-                            </label>
-                        </li>
-                    </ul>
-                    <span id="chat-type-label"
-                          class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">
-                        </span>
-                </div>
-
                 <div id="screenshot_section" class="assetEditorColumn" style="float: right;">
 
                     <h3 class="mdc-typography--title">Screenshot</h3>
@@ -750,6 +698,77 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                            id="imageFileInput" accept="image/png, image/jpg"/>
 
                 </div>
+
+
+                <div id="chat_section" class="assetEditorColumn" style="display: none;">
+                    <h3 class="mdc-typography--title">Chat Type</h3>
+                    <?php
+                    $chatTypeP2p = '';
+                    $chatTypeBroadcast = '';
+                    $chatTypeHelp = '';
+                    $chat_type = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
+                    if($chat_type === 'p2p') {
+                        $chatTypeP2p = 'checked';
+                    } else if ($chat_type === 'broadcast') {
+                        $chatTypeBroadcast = 'checked';
+                    }
+                    else {
+                        $chatTypeHelp = 'checked';
+                    }
+                    ?>
+
+                    <ul class="RadioButtonList" onclick="loadChatTypeDescription();">
+                        <li class="mdc-form-field">
+                            <div class="mdc-radio">
+                                <input class="mdc-radio__native-control" type="radio" id="chatTypeP2P"
+                                       name="chatTypeRadio" value="p2p" <?php echo $chatTypeP2p; ?>>
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                            </div>
+                            <label id="chatTypeP2P-label" for="chatTypeP2P">
+                                <i class="material-icons">group</i>
+                                <span style="vertical-align: super">P2P</span>
+                            </label>
+                        </li>
+
+                        <li class="mdc-form-field">
+                            <div class="mdc-radio">
+                                <input class="mdc-radio__native-control" type="radio" id="chatTypeBroadcast"
+                                       name="chatTypeRadio" value="broadcast" <?php echo $chatTypeBroadcast; ?>>
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                            </div>
+                            <label id="chatTypeBroadcast-label" for="chatTypeBroadcast">
+                                <i class="material-icons">public</i>
+                                <span style="vertical-align: super">Broadcast</span>
+                            </label>
+                        </li>
+
+                        <li class="mdc-form-field">
+                            <div class="mdc-radio">
+                                <input class="mdc-radio__native-control" type="radio" id="chatTypeHelp"
+                                       name="chatTypeRadio" value="help" <?php echo $chatTypeHelp; ?>>
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                            </div>
+                            <label id="chatTypeHelp-label" for="chatTypeHelp">
+                                <i class="material-icons">help</i>
+                                <span style="vertical-align: super">Help</span>
+                            </label>
+                        </li>
+                    </ul>
+                    <span id="chat-type-label"
+                          class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">
+                        </span>
+                </div>
+
+
             </div>
 
             <!-- CATEGORY IPR -->
@@ -989,9 +1008,9 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 switch (slug) {
 
                     case "chat":
-                        document.getElementById('screenshot_section').style.display = "none";
                         document.getElementById('ipr_section').style.display = "none";
                         document.getElementById('chat_section').style.display = "block";
+                        loadChatTypeDescription();
                         break;
                     case "poi-help":
                         document.getElementById('ipr_section').style.display = "none";
@@ -1116,6 +1135,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
     let loadChatTypeDescription = () => {
         let checked = document.querySelector('input[name="chatTypeRadio"]:checked').value;
+
         let content = '';
         if (checked === 'p2p') {
             content = "A private chat between users. (Not yet implemented)";
