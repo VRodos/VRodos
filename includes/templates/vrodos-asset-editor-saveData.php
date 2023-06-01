@@ -93,7 +93,10 @@ function vrodos_create_asset_addImages_frontend($asset_newID){
         if ($i==0){
             // Featured image (thumbnail)
             $attachment_id = vrodos_upload_img_vid_aud( $asset_imageForm[0], $asset_newID);
-            set_post_thumbnail( $asset_newID, $attachment_id );
+
+            // Dont set post thumbnail. another call does that.
+            // set_post_thumbnail( $asset_newID, $attachment_id );
+            update_post_meta($asset_newID, 'vrodos_asset3d_image'.$i, $attachment_id);
         } else { // Images 1,2,3,4
             if ($asset_imageForm[$i]['error'] != 4) { // No error
                 $attachment_id_image = vrodos_upload_img_vid_aud($asset_imageForm[$i], $asset_newID);
@@ -118,7 +121,7 @@ function vrodos_create_asset_addAudio_frontend($asset_newID){
 
 
 
-function vrodos_create_asset_addVideo_frontend($asset_newID){
+function vrodos_create_asset_addVideo_frontend($asset_newID) {
     $asset_videoForm = $_FILES['videoFileInput'];
 
     // 4 error means empty

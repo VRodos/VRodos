@@ -95,6 +95,13 @@ function vrodos_upload_img_vid_aud_directory( $dir ) {
         ) + $dir;
 }
 
+function vrodos_upload_video_dir( $dir ) {
+    return array(
+            'path'   => $dir['basedir'] . '/models/videos',
+            'url'    => $dir['baseurl'] . '/models/videos',
+            'subdir' => '/models/videos',
+        ) + $dir;
+}
 
 // Change general upload directory to Models
 function vrodos_upload_filter( $args  ) {
@@ -132,13 +139,24 @@ function vrodos_upload_img_vid_aud($file, $parent_post_id) {
     require_once( ABSPATH . 'wp-admin/includes/admin.php' );
 
     // Add all models to "uploads/Models/" folder
-    add_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
+
+    if($file['type'] === 'video/mp4' || $file['type'] === 'video/webm'){
+        add_filter( 'upload_dir', 'vrodos_upload_video_dir' );
+    } else {
+        add_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
+    }
 
     // Upload
     $file_return = wp_handle_upload( $file, array('test_form' => false ) );
 
     // Remove upload filter to "Models" folder
-    remove_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
+    if($file['type'] === 'video/mp4' || $file['type'] === 'video/webm'){
+        remove_filter( 'upload_dir', 'vrodos_upload_video_dir' );
+    } else {
+        remove_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
+    }
+
+
 
     // if file has been uploaded succesfully
     if( !isset( $file_return['error'] ) && !isset( $file_return['upload_error_handler'] ) ) {

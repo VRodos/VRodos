@@ -172,53 +172,34 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         'post_nonce')) {
 
     $assetTitle = isset($_POST['assetTitle']) ? esc_attr(strip_tags($_POST['assetTitle'])) : '';
-    $assetDescription = isset($_POST['assetDescription']) ? esc_attr(strip_tags($_POST['assetDescription'])) : '';
-
-    // Fonts Selected
-    $assetFonts = isset($_POST['assetFonts']) ? esc_attr(strip_tags($_POST['assetFonts'])) : '';
-
-    // 3D background color
-    $assetback3dcolor = esc_attr(strip_tags($_POST['assetback3dcolor']));
-
-    // Asset trs
-    $assettrs = esc_attr(strip_tags($_POST['assettrs']));
-
-    // Asset category
-    $assetCatID = intval($_POST['term_id']);//ID of Asset Category (hidden input)
-
-    // Term
+    $assetCatID = intval($_POST['term_id']); //ID of Asset Category (hidden input)
     $assetCatTerm = get_term_by('id', $assetCatID, 'vrodos_asset3d_cat');
 
-    // IPR Term id
+    $assetFonts = isset($_POST['assetFonts']) ? esc_attr(strip_tags($_POST['assetFonts'])) : '';
+
+    $assetback3dcolor = esc_attr(strip_tags($_POST['assetback3dcolor']));
+    $assettrs = esc_attr(strip_tags($_POST['assettrs']));
+
     $assetCatIPRID = intval($_POST['term_id_ipr']); //ID of Asset Category IPR (hidden input)
-
-    // IPR Term id cat
     $assetCatIPRTerm = get_term_by('id', $assetCatIPRID, 'vrodos_asset3d_ipr_cat');
-
-    // show an icon while waiting
 
     $asset_updatedConf = 0;
     // NEW Asset: submit info to backend
 
-    if($asset_id == null) {
-        ?>
-
+    if($asset_id == null) { ?>
         <!-- css ref is not recognized in the following, therefore CSS should be written inline -->
         <div style="position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%);font-size: x-large">Creating asset...</div>
-
         <?php
-
         // It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
-        $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, $assetDescription);
-
-    }else {
-        ?>
+        $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '');
+    }
+    else { ?>
         <div class='centerMessageAssetSubmit'>Updating asset...</div>
         <?php
-
         // Edit an existing asset: Return true if updated, false if failed
-        $asset_updatedConf = vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, $assetDescription);
+        $asset_updatedConf = vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '');
     }
+
 
     // Upload 3D files
     if($asset_id != 0 || $asset_updatedConf == 1) {
@@ -237,35 +218,42 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         vrodos_upload_asset_screenshot($_POST['sshotFileInput'], $assetTitle, $asset_id, $project_id);
     }
 
-
-    // Save screenshot
-    //vrodos_create_asset_addImages_frontend($asset_id);
-
     // Save custom parameters according to asset type.
-    switch ($assetCatTerm->slug){
-        case 'decoration':
-            break;
-        case 'door':
-            break;
+    switch ($assetCatTerm->slug) {
+        /*  case 'decoration':
+              break;
+          case 'door':
+              break;*/
         case 'video':
+            if (isset($_FILES['videoFileInput'])) {
+                vrodos_create_asset_addVideo_frontend($asset_id);
+            }
+            if (isset($_POST['videoSshotFileInput'])) {
+                vrodos_upload_asset_screenshot($_POST['videoSshotFileInput'], $assetTitle, $asset_id, $project_id);
+            }
+            update_post_meta($asset_id, 'vrodos_asset3d_video_title', $_POST['videoTitle']);
+            update_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', isset($_POST['video_autoloop_checkbox']));
+
             break;
         case 'poi-imagetext':
+            // Save Image
+            // vrodos_create_asset_addImages_frontend($asset_id);
             break;
         case 'poi-help':
+
             break;
         case 'chat':
+
             break;
         case 'poi-link':
-            break;
 
+            break;
         default:
-            //vrodos_create_asset_addImages_frontend($asset_id);
-            // vrodos_create_asset_addAudio_frontend($asset_id);
-            // vrodos_create_asset_addVideo_frontend($asset_id);
             break;
-
-
     }
+
+    // Audio: To add
+    // vrodos_create_asset_addAudio_frontend($asset_id);
 
     if (isset($_GET['vrodos_asset'])) {
         echo '<script>window.location.href = "'.$_SERVER['HTTP_REFERER'].'"</script>';
@@ -280,6 +268,8 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 // When asset was created in the past and now we want to edit it. We should get the attachments obj, mtl
 if($asset_id != null) {
 
+    var_dump($asset_id);
+
     // Get post
     $asset_post = get_post($asset_id);
 
@@ -287,11 +277,10 @@ if($asset_id != null) {
     $assetpostMeta = get_post_meta($asset_id);
 
     // Background color in canvas
-    $back_3d_color = $assetpostMeta['vrodos_asset3d_back3dcolor'][0];
+    $back_3d_color = $assetpostMeta['vrodos_asset3d_back3dcolor'] ? $assetpostMeta['vrodos_asset3d_back3dcolor'][0] : '#ffffff';
 
     // Font type for text
     $fonts = $assetpostMeta['vrodos_asset3d_fonts'][0];
-
     $curr_font = str_replace("+", " ", $fonts);
 
     $asset_3d_files = get_3D_model_files($assetpostMeta, $asset_id);
@@ -530,17 +519,17 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 <div class="assetEditorColumn" id="video_section" style="display: none;">
                     <h3 class="mdc-typography--title">Video</h3>
 
-                    <div id="videoFileInputContainer" class="">
+                    <div id="videoFileInputContainer">
                         <?php
                         $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
-                        $attachment_post = get_post($videoID);
-                        $attachment_file = $attachment_post->guid; ?>
+                        $video_attachment_post = get_post($videoID);
+                        $video_attachment_file = $video_attachment_post->guid; ?>
                         <label for="videoFileInput">Select a video</label>
                         <br />
                         <video width="320" height="240" id="assetVideoTag" style="width:60%" preload="auto" controls>
-                            <source id="assetVideoSource" src="<?php echo $attachment_file;?>" type="video/mp4">
+                            <source id="assetVideoSource" src="<?php echo $video_attachment_file;?>" type="video/mp4">
                         </video>
-                        <input class="FullWidth" type="file" name="videoFileInput" value="" id="videoFileInput" accept="video/mp4,video/webm"/>
+                        <input class="FullWidth" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
                         <br />
                         <span id="video-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp4 &amp; webm files are supported.</span>
                     </div>
@@ -641,19 +630,12 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 <div id="video_screenshot_section" class="assetEditorColumn" style="display:none; float: right;">
 
                     <h3 class="mdc-typography--title">Video Screenshot</h3>
-                    <?php
-                    if($asset_id==null) {
-                        $videoScreenshotImgURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
-                    } else {
-                        $videoScreenshotImgURL = wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_videoscreenimage",true) );
-
-                        if ($videoScreenshotImgURL == false) {
-                            $videoScreenshotImgURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
-                        }
-                    } ?>
+                    <span style="font-style: italic; line-height: 1rem;" class="mdc-typography--caption mdc-theme--text-secondary-on-light">
+                          Generated automatically during video seek
+                    </span>
                     <div style="float: left; width: 100%">
                         <canvas id="videoSshotPreviewImg" style="overflow:auto"></canvas>
-                        <input type="hidden" name="videoSshotFileInput" value=""
+                        <input type="hidden" name="videoSshotFileInput"
                                id="videoSshotFileInput" accept="image/png"/>
                     </div>
 
@@ -720,14 +702,19 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     <h3 class="mdc-typography--title">Video options</h3>
 
                     <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
+                        <?php
+                        $video_title = get_post_meta($asset_id,'vrodos_asset3d_video_title', true);
+                        $video_autoloop = get_post_meta($asset_id,'vrodos_asset3d_video_autoloop', true) ? 'checked' : '';
+
+                        ?>
                         <input id="videoTitle" type="text"
                                class="mdc-textfield__input mdc-theme--text-primary-on-light"
                                name="videoTitle"
                                aria-controls="title-validation-msg" minlength="3" maxlength="25"
-                               value="">
+                               value="<?php echo $video_title; ?>">
 
                         <label for="videoTitle" class="mdc-textfield__label">
-                            Title (optional)
+                            Video title (optional)
                         </label>
 
                         <div class="mdc-textfield__bottom-line"></div>
@@ -737,9 +724,8 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         Between 3 - 25 characters
                     </p>
 
-
                     <input type="checkbox" title="Select if you want the video to automativally loop." id="video_autoloop_checkbox"
-                           name="video_autoloop_checkbox" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light"/>
+                           name="video_autoloop_checkbox" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $video_autoloop; ?>/>
                     <label for="video_autoloop_checkbox" class="mdc-typography--subheading2" style="vertical-align: middle; cursor: pointer;">Autoloop</label>
                 </div>
 
@@ -904,6 +890,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
     const assetVideoSrc = document.getElementById("assetVideoSource");
     const assetVideoTag = document.getElementById("assetVideoTag");
+
     const videoInputTag = document.getElementById("videoFileInput");
     const videoSshotCanvas = document.getElementById("videoSshotPreviewImg");
     const videoSshotFileInput = document.getElementById("videoSshotFileInput");
@@ -921,6 +908,13 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
     let mdc = window.mdc;
     mdc.autoInit();
+
+    assetVideoTag.addEventListener('loadeddata', function() {
+        generateVideoSshot(videoSshotCanvas, assetVideoTag);
+    }, false);
+    assetVideoTag.addEventListener('seeked', function(){
+        generateVideoSshot(videoSshotCanvas, assetVideoTag);
+    });
 
     generateQRcode();
     setScreenshotHandler();
@@ -1089,11 +1083,10 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     let fr = new FileReader();
                     fr.onload = function () {
                         document.getElementById('imagePoiPreviewImg').src = fr.result;
+                        document.getElementById('imageFileInput').value = fr.result;
                     }
                     fr.readAsDataURL(files[0]);
                 }
-
-                // Not supported
                 else {
                     // fallback -- perhaps submit the input to an iframe and temporarily store
                     // them on the server until the user's session ends.
@@ -1109,27 +1102,16 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
             reader.onload = function(e) {
                 assetVideoSrc.src = e.target.result
-
                 assetVideoTag.load();
-
-                assetVideoTag.addEventListener('loadeddata', function() {
-                    generateVideoSshot(videoSshotCanvas, assetVideoTag);
-                }, false);
-
-                assetVideoTag.addEventListener('seeked', function(){
-                    generateVideoSshot(videoSshotCanvas, assetVideoTag);
-                });
             }.bind(this)
             reader.readAsDataURL(event.target.files[0]);
         }
     };
 
     let generateVideoSshot = (canvas, video) => {
-
         let ctx = canvas.getContext('2d');
         ctx.drawImage( video, 0, 0, 320, 240);
-
-        videoSshotFileInput.src = canvas.toDataURL('image/png');
+        videoSshotFileInput.value = canvas.toDataURL('image/png');
     };
 
     let loadChatTypeDescription = () => {
