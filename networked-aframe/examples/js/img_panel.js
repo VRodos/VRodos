@@ -6,10 +6,11 @@ AFRAME.registerComponent('info-panel', {
         this.ImageEl = document.querySelector('#top_img_' + this.data);
         this.TitleEl = document.querySelector('#title_' + this.data);
         this.DescriptionEl = document.querySelector('#desc_' + this.data);
+        this.infoPanel = document.querySelector('#infoPanel_' + this.data);
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
 
-        console.log(btn);
+
 
 
 
@@ -21,8 +22,17 @@ AFRAME.registerComponent('info-panel', {
 
         this.buttonEl.addEventListener('click', this.onMenuButtonClick);
         this.backgroundEl.addEventListener('click', this.onBackgroundClick);
-        this.el.object3D.renderOrder = 9999999;
-        this.el.object3D.depthTest = false;
+        //this.el.object3D.renderOrder = 9999999;
+        //this.el.object3D.depthTest = false;
+
+        console.log(this.infoPanel);
+        ///this.infoPanel.object3D.depthTest = false;
+        //this.infoPanel.object3D.renderOrder = 999999999999;
+
+        this.backgroundEl.addEventListener('raycaster-intersected', evt => {
+            console.log("Intersected");
+        });
+
 
     },
 
@@ -39,11 +49,12 @@ AFRAME.registerComponent('info-panel', {
         //this.backgroundEl.sceneEl.renderer.sortObjects = true;
         this.backgroundEl.components.material.material.depthTest = false;
         //this.backgroundEl.components.material.material.clipIntersection = false;
+        this.buttonEl.object3D.depthTest = false;
 
         this.backgroundEl.object3D.renderOrder = 9999999;
         this.buttonEl.object3D.renderOrder = 9999999;
         //clipIntersection
-        this.buttonEl.components.material.material.depthTest = false;;
+        this.buttonEl.components.material.material.depthTest = false;
 
         this.ImageEl.components.material.material.depthTest = false;
         this.DescriptionEl.components.text.material.depthTest = false;

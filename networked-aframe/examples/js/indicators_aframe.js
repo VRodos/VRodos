@@ -28,7 +28,8 @@ AFRAME.registerComponent('indicator', {
                 if (child.type === 'Mesh') {
                     const material = child.material;
                     console.log("Mat found");
-                    console.log(material);
+                    console.log(child);
+                    //child.position.set(0, 0, 0);
                     //material.color.r = 0;
 
                     //material.color.g = 0;
