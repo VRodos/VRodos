@@ -248,8 +248,9 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
             break;
 
         case 'poi-link':
-
+            update_post_meta($asset_id, 'vrodos_asset3d_link', $_POST['assetLinkInput']);
             break;
+
         default:
             break;
     }
@@ -654,8 +655,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                                      <textarea id="assetLinkInput" name="assetLinkInput"
                                                class="mdc-textfield__input"
                                                style="box-shadow: none;" rows="5"
-                                               type="text"><?php /*echo get_post_meta($current_scene_id,
-                                             'vrodos_scene_caption', true); */?></textarea>
+                                               type="text"><?php echo get_post_meta($asset_id,'vrodos_asset3d_link', true);?></textarea>
                             <label for="assetLinkInput" class="mdc-textfield__label"
                                    style="background: none;">Link to external target</label>
                         </div>
