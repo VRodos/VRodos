@@ -129,6 +129,8 @@
                 let videoDisplay = document.querySelector(video_display_id);
                 let videoPanel = document.querySelector(vid_panel_id);
                 let videoBorder = document.querySelector(video_border_id);
+
+
                 let fsEl = document.querySelector("#ent_fs_" + data.id);
                 let plEl = document.querySelector("#ent_pl_" + data.id);
                 let exEl = document.querySelector("#ent_ex_" + data.id);
@@ -158,6 +160,61 @@
                 //helper.update();
                 // If you want a visible bounding box
                 //backgroundEl.add(helper);
+                function restoreVidPos(border, disp, panel) {
+                    let offsetX = 20;
+                    border.add(panel);
+
+                    var curr_rot = border.getAttribute('rotation');
+
+                    //console.log(curr_rot);
+                    border.object3D.rotation.set(
+                        THREE.MathUtils.degToRad(0),
+                        THREE.MathUtils.degToRad(0),
+                        THREE.MathUtils.degToRad(0)
+                    );
+                    //disp.object3D.rotation.set(
+                    //    THREE.MathUtils.degToRad(0),
+                    //    THREE.MathUtils.degToRad(0),
+                    //    THREE.MathUtils.degToRad(0)
+                    //);
+
+                    //let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
+                    //console.log("r_x");
+                    //console.log(r_x);
+
+                    //videoBorder.setAttribute("position", p_x);
+                    //videoDisplay.setAttribute("position", p_x);
+
+                    //videoBorder.setAttribute("rotation", r_x);
+                    //videoDisplay.setAttribute("rotation", r_x);
+                    //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
+
+                    panel.object3D.position.set(offsetX, 0, 0);
+                    //videoBorder.setAttribute("rotation", r_x);
+
+
+                    //border.object3D.rotation.x += curr_rot.x;
+                    //border.object3D.rotation.y += curr_rot.y;
+                    //border.object3D.rotation.z += curr_rot.z;
+
+                    //disp.object3D.rotation.x += 0;
+                    //disp.object3D.rotation.y += 90;
+                    //disp.object3D.rotation.z += 0;
+
+
+                    border.object3D.rotation.set(
+                        THREE.MathUtils.degToRad(data.orig_rot[0] * (180 / Math.PI)),
+                        THREE.MathUtils.degToRad(data.orig_rot[1] * (180 / Math.PI)),
+                        THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
+                    );
+                    //disp.object3D.rotation.set(
+                    //    THREE.MathUtils.degToRad(0),
+                    //    THREE.MathUtils.degToRad(90),
+                    //    THREE.MathUtils.degToRad(0)
+                    //);
+
+                }
+
 
 
 
@@ -167,23 +224,31 @@
                     //videoBorder.object3D.rotation.set(0, 0, 0);
 
                     let rotateB = videoBorder.getAttribute("rotation");
-                    let rotateD = videoDisplay.getObject3D("mesh").rotation.clone();
+                    //const meshA = videoDisplay.getObject3D("mesh");
+
+
                     //videoDisplay.object3D.rotation.set(0, 0, 0);
                     //videoBorder.object3D.rotation.set(0, 0, 0);
 
                     //videoDisplay.getObject3D("mesh").geometry.rotateY(-Math.PI / 2);
 
                     //videoBorder.getObject3D("mesh").geometry.rotateY(-Math.PI / 2);
-                    videoDisplay.getObject3D("mesh").updateMatrixWorld();
-                    videoBorder.getObject3D("mesh").updateMatrixWorld();
+                    //videoDisplay.getObject3D("mesh").updateMatrixWorld();
+                    //videoBorder.getObject3D("mesh").updateMatrixWorld();
                     //let helperb = new THREE.BoxHelper(videoDisplay.getObject3D("mesh"), 0xff0000);
 
                     // helperb.geometry.computeBoundingBox();
 
-                    console.log(rotateB);
+                    //console.log(rotateB);
 
                     let videoMesh = videoDisplay.getObject3D("mesh");
                     let borderMesh = videoBorder.getObject3D("mesh");
+
+
+
+                    //const v1 = new THREE.Vector3(1, 0, 0).applyQuaternion(borderMesh.quaternion);
+                    //videoPanel.getObject3D("mesh").quaternion.copy(borderMesh.quaternion);
+                    //videoPanel.getObject3D("mesh").position.copy(borderMesh.position).add(v1.multiplyScalar(-2));
 
                     let bbox = new THREE.Box3().setFromObject(videoDisplay.object3D);
 
@@ -252,7 +317,12 @@
 
 
 
-                    //fsEl.object3D.position.set(centered_values.x, centered_values.y, centered_values.z);
+                    //videoPanel.object3D.position.set(centered_values.x + 15, centered_values.y, centered_values.z);
+                    restoreVidPos(videoBorder, videoDisplay, videoPanel);
+
+
+
+
 
                     //fsEl.object3D.rotation.set(0, 0, 0);
                     //fsEl.object3D.rotation.set(0, 90, 0);
@@ -364,7 +434,7 @@
                 exEl.addEventListener("mousedown", function (event) {
                     addToCam(videoPanel, false, true, 0.2);
                     if (video.paused) {
-                        video.play();
+                        console.log("Video Paused. Exiting...")
 
                     }
                     else {
@@ -438,15 +508,15 @@
                     cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
                     backgroundEl.setAttribute("background", "color", "black");
                     backgroundEl.setAttribute("overlay", "");
-
-
+        
+        
                     console.log(origPosBorder);
                     if (video.paused) {
                         video.play();
                         //console.log(data.orig_pos[2]);
                         //borderMesh.material.color.set("#004400");
-
-
+        
+        
                         for (let i = 0; i < entCollection.length; i++) {
                             entCollection[i].setAttribute("visible", "false");
                             console.log(entCollection[i].getAttribute("visible"));
@@ -456,21 +526,21 @@
                             cam.add(videoDisplay);
                             videoBorder.setAttribute("position", "0 0 -25");
                             videoDisplay.setAttribute("position", "0 0 -25");
-
+        
                             videoBorder.setAttribute("rotation", "0 0 0");
                             videoDisplay.setAttribute("rotation", "0 0 0");
                             visCollection.push(i);
-
-
+        
+        
                             //console.log(entCollection[i]);
                             //console.log(entCollection[i].getAttribute("original-scale"));
                             //console.log(visCollection);
                         }
-
-
-
+        
+        
+        
                         //cam.setAttribute("position", "%s %s %s", borderCords.x, borderCords.y, borderCords.z - 5);
-
+        
                         //cam.object3D.position.set(borderCords.x, borderCords.y, borderCords.z);
                         //cam.components['look-controls'].yawObject.rotation.set(0, THREE.Math.degToRad(30), 0);
                         //cam.object3D.rotation.set(0, THREE.Math.degToRad(30), 0);
@@ -479,13 +549,13 @@
                         //cam.setAttribute("camera", "fov", 2 * Math.atan(19 / (2 * 25)) * (180 / Math.PI));
                         //backgroundEl.setAttribute("background", "color", "black");
                         //videoBorder.setAttribute("position", "0 0 -25");
-
-
-
+        
+        
+        
                         //videoDisplay.setAttribute("height", "19");
                         //videoDisplay.setAttribute("width", "19");
                         //console.log(visCollection);
-
+        
                     }
                     else {
                         //addToCam(videoPanel, "35 5 -25", false);
@@ -498,23 +568,23 @@
                         //borderMesh.material.color.set("#440000");
                         for (let i = 0; i < visCollection.length; i++) {
                             entCollection[visCollection[i]].setAttribute("visible", "true");
-
+        
                             console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
-
+        
                             entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
-
+        
                             //videoDisplay.setAttribute("position", origPosDisplay);
-
+        
                         }
                         player.setAttribute("wasd-controls", "acceleration: 10");
                         backgroundEl.add(videoBorder);
                         backgroundEl.add(videoDisplay);
                         let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
                         let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-
+        
                         videoBorder.setAttribute("position", p_x);
                         videoDisplay.setAttribute("position", p_x);
-
+        
                         videoBorder.setAttribute("rotation", r_x);
                         videoDisplay.setAttribute("rotation", r_x);
                         //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
@@ -534,7 +604,7 @@
                         cam.setAttribute("camera", "fov", 80);
                         backgroundEl.setAttribute("background", "color", "#eeeeee");
                         console.log(visCollection);
-                        //borderMesh.material.color.set("#440000");
+                        //restoreVidPos(videoBorder, videoDisplay, videoPanel);
                         for (let i = 0; i < visCollection.length; i++) {
                             entCollection[visCollection[i]].setAttribute("visible", "true");
 

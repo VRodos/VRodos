@@ -632,6 +632,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 				$a_entity = $dom->createElement("a-plane");
 				$a_entity->setAttribute("id", "video-border_$nameObject");
+               
                 $pos_x = $contentObject->position[0];
                 $pos_y = $contentObject->position[1];
                 $pos_z = $contentObject->position[2];
@@ -688,7 +689,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->setAttribute("visible", "false");
                 $a_entity_panel->setAttribute("renderOrder", "9999999");
                 $a_entity_panel->setAttribute("material", "color: #333333; shader: flat; ");
-                $ascenePlayer->appendChild($a_entity_panel);
+                //$ascenePlayer->appendChild($a_entity_panel);
+
+                $ascene->appendChild($a_entity_panel);
 
                 $a_title_vid_entity = $dom->createElement("a-entity");
                 $a_title_vid_entity->setAttribute("id", "ent_tit_$nameObject");
@@ -703,50 +706,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->appendChild($a_entity_fs);
                 $a_entity_panel->appendChild($a_entity_pl);
                 $a_entity_panel->appendChild($a_entity_ex);
-
-                /*
-                $a_entity_gui = $dom->createElement("a-plane");
-                $a_entity_gui->setAttribute("id", "vid-gui_$nameObject");
-                $a_entity_gui->setAttribute("flex-direction", "column");
-				$a_entity_gui->setAttribute("justify-content", "center");
-				$a_entity_gui->setAttribute("align-items", "normal");
-                $a_entity_gui->setAttribute("opacity", "0.7");
-                $a_entity_gui->setAttribute("width", "7.5");
-                $a_entity_gui->setAttribute("height", "9.5");
-                $a_entity_gui->setAttribute("color", "#072B73");
-                $a_entity_gui->setAttribute("shadow", "receive: false");
-                $a_entity_gui->setAttribute("position", "10 15 -25");
-                $a_entity_gui->setAttribute("rotation", "0 0 0");
-               
-
-                $a_entity_but = $dom->createElement("a-box");
-                $a_entity_but->setAttribute("id", "but-gui_$nameObject");         
-                $a_entity_but->setAttribute("width", "2.5");
-                $a_entity_but->setAttribute("height", "0.7"); 
-                $a_entity_but->setAttribute("base-depth", "0.025");
-                $a_entity_but->setAttribute("depth", "0.1");
-                $a_entity_but->setAttribute("gap", "0.1");         
-                $a_entity_but->setAttribute("value", "Sample Button");
-                $a_entity_but->setAttribute("font-size", "0.25"); 
-                $a_entity_but->setAttribute("margin", "0 0 0.05 0");
-                $a_entity_but->setAttribute("font-color", "black");
-                $a_entity_but->setAttribute("active-color", "red"); 
-                $a_entity_but->setAttribute("hover-color", "yellow");
-                $a_entity_but->setAttribute("border-color", "white");
-                $a_entity_but->setAttribute("focus-color", "black"); 
-                $a_entity_but->setAttribute("background-color", "orange");
-                $a_entity_but->setAttribute("bevel", "true");
-                $a_entity_but->setAttribute("shadow", "receive: false");
-                
-                //$a_entity_but->setAttribute("position", "15 0 -25");
-
-
-  
-
-                $a_entity_gui->appendChild($a_entity_but);
-                $ascenePlayer->appendChild($a_entity_gui);
-                */
-
 
                 //$a_entity_panel->setAttribute("overlay", "");
 
