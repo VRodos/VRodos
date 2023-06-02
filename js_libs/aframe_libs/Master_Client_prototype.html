@@ -649,6 +649,17 @@
             }
         });
 
+        AFRAME.registerComponent('link-listener', {
+            schema: { type: "string", default: "default value" },
+            init: function () {
+                this.el.addEventListener("click", e => {
+                    //console.log();
+                    window.new(this.data);
+
+                });
+            }
+        });
+
         AFRAME.registerComponent("overlay", {
             dependencies: ['material'],
             init: function () {
