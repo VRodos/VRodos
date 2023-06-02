@@ -103,6 +103,14 @@ function vrodos_upload_video_dir( $dir ) {
         ) + $dir;
 }
 
+function vrodos_upload_image_dir( $dir ) {
+    return array(
+            'path'   => $dir['basedir'] . '/models/images',
+            'url'    => $dir['baseurl'] . '/models/images',
+            'subdir' => '/models/videos',
+        ) + $dir;
+}
+
 // Change general upload directory to Models
 function vrodos_upload_filter( $args  ) {
 
@@ -138,24 +146,44 @@ function vrodos_upload_img_vid_aud($file, $parent_post_id) {
     // We need admin power
     require_once( ABSPATH . 'wp-admin/includes/admin.php' );
 
-    // Add all models to "uploads/Models/" folder
+    // Add all models to respective folders
+    switch ($file['type']) {
+        case 'video/mp4':
+        case 'video/webm':
+            add_filter( 'upload_dir', 'vrodos_upload_video_dir' );
+            break;
 
-    if($file['type'] === 'video/mp4' || $file['type'] === 'video/webm'){
-        add_filter( 'upload_dir', 'vrodos_upload_video_dir' );
-    } else {
-        add_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
+        case 'image/png':
+        case 'image/jpg':
+        case 'image/jpeg':
+            add_filter( 'upload_dir', 'vrodos_upload_image_dir' );
+            break;
+
+        default:
+            add_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
+            break;
     }
 
     // Upload
     $file_return = wp_handle_upload( $file, array('test_form' => false ) );
 
     // Remove upload filter to "Models" folder
-    if($file['type'] === 'video/mp4' || $file['type'] === 'video/webm'){
-        remove_filter( 'upload_dir', 'vrodos_upload_video_dir' );
-    } else {
-        remove_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
-    }
+    switch ($file['type']) {
+        case 'video/mp4':
+        case 'video/webm':
+            remove_filter( 'upload_dir', 'vrodos_upload_video_dir' );
+            break;
 
+        case 'image/png':
+        case 'image/jpg':
+        case 'image/jpeg':
+            remove_filter( 'upload_dir', 'vrodos_upload_image_dir' );
+            break;
+
+        default:
+            remove_filter( 'upload_dir', 'vrodos_upload_img_vid_aud_directory' );
+            break;
+    }
 
 
     // if file has been uploaded succesfully

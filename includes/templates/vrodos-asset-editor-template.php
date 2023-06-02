@@ -220,10 +220,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
     // Save custom parameters according to asset type.
     switch ($assetCatTerm->slug) {
-        /*  case 'decoration':
-              break;
-          case 'door':
-              break;*/
+
         case 'video':
             if (isset($_FILES['videoFileInput'])) {
                 vrodos_create_asset_addVideo_frontend($asset_id);
@@ -233,13 +230,15 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
             }
             update_post_meta($asset_id, 'vrodos_asset3d_video_title', $_POST['videoTitle']);
             update_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', isset($_POST['video_autoloop_checkbox']));
+            break;
 
-            break;
         case 'poi-imagetext':
-            // Save Image
-            // vrodos_create_asset_addImages_frontend($asset_id);
-            break;
-        case 'poi-help':
+
+            if (isset($_FILES['imageFileInput'])) {
+                vrodos_create_asset_addImages_frontend($asset_id, $_FILES['imageFileInput']);
+            }
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', $_POST['poiImgTitle']);
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', $_POST['poiImgDescription']);
 
             break;
 
@@ -613,14 +612,14 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         <h3 class="mdc-typography--title">POI Details</h3>
 
                         <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-                            <input id="imageTitle" type="text"
+                            <input id="poiImgTitle" type="text"
                                    class="mdc-textfield__input mdc-theme--text-primary-on-light"
-                                   name="imageTitle"
+                                   name="poiImgTitle"
                                    aria-controls="title-validation-msg" minlength="3" maxlength="25"
-                                   value="">
+                                   value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_imgtxt_title', true);?>">
 
-                            <label for="imageTitle" class="mdc-textfield__label">
-                                Image title
+                            <label for="poiImgTitle" class="mdc-textfield__label">
+                                Title
                             </label>
 
                             <div class="mdc-textfield__bottom-line"></div>
@@ -631,12 +630,12 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         <div class="mdc-textfield mdc-textfield--textarea"
                              data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3); width: 100%;">
-                            <label for="imageDescription" class="mdc-textfield__label"
+                            <label for="poiImgDescription" class="mdc-textfield__label"
                                    style="background: none;">Add the text content</label>
-                            <textarea id="imageDescription" name="imageDescription"
+                            <textarea id="poiImgDescription" name="poiImgDescription"
                                       class="mdc-textfield__input"
                                       style="box-shadow: none;" rows="10"
-                                      type="text" form=""><?php echo $asset_description_value; ?></textarea>
+                                      type="text"><?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_imgtxt_content', true);?></textarea>
 
                         </div>
 
@@ -644,8 +643,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                     <div id="poi_help_section" class="assetEditorColumn" style="display: none;">
                         <h3 class="mdc-typography--title">Contact Form</h3>
-                        <!--Save id of contact form to db-->
-                        <p>Todo: load a list of available contact forms or create a default one</p>
+
                     </div>
 
                     <div id="poi_link_section" class="assetEditorColumn" style="display: none;">
@@ -699,18 +697,17 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         if($asset_id==null) {
                             $imagePoiImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
                         } else {
-                            $imagePoiImageURL = wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_imagepoiimage",true) );
+                            $imagePoiImageURL = wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_poi_imgtxt_image",true) );
 
                             if ($imagePoiImageURL == false) {
                                 $imagePoiImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
                             }
                         }?>
 
+                        <img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo $imagePoiImageURL; ?>" alt="Asset Image Text POI image">
 
-                        <img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo $imagePoiImageURL; ?>" alt="Asset Image POI image">
-
-                        <input type="file" name="imagePoiPreviewImg" value=""
-                               id="imageFileInput" accept="image/png, image/jpg"/>
+                        <input type="file" name="imageFileInput" value=""
+                               id="imageFileInput" accept="image/png, image/jpg,  image/jpeg"/>
 
                     </div>
 
@@ -1097,7 +1094,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         let fr = new FileReader();
                         fr.onload = function () {
                             document.getElementById('imagePoiPreviewImg').src = fr.result;
-                            document.getElementById('imageFileInput').value = fr.result;
                         }
                         fr.readAsDataURL(files[0]);
                     }
