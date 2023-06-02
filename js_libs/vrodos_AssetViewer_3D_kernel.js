@@ -28,19 +28,22 @@ class VRodos_AssetViewer_3D_kernel {
                 animationButton,
                 previewProgressLabel,
                 previewProgressLine,
-                back_3d_color, audioElement,
-                pathUrl = null, mtlFilename = null,
-                objFilename= null, pdbFileContent = null,
-                fbxFilename = null, glbFilename = null,
+                back_3d_color,
+                audioElement,
+                pathUrl = null,
+                mtlFilename = null,
+                objFilename= null,
+                pdbFileContent = null,
+                fbxFilename = null,
+                glbFilename = null,
                 textures_fbx_string_connected = null,
                 statsSwitch = true,
                 isBackGroundNull = false,
                 lockTranslation = false,
                 enableZoom = true,
-                assettrs = '0,0,0,0,0,0,0,0,-100', boundingSphereButton = null) {
-
-
-
+                assettrs = '0,0,0,0,0,0,0,0,-100',
+                boundingSphereButton = null
+    ) {
 
         //console.log(pathUrl, fbxFilename + " t:" + textures_fbx_string_connected );
 
@@ -53,7 +56,7 @@ class VRodos_AssetViewer_3D_kernel {
         this.previewProgressLabel = previewProgressLabel;
         this.previewProgressLine = previewProgressLine;
 
-        this.setZeroVars()
+        this.setZeroVars();
         this.back_3d_color = back_3d_color;
 
         this.isBackGroundNull = isBackGroundNull;
@@ -62,7 +65,7 @@ class VRodos_AssetViewer_3D_kernel {
         this.GlbBuffer = '';
 
         this.path_url = null;
-        this.mtl_file_name = this.obj_file_name = this.pdb_file_name = this.fbx_file_name = this.glb_file_name;
+        this.glb_file_name = null;
 
         this.assettrs = assettrs.split(',');
         this.scene = new THREE.Scene();
@@ -147,10 +150,6 @@ class VRodos_AssetViewer_3D_kernel {
 
         // Trackball or OrbitControls controls
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-
-
-
-
 
         //this.scene.add(new THREE.AxisHelper(5,5,5));
 
@@ -681,7 +680,7 @@ class VRodos_AssetViewer_3D_kernel {
     showHideBoundSphere(){
         let sphObj = this.scene.getObjectByName('myBoundingSphere');
         let isVisible = sphObj.visible;
-        sphObj.visible = isVisible ? false : true;
+        sphObj.visible = !isVisible;
         this.render();
     }
 

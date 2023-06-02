@@ -353,7 +353,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             <div id="previewCanvasLabels"></div>
 
             <!-- 3D Canvas -->
-            <canvas id="previewCanvas" >3D canvas</canvas>
+            <canvas id="previewCanvas">3D canvas</canvas>
 
             <a href="#" class="animationButton" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();">Animation 1</a>
             <!--Bounds not working...-->
