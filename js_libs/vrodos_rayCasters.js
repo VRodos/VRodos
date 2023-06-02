@@ -740,6 +740,13 @@ function displayDoorProperties(event, name) {
         if (this.value != "Default" && this.value)
             envir.scene.getObjectByName(updName).sceneID_target = this.value;
         //envir.scene.getObjectByName(name).sceneName_target = this.value;
+        //envir.scene.getObjectByName(updName).tempValue = 0;
+
+        //Object.defineProperty(envir.scene.getObjectByName(updName), 'tempValue', {
+        //    value: 1
+        //})
+
+        //console.log(envir.scene.getObjectByName(updName));
 
         saveChanges();
         //
@@ -889,29 +896,98 @@ function showWholePopupDiv(popUpDiv, event) {
  //  * @param event
  //  * @param name
  //  */
-// function displayPoiImageTextProperties(event, name){
-//
-//     // The whole popup div
-//     var ppPropertiesDiv = jQuery("#popUpPoiImageTextPropertiesDiv");
-//
-//     // The checkbox only
-//     var chbox = jQuery("#poi_image_text_reward_checkbox");
-//
-//     // Save the previous artifact properties values (in case of  direct mouse click on another item)
-//     chbox.trigger("change");
-//
-//     clearAndUnbind(null, null, "poi_image_text_reward_checkbox");
-//
-//     chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
-//
-//     // Show Selection
-//     ppPropertiesDiv.show();
-//     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-//     ppPropertiesDiv[0].style.top  = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-//
-//     // Add change listener
-//     chbox.change(function(e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
-// }
+function displayPoiImageTextProperties(event, name) {
+
+    // The whole popup div
+    var ppPropertiesDiv = jQuery("#popUpPoiImageTextPropertiesDiv");
+
+    var chboxImg = jQuery("#poi_image_desc_checkbox");
+    var setTitle = document.getElementById('poi_image_title_text');
+    var setDesc = document.getElementById('poi_image_desc_text');
+    var titleArea = jQuery("#poi_image_title_text");
+    var descArea = jQuery("#poi_image_desc_text");
+
+    clearAndUnbind(null, null, "poi_image_desc_checkbox");
+
+    clearAndUnbind(null, null, "poi_image_title_text");
+
+    clearAndUnbind(null, null, "poi_image_desc_text");
+
+
+    // Save the previous artifact properties values (in case of  direct mouse click on another item)
+
+    chboxImg.prop('checked', envir.scene.getObjectByName(name).poi_onlyimg == 1);
+    if (envir.scene.getObjectByName(name).poi_onlyimg == 1) {
+        setDesc.style.display = "block";
+    } else {
+        setDesc.style.display = "none";
+    }
+
+    //descArea.prop('disabled', envir.scene.getObjectByName(name).poi_onlyimg == 1);
+
+
+    //clearAndUnbind(null, null, "poi_image_desc_checkbox");
+
+    //clearAndUnbind(null, null, "poi_image_title_text");
+
+    //clearAndUnbind(null, null, "poi_image_desc_text");
+
+    setDesc.value = envir.scene.getObjectByName(name).poi_img_desc;
+    setTitle.value = envir.scene.getObjectByName(name).poi_img_title;
+
+
+    // Show Selection
+    ppPropertiesDiv.show();
+    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
+    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+
+    // Add change listener
+    //chbox.change(function (e) { envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0; });
+
+    chboxImg.change(function (e) {
+
+
+        //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
+        envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0;
+        console.log(envir.scene.getObjectByName(name).poi_onlyimg);
+
+        if (this.checked) {
+            envir.scene.getObjectByName(name).poi_img_desc = setDesc.value;
+            setDesc.style.display = "block";
+        } else {
+            setDesc.style.display = "none";
+        }
+        envir.scene.getObjectByName(name).poi_img_title = setTitle.value;
+
+
+
+        //descArea.prop("disabled", (this.checked));
+        //var sceneJson = document.getElementById("vrodos_scene_json_input").value;
+
+        saveChanges();
+
+
+
+    });
+
+    titleArea.change(function (e) {
+        //var valDoorScene = popupDoorSelect.val();
+        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+        envir.scene.getObjectByName(name).poi_img_title = this.value;
+        //console.log(this.value);
+        saveChanges();
+
+    });
+
+    descArea.change(function (e) {
+        //var valDoorScene = popupDoorSelect.val();
+        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+        envir.scene.getObjectByName(name).poi_img_desc = this.value;
+        console.log(this.value);
+        saveChanges();
+
+    });
+}
 //
 // /**
 //  * Poi video properties
@@ -925,10 +1001,14 @@ function saveChanges() {
 
     // Export using a custom variant of the old deprecated class SceneExporter
     let exporter = new THREE.SceneExporter();
-
+    //env.getObjectByName(name).follow_camera = 2;
     document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-    //console.log(document.getElementById('vrodos_scene_json_input').value);
+    //let test = document.getElementById('vrodos_scene_json_input').value;
+
+    //var json = JSON.stringify(test);
+
+    //console.log(test);
 
     vrodos_saveSceneAjax();
     //.forEach(element => console.log(element));
@@ -966,18 +1046,19 @@ function displayPoiVideoProperties(event, name) {
 
     clearAndUnbind(null, null, "focus_Z");
 
-    chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
+    chbox.prop('checked', envir.scene.getObjectByName(name).follow_camera == 1);
+    //chbox.prop('checked', envir.scene.getObjectByName(name).follow_camera == 1);
 
-    setFocusX.value = envir.scene.getObjectByName(name).hv_penalty;
-    setFocusZ.value = envir.scene.getObjectByName(name).natural_penalty;
+    setFocusX.value = envir.scene.getObjectByName(name).follow_camera_x;
+    setFocusZ.value = envir.scene.getObjectByName(name).follow_camera_z;
 
 
     //console.log(setFocusX.value);
 
 
 
-    sliderFocusX.prop('disabled', envir.scene.getObjectByName(name).isreward == 0);
-    sliderFocusZ.prop('disabled', envir.scene.getObjectByName(name).isreward == 0);
+    sliderFocusX.prop('disabled', envir.scene.getObjectByName(name).follow_camera == 0);
+    sliderFocusZ.prop('disabled', envir.scene.getObjectByName(name).follow_camera == 0);
 
     // Show Selection
     ppPropertiesDiv.show();
@@ -990,12 +1071,13 @@ function displayPoiVideoProperties(event, name) {
     chbox.change(function (e) {
 
 
-        envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
+        //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
+        envir.scene.getObjectByName(name).follow_camera = this.checked ? 1 : 0;
 
         if (this.checked) {
-            envir.scene.getObjectByName(name).hv_penalty = setFocusX.value;
-            envir.scene.getObjectByName(name).natural_penalty = setFocusZ.value;
-            //console.log(envir.scene.getObjectByName(name).hv_penalty);
+            envir.scene.getObjectByName(name).follow_camera_x = setFocusX.value;
+            envir.scene.getObjectByName(name).follow_camera_z = setFocusZ.value;
+            //console.log(envir.scene.getObjectByName(name).follow_camera);
         }
 
         sliderFocusX.prop("disabled", (!this.checked));
@@ -1015,7 +1097,7 @@ function displayPoiVideoProperties(event, name) {
     sliderFocusX.change(function (e) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        envir.scene.getObjectByName(name).hv_penalty = this.value;
+        envir.scene.getObjectByName(name).follow_camera_x = this.value;
         //console.log(this.value);
         saveChanges();
 
@@ -1024,7 +1106,7 @@ function displayPoiVideoProperties(event, name) {
     sliderFocusZ.change(function (e) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        envir.scene.getObjectByName(name).natural_penalty = this.value;
+        envir.scene.getObjectByName(name).follow_camera_z = this.value;
         //console.log(this.value);
         saveChanges();
 

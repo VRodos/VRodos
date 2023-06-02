@@ -6,7 +6,7 @@
 
 class VRodos_LoaderMulti {
 
-    constructor(who){
+    constructor(who) {
     };
 
     load(manager, resources3D, pluginPath) {
@@ -16,16 +16,16 @@ class VRodos_LoaderMulti {
         for (let n in resources3D) {
             (function (name) {
 
-                if(name==='ClearColor' || name==='toneMappingExposure' | name ==='enableEnvironmentTexture' )
+                if (name === 'ClearColor' || name === 'toneMappingExposure' | name === 'enableEnvironmentTexture')
                     return;
 
                 // Fog is not parsed here but in LightsPawn_Loader
-                if(name === 'fogtype' || name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity'){
+                if (name === 'fogtype' || name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity') {
                     return;
                 }
 
                 // Lights are in a different loop
-                if(resources3D[name]['categoryName']) {
+                if (resources3D[name]['categoryName']) {
                     if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
                         return;
                 }
@@ -125,7 +125,7 @@ class VRodos_LoaderMulti {
                                     // called while loading is progressing
                                     function (xhr) {
 
-                                        document.getElementById("result_download").innerHTML = "'"  +
+                                        document.getElementById("result_download").innerHTML = "'" +
                                             resources3D[name].assetname + "' downloaded " +
                                             Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
                                     },
@@ -138,7 +138,7 @@ class VRodos_LoaderMulti {
                             // Ajax error
                             error: function (xhr, ajaxOptions, thrownError) {
 
-                                alert("Could not fetch GLB asset. Probably deleted ? "+ name);
+                                alert("Could not fetch GLB asset. Probably deleted ? " + name);
 
                                 console.log("Ajax Fetch Asset: ERROR: 189" + thrownError);
                             }
@@ -168,7 +168,7 @@ function setObjectProperties(object, name, resources3D) {
     object.fnPath = resources3D[name]['path'];
 
     // avoid revealing the full path. Use the relative in the saving format.
-    object.fnPath = object.fnPath.substring( object.fnPath.indexOf('uploads/') + 7);
+    object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
 
     object.fnObj = resources3D[name]['obj'];
     object.fnObjID = resources3D[name]['objID'];
@@ -193,8 +193,8 @@ function setObjectProperties(object, name, resources3D) {
     //============== Video texture ==========
 
 
-    if(resources3D[name]['videoTextureSrc'] !== "") {
-        if(resources3D[name]['videoTextureSrc'] !== "undefined") {
+    if (resources3D[name]['videoTextureSrc'] !== "") {
+        if (resources3D[name]['videoTextureSrc'] !== "undefined") {
             console.log("The object has video texture:", resources3D[name]['videoTextureSrc'])
             startVideo(resources3D, name);
         }
@@ -224,19 +224,29 @@ function setObjectProperties(object, name, resources3D) {
     object.natural_penalty = resources3D[name]['natural_penalty'];
 
     object.isreward = resources3D[name]['isreward'];
+    object.follow_camera = resources3D[name]['follow_camera'];
+    object.image_link = resources3D[name]['image_link'];
+    object.video_link = resources3D[name]['video_link'];
+    object.follow_camera_x = resources3D[name]['follow_camera_x'];
+    object.follow_camera_y = resources3D[name]['follow_camera_y'];
+    object.follow_camera_z = resources3D[name]['follow_camera_z'];
     object.isCloned = resources3D[name]['isCloned'];
+    object.poi_img_title = resources3D[name]['poi_img_title'];
+    object.poi_img_desc = resources3D[name]['poi_img_desc'];
+    object.poi_img_link = resources3D[name]['poi_img_link'];
+    object.poi_onlyimg = resources3D[name]['poi_onlyimg'];
 
     //object.type_behavior = resources3D[name]['type_behavior'];
 
     object.position.set(
         resources3D[name]['trs']['translation'][0],
         resources3D[name]['trs']['translation'][1],
-        resources3D[name]['trs']['translation'][2] );
+        resources3D[name]['trs']['translation'][2]);
 
     object.rotation.set(
         resources3D[name]['trs']['rotation'][0],
         resources3D[name]['trs']['rotation'][1],
-        resources3D[name]['trs']['rotation'][2] );
+        resources3D[name]['trs']['rotation'][2]);
 
     object.scale.set(
         resources3D[name]['trs']['scale'][0],
@@ -274,7 +284,7 @@ function startVideo (resources3D, name){
 
     var cHex = "#" + resources3D[name]['color'];
 
-    var movieMaterial = new THREE.MeshBasicMaterial({map: videoTexture[name], side: THREE.DoubleSide, color: cHex});
+    var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture[name], side: THREE.DoubleSide, color: cHex });
 
 
 

@@ -19,7 +19,7 @@ function loadButtonActions() {
     });
 
     // Select platform for compile
-    if(document.getElementById('platform-select')) {
+    if (document.getElementById('platform-select')) {
         var platformSelect = MDCSelect.attachTo(document.getElementById('platform-select'));
 
         document.getElementById('platform-select').addEventListener('MDCSelect:change',
@@ -209,7 +209,7 @@ function loadButtonActions() {
                 dataDrag.categoryName === "lightLamp" ||
                 dataDrag.categoryName === "lightSpot" ||
                 dataDrag.categoryName === "lightAmbient" ||
-                dataDrag.categoryName === "Pawn" ) {
+                dataDrag.categoryName === "Pawn") {
 
                 var path = objFname = mtlFname = '';
                 dataDrag.objID = dataDrag.mtlID = dataDrag.assetid = dataDrag.categoryIcon = '';
@@ -220,8 +220,11 @@ function loadButtonActions() {
 
                 dataDrag.categoryID = dataDrag.diffImages = dataDrag.diffImageIDs = dataDrag.image1id = dataDrag.doorName_source = '';
                 dataDrag.doorName_target = dataDrag.sceneName_target = dataDrag.sceneID_target = dataDrag.archaeology_penalty = '';
-                dataDrag.hv_penalty = dataDrag.natural_penalty = '';
-                dataDrag.isreward = dataDrag.isCloned = dataDrag.isJoker = 0;
+                dataDrag.hv_penalty = dataDrag.natural_penalty = dataDrag.image_link = dataDrag.video_link = dataDrag.follow_camera_x = dataDrag.follow_camera_y = dataDrag.follow_camera_z = dataDrag.poi_img_title = dataDrag.poi_img_desc = dataDrag.poi_img_link = '';
+                dataDrag.isreward = dataDrag.follow_camera = dataDrag.isCloned = dataDrag.isJoker = dataDrag.poi_onlyimg = 0;
+
+
+
 
             }
             else {
@@ -255,12 +258,12 @@ function loadButtonActions() {
 
     // VR Editor Drag Over
     document.getElementById('vr_editor_main_div').ondragover =
-        function(ev){
+        function (ev) {
             ev.preventDefault();
         };
 
 
-    if(jQuery("#pauseRendering").get(0)) {
+    if (jQuery("#pauseRendering").get(0)) {
         jQuery("#pauseRendering").get(0).addEventListener('mousedown', function (event) {
             pauseClickFun();
         }, false);
@@ -268,7 +271,7 @@ function loadButtonActions() {
 
 
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
-    jQuery('#save-scene-button').click(function() {
+    jQuery('#save-scene-button').click(function () {
 
         jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
@@ -279,7 +282,7 @@ function loadButtonActions() {
 
         //console.log(document.getElementById('vrodos_scene_json_input').value);
 
-        if(!is_scene_icon_manually_selected)
+        if (!is_scene_icon_manually_selected)
             takeScreenshot();
 
         vrodos_saveSceneAjax();
@@ -287,7 +290,7 @@ function loadButtonActions() {
 
 
     // UNDO button
-    jQuery('#undo-scene-button').click(function() {
+    jQuery('#undo-scene-button').click(function () {
 
         document.getElementById('redo-scene-button').style.visibility = 'visible';
 
@@ -299,9 +302,9 @@ function loadButtonActions() {
     });
 
     // REDO button
-    jQuery('#redo-scene-button').click(function() {
+    jQuery('#redo-scene-button').click(function () {
 
-        if(post_revision_no>1) {
+        if (post_revision_no > 1) {
             post_revision_no -= 1;
 
             jQuery('#redo-scene-button').html("...").addClass("LinkDisabled");
@@ -315,7 +318,7 @@ function loadButtonActions() {
 
 
     // Autorotate in 3D
-    jQuery('#toggle-tour-around-btn').click(function() {
+    jQuery('#toggle-tour-around-btn').click(function () {
 
         var btn = jQuery('#toggle-tour-around-btn');
 
@@ -337,7 +340,7 @@ function loadButtonActions() {
         btn.toggleClass('mdc-theme--secondary-bg');
     });
 
-    if(firstPersonBlockerBtn) {
+    if (firstPersonBlockerBtn) {
         firstPersonBlockerBtn.addEventListener('click', function (event) {
 
             firstPersonViewWithoutLock();
@@ -348,12 +351,12 @@ function loadButtonActions() {
 
 
     // 3D Widgets change mode (Translation-Rotation-Scale)
-    jQuery("#object-manipulation-toggle").click(function() {
+    jQuery("#object-manipulation-toggle").click(function () {
 
         let mode = jQuery("input[name='object-manipulation-switch']:checked").val();
 
         // Sun and Target spot can not change control manipulation mode
-        if(transform_controls.object) {
+        if (transform_controls.object) {
             if (transform_controls.object.categoryName.includes("lightTargetSpot") ||
                 transform_controls.object.categoryName.includes("lightSun") ||
                 transform_controls.object.categoryName.includes("lightLamp") ||
@@ -368,17 +371,17 @@ function loadButtonActions() {
     });
 
     // Axis Increase size btn
-    jQuery("#axis-size-increase-btn").click(function() {
-        transform_controls.setSize( transform_controls.size * 1.1 );
+    jQuery("#axis-size-increase-btn").click(function () {
+        transform_controls.setSize(transform_controls.size * 1.1);
     });
 
     // Axis Decrease size btn
-    jQuery("#axis-size-decrease-btn").click(function() {
-        transform_controls.setSize( Math.max(transform_controls.size * 0.9, 0.1 ) );
+    jQuery("#axis-size-decrease-btn").click(function () {
+        transform_controls.setSize(Math.max(transform_controls.size * 0.9, 0.1));
     });
 
     // Toggle 2D vs 3D button
-    jQuery("#dim-change-btn").click(function() {
+    jQuery("#dim-change-btn").click(function () {
 
         jQuery("#translate-switch").click();
 
@@ -455,21 +458,21 @@ function loadButtonActions() {
 
     // Auto-Saving
     // Detect enter button press for saving scene
-    canvas3D.addEventListener( 'keypress', saveScene, false );
+    canvas3D.addEventListener('keypress', saveScene, false);
 
     // Auto save listener
     envir.scene.addEventListener("modificationPendingSave", saveScene);
 
     // Prevent showing the context menu (normal behaviour when rightclicking in web items)
-    jQuery("#popUpArtifactPropertiesDiv").bind('contextmenu', function(e) { return false; });
-    jQuery("#popUpDoorPropertiesDiv").bind('contextmenu', function(e) { return false; });
+    jQuery("#popUpArtifactPropertiesDiv").bind('contextmenu', function (e) { return false; });
+    jQuery("#popUpDoorPropertiesDiv").bind('contextmenu', function (e) { return false; });
 
-    jQuery("#popUpPoiImageTextPropertiesDiv").bind('contextmenu', function(e) { return false; });
-    jQuery("#popUpPoiVideoPropertiesDiv").bind('contextmenu', function(e) { return false; });
-    jQuery("#popUpSunPropertiesDiv").bind('contextmenu', function(e) { return false; });
-    jQuery("#popUpLampPropertiesDiv").bind('contextmenu', function(e) { return false; });
-    jQuery("#popUpSpotPropertiesDiv").bind('contextmenu', function(e) { return false; });
-    jQuery("#popUpAmbientPropertiesDiv").bind('contextmenu', function(e) { return false; });
+    jQuery("#popUpPoiImageTextPropertiesDiv").bind('contextmenu', function (e) { return false; });
+    jQuery("#popUpPoiVideoPropertiesDiv").bind('contextmenu', function (e) { return false; });
+    jQuery("#popUpSunPropertiesDiv").bind('contextmenu', function (e) { return false; });
+    jQuery("#popUpLampPropertiesDiv").bind('contextmenu', function (e) { return false; });
+    jQuery("#popUpSpotPropertiesDiv").bind('contextmenu', function (e) { return false; });
+    jQuery("#popUpAmbientPropertiesDiv").bind('contextmenu', function (e) { return false; });
 
 
     // Toggle UIs to clear out vision
@@ -558,20 +561,22 @@ function loadButtonActions() {
     function handleLightPawnDragStart(e) {
 
         var dragData;
-        if (  e.target.dataset.lightpawn === "Sun" ||
-              e.target.dataset.lightpawn === "Spot" ||
-              e.target.dataset.lightpawn === "Lamp" ||
-              e.target.dataset.lightpawn === "Ambient"
+        if (e.target.dataset.lightpawn === "Sun" ||
+            e.target.dataset.lightpawn === "Spot" ||
+            e.target.dataset.lightpawn === "Lamp" ||
+            e.target.dataset.lightpawn === "Ambient"
         ) {
-            dragData = { "categoryName": "light" + e.target.dataset.lightpawn,
-                         "title": "mylight" + e.target.dataset.lightpawn + "_" + Math.floor(Date.now() / 1000)
-                        };
+            dragData = {
+                "categoryName": "light" + e.target.dataset.lightpawn,
+                "title": "mylight" + e.target.dataset.lightpawn + "_" + Math.floor(Date.now() / 1000)
+            };
 
         }
         else if (e.target.dataset.lightpawn === "Pawn") {
-            dragData = { "categoryName": "Pawn",
-                         "title": "aPawn" + "_" + Math.floor(Date.now() / 1000)
-                       };
+            dragData = {
+                "categoryName": "Pawn",
+                "title": "aPawn" + "_" + Math.floor(Date.now() / 1000)
+            };
         }
 
         e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
@@ -605,25 +610,25 @@ function setVisiblityLightHelpingElements(statusVisibility) {
 }
 
 
-function pauseClickFun(){
+function pauseClickFun() {
     isPaused = !isPaused;
-    jQuery("#pauseRendering").get(0).childNodes[1].innerText = isPaused?"pause":"play_arrow";
+    jQuery("#pauseRendering").get(0).childNodes[1].innerText = isPaused ? "pause" : "play_arrow";
 
-    if(!isPaused) {
+    if (!isPaused) {
         animate();
         document.getElementById('pauseRendering').style.background = '';
-    }else {
+    } else {
         document.getElementById('pauseRendering').style.background = 'red';
     }
 
-    envir.scene.traverse( function ( node ) {
-        if ( node instanceof THREE.PositionalAudio  ) {
-            if(isPaused)
+    envir.scene.traverse(function (node) {
+        if (node instanceof THREE.PositionalAudio) {
+            if (isPaused)
                 node.pause();
             else
                 node.play();
         }
-    } );
+    });
 
 
 
@@ -641,11 +646,11 @@ function hideObjectPropertiesPanels() {
 
 function showObjectPropertiesPanel(type) {
     hideObjectPropertiesPanels();
-    jQuery("#"+type+"PanelGui").show();
+    jQuery("#" + type + "PanelGui").show();
 }
 
 // Take screenshot of scene
-function takeScreenshot(){
+function takeScreenshot() {
 
     //envir.cameraAvatarHelper.visible = false;
     if (envir.scene.getObjectByName("myTransformControls")) {
@@ -655,7 +660,7 @@ function takeScreenshot(){
     envir.renderer.preserveDrawingBuffer = true;
 
     // Save screenshot data to input
-    envir.renderer.render( envir.scene, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
+    envir.renderer.render(envir.scene, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
 
     // if no manually selected file for icon, then take a screenshot of the 3D canvas
     //if (document.getElementById("vrodos_scene_sshot").src.includes("noimagemagicword"))
@@ -669,7 +674,7 @@ function takeScreenshot(){
     //envir.gridHelper.visible = true;
 
     if (envir.scene.getObjectByName("myTransformControls"))
-        envir.scene.getObjectByName("myTransformControls").visible=true;
+        envir.scene.getObjectByName("myTransformControls").visible = true;
 }
 
 
@@ -679,7 +684,7 @@ function takeScreenshot(){
 function saveScene(e) {
 
     // A change has been made and mouseup then save
-    if (e.type ==  'modificationPendingSave')
+    if (e.type == 'modificationPendingSave')
         mapActions[e.type] = true;
 
     if (e.type == 'mouseup') {
@@ -694,16 +699,16 @@ function saveScene(e) {
 }
 
 // trigger autosave for the automatic cases (insert, delete asset from scene)
-function triggerAutoSave(){
+function triggerAutoSave() {
 
     // Add an event listener to scene
-    envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    envir.scene.dispatchEvent({ type: "modificationPendingSave" });
 
     // Make a click event
-    let clickEvent = document.createEvent ('MouseEvents');
+    let clickEvent = document.createEvent('MouseEvents');
 
     // On mouse up initialize an event
-    clickEvent.initEvent ("mouseup", true, true);
+    clickEvent.initEvent("mouseup", true, true);
 
     // Send the click with jQuery
     jQuery("#vr_editor_main_div canvas").get(0).dispatchEvent(clickEvent);

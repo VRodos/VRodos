@@ -17,6 +17,18 @@ $table_of_asset_fields = array(
     array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_scene','string', '', true, true),
     array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'string', '', true, true),
     array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'string', '0', true, true),
+    array('follow_camera'                   , 'follow_camera'                   , 'vrodos_asset3d_follow_camera', 'string', '0', true, true),
+    array('image_link'                   , 'image_link'                   , 'vrodos_asset3d_image_link', 'string', '', true, true),
+    array('video_link'                   , 'video_link'                   , 'vrodos_asset3d_video_link', 'string', '', true, true),
+    array('follow_camera_x'                   , 'follow_camera_x'                   , 'vrodos_asset3d_follow_camera_x', 'string', '', true, true),
+    array('follow_camera_y'                   , 'follow_camera_y'                   , 'vrodos_asset3d_follow_camera_y', 'string', '', true, true),
+    array('follow_camera_z'                   , 'follow_camera_z'                   , 'vrodos_asset3d_follow_camera_z', 'string', '', true, true),
+
+    array('poi_img_title'                   , 'poi_img_title'                   , 'vrodos_asset3d_poi_img_title', 'string', '', true, true),
+    array('poi_img_desc'                   , 'poi_img_desc'                   , 'vrodos_asset3d_poi_img_desc', 'string', '', true, true),
+    array('poi_img_link'                   , 'poi_img_link'                   , 'vrodos_asset3d_poi_img_link', 'string', '', true, true),
+    array('poi_onlyimg'                   , 'poi_onlyimg'                   , 'vrodos_asset3d_poi_onlyimg', 'string', '0', true, true),
+
 
     array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'string', '', true, true),
     array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'string', '', true, true),
