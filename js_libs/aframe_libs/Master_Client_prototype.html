@@ -509,15 +509,15 @@
                     cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
                     backgroundEl.setAttribute("background", "color", "black");
                     backgroundEl.setAttribute("overlay", "");
-        
-        
+
+
                     console.log(origPosBorder);
                     if (video.paused) {
                         video.play();
                         //console.log(data.orig_pos[2]);
                         //borderMesh.material.color.set("#004400");
-        
-        
+
+
                         for (let i = 0; i < entCollection.length; i++) {
                             entCollection[i].setAttribute("visible", "false");
                             console.log(entCollection[i].getAttribute("visible"));
@@ -527,21 +527,21 @@
                             cam.add(videoDisplay);
                             videoBorder.setAttribute("position", "0 0 -25");
                             videoDisplay.setAttribute("position", "0 0 -25");
-        
+
                             videoBorder.setAttribute("rotation", "0 0 0");
                             videoDisplay.setAttribute("rotation", "0 0 0");
                             visCollection.push(i);
-        
-        
+
+
                             //console.log(entCollection[i]);
                             //console.log(entCollection[i].getAttribute("original-scale"));
                             //console.log(visCollection);
                         }
-        
-        
-        
+
+
+
                         //cam.setAttribute("position", "%s %s %s", borderCords.x, borderCords.y, borderCords.z - 5);
-        
+
                         //cam.object3D.position.set(borderCords.x, borderCords.y, borderCords.z);
                         //cam.components['look-controls'].yawObject.rotation.set(0, THREE.Math.degToRad(30), 0);
                         //cam.object3D.rotation.set(0, THREE.Math.degToRad(30), 0);
@@ -550,13 +550,13 @@
                         //cam.setAttribute("camera", "fov", 2 * Math.atan(19 / (2 * 25)) * (180 / Math.PI));
                         //backgroundEl.setAttribute("background", "color", "black");
                         //videoBorder.setAttribute("position", "0 0 -25");
-        
-        
-        
+
+
+
                         //videoDisplay.setAttribute("height", "19");
                         //videoDisplay.setAttribute("width", "19");
                         //console.log(visCollection);
-        
+
                     }
                     else {
                         //addToCam(videoPanel, "35 5 -25", false);
@@ -569,23 +569,23 @@
                         //borderMesh.material.color.set("#440000");
                         for (let i = 0; i < visCollection.length; i++) {
                             entCollection[visCollection[i]].setAttribute("visible", "true");
-        
+
                             console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
-        
+
                             entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
-        
+
                             //videoDisplay.setAttribute("position", origPosDisplay);
-        
+
                         }
                         player.setAttribute("wasd-controls", "acceleration: 10");
                         backgroundEl.add(videoBorder);
                         backgroundEl.add(videoDisplay);
                         let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
                         let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-        
+
                         videoBorder.setAttribute("position", p_x);
                         videoDisplay.setAttribute("position", p_x);
-        
+
                         videoBorder.setAttribute("rotation", r_x);
                         videoDisplay.setAttribute("rotation", r_x);
                         //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
@@ -835,12 +835,15 @@
     </div>
 
 
-    <a-scene id="aframe-scene-container" fog="type: linear; color: #AAB; far: 230; near: 0"
-        renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: #000000"
-        vr-mode-ui="enabled: false" networked-scene="
+
+  </div><a-scene id="aframe-scene-container"
+        fog="type: linear; color: #AAB; far: 230; near: 0"
+        renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic"
+        background="color: #000000"
+        vr-mode-ui="enabled: true"
+        networked-scene="
         room: roomname;
         debug: true;
-        audio: true;
         adapter: easyrtc;
        " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
 
@@ -885,11 +888,50 @@
             <a-sphere class="head" visible="false" random-color>
             </a-sphere>
 
-            <a-entity id="cameraA" active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
+              <a-entity
+                      active="true"
+                      camera="near: 0.1; far: 7000.0;"
+                      position="0 0.6 0"
+                      >
+              </a-entity>
+    </a-entity>
 
-            </a-entity>
+    <!-- VR rendered stuff-->
+    <a-entity id="left-hand" hand-controls="hand: left"></a-entity>
+<   a-entity id="right-hand" hand-controls="hand: right"></a-entity>
 
-        </a-entity>
+
+    <a-entity id="left-hand" hand-controls="hand: left">
+    <a-entity line="start: 0 0 0; end: 0 0 -1; color: red"></a-entity>
+    </a-entity>
+    <a-entity id="right-hand" hand-controls="hand: right">
+    <a-entity line="start: 0 0 0; end: 0 0 -1; color: blue"></a-entity>
+    </a-entity>
+
+    <a-entity camera movement-controls></a-entity>
+
+
+    <a-entity id="camera-rig" movement-controls="speed: 0.1">
+    <a-entity camera look-controls></a-entity>
+    </a-entity>
+
+    <a-entity id="left-hand" hand-controls="hand: left"></a-entity>
+
+    <script>
+      AFRAME.registerComponent('left-thumbstick', {
+        init: function () {
+          var hand = this.el;
+          var cameraRig = document.querySelector('#camera-rig');
+
+          hand.addEventListener('thumbstickmoved', function (event) {
+            var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
+            cameraRig.object3D.position.add(movementVector.multiplyScalar(cameraRig.getAttribute('movement-controls').data.speed));
+          });
+        }
+      });
+
+      document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
+    </script>
 
 
 
