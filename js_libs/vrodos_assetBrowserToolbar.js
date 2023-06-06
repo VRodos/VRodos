@@ -196,17 +196,14 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 // Add the category in tabs if not yet added
                 if (jQuery("#assetCategTab").find("[id='" + f.categoryName + "']").length == 0) {
                     //Create an input type dynamically.
-                    var element = document.createElement("button");
+                    let element = document.createElement("button");
                     //Assign different attributes to the element.
-                    element.className = "tablinks";
+                    element.className = "tablinks mdc-button";
                     element.id = f.categoryName;
                     element.innerHTML = "<i class='material-icons' title='" + f.categoryName + ": " + f.categoryDescription + "' style='font-size:18px;'>" + f.categoryIcon + "</i>";//f.categoryName;
                     element.addEventListener("click", function (event) { openCategoryTab(event, this); });
 
-                    var foo = document.getElementById("assetCategTab");
-                    //Append the element
-
-                    foo.appendChild(element);
+                    document.getElementById("assetCategTab").appendChild(element);
                 }
 
                 f.screenImagePath = f.screenImagePath ? f.screenImagePath : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";

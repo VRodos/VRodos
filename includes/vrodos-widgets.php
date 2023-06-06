@@ -533,12 +533,12 @@ class vrodos_3d_widget extends WP_Widget {
                 canvasbackgroundcolor<?php echo $title;?>,
                 audio_file<?php echo $title;?>,
                 path_url<?php echo $title;?>, // OBJ textures path
-                mtl_file_name_widget<?php echo $title;?>,
-                obj_file_name_widget<?php echo $title;?>,
-                pdb_file_name_widget<?php echo $title;?>,
-                fbx_file_name_widget<?php echo $title;?>,
+                null,
+                null,
+                null,
+                null,
                 glb_file_name_widget<?php echo $title;?>,
-                textures_fbx_string_connected_widget<?php echo $title;?>,
+                null,
                 false,
                 canvasbackgroundcolor<?php echo $title;?> === 'transparent',
                 enablepan<?php echo $title;?>, // lock

@@ -28,19 +28,22 @@ class VRodos_AssetViewer_3D_kernel {
                 animationButton,
                 previewProgressLabel,
                 previewProgressLine,
-                back_3d_color, audioElement,
-                pathUrl = null, mtlFilename = null,
-                objFilename= null, pdbFileContent = null,
-                fbxFilename = null, glbFilename = null,
+                back_3d_color,
+                audioElement,
+                pathUrl = null,
+                mtlFilename = null,
+                objFilename= null,
+                pdbFileContent = null,
+                fbxFilename = null,
+                glbFilename = null,
                 textures_fbx_string_connected = null,
                 statsSwitch = true,
                 isBackGroundNull = false,
                 lockTranslation = false,
                 enableZoom = true,
-                assettrs = '0,0,0,0,0,0,0,0,-100', boundingSphereButton = null) {
-
-
-
+                assettrs = '0,0,0,0,0,0,0,0,-100',
+                boundingSphereButton = null
+    ) {
 
         //console.log(pathUrl, fbxFilename + " t:" + textures_fbx_string_connected );
 
@@ -53,7 +56,7 @@ class VRodos_AssetViewer_3D_kernel {
         this.previewProgressLabel = previewProgressLabel;
         this.previewProgressLine = previewProgressLine;
 
-        this.setZeroVars()
+        this.setZeroVars();
         this.back_3d_color = back_3d_color;
 
         this.isBackGroundNull = isBackGroundNull;
@@ -62,7 +65,7 @@ class VRodos_AssetViewer_3D_kernel {
         this.GlbBuffer = '';
 
         this.path_url = null;
-        this.mtl_file_name = this.obj_file_name = this.pdb_file_name = this.fbx_file_name = this.glb_file_name;
+        this.glb_file_name = null;
 
         this.assettrs = assettrs.split(',');
         this.scene = new THREE.Scene();
@@ -148,10 +151,6 @@ class VRodos_AssetViewer_3D_kernel {
         // Trackball or OrbitControls controls
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
 
-
-
-
-
         //this.scene.add(new THREE.AxisHelper(5,5,5));
 
         this.controls.zoomSpeed = 1.02;
@@ -174,21 +173,12 @@ class VRodos_AssetViewer_3D_kernel {
         root.name = "root";
         this.scene.add( root );
 
-
         // const size = 10;
         // const divisions = 10;
         //
         // const gridHelper = new THREE.GridHelper( size, divisions );
         // this.scene.add( gridHelper );
 
-
-        // - OBJ Specific - Setup loader
-        try {
-            this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
-            this.wwObjLoader2.setCrossOrigin('anonymous');
-        } catch (e) {
-            console.log("ERROR WW15", "Web Workers for OBJ not found")
-        }
 
         this.boundRender = this.render.bind( this );
         this.initGL();
@@ -203,7 +193,6 @@ class VRodos_AssetViewer_3D_kernel {
         this.canvasResizeBounded = this.onCanvasResize.bind(this);
         window.addEventListener( 'resize', this.canvasResizeBounded, true );
     }
-
 
     onCanvasResize(){
         this.resizeDisplayGL();
@@ -459,9 +448,7 @@ class VRodos_AssetViewer_3D_kernel {
     // Initialize Scene
     initGL(){
 
-
         this.scene.background = this.isBackGroundNull ? null : new THREE.Color(this.back_3d_color);
-
 
         // - Label renderer -
         this.labelRenderer = new THREE.CSS2DRenderer();
@@ -508,54 +495,6 @@ class VRodos_AssetViewer_3D_kernel {
         this.scene.add(directionalLight2);
         this.scene.add(directionalLight3);
         this.scene.add(ambientLight);
-
-        // ---- OBJ asynch loader ---------
-
-        let scope = this;
-
-        // Function for OBJ: Function to load materials
-        let materialsLoaded = function (materials) {
-            for (let k in materials) {
-                if(materials.hasOwnProperty(k)) {
-                    materials[k].transparent = true;
-                    materials[k].alphaTest = 0.1;
-                }
-            }
-        };
-
-        // Function for OBJ: Report for meshes
-        let meshLoaded = function (name, bufferGeometry, material) {};
-
-        // Function on Completed Loading
-        let completedLoading = function () {
-            console.log('Loading complete for OBJ WW!');
-
-            if (scope.previewProgressLabel) {
-                scope.previewProgressLine.style.width = '0';
-                scope.previewProgressLabel.innerHTML = "";
-            }
-
-            scope.zoomer(scope.scene.getChildByName('root'));
-
-            scope.kickRendererOnDemand();
-
-            //scope.controls.target(scope.scene.getChildByName('root'));
-
-            // // Auto create screenshot;
-            // setTimeout(function(){
-            //     jQuery("#button_qrcode").click(); // close qr code
-            //     jQuery("#createModelScreenshotBtn").click();
-            // },1000);
-        };
-
-        try {
-            this.wwObjLoader2.registerCallbackProgress(this._reportProgress);
-            this.wwObjLoader2.registerCallbackCompletedLoading(completedLoading);
-            this.wwObjLoader2.registerCallbackMaterialsLoaded(materialsLoaded);
-            this.wwObjLoader2.registerCallbackMeshLoaded(meshLoaded);
-        } catch (e){
-            console.log("Can load OBJ", "ERROR O151");
-        }
 
         return true;
     }
@@ -633,7 +572,7 @@ class VRodos_AssetViewer_3D_kernel {
         setTimeout(function(){scope.kickRendererOnDemand();} , 500);
     }
 
-    /* GLB loader */
+    /* GLB GLTF loader */
     loadGlbStream(GlbBuffer) {
         let scope = this;
 
@@ -645,25 +584,16 @@ class VRodos_AssetViewer_3D_kernel {
 
         let glbLoader = new THREE.GLTFLoader( manager );
 
-
-        // const dracoLoader = new THREE.DRACOLoader();
-        // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs119/draco/' );
-        // glbLoader.setDRACOLoader( dracoLoader );
+        const dracoLoader = new THREE.DRACOLoader();
+        dracoLoader.setDecoderPath( '/wp-content/plugins/vrodos/js_libs/threejs141/draco/' );
+        glbLoader.setDRACOLoader( dracoLoader );
 
 
         // Load a glTF resource
-        glbLoader.load(
-            GlbBuffer,
+        glbLoader.parse(
+            GlbBuffer, '',
             // called when the resource is loaded
             function ( gltf ) {
-
-                //scene.add( gltf.scene );
-
-                // gltf.animations; // Array<THREE.AnimationClip>
-                // gltf.scene; // THREE.Group
-                // gltf.scenes; // Array<THREE.Group>
-                // gltf.cameras; // Array<THREE.Camera>
-                // gltf.asset; // Object
 
                 if ( gltf.animations.length > 0) {
 
@@ -681,12 +611,10 @@ class VRodos_AssetViewer_3D_kernel {
 
                 }
 
-                scope.scene.getChildByName('root').add( gltf.scene );
-
-                scope.zoomer(scope.scene.getChildByName('root'));
-
-                setTimeout(function(){scope.kickRendererOnDemand();} , 1);
-
+                scope.scene.getObjectByName('root').add( gltf.scene );
+                scope.zoomer(scope.scene.getObjectByName('root'));
+                scope.kickRendererOnDemand();
+                //setTimeout(function(){scope.kickRendererOnDemand();} , 1);
 
             },
             '',
@@ -752,7 +680,7 @@ class VRodos_AssetViewer_3D_kernel {
     showHideBoundSphere(){
         let sphObj = this.scene.getObjectByName('myBoundingSphere');
         let isVisible = sphObj.visible;
-        sphObj.visible = isVisible ? false : true;
+        sphObj.visible = !isVisible;
         this.render();
     }
 
@@ -779,7 +707,7 @@ class VRodos_AssetViewer_3D_kernel {
             // Instantiate a loader
             const loader = new THREE.GLTFLoader();
 
-            loader.setDRACOLoader( new THREE.DRACOLoader() );
+            //loader.setDRACOLoader( new THREE.DRACOLoader() );
 
             // const dracoLoader = new THREE.DRACOLoader();
             // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs119/draco/' );
@@ -814,8 +742,8 @@ class VRodos_AssetViewer_3D_kernel {
                     }
 
                     // Add to root
-                    scope.scene.getChildByName('root').add(gltf.scene);
-                    scope.zoomer(scope.scene.getChildByName('root'));
+                    scope.scene.getObjectByName('root').add(gltf.scene);
+                    scope.zoomer(scope.scene.getObjectByName('root'));
                     scope.kickRendererOnDemand();
 
                     //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";

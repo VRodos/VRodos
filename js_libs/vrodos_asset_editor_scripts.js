@@ -6,8 +6,6 @@
  */
 'use strict';
 
-var currLanguage = "English";
-
 // Initial slide to show (carousel top)
 var slideIndex = 0;
 
@@ -19,17 +17,7 @@ function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
     }
 
     // Clear inputs
-    document.getElementById("fbxFileInput").value = "";
-    document.getElementById("mtlFileInput").value = "";
-    document.getElementById("objFileInput").value = "";
-    document.getElementById("pdbFileInput").value = "";
     document.getElementById("glbFileInput").value = "";
-
-
-    // Clear add texture hidden fields
-    while ( jQuery("[id^=textureFileInput]").length > 0) {
-        jQuery("[id^=textureFileInput]")[0].remove();
-    }
 
     // Clear select 3D files input
     if (document.getElementById("fileUploadInput"))
@@ -116,13 +104,11 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
     let _handleFileSelect = function ( event ) {
 
         let input = document.getElementById('fileUploadInput');
-        let output = document.getElementById('fileList3D');
         let children = "";
 
         for (let i = 0; i < input.files.length; ++i) {
             children += '<li>' + input.files.item(i).name + '</li>';
         }
-        output.innerHTML = '<ul>'+children+'</ul>';
 
         // Reset Screenshot
         document.getElementById("sshotPreviewImg").src = sshotPreviewDefaultImg;
@@ -181,70 +167,6 @@ function rgbToHex(r, g, b) {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
-function applyFont(font) {
-    console.log('You selected font: ' + font);
-
-    // Replace + signs with spaces for css
-    font = font.replace(/\+/g, ' ');
-
-    // Split font into family and weight
-    font = font.split(':');
-
-    let fontFamily = font[0];
-    let fontWeight = font[1] || 400;
-
-    // Set selected font on paragraphs
-    jQuery('.changablefont').css({fontFamily:"'"+fontFamily+"'", fontWeight:fontWeight});
-}
-
-function resizeText(multiplier) {
-    window.event.preventDefault();
-    window.event.stopPropagation();
-    window.event.stopImmediatePropagation();
-    if (document.body.style.fontSize == "") {
-        document.body.style.fontSize = "1.0em";
-    }
-    document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
-
-
-    // document.getElementsByClassName("asset3d_desc_view")[0].style.marginTop =
-    //     (parseFloat(document.getElementsByClassName("asset3d_desc_view")[0].style.marginTop)+multiplier*10)+"px";
-
-    return false;
-}
-
-
-
-function showSlides(i) {
-
-
-    // Get slides div
-    let slides = document.getElementsByClassName("mySlides");
-
-
-    if(slides.length == 0)
-        return;
-
-    // Hide all
-    for (let j = 0; j < slides.length; j++) {
-        slides[j].style.display = "none";
-    }
-
-    if (i >= slides.length) {slideIndex = 0}
-    if (i < 0) {slideIndex = slides.length}
-
-    i = slideIndex;
-
-    console.log(slides);
-
-    // Show only one
-    slides[i].style.display = "block";
-}
-
-function plusSlides(i) {
-    showSlides(slideIndex += i);
-}
-
 // Create model screenshot
 function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
 
@@ -301,12 +223,6 @@ function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
     if (jQuery("ProducerPlotTooltip")) {
         jQuery("div.ProducerPlotTooltip").remove();
     }
-
-    jQuery("#assetDescription").show();
-    jQuery("#doorDetailsPanel").hide();
-    //jQuery("#imgDetailsPanel").hide();
-    //jQuery("#videoDetailsPanel").hide();
-    jQuery("#objectPreviewTitle").hide();
 }
 
 function clearList() {
@@ -314,101 +230,29 @@ function clearList() {
 }
 
 
-
-
-function openAccess(accessLevel) {
-
-    var i, tabcontent, tablinks;
-
-    // The description
-    tabcontent = document.getElementsByClassName("tabcontent2");
-
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-
-    // tablinks = document.getElementsByClassName("tablinks2");
-    // for (i = 0; i < tablinks.length; i++) {
-    //     tablinks[i].className = tablinks[i].className.replace(" active", "");
-    // }
-
-    document.getElementById(currLanguage + accessLevel).style.display = "block";
-
-    window.event.currentTarget.className += " active";
-}
-
-
-function openLanguage(lang) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent2");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("tablinks2");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-
-    currLanguage = lang;
-
-    document.getElementById(lang).style.display = "block";
-
-    var titLang = eval('asset_title_'+currLanguage.toLowerCase()+'_saved');
-
-    //console.log(titLang);
-
-    if (titLang === '')
-        titLang = eval('asset_title_english_saved');
-
-    document.getElementById("assetTitleView").innerHTML = titLang;
-
-    window.event.currentTarget.className += " active";
-}
-
-// Start P2P conference
-function startConf(){
-    jQuery("#confwindow")[0].style.display="";
-    jQuery("#confwindow_helper")[0].style.display="none";
-
-    document.getElementById('iframeConf').src =
-        "https://heliosvr.mklab.iti.gr:3000/call/<?php echo $assetLangPack2['asset_title_saved']; ?>";
-
-    vrodos_notify_confpeers();
-}
-
-// function setCanvasDivSize(){
-//
-//     // Responsive Layout (text panel vs 3D model panel
-//     if (window.innerWidth < window.innerHeight) {
-//
-//         const initCH = document.getElementById('text-asset-sidebar').clientHeight;
-//         const initCH2 = document.getElementById('wrapper_3d_inner').clientHeight;
-//
-//         document.getElementById('text-asset-sidebar').addEventListener('scroll', function () {
-//             document.getElementById("text-asset-sidebar").style.height = (initCH + this.scrollTop / 2 + 5).toString();
-//             document.getElementById("wrapper_3d_inner").style.height = (initCH2 - this.scrollTop / 2 + 5).toString();
-//             asset_viewer_3d_kernel.resizeDisplayGL();
-//         });
-//     }
-//
-// }
-
 function generateQRcode(){
-
     // Generate QR Code
-    const qrcode = new QRCode(
-        document.getElementById("qrcode_img"), {
-            text: window.location.href.replace('#','&qrcode=none#'),
-            width: 128,
-            height: 128,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
+    let opts = {
+        errorCorrectionLevel: 'H',
+        type: 'image/png',
+        quality: 1.0,
+        margin: 1,
+        color: {
+            dark:"#010599FF",
+            light:"#FFBF60FF"
+        }
+    };
+    /*let data = window.location.href.replace('#','&qrcode=none#');*/
+    let data = window.location.href;
 
+    QRCode.toDataURL(data, opts, function (err, url) {
+        if (err) throw err
+        let img = document.getElementById('qrcode_img');
+        img.src = url;
+    })
 }
 
-function screenshotHandlerSet(){
+function setScreenshotHandler(){
 
     // Screenshot handler
     if (document.getElementById("sshotPreviewImg")) {

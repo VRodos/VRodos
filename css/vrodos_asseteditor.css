@@ -1,5 +1,5 @@
 .fusion-row {
-    margin-left: 0px !important;
+    margin-left: 0 !important;
     display: inline
 }
 
@@ -113,10 +113,10 @@
 }
 
 #jscolorpick {
-    display: block;
+
     padding: 6px 0 6px 0;
-    margin: 42px 16px 0 16px;
-    width: 30%;
+    margin: 42px 0 0 0;
+
 }
 
 #assetFontsLabel {
@@ -155,12 +155,6 @@
     /*margin-left:0%;*/
 }
 
-#ipr-div {
-    margin-bottom: 20px;
-}
-
-#assetTitleView {}
-
 #assetTitleView {
     width: 100%;
     display: flex;
@@ -197,18 +191,6 @@
     text-shadow: 1px 1px #0bb697;
 }
 
-#plustext {
-    margin-left: 10px;
-    display: inline-block;
-    font-size: 18pt;
-}
-
-#minustext {
-    margin-left: 10px;
-    display: inline-block;
-    font-size: 14pt;
-}
-
 .accessButton {
     background-color: white;
     padding: 0;
@@ -228,46 +210,18 @@
     background-color: white;
 }
 
-#confwindow {
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    display: none;
-}
-
-#iframeConf {
-    margin-bottom: 0;
-}
-
-#confwindow_helper {
-    padding-top: 20px;
-    text-align: center;
-    width: 200px;
-    margin: 0 auto;
-}
 
 #category-ipr-select {
     min-width: 100%;
 }
 
 #categoryIPRDescription {
-    "font-style: italic;"
+    font-style: italic;
 }
 
-#vrodos-asset-author {
-    display: inline-block;
-    text-align: left;
-    float: right;
-    right: 0;
-    margin-top: 0;
-    width: auto;
-}
-
-#vrodos-authorImg {
+.AssetEditorAuthorImageStyle {
     width: 40px;
-    min-width: 40px;
     height: 40px;
-    min-height: 40px;
     border-radius: 50%;
 }
 
@@ -348,31 +302,23 @@ a.boundingSphereButton {
 }
 
 
-
-
-
 .qrcode_div {
     width: 180px;
+    height: 180px;
     position: absolute;
     bottom: 0;
     right: 0;
     text-align: center;
-    height: 200px;
 }
 
 .qrcode_img_div {
-    width: 180px;
-    height: 170px;
     position: absolute;
-    background-color: white;
-    bottom: 15px;
     right: 0;
-    padding: 5px;
     text-align: center
 }
 
 .qrcode_img {
-    width: 128px;
+    width: 160px;
     text-align: center;
     margin: 15px auto 10px;
 }
@@ -385,4 +331,11 @@ a.boundingSphereButton {
     padding: 0 5px 0 3px;
     margin-bottom: 5px;
     font-family: Arial, sans-serif;
+    cursor: pointer;
+}
+
+.assetEditorColumn {
+    display: block;
+    width: 46%;
+    margin: 0 8px 0 8px;
 }

@@ -152,3 +152,4 @@ test_compiler/
 /semantics/
 /peer-calls/
 /includes/translate/
+/networked-aframe/examples/js/

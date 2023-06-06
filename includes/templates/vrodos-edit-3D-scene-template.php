@@ -184,28 +184,7 @@ $allScenePGame = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
 
 $parent_project_id_as_term_id = $allScenePGame ? $allScenePGame->term_id : null;
 
-// Ajax for fetching game's assets within asset browser widget at vr_editor // user must be logged in to work, otherwise ajax has no privileges
 // COMPILE Ajax
-if(vrodos_getUnity_local_or_remote() != 'remote') {
-
-    // Local compile
-    $gameUnityProject_dirpath = $upload_dir . '\\' . $projectSlug . 'Unity';
-    $gameUnityProject_urlpath = $pluginpath . '/../../uploads/' . $projectSlug . 'Unity/';
-
-} else {
-
-    // Remote compile
-    $ftp_cre = vrodos_get_ftpCredentials();
-    $ftp_host = $ftp_cre['address'];
-
-    $gamesFolder = 'COMPILE_UNITY3D_GAMES';
-
-    $gameUnityProject_dirpath = $gamesFolder."/".$projectSlug."Unity";
-    $gameUnityProject_urlpath = "http://".$ftp_host."/".$gamesFolder."/".$projectSlug."Unity";
-}
-
-
-
 $thepath = $pluginpath . '/js_libs/ajaxes/vrodos_request_compile.js';
 
 wp_enqueue_script( 'ajax-script_compile', $thepath, array('jquery') );
@@ -217,9 +196,6 @@ wp_localize_script( 'ajax-script_compile',
         'projectId' => $project_id,
         'slug' => $projectSlug,
         'sceneId' => $current_scene_id
-//                        ,
-//                               'gameUnityProject_dirpath' => $gameUnityProject_dirpath,
-//                               'gameUnityProject_urlpath' => $gameUnityProject_urlpath
     )
 );
 
@@ -228,12 +204,6 @@ wp_localize_script( 'ajax-script_compile',
 wp_enqueue_script( 'ajax-script_deletescene', $pluginpath . '/js_libs/ajaxes/delete_scene.js', array('jquery') );
 wp_localize_script( 'ajax-script_deletescene', 'my_ajax_object_deletescene',
     array( 'ajax_url' => admin_url( 'admin-ajax.php'))
-);
-
-//FOR SAVING extra keys
-wp_enqueue_script( 'ajax-script_savegio', $pluginpath.'/js_libs/ajaxes/vrodos_save_scene_ajax.js', array('jquery') );
-wp_localize_script( 'ajax-script_savegio', 'my_ajax_object_savegio',
-    array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'project_id' => $project_id )
 );
 
 // Asset Browser
@@ -372,7 +342,7 @@ wp_head();
     <!-- PANELS -->
     <div class="panels">
 
-        <!-- Panel 1 is the vr enivironment -->
+        <!-- Panel 1 is the vr environment -->
         <div class="panel active" id="panel-1" role="tabpanel" aria-hidden="false">
 
             <!-- 3D editor  -->
@@ -430,7 +400,7 @@ wp_head();
 
                     <div class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
                         <header draggable="false" class="notdraggable">Actor</header>
-                        <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0px"
+                        <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0"
                              src="<?php echo $pluginpath?>/images/lights/pawn.png"/>
                     </div>
 
@@ -446,25 +416,25 @@ wp_head();
                     <div class="lightpawnbutton" data-lightPawn="Lamp" draggable="true">
                         <header draggable="false" class="notdraggable">Lamp</header>
                         <img draggable="false" class="lighticon notdraggable"
-                             src="<?php echo $pluginpath?>/images/lights/lamp.png" draggable="false"/>
+                             src="<?php echo $pluginpath?>/images/lights/lamp.png"/>
                     </div>
 
                     <div class="lightpawnbutton" data-lightPawn="Spot" draggable="true">
                         <header draggable="false" class="notdraggable">Spot</header>
                         <img draggable="false" class="lighticon notdraggable"
-                             src="<?php echo $pluginpath?>/images/lights/spot.png" draggable="false"/>
+                             src="<?php echo $pluginpath?>/images/lights/spot.png"/>
                     </div>
 
                     <div class="lightpawnbutton" data-lightPawn="Ambient" draggable="true">
                         <header draggable="false" class="notdraggable" style="font-size: 7pt">Ambient</header>
                         <img draggable="false" class="lighticon notdraggable"
-                             src="<?php echo $pluginpath?>/images/lights/ambient_light.png" draggable="false"/>
+                             src="<?php echo $pluginpath?>/images/lights/ambient_light.png"/>
                     </div>
 
                     <!-- Set RendererToneMapping  -->
                     <div id="rendererToneMappingDiv"
                          class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
-                         style="width:60px; margin:0px; padding:0px; height:42px; background: rgba(255,255,255,0.5);float:left;display:block">
+                         style="width:60px; margin:0; padding:0; height:42px; background: rgba(255,255,255,0.5);float:left;display:block">
 
                         <label for="rendererToneMapping"
                                class=""
@@ -476,9 +446,8 @@ wp_head();
                                onchange="changeRendererToneMapping(this.value);">
                     </div>
 
-                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
+                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;padding:0;margin: 0 2px;">
                     </div>
-
 
 
                     <div class="environmentButton">
@@ -573,8 +542,8 @@ wp_head();
                 <div class="filemanager" id="assetBrowserToolbar">
 
                     <!-- Categories of assets -->
-                    <div id="assetCategTab">
-                        <button id="allAssetsViewBt" class="tablinks active">All</button>
+                    <div id="assetCategTab" class="AssetCategoryTabStyle">
+                        <button id="allAssetsViewBt" class="tablinks mdc-button active">All</button>
                     </div>
 
                     <!-- Search bar -->
@@ -648,8 +617,6 @@ wp_head();
             // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
         });
 
-
-
     </script>
 
 
@@ -676,8 +643,6 @@ wp_head();
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
-
-
 
         let transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
@@ -780,11 +745,13 @@ wp_head();
             envir.updateCameraGivenSceneLimits();
 
             setHierarchyViewer();
-            setDatGuiInitialVales();
+            setDatGuiInitialVales(objItem);
 
-            // Set Target light for Spots
+
             for (let n in resources3D) {
                 (function (name) {
+
+                    // Set Target light for Spots
                     if (resources3D[name]['categoryName'] === 'lightSpot') {
                         let lightSpot = envir.scene.getObjectByName(name);
                         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
@@ -820,28 +787,7 @@ wp_head();
         loaderMulti.load(manager, resources3D, pluginPath);
 
 
-        // Only in Undo redo as javascript not php!
-        function parseJSON_LoadScene(scene_json){
 
-            resources3D = parseJSON_javascript(scene_json, uploadDir);
-
-            // CLEAR SCENE
-            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
-
-            for (let i = envir.scene.children.length - 1; i >=0 ; i--){
-                if (!preserveElements.includes(envir.scene.children[i].name))
-                    envir.scene.remove(envir.scene.children[i]);
-            }
-
-            setHierarchyViewer();
-
-            transform_controls = envir.scene.getObjectByName('myTransformControls');
-            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
-
-
-            loaderMulti = new VRodos_LoaderMulti("2");
-            loaderMulti.load(manager, resources3D);
-        }
 
         //--- initiate PointerLockControls ---------------
         initPointerLock();
@@ -880,7 +826,10 @@ wp_head();
 
 
             // Update it
-            updatePositionsAndControls();
+            envir.orbitControls.update();
+            updatePointerLockControls();
+
+            //updatePositionsAndControls();
 
             //envir.cubeCamera.update( envir.renderer, envir.scene );
         }
@@ -888,9 +837,9 @@ wp_head();
         // UPDATE
         function updatePositionsAndControls()
         {
-            envir.orbitControls.update();
+            // envir.orbitControls.update();
+            // updatePointerLockControls();
 
-            updatePointerLockControls();
 
             // Now update the translation and rotation input texts at datgui from transform controls
             if (transform_controls.object) {
@@ -903,7 +852,6 @@ wp_head();
                         }
                     }
                 }
-
                 updatePositionsPhpAndJavsFromControlsAxes();
             }
         }
@@ -921,13 +869,12 @@ wp_head();
             // highlight
             envir.outlinePass.selectedObjects = [objItem];
 
-            if (selected_object_name != 'avatarCamera') {
-                transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
-                    trs_tmp['translation'][2]);
-                transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
-                    trs_tmp['rotation'][2]);
-                transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
-            }
+            transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
+                trs_tmp['translation'][2]);
+            transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
+                trs_tmp['rotation'][2]);
+            transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+
 
             jQuery('#object-manipulation-toggle').show();
             jQuery('#axis-manipulation-buttons').show();
@@ -939,16 +886,31 @@ wp_head();
             transform_controls.setMode("translate");
 
             // Resize controls based on object size
-            if (selected_object_name != 'avatarCamera') {
+            setTransformControlsSize();
+        }
 
-                if (selected_object_name.includes("lightSun") || selected_object_name.includes("lightLamp") ||
-                    selected_object_name.includes("lightSpot")){
-                }
-            } else {
-                transform_controls.visible = false;
+        // Only in Undo redo as javascript not php!
+        function parseJSON_LoadScene(scene_json){
+
+            resources3D = parseJSON_javascript(scene_json, uploadDir);
+
+            // CLEAR SCENE
+            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
+
+            for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
+
+                if (!preserveElements.includes(envir.scene.children[i].name))
+                    envir.scene.remove(envir.scene.children[i]);
             }
 
-            setTransformControlsSize();
+            setHierarchyViewer();
+
+            transform_controls = envir.scene.getObjectByName('myTransformControls');
+            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
+
+
+            loaderMulti = new VRodos_LoaderMulti("2");
+            loaderMulti.load(manager, resources3D);
         }
 
         document.getElementsByTagName("html")[0].style.overflow="hidden";

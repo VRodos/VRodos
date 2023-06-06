@@ -29,9 +29,10 @@ echo ini_get('max_input_time').chr(10);
 @ini_set( 'max_execution_time', '2400' );
 
 // Set scope for the 3D editor (under construction feature):
+// Default    : 1
 // Virtual Exhibition (VRExpo)    : 2
 // VirtualProduction (MediaVerse) : 3
-$project_scope = 3;
+$project_scope = 2;
 
 
 
@@ -50,9 +51,7 @@ function vrodos_register_scripts() {
         array('vrodos_savescene_request', $pluginDirJS.'ajaxes/vrodos_save_scene_ajax.js'),
         array('vrodos_content_interlinking_request', $pluginDirJS.'content_interlinking_commands/content_interlinking.js'),
         array('vrodos_segmentation_request', $pluginDirJS.'semantics_commands/segmentation.js'),
-
         array('vrodos_classification_request', $pluginDirJS.'semantics_commands/classification.js'),
-        array('vrodos_qrcode_generator', $pluginDirJS.'external_js_libraries/qrcode.js'),
         array('vrodos_inflate', $pluginDirJS.'external_js_libraries/inflate.min.js'),
         array('vrodos_AssetViewer_3D_kernel', $pluginDirJS.'vrodos_AssetViewer_3D_kernel.js'),
         array('vrodos_3d_editor_buttons_drags', $pluginDirJS.'vrodos_3d_editor_buttons_drags.js'),
@@ -103,6 +102,7 @@ function vrodos_register_scripts() {
         array( 'vrodos_load119_GLTFLoader', $pluginDirJS.'threejs119/GLTFLoader.js'),
         array( 'vrodos_load141_GLTFLoader', $pluginDirJS.'threejs141/GLTFLoader.js'),
         array( 'vrodos_load119_DRACOLoader', $pluginDirJS.'threejs119/DRACOLoader.js'),
+        array( 'vrodos_load141_DRACOLoader', $pluginDirJS.'threejs141/DRACOLoader.js'),
         array( 'vrodos_load119_DDSLoader', $pluginDirJS.'threejs119/DDSLoader.js'),
         array( 'vrodos_load119_KTXLoader', $pluginDirJS.'threejs119/KTXLoader.js'),
 
@@ -162,8 +162,6 @@ function vrodos_register_scripts() {
         array( 'vrodos_load119_FileLoader', $pluginDirJS.'threejs119/FileLoader.js'),
         array( 'vrodos_load119_LoadingManager', $pluginDirJS.'threejs119/LoadingManager.js'),
 
-
-
     );
 
     for ( $i = 0 ; $i < count($scriptsC); $i ++){
@@ -190,7 +188,7 @@ function vrodos_register_scripts() {
         wp_register_script($scriptsD[$i][0] , $scriptsD[$i][1], null, null, false );
     }
 }
-// 45
+
 
 // Register in front-end
 add_action('wp_enqueue_scripts', 'vrodos_register_scripts' );
@@ -523,7 +521,6 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
 
 //------------------- For Compile ---------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-compile-aframe.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
 
@@ -531,21 +528,17 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemb
 
 //------------------- Archaeology related -----------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-yamls.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-settings.php' );
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
 
 // 22
-add_action( 'init', 'vrodos_assets_taxcategory_archaeology_fill' );
+add_action( 'init', 'vrodos_create_asset_categories');
 
 // 23
 add_action( 'init', 'vrodos_scenes_types_archaeology_standard_cre' );
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-compile.php' );
-
-
 
 // ---- Content interlinking ----------
-
-add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description_action_callback' );
+//add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description_action_callback' );
 
 // Translate
 //add_action( 'wp_ajax_vrodos_translate_action', 'vrodos_translate_action_callback' );
@@ -917,11 +910,6 @@ add_action('wp_ajax_vrodos_undo_scene_async_action','vrodos_undo_scene_async_act
 add_action('wp_ajax_vrodos_redo_scene_async_action','vrodos_redo_scene_async_action_callback');
 
 
-add_action('wp_ajax_vrodos_save_expid_async_action','vrodos_save_expid_async_action_callback');
-
-// Ajax for saving gio asynchronoysly
-add_action('wp_ajax_vrodos_save_gio_async_action','vrodos_save_gio_async_action_callback');
-
 // Ajax for deleting scene
 add_action('wp_ajax_vrodos_delete_scene_action','vrodos_delete_scene_frontend_callback');
 
@@ -969,14 +957,6 @@ add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_ass
 add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_backend_callback');
 
 // ------- Ajaxes for compiling ---------
-
-// the ajax js is in js_lib/request_game.js (see main functions.php for registering js)
-// the ajax phps are on vrodos-core-functions.php
-
-
-add_action( 'wp_ajax_vrodos_monitor_compiling_action', 'vrodos_monitor_compiling_action_callback' );
-add_action( 'wp_ajax_vrodos_killtask_compiling_action', 'vrodos_killtask_compiling_action_callback' );
-add_action( 'wp_ajax_vrodos_game_zip_action', 'vrodos_game_zip_action_callback' );
 
 // Assemble php from ajax call
 //add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' );
@@ -1026,18 +1006,9 @@ function vrodos_remove_db_residues(){
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%_games%'");
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%pois_%'");
     $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%decoration%'");
-
-
-    // +++
-    //terrain
-    //marker
-    //educational-energy
-    //artifact
-    //site
-    //door
-    //room
-    //gate
-    //molecule
+    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%door%'");
+    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%video%'");
+    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%chat%'");
 
     // 5. Term relationships
     // +++

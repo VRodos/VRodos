@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Ζωντανή Παράσταση</title>
-    <meta name="description" content="Dev Example — Networked-Aframe with Green Screen effect" />
+    <title>Collaborative content creation</title>
+    <meta name="description" content="Collaborative content creation" />
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -442,10 +442,6 @@
                         video.pause();
 
                     }
-
-
-
-
                 });
 
 
@@ -509,15 +505,15 @@
                     cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
                     backgroundEl.setAttribute("background", "color", "black");
                     backgroundEl.setAttribute("overlay", "");
-        
-        
+    
+    
                     console.log(origPosBorder);
                     if (video.paused) {
                         video.play();
                         //console.log(data.orig_pos[2]);
                         //borderMesh.material.color.set("#004400");
-        
-        
+    
+    
                         for (let i = 0; i < entCollection.length; i++) {
                             entCollection[i].setAttribute("visible", "false");
                             console.log(entCollection[i].getAttribute("visible"));
@@ -527,21 +523,21 @@
                             cam.add(videoDisplay);
                             videoBorder.setAttribute("position", "0 0 -25");
                             videoDisplay.setAttribute("position", "0 0 -25");
-        
+    
                             videoBorder.setAttribute("rotation", "0 0 0");
                             videoDisplay.setAttribute("rotation", "0 0 0");
                             visCollection.push(i);
-        
-        
+    
+    
                             //console.log(entCollection[i]);
                             //console.log(entCollection[i].getAttribute("original-scale"));
                             //console.log(visCollection);
                         }
-        
-        
-        
+    
+    
+    
                         //cam.setAttribute("position", "%s %s %s", borderCords.x, borderCords.y, borderCords.z - 5);
-        
+    
                         //cam.object3D.position.set(borderCords.x, borderCords.y, borderCords.z);
                         //cam.components['look-controls'].yawObject.rotation.set(0, THREE.Math.degToRad(30), 0);
                         //cam.object3D.rotation.set(0, THREE.Math.degToRad(30), 0);
@@ -550,13 +546,13 @@
                         //cam.setAttribute("camera", "fov", 2 * Math.atan(19 / (2 * 25)) * (180 / Math.PI));
                         //backgroundEl.setAttribute("background", "color", "black");
                         //videoBorder.setAttribute("position", "0 0 -25");
-        
-        
-        
+    
+    
+    
                         //videoDisplay.setAttribute("height", "19");
                         //videoDisplay.setAttribute("width", "19");
                         //console.log(visCollection);
-        
+    
                     }
                     else {
                         //addToCam(videoPanel, "35 5 -25", false);
@@ -569,23 +565,23 @@
                         //borderMesh.material.color.set("#440000");
                         for (let i = 0; i < visCollection.length; i++) {
                             entCollection[visCollection[i]].setAttribute("visible", "true");
-        
+    
                             console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
-        
+    
                             entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
-        
+    
                             //videoDisplay.setAttribute("position", origPosDisplay);
-        
+    
                         }
                         player.setAttribute("wasd-controls", "acceleration: 10");
                         backgroundEl.add(videoBorder);
                         backgroundEl.add(videoDisplay);
                         let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
                         let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-        
+    
                         videoBorder.setAttribute("position", p_x);
                         videoDisplay.setAttribute("position", p_x);
-        
+    
                         videoBorder.setAttribute("rotation", r_x);
                         videoDisplay.setAttribute("rotation", r_x);
                         //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
@@ -654,7 +650,7 @@
             init: function () {
                 this.el.addEventListener("click", e => {
                     //console.log();
-                    window.open(this.data);
+                    window.new(this.data);
 
                 });
             }
@@ -684,17 +680,17 @@
                     let cam = document.getElementById("player");
                     //this.el.emit("event1");
                     /*
-
+    
                     var entity_main = document.createElement('a-plane');
                     var title_main = document.createElement('a-text');
-
+    
                     var desc_main = document.createElement('a-text');
                     */
 
                     let entitycheck = document.getElementById(this.data.id_img);
                     if (!entitycheck) {
                         /*
-
+    
                         entity_main.setAttribute("src", '#' + this.data.main_img);
                         entity_main.setAttribute("id", this.data.id_img);
                         entity_main.setAttribute("height", "8");
@@ -702,7 +698,7 @@
                         entity_main.setAttribute("position", "0  2  -10");
                         entity_main.setAttribute("material", "shader: flat");
                         entity_main.setAttribute("overlay", "");
-
+    
                         title_main.setAttribute("value", "Title of the image");
                         title_main.setAttribute("position", "-3  6  -9");
                         title_main.setAttribute("color", "black");
@@ -710,7 +706,7 @@
                         title_main.setAttribute("anchor", "left");
                         title_main.setAttribute("overlay", "");
                         title_main.setAttribute("width", "8");
-
+    
                         desc_main.setAttribute("value", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis, odio in vulputate interdum, sapien neque interdum mi, et suscipit elit sem non risus. Sed rutrum augue sed lectus convallis vehicula. Maecenas orci neque, rutrum in blandit eget, ultricies sit amet turpis. Curabitur maximus purus vel auctor faucibus.");
                         desc_main.setAttribute("position", "-3  0  -9");
                         desc_main.setAttribute("color", "white");
@@ -719,9 +715,9 @@
                         desc_main.setAttribute("overlay", "");
                         desc_main.setAttribute("width", "6");
                         desc_main.setAttribute("wrapCount", "40");
-
-
-
+    
+    
+    
                         cam.appendChild(entity_main);
                         cam.appendChild(title_main);
                         cam.appendChild(desc_main);
@@ -765,6 +761,21 @@
                 });
             }
         });
+
+        AFRAME.registerComponent('left-thumbstick', {
+            init: function () {
+                var hand = this.el;
+                var cameraRig = document.querySelector('#camera-rig');
+
+                hand.addEventListener('thumbstickmoved', function (event) {
+                    var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
+                    cameraRig.object3D.position.add(movementVector.multiplyScalar(cameraRig.getAttribute('movement-controls').data.speed));
+                });
+            }
+        });
+
+        document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
+
     </script>
 
     <div>
@@ -835,6 +846,7 @@
     </div>
 
 
+
     <a-scene id="aframe-scene-container" fog="type: linear; color: #AAB; far: 230; near: 0"
         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: #000000"
         vr-mode-ui="enabled: false" networked-scene="
@@ -885,13 +897,26 @@
             <a-sphere class="head" visible="false" random-color>
             </a-sphere>
 
-            <a-entity id="cameraA" active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
-
+            <a-entity active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
             </a-entity>
-
         </a-entity>
 
+        <!-- VR rendered stuff-->
+        <a-entity id="left-hand" hand-controls="hand: left">
+            <a-entity line="start: 0 0 0; end: 0 0 -1; color: red"></a-entity>
+        </a-entity>
 
+        <a-entity id="right-hand" hand-controls="hand: right">
+            <a-entity line="start: 0 0 0; end: 0 0 -1; color: blue"></a-entity>
+        </a-entity>
+
+        <a-entity camera movement-controls></a-entity>
+
+        <a-entity id="camera-rig" movement-controls="speed: 0.1">
+            <a-entity camera look-controls></a-entity>
+        </a-entity>
+
+        <a-entity id="left-hand" hand-controls="hand: left"></a-entity>
 
     </a-scene>
 
