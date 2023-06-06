@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Ζωντανή Παράσταση</title>
-    <meta name="description" content="Dev Example — Networked-Aframe with Green Screen effect" />
+    <title>Collaborative content creation</title>
+    <meta name="description" content="Collaborative content creation" />
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -35,433 +35,485 @@
 
 <body id="master-client-body">
 
-    <script>
-        AFRAME.registerComponent('clear-frustum-culling', {
-            init: function () {
-                let el = this.el;
-                el.addEventListener("model-loaded", e => {
-                    let mesh = el.getObject3D('mesh');
-                    if (!mesh) { return; }
-                    mesh.traverse(function (node) {
-                        if (node.isMesh) {
-                            node.frustumCulled = false;
-                        }
-                    });
+<script>
+    AFRAME.registerComponent('clear-frustum-culling', {
+        init: function () {
+            let el = this.el;
+            el.addEventListener("model-loaded", e => {
+                let mesh = el.getObject3D('mesh');
+                if (!mesh) { return; }
+                mesh.traverse(function (node) {
+                    if (node.isMesh) {
+                        node.frustumCulled = false;
+                    }
                 });
+            });
+        }
+    });
+
+    AFRAME.registerComponent('static-mask-me', {
+        init: function () {
+            let el = this.el;
+            // el.addEventListener("model-loaded", e => {
+            const maskMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: false,
+                colorWrite: false,
+            });
+            maskMaterial.needsUpdate = true;
+            let mesh = el.getObject3D('mesh');
+            if (!mesh) {
+                return;
             }
-        });
-
-        AFRAME.registerComponent('static-mask-me', {
-            init: function () {
-                let el = this.el;
-                // el.addEventListener("model-loaded", e => {
-                const maskMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ffff,
-                    transparent: false,
-                    colorWrite: false,
-                });
-                maskMaterial.needsUpdate = true;
-                let mesh = el.getObject3D('mesh');
-                if (!mesh) {
+            mesh.traverse(node => {
+                if (!node.isMesh) {
                     return;
                 }
-                mesh.traverse(node => {
-                    if (!node.isMesh) {
-                        return;
-                    }
-                    node.material = maskMaterial;
-                    node.renderOrder = 999;
-                });
-                //  });
-            },
-            tick: null
-        });
+                node.material = maskMaterial;
+                node.renderOrder = 999;
+            });
+            //  });
+        },
+        tick: null
+    });
 
-        AFRAME.registerComponent('render-order-change', {
-            schema: {
-                renderingOrderArg: { type: 'string', default: '2000' }
-            },
-            init: function () {
-                let el = this.el;
-                // el.addEventListener("model-loaded", e => {
-                let mesh = el.getObject3D('mesh');
-                if (!mesh) {
+    AFRAME.registerComponent('render-order-change', {
+        schema: {
+            renderingOrderArg: { type: 'string', default: '2000' }
+        },
+        init: function () {
+            let el = this.el;
+            // el.addEventListener("model-loaded", e => {
+            let mesh = el.getObject3D('mesh');
+            if (!mesh) {
+                return;
+            }
+            mesh.traverse(node => {
+                if (!node.isMesh) {
                     return;
                 }
-                mesh.traverse(node => {
-                    if (!node.isMesh) {
-                        return;
-                    }
-                    node.renderOrder = this.data.renderingOrderArg;
+                node.renderOrder = this.data.renderingOrderArg;
 
-                });
-                //  });
-            },
-            tick: null
-        });
-        AFRAME.registerComponent('video-controls', {
-            schema: {
-                id: { default: "default value" },
-                orig_pos: {
-                    'parse': function (val) {
-                        return val.split(',');
-                    }
-                },
-                orig_rot: {
-                    'parse': function (val) {
-                        return val.split(',');
-                    }
+            });
+            //  });
+        },
+        tick: null
+    });
+    AFRAME.registerComponent('video-controls', {
+        schema: {
+            id: { default: "default value" },
+            orig_pos: {
+                'parse': function (val) {
+                    return val.split(',');
                 }
             },
-            init: function () {
+            orig_rot: {
+                'parse': function (val) {
+                    return val.split(',');
+                }
+            }
+        },
+        init: function () {
 
 
-                let data = this.data;
-                let video_id = "#video_" + data.id;
-                let video = document.querySelector(video_id);
-                let sBorder;
-                let sDisplay;
+            let data = this.data;
+            let video_id = "#video_" + data.id;
+            let video = document.querySelector(video_id);
+            let sBorder;
+            let sDisplay;
 
-                let video_display_id = "#video-display_" + data.id;
-                let video_border_id = "#video-border_" + data.id;
-                let vid_panel_id = "#vid-panel_" + data.id;
-                //let vid_panel_id = "#vid-gui_" + data.id;
+            let video_display_id = "#video-display_" + data.id;
+            let video_border_id = "#video-border_" + data.id;
+            let vid_panel_id = "#vid-panel_" + data.id;
+            //let vid_panel_id = "#vid-gui_" + data.id;
 
-                let videoDisplay = document.querySelector(video_display_id);
-                let videoPanel = document.querySelector(vid_panel_id);
-                let videoBorder = document.querySelector(video_border_id);
-
-
-                let fsEl = document.querySelector("#ent_fs_" + data.id);
-                let plEl = document.querySelector("#ent_pl_" + data.id);
-                let exEl = document.querySelector("#ent_ex_" + data.id);
-                let titEl = document.querySelector("#ent_tit_" + data.id);
-                let backgroundEl = document.querySelector('#aframe-scene-container');
-                let playerEl = document.querySelector('#player');
-                //videoMesh.material.wireframe = true;
-                let cam = document.querySelector("#cameraA");
-
-                const entCollection = document.getElementsByClassName("hideable");
-
-                //obb = new THREE.MATH.OBB();
+            let videoDisplay = document.querySelector(video_display_id);
+            let videoPanel = document.querySelector(vid_panel_id);
+            let videoBorder = document.querySelector(video_border_id);
 
 
+            let fsEl = document.querySelector("#ent_fs_" + data.id);
+            let plEl = document.querySelector("#ent_pl_" + data.id);
+            let exEl = document.querySelector("#ent_ex_" + data.id);
+            let titEl = document.querySelector("#ent_tit_" + data.id);
+            let backgroundEl = document.querySelector('#aframe-scene-container');
+            let playerEl = document.querySelector('#player');
+            //videoMesh.material.wireframe = true;
+            let cam = document.querySelector("#cameraA");
 
-                //full_screen_el.setAttribute('height', "1");
-                //full_screen_el.setAttribute('width', "1");
-                //full_screen_el.setAttribute('position', "0 0 %s", borderCords.z);
+            const entCollection = document.getElementsByClassName("hideable");
 
-                //full_screen_el.setAttribute('src', screen_img_src);
-                //fsEl.renderOrder = 999999999;
-                //full_screen_el.setAttribute('visible', true);
+            //obb = new THREE.MATH.OBB();
 
-                //toMesh.updateMatrixWorld(); // important !
-                //mesh.applyMatrix4(new THREE.Matrix4().copy(toMesh.matrixWorld).invert());
 
+
+            //full_screen_el.setAttribute('height', "1");
+            //full_screen_el.setAttribute('width', "1");
+            //full_screen_el.setAttribute('position', "0 0 %s", borderCords.z);
+
+            //full_screen_el.setAttribute('src', screen_img_src);
+            //fsEl.renderOrder = 999999999;
+            //full_screen_el.setAttribute('visible', true);
+
+            //toMesh.updateMatrixWorld(); // important !
+            //mesh.applyMatrix4(new THREE.Matrix4().copy(toMesh.matrixWorld).invert());
+
+            //helper.update();
+            // If you want a visible bounding box
+            //backgroundEl.add(helper);
+            function restoreVidPos(border, disp, panel) {
+                let offsetX = 20;
+                border.add(panel);
+
+                var curr_rot = border.getAttribute('rotation');
+
+                //console.log(curr_rot);
+                border.object3D.rotation.set(
+                    THREE.MathUtils.degToRad(0),
+                    THREE.MathUtils.degToRad(0),
+                    THREE.MathUtils.degToRad(0)
+                );
+                //disp.object3D.rotation.set(
+                //    THREE.MathUtils.degToRad(0),
+                //    THREE.MathUtils.degToRad(0),
+                //    THREE.MathUtils.degToRad(0)
+                //);
+
+                //let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
+                //console.log("r_x");
+                //console.log(r_x);
+
+                //videoBorder.setAttribute("position", p_x);
+                //videoDisplay.setAttribute("position", p_x);
+
+                //videoBorder.setAttribute("rotation", r_x);
+                //videoDisplay.setAttribute("rotation", r_x);
+                //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
+
+                panel.object3D.position.set(offsetX, 0, 0);
+                //videoBorder.setAttribute("rotation", r_x);
+
+
+                //border.object3D.rotation.x += curr_rot.x;
+                //border.object3D.rotation.y += curr_rot.y;
+                //border.object3D.rotation.z += curr_rot.z;
+
+                //disp.object3D.rotation.x += 0;
+                //disp.object3D.rotation.y += 90;
+                //disp.object3D.rotation.z += 0;
+
+
+                border.object3D.rotation.set(
+                    THREE.MathUtils.degToRad(data.orig_rot[0] * (180 / Math.PI)),
+                    THREE.MathUtils.degToRad(data.orig_rot[1] * (180 / Math.PI)),
+                    THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
+                );
+                //disp.object3D.rotation.set(
+                //    THREE.MathUtils.degToRad(0),
+                //    THREE.MathUtils.degToRad(90),
+                //    THREE.MathUtils.degToRad(0)
+                //);
+
+            }
+
+
+
+
+
+            backgroundEl.addEventListener('loaded', function () {
+                ///videoDisplay.object3D.rotation.set(0, 0, 0);
+                //videoBorder.object3D.rotation.set(0, 0, 0);
+
+                let rotateB = videoBorder.getAttribute("rotation");
+                //const meshA = videoDisplay.getObject3D("mesh");
+
+
+                //videoDisplay.object3D.rotation.set(0, 0, 0);
+                //videoBorder.object3D.rotation.set(0, 0, 0);
+
+                //videoDisplay.getObject3D("mesh").geometry.rotateY(-Math.PI / 2);
+
+                //videoBorder.getObject3D("mesh").geometry.rotateY(-Math.PI / 2);
+                //videoDisplay.getObject3D("mesh").updateMatrixWorld();
+                //videoBorder.getObject3D("mesh").updateMatrixWorld();
+                //let helperb = new THREE.BoxHelper(videoDisplay.getObject3D("mesh"), 0xff0000);
+
+                // helperb.geometry.computeBoundingBox();
+
+                //console.log(rotateB);
+
+                let videoMesh = videoDisplay.getObject3D("mesh");
+                let borderMesh = videoBorder.getObject3D("mesh");
+
+
+
+                //const v1 = new THREE.Vector3(1, 0, 0).applyQuaternion(borderMesh.quaternion);
+                //videoPanel.getObject3D("mesh").quaternion.copy(borderMesh.quaternion);
+                //videoPanel.getObject3D("mesh").position.copy(borderMesh.position).add(v1.multiplyScalar(-2));
+
+                let bbox = new THREE.Box3().setFromObject(videoDisplay.object3D);
+
+                //let full_screen_el = document.createElement('a-plane');
+                const vector = new THREE.Vector3();
+                var centered_values = bbox.getCenter(vector);
+
+                var box3 = new THREE.Box3();
+                var size = new THREE.Vector3(); // create once and reuse
+
+                //var helper = new THREE.BoxHelper(videoMesh);
                 //helper.update();
-                // If you want a visible bounding box
+
+                //videoMesh.geometry.computeBoundingBox();
+
+
+
+                //videoDisplay.setAttribute("renderOrder", "1");
+                //videoBorder.setAttribute("renderOrder", "1");
+
+                //videoDisplay.components.material.material.depthTest = false;
+                //videoBorder.components.material.material.depthTest = false;
+
+
+
+                var cW = 19;
+                var cH = 19;
+                var rad = 90;
+
+                let panel_width = 20;
+
+                let icon_width = 2;
+
+                let offset = 1;
+
+
+
+                //var cBW = Math.abs(cH * Math.sin(rad)) + Math.abs(cW * Math.cos(rad));
+
+                //var cBH = Math.abs(cH * Math.sin(rad)) + Math.abs(cW * Math.cos(rad));
+                //nBW = newBoundingWidth
+                //nBH = newBoundingHeight
+                //var dx = differenceWidth = (cBW - cW);
+                //var dy = differenceHeight = (cBH - cH);
+
+                //console.log("cBW " + cBW + " cBH " + cBH + " dx " + dx + " dy " + dy);
+
                 //backgroundEl.add(helper);
-                function restoreVidPos(border, disp, panel) {
-                    let offsetX = 20;
-                    border.add(panel);
 
-                    var curr_rot = border.getAttribute('rotation');
+                //var boxwire = new THREE.BoxHelper(videoMesh, 0xff8000);
+                //this.boxwire = boxwire;
+                //videoMesh.updateMatrixWorld(); // important !
+                //videoMesh.applyMatrix(new THREE.Matrix4().getInverse(videoMesh.matrixWorld));
+                //videoMesh.add(boxwire);
 
-                    //console.log(curr_rot);
-                    border.object3D.rotation.set(
-                        THREE.MathUtils.degToRad(0),
-                        THREE.MathUtils.degToRad(0),
-                        THREE.MathUtils.degToRad(0)
-                    );
-                    //disp.object3D.rotation.set(
-                    //    THREE.MathUtils.degToRad(0),
-                    //    THREE.MathUtils.degToRad(0),
-                    //    THREE.MathUtils.degToRad(0)
-                    //);
 
-                    //let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-                    //console.log("r_x");
-                    //console.log(r_x);
 
-                    //videoBorder.setAttribute("position", p_x);
-                    //videoDisplay.setAttribute("position", p_x);
+                let screen_img_src = "#video_fullScreen_" + this.data;
+                let borderCords = videoBorder.getAttribute("position");
+                //fsEl.object3D.position.set(0, 0, -25);
 
-                    //videoBorder.setAttribute("rotation", r_x);
-                    //videoDisplay.setAttribute("rotation", r_x);
-                    //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-
-                    panel.object3D.position.set(offsetX, 0, 0);
-                    //videoBorder.setAttribute("rotation", r_x);
-
-
-                    //border.object3D.rotation.x += curr_rot.x;
-                    //border.object3D.rotation.y += curr_rot.y;
-                    //border.object3D.rotation.z += curr_rot.z;
-
-                    //disp.object3D.rotation.x += 0;
-                    //disp.object3D.rotation.y += 90;
-                    //disp.object3D.rotation.z += 0;
-
-
-                    border.object3D.rotation.set(
-                        THREE.MathUtils.degToRad(data.orig_rot[0] * (180 / Math.PI)),
-                        THREE.MathUtils.degToRad(data.orig_rot[1] * (180 / Math.PI)),
-                        THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
-                    );
-                    //disp.object3D.rotation.set(
-                    //    THREE.MathUtils.degToRad(0),
-                    //    THREE.MathUtils.degToRad(90),
-                    //    THREE.MathUtils.degToRad(0)
-                    //);
-
-                }
-
-
-
-
-
-                backgroundEl.addEventListener('loaded', function () {
-                    ///videoDisplay.object3D.rotation.set(0, 0, 0);
-                    //videoBorder.object3D.rotation.set(0, 0, 0);
-
-                    let rotateB = videoBorder.getAttribute("rotation");
-                    //const meshA = videoDisplay.getObject3D("mesh");
-
-
-                    //videoDisplay.object3D.rotation.set(0, 0, 0);
-                    //videoBorder.object3D.rotation.set(0, 0, 0);
-
-                    //videoDisplay.getObject3D("mesh").geometry.rotateY(-Math.PI / 2);
-
-                    //videoBorder.getObject3D("mesh").geometry.rotateY(-Math.PI / 2);
-                    //videoDisplay.getObject3D("mesh").updateMatrixWorld();
-                    //videoBorder.getObject3D("mesh").updateMatrixWorld();
-                    //let helperb = new THREE.BoxHelper(videoDisplay.getObject3D("mesh"), 0xff0000);
-
-                    // helperb.geometry.computeBoundingBox();
-
-                    //console.log(rotateB);
-
-                    let videoMesh = videoDisplay.getObject3D("mesh");
-                    let borderMesh = videoBorder.getObject3D("mesh");
-
-
-
-                    //const v1 = new THREE.Vector3(1, 0, 0).applyQuaternion(borderMesh.quaternion);
-                    //videoPanel.getObject3D("mesh").quaternion.copy(borderMesh.quaternion);
-                    //videoPanel.getObject3D("mesh").position.copy(borderMesh.position).add(v1.multiplyScalar(-2));
-
-                    let bbox = new THREE.Box3().setFromObject(videoDisplay.object3D);
-
-                    //let full_screen_el = document.createElement('a-plane');
-                    const vector = new THREE.Vector3();
-                    var centered_values = bbox.getCenter(vector);
-
-                    var box3 = new THREE.Box3();
-                    var size = new THREE.Vector3(); // create once and reuse
-
-                    //var helper = new THREE.BoxHelper(videoMesh);
-                    //helper.update();
-
-                    //videoMesh.geometry.computeBoundingBox();
-
-
-
-                    //videoDisplay.setAttribute("renderOrder", "1");
-                    //videoBorder.setAttribute("renderOrder", "1");
-
-                    //videoDisplay.components.material.material.depthTest = false;
-                    //videoBorder.components.material.material.depthTest = false;
-
-
-
-                    var cW = 19;
-                    var cH = 19;
-                    var rad = 90;
-
-                    let panel_width = 20;
-
-                    let icon_width = 2;
-
-                    let offset = 1;
-
-
-
-                    //var cBW = Math.abs(cH * Math.sin(rad)) + Math.abs(cW * Math.cos(rad));
-
-                    //var cBH = Math.abs(cH * Math.sin(rad)) + Math.abs(cW * Math.cos(rad));
-                    //nBW = newBoundingWidth
-                    //nBH = newBoundingHeight
-                    //var dx = differenceWidth = (cBW - cW);
-                    //var dy = differenceHeight = (cBH - cH);
-
-                    //console.log("cBW " + cBW + " cBH " + cBH + " dx " + dx + " dy " + dy);
-
-                    //backgroundEl.add(helper);
-
-                    //var boxwire = new THREE.BoxHelper(videoMesh, 0xff8000);
-                    //this.boxwire = boxwire;
-                    //videoMesh.updateMatrixWorld(); // important !
-                    //videoMesh.applyMatrix(new THREE.Matrix4().getInverse(videoMesh.matrixWorld));
-                    //videoMesh.add(boxwire);
-
-
-
-                    let screen_img_src = "#video_fullScreen_" + this.data;
-                    let borderCords = videoBorder.getAttribute("position");
-                    //fsEl.object3D.position.set(0, 0, -25);
-
-                    //videoDisplay.add(fsEl);
-
-                    //fsEl.object3D.position.set(0, 0, 0);
-
-
-
-
-                    //videoPanel.object3D.position.set(centered_values.x + 15, centered_values.y, centered_values.z);
-                    restoreVidPos(videoBorder, videoDisplay, videoPanel);
-
-
-
-
-
-                    //fsEl.object3D.rotation.set(0, 0, 0);
-                    //fsEl.object3D.rotation.set(0, 90, 0);
-                    //videoDisplay.object3D.rotation.set(0, 45, 0);
-                    //videoBorder.object3D.rotation.set(0, 45, 0);
-                    //fsEl.object3D.rotation.set(0, 90, 0);
-                    //videoDisplay.object3D.rotation.set(0, 90, 0);
-                    //videoBorder.object3D.rotation.set(0, 90, 0);
-                    //console.log(helper);
-
-                    //console.log(helperb.geometry.boundingBox.min.y);
-                    //console.log(borderCords);
-
-
-                });
-
-
-                //backgroundEl.appendChild(full_screen_el);
-
-                //console.log(videoBorder.object3D.position.get());
-
-
-
-
-
-                //backgroundEl.object3D.renderOrder = 9;
-                //backgroundEl.getObject3D('mesh').material.depthTest = false;
-
-                //console.log(full_screen_el.getAttribute("position"));
-
-
-                let visCollection = [];
-                let origPosBorder;
-                let origPosDisplay;
-                let height = 15;
-                let width = 20;
-                let dist = 25;
-                console.log(videoPanel);
+                //videoDisplay.add(fsEl);
 
                 //fsEl.object3D.position.set(0, 0, 0);
 
-                function addToCam(obj, non_visible, trans, opac) {
-                    if (non_visible) {
-                        obj.object3D.renderOrder = 9999999;
-                        //clipIntersection
-                        obj.components.material.material.depthTest = false;
-                        obj.components.material.material.transparent = trans;
-                        obj.components.material.material.opacity = opac;
 
-                        obj.setAttribute("visible", "true");
-                        obj.setAttribute("scale", "1 1 1");
-                        //obj.setAttribute("position", pos);
-                    }
-                    else {
-                        obj.setAttribute("visible", "false");
-                        obj.setAttribute("scale", "0.001 0.001 0.001");
 
-                    }
 
-                };
-
-                function addToCamText(obj, non_visible, trans, opac) {
-                    if (non_visible) {
-                        obj.object3D.renderOrder = 9999999;
-                        //clipIntersection
-                        obj.components.text.material.depthTest = false;
-                        obj.components.text.material.transparent = trans;
-                        obj.components.text.material.opacity = opac;
-
-                        obj.setAttribute("visible", "true");
-                        obj.setAttribute("scale", "1 1 1");
-                        //obj.setAttribute("position", pos);
-                    }
-                    else {
-                        obj.setAttribute("visible", "false");
-                        obj.setAttribute("scale", "0.001 0.001 0.001");
-
-                    }
-
-                };
-                function playUpd(obj) {
-                    if (video.paused) {
-                        obj.setAttribute("src", "#video_pl_" + data.id);
-
-                    }
-                    else {
-                        obj.setAttribute("src", "#video_pas_" + data.id);
-                    }
-                    obj.setAttribute("material", "depthTest: false");
-                    obj.setAttribute("material", "transparent: true");
-                    obj.setAttribute("material", "opacity: 1");
-
-                };
-
-                plEl.addEventListener("mousedown", function (event) {
-                    if (video.paused) {
-                        video.play();
-
-                    }
-                    else {
-                        video.pause();
-
-                    }
-
-                    playUpd(plEl);
-
-                });
-
-                exEl.addEventListener("mousedown", function (event) {
-                    addToCam(videoPanel, false, true, 0.2);
-                    if (video.paused) {
-                        console.log("Video Paused. Exiting...")
-
-                    }
-                    else {
-                        video.pause();
-
-                    }
+                //videoPanel.object3D.position.set(centered_values.x + 15, centered_values.y, centered_values.z);
+                restoreVidPos(videoBorder, videoDisplay, videoPanel);
 
 
 
 
-                });
+
+                //fsEl.object3D.rotation.set(0, 0, 0);
+                //fsEl.object3D.rotation.set(0, 90, 0);
+                //videoDisplay.object3D.rotation.set(0, 45, 0);
+                //videoBorder.object3D.rotation.set(0, 45, 0);
+                //fsEl.object3D.rotation.set(0, 90, 0);
+                //videoDisplay.object3D.rotation.set(0, 90, 0);
+                //videoBorder.object3D.rotation.set(0, 90, 0);
+                //console.log(helper);
+
+                //console.log(helperb.geometry.boundingBox.min.y);
+                //console.log(borderCords);
+
+
+            });
+
+
+            //backgroundEl.appendChild(full_screen_el);
+
+            //console.log(videoBorder.object3D.position.get());
 
 
 
-                fsEl.addEventListener("mousedown", function (event) {
-                    cam.setAttribute("position", "0 0 0");
-                    cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
-                    backgroundEl.setAttribute("background", "color", "black");
-                    backgroundEl.setAttribute("overlay", "");
 
-                    if (video.paused) {
-                        video.play();
-                        //console.log(data.orig_pos[2]);
-                        //borderMesh.material.color.set("#004400");
 
-                    }
+            //backgroundEl.object3D.renderOrder = 9;
+            //backgroundEl.getObject3D('mesh').material.depthTest = false;
+
+            //console.log(full_screen_el.getAttribute("position"));
+
+
+            let visCollection = [];
+            let origPosBorder;
+            let origPosDisplay;
+            let height = 15;
+            let width = 20;
+            let dist = 25;
+            console.log(videoPanel);
+
+            //fsEl.object3D.position.set(0, 0, 0);
+
+            function addToCam(obj, non_visible, trans, opac) {
+                if (non_visible) {
+                    obj.object3D.renderOrder = 9999999;
+                    //clipIntersection
+                    obj.components.material.material.depthTest = false;
+                    obj.components.material.material.transparent = trans;
+                    obj.components.material.material.opacity = opac;
+
+                    obj.setAttribute("visible", "true");
+                    obj.setAttribute("scale", "1 1 1");
+                    //obj.setAttribute("position", pos);
+                }
+                else {
+                    obj.setAttribute("visible", "false");
+                    obj.setAttribute("scale", "0.001 0.001 0.001");
+
+                }
+
+            };
+
+            function addToCamText(obj, non_visible, trans, opac) {
+                if (non_visible) {
+                    obj.object3D.renderOrder = 9999999;
+                    //clipIntersection
+                    obj.components.text.material.depthTest = false;
+                    obj.components.text.material.transparent = trans;
+                    obj.components.text.material.opacity = opac;
+
+                    obj.setAttribute("visible", "true");
+                    obj.setAttribute("scale", "1 1 1");
+                    //obj.setAttribute("position", pos);
+                }
+                else {
+                    obj.setAttribute("visible", "false");
+                    obj.setAttribute("scale", "0.001 0.001 0.001");
+
+                }
+
+            };
+            function playUpd(obj) {
+                if (video.paused) {
+                    obj.setAttribute("src", "#video_pl_" + data.id);
+
+                }
+                else {
+                    obj.setAttribute("src", "#video_pas_" + data.id);
+                }
+                obj.setAttribute("material", "depthTest: false");
+                obj.setAttribute("material", "transparent: true");
+                obj.setAttribute("material", "opacity: 1");
+
+            };
+
+            plEl.addEventListener("mousedown", function (event) {
+                if (video.paused) {
+                    video.play();
+
+                }
+                else {
+                    video.pause();
+
+                }
+
+                playUpd(plEl);
+
+            });
+
+            exEl.addEventListener("mousedown", function (event) {
+                addToCam(videoPanel, false, true, 0.2);
+                if (video.paused) {
+                    console.log("Video Paused. Exiting...")
+
+                }
+                else {
+                    video.pause();
+
+                }
+            });
+
+
+
+            fsEl.addEventListener("mousedown", function (event) {
+                cam.setAttribute("position", "0 0 0");
+                cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
+                backgroundEl.setAttribute("background", "color", "black");
+                backgroundEl.setAttribute("overlay", "");
+
+                if (video.paused) {
+                    video.play();
+                    //console.log(data.orig_pos[2]);
+                    //borderMesh.material.color.set("#004400");
+
+                }
+                for (let i = 0; i < entCollection.length; i++) {
+                    entCollection[i].setAttribute("visible", "false");
+                    console.log(entCollection[i].getAttribute("visible"));
+                    entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
+                    playerEl.setAttribute("wasd-controls", "acceleration: 0");
+                    cam.add(videoBorder);
+                    cam.add(videoDisplay);
+                    videoBorder.setAttribute("position", "0 0 -25");
+                    videoDisplay.setAttribute("position", "0 0 -25");
+
+                    videoBorder.setAttribute("rotation", "0 0 0");
+                    videoDisplay.setAttribute("rotation", "0 0 0");
+                    visCollection.push(i);
+
+
+                    //console.log(entCollection[i]);
+                    //console.log(entCollection[i].getAttribute("original-scale"));
+                    //console.log(visCollection);
+                }
+
+                playUpd(plEl);
+
+
+
+
+            });
+
+
+
+            videoBorder.addEventListener("mousedown", function (event) {
+                addToCam(videoPanel, true, true, 0.2);
+                addToCam(fsEl, true, true, 1);
+                addToCam(plEl, true, true, 1);
+                addToCam(exEl, true, true, 1);
+                addToCamText(titEl, true, true, 1);
+                console.log(titEl.components);
+                playUpd(plEl);
+
+                //plEl.components.material.material.depthTest = false;
+                //plEl.components.material.material.transparent = true;
+                //plEl.components.material.material.opacity = 1;
+
+                /*
+                cam.setAttribute("position", "0 0 0");
+                cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
+                backgroundEl.setAttribute("background", "color", "black");
+                backgroundEl.setAttribute("overlay", "");
+
+
+                console.log(origPosBorder);
+                if (video.paused) {
+                    video.play();
+                    //console.log(data.orig_pos[2]);
+                    //borderMesh.material.color.set("#004400");
+
+
                     for (let i = 0; i < entCollection.length; i++) {
                         entCollection[i].setAttribute("visible", "false");
                         console.log(entCollection[i].getAttribute("visible"));
@@ -482,910 +534,848 @@
                         //console.log(visCollection);
                     }
 
-                    playUpd(plEl);
+
+
+                    //cam.setAttribute("position", "%s %s %s", borderCords.x, borderCords.y, borderCords.z - 5);
+
+                    //cam.object3D.position.set(borderCords.x, borderCords.y, borderCords.z);
+                    //cam.components['look-controls'].yawObject.rotation.set(0, THREE.Math.degToRad(30), 0);
+                    //cam.object3D.rotation.set(0, THREE.Math.degToRad(30), 0);
+                    //cam.object3D.rotation.y += Math.PI / 2;
+                    //cam.setAttribute("position", "0 0 0");
+                    //cam.setAttribute("camera", "fov", 2 * Math.atan(19 / (2 * 25)) * (180 / Math.PI));
+                    //backgroundEl.setAttribute("background", "color", "black");
+                    //videoBorder.setAttribute("position", "0 0 -25");
 
 
 
+                    //videoDisplay.setAttribute("height", "19");
+                    //videoDisplay.setAttribute("width", "19");
+                    //console.log(visCollection);
 
-                });
-
-
-
-                videoBorder.addEventListener("mousedown", function (event) {
-                    addToCam(videoPanel, true, true, 0.2);
-                    addToCam(fsEl, true, true, 1);
-                    addToCam(plEl, true, true, 1);
-                    addToCam(exEl, true, true, 1);
-                    addToCamText(titEl, true, true, 1);
-                    console.log(titEl.components);
-                    playUpd(plEl);
-
-                    //plEl.components.material.material.depthTest = false;
-                    //plEl.components.material.material.transparent = true;
-                    //plEl.components.material.material.opacity = 1;
-
-                    /*
-                    cam.setAttribute("position", "0 0 0");
-                    cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
-                    backgroundEl.setAttribute("background", "color", "black");
-                    backgroundEl.setAttribute("overlay", "");
-
-
+                }
+                else {
+                    //addToCam(videoPanel, "35 5 -25", false);
                     console.log(origPosBorder);
-                    if (video.paused) {
-                        video.play();
-                        //console.log(data.orig_pos[2]);
-                        //borderMesh.material.color.set("#004400");
+                    video.pause();
+                    cam.setAttribute("position", "0 0.6 0");
+                    cam.setAttribute("camera", "fov", 80);
+                    backgroundEl.setAttribute("background", "color", "#eeeeee");
+                    console.log(visCollection);
+                    //borderMesh.material.color.set("#440000");
+                    for (let i = 0; i < visCollection.length; i++) {
+                        entCollection[visCollection[i]].setAttribute("visible", "true");
 
+                        console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
 
-                        for (let i = 0; i < entCollection.length; i++) {
-                            entCollection[i].setAttribute("visible", "false");
-                            console.log(entCollection[i].getAttribute("visible"));
-                            entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
-                            playerEl.setAttribute("wasd-controls", "acceleration: 0");
-                            cam.add(videoBorder);
-                            cam.add(videoDisplay);
-                            videoBorder.setAttribute("position", "0 0 -25");
-                            videoDisplay.setAttribute("position", "0 0 -25");
+                        entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
 
-                            videoBorder.setAttribute("rotation", "0 0 0");
-                            videoDisplay.setAttribute("rotation", "0 0 0");
-                            visCollection.push(i);
-
-
-                            //console.log(entCollection[i]);
-                            //console.log(entCollection[i].getAttribute("original-scale"));
-                            //console.log(visCollection);
-                        }
-
-
-
-                        //cam.setAttribute("position", "%s %s %s", borderCords.x, borderCords.y, borderCords.z - 5);
-
-                        //cam.object3D.position.set(borderCords.x, borderCords.y, borderCords.z);
-                        //cam.components['look-controls'].yawObject.rotation.set(0, THREE.Math.degToRad(30), 0);
-                        //cam.object3D.rotation.set(0, THREE.Math.degToRad(30), 0);
-                        //cam.object3D.rotation.y += Math.PI / 2;
-                        //cam.setAttribute("position", "0 0 0");
-                        //cam.setAttribute("camera", "fov", 2 * Math.atan(19 / (2 * 25)) * (180 / Math.PI));
-                        //backgroundEl.setAttribute("background", "color", "black");
-                        //videoBorder.setAttribute("position", "0 0 -25");
-
-
-
-                        //videoDisplay.setAttribute("height", "19");
-                        //videoDisplay.setAttribute("width", "19");
-                        //console.log(visCollection);
+                        //videoDisplay.setAttribute("position", origPosDisplay);
 
                     }
-                    else {
-                        //addToCam(videoPanel, "35 5 -25", false);
-                        console.log(origPosBorder);
-                        video.pause();
-                        cam.setAttribute("position", "0 0.6 0");
-                        cam.setAttribute("camera", "fov", 80);
-                        backgroundEl.setAttribute("background", "color", "#eeeeee");
-                        console.log(visCollection);
-                        //borderMesh.material.color.set("#440000");
-                        for (let i = 0; i < visCollection.length; i++) {
-                            entCollection[visCollection[i]].setAttribute("visible", "true");
+                    player.setAttribute("wasd-controls", "acceleration: 10");
+                    backgroundEl.add(videoBorder);
+                    backgroundEl.add(videoDisplay);
+                    let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
+                    let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
 
-                            console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
+                    videoBorder.setAttribute("position", p_x);
+                    videoDisplay.setAttribute("position", p_x);
 
-                            entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
+                    videoBorder.setAttribute("rotation", r_x);
+                    videoDisplay.setAttribute("rotation", r_x);
+                    //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
+                    console.log(videoBorder.getAttribute("rotation"));
+                    console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
+                    visCollection = [];
+                }
+                */
+                if (video.paused) {
+                    console.log("border clicked");
+                }
+                else {
+                    //addToCam(videoPanel, "35 5 -25", false);
+                    console.log(origPosBorder);
+                    //video.pause();
+                    cam.setAttribute("position", "0 0.6 0");
+                    cam.setAttribute("camera", "fov", 80);
+                    backgroundEl.setAttribute("background", "color", "#eeeeee");
+                    console.log(visCollection);
+                    //restoreVidPos(videoBorder, videoDisplay, videoPanel);
+                    for (let i = 0; i < visCollection.length; i++) {
+                        entCollection[visCollection[i]].setAttribute("visible", "true");
 
-                            //videoDisplay.setAttribute("position", origPosDisplay);
+                        console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
 
-                        }
-                        player.setAttribute("wasd-controls", "acceleration: 10");
-                        backgroundEl.add(videoBorder);
-                        backgroundEl.add(videoDisplay);
-                        let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
-                        let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
+                        entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
 
-                        videoBorder.setAttribute("position", p_x);
-                        videoDisplay.setAttribute("position", p_x);
-
-                        videoBorder.setAttribute("rotation", r_x);
-                        videoDisplay.setAttribute("rotation", r_x);
-                        //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-                        console.log(videoBorder.getAttribute("rotation"));
-                        console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
-                        visCollection = [];
-                    }
-                    */
-                    if (video.paused) {
-                        console.log("border clicked");
-                    }
-                    else {
-                        //addToCam(videoPanel, "35 5 -25", false);
-                        console.log(origPosBorder);
-                        //video.pause();
-                        cam.setAttribute("position", "0 0.6 0");
-                        cam.setAttribute("camera", "fov", 80);
-                        backgroundEl.setAttribute("background", "color", "#eeeeee");
-                        console.log(visCollection);
-                        //restoreVidPos(videoBorder, videoDisplay, videoPanel);
-                        for (let i = 0; i < visCollection.length; i++) {
-                            entCollection[visCollection[i]].setAttribute("visible", "true");
-
-                            console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
-
-                            entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
-
-                            //videoDisplay.setAttribute("position", origPosDisplay);
-
-                        }
-                        player.setAttribute("wasd-controls", "acceleration: 10");
-                        backgroundEl.add(videoBorder);
-                        backgroundEl.add(videoDisplay);
-                        let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
-                        let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-
-                        videoBorder.setAttribute("position", p_x);
-                        videoDisplay.setAttribute("position", p_x);
-
-                        videoBorder.setAttribute("rotation", r_x);
-                        videoDisplay.setAttribute("rotation", r_x);
-                        //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-                        console.log(videoBorder.getAttribute("rotation"));
-                        console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
-                        visCollection = [];
-                        //playUpd(plEl);
+                        //videoDisplay.setAttribute("position", origPosDisplay);
 
                     }
-                });
+                    player.setAttribute("wasd-controls", "acceleration: 10");
+                    backgroundEl.add(videoBorder);
+                    backgroundEl.add(videoDisplay);
+                    let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
+                    let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
 
-            }
+                    videoBorder.setAttribute("position", p_x);
+                    videoDisplay.setAttribute("position", p_x);
 
-        });
-        AFRAME.registerComponent('door-listener', {
-            schema: { type: "string", default: "default value" },
-            init: function () {
-                this.el.addEventListener("click", e => {
-                    //console.log();
-                    window.location.replace(this.data);
-                });
-            }
-        });
+                    videoBorder.setAttribute("rotation", r_x);
+                    videoDisplay.setAttribute("rotation", r_x);
+                    //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
+                    console.log(videoBorder.getAttribute("rotation"));
+                    console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
+                    visCollection = [];
+                    //playUpd(plEl);
 
-        AFRAME.registerComponent('link-listener', {
-            schema: { type: "string", default: "default value" },
-            init: function () {
-                this.el.addEventListener("click", e => {
-                    //console.log();
-                    window.new(this.data);
+                }
+            });
 
-                });
-            }
-        });
+        }
 
-        AFRAME.registerComponent("overlay", {
-            dependencies: ['material'],
-            init: function () {
-                this.el.sceneEl.renderer.sortObjects = true;
-                this.el.object3D.renderOrder = 100;
-                this.el.components.material.material.depthTest = false;
-            }
-        })
+    });
+    AFRAME.registerComponent('door-listener', {
+        schema: { type: "string", default: "default value" },
+        init: function () {
+            this.el.addEventListener("click", e => {
+                //console.log();
+                window.location.replace(this.data);
+            });
+        }
+    });
 
-        AFRAME.registerComponent('image-display', {
-            schema: {
-                id_img: { default: "default value" },
-                main_img: { default: "default value" },
-                esc_img: { default: "default value" }
-            },
-            init: function () {
+    AFRAME.registerComponent('link-listener', {
+        schema: { type: "string", default: "default value" },
+        init: function () {
+            this.el.addEventListener("click", e => {
+                //console.log();
+                window.new(this.data);
+
+            });
+        }
+    });
+
+    AFRAME.registerComponent("overlay", {
+        dependencies: ['material'],
+        init: function () {
+            this.el.sceneEl.renderer.sortObjects = true;
+            this.el.object3D.renderOrder = 100;
+            this.el.components.material.material.depthTest = false;
+        }
+    })
+
+    AFRAME.registerComponent('image-display', {
+        schema: {
+            id_img: { default: "default value" },
+            main_img: { default: "default value" },
+            esc_img: { default: "default value" }
+        },
+        init: function () {
 
 
 
-                let click_event = this.el.addEventListener("click", e => {
-                    this.el.emit("img_open");
-                    let cam = document.getElementById("player");
-                    //this.el.emit("event1");
+            let click_event = this.el.addEventListener("click", e => {
+                this.el.emit("img_open");
+                let cam = document.getElementById("player");
+                //this.el.emit("event1");
+                /*
+
+                var entity_main = document.createElement('a-plane');
+                var title_main = document.createElement('a-text');
+
+                var desc_main = document.createElement('a-text');
+                */
+
+                let entitycheck = document.getElementById(this.data.id_img);
+                if (!entitycheck) {
                     /*
 
-                    var entity_main = document.createElement('a-plane');
-                    var title_main = document.createElement('a-text');
+                    entity_main.setAttribute("src", '#' + this.data.main_img);
+                    entity_main.setAttribute("id", this.data.id_img);
+                    entity_main.setAttribute("height", "8");
+                    entity_main.setAttribute("width", "8");
+                    entity_main.setAttribute("position", "0  2  -10");
+                    entity_main.setAttribute("material", "shader: flat");
+                    entity_main.setAttribute("overlay", "");
 
-                    var desc_main = document.createElement('a-text');
+                    title_main.setAttribute("value", "Title of the image");
+                    title_main.setAttribute("position", "-3  6  -9");
+                    title_main.setAttribute("color", "black");
+                    title_main.setAttribute("transparent", "true");
+                    title_main.setAttribute("anchor", "left");
+                    title_main.setAttribute("overlay", "");
+                    title_main.setAttribute("width", "8");
+
+                    desc_main.setAttribute("value", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis, odio in vulputate interdum, sapien neque interdum mi, et suscipit elit sem non risus. Sed rutrum augue sed lectus convallis vehicula. Maecenas orci neque, rutrum in blandit eget, ultricies sit amet turpis. Curabitur maximus purus vel auctor faucibus.");
+                    desc_main.setAttribute("position", "-3  0  -9");
+                    desc_main.setAttribute("color", "white");
+                    desc_main.setAttribute("transparent", "true");
+                    desc_main.setAttribute("anchor", "left");
+                    desc_main.setAttribute("overlay", "");
+                    desc_main.setAttribute("width", "6");
+                    desc_main.setAttribute("wrapCount", "40");
+
+
+
+                    cam.appendChild(entity_main);
+                    cam.appendChild(title_main);
+                    cam.appendChild(desc_main);
                     */
 
-                    let entitycheck = document.getElementById(this.data.id_img);
-                    if (!entitycheck) {
-                        /*
+                    var entity_esc = document.createElement('a-plane');
 
-                        entity_main.setAttribute("src", '#' + this.data.main_img);
-                        entity_main.setAttribute("id", this.data.id_img);
-                        entity_main.setAttribute("height", "8");
-                        entity_main.setAttribute("width", "8");
-                        entity_main.setAttribute("position", "0  2  -10");
-                        entity_main.setAttribute("material", "shader: flat");
-                        entity_main.setAttribute("overlay", "");
+                    entity_esc.setAttribute("src", '#' + this.data.esc_img);
 
-                        title_main.setAttribute("value", "Title of the image");
-                        title_main.setAttribute("position", "-3  6  -9");
-                        title_main.setAttribute("color", "black");
-                        title_main.setAttribute("transparent", "true");
-                        title_main.setAttribute("anchor", "left");
-                        title_main.setAttribute("overlay", "");
-                        title_main.setAttribute("width", "8");
+                    // Set the position of the box to the click intersection.
+                    entity_esc.setAttribute("height", "1");
+                    entity_esc.setAttribute("width", "1");
+                    entity_esc.setAttribute("position", "3  7 -9");
+                    entity_esc.setAttribute("material", "shader: flat");
+                    entity_esc.setAttribute("overlay", "");
+                    entity_esc.addEventListener("click", e => { cam.removeChild(entity_main); cam.removeChild(entity_esc); cam.removeChild(title_main); cam.removeChild(desc_main); });
 
-                        desc_main.setAttribute("value", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis, odio in vulputate interdum, sapien neque interdum mi, et suscipit elit sem non risus. Sed rutrum augue sed lectus convallis vehicula. Maecenas orci neque, rutrum in blandit eget, ultricies sit amet turpis. Curabitur maximus purus vel auctor faucibus.");
-                        desc_main.setAttribute("position", "-3  0  -9");
-                        desc_main.setAttribute("color", "white");
-                        desc_main.setAttribute("transparent", "true");
-                        desc_main.setAttribute("anchor", "left");
-                        desc_main.setAttribute("overlay", "");
-                        desc_main.setAttribute("width", "6");
-                        desc_main.setAttribute("wrapCount", "40");
+                    // Append the box element to the scene.
+                    cam.appendChild(entity_esc);
+                }
+            });
 
+            this.el.addEventListener("img_open", e => {
+                //this.el.object3D.visible = false;
 
+                //this.el.emit("imageClick");
+                console.log("Clicked");
+                removeEventListener('click', click_event, false);
+                //this.el.setAttribute("src", "#search");
+                //window.location.replace(this.data);
+            });
+            this.el.addEventListener("animationcomplete", e => {
+                //this.el.object3D.visible = false;
 
-                        cam.appendChild(entity_main);
-                        cam.appendChild(title_main);
-                        cam.appendChild(desc_main);
-                        */
+                //this.el.emit("event2");
+                //console.log(this.el.animation);
+                console.log("Animation completed");
+                //this.el.setAttribute("src", "#search");
+                //this.el.setAttribute("src", "#search");
+                //window.location.replace(this.data);
+            });
+        }
+    });
 
-                        var entity_esc = document.createElement('a-plane');
+    AFRAME.registerComponent('left-thumbstick', {
+        init: function () {
+            var hand = this.el;
+            var cameraRig = document.querySelector('#camera-rig');
 
-                        entity_esc.setAttribute("src", '#' + this.data.esc_img);
+            hand.addEventListener('thumbstickmoved', function (event) {
+                var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
+                cameraRig.object3D.position.add(movementVector.multiplyScalar(cameraRig.getAttribute('movement-controls').data.speed));
+            });
+        }
+    });
 
-                        // Set the position of the box to the click intersection.
-                        entity_esc.setAttribute("height", "1");
-                        entity_esc.setAttribute("width", "1");
-                        entity_esc.setAttribute("position", "3  7 -9");
-                        entity_esc.setAttribute("material", "shader: flat");
-                        entity_esc.setAttribute("overlay", "");
-                        entity_esc.addEventListener("click", e => { cam.removeChild(entity_main); cam.removeChild(entity_esc); cam.removeChild(title_main); cam.removeChild(desc_main); });
+    document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
 
-                        // Append the box element to the scene.
-                        cam.appendChild(entity_esc);
-                    }
-                });
+</script>
 
-                this.el.addEventListener("img_open", e => {
-                    //this.el.object3D.visible = false;
-
-                    //this.el.emit("imageClick");
-                    console.log("Clicked");
-                    removeEventListener('click', click_event, false);
-                    //this.el.setAttribute("src", "#search");
-                    //window.location.replace(this.data);
-                });
-                this.el.addEventListener("animationcomplete", e => {
-                    //this.el.object3D.visible = false;
-
-                    //this.el.emit("event2");
-                    //console.log(this.el.animation);
-                    console.log("Animation completed");
-                    //this.el.setAttribute("src", "#search");
-                    //this.el.setAttribute("src", "#search");
-                    //window.location.replace(this.data);
-                });
-            }
-        });
-    </script>
-
-    <div>
-        <div class="wrapperVideoElement" style="visibility: hidden">
-            <video id="video-preview" width="300" height="200" autoplay muted></video>
-            <video id="recording" hidden></video>
-        </div>
-
-        <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-            <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
-            <div id="directorline" style=""></div>
-
-
-            <div class="wrapperControlElement">
-                <label for="roomNameShow" title="Name of Room">&#127917;</label>
-                <span id="roomNameShow">roomname</span>
-            </div>
-
-            <div class="wrapperControlElement">
-                <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
-                <span id="occupantsNumberShow"></span>
-            </div>
-
-            <div class="wrapperControlElement">
-                <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying"
-                    title="Obtain status and control green screens">
-                    &#128260; &#9989;
-                </button>
-            </div>
-
-            <div class="wrapperControlElement">
-                <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
-                    &#127909; &#9654; &#128101;
-                </button>
-            </div>
-
-            <div class="wrapperControlLineElement">
-                <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
-                    ⚪️
-                </button>
-
-                <button id="stop-recording-btn" class="buttonStopRecord" title="Save capture" disabled>
-                    ◼️
-                </button>
-
-                <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video" disabled>
-                    💾️️
-                </a>
-
-                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden"
-                    title="Upload Recording to MediaVerse" disabled>
-                    ⬆️️️
-                </button>
-            </div>
-            <div class="wrapperControlElement">
-                <span id="captured-video-label"></span>
-            </div>
-            <div class="wrapperControlElement">
-                <label for="positionShow" title="Camera Position">&#127909;</label>
-                <span id="positionShow"></span>
-            </div>
-
-            <div id="panelsSizeControlsDiv"></div>
-            <input id="node-url-input" hidden disabled />
-            <input id="node-token-input" hidden disabled />
-            <input id="mv-project-id-input" hidden disabled />
-        </div>
+<div>
+    <div class="wrapperVideoElement" style="visibility: hidden">
+        <video id="video-preview" width="300" height="200" autoplay muted></video>
+        <video id="recording" hidden></video>
     </div>
 
+    <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
+        <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
+        <div id="directorline" style=""></div>
 
 
-  </div><a-scene id="aframe-scene-container"
-        fog="type: linear; color: #AAB; far: 230; near: 0"
-        renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic"
-        background="color: #000000"
-        vr-mode-ui="enabled: true"
-        networked-scene="
+        <div class="wrapperControlElement">
+            <label for="roomNameShow" title="Name of Room">&#127917;</label>
+            <span id="roomNameShow">roomname</span>
+        </div>
+
+        <div class="wrapperControlElement">
+            <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
+            <span id="occupantsNumberShow"></span>
+        </div>
+
+        <div class="wrapperControlElement">
+            <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying"
+                    title="Obtain status and control green screens">
+                &#128260; &#9989;
+            </button>
+        </div>
+
+        <div class="wrapperControlElement">
+            <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
+                &#127909; &#9654; &#128101;
+            </button>
+        </div>
+
+        <div class="wrapperControlLineElement">
+            <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
+                ⚪️
+            </button>
+
+            <button id="stop-recording-btn" class="buttonStopRecord" title="Save capture" disabled>
+                ◼️
+            </button>
+
+            <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video" disabled>
+                💾️️
+            </a>
+
+            <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden"
+                    title="Upload Recording to MediaVerse" disabled>
+                ⬆️️️
+            </button>
+        </div>
+        <div class="wrapperControlElement">
+            <span id="captured-video-label"></span>
+        </div>
+        <div class="wrapperControlElement">
+            <label for="positionShow" title="Camera Position">&#127909;</label>
+            <span id="positionShow"></span>
+        </div>
+
+        <div id="panelsSizeControlsDiv"></div>
+        <input id="node-url-input" hidden disabled />
+        <input id="node-token-input" hidden disabled />
+        <input id="mv-project-id-input" hidden disabled />
+    </div>
+</div>
+
+
+
+<a-scene id="aframe-scene-container"
+         fog="type: linear; color: #AAB; far: 230; near: 0"
+         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic"
+         background="color: #000000"
+         vr-mode-ui="enabled: false"
+         networked-scene="
         room: roomname;
         debug: true;
+        audio: true;
         adapter: easyrtc;
        " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
 
-        <a-assets>
-            <!-- Avatar Template -->
-            <template id="avatar-template">
-                <a-entity class="avatar" networked-audio-source>
+    <a-assets>
+        <!-- Avatar Template -->
+        <template id="avatar-template">
+            <a-entity class="avatar" networked-audio-source>
 
-                    <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="1" height="0.75"
-                        position="0 0.6 -0.15" material="side: double"
-                        networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
-                        render-order-change="2000">
-                    </a-plane>
+                <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="1" height="0.75"
+                         position="0 0.6 -0.15" material="side: double"
+                         networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                         render-order-change="2000">
+                </a-plane>
 
-                    <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
-                        material="side: double" networked-video-source="streamName:screen">
-                    </a-plane>
-                </a-entity>
-            </template>
+                <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
+                         material="side: double" networked-video-source="streamName:screen">
+                </a-plane>
+            </a-entity>
+        </template>
 
-            <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: black; shader: flat"></a-mixin>
-            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: white; shader: flat"
-                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
-                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
-            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
-                material="color: white; shader: flat" material="shader: flat" position="0 0 0.005"></a-mixin>
-            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.5; height: 0.81"
-                material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin>
-            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5"
-                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
-            <a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2"
-                material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
-        </a-assets>
+        <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                 material="color: black; shader: flat"></a-mixin>
+        <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                 material="color: white; shader: flat"
+                 animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
+                 animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
+        <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
+                 material="color: white; shader: flat" material="shader: flat" position="0 0 0.005"></a-mixin>
+        <a-mixin id="poiImage" geometry="primitive: plane; width: 1.5; height: 0.81"
+                 material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin>
+        <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5"
+                 material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
+        <a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2"
+                 material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
+    </a-assets>
 
 
-        <!-- Pawn -->
-        <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" position="0 0.6 0"
-            wasd-controls="fly: true; acceleration:10" show-position look-controls="pointerLockEnabled: false;">
+    <!-- Pawn -->
+    <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" position="0 0.6 0"
+              wasd-controls="fly: true; acceleration:10" show-position look-controls="pointerLockEnabled: false;">
 
-            <a-sphere class="head" visible="false" random-color>
-            </a-sphere>
+        <a-sphere class="head" visible="false" random-color>
+        </a-sphere>
 
-              <a-entity
-                      active="true"
-                      camera="near: 0.1; far: 7000.0;"
-                      position="0 0.6 0"
-                      >
-              </a-entity>
+        <a-entity
+                active="true"
+                camera="near: 0.1; far: 7000.0;"
+                position="0 0.6 0"
+        >
+        </a-entity>
     </a-entity>
 
     <!-- VR rendered stuff-->
-    <a-entity id="left-hand" hand-controls="hand: left"></a-entity>
-<   a-entity id="right-hand" hand-controls="hand: right"></a-entity>
-
-
     <a-entity id="left-hand" hand-controls="hand: left">
-    <a-entity line="start: 0 0 0; end: 0 0 -1; color: red"></a-entity>
+        <a-entity line="start: 0 0 0; end: 0 0 -1; color: red"></a-entity>
     </a-entity>
+
     <a-entity id="right-hand" hand-controls="hand: right">
-    <a-entity line="start: 0 0 0; end: 0 0 -1; color: blue"></a-entity>
+        <a-entity line="start: 0 0 0; end: 0 0 -1; color: blue"></a-entity>
     </a-entity>
 
     <a-entity camera movement-controls></a-entity>
 
-
     <a-entity id="camera-rig" movement-controls="speed: 0.1">
-    <a-entity camera look-controls></a-entity>
+        <a-entity camera look-controls></a-entity>
     </a-entity>
 
     <a-entity id="left-hand" hand-controls="hand: left"></a-entity>
 
-    <script>
-      AFRAME.registerComponent('left-thumbstick', {
+</a-scene>
+
+
+<script>
+
+    AFRAME.registerComponent('show-position', {
         init: function () {
-          var hand = this.el;
-          var cameraRig = document.querySelector('#camera-rig');
+            this.positionShow = document.getElementById("positionShow");
+            this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
+        },
+        tick: function (time, timeDelta) {
+            let p = this.el.getAttribute('position');
+            this.positionShow.innerHTML = Math.round(p.x * 100) / 100 + ", " + Math.round(p.y * 100) / 100 + ", " + Math.round(p.z * 100) / 100;
 
-          hand.addEventListener('thumbstickmoved', function (event) {
-            var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
-            cameraRig.object3D.position.add(movementVector.multiplyScalar(cameraRig.getAttribute('movement-controls').data.speed));
-          });
+            let occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
+            if (occupants) {
+                this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
+            }
         }
-      });
+    });
 
-      document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
-    </script>
+    const api_pattern_single = {
+        ThresholdMin: 0.106,
+        ThresholdMax: 0.13,
+        red: 48, green: 146, blue: 89,
+        w: 1, h: 0.75,
+        x: 0, y: 0, z: 0,
+        rx: 0, ry: 0, rz: 0
+    };
 
+    const api_pattern_singleMin = {
+        ThresholdMinLow: 0,
+        ThresholdMaxLow: 0,
+        redLow: 0,
+        greenLow: 0,
+        blueLow: 0,
+        wLow: 0.1,
+        hLow: 0.1,
+        xLow: -100000,
+        yLow: -100000,
+        zLow: -100000,
+        rxLow: -100,
+        ryLow: -100,
+        rzLow: -100
+    };
+    const api_pattern_singleMax = {
+        ThresholdMinHigh: 0.4,
+        ThresholdMaxHigh: 0.4,
+        redHigh: 255,
+        greenHigh: 255,
+        blueHigh: 255,
+        wHigh: 5,
+        hHigh: 5,
+        xHigh: 100000,
+        yHigh: 100000,
+        zHigh: 100000,
+        rxHigh: 100,
+        ryHigh: 100,
+        rzHigh: 100
+    };
+    const api_pattern_singleStep = {
+        ThresholdMinStep: 0.001,
+        ThresholdMaxStep: 0.001,
+        redStep: 1,
+        greenStep: 1,
+        blueStep: 1,
+        wStep: 0.05,
+        hStep: 0.05,
+        xStep: 10,
+        yStep: 10,
+        zStep: 10,
+        rxStep: 0.1,
+        ryStep: 0.1,
+        rzStep: 0.1
+    };
 
+    let btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
+    btStatusControls.addEventListener('click', function () {
 
-    </a-scene>
+        let entities = window.NAF.connection.entities.entities;
+        let panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
 
+        /* Clear Panels Size  Controls */
+        panelsSizeControlsDiv.replaceChildren([]);
 
-    <script>
-
-        AFRAME.registerComponent('show-position', {
-            init: function () {
-                this.positionShow = document.getElementById("positionShow");
-                this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
-            },
-            tick: function (time, timeDelta) {
-                let p = this.el.getAttribute('position');
-                this.positionShow.innerHTML = Math.round(p.x * 100) / 100 + ", " + Math.round(p.y * 100) / 100 + ", " + Math.round(p.z * 100) / 100;
-
-                let occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
-                if (occupants) {
-                    this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
-                }
+        /* DestroyGui */
+        try {
+            console.log("destroying");
+            if (btStatusControls.gui) {
+                btStatusControls.gui.destroy();
             }
-        });
+        }
+        catch (e) {
+            console.log(e);
+        }
 
-        const api_pattern_single = {
-            ThresholdMin: 0.106,
-            ThresholdMax: 0.13,
-            red: 48, green: 146, blue: 89,
-            w: 1, h: 0.75,
-            x: 0, y: 0, z: 0,
-            rx: 0, ry: 0, rz: 0
-        };
+        btStatusControls.gui = new dat.GUI({ width: 200 });
 
-        const api_pattern_singleMin = {
-            ThresholdMinLow: 0,
-            ThresholdMaxLow: 0,
-            redLow: 0,
-            greenLow: 0,
-            blueLow: 0,
-            wLow: 0.1,
-            hLow: 0.1,
-            xLow: -100000,
-            yLow: -100000,
-            zLow: -100000,
-            rxLow: -100,
-            ryLow: -100,
-            rzLow: -100
-        };
-        const api_pattern_singleMax = {
-            ThresholdMinHigh: 0.4,
-            ThresholdMaxHigh: 0.4,
-            redHigh: 255,
-            greenHigh: 255,
-            blueHigh: 255,
-            wHigh: 5,
-            hHigh: 5,
-            xHigh: 100000,
-            yHigh: 100000,
-            zHigh: 100000,
-            rxHigh: 100,
-            ryHigh: 100,
-            rzHigh: 100
-        };
-        const api_pattern_singleStep = {
-            ThresholdMinStep: 0.001,
-            ThresholdMaxStep: 0.001,
-            redStep: 1,
-            greenStep: 1,
-            blueStep: 1,
-            wStep: 0.05,
-            hStep: 0.05,
-            xStep: 10,
-            yStep: 10,
-            zStep: 10,
-            rxStep: 0.1,
-            ryStep: 0.1,
-            rzStep: 0.1
-        };
+        let elementsDatGui = [];
+        let videoUserGui = [];
 
-        let btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
-        btStatusControls.addEventListener('click', function () {
+        let nActor = 0;
 
-            let entities = window.NAF.connection.entities.entities;
-            let panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
+        if (entities) {
 
-            /* Clear Panels Size  Controls */
-            panelsSizeControlsDiv.replaceChildren([]);
+            /* Canvas Size Controls */
+            let panel = {};
+            for (let e in entities) {
 
-            /* DestroyGui */
-            try {
-                console.log("destroying");
-                if (btStatusControls.gui) {
-                    btStatusControls.gui.destroy();
-                }
-            }
-            catch (e) {
-                console.log(e);
-            }
+                let h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
+                if (h) {
+                    nActor++;
 
-            btStatusControls.gui = new dat.GUI({ width: 200 });
+                    /*  Thresholds Green */
+                    videoUserGui[e] = btStatusControls.gui.addFolder(e);
 
-            let elementsDatGui = [];
-            let videoUserGui = [];
+                    /*  Panels  */
+                    panel[e] = window.NAF.connection.entities.entities[e].childNodes[0].id === "videoPlaneGreen" ?
+                        window.NAF.connection.entities.entities[e].childNodes[0] :
+                        window.NAF.connection.entities.entities[e].childNodes[1];
 
-            let nActor = 0;
+                    elementsDatGui[e] = [];
+                    for (let a in api_pattern_single) {
 
-            if (entities) {
+                        let L = a + "Low";
+                        let H = a + "High";
+                        let S = a + "Step";
 
-                /* Canvas Size Controls */
-                let panel = {};
-                for (let e in entities) {
+                        elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L], api_pattern_singleMax[H], api_pattern_singleStep[S]);
 
-                    let h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
-                    if (h) {
-                        nActor++;
+                        if (a[0] === 'w'
+                            || a[0] === 'h'
+                            || a[0] === 'x'
+                            || a[0] === 'y'
+                            || a[0] === 'z'
+                            || a.substring(0, 2) === 'rx'
+                            || a.substring(0, 2) === 'ry'
+                            || a.substring(0, 2) === 'rz') {
 
-                        /*  Thresholds Green */
-                        videoUserGui[e] = btStatusControls.gui.addFolder(e);
+                            elementsDatGui[e][a].panelaki = panel[e];
+                            elementsDatGui[e][a].domElement.pName = e;
 
-                        /*  Panels  */
-                        panel[e] = window.NAF.connection.entities.entities[e].childNodes[0].id === "videoPlaneGreen" ?
-                            window.NAF.connection.entities.entities[e].childNodes[0] :
-                            window.NAF.connection.entities.entities[e].childNodes[1];
-
-                        elementsDatGui[e] = [];
-                        for (let a in api_pattern_single) {
-
-                            let L = a + "Low";
-                            let H = a + "High";
-                            let S = a + "Step";
-
-                            elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L], api_pattern_singleMax[H], api_pattern_singleStep[S]);
-
-                            if (a[0] === 'w'
-                                || a[0] === 'h'
-                                || a[0] === 'x'
-                                || a[0] === 'y'
-                                || a[0] === 'z'
-                                || a.substring(0, 2) === 'rx'
-                                || a.substring(0, 2) === 'ry'
-                                || a.substring(0, 2) === 'rz') {
-
-                                elementsDatGui[e][a].panelaki = panel[e];
-                                elementsDatGui[e][a].domElement.pName = e;
-
-                                switch (a[0]) {
-                                    case 'w':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[5].panelaki;
-                                            p.setAttribute('width', api_pattern_single[this.property]);
-                                        });
-                                        break;
-                                    case 'h':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[6].panelaki;
-                                            p.setAttribute('height', api_pattern_single[this.property]);
-                                        });
-                                        break;
-                                    case 'x':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[7].panelaki;
-                                            p.getAttribute('position').x = api_pattern_single[this.property] / 10000;
-                                        });
-                                        break;
-                                    case 'y':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[8].panelaki;
-                                            p.getAttribute('position').y = api_pattern_single[this.property] / 10000;
-                                        });
-                                        break;
-                                    case 'z':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[9].panelaki;
-                                            p.getAttribute('position').z = api_pattern_single[this.property] / 10000;
-                                        });
-                                        break;
+                            switch (a[0]) {
+                                case 'w':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[5].panelaki;
+                                        p.setAttribute('width', api_pattern_single[this.property]);
+                                    });
+                                    break;
+                                case 'h':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[6].panelaki;
+                                        p.setAttribute('height', api_pattern_single[this.property]);
+                                    });
+                                    break;
+                                case 'x':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[7].panelaki;
+                                        p.getAttribute('position').x = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
+                                case 'y':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[8].panelaki;
+                                        p.getAttribute('position').y = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
+                                case 'z':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[9].panelaki;
+                                        p.getAttribute('position').z = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
 
 
-                                }
-
-                                switch (a.substring(0, 2)) {
-
-                                    case 'rx':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[10].panelaki;
-                                            let xStr = api_pattern_single[this.property];
-                                            let yStr = p.getAttribute('rotation').y;
-                                            let zStr = p.getAttribute('rotation').z;
-                                            p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                                        });
-                                        break;
-
-                                    case 'ry':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[11].panelaki;
-                                            let xStr = p.getAttribute('rotation').x;
-                                            let yStr = api_pattern_single[this.property];
-                                            let zStr = p.getAttribute('rotation').z;
-                                            p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                                        });
-                                        break;
-
-                                    case 'rz':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[12].panelaki;
-                                            let xStr = p.getAttribute('rotation').x;
-                                            let yStr = p.getAttribute('rotation').y;
-                                            let zStr = api_pattern_single[this.property];
-                                            p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                                        });
-                                        break;
-                                }
-
-                            } else {
-                                elementsDatGui[e][a].onChange(function () {
-                                    let domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
-                                    domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
-                                });
                             }
-                            elementsDatGui[e][a].nActor = nActor - 1;
+
+                            switch (a.substring(0, 2)) {
+
+                                case 'rx':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[10].panelaki;
+                                        let xStr = api_pattern_single[this.property];
+                                        let yStr = p.getAttribute('rotation').y;
+                                        let zStr = p.getAttribute('rotation').z;
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+
+                                case 'ry':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[11].panelaki;
+                                        let xStr = p.getAttribute('rotation').x;
+                                        let yStr = api_pattern_single[this.property];
+                                        let zStr = p.getAttribute('rotation').z;
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+
+                                case 'rz':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[12].panelaki;
+                                        let xStr = p.getAttribute('rotation').x;
+                                        let yStr = p.getAttribute('rotation').y;
+                                        let zStr = api_pattern_single[this.property];
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+                            }
+
+                        } else {
+                            elementsDatGui[e][a].onChange(function () {
+                                let domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
+                                domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
+                            });
                         }
+                        elementsDatGui[e][a].nActor = nActor - 1;
                     }
                 }
             }
-        });
-
-        /* Define custom schema for syncing avatar color, set by random-color */
-        NAF.schemas.add({
-            template: '#avatar-template',
-            components: [
-                'position',
-                'rotation'
-            ]
-        });
-
-        /* Called by Networked-Aframe when connected to server */
-        function onConnect() {
-            console.log("onConnect", new Date());
-
-            const screenBtnEle = document.getElementById('screen-btn-sendscreen');
-            screenBtnEle.addEventListener('click', function () {
-                navigator.mediaDevices.getDisplayMedia({
-                    preferCurrentTab: true,
-                    selfBrowserSurface: 'include',
-                    audio: true
-                }).then((stream) => {
-                    NAF.connection.adapter.addLocalMediaStream(stream, "screen");
-                });
-            });
         }
+    });
 
-        let record_button = document.getElementById('start-recording-btn');
-        let video_preview = document.getElementById('video-preview');
-        let stop_button = document.getElementById('stop-recording-btn');
-        let download_button = document.getElementById('download-recording-btn');
-        let upload_button = document.getElementById('upload-recording-btn');
-        let capture_label = document.getElementById('captured-video-label');
-        let recording = document.getElementById('recording');
+    /* Define custom schema for syncing avatar color, set by random-color */
+    NAF.schemas.add({
+        template: '#avatar-template',
+        components: [
+            'position',
+            'rotation'
+        ]
+    });
 
-        function startRecording(stream) {
+    /* Called by Networked-Aframe when connected to server */
+    function onConnect() {
+        console.log("onConnect", new Date());
 
-            let recorder = new MediaRecorder(stream);
-            let data = [];
-
-            recorder.ondataavailable = event => data.push(event.data);
-            recorder.start();
-
-            let stopped = new Promise((resolve, reject) => {
-                recorder.onstop = resolve;
-                recorder.onerror = event => reject(event.name);
-            });
-
-            return Promise.all([
-                stopped
-            ]).then(() => data);
-        }
-
-        function stopRecording(stream) {
-            stream.getTracks().forEach(track => track.stop());
-            record_button.disabled = false;
-            stop_button.disabled = true;
-            download_button.disabled = false;
-            upload_button.disabled = false;
-        }
-
-        let recordedBlob;
-
-        record_button.addEventListener("click", function () {
-
-            capture_label.innerHTML = '';
-
+        const screenBtnEle = document.getElementById('screen-btn-sendscreen');
+        screenBtnEle.addEventListener('click', function () {
             navigator.mediaDevices.getDisplayMedia({
                 preferCurrentTab: true,
                 selfBrowserSurface: 'include',
-                systemAudio: 'include',
-                video: {
-                    cursor: 'never'
-                },
                 audio: true
-            }).then(stream => {
-
-                record_button.disabled = true;
-                stop_button.disabled = false;
-
-                video_preview.style.display = 'block';
-                video_preview.srcObject = stream;
-                download_button.href = stream;
-                video_preview.captureStream = video_preview.captureStream || video_preview.mozCaptureStream;
-
-                stream.getVideoTracks()[0].onended = function () {
-                    video_preview.style.display = 'none';
-                    stopRecording(video_preview.srcObject);
-                };
-
-                return new Promise(resolve => video_preview.onplaying = resolve);
-            }).then(() => startRecording(video_preview.captureStream()))
-                .then(recordedChunks => {
-
-                    recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
-                    recording.src = URL.createObjectURL(recordedBlob);
-                    download_button.href = recording.src;
-                    download_button.download = "RecordedVideo.webm";
-
-                    upload_button.href = recording.src;
-                    capture_label.innerHTML = "Recorded " + formatBytes(recordedBlob.size) + " of " +
-                        recordedBlob.type + " media.";
-
-                });
-        }, false);
-
-        stop_button.addEventListener("click", function () {
-            stopRecording(video_preview.srcObject);
-        }, false);
-
-        upload_button.addEventListener("click", function () {
-
-            upload_button.disabled = true;
-
-            const mv_url = document.getElementById('node-url-input').value;
-            const mv_token = document.getElementById('node-token-input').value;
-            const mv_project_id = document.getElementById('mv-project-id-input').value;
-
-            const video_file = new File([recordedBlob], 'vrodos-' + recordedBlob.size + '.webm', {
-                type: recordedBlob.type,
+            }).then((stream) => {
+                NAF.connection.adapter.addLocalMediaStream(stream, "screen");
             });
+        });
+    }
 
-            let formData = new FormData();
-            formData.append('file', video_file);
+    let record_button = document.getElementById('start-recording-btn');
+    let video_preview = document.getElementById('video-preview');
+    let stop_button = document.getElementById('stop-recording-btn');
+    let download_button = document.getElementById('download-recording-btn');
+    let upload_button = document.getElementById('upload-recording-btn');
+    let capture_label = document.getElementById('captured-video-label');
+    let recording = document.getElementById('recording');
 
-            fetch(mv_url + '/dam/assets?description=' + 'Recorded video from VROdos' + '&externalTool=VRodos', {
-                method: 'POST',
+    function startRecording(stream) {
+
+        let recorder = new MediaRecorder(stream);
+        let data = [];
+
+        recorder.ondataavailable = event => data.push(event.data);
+        recorder.start();
+
+        let stopped = new Promise((resolve, reject) => {
+            recorder.onstop = resolve;
+            recorder.onerror = event => reject(event.name);
+        });
+
+        return Promise.all([
+            stopped
+        ]).then(() => data);
+    }
+
+    function stopRecording(stream) {
+        stream.getTracks().forEach(track => track.stop());
+        record_button.disabled = false;
+        stop_button.disabled = true;
+        download_button.disabled = false;
+        upload_button.disabled = false;
+    }
+
+    let recordedBlob;
+
+    record_button.addEventListener("click", function () {
+
+        capture_label.innerHTML = '';
+
+        navigator.mediaDevices.getDisplayMedia({
+            preferCurrentTab: true,
+            selfBrowserSurface: 'include',
+            systemAudio: 'include',
+            video: {
+                cursor: 'never'
+            },
+            audio: true
+        }).then(stream => {
+
+            record_button.disabled = true;
+            stop_button.disabled = false;
+
+            video_preview.style.display = 'block';
+            video_preview.srcObject = stream;
+            download_button.href = stream;
+            video_preview.captureStream = video_preview.captureStream || video_preview.mozCaptureStream;
+
+            stream.getVideoTracks()[0].onended = function () {
+                video_preview.style.display = 'none';
+                stopRecording(video_preview.srcObject);
+            };
+
+            return new Promise(resolve => video_preview.onplaying = resolve);
+        }).then(() => startRecording(video_preview.captureStream()))
+            .then(recordedChunks => {
+
+                recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
+                recording.src = URL.createObjectURL(recordedBlob);
+                download_button.href = recording.src;
+                download_button.download = "RecordedVideo.webm";
+
+                upload_button.href = recording.src;
+                capture_label.innerHTML = "Recorded " + formatBytes(recordedBlob.size) + " of " +
+                    recordedBlob.type + " media.";
+
+            });
+    }, false);
+
+    stop_button.addEventListener("click", function () {
+        stopRecording(video_preview.srcObject);
+    }, false);
+
+    upload_button.addEventListener("click", function () {
+
+        upload_button.disabled = true;
+
+        const mv_url = document.getElementById('node-url-input').value;
+        const mv_token = document.getElementById('node-token-input').value;
+        const mv_project_id = document.getElementById('mv-project-id-input').value;
+
+        const video_file = new File([recordedBlob], 'vrodos-' + recordedBlob.size + '.webm', {
+            type: recordedBlob.type,
+        });
+
+        let formData = new FormData();
+        formData.append('file', video_file);
+
+        fetch(mv_url + '/dam/assets?description=' + 'Recorded video from VROdos' + '&externalTool=VRodos', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${mv_token}`
+            },
+            body: formData
+        }).then(function (response) {
+            if (response.ok) {
+                return response.json();
+            } else {
+                upload_button.disabled = false;
+                alert("There has been a problem uploading your video to MediaVerse platform");
+            }
+        }).then(function (data) {
+
+            fetch(mv_url + '/dam/project/' + mv_project_id, {
+                method: 'PUT',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${mv_token}`
                 },
-                body: formData
-            }).then(function (response) {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    upload_button.disabled = false;
-                    alert("There has been a problem uploading your video to MediaVerse platform");
-                }
-            }).then(function (data) {
-
-                fetch(mv_url + '/dam/project/' + mv_project_id, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${mv_token}`
-                    },
-                    body: JSON.stringify({
-                        "projectOutput": [data.key]
-                    })
-                }).then(function (response) {
-                    upload_button.disabled = false;
-                    if (response.ok) {
-                        alert('The video has been successfully uploaded to MediaVerse!');
-                    } else {
-                        alert("There has been a problem uploading your video to MediaVerse platform");
-                        console.log(response.json());
-                    }
+                body: JSON.stringify({
+                    "projectOutput": [data.key]
                 })
-            });
-        });
-
-        /* Scale down div when in compile preview */
-        (function () {
-            if (window.innerWidth < 400) {
-                let actionsDiv = document.getElementById("actionsDiv");
-                actionsDiv.style.transformOrigin = "0px 200px";
-                actionsDiv.style.scale = "0.3";
-            }
-        })();
-
-        /* x button show clacket. key code 88 */
-        document.addEventListener('keydown', function (e) {
-            if (e.keyCode === 88) {
-                document.getElementById('actionsDiv').style.display = 'block';
-
-                if (document.getElementsByClassName('dg ac')[0]) {
-                    document.getElementsByClassName('dg ac')[0].style.display = 'block';
+            }).then(function (response) {
+                upload_button.disabled = false;
+                if (response.ok) {
+                    alert('The video has been successfully uploaded to MediaVerse!');
+                } else {
+                    alert("There has been a problem uploading your video to MediaVerse platform");
+                    console.log(response.json());
                 }
-
-                if (document.cancelFullScreen) {
-                    document.cancelFullScreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitCancelFullScreen) {
-                    document.webkitCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
+            })
         });
+    });
 
-        /* Make full screen and hide controls */
-        let director_controls = document.getElementById("toggle_controls");
-        director_controls.onclick = function () {
+    /* Scale down div when in compile preview */
+    (function () {
+        if (window.innerWidth < 400) {
+            let actionsDiv = document.getElementById("actionsDiv");
+            actionsDiv.style.transformOrigin = "0px 200px";
+            actionsDiv.style.scale = "0.3";
+        }
+    })();
 
-            document.getElementById('actionsDiv').style.display = 'none';
+    /* x button show clacket. key code 88 */
+    document.addEventListener('keydown', function (e) {
+        if (e.keyCode === 88) {
+            document.getElementById('actionsDiv').style.display = 'block';
 
             if (document.getElementsByClassName('dg ac')[0]) {
-                document.getElementsByClassName('dg ac')[0].style.display = 'none';
+                document.getElementsByClassName('dg ac')[0].style.display = 'block';
             }
 
-            let elem = document.body;
-
-            if (elem.requestFullScreen) {
-                elem.requestFullScreen();
-            } else if (elem.mozRequestFullScreen) {
-                elem.mozRequestFullScreen();
-            } else if (elem.webkitRequestFullScreen) {
-                elem.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
+            if (document.cancelFullScreen) {
+                document.cancelFullScreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitCancelFullScreen) {
+                document.webkitCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
             }
-        };
+        }
+    });
 
-        let formatBytes = (bytes, decimals = 2) => {
-            if (!+bytes) return '0 Bytes'
+    /* Make full screen and hide controls */
+    let director_controls = document.getElementById("toggle_controls");
+    director_controls.onclick = function () {
 
-            const k = 1024
-            const dm = decimals < 0 ? 0 : decimals
-            const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+        document.getElementById('actionsDiv').style.display = 'none';
 
-            const i = Math.floor(Math.log(bytes) / Math.log(k))
+        if (document.getElementsByClassName('dg ac')[0]) {
+            document.getElementsByClassName('dg ac')[0].style.display = 'none';
+        }
 
-            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
-        };
+        let elem = document.body;
 
-    </script>
+        if (elem.requestFullScreen) {
+            elem.requestFullScreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullScreen) {
+            elem.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    };
 
-    <!-- This will change the glb materials -->
-    <script src="js/glb_material_changer.js"></script>
+    let formatBytes = (bytes, decimals = 2) => {
+        if (!+bytes) return '0 Bytes'
+
+        const k = 1024
+        const dm = decimals < 0 ? 0 : decimals
+        const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+    };
+
+</script>
+
+<!-- This will change the glb materials -->
+<script src="js/glb_material_changer.js"></script>
 
 </body>
 
