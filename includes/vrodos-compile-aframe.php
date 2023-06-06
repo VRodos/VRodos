@@ -64,8 +64,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         // Add glbURLs from glbID
         $objCount = 0;
         foreach ( $scene_json[$key]->objects as &$o ) {
-
-            if ( $o->categoryName == "Artifact" ||  $o->categoryName == "Door" ||  $o->categoryName == "PointsofInterest(Image-Text)") {
+            
+            if ( $o->categoryName == "Artifact" ||  $o->categoryName == "Door" ||  $o->categoryName == "PointsofInterest(Image-Text) " ||  $o->categoryName == "POI-Link") {
                 $glbURL[$key] = get_the_guid( $o->glbID );
                 $o->glbURL[$key] = $glbURL[$key];
                 
@@ -755,7 +755,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //
                 //$a_entity->setAttribute( "height", "20" );
                 //$a_entity->setAttribute( "width", "20" );
-            }else if ($contentObject->categoryName == 'PointsofInterest(link)') {
+            }else if ($contentObject->categoryName == 'POI-Link') {
                 $a_entity = $dom->createElement( "a-entity" );
                 $a_entity->appendChild( $dom->createTextNode( '' ) );
                 $sc_x = $contentObject->scale[0];
@@ -773,7 +773,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
                 $a_entity->setAttribute("class", "raycastable hideable");
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
-                $a_entity->setAttribute('link-listener',"Link_to_add.pdf");
+                $a_entity->setAttribute('link-listener',"http://localhost/wp_vrodos/wp-content/uploads//Models/ACM.pdf");
               
 
                 $ascene->appendChild( $a_entity );
