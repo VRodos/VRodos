@@ -28,6 +28,7 @@
     <script src="js/img_panel.js"></script>
 
     <script src="js/indicators_aframe.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
 
 
 </head>
@@ -644,6 +645,17 @@
                 this.el.addEventListener("click", e => {
                     //console.log();
                     window.location.replace(this.data);
+                });
+            }
+        });
+
+        AFRAME.registerComponent('link-listener', {
+            schema: { type: "string", default: "default value" },
+            init: function () {
+                this.el.addEventListener("click", e => {
+                    //console.log();
+                    window.new(this.data);
+
                 });
             }
         });

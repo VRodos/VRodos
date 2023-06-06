@@ -756,7 +756,32 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //
                 //$a_entity->setAttribute( "height", "20" );
                 //$a_entity->setAttribute( "width", "20" );
-            } else if ($contentObject->categoryName == 'PointsofInterest(Image-Text)') {
+            }else if ($contentObject->categoryName == 'PointsofInterest(link)') {
+                $a_entity = $dom->createElement( "a-entity" );
+                $a_entity->appendChild( $dom->createTextNode( '' ) );
+                $sc_x = $contentObject->scale[0];
+                $sc_y = $contentObject->scale[1];
+                $sc_z = $contentObject->scale[2];
+            
+
+                $material = "";
+                $fileOperations->setMaterial( $material, $contentObject );
+                $fileOperations->setAffineTransformations( $a_entity, $contentObject );                     //TODO: Include glb in the beginning, update to proper cat name
+                $a_entity->setAttribute( "class", "override-materials" );
+                $a_entity->setAttribute( "id", $nameObject );
+                $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
+                $a_entity->setAttribute( "material", $material );
+                $a_entity->setAttribute( "clear-frustum-culling", "" );
+                $a_entity->setAttribute("class", "raycastable hideable");
+                $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
+                $a_entity->setAttribute('link-listener',"Link_to_add.pdf");
+              
+
+                $ascene->appendChild( $a_entity );
+
+            
+            
+            }else if ($contentObject->categoryName == 'PointsofInterest(Image-Text)') {
                 //print_r($contentObject);
                 //$fileOperations->writer("D:/output_masterPOi.txt", $contentObject->poi_img_desc);
 
