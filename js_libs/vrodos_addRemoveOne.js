@@ -1,4 +1,4 @@
-function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag, translation, pluginPath) {
+function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath) {
 
     // Add javascript variables for viewing the object correctly
     let selected_object_trs = {
@@ -7,47 +7,16 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "scale": [1, 1, 1]
     };
 
-
     resources3D[nameModel] = {
         "path": path,
-        "assetid": dataDrag.assetid,
-        "assetname": dataDrag.assetname,
-        "glbID": dataDrag.glbID,
-        "color": "",
-        "audioID": dataDrag.audioID,
-        "categoryName": dataDrag.categoryName,
-        "categoryDescription": dataDrag.categoryDescription,
-        "categoryIcon": dataDrag.categoryIcon,
-        "categoryID": dataDrag.categoryID,
-        "image1id": dataDrag.image1id,
-        "videoTextureSrc": "",
-        "videoTextureRepeatX": "1",
-        "videoTextureRepeatY": "1",
-        "videoTextureCenterX": "0",
-        "videoTextureCenterY": "0",
-        "videoTextureRotation": "0",
-        "doorName_source": dataDrag.doorName_source,
-        "doorName_target": dataDrag.doorName_target,
-        "sceneName_target": dataDrag.sceneName_target,
-        "sceneID_target": dataDrag.sceneID_target,
-        "isreward": dataDrag.isreward,
-        "follow_camera": dataDrag.follow_camera,
-        "image_link": dataDrag.image_link,
-        "video_link": dataDrag.video_link,
-        "follow_camera_x": dataDrag.follow_camera_x,
-        "follow_camera_y": dataDrag.follow_camera_y,
-        "follow_camera_z": dataDrag.follow_camera_z,
-        "poi_img_title": dataDrag.poi_img_title,
-        "poi_img_desc": dataDrag.poi_img_desc,
-        "poi_img_link": dataDrag.poi_img_link,
-        "poi_onlyimg": dataDrag.poi_onlyimg,
-        "isCloned": dataDrag.isCloned,
-        "isJoker": dataDrag.isJoker,
         "trs": selected_object_trs
     };
 
-    if (categoryName === 'lightSun') {
+    for (let entry in Object.keys(dataDrag)) {
+        resources3D[nameModel][Object.keys(dataDrag)[entry]] = Object.values(dataDrag)[entry];
+    }
 
+    if (categoryName === 'lightSun') {
 
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;

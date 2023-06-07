@@ -76,9 +76,6 @@ THREE.SceneExporter.prototype = {
                     continue;
 
 
-
-
-
                 if (node instanceof THREE.Mesh && node.categoryName !== "pawn")
                     continue;
 
@@ -185,104 +182,15 @@ THREE.SceneExporter.prototype = {
         var activeCamera = null;
 
         scene.traverse(function (node) {
-
             if (node instanceof THREE.Camera && node.userData.active) {
-
                 activeCamera = node;
-
             }
-
         });
 
         var defcamera = LabelString(activeCamera ? getObjectName(activeCamera) : "");
         var deffog = LabelString(scene.fog ? getFogName(scene.fog) : "");
 
-
-
-        // function LightString( o, n ) {
-        //
-        //     if ( o instanceof THREE.AmbientLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"  : "AmbientLight",',
-        //             '	"color" : ' + o.color.getHex() + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else if ( o instanceof THREE.DirectionalLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"      : "DirectionalLight",',
-        //             '	"color"     : ' + o.color.getHex() + ',',
-        //             '	"intensity" : ' + o.intensity + ',',
-        //             '	"direction" : ' + Vector3String( o.position ) + ',',
-        //             '	"target"    : ' + LabelString( getObjectName( o.target ) ) + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else if ( o instanceof THREE.PointLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"      : "PointLight",',
-        //             '	"color"     : ' + o.color.getHex() + ',',
-        //             '	"shadowRadius" : ' + o.shadow.radius + ',',
-        //             '	"decay" : ' + o.decay + ',',
-        //             '	"intensity" : ' + o.intensity + ',',
-        //             '	"position"  : ' + Vector3String( o.position ) + ',',
-        //             '	"distance"  : ' + o.distance + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else if ( o instanceof THREE.SpotLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"      : "SpotLight",',
-        //             '	"color"     : ' + o.color.getHex() + ',',
-        //             '	"intensity" : ' + o.intensity + ',',
-        //             '	"position"  : ' + Vector3String( o.position ) + ',',
-        //             '	"distance"  : ' + o.distance + ',',
-        //             '	"angle"     : ' + o.angle + ',',
-        //             '	"exponent"  : ' + o.exponent + ',',
-        //             '	"target"    : ' + LabelString( getObjectName( o.target ) ) + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else if ( o instanceof THREE.HemisphereLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"        : "HemisphereLight",',
-        //             '	"skyColor"    : ' + o.color.getHex() + ',',
-        //             '	"groundColor" : ' + o.groundColor.getHex() + ',',
-        //             '	"intensity"   : ' + o.intensity + ',',
-        //             '	"position"    : ' + Vector3String( o.position ) + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else {
-        //
-        //         var output = [];
-        //
-        //     }
-        //
-        //     return generateMultiLineString( output, '\n\t\t', n );
-        //
-        // }
-
-
-
         function CameraString(o, n) {
-
-
 
             if (o instanceof THREE.PerspectiveCamera) {
 
@@ -369,70 +277,30 @@ THREE.SceneExporter.prototype = {
                     var vemissiveIntensity = 0;
                 }
 
-
-
+                let dynamic_string = '';
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object'){
+                        dynamic_string = dynamic_string.concat('"'+Object.keys(o)[entry] + '":"' + Object.values(o)[entry]) + '", ';
+                    }
+                }
 
                 var output = [
                     '\t\t' + ',' + LabelString(getObjectName(o)) + ' : {',
                     '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," +
-                    o.rotation.y + "," +
-                    o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-
-                    '	"quaternion" : ' + "[" + quatR._x + "," +
-                    quatR._y + "," +
-                    quatR._z + "," +
-                    quatR._w + "]" + ',',
-
-
+                    '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',',
+                    '	"quaternion" : ' + "[" + quatR._x + "," + quatR._y + "," + quatR._z + "," + quatR._w + "]" + ',',
                     '	"scale"	   : ' + Vector3String(o.scale) + ',',
                     '	"fnPath" : ' + '"' + o.fnPath + '"' + ',',
-                    '	"assetid" : ' + '"' + o.assetid + '"' + ',',
-                    '	"assetname" : ' + '"' + o.assetname + '"' + ',',
-                    '	"fnObj" : ' + '"' + o.fnObj + '"' + ',',
-                    '	"fnObjID" : ' + '"' + o.fnObjID + '"' + ',',
-                    '	"categoryName" : ' + '"' + o.categoryName + '"' + ',',
-                    '	"categoryDescription" : ' + '"' + o.categoryDescription + '"' + ',',
-                    '	"categoryIcon" : ' + '"' + o.categoryIcon + '"' + ',',
-                    '	"categoryID" : ' + '"' + o.categoryID + '"' + ',',
-                    '   "fbxID" : ' + '"' + o.fbxID + '"' + ',',
-                    '   "glbID" : ' + '"' + o.glbID + '"' + ',',
                     '   "overrideMaterial" : ' + '"' + o.overrideMaterial + '"' + ',',
                     '   "color" : ' + '"' + vcolor + '"' + ',',
                     '   "emissive" : ' + '"' + vemissive + '"' + ',',
                     '   "roughness" : ' + '"' + vroughness + '"' + ',',
                     '   "metalness" : ' + '"' + vmetalness + '"' + ',',
                     '   "emissiveIntensity" : ' + '"' + vemissiveIntensity + '"' + ',',
-                    '   "videoTextureSrc" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.image.src : '') + '"' + ',',
-                    '   "videoTextureRepeatX" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.repeat.x : '') + '"' + ',',
-                    '   "videoTextureRepeatY" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.repeat.y : '') + '"' + ',',
-                    '   "videoTextureCenterX" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.center.x : '') + '"' + ',',
-                    '   "videoTextureCenterY" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.center.y : '') + '"' + ',',
-                    '   "videoTextureRotation" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.rotation : '') + '"' + ',',
-                    '   "audioID" : ' + '"' + o.audioID + '"' + ',',
-                    '	"image1id" : ' + '"' + o.image1id + '"' + ',',
-                    '   "doorName_source" : ' + '"' + o.doorName_source + '"' + ',',
-                    '   "doorName_target" : ' + '"' + o.doorName_target + '"' + ',',
-                    '   "sceneName_target" : ' + '"' + o.sceneName_target + '"' + ',',
-                    '   "sceneID_target" : ' + '"' + o.sceneID_target + '"' + ',',
-                    '   "archaeology_penalty" : ' + '"' + o.archaeology_penalty + '"' + ',',
-                    '   "hv_penalty" : ' + '"' + o.hv_penalty + '"' + ',',
-                    '   "natural_penalty" : ' + '"' + o.natural_penalty + '"' + ',',
-                    '   "isreward" : ' + '"' + o.isreward + '"' + ',',
-                    '   "follow_camera" : ' + '"' + o.follow_camera + '"' + ',',
-                    '   "image_link" : ' + '"' + o.image_link + '"' + ',',
-                    '   "video_link" : ' + '"' + o.video_link + '"' + ',',
-                    '   "follow_camera_x" : ' + '"' + o.follow_camera_x + '"' + ',',
-                    '   "follow_camera_y" : ' + '"' + o.follow_camera_y + '"' + ',',
-                    '   "follow_camera_z" : ' + '"' + o.follow_camera_z + '"' + ',',
                     '   "isCloned" : ' + '"' + o.isCloned + '"' + ',',
-                    '   "poi_img_title" : ' + '"' + o.poi_img_title + '"' + ',',
-                    '   "poi_img_desc" : ' + '"' + o.poi_img_desc + '"' + ',',
-                    '   "poi_img_link" : ' + '"' + o.poi_img_link + '"' + ',',
-                    '   "poi_onlyimg" : ' + '"' + o.poi_onlyimg + '"' + ',',
                     '   "isLight" : ' + '"' + 'false' + '"' + ',',
-                    '	"fnMtl" : ' + '"' + o.fnMtl + '"' + ',',
-                    '	"fnMtlID" : ' + '"' + o.fnMtlID + '"' + (o.children.length ? ',' : '')
+                    dynamic_string,
+                    + (o.children.length ? ',' : '')
 
                     //+ ',',
                     //'	"visible"  : ' + o.visible + ( o.children.length ? ',' : '' )
@@ -941,48 +809,8 @@ THREE.SceneExporter.prototype = {
             objects,
             '	}',    // Original line:   '	},',
             '',
-
-
-
-            // '	"geometries" :',
-            // '	{',
-            // '\t' + 	geometries,
-            // '	},',
-            // '',
-            //
-            // '	"materials" :',
-            // '	{',
-            // '\t' + 	materials,
-            // '	},',
-            // '',
-            //
-            // '	"textures" :',
-            // '	{',
-            // '\t' + 	textures,
-            // '	},',
-            // '',
-            //
-            // '	"fogs" :',
-            // '	{',
-            // '\t' + 	fogs,
-            // '	},',
-            // '',
-            //
-            // '	"transform" :',
-            // '	{',
-            // '		"position"  : ' + position + ',',
-            // '		"rotation"  : ' + rotation + ',',
-            // '		"scale"     : ' + scale,
-            // '	},',
-            // '',
-            // '	"defaults" :',
-            // '	{',
-            // '		"camera"  : ' + defcamera + ',',
-            // '		"fog"  	  : ' + deffog,
-            // '	}',
             '}'
         ].join('\n');
-
 
         //console.log(output);
 

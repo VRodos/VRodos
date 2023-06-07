@@ -60,7 +60,6 @@ function raycasterSetter(event) {
 // find the correct y (height) to place the object
 function dragDropVerticalRayCasting(event) {
     let intersects = findIntersectedRaw(event);
-
     return intersects.length === 0 ? [0, 0, 0] : [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z];
 }
 

@@ -30,8 +30,6 @@ class VRodos_LoaderMulti {
                         return;
                 }
 
-
-
                 // Load Camera object
                 if (name == 'avatarCamera') {
 
@@ -169,13 +167,6 @@ function setObjectProperties(object, name, resources3D) {
 
     // avoid revealing the full path. Use the relative in the saving format.
     object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
-
-    object.fnObj = resources3D[name]['obj'];
-    object.fnObjID = resources3D[name]['objID'];
-    object.fnMtl = resources3D[name]['mtl'];
-    object.fnMtlID = resources3D[name]['mtlID'];
-
-    object.fbxID = resources3D[name]['fbxID'];
     object.glbID = resources3D[name]['glbID'];
 
 
@@ -193,48 +184,17 @@ function setObjectProperties(object, name, resources3D) {
     //============== Video texture ==========
 
 
-    if (resources3D[name]['videoTextureSrc'] !== "") {
+    if (resources3D[name]['videoTextureSrc']) {
         if (resources3D[name]['videoTextureSrc'] !== "undefined") {
             console.log("The object has video texture:", resources3D[name]['videoTextureSrc'])
             startVideo(resources3D, name);
         }
     }
 
-    //=======================================
-
-
-
-    object.audioID = resources3D[name]['audioID'];
-
-    object.categoryID = resources3D[name]['categoryID'];
-    object.categoryName = resources3D[name]['categoryName'];
-
-    object.diffImages = resources3D[name]['diffImages'];
-    object.diffImageIDs = resources3D[name]['diffImageIDs'];
-
-    object.image1id = resources3D[name]['image1id'];
-
-    object.doorName_source = resources3D[name]['doorName_source'];
-    object.doorName_target = resources3D[name]['doorName_target'];
-    object.sceneName_target = resources3D[name]['sceneName_target'];
-    object.sceneID_target = resources3D[name]['sceneID_target'];
-
-    object.archaeology_penalty = resources3D[name]['archaeology_penalty'];
-    object.hv_penalty = resources3D[name]['hv_penalty'];
-    object.natural_penalty = resources3D[name]['natural_penalty'];
-
-    object.isreward = resources3D[name]['isreward'];
-    object.follow_camera = resources3D[name]['follow_camera'];
-    object.image_link = resources3D[name]['image_link'];
-    object.video_link = resources3D[name]['video_link'];
-    object.follow_camera_x = resources3D[name]['follow_camera_x'];
-    object.follow_camera_y = resources3D[name]['follow_camera_y'];
-    object.follow_camera_z = resources3D[name]['follow_camera_z'];
-    object.isCloned = resources3D[name]['isCloned'];
-    object.poi_img_title = resources3D[name]['poi_img_title'];
-    object.poi_img_desc = resources3D[name]['poi_img_desc'];
-    object.poi_img_link = resources3D[name]['poi_img_link'];
-    object.poi_onlyimg = resources3D[name]['poi_onlyimg'];
+    // Automatically load values that are available
+    for (let entry in Object.keys(resources3D[name])) {
+        object[[Object.keys(resources3D[name])[entry]]] = Object.values(resources3D[name])[entry];
+    }
 
     //object.type_behavior = resources3D[name]['type_behavior'];
 
@@ -285,9 +245,6 @@ function startVideo (resources3D, name){
     var cHex = "#" + resources3D[name]['color'];
 
     var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture[name], side: THREE.DoubleSide, color: cHex });
-
-
-
 
 
     setTimeout(function () {
