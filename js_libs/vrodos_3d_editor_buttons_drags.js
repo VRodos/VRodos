@@ -202,7 +202,8 @@ function loadButtonActions() {
 
             let categoryName = dataDrag.categoryName;
             let nameModel = dataDrag.title;
-            let displayed_name = dataDrag.title;
+
+            let path = '';
 
             // SUN or LAMP or Spot or Ambient
             if (dataDrag.categoryName === "lightSun" ||
@@ -211,35 +212,17 @@ function loadButtonActions() {
                 dataDrag.categoryName === "lightAmbient" ||
                 dataDrag.categoryName === "Pawn") {
 
-                var path = objFname = mtlFname = '';
-                dataDrag.objID = dataDrag.mtlID = dataDrag.assetid = dataDrag.categoryIcon = '';
-
-                dataDrag.fbxID = '';
-                dataDrag.glbID = '';
-                dataDrag.audioID = '';
-
-                dataDrag.categoryID = dataDrag.diffImages = dataDrag.diffImageIDs = dataDrag.image1id = dataDrag.doorName_source = '';
-                dataDrag.doorName_target = dataDrag.sceneName_target = dataDrag.sceneID_target = dataDrag.archaeology_penalty = '';
-                dataDrag.hv_penalty = dataDrag.natural_penalty = dataDrag.image_link = dataDrag.video_link = dataDrag.follow_camera_x = dataDrag.follow_camera_y = dataDrag.follow_camera_z = dataDrag.poi_img_title = dataDrag.poi_img_desc = dataDrag.poi_img_link = '';
-                dataDrag.isreward = dataDrag.follow_camera = dataDrag.isCloned = dataDrag.isJoker = dataDrag.poi_onlyimg = 0;
-
-
-
 
             }
             else {
-
-                var path = dataDrag.obj.substring(0, dataDrag.obj.lastIndexOf("/") + 1);
-                var objFname = dataDrag.obj.substring(dataDrag.obj.lastIndexOf("/") + 1);
-                var mtlFname = dataDrag.mtl.substring(dataDrag.mtl.lastIndexOf("/") + 1);
+                path = dataDrag.path.substring(0, dataDrag.path.lastIndexOf("/") + 1);
             }
 
             let translation = dragDropVerticalRayCasting(ev);
 
 
-
             // Asset add to canvas
-            addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag, translation, pluginPath);
+            addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath);
 
             // Show options
             jQuery('#object-manipulation-toggle').show();

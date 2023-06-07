@@ -104,8 +104,6 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         click: function (e) {
             //alert("Drag n drop models onto 3D space");
 
-
-
             e.preventDefault();
         },
 
@@ -114,48 +112,20 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
             let screenshotImage = e.target.attributes.getNamedItem("data-sshot-url");
 
-
-
             dragImg.src = screenshotImage ? screenshotImage.value : "/wp-content/plugins/VRodos/images/ic_asset.png";
 
             e.originalEvent.dataTransfer.setDragImage(dragImg, 32, 32);
 
-
-
-            var dragData = {
-                "title": e.target.attributes.getNamedItem("data-assetslug").value + "_" + Math.floor(Date.now() / 1000),
+            let dragData = {
+                "title": e.target.attributes.getNamedItem("data-assetSlug").value + "_" + Math.floor(Date.now() / 1000),
                 "assetid": e.target.attributes.getNamedItem("data-assetid").value,
                 "assetname": e.target.attributes.getNamedItem("data-name").value,
-                "obj": e.target.attributes.getNamedItem("data-objPath").value,
-                "objID": e.target.attributes.getNamedItem("data-objID").value,
-                "mtl": e.target.attributes.getNamedItem("data-mtlPath").value,
-                "mtlID": e.target.attributes.getNamedItem("data-mtlID").value,
-                "fbxID": e.target.attributes.getNamedItem("data-fbxID").value,
                 "glbID": e.target.attributes.getNamedItem("data-glbID").value,
-                "audioID": e.target.attributes.getNamedItem("data-audioID").value,
+                "path": e.target.attributes.getNamedItem("data-path").value,
                 "categoryID": e.target.attributes.getNamedItem("data-categoryID").value,
                 "categoryName": e.target.attributes.getNamedItem("data-categoryName").value,
-                "categoryDescription": e.target.attributes.getNamedItem("data-categoryDescription").value,
+                "categorySlug": e.target.attributes.getNamedItem("data-categorySlug").value,
                 "categoryIcon": e.target.attributes.getNamedItem("data-categoryIcon").value,
-                "image1id": e.target.attributes.getNamedItem("data-image1id").value,
-                "doorName_source": e.target.attributes.getNamedItem("data-doorName_source").value,
-                "doorName_target": e.target.attributes.getNamedItem("data-doorName_target").value,
-                "isreward": e.target.attributes.getNamedItem("data-isreward").value,
-                "follow_camera": e.target.attributes.getNamedItem("data-follow_camera").value,
-                "image_link": e.target.attributes.getNamedItem("data-image_link").value,
-                "video_link": e.target.attributes.getNamedItem("data-video_link").value,
-                "follow_camera_x": e.target.attributes.getNamedItem("data-follow_camera_x").value,
-                "follow_camera_y": e.target.attributes.getNamedItem("data-follow_camera_y").value,
-                "follow_camera_z": e.target.attributes.getNamedItem("data-follow_camera_z").value,
-                "poi_img_title": e.target.attributes.getNamedItem("data-poi_img_title").value,
-                "poi_img_desc": e.target.attributes.getNamedItem("data-poi_img_desc").value,
-                "poi_img_link": e.target.attributes.getNamedItem("data-poi_img_link").value,
-                "poi_onlyimg": e.target.attributes.getNamedItem("data-poi_onlyimg").value,
-                "sceneName_target": e.target.attributes.getNamedItem("data-sceneName_target").value,
-                "sceneID_target": e.target.attributes.getNamedItem("data-sceneID_target").value,
-                "archaeology_penalty": e.target.attributes.getNamedItem("data-archaeology_penalty").value,
-                "hv_penalty": e.target.attributes.getNamedItem("data-hv_penalty").value,
-                "natural_penalty": e.target.attributes.getNamedItem("data-natural_penalty").value,
                 "isCloned": e.target.attributes.getNamedItem("data-isCloned").value,
                 "isJoker": e.target.attributes.getNamedItem("data-isJoker").value
             };
@@ -213,49 +183,15 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     // '<span class="megabytesAsset mdc-typography--caption mdc-theme--text-secondary-on-light">'+ fileSize + '</span>'+
                     '</span>';
 
-
+                let draggable_string = '';
+                for (let entry in Object.keys(f)) {
+                    draggable_string = draggable_string.concat('data-'+Object.keys(f)[entry] + '="' + Object.values(f)[entry]) + '" ';
+                }
 
                 var file = jQuery('<li draggable="true" id="asset-' + f.assetid + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
-                    ' title="Drag the card into the plane, (Size: ' + fileSize + ')"' +
-                    ' data-assetslug="' + f.assetSlug +
-                    '" data-assetid="' + f.assetid +
-                    '" data-name="' + name +
-                    '" data-objPath="' + f.objPath +
-                    '" data-objID="' + f.objID +
-                    '" data-fbxPath="' + f.fbxPath +
-                    '" data-fbxID="' + f.fbxID +
-                    '" data-glbPath="' + f.glbPath +
-                    '" data-glbID="' + f.glbID +
-                    '" data-mtlPath="' + f.mtlPath +
-                    '" data-mtlID="' + f.mtlID +
-                    '" data-audioID="' + f.audioID +
-                    '" data-categoryID="' + f.categoryID +
-                    '" data-categoryName="' + f.categoryName +
-                    '" data-categoryDescription="' + f.categoryDescription +
-                    '" data-categoryIcon="' + f.categoryIcon +
-                    '" data-image1id="' + f.image1id +
-                    '" data-doorName_source="' + f.doorName_source +
-                    '" data-doorName_target="' + f.doorName_target +
-                    '" data-sceneName_target="' + f.sceneName_target +
-                    '" data-sceneID_target="' + f.sceneID_target +
-                    '" data-archaeology_penalty="' + f.archaeology_penalty +
-                    '" data-hv_penalty="' + f.hv_penalty +
-                    '" data-natural_penalty="' + f.natural_penalty +
-                    '" data-sshot-url="' + f.screenImagePath +
-                    '" data-isreward="' + f.isreward +
-                    '" data-follow_camera="' + f.follow_camera +
-                    '" data-image_link="' + f.image_link +
-                    '" data-video_link="' + f.video_link +
-                    '" data-follow_camera_x="' + f.follow_camera_x +
-                    '" data-follow_camera_y="' + f.follow_camera_y +
-                    '" data-follow_camera_z="' + f.follow_camera_z +
-                    '" data-isCloned="' + f.isCloned +
-                    '" data-poi_img_title="' + f.poi_img_title +
-                    '" data-poi_img_desc="' + f.poi_img_desc +
-                    '" data-poi_img_link="' + f.poi_img_link +
-                    '" data-poi_onlyimg="' + f.poi_onlyimg +
-                    '" data-isJoker="' + f.isJoker +
-                    '" >' + img +
+                    ' title="Drag the card into the plane"' +
+                    draggable_string +'>' + img +
+
                     '<span class="FileListItemName mdc-list-item__text" title="Drag the card into the plane">' + name +
                     '<i class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption material-icons">' + f.categoryIcon
                     + '</i></span>' +
@@ -312,9 +248,9 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
     // Convert file sizes from bytes to human readable units
     function bytesToSize(bytes) {
-        var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        let sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
         if (bytes == 0) return '0 Bytes';
-        var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+        let i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
         return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
     }
 

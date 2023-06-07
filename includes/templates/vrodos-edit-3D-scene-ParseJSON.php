@@ -10,50 +10,16 @@ class ParseJSON
     public function init($sceneToLoad)
     {
 
-        //        $f = fopen("output_Parse_json.txt","w");
-//        fwrite($f, "1");
-
         $resources3D = [];
-
-        //        $fp = fopen("output_saved2.txt","w");
-//        fwrite($fp, print_r($sceneToLoad,true));
-//        fclose($fp);
 
         $assetid = '';
         $assetname = '';
-        $objID = '';
-        $mtlID = '';
-        $fbxID = '';
-        $glbID = '';
-        $audioID = '';
 
-        $videoTextureSrc = '';
-        $videoTextureRepeatX = '';
-        $videoTextureRepeatY = '';
-        $videoTextureCenterX = '';
-        $videoTextureCenterY = '';
-        $videoTextureRotation = '';
+        $glbID = '';
 
         $categoryID = '';
-        $image1id = '';
-        $doorName_source = '';
-        $doorName_target = '';
-        $sceneName_target = '';
-        $sceneID_target = '';
-        $archaeology_penalty = '';
-        $hv_penalty = '';
-        $natural_penalty = '';
-        $isreward = '';
-        $follow_camera = '';
-        $image_link = '';
-        $video_link = '';
-        $follow_camera_x = '';
-        $follow_camera_y = '';
-        $follow_camera_z = '';
-        $poi_img_title = '';
-        $poi_img_desc = '';
-        $poi_img_link = '';
-        $poi_onlyimg = '';
+        $categorySlug = '';
+
         $isCloned = '';
         $isJoker = '';
         $color = ''; // object color override
@@ -107,15 +73,12 @@ class ParseJSON
         $overrideMaterial = "false";
 
 
-
         foreach ($json_objects as $key => $value) {
 
             $name = $key;
 
             if ($name == 'avatarCamera') {
                 $path = '';
-                $obj = '';
-                $mtl = '';
                 $categoryName = 'avatarYawObject';
 
                 $r_x = $value->rotation[0];
@@ -127,8 +90,6 @@ class ParseJSON
             } elseif (strpos($name, 'lightSun') !== false) {
 
                 $path = '';
-                $obj = '';
-                $mtl = '';
 
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
@@ -149,8 +110,6 @@ class ParseJSON
             } elseif (strpos($name, 'lightLamp') !== false) {
 
                 $path = '';
-                $obj = '';
-                $mtl = '';
 
                 $r_x = 0;
                 $r_y = 0;
@@ -174,8 +133,6 @@ class ParseJSON
             } elseif (strpos($name, 'lightSpot') !== false) {
 
                 $path = '';
-                $obj = '';
-                $mtl = '';
 
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
@@ -198,18 +155,12 @@ class ParseJSON
                 $lightangle = $value->lightangle;
                 $lightpenumbra = $value->lightpenumbra;
 
-                //                $fp = fopen("output_saved.txt","w");
-//                fwrite($fp, print_r($value,true));
-//                fclose($fp);
-
 
                 $lighttargetobjectname = $value->lighttargetobjectname;
 
             } elseif (strpos($name, 'lightAmbient') !== false) {
 
                 $path = '';
-                $obj = '';
-                $mtl = '';
 
                 $assetname = 'lightAmbient';
 
@@ -234,18 +185,12 @@ class ParseJSON
                 $lightangle = '';
                 $lightpenumbra = '';
 
-                //                $fp = fopen("output_saved.txt","w");
-//                fwrite($fp, print_r($value,true));
-//                fclose($fp);
-
 
                 $lighttargetobjectname = '';
 
             } elseif (strpos($name, 'Pawn') !== false) {
 
                 $path = '';
-                $obj = '';
-                $mtl = '';
 
                 $assetname = $name;
 
@@ -263,14 +208,9 @@ class ParseJSON
 
             } else {
 
-
                 $path = $this->relativepath . $value->fnPath;
                 $assetid = $value->assetid;
                 $assetname = $value->assetname;
-                $obj = $value->fnObj;
-                $objID = $value->fnObjID;
-                $mtl = $value->fnMtl;
-                $mtlID = $value->fnMtlID;
 
                 if (isset($value->overrideMaterial)) {
                     $overrideMaterial = $value->overrideMaterial;
@@ -284,44 +224,10 @@ class ParseJSON
                 $roughness = $value->roughness;
                 $metalness = $value->metalness;
 
-                $fbxID = $value->fbxID;
                 $glbID = $value->glbID;
-
-                $videoTextureSrc = $value->videoTextureSrc;
-                $videoTextureRepeatX = $value->videoTextureRepeatX;
-                $videoTextureRepeatY = $value->videoTextureRepeatY;
-                $videoTextureCenterX = $value->videoTextureCenterX;
-                $videoTextureCenterY = $value->videoTextureCenterY;
-                $videoTextureRotation = $value->videoTextureRotation;
-
-
 
                 $categoryName = $value->categoryName;
                 $categoryID = $value->categoryID;
-                $image1id = $value->image1id;
-
-                $doorName_source = $value->doorName_source;
-                $doorName_target = $value->doorName_target;
-                $sceneName_target = $value->sceneName_target;
-                $sceneID_target = $value->sceneID_target;
-
-                $archaeology_penalty = $value->archaeology_penalty;
-                $hv_penalty = $value->hv_penalty;
-                $natural_penalty = $value->natural_penalty;
-
-                $isreward = $value->isreward;
-                $follow_camera = $value->follow_camera;
-                $image_link = $value->image_link;
-                $video_link = $value->video_link;
-                $follow_camera_x = $value->follow_camera_x;
-                $follow_camera_y = $value->follow_camera_y;
-                $follow_camera_z = $value->follow_camera_z;
-                $poi_img_title = $value->poi_img_title;
-                $poi_img_desc = $value->poi_img_desc;
-                $poi_img_link = $value->poi_img_link;
-                $poi_onlyimg = $value->poi_onlyimg;
-
-
 
                 $isCloned = $value->isCloned;
 
@@ -357,17 +263,10 @@ class ParseJSON
                 $r_x . ',' . $r_y . ',' . $r_z . '],' . '"scale":[' . $s_x . ',' . $s_y . ',' . $s_z . ']};';
 
 
-
-
             echo 'resources3D["' . $name . '"]= {' .
                 '"path":"' . $path .
                 '","assetid":"' . $assetid .
                 '","assetname":"' . $assetname .
-                '","obj":"' . $obj .
-                '","objID":"' . $objID .
-                '","mtl":"' . $mtl .
-                '","mtlID":"' . $mtlID .
-                '","fbxID":"' . $fbxID .
                 '","glbID":"' . $glbID .
                 '","overrideMaterial":"' . $overrideMaterial,
                 '","color":"' . $color .
@@ -375,34 +274,8 @@ class ParseJSON
                 '","emissiveIntensity":"' . $emissiveIntensity .
                 '","roughness":"' . $roughness .
                 '","metalness":"' . $metalness .
-                '","audioID":"' . $audioID .
-                '","videoTextureSrc":"' . $videoTextureSrc .
-                '","videoTextureRepeatX":"' . $videoTextureRepeatX .
-                '","videoTextureRepeatY":"' . $videoTextureRepeatY .
-                '","videoTextureCenterX":"' . $videoTextureCenterX .
-                '","videoTextureCenterY":"' . $videoTextureCenterY .
-                '","videoTextureRotation":"' . $videoTextureRotation .
                 '","categoryName":"' . $categoryName .
                 '","categoryID":"' . $categoryID .
-                '","image1id":"' . $image1id .
-                '","doorName_source":"' . $doorName_source .
-                '","doorName_target":"' . $doorName_target .
-                '","sceneName_target":"' . $sceneName_target .
-                '","sceneID_target":"' . $sceneID_target .
-                '","archaeology_penalty":"' . $archaeology_penalty .
-                '","hv_penalty":"' . $hv_penalty .
-                '","natural_penalty":"' . $natural_penalty .
-                '","isreward":"' . $isreward .
-                '","follow_camera":"' . $follow_camera .
-                '","image_link":"' . $image_link .
-                '","video_link":"' . $video_link .
-                '","follow_camera_x":"' . $follow_camera_x .
-                '","follow_camera_y":"' . $follow_camera_y .
-                '","follow_camera_z":"' . $follow_camera_z .
-                '","poi_img_title":"' . $poi_img_title .
-                '","poi_img_desc":"' . $poi_img_desc .
-                '","poi_img_link":"' . $poi_img_link .
-                '","poi_onlyimg":"' . $poi_onlyimg .
                 '","isCloned":"' . $isCloned .
                 '","isJoker":"' . $isJoker .
                 '","isLight":"' . $isLight .
@@ -420,81 +293,9 @@ class ParseJSON
             //echo 'console.log("resources3D");';
             echo '</script>';
 
-
-
-
-
-            //            $resources3D[$name] = [ 'path' => $path,
-//                                    'assetid' =>$assetid,
-//                                    'assetname' =>$assetname,
-//                                    'obj' =>$obj,
-//                                    'objID' =>$objID,
-//                                    'mtl' =>$mtl,
-//                                    'mtlID' =>$mtlID,
-//                                    'fbxID' =>$fbxID,
-//                                    'glbID' =>$glbID,
-//                                    'color' =>$color
-//                        ];
-
-
-            //			// Return to php side the resources3D as php variable
-//	        $resources3D[$name] = [ 'path' => $path,
-//                                    'assetid' =>$assetid,
-//                                    'assetname' =>$assetname,
-//                                    'obj' =>$obj,
-//                                    'objID' =>$objID,
-//                                    'mtl' =>$mtl,
-//                                    'mtlID' =>$mtlID,
-//                                    'fbxID' =>$fbxID,
-//                                    'glbID' =>$glbID,
-//                                    'color' =>$color,
-//                                    'emissive' =>$emissive,
-//                                    'emissiveIntensity' =>$emissiveIntensity,
-//                                    'roughness' =>$roughness,
-//                                    'metalness' =>$metalness,
-//                                    'audioID' =>$audioID,
-//                                    'videoTextureSrc' =>$videoTextureSrc,
-//                                    'videoTextureRepeatX' =>$videoTextureRepeatX ,
-//				                    'videoTextureRepeatY' =>$videoTextureRepeatY ,
-//				                    'videoTextureCenterX' =>$videoTextureCenterX ,
-//				                    'videoTextureCenterY' =>$videoTextureCenterY ,
-//				                    'videoTextureRotation' =>$videoTextureRotation ,
-//				                    'categoryName' =>$categoryName,
-//				                    'categoryID' =>$categoryID,
-//				                    'image1id' =>$image1id,
-//				                    'doorName_source' =>$doorName_source,
-//				                    'doorName_target' =>$doorName_target,
-//				                    'sceneName_target' =>$sceneName_target,
-//				                    'sceneID_target' =>$sceneID_target,
-//				                    'archaeology_penalty' =>$archaeology_penalty,
-//				                    'hv_penalty' =>$hv_penalty,
-//				                    'natural_penalty' =>$natural_penalty,
-//				                    'isreward' =>$isreward,
-//				                    'isCloned' =>$isCloned,
-//				                    'isJoker' =>$isJoker,
-//				                    'isLight' =>$isLight,
-//				                    'lightintensity' =>$lightintensity,
-//				                    'shadowRadius' =>$shadowRadius,
-//				                    'lightdecay' =>$lightdecay,
-//				                    'lightdistance' =>$lightdistance,
-//				                    'lightangle' =>$lightangle,
-//				                    'lightpenumbra' =>$lightpenumbra,
-//				                    'lighttargetobjectname' =>$lighttargetobjectname,
-//                                    'lightcolor' => [$light_color_r, $light_color_g, $light_color_b],
-//                                    'targetposition' => [$target_position_x, $target_position_y, $target_position_z],
-//                                    'trs' => ['translation'=>[$t_x,$t_y,$t_z],
-//	                                          'rotation' => [$r_x,$r_y,$r_z],
-//	                                          'scale' => [$s_x,$s_y,$s_z]
-//                                             ]
-//	                        ];
-
-
-            //            fwrite($f, "4");
-
-
         }
+
 
         return $resources3D;
     }
 }
-?>
