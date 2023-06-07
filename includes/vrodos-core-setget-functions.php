@@ -178,7 +178,7 @@ function get_assets($games_slugs){
                     $data_arr['chatType'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
                     break;
                 case 'poi-link':
-                    $data_arr['poiLinkUrl'] = get_post_meta($asset_id, 'assetLinkInput', true);
+                    $data_arr['poiLinkUrl'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
                     break;
             }
 
@@ -301,7 +301,7 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
                     $data_arr['chatType'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
                     break;
                 case 'poi-link':
-                    $data_arr['poiLinkUrl'] = get_post_meta($asset_id, 'assetLinkInput', true);
+                    $data_arr['poiLinkUrl'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
                     break;
             }
 
