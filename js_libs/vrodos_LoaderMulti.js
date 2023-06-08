@@ -210,8 +210,6 @@ function setObjectProperties(object, name, resources3D) {
         resources3D[name]['trs']['scale'][2] );
 
 
-    console.log(object);
-
     return object;
 }
 
