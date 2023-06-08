@@ -721,6 +721,7 @@ wp_head();
 
         // On progress messages (loading)
         manager.onProgress = function ( url, loaded, total ) {
+
             document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
         };
 
@@ -752,7 +753,7 @@ wp_head();
                 (function (name) {
 
                     // Set Target light for Spots
-                    if (resources3D[name]['categoryName'] === 'lightSpot') {
+                    if (resources3D[name]['category_name'] === 'lightSpot') {
                         let lightSpot = envir.scene.getObjectByName(name);
                         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
                     }

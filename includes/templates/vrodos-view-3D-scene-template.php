@@ -377,7 +377,7 @@ if(is_user_logged_in() ) {
             // Set Target light for Spots
             for (let n in resources3D) {
                 (function (name) {
-                    if (resources3D[name]['categoryName'] === 'lightSpot') {
+                    if (resources3D[name]['category_name'] === 'lightSpot') {
                         let lightSpot = envir.scene.getObjectByName(name);
                         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
                     }

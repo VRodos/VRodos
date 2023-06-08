@@ -139,23 +139,23 @@ function get_assets($games_slugs){
             $assettrs = get_post_meta($asset_id,'vrodos_asset3d_assettrs', true);
 
             $data_arr = [
-                'assetName'=>get_the_title(),
-                'assetSlug'=>get_post()->post_name,
-                'assetid'=>$asset_id,
-                'categoryName'=>$asset_cat_arr[0]->name,
-                'categorySlug'=>$asset_cat_arr[0]->slug,
-                'categoryID'=>$asset_cat_arr[0]->term_id,
-                'categoryIcon'=> get_term_meta($asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true),
-                'glbID'=>$glbID,
-                'glbPath'=>$glbPath,
+                'asset_name'=>get_the_title(),
+                'asset_slug'=>get_post()->post_name,
+                'asset_id'=>$asset_id,
+                'category_name'=>$asset_cat_arr[0]->name,
+                'category_slug'=>$asset_cat_arr[0]->slug,
+                'category_id'=>$asset_cat_arr[0]->term_id,
+                'category_icon'=> get_term_meta($asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true),
+                'glb_id'=>$glbID,
+                'glb_path'=>$glbPath,
                 'path'=>$glbPath,
-                'screenImageID'=>$sshotID,
-                'screenImagePath'=>$sshotPath,
-                'isCloned'=> get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true),
-                'isJoker'=> get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true),
+                'screenshot_id'=>$sshotID,
+                'screenshot_path'=>$sshotPath,
+                'is_cloned'=> get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true),
+                'is_joker'=> get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true),
                 'assettrs' => $assettrs,
-                'assetParentGame'=>$asset_pgame[0]->name,
-                'assetParentGameSlug'=>$asset_pgame[0]->slug,
+                'asset_parent_game'=>$asset_pgame[0]->name,
+                'asset_parent_game_slug'=>$asset_pgame[0]->slug,
                 'author_id'=> $author_id,
                 'author_displayname'=> $author_displayname,
                 'author_username'=> $author_username
@@ -163,22 +163,22 @@ function get_assets($games_slugs){
 
             switch ($asset_cat_arr[0]->slug) {
                 case 'video':
-                    $data_arr['videoId'] = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
-                    $data_arr['videoPath'] = wp_get_attachment_url( $data_arr['videoId'] );
-                    $data_arr['videoTitle'] = get_post_meta($asset_id, 'vrodos_asset3d_video_title', true);
-                    $data_arr['videoAutoloop'] = get_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', true);
+                    $data_arr['video_id'] = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
+                    $data_arr['video_path'] = wp_get_attachment_url( $data_arr['videoId'] );
+                    $data_arr['video_title'] = get_post_meta($asset_id, 'vrodos_asset3d_video_title', true);
+                    $data_arr['video_loop'] = get_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', true);
                     break;
                 case 'poi-imagetext':
-                    $data_arr['poiImageId'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', true);
-                    $data_arr['poiImagePath'] = wp_get_attachment_url( $data_arr['poiImageId'] );
-                    $data_arr['poiImageTitle'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', true);
-                    $data_arr['poiImageContent'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', true);
+                    $data_arr['poi_img_id'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', true);
+                    $data_arr['poi_img_path'] = wp_get_attachment_url( $data_arr['poiImageId'] );
+                    $data_arr['poi_img_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', true);
+                    $data_arr['poi_img_content'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', true);
                     break;
                 case 'chat':
-                    $data_arr['chatType'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
+                    $data_arr['chat_type'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
                     break;
                 case 'poi-link':
-                    $data_arr['poiLinkUrl'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
+                    $data_arr['poi_link_url'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
                     break;
             }
 
@@ -268,40 +268,40 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
             $sshotPath = $sshotID ? wp_get_attachment_url( $sshotID ) : '';           // Screenshot Image PATH
 
             $data_arr = [
-                'assetName'=>get_the_title(),
-                'assetSlug'=>get_post()->post_name,
-                'assetid'=>$asset_id,
-                'categoryName'=>$asset_cat_arr[0]->name,
-                'categorySlug'=>$asset_cat_arr[0]->slug,
-                'categoryID'=>$asset_cat_arr[0]->term_id,
-                'categoryIcon'=> get_term_meta($asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true),
-                'glbID'=>$glbID,
-                'glbPath'=>$glbPath,
+                'asset_name'=>get_the_title(),
+                'asset_slug'=>get_post()->post_name,
+                'asset_id'=>$asset_id,
+                'category_name'=>$asset_cat_arr[0]->name,
+                'category_slug'=>$asset_cat_arr[0]->slug,
+                'category_id'=>$asset_cat_arr[0]->term_id,
+                'category_icon'=> get_term_meta($asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true),
+                'glb_id'=>$glbID,
+                'glb_path'=>$glbPath,
                 'path'=>$glbPath,
-                'screenImageID'=>$sshotID,
-                'screenImagePath'=>$sshotPath,
-                'isCloned'=> get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true),
-                'isJoker'=> get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true)
+                'screenshot_id'=>$sshotID,
+                'screenshot_path'=>$sshotPath,
+                'is_cloned'=> get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true),
+                'is_joker'=> get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true),
             ];
 
             switch ($asset_cat_arr[0]->slug) {
                 case 'video':
-                    $data_arr['videoId'] = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
-                    $data_arr['videoPath'] = wp_get_attachment_url( $data_arr['videoId'] );
-                    $data_arr['videoTitle'] = get_post_meta($asset_id, 'vrodos_asset3d_video_title', true);
-                    $data_arr['videoAutoloop'] = get_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', true);
+                    $data_arr['video_id'] = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
+                    $data_arr['video_path'] = wp_get_attachment_url( $data_arr['videoId'] );
+                    $data_arr['video_title'] = get_post_meta($asset_id, 'vrodos_asset3d_video_title', true);
+                    $data_arr['video_loop'] = get_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', true);
                     break;
                 case 'poi-imagetext':
-                    $data_arr['poiImageId'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', true);
-                    $data_arr['poiImagePath'] = wp_get_attachment_url( $data_arr['poiImageId'] );
-                    $data_arr['poiImageTitle'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', true);
-                    $data_arr['poiImageContent'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', true);
+                    $data_arr['poi_img_id'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', true);
+                    $data_arr['poi_img_path'] = wp_get_attachment_url( $data_arr['poiImageId'] );
+                    $data_arr['poi_img_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', true);
+                    $data_arr['poi_img_content'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', true);
                     break;
                 case 'chat':
-                    $data_arr['chatType'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
+                    $data_arr['chat_type'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
                     break;
                 case 'poi-link':
-                    $data_arr['poiLinkUrl'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
+                    $data_arr['poi_link_url'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
                     break;
             }
 

@@ -12,16 +12,16 @@ class ParseJSON
 
         $resources3D = [];
 
-        $assetid = '';
-        $assetname = '';
+        $asset_id = '';
+        $asset_name = '';
 
-        $glbID = '';
+        $glb_id = '';
 
-        $categoryID = '';
-        $categorySlug = '';
+        $category_id = '';
+        $category_slug = '';
 
-        $isCloned = '';
-        $isJoker = '';
+        $is_cloned = '';
+        $is_joker = '';
         $color = ''; // object color override
         $emissive = '';
         $emissiveIntensity = '';
@@ -48,7 +48,6 @@ class ParseJSON
         echo '</script>';
 
 
-
         $json_objects = $content_JSON->objects;
 
         // For light target
@@ -72,24 +71,20 @@ class ParseJSON
 
         $overrideMaterial = "false";
 
-
         foreach ($json_objects as $key => $value) {
 
             $name = $key;
 
             if ($name == 'avatarCamera') {
-                $path = '';
-                $categoryName = 'avatarYawObject';
 
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
                 $r_z = 0;
 
-                $isLight = "false";
+                $value->path = "";
+                $value->isLight = "false";
 
             } elseif (strpos($name, 'lightSun') !== false) {
-
-                $path = '';
 
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
@@ -103,13 +98,12 @@ class ParseJSON
                 $light_color_g = $value->lightcolor[1];
                 $light_color_b = $value->lightcolor[2];
 
-                $categoryName = 'lightSun';
-                $isLight = "true";
-                $lightintensity = $value->lightintensity;
+                $value->path = "";
+                $value->isLight = "true";
+
 
             } elseif (strpos($name, 'lightLamp') !== false) {
 
-                $path = '';
 
                 $r_x = 0;
                 $r_y = 0;
@@ -123,17 +117,11 @@ class ParseJSON
                 $light_color_g = $value->lightcolor[1];
                 $light_color_b = $value->lightcolor[2];
 
-                $categoryName = 'lightLamp';
-                $isLight = "true";
-                $lightintensity = $value->lightintensity;
-                $lightdecay = $value->lightdecay;
-                $lightdistance = $value->lightdistance;
-                $shadowRadius = $value->shadowRadius;
+                $value->path = "";
+                $value->isLight = "true";
 
             } elseif (strpos($name, 'lightSpot') !== false) {
 
-                $path = '';
-
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
                 $r_z = $value->rotation[2];
@@ -146,23 +134,13 @@ class ParseJSON
                 $light_color_g = $value->lightcolor[1];
                 $light_color_b = $value->lightcolor[2];
 
-                $categoryName = 'lightSpot';
-                $isLight = "true";
-                $lightintensity = $value->lightintensity;
-                $lightdecay = $value->lightdecay;
-                $lightdistance = $value->lightdistance;
-
-                $lightangle = $value->lightangle;
-                $lightpenumbra = $value->lightpenumbra;
-
-
-                $lighttargetobjectname = $value->lighttargetobjectname;
+                $value->path = "";
+                $value->isLight = "true";
 
             } elseif (strpos($name, 'lightAmbient') !== false) {
 
-                $path = '';
 
-                $assetname = 'lightAmbient';
+                $value->asset_name = 'lightAmbient';
 
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
@@ -176,23 +154,13 @@ class ParseJSON
                 $light_color_g = $value->lightcolor[1];
                 $light_color_b = $value->lightcolor[2];
 
-                $categoryName = 'lightAmbient';
-                $isLight = "true";
-                $lightintensity = $value->lightintensity;
-                $lightdecay = '';
-                $lightdistance = '';
+                $value->path = "";
+                $value->isLight = "true";
 
-                $lightangle = '';
-                $lightpenumbra = '';
-
-
-                $lighttargetobjectname = '';
 
             } elseif (strpos($name, 'Pawn') !== false) {
 
-                $path = '';
-
-                $assetname = $name;
+                $value->asset_name = $name;
 
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
@@ -202,45 +170,29 @@ class ParseJSON
                 $target_position_y = 0;
                 $target_position_z = 0;
 
-                $categoryName = 'pawn';
-                $isLight = "false";
+                $value->path = "";
+                $value->isLight = "false";
 
 
             } else {
+                // Object
 
-                $path = $this->relativepath . $value->fnPath;
-                $assetid = $value->assetid;
-                $assetname = $value->assetname;
+                $value->path = $this->relativepath . $value->fnPath;
 
-                if (isset($value->overrideMaterial)) {
-                    $overrideMaterial = $value->overrideMaterial;
-                } else {
-                    $overrideMaterial = "false";
+                if (!isset($value->overrideMaterial)) {
+                    $value->overrideMaterial = 'false';
                 }
 
-                $color = $value->color;
-                $emissive = $value->emissive;
-                $emissiveIntensity = $value->emissiveIntensity;
-                $roughness = $value->roughness;
-                $metalness = $value->metalness;
+                if (!property_exists($value, 'is_joker')) {
+                    $value->is_joker = 'false';
+                }
 
-                $glbID = $value->glbID;
-
-                $categoryName = $value->categoryName;
-                $categoryID = $value->categoryID;
-
-                $isCloned = $value->isCloned;
-
-                if (property_exists($value, 'isJoker'))
-                    $isJoker = $value->isJoker;
-                else
-                    $isJoker = 'false';
 
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
                 $r_z = $value->rotation[2];
 
-                $isLight = "false";
+                $value->isLight = "false";
             }
 
 
@@ -254,47 +206,42 @@ class ParseJSON
             $s_y = $value->scale[1];
             $s_z = $value->scale[2];
 
-
             //echo $name." ".$assetname." ".$lightintensity."<br />";
+
+            /*var_dump($value);
+            exit;*/
+
+            $trs = '{"translation":[' . $t_x . ',' . $t_y . ',' . $t_z . '],"rotation":[' . $r_x . ',' . $r_y . ',' . $r_z . '], "scale":[' . $s_x . ',' . $s_y . ',' . $s_z . ']} ';
+
+            $resourcesString = 'resources3D["' . $name . '"]={ ';
+            foreach($value as $entry=>$val) {
+
+                if (is_array($val)) {
+                    $resourcesString .= '"'.$entry.'":['.implode(", ", $val).'], ';
+                }
+                else if (is_object($val)) {
+                    // need to further check this
+                }
+                else {
+                    $resourcesString .= '"'.$entry.'":"'.$val.'", ';
+                }
+
+            }
+
+            $resourcesString .= '"targetposition":[' . $target_position_x . ',' . $target_position_y . ',' . $target_position_z . '], ';
+            $resourcesString .= '"lightcolor":[' . $light_color_r . ',' . $light_color_g . ',' . $light_color_b . '], ';
+            $resourcesString .= '"lightintensity":"' . $lightintensity .'", ';
+            $resourcesString .= '"trs":' . $trs . " };";
+
 
             // Make javascript variable resources 3D
             echo '<script type="text/javascript">';
-            echo 'var selected_object_trs={"translation":[' . $t_x . ',' . $t_y . ',' . $t_z . '],"rotation":[' .
-                $r_x . ',' . $r_y . ',' . $r_z . '],' . '"scale":[' . $s_x . ',' . $s_y . ',' . $s_z . ']};';
+            echo 'var selected_object_trs=' . $trs . ';';
 
-
-            echo 'resources3D["' . $name . '"]= {' .
-                '"path":"' . $path .
-                '","assetid":"' . $assetid .
-                '","assetname":"' . $assetname .
-                '","glbID":"' . $glbID .
-                '","overrideMaterial":"' . $overrideMaterial,
-                '","color":"' . $color .
-                '","emissive":"' . $emissive .
-                '","emissiveIntensity":"' . $emissiveIntensity .
-                '","roughness":"' . $roughness .
-                '","metalness":"' . $metalness .
-                '","categoryName":"' . $categoryName .
-                '","categoryID":"' . $categoryID .
-                '","isCloned":"' . $isCloned .
-                '","isJoker":"' . $isJoker .
-                '","isLight":"' . $isLight .
-                '","lightintensity":"' . $lightintensity .
-                '","shadowRadius":"' . $shadowRadius .
-                '","lightdecay":"' . $lightdecay .
-                '","lightdistance":"' . $lightdistance .
-                '","lightangle":"' . $lightangle .
-                '","lightpenumbra":"' . $lightpenumbra .
-                '","lighttargetobjectname":"' . $lighttargetobjectname .
-                '","lightcolor":[' . $light_color_r . ',' . $light_color_g . ',' . $light_color_b . ']' .
-                ',"targetposition":[' . $target_position_x . ',' . $target_position_y . ',' . $target_position_z . ']' .
-                ',"trs":selected_object_trs};';
-
-            //echo 'console.log("resources3D");';
+            echo $resourcesString;
             echo '</script>';
 
         }
-
 
         return $resources3D;
     }

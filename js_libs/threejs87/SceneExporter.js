@@ -58,7 +58,6 @@ THREE.SceneExporter.prototype = {
 
                 var node = object.children[i];
 
-
                 if ((node.name === 'rayLine' ||
                     node.name === 'rayLine' ||
                     node.name === 'mylightAvatar' ||
@@ -68,18 +67,18 @@ THREE.SceneExporter.prototype = {
                     node.name === 'SteveMesh' || node.name === 'avatarPitchObject' ||
                     node.name === 'orbitCamera' || node.name === 'myAxisHelper' || node.name === 'myAxisHelper' ||
                     node.name === 'myGridHelper' || node.name === 'myTransformControls'
-                    || node.categoryName === 'lightHelper'
-                    || node.categoryName === 'lightTargetSpot'
+                    || node['category_name'] === 'lightHelper'
+                    || node['category_name'] === 'lightTargetSpot'
                     || node.name === 'Camera3Dmodel'
                     || node.name === 'Camera3DmodelMesh'
-                    || typeof node.categoryName === 'undefined') && node.name != 'avatarCamera')
+                    || typeof node['category_name'] === 'undefined') && node.name != 'avatarCamera')
                     continue;
 
 
-                if (node instanceof THREE.Mesh && node.categoryName !== "pawn")
+                if (node instanceof THREE.Mesh && node['category_name'] !== "pawn")
                     continue;
 
-                if (node instanceof THREE.Mesh && node.categoryName === "pawn") {
+                if (node instanceof THREE.Mesh && node['category_name'] === "pawn") {
 
                     linesArray.push(ObjectString(node, pad));
                     nobjects += 1;
@@ -118,7 +117,7 @@ THREE.SceneExporter.prototype = {
 
 
                 } else if (node instanceof THREE.Camera || node instanceof THREE.CameraHelper) {
-                    node.categoryName = "camera";
+                    node['category_name'] = "camera";
                     linesArray.push(ObjectString(node, pad));
 
                     // linesArray.push( CameraString( node, pad ) );
@@ -237,12 +236,12 @@ THREE.SceneExporter.prototype = {
         function ObjectString(o, n) {
 
             if (o.name != 'avatarCamera'
-                && !o.categoryName.includes('lightSun')
-                && !o.categoryName.includes('lightTargetSpot')
-                && !o.categoryName.includes('lightLamp')
-                && !o.categoryName.includes('lightSpot')
-                && !o.categoryName.includes('lightAmbient')
-                && !o.categoryName.includes('pawn')
+                && !o['category_name'].includes('lightSun')
+                && !o['category_name'].includes('lightTargetSpot')
+                && !o['category_name'].includes('lightLamp')
+                && !o['category_name'].includes('lightSpot')
+                && !o['category_name'].includes('lightAmbient')
+                && !o['category_name'].includes('pawn')
             ) {
 
                 var quatR = new THREE.Quaternion();
@@ -279,7 +278,7 @@ THREE.SceneExporter.prototype = {
 
                 let dynamic_string = '';
                 for (let entry in Object.keys(o)) {
-                    if(typeof (Object.values(o)[entry]) !== 'object'){
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
                         dynamic_string = dynamic_string.concat('"'+Object.keys(o)[entry] + '":"' + Object.values(o)[entry]) + '", ';
                     }
                 }
@@ -297,7 +296,7 @@ THREE.SceneExporter.prototype = {
                     '   "roughness" : ' + '"' + vroughness + '"' + ',',
                     '   "metalness" : ' + '"' + vmetalness + '"' + ',',
                     '   "emissiveIntensity" : ' + '"' + vemissiveIntensity + '"' + ',',
-                    '   "isCloned" : ' + '"' + o.isCloned + '"' + ',',
+                    '   "is_cloned" : ' + '"' + o['is_cloned'] + '"' + ',',
                     '   "isLight" : ' + '"' + 'false' + '"' + ',',
                     dynamic_string,
                     + (o.children.length ? ',' : '')
@@ -308,7 +307,7 @@ THREE.SceneExporter.prototype = {
                 //===============================================
 
             }
-            else if (o.categoryName === "lightSun") {
+            else if (o['category_name'] === "lightSun") {
 
                 var quatR_light = new THREE.Quaternion();
 
@@ -331,11 +330,11 @@ THREE.SceneExporter.prototype = {
                     '	"lightintensity"	: "' + o.intensity + '",',
                     '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
                     '	"targetposition" : ' + Vector3String(o.target.position) + ',',
-                    '	"categoryName" : "' + o.categoryName + '",',
+                    '	"category_name" : "' + o.category_name + '",',
                     '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
                 ];
             }
-            else if (o.categoryName === "lightLamp") {
+            else if (o['category_name'] === "lightLamp") {
                 var quatR_light = new THREE.Quaternion();
 
                 var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
@@ -359,11 +358,11 @@ THREE.SceneExporter.prototype = {
                     '	"lightdecay" : "' + o.decay + '",',
                     '	"lightdistance" : "' + o.distance + '",',
                     '	"shadowRadius" : "' + o.shadow.radius + '",',
-                    '	"categoryName" : "' + o.categoryName + '",',
+                    '	"category_name" : "' + o.category_name + '",',
                     '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
                 ];
             }
-            else if (o.categoryName === "lightSpot") {
+            else if (o['category_name'] === "lightSpot") {
                 var quatR_light = new THREE.Quaternion();
 
                 var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
@@ -390,12 +389,12 @@ THREE.SceneExporter.prototype = {
                     '	"lightangle" : "' + o.angle + '",',
                     '	"lightpenumbra" : "' + o.penumbra + '",',
                     '	"lighttargetobjectname" : "' + o.target.name + '",',
-                    '	"categoryName" : "' + o.categoryName + '",',
+                    '	"category_name" : "' + o.category_name + '",',
                     '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
                 ];
 
             }
-            else if (o.categoryName === "lightAmbient") {
+            else if (o['category_name'] === "lightAmbient") {
 
                 var quatR_light = new THREE.Quaternion();
 
@@ -413,14 +412,14 @@ THREE.SceneExporter.prototype = {
                     '	"scale"	    : ' + Vector3String(o.scale) + ',',
                     '	"lightintensity"	: "' + o.intensity + '",',
                     '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"categoryName" : "' + o.categoryName + '",',
+                    '	"category_name" : "' + o.category_name + '",',
                     '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
                 ];
 
                 //console.log(output);
 
             }
-            else if (o.categoryName === "pawn") {
+            else if (o['category_name'] === "pawn") {
 
 
                 var quatR_light = new THREE.Quaternion();
@@ -434,7 +433,7 @@ THREE.SceneExporter.prototype = {
                     '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
                     '	"quaternion" : ' + "[" + quatR_light._x + "," + quatR_light._y + "," + quatR_light._z + "," + quatR_light._w + "]" + ',',
                     '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"categoryName" : "' + o.categoryName + '",',
+                    '	"category_name" : "' + o.category_name + '",',
                     '	"isLight"   : ' + '"' + 'false' + '"' + (o.children.length ? ',' : '')
                 ];
 
@@ -478,7 +477,7 @@ THREE.SceneExporter.prototype = {
                     quatR_camera._z.toFixed(4) + "," +
                     quatR_camera._w.toFixed(4) + "]" + ',',
                     '	"scale"	   : ' + Vector3String(o.scale) + ',',
-                    '	"categoryName" : "' + 'avatarYawObject' + '",',
+                    '	"category_name" : "' + 'avatarYawObject' + '",',
                     '	"visible"  : ' + o.visible + (o.children.length ? '' : '') + '}'
                 ];
             }

@@ -67,13 +67,7 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
             resources3D_local[name] = {
                 "path": '',
                 "assetid": '',
-                "obj": '',
-                "objID": '',
-                "mtl": '',
-                "mtlID": '',
-                "fbxID": '',
                 "glbID": '',
-                "audioID": '',
                 "lightintensity": lightintensity,
                 "categoryName": 'lightSun',
                 "categoryID": '',

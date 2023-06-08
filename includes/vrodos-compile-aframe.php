@@ -66,7 +66,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $objCount = 0;
         foreach ( $scene_json[$key]->objects as &$o ) {
 
-            if ( $o->categoryName == "Decoration" ||  $o->categoryName == "Door" ||  $o->categoryName == "PointsofInterest(Image-Text)") {
+            if ( $o->category_name == "Decoration" ||  $o->category_name == "Door" ||  $o->category_name == "PointsofInterest(Image-Text)") {
                 $glbURL[$key] = get_the_guid( $o->glbID );
                 $o->glbURL[$key] = $glbURL[$key];
 
@@ -360,9 +360,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
         foreach($objects as $nameObject => $contentObject) {
-            //print_r($contentObject->categoryName);
+            //print_r($contentObject->category_name);
             // ===========  Artifact - Decoration ==============
-            if ( $contentObject->categoryName == 'Decoration' ) {
+            if ( $contentObject->category_name == 'Decoration' ) {
 
                 //$fileOperations->writer("D:\output_master.txt", $contentObject->poi_img_desc);
                 /*
@@ -429,7 +429,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     //print_r($sc_x);
 
 
-                    //print_r($contentObject->categoryName);
+                    //print_r($contentObject->category_name);
                     $a_entity = $dom->createElement( "a-entity" );
                     $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                     $a_entity->appendChild( $dom->createTextNode( '' ) );
@@ -448,7 +448,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 }
 
                 //==================== Pawn =================
-            }else if ( $contentObject->categoryName == 'pawn' ) {
+            }else if ( $contentObject->category_name == 'pawn' ) {
 
 
                 if($showPawnPositions=="true") {
@@ -466,10 +466,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $ascene->appendChild( $a_entity );
                 }
 
-            } else if ( $contentObject->categoryName == 'lightSun' ||
-                $contentObject->categoryName == 'lightSpot' ||
-                $contentObject->categoryName == 'lightLamp' ||
-                $contentObject->categoryName == 'lightAmbient' )
+            } else if ( $contentObject->category_name == 'lightSun' ||
+                $contentObject->category_name == 'lightSpot' ||
+                $contentObject->category_name == 'lightLamp' ||
+                $contentObject->category_name == 'lightAmbient' )
             {
 
                 $a_light = $dom->createElement( "a-light" );
@@ -478,7 +478,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 // Affine transformations
                 $fileOperations->setAffineTransformations($a_light, $contentObject);
 
-                switch ($contentObject->categoryName){
+                switch ($contentObject->category_name){
                     case 'lightSun':
 
                         $a_light_target = $dom->createElement( "a-entity" );
@@ -543,7 +543,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 // Add to scene
                 $ascene->appendChild( $a_light );
-            }else if ( $contentObject->categoryName == 'Door' ) {
+            }else if ( $contentObject->category_name == 'Door' ) {
                 //print_r($contentObject);
                 $a_entity = $dom->createElement( "a-entity" );
                 $a_entity->appendChild( $dom->createTextNode( '' ) );
@@ -568,12 +568,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 if (!empty($contentObject->sceneID_target))
                     includeDoorFunctionality($a_entity, $contentObject->sceneID_target);
-            } else if ($contentObject->categoryName == 'avatarYawObject') {
+            } else if ($contentObject->category_name == 'avatarYawObject') {
                     continue;
 
 
 
-            } else if ($contentObject->categoryName == 'PointsofInterest(Video)') {
+            } else if ($contentObject->category_name == 'PointsofInterest(Video)') {
                 //print_r(empty($contentObject->video_link));
 
 
@@ -756,7 +756,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //
                 //$a_entity->setAttribute( "height", "20" );
                 //$a_entity->setAttribute( "width", "20" );
-            }else if ($contentObject->categoryName == 'PointsofInterest(link)') {
+            }else if ($contentObject->category_name == 'PointsofInterest(link)') {
                 $a_entity = $dom->createElement( "a-entity" );
                 $a_entity->appendChild( $dom->createTextNode( '' ) );
                 $sc_x = $contentObject->scale[0];
@@ -781,7 +781,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             
             
-            }else if ($contentObject->categoryName == 'PointsofInterest(Image-Text)') {
+            }else if ($contentObject->category_name == 'PointsofInterest(Image-Text)') {
                 //print_r($contentObject);
                 //$fileOperations->writer("D:/output_masterPOi.txt", $contentObject->poi_img_desc);
 
@@ -834,7 +834,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //print_r($sc_x);
 
 
-                //print_r($contentObject->categoryName);
+                //print_r($contentObject->category_name);
                 $a_ui_entity = $dom->createElement("a-entity");
                 $a_ui_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                 $a_ui_entity->setAttribute("id", "ui");
@@ -1097,7 +1097,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             fwrite($f, print_r($basicDomElements['actionsDiv'], true));
             fclose($f);*/
 
-            if ( $contentObject->categoryName == 'pawn' ) {
+            if ( $contentObject->category_name == 'pawn' ) {
                 $i++;
                 $buttonDiv = $dom->createElement( "button" );
 
