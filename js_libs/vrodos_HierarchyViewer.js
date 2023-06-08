@@ -15,9 +15,7 @@ function resetInScene(name){
     }
 }
 
-function AppendObject(obj, game_object_nameA_assetName, game_object_nameB_dateCreated, deleteButtonHTML, resetButtonHTML){
-
-    console.log(obj);
+function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML){
 
     jQuery('#hierarchy-viewer').append(
         '<li class="hierarchyItem mdc-list-item" id="' + obj.name + '">' +
@@ -25,8 +23,8 @@ function AppendObject(obj, game_object_nameA_assetName, game_object_nameB_dateCr
         'style="font-size: 9pt; line-height:12pt" ' +
         'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
         '<span id="" class="mdc-list-item__text">' +
-        game_object_nameA_assetName + '<br />' +
-        '<span style="font-size:7pt; color:grey">' + game_object_nameB_dateCreated + '</span>' +
+        object_name + '<br />' +
+        '<span style="font-size:7pt; color:grey">' + created + '</span>' +
         '</span>' +
         '</a>' +
         deleteButtonHTML +
