@@ -6,7 +6,7 @@
 
 class VRodos_LightsPawn_Loader {
 
-    constructor(who){
+    constructor(who) {
     };
 
     load(resources3D) {
@@ -16,28 +16,28 @@ class VRodos_LightsPawn_Loader {
             (function (name) {
 
 
-                if(name === 'fogtype' ) {
-                    if( resources3D[name] === 'linear'){
+                if (name === 'fogtype') {
+                    if (resources3D[name] === 'linear') {
 
-                        envir.scene.fog = new THREE.Fog( resources3D['fogcolor'],
-                                                          parseFloat(resources3D['fognear']),
-                                                          parseFloat(resources3D['fogfar'])
-                                                        );
+                        envir.scene.fog = new THREE.Fog(resources3D['fogcolor'],
+                            parseFloat(resources3D['fognear']),
+                            parseFloat(resources3D['fogfar'])
+                        );
 
-                    } else if( resources3D[name] === 'exponential') {
+                    } else if (resources3D[name] === 'exponential') {
 
-                        envir.scene.fog = new THREE.FogExp2( resources3D['fogcolor'],
-                                                             parseFloat(resources3D['fogdensity'])
-                                                           );
+                        envir.scene.fog = new THREE.FogExp2(resources3D['fogcolor'],
+                            parseFloat(resources3D['fogdensity'])
+                        );
 
                     }
 
                     // Set the UIs too
                     document.getElementById('FogType').value = resources3D[name];
 
-                    if (resources3D[name] === "none"){
+                    if (resources3D[name] === "none") {
                         document.getElementById('RadioNoFog').checked = true;
-                    } else if (resources3D[name] === "linear"){
+                    } else if (resources3D[name] === "linear") {
                         document.getElementById('RadioLinearFog').checked = true;
                     } else if (resources3D[name] === "exponential") {
                         document.getElementById('RadioExponentialFog').checked = true;
@@ -54,13 +54,13 @@ class VRodos_LightsPawn_Loader {
                 }
 
 
-                if(name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity')
+                if (name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity')
                     return;
 
 
 
                 // Scene Settings
-                if(name === 'ClearColor') {
+                if (name === 'ClearColor') {
 
                     //console.log("resources3D['ClearColor']", resources3D['ClearColor']);
 
@@ -68,21 +68,21 @@ class VRodos_LightsPawn_Loader {
 
                     //envir.renderer.setClearColor(resources3D['ClearColor']);
 
-                    if(document.getElementById('sceneClearColor')) {
+                    if (document.getElementById('sceneClearColor')) {
                         document.getElementById('sceneClearColor').value = resources3D['ClearColor'];
                     }
-                    if(document.getElementById('jscolorpick')) {
+                    if (document.getElementById('jscolorpick')) {
                         document.getElementById('jscolorpick').value = resources3D['ClearColor'];
                     }
                     return;
                 }
 
-                if(name === 'toneMappingExposure') {
+                if (name === 'toneMappingExposure') {
 
-                    let toneMappingExposure =  parseFloat(resources3D['toneMappingExposure']);
+                    let toneMappingExposure = parseFloat(resources3D['toneMappingExposure']);
                     envir.renderer.toneMappingExposure = toneMappingExposure;
 
-                    if(document.getElementById('rendererToneMapping')) {
+                    if (document.getElementById('rendererToneMapping')) {
                         document.getElementById('rendererToneMapping').value = toneMappingExposure;
                     }
 
@@ -90,13 +90,13 @@ class VRodos_LightsPawn_Loader {
                 }
 
 
-                if(name === 'enableEnvironmentTexture') {
+                if (name === 'enableEnvironmentTexture') {
 
                     let enableEnvironmentTexture = (resources3D['enableEnvironmentTexture'] === 'true');
 
                     envir.scene.environment = enableEnvironmentTexture ? envir.maintexture : "";
 
-                    if(document.getElementById('sceneEnvironmentTexture')) {
+                    if (document.getElementById('sceneEnvironmentTexture')) {
                         document.getElementById('sceneEnvironmentTexture').checked = enableEnvironmentTexture;
                     }
 
@@ -104,12 +104,12 @@ class VRodos_LightsPawn_Loader {
                 }
 
 
-                var clearToParse = resources3D[name]['category_name'].startsWith("light") || resources3D[name]['category_name'].startsWith("pawn");
+                //var clearToParse = resources3D[name]['category_name'].startsWith("light") || resources3D[name]['category_name'].startsWith("pawn");
 
-                if(!clearToParse)
-                    return;
+                //if(!clearToParse)
+                //    return;
 
-                if (resources3D[name]['category_name']==='lightSun'){
+                if (resources3D[name]['category_name'] === 'lightSun') {
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -118,7 +118,7 @@ class VRodos_LightsPawn_Loader {
                     var lightintensity = resources3D[name]['lightintensity'];
 
                     // LIGHT
-                    var lightSun = new THREE.DirectionalLight( colora, lightintensity ); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
+                    var lightSun = new THREE.DirectionalLight(colora, lightintensity); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
                     //lightSun.castShadow = true;
 
                     //Set up shadow properties for the light
@@ -128,14 +128,14 @@ class VRodos_LightsPawn_Loader {
                     // REM HERE
                     lightSun.position.set(resources3D[name]['trs']['translation'][0],
                         resources3D[name]['trs']['translation'][1],
-                        resources3D[name]['trs']['translation'][2] );
+                        resources3D[name]['trs']['translation'][2]);
 
                     lightSun.rotation.set(
                         resources3D[name]['trs']['rotation'][0],
                         resources3D[name]['trs']['rotation'][1],
-                        resources3D[name]['trs']['rotation'][2] );
+                        resources3D[name]['trs']['rotation'][2]);
 
-                    lightSun.scale.set( resources3D[name]['trs']['scale'][0],
+                    lightSun.scale.set(resources3D[name]['trs']['scale'][0],
                         resources3D[name]['trs']['scale'][1],
                         resources3D[name]['trs']['scale'][2]);
 
@@ -165,8 +165,8 @@ class VRodos_LightsPawn_Loader {
 
                     //// Add Sun Helper
                     var sunSphere = new THREE.Mesh(
-                        new THREE.SphereBufferGeometry( 1, 16, 8 ),
-                        new THREE.MeshBasicMaterial( { color: colora } )
+                        new THREE.SphereBufferGeometry(1, 16, 8),
+                        new THREE.MeshBasicMaterial({ color: colora })
                     );
                     sunSphere.isSelectableMesh = true;
                     sunSphere.name = "SunSphere";
@@ -180,7 +180,7 @@ class VRodos_LightsPawn_Loader {
 
 
 
-                    var lightSunHelper = new THREE.DirectionalLightHelper( lightSun, 3, colora);
+                    var lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, colora);
                     lightSunHelper.isLightHelper = true;
                     lightSunHelper.name = 'lightHelper_' + lightSun.name;
                     lightSunHelper.category_name = 'lightHelper';
@@ -198,8 +198,8 @@ class VRodos_LightsPawn_Loader {
                     var lightTargetSpot = new THREE.Object3D();
 
                     lightTargetSpot.add(new THREE.Mesh(
-                        new THREE.SphereBufferGeometry( 0.5, 16, 8 ),
-                        new THREE.MeshBasicMaterial( { color: colora } )
+                        new THREE.SphereBufferGeometry(0.5, 16, 8),
+                        new THREE.MeshBasicMaterial({ color: colora })
                     ));
 
                     lightTargetSpot.isSelectableMesh = true;
@@ -216,20 +216,20 @@ class VRodos_LightsPawn_Loader {
                     lightTargetSpot.parentLightHelper = lightSunHelper;
 
                     lightSun.target.position.set(lightTargetSpot.position.x, lightTargetSpot.position.y,
-                        lightTargetSpot.position.z) ;
+                        lightTargetSpot.position.z);
 
                     envir.scene.add(lightTargetSpot);
 
                     //Create a helper for the shadow camera (optional)
-                    var lightSunShadowhelper = new THREE.CameraHelper( lightSun.shadow.camera );
+                    var lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
                     lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
-                    envir.scene.add( lightSunShadowhelper );
+                    envir.scene.add(lightSunShadowhelper);
 
 
 
 
                 }
-                else if (resources3D[name]['category_name']==='lightLamp'){
+                else if (resources3D[name]['category_name'] === 'lightLamp') {
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -245,14 +245,14 @@ class VRodos_LightsPawn_Loader {
                     lightLamp.position.set(
                         resources3D[name]['trs']['translation'][0],
                         resources3D[name]['trs']['translation'][1],
-                        resources3D[name]['trs']['translation'][2] );
+                        resources3D[name]['trs']['translation'][2]);
 
                     lightLamp.rotation.set(
                         resources3D[name]['trs']['rotation'][0],
                         resources3D[name]['trs']['rotation'][1],
-                        resources3D[name]['trs']['rotation'][2] );
+                        resources3D[name]['trs']['rotation'][2]);
 
-                    lightLamp.scale.set( resources3D[name]['trs']['scale'],
+                    lightLamp.scale.set(resources3D[name]['trs']['scale'],
                         resources3D[name]['trs']['scale'],
                         resources3D[name]['trs']['scale']);
 
@@ -262,14 +262,14 @@ class VRodos_LightsPawn_Loader {
                     lightLamp.isSelectableMesh = true;
                     lightLamp.isLight = true;
                     lightLamp.castShadow = true;
-                    lightLamp.shadow.radius = parseFloat( resources3D[name]['shadowRadius'] );
+                    lightLamp.shadow.radius = parseFloat(resources3D[name]['shadowRadius']);
 
                     envir.scene.add(lightLamp);
 
                     // Add Lamp Sphere
                     var lampSphere = new THREE.Mesh(
                         new THREE.SphereBufferGeometry(0.5, 16, 8),
-                        new THREE.MeshBasicMaterial({color: colora})
+                        new THREE.MeshBasicMaterial({ color: colora })
                     );
                     lampSphere.isSelectableMesh = false;
                     lampSphere.name = "LampSphere";
@@ -293,8 +293,7 @@ class VRodos_LightsPawn_Loader {
 
                 }
                 // SPOT
-                else if (resources3D[name]['category_name']==='lightSpot')
-                {
+                else if (resources3D[name]['category_name'] === 'lightSpot') {
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -313,14 +312,14 @@ class VRodos_LightsPawn_Loader {
                     lightSpot.position.set(
                         resources3D[name]['trs']['translation'][0],
                         resources3D[name]['trs']['translation'][1],
-                        resources3D[name]['trs']['translation'][2] );
+                        resources3D[name]['trs']['translation'][2]);
 
                     lightSpot.rotation.set(
                         resources3D[name]['trs']['rotation'][0],
                         resources3D[name]['trs']['rotation'][1],
-                        resources3D[name]['trs']['rotation'][2] );
+                        resources3D[name]['trs']['rotation'][2]);
 
-                    lightSpot.scale.set( resources3D[name]['trs']['scale'],
+                    lightSpot.scale.set(resources3D[name]['trs']['scale'],
                         resources3D[name]['trs']['scale'],
                         resources3D[name]['trs']['scale']);
 
@@ -342,8 +341,8 @@ class VRodos_LightsPawn_Loader {
 
                     //// Add Spot Sphere
                     var spotSphere = new THREE.Mesh(
-                        new THREE.SphereBufferGeometry( 1, 16, 8 ),
-                        new THREE.MeshBasicMaterial({color: colora})
+                        new THREE.SphereBufferGeometry(1, 16, 8),
+                        new THREE.MeshBasicMaterial({ color: colora })
                     );
                     spotSphere.isSelectableMesh = true;
                     spotSphere.name = "SpotSphere";
@@ -374,14 +373,13 @@ class VRodos_LightsPawn_Loader {
 
 
                 }
-                else if (resources3D[name]['category_name']==='lightAmbient')
-                {
+                else if (resources3D[name]['category_name'] === 'lightAmbient') {
 
                     //console.log("resources3D", resources3D);
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
-                                                 resources3D[name]['lightcolor'][1],
-                                                 resources3D[name]['lightcolor'][2]);
+                        resources3D[name]['lightcolor'][1],
+                        resources3D[name]['lightcolor'][2]);
 
                     var lightintensity = resources3D[name]['lightintensity'];
 
@@ -392,16 +390,16 @@ class VRodos_LightsPawn_Loader {
                     lightAmbient.position.set(
                         resources3D[name]['trs']['translation'][0],
                         resources3D[name]['trs']['translation'][1],
-                        resources3D[name]['trs']['translation'][2] );
+                        resources3D[name]['trs']['translation'][2]);
 
                     lightAmbient.rotation.set(
                         resources3D[name]['trs']['rotation'][0],
                         resources3D[name]['trs']['rotation'][1],
-                        resources3D[name]['trs']['rotation'][2] );
+                        resources3D[name]['trs']['rotation'][2]);
 
-                    lightAmbient.scale.set( resources3D[name]['trs']['scale'],
-                                            resources3D[name]['trs']['scale'],
-                                            resources3D[name]['trs']['scale']);
+                    lightAmbient.scale.set(resources3D[name]['trs']['scale'],
+                        resources3D[name]['trs']['scale'],
+                        resources3D[name]['trs']['scale']);
 
                     lightAmbient.name = name;
                     lightAmbient.asset_name = "mylightAmbient";
@@ -412,8 +410,8 @@ class VRodos_LightsPawn_Loader {
 
                     //// Add Sun Helper
                     var ambientSphere = new THREE.Mesh(
-                        new THREE.SphereBufferGeometry( 1, 16, 8 ),
-                        new THREE.MeshBasicMaterial( { color: colora } )
+                        new THREE.SphereBufferGeometry(1, 16, 8),
+                        new THREE.MeshBasicMaterial({ color: colora })
                     );
                     ambientSphere.isSelectableMesh = true;
                     ambientSphere.name = "ambientSphere";
@@ -433,7 +431,7 @@ class VRodos_LightsPawn_Loader {
                     }
 
                 }
-                else if (resources3D[name]['category_name']==='pawn'){
+                else if (resources3D[name]['category_name'] === 'pawn') {
 
                     // Instantiate a loader
                     const loader = new THREE.GLTFLoader();
@@ -443,7 +441,7 @@ class VRodos_LightsPawn_Loader {
                         // resource URL
                         pluginPath + '/assets/pawn.glb',
                         // called when the resource is loaded
-                        function ( gltf ) {
+                        function (gltf) {
 
                             var pawn = gltf.scene.children[0];
 
@@ -451,14 +449,14 @@ class VRodos_LightsPawn_Loader {
                             pawn.position.set(
                                 resources3D[name]['trs']['translation'][0],
                                 resources3D[name]['trs']['translation'][1],
-                                resources3D[name]['trs']['translation'][2] );
+                                resources3D[name]['trs']['translation'][2]);
 
                             pawn.rotation.set(
                                 resources3D[name]['trs']['rotation'][0],
                                 resources3D[name]['trs']['rotation'][1],
-                                resources3D[name]['trs']['rotation'][2] );
+                                resources3D[name]['trs']['rotation'][2]);
 
-                            pawn.scale.set( resources3D[name]['trs']['scale'],
+                            pawn.scale.set(resources3D[name]['trs']['scale'],
                                 resources3D[name]['trs']['scale'],
                                 resources3D[name]['trs']['scale']);
 
@@ -472,24 +470,24 @@ class VRodos_LightsPawn_Loader {
                             pawn.material.opacity = 0.6;
 
                             // Give a number to Pawn
-                            var indexPawn=1;
-                            for (let ch of envir.scene.children){
-                                if (ch.name.includes("Pawn")){
+                            var indexPawn = 1;
+                            for (let ch of envir.scene.children) {
+                                if (ch.name.includes("Pawn")) {
                                     indexPawn += 1;
                                 }
                             }
 
 
-                            var pawnLabelDiv = document.createElement( 'div' );
+                            var pawnLabelDiv = document.createElement('div');
                             pawnLabelDiv.className = '';
-                            pawnLabelDiv.textContent = 'Actor ' +  indexPawn;
+                            pawnLabelDiv.textContent = 'Actor ' + indexPawn;
                             pawnLabelDiv.style.marginTop = '-1em';
                             pawnLabelDiv.style.fontSize = '26px';
                             pawnLabelDiv.style.color = "yellow";
                             //pawnLabelDiv.style.letterSpacing = '4px';
-                            var pawnLabel = new THREE.CSS2DObject( pawnLabelDiv );
-                            pawnLabel.position.set( 0, 1.5, 0 );
-                            pawn.add( pawnLabel );
+                            var pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
+                            pawnLabel.position.set(0, 1.5, 0);
+                            pawn.add(pawnLabel);
                             //pawnLabel.layers.set( 0 );
 
 
@@ -507,19 +505,19 @@ class VRodos_LightsPawn_Loader {
 
                         },
                         // called while loading is progressing
-                        function ( xhr ) {
+                        function (xhr) {
                             //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
                         },
                         // called when loading has errors
-                        function ( error ) {
-                            console.log( 'An error happened while loading Pawn. Error 455');
+                        function (error) {
+                            console.log('An error happened while loading Pawn. Error 455');
                         }
                     );
 
 
 
 
-            }
+                }
 
 
 

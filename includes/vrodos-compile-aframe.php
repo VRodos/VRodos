@@ -937,7 +937,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_panel_entity->appendChild($a_main_img_entity);
                 $a_panel_entity->appendChild($a_title_img_entity);
 
-                if($contentObject->poi_onlyimg == "1")
+                if(!is_null($contentObject->poi_img_content))
                 {
                     //print_r($contentObject->poi_img_desc);
                     $a_main_img_entity->setAttribute("mixin", "poiImage");
@@ -947,7 +947,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_desc_img_entity->setAttribute("id", "desc_$nameObject");
                     $a_desc_img_entity->setAttribute("position", "-0.68 -0.2 0");
 
-                    $a_desc_img_entity->setAttribute("text", "baseline: top; shader: msdf; anchor: left; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: white; value: $contentObject->poi_img_desc");
+                    $a_desc_img_entity->setAttribute("text", "baseline: top; shader: msdf; anchor: left; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: white; value: $contentObject->poi_img_content");
                     $a_panel_entity->appendChild($a_desc_img_entity);
                 }
                 else{
