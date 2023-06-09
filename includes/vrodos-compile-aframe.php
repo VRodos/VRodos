@@ -59,7 +59,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
           }*/
         //print_r($cp_poi_img_desc);
 
-        $scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
+        //$scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
         $scene_json[$key] = json_decode( $scene_content_text[$key] );
 
     }
@@ -839,7 +839,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_button_entity->setAttribute("mixin", "frame");
                 //$a_button_entity->setAttribute("glow", "");
                 $a_button_entity->setAttribute("class", "raycastable menu-button hideable");
-                $a_button_entity->setAttribute("indicator", "$nameObject");
+                //$a_button_entity->setAttribute("indicator", "$nameObject");
 
                 $a_button_entity->setAttribute('original-scale', "1 1 1");
 
