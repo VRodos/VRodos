@@ -25,8 +25,8 @@ class VRodos_LoaderMulti {
                 }
 
                 // Lights are in a different loop
-                if (resources3D[name]['categoryName']) {
-                    if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
+                if (resources3D[name]['category_name']) {
+                    if (resources3D[name]['category_name'].startsWith("light") || resources3D[name]['category_name'].startsWith("pawn"))
                         return;
                 }
 
@@ -37,6 +37,7 @@ class VRodos_LoaderMulti {
 
                         // called when the resource is loaded
                         function (objectMain) {
+
 
                             let object = objectMain.scene.children[0];
                             object.name = "Camera3Dmodel";
@@ -80,22 +81,18 @@ class VRodos_LoaderMulti {
 
                 } else { // GLB 3D models
 
-                    //console.log(resources3D[name]);
-
-                    if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
-
+                    if (resources3D[name]['glb_id'] !== "" && resources3D[name]['glb_id'] !== undefined) {
 
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
                             type: 'POST',
                             data: {
                                 'action': 'vrodos_fetch_glb_asset_action',
-                                'asset_id': resources3D[name]['assetid']
+                                'asset_id': resources3D[name]['asset_id']
                             },
                             success: function (res) {
 
                                 let resourcesGLB = JSON.parse(res);
-
                                 let glbURL = resourcesGLB['glbURL'];
 
                                 // Instantiate a loader
@@ -117,6 +114,7 @@ class VRodos_LoaderMulti {
                                         }
 
                                         object = setObjectProperties(object.scene, name, resources3D);
+
                                         object.isSelectableMesh = true;
                                         envir.scene.add(object);
                                     },
@@ -124,7 +122,7 @@ class VRodos_LoaderMulti {
                                     function (xhr) {
 
                                         document.getElementById("result_download").innerHTML = "'" +
-                                            resources3D[name].assetname + "' downloaded " +
+                                            resources3D[name]['asset_name'] + "' downloaded " +
                                             Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
                                     },
                                     // called when loading has errors
@@ -158,16 +156,21 @@ class VRodos_LoaderMulti {
 // Set loaded Object or Scene (for GLBs) properties
 function setObjectProperties(object, name, resources3D) {
 
+    // Automatically load values that are available
+    for (let entry in Object.keys(resources3D[name])) {
+        if (!['id', 'translation', 'position', 'rotation', 'scale', 'quaternion'].includes(Object.keys(resources3D[name])[entry])) {
+            object[[Object.keys(resources3D[name])[entry]]] = Object.values(resources3D[name])[entry];
+        }
+    }
+
+
     object.isSelectableMesh = true;
     object.isLight = resources3D[name]['isLight'];
-    object.name = name;
-    object.assetname = resources3D[name]['assetname'];
-    object.assetid = resources3D[name]['assetid'];
     object.fnPath = resources3D[name]['path'];
 
     // avoid revealing the full path. Use the relative in the saving format.
     object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
-    object.glbID = resources3D[name]['glbID'];
+    object['glb_id'] = resources3D[name]['glb_id'];
 
 
     if (resources3D[name]['overrideMaterial'] === "true") {
@@ -190,13 +193,6 @@ function setObjectProperties(object, name, resources3D) {
             startVideo(resources3D, name);
         }
     }
-
-    // Automatically load values that are available
-    for (let entry in Object.keys(resources3D[name])) {
-        object[[Object.keys(resources3D[name])[entry]]] = Object.values(resources3D[name])[entry];
-    }
-
-    //object.type_behavior = resources3D[name]['type_behavior'];
 
     object.position.set(
         resources3D[name]['trs']['translation'][0],

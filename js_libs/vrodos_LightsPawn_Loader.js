@@ -6,8 +6,6 @@
 
 class VRodos_LightsPawn_Loader {
 
-
-
     constructor(who){
     };
 
@@ -106,7 +104,7 @@ class VRodos_LightsPawn_Loader {
                 }
 
 
-                var clearToParse = resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn");
+                var clearToParse = resources3D[name]['category_name'].startsWith("light") || resources3D[name]['category_name'].startsWith("pawn");
 
                 if(!clearToParse)
                     return;
@@ -149,7 +147,7 @@ class VRodos_LightsPawn_Loader {
                     //console.log("name", name);
 
                     lightSun.name = name;
-                    lightSun.assetname = "mylightSun";
+                    lightSun.asset_name = "mylightSun";
                     lightSun.categoryName = "lightSun";
                     lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
@@ -185,7 +183,7 @@ class VRodos_LightsPawn_Loader {
                     var lightSunHelper = new THREE.DirectionalLightHelper( lightSun, 3, colora);
                     lightSunHelper.isLightHelper = true;
                     lightSunHelper.name = 'lightHelper_' + lightSun.name;
-                    lightSunHelper.categoryName = 'lightHelper';
+                    lightSunHelper.category_name = 'lightHelper';
                     lightSunHelper.parentLightName = name;
                     envir.scene.add(lightSunHelper);
 
@@ -206,8 +204,8 @@ class VRodos_LightsPawn_Loader {
 
                     lightTargetSpot.isSelectableMesh = true;
                     lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
-                    lightTargetSpot.assetname = "lightTargetSpot_" + lightSun.assetname;
-                    lightTargetSpot.categoryName = "lightTargetSpot";
+                    lightTargetSpot.asset_name = "lightTargetSpot_" + lightSun.asset_name;
+                    lightTargetSpot.category_name = "lightTargetSpot";
                     lightTargetSpot.isLightTargetSpot = true;
 
                     lightTargetSpot.position.set(resources3D[name]['targetposition'][0],
@@ -231,7 +229,7 @@ class VRodos_LightsPawn_Loader {
 
 
                 }
-                else if (resources3D[name]['categoryName']==='lightLamp'){
+                else if (resources3D[name]['category_name']==='lightLamp'){
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -259,8 +257,8 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['scale']);
 
                     lightLamp.name = name;
-                    lightLamp.assetname = "mylightLamp";
-                    lightLamp.categoryName = "lightLamp";
+                    lightLamp.asset_name = "mylightLamp";
+                    lightLamp.category_name = "lightLamp";
                     lightLamp.isSelectableMesh = true;
                     lightLamp.isLight = true;
                     lightLamp.castShadow = true;
@@ -281,7 +279,7 @@ class VRodos_LightsPawn_Loader {
                     var lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, colora);
                     lightLampHelper.isLightHelper = true;
                     lightLampHelper.name = 'lightHelper_' + lightLamp.name;
-                    lightLampHelper.categoryName = 'lightHelper';
+                    lightLampHelper.category_name = 'lightHelper';
                     lightLampHelper.parentLightName = lightLamp.name;
                     envir.scene.add(lightLampHelper);
                     lightLampHelper.update();
@@ -295,7 +293,7 @@ class VRodos_LightsPawn_Loader {
 
                 }
                 // SPOT
-                else if (resources3D[name]['categoryName']==='lightSpot')
+                else if (resources3D[name]['category_name']==='lightSpot')
                 {
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
@@ -327,8 +325,8 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['scale']);
 
                     lightSpot.name = name;
-                    lightSpot.assetname = "mylightSpot";
-                    lightSpot.categoryName = "lightSpot";
+                    lightSpot.asset_name = "mylightSpot";
+                    lightSpot.category_name = "lightSpot";
                     lightSpot.isSelectableMesh = true;
                     lightSpot.isLight = true;
 
@@ -356,7 +354,7 @@ class VRodos_LightsPawn_Loader {
                     var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, colora);
                     lightSpotHelper.isLightHelper = true;
                     lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
-                    lightSpotHelper.categoryName = 'lightHelper';
+                    lightSpotHelper.category_name = 'lightHelper';
                     lightSpotHelper.parentLightName = lightSpot.name;
 
                     envir.scene.add(lightSpot);
@@ -376,7 +374,7 @@ class VRodos_LightsPawn_Loader {
 
 
                 }
-                else if (resources3D[name]['categoryName']==='lightAmbient')
+                else if (resources3D[name]['category_name']==='lightAmbient')
                 {
 
                     //console.log("resources3D", resources3D);
@@ -406,8 +404,8 @@ class VRodos_LightsPawn_Loader {
                                             resources3D[name]['trs']['scale']);
 
                     lightAmbient.name = name;
-                    lightAmbient.assetname = "mylightAmbient";
-                    lightAmbient.categoryName = "lightAmbient";
+                    lightAmbient.asset_name = "mylightAmbient";
+                    lightAmbient.category_name = "lightAmbient";
                     lightAmbient.isSelectableMesh = true;
                     lightAmbient.isLight = true;
 
@@ -435,7 +433,7 @@ class VRodos_LightsPawn_Loader {
                     }
 
                 }
-                else if (resources3D[name]['categoryName']==='pawn'){
+                else if (resources3D[name]['category_name']==='pawn'){
 
                     // Instantiate a loader
                     const loader = new THREE.GLTFLoader();
@@ -465,8 +463,8 @@ class VRodos_LightsPawn_Loader {
                                 resources3D[name]['trs']['scale']);
 
                             pawn.name = name;
-                            pawn.assetname = "myActor";
-                            pawn.categoryName = "pawn";
+                            pawn.asset_name = "myActor";
+                            pawn.category_name = "pawn";
                             pawn.isSelectableMesh = true;
                             pawn.isLight = false;
 

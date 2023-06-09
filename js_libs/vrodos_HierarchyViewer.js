@@ -15,7 +15,7 @@ function resetInScene(name){
     }
 }
 
-function AppendObject(obj, game_object_nameA_assetName, game_object_nameB_dateCreated, deleteButtonHTML, resetButtonHTML){
+function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML){
 
     jQuery('#hierarchy-viewer').append(
         '<li class="hierarchyItem mdc-list-item" id="' + obj.name + '">' +
@@ -23,8 +23,8 @@ function AppendObject(obj, game_object_nameA_assetName, game_object_nameB_dateCr
         'style="font-size: 9pt; line-height:12pt" ' +
         'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
         '<span id="" class="mdc-list-item__text">' +
-        game_object_nameA_assetName + '<br />' +
-        '<span style="font-size:7pt; color:grey">' + game_object_nameB_dateCreated + '</span>' +
+        object_name + '<br />' +
+        '<span style="font-size:7pt; color:grey">' + created + '</span>' +
         '</span>' +
         '</a>' +
         deleteButtonHTML +
@@ -76,12 +76,12 @@ function setHierarchyViewer() {
 
         if (obj.isSelectableMesh || obj.name === "avatarCamera") {
 
-            let game_object_nameA_assetName = obj.name === 'avatarCamera' ? "Director" : obj.assetname;
+            let game_object_nameA_assetName = obj.name === 'avatarCamera' ? "Director" : obj.asset_name;
 
             let game_object_nameB_dateCreated = obj.name === 'avatarCamera' ? "" : unixTimestamp_to_time(
                                                 obj.name.substring(obj.name.length - 10, obj.name.length));
 
-            let deleteButton = obj.categoryName === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
+            let deleteButton = obj['category_name'] === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
                                                                                            CreateDeleteButton(obj);
 
             // Add as a list item
@@ -95,11 +95,11 @@ function setHierarchyViewer() {
 // Single object add in Hierarchy
 function addInHierarchyViewer(obj) {
 
-    let game_object_nameA_assetName = obj.categoryName !== 'lightTargetSpot' ? obj.assetname : obj.name.substring(0, obj.name.length - 11);
+    let game_object_nameA_assetName = obj['category_name'] !== 'lightTargetSpot' ? obj['asset_name'] : obj.name.substring(0, obj.name.length - 11);
 
     let game_object_nameB_dateCreated = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
-    let deleteButton = obj.categoryName === "lightTargetSpot" ? "" : CreateDeleteButton(obj);
+    let deleteButton = obj['category_name'] === "lightTargetSpot" ? "" : CreateDeleteButton(obj);
 
     // Add as a list item
     AppendObject(obj, game_object_nameA_assetName, game_object_nameB_dateCreated, deleteButton, CreateResetButton(obj));

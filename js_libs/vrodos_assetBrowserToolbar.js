@@ -35,7 +35,6 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     // closeButton = jQuery('#bt_close_file_toolbar');
 
 
-
     // Create drag image BEFORE event is fired - THEN call it inside the event
     function createDragImage() {
         var img = jQuery('<img>');
@@ -53,7 +52,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         });
         return img[0];
     }
-    var dragImg = createDragImage();
+    let dragImg = createDragImage();
 
     render(responseData, gameProjectSlug, urlforAssetEdit);
 
@@ -110,26 +109,23 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         dragstart: function (e) {
             // Problems with Chrome. Firefox ok.
 
-            let screenshotImage = e.target.attributes.getNamedItem("data-sshot-url");
+            let screenshotImage = e.target.attributes.getNamedItem("data-screenshot_path");
 
             dragImg.src = screenshotImage ? screenshotImage.value : "/wp-content/plugins/VRodos/images/ic_asset.png";
 
             e.originalEvent.dataTransfer.setDragImage(dragImg, 32, 32);
 
-            let dragData = {
-                "title": e.target.attributes.getNamedItem("data-assetSlug").value + "_" + Math.floor(Date.now() / 1000),
-                "assetid": e.target.attributes.getNamedItem("data-assetid").value,
-                "assetname": e.target.attributes.getNamedItem("data-name").value,
-                "glbID": e.target.attributes.getNamedItem("data-glbID").value,
-                "path": e.target.attributes.getNamedItem("data-path").value,
-                "categoryID": e.target.attributes.getNamedItem("data-categoryID").value,
-                "categoryName": e.target.attributes.getNamedItem("data-categoryName").value,
-                "categorySlug": e.target.attributes.getNamedItem("data-categorySlug").value,
-                "categoryIcon": e.target.attributes.getNamedItem("data-categoryIcon").value,
-                "isCloned": e.target.attributes.getNamedItem("data-isCloned").value,
-                "isJoker": e.target.attributes.getNamedItem("data-isJoker").value
-            };
+            let dragData = {};
+            for (let entry in Object.keys(e.target.attributes)) {
 
+                let name = (Object.values(e.target.attributes)[entry]).name;
+
+                name = name.substring(name.indexOf('-')+1);
+                dragData[name] = (Object.values(e.target.attributes)[entry]).value;
+
+            }
+            dragData.title = e.target.attributes.getNamedItem("data-asset_slug").value + "_" + Math.floor(Date.now() / 1000);
+            dragData.name = dragData.title;
 
             var jsonDataDrag = JSON.stringify(dragData);
             e.originalEvent.dataTransfer.setData("text/plain", jsonDataDrag);
@@ -159,27 +155,25 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
             for (let i = 0; i < enlistData.length; i++) {
                 f = enlistData[i];
 
-                let fileSize = ''; //bytesToSize(f.size);
-
-                name = escapeHTML(f.name);
+                name = escapeHTML(f['asset_name']);
 
                 // Add the category in tabs if not yet added
-                if (jQuery("#assetCategTab").find("[id='" + f.categoryName + "']").length == 0) {
+                if (jQuery("#assetCategTab").find("[id='" + f.category_slug + "']").length == 0) {
                     //Create an input type dynamically.
                     let element = document.createElement("button");
                     //Assign different attributes to the element.
                     element.className = "tablinks mdc-button";
-                    element.id = f.categoryName;
-                    element.innerHTML = "<i class='material-icons' title='" + f.categoryName + ": " + f.categoryDescription + "' style='font-size:18px;'>" + f.categoryIcon + "</i>";//f.categoryName;
+                    element.id = f['category_name'];
+                    element.innerHTML = "<i class='material-icons' title='" + f['category_name'] + "' style='font-size:18px;'>" + f['category_icon'] + "</i>";
                     element.addEventListener("click", function (event) { openCategoryTab(event, this); });
 
                     document.getElementById("assetCategTab").appendChild(element);
                 }
 
-                f.screenImagePath = f.screenImagePath ? f.screenImagePath : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
+                f['screenshot_path'] = f['screenshot_path'] ? f['screenshot_path'] : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
 
                 let img = '<span class="mdc-list-item__start-detail CenterContents">' +
-                    '<img class="assetImg" draggable="false" style="-webkit-user-drag: none" src=' + encodeURI(f.screenImagePath) + '>' +
+                    '<img class="assetImg" draggable="false" style="-webkit-user-drag: none" src=' + encodeURI(f['screenshot_path']) + '>' +
                     // '<span class="megabytesAsset mdc-typography--caption mdc-theme--text-secondary-on-light">'+ fileSize + '</span>'+
                     '</span>';
 
@@ -188,35 +182,37 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     draggable_string = draggable_string.concat('data-'+Object.keys(f)[entry] + '="' + Object.values(f)[entry]) + '" ';
                 }
 
-                var file = jQuery('<li draggable="true" id="asset-' + f.assetid + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
+
+
+                let file = jQuery('<li draggable="true" id="asset-' + f['asset_id'] + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
                     ' title="Drag the card into the plane"' +
                     draggable_string +'>' + img +
 
                     '<span class="FileListItemName mdc-list-item__text" title="Drag the card into the plane">' + name +
-                    '<i class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption material-icons">' + f.categoryIcon
+                    '<i class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption material-icons">' + f['category_icon']
                     + '</i></span>' +
                     '<span class="FileListItemFooter">' +
 
-                    (f.isJoker === 'false' ?
-                        ('<a draggable="false" ondragstart="return false;" title="Edit asset" id="editAssetBtn-' + f.assetid +
-                            '" onclick="window.location.href=\'' + urlforAssetEdit + f.assetid + '&scene_type=scene&preview=0&editable=true' +
-                            '\'" class="editAssetbutton mdc-button mdc-button--dense">Edit</a>')
-                        :
-                        ('<a draggable="false" ondragstart="return false;" title="View asset" id="editAssetBtn-' + f.assetid +
-                            '" onclick="window.location.href=\'' + urlforAssetEdit + f.assetid + '&scene_type=scene&preview=1&editable=false' +
-                            '\'" class="deleteAssetbutton mdc-button mdc-button--dense">View</a>')
+                    (f['is_joker'] === 'false' ?
+                            ('<a draggable="false" ondragstart="return false;" title="Edit asset" id="editAssetBtn-' + f['asset_id'] +
+                                '" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=0&editable=true' +
+                                '\'" class="editAssetbutton mdc-button mdc-button--dense">Edit</a>')
+                            :
+                            ('<a draggable="false" ondragstart="return false;" title="View asset" id="editAssetBtn-' + f['asset_id'] +
+                                '" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=1&editable=false' +
+                                '\'" class="deleteAssetbutton mdc-button mdc-button--dense">View</a>')
                     ) +
 
-                    (f.isJoker === 'false' ?
-                        ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-' + f.assetid
-                            + '" onclick="vrodos_deleteAssetAjax(' +
-                            f.assetid + ', \'' + gameProjectSlug + '\',' + f.isCloned + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
-                        ''
+                    (f['is_joker'] === 'false' ?
+                            ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-' + f['asset_id']
+                                + '" onclick="vrodos_deleteAssetAjax(' +
+                                f['asset_id'] + ', \'' + gameProjectSlug + '\',' + f['is_cloned'] + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
+                            ''
                     )
                     +
 
                     '</span>' +
-                    '<div id="deleteAssetProgressBar-' + f.assetid + '" class="progressSlider" style="position: absolute;bottom: 0;display: none;">\n' +
+                    '<div id="deleteAssetProgressBar-' + f['asset_id'] + '" class="progressSlider" style="position: absolute;bottom: 0;display: none;">\n' +
                     '<div class="progressSliderLine"></div>\n' +
                     '<div class="progressSliderSubLine progressIncrease"></div>\n' +
                     '<div class="progressSliderSubLine progressDecrease"></div>\n' +
@@ -257,7 +253,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     function selectByTitleComparizon(input_data, needle) {
         var output_data = [];
         input_data.forEach(function (d) {
-            if (d.assetName.indexOf(needle) !== -1)
+            if (d['asset_name'].indexOf(needle) !== -1)
                 output_data.push(d);
         });
         return output_data;
@@ -266,10 +262,10 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
     function openCategoryTab(evt, b) {
 
-        var categName = b.id;
+        let categName = b.id;
 
         // Declare all variables
-        var tabcontent, tablinks;
+        let tabcontent, tablinks;
 
         // Get all elements with class="tabcontent" and hide them
         tabcontent = document.getElementsByClassName("tabcontent");
@@ -284,7 +280,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         }
 
         // Show the current tab, and add an "active" class to the button that opened the tab
-        var items = fileList[0].getElementsByTagName("li");
+        let items = fileList[0].getElementsByTagName("li");
         for (let i = 0; i < items.length; ++i) {
             if (categName == "allAssetsViewBt")
                 items[i].style.display = '';
