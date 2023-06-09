@@ -760,7 +760,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
                 $a_entity->setAttribute("class", "raycastable hideable");
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
-                $a_entity->setAttribute('link-listener',"http://localhost/wp_vrodos/wp-content/uploads//Models/ACM.pdf");
+                $a_entity->setAttribute('link-listener', $contentObject->poi_link_url);
               
 
                 $ascene->appendChild( $a_entity );
