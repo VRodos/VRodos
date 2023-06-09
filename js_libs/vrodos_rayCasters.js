@@ -305,7 +305,7 @@ function showProperties(event, object) {
     //console.log(name);
 
     switch (object.category_slug) {
-        case 'Artifact':
+        case 'decoration':
             displayArtifactProperties(event, name);
             break;
         case 'poi-imagetext':
