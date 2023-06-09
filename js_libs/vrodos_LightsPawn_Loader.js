@@ -109,7 +109,7 @@ class VRodos_LightsPawn_Loader {
                 if(!clearToParse)
                     return;
 
-                if (resources3D[name]['categoryName']==='lightSun'){
+                if (resources3D[name]['category_name']==='lightSun'){
 
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
@@ -148,7 +148,7 @@ class VRodos_LightsPawn_Loader {
 
                     lightSun.name = name;
                     lightSun.asset_name = "mylightSun";
-                    lightSun.categoryName = "lightSun";
+                    lightSun.category_name = "lightSun";
                     lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
 
