@@ -164,13 +164,13 @@ function get_assets($games_slugs){
             switch ($asset_cat_arr[0]->slug) {
                 case 'video':
                     $data_arr['video_id'] = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
-                    $data_arr['video_path'] = wp_get_attachment_url( $data_arr['videoId'] );
+                    $data_arr['video_path'] = wp_get_attachment_url( $data_arr['video_id'] );
                     $data_arr['video_title'] = get_post_meta($asset_id, 'vrodos_asset3d_video_title', true);
                     $data_arr['video_loop'] = get_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', true);
                     break;
                 case 'poi-imagetext':
                     $data_arr['poi_img_id'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', true);
-                    $data_arr['poi_img_path'] = wp_get_attachment_url( $data_arr['poiImageId'] );
+                    $data_arr['poi_img_path'] = wp_get_attachment_url( $data_arr['poi_img_id'] );
                     $data_arr['poi_img_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', true);
                     $data_arr['poi_img_content'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', true);
                     break;
