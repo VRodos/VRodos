@@ -386,28 +386,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 }
                 */
-                /*  if ( str_contains($contentObject->asset_name, 'Door')) {
-                      $a_entity = $dom->createElement( "a-entity" );
-                      $a_entity->appendChild( $dom->createTextNode( '' ) );
-                      //rint_r($contentObject->assetname);
-
-                      $material = "";
-                      $fileOperations->setMaterial( $material, $contentObject );
-                      $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-
-                      $a_entity->setAttribute( "class", "override-materials" );
-                      $a_entity->setAttribute( "id", $nameObject );
-                      $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path[$index] . ")" );
-                      $a_entity->setAttribute( "material", $material );
-                      $a_entity->setAttribute( "clear-frustum-culling", "" );
-
-
-                      includeDoorFunctionality($a_entity, $scene_id);
-
-
-
-                      $ascene->appendChild( $a_entity );
-                  }else {*/
+               
                 $sc_x = $contentObject->scale[0];
                 $sc_y = $contentObject->scale[1];
                 $sc_z = $contentObject->scale[2];
@@ -431,7 +410,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $ascene->appendChild( $a_entity );
 
-                /*  }*/
+            
 
                 //==================== Pawn =================
             }else if ( $contentObject->category_name == 'pawn' ) {
@@ -529,7 +508,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 // Add to scene
                 $ascene->appendChild( $a_light );
-            }else if ( $contentObject->category_name == 'Door' ) {
+            }else if ( $contentObject->category_slug == 'door' ) {
                 //print_r($contentObject);
                 $a_entity = $dom->createElement( "a-entity" );
                 $a_entity->appendChild( $dom->createTextNode( '' ) );

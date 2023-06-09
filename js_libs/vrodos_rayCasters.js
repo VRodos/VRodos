@@ -314,7 +314,7 @@ function showProperties(event, object) {
         case 'Points of Interest (Video)':
             displayPoiVideoProperties(event, name);
             break;
-        case 'Door':
+        case 'door':
             displayDoorProperties(event, name);
             break;
         case 'Marker':
