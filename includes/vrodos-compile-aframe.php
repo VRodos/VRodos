@@ -62,20 +62,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
         $scene_json[$key] = json_decode( $scene_content_text[$key] );
 
-        // Add glbURLs from glbID
-        /* $objCount = 0;
-         foreach ( $scene_json[$key]->objects as &$o ) {
-
-             if ( $o->category_name == "Decoration" ||  $o->category_name == "Door" ||  $o->category_name == "PointsofInterest(Image-Text)") {
-                 $glbURL[$key] = get_the_guid( $o->glb_id );
-                 $o->glb_path[$key] = $glbURL[$key];
-
-             }
-             //print_r($cp_poi_img_desc[$key][$objCount]);
-             $o->poi_img_content = $cp_poi_img_desc[$key][$objCount];
-             $o->poi_img_title = $cp_poi_img_title[$key][$objCount];
-             $objCount++;
-         }*/
     }
 
     class FileOperations {
