@@ -151,51 +151,6 @@ function create_post_project_joker($tax_slug, $post_title, $post_name, $userID){
 }
 
 
-
-function vrodos_getNonRegionalScenes($project_id) {
-	$game_post = get_post($project_id);
-	$gameSlug = $game_post->post_name;
-	$scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
-	$scenePGameID = $scenePGame->term_id;
-
-	$nonRegionalScenes = array();
-
-	// Define custom query parameters
-	$custom_query_args = array(
-		'post_type' => 'vrodos_scene',
-		'posts_per_page' => -1,
-		'tax_query' => array(
-			array(
-				'taxonomy' => 'vrodos_scene_pgame',
-				'field'    => 'term_id',
-				'terms'    => $scenePGameID,
-			)
-		),
-		'meta_key'   => 'vrodos_isRegional',
-		'meta_value' => '0',
-		'orderby' => 'ID',
-		'order' => 'DESC',
-	);
-
-	$custom_query = new WP_Query( $custom_query_args );
-
-	// Output custom query loop
-	if ( $custom_query->have_posts() ) {
-		while ($custom_query->have_posts()) {
-			$custom_query->the_post();
-			$scene_id = get_the_ID();
-			$scene_slug = get_post_field( 'post_name', $scene_id );
-
-			$nonRegionalScenes[] = ['sceneID'=>$scene_id, 'sceneSlug'=>$scene_slug ];
-		}
-	}
-
-	wp_reset_postdata();
-	$wp_query = NULL;
-
-	return $nonRegionalScenes;
-}
-
 //==========================================================================================================================================
 //==========================================================================================================================================
 
@@ -450,7 +405,7 @@ function vrodos_get_all_doors_of_project_fastversion($parent_project_id_as_term_
                 if (count($sceneJsonARR['objects']) > 0)
                     foreach ($sceneJsonARR['objects'] as $key => $value) {
                         if ($key !== 'avatarCamera') {
-                            if ($value['categoryName'] === 'Door') {
+                            if ($value['category_name'] === 'Decoration') {
                                 $doorInfoGathered[] = ['door' => $value['doorName_source'],
                                                        'scene' => $sceneTitle,
                                                        'sceneSlug'=> $sceneSlug];

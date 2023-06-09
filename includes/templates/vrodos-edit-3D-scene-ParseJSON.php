@@ -208,9 +208,6 @@ class ParseJSON
 
             //echo $name." ".$assetname." ".$lightintensity."<br />";
 
-            /*var_dump($value);
-            exit;*/
-
             $trs = '{"translation":[' . $t_x . ',' . $t_y . ',' . $t_z . '],"rotation":[' . $r_x . ',' . $r_y . ',' . $r_z . '], "scale":[' . $s_x . ',' . $s_y . ',' . $s_z . ']} ';
 
             $resourcesString = 'resources3D["' . $name . '"]={ ';
