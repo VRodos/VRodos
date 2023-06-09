@@ -531,8 +531,8 @@ function vrodos_fetch_glb_asset3d_frontend_callback(){
 
     $asset_id = $_POST['asset_id'];
 
-    $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb');
-    $glbURL= get_the_guid($glbID[0]);
+    $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
+    $glbURL= wp_get_attachment_url( $glbID );
 
     $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio');
     $audioURL= get_the_guid($audioID[0]);

@@ -81,6 +81,7 @@ class ParseJSON
                 $r_y = $value->rotation[1];
                 $r_z = 0;
 
+                $value->category_name = 'avatarCamera';
                 $value->path = "";
                 $value->isLight = "false";
 

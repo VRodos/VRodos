@@ -246,7 +246,7 @@ THREE.SceneExporter.prototype = {
 
                 var quatR = new THREE.Quaternion();
 
-                var eulerR = new THREE.Euler(o.rotation._x, -o.rotation.y, - o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                var eulerR = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR.setFromEuler(eulerR);
 
                 // console.log("ROTATION:", eulerR);
@@ -256,26 +256,27 @@ THREE.SceneExporter.prototype = {
 
 
                 var overrideMaterial = "false";
+                if (o.children[0]) {
+                    if (o.children[0].isMesh) {
 
-                if (o.children[0].isMesh) {
-                    var vswitch = o.children[0].material.map;
+                        var vswitch = o.children[0].material.map;
 
-                    overrideMaterial = o.children[0].overrideMaterial;
-                    var vcolor = o.children[0].material.color.getHexString(); // : "0x000000";
-                    var vemissive = (o.children[0].material.emissive !== undefined ?
-                        o.children[0].material.emissive.getHexString() : '000000');
-                    var vroughness = o.children[0].material.roughness;
-                    var vmetalness = o.children[0].material.metalness;
-                    var vemissiveIntensity = o.children[0].material.emissiveIntensity;
-                } else {
-                    var vswitch = false;
-                    var vcolor = "0x000000";
-                    var vemissive = 0;
-                    var vroughness = 0;
-                    var vmetalness = 0;
-                    var vemissiveIntensity = 0;
+                        overrideMaterial = o.children[0].overrideMaterial;
+                        var vcolor = o.children[0].material.color.getHexString(); // : "0x000000";
+                        var vemissive = (o.children[0].material.emissive !== undefined ?
+                            o.children[0].material.emissive.getHexString() : '000000');
+                        var vroughness = o.children[0].material.roughness;
+                        var vmetalness = o.children[0].material.metalness;
+                        var vemissiveIntensity = o.children[0].material.emissiveIntensity;
+                    } else {
+                        var vswitch = false;
+                        var vcolor = "0x000000";
+                        var vemissive = 0;
+                        var vroughness = 0;
+                        var vmetalness = 0;
+                        var vemissiveIntensity = 0;
+                    }
                 }
-
                 let dynamic_string = '';
                 for (let entry in Object.keys(o)) {
                     if(typeof (Object.values(o)[entry]) !== 'object') {
