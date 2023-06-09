@@ -211,10 +211,10 @@ function selectorMajor(event, objectSel, whocalls) {
             // transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
             // transform_controls.object.parentLight.target.updateMatrixWorld();
             envir.scene.traverse(function (child) {
-                    if (child.light != undefined)
-                        if (child.light.name === transform_controls.object.name)
-                            child.update();
-                }
+                if (child.light != undefined)
+                    if (child.light.name === transform_controls.object.name)
+                        child.update();
+            }
             );
         };
 
@@ -308,7 +308,7 @@ function showProperties(event, object) {
         case 'Artifact':
             displayArtifactProperties(event, name);
             break;
-        case 'Points of Interest (Image-Text)':
+        case 'POI - Image / Text':
             displayPoiImageTextProperties(event, name);
             break;
         case 'Points of Interest (Video)':

@@ -638,10 +638,12 @@
         AFRAME.registerComponent('door-listener', {
             schema: { type: "string", default: "default value" },
             init: function () {
-                this.el.addEventListener("click", e => {
-                    //console.log();
-                    window.location.replace(this.data);
-                });
+                this.el.setAttribute("link", "on: click; href: " + this.data);
+                //console.log("link", "on: click; href: " + this.data);
+                //this.el.addEventListener("click", e => {
+                //console.log();
+                //    window.location.replace(this.data);
+                //});
             }
         });
 
@@ -901,20 +903,6 @@
             </a-entity>
         </a-entity>
 
-        <!-- VR rendered stuff-->
-        <a-entity id="left-hand" hand-controls="hand: left">
-            <a-entity line="start: 0 0 0; end: 0 0 -1; color: red"></a-entity>
-        </a-entity>
-
-        <a-entity id="right-hand" hand-controls="hand: right">
-            <a-entity line="start: 0 0 0; end: 0 0 -1; color: blue"></a-entity>
-        </a-entity>
-
-        <a-entity camera movement-controls></a-entity>
-
-        <a-entity id="camera-rig" movement-controls="speed: 0.1">
-            <a-entity camera look-controls></a-entity>
-        </a-entity>
 
     </a-scene>
 

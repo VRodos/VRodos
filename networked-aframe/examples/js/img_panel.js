@@ -57,7 +57,12 @@ AFRAME.registerComponent('info-panel', {
         this.buttonEl.components.material.material.depthTest = false;
 
         this.ImageEl.components.material.material.depthTest = false;
-        this.DescriptionEl.components.text.material.depthTest = false;
+        if (this.DescriptionEl == null) {
+            console.log("No Desc");
+        }
+        else {
+            this.DescriptionEl.components.text.material.depthTest = false;
+        }
         this.TitleEl.components.text.material.depthTest = false;
         console.log(this.buttonEl.components);
 
@@ -78,7 +83,12 @@ AFRAME.registerComponent('info-panel', {
 
         this.el.components.material.material.depthTest = true;
         this.ImageEl.components.material.material.depthTest = true;
-        this.DescriptionEl.components.text.material.depthTest = true;
+        if (this.DescriptionEl == null) {
+            console.log("No Desc");
+        }
+        else {
+            this.DescriptionEl.components.text.material.depthTest = true;
+        }
         this.TitleEl.components.text.material.depthTest = true;
 
 

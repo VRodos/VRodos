@@ -66,7 +66,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $objCount = 0;
         foreach ( $scene_json[$key]->objects as &$o ) {
 
-            if ( $o->categoryName == "Decoration" ||  $o->categoryName == "Door" ||  $o->categoryName == "PointsofInterest(Image-Text)") {
+            if ( $o->categoryName == "Decoration" ||  $o->categoryName == "Door" ||  $o->categoryName == "POI-Image/Text") {
                 $glbURL[$key] = get_the_guid( $o->glbID );
                 $o->glbURL[$key] = $glbURL[$key];
 
@@ -781,7 +781,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             
             
-            }else if ($contentObject->categoryName == 'PointsofInterest(Image-Text)') {
+            }else if ($contentObject->categoryName == 'POI-Image/Text') {
                 //print_r($contentObject);
                 //$fileOperations->writer("D:/output_masterPOi.txt", $contentObject->poi_img_desc);
 
