@@ -44,16 +44,6 @@ class ParseJSON
         $light_color_g = 1;
         $light_color_b = 1;
 
-        $lightintensity = 1; // Sun
-        $lightdecay = 1; // Lamp
-        $lightdistance = 100; // Lamp
-        $shadowRadius = 8;
-
-        $lightangle = 0.7;
-        $lightpenumbra = 0;
-
-        $lighttargetobjectname = '';
-
         $overrideMaterial = "false";
 
         foreach ($json_objects as $key => $value) {
@@ -84,6 +74,11 @@ class ParseJSON
                 $light_color_g = $value->lightcolor[1];
                 $light_color_b = $value->lightcolor[2];
 
+                $value->shadowRadius = 8;
+
+                $value->lightintensity = .8;
+
+
                 $value->path = "";
                 $value->isLight = "true";
 
@@ -103,6 +98,9 @@ class ParseJSON
                 $light_color_g = $value->lightcolor[1];
                 $light_color_b = $value->lightcolor[2];
 
+                $value->lightdecay = 1;
+                $value->lightdistance = 100;
+
                 $value->path = "";
                 $value->isLight = "true";
 
@@ -119,6 +117,11 @@ class ParseJSON
                 $light_color_r = $value->lightcolor[0];
                 $light_color_g = $value->lightcolor[1];
                 $light_color_b = $value->lightcolor[2];
+
+                $value->lightangle = 0.7;
+                $value->lightpenumbra = 0;
+                $value->lighttargetobjectname = '';
+
 
                 $value->path = "";
                 $value->isLight = "true";
@@ -173,7 +176,6 @@ class ParseJSON
                     $value->is_joker = 'false';
                 }
 
-
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
                 $r_z = $value->rotation[2];
@@ -183,7 +185,6 @@ class ParseJSON
 
 
             // Common for all
-
             $t_x = $value->position[0];
             $t_y = $value->position[1];
             $t_z = $value->position[2];
