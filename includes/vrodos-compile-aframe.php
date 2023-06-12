@@ -550,7 +550,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_asset_fs->setAttribute("id", "video_fullScreen_$nameObject");
                 //$a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/fullscreen.png");
                 $a_asset_fs->setAttribute("src",  plugins_url( '../VRodos/assets/images/fullscreen.png', dirname(__FILE__)));
-                
+
 
                 $a_asset_ex = $dom->createElement( "a-assets" );
                 $a_asset_ex->setAttribute("mixin", "vid_panel");
@@ -745,7 +745,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->setAttribute("class", "raycastable hideable");
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                 $a_entity->setAttribute('link-listener', $contentObject->poi_link_url);
-                             
+
 
                 $ascene->appendChild( $a_entity );
 

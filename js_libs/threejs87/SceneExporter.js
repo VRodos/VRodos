@@ -277,6 +277,7 @@ THREE.SceneExporter.prototype = {
                         var vemissiveIntensity = 0;
                     }
                 }
+
                 let dynamic_string = '';
                 for (let entry in Object.keys(o)) {
                     if(typeof (Object.values(o)[entry]) !== 'object') {

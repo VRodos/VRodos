@@ -12,21 +12,6 @@ class ParseJSON
 
         $resources3D = [];
 
-        $asset_id = '';
-        $asset_name = '';
-
-        $glb_id = '';
-
-        $category_id = '';
-        $category_slug = '';
-
-        $is_cloned = '';
-        $is_joker = '';
-        $color = ''; // object color override
-        $emissive = '';
-        $emissiveIntensity = '';
-        $roughness = '';
-        $metalness = '';
 
         $sceneToLoad = htmlspecialchars_decode($sceneToLoad);
         $content_JSON = json_decode($sceneToLoad);
@@ -81,7 +66,7 @@ class ParseJSON
                 $r_y = $value->rotation[1];
                 $r_z = 0;
 
-                $value->category_name = 'avatarCamera';
+                $value->category_name = 'avatarYawObject';
                 $value->path = "";
                 $value->isLight = "false";
 

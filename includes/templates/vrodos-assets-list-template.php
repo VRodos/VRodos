@@ -156,18 +156,18 @@ if ($single_project_asset_list)
 
 
         <!-- Each Asset -->
-        <?php foreach ($assets as $asset) {    ?>
+        <?php foreach ($assets as $asset) {  ?>
 
             <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="position:relative">
 
-                <div class="asset-shared-thumbnail mdc-card mdc-theme--background" id="<?php echo $asset['assetid']; ?>">
+                <div class="asset-shared-thumbnail mdc-card mdc-theme--background" id="<?php echo $asset['asset_id']; ?>">
 
-                    <?php $pGameId= get_page_by_path($asset['assetParentGameSlug'], OBJECT, 'vrodos_game')->ID; ?>
+                    <?php $pGameId= get_page_by_path($asset['asset_parent_game_slug'], OBJECT, 'vrodos_game')->ID; ?>
 
                     <!-- Edit url -->
-                    <a class="editasseturl" href="<?php echo $link_to_edit.'vrodos_game='.$pGameId.'&vrodos_asset='.$asset['assetid'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English'; ?>">
-                        <?php if ($asset['screenImagePath']){ ?>
-                            <img src="<?php echo $asset['screenImagePath']; ?>" class="asset-shared-thumbnail">
+                    <a class="editasseturl" href="<?php echo $link_to_edit.'vrodos_game='.$pGameId.'&vrodos_asset='.$asset['asset_id'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English'; ?>">
+                        <?php if ($asset['screenshot_path']){ ?>
+                            <img src="<?php echo $asset['screenshot_path']; ?>" class="asset-shared-thumbnail">
                         <?php } else { ?>
                             <div style="min-height: 226px;width:70%" class="DisplayBlock mdc-theme--secondary-bg CenterContents">
                                 <i style="font-size: 64px; padding-top: 80px;" class="material-icons mdc-theme--text-icon-on-background">insert_photo</i>
@@ -179,8 +179,8 @@ if ($single_project_asset_list)
                     <h1 class="assetsListCardTitle mdc-card__title mdc-typography--title" style="">
                         <a class="mdc-theme--secondary"
                            href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.
-                               '&vrodos_asset='.$asset['assetid'].'#English';
-                           ?>"><?php echo $asset['assetName'];?></a>
+                               '&vrodos_asset='.$asset['asset_id'].'#English';
+                           ?>"><?php echo $asset['asset_name'];?></a>
                     </h1>
 
                     <!-- Author -->
@@ -205,35 +205,31 @@ if ($single_project_asset_list)
 
                         <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" style="background: rgba(214,30,30,0.7);"
                            class="deleteAssetListButton mdc-button mdc-button--compact mdc-card__action"
-                           onclick="vrodos_deleteAssetAjax(<?php echo $asset['assetid'];?>,'<?php echo $joker_project_slug ?>',<?php echo $asset['isCloned'];?>)"
+                           onclick="vrodos_deleteAssetAjax(<?php echo $asset['asset_id'];?>,'<?php echo $joker_project_slug ?>',<?php echo $asset['is_cloned'];?>)"
                         ><i class="material-icons mdc-theme--text-hint-on-light">delete</i></a>
 
                     <?php } ?>
 
                     <!-- Parent Game -->
-                    <?php if ($asset['isJoker']=='true') { ?>
+                    <?php if ($asset['is_joker']=='true') { ?>
                         <span class="sharedAssetsIndicator mdc-typography--subheading1" style="color:black; background: rgba(184,248,184,0.6);">Shared</span>
                     <?php } else { ?>
                         <span class="sharedAssetsIndicator mdc-typography--subheading1"
                               style="color:black; background: rgba(250,250,210,0.6);">
-                            <?php echo "@".$asset['assetParentGame']; ?></span>
+                            <?php echo "@".$asset['asset_parent_game']; ?></span>
                     <?php } ?>
 
 
-                    <!-- Phone Ring -->
-
                     <!-- id = "phonering-Scladina terrain" -->
 
-                    <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['assetName'] ?>">
+                    <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['asset_name'] ?>">
                         <div class="phonering-alo-ph-circle"></div>
                         <div class="phonering-alo-ph-circle-fill"></div>
-                        <a href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['assetid'].'&preview=1&directcall=1&#English';?>"
+                        <a href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['asset_id'].'&preview=1&directcall=1&#English';?>"
                            class="pps-btn-img" title="teleconference_ring">
                             <div class="phonering-alo-ph-img-circle"></div>
                         </a>
                     </div>
-
-
 
                 </div>
             </div>
