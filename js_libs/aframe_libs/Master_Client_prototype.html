@@ -653,7 +653,7 @@
 
                 this.el.addEventListener("click", e => {
                     if (!this.data.match(/^https?:\/\//i)) {
-                        this.data = 'http://' + this.data;
+                        this.data = '//' + this.data;
                     }
                     window.open(this.data);
 
