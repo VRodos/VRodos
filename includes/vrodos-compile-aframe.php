@@ -740,7 +740,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->setAttribute("class", "raycastable hideable");
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                 $a_entity->setAttribute('link-listener', $contentObject->poi_link_url);
-              
 
                 $ascene->appendChild( $a_entity );
 
