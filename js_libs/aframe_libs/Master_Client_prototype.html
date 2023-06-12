@@ -778,7 +778,7 @@
             }
         });
 
-    //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
+        //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
 
         AFRAME.registerComponent('show-position', {
             init: function () {
@@ -877,6 +877,8 @@
         adapter: easyrtc;
        " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
 
+
+
         <a-assets>
             <!-- Avatar Template -->
             <template id="avatar-template">
@@ -910,10 +912,9 @@
                 material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
         </a-assets>
 
-
         <!-- Pawn -->
         <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" position="0 0.6 0"
-            wasd-controls="fly: true; acceleration:10" show-position look-controls="pointerLockEnabled: false;">
+            wasd-controls="acceleration:10" show-position look-controls="pointerLockEnabled: false;">
 
             <a-sphere class="head" visible="false" random-color>
             </a-sphere>

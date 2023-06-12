@@ -4,6 +4,10 @@ AFRAME.registerComponent('highlight', {
         //var backgroundEl = document.querySelector('#exit_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
         this.buttonEl = document.querySelector('#button_poi_' + this.data);
+        if (this.buttonEl == null) {
+            this.buttonEl = document.querySelector('#' + this.data);
+            console.log(this.buttonEl);
+        }
         this.onClick = this.onClick.bind(this);
         this.onMouseEnter = this.onMouseEnter.bind(this);
         this.onMouseLeave = this.onMouseLeave.bind(this);
