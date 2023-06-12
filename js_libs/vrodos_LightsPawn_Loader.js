@@ -103,10 +103,16 @@ class VRodos_LightsPawn_Loader {
                     return;
                 }
 
-                let clearToParse = resources3D[name]['category_name'].startsWith("light") || resources3D[name]['category_name'].startsWith("pawn");
+                let clearToParse = null;
+                if (resources3D[name]['category_name']) {
 
-                if(!clearToParse)
-                    return;
+                    clearToParse = resources3D[name]['category_name'].startsWith("light") || resources3D[name]['category_name'].startsWith("pawn");
+
+                    if(!clearToParse)
+                        return;
+                }
+
+
 
                 if (resources3D[name]['category_name']==='lightSun'){
 

@@ -95,9 +95,6 @@ class VRodos_LoaderMulti {
                                 let resourcesGLB = JSON.parse(res);
                                 let glbURL = resourcesGLB['glbURL'];
 
-                                console.log(resourcesGLB);
-
-
                                 // Instantiate a loader
 
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
