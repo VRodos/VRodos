@@ -455,7 +455,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                         $a_light->setAttribute("light", "type:directional;".
                             "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-                            "intensity:".(6*$contentObject->lightintensity).";"
+                            "intensity:".($contentObject->lightintensity).";"
                         );
 
                         $a_light->setAttribute("target", "#".$nameObject."target");

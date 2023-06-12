@@ -76,7 +76,7 @@ class ParseJSON
 
                 $value->shadowRadius = 8;
 
-                $value->lightintensity = .8;
+                $value->lightintensity = 1;
 
 
                 $value->path = "";
