@@ -780,6 +780,23 @@
 
     //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
 
+        AFRAME.registerComponent('show-position', {
+            init: function () {
+                this.positionShow = document.getElementById("positionShow");
+                this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
+            },
+            tick: function (time, timeDelta) {
+                let p = this.el.getAttribute('position');
+                this.positionShow.innerHTML = Math.round(p.x * 100) / 100 + ", " + Math.round(p.y * 100) / 100 + ", " + Math.round(p.z * 100) / 100;
+
+                let occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
+                if (occupants) {
+                    this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
+                }
+            }
+        });
+
+
     </script>
 
     <div>
@@ -852,7 +869,7 @@
 
 
     <a-scene id="aframe-scene-container" fog="type: linear; color: #AAB; far: 230; near: 0"
-        renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: #000000"
+        renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
         vr-mode-ui="enabled: false" networked-scene="
         room: roomname;
         debug: true;
@@ -911,21 +928,7 @@
 
     <script>
 
-        AFRAME.registerComponent('show-position', {
-            init: function () {
-                this.positionShow = document.getElementById("positionShow");
-                this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
-            },
-            tick: function (time, timeDelta) {
-                let p = this.el.getAttribute('position');
-                this.positionShow.innerHTML = Math.round(p.x * 100) / 100 + ", " + Math.round(p.y * 100) / 100 + ", " + Math.round(p.z * 100) / 100;
 
-                let occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
-                if (occupants) {
-                    this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
-                }
-            }
-        });
 
         const api_pattern_single = {
             ThresholdMin: 0.106,
