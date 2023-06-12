@@ -214,9 +214,7 @@ class ParseJSON
 
             $resourcesString .= '"targetposition":[' . $target_position_x . ',' . $target_position_y . ',' . $target_position_z . '], ';
             $resourcesString .= '"lightcolor":[' . $light_color_r . ',' . $light_color_g . ',' . $light_color_b . '], ';
-            $resourcesString .= '"lightintensity":"' . $lightintensity .'", ';
             $resourcesString .= '"trs":' . $trs . " };";
-
 
             // Make javascript variable resources 3D
             echo '<script type="text/javascript">';
