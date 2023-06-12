@@ -220,8 +220,6 @@ if ($single_project_asset_list)
                     <?php } ?>
 
 
-                    <!-- Phone Ring -->
-
                     <!-- id = "phonering-Scladina terrain" -->
 
                     <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['asset_name'] ?>">
@@ -232,8 +230,6 @@ if ($single_project_asset_list)
                             <div class="phonering-alo-ph-img-circle"></div>
                         </a>
                     </div>
-
-
 
                 </div>
             </div>
