@@ -28,7 +28,7 @@ AFRAME.registerComponent('highlight', {
             //this.el.object3D.visible = false;
 
             //this.buttonEl.emit("temp");
-            console.log(e.detail.name);
+            //console.log(e.detail.name);
             if (e.detail.name == "animation__scale") {
                 //this.buttonEl.addEventListener('mouseleave', this.onMouseLeave);
                 console.log(e.detail.name + " Completed");
@@ -53,7 +53,7 @@ AFRAME.registerComponent('highlight', {
 
             if (child.type === 'Mesh') {
                 const material = child.material;
-                console.log(material);
+                //console.log(material);
 
                 //material.emissiveIntensity = 0.5;
 
@@ -135,7 +135,7 @@ AFRAME.registerComponent('highlight', {
 
                 material.userData.originalColor = c.getHexString();
                 var hex_val = "0x" + c.getHexString();
-                console.log(material);
+                //console.log(material);
                 ///material.transparent = true; // enable to modify opacity correctly
                 //material.opacity = 0.9;
 
@@ -178,7 +178,7 @@ AFRAME.registerComponent('highlight', {
 
     },
     onBackgroundClick: function (evt) {
-        console.log("reached");
+        //console.log("reached");
         evt.target.object3D.traverse((child) => {
 
             if (child.type === 'Mesh') {

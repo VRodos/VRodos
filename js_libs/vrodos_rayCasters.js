@@ -948,7 +948,7 @@ function displayPoiImageTextProperties(event, name) {
 
         //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
         //envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0;
-        console.log(envir.scene.getObjectByName(name).poi_onlyimg);
+        //console.log(envir.scene.getObjectByName(name).poi_onlyimg);
 
         if (this.checked) {
 
@@ -989,7 +989,7 @@ function displayPoiImageTextProperties(event, name) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
         envir.scene.getObjectByName(name).poi_img_content = this.value;
-        console.log(this.value);
+        //console.log(this.value);
         saveChanges();
 
     });

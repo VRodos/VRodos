@@ -25,7 +25,7 @@ AFRAME.registerComponent('info-panel', {
         //this.el.object3D.renderOrder = 9999999;
         //this.el.object3D.depthTest = false;
 
-        console.log(this.infoPanel);
+        //console.log(this.infoPanel);
         ///this.infoPanel.object3D.depthTest = false;
         //this.infoPanel.object3D.renderOrder = 999999999999;
 
@@ -64,7 +64,7 @@ AFRAME.registerComponent('info-panel', {
             this.DescriptionEl.components.text.material.depthTest = false;
         }
         this.TitleEl.components.text.material.depthTest = false;
-        console.log(this.buttonEl.components);
+        //console.log(this.buttonEl.components);
 
 
         this.playerEl.setAttribute("wasd-controls", "acceleration: 0");
