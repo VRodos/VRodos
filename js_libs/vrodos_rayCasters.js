@@ -211,10 +211,10 @@ function selectorMajor(event, objectSel, whocalls) {
             // transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
             // transform_controls.object.parentLight.target.updateMatrixWorld();
             envir.scene.traverse(function (child) {
-                    if (child.light != undefined)
-                        if (child.light.name === transform_controls.object.name)
-                            child.update();
-                }
+                if (child.light != undefined)
+                    if (child.light.name === transform_controls.object.name)
+                        child.update();
+            }
             );
         };
 
@@ -304,17 +304,17 @@ function showProperties(event, object) {
     var name = object.name;
     //console.log(name);
 
-    switch (object.categoryName) {
-        case 'Artifact':
+    switch (object.category_slug) {
+        case 'decoration':
             displayArtifactProperties(event, name);
             break;
-        case 'Points of Interest (Image-Text)':
+        case 'poi-imagetext':
             displayPoiImageTextProperties(event, name);
             break;
         case 'Points of Interest (Video)':
             displayPoiVideoProperties(event, name);
             break;
-        case 'Door':
+        case 'door':
             displayDoorProperties(event, name);
             break;
         case 'Marker':
@@ -915,8 +915,8 @@ function displayPoiImageTextProperties(event, name) {
 
     // Save the previous artifact properties values (in case of  direct mouse click on another item)
 
-    chboxImg.prop('checked', envir.scene.getObjectByName(name).poi_onlyimg == 1);
-    if (envir.scene.getObjectByName(name).poi_onlyimg == 1) {
+    chboxImg.prop('checked', envir.scene.getObjectByName(name).poi_img_content != null);
+    if (envir.scene.getObjectByName(name).poi_img_content != null) {
         setDesc.style.display = "block";
     } else {
         setDesc.style.display = "none";
@@ -931,7 +931,7 @@ function displayPoiImageTextProperties(event, name) {
 
     //clearAndUnbind(null, null, "poi_image_desc_text");
 
-    setDesc.value = envir.scene.getObjectByName(name).poi_img_desc;
+    setDesc.value = envir.scene.getObjectByName(name).poi_img_content;
     setTitle.value = envir.scene.getObjectByName(name).poi_img_title;
 
 
@@ -947,14 +947,21 @@ function displayPoiImageTextProperties(event, name) {
 
 
         //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
-        envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0;
+        //envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0;
         console.log(envir.scene.getObjectByName(name).poi_onlyimg);
 
         if (this.checked) {
-            envir.scene.getObjectByName(name).poi_img_desc = setDesc.value;
+
+            if (envir.scene.getObjectByName(name).poi_img_content != null) {
+                envir.scene.getObjectByName(name).poi_img_content = setDesc.value;
+            }
+            else {
+                envir.scene.getObjectByName(name).poi_img_content = '';
+            }
             setDesc.style.display = "block";
         } else {
             setDesc.style.display = "none";
+            envir.scene.getObjectByName(name).poi_img_content = null;
         }
         envir.scene.getObjectByName(name).poi_img_title = setTitle.value;
 
@@ -981,7 +988,7 @@ function displayPoiImageTextProperties(event, name) {
     descArea.change(function (e) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        envir.scene.getObjectByName(name).poi_img_desc = this.value;
+        envir.scene.getObjectByName(name).poi_img_content = this.value;
         console.log(this.value);
         saveChanges();
 
