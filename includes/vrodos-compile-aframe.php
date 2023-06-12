@@ -548,22 +548,27 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_asset_fs = $dom->createElement( "a-assets" );
                 $a_asset_fs->setAttribute("mixin", "vid_panel");
                 $a_asset_fs->setAttribute("id", "video_fullScreen_$nameObject");
-                $a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/fullscreen.png");
+                //$a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/fullscreen.png");
+                $a_asset_fs->setAttribute("src",  plugins_url( '../VRodos/assets/images/fullscreen.png', dirname(__FILE__)));
+                
 
                 $a_asset_ex = $dom->createElement( "a-assets" );
                 $a_asset_ex->setAttribute("mixin", "vid_panel");
                 $a_asset_ex->setAttribute("id", "video_exit_$nameObject");
-                $a_asset_ex->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/exit.png");
+                //$a_asset_ex->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/exit.png");
+                $a_asset_ex->setAttribute("src",  plugins_url( '../VRodos/assets/images/exit.png', dirname(__FILE__)));
 
                 $a_asset_pl = $dom->createElement( "a-assets" );
                 $a_asset_pl->setAttribute("mixin", "vid_panel");
                 $a_asset_pl->setAttribute("id", "video_pl_$nameObject");
-                $a_asset_pl->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/play.png");
+                //$a_asset_pl->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/play.png");
+                $a_asset_pl->setAttribute("src",  plugins_url( '../VRodos/assets/images/play.png', dirname(__FILE__)));
 
                 $a_asset_pas = $dom->createElement( "a-assets" );
                 $a_asset_pas->setAttribute("mixin", "vid_panel");
                 $a_asset_pas->setAttribute("id", "video_pas_$nameObject");
-                $a_asset_pas->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/pause.png");
+                //$a_asset_pas->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/pause.png");
+                $a_asset_pas->setAttribute("src",  plugins_url( '../VRodos/assets/images/pause.png', dirname(__FILE__)));
 
 
 
@@ -574,9 +579,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_video_asset->setAttribute("id", "video_$nameObject");
                 $a_video_asset->setAttribute( "loop", "true");
 
-                $contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
+                //$contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
                 //if (empty($contentObject->video_link) == 1){
-                $a_video_asset->setAttribute("src", $contentObject->video_link);
+                $a_video_asset->setAttribute("src", $contentObject->video_path);
                 //    console_log("Video link found");
                 //}
 
@@ -663,7 +668,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_title_vid_entity->setAttribute("id", "ent_tit_$nameObject");
                 $a_title_vid_entity->setAttribute("position", "-3 4 0");
 
-                $a_title_vid_entity->setAttribute("text", "depthTest:false; shader: msdf; anchor: left; width: 18; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: black; value: Video Title");
+                $a_title_vid_entity->setAttribute("text", "depthTest:false; shader: msdf; anchor: left; width: 18; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: black; value: $contentObject->video_title");
                 $a_title_vid_entity->setAttribute( "class", "clickable raycastable" );
 
 
@@ -740,7 +745,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->setAttribute("class", "raycastable hideable");
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                 $a_entity->setAttribute('link-listener', $contentObject->poi_link_url);
-              
+                             
 
                 $ascene->appendChild( $a_entity );
 

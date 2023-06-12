@@ -650,8 +650,11 @@
         AFRAME.registerComponent('link-listener', {
             schema: { type: "string", default: "default value" },
             init: function () {
+
                 this.el.addEventListener("click", e => {
-                    //console.log();
+                    if (!this.data.match(/^https?:\/\//i)) {
+                        this.data = 'http://' + this.data;
+                    }
                     window.open(this.data);
 
                 });
