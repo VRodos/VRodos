@@ -4,11 +4,86 @@ AFRAME.registerComponent('info-panel', {
 
 
         this.ImageEl = document.querySelector('#top_img_' + this.data);
+        this.ImageAsset = document.querySelector('#main_img_' + this.data);
         this.TitleEl = document.querySelector('#title_' + this.data);
         this.DescriptionEl = document.querySelector('#desc_' + this.data);
         this.infoPanel = document.querySelector('#infoPanel_' + this.data);
+        this.escEl = document.querySelector('#exit_' + this.data);
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
+
+        var img = new Image();
+        const getMeta = (url, cb) => {
+            const img = new Image();
+            img.onload = () => cb(null, img);
+            img.onerror = (err) => cb(err);
+            img.src = url;
+        };
+        console.log(this.ImageAsset.getAttribute("src"));
+        let expected_width, expected_height;
+        if (this.DescriptionEl != null) {
+            expected_width = 1.5;
+            expected_height = 0.81;
+        }
+        else {
+            expected_width = 1.5;
+            expected_height = 1.5;
+        }
+        getMeta(this.ImageAsset.getAttribute("src"), (err, img) => {
+
+            let aspect_ratio = img.naturalWidth / img.naturalHeight;
+            img.naturalWidth > img.naturalHeight ? expected_height = expected_width / aspect_ratio : expected_width = expected_height / aspect_ratio;
+            /*
+            if (img.naturalWidth > img.naturalHeight) {
+                //expected_width = 1.5;
+                expected_height = expected_width / aspect_ratio;
+                console.log("height:" + expected_height);
+            }
+            else {
+                //expected_height = 0.81;
+                expected_width = expected_height / aspect_ratio;
+                console.log("width:" + expected_width);
+                console.log("height:" + expected_height);
+
+            }
+            */
+
+            //while (given_height > 0.81) {
+            //    expected_width = expected_width / 2;
+            //    given_height = given_height / 2;
+            //    console.log(expected_width, given_height);
+
+            //}
+            console.log("EXP:" + expected_height + " " + expected_width);
+            let panel_pad;
+            expected_width > 1.5 ? panel_pad = expected_width : panel_pad = 1.5;
+
+
+            if (this.DescriptionEl != null) {
+                while (expected_height > 0.81) {
+                    expected_width = expected_width / 2;
+                    expected_height = expected_height / 2;
+                    console.log(expected_width, expected_height);
+
+                }
+            } else {
+                while (expected_height > 1.5) {
+                    expected_width = expected_width / 2;
+                    expected_height = expected_height / 2;
+                    console.log(expected_width, expected_height);
+                }
+
+            }
+            let esc_pad = (panel_pad / 2) + 0.1;
+
+            let upd_mixin = "width: " + expected_width + "; height: " + expected_height;
+            let panel_mixin = "width: " + panel_pad + "; height: 1.8";
+            this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
+            this.ImageEl.setAttribute("geometry", "primitive: plane;" + upd_mixin);
+            this.infoPanel.setAttribute("geometry", "primitive: plane;" + panel_mixin);
+        });
+
+
 
 
 

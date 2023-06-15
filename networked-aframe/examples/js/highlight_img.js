@@ -133,6 +133,7 @@ AFRAME.registerComponent('highlight', {
             if (child.type === 'Mesh') {
 
                 const material = child.material;
+                //material.side = THREE.FrontSide;
 
                 var c = new THREE.Color();
                 c.set(material.color);

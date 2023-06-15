@@ -81,7 +81,7 @@ class VRodos_LoaderMulti {
 
                 } else { // GLB 3D models
 
-                    if (resources3D[name]['glb_id'] !== "" && resources3D[name]['glb_id'] !== undefined) {
+                    if ((resources3D[name]['glb_id'] !== "" && resources3D[name]['glb_id'] !== undefined) || resources3D[name]['category_slug'] == "video") {
 
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
@@ -94,7 +94,8 @@ class VRodos_LoaderMulti {
 
                                 let resourcesGLB = JSON.parse(res);
                                 let glbURL = resourcesGLB['glbURL'];
-
+                                if (resources3D[name]['category_slug'] == "video")
+                                    glbURL = pluginPath + '/assets/objects/tv.glb';
                                 // Instantiate a loader
 
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
@@ -207,13 +208,13 @@ function setObjectProperties(object, name, resources3D) {
     object.scale.set(
         resources3D[name]['trs']['scale'][0],
         resources3D[name]['trs']['scale'][1],
-        resources3D[name]['trs']['scale'][2] );
+        resources3D[name]['trs']['scale'][2]);
 
 
     return object;
 }
 
-function startVideo (resources3D, name){
+function startVideo(resources3D, name) {
 
     var videoDom = Array();
     var videoTexture = Array();

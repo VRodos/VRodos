@@ -578,7 +578,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_video_asset = $dom->createElement( "video" );
                 $a_video_asset->setAttribute("id", "video_$nameObject");
-                $a_video_asset->setAttribute( "loop", "true");
+               
+                $contentObject->video_loop == 1 ? $a_video_asset->setAttribute( "loop", "true") : $a_video_asset->setAttribute( "loop", "false");
 
                 //$contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
                 //if (empty($contentObject->video_link) == 1){
@@ -913,8 +914,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_exit_img_entity = $dom->createElement("a-entity");
                 $a_exit_img_entity->setAttribute("id", "exit_$nameObject");
                 $a_exit_img_entity->setAttribute("mixin", "poiEsc");
-                //$a_exit_img_entity->setAttribute("position", "-0.68 -0.2 0");
-                //$a_exit_img_entity->setAttribute("image", "shader: msdf; anchor: right; width: 1.5;");
                 $a_exit_img_entity->setAttribute("material", "src: #esc_img_$nameObject; depthTest: false; transparent: true");
                 $a_exit_img_entity->setAttribute("class", "raycastable hideable" );
                 $a_exit_img_entity->setAttribute("original-scale", "1 1 1");
