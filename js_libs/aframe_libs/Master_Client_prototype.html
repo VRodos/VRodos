@@ -275,15 +275,15 @@
 
 
 
-                    var cW = 19;
-                    var cH = 19;
-                    var rad = 90;
+                    //var cW = 19;
+                    //var cH = 19;
+                    //var rad = 90;
 
-                    let panel_width = 20;
+                    //let panel_width = 20;
 
-                    let icon_width = 2;
+                    //let icon_width = 2;
 
-                    let offset = 1;
+                    //let offset = 1;
 
 
 
@@ -452,24 +452,31 @@
                     backgroundEl.setAttribute("background", "color", "black");
                     backgroundEl.setAttribute("overlay", "");
 
+                    cam.add(videoBorder);
+                    cam.add(videoDisplay);
+                    videoBorder.setAttribute("position", "0 0 -25");
+                    videoDisplay.setAttribute("position", "0 0 -25");
+
+                    videoBorder.setAttribute("rotation", "0 0 0");
+                    videoDisplay.setAttribute("rotation", "0 0 0");
+                    console.log(videoBorder);
+
                     if (video.paused) {
                         video.play();
                         //console.log(data.orig_pos[2]);
                         //borderMesh.material.color.set("#004400");
-
                     }
                     for (let i = 0; i < entCollection.length; i++) {
                         entCollection[i].setAttribute("visible", "false");
                         console.log(entCollection[i].getAttribute("visible"));
                         entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
                         playerEl.setAttribute("wasd-controls", "acceleration: 0");
-                        cam.add(videoBorder);
-                        cam.add(videoDisplay);
-                        videoBorder.setAttribute("position", "0 0 -25");
-                        videoDisplay.setAttribute("position", "0 0 -25");
 
-                        videoBorder.setAttribute("rotation", "0 0 0");
-                        videoDisplay.setAttribute("rotation", "0 0 0");
+                        //videoBorder.setAttribute("position", "0 0 -25");
+                        //videoDisplay.setAttribute("position", "0 0 -25");
+
+                        //videoBorder.setAttribute("rotation", "0 0 0");
+                        //videoDisplay.setAttribute("rotation", "0 0 0");
                         visCollection.push(i);
 
 
@@ -778,7 +785,7 @@
             }
         });
 
-    //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
+        //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
 
         AFRAME.registerComponent('show-position', {
             init: function () {
@@ -877,6 +884,8 @@
         adapter: easyrtc;
        " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
 
+
+
         <a-assets>
             <!-- Avatar Template -->
             <template id="avatar-template">
@@ -910,15 +919,14 @@
                 material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
         </a-assets>
 
-
         <!-- Pawn -->
         <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" position="0 0.6 0"
-            wasd-controls="fly: true; acceleration:10" show-position look-controls="pointerLockEnabled: false;">
+            wasd-controls="acceleration:10" show-position look-controls="pointerLockEnabled: false;">
 
             <a-sphere class="head" visible="false" random-color>
             </a-sphere>
 
-            <a-entity active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
+            <a-entity id="cameraA" active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
             </a-entity>
         </a-entity>
 
