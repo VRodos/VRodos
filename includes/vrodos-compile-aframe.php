@@ -407,6 +407,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
+                //$a_entity->setAttribute( "ammo-body", "type: dynamic;" );
+                //$a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );
+                $a_entity->setAttribute( "class", "collidable" );
+                
+                
 
                 $ascene->appendChild( $a_entity );
 
