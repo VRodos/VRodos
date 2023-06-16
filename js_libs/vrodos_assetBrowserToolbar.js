@@ -163,7 +163,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     let element = document.createElement("button");
                     //Assign different attributes to the element.
                     element.className = "tablinks mdc-button";
-                    element.id = f['category_name'];
+                    element.id = f['category_slug'];
                     element.innerHTML = "<i class='material-icons' title='" + f['category_name'] + "' style='font-size:18px;'>" + f['category_icon'] + "</i>";
                     element.addEventListener("click", function (event) { openCategoryTab(event, this); });
 

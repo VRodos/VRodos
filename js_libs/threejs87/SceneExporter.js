@@ -130,7 +130,7 @@ THREE.SceneExporter.prototype = {
 
 
                     if (node.name === "bbox" || node.name === "xline" || node.name === "yline" ||
-                        node.name === "zline" || node.name == 'SteveOld')
+                        node.name === "zline" || node.name === 'SteveOld')
                         continue;
 
 
@@ -252,8 +252,7 @@ THREE.SceneExporter.prototype = {
                 // console.log("ROTATION:", eulerR);
                 //                console.log("Quaternion:", o);
 
-                // ================ Ververidis Main =============: All objs
-
+               // ALL OBJECTS
 
                 var overrideMaterial = "false";
                 if (o.children[0]) {
@@ -349,7 +348,6 @@ THREE.SceneExporter.prototype = {
                     '	"rotation" : ' + "[" + o.rotation.x + "," +
                     o.rotation.y + "," +
                     o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-
                     '	"quaternion" : ' + "[" + quatR_light._x + "," +
                     quatR_light._y + "," +
                     quatR_light._z + "," +
@@ -378,7 +376,6 @@ THREE.SceneExporter.prototype = {
                     '	"rotation" : ' + "[" + o.rotation.x + "," +
                     o.rotation.y + "," +
                     o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-
                     '	"quaternion" : ' + "[" + quatR_light._x + "," +
                     quatR_light._y + "," +
                     quatR_light._z + "," +
@@ -801,10 +798,8 @@ THREE.SceneExporter.prototype = {
             '		"enableEnvironmentTexture" : "' + (!!envir.scene.environment) + '",',
             '		"objects"       : ' + nobjects + //+  ',',
             '	},',
-            '',
             '	"urlBaseType": "relativeToScene",',
             '',
-
             '	"objects" :',
             '	{',
             objects,
