@@ -30,22 +30,9 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
         if (name === 'avatarCamera') {
 
-            // var path = '';
-            // var obj = '';
-            // var mtl = '';
-            // var type_behavior = 'avatar';
-            //
-            // var r_x = value['rotation'][0];
-            // var r_y = value['rotation'][1];
-            // var r_z = 0;
-
-            var isLight = "false";
 
         } else if (name.includes('lightSun')) {
 
-            var path = '';
-            var obj = '';
-            var mtl = '';
 
             var t_x = value['position'][0];
             var t_y = value['position'][1];
@@ -58,11 +45,9 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
             var scale = value['scale'][0];
 
-            var isLight = "true";
             var selected_object_trs = { "translation": [t_x, t_y, t_z], "rotation": [r_x, r_y, r_z], "scale": scale };
 
             var lightintensity = value['lightintensity'];
-
 
             resources3D_local[name] = {
                 "path": '',
@@ -86,11 +71,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
         } else if (name.includes('lightLamp')) {
 
-
-            var path = '';
-            var obj = '';
-            var mtl = '';
-
             var t_x = value['position'][0];
             var t_y = value['position'][1];
             var t_z = value['position'][2];
@@ -108,7 +88,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
             var lightdecay = value['lightdecay'];
             var lightdistance = value['lightdistance'];
             var shadowRadius = value['shadowRadius'];
-
 
             var isLight = "true";
             var selected_object_trs = { "translation": [t_x, t_y, t_z], "rotation": [r_x, r_y, r_z], "scale": scale };
@@ -162,9 +141,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
         } else if (name.includes('lightSpot')) {
 
-            var path = '';
-            var obj = '';
-            var mtl = '';
 
             var t_x = value['position'][0];
             var t_y = value['position'][1];
@@ -223,10 +199,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
         } else if (name.includes('lightAmbient')) {
 
-            var path = '';
-            var obj = '';
-            var mtl = '';
-
             var t_x = value['position'][0];
             var t_y = value['position'][1];
             var t_z = value['position'][2];
@@ -283,10 +255,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
         } else if (name.includes('pawn')) {
 
-            var path = '';
-            var obj = '';
-            var mtl = '';
-
             var t_x = value['position'][0];
             var t_y = value['position'][1];
             var t_z = value['position'][2];
@@ -342,17 +310,14 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
             };
 
         } else {
+
             var path = UPLOAD_DIR + value['fnPath'];
 
             //console.log("value", value);
 
-            var assetid = value['assetid'];
-            var assetname = value['assetname'];
-            var obj = value['fnObj'];
-            var objID = value['fnObjID'];
-            var mtl = value['fnMtl'];
-            var mtlID = value['fnMtlID'];
-            var fbxID = value['fbxID'];
+            var assetid = value['asset_id'];
+            var assetname = value['asset_name'];
+
             var glbID = value['glbID'];
             var overrideMaterial = value['overrideMaterial'];
             var color = value['color'];
@@ -365,18 +330,8 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
             var audioID = value['audioID'];
             var categoryName = value['categoryName'];
             var categoryID = value['categoryID'];
-            var image1id = value['image1id'];
 
-            var doorName_source = value['doorName_source'];
-            var doorName_target = value['doorName_target'];
-            var sceneName_target = value['sceneName_target'];
-            var sceneID_target = value['sceneID_target'];
 
-            var archaeology_penalty = value['archaeology_penalty'];
-            var hv_penalty = value['hv_penalty'];
-            var natural_penalty = value['natural_penalty'];
-
-            var isreward = value['isreward'];
             var follow_camera = value['follow_camera'];
 
             var image_link = value['image_link'];
@@ -408,15 +363,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
             var s_y = value['scale'][1];
             var s_z = value['scale'][2];
 
-            var videoTextureSrc = value['videoTextureSrc'];
-
-
-            var videoTextureRepeatX = value['videoTextureRepeatX'];
-            var videoTextureRepeatY = value['videoTextureRepeatY'];
-            var videoTextureCenterX = value['videoTextureCenterX'];
-            var videoTextureCenterY = value['videoTextureCenterY'];
-            var videoTextureRotation = value['videoTextureRotation'];
-
 
             var selected_object_trs = { "translation": [t_x, t_y, t_z], "rotation": [r_x, r_y, r_z], "scale": [s_x, s_y, s_z] };
 
@@ -424,11 +370,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "path": path,
                 "assetid": assetid,
                 "assetname": assetname,
-                "obj": obj,
-                "objID": objID,
-                "mtl": mtl,
-                "mtlID": mtlID,
-                "fbxID": fbxID,
                 "glbID": glbID,
                 "overrideMaterial": overrideMaterial,
                 "color": color,
@@ -436,17 +377,9 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
                 "emissiveIntensity": emissiveIntensity,
                 "roughness": roughness,
                 "metalness": metalness,
-                "videoTextureSrc": videoTextureSrc,
-                "videoTextureRepeatX": videoTextureRepeatX,
-                "videoTextureRepeatY": videoTextureRepeatY,
-                "videoTextureCenterX": videoTextureCenterX,
-                "videoTextureCenterY": videoTextureCenterY,
-                "videoTextureRotation": videoTextureRotation,
                 "audioID": audioID,
                 "categoryName": categoryName, "categoryID": categoryID,
-                "image1id": image1id, "doorName_source": doorName_source, "doorName_target": doorName_target,
-                "sceneName_target": sceneName_target, "sceneID_target": sceneID_target, "archaeology_penalty": archaeology_penalty,
-                "hv_penalty": hv_penalty, "natural_penalty": natural_penalty, "isreward": isreward, "isCloned": isCloned,
+                "isCloned": isCloned,
                 "follow_camera": follow_camera,
                 "image_link": image_link,
                 "video_link": video_link,
