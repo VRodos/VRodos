@@ -141,6 +141,7 @@
                 //videoMesh.material.wireframe = true;
                 let cam = document.querySelector("#cameraA");
 
+
                 const entCollection = document.getElementsByClassName("hideable");
 
                 //obb = new THREE.MATH.OBB();
@@ -163,7 +164,7 @@
                 //backgroundEl.add(helper);
                 function restoreVidPos(border, disp, panel) {
                     let offsetX = 20;
-                    border.add(panel);
+                    //cam.add(panel);
 
                     var curr_rot = border.getAttribute('rotation');
 
@@ -190,7 +191,8 @@
                     //videoDisplay.setAttribute("rotation", r_x);
                     //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
 
-                    panel.object3D.position.set(offsetX, 0, 0);
+                    //panel.object3D.position.set(offsetX, 0, 0);
+                    //panel.object3D.position.set(offsetX, 0, 0);
                     //videoBorder.setAttribute("rotation", r_x);
 
 
@@ -201,13 +203,16 @@
                     //disp.object3D.rotation.x += 0;
                     //disp.object3D.rotation.y += 90;
                     //disp.object3D.rotation.z += 0;
+                    console.log(border);
 
+                    console.log(border.getAttribute("original-scale"));
 
                     border.object3D.rotation.set(
                         THREE.MathUtils.degToRad(data.orig_rot[0] * (180 / Math.PI)),
                         THREE.MathUtils.degToRad(data.orig_rot[1] * (180 / Math.PI)),
                         THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
                     );
+                    
                     //disp.object3D.rotation.set(
                     //    THREE.MathUtils.degToRad(0),
                     //    THREE.MathUtils.degToRad(90),
@@ -366,6 +371,7 @@
                 //fsEl.object3D.position.set(0, 0, 0);
 
                 function addToCam(obj, non_visible, trans, opac) {
+                   
                     if (non_visible) {
                         obj.object3D.renderOrder = 9999999;
                         //clipIntersection
@@ -433,7 +439,7 @@
                 });
 
                 exEl.addEventListener("mousedown", function (event) {
-                    addToCam(videoPanel, false, true, 0.2);
+                    addToCam(videoPanel, false, true, 0.3);
                     if (video.paused) {
                         console.log("Video Paused. Exiting...")
 
@@ -495,7 +501,7 @@
 
 
                 videoBorder.addEventListener("mousedown", function (event) {
-                    addToCam(videoPanel, true, true, 0.2);
+                    addToCam(videoPanel, true, true, 0.3);
                     addToCam(fsEl, true, true, 1);
                     addToCam(plEl, true, true, 1);
                     addToCam(exEl, true, true, 1);
@@ -627,6 +633,7 @@
 
                         videoBorder.setAttribute("position", p_x);
                         videoDisplay.setAttribute("position", p_x);
+                        videoDisplay.setAttribute("scale", videoBorder.getAttribute("original-scale")); 
 
                         videoBorder.setAttribute("rotation", r_x);
                         videoDisplay.setAttribute("rotation", r_x);

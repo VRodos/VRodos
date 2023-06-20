@@ -734,3 +734,15 @@ value="" />
         Is a reward item?</label>-->
 
 </div>
+
+<!-- POI Video @ Archaeology: Popup menu to for Reward item checkbox, from -->
+<div id="popUpLinkPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2"
+    style="min-width: 200px;display:none">
+    <!---->
+    <!--    The close button-->
+    <a style="float: right;" type="button" class="mdc-theme--primary"
+        onclick='this.parentNode.style.display = "none";  return false;'>
+        <i class="material-icons" style="cursor: pointer; float: right;">close</i>
+    </a>
+    <input type="text" id="poi_link_text" name="poi_link_text">
+</div>
