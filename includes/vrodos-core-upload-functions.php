@@ -398,7 +398,8 @@ function vrodos_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $ty
     require_once(ABSPATH . 'wp-admin/includes/admin.php');
 
     // Get upload directory and do some sanitization
-    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'Models'.$DS;
+    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'models'.$DS;
+
 
     // Write file string to a file in server
     file_put_contents($upload_path . $hashed_filename,
@@ -475,6 +476,9 @@ function vrodos_upload_asset_screenshot($image, $imgTitle, $parentPostId, $proje
 
     // Get upload directory and do some sanitization
     $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS . 'models' . $DS . $projectId . $DS;
+    if (!is_dir($upload_path)) {
+        mkdir( $upload_path, 0777, true );
+    }
 
     // Write file string to a file in server
     file_put_contents($upload_path . $hashed_filename,
