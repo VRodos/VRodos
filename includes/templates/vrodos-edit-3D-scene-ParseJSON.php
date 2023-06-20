@@ -10,12 +10,14 @@ class ParseJSON
     public function init($sceneToLoad)
     {
 
-        $resources3D = [];
-
-
         $sceneToLoad = htmlspecialchars_decode($sceneToLoad);
         $content_JSON = json_decode($sceneToLoad);
         $json_metadata = $content_JSON->metadata;
+
+        /*echo($sceneToLoad);
+        var_dump($content_JSON);
+            exit;*/
+
 
         echo '<script>';
         echo 'resources3D["ClearColor"]= "' . $json_metadata->ClearColor . '";';
@@ -44,7 +46,9 @@ class ParseJSON
         $light_color_g = 1;
         $light_color_b = 1;
 
-        $overrideMaterial = "false";
+        $r_x = 0;
+        $r_y = 0;
+        $r_z = 0;
 
         foreach ($json_objects as $key => $value) {
 
@@ -62,9 +66,6 @@ class ParseJSON
 
             } elseif (strpos($name, 'lightSun') !== false) {
 
-                $r_x = $value->rotation[0];
-                $r_y = $value->rotation[1];
-                $r_z = $value->rotation[2];
 
                 $target_position_x = $value->targetposition[0];
                 $target_position_y = $value->targetposition[1];
@@ -77,7 +78,6 @@ class ParseJSON
                 $value->shadowRadius = 8;
 
                 $value->lightintensity = 1;
-
 
                 $value->path = "";
                 $value->isLight = "true";
@@ -185,17 +185,20 @@ class ParseJSON
 
 
             // Common for all
-            $t_x = $value->position[0];
-            $t_y = $value->position[1];
-            $t_z = $value->position[2];
+            $t_x = $value->position[0] ? : 0;
+            $t_y = $value->position[1] ? : 0;
+            $t_z = $value->position[2] ? : 0;
 
-            $s_x = $value->scale[0];
-            $s_y = $value->scale[1];
-            $s_z = $value->scale[2];
+            $s_x = $value->scale[0] ? : 0;
+            $s_y = $value->scale[1] ? : 0;
+            $s_z = $value->scale[2] ? : 0;
 
-            //echo $name." ".$assetname." ".$lightintensity."<br />";
-
-            $trs = '{"translation":[' . $t_x . ',' . $t_y . ',' . $t_z . '],"rotation":[' . $r_x . ',' . $r_y . ',' . $r_z . '], "scale":[' . $s_x . ',' . $s_y . ',' . $s_z . ']} ';
+            $trs = array(
+                'translation' => [$t_x, $t_y, $t_z],
+                'rotation' => [$r_x, $r_y, $r_z],
+                'scale' => [$s_x, $s_y, $s_z]
+            );
+            $trs = json_encode($trs);
 
             $resourcesString = 'resources3D["' . $name . '"]={ ';
             foreach($value as $entry=>$val) {
@@ -209,7 +212,6 @@ class ParseJSON
                 else {
                     $resourcesString .= '"'.$entry.'":"'.$val.'", ';
                 }
-
             }
 
             $resourcesString .= '"targetposition":[' . $target_position_x . ',' . $target_position_y . ',' . $target_position_z . '], ';
@@ -222,9 +224,6 @@ class ParseJSON
 
             echo $resourcesString;
             echo '</script>';
-
         }
-
-        return $resources3D;
     }
 }

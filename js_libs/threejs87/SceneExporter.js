@@ -71,7 +71,7 @@ THREE.SceneExporter.prototype = {
                     || node['category_name'] === 'lightTargetSpot'
                     || node.name === 'Camera3Dmodel'
                     || node.name === 'Camera3DmodelMesh'
-                    || typeof node['category_name'] === 'undefined') && node.name != 'avatarCamera')
+                    || typeof node['category_name'] === 'undefined') && node.name !== 'avatarCamera')
                     continue;
 
 
@@ -235,77 +235,37 @@ THREE.SceneExporter.prototype = {
 
         function ObjectString(o, n) {
 
+            // ALL 3D ASSETS
             if (o.name != 'avatarCamera'
                 && !o['category_name'].includes('lightSun')
                 && !o['category_name'].includes('lightTargetSpot')
                 && !o['category_name'].includes('lightLamp')
                 && !o['category_name'].includes('lightSpot')
                 && !o['category_name'].includes('lightAmbient')
-                && !o['category_name'].includes('pawn')
-            ) {
+                && !o['category_name'].includes('pawn'))
+            {
 
-                var quatR = new THREE.Quaternion();
-
-                var eulerR = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR = new THREE.Quaternion();
+                let eulerR = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR.setFromEuler(eulerR);
 
-                // console.log("ROTATION:", eulerR);
-                //                console.log("Quaternion:", o);
+                let entryObject = {};
 
-               // ALL OBJECTS
-
-                var overrideMaterial = "false";
-                if (o.children[0]) {
-                    if (o.children[0].isMesh) {
-
-                        var vswitch = o.children[0].material.map;
-
-                        overrideMaterial = o.children[0].overrideMaterial;
-                        var vcolor = o.children[0].material.color.getHexString(); // : "0x000000";
-                        var vemissive = (o.children[0].material.emissive !== undefined ?
-                            o.children[0].material.emissive.getHexString() : '000000');
-                        var vroughness = o.children[0].material.roughness;
-                        var vmetalness = o.children[0].material.metalness;
-                        var vemissiveIntensity = o.children[0].material.emissiveIntensity;
-                    } else {
-                        var vswitch = false;
-                        var vcolor = "0x000000";
-                        var vemissive = 0;
-                        var vroughness = 0;
-                        var vmetalness = 0;
-                        var vemissiveIntensity = 0;
-                    }
-                }
-
-                let dynamic_string = '';
                 for (let entry in Object.keys(o)) {
                     if(typeof (Object.values(o)[entry]) !== 'object') {
-                        dynamic_string = dynamic_string.concat('"'+Object.keys(o)[entry] + '":"' + Object.values(o)[entry]) + '", ';
+                        entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
                     }
                 }
 
-                var output = [
-                    '\t\t' + ',' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',',
-                    '	"quaternion" : ' + "[" + quatR._x + "," + quatR._y + "," + quatR._z + "," + quatR._w + "]" + ',',
-                    '	"scale"	   : ' + Vector3String(o.scale) + ',',
-                    '	"fnPath" : ' + '"' + o.fnPath + '"' + ',',
-                    '   "overrideMaterial" : ' + '"' + o.overrideMaterial + '"' + ',',
-                    '   "color" : ' + '"' + vcolor + '"' + ',',
-                    '   "emissive" : ' + '"' + vemissive + '"' + ',',
-                    '   "roughness" : ' + '"' + vroughness + '"' + ',',
-                    '   "metalness" : ' + '"' + vmetalness + '"' + ',',
-                    '   "emissiveIntensity" : ' + '"' + vemissiveIntensity + '"' + ',',
-                    '   "is_cloned" : ' + '"' + o['is_cloned'] + '"' + ',',
-                    '   "isLight" : ' + '"' + 'false' + '"' + ',',
-                    dynamic_string,
-                    + (o.children.length ? ',' : '')
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.quaternion = [quatR._x, quatR._y, quatR._z];
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
 
-                    //+ ',',
-                    //'	"visible"  : ' + o.visible + ( o.children.length ? ',' : '' )
-                ];
-                //===============================================
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
             }
             else if (o['category_name'] === "lightSun") {

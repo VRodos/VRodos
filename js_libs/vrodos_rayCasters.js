@@ -219,20 +219,20 @@ function selectorMajor(event, objectSel, whocalls) {
         };
 
 
-        if (objectSel.categoryName === "lightSun" ||
-            objectSel.categoryName === "lightTargetSpot" ||
-            objectSel.categoryName === "lightSpot" ||
-            objectSel.categoryName === "lightLamp") {
+        if (objectSel.category_name === "lightSun" ||
+            objectSel.category_name === "lightTargetSpot" ||
+            objectSel.category_name === "lightSpot" ||
+            objectSel.category_name === "lightLamp") {
 
             // Add event listener for lightSpotHelper
 
 
-            if (objectSel.categoryName === "lightTargetSpot") {
+            if (objectSel.category_name === "lightTargetSpot") {
                 transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightDirectionalLightSpotMover);
             }
 
 
-            if (objectSel.categoryName === "lightSpot") {
+            if (objectSel.category_name === "lightSpot") {
                 transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightSpotLightMover);
             }
 
@@ -585,7 +585,7 @@ function displaySpotProperties(event, name) {
     spotTargetObject.innerText = null;
 
     for (var i = 0; i < jQuery('#hierarchy-viewer')[0].childNodes.length; i++) {
-        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).categoryName ){
+        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).category_name ){
         var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
         var scene_object = envir.scene.getObjectByName(id_Hierarchy);
         spotTargetObject.appendChild(new Option(scene_object.name));
@@ -619,7 +619,7 @@ function displayAmbientProperties(event, name) {
     var ppPropertiesDiv = jQuery("#popUpAmbientPropertiesDiv");
 
     for (var i = 0; i < jQuery('#hierarchy-viewer')[0].childNodes.length; i++) {
-        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).categoryName ){
+        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).category_name ){
         var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
         var scene_object = envir.scene.getObjectByName(id_Hierarchy);
         //spotTargetObject.appendChild(new Option(scene_object.name));
