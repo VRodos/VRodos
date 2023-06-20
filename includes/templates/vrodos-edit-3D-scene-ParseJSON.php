@@ -77,7 +77,7 @@ class ParseJSON
 
                 $value->shadowRadius = 8;
 
-                $value->lightintensity = 1;
+                //$value->lightintensity = 1;
 
                 $value->path = "";
                 $value->isLight = "true";
@@ -198,25 +198,20 @@ class ParseJSON
                 'rotation' => [$r_x, $r_y, $r_z],
                 'scale' => [$s_x, $s_y, $s_z]
             );
-            $trs = json_encode($trs);
 
-            $resourcesString = 'resources3D["' . $name . '"]={ ';
+            $resourceObj = array();
             foreach($value as $entry=>$val) {
-
-                if (is_array($val)) {
-                    $resourcesString .= '"'.$entry.'":['.implode(", ", $val).'], ';
-                }
-                else if (is_object($val)) {
-                    // need to further check this
-                }
-                else {
-                    $resourcesString .= '"'.$entry.'":"'.$val.'", ';
+                if (!is_object($val)) {
+                    $resourceObj[$entry] = is_array($val) ? implode(", ", $val) : $val;
                 }
             }
+            $resourceObj["targetposition"] = [ $target_position_x, $target_position_y, $target_position_z];
+            $resourceObj["lightcolor"] = [ $light_color_r, $light_color_g, $light_color_b];
+            $resourceObj["trs"] = $trs;
 
-            $resourcesString .= '"targetposition":[' . $target_position_x . ',' . $target_position_y . ',' . $target_position_z . '], ';
-            $resourcesString .= '"lightcolor":[' . $light_color_r . ',' . $light_color_g . ',' . $light_color_b . '], ';
-            $resourcesString .= '"trs":' . $trs . " };";
+            // JSON encode before sendig to JS
+            $resourcesString = 'resources3D["' . $name . '"]=' . json_encode($resourceObj);
+            $trs = json_encode($trs);
 
             // Make javascript variable resources 3D
             echo '<script type="text/javascript">';

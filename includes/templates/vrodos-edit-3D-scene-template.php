@@ -718,7 +718,6 @@ wp_head();
 
         // On progress messages (loading)
         manager.onProgress = function ( url, loaded, total ) {
-
             document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
         };
 
@@ -784,8 +783,6 @@ wp_head();
         // Loader of assets
         let loaderMulti = new VRodos_LoaderMulti();
         loaderMulti.load(manager, resources3D, pluginPath);
-
-
 
 
         //--- initiate PointerLockControls ---------------
