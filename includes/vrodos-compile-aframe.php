@@ -409,7 +409,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
                 //$a_entity->setAttribute( "ammo-body", "type: dynamic;" );
                 //$a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );
-                $a_entity->setAttribute( "class", "collidable" );
+                //$a_entity->setAttribute( "class", "collidable" );
                 
                 
 
@@ -622,6 +622,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //print_r($pos_x);
 
                 $a_entity->setAttribute('video-controls', "id: $nameObject; orig_pos:$pos_x,$pos_y,$pos_z; orig_rot:$rot_x,$rot_y,$rot_z");
+                $sc_x = $contentObject->scale[0];
+                $sc_y = $contentObject->scale[1];
+                $sc_z = $contentObject->scale[2];
+                $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                 //$a_entity->setAttribute("camera-listener", "");
                 $a_entity->setAttribute("class", "clickable raycastable");
 
@@ -665,11 +669,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->setAttribute("position", "35 5 -25");
                 $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
                 $a_entity_panel->setAttribute("visible", "false");
-                $a_entity_panel->setAttribute("renderOrder", "9999999");
+                //$a_entity_panel->setAttribute("renderOrder", "9999999");
                 $a_entity_panel->setAttribute("material", "color: #333333; shader: flat; ");
-                //$ascenePlayer->appendChild($a_entity_panel);
+                
 
-                $ascene->appendChild($a_entity_panel);
+                //$ascene->appendChild($a_entity_panel);
 
                 $a_title_vid_entity = $dom->createElement("a-entity");
                 $a_title_vid_entity->setAttribute("id", "ent_tit_$nameObject");
@@ -684,7 +688,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->appendChild($a_entity_fs);
                 $a_entity_panel->appendChild($a_entity_pl);
                 $a_entity_panel->appendChild($a_entity_ex);
+                //$ascene->appendChild($a_entity_panel);
 
+                $ascenePlayer->appendChild($a_entity_panel);
                 //$a_entity_panel->setAttribute("overlay", "");
 
 //$a_entity_panel->setAttribute("renderOrder", "9999999");
@@ -694,10 +700,22 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //$ascenePlayer->appendChild($a_entity_panel);
 
                 //$a_entity->setAttribute("material", "side: double");
+                
+                
+
+                //print_r($sc_x);
+
+
+                //print_r($contentObject->category_name);
+              
+                
 
 
                 $a_video = $dom->createElement("a-video");
                 $a_video->setAttribute("id", "video-display_$nameObject");
+
+
+
                 $a_video->setAttribute("height", "15");
                 $a_video->setAttribute("width", "20");
                 $a_video->setAttribute("position", "0 0 0.1");
@@ -720,11 +738,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $ascenePlayer->appendChild($a_entity);
                 } else {
                     $fileOperations->setAffineTransformations($a_entity, $contentObject);
+                   
                     $a_entity->setAttribute("height", "0.000001");                      //TODO reformat without a entity component
                     $a_entity->setAttribute("width", "0.000001");
 
 
-
+                    //$a_entity->appendChild($a_video);
+                    //$ascenePlayer->appendChild($a_entity);
 
                     $a_entity->appendChild($a_video);
 
