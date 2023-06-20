@@ -317,8 +317,8 @@ function showProperties(event, object) {
         case 'door':
             displayDoorProperties(event, name);
             break;
-        case 'Marker':
-            displayMarkerProperties(event, name);
+        case 'poi-link':
+            displayLinkProperties(event, name);
             break;
         case 'Gate':
             displayGateProperties(event, name);
@@ -753,6 +753,32 @@ function displayDoorProperties(event, name) {
 
 }
 
+
+
+
+function displayLinkProperties(event, name) {
+
+    var popUpLinkPropertiesDiv = jQuery("#popUpLinkPropertiesDiv");
+    var popupLinkSelect = jQuery("#poi_link_text");
+    if (envir.scene.getObjectByName(name).poi_link_url)
+        popupLinkSelect.val(envir.scene.getObjectByName(name).poi_link_url);
+
+    // Show Selection
+    popUpLinkPropertiesDiv.show();
+    popUpLinkPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
+    popUpLinkPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+
+    popupLinkSelect.change(function (e) {
+   
+        if (this.value)
+            envir.scene.getObjectByName(name).poi_link_url = this.value;
+      
+
+        saveChanges();
+
+    });
+
+}
 
 
 // ----------------- Aux ----------------------------------------------------------
