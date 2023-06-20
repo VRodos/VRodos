@@ -632,45 +632,45 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_entity_fs = $dom->createElement("a-plane");
                 $a_entity_fs->setAttribute("id", "ent_fs_$nameObject");
-                $a_entity_fs->setAttribute("height", "2");
-                $a_entity_fs->setAttribute("width", "2");
+                $a_entity_fs->setAttribute("height", "0.1");
+                $a_entity_fs->setAttribute("width", "0.1");
                 $a_entity_fs->setAttribute("src", "#video_fullScreen_$nameObject");
                 $a_entity_fs->setAttribute("renderOrder", "9999999");
-                $a_entity_fs->setAttribute("position", "-2 0 0");
+                $a_entity_fs->setAttribute("position", "-0.05 0 0.000001");
                 $a_entity_fs->setAttribute("material", "color: #ffffff; shader: flat");
                 $a_entity_fs->setAttribute("class", "clickable raycastable");
 
                 $a_entity_pl = $dom->createElement("a-plane");
                 $a_entity_pl->setAttribute("id", "ent_pl_$nameObject");
-                $a_entity_pl->setAttribute("height", "2");
-                $a_entity_pl->setAttribute("width", "2");
+                $a_entity_pl->setAttribute("height", "0.1");
+                $a_entity_pl->setAttribute("width", "0.1");
                 $a_entity_pl->setAttribute("src", "#video_pl_$nameObject");
                 $a_entity_pl->setAttribute("renderOrder", "9999999");
-                $a_entity_pl->setAttribute("position", "2 0 0");
+                $a_entity_pl->setAttribute("position", "0.05 0 0.000001");
                 $a_entity_pl->setAttribute("material", "color: #ffffff; shader: flat;");
                 $a_entity_pl->setAttribute("class", "clickable raycastable");
                 //$fileOperations->setAffineTransformations($a_entity_fs, $contentObject);
                 //$ascene->appendChild($a_entity_fs);
                 $a_entity_ex = $dom->createElement("a-plane");
                 $a_entity_ex->setAttribute("id", "ent_ex_$nameObject");
-                $a_entity_ex->setAttribute("height", "2");
-                $a_entity_ex->setAttribute("width", "2");
+                $a_entity_ex->setAttribute("height", "0.1");
+                $a_entity_ex->setAttribute("width", "0.1");
                 $a_entity_ex->setAttribute("src", "#video_exit_$nameObject");
                 $a_entity_ex->setAttribute("renderOrder", "9999999");
-                $a_entity_ex->setAttribute("position", "4 7 0");
+                $a_entity_ex->setAttribute("position", "0.05 0.1 0.000001");
                 $a_entity_ex->setAttribute("material", "color: #ffffff; shader: flat;");
                 $a_entity_ex->setAttribute("class", "clickable raycastable");
 
                 $a_entity_panel = $dom->createElement("a-plane");
                 $a_entity_panel->setAttribute("id", "vid-panel_$nameObject");
-                $a_entity_panel->setAttribute("height", "12");
-                $a_entity_panel->setAttribute("width", "8");
+                $a_entity_panel->setAttribute("height", "0.3");
+                $a_entity_panel->setAttribute("width", "0.2");
                 //$a_entity_panel->setAttribute("color", "red");
-                $a_entity_panel->setAttribute("position", "35 5 -25");
+                $a_entity_panel->setAttribute("position", "1 1 -1");
                 $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
                 $a_entity_panel->setAttribute("visible", "false");
                 //$a_entity_panel->setAttribute("renderOrder", "9999999");
-                $a_entity_panel->setAttribute("material", "color: #333333; shader: flat; ");
+                $a_entity_panel->setAttribute("material", "color: #ffffff; shader: flat; ");
                 
 
                 //$ascene->appendChild($a_entity_panel);
