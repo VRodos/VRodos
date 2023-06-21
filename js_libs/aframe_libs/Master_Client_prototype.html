@@ -144,6 +144,27 @@
 
                 const entCollection = document.getElementsByClassName("hideable");
 
+
+
+                videoDisplay.object3D.renderOrder = 1;
+                //clipIntersection
+                videoDisplay.components.material.material.depthTest = false;
+
+                videoBorder.object3D.renderOrder = 1;
+                //clipIntersection
+                videoBorder.components.material.material.depthTest = false;
+
+                video.addEventListener("ended", (e) => {
+                    playUpd(plEl);
+                    
+                })
+                //console.log("loop "+video.getAttribute("loop"));
+               
+
+                
+
+
+
                 //obb = new THREE.MATH.OBB();
 
 
@@ -382,6 +403,12 @@
                         obj.setAttribute("visible", "true");
                         obj.setAttribute("scale", "1 1 1");
                         //obj.setAttribute("position", pos);
+
+                     
+               
+
+                
+
                     }
                     else {
                         obj.setAttribute("visible", "false");
@@ -424,7 +451,7 @@
 
                 };
 
-                plEl.addEventListener("mousedown", function (event) {
+                plEl.addEventListener("mouseup", function (event) {
                     if (video.paused) {
                         video.play();
 
@@ -438,7 +465,7 @@
 
                 });
 
-                exEl.addEventListener("mousedown", function (event) {
+                exEl.addEventListener("mouseup", function (event) {
                     addToCam(videoPanel, false, true, 0.3);
                     if (video.paused) {
                         console.log("Video Paused. Exiting...")
@@ -452,7 +479,7 @@
 
 
 
-                fsEl.addEventListener("mousedown", function (event) {
+                fsEl.addEventListener("mouseup", function (event) {
                     cam.setAttribute("position", "0 0 0");
                     cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
                     backgroundEl.setAttribute("background", "color", "black");
@@ -500,8 +527,8 @@
 
 
 
-                videoBorder.addEventListener("mousedown", function (event) {
-                    addToCam(videoPanel, true, true, 0.3);
+                videoBorder.addEventListener("mouseup", function (event) {
+                    addToCam(videoPanel, true, true, 1);
                     addToCam(fsEl, true, true, 1);
                     addToCam(plEl, true, true, 1);
                     addToCam(exEl, true, true, 1);
@@ -509,106 +536,8 @@
                     console.log(titEl.components);
                     playUpd(plEl);
 
-                    //plEl.components.material.material.depthTest = false;
-                    //plEl.components.material.material.transparent = true;
-                    //plEl.components.material.material.opacity = 1;
-
-                    /*
-                    cam.setAttribute("position", "0 0 0");
-                    cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
-                    backgroundEl.setAttribute("background", "color", "black");
-                    backgroundEl.setAttribute("overlay", "");
-    
-    
-                    console.log(origPosBorder);
-                    if (video.paused) {
-                        video.play();
-                        //console.log(data.orig_pos[2]);
-                        //borderMesh.material.color.set("#004400");
-    
-    
-                        for (let i = 0; i < entCollection.length; i++) {
-                            entCollection[i].setAttribute("visible", "false");
-                            console.log(entCollection[i].getAttribute("visible"));
-                            entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
-                            playerEl.setAttribute("wasd-controls", "acceleration: 0");
-                            cam.add(videoBorder);
-                            cam.add(videoDisplay);
-                            videoBorder.setAttribute("position", "0 0 -25");
-                            videoDisplay.setAttribute("position", "0 0 -25");
-    
-                            videoBorder.setAttribute("rotation", "0 0 0");
-                            videoDisplay.setAttribute("rotation", "0 0 0");
-                            visCollection.push(i);
-    
-    
-                            //console.log(entCollection[i]);
-                            //console.log(entCollection[i].getAttribute("original-scale"));
-                            //console.log(visCollection);
-                        }
-    
-    
-    
-                        //cam.setAttribute("position", "%s %s %s", borderCords.x, borderCords.y, borderCords.z - 5);
-    
-                        //cam.object3D.position.set(borderCords.x, borderCords.y, borderCords.z);
-                        //cam.components['look-controls'].yawObject.rotation.set(0, THREE.Math.degToRad(30), 0);
-                        //cam.object3D.rotation.set(0, THREE.Math.degToRad(30), 0);
-                        //cam.object3D.rotation.y += Math.PI / 2;
-                        //cam.setAttribute("position", "0 0 0");
-                        //cam.setAttribute("camera", "fov", 2 * Math.atan(19 / (2 * 25)) * (180 / Math.PI));
-                        //backgroundEl.setAttribute("background", "color", "black");
-                        //videoBorder.setAttribute("position", "0 0 -25");
-    
-    
-    
-                        //videoDisplay.setAttribute("height", "19");
-                        //videoDisplay.setAttribute("width", "19");
-                        //console.log(visCollection);
-    
-                    }
-                    else {
-                        //addToCam(videoPanel, "35 5 -25", false);
-                        console.log(origPosBorder);
-                        video.pause();
-                        cam.setAttribute("position", "0 0.6 0");
-                        cam.setAttribute("camera", "fov", 80);
-                        backgroundEl.setAttribute("background", "color", "#eeeeee");
-                        console.log(visCollection);
-                        //borderMesh.material.color.set("#440000");
-                        for (let i = 0; i < visCollection.length; i++) {
-                            entCollection[visCollection[i]].setAttribute("visible", "true");
-    
-                            console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
-    
-                            entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
-    
-                            //videoDisplay.setAttribute("position", origPosDisplay);
-    
-                        }
-                        player.setAttribute("wasd-controls", "acceleration: 10");
-                        backgroundEl.add(videoBorder);
-                        backgroundEl.add(videoDisplay);
-                        let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
-                        let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-    
-                        videoBorder.setAttribute("position", p_x);
-                        videoDisplay.setAttribute("position", p_x);
-    
-                        videoBorder.setAttribute("rotation", r_x);
-                        videoDisplay.setAttribute("rotation", r_x);
-                        //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-                        console.log(videoBorder.getAttribute("rotation"));
-                        console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
-                        visCollection = [];
-                    }
-                    */
-                    if (video.paused) {
-                        console.log("border clicked");
-                    }
-                    else {
-                        //addToCam(videoPanel, "35 5 -25", false);
-                        console.log(origPosBorder);
+                    function restoreVid(){
+                        console.log("playing");
                         //video.pause();
                         cam.setAttribute("position", "0 0.6 0");
                         cam.setAttribute("camera", "fov", 80);
@@ -641,8 +570,21 @@
                         console.log(videoBorder.getAttribute("rotation"));
                         console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
                         visCollection = [];
+                    }
+
+                   
+                 
+                    if (video.paused) {
+                        console.log("border clicked");
+                    }
+                    else if (video.play){
+                        //addToCam(videoPanel, "35 5 -25", false);
+                        restoreVid();
                         //playUpd(plEl);
 
+                    }
+                    if (video.ended){
+                        restoreVid();
                     }
                 });
 
