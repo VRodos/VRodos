@@ -21,13 +21,15 @@ AFRAME.registerComponent('info-panel', {
         };
         console.log(this.ImageAsset.getAttribute("src"));
         let expected_width, expected_height;
-        if (this.DescriptionEl != null) {
+        if (this.DescriptionEl) {
             expected_width = 1.5;
             expected_height = 0.81;
+            console.log("reach 1");
         }
         else {
             expected_width = 1.5;
             expected_height = 1.5;
+            console.log("reach 2");
         }
         getMeta(this.ImageAsset.getAttribute("src"), (err, img) => {
 
@@ -63,7 +65,7 @@ AFRAME.registerComponent('info-panel', {
             expected_width > 1.5 ? panel_pad = expected_width : panel_pad = 1.5;
 
 
-            if (this.DescriptionEl != null) {
+            if (!this.DescriptionEl) {
                 while (expected_height > 0.81) {
                     expected_width = expected_width / 2;
                     expected_height = expected_height / 2;
@@ -136,7 +138,7 @@ AFRAME.registerComponent('info-panel', {
         this.buttonEl.components.material.material.depthTest = false;
 
         this.ImageEl.components.material.material.depthTest = false;
-        if (this.DescriptionEl == null) {
+        if (!this.DescriptionEl) {
             console.log("No Desc");
         }
         else {
