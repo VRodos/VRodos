@@ -849,20 +849,6 @@ function vrodos_undo_scene_async_action_callback()
 }
 
 
-//function vrodos_translate_action_callback()
-//{
-//
-//    $text = $_POST['text'];
-//    $target_lang = $_POST['lang'];
-//
-//    //$translate = new TranslateClient();
-////    $result = $translate->translate($text, [
-////    'target' => $target_lang,
-////    ]);
-//    echo $result[text];
-//    wp_die();
-//}
-
 
 // Redo button for scenes
 function vrodos_redo_scene_async_action_callback()
