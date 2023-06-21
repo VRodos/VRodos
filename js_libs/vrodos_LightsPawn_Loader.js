@@ -519,20 +519,11 @@ class VRodos_LightsPawn_Loader {
                         }
                     );
 
-
-
-
                 }
-
-
 
             })(n);
         }
 
-
-
-
     }
-
 
 }

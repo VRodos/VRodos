@@ -161,7 +161,7 @@ if ($current_user->exists()) {
 // Shift vars to Javascript side
 echo '<script>';
 echo 'var pluginPath="'.$pluginpath.'";';
-echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
+echo 'var uploadDir="'.wp_upload_dir()['baseurl'].'";';
 echo 'let projectId="'.$project_id.'";';
 echo 'let projectSlug="'.$projectSlug.'";';
 echo 'let isAdmin="'.$isAdmin.'";';
@@ -173,9 +173,6 @@ echo 'user_email = "'.$user_email.'";';
 echo 'current_user_id = "'.get_current_user_id().'";';
 echo 'let siteurl="'.site_url().'";';
 
-if ($project_type === 'Archaeology') {
-    echo "var doorsAll=" . json_encode($doorsAllInfo) . ";";
-}
 echo '</script>';
 
 
@@ -630,7 +627,7 @@ wp_head();
         let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 
         // Selected object name
-        let selected_object_name = '';
+        var selected_object_name = '';
 
         // Add 3D gui widgets to gui vr_editor_main_div
         let guiContainer = document.getElementById('numerical_gui-container');
@@ -639,12 +636,12 @@ wp_head();
         // guiContainer.appendChild(controlInterface.scale.domElement);
 
         // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
-        let envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
+        var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
         envir.is2d = true;
 
         // Controls with axes (Transform, Rotate, Scale)
 
-        let transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
+        var transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
 
 
@@ -721,7 +718,6 @@ wp_head();
 
         // On progress messages (loading)
         manager.onProgress = function ( url, loaded, total ) {
-
             document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
         };
 
@@ -738,6 +734,7 @@ wp_head();
             if (objItem === undefined){
                 return;
             } else {
+                console.log(name, objItem);
                 attachToControls(name, objItem);
             }
 
@@ -786,8 +783,6 @@ wp_head();
         // Loader of assets
         let loaderMulti = new VRodos_LoaderMulti();
         loaderMulti.load(manager, resources3D, pluginPath);
-
-
 
 
         //--- initiate PointerLockControls ---------------
@@ -908,7 +903,6 @@ wp_head();
 
             transform_controls = envir.scene.getObjectByName('myTransformControls');
             transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
-
 
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);

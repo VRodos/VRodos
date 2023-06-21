@@ -2,8 +2,13 @@
 // Find dimensions of the selected object
 function findDimensions(groupObj){
 
-    groupObj.remove( groupObj.getObjectByName('bbox') );
-    groupObj.remove( groupObj.getObjectByName('x_dim_line') );
+    if (groupObj.getObjectByName('bbox')){
+        groupObj.remove( groupObj.getObjectByName('bbox') );
+    }
+    if (groupObj.getObjectByName('x_dim_line')){
+        groupObj.remove( groupObj.getObjectByName('x_dim_line') );
+    }
+
 
     // ======= bbox ========================
     var box;
@@ -62,8 +67,13 @@ function findBorders(groupObj){
 // Find Limits (world coordinates) of the selected object
 function findObjectLimits(groupObj){
 
-    groupObj.remove( groupObj.getObjectByName('bbox') );
-    groupObj.remove( groupObj.getObjectByName('x_dim_line') );
+    if (groupObj.getObjectByName('bbox')) {
+        groupObj.remove( groupObj.getObjectByName('bbox') );
+    }
+    if (groupObj.getObjectByName('x_dim_line')) {
+        groupObj.remove( groupObj.getObjectByName('x_dim_line') );
+    }
+
 
     // ======= bbox ========================
     try {
@@ -108,7 +118,7 @@ function findSceneDimensions(){
 
         if (envir.scene.children[i].name !== "myTransformControls" && envir.scene.children[i].name !== "myGridHelper") {
 
-            if ( envir.scene.children[i].categoryName === 'lightHelper')
+            if ( envir.scene.children[i].category_name === 'lightHelper')
                 continue;
 
             var sizeXYZ_Arr = findObjectLimits(envir.scene.children[i]);

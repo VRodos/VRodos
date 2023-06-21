@@ -238,7 +238,7 @@ class vrodos_3d_editor_environmentals {
         // Avatar camera is a Perspective camera
         this.cameraAvatar = new THREE.PerspectiveCamera(this.VIEW_ANGLE, this.ASPECT, 0.01, 4000);
         this.cameraAvatar.name = "avatarCamera";
-        this.cameraAvatar.category_name = "avatarCamera";
+        this.cameraAvatar.category_name = "avatarYawObject";
         this.cameraAvatar.isSelectableMesh = true;
         this.cameraAvatar.rotation.y = Math.PI*2;
 
@@ -348,9 +348,6 @@ class vrodos_3d_editor_environmentals {
         }
     }
 
-
-
-
     updateCameraGivenSceneLimits() {
 
         if (this.cameraOrbit.type === 'PerspectiveCamera') {
@@ -380,27 +377,4 @@ class vrodos_3d_editor_environmentals {
         this.cameraOrbit.updateProjectionMatrix();
         //this.orbitControls.object.updateProjectionMatrix();
     }
-
-    // setBackground() {
-    //     //
-    //     // console.log("1");
-    //     // const loader = new THREE.CubeTextureLoader();
-    //     // const texture = loader.load([
-    //     //     'https://r105.threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/pos-x.jpg',
-    //     //     'https://r105.threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/neg-x.jpg',
-    //     //     'https://r105.threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/pos-y.jpg',
-    //     //     'https://r105.threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/neg-y.jpg',
-    //     //     'https://r105.threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/pos-z.jpg',
-    //     //     'https://r105.threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/neg-z.jpg',
-    //     // ]);
-    //     // this.scene.background = texture;
-    //
-    //     // Load envMap.
-    //     var textureLoader = new THREE.TextureLoader();
-    //     var envmap_texture = textureLoader.load(siteurl + '/wp-content/plugins/VRodos/images/hdr/venice_sunset_1k.hdr');
-    //     // envmap_texture.mapping = THREE.EquirectangularReflectionMapping;
-    //     // envmap_texture.encoding = THREE.sRGBEncoding;
-    //
-    //     this.scene.background = envmap_texture;
-    // }
 }

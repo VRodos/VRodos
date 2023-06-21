@@ -285,7 +285,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
             if (categName == "allAssetsViewBt")
                 items[i].style.display = '';
             else {
-                if (items[i].firstChild.dataset.categoryname == categName)
+                if (items[i].firstChild.dataset.category_name == categName)
                     items[i].style.display = '';
                 else
                     items[i].style.display = 'none';

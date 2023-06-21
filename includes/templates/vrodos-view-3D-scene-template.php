@@ -134,7 +134,7 @@ $videos = vrodos_getVideoAttachmentsFromMediaLibrary();
 // Shift vars to Javascript side
 echo '<script>';
 echo 'var pluginPath="'.$pluginpath.'";';
-echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
+echo 'var uploadDir="'.wp_upload_dir()['baseurl'].'";';
 echo 'var isAdmin="'.$isAdmin.'";';
 echo 'let isUserAdmin="'.current_user_can('administrator').'";';
 echo 'let scene_id ="'.$current_scene_id.'";';

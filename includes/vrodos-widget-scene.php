@@ -441,7 +441,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
         // Shift vars to Javascript side
 	    echo '<script>';
 	    echo 'var pluginPath="'.$pluginpath.'";';
-	    echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
+	    echo 'var uploadDir="'.wp_upload_dir()['baseurl'].'";';
         echo 'var siteurl="'.site_url().'";';
 	    echo '</script>';
 	

@@ -71,7 +71,7 @@ THREE.SceneExporter.prototype = {
                     || node['category_name'] === 'lightTargetSpot'
                     || node.name === 'Camera3Dmodel'
                     || node.name === 'Camera3DmodelMesh'
-                    || typeof node['category_name'] === 'undefined') && node.name != 'avatarCamera')
+                    || typeof node['category_name'] === 'undefined') && node.name !== 'avatarCamera')
                     continue;
 
 
@@ -235,250 +235,236 @@ THREE.SceneExporter.prototype = {
 
         function ObjectString(o, n) {
 
+            let ignoredKeys = ['matrixAutoUpdate', 'matrixWorldNeedsUpdate', 'visible', 'castShadow', 'receiveShadow', 'frustumCulled', 'renderOrder', 'draggable', 'class', 'isGroup']
+
+            // ALL 3D ASSETS
             if (o.name != 'avatarCamera'
                 && !o['category_name'].includes('lightSun')
                 && !o['category_name'].includes('lightTargetSpot')
                 && !o['category_name'].includes('lightLamp')
                 && !o['category_name'].includes('lightSpot')
                 && !o['category_name'].includes('lightAmbient')
-                && !o['category_name'].includes('pawn')
-            ) {
+                && !o['category_name'].includes('pawn'))
+            {
 
-                var quatR = new THREE.Quaternion();
-
-                var eulerR = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR = new THREE.Quaternion();
+                let eulerR = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR.setFromEuler(eulerR);
 
-                // console.log("ROTATION:", eulerR);
-                //                console.log("Quaternion:", o);
+                let entryObject = {};
 
-               // ALL OBJECTS
-
-                var overrideMaterial = "false";
-                if (o.children[0]) {
-                    if (o.children[0].isMesh) {
-
-                        var vswitch = o.children[0].material.map;
-
-                        overrideMaterial = o.children[0].overrideMaterial;
-                        var vcolor = o.children[0].material.color.getHexString(); // : "0x000000";
-                        var vemissive = (o.children[0].material.emissive !== undefined ?
-                            o.children[0].material.emissive.getHexString() : '000000');
-                        var vroughness = o.children[0].material.roughness;
-                        var vmetalness = o.children[0].material.metalness;
-                        var vemissiveIntensity = o.children[0].material.emissiveIntensity;
-                    } else {
-                        var vswitch = false;
-                        var vcolor = "0x000000";
-                        var vemissive = 0;
-                        var vroughness = 0;
-                        var vmetalness = 0;
-                        var vemissiveIntensity = 0;
-                    }
-                }
-
-                let dynamic_string = '';
                 for (let entry in Object.keys(o)) {
                     if(typeof (Object.values(o)[entry]) !== 'object') {
-                        dynamic_string = dynamic_string.concat('"'+Object.keys(o)[entry] + '":"' + Object.values(o)[entry]) + '", ';
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
                     }
                 }
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR._x, quatR._y, quatR._z];
 
-                var output = [
-                    '\t\t' + ',' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',',
-                    '	"quaternion" : ' + "[" + quatR._x + "," + quatR._y + "," + quatR._z + "," + quatR._w + "]" + ',',
-                    '	"scale"	   : ' + Vector3String(o.scale) + ',',
-                    '	"fnPath" : ' + '"' + o.fnPath + '"' + ',',
-                    '   "overrideMaterial" : ' + '"' + o.overrideMaterial + '"' + ',',
-                    '   "color" : ' + '"' + vcolor + '"' + ',',
-                    '   "emissive" : ' + '"' + vemissive + '"' + ',',
-                    '   "roughness" : ' + '"' + vroughness + '"' + ',',
-                    '   "metalness" : ' + '"' + vmetalness + '"' + ',',
-                    '   "emissiveIntensity" : ' + '"' + vemissiveIntensity + '"' + ',',
-                    '   "is_cloned" : ' + '"' + o['is_cloned'] + '"' + ',',
-                    '   "isLight" : ' + '"' + 'false' + '"' + ',',
-                    dynamic_string,
-                    + (o.children.length ? ',' : '')
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
 
-                    //+ ',',
-                    //'	"visible"  : ' + o.visible + ( o.children.length ? ',' : '' )
-                ];
-                //===============================================
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
             }
             else if (o['category_name'] === "lightSun") {
 
-                var quatR_light = new THREE.Quaternion();
-
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
 
-                // REM HERE Check with trailing comma
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," +
-                    o.rotation.y + "," +
-                    o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.targetposition = [o.target.position.x, o.target.position.y, o.target.position.z];
+                entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
+                entryObject.lightintensity = o.intensity;
+                delete entryObject.intensity;
 
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," + quatR_light._y + "," + quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
 
-                    '	"scale"	    : ' + '[' + o.scale.x + ',' + o.scale.y + ',' + o.scale.z + '],',
-                    '	"lightintensity"	: "' + o.intensity + '",',
-                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"targetposition" : ' + Vector3String(o.target.position) + ',',
-                    '	"category_name" : "' + o.category_name + '",',
-                    '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
-                ];
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
+
             }
             else if (o['category_name'] === "lightLamp") {
-                var quatR_light = new THREE.Quaternion();
 
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
-                // REM HERE Check with trailing comma
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," +
-                    o.rotation.y + "," +
-                    o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," +
-                    quatR_light._y + "," +
-                    quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"lightintensity"	: "' + o.intensity + '",',
-                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"lightdecay" : "' + o.decay + '",',
-                    '	"lightdistance" : "' + o.distance + '",',
-                    '	"shadowRadius" : "' + o.shadow.radius + '",',
-                    '	"category_name" : "' + o.category_name + '",',
-                    '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
-                ];
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
+
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
+                entryObject.lightdecay = o.decay;
+                delete entryObject.decay;
+                entryObject.lightdistance = o.distance;
+                delete entryObject.distance;
+                entryObject.shadowRadius = o.shadow.radius;
+                delete entryObject.shadow;
+                entryObject.lightintensity = o.intensity;
+                delete entryObject.intensity;
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
+
             }
             else if (o['category_name'] === "lightSpot") {
-                var quatR_light = new THREE.Quaternion();
 
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
 
-                // REM HERE Check with trailing comma
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," +
-                    o.rotation.y + "," +
-                    o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," +
-                    quatR_light._y + "," +
-                    quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"lightintensity"	: "' + o.intensity + '",',
-                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"lightdecay" : "' + o.decay + '",',
-                    '	"lightdistance" : "' + o.distance + '",',
-                    '	"lightangle" : "' + o.angle + '",',
-                    '	"lightpenumbra" : "' + o.penumbra + '",',
-                    '	"lighttargetobjectname" : "' + o.target.name + '",',
-                    '	"category_name" : "' + o.category_name + '",',
-                    '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
-                ];
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
+                entryObject.lightintensity = o.intensity;
+                delete entryObject.intensity;
+                entryObject.lightdecay = o.decay;
+                delete entryObject.decay;
+                entryObject.lightdistance = o.distance;
+                delete entryObject.distance;
+                entryObject.lightangle = o.angle;
+                delete entryObject.angle;
+                entryObject.lightpenumbra = o.penumbra;
+                delete entryObject.penumbra;
+                entryObject.lighttargetobjectname = o.target.name;
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
             }
             else if (o['category_name'] === "lightAmbient") {
 
-                var quatR_light = new THREE.Quaternion();
-
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," +
-                    quatR_light._y + "," +
-                    quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"lightintensity"	: "' + o.intensity + '",',
-                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"category_name" : "' + o.category_name + '",',
-                    '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
-                ];
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
 
-                //console.log(output);
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
+                entryObject.lightintensity = o.intensity;
+                delete entryObject.intensity;
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
+
 
             }
             else if (o['category_name'] === "pawn") {
 
-
-                var quatR_light = new THREE.Quaternion();
-
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," + quatR_light._y + "," + quatR_light._z + "," + quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"category_name" : "' + o.category_name + '",',
-                    '	"isLight"   : ' + '"' + 'false' + '"' + (o.children.length ? ',' : '')
-                ];
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
 
-                //console.log(output);
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
             }
             else if (o.name === 'avatarCamera') {
-                var quatCombined = new THREE.Quaternion();
-                var camEulerCombined = new THREE.Euler(- o.children[0].rotation._x, (Math.PI - o.rotation.y) % (2 * Math.PI), 0, 'YXZ');
+
+                let quatCombined = new THREE.Quaternion();
+                let camEulerCombined = new THREE.Euler(- o.children[0].rotation._x, (Math.PI - o.rotation.y) % (2 * Math.PI), 0, 'YXZ');
                 quatCombined.setFromEuler(camEulerCombined);
 
-                // player is only around y
-                var quatR_player = new THREE.Quaternion();
-                var eulerR_player = new THREE.Euler(0, (Math.PI - o.rotation._y) % (2 * Math.PI), 0, 'YXZ');
+                // Player is only around y
+                let quatR_player = new THREE.Quaternion();
+                let eulerR_player = new THREE.Euler(0, (Math.PI - o.rotation._y) % (2 * Math.PI), 0, 'YXZ');
                 quatR_player.setFromEuler(eulerR_player);
 
 
-                //console.log("o.rotation", o.rotation);
-
-                // camera is only around x
-                var quatR_camera = new THREE.Quaternion();
-                var eulerR_camera = new THREE.Euler(-o.children[0].rotation._x, 0, 0, 'YXZ');
+                // Camera is only around x
+                let quatR_camera = new THREE.Quaternion();
+                let eulerR_camera = new THREE.Euler(-o.children[0].rotation._x, 0, 0, 'YXZ');
                 quatR_camera.setFromEuler(eulerR_camera);
 
-                var output = [
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.children[0].rotation._x + "," +
-                    o.rotation.y + "," +
-                    0 + "]" + ',', //+ Vector3String(o.rotation) + ',',
-                    '	"quaternion" : ' + "[" + quatCombined._x.toFixed(4) + "," +
-                    quatCombined._y.toFixed(4) + "," +
-                    quatCombined._z.toFixed(4) + "," +
-                    quatCombined._w.toFixed(4) + "]" + ',',
-                    '	"quaternion_player" : ' + "[" + quatR_player._x.toFixed(4) + "," +
-                    quatR_player._y.toFixed(4) + "," +
-                    quatR_player._z.toFixed(4) + "," +
-                    quatR_player._w.toFixed(4) + "]" + ',',
-                    '	"quaternion_camera" : ' + "[" + quatR_camera._x.toFixed(4) + "," +
-                    quatR_camera._y.toFixed(4) + "," +
-                    quatR_camera._z.toFixed(4) + "," +
-                    quatR_camera._w.toFixed(4) + "]" + ',',
-                    '	"scale"	   : ' + Vector3String(o.scale) + ',',
-                    '	"category_name" : "' + 'avatarYawObject' + '",',
-                    '	"visible"  : ' + o.visible + (o.children.length ? '' : '') + '}'
-                ];
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
+
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.children[0].rotation._x, o.rotation.y, 0];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatCombined._x.toFixed(4), quatCombined._y.toFixed(4), quatCombined._z.toFixed(4), quatCombined._w.toFixed(4)];
+                entryObject.quaternion_player = [quatR_player._x.toFixed(4), quatR_player._y.toFixed(4), quatR_player._z.toFixed(4), quatR_player._w.toFixed(4)];
+                entryObject.quaternion_camera = [quatR_camera._x.toFixed(4), quatR_camera._y.toFixed(4), quatR_camera._z.toFixed(4), quatR_camera._w.toFixed(4)];
+
+                entryObject.category_name = 'avatarYawObject';
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t'  + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? '' : '') + '}'  ];
+
             }
 
             return generateMultiLineString(output, '\n\t\t', n);
@@ -554,8 +540,6 @@ THREE.SceneExporter.prototype = {
                 ];
 
             } else if (g instanceof THREE.Geometry) {
-
-
 
                 if (g.sourceType === "ascii" || g.sourceType === "ctm" || g.sourceType === "stl" || g.sourceType === "vtk") {
 

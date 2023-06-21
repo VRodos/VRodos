@@ -71,5 +71,6 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
         }
     }
+    console.log(resources3D_new);
     return resources3D_new;
 }
