@@ -2,7 +2,6 @@
 // Find dimensions of the selected object
 function findDimensions(groupObj){
 
-    console.log(groupObj);
     if (groupObj.getObjectByName('bbox')){
         groupObj.remove( groupObj.getObjectByName('bbox') );
     }
