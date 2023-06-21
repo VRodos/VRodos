@@ -31,7 +31,11 @@ AFRAME.registerComponent('info-panel', {
         }
         getMeta(this.ImageAsset.getAttribute("src"), (err, img) => {
 
-            let aspect_ratio = img.naturalWidth / img.naturalHeight;
+            console.log(img.naturalWidth + " " +  img.naturalHeight);
+
+            //let aspect_ratio = img.naturalWidth / img.naturalHeight;
+            let aspect_ratio;
+            img.naturalWidth > img.naturalHeight ? aspect_ratio = img.naturalWidth / img.naturalHeight : aspect_ratio = img.naturalHeight / img.naturalWidth;
             img.naturalWidth > img.naturalHeight ? expected_height = expected_width / aspect_ratio : expected_width = expected_height / aspect_ratio;
             /*
             if (img.naturalWidth > img.naturalHeight) {
@@ -63,14 +67,14 @@ AFRAME.registerComponent('info-panel', {
                 while (expected_height > 0.81) {
                     expected_width = expected_width / 2;
                     expected_height = expected_height / 2;
-                    console.log(expected_width, expected_height);
+                    console.log("reach 1");
 
                 }
             } else {
                 while (expected_height > 1.5) {
                     expected_width = expected_width / 2;
                     expected_height = expected_height / 2;
-                    console.log(expected_width, expected_height);
+                    console.log("reach 2");
                 }
 
             }
