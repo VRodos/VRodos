@@ -402,7 +402,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $material = "";
                 //$fileOperations->setMaterial( $material, $contentObject );
                 $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                $a_entity->setAttribute( "class", "override-materials hideable" );
+                $a_entity->setAttribute( "class", "override-materials hideable non-clickable" );
                 $a_entity->setAttribute( "id", $nameObject );
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );

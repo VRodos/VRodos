@@ -9,6 +9,7 @@ AFRAME.registerComponent('info-panel', {
         this.DescriptionEl = document.querySelector('#desc_' + this.data);
         this.infoPanel = document.querySelector('#infoPanel_' + this.data);
         this.escEl = document.querySelector('#exit_' + this.data);
+        this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
 
@@ -122,6 +123,7 @@ AFRAME.registerComponent('info-panel', {
 
         this.backgroundEl.object3D.scale.set(1, 1, 1);
         this.backgroundEl.object3D.visible = true;
+        this.scen.setAttribute("raycaster","objects: .raycastable");
 
         this.el.object3D.scale.set(1, 1, 1);
         if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
@@ -161,6 +163,7 @@ AFRAME.registerComponent('info-panel', {
         this.el.object3D.visible = false;
         this.el.emit("resetmat");
         this.playerEl.setAttribute("wasd-controls", "acceleration: 10");
+        this.scen.setAttribute("raycaster","objects: .raycastable, .non-clickable");
 
         this.el.components.material.material.depthTest = true;
         this.ImageEl.components.material.material.depthTest = true;
