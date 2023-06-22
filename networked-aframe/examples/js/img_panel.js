@@ -13,6 +13,11 @@ AFRAME.registerComponent('info-panel', {
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
 
+        this.el.addEventListener("force-close", (evt)=> {
+            console.log("εμιτεντ" + evt.detail.value);
+            console.log("δις ελ" + this.data);
+        });
+
         var img = new Image();
         const getMeta = (url, cb) => {
             const img = new Image();
@@ -102,7 +107,10 @@ AFRAME.registerComponent('info-panel', {
         this.buttonEl = document.querySelector('#button_poi_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
 
+        
+
         this.buttonEl.addEventListener('click', this.onMenuButtonClick);
+        //this.buttonEl.addEventListener('force-close-others', this.onMenuButtonClick);
         this.backgroundEl.addEventListener('click', this.onBackgroundClick);
         //this.el.object3D.renderOrder = 9999999;
         //this.el.object3D.depthTest = false;
@@ -120,7 +128,13 @@ AFRAME.registerComponent('info-panel', {
 
     onMenuButtonClick: function (evt) {
 
-
+        this.el.emit("force-close",{value: this.data, el: this.el});
+        let poi_elems = document.getElementsByClassName('openPOI');
+        for (let i = 0; i < poi_elems.length; ++i) {
+            poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
+            poi_elems[i].object3D.visible = false;
+        }
+        this.el.classList.add("openPOI");
         this.backgroundEl.object3D.scale.set(1, 1, 1);
         this.backgroundEl.object3D.visible = true;
         this.scen.setAttribute("raycaster","objects: .raycastable");
@@ -160,6 +174,7 @@ AFRAME.registerComponent('info-panel', {
         this.backgroundEl.object3D.scale.set(0.001, 0.001, 0.001);
         this.backgroundEl.object3D.visible = false;
         this.el.object3D.scale.set(0.001, 0.001, 0.001);
+        this.el.classList.remove("openPOI");
         this.el.object3D.visible = false;
         this.el.emit("resetmat");
         this.playerEl.setAttribute("wasd-controls", "acceleration: 10");
