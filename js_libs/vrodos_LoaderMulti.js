@@ -95,7 +95,7 @@ class VRodos_LoaderMulti {
                                 let resourcesGLB = JSON.parse(res);
                                 let glbURL = resourcesGLB['glbURL'];
                                 if (resources3D[name]['category_slug'] == "video")
-                                    glbURL = pluginPath + '/assets/objects/tv.glb';
+                                    glbURL = pluginPath + '/assets/objects/tv_rotated.glb';
                                 // Instantiate a loader
 
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
