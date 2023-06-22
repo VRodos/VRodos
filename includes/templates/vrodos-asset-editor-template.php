@@ -509,7 +509,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                 <div style="display:flex; width: 100%;">
 
-                    <div id="glb_file_section" class="assetEditorColumn">
+                    <div id="glb_file_section" class="assetEditorColumn" style="display: <?php echo ($asset_id == null) ? 'none' : 'block' ?>">
 
                         <h3 class="mdc-typography--title">3D Model</h3>
 
@@ -552,7 +552,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         </div>
                     </div>
 
-                    <div id="screenshot_section" class="assetEditorColumn" style="float: right;">
+                    <div id="screenshot_section" class="assetEditorColumn" style="float: right; display: <?php echo ($asset_id == null) ? 'none' : 'block' ?>;">
 
                         <h3 class="mdc-typography--title">Screenshot</h3>
                         <?php
