@@ -402,7 +402,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $material = "";
                 //$fileOperations->setMaterial( $material, $contentObject );
                 $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                $a_entity->setAttribute( "class", "override-materials hideable" );
+                $a_entity->setAttribute( "class", "override-materials hideable non-clickable" );
                 $a_entity->setAttribute( "id", $nameObject );
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );
@@ -666,7 +666,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->setAttribute("height", "0.3");
                 $a_entity_panel->setAttribute("width", "0.2");
                 //$a_entity_panel->setAttribute("color", "red");
-                $a_entity_panel->setAttribute("position", "1 1 -1");
+                $a_entity_panel->setAttribute("position", "1 0.7 -1");
                 $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
                 $a_entity_panel->setAttribute("visible", "false");
                 //$a_entity_panel->setAttribute("renderOrder", "9999999");
@@ -677,9 +677,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_title_vid_entity = $dom->createElement("a-entity");
                 $a_title_vid_entity->setAttribute("id", "ent_tit_$nameObject");
-                $a_title_vid_entity->setAttribute("position", "-3 4 0");
+                $a_title_vid_entity->setAttribute("position", "-0.1 0.17 0.000001");
 
-                $a_title_vid_entity->setAttribute("text", "depthTest:false; shader: msdf; anchor: left; width: 18; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: black; value: $contentObject->video_title");
+                $a_title_vid_entity->setAttribute("text", "depthTest:false; shader: msdf; anchor: left; width: 0.5; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: black; value: $contentObject->video_title");
                 $a_title_vid_entity->setAttribute( "class", "clickable raycastable" );
 
 
@@ -727,32 +727,19 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
 
-                if ($contentObject->follow_camera) {
-                    $cameraPosition[0] = $contentObject->follow_camera_x;
-                    $cameraPosition[2] = $contentObject->follow_camera_z;
-
-                    //print_r($fov);
-
-                    $a_entity->setAttribute("position", "$cameraPosition[0]  0  $cameraPosition[2]");
-                    $a_entity->appendChild($a_video);
-                    $ascenePlayer->appendChild($a_entity);
-                } else {
-                    $fileOperations->setAffineTransformations($a_entity, $contentObject);
-                   
-                    $a_entity->setAttribute("height", "0.000001");                      //TODO reformat without a entity component
-                    $a_entity->setAttribute("width", "0.000001");
+                $fileOperations->setAffineTransformations($a_entity, $contentObject);
+                
+                $a_entity->setAttribute("height", "0.000001");                      //TODO reformat without a entity component
+                $a_entity->setAttribute("width", "0.000001");
 
 
-                    //$a_entity->appendChild($a_video);
-                    //$ascenePlayer->appendChild($a_entity);
+                //$a_entity->appendChild($a_video);
+                //$ascenePlayer->appendChild($a_entity);
 
-                    $a_entity->appendChild($a_video);
+                $a_entity->appendChild($a_video);
 
-                    $ascene->appendChild($a_entity);
-                }
-                //
-                //$a_entity->setAttribute( "height", "20" );
-                //$a_entity->setAttribute( "width", "20" );
+                $ascene->appendChild($a_entity);
+           
             }else if ($contentObject->category_slug == 'poi-link') {
                 $a_entity = $dom->createElement( "a-entity" );
                 $a_entity->appendChild( $dom->createTextNode( '' ) );
@@ -904,7 +891,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_panel_entity = $dom->createElement("a-entity");
                 $a_panel_entity->setAttribute("id", "infoPanel_$nameObject");
-                $a_panel_entity->setAttribute("position", "0 1 -2");
+                $a_panel_entity->setAttribute("position", "0 0.7 -2");
 
                 $a_panel_entity->setAttribute("info-panel", "$nameObject");
                 $a_panel_entity->setAttribute("visible", "false");
@@ -929,7 +916,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_title_img_entity = $dom->createElement("a-entity");
                 $a_title_img_entity->setAttribute("id", "title_$nameObject");
-                $a_title_img_entity->setAttribute("position", "-0.68 -0.9 0");
+                //$a_title_img_entity->setAttribute("position", "-0.68 -0.9 0");
 
                 $a_title_img_entity->setAttribute("text", "shader: msdf; anchor: left; width: 1.5; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: white; value: $contentObject->poi_img_title");
                 $a_title_img_entity->setAttribute( "class", "hideable" );
@@ -949,7 +936,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_panel_entity->appendChild($a_main_img_entity);
                 $a_panel_entity->appendChild($a_title_img_entity);
 
-                if(!is_null($contentObject->poi_img_content))
+                if($contentObject->poi_img_content)
                 {
                     //print_r($contentObject->poi_img_desc);
                     $a_main_img_entity->setAttribute("mixin", "poiImage");

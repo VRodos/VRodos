@@ -51,6 +51,14 @@
             }
         });
 
+        AFRAME.registerComponent('scene-settings', {
+            init: function () {
+                let cam = document.querySelector("#cameraA");
+                cam.setAttribute("camera", "fov: 60");
+            }
+        });
+
+
         AFRAME.registerComponent('static-mask-me', {
             init: function () {
                 let el = this.el;
@@ -467,6 +475,7 @@
 
                 exEl.addEventListener("mouseup", function (event) {
                     addToCam(videoPanel, false, true, 0.3);
+                    backgroundEl.setAttribute("raycaster","objects: .raycastable, .non-clickable");
                     if (video.paused) {
                         console.log("Video Paused. Exiting...")
 
@@ -533,14 +542,15 @@
                     addToCam(plEl, true, true, 1);
                     addToCam(exEl, true, true, 1);
                     addToCamText(titEl, true, true, 1);
-                    console.log(titEl.components);
+                    //console.log(titEl.components);
+                    backgroundEl.setAttribute("raycaster","objects: .raycastable");
                     playUpd(plEl);
 
                     function restoreVid(){
                         console.log("playing");
                         //video.pause();
                         cam.setAttribute("position", "0 0.6 0");
-                        cam.setAttribute("camera", "fov", 80);
+                        cam.setAttribute("camera", "fov", 60);
                         backgroundEl.setAttribute("background", "color", "#eeeeee");
                         console.log(visCollection);
                         //restoreVidPos(videoBorder, videoDisplay, videoPanel);
@@ -595,11 +605,6 @@
             schema: { type: "string", default: "default value" },
             init: function () {
                 this.el.setAttribute("link", "on: click; href: " + this.data);
-                //console.log("link", "on: click; href: " + this.data);
-                //this.el.addEventListener("click", e => {
-                //console.log();
-                //    window.location.replace(this.data);
-                //});
             }
         });
 
@@ -824,14 +829,14 @@
 
 
 
-    <a-scene id="aframe-scene-container" fog="type: linear; color: #AAB; far: 230; near: 0"
+    <a-scene id="aframe-scene-container" scene-settings fog="type: linear; color: #AAB; far: 230; near: 0"
         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
         vr-mode-ui="enabled: false" networked-scene="
         room: roomname;
         debug: true;
         audio: true;
         adapter: easyrtc;
-       " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
+       " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable, .non-clickable">
 
 
 
