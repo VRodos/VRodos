@@ -50,26 +50,6 @@ for (let key in gui_controls_funs) {
  */
 function controllerDatGuiOnChange() {
 
-    // The following code might be obsolete.
-    /*let actionLabel = ['translate','translate','translate','rotate','rotate','rotate','scale', 'scale', 'scale'];
-    let k = 0;
-    for (let key in gui_controls_funs) {
-
-        // When gui values changes then stop animating else won't be able to type with keyboard
-        dg_controller[0].onChange(function(value) {
-
-                // Stop animating
-                cancelAnimationFrame( id_animation_frame );
-
-                // update object position
-                transform_controls.object.position.x = gui_controls_funs.dg_t1;
-
-                // start animating again
-                animate();
-            }
-        );
-    }*/
-
 
     // When gui values changes then stop animating else won't be able to type with keyboard
     dg_controller[0].onChange(function(value) {
@@ -80,53 +60,60 @@ function controllerDatGuiOnChange() {
     );
 
     dg_controller[1].onChange(function (value) {
-        cancelAnimationFrame(id_animation_frame);
-        transform_controls.object.position.y = gui_controls_funs.dg_t2;
-        animate();
-    }
+            cancelAnimationFrame(id_animation_frame);
+            transform_controls.object.position.y = gui_controls_funs.dg_t2;
+            animate();
+        }
     );
 
     dg_controller[2].onChange(function (value) {
-        cancelAnimationFrame(id_animation_frame);
-        transform_controls.object.position.z = gui_controls_funs.dg_t3;
-        animate();
-    }
+            cancelAnimationFrame(id_animation_frame);
+            transform_controls.object.position.z = gui_controls_funs.dg_t3;
+            animate();
+        }
     );
 
     dg_controller[3].onChange(function (value) {
-        cancelAnimationFrame(id_animation_frame);
-        transform_controls.object.rotation.x = gui_controls_funs.dg_r1 / 180 * Math.PI;
-        animate();
-    }
+            cancelAnimationFrame(id_animation_frame);
+            transform_controls.object.rotation.x = gui_controls_funs.dg_r1 / 180 * Math.PI;
+            animate();
+        }
     );
 
     dg_controller[4].onChange(function (value) {
-        cancelAnimationFrame(id_animation_frame);
-        transform_controls.object.rotation.y = gui_controls_funs.dg_r2 / 180 * Math.PI;
-        animate();
-    }
+            cancelAnimationFrame(id_animation_frame);
+            transform_controls.object.rotation.y = gui_controls_funs.dg_r2 / 180 * Math.PI;
+            animate();
+        }
     );
 
     dg_controller[5].onChange(function (value) {
-        cancelAnimationFrame(id_animation_frame);
-        transform_controls.object.rotation.z = gui_controls_funs.dg_r3 / 180 * Math.PI;
-        animate();
-    }
+            cancelAnimationFrame(id_animation_frame);
+            transform_controls.object.rotation.z = gui_controls_funs.dg_r3 / 180 * Math.PI;
+            animate();
+        }
     );
 
     // When x length changes from dat gui then change also scale, y and z lengths, and scale the object with transform controls also
     dg_controller[6].onChange(function (value) {
 
-        cancelAnimationFrame(id_animation_frame);
+            cancelAnimationFrame(id_animation_frame);
 
-        if (dg_s1_prev) {
-            transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
-            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+            if (dg_s1_prev) {
+                if (envir.scene.keepScaleAspectRatio) {
+                    transform_controls.object.scale.set(value, value, value);
+                    dg_controller[7].domElement.children[0].value = value;
+                    dg_controller[8].domElement.children[0].value = value;
+                } else {
+                    transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
+
+                }
+                envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+            }
+
+            dg_s1_prev = value;
+            animate();
         }
-
-        dg_s1_prev = value;
-        animate();
-    }
     );
 
     dg_controller[7].onChange( function(value) {
@@ -134,7 +121,13 @@ function controllerDatGuiOnChange() {
             cancelAnimationFrame( id_animation_frame );
 
             if (dg_s2_prev) {
-                transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
+                if (envir.scene.keepScaleAspectRatio) {
+                    transform_controls.object.scale.set(value, value, value);
+                    dg_controller[6].domElement.children[0].value = value;
+                    dg_controller[8].domElement.children[0].value = value;
+                } else {
+                    transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
+                }
                 envir.scene.dispatchEvent({type:"modificationPendingSave"});
             }
 
@@ -149,14 +142,14 @@ function controllerDatGuiOnChange() {
             cancelAnimationFrame( id_animation_frame );
 
             if (dg_s3_prev) {
-                //gui_controls_funs.dg_scale = gui_controls_funs.dg_scale * value / dg_s3_prev;
+                if (envir.scene.keepScaleAspectRatio) {
+                    transform_controls.object.scale.set(value, value, value);
+                    dg_controller[6].domElement.children[0].value = value;
+                    dg_controller[7].domElement.children[0].value = value;
+                } else {
+                    transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
+                }
 
-                transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
-
-                // var dims = findDimensions(transform_controls.object);
-                //
-                // gui_controls_funs.dg_s1 = dims[0];
-                // gui_controls_funs.dg_s2 = dims[1];
                 envir.scene.dispatchEvent({type:"modificationPendingSave"});
             }
 
@@ -211,7 +204,7 @@ function setEventListenerKeyPressControllerConstrained(element) {
         cancelAnimationFrame(id_animation_frame);
     });
 
-    // While on Input Field on Focus and press enter
+    // While on Input Field on Focus and pressing enter for value
     element.addEventListener('keydown', function (e) {
 
         switch (element.parentElement.parentElement.event3DOperation) {
@@ -227,18 +220,6 @@ function setEventListenerKeyPressControllerConstrained(element) {
                 gui_controls_funs.dg_t3 = element.value;
                 transform_controls.object.position.z = element.value;
                 break;
-            case 'Sx':
-                gui_controls_funs.dg_s1 = element.value;
-                transform_controls.object.scale.x = element.value;
-                break;
-            case 'Sy':
-                gui_controls_funs.dg_s2 = element.value;
-                transform_controls.object.scale.y = element.value;
-                break;
-            case 'Sz':
-                gui_controls_funs.dg_s3 = element.value;
-                transform_controls.object.scale.z = element.value;
-                break;
             case 'Rx':
                 gui_controls_funs.dg_r1 = element.value;
                 transform_controls.object.rotation.x = element.value;
@@ -250,6 +231,36 @@ function setEventListenerKeyPressControllerConstrained(element) {
             case 'Rz':
                 gui_controls_funs.dg_r3 = element.value;
                 transform_controls.object.rotation.z = element.value;
+                break;
+            case 'Sx':
+                gui_controls_funs.dg_s1 = element.value;
+                transform_controls.object.scale.x = element.value;
+                if (envir.scene.keepScaleAspectRatio) {
+                    gui_controls_funs.dg_s2 = element.value;
+                    transform_controls.object.scale.y = element.value;
+                    gui_controls_funs.dg_s3 = element.value;
+                    transform_controls.object.scale.z = element.value;
+                }
+                break;
+            case 'Sy':
+                gui_controls_funs.dg_s2 = element.value;
+                transform_controls.object.scale.y = element.value;
+                if (envir.scene.keepScaleAspectRatio) {
+                    gui_controls_funs.dg_s1 = element.value;
+                    transform_controls.object.scale.x = element.value;
+                    gui_controls_funs.dg_s3 = element.value;
+                    transform_controls.object.scale.z = element.value;
+                }
+                break;
+            case 'Sz':
+                gui_controls_funs.dg_s3 = element.value;
+                transform_controls.object.scale.z = element.value;
+                if (envir.scene.keepScaleAspectRatio) {
+                    gui_controls_funs.dg_s2 = element.value;
+                    transform_controls.object.scale.y = element.value;
+                    gui_controls_funs.dg_s1 = element.value;
+                    transform_controls.object.scale.x = element.value;
+                }
                 break;
         }
 
@@ -273,7 +284,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     //--------- translate_x ---------------
     if ( transform_controls.object.position.x!== gui_controls_funs.dg_t1) {
         gui_controls_funs.dg_t1 = transform_controls.object.position.x;
-        // Auto-save
+
         envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
@@ -281,7 +292,6 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     if (transform_controls.object.position.y!== gui_controls_funs.dg_t2) {
         gui_controls_funs.dg_t2 = transform_controls.object.position.y;
 
-        // Auto-save
         envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
@@ -289,7 +299,6 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     if (transform_controls.object.position.z!== gui_controls_funs.dg_t3) {
         gui_controls_funs.dg_t3 = transform_controls.object.position.z;
 
-        // Auto-save
         envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
@@ -297,37 +306,50 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     if (transform_controls.object.rotation._x*180/Math.PI !== gui_controls_funs.dg_r1){
         gui_controls_funs.dg_r1 = transform_controls.object.rotation._x * 180/Math.PI;
 
-        // Auto-save
         envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
     //---------rotate_y -------------------------------
     if (transform_controls.object.rotation._y*180/Math.PI !== this.dg_r2){
         gui_controls_funs.dg_r2 = transform_controls.object.rotation._y * 180/Math.PI;
+
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //---------rotate_z -------------------------------
     if (transform_controls.object.rotation._z*180/Math.PI !== gui_controls_funs.dg_r3){
         gui_controls_funs.dg_r3 = transform_controls.object.rotation._z * 180/Math.PI;
+
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //---------scale_x -------------------------------
     if (transform_controls.object.scale.x !== gui_controls_funs.dg_s1){
         gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
+        if (envir.scene.keepScaleAspectRatio) {
+            gui_controls_funs.dg_s2 = transform_controls.object.scale.x;
+            gui_controls_funs.dg_s3 = transform_controls.object.scale.x;
+        }
         envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
     //---------scale_y -------------------------------
     if (transform_controls.object.scale.y !== gui_controls_funs.dg_s2){
         gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
+        if (envir.scene.keepScaleAspectRatio) {
+            gui_controls_funs.dg_s1 = transform_controls.object.scale.y;
+            gui_controls_funs.dg_s3 = transform_controls.object.scale.y;
+        }
         envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
     //---------scale_z -------------------------------
     if (transform_controls.object.scale.z !== gui_controls_funs.dg_s3){
         gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
+        if (envir.scene.keepScaleAspectRatio) {
+            gui_controls_funs.dg_s1 = transform_controls.object.scale.z;
+            gui_controls_funs.dg_s2 = transform_controls.object.scale.z;
+        }
         envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 

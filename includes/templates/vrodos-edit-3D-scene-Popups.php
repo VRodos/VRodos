@@ -26,6 +26,10 @@
         envir.scene.environment = value ? envir.maintexture : null;
     }
 
+    function keepScaleAspectRatio(value) {
+        envir.scene.keepScaleAspectRatio = value;
+    }
+
     function changeRendererToneMapping(value) {
         envir.renderer.toneMappingExposure = value;
     }
