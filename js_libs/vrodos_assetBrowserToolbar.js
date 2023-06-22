@@ -251,7 +251,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     }
 
     function selectByTitleComparizon(input_data, needle) {
-        var output_data = [];
+        let output_data = [];
         input_data.forEach(function (d) {
             if (d['asset_name'].indexOf(needle) !== -1)
                 output_data.push(d);
@@ -282,10 +282,10 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         // Show the current tab, and add an "active" class to the button that opened the tab
         let items = fileList[0].getElementsByTagName("li");
         for (let i = 0; i < items.length; ++i) {
-            if (categName == "allAssetsViewBt")
+            if (categName === "allAssetsViewBt")
                 items[i].style.display = '';
             else {
-                if (items[i].firstChild.dataset.category_name == categName)
+                if (items[i].dataset.category_slug === categName)
                     items[i].style.display = '';
                 else
                     items[i].style.display = 'none';
