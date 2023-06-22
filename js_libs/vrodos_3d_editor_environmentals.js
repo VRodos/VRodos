@@ -20,7 +20,7 @@ class vrodos_3d_editor_environmentals {
         this.vr_editor_main_div = vr_editor_main_div;
 
         this.SCREEN_WIDTH = this.vr_editor_main_div.clientWidth; // 500; //window.innerWidth;
-            this.SCREEN_HEIGHT = this.vr_editor_main_div.clientHeight; // 500; //window.innerHeight;
+        this.SCREEN_HEIGHT = this.vr_editor_main_div.clientHeight; // 500; //window.innerHeight;
         this.VIEW_ANGLE = 60;
 
         this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
@@ -132,7 +132,7 @@ class vrodos_3d_editor_environmentals {
         let camera = avatarControlsEnabled ? this.cameraAvatar : this.cameraOrbit;
 
         if (transform_controls)
-           transform_controls.camera = camera;
+            transform_controls.camera = camera;
 
         this.composer = new THREE.EffectComposer(this.renderer);
 
@@ -204,9 +204,9 @@ class vrodos_3d_editor_environmentals {
         // Do not set orthographicCamera near plane to negative values (it affects badly raycasting)
         // Try to configure orthographicCamera based on game type
         this.cameraOrbit = new THREE.OrthographicCamera(this.FRUSTUM_SIZE * this.ASPECT / -2,
-                                                            this.FRUSTUM_SIZE * this.ASPECT / 2,
-                                                            this.FRUSTUM_SIZE / 2,
-                                                            this.FRUSTUM_SIZE / -2, 0, this.FAR);
+            this.FRUSTUM_SIZE * this.ASPECT / 2,
+            this.FRUSTUM_SIZE / 2,
+            this.FRUSTUM_SIZE / -2, 0, this.FAR);
 
         //     new THREE.PerspectiveCamera(this.VIEW_ANGLE, this.ASPECT, this.NEAR, this.FAR);
 

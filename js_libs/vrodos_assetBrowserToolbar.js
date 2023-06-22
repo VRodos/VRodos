@@ -127,7 +127,8 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
             dragData.title = e.target.attributes.getNamedItem("data-asset_slug").value + "_" + Math.floor(Date.now() / 1000);
             dragData.name = dragData.title;
 
-            var jsonDataDrag = JSON.stringify(dragData);
+            let jsonDataDrag = JSON.stringify(dragData);
+
             e.originalEvent.dataTransfer.setData("text/plain", jsonDataDrag);
 
         },
