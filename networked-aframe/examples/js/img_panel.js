@@ -154,11 +154,32 @@ AFRAME.registerComponent('info-panel', {
         }
         else {
             this.DescriptionEl.components.text.material.depthTest = false;
+            this.DescriptionEl.object3D.renderOrder = 9999999;
         }
-        this.TitleEl.components.text.material.depthTest = false;
+              
+        if (!this.TitleEl) {
+            console.log("No Title");
+        }
+        else {
+            this.TitleEl.components.text.material.depthTest = false;
+            this.TitleEl.object3D.renderOrder = 9999999;
+        }
+      
+        if (!this.ImageEl) {
+            console.log("No Image");
+        }
+        else {
+            this.ImageEl.components.material.material.depthTest = false;
+            this.ImageEl.object3D.renderOrder = 9999999;
+        }
 
         this.infoPanel.components.material.material.depthTest = false;
+        this.infoPanel.object3D.renderOrder = 9999;
        
+        
+       
+        //this.backgroundEl.object3D.renderOrder = 1;
+
         
 
         //console.log(this.buttonEl.components);
