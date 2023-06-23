@@ -409,7 +409,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $fileOperations->setMaterial( $material, $contentObject );
                     $fileOperations->setAffineTransformations( $a_entity, $contentObject );
 
-                    $a_entity->setAttribute( "class", "override-materials" );
+                    $a_entity->setAttribute( "class", "override-materials clickable" );
                     $a_entity->setAttribute( "id", $nameObject );
                     $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
                     $a_entity->setAttribute( "material", $material );
@@ -554,13 +554,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $material = "";
                 $fileOperations->setMaterial( $material, $contentObject );
-                $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                $a_entity->setAttribute( "class", "override-materials" );
+                $fileOperations->setAffineTransformations( $a_entity, $contentObject );                
                 $a_entity->setAttribute( "id", $nameObject );
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
                 $a_entity->setAttribute( "material", $material );
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
-                $a_entity->setAttribute("class", "raycastable hideable");
+                $a_entity->setAttribute("class", "raycastable hideable override-materials clickable");
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
 
 

@@ -1,0 +1,198 @@
+<html lang="el"><head><meta charset="utf-8"><title>Πύλη συμμετοχής</title><meta name="description" content="Πάρε μέρος στο έργο !"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script><script src="js/socketio/2.3.0/socket.io.slim.js"></script><script src="js/datgui/0.7.7/dat.gui.min.js"></script><script src="easyrtc/easyrtc.js"></script><script src="../dist/networked-aframe.js"></script><script src="../js/NoSleep.min.js"></script><link rel="stylesheet" type="text/css" href="css/adv-screen.css"><!--    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">--></head><body style="background: gray" id="simple-client-body">
+<div id="renderFeedback" class="renderFeedback">
+    <div class="renderFeedbackText" id="renderFeedbackText">Waiting for the rendered scene ...</div>
+</div>
+<div class="actionsActor" name="actionsDiv" id="actionsDiv">
+    <div id="reporting"></div>
+</div>
+<a-scene id="aframe-scene-container" background="color: black" vr-mode-ui="enabled: false" networked-scene="
+      room: room290;
+      debug: true;
+      adapter: easyrtc;
+      audio: true;
+      video: true;
+    "><a-assets><!-- Avatar Template --><template id="avatar-template"><a-entity class="avatar" networked-audio-source><a-plane id="videoPlane" color="#FFF" width="1" height="0.75" position="0 0.6 0.5" material="side: double" networked-video-source="streamName:video"></a-plane><a-plane id="screenPlane" color="#FFF" width="8" height="6" position="0 0.6 0" material="side: double; shader:flat" networked-video-source="streamName:screen"></a-plane></a-entity></template></a-assets><!-- Pawn --><a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" position="0 0 0" wasd-controls="fly:true" look-controls><a-entity active="true" camera="near: 0.1; far: 7000.0;" position="0 0 0"></a-entity></a-entity><!-- Fixed Light --><a-entity light="color: #ffaaff; intensity: 1.5" position="5 5 5"></a-entity><!-- VR STUFF --><!-- <script type="module">
+
+    / XR globals. Several additional reference spaces are required because of
+      // how the teleportation mechanic in onSelect works.
+      let xrButton = null;
+      let xrImmersiveRefSpaceBase = null;
+      let xrImmersiveRefSpaceOffset = null;
+      let xrInlineRefSpaceBase = null;
+      let xrInlineRefSpaceOffset = null;
+      let xrViewerSpaces = {};
+
+      let trackingSpaceOriginInWorldSpace = vec3.create();
+      let trackingSpaceHeadingDegrees = 0;  // around +Y axis, positive angles rotate left
+      let floorSize = 10;
+      let floorPosition = [0, -floorSize / 2 + 0.01, 0];
+      let floorNode = null;
+
+      // WebGL scene globals.
+      let gl = null;
+      let renderer = null;
+      let scene = new Scene();
+      if (hideStats) {
+        scene.enableStats(false);
+      }
+
+
+      
+
+      let boxes = [];
+
+      function initXR() {
+        xrButton = new WebXRButton({
+          onRequestSession: onRequestSession,
+          onEndSession: onEndSession
+        });
+        document.querySelector('header').appendChild(xrButton.domElement);
+
+        if (navigator.xr) {
+          navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+            xrButton.enabled = supported;
+          });
+
+          navigator.xr.requestSession('inline').then(onSessionStarted);
+        }
+      }
+      initXR();
+    </script>--></a-scene><script>
+
+    /* Syncing avatar */
+    NAF.schemas.add({
+        template: '#avatar-template',
+        components: [
+            'position',
+            'rotation'
+        ]
+    });
+
+    //NAF.connection.adapter.on   onaddtrack = function(){console.log("Track was added");};
+
+    /* Called by Networked-Aframe when connected to server */
+    function onConnect () {
+
+
+        let userName = Object.keys(window.NAF.entities.entities)[0];
+        let room = window.NAF.room;
+
+        function selectString(room, userName, lang, key, position){
+
+            let str = "Error unknown string";
+
+            switch (key) {
+                case "_connected":
+                    str = (lang==="el" ? "έχεις συνδεθεί στον διακομιστή στο δωμάτιο " : "you are now connected to server at room ") + room;
+                    break;
+                case "_selectPosition":
+                    str = lang==="el" ? "επέλεξε θέση στη σκηνή:" : "select a position in the scene:";
+                    break;
+                case "_position":
+                    str = (lang==="el" ? "Θέση " : "Position " ) + position;
+                    break;
+            }
+
+            return userName + ", " + str;
+        }
+
+        /* Get system language */
+        let userLang = navigator.language.substring(0,2);
+
+        /* Show some initial messages */
+        document.getElementById("reporting").innerText = selectString(room, userName, userLang, "_connected");
+
+        setTimeout(function (){
+            document.getElementById("reporting").innerText = selectString(room, userName, userLang, "_selectPosition");
+        }, 5000);
+
+
+        /* Clicking any button for changing position */
+        let buttonsArray = document.getElementsByClassName("positionalButtons");
+
+        for (let i=0; i < buttonsArray.length; i++){
+
+            let button = buttonsArray[i];
+            button.userLang = userLang;
+            button.userName = userName;
+            button.room = room;
+
+            let changeReporter = function(evt) {
+
+                let rotation = JSON.parse(this.dataset.rotation);
+                let position = JSON.parse(this.dataset.position);
+
+                document.getElementById("reporting").innerText = selectString(evt.currentTarget.room,
+                    evt.currentTarget.userName,
+                    evt.currentTarget.userLang,
+                    "_position", i+1);
+                let el = document.getElementById('player');
+                el.removeAttribute('look-controls');
+                el.setAttribute('rotation', rotation.x * 180 /3.14 + " " + rotation.y * 180 /3.14 + " " + rotation.z * 180 /3.14);
+                el.setAttribute('position', position.x + " " + position.y + " " + position.z);
+            };
+
+            /* bind the external function */
+            changeReporter.bind(selectString);
+
+            button.addEventListener('click', changeReporter);
+        }
+
+
+        // Hide 3D scene canvas
+        document.getElementsByTagName('a-scene')[0].style.display='none'
+
+
+
+
+    }
+
+
+    // Add to a div the input stream of the rendered screen
+    function scanForStreamsAndShowInFullScreen(){
+
+        for (let e in window.NAF.entities.entities){
+            for (let i=0; i < window.NAF.entities.entities[e].children.length; i++){
+                let nvs = window.NAF.entities.entities[e].children[i].components['networked-video-source'];
+                if(nvs!==undefined){
+                    if(nvs.videoTexture!==undefined && nvs.videoTexture!==null) {
+                        if (nvs.el.id === 'screenPlane'){
+                            // If it has only the text element
+                            if(document.getElementById("renderFeedback").children.length === 1) {
+                                document.getElementById("renderFeedback").appendChild(nvs.videoTexture.image);
+                                document.getElementById("renderFeedback").children[1].style.position="absolute";
+                                document.getElementById("renderFeedback").children[1].style.left="0";
+                                document.getElementById("renderFeedback").children[1].style.width = "100%";
+                                //document.getElementById("renderFeedback").children[1].style.height = "100%";
+
+                                document.getElementById("renderFeedbackText").style.visibility = "hidden";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Check every 3 secs if the rendered screen has arrived.
+    let timerForScreenFeedback = setInterval(scanForStreamsAndShowInFullScreen, 3000);
+
+    function go_full_screen(){
+        var elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        }
+        document.getElementById("view-fullscreen").style.display = "none";
+    }
+
+    var noSleep = new NoSleep();
+    noSleep.enable(); // keep the screen on!
+</script><button id="view-fullscreen" style="z-index:10000000;position:absolute;right:0;top:0" onclick="go_full_screen();">Fullscreen</button>
+
+</body></html>
