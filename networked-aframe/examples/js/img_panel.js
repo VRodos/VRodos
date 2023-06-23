@@ -12,12 +12,7 @@ AFRAME.registerComponent('info-panel', {
         this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
-
-        this.el.addEventListener("force-close", (evt)=> {
-            console.log("εμιτεντ" + evt.detail.value);
-            console.log("δις ελ" + this.data);
-        });
-
+        
         var img = new Image();
         const getMeta = (url, cb) => {
             const img = new Image();

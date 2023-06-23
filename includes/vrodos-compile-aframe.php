@@ -679,7 +679,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_title_vid_entity->setAttribute("id", "ent_tit_$nameObject");
                 $a_title_vid_entity->setAttribute("position", "-0.1 0.17 0.000001");
 
-                $a_title_vid_entity->setAttribute("text", "depthTest:false; shader: msdf; anchor: left; width: 0.5; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: black; value: $contentObject->video_title");
+                $vid_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
+                $a_title_vid_entity->setAttribute("text", "depthTest:false; negate:false; shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: black; value: $contentObject->video_title");
                 $a_title_vid_entity->setAttribute( "class", "clickable raycastable" );
 
 
@@ -916,12 +917,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_title_img_entity = $dom->createElement("a-entity");
                 $a_title_img_entity->setAttribute("id", "title_$nameObject");
-                //$a_title_img_entity->setAttribute("position", "-0.68 -0.9 0");
 
-                $a_title_img_entity->setAttribute("text", "shader: msdf; anchor: left; width: 1.5; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: white; value: $contentObject->poi_img_title");
+                
+                
+                $tit_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
+                $a_title_img_entity->setAttribute("text", "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: white; value: $contentObject->poi_img_title");
                 $a_title_img_entity->setAttribute( "class", "hideable" );
                 $a_title_img_entity->setAttribute("original-scale", "1 1 1");
-
 
                 $a_exit_img_entity = $dom->createElement("a-entity");
                 $a_exit_img_entity->setAttribute("id", "exit_$nameObject");
@@ -944,14 +946,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $a_desc_img_entity = $dom->createElement("a-entity");
                     $a_desc_img_entity->setAttribute("id", "desc_$nameObject");
-                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.2 0");
+                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.3 0");
+                    //plugins_url( '../VRodos/assets/fonts/Arimo-VariableFont_wght-msdf.json', dirname(__FILE__))
+                    $desc_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Regular-msdf.json', dirname(__FILE__));
 
-                    $a_desc_img_entity->setAttribute("text", "baseline: top; shader: msdf; anchor: left; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: white; value: $contentObject->poi_img_content");
+                    $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value: $contentObject->poi_img_content");
                     $a_panel_entity->appendChild($a_desc_img_entity);
                 }
                 else{
                     $a_main_img_entity->setAttribute("mixin", "poiImageFull");
-                    $a_title_img_entity->setAttribute("position", "-0.68 -0.9 0");
+                    $a_title_img_entity->setAttribute("position", "-0.68 -0.8 0");
                 }
 
 
