@@ -513,6 +513,7 @@
                         console.log(entCollection[i].getAttribute("visible"));
                         entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
                         playerEl.setAttribute("wasd-controls", "acceleration: 0");
+                        playerEl.setAttribute("look-controls", "enabled: false");
 
                         //videoBorder.setAttribute("position", "0 0 -25");
                         //videoDisplay.setAttribute("position", "0 0 -25");
@@ -565,6 +566,7 @@
 
                         }
                         player.setAttribute("wasd-controls", "acceleration: 10");
+                        playerEl.setAttribute("look-controls", "enabled: true");
                         backgroundEl.add(videoBorder);
                         backgroundEl.add(videoDisplay);
                         let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];

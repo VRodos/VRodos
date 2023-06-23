@@ -156,10 +156,18 @@ AFRAME.registerComponent('info-panel', {
             this.DescriptionEl.components.text.material.depthTest = false;
         }
         this.TitleEl.components.text.material.depthTest = false;
+
+        this.infoPanel.components.material.material.depthTest = false;
+       
+        
+
         //console.log(this.buttonEl.components);
 
 
         this.playerEl.setAttribute("wasd-controls", "acceleration: 0");
+        this.playerEl.setAttribute("look-controls", "enabled: false");
+
+       
 
         this.ImageEl.object3D.visible = true;
 
@@ -173,6 +181,8 @@ AFRAME.registerComponent('info-panel', {
         this.el.object3D.visible = false;
         this.el.emit("resetmat");
         this.playerEl.setAttribute("wasd-controls", "acceleration: 10");
+        this.playerEl.setAttribute("look-controls", "enabled: true");
+
         this.scen.setAttribute("raycaster","objects: .raycastable, .non-clickable");
 
         this.el.components.material.material.depthTest = true;

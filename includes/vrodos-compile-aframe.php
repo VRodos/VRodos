@@ -680,7 +680,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_title_vid_entity->setAttribute("position", "-0.1 0.17 0.000001");
 
                 $vid_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
-                $a_title_vid_entity->setAttribute("text", "depthTest:false; negate:false; shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: black; value: $contentObject->video_title");
+                $a_title_vid_entity->setAttribute("text", "depthTest:false; negate:false;shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: black; value: $contentObject->video_title");
                 $a_title_vid_entity->setAttribute( "class", "clickable raycastable" );
 
 
