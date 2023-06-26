@@ -661,6 +661,8 @@ function displayDoorProperties(event, name) {
     //doorid.trigger("change");
     popupDoorSelect.trigger("change");
 
+    clearAndUnbind(null, null, "popupDoorSelect");
+
     if (envir.scene.getObjectByName(updName).sceneID_target)
         popupDoorSelect.val(envir.scene.getObjectByName(updName).sceneID_target);
     else
@@ -760,6 +762,8 @@ function displayLinkProperties(event, name) {
 
     var popUpLinkPropertiesDiv = jQuery("#popUpLinkPropertiesDiv");
     var popupLinkSelect = jQuery("#poi_link_text");
+
+    clearAndUnbind(null, null, "popupLinkSelect");
     if (envir.scene.getObjectByName(name).poi_link_url)
         popupLinkSelect.val(envir.scene.getObjectByName(name).poi_link_url);
 

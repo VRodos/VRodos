@@ -13,7 +13,6 @@ AFRAME.registerComponent('info-panel', {
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
         
-        var img = new Image();
         const getMeta = (url, cb) => {
             const img = new Image();
             img.onload = () => cb(null, img);
@@ -25,70 +24,47 @@ AFRAME.registerComponent('info-panel', {
         if (this.DescriptionEl) {
             expected_width = 1.5;
             expected_height = 0.81;
-            console.log("reach 1");
         }
         else {
             expected_width = 1.5;
             expected_height = 1.5;
-            console.log("reach 2");
         }
-        getMeta(this.ImageAsset.getAttribute("src"), (err, img) => {
+        if (this.ImageAsset.getAttribute("src")){
+            getMeta(this.ImageAsset.getAttribute("src"), (err, img) => {
 
-            console.log(img.naturalWidth + " " +  img.naturalHeight);
-
-            //let aspect_ratio = img.naturalWidth / img.naturalHeight;
-            let aspect_ratio;
-            img.naturalWidth > img.naturalHeight ? aspect_ratio = img.naturalWidth / img.naturalHeight : aspect_ratio = img.naturalHeight / img.naturalWidth;
-            img.naturalWidth > img.naturalHeight ? expected_height = expected_width / aspect_ratio : expected_width = expected_height / aspect_ratio;
-            /*
-            if (img.naturalWidth > img.naturalHeight) {
-                //expected_width = 1.5;
-                expected_height = expected_width / aspect_ratio;
-                console.log("height:" + expected_height);
-            }
-            else {
-                //expected_height = 0.81;
-                expected_width = expected_height / aspect_ratio;
-                console.log("width:" + expected_width);
-                console.log("height:" + expected_height);
-
-            }
-            */
-
-            //while (given_height > 0.81) {
-            //    expected_width = expected_width / 2;
-            //    given_height = given_height / 2;
-            //    console.log(expected_width, given_height);
-
-            //}
-            console.log("EXP:" + expected_height + " " + expected_width);
-            let panel_pad;
-            expected_width > 1.5 ? panel_pad = expected_width : panel_pad = 1.5;
+                let aspect_ratio;
+                img.naturalWidth > img.naturalHeight ? aspect_ratio = img.naturalWidth / img.naturalHeight : aspect_ratio = img.naturalHeight / img.naturalWidth;
+                img.naturalWidth > img.naturalHeight ? expected_height = expected_width / aspect_ratio : expected_width = expected_height / aspect_ratio;
+            
+                console.log("EXP:" + expected_height + " " + expected_width);
+                let panel_pad;
+                expected_width > 1.5 ? panel_pad = expected_width : panel_pad = 1.5;
 
 
-            if (!this.DescriptionEl) {
-                while (expected_height > 0.81) {
-                    expected_width = expected_width / 2;
-                    expected_height = expected_height / 2;
-                    console.log("reach 1");
+                if (!this.DescriptionEl) {
+                    while (expected_height > 0.81) {
+                        expected_width = expected_width / 2;
+                        expected_height = expected_height / 2;
+                        console.log("reach 1");
+
+                    }
+                } else {
+                    while (expected_height > 1.5) {
+                        expected_width = expected_width / 2;
+                        expected_height = expected_height / 2;
+                        console.log("reach 2");
+                    }
 
                 }
-            } else {
-                while (expected_height > 1.5) {
-                    expected_width = expected_width / 2;
-                    expected_height = expected_height / 2;
-                    console.log("reach 2");
-                }
+                let esc_pad = (panel_pad / 2) + 0.1;
 
-            }
-            let esc_pad = (panel_pad / 2) + 0.1;
-
-            let upd_mixin = "width: " + expected_width + "; height: " + expected_height;
-            let panel_mixin = "width: " + panel_pad + "; height: 1.8";
-            this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
-            this.ImageEl.setAttribute("geometry", "primitive: plane;" + upd_mixin);
-            this.infoPanel.setAttribute("geometry", "primitive: plane;" + panel_mixin);
-        });
+                let upd_mixin = "width: " + expected_width + "; height: " + expected_height;
+                let panel_mixin = "width: " + panel_pad + "; height: 1.8";
+                this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
+                this.ImageEl.setAttribute("geometry", "primitive: plane;" + upd_mixin);
+                this.infoPanel.setAttribute("geometry", "primitive: plane;" + panel_mixin);
+            });
+        }
 
 
 
@@ -107,13 +83,7 @@ AFRAME.registerComponent('info-panel', {
         this.buttonEl.addEventListener('click', this.onMenuButtonClick);
         //this.buttonEl.addEventListener('force-close-others', this.onMenuButtonClick);
         this.backgroundEl.addEventListener('click', this.onBackgroundClick);
-        //this.el.object3D.renderOrder = 9999999;
-        //this.el.object3D.depthTest = false;
-
-        //console.log(this.infoPanel);
-        ///this.infoPanel.object3D.depthTest = false;
-        //this.infoPanel.object3D.renderOrder = 999999999999;
-
+       
         this.backgroundEl.addEventListener('raycaster-intersected', evt => {
             console.log("Intersected");
         });
@@ -132,7 +102,7 @@ AFRAME.registerComponent('info-panel', {
         this.el.classList.add("openPOI");
         this.backgroundEl.object3D.scale.set(1, 1, 1);
         this.backgroundEl.object3D.visible = true;
-        this.scen.setAttribute("raycaster","objects: .raycastable");
+        this.scen.setAttribute("raycaster","objects: .non-clickable");
 
         this.el.object3D.scale.set(1, 1, 1);
         if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
@@ -165,12 +135,14 @@ AFRAME.registerComponent('info-panel', {
             this.TitleEl.object3D.renderOrder = 9999999;
         }
       
-        if (!this.ImageEl) {
+        if (!this.ImageAsset.getAttribute("src")) {
             console.log("No Image");
+            
         }
         else {
             this.ImageEl.components.material.material.depthTest = false;
             this.ImageEl.object3D.renderOrder = 9999999;
+            console.log(this.ImageEl.components);
         }
 
         this.infoPanel.components.material.material.depthTest = false;
@@ -178,15 +150,10 @@ AFRAME.registerComponent('info-panel', {
        
         
        
-        //this.backgroundEl.object3D.renderOrder = 1;
-
-        
-
-        //console.log(this.buttonEl.components);
-
+      
 
         this.playerEl.setAttribute("wasd-controls", "acceleration: 0");
-        this.playerEl.setAttribute("look-controls", "enabled: false");
+        //this.playerEl.setAttribute("look-controls", "enabled: false");
 
        
 
@@ -204,7 +171,7 @@ AFRAME.registerComponent('info-panel', {
         this.playerEl.setAttribute("wasd-controls", "acceleration: 10");
         this.playerEl.setAttribute("look-controls", "enabled: true");
 
-        this.scen.setAttribute("raycaster","objects: .raycastable, .non-clickable");
+        this.scen.setAttribute("raycaster","objects: .raycastable");
 
         this.el.components.material.material.depthTest = true;
         this.ImageEl.components.material.material.depthTest = true;
