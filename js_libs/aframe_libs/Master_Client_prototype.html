@@ -511,7 +511,7 @@
                         entCollection[i].setAttribute("visible", "false");
                         console.log(entCollection[i].getAttribute("visible"));
                         entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
-                        playerEl.setAttribute("wasd-controls", "acceleration: 0");
+                        //playerEl.setAttribute("wasd-controls", "acceleration: 0");
 
                         //videoBorder.setAttribute("position", "0 0 -25");
                         //videoDisplay.setAttribute("position", "0 0 -25");
@@ -563,7 +563,7 @@
                             //videoDisplay.setAttribute("position", origPosDisplay);
 
                         }
-                        player.setAttribute("wasd-controls", "acceleration: 10");
+                        //player.setAttribute("wasd-controls", "acceleration: 10");
                         backgroundEl.add(videoBorder);
                         backgroundEl.add(videoDisplay);
                         let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
@@ -878,9 +878,9 @@
             <a-sphere class="head" visible="false" random-color>
             </a-sphere>
 
-            <a-entity id="cameraA" active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
+            <a-entity id="camera" active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
             </a-entity>
-        </a-entity>
+    </a-entity>
 
     <!-- VR rendered stuff-->
     <a-entity id="camera-rig" movement-controls="speed: 0.1" raycaster>
@@ -894,8 +894,8 @@
 
 
 <a-box class="clickable" position="0 0 -3" color="red"></a-box>
-<a-sphere class="clickable" position="0 1 -4" color="green"></a-sphere>
-<a-cylinder class="clickable" position="0 2 -5" color="blue" ></a-cylinder>
+<!-- <a-sphere class="clickable" position="0 1 -4" color="green"></a-sphere>
+<a-cylinder class="clickable" position="0 2 -5" color="blue" ></a-cylinder> -->
 
 
 </a-scene>
@@ -916,38 +916,32 @@
 
 
   AFRAME.registerComponent('custom-movement', {
-    init: function () {
-      const cameraEl = document.querySelector('a-camera');
-      const cameraRig = this.el;
+  init: function () {
+    const cameraEl = document.querySelector('a-camera');
+    const cameraRig = this.el;
 
-      this.el.addEventListener('thumbstickmoved', (event) => {
-        const thumbstickX = event.detail.x;
-        const thumbstickY = event.detail.y;
+    this.el.addEventListener('thumbstickmoved', (event) => {
+      const thumbstickX = event.detail.x;
+      const thumbstickY = event.detail.y;
 
-        // Get camera rotation
-        const rotation = cameraEl.getAttribute('rotation');
-        const angleY = THREE.Math.degToRad(rotation.y);
-        const angleX = THREE.Math.degToRad(rotation.x);
-        const angleZ = THREE.Math.degToRad(rotation.z);
+      // Get camera rotation
+      const rotation = cameraEl.getAttribute('rotation');
+      const angleY = THREE.Math.degToRad(rotation.y);
+      //const angleX = THREE.Math.degToRad(rotation.x);
 
-        // Calculate movement direction based on camera rotation
-        const direction = new THREE.Vector3(
-        Math.sin(angleY) * Math.cos(angleX),
-        Math.sin(angleX),
-        Math.cos(angleY) * Math.cos(angleX)
-      );
+      // Calculate movement direction based on camera rotation
+      const direction = new THREE.Vector3(-Math.sin(angleY), 0, -Math.cos(angleY));
 
-        // Apply movement to the camera rig's position
-        const movementSpeed = 0.1;
-        cameraRig.object3D.translateX(thumbstickX * movementSpeed + direction.x);
-        cameraRig.object3D.translateY(thumbstickY * movementSpeed + direction.y);
-        cameraRig.object3D.translateZ(thumbstickY * movementSpeed + direction.z);
+      // Apply movement to the camera rig's position
+      const movementSpeed = 0.1;
+      cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
+      cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
+     
 
-        console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
-
-      });
-    }
-  });
+      console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
+    });
+  }
+});
 
   // Attach the custom-movement component to the camera rig entity
   document.querySelector('#camera-rig').setAttribute('custom-movement', '');
