@@ -58,7 +58,6 @@ THREE.SceneExporter.prototype = {
 
                 var node = object.children[i];
 
-
                 if ((node.name === 'rayLine' ||
                     node.name === 'rayLine' ||
                     node.name === 'mylightAvatar' ||
@@ -68,21 +67,18 @@ THREE.SceneExporter.prototype = {
                     node.name === 'SteveMesh' || node.name === 'avatarPitchObject' ||
                     node.name === 'orbitCamera' || node.name === 'myAxisHelper' || node.name === 'myAxisHelper' ||
                     node.name === 'myGridHelper' || node.name === 'myTransformControls'
-                    || node.categoryName === 'lightHelper'
-                    || node.categoryName === 'lightTargetSpot'
+                    || node['category_name'] === 'lightHelper'
+                    || node['category_name'] === 'lightTargetSpot'
                     || node.name === 'Camera3Dmodel'
                     || node.name === 'Camera3DmodelMesh'
-                    || typeof node.categoryName === 'undefined') && node.name != 'avatarCamera')
+                    || typeof node['category_name'] === 'undefined') && node.name !== 'avatarCamera')
                     continue;
 
 
-
-
-
-                if (node instanceof THREE.Mesh && node.categoryName !== "pawn")
+                if (node instanceof THREE.Mesh && node['category_name'] !== "pawn")
                     continue;
 
-                if (node instanceof THREE.Mesh && node.categoryName === "pawn") {
+                if (node instanceof THREE.Mesh && node['category_name'] === "pawn") {
 
                     linesArray.push(ObjectString(node, pad));
                     nobjects += 1;
@@ -121,7 +117,7 @@ THREE.SceneExporter.prototype = {
 
 
                 } else if (node instanceof THREE.Camera || node instanceof THREE.CameraHelper) {
-                    node.categoryName = "camera";
+                    node['category_name'] = "camera";
                     linesArray.push(ObjectString(node, pad));
 
                     // linesArray.push( CameraString( node, pad ) );
@@ -134,7 +130,7 @@ THREE.SceneExporter.prototype = {
 
 
                     if (node.name === "bbox" || node.name === "xline" || node.name === "yline" ||
-                        node.name === "zline" || node.name == 'SteveOld')
+                        node.name === "zline" || node.name === 'SteveOld')
                         continue;
 
 
@@ -185,104 +181,15 @@ THREE.SceneExporter.prototype = {
         var activeCamera = null;
 
         scene.traverse(function (node) {
-
             if (node instanceof THREE.Camera && node.userData.active) {
-
                 activeCamera = node;
-
             }
-
         });
 
         var defcamera = LabelString(activeCamera ? getObjectName(activeCamera) : "");
         var deffog = LabelString(scene.fog ? getFogName(scene.fog) : "");
 
-
-
-        // function LightString( o, n ) {
-        //
-        //     if ( o instanceof THREE.AmbientLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"  : "AmbientLight",',
-        //             '	"color" : ' + o.color.getHex() + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else if ( o instanceof THREE.DirectionalLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"      : "DirectionalLight",',
-        //             '	"color"     : ' + o.color.getHex() + ',',
-        //             '	"intensity" : ' + o.intensity + ',',
-        //             '	"direction" : ' + Vector3String( o.position ) + ',',
-        //             '	"target"    : ' + LabelString( getObjectName( o.target ) ) + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else if ( o instanceof THREE.PointLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"      : "PointLight",',
-        //             '	"color"     : ' + o.color.getHex() + ',',
-        //             '	"shadowRadius" : ' + o.shadow.radius + ',',
-        //             '	"decay" : ' + o.decay + ',',
-        //             '	"intensity" : ' + o.intensity + ',',
-        //             '	"position"  : ' + Vector3String( o.position ) + ',',
-        //             '	"distance"  : ' + o.distance + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else if ( o instanceof THREE.SpotLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"      : "SpotLight",',
-        //             '	"color"     : ' + o.color.getHex() + ',',
-        //             '	"intensity" : ' + o.intensity + ',',
-        //             '	"position"  : ' + Vector3String( o.position ) + ',',
-        //             '	"distance"  : ' + o.distance + ',',
-        //             '	"angle"     : ' + o.angle + ',',
-        //             '	"exponent"  : ' + o.exponent + ',',
-        //             '	"target"    : ' + LabelString( getObjectName( o.target ) ) + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else if ( o instanceof THREE.HemisphereLight ) {
-        //
-        //         var output = [
-        //
-        //             '\t\t' + LabelString( getObjectName( o ) ) + ' : {',
-        //             '	"type"        : "HemisphereLight",',
-        //             '	"skyColor"    : ' + o.color.getHex() + ',',
-        //             '	"groundColor" : ' + o.groundColor.getHex() + ',',
-        //             '	"intensity"   : ' + o.intensity + ',',
-        //             '	"position"    : ' + Vector3String( o.position ) + ( o.children.length ? ',' : '' )
-        //
-        //         ];
-        //
-        //     } else {
-        //
-        //         var output = [];
-        //
-        //     }
-        //
-        //     return generateMultiLineString( output, '\n\t\t', n );
-        //
-        // }
-
-
-
         function CameraString(o, n) {
-
-
 
             if (o instanceof THREE.PerspectiveCamera) {
 
@@ -328,291 +235,236 @@ THREE.SceneExporter.prototype = {
 
         function ObjectString(o, n) {
 
+            let ignoredKeys = ['matrixAutoUpdate', 'matrixWorldNeedsUpdate', 'visible', 'castShadow', 'receiveShadow', 'frustumCulled', 'renderOrder', 'draggable', 'class', 'isGroup']
+
+            // ALL 3D ASSETS
             if (o.name != 'avatarCamera'
-                && !o.categoryName.includes('lightSun')
-                && !o.categoryName.includes('lightTargetSpot')
-                && !o.categoryName.includes('lightLamp')
-                && !o.categoryName.includes('lightSpot')
-                && !o.categoryName.includes('lightAmbient')
-                && !o.categoryName.includes('pawn')
-            ) {
+                && !o['category_name'].includes('lightSun')
+                && !o['category_name'].includes('lightTargetSpot')
+                && !o['category_name'].includes('lightLamp')
+                && !o['category_name'].includes('lightSpot')
+                && !o['category_name'].includes('lightAmbient')
+                && !o['category_name'].includes('pawn'))
+            {
 
-                var quatR = new THREE.Quaternion();
-
-                var eulerR = new THREE.Euler(o.rotation._x, -o.rotation.y, - o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR = new THREE.Quaternion();
+                let eulerR = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR.setFromEuler(eulerR);
 
-                // console.log("ROTATION:", eulerR);
-                //                console.log("Quaternion:", o);
+                let entryObject = {};
 
-                // ================ Ververidis Main =============: All objs
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR._x, quatR._y, quatR._z];
 
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
 
-                var overrideMaterial = "false";
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
-                if (o.children[0].isMesh) {
-                    var vswitch = o.children[0].material.map;
+            }
+            else if (o['category_name'] === "lightSun") {
 
-                    overrideMaterial = o.children[0].overrideMaterial;
-                    var vcolor = o.children[0].material.color.getHexString(); // : "0x000000";
-                    var vemissive = (o.children[0].material.emissive !== undefined ?
-                        o.children[0].material.emissive.getHexString() : '000000');
-                    var vroughness = o.children[0].material.roughness;
-                    var vmetalness = o.children[0].material.metalness;
-                    var vemissiveIntensity = o.children[0].material.emissiveIntensity;
-                } else {
-                    var vswitch = false;
-                    var vcolor = "0x000000";
-                    var vemissive = 0;
-                    var vroughness = 0;
-                    var vmetalness = 0;
-                    var vemissiveIntensity = 0;
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                quatR_light.setFromEuler(eulerR_light);
+
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
                 }
 
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.targetposition = [o.target.position.x, o.target.position.y, o.target.position.z];
+                entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
+                entryObject.lightintensity = o.intensity;
+                delete entryObject.intensity;
 
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
 
-
-                var output = [
-                    '\t\t' + ',' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," +
-                    o.rotation.y + "," +
-                    o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-
-                    '	"quaternion" : ' + "[" + quatR._x + "," +
-                    quatR._y + "," +
-                    quatR._z + "," +
-                    quatR._w + "]" + ',',
-
-
-                    '	"scale"	   : ' + Vector3String(o.scale) + ',',
-                    '	"fnPath" : ' + '"' + o.fnPath + '"' + ',',
-                    '	"assetid" : ' + '"' + o.assetid + '"' + ',',
-                    '	"assetname" : ' + '"' + o.assetname + '"' + ',',
-                    '	"fnObj" : ' + '"' + o.fnObj + '"' + ',',
-                    '	"fnObjID" : ' + '"' + o.fnObjID + '"' + ',',
-                    '	"categoryName" : ' + '"' + o.categoryName + '"' + ',',
-                    '	"categoryDescription" : ' + '"' + o.categoryDescription + '"' + ',',
-                    '	"categoryIcon" : ' + '"' + o.categoryIcon + '"' + ',',
-                    '	"categoryID" : ' + '"' + o.categoryID + '"' + ',',
-                    '   "fbxID" : ' + '"' + o.fbxID + '"' + ',',
-                    '   "glbID" : ' + '"' + o.glbID + '"' + ',',
-                    '   "overrideMaterial" : ' + '"' + o.overrideMaterial + '"' + ',',
-                    '   "color" : ' + '"' + vcolor + '"' + ',',
-                    '   "emissive" : ' + '"' + vemissive + '"' + ',',
-                    '   "roughness" : ' + '"' + vroughness + '"' + ',',
-                    '   "metalness" : ' + '"' + vmetalness + '"' + ',',
-                    '   "emissiveIntensity" : ' + '"' + vemissiveIntensity + '"' + ',',
-                    '   "videoTextureSrc" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.image.src : '') + '"' + ',',
-                    '   "videoTextureRepeatX" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.repeat.x : '') + '"' + ',',
-                    '   "videoTextureRepeatY" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.repeat.y : '') + '"' + ',',
-                    '   "videoTextureCenterX" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.center.x : '') + '"' + ',',
-                    '   "videoTextureCenterY" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.center.y : '') + '"' + ',',
-                    '   "videoTextureRotation" : ' + '"' + (o.overrideMaterial === "true" ? vswitch.rotation : '') + '"' + ',',
-                    '   "audioID" : ' + '"' + o.audioID + '"' + ',',
-                    '	"image1id" : ' + '"' + o.image1id + '"' + ',',
-                    '   "doorName_source" : ' + '"' + o.doorName_source + '"' + ',',
-                    '   "doorName_target" : ' + '"' + o.doorName_target + '"' + ',',
-                    '   "sceneName_target" : ' + '"' + o.sceneName_target + '"' + ',',
-                    '   "sceneID_target" : ' + '"' + o.sceneID_target + '"' + ',',
-                    '   "archaeology_penalty" : ' + '"' + o.archaeology_penalty + '"' + ',',
-                    '   "hv_penalty" : ' + '"' + o.hv_penalty + '"' + ',',
-                    '   "natural_penalty" : ' + '"' + o.natural_penalty + '"' + ',',
-                    '   "isreward" : ' + '"' + o.isreward + '"' + ',',
-                    '   "follow_camera" : ' + '"' + o.follow_camera + '"' + ',',
-                    '   "image_link" : ' + '"' + o.image_link + '"' + ',',
-                    '   "video_link" : ' + '"' + o.video_link + '"' + ',',
-                    '   "follow_camera_x" : ' + '"' + o.follow_camera_x + '"' + ',',
-                    '   "follow_camera_y" : ' + '"' + o.follow_camera_y + '"' + ',',
-                    '   "follow_camera_z" : ' + '"' + o.follow_camera_z + '"' + ',',
-                    '   "isCloned" : ' + '"' + o.isCloned + '"' + ',',
-                    '   "poi_img_title" : ' + '"' + o.poi_img_title + '"' + ',',
-                    '   "poi_img_desc" : ' + '"' + o.poi_img_desc + '"' + ',',
-                    '   "poi_img_link" : ' + '"' + o.poi_img_link + '"' + ',',
-                    '   "poi_onlyimg" : ' + '"' + o.poi_onlyimg + '"' + ',',
-                    '   "isLight" : ' + '"' + 'false' + '"' + ',',
-                    '	"fnMtl" : ' + '"' + o.fnMtl + '"' + ',',
-                    '	"fnMtlID" : ' + '"' + o.fnMtlID + '"' + (o.children.length ? ',' : '')
-
-                    //+ ',',
-                    //'	"visible"  : ' + o.visible + ( o.children.length ? ',' : '' )
-                ];
-                //===============================================
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
             }
-            else if (o.categoryName === "lightSun") {
+            else if (o['category_name'] === "lightLamp") {
 
-                var quatR_light = new THREE.Quaternion();
-
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
 
-                // REM HERE Check with trailing comma
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," +
-                    o.rotation.y + "," +
-                    o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
+                entryObject.lightdecay = o.decay;
+                delete entryObject.decay;
+                entryObject.lightdistance = o.distance;
+                delete entryObject.distance;
+                entryObject.shadowRadius = o.shadow.radius;
+                delete entryObject.shadow;
+                entryObject.lightintensity = o.intensity;
+                delete entryObject.intensity;
 
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," + quatR_light._y + "," + quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
-
-                    '	"scale"	    : ' + '[' + o.scale.x + ',' + o.scale.y + ',' + o.scale.z + '],',
-                    '	"lightintensity"	: "' + o.intensity + '",',
-                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"targetposition" : ' + Vector3String(o.target.position) + ',',
-                    '	"categoryName" : "' + o.categoryName + '",',
-                    '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
-                ];
-            }
-            else if (o.categoryName === "lightLamp") {
-                var quatR_light = new THREE.Quaternion();
-
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
-                quatR_light.setFromEuler(eulerR_light);
-
-                // REM HERE Check with trailing comma
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," +
-                    o.rotation.y + "," +
-                    o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," +
-                    quatR_light._y + "," +
-                    quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"lightintensity"	: "' + o.intensity + '",',
-                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"lightdecay" : "' + o.decay + '",',
-                    '	"lightdistance" : "' + o.distance + '",',
-                    '	"shadowRadius" : "' + o.shadow.radius + '",',
-                    '	"categoryName" : "' + o.categoryName + '",',
-                    '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
-                ];
-            }
-            else if (o.categoryName === "lightSpot") {
-                var quatR_light = new THREE.Quaternion();
-
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
-                quatR_light.setFromEuler(eulerR_light);
-
-
-                // REM HERE Check with trailing comma
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," +
-                    o.rotation.y + "," +
-                    o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," +
-                    quatR_light._y + "," +
-                    quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"lightintensity"	: "' + o.intensity + '",',
-                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"lightdecay" : "' + o.decay + '",',
-                    '	"lightdistance" : "' + o.distance + '",',
-                    '	"lightangle" : "' + o.angle + '",',
-                    '	"lightpenumbra" : "' + o.penumbra + '",',
-                    '	"lighttargetobjectname" : "' + o.target.name + '",',
-                    '	"categoryName" : "' + o.categoryName + '",',
-                    '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
-                ];
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
             }
-            else if (o.categoryName === "lightAmbient") {
+            else if (o['category_name'] === "lightSpot") {
 
-                var quatR_light = new THREE.Quaternion();
-
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," +
-                    quatR_light._y + "," +
-                    quatR_light._z + "," +
-                    quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"lightintensity"	: "' + o.intensity + '",',
-                    '	"lightcolor"	: ' + ColorString(o.color) + ',',  // To transfor object r g b to Hex ???
-                    '	"categoryName" : "' + o.categoryName + '",',
-                    '	"isLight"   : ' + '"' + 'true' + '"' + (o.children.length ? ',' : '')
-                ];
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
 
-                //console.log(output);
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
+                entryObject.lightintensity = o.intensity;
+                delete entryObject.intensity;
+                entryObject.lightdecay = o.decay;
+                delete entryObject.decay;
+                entryObject.lightdistance = o.distance;
+                delete entryObject.distance;
+                entryObject.lightangle = o.angle;
+                delete entryObject.angle;
+                entryObject.lightpenumbra = o.penumbra;
+                delete entryObject.penumbra;
+                entryObject.lighttargetobjectname = o.target.name;
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
             }
-            else if (o.categoryName === "pawn") {
+            else if (o['category_name'] === "lightAmbient") {
 
-
-                var quatR_light = new THREE.Quaternion();
-
-                var eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
                 quatR_light.setFromEuler(eulerR_light);
 
-                var output = [
-                    '\t\t,' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.rotation.x + "," + o.rotation.y + "," + o.rotation.z + "]" + ',', //+ Vector3String(o.rotation) + ',',
-                    '	"quaternion" : ' + "[" + quatR_light._x + "," + quatR_light._y + "," + quatR_light._z + "," + quatR_light._w + "]" + ',',
-                    '	"scale"	    : ' + Vector3String(o.scale) + ',',
-                    '	"categoryName" : "' + o.categoryName + '",',
-                    '	"isLight"   : ' + '"' + 'false' + '"' + (o.children.length ? ',' : '')
-                ];
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
 
-                //console.log(output);
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
+                entryObject.lightintensity = o.intensity;
+                delete entryObject.intensity;
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
+
+
+            }
+            else if (o['category_name'] === "pawn") {
+
+                let quatR_light = new THREE.Quaternion();
+                let eulerR_light = new THREE.Euler(o.rotation._x, -o.rotation.y, -o.rotation._z, 'XYZ'); // (Math.PI - o.rotation.y)%(2*Math.PI)
+                quatR_light.setFromEuler(eulerR_light);
+
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
+
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
             }
             else if (o.name === 'avatarCamera') {
-                var quatCombined = new THREE.Quaternion();
-                var camEulerCombined = new THREE.Euler(- o.children[0].rotation._x, (Math.PI - o.rotation.y) % (2 * Math.PI), 0, 'YXZ');
+
+                let quatCombined = new THREE.Quaternion();
+                let camEulerCombined = new THREE.Euler(- o.children[0].rotation._x, (Math.PI - o.rotation.y) % (2 * Math.PI), 0, 'YXZ');
                 quatCombined.setFromEuler(camEulerCombined);
 
-                // player is only around y
-                var quatR_player = new THREE.Quaternion();
-                var eulerR_player = new THREE.Euler(0, (Math.PI - o.rotation._y) % (2 * Math.PI), 0, 'YXZ');
+                // Player is only around y
+                let quatR_player = new THREE.Quaternion();
+                let eulerR_player = new THREE.Euler(0, (Math.PI - o.rotation._y) % (2 * Math.PI), 0, 'YXZ');
                 quatR_player.setFromEuler(eulerR_player);
 
 
-                //console.log("o.rotation", o.rotation);
-
-                // camera is only around x
-                var quatR_camera = new THREE.Quaternion();
-                var eulerR_camera = new THREE.Euler(-o.children[0].rotation._x, 0, 0, 'YXZ');
+                // Camera is only around x
+                let quatR_camera = new THREE.Quaternion();
+                let eulerR_camera = new THREE.Euler(-o.children[0].rotation._x, 0, 0, 'YXZ');
                 quatR_camera.setFromEuler(eulerR_camera);
 
-                var output = [
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
-                    '	"position" : ' + Vector3String(o.position) + ',',
-                    '	"rotation" : ' + "[" + o.children[0].rotation._x + "," +
-                    o.rotation.y + "," +
-                    0 + "]" + ',', //+ Vector3String(o.rotation) + ',',
-                    '	"quaternion" : ' + "[" + quatCombined._x.toFixed(4) + "," +
-                    quatCombined._y.toFixed(4) + "," +
-                    quatCombined._z.toFixed(4) + "," +
-                    quatCombined._w.toFixed(4) + "]" + ',',
-                    '	"quaternion_player" : ' + "[" + quatR_player._x.toFixed(4) + "," +
-                    quatR_player._y.toFixed(4) + "," +
-                    quatR_player._z.toFixed(4) + "," +
-                    quatR_player._w.toFixed(4) + "]" + ',',
-                    '	"quaternion_camera" : ' + "[" + quatR_camera._x.toFixed(4) + "," +
-                    quatR_camera._y.toFixed(4) + "," +
-                    quatR_camera._z.toFixed(4) + "," +
-                    quatR_camera._w.toFixed(4) + "]" + ',',
-                    '	"scale"	   : ' + Vector3String(o.scale) + ',',
-                    '	"categoryName" : "' + 'avatarYawObject' + '",',
-                    '	"visible"  : ' + o.visible + (o.children.length ? '' : '') + '}'
-                ];
+                let entryObject = {};
+                for (let entry in Object.keys(o)) {
+                    if(typeof (Object.values(o)[entry]) !== 'object') {
+                        if (!ignoredKeys.includes(Object.keys(o)[entry])) {
+                            entryObject[Object.keys(o)[entry]] = Object.values(o)[entry];
+                        }
+                    }
+                }
+
+                entryObject.position = [o.position.x, o.position.y, o.position.z];
+                entryObject.rotation = [o.children[0].rotation._x, o.rotation.y, 0];
+                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.quaternion = [quatCombined._x.toFixed(4), quatCombined._y.toFixed(4), quatCombined._z.toFixed(4), quatCombined._w.toFixed(4)];
+                entryObject.quaternion_player = [quatR_player._x.toFixed(4), quatR_player._y.toFixed(4), quatR_player._z.toFixed(4), quatR_player._w.toFixed(4)];
+                entryObject.quaternion_camera = [quatR_camera._x.toFixed(4), quatR_camera._y.toFixed(4), quatR_camera._z.toFixed(4), quatR_camera._w.toFixed(4)];
+
+                entryObject.category_name = 'avatarYawObject';
+
+                let stringObj = JSON.stringify(entryObject);
+                stringObj = stringObj.slice(0, -1);
+                var output = ['\t\t'  + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? '' : '') + '}'  ];
+
             }
 
             return generateMultiLineString(output, '\n\t\t', n);
@@ -688,8 +540,6 @@ THREE.SceneExporter.prototype = {
                 ];
 
             } else if (g instanceof THREE.Geometry) {
-
-
 
                 if (g.sourceType === "ascii" || g.sourceType === "ctm" || g.sourceType === "stl" || g.sourceType === "vtk") {
 
@@ -932,57 +782,15 @@ THREE.SceneExporter.prototype = {
             '		"enableEnvironmentTexture" : "' + (!!envir.scene.environment) + '",',
             '		"objects"       : ' + nobjects + //+  ',',
             '	},',
-            '',
             '	"urlBaseType": "relativeToScene",',
             '',
-
             '	"objects" :',
             '	{',
             objects,
             '	}',    // Original line:   '	},',
             '',
-
-
-
-            // '	"geometries" :',
-            // '	{',
-            // '\t' + 	geometries,
-            // '	},',
-            // '',
-            //
-            // '	"materials" :',
-            // '	{',
-            // '\t' + 	materials,
-            // '	},',
-            // '',
-            //
-            // '	"textures" :',
-            // '	{',
-            // '\t' + 	textures,
-            // '	},',
-            // '',
-            //
-            // '	"fogs" :',
-            // '	{',
-            // '\t' + 	fogs,
-            // '	},',
-            // '',
-            //
-            // '	"transform" :',
-            // '	{',
-            // '		"position"  : ' + position + ',',
-            // '		"rotation"  : ' + rotation + ',',
-            // '		"scale"     : ' + scale,
-            // '	},',
-            // '',
-            // '	"defaults" :',
-            // '	{',
-            // '		"camera"  : ' + defcamera + ',',
-            // '		"fog"  	  : ' + deffog,
-            // '	}',
             '}'
         ].join('\n');
-
 
         //console.log(output);
 

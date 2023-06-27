@@ -4,6 +4,10 @@ AFRAME.registerComponent('highlight', {
         //var backgroundEl = document.querySelector('#exit_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
         this.buttonEl = document.querySelector('#button_poi_' + this.data);
+        if (this.buttonEl == null) {
+            this.buttonEl = document.querySelector('#' + this.data);
+            console.log(this.buttonEl);
+        }
         this.onClick = this.onClick.bind(this);
         this.onMouseEnter = this.onMouseEnter.bind(this);
         this.onMouseLeave = this.onMouseLeave.bind(this);
@@ -28,7 +32,7 @@ AFRAME.registerComponent('highlight', {
             //this.el.object3D.visible = false;
 
             //this.buttonEl.emit("temp");
-            console.log(e.detail.name);
+            //console.log(e.detail.name);
             if (e.detail.name == "animation__scale") {
                 //this.buttonEl.addEventListener('mouseleave', this.onMouseLeave);
                 console.log(e.detail.name + " Completed");
@@ -53,7 +57,7 @@ AFRAME.registerComponent('highlight', {
 
             if (child.type === 'Mesh') {
                 const material = child.material;
-                console.log(material);
+                //console.log(material);
 
                 //material.emissiveIntensity = 0.5;
 
@@ -129,13 +133,14 @@ AFRAME.registerComponent('highlight', {
             if (child.type === 'Mesh') {
 
                 const material = child.material;
+                //material.side = THREE.FrontSide;
 
                 var c = new THREE.Color();
                 c.set(material.color);
 
                 material.userData.originalColor = c.getHexString();
                 var hex_val = "0x" + c.getHexString();
-                console.log(material);
+                //console.log(material);
                 ///material.transparent = true; // enable to modify opacity correctly
                 //material.opacity = 0.9;
 
@@ -178,7 +183,7 @@ AFRAME.registerComponent('highlight', {
 
     },
     onBackgroundClick: function (evt) {
-        console.log("reached");
+        //console.log("reached");
         evt.target.object3D.traverse((child) => {
 
             if (child.type === 'Mesh') {

@@ -18,7 +18,7 @@ function vrodos_saveSceneAjax() {
         },
         error: function (xhr, ajaxOptions, thrownError) {
 
-            console.log("Ajax Save Scene: ERROR: 156" + thrownError);
+            console.log("Ajax Save Scene: ERROR: 156 - " + thrownError);
 
             jQuery('#save-scene-button').html("Save scene").removeClass("LinkDisabled");
 
@@ -52,7 +52,7 @@ function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
         },
         error: function (xhr, ajaxOptions, thrownError) {
 
-            console.log("Ajax Undo Scene: ERROR: 158" + thrownError);
+            console.log("Ajax Undo Scene: ERROR: 158 - " + thrownError);
 
             jQuery('#undo-scene-button').html("<i class='material-icons'>undo</i>").removeClass("LinkDisabled");
             jQuery('#redo-scene-button').html("<i class='material-icons'>redo</i>").removeClass("LinkDisabled");

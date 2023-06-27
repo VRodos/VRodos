@@ -1,4 +1,4 @@
-function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag, translation, pluginPath) {
+function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath) {
 
     // Add javascript variables for viewing the object correctly
     let selected_object_trs = {
@@ -7,56 +7,25 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         "scale": [1, 1, 1]
     };
 
-
     resources3D[nameModel] = {
         "path": path,
-        "assetid": dataDrag.assetid,
-        "assetname": dataDrag.assetname,
-        "glbID": dataDrag.glbID,
-        "color": "",
-        "audioID": dataDrag.audioID,
-        "categoryName": dataDrag.categoryName,
-        "categoryDescription": dataDrag.categoryDescription,
-        "categoryIcon": dataDrag.categoryIcon,
-        "categoryID": dataDrag.categoryID,
-        "image1id": dataDrag.image1id,
-        "videoTextureSrc": "",
-        "videoTextureRepeatX": "1",
-        "videoTextureRepeatY": "1",
-        "videoTextureCenterX": "0",
-        "videoTextureCenterY": "0",
-        "videoTextureRotation": "0",
-        "doorName_source": dataDrag.doorName_source,
-        "doorName_target": dataDrag.doorName_target,
-        "sceneName_target": dataDrag.sceneName_target,
-        "sceneID_target": dataDrag.sceneID_target,
-        "isreward": dataDrag.isreward,
-        "follow_camera": dataDrag.follow_camera,
-        "image_link": dataDrag.image_link,
-        "video_link": dataDrag.video_link,
-        "follow_camera_x": dataDrag.follow_camera_x,
-        "follow_camera_y": dataDrag.follow_camera_y,
-        "follow_camera_z": dataDrag.follow_camera_z,
-        "poi_img_title": dataDrag.poi_img_title,
-        "poi_img_desc": dataDrag.poi_img_desc,
-        "poi_img_link": dataDrag.poi_img_link,
-        "poi_onlyimg": dataDrag.poi_onlyimg,
-        "isCloned": dataDrag.isCloned,
-        "isJoker": dataDrag.isJoker,
         "trs": selected_object_trs
     };
 
-    if (categoryName === 'lightSun') {
+    for (let entry in Object.keys(dataDrag)) {
+        resources3D[nameModel][Object.keys(dataDrag)[entry]] = Object.values(dataDrag)[entry];
+    }
 
+    if (categoryName === 'lightSun') {
 
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
         lightSun.shadowMapHeight = 200;
         lightSun.shadowMapWidth = 200;
         lightSun.name = nameModel;
-        lightSun.assetname = "mylightSun";
+        lightSun['asset_name'] = "mylightSun";
         lightSun.isSelectableMesh = true;
-        lightSun.categoryName = "lightSun";
+        lightSun['category_name'] = "lightSun";
         lightSun.isLight = true;
 
         //// Add Sun Helper
@@ -73,7 +42,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0x555500);
         lightSunHelper.isLightHelper = true;
         lightSunHelper.name = 'lightHelper_' + lightSun.name;
-        lightSunHelper.categoryName = 'lightHelper';
+        lightSunHelper['category_name'] = 'lightHelper';
         lightSunHelper.parentLightName = lightSun.name;
 
         // Target spot: Where Sun points
@@ -86,7 +55,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         lightTargetSpot.isSelectableMesh = true;
         lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
-        lightTargetSpot.categoryName = "lightTargetSpot";
+        lightTargetSpot['category_name'] = "lightTargetSpot";
         lightTargetSpot.isLightTargetSpot = true;
         lightTargetSpot.isLight = false;
         lightTargetSpot.position = new THREE.Vector3(0, 0, 0);
@@ -156,9 +125,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
 
         lightLamp.name = nameModel;
-        lightLamp.assetname = "mylightLamp";
+        lightLamp['asset_name'] = "mylightLamp";
         lightLamp.isSelectableMesh = true;
-        lightLamp.categoryName = "lightLamp";
+        lightLamp['category_name'] = "lightLamp";
         lightLamp.isLight = true;
         lightLamp.castShadow = true;
 
@@ -176,7 +145,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
         lightLampHelper.isLightHelper = true;
         lightLampHelper.name = 'lightHelper_' + lightLamp.name;
-        lightLampHelper.categoryName = 'lightHelper';
+        lightLampHelper['category_name'] = 'lightHelper';
         lightLampHelper.parentLightName = lightLamp.name;
 
         envir.scene.add(lightLamp);
@@ -232,9 +201,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
 
         lightSpot.name = nameModel;
-        lightSpot.assetname = "mylightSpot";
+        lightSpot['asset_name'] = "mylightSpot";
         lightSpot.isSelectableMesh = true;
-        lightSpot.categoryName = "lightSpot";
+        lightSpot['category_name'] = "lightSpot";
         lightSpot.isLight = true;
 
         //// Add Lamp Helper
@@ -255,7 +224,7 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0x555500);
         lightSpotHelper.isLightHelper = true;
         lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
-        lightSpotHelper.categoryName = 'lightHelper';
+        lightSpotHelper['category_name'] = 'lightHelper';
         lightSpotHelper.parentLightName = lightSpot.name;
 
         envir.scene.add(lightSpot);
@@ -310,9 +279,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
         var lightAmbient = new THREE.AmbientLight(0xffffff, 1);
 
         lightAmbient.name = nameModel;
-        lightAmbient.assetname = "mylightAmbient";
+        lightAmbient['asset_name'] = "mylightAmbient";
         lightAmbient.isSelectableMesh = true;
-        lightAmbient.categoryName = "lightAmbient";
+        lightAmbient['category_name'] = "lightAmbient";
         lightAmbient.isLight = true;
 
         //// Add Lamp Helper
@@ -386,9 +355,9 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
                 var Pawn = gltf.scene.children[0];
                 Pawn.name = nameModel;
-                Pawn.assetname = "myActor";
+                Pawn['asset_name'] = "myActor";
                 Pawn.isSelectableMesh = true;
-                Pawn.categoryName = "pawn";
+                Pawn['category_name'] = "pawn";
                 Pawn.isLight = false;
 
 
@@ -475,11 +444,11 @@ function addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dat
 
         // Make a manager for the GLB
         var manager = new THREE.LoadingManager();
-
         // On progress messages
         manager.onProgress = function (item, loaded, total) {
-            document.getElementById("result_download").innerHTML = resources3D[nameModel].assetname + " loading part " + loaded + " / " + total;
+            document.getElementById("result_download").innerHTML = resources3D[nameModel]['asset_name'] + " loading part " + loaded + " / " + total;
         };
+
 
         // When all are finished loading
         manager.onLoad = function () {

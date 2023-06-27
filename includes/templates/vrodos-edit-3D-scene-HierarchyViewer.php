@@ -46,9 +46,24 @@
         </div>
 
         <div id="axis-manipulation-buttons" class="AxisManipulationBtns mdc-typography" style="display: none;">
-            <a id="axis-size-increase-btn" data-mdc-auto-init="MDCRipple" title="Increase axes size" class="mdc-button mdc-button--raised mdc-button--dense mdc-button--primary" style="width-min:50px">+</a>
-            <a id="axis-size-decrease-btn" data-mdc-auto-init="MDCRipple" title="Decrease axes size" class="mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"  style="width-min:50px">-</a>
+            <a id="axis-size-increase-btn" data-mdc-auto-init="MDCRipple" title="Increase axes size" class="mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">+</a>
+            <a id="axis-size-decrease-btn" data-mdc-auto-init="MDCRipple" title="Decrease axes size" class="mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">-</a>
         </div>
+
+    </div>
+
+    <div id="scale-lock-div"
+         style="display: block; width:100%; margin:0; padding:0; height:30px; background: rgba(255,255,255,0.5)">
+
+        <input type="checkbox"
+               title="Lock Scale aspect ratio"
+               id="scaleLockCheckbox"
+               name="scaleLockCheckbox"
+               form="3dAssetForm"
+               class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light"
+               onchange="keepScaleAspectRatio(this.checked)">
+        <label for="scaleLockCheckbox" class="mdc-typography--subheading2" style="vertical-align: middle; cursor: pointer;">Lock Scale aspect ratio</label>
+
     </div>
 
     <!-- Hierarchy viewer -->

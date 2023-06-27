@@ -35,7 +35,6 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     // closeButton = jQuery('#bt_close_file_toolbar');
 
 
-
     // Create drag image BEFORE event is fired - THEN call it inside the event
     function createDragImage() {
         var img = jQuery('<img>');
@@ -53,7 +52,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         });
         return img[0];
     }
-    var dragImg = createDragImage();
+    let dragImg = createDragImage();
 
     render(responseData, gameProjectSlug, urlforAssetEdit);
 
@@ -104,64 +103,32 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         click: function (e) {
             //alert("Drag n drop models onto 3D space");
 
-
-
             e.preventDefault();
         },
 
         dragstart: function (e) {
             // Problems with Chrome. Firefox ok.
 
-            let screenshotImage = e.target.attributes.getNamedItem("data-sshot-url");
-
-
+            let screenshotImage = e.target.attributes.getNamedItem("data-screenshot_path");
 
             dragImg.src = screenshotImage ? screenshotImage.value : "/wp-content/plugins/VRodos/images/ic_asset.png";
 
             e.originalEvent.dataTransfer.setDragImage(dragImg, 32, 32);
 
+            let dragData = {};
+            for (let entry in Object.keys(e.target.attributes)) {
 
+                let name = (Object.values(e.target.attributes)[entry]).name;
 
-            var dragData = {
-                "title": e.target.attributes.getNamedItem("data-assetslug").value + "_" + Math.floor(Date.now() / 1000),
-                "assetid": e.target.attributes.getNamedItem("data-assetid").value,
-                "assetname": e.target.attributes.getNamedItem("data-name").value,
-                "obj": e.target.attributes.getNamedItem("data-objPath").value,
-                "objID": e.target.attributes.getNamedItem("data-objID").value,
-                "mtl": e.target.attributes.getNamedItem("data-mtlPath").value,
-                "mtlID": e.target.attributes.getNamedItem("data-mtlID").value,
-                "fbxID": e.target.attributes.getNamedItem("data-fbxID").value,
-                "glbID": e.target.attributes.getNamedItem("data-glbID").value,
-                "audioID": e.target.attributes.getNamedItem("data-audioID").value,
-                "categoryID": e.target.attributes.getNamedItem("data-categoryID").value,
-                "categoryName": e.target.attributes.getNamedItem("data-categoryName").value,
-                "categoryDescription": e.target.attributes.getNamedItem("data-categoryDescription").value,
-                "categoryIcon": e.target.attributes.getNamedItem("data-categoryIcon").value,
-                "image1id": e.target.attributes.getNamedItem("data-image1id").value,
-                "doorName_source": e.target.attributes.getNamedItem("data-doorName_source").value,
-                "doorName_target": e.target.attributes.getNamedItem("data-doorName_target").value,
-                "isreward": e.target.attributes.getNamedItem("data-isreward").value,
-                "follow_camera": e.target.attributes.getNamedItem("data-follow_camera").value,
-                "image_link": e.target.attributes.getNamedItem("data-image_link").value,
-                "video_link": e.target.attributes.getNamedItem("data-video_link").value,
-                "follow_camera_x": e.target.attributes.getNamedItem("data-follow_camera_x").value,
-                "follow_camera_y": e.target.attributes.getNamedItem("data-follow_camera_y").value,
-                "follow_camera_z": e.target.attributes.getNamedItem("data-follow_camera_z").value,
-                "poi_img_title": e.target.attributes.getNamedItem("data-poi_img_title").value,
-                "poi_img_desc": e.target.attributes.getNamedItem("data-poi_img_desc").value,
-                "poi_img_link": e.target.attributes.getNamedItem("data-poi_img_link").value,
-                "poi_onlyimg": e.target.attributes.getNamedItem("data-poi_onlyimg").value,
-                "sceneName_target": e.target.attributes.getNamedItem("data-sceneName_target").value,
-                "sceneID_target": e.target.attributes.getNamedItem("data-sceneID_target").value,
-                "archaeology_penalty": e.target.attributes.getNamedItem("data-archaeology_penalty").value,
-                "hv_penalty": e.target.attributes.getNamedItem("data-hv_penalty").value,
-                "natural_penalty": e.target.attributes.getNamedItem("data-natural_penalty").value,
-                "isCloned": e.target.attributes.getNamedItem("data-isCloned").value,
-                "isJoker": e.target.attributes.getNamedItem("data-isJoker").value
-            };
+                name = name.substring(name.indexOf('-')+1);
+                dragData[name] = (Object.values(e.target.attributes)[entry]).value;
 
+            }
+            dragData.title = e.target.attributes.getNamedItem("data-asset_slug").value + "_" + Math.floor(Date.now() / 1000);
+            dragData.name = dragData.title;
 
-            var jsonDataDrag = JSON.stringify(dragData);
+            let jsonDataDrag = JSON.stringify(dragData);
+
             e.originalEvent.dataTransfer.setData("text/plain", jsonDataDrag);
 
         },
@@ -189,98 +156,64 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
             for (let i = 0; i < enlistData.length; i++) {
                 f = enlistData[i];
 
-                let fileSize = ''; //bytesToSize(f.size);
-
-                name = escapeHTML(f.name);
+                name = escapeHTML(f['asset_name']);
 
                 // Add the category in tabs if not yet added
-                if (jQuery("#assetCategTab").find("[id='" + f.categoryName + "']").length == 0) {
+                if (jQuery("#assetCategTab").find("[id='" + f.category_slug + "']").length == 0) {
                     //Create an input type dynamically.
                     let element = document.createElement("button");
                     //Assign different attributes to the element.
                     element.className = "tablinks mdc-button";
-                    element.id = f.categoryName;
-                    element.innerHTML = "<i class='material-icons' title='" + f.categoryName + ": " + f.categoryDescription + "' style='font-size:18px;'>" + f.categoryIcon + "</i>";//f.categoryName;
+                    element.id = f['category_slug'];
+                    element.innerHTML = "<i class='material-icons' title='" + f['category_name'] + "' style='font-size:18px;'>" + f['category_icon'] + "</i>";
                     element.addEventListener("click", function (event) { openCategoryTab(event, this); });
 
                     document.getElementById("assetCategTab").appendChild(element);
                 }
 
-                f.screenImagePath = f.screenImagePath ? f.screenImagePath : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
+                f['screenshot_path'] = f['screenshot_path'] ? f['screenshot_path'] : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
 
                 let img = '<span class="mdc-list-item__start-detail CenterContents">' +
-                    '<img class="assetImg" draggable="false" style="-webkit-user-drag: none" src=' + encodeURI(f.screenImagePath) + '>' +
+                    '<img class="assetImg" draggable="false" style="-webkit-user-drag: none" src=' + encodeURI(f['screenshot_path']) + '>' +
                     // '<span class="megabytesAsset mdc-typography--caption mdc-theme--text-secondary-on-light">'+ fileSize + '</span>'+
                     '</span>';
 
+                let draggable_string = '';
+                for (let entry in Object.keys(f)) {
+                    draggable_string = draggable_string.concat('data-'+Object.keys(f)[entry] + '="' + Object.values(f)[entry]) + '" ';
+                }
 
 
-                var file = jQuery('<li draggable="true" id="asset-' + f.assetid + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
-                    ' title="Drag the card into the plane, (Size: ' + fileSize + ')"' +
-                    ' data-assetslug="' + f.assetSlug +
-                    '" data-assetid="' + f.assetid +
-                    '" data-name="' + name +
-                    '" data-objPath="' + f.objPath +
-                    '" data-objID="' + f.objID +
-                    '" data-fbxPath="' + f.fbxPath +
-                    '" data-fbxID="' + f.fbxID +
-                    '" data-glbPath="' + f.glbPath +
-                    '" data-glbID="' + f.glbID +
-                    '" data-mtlPath="' + f.mtlPath +
-                    '" data-mtlID="' + f.mtlID +
-                    '" data-audioID="' + f.audioID +
-                    '" data-categoryID="' + f.categoryID +
-                    '" data-categoryName="' + f.categoryName +
-                    '" data-categoryDescription="' + f.categoryDescription +
-                    '" data-categoryIcon="' + f.categoryIcon +
-                    '" data-image1id="' + f.image1id +
-                    '" data-doorName_source="' + f.doorName_source +
-                    '" data-doorName_target="' + f.doorName_target +
-                    '" data-sceneName_target="' + f.sceneName_target +
-                    '" data-sceneID_target="' + f.sceneID_target +
-                    '" data-archaeology_penalty="' + f.archaeology_penalty +
-                    '" data-hv_penalty="' + f.hv_penalty +
-                    '" data-natural_penalty="' + f.natural_penalty +
-                    '" data-sshot-url="' + f.screenImagePath +
-                    '" data-isreward="' + f.isreward +
-                    '" data-follow_camera="' + f.follow_camera +
-                    '" data-image_link="' + f.image_link +
-                    '" data-video_link="' + f.video_link +
-                    '" data-follow_camera_x="' + f.follow_camera_x +
-                    '" data-follow_camera_y="' + f.follow_camera_y +
-                    '" data-follow_camera_z="' + f.follow_camera_z +
-                    '" data-isCloned="' + f.isCloned +
-                    '" data-poi_img_title="' + f.poi_img_title +
-                    '" data-poi_img_desc="' + f.poi_img_desc +
-                    '" data-poi_img_link="' + f.poi_img_link +
-                    '" data-poi_onlyimg="' + f.poi_onlyimg +
-                    '" data-isJoker="' + f.isJoker +
-                    '" >' + img +
+
+                let file = jQuery('<li draggable="true" id="asset-' + f['asset_id'] + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
+                    ' title="Drag the card into the plane"' +
+                    draggable_string +'>' + img +
+
                     '<span class="FileListItemName mdc-list-item__text" title="Drag the card into the plane">' + name +
-                    '<i class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption material-icons">' + f.categoryIcon
+                    '<i class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption material-icons">' + f['category_icon']
                     + '</i></span>' +
                     '<span class="FileListItemFooter">' +
 
-                    (f.isJoker === 'false' ?
-                        ('<a draggable="false" ondragstart="return false;" title="Edit asset" id="editAssetBtn-' + f.assetid +
-                            '" onclick="window.location.href=\'' + urlforAssetEdit + f.assetid + '&scene_type=scene&preview=0&editable=true' +
-                            '\'" class="editAssetbutton mdc-button mdc-button--dense">Edit</a>')
-                        :
-                        ('<a draggable="false" ondragstart="return false;" title="View asset" id="editAssetBtn-' + f.assetid +
-                            '" onclick="window.location.href=\'' + urlforAssetEdit + f.assetid + '&scene_type=scene&preview=1&editable=false' +
-                            '\'" class="deleteAssetbutton mdc-button mdc-button--dense">View</a>')
+                    (f['is_joker'] === 'false' ?
+                            ('<a draggable="false" ondragstart="return false;" title="Edit asset" id="editAssetBtn-' + f['asset_id'] +
+                                '" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=0&editable=true' +
+                                '\'" class="editAssetbutton mdc-button mdc-button--dense">Edit</a>')
+                            :
+                            ('<a draggable="false" ondragstart="return false;" title="View asset" id="editAssetBtn-' + f['asset_id'] +
+                                '" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=1&editable=false' +
+                                '\'" class="deleteAssetbutton mdc-button mdc-button--dense">View</a>')
                     ) +
 
-                    (f.isJoker === 'false' ?
-                        ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-' + f.assetid
-                            + '" onclick="vrodos_deleteAssetAjax(' +
-                            f.assetid + ', \'' + gameProjectSlug + '\',' + f.isCloned + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
-                        ''
+                    (f['is_joker'] === 'false' ?
+                            ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-' + f['asset_id']
+                                + '" onclick="vrodos_deleteAssetAjax(' +
+                                f['asset_id'] + ', \'' + gameProjectSlug + '\',' + f['is_cloned'] + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
+                            ''
                     )
                     +
 
                     '</span>' +
-                    '<div id="deleteAssetProgressBar-' + f.assetid + '" class="progressSlider" style="position: absolute;bottom: 0;display: none;">\n' +
+                    '<div id="deleteAssetProgressBar-' + f['asset_id'] + '" class="progressSlider" style="position: absolute;bottom: 0;display: none;">\n' +
                     '<div class="progressSliderLine"></div>\n' +
                     '<div class="progressSliderSubLine progressIncrease"></div>\n' +
                     '<div class="progressSliderSubLine progressDecrease"></div>\n' +
@@ -312,16 +245,16 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
     // Convert file sizes from bytes to human readable units
     function bytesToSize(bytes) {
-        var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        let sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
         if (bytes == 0) return '0 Bytes';
-        var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+        let i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
         return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
     }
 
     function selectByTitleComparizon(input_data, needle) {
-        var output_data = [];
+        let output_data = [];
         input_data.forEach(function (d) {
-            if (d.assetName.indexOf(needle) !== -1)
+            if (d['asset_name'].indexOf(needle) !== -1)
                 output_data.push(d);
         });
         return output_data;
@@ -330,10 +263,10 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
     function openCategoryTab(evt, b) {
 
-        var categName = b.id;
+        let categName = b.id;
 
         // Declare all variables
-        var tabcontent, tablinks;
+        let tabcontent, tablinks;
 
         // Get all elements with class="tabcontent" and hide them
         tabcontent = document.getElementsByClassName("tabcontent");
@@ -348,12 +281,12 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         }
 
         // Show the current tab, and add an "active" class to the button that opened the tab
-        var items = fileList[0].getElementsByTagName("li");
+        let items = fileList[0].getElementsByTagName("li");
         for (let i = 0; i < items.length; ++i) {
-            if (categName == "allAssetsViewBt")
+            if (categName === "allAssetsViewBt")
                 items[i].style.display = '';
             else {
-                if (items[i].firstChild.dataset.categoryname == categName)
+                if (items[i].dataset.category_slug === categName)
                     items[i].style.display = '';
                 else
                     items[i].style.display = 'none';

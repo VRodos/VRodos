@@ -134,7 +134,7 @@ $videos = vrodos_getVideoAttachmentsFromMediaLibrary();
 // Shift vars to Javascript side
 echo '<script>';
 echo 'var pluginPath="'.$pluginpath.'";';
-echo 'let uploadDir="'.wp_upload_dir()['baseurl'].'";';
+echo 'var uploadDir="'.wp_upload_dir()['baseurl'].'";';
 echo 'var isAdmin="'.$isAdmin.'";';
 echo 'let isUserAdmin="'.current_user_can('administrator').'";';
 echo 'let scene_id ="'.$current_scene_id.'";';
@@ -377,7 +377,7 @@ if(is_user_logged_in() ) {
             // Set Target light for Spots
             for (let n in resources3D) {
                 (function (name) {
-                    if (resources3D[name]['categoryName'] === 'lightSpot') {
+                    if (resources3D[name]['category_name'] === 'lightSpot') {
                         let lightSpot = envir.scene.getObjectByName(name);
                         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
                     }

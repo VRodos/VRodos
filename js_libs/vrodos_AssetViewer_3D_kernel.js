@@ -126,12 +126,9 @@ class VRodos_AssetViewer_3D_kernel {
         this.recalcAspectRatio();
 
 
-
-
         let cameraPosX = this.assettrs[6];
         let cameraPosY = this.assettrs[7];
         let cameraPosZ = this.assettrs[8];
-
 
 
         this.cameraDefaults = {
@@ -237,10 +234,6 @@ class VRodos_AssetViewer_3D_kernel {
     addControlEventListeners(){
 
         this.controls.addEventListener('change', this.boundRender);
-
-
-
-
 
         // this.controls.dispatchEvent( { type: 'change' } );
         //window.addEventListener('resize', this.boundRender);

@@ -34,77 +34,92 @@ var torgue = new THREE.Vector3();
 // }, true);
 //
 // WHEEL
-document.addEventListener( 'wheel', function ( event ) {
+
+document.addEventListener('wheel', function (event) {
     if (avatarControlsEnabled)
         if (event.deltaY)
-            if (event.deltaY>0) {
+            if (event.deltaY > 0) {
                 envir.cameraAvatar.fov += 1;
                 envir.cameraAvatar.updateProjectionMatrix();
                 //moveUp = true;
-            }else {
+            } else {
                 envir.cameraAvatar.fov -= 1;
                 envir.cameraAvatar.updateProjectionMatrix();
             }
 }, true);
 
-// KEY DOWN
-document.addEventListener( 'keydown',
-    function ( event ) {
+firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
-        var objManipulationSwitch = jQuery('input:radio[name=object-manipulation-switch]');
+if (firstPersonBlockerBtn) {
+    console.log("firstPersonBlockerBtn");
+};
 
-        switch ( event.keyCode ) {
-            //---------------------------- TRS ---------------------------------------
-            case 80: console.log("Pause"); pauseClickFun(); break; // r
-            case 82: viewUp=true; break; // r
-            case 70: viewDown=true; break; // f
-            case 187: break;
-            case 107: transform_controls.setSize(transform_controls.size + 0.1); break; // +,=,num+
-            case 189: break;
-            case 10: transform_controls.setSize(Math.max(transform_controls.size - 0.1, 0.1));break;// -,_,num-
-            //-------------------------------- PointerLock -----------------------
-            case 38: break;// up arrow
-            case 87: moveForward = true; break; // w
-            case 37: break;// left
-            case 65: moveLeft = true; break;// a
-            case 40: break;// down
-            case 83: moveBackward = true; break; // s
-            case 39: break; // right
-            case 68: moveRight = true; break; // d
-            case 81: moveUp = true; break; // Q
-            case 69: moveDown = true; break; // E
-            case 32: break; // space
-            case 96: break;// 0
-            case 46:
-                // If focus is on main screen but not at inputs
-                if(event.composedPath()[0].tagName === "BODY") {
-                    deleterFomScene(transform_controls.object.name);
-                }
-                break;//  delete
-        }
-    });
+document.addEventListener('remove_movement',
+    function (event) {
+        //abortController.abort()
+        document.removeEventListener('keydown', keydown_handler);
+        document.removeEventListener('keyup', keyup_handler);
 
-// KEY UP
-document.addEventListener( 'keyup',
-    function ( event ) {
-
-        //triggerAutoSave(); // too slow
-        switch( event.keyCode ) {
-            case 38: // up
-            case 87: moveForward = false; break; // w
-            case 37: // left
-            case 65: moveLeft = false; break; // a
-            case 40: // down
-            case 83: moveBackward = false; break; // s
-            case 39: // right
-            case 68: moveRight = false; break; // d
-            case 69: moveDown = false; break;  // e
-            case 81: moveUp = false; break; // e
-            case 82: viewUp = false; break; // r
-            case 70: viewDown =false; break; // f
-        }
-    }, false
+    }
 );
+
+
+document.addEventListener('add_movement',
+    function (event) {
+        document.addEventListener('keydown', keydown_handler);
+        document.addEventListener('keyup', keyup_handler);
+    }
+);
+let keydown_handler = (ev) => {
+    var objManipulationSwitch = jQuery('input:radio[name=object-manipulation-switch]');
+
+    switch (ev.keyCode) {
+        //---------------------------- TRS ---------------------------------------
+        case 80: console.log("Pause"); pauseClickFun(); break; // r
+        case 82: viewUp = true; break; // r
+        case 70: viewDown = true; break; // f
+        case 187: break;
+        case 107: transform_controls.setSize(transform_controls.size + 0.1); break; // +,=,num+
+        case 189: break;
+        case 10: transform_controls.setSize(Math.max(transform_controls.size - 0.1, 0.1)); break;// -,_,num-
+        //-------------------------------- PointerLock -----------------------
+        case 38: break;// up arrow
+        case 87: moveForward = true; break; // w
+        case 37: break;// left
+        case 65: moveLeft = true; break;// a
+        case 40: break;// down
+        case 83: moveBackward = true; break; // s
+        case 39: break; // right
+        case 68: moveRight = true; break; // d
+        case 81: moveUp = true; break; // Q
+        case 69: moveDown = true; break; // E
+        case 32: break; // space
+        case 96: break;// 0
+        case 46:
+            // If focus is on main screen but not at inputs
+            if (ev.composedPath()[0].tagName === "BODY") {
+                deleterFomScene(transform_controls.object.name);
+            }
+            break;//  delete
+    }
+};
+let keyup_handler = (ev) => {
+    switch (ev.keyCode) {
+        case 38: // up
+        case 87: moveForward = false; break; // w
+        case 37: // left
+        case 65: moveLeft = false; break; // a
+        case 40: // down
+        case 83: moveBackward = false; break; // s
+        case 39: // right
+        case 68: moveRight = false; break; // d
+        case 69: moveDown = false; break;  // e
+        case 81: moveUp = false; break; // e
+        case 82: viewUp = false; break; // r
+        case 70: viewDown = false; break; // f
+    }
+
+};
 
 
 /* Update Steve when Steve walks by key presses */

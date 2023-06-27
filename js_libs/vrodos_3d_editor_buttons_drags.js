@@ -200,46 +200,31 @@ function loadButtonActions() {
 
             let dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
 
-            let categoryName = dataDrag.categoryName;
+            console.log(dataDrag);
+
+            let categoryName = dataDrag['category_name'];
             let nameModel = dataDrag.title;
-            let displayed_name = dataDrag.title;
+
+            let path = '';
 
             // SUN or LAMP or Spot or Ambient
-            if (dataDrag.categoryName === "lightSun" ||
-                dataDrag.categoryName === "lightLamp" ||
-                dataDrag.categoryName === "lightSpot" ||
-                dataDrag.categoryName === "lightAmbient" ||
-                dataDrag.categoryName === "Pawn") {
-
-                var path = objFname = mtlFname = '';
-                dataDrag.objID = dataDrag.mtlID = dataDrag.assetid = dataDrag.categoryIcon = '';
-
-                dataDrag.fbxID = '';
-                dataDrag.glbID = '';
-                dataDrag.audioID = '';
-
-                dataDrag.categoryID = dataDrag.diffImages = dataDrag.diffImageIDs = dataDrag.image1id = dataDrag.doorName_source = '';
-                dataDrag.doorName_target = dataDrag.sceneName_target = dataDrag.sceneID_target = dataDrag.archaeology_penalty = '';
-                dataDrag.hv_penalty = dataDrag.natural_penalty = dataDrag.image_link = dataDrag.video_link = dataDrag.follow_camera_x = dataDrag.follow_camera_y = dataDrag.follow_camera_z = dataDrag.poi_img_title = dataDrag.poi_img_desc = dataDrag.poi_img_link = '';
-                dataDrag.isreward = dataDrag.follow_camera = dataDrag.isCloned = dataDrag.isJoker = dataDrag.poi_onlyimg = 0;
-
-
+            if (dataDrag['category_name'] === "lightSun" ||
+                dataDrag['category_name'] === "lightLamp" ||
+                dataDrag['category_name'] === "lightSpot" ||
+                dataDrag['category_name'] === "lightAmbient" ||
+                dataDrag['category_name'] === "Pawn") {
 
 
             }
             else {
-
-                var path = dataDrag.obj.substring(0, dataDrag.obj.lastIndexOf("/") + 1);
-                var objFname = dataDrag.obj.substring(dataDrag.obj.lastIndexOf("/") + 1);
-                var mtlFname = dataDrag.mtl.substring(dataDrag.mtl.lastIndexOf("/") + 1);
+                path = dataDrag.path.substring(0, dataDrag.path.lastIndexOf("/") + 1);
             }
 
             let translation = dragDropVerticalRayCasting(ev);
 
 
-
             // Asset add to canvas
-            addAssetToCanvas(nameModel, path, objFname, mtlFname, categoryName, dataDrag, translation, pluginPath);
+            addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath);
 
             // Show options
             jQuery('#object-manipulation-toggle').show();
@@ -357,10 +342,10 @@ function loadButtonActions() {
 
         // Sun and Target spot can not change control manipulation mode
         if (transform_controls.object) {
-            if (transform_controls.object.categoryName.includes("lightTargetSpot") ||
-                transform_controls.object.categoryName.includes("lightSun") ||
-                transform_controls.object.categoryName.includes("lightLamp") ||
-                transform_controls.object.categoryName.includes("lightSpot")) {
+            if (transform_controls.object['category_name'].includes("lightTargetSpot") ||
+                transform_controls.object['category_name'].includes("lightSun") ||
+                transform_controls.object['category_name'].includes("lightLamp") ||
+                transform_controls.object['category_name'].includes("lightSpot")) {
 
                 if (mode === 'rotate')
                     return;
@@ -567,14 +552,14 @@ function loadButtonActions() {
             e.target.dataset.lightpawn === "Ambient"
         ) {
             dragData = {
-                "categoryName": "light" + e.target.dataset.lightpawn,
+                "category_name": "light" + e.target.dataset.lightpawn,
                 "title": "mylight" + e.target.dataset.lightpawn + "_" + Math.floor(Date.now() / 1000)
             };
 
         }
         else if (e.target.dataset.lightpawn === "Pawn") {
             dragData = {
-                "categoryName": "Pawn",
+                "category_name": "Pawn",
                 "title": "aPawn" + "_" + Math.floor(Date.now() / 1000)
             };
         }
@@ -592,16 +577,16 @@ function setVisiblityLightHelpingElements(statusVisibility) {
     for (var i = 0; i < envir.scene.children.length; i++) {
         var curr_obj = envir.scene.children[i];
 
-        if (curr_obj.categoryName === 'lightHelper' || curr_obj.categoryName === 'lightTargetSpot')
+        if (curr_obj['category_name'] === 'lightHelper' || curr_obj['category_name'] === 'lightTargetSpot')
             curr_obj.visible = statusVisibility;
 
-        if (curr_obj.categoryName === 'lightSun')
+        if (curr_obj['category_name'] === 'lightSun')
             curr_obj.children[0].visible = statusVisibility;
 
-        if (curr_obj.categoryName === 'lightLamp')
+        if (curr_obj['category_name'] === 'lightLamp')
             curr_obj.children[0].visible = statusVisibility;
 
-        if (curr_obj.categoryName === 'lightSpot')
+        if (curr_obj['category_name'] === 'lightSpot')
             curr_obj.children[0].visible = statusVisibility;
 
         if (curr_obj.type === 'CameraHelper') // This is the shadow camera of sun

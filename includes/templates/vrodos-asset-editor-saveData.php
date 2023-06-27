@@ -57,6 +57,7 @@ function vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $as
 
     $asset_id = wp_insert_post($asset_information);
     update_post_meta($asset_id, 'vrodos_asset3d_pathData', $gameSlug);
+    
 
     vrodos_update_asset_meta($asset_id, $assetFonts, $assetback3dcolor, $assettrs);
 
@@ -78,6 +79,7 @@ function vrodos_update_asset_frontend($assetPGameID, $assetCatID, $assetId, $ass
         'post_content' => $assetDescription,
         'tax_input' => $asset_taxonomies,
     );
+
     wp_update_post($data);
     vrodos_update_asset_meta($assetId, $assetFonts, $assetback3dcolor, $assettrs);
 

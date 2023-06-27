@@ -25,12 +25,10 @@ class VRodos_LoaderMulti {
                 }
 
                 // Lights are in a different loop
-                if (resources3D[name]['categoryName']) {
-                    if (resources3D[name]['categoryName'].startsWith("light") || resources3D[name]['categoryName'].startsWith("pawn"))
+                if (resources3D[name]['category_name']) {
+                    if (resources3D[name]['category_name'].startsWith("light") || resources3D[name]['category_name'].startsWith("pawn"))
                         return;
                 }
-
-
 
                 // Load Camera object
                 if (name == 'avatarCamera') {
@@ -39,6 +37,7 @@ class VRodos_LoaderMulti {
 
                         // called when the resource is loaded
                         function (objectMain) {
+
 
                             let object = objectMain.scene.children[0];
                             object.name = "Camera3Dmodel";
@@ -82,24 +81,21 @@ class VRodos_LoaderMulti {
 
                 } else { // GLB 3D models
 
-                    //console.log(resources3D[name]);
-
-                    if (resources3D[name]['glbID'] !== "" && resources3D[name]['glbID'] !== undefined) {
-
+                    if ((resources3D[name]['glb_id'] !== "" && resources3D[name]['glb_id'] !== undefined) || resources3D[name]['category_slug'] == "video") {
 
                         jQuery.ajax({
                             url: my_ajax_object_fetchasset.ajax_url,
                             type: 'POST',
                             data: {
                                 'action': 'vrodos_fetch_glb_asset_action',
-                                'asset_id': resources3D[name]['assetid']
+                                'asset_id': resources3D[name]['asset_id']
                             },
                             success: function (res) {
 
                                 let resourcesGLB = JSON.parse(res);
-
                                 let glbURL = resourcesGLB['glbURL'];
-
+                                if (resources3D[name]['category_slug'] == "video")
+                                    glbURL = pluginPath + '/assets/objects/tv_rotated.glb';
                                 // Instantiate a loader
 
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
@@ -119,6 +115,7 @@ class VRodos_LoaderMulti {
                                         }
 
                                         object = setObjectProperties(object.scene, name, resources3D);
+
                                         object.isSelectableMesh = true;
                                         envir.scene.add(object);
                                     },
@@ -126,7 +123,7 @@ class VRodos_LoaderMulti {
                                     function (xhr) {
 
                                         document.getElementById("result_download").innerHTML = "'" +
-                                            resources3D[name].assetname + "' downloaded " +
+                                            resources3D[name]['asset_name'] + "' downloaded " +
                                             Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
                                     },
                                     // called when loading has errors
@@ -160,23 +157,21 @@ class VRodos_LoaderMulti {
 // Set loaded Object or Scene (for GLBs) properties
 function setObjectProperties(object, name, resources3D) {
 
+    // Automatically load values that are available
+    for (let entry in Object.keys(resources3D[name])) {
+        if (!['id', 'translation', 'position', 'rotation', 'scale', 'quaternion'].includes(Object.keys(resources3D[name])[entry])) {
+            object[[Object.keys(resources3D[name])[entry]]] = Object.values(resources3D[name])[entry];
+        }
+    }
+
+
     object.isSelectableMesh = true;
     object.isLight = resources3D[name]['isLight'];
-    object.name = name;
-    object.assetname = resources3D[name]['assetname'];
-    object.assetid = resources3D[name]['assetid'];
     object.fnPath = resources3D[name]['path'];
 
     // avoid revealing the full path. Use the relative in the saving format.
     object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
-
-    object.fnObj = resources3D[name]['obj'];
-    object.fnObjID = resources3D[name]['objID'];
-    object.fnMtl = resources3D[name]['mtl'];
-    object.fnMtlID = resources3D[name]['mtlID'];
-
-    object.fbxID = resources3D[name]['fbxID'];
-    object.glbID = resources3D[name]['glbID'];
+    object['glb_id'] = resources3D[name]['glb_id'];
 
 
     if (resources3D[name]['overrideMaterial'] === "true") {
@@ -193,50 +188,12 @@ function setObjectProperties(object, name, resources3D) {
     //============== Video texture ==========
 
 
-    if (resources3D[name]['videoTextureSrc'] !== "") {
+    if (resources3D[name]['videoTextureSrc']) {
         if (resources3D[name]['videoTextureSrc'] !== "undefined") {
             console.log("The object has video texture:", resources3D[name]['videoTextureSrc'])
             startVideo(resources3D, name);
         }
     }
-
-    //=======================================
-
-
-
-    object.audioID = resources3D[name]['audioID'];
-
-    object.categoryID = resources3D[name]['categoryID'];
-    object.categoryName = resources3D[name]['categoryName'];
-
-    object.diffImages = resources3D[name]['diffImages'];
-    object.diffImageIDs = resources3D[name]['diffImageIDs'];
-
-    object.image1id = resources3D[name]['image1id'];
-
-    object.doorName_source = resources3D[name]['doorName_source'];
-    object.doorName_target = resources3D[name]['doorName_target'];
-    object.sceneName_target = resources3D[name]['sceneName_target'];
-    object.sceneID_target = resources3D[name]['sceneID_target'];
-
-    object.archaeology_penalty = resources3D[name]['archaeology_penalty'];
-    object.hv_penalty = resources3D[name]['hv_penalty'];
-    object.natural_penalty = resources3D[name]['natural_penalty'];
-
-    object.isreward = resources3D[name]['isreward'];
-    object.follow_camera = resources3D[name]['follow_camera'];
-    object.image_link = resources3D[name]['image_link'];
-    object.video_link = resources3D[name]['video_link'];
-    object.follow_camera_x = resources3D[name]['follow_camera_x'];
-    object.follow_camera_y = resources3D[name]['follow_camera_y'];
-    object.follow_camera_z = resources3D[name]['follow_camera_z'];
-    object.isCloned = resources3D[name]['isCloned'];
-    object.poi_img_title = resources3D[name]['poi_img_title'];
-    object.poi_img_desc = resources3D[name]['poi_img_desc'];
-    object.poi_img_link = resources3D[name]['poi_img_link'];
-    object.poi_onlyimg = resources3D[name]['poi_onlyimg'];
-
-    //object.type_behavior = resources3D[name]['type_behavior'];
 
     object.position.set(
         resources3D[name]['trs']['translation'][0],
@@ -251,13 +208,13 @@ function setObjectProperties(object, name, resources3D) {
     object.scale.set(
         resources3D[name]['trs']['scale'][0],
         resources3D[name]['trs']['scale'][1],
-        resources3D[name]['trs']['scale'][2] );
+        resources3D[name]['trs']['scale'][2]);
 
 
     return object;
 }
 
-function startVideo (resources3D, name){
+function startVideo(resources3D, name) {
 
     var videoDom = Array();
     var videoTexture = Array();
@@ -285,9 +242,6 @@ function startVideo (resources3D, name){
     var cHex = "#" + resources3D[name]['color'];
 
     var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture[name], side: THREE.DoubleSide, color: cHex });
-
-
-
 
 
     setTimeout(function () {

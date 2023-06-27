@@ -3,6 +3,7 @@
 
 var avatarControlsEnabled = false;
 
+
 // Initialize
 function initPointerLock() {
 
@@ -26,6 +27,8 @@ function firstPersonViewWithoutLock(){
 
         // // ----------- First person view ----------------------
         avatarControlsEnabled = true;
+        let event_add_mv = new CustomEvent("add_movement");
+        document.dispatchEvent(event_add_mv);
 
         // Mouse controls Avatar viewing
         envir.avatarControls.enabled = false;
@@ -58,6 +61,8 @@ function firstPersonViewWithoutLock(){
 
         // ------------- ORBIT --------------------------
         avatarControlsEnabled = false;
+        var event_rm_mv = new CustomEvent("remove_movement");
+        document.dispatchEvent(event_rm_mv);
 
         envir.avatarControls.enabled = false;
 

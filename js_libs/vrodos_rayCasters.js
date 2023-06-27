@@ -60,7 +60,6 @@ function raycasterSetter(event) {
 // find the correct y (height) to place the object
 function dragDropVerticalRayCasting(event) {
     let intersects = findIntersectedRaw(event);
-
     return intersects.length === 0 ? [0, 0, 0] : [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z];
 }
 
@@ -212,28 +211,28 @@ function selectorMajor(event, objectSel, whocalls) {
             // transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
             // transform_controls.object.parentLight.target.updateMatrixWorld();
             envir.scene.traverse(function (child) {
-                    if (child.light != undefined)
-                        if (child.light.name === transform_controls.object.name)
-                            child.update();
-                }
+                if (child.light != undefined)
+                    if (child.light.name === transform_controls.object.name)
+                        child.update();
+            }
             );
         };
 
 
-        if (objectSel.categoryName === "lightSun" ||
-            objectSel.categoryName === "lightTargetSpot" ||
-            objectSel.categoryName === "lightSpot" ||
-            objectSel.categoryName === "lightLamp") {
+        if (objectSel.category_name === "lightSun" ||
+            objectSel.category_name === "lightTargetSpot" ||
+            objectSel.category_name === "lightSpot" ||
+            objectSel.category_name === "lightLamp") {
 
             // Add event listener for lightSpotHelper
 
 
-            if (objectSel.categoryName === "lightTargetSpot") {
+            if (objectSel.category_name === "lightTargetSpot") {
                 transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightDirectionalLightSpotMover);
             }
 
 
-            if (objectSel.categoryName === "lightSpot") {
+            if (objectSel.category_name === "lightSpot") {
                 transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightSpotLightMover);
             }
 
@@ -305,21 +304,21 @@ function showProperties(event, object) {
     var name = object.name;
     //console.log(name);
 
-    switch (object.categoryName) {
-        case 'Artifact':
+    switch (object.category_slug) {
+        case 'decoration':
             displayArtifactProperties(event, name);
             break;
-        case 'Points of Interest (Image-Text)':
+        case 'poi-imagetext':
             displayPoiImageTextProperties(event, name);
             break;
         case 'Points of Interest (Video)':
             displayPoiVideoProperties(event, name);
             break;
-        case 'Door':
+        case 'door':
             displayDoorProperties(event, name);
             break;
-        case 'Marker':
-            displayMarkerProperties(event, name);
+        case 'poi-link':
+            displayLinkProperties(event, name);
             break;
         case 'Gate':
             displayGateProperties(event, name);
@@ -586,7 +585,7 @@ function displaySpotProperties(event, name) {
     spotTargetObject.innerText = null;
 
     for (var i = 0; i < jQuery('#hierarchy-viewer')[0].childNodes.length; i++) {
-        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).categoryName ){
+        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).category_name ){
         var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
         var scene_object = envir.scene.getObjectByName(id_Hierarchy);
         spotTargetObject.appendChild(new Option(scene_object.name));
@@ -620,7 +619,7 @@ function displayAmbientProperties(event, name) {
     var ppPropertiesDiv = jQuery("#popUpAmbientPropertiesDiv");
 
     for (var i = 0; i < jQuery('#hierarchy-viewer')[0].childNodes.length; i++) {
-        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).categoryName ){
+        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).category_name ){
         var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
         var scene_object = envir.scene.getObjectByName(id_Hierarchy);
         //spotTargetObject.appendChild(new Option(scene_object.name));
@@ -754,6 +753,32 @@ function displayDoorProperties(event, name) {
 
 }
 
+
+
+
+function displayLinkProperties(event, name) {
+
+    var popUpLinkPropertiesDiv = jQuery("#popUpLinkPropertiesDiv");
+    var popupLinkSelect = jQuery("#poi_link_text");
+    if (envir.scene.getObjectByName(name).poi_link_url)
+        popupLinkSelect.val(envir.scene.getObjectByName(name).poi_link_url);
+
+    // Show Selection
+    popUpLinkPropertiesDiv.show();
+    popUpLinkPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
+    popUpLinkPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+
+    popupLinkSelect.change(function (e) {
+   
+        if (this.value)
+            envir.scene.getObjectByName(name).poi_link_url = this.value;
+      
+
+        saveChanges();
+
+    });
+
+}
 
 
 // ----------------- Aux ----------------------------------------------------------
@@ -916,8 +941,8 @@ function displayPoiImageTextProperties(event, name) {
 
     // Save the previous artifact properties values (in case of  direct mouse click on another item)
 
-    chboxImg.prop('checked', envir.scene.getObjectByName(name).poi_onlyimg == 1);
-    if (envir.scene.getObjectByName(name).poi_onlyimg == 1) {
+    chboxImg.prop('checked', envir.scene.getObjectByName(name).poi_img_content != null);
+    if (envir.scene.getObjectByName(name).poi_img_content != null) {
         setDesc.style.display = "block";
     } else {
         setDesc.style.display = "none";
@@ -932,7 +957,7 @@ function displayPoiImageTextProperties(event, name) {
 
     //clearAndUnbind(null, null, "poi_image_desc_text");
 
-    setDesc.value = envir.scene.getObjectByName(name).poi_img_desc;
+    setDesc.value = envir.scene.getObjectByName(name).poi_img_content;
     setTitle.value = envir.scene.getObjectByName(name).poi_img_title;
 
 
@@ -948,14 +973,21 @@ function displayPoiImageTextProperties(event, name) {
 
 
         //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
-        envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0;
-        console.log(envir.scene.getObjectByName(name).poi_onlyimg);
+        //envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0;
+        //console.log(envir.scene.getObjectByName(name).poi_onlyimg);
 
         if (this.checked) {
-            envir.scene.getObjectByName(name).poi_img_desc = setDesc.value;
+
+            if (envir.scene.getObjectByName(name).poi_img_content != null) {
+                envir.scene.getObjectByName(name).poi_img_content = setDesc.value;
+            }
+            else {
+                envir.scene.getObjectByName(name).poi_img_content = '';
+            }
             setDesc.style.display = "block";
         } else {
             setDesc.style.display = "none";
+            envir.scene.getObjectByName(name).poi_img_content = null;
         }
         envir.scene.getObjectByName(name).poi_img_title = setTitle.value;
 
@@ -982,8 +1014,8 @@ function displayPoiImageTextProperties(event, name) {
     descArea.change(function (e) {
         //var valDoorScene = popupDoorSelect.val();
         //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        envir.scene.getObjectByName(name).poi_img_desc = this.value;
-        console.log(this.value);
+        envir.scene.getObjectByName(name).poi_img_content = this.value;
+        //console.log(this.value);
         saveChanges();
 
     });
