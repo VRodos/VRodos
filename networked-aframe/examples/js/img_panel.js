@@ -12,6 +12,10 @@ AFRAME.registerComponent('info-panel', {
         this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
+
+        this.cam = document.querySelector("#cameraA");
+              
+        this.cam.add(this.infoPanel);
         
         const getMeta = (url, cb) => {
             const img = new Image();
@@ -150,9 +154,9 @@ AFRAME.registerComponent('info-panel', {
        
         
        
-      
-
-        this.playerEl.setAttribute("wasd-controls", "acceleration: 0");
+        this.cam.setAttribute("wasd-controls-enabled", "false");
+        //playerEl.setAttribute("look-controls", "enabled: false");
+        //this.playerEl.setAttribute("movement-controls", "speed: 0");
         //this.playerEl.setAttribute("look-controls", "enabled: false");
 
        
@@ -168,7 +172,7 @@ AFRAME.registerComponent('info-panel', {
         this.el.classList.remove("openPOI");
         this.el.object3D.visible = false;
         this.el.emit("resetmat");
-        this.playerEl.setAttribute("wasd-controls", "acceleration: 10");
+        this.playerEl.setAttribute("movement-controls", "speed: 10");
         this.playerEl.setAttribute("look-controls", "enabled: true");
 
         this.scen.setAttribute("raycaster","objects: .raycastable");
@@ -182,6 +186,8 @@ AFRAME.registerComponent('info-panel', {
             this.DescriptionEl.components.text.material.depthTest = true;
         }
         this.TitleEl.components.text.material.depthTest = true;
+
+        this.cam.setAttribute("wasd-controls-enabled", "true");
 
 
     }
