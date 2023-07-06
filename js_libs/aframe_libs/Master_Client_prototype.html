@@ -871,7 +871,7 @@
     <a-entity id="player"
     networked="template:#avatar-template;attachTemplateToLocal:false;"
     position="0 0.6 0"
-    movement-controls="speed: 0.5"
+    
     show-position
     look-controls="pointerLockEnabled: false;">
 
@@ -883,7 +883,7 @@
     </a-entity>
 
     <!-- VR rendered stuff-->
-    <a-entity id="camera-rig" movement-controls="speed: 0.1" raycaster>
+    <a-entity id="camera-rig" raycaster>
         <a-camera position="0 1.6 0" look-controls ></a-camera>
         <a-entity oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="objects: .clickable"></a-entity>
         <a-entity oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" teleport-controls="cameraRig: #camera-rig"></a-entity>
