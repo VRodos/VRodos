@@ -53,9 +53,13 @@
         });
 
         AFRAME.registerComponent('scene-settings', {
+            schema: { type: "string", default: "#ffffff" },
             init: function () {
                 let cam = document.querySelector("#cameraA");
                 cam.setAttribute("camera", "fov: 60");
+
+                let backgroundEl = document.querySelector('#aframe-scene-container');
+                backgroundEl.setAttribute("background", "color", this.data);
             }
         });
 
@@ -148,6 +152,7 @@
                 let exEl = document.querySelector("#ent_ex_" + data.id);
                 let titEl = document.querySelector("#ent_tit_" + data.id);
                 let backgroundEl = document.querySelector('#aframe-scene-container');
+                
                 let playerEl = document.querySelector('#player');
                 let rightHand = document.querySelector('#oculusRight');
                 //videoMesh.material.wireframe = true;
@@ -375,8 +380,10 @@
                     //video.pause();
                     camRig.setAttribute("position", "0 1.6 0");
                     cam.setAttribute("camera", "fov", 60);
-                    backgroundEl.setAttribute("background", "color", "#eeeeee");
-                    console.log(visCollection);
+                    //console.log(backgroundEl);
+                    let bcgCol = backgroundEl.getAttribute("scene-settings");
+                    backgroundEl.setAttribute("background", "color", bcgCol);
+                    //console.log(visCollection);
                     //restoreVidPos(videoBorder, videoDisplay, videoPanel);
                     for (let i = 0; i < visCollection.length; i++) {
                         entCollection[visCollection[i]].setAttribute("visible", "true");
@@ -662,7 +669,7 @@
 
 
 
-    <a-scene oculus-go-controls-enabled id="aframe-scene-container" scene-settings fog="type: linear; color: #AAB; far: 230; near: 0"
+    <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
         vr-mode-ui="enabled: true" networked-scene="
         room: roomname;

@@ -339,6 +339,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $objects = $basicDomElements['objects'];
         $ascene = $basicDomElements['ascene'];
         $ascenePlayer = $basicDomElements['ascenePlayer'];
+
+        if (!empty($scene_json->metadata->ClearColor))
+            $ascene->setAttribute("scene-settings", $scene_json->metadata->ClearColor);
+        else
+        $ascene->setAttribute("scene-settings", "#ffffff");
         //print($scene_id)
 
         //$i = array_search($scene_id, array_keys($scene_id_list));
