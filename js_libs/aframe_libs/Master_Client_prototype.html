@@ -818,7 +818,7 @@
 
 
 
-<a-scene oculus-go-controls-enabled
+<a-scene oculus-touch-controls-enabled
         id="aframe-scene-container"
         fog="type: linear; color: #AAB; far: 230; near: 0"
         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic"
@@ -871,7 +871,7 @@
     <a-entity id="player"
     networked="template:#avatar-template;attachTemplateToLocal:false;"
     position="0 0.6 0"
-    
+    movement-controls="speed: 0.5"
     show-position
     look-controls="pointerLockEnabled: false;">
 
@@ -883,17 +883,18 @@
     </a-entity>
 
     <!-- VR rendered stuff-->
-    <a-entity id="camera-rig" raycaster>
+    <a-entity id="camera-rig" movement-controls="speed: 0.1" raycaster>
         <a-camera position="0 1.6 0" look-controls ></a-camera>
-        <a-entity oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="objects: .clickable"></a-entity>
-        <a-entity oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" teleport-controls="cameraRig: #camera-rig"></a-entity>
+        <a-entity oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="lineColor: red;objects: .clickable"></a-entity>
+        <!-- <a-entity oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" teleport-controls="cameraRig: #camera-rig"></a-entity> -->
+        <a-entity oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" laser-controls="hand: left" raycaster="lineColor: blue; objects: .clickable"></a-entity>
         <!-- <a-entity camera look-controls></a-entity> -->
     </a-entity>   
     <!--<a-entity custom-movement></a-entity>-->
  
 
 
-<!-- <a-box class="clickable" position="0 0 -3" color="red"></a-box> -->
+<a-box class="clickable" position="0 0 -3" color="red"></a-box>
 <!-- <a-sphere class="clickable" position="0 1 -4" color="green"></a-sphere>
 <a-cylinder class="clickable" position="0 2 -5" color="blue" ></a-cylinder> -->
 
@@ -944,7 +945,7 @@
 });
 
   // Attach the custom-movement component to the camera rig entity
-  document.querySelector('#camera-rig').setAttribute('custom-movement', '');
+ document.querySelector('#camera-rig').setAttribute('custom-movement', '');
 
 
 
