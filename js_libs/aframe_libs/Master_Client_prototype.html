@@ -26,6 +26,7 @@
 
     <script src="js/highlight_img.js"></script>
     <script src="js/img_panel.js"></script>
+    
 
     <script src="js/indicators_aframe.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
@@ -51,9 +52,13 @@
         });
 
         AFRAME.registerComponent('scene-settings', {
+            schema: { type: "string", default: "#ffffff" },
             init: function () {
                 let cam = document.querySelector("#cameraA");
                 cam.setAttribute("camera", "fov: 60");
+
+                let backgroundEl = document.querySelector('#aframe-scene-container');
+                backgroundEl.setAttribute("background", "color", this.data);
             }
         });
 
@@ -138,61 +143,35 @@
                 let videoPanel = document.querySelector(vid_panel_id);
                 let videoBorder = document.querySelector(video_border_id);
 
+                
+
 
                 let fsEl = document.querySelector("#ent_fs_" + data.id);
                 let plEl = document.querySelector("#ent_pl_" + data.id);
                 let exEl = document.querySelector("#ent_ex_" + data.id);
                 let titEl = document.querySelector("#ent_tit_" + data.id);
                 let backgroundEl = document.querySelector('#aframe-scene-container');
+                
                 let playerEl = document.querySelector('#player');
+                let rightHand = document.querySelector('#oculusRight');
                 //videoMesh.material.wireframe = true;
                 let cam = document.querySelector("#cameraA");
+                let camRig = document.querySelector("#camera-rig");
+
+                cam.add(videoPanel);
 
 
                 const entCollection = document.getElementsByClassName("hideable");
 
 
-
-                //videoDisplay.object3D.renderOrder = 1;
-                //clipIntersection
-                //videoDisplay.components.material.material.depthTest = false;
-
-                //videoBorder.object3D.renderOrder = 1;
-                //clipIntersection
-                //videoBorder.components.material.material.depthTest = false;
-
                 video.addEventListener("ended", (e) => {
                     playUpd(plEl);
                     
                 })
-                //console.log("loop "+video.getAttribute("loop"));
-               
 
-                
-
-
-
-                //obb = new THREE.MATH.OBB();
-
-
-
-                //full_screen_el.setAttribute('height', "1");
-                //full_screen_el.setAttribute('width', "1");
-                //full_screen_el.setAttribute('position', "0 0 %s", borderCords.z);
-
-                //full_screen_el.setAttribute('src', screen_img_src);
-                //fsEl.renderOrder = 999999999;
-                //full_screen_el.setAttribute('visible', true);
-
-                //toMesh.updateMatrixWorld(); // important !
-                //mesh.applyMatrix4(new THREE.Matrix4().copy(toMesh.matrixWorld).invert());
-
-                //helper.update();
-                // If you want a visible bounding box
-                //backgroundEl.add(helper);
                 function restoreVidPos(border, disp, panel) {
                     let offsetX = 20;
-                    //cam.add(panel);
+                    
 
                     var curr_rot = border.getAttribute('rotation');
 
@@ -202,35 +181,7 @@
                         THREE.MathUtils.degToRad(0),
                         THREE.MathUtils.degToRad(0)
                     );
-                    //disp.object3D.rotation.set(
-                    //    THREE.MathUtils.degToRad(0),
-                    //    THREE.MathUtils.degToRad(0),
-                    //    THREE.MathUtils.degToRad(0)
-                    //);
-
-                    //let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-                    //console.log("r_x");
-                    //console.log(r_x);
-
-                    //videoBorder.setAttribute("position", p_x);
-                    //videoDisplay.setAttribute("position", p_x);
-
-                    //videoBorder.setAttribute("rotation", r_x);
-                    //videoDisplay.setAttribute("rotation", r_x);
-                    //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-
-                    //panel.object3D.position.set(offsetX, 0, 0);
-                    //panel.object3D.position.set(offsetX, 0, 0);
-                    //videoBorder.setAttribute("rotation", r_x);
-
-
-                    //border.object3D.rotation.x += curr_rot.x;
-                    //border.object3D.rotation.y += curr_rot.y;
-                    //border.object3D.rotation.z += curr_rot.z;
-
-                    //disp.object3D.rotation.x += 0;
-                    //disp.object3D.rotation.y += 90;
-                    //disp.object3D.rotation.z += 0;
+                    
                     console.log(border);
 
                     console.log(border.getAttribute("original-scale"));
@@ -241,11 +192,7 @@
                         THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
                     );
                     
-                    //disp.object3D.rotation.set(
-                    //    THREE.MathUtils.degToRad(0),
-                    //    THREE.MathUtils.degToRad(90),
-                    //    THREE.MathUtils.degToRad(0)
-                    //);
+
 
                 }
 
@@ -254,138 +201,35 @@
 
 
                 backgroundEl.addEventListener('loaded', function () {
-                    ///videoDisplay.object3D.rotation.set(0, 0, 0);
-                    //videoBorder.object3D.rotation.set(0, 0, 0);
+
 
                     let rotateB = videoBorder.getAttribute("rotation");
-                    //const meshA = videoDisplay.getObject3D("mesh");
-
-
-                    //videoDisplay.object3D.rotation.set(0, 0, 0);
-                    //videoBorder.object3D.rotation.set(0, 0, 0);
-
-                    //videoDisplay.getObject3D("mesh").geometry.rotateY(-Math.PI / 2);
-
-                    //videoBorder.getObject3D("mesh").geometry.rotateY(-Math.PI / 2);
-                    //videoDisplay.getObject3D("mesh").updateMatrixWorld();
-                    //videoBorder.getObject3D("mesh").updateMatrixWorld();
-                    //let helperb = new THREE.BoxHelper(videoDisplay.getObject3D("mesh"), 0xff0000);
-
-                    // helperb.geometry.computeBoundingBox();
-
-                    //console.log(rotateB);
+       
 
                     let videoMesh = videoDisplay.getObject3D("mesh");
                     let borderMesh = videoBorder.getObject3D("mesh");
 
 
-
-                    //const v1 = new THREE.Vector3(1, 0, 0).applyQuaternion(borderMesh.quaternion);
-                    //videoPanel.getObject3D("mesh").quaternion.copy(borderMesh.quaternion);
-                    //videoPanel.getObject3D("mesh").position.copy(borderMesh.position).add(v1.multiplyScalar(-2));
-
                     let bbox = new THREE.Box3().setFromObject(videoDisplay.object3D);
 
-                    //let full_screen_el = document.createElement('a-plane');
+
                     const vector = new THREE.Vector3();
                     var centered_values = bbox.getCenter(vector);
 
                     var box3 = new THREE.Box3();
                     var size = new THREE.Vector3(); // create once and reuse
 
-                    //var helper = new THREE.BoxHelper(videoMesh);
-                    //helper.update();
-
-                    //videoMesh.geometry.computeBoundingBox();
-
-
-
-                    //videoDisplay.setAttribute("renderOrder", "1");
-                    //videoBorder.setAttribute("renderOrder", "1");
-
-                    //videoDisplay.components.material.material.depthTest = false;
-                    //videoBorder.components.material.material.depthTest = false;
-
-
-
-                    //var cW = 19;
-                    //var cH = 19;
-                    //var rad = 90;
-
-                    //let panel_width = 20;
-
-                    //let icon_width = 2;
-
-                    //let offset = 1;
-
-
-
-                    //var cBW = Math.abs(cH * Math.sin(rad)) + Math.abs(cW * Math.cos(rad));
-
-                    //var cBH = Math.abs(cH * Math.sin(rad)) + Math.abs(cW * Math.cos(rad));
-                    //nBW = newBoundingWidth
-                    //nBH = newBoundingHeight
-                    //var dx = differenceWidth = (cBW - cW);
-                    //var dy = differenceHeight = (cBH - cH);
-
-                    //console.log("cBW " + cBW + " cBH " + cBH + " dx " + dx + " dy " + dy);
-
-                    //backgroundEl.add(helper);
-
-                    //var boxwire = new THREE.BoxHelper(videoMesh, 0xff8000);
-                    //this.boxwire = boxwire;
-                    //videoMesh.updateMatrixWorld(); // important !
-                    //videoMesh.applyMatrix(new THREE.Matrix4().getInverse(videoMesh.matrixWorld));
-                    //videoMesh.add(boxwire);
-
-
-
                     let screen_img_src = "#video_fullScreen_" + this.data;
                     let borderCords = videoBorder.getAttribute("position");
-                    //fsEl.object3D.position.set(0, 0, -25);
-
-                    //videoDisplay.add(fsEl);
-
-                    //fsEl.object3D.position.set(0, 0, 0);
-
-
-
-
-                    //videoPanel.object3D.position.set(centered_values.x + 15, centered_values.y, centered_values.z);
+            
                     restoreVidPos(videoBorder, videoDisplay, videoPanel);
 
-
-
-
-
-                    //fsEl.object3D.rotation.set(0, 0, 0);
-                    //fsEl.object3D.rotation.set(0, 90, 0);
-                    //videoDisplay.object3D.rotation.set(0, 45, 0);
-                    //videoBorder.object3D.rotation.set(0, 45, 0);
-                    //fsEl.object3D.rotation.set(0, 90, 0);
-                    //videoDisplay.object3D.rotation.set(0, 90, 0);
-                    //videoBorder.object3D.rotation.set(0, 90, 0);
-                    //console.log(helper);
-
-                    //console.log(helperb.geometry.boundingBox.min.y);
-                    //console.log(borderCords);
 
 
                 });
 
 
-                //backgroundEl.appendChild(full_screen_el);
 
-                //console.log(videoBorder.object3D.position.get());
-
-
-
-
-
-                //backgroundEl.object3D.renderOrder = 9;
-                //backgroundEl.getObject3D('mesh').material.depthTest = false;
-
-                //console.log(full_screen_el.getAttribute("position"));
 
 
                 let visCollection = [];
@@ -474,7 +318,6 @@
 
                 exEl.addEventListener("mouseup", function (event) {
                     addToCam(videoPanel, false, true, 0.3);
-                    backgroundEl.setAttribute("raycaster","objects: .raycastable, .non-clickable");
                     if (video.paused) {
                         console.log("Video Paused. Exiting...")
 
@@ -483,12 +326,14 @@
                         video.pause();
 
                     }
+                    backgroundEl.setAttribute("raycaster","objects: .raycastable");
+                    rightHand.setAttribute("raycaster","objects: .raycastable");
                 });
 
 
 
                 fsEl.addEventListener("mouseup", function (event) {
-                    cam.setAttribute("position", "0 0 0");
+                    camRig.setAttribute("position", "0 0 0");
                     cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
                     backgroundEl.setAttribute("background", "color", "black");
                     backgroundEl.setAttribute("overlay", "");
@@ -504,27 +349,21 @@
 
                     if (video.paused) {
                         video.play();
-                        //console.log(data.orig_pos[2]);
-                        //borderMesh.material.color.set("#004400");
+
                     }
                     for (let i = 0; i < entCollection.length; i++) {
                         entCollection[i].setAttribute("visible", "false");
                         console.log(entCollection[i].getAttribute("visible"));
                         entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
-                        //playerEl.setAttribute("wasd-controls", "acceleration: 0");
+                       
+                        
 
-                        //videoBorder.setAttribute("position", "0 0 -25");
-                        //videoDisplay.setAttribute("position", "0 0 -25");
 
-                        //videoBorder.setAttribute("rotation", "0 0 0");
-                        //videoDisplay.setAttribute("rotation", "0 0 0");
                         visCollection.push(i);
 
-
-                        //console.log(entCollection[i]);
-                        //console.log(entCollection[i].getAttribute("original-scale"));
-                        //console.log(visCollection);
                     }
+                    cam.setAttribute("wasd-controls-enabled", "true");
+                    playerEl.setAttribute("look-controls", "enabled: false");
 
                     playUpd(plEl);
 
@@ -535,67 +374,78 @@
 
 
 
-                videoBorder.addEventListener("mouseup", function (event) {
-                    addToCam(videoPanel, true, true, 1);
-                    addToCam(fsEl, true, true, 1);
-                    addToCam(plEl, true, true, 1);
-                    addToCam(exEl, true, true, 1);
-                    addToCamText(titEl, true, true, 1);
-                    //console.log(titEl.components);
-                    backgroundEl.setAttribute("raycaster","objects: .raycastable");
-                    playUpd(plEl);
+                function restoreVid(){
+                    console.log("playing");
+                    //video.pause();
+                    camRig.setAttribute("position", "0 1.6 0");
+                    cam.setAttribute("camera", "fov", 60);
+                    //console.log(backgroundEl);
+                    let bcgCol = backgroundEl.getAttribute("scene-settings");
+                    backgroundEl.setAttribute("background", "color", bcgCol);
+                    //console.log(visCollection);
+                    //restoreVidPos(videoBorder, videoDisplay, videoPanel);
+                    for (let i = 0; i < visCollection.length; i++) {
+                        entCollection[visCollection[i]].setAttribute("visible", "true");
 
-                    function restoreVid(){
-                        console.log("playing");
-                        //video.pause();
-                        cam.setAttribute("position", "0 0.6 0");
-                        cam.setAttribute("camera", "fov", 60);
-                        backgroundEl.setAttribute("background", "color", "#eeeeee");
-                        console.log(visCollection);
-                        //restoreVidPos(videoBorder, videoDisplay, videoPanel);
-                        for (let i = 0; i < visCollection.length; i++) {
-                            entCollection[visCollection[i]].setAttribute("visible", "true");
+                        console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
 
-                            console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
+                        entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
 
-                            entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
+                        //videoDisplay.setAttribute("position", origPosDisplay);
 
-                            //videoDisplay.setAttribute("position", origPosDisplay);
+                    }
+                   
+                    cam.setAttribute("wasd-controls-enabled", "true");
+                    playerEl.setAttribute("look-controls", "enabled: true");
+                    backgroundEl.add(videoBorder);
+                    backgroundEl.add(videoDisplay);
+                    let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
+                    let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
+
+                    
+
+                    videoBorder.setAttribute("position", p_x);
+                    videoDisplay.setAttribute("position", p_x);
+                    videoDisplay.setAttribute("scale", videoBorder.getAttribute("original-scale")); 
+
+                    videoBorder.setAttribute("rotation", r_x);
+                    videoDisplay.setAttribute("rotation", r_x);
+                    //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
+                    console.log(videoBorder.getAttribute("rotation"));
+                    console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
+                    visCollection = [];
+                }
+                if (video.getAttribute("src")){
+                    videoBorder.addEventListener("mouseup", function (event) {
+                        addToCam(videoPanel, true, true, 1);
+                        addToCam(fsEl, true, true, 1);
+                        addToCam(plEl, true, true, 1);
+                        addToCam(exEl, true, true, 1);
+                        addToCamText(titEl, true, true, 1);
+                        //console.log(titEl.components);
+                        backgroundEl.setAttribute("raycaster","objects: .non-clickable");
+                        rightHand.setAttribute("raycaster","objects: .non-clickable");
+
+                        console.log(videoPanel.getAttribute("visible"));
+                        playUpd(plEl);
+
+                        
+                    
+                    
+                        if (video.paused) {
+                            console.log("border clicked");
+                        }
+                        else if (video.play){
+                            //addToCam(videoPanel, "35 5 -25", false);
+                            restoreVid();
+                            //playUpd(plEl);
 
                         }
-                        //player.setAttribute("wasd-controls", "acceleration: 10");
-                        backgroundEl.add(videoBorder);
-                        backgroundEl.add(videoDisplay);
-                        let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
-                        let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-
-                        videoBorder.setAttribute("position", p_x);
-                        videoDisplay.setAttribute("position", p_x);
-                        videoDisplay.setAttribute("scale", videoBorder.getAttribute("original-scale")); 
-
-                        videoBorder.setAttribute("rotation", r_x);
-                        videoDisplay.setAttribute("rotation", r_x);
-                        //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-                        console.log(videoBorder.getAttribute("rotation"));
-                        console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
-                        visCollection = [];
-                    }
-
-                   
-                 
-                    if (video.paused) {
-                        console.log("border clicked");
-                    }
-                    else if (video.play){
-                        //addToCam(videoPanel, "35 5 -25", false);
-                        restoreVid();
-                        //playUpd(plEl);
-
-                    }
-                    if (video.ended){
-                        restoreVid();
-                    }
-                });
+                        if (video.ended){
+                            restoreVid();
+                        }
+                    });
+                }
 
             }
 
@@ -608,15 +458,17 @@
         });
 
         AFRAME.registerComponent('link-listener', {
-            schema: { type: "string", default: "default value" },
+            schema: { type: "string"},
             init: function () {
 
-                this.el.addEventListener("click", e => {
-                    if (!this.data.match(/^https?:\/\//i)) {
-                        this.data = '//' + this.data;
-                    }
-                    window.open(this.data);
-                });
+                if (this.data){
+                    this.el.addEventListener("click", e => {
+                        if (!this.data.match(/^https?:\/\//i)) {
+                            this.data = '//' + this.data;
+                        }
+                        window.open(this.data);
+                    });
+                }
             }
         });
 
@@ -653,39 +505,7 @@
 
                     let entitycheck = document.getElementById(this.data.id_img);
                     if (!entitycheck) {
-                        /*
-    
-                        entity_main.setAttribute("src", '#' + this.data.main_img);
-                        entity_main.setAttribute("id", this.data.id_img);
-                        entity_main.setAttribute("height", "8");
-                        entity_main.setAttribute("width", "8");
-                        entity_main.setAttribute("position", "0  2  -10");
-                        entity_main.setAttribute("material", "shader: flat");
-                        entity_main.setAttribute("overlay", "");
-    
-                        title_main.setAttribute("value", "Title of the image");
-                        title_main.setAttribute("position", "-3  6  -9");
-                        title_main.setAttribute("color", "black");
-                        title_main.setAttribute("transparent", "true");
-                        title_main.setAttribute("anchor", "left");
-                        title_main.setAttribute("overlay", "");
-                        title_main.setAttribute("width", "8");
-    
-                        desc_main.setAttribute("value", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis, odio in vulputate interdum, sapien neque interdum mi, et suscipit elit sem non risus. Sed rutrum augue sed lectus convallis vehicula. Maecenas orci neque, rutrum in blandit eget, ultricies sit amet turpis. Curabitur maximus purus vel auctor faucibus.");
-                        desc_main.setAttribute("position", "-3  0  -9");
-                        desc_main.setAttribute("color", "white");
-                        desc_main.setAttribute("transparent", "true");
-                        desc_main.setAttribute("anchor", "left");
-                        desc_main.setAttribute("overlay", "");
-                        desc_main.setAttribute("width", "6");
-                        desc_main.setAttribute("wrapCount", "40");
-    
-    
-    
-                        cam.appendChild(entity_main);
-                        cam.appendChild(title_main);
-                        cam.appendChild(desc_main);
-                        */
+                    
 
                         var entity_esc = document.createElement('a-plane');
 
@@ -705,23 +525,15 @@
                 });
 
                 this.el.addEventListener("img_open", e => {
-                    //this.el.object3D.visible = false;
-
-                    //this.el.emit("imageClick");
+                 
                     console.log("Clicked");
                     removeEventListener('click', click_event, false);
-                    //this.el.setAttribute("src", "#search");
-                    //window.location.replace(this.data);
+                    
                 });
                 this.el.addEventListener("animationcomplete", e => {
-                    //this.el.object3D.visible = false;
-
-                    //this.el.emit("event2");
-                    //console.log(this.el.animation);
+                  
                     console.log("Animation completed");
-                    //this.el.setAttribute("src", "#search");
-                    //this.el.setAttribute("src", "#search");
-                    //window.location.replace(this.data);
+                  
                 });
             }
         });
@@ -744,6 +556,34 @@
                     this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
                 }
             }
+        });
+
+        AFRAME.registerComponent('custom-movement', {
+        init: function () {
+            const cameraEl = document.querySelector('a-camera');
+            const cameraRig = this.el;
+
+            this.el.addEventListener('thumbstickmoved', (event) => {
+            const thumbstickX = event.detail.x;
+            const thumbstickY = event.detail.y;
+
+            // Get camera rotation
+            const rotation = cameraEl.getAttribute('rotation');
+            const angleY = THREE.Math.degToRad(rotation.y);
+            //const angleX = THREE.Math.degToRad(rotation.x);
+
+            // Calculate movement direction based on camera rotation
+            const direction = new THREE.Vector3(-Math.sin(angleY), 0, -Math.cos(angleY));
+
+            // Apply movement to the camera rig's position
+            const movementSpeed = 0.1;
+            cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
+            cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
+            
+
+            console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
+            });
+        }
         });
 
 
@@ -818,36 +658,21 @@
 
 
 
-<a-scene oculus-touch-controls-enabled
-        id="aframe-scene-container"
-        fog="type: linear; color: #AAB; far: 230; near: 0"
-        renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic"
-        background="color: #000000"
-        vr-mode-ui="enabled: true"
-        networked-scene="
+    <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
+        renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
+        vr-mode-ui="enabled: true" networked-scene="
         room: roomname;
         debug: true;
         audio: true;
         adapter: easyrtc;
-       " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable, .non-clickable">
+       " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
 
 
 
         <a-assets>
             <!-- Avatar Template -->
             <template id="avatar-template">
-                <a-entity class="avatar" networked-audio-source>
-
-                    <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="1" height="0.75"
-                        position="0 0.6 -0.15" material="side: double"
-                        networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
-                        render-order-change="2000">
-                    </a-plane>
-
-                    <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
-                        material="side: double" networked-video-source="streamName:screen">
-                    </a-plane>
-                </a-entity>
+                    <a-sphere color="yellow" position="0 0 -4" radius="2"></a-sphere>
             </template>
 
             <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
@@ -866,37 +691,25 @@
                 material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
         </a-assets>
 
-
-    <!-- Pawn -->
-    <a-entity id="player"
-    networked="template:#avatar-template;attachTemplateToLocal:false;"
-    position="0 0.6 0"
-    movement-controls="speed: 0.5"
-    show-position
-    look-controls="pointerLockEnabled: false;">
+        <!-- Pawn -->
+        <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;"
+        show-position look-controls="pointerLockEnabled: false;">
 
             <a-sphere class="head" visible="false" random-color>
             </a-sphere>
 
-            <a-entity id="camera" active="true" camera="near: 0.1; far: 7000.0;" position="0 0.6 0">
-            </a-entity>
-    </a-entity>
+            <a-entity id="camera-rig" position="0 1.6 0" custom-movement>
+                <a-camera id="cameraA" near="0.1" far="7000.0">  </a-camera>
+                <a-entity id="oculusRight" oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="objects: .raycastable"></a-entity>
+                <a-entity id="oculusLeft" oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" teleport-controls="cameraRig: #camera-rig"></a-entity>
+                <!-- <a-entity camera look-controls></a-entity> -->
+            </a-entity>   
 
-    <!-- VR rendered stuff-->
-    <a-entity id="camera-rig" movement-controls="speed: 0.1" raycaster>
-        <a-camera position="0 1.6 0" look-controls ></a-camera>
-        <a-entity oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="lineColor: red;objects: .clickable"></a-entity>
-        <!-- <a-entity oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" teleport-controls="cameraRig: #camera-rig"></a-entity> -->
-        <a-entity oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" laser-controls="hand: left" raycaster="lineColor: blue; objects: .clickable"></a-entity>
-        <!-- <a-entity camera look-controls></a-entity> -->
-    </a-entity>   
-    <!--<a-entity custom-movement></a-entity>-->
- 
+            
+            
+        </a-entity>
 
-
-<a-box class="clickable" position="0 0 -3" color="red"></a-box>
-<!-- <a-sphere class="clickable" position="0 1 -4" color="green"></a-sphere>
-<a-cylinder class="clickable" position="0 2 -5" color="blue" ></a-cylinder> -->
+         
 
 
 </a-scene>

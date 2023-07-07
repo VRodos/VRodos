@@ -339,6 +339,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $objects = $basicDomElements['objects'];
         $ascene = $basicDomElements['ascene'];
         $ascenePlayer = $basicDomElements['ascenePlayer'];
+
+        if (!empty($scene_json->metadata->ClearColor))
+            $ascene->setAttribute("scene-settings", $scene_json->metadata->ClearColor);
+        else
+        $ascene->setAttribute("scene-settings", "#ffffff");
         //print($scene_id)
 
         //$i = array_search($scene_id, array_keys($scene_id_list));
@@ -350,42 +355,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             // ===========  Artifact - Decoration ==============
             if ( $contentObject->category_slug == 'decoration' ) {
 
-                //$fileOperations->writer("D:\output_master.txt", $contentObject->poi_img_desc);
-                /*
-                if (strcasecmp($contentObject->assetname, 'water')==0) {
-
-                    $a_entity = $dom->createElement( "a-ocean" );
-                    $a_entity->appendChild( $dom->createTextNode( '' ) );
-
-                    $a_entity->setAttribute( "ocean-state", "wind_velocity: 0.25 0.25; height_offset:0; large_normal_map: img/water-normal-1.png; small_normal_map: img/water-normal-2.png" );
-                    $a_entity->setAttribute( "shadow", "receive: true" );
-                    $a_entity->setAttribute( "render-order-change", "1000" );
-
-
-                    $ascene->appendChild( $a_entity );
-
-
-
-                } else if (strcasecmp($contentObject->assetname, 'mask')==0) {
-
-                        $a_entity = $dom->createElement( "a-plane" );
-                        $a_entity->appendChild( $dom->createTextNode( '' ) );
-
-                        $material = "";
-                        $fileOperations->setMaterial( $material, $contentObject );
-                        $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-
-                        $a_entity->setAttribute( "class", "override-materials" );
-                        $a_entity->setAttribute( "id", $nameObject );
-                        $a_entity->setAttribute( "height", "1" );
-                        $a_entity->setAttribute( "width", "1" );
-                        $a_entity->setAttribute( "material", $material );
-                        $a_entity->setAttribute( "static-mask-me", "" );
-
-                        $ascene->appendChild( $a_entity );
-
-                }
-                */
+                
                
                 $sc_x = $contentObject->scale[0];
                 $sc_y = $contentObject->scale[1];
@@ -402,7 +372,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $material = "";
                 //$fileOperations->setMaterial( $material, $contentObject );
                 $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                $a_entity->setAttribute( "class", "override-materials hideable non-clickable" );
+                $a_entity->setAttribute( "class", "override-materials hideable raycastable" );
                 $a_entity->setAttribute( "id", $nameObject );
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );
@@ -524,12 +494,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $material = "";
                 $fileOperations->setMaterial( $material, $contentObject );
-                $fileOperations->setAffineTransformations( $a_entity, $contentObject );                
+                $fileOperations->setAffineTransformations( $a_entity, $contentObject );
+                $a_entity->setAttribute( "class", "override-materials raycastable hideable" );
                 $a_entity->setAttribute( "id", $nameObject );
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
-                $a_entity->setAttribute("class", "raycastable hideable override-materials clickable");
+                //$a_entity->setAttribute("class", "");
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                 $a_entity->setAttribute("highlight", "$nameObject");
 
@@ -586,10 +557,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $contentObject->video_loop == 1 ? $a_video_asset->setAttribute( "loop", "true") : $a_video_asset->setAttribute( "loop", "false");
 
                 //$contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
-                //if (empty($contentObject->video_link) == 1){
-                $a_video_asset->setAttribute("src", $contentObject->video_path);
-                //    console_log("Video link found");
-                //}
+                if ($contentObject->video_path != "false"){
+                    $a_video_asset->setAttribute("src", $contentObject->video_path); 
+                }
 
 
                 //$a_video_asset->setAttribute("src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
@@ -626,7 +596,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $sc_z = $contentObject->scale[2];
                 $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                 //$a_entity->setAttribute("camera-listener", "");
-                $a_entity->setAttribute("class", "clickable raycastable");
+                $a_entity->setAttribute("class", "clickable raycastable non-clickable");
 
 
                 $a_entity_fs = $dom->createElement("a-plane");
@@ -637,7 +607,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_fs->setAttribute("renderOrder", "9999999");
                 $a_entity_fs->setAttribute("position", "-0.05 0 0.000001");
                 $a_entity_fs->setAttribute("material", "color: #ffffff; shader: flat");
-                $a_entity_fs->setAttribute("class", "clickable raycastable");
+                $a_entity_fs->setAttribute("class", "clickable raycastable non-clickable");
 
                 $a_entity_pl = $dom->createElement("a-plane");
                 $a_entity_pl->setAttribute("id", "ent_pl_$nameObject");
@@ -647,7 +617,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_pl->setAttribute("renderOrder", "9999999");
                 $a_entity_pl->setAttribute("position", "0.05 0 0.000001");
                 $a_entity_pl->setAttribute("material", "color: #ffffff; shader: flat;");
-                $a_entity_pl->setAttribute("class", "clickable raycastable");
+                $a_entity_pl->setAttribute("class", "clickable raycastable non-clickable");
                 //$fileOperations->setAffineTransformations($a_entity_fs, $contentObject);
                 //$ascene->appendChild($a_entity_fs);
                 $a_entity_ex = $dom->createElement("a-plane");
@@ -658,14 +628,14 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_ex->setAttribute("renderOrder", "9999999");
                 $a_entity_ex->setAttribute("position", "0.05 0.1 0.000001");
                 $a_entity_ex->setAttribute("material", "color: #ffffff; shader: flat;");
-                $a_entity_ex->setAttribute("class", "clickable raycastable");
+                $a_entity_ex->setAttribute("class", "clickable raycastable non-clickable");
 
                 $a_entity_panel = $dom->createElement("a-plane");
                 $a_entity_panel->setAttribute("id", "vid-panel_$nameObject");
                 $a_entity_panel->setAttribute("height", "0.3");
                 $a_entity_panel->setAttribute("width", "0.2");
                 //$a_entity_panel->setAttribute("color", "red");
-                $a_entity_panel->setAttribute("position", "1 0.7 -1");
+                $a_entity_panel->setAttribute("position", "1 0 -1");
                 $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
                 $a_entity_panel->setAttribute("visible", "false");
                 //$a_entity_panel->setAttribute("renderOrder", "9999999");
@@ -678,7 +648,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_title_vid_entity->setAttribute("id", "ent_tit_$nameObject");
                 $a_title_vid_entity->setAttribute("position", "-0.1 0.17 0.000001");
 
-                $a_title_vid_entity->setAttribute("text", "depthTest:false; shader: msdf; anchor: left; width: 0.5; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: black; value: $contentObject->video_title");
+                $vid_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
+                $a_title_vid_entity->setAttribute("text", "depthTest:false; negate:false;shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: black; value: $contentObject->video_title");
                 $a_title_vid_entity->setAttribute( "class", "clickable raycastable" );
 
 
@@ -720,7 +691,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_video->setAttribute("position", "0 0 0.1");
                 $a_video->setAttribute("src", "#video_$nameObject");
                 $a_video->setAttribute("material", "side: double");
-                $a_video->setAttribute("class", "clickable raycastable");
+                $a_video->setAttribute("class", "clickable raycastable non-clickable");
                 //$a_video->setAttribute("renderOrder", "9");
 
 
@@ -750,12 +721,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $material = "";
                 $fileOperations->setMaterial( $material, $contentObject );
                 $fileOperations->setAffineTransformations( $a_entity, $contentObject );                     //TODO: Include glb in the beginning, update to proper cat name
-                $a_entity->setAttribute( "class", "override-materials" );
+                //$a_entity->setAttribute( "class", "" );
                 $a_entity->setAttribute( "id", $nameObject );
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
-                $a_entity->setAttribute("class", "raycastable hideable");
+                $a_entity->setAttribute("class", "raycastable hideable override-materials");
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                 $a_entity->setAttribute('link-listener', $contentObject->poi_link_url);
                 $a_entity->setAttribute("highlight", "$nameObject");
@@ -781,7 +752,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //$a_image_asset_exp->setAttribute("src",  "VRodos/assets/images/search.png");
 
                 $a_image_asset_main->setAttribute("id", "main_img_$nameObject");
-                $a_image_asset_main->setAttribute("src",$contentObject->poi_img_path);
+                if ($contentObject->poi_img_path != "false")
+                    $a_image_asset_main->setAttribute("src",$contentObject->poi_img_path);
 
                 $a_image_asset_esc->setAttribute("id", "esc_img_$nameObject");
                 $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
@@ -794,23 +766,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $ascene->appendChild($a_image_asset_exp);
                 $ascene->appendChild($a_image_asset_main);
                 $ascene->appendChild($a_image_asset_esc);
-
-
-
-                //$a_image_entity->setAttribute("animation", " property: rotation; from: 0 0 0; to: 180 0 0; startEvents: event1; dur: 750;");
-
-
-
-                //$a_image_entity = $dom->createElement("a-plane");
-                //$a_image_entity->setAttribute("src", "#exp_img_$nameObject");
-                //$a_image_entity->setAttribute("scale", "1 1 1");
-                //$a_image_entity->setAttribute("highlight", "");
-                //$a_image_entity->setAttribute("menu-button", "");
-                //$a_image_entity->setAttribute("image-display", "id_img: id_img_$nameObject; main_img: main_img_$nameObject; esc_img:esc_img_$nameObject");
-                //$a_image_entity->emit("imageClick");
-
-                //$fileOperations->setAffineTransformations($a_image_entity, $contentObject);
-                //$a_image_entity->setAttribute("animation", " property: rotation; from: 180 0 0; to: 0 0 0; startEvents: event2; dur: 750;");
 
 
                 $sc_x = $contentObject->scale[0];
@@ -833,18 +788,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //$a_ui_entity->setAttribute("position", "0 0 -5");
                 $fileOperations->setAffineTransformations($a_ui_entity, $contentObject);
 
-                //$a_entity = $dom->createElement("a-entity");
-                //$a_entity->appendChild( $dom->createTextNode( '' ) );
 
-                //$material = "";
-                //print_r($contentObject->glbURL[$index]);
-                //$fileOperations->setMaterial( $material, $contentObject );
-                //$fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                //$a_entity->setAttribute( "class", "override-materials" );
-                //$a_entity->setAttribute( "id", $nameObject );
-                //$a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glbURL[$index] . ")" );
-                //$a_entity->setAttribute( "material", $material );
-                //$a_entity->setAttribute( "clear-frustum-culling", "" );
 
 
                 $a_menu_entity = $dom->createElement("a-entity");
@@ -868,15 +812,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_button_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_button_entity->setAttribute( "material", $material );
-                //$a_button_entity->setAttribute( "clear-frustum-culling", "" );
-
-
-                //$a_poster_entity = $dom->createElement("a-entity");
-                //$a_poster_entity->setAttribute("material", "src: #exp_img_$nameObject");
-                //$a_poster_entity->setAttribute("mixin", "poster");
-
-
-                //$a_button_entity->appendChild($a_poster_entity);
+           
                 $a_menu_entity->appendChild($a_button_entity);
                 $a_ui_entity->appendChild($a_menu_entity);
                 $ascene->appendChild($a_ui_entity);
@@ -890,7 +826,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_panel_entity = $dom->createElement("a-entity");
                 $a_panel_entity->setAttribute("id", "infoPanel_$nameObject");
-                $a_panel_entity->setAttribute("position", "0 0.7 -2");
+                $a_panel_entity->setAttribute("position", "0 0.2 -2");
 
                 $a_panel_entity->setAttribute("info-panel", "$nameObject");
                 $a_panel_entity->setAttribute("visible", "false");
@@ -915,18 +851,19 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_title_img_entity = $dom->createElement("a-entity");
                 $a_title_img_entity->setAttribute("id", "title_$nameObject");
-                //$a_title_img_entity->setAttribute("position", "-0.68 -0.9 0");
 
-                $a_title_img_entity->setAttribute("text", "shader: msdf; anchor: left; width: 1.5; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: white; value: $contentObject->poi_img_title");
+                
+                
+                $tit_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
+                $a_title_img_entity->setAttribute("text", "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: white; value: $contentObject->poi_img_title");
                 $a_title_img_entity->setAttribute( "class", "hideable" );
                 $a_title_img_entity->setAttribute("original-scale", "1 1 1");
-
 
                 $a_exit_img_entity = $dom->createElement("a-entity");
                 $a_exit_img_entity->setAttribute("id", "exit_$nameObject");
                 $a_exit_img_entity->setAttribute("mixin", "poiEsc");
                 $a_exit_img_entity->setAttribute("material", "src: #esc_img_$nameObject; depthTest: false; transparent: true");
-                $a_exit_img_entity->setAttribute("class", "raycastable hideable" );
+                $a_exit_img_entity->setAttribute("class", "raycastable hideable non-clickable" );
                 $a_exit_img_entity->setAttribute("original-scale", "1 1 1");
 
 
@@ -943,14 +880,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $a_desc_img_entity = $dom->createElement("a-entity");
                     $a_desc_img_entity->setAttribute("id", "desc_$nameObject");
-                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.2 0");
+                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.3 0");
+                    //plugins_url( '../VRodos/assets/fonts/Arimo-VariableFont_wght-msdf.json', dirname(__FILE__))
+                    $desc_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Regular-msdf.json', dirname(__FILE__));
 
-                    $a_desc_img_entity->setAttribute("text", "baseline: top; shader: msdf; anchor: left; font: https://cdn.aframe.io/examples/ui/Viga-Regular.json; color: white; value: $contentObject->poi_img_content");
+                    $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value: $contentObject->poi_img_content");
                     $a_panel_entity->appendChild($a_desc_img_entity);
                 }
                 else{
                     $a_main_img_entity->setAttribute("mixin", "poiImageFull");
-                    $a_title_img_entity->setAttribute("position", "-0.68 -0.9 0");
+                    $a_title_img_entity->setAttribute("position", "-0.68 -0.8 0");
                 }
 
 
@@ -960,46 +899,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
                 $ascenePlayer->appendChild($a_panel_entity);
-
-
-                // $a_exc_entity = $dom->createElement( "a-entity" );
-                // $a_exc_entity->appendChild( $dom->createTextNode( '' ) );
-
-                // $material = "";
-                // //$fileOperations->setMaterial( $material, $contentObject );
-
-                // $a_exc_entity->setAttribute( "class", "override-materials hideable" );
-                // $a_exc_entity->setAttribute( "id", "excMark_$nameObject" );
-                // $a_exc_entity->setAttribute( "gltf-model", "url(http://localhost/wp_vrodos/wp-content/uploads//Models/exp_or.glb)" );
-                // $a_exc_entity->setAttribute( "clear-frustum-culling", "" );
-                // $a_exc_entity->setAttribute( "scale", "0.0001 0.0001 0.0001" );
-                // $a_exc_entity->setAttribute( "visible", "false" );
-                // $a_exc_entity->setAttribute("original-scale", "30 30 30");
-
-                // //$a_exc_entity->setAttribute("position", "0 0 0");
-
-                // $offset_ic_x = $contentObject->position[0];
-                // $offset_ic_z = $contentObject->position[2];
-                // $offset_ic_y = $contentObject->position[1] + 1;
-
-                // //print_r("$offset_ic_x $offset_ic_y $offset_ic_z");
-
-                // $a_exc_entity->setAttribute("position", "$offset_ic_x $offset_ic_y $offset_ic_z");
-                // //$a_entity->setAttribute("rotation", implode(" ", [
-                // //    -180 / pi() * $contentObject->rotation[0], 180 / pi() * $contentObject->rotation[1],
-                // //    180 / pi() * $contentObject->rotation[2]
-                // //]));
-
-
-
-                // $a_exc_entity->setAttribute( "material", $material );
-
-
-
-                // $ascene->appendChild( $a_exc_entity );
-
-
-                //$ascene->appendChild($a_image_entity);
 
             }
         }
