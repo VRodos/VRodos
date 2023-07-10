@@ -339,6 +339,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $objects = $basicDomElements['objects'];
         $ascene = $basicDomElements['ascene'];
         $ascenePlayer = $basicDomElements['ascenePlayer'];
+
+        if (!empty($scene_json->metadata->ClearColor))
+            $ascene->setAttribute("scene-settings", $scene_json->metadata->ClearColor);
+        else
+        $ascene->setAttribute("scene-settings", "#ffffff");
         //print($scene_id)
 
         //$i = array_search($scene_id, array_keys($scene_id_list));
@@ -630,7 +635,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->setAttribute("height", "0.3");
                 $a_entity_panel->setAttribute("width", "0.2");
                 //$a_entity_panel->setAttribute("color", "red");
-                $a_entity_panel->setAttribute("position", "1 0.7 -1");
+                $a_entity_panel->setAttribute("position", "1 0 -1");
                 $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
                 $a_entity_panel->setAttribute("visible", "false");
                 //$a_entity_panel->setAttribute("renderOrder", "9999999");
@@ -821,7 +826,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_panel_entity = $dom->createElement("a-entity");
                 $a_panel_entity->setAttribute("id", "infoPanel_$nameObject");
-                $a_panel_entity->setAttribute("position", "0 0.7 -2");
+                $a_panel_entity->setAttribute("position", "0 0.2 -2");
 
                 $a_panel_entity->setAttribute("info-panel", "$nameObject");
                 $a_panel_entity->setAttribute("visible", "false");
