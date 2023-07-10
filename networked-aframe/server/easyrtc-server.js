@@ -2,12 +2,7 @@
 const http = require("http");                 // http server core module
 const path = require("path");
 const express = require("express");           // web framework external module
-//const socketIo = require("socket.io");        // web socket external module
-
 const easyrtc = require("open-easyrtc");      // EasyRTC external module
-
-// socketIo.origins(["http://localhost:3000"]); // for local development
-
 
 // Set process name
 process.title = "networked-aframe-server";
@@ -18,27 +13,6 @@ const port = process.env.PORT || 5832;
 // Setup and configure Express http server.
 const app = express();
 
-
-// var fs = require('fs');
-// var https_options = {
-//     key: fs.readFileSync("/path/to/private.key"),
-//     cert: fs.readFileSync("/path/to/your_domain_name.crt"),
-//     ca: [
-//         fs.readFileSync('path/to/CA_root.crt'),
-//         fs.readFileSync('path/to/ca_bundle_certificate.crt')
-//     ]
-// };
-
-
-// var corsOptions = {
-//     origin: '*',
-//     optionsSuccessStatus: 200,
-// }
- //app.use(cors(corsOptions));
- //app.use(express.json());
-
-
-
 app.use(express.static(path.resolve(__dirname, "..", "examples")));
 
 app.use(function(req, res, next) {
@@ -46,63 +20,32 @@ app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
-//
-// app.get('/', function(req, res, next) {
-//     // Handle the get for this route
-// });
-//
-// app.post('/', function(req, res, next) {
-//     // Handle the post for this route
-// });
-
-//
-// var whitelist = ['http://http://160.40.52.199/'];
-// var corsOptions = {
-//     origin: function (origin, callback) {
-//         if (whitelist.indexOf(origin) !== -1) {
-//             callback(null, true)
-//         } else {
-//             callback(new Error('Not allowed by CORS'))
-//         }
-//     }
-// }
-//
-// app.get('/products/:id', cors(corsOptions), function (req, res, next) {
-//     res.json({msg: 'This is CORS-enabled for a whitelisted domain.'})
-// })
-
-//app.options('*', (req, res) => {
-//     res.writeHead(200, '', {
-//         'Access-Control-Allow-Origin': '*',
-//        'Access-Control-Allow-Methods': 'OPTIONS',
-//     }).end();
-// });
 
 
 // Serve the example and build the bundle in development.
 if (process.env.NODE_ENV === "development") {
-  const webpackMiddleware = require("webpack-dev-middleware");
-  const webpack = require("webpack");
-  const config = require("../webpack.config");
+    const webpackMiddleware = require("webpack-dev-middleware");
+    const webpack = require("webpack");
+    const config = require("../webpack.config");
 
-  app.use(
-    webpackMiddleware(webpack(config), {
-      publicPath: "/"
-    })
-  );
+    app.use(
+        webpackMiddleware(webpack(config), {
+            publicPath: "/"
+        })
+    );
 }
 
 // Start Express http server
 const webServer = http.createServer(app);
 
 const socketServer = require("socket.io")(webServer, {
-	
-	origins: [
-	    'http://localhost:5832',
+
+    origins: [
+        'http://localhost:5832',
         'https://vrodos-multiplaying.iti.gr/',
         '*:*'
     ],
-	
+
     /*handlePreflightRequest: (req, res) => {
         const headers = {
             "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -113,10 +56,8 @@ const socketServer = require("socket.io")(webServer, {
         res.end();
     }*/
 });
- 
 
-// Start Socket.io so it attaches itself to Express server
-//const socketServer = socketIo.listen(webServer, {"log level": 1});
+
 const myIceServers = [
     {
         urls: "turn:openrelay.metered.ca:80",
@@ -124,23 +65,23 @@ const myIceServers = [
         credential: "openrelayproject",
     }
 
-     // Turn servers are needed for mobile devices in public networks !!!!
+    // Turn servers are needed for mobile devices in public networks !!!!
 
 
     // {"urls":"stun:openrelay.metered.ca:80"},
     // {"urls":"stun.nextcloud.com:443"}
-  //  {"urls":"stun:stun1.l.google.com:19302"}
-  //{"urls":"stun:stun2.l.google.com:19302"},
-  // {
-  //   "urls":"turn:[ADDRESS]:[PORT]",
-  //   "username":"[USERNAME]",
-  //   "credential":"[CREDENTIAL]"
-  // },
-  // {
-  //   "urls":"turn:[ADDRESS]:[PORT][?transport=tcp]",
-  //   "username":"[USERNAME]",
-  //   "credential":"[CREDENTIAL]"
-  // }
+    //  {"urls":"stun:stun1.l.google.com:19302"}
+    //{"urls":"stun:stun2.l.google.com:19302"},
+    // {
+    //   "urls":"turn:[ADDRESS]:[PORT]",
+    //   "username":"[USERNAME]",
+    //   "credential":"[CREDENTIAL]"
+    // },
+    // {
+    //   "urls":"turn:[ADDRESS]:[PORT][?transport=tcp]",
+    //   "username":"[USERNAME]",
+    //   "credential":"[CREDENTIAL]"
+    // }
 ];
 easyrtc.setOption("appIceServers", myIceServers);
 easyrtc.setOption("logLevel", "debug");
@@ -181,7 +122,7 @@ easyrtc.listen(app, socketServer, null, (err, rtcRef) => {
 
 
 // Listen on port
-webServer.listen(port, () => {
+webServer.listen(parseInt(port), () => {
     console.log("listening on port:" + port);
 });
 
