@@ -4,11 +4,14 @@ const path = require("path");
 const express = require("express");           // web framework external module
 const easyrtc = require("open-easyrtc");      // EasyRTC external module
 
-// Set process name
-process.title = "networked-aframe-server";
+// Get port dynamically.
+const args = process.argv;
 
-// Get port or default to 5832
-const port = process.env.PORT || 5832;
+// Get port from arguments or default to 5832
+const port = args[2] ? args[2] : 5832;
+
+// Set process name
+process.title = "networked-aframe-server-" +port;
 
 // Setup and configure Express http server.
 const app = express();
@@ -41,7 +44,7 @@ const webServer = http.createServer(app);
 const socketServer = require("socket.io")(webServer, {
 
     origins: [
-        'http://localhost:5832',
+        'http://localhost:'+port,
         'https://vrodos-multiplaying.iti.gr/',
         '*:*'
     ],
