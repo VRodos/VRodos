@@ -82,6 +82,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             $this->portNodeJs = "5832";
 
+            if ($this->website_root_url == 'vrexpo.iti.gr' ) {
+                $this->portNodeJs = "5840";
+            }
+
+
+
 //			$f = fopen("output_compile.txt", "w");
 //			fwrite($f, $plugin_path_url . chr(13));
 //			fwrite($f, $plugin_path_dir . chr(13));
@@ -94,9 +100,17 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         {
 
             if (PHP_OS == "WINNT") {
-                return $this->server_protocol . "://" . $this->website_root_url . ":" . $this->portNodeJs . "/";
+                $site_path = $this->server_protocol . "://" . $this->website_root_url . ":" . $this->portNodeJs . "/";
+                return $site_path;
             } else {
-                return "https://vrodos-multiplaying.iti.gr/";
+
+                if ($this->website_root_url == 'vrexpo.iti.gr') {
+                    $site_path = "https://vrexpo-multi.iti.gr/";
+                }
+                else {
+                    $site_path = "https://vrodos-multiplaying.iti.gr/";
+                }
+                return $site_path;
             }
         }
 
@@ -343,7 +357,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         if (!empty($scene_json->metadata->ClearColor))
             $ascene->setAttribute("scene-settings", $scene_json->metadata->ClearColor);
         else
-        $ascene->setAttribute("scene-settings", "#ffffff");
+            $ascene->setAttribute("scene-settings", "#ffffff");
         //print($scene_id)
 
         //$i = array_search($scene_id, array_keys($scene_id_list));
@@ -355,8 +369,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             // ===========  Artifact - Decoration ==============
             if ( $contentObject->category_slug == 'decoration' ) {
 
-                
-               
+
+
                 $sc_x = $contentObject->scale[0];
                 $sc_y = $contentObject->scale[1];
                 $sc_z = $contentObject->scale[2];
@@ -380,12 +394,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //$a_entity->setAttribute( "ammo-body", "type: dynamic;" );
                 //$a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );
                 //$a_entity->setAttribute( "class", "collidable" );
-                
-                
+
+
 
                 $ascene->appendChild( $a_entity );
 
-            
+
 
                 //==================== Pawn =================
             }else if ( $contentObject->category_name == 'pawn' ) {
@@ -508,7 +522,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $ascene->appendChild( $a_entity );
 
                 if (!empty($contentObject->sceneID_target))
-                    includeDoorFunctionality($a_entity, $contentObject->sceneID_target);
+                    includeDoorFunctionality($a_entity, $contentObject->sceneID_target, $fileOperations);
             } else if ($contentObject->category_name == 'avatarYawObject') {
                 continue;
 
@@ -553,12 +567,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_video_asset = $dom->createElement( "video" );
                 $a_video_asset->setAttribute("id", "video_$nameObject");
-               
+
                 $contentObject->video_loop == 1 ? $a_video_asset->setAttribute( "loop", "true") : $a_video_asset->setAttribute( "loop", "false");
 
                 //$contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
                 if ($contentObject->video_path != "false"){
-                    $a_video_asset->setAttribute("src", $contentObject->video_path); 
+                    $a_video_asset->setAttribute("src", $contentObject->video_path);
                 }
 
 
@@ -640,7 +654,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->setAttribute("visible", "false");
                 //$a_entity_panel->setAttribute("renderOrder", "9999999");
                 $a_entity_panel->setAttribute("material", "color: #ffffff; shader: flat; ");
-                
+
 
                 //$ascene->appendChild($a_entity_panel);
 
@@ -670,15 +684,15 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 //$ascenePlayer->appendChild($a_entity_panel);
 
                 //$a_entity->setAttribute("material", "side: double");
-                
-                
+
+
 
                 //print_r($sc_x);
 
 
                 //print_r($contentObject->category_name);
-              
-                
+
+
 
 
                 $a_video = $dom->createElement("a-video");
@@ -698,7 +712,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
                 $fileOperations->setAffineTransformations($a_entity, $contentObject);
-                
+
                 $a_entity->setAttribute("height", "0.000001");                      //TODO reformat without a entity component
                 $a_entity->setAttribute("width", "0.000001");
 
@@ -709,7 +723,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->appendChild($a_video);
 
                 $ascene->appendChild($a_entity);
-           
+
             }else if ($contentObject->category_slug == 'poi-link') {
                 $a_entity = $dom->createElement( "a-entity" );
                 $a_entity->appendChild( $dom->createTextNode( '' ) );
@@ -730,7 +744,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                 $a_entity->setAttribute('link-listener', $contentObject->poi_link_url);
                 $a_entity->setAttribute("highlight", "$nameObject");
-                
+
 
 
                 $ascene->appendChild( $a_entity );
@@ -746,7 +760,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_image_asset_main = $dom->createElement( "a-assets" );
                 $a_image_asset_esc = $dom->createElement( "a-assets" );
 
-                
+
 
                 //$a_image_asset_exp->setAttribute("id", "exp_img_$nameObject");
                 //$a_image_asset_exp->setAttribute("src",  "VRodos/assets/images/search.png");
@@ -757,7 +771,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_image_asset_esc->setAttribute("id", "esc_img_$nameObject");
                 $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
-                
+
 
 
                 //$a_asset->appendChild(a_image_asset);
@@ -812,7 +826,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_button_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_button_entity->setAttribute( "material", $material );
-           
+
                 $a_menu_entity->appendChild($a_button_entity);
                 $a_ui_entity->appendChild($a_menu_entity);
                 $ascene->appendChild($a_ui_entity);
@@ -852,8 +866,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_title_img_entity = $dom->createElement("a-entity");
                 $a_title_img_entity->setAttribute("id", "title_$nameObject");
 
-                
-                
+
+
                 $tit_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
                 $a_title_img_entity->setAttribute("text", "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: white; value: $contentObject->poi_img_title");
                 $a_title_img_entity->setAttribute( "class", "hideable" );
@@ -910,8 +924,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
     }
 
 
-    function includeDoorFunctionality($a_entity, $door_link){
-        $a_entity->setAttribute('door-listener',"http://localhost:5832/Master_Client_{$door_link}.html");
+    function includeDoorFunctionality($a_entity, $door_link, $fileOperations){
+        $a_entity->setAttribute('door-listener', $fileOperations->nodeJSpath()."/Master_Client_{$door_link}.html");
 
     }
 
