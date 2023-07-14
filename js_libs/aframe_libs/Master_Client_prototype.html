@@ -741,8 +741,8 @@
 
         <!-- Pawn -->
         <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;"
-        show-position look-controls="fly:false; pointerLockEnabled: false;">
-            <a-entity id="camera-rig" position="0 1.6 0" custom-movement>
+        show-position>
+            <a-entity id="camera-rig" position="0 .3 0" custom-movement>
                 <a-camera id="cameraA" near="0.1" far="7000.0" >  </a-camera>
                 <a-entity id="oculusRight" oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="objects: .raycastable"></a-entity>
                 <a-entity id="oculusLeft" oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" teleport-controls="cameraRig: #camera-rig"></a-entity>
@@ -750,10 +750,7 @@
             </a-entity>
 
 
-
         </a-entity>
-
-
 
 
     </a-scene>
