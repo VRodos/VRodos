@@ -610,7 +610,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $sc_z = $contentObject->scale[2];
                 $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                 //$a_entity->setAttribute("camera-listener", "");
-                $a_entity->setAttribute("class", "clickable raycastable non-clickable");
+                $a_entity->setAttribute("class", "clickable raycastable");
 
 
                 $a_entity_fs = $dom->createElement("a-plane");
@@ -654,6 +654,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->setAttribute("visible", "false");
                 //$a_entity_panel->setAttribute("renderOrder", "9999999");
                 $a_entity_panel->setAttribute("material", "color: #ffffff; shader: flat; ");
+                $a_entity_panel->setAttribute("class", "clickable raycastable");
 
 
                 //$ascene->appendChild($a_entity_panel);
@@ -705,7 +706,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_video->setAttribute("position", "0 0 0.1");
                 $a_video->setAttribute("src", "#video_$nameObject");
                 $a_video->setAttribute("material", "side: double");
-                $a_video->setAttribute("class", "clickable raycastable non-clickable");
+                $a_video->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
+                $a_video->setAttribute("class", "clickable hideable raycastable");
                 //$a_video->setAttribute("renderOrder", "9");
 
 
@@ -849,7 +851,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 $a_panel_entity->setAttribute("geometry", "primitive: plane; width: 1.5; height: 1.8");
                 $a_panel_entity->setAttribute("material", "color: #333333; shader: flat; depthTest: false; transparent: true");
-                $a_panel_entity->setAttribute("class", "raycastable hideable");
+                $a_panel_entity->setAttribute("class", "raycastable hideable ");
                 //$a_panel_entity->setAttribute("outline", "");
                 $a_panel_entity->setAttribute("original-scale", "0.001 0.001 0.001");
 

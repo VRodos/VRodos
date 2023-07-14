@@ -26,7 +26,7 @@
 
     <script src="js/highlight_img.js"></script>
     <script src="js/img_panel.js"></script>
-    
+
 
     <script src="js/indicators_aframe.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
@@ -152,7 +152,7 @@
                 let exEl = document.querySelector("#ent_ex_" + data.id);
                 let titEl = document.querySelector("#ent_tit_" + data.id);
                 let backgroundEl = document.querySelector('#aframe-scene-container');
-                
+
                 let playerEl = document.querySelector('#player');
                 let rightHand = document.querySelector('#oculusRight');
                 //videoMesh.material.wireframe = true;
@@ -172,7 +172,7 @@
 
                 function restoreVidPos(border, disp, panel) {
                     let offsetX = 20;
-                    
+
 
                     var curr_rot = border.getAttribute('rotation');
 
@@ -327,6 +327,8 @@
                         video.pause();
 
                     }
+                    videoDisplay.classList.remove("non-clickable");
+                    videoPanel.classList.remove("non-clickable");
                     backgroundEl.setAttribute("raycaster","objects: .raycastable");
                     rightHand.setAttribute("raycaster","objects: .raycastable");
                 });
@@ -338,6 +340,7 @@
                     cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
                     backgroundEl.setAttribute("background", "color", "black");
                     backgroundEl.setAttribute("overlay", "");
+
 
                     cam.add(videoBorder);
                     cam.add(videoDisplay);
@@ -353,14 +356,23 @@
 
                     }
                     for (let i = 0; i < entCollection.length; i++) {
-                        entCollection[i].setAttribute("visible", "false");
-                        console.log(entCollection[i].getAttribute("visible"));
-                        entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
-                       
-                        
 
+
+
+                        console.log(videoDisplay);
+                        console.log(entCollection[i]);
+                        if (entCollection[i] !=videoDisplay){
+                            entCollection[i].setAttribute("visible", "false");
+                            console.log(entCollection[i].getAttribute("visible"));
+                            entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
+
+
+                        }
 
                         visCollection.push(i);
+
+
+
 
                     }
                     cam.setAttribute("wasd-controls-enabled", "true");
@@ -391,11 +403,12 @@
                         console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
 
                         entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
+                        //entCollection[visCollection[i]].classList.add("non-clickable");
 
                         //videoDisplay.setAttribute("position", origPosDisplay);
 
                     }
-                   
+
                     cam.setAttribute("wasd-controls-enabled", "true");
                     playerEl.setAttribute("look-controls", "enabled: true");
                     backgroundEl.add(videoBorder);
@@ -403,11 +416,11 @@
                     let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
                     let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
 
-                    
+
 
                     videoBorder.setAttribute("position", p_x);
                     videoDisplay.setAttribute("position", p_x);
-                    videoDisplay.setAttribute("scale", videoBorder.getAttribute("original-scale")); 
+                    videoDisplay.setAttribute("scale", videoBorder.getAttribute("original-scale"));
 
                     videoBorder.setAttribute("rotation", r_x);
                     videoDisplay.setAttribute("rotation", r_x);
@@ -424,6 +437,8 @@
                         addToCam(exEl, true, true, 1);
                         addToCamText(titEl, true, true, 1);
                         //console.log(titEl.components);
+                        videoDisplay.classList.add("non-clickable");
+                        videoPanel.classList.add("non-clickable");
                         backgroundEl.setAttribute("raycaster","objects: .non-clickable");
                         rightHand.setAttribute("raycaster","objects: .non-clickable");
 
@@ -590,7 +605,7 @@
             const movementSpeed = 0.1;
             cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
             cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
-            
+
 
             console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
             });
@@ -683,7 +698,29 @@
         <a-assets>
             <!-- Avatar Template -->
             <template id="avatar-template">
-                    <a-sphere color="yellow" position="0 0 -4" radius="2"></a-sphere>
+                <a-entity class="avatar"
+                networked-audio-source>
+
+                    <a-plane id="videoPlaneGreen"
+                            class="videoPlaneGreenClass"
+                            color="#FFF"
+                            width="1"
+                            height="0.75"
+                            position="0 0.6 -0.15"
+                            material="side: double"
+                            networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                            render-order-change="2000">
+                    </a-plane>
+
+                    <a-plane id="screenPlane"
+                            color="#FFF"
+                            width="0"
+                            height="0"
+                            position="0 0.6 -0.15"
+                            material="side: double"
+                            networked-video-source="streamName:screen">
+                    </a-plane>
+                </a-entity>
             </template>
 
             <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
@@ -704,23 +741,19 @@
 
         <!-- Pawn -->
         <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;"
-        show-position look-controls="pointerLockEnabled: false;">
-
-            <a-sphere class="head" visible="false" random-color>
-            </a-sphere>
-
+        show-position look-controls="fly:false; pointerLockEnabled: false;">
             <a-entity id="camera-rig" position="0 1.6 0" custom-movement>
-                <a-camera id="cameraA" near="0.1" far="7000.0">  </a-camera>
+                <a-camera id="cameraA" near="0.1" far="7000.0" >  </a-camera>
                 <a-entity id="oculusRight" oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="objects: .raycastable"></a-entity>
                 <a-entity id="oculusLeft" oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" teleport-controls="cameraRig: #camera-rig"></a-entity>
                 <!-- <a-entity camera look-controls></a-entity> -->
-            </a-entity>   
+            </a-entity>
 
-            
-            
+
+
         </a-entity>
 
-         
+
 
 
     </a-scene>
