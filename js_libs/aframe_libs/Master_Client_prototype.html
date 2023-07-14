@@ -698,7 +698,29 @@
         <a-assets>
             <!-- Avatar Template -->
             <template id="avatar-template">
-                    <a-sphere color="yellow" position="0 0 -4" radius="2"></a-sphere>
+                <a-entity class="avatar"
+                networked-audio-source>
+
+                    <a-plane id="videoPlaneGreen"
+                            class="videoPlaneGreenClass"
+                            color="#FFF"
+                            width="1"
+                            height="0.75"
+                            position="0 0.6 -0.15"
+                            material="side: double"
+                            networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                            render-order-change="2000">
+                    </a-plane>
+
+                    <a-plane id="screenPlane"
+                            color="#FFF"
+                            width="0"
+                            height="0"
+                            position="0 0.6 -0.15"
+                            material="side: double"
+                            networked-video-source="streamName:screen">
+                    </a-plane>
+                </a-entity>
             </template>
 
             <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
