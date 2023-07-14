@@ -8,7 +8,6 @@ A plugin for WordPress to transform your website into a multipurpose 3D media ma
 - Digital Signage management tool capable for visualizing 3D media
 - VR applications authoring tool with a 3D scene editor
 
-
 Features
 
 - Formats support:  GLB.
@@ -20,27 +19,6 @@ Interface Pages
 - Project Manager
 - Scene 3D Editor
 - Asset Editor
-
-
-
-
-[comment]: <> (##Basic Interfaces)
-
-[comment]: <> (Asset Uploader and Previewer)
-
-[comment]: <> (![Example Asset]&#40;AssetExample.jpg&#41;)
-
-[comment]: <> (Scene synthesis)
-
-[comment]: <> (![Example Scene]&#40;SceneExample.jpg&#41;)
-
-
-[comment]: <> (### What is this repository for? ###)
-
-
-[comment]: <> (Other features)
-
-[comment]: <> (- Lights &#40;Spot, Directional, Sphere&#41;)
 
 
 ### Do you have a demo?
@@ -77,22 +55,7 @@ Interface Pages
   -- Assets List Page
   -- Project Manager page
 
-
-[comment]: <> (### Peer calls ###)
-
-[comment]: <> (A visitor to an artifact can speak with an expert through node.js peer-calls. It is installed in an iframe in artifact page.)
-
-[comment]: <> (It starts in server in the peer-calls folder with)
-
-[comment]: <> (* sudo npm run build)
-
-[comment]: <> (* sudo npm start  )
-
-
-[comment]: <> (### Who do I talk to? ###)
-
-[comment]: <> (* I am coordinating and contributing to this repository: Dimitrios Ververidis, ververid [at] iti.gr, jimver04 [at] gmail.com)
-
+  
 
 ### Servers install and run
 
@@ -138,13 +101,15 @@ Two types of servers are needed:
 * CORS
   You need wordpress at port 80 (apache2 standard) to allow to give content to aframe at node.js server at port 5832, or whichever port you have used when running easyRTC service.
 
-Add this to .htaccess
+####Add this to .htaccess
 
-<IfModule mod_headers.c>
+`<IfModule mod_headers.c>`
+
 	Header set Access-Control-Allow-Origin "*"
-</IfModule>
 
-* Big 3D models
+`</IfModule>`
+
+#### Big 3D models
 
   Add these to .htaccess to allow big files to be uploaded to wordpress
 
