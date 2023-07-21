@@ -152,9 +152,11 @@ AFRAME.registerComponent('info-panel', {
         this.infoPanel.components.material.material.depthTest = false;
         this.infoPanel.object3D.renderOrder = 9999;
        
-        
-       
-        this.cam.setAttribute("wasd-controls-enabled", "false");
+        if (this.playerEl.getAttribute("wasd-controls")){
+            this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+        }
+        else
+            this.cam.setAttribute("wasd-controls-enabled", "false");
         //playerEl.setAttribute("look-controls", "enabled: false");
         //this.playerEl.setAttribute("movement-controls", "speed: 0");
         //this.playerEl.setAttribute("look-controls", "enabled: false");

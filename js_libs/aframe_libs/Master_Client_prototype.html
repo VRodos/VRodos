@@ -53,13 +53,26 @@
         });
 
         AFRAME.registerComponent('scene-settings', {
-            schema: { type: "string", default: "#ffffff" },
+            schema: { 
+                color:{type: "string", default: "#ffffff"},
+                pr_type:{type: "string", default: "default"},
+             },
             init: function () {
+                console.log(this.data.pr_type);
+                
                 let cam = document.querySelector("#cameraA");
-                cam.setAttribute("camera", "fov: 60");
+                console.log(cam);
+                if (this.data.pr_type == "virtualproduction_games" || this.data.pr_type == "archaeology_games")
+                    cam.setAttribute("camera", "fov: 60");
+                else{
+                    cam.setAttribute("fov", "60");
+                    
+                }
+
+                    
 
                 let backgroundEl = document.querySelector('#aframe-scene-container');
-                backgroundEl.setAttribute("background", "color", this.data);
+                backgroundEl.setAttribute("background", "color", this.data.color);
             }
         });
 
@@ -156,10 +169,16 @@
                 let playerEl = document.querySelector('#player');
                 let rightHand = document.querySelector('#oculusRight');
                 //videoMesh.material.wireframe = true;
+                let bcgCol = backgroundEl.getAttribute("scene-settings");
                 let cam = document.querySelector("#cameraA");
                 let camRig = document.querySelector("#camera-rig");
 
+                let media_panel = document.getElementById("mediaPanel");
+                let recording_controls = document.getElementById("upload-recording-btn");
+
                 cam.add(videoPanel);
+
+                
 
 
                 const entCollection = document.getElementsByClassName("hideable");
@@ -330,13 +349,22 @@
                     videoDisplay.classList.remove("non-clickable");
                     videoPanel.classList.remove("non-clickable");
                     backgroundEl.setAttribute("raycaster","objects: .raycastable");
-                    rightHand.setAttribute("raycaster","objects: .raycastable");
+                    if(rightHand)
+                        rightHand.setAttribute("raycaster","objects: .raycastable");
                 });
 
 
 
                 fsEl.addEventListener("mouseup", function (event) {
-                    camRig.setAttribute("position", "0 0 0");
+                    if (camRig)                                          //TODO change based on project type
+                        camRig.setAttribute("position", "0 0 0");
+                    else{
+                        cam.setAttribute("position", "0 0 0");
+                        media_panel.setAttribute( "style", 'visibility: hidden;' );
+                        recording_controls.setAttribute('style', 'visibility: hidden;');
+                    }
+                                                                                   
+
                     cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
                     backgroundEl.setAttribute("background", "color", "black");
                     backgroundEl.setAttribute("overlay", "");
@@ -375,8 +403,11 @@
                        
 
                     }
-                    cam.setAttribute("wasd-controls-enabled", "true");
-                    playerEl.setAttribute("look-controls", "enabled: false");
+                    if (playerEl.getAttribute("wasd-controls")){
+                        playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+                    }else
+                        cam.setAttribute("wasd-controls-enabled", "false");
+                  
 
                     playUpd(plEl);
 
@@ -390,7 +421,14 @@
                 function restoreVid(){
                     console.log("playing");
                     //video.pause();
-                    camRig.setAttribute("position", "0 1.6 0");
+                    if (camRig)
+                        camRig.setAttribute("position", "0 1.6 0");
+                    else{
+                        cam.setAttribute("position", "0 0.6 0");
+                        media_panel.setAttribute( "style", 'visibility: visible;' );        //TODO change based on project type
+                        recording_controls.setAttribute('style', 'visibility: visible;');
+                    }
+
                     cam.setAttribute("camera", "fov", 60);
                     //console.log(backgroundEl);
                     let bcgCol = backgroundEl.getAttribute("scene-settings");
@@ -410,7 +448,7 @@
                     }
                    
                     cam.setAttribute("wasd-controls-enabled", "true");
-                    playerEl.setAttribute("look-controls", "enabled: true");
+                    //playerEl.setAttribute("look-controls", "enabled: true");
                     backgroundEl.add(videoBorder);
                     backgroundEl.add(videoDisplay);
                     let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
@@ -440,7 +478,8 @@
                         videoDisplay.classList.add("non-clickable");
                         videoPanel.classList.add("non-clickable");
                         backgroundEl.setAttribute("raycaster","objects: .non-clickable");
-                        rightHand.setAttribute("raycaster","objects: .non-clickable");
+                        if(rightHand)
+                            rightHand.setAttribute("raycaster","objects: .non-clickable");
 
                         console.log(videoPanel.getAttribute("visible"));
                         playUpd(plEl);
@@ -615,7 +654,7 @@
 
     </script>
 
-    <div>
+    <div id="mediaPanel">
         <div class="wrapperVideoElement" style="visibility: hidden">
             <video id="video-preview" width="300" height="200" autoplay muted></video>
             <video id="recording" hidden></video>
@@ -643,7 +682,7 @@
                 </button>
             </div>
 
-            <div class="wrapperControlElement">
+            <div class="wrapperControlElement" >
                 <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
                     &#127909; &#9654; &#128101;
                 </button>
@@ -662,7 +701,7 @@
                     💾️️
                 </a>
 
-                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden"
+                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden;"
                     title="Upload Recording to MediaVerse" disabled>
                     ⬆️️️
                 </button>
@@ -723,6 +762,13 @@
                 </a-entity>
             </template>
 
+            <template id="avatar-template-expo">
+                <a-entity class="avatar">
+                    <!-- <a-sphere class="head" visible="true" random-color>
+                    </a-sphere> -->
+                </a-entity>
+            </template>
+
             <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
                 material="color: black; shader: flat"></a-mixin>
             <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
@@ -740,17 +786,7 @@
         </a-assets>
 
         <!-- Pawn -->
-        <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;"
-        show-position look-controls="fly:false; pointerLockEnabled: false;">
-            <a-entity id="camera-rig" position="0 1.6 0" custom-movement>
-                <a-camera id="cameraA" near="0.1" far="7000.0" >  </a-camera>
-                <a-entity id="oculusRight" oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="objects: .raycastable"></a-entity>
-                <a-entity id="oculusLeft" oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" teleport-controls="cameraRig: #camera-rig"></a-entity>
-                <!-- <a-entity camera look-controls></a-entity> -->
-            </a-entity>   
-
-            
-            
+        <a-entity id="player">
         </a-entity>
 
          

@@ -233,10 +233,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $ascenePlayer = $dom->getElementById('player');
 
             // If MediaVerse project, then enable upload to MV Node.
+            $media_panel = $dom->getElementById('mediaPanel');
             $recording_controls = $dom->getElementById('upload-recording-btn');
             $project_type = wp_get_post_terms($project_id, 'vrodos_game_type');
             if ($project_type[0]->slug == 'virtualproduction_games') {
+                $media_panel->setAttribute( "style", 'visibility: visible;' );
                 $recording_controls->setAttribute('style', 'visibility: visible;');
+                
 
                 // If MediaVerse project, get MV node url, in order to upload video and update project
                 $user_id = get_current_user_id();
@@ -259,7 +262,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 }
 
                 $dom->saveHTML();
+            }else{
+                 
+                $media_panel->setAttribute( "style", 'visibility: hidden;' );
+                $recording_controls->setAttribute('style', 'visibility: hidden;');
+
             }
+
 
 
 //			$f = fopen("output_compile_director.txt","w");
@@ -353,11 +362,66 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $objects = $basicDomElements['objects'];
         $ascene = $basicDomElements['ascene'];
         $ascenePlayer = $basicDomElements['ascenePlayer'];
+        $sceneColor = $scene_json->metadata->ClearColor;
 
-        if (!empty($scene_json->metadata->ClearColor))
-            $ascene->setAttribute("scene-settings", $scene_json->metadata->ClearColor);
-        else
-            $ascene->setAttribute("scene-settings", "#ffffff");
+        $pj_type = wp_get_post_terms($project_id, 'vrodos_game_type');
+
+        $projectType = $pj_type[0]->slug;
+
+       
+
+        if (!empty($sceneColor)){
+            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType");
+        }else{
+            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType");
+        }
+
+        if ($projectType == 'vrexpo_games') {
+            $a_entity_expo = $dom->createElement( "a-entity" );
+            $a_entity_expo->setAttribute( "id", "camera-rig" );
+            $a_entity_expo->setAttribute( "position", "0 1.6 0" );
+            $a_entity_expo->setAttribute( "custom-movement", "" );
+            $a_entity_expo->setAttribute( "show-position", "" );
+            $a_entity_expo->setAttribute( "networked", "template:#avatar-template-expo;" );
+          
+            $a_camera = $dom->createElement( "a-camera" );
+            $a_camera->setAttribute( "id", "cameraA" );
+            $a_camera->setAttribute( "near", "0.1" );
+            $a_camera->setAttribute( "far", "7000.0" );
+
+            $a_entity_oc_right = $dom->createElement( "a-entity" );
+            $a_entity_oc_right->setAttribute( "id", "oculusRight" );
+            $a_entity_oc_right->setAttribute( "oculus-touch-controls", "hand: right" );
+            $a_entity_oc_right->setAttribute( "laser-controls", "hand: right" );
+            $a_entity_oc_right->setAttribute( "raycaster", "objects: .raycastable" );
+
+            $a_entity_oc_left = $dom->createElement( "a-entity" );
+            $a_entity_oc_left->setAttribute( "id", "oculusRight" );
+            $a_entity_oc_left->setAttribute( "oculus-touch-controls", "hand: left" );
+            
+            $a_entity_expo->appendChild( $a_camera );
+            $a_entity_expo->appendChild( $a_entity_oc_right );
+            $a_entity_expo->appendChild( $a_entity_oc_left );
+            $ascenePlayer->appendChild( $a_entity_expo );
+
+            
+        }else{
+            $ascenePlayer->setAttribute( "position", "0 0.6 0" );
+            $ascenePlayer->setAttribute( "networked", "template:#avatar-template;attachTemplateToLocal:false;" );
+            $ascenePlayer->setAttribute( "show-position", "" );
+            $ascenePlayer->setAttribute( "wasd-controls", "fly:false; acceleration:10" );
+            $ascenePlayer->setAttribute( "look-controls", "pointerLockEnabled: false" );
+
+            $a_entity = $dom->createElement( "a-entity" );
+            $a_entity->setAttribute( "id", "cameraA" );
+            $a_entity->setAttribute( "active", "true" );
+            $a_entity->setAttribute( "camera", "near: 0.1; far: 7000.0;" );
+            $a_entity->setAttribute( "position", "0 0.6 0" );
+
+            $ascenePlayer->appendChild( $a_entity );
+        }
+
+        
         //print($scene_id)
 
         //$i = array_search($scene_id, array_keys($scene_id_list));
@@ -386,7 +450,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $material = "";
                 //$fileOperations->setMaterial( $material, $contentObject );
                 $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                $a_entity->setAttribute( "class", "override-materials hideable raycastable" );
+                $a_entity->setAttribute( "class", "override-materials hideable" );
                 $a_entity->setAttribute( "id", $nameObject );
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );
@@ -523,10 +587,15 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 if (!empty($contentObject->sceneID_target))
                     includeDoorFunctionality($a_entity, $contentObject->sceneID_target, $fileOperations);
+                    
             } else if ($contentObject->category_name == 'avatarYawObject') {
-                continue;
+                   continue;
+                    
 
+               
+                
 
+                // $ascenePlayer->appendChild( $a_entity );
 
             } else if ($contentObject->category_slug == 'video') {
                 //print_r(empty($contentObject->video_link));
@@ -927,7 +996,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
     function includeDoorFunctionality($a_entity, $door_link, $fileOperations){
-        $a_entity->setAttribute('door-listener', $fileOperations->nodeJSpath()."/Master_Client_{$door_link}.html");
+        $a_entity->setAttribute('door-listener', $fileOperations->nodeJSpath()."Master_Client_{$door_link}.html");
 
     }
 
