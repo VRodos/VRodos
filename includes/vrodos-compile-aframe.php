@@ -367,13 +367,29 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $pj_type = wp_get_post_terms($project_id, 'vrodos_game_type');
 
         $projectType = $pj_type[0]->slug;
+        // $a_asset = $dom->createElement( "a-assets" );
+
+        // $a_asset_sky = $dom->createElement( "img" );
+        // $a_asset_sky->setAttribute("id", "custom_sky");
+        // $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/sky.jpg");
+
+        // $a_entity_sky = $dom->createElement( "a-sky" );
+        // $a_entity_sky->setAttribute("id", "sky");
+        // $a_entity_sky->setAttribute("src",  "#custom_sky");
+
+        // $a_asset->appendChild($a_asset_sky);
+        // $ascene->appendChild($a_asset);
+
+        // $ascene->appendChild($a_entity_sky);
+
+
 
        
 
         if (!empty($sceneColor)){
-            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType");
+            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; img_link:custom_sky");
         }else{
-            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType");
+            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; img_link:custom_sky");
         }
 
         if ($projectType == 'vrexpo_games') {
@@ -770,8 +786,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
 
-                $a_video->setAttribute("height", "15");
-                $a_video->setAttribute("width", "20");
+                // $a_video->setAttribute("height", "15");
+                // $a_video->setAttribute("width", "20");
+                $a_video->setAttribute("height", "3");          ///Has to match size of the three.js asset
+                $a_video->setAttribute("width", "4");
                 $a_video->setAttribute("position", "0 0 0.1");
                 $a_video->setAttribute("src", "#video_$nameObject");
                 $a_video->setAttribute("material", "side: double");
