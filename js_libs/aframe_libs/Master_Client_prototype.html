@@ -774,8 +774,8 @@
 
             <template id="avatar-template-expo">
                 <a-entity class="avatar">
-                    <!-- <a-sphere class="head" visible="true" random-color>
-                    </a-sphere> -->
+                    <a-sphere class="head" visible="true" random-color>
+                    </a-sphere>
                 </a-entity>
             </template>
 
@@ -1012,6 +1012,14 @@
         /* Define custom schema for syncing avatar color, set by random-color */
         NAF.schemas.add({
             template: '#avatar-template',
+            components: [
+                'position',
+                'rotation'
+            ],
+        });
+
+        NAF.schemas.add({
+            template: '#avatar-template-expo',
             components: [
                 'position',
                 'rotation'
