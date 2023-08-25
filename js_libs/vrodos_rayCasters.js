@@ -65,15 +65,15 @@ function dragDropVerticalRayCasting(event) {
 
 
 // On Double click center screen and focus to that object
-function onMouseDoubleClickFocus(event, objectName) {
+function onMouseDoubleClickFocus(event, id) {
 
-    if (typeof objectName == 'undefined') {
-        objectName = envir.scene.getObjectByName(selected_object_name);
+    if (typeof id == 'undefined') {
+        id = envir.scene.getObjectById(selected_object_name);
     }
 
     if (arguments.length === 2) {
-        if (envir.scene.getObjectByName(objectName))
-            selectorMajor(event, envir.scene.getObjectByName(objectName), "1");
+        if (envir.scene.getObjectById(id))
+            selectorMajor(event, envir.scene.getObjectById(id), "1");
     }
 
     // This makes the camera (in 3D mode) to go on top of the selected item
@@ -183,7 +183,7 @@ function selectorMajor(event, objectSel, whocalls) {
     if (event.button === 0) {
 
         // set the selected color of the hierarchy viewer
-        setBackgroundColorHierarchyViewer(objectSel.name);
+        setBackgroundColorHierarchyViewer(objectSel.uuid);
 
         transform_controls.attach(objectSel);
 

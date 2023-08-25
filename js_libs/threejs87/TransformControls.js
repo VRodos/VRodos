@@ -1710,7 +1710,7 @@
 
             // DELETE
             if(scope.axis === 'XZY') {
-                deleterFomScene(transform_controls.object.name);
+                deleterFomScene(transform_controls.object.uuid);
             }
 
             scope.update();

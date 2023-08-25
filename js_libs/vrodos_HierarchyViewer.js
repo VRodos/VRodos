@@ -18,10 +18,10 @@ function resetInScene(name){
 function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML){
 
     jQuery('#hierarchy-viewer').append(
-        '<li class="hierarchyItem mdc-list-item" id="' + obj.name + '">' +
+        '<li class="hierarchyItem mdc-list-item" id="' + obj.uuid + '">' +
         '<a href="javascript:void(0);" class="hierarchyItem mdc-list-item" ' +
         'style="font-size: 9pt; line-height:12pt" ' +
-        'data-mdc-auto-init="MDCRipple" title="" onclick="onMouseDoubleClickFocus(event,\'' + obj.name + '\')">' +
+        'data-mdc-auto-init="MDCRipple" title="'+ obj.title +'" onclick="onMouseDoubleClickFocus(event,\'' + obj.uuid + '\')">' +
         '<span id="" class="mdc-list-item__text">' +
         object_name + '<br />' +
         '<span style="font-size:7pt; color:grey">' + created + '</span>' +
@@ -34,24 +34,25 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
 
 
 function CreateDeleteButton(obj){
-    return '<a href="javascript:void(0);" class="hierarchyItemDelete mdc-list-item" aria-label="Delete asset"' + ' title="Delete asset object" onclick="' + 'deleterFomScene(\'' + obj.name + '\');' + '">' +
+    return '<a href="javascript:void(0);" class="hierarchyItemDelete mdc-list-item" aria-label="Delete asset"' +
+        ' title="Delete asset object" onclick="' + 'deleterFomScene(\'' + obj.uuid + '\');' + '">' +
         '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Delete">delete </i>' + '</a>';
 }
 
 function CreateResetButton(obj){
 
     return '<a href="javascript:void(0);" class="mdc-list-item" aria-label="Reset asset"' +
-    ' title="Reset asset object" onclick="' +
-    // Reset 0,0,0 rot 0,0,0
-    'resetInScene(\'' + obj.name + '\');'
-    + '">' +
-    '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Reset">cached</i>' +
-    '</a>';
+        ' title="Reset asset object" onclick="' +
+        // Reset 0,0,0 rot 0,0,0
+        'resetInScene(\'' + obj.name + '\');'
+        + '">' +
+        '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Reset">cached</i>' +
+        '</a>';
 
 }
 
 // Highlight item in Hierarchy viewer
-function setBackgroundColorHierarchyViewer(name) {
+function setBackgroundColorHierarchyViewer(id) {
 
     jQuery('#hierarchy-viewer li').each(
         function (idx, li) {
@@ -59,8 +60,7 @@ function setBackgroundColorHierarchyViewer(name) {
         }
     );
 
-
-    jQuery('#hierarchy-viewer').find('#' + name)[0].style.background = '#a4addf';
+    document.getElementById(id).style.background = '#a4addf';
 }
 
 // Traverse the entire scene to insert scene children in Hierarchy Viewer
@@ -79,10 +79,10 @@ function setHierarchyViewer() {
             let asset_name = obj.name === 'avatarCamera' ? "Director" : obj.asset_name;
 
             let created = obj.name === 'avatarCamera' ? "" : unixTimestamp_to_time(
-                                                obj.name.substring(obj.name.length - 10, obj.name.length));
+                obj.name.substring(obj.name.length - 10, obj.name.length));
 
             let deleteButton = obj['category_name'] === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
-                                                                                           CreateDeleteButton(obj);
+                CreateDeleteButton(obj);
 
             // Add as a list item
             AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj));
