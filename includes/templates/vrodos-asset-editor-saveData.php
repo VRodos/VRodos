@@ -1,6 +1,6 @@
 <?php
 
-function vrodos_create_asset_3DFilesExtra_frontend($assetNewId, $assetTitle, $gameSlug, $projectId){
+function vrodos_create_asset_3DFilesExtra_frontend($assetNewId, $projectId, $assetCatId){
 
     // Clear out all previous
 
@@ -29,7 +29,7 @@ function vrodos_create_asset_3DFilesExtra_frontend($assetNewId, $assetTitle, $ga
 
         // GLB upload and add id of uploaded file to postmeta  vrodos_asset3d_glb of asset
         if (strlen($_POST['glbFileInput']) > 0) {
-            $glbFile_id = vrodos_upload_AssetText(null, 'glb' . $assetTitle, $assetNewId,
+            $glbFile_id = vrodos_upload_AssetText(null, 'glb_' . $assetNewId . '_' . $assetCatId, $assetNewId,
                 $_FILES, 0, $projectId);
 
             update_post_meta($assetNewId, 'vrodos_asset3d_glb', $glbFile_id);

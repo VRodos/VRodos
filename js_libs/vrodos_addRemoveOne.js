@@ -516,20 +516,35 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
  *
  * @param nameToRemove
  */
-function deleterFomScene(nameToRemove) {
+function deleterFomScene(uuid) {
 
-    if (nameToRemove === "avatarCamera")
-        return;
+    let resChildren = Object.values(resources3D);
+    let envirChildren = Object.values(envir.scene.children);
 
-    delete resources3D[nameToRemove];
+    // 1. Delete object from js array (if it exists. Usually it is saved after reload)
+    for (let i in resChildren) {
+        if (typeof resChildren[i] === 'object' && resChildren[i] !== null) {
+            if (resChildren[i].uuid == uuid) {
+                delete resources3D[resChildren[i].name];
+            }
+        }
+    }
 
-    // Get object (Child)
-    var objectSelected = envir.scene.getObjectByName(nameToRemove);
+    // 2. Find actual object inside scene
+    var objectSelected;
+    for (let i in envirChildren) {
+        if (typeof envirChildren[i] === 'object' && envirChildren[i] !== null) {
+            if (envirChildren[i].uuid == uuid) {
+                objectSelected = envir.scene.getObjectByName(envirChildren[i].name);
+            }
+        }
+    }
+
 
     // remove animations
     isPaused = true;
     let filtered = envir.animationMixers.filter(function (el) {
-        return el._root.name !== nameToRemove;
+        return el._root.name !== objectSelected.name;
     });
     envir.animationMixers = filtered;
     isPaused = false;
@@ -538,16 +553,17 @@ function deleterFomScene(nameToRemove) {
     if (objectSelected.isLight) {
 
         // Sun Shadow Helper
-        envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + nameToRemove));
+        envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name));
 
         // Sun target spot
-        envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + nameToRemove));
+        envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name));
 
         // Sun target spot remove from hierarchy viewer
-        jQuery('#hierarchy-viewer').find('#' + "lightTargetSpot_" + nameToRemove).remove();
+        let target = "lightTargetSpot_" + objectSelected.name;
+        jQuery("[data-name='" +target +"']").remove();
 
         // Light Helper (for all lights)
-        envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + nameToRemove));
+        envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + objectSelected.name));
     }
 
     transform_controls.detach(objectSelected);
@@ -559,7 +575,7 @@ function deleterFomScene(nameToRemove) {
     envir.scene.remove(objectSelected);
 
     // Remove from hierarchy viewer
-    jQuery('#hierarchy-viewer').find('#' + nameToRemove).remove();
+    jQuery('#hierarchy-viewer').find('#' + uuid).remove();
 
     //transform_controls.detach();
 
@@ -582,30 +598,6 @@ function deleterFomScene(nameToRemove) {
 }
 
 
-
-
-// function makeProducerPlane(){
-//
-//     var geometry = new THREE.Geometry();
-//
-//     geometry.vertices.push(
-//         new THREE.Vector3( -50,  -50,  50 ),
-//         new THREE.Vector3( -50,  -50, -50 ),
-//         new THREE.Vector3(  50,  -50,  50 ),
-//         new THREE.Vector3(  50,  -50, -50 ),
-//     );
-//
-//     geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
-//     geometry.faces.push( new THREE.Face3( 1, 2, 3 ) );
-//
-//
-//     var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide, opacity: 0.5});
-//     material.opacity = 0.2;
-//     var plane = new THREE.Mesh( geometry, material );
-//
-//     return plane;
-//
-// }
 
 
 

@@ -62,7 +62,7 @@ class ParseJSON
 
                 $value->category_name = 'avatarYawObject';
                 $value->path = "";
-                $value->isLight = "false";
+                $value->isLight = false;
 
             } elseif (strpos($name, 'lightSun') !== false) {
 
@@ -80,7 +80,7 @@ class ParseJSON
                 //$value->lightintensity = 1;
 
                 $value->path = "";
-                $value->isLight = "true";
+                $value->isLight = true;
 
 
             } elseif (strpos($name, 'lightLamp') !== false) {
@@ -102,7 +102,7 @@ class ParseJSON
                 $value->lightdistance = 100;
 
                 $value->path = "";
-                $value->isLight = "true";
+                $value->isLight = true;
 
             } elseif (strpos($name, 'lightSpot') !== false) {
 
@@ -124,7 +124,7 @@ class ParseJSON
 
 
                 $value->path = "";
-                $value->isLight = "true";
+                $value->isLight = true;
 
             } elseif (strpos($name, 'lightAmbient') !== false) {
 
@@ -144,7 +144,7 @@ class ParseJSON
                 $light_color_b = $value->lightcolor[2];
 
                 $value->path = "";
-                $value->isLight = "true";
+                $value->isLight = true;
 
 
             } elseif (strpos($name, 'Pawn') !== false) {
@@ -160,7 +160,7 @@ class ParseJSON
                 $target_position_z = 0;
 
                 $value->path = "";
-                $value->isLight = "false";
+                $value->isLight = false;
 
 
             } else {
@@ -180,7 +180,7 @@ class ParseJSON
                 $r_y = $value->rotation[1];
                 $r_z = $value->rotation[2];
 
-                $value->isLight = "false";
+                $value->isLight = false;
             }
 
 

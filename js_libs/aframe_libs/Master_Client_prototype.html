@@ -26,7 +26,7 @@
 
     <script src="js/highlight_img.js"></script>
     <script src="js/img_panel.js"></script>
-    
+
 
     <script src="js/indicators_aframe.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
@@ -159,7 +159,7 @@
                 let videoPanel = document.querySelector(vid_panel_id);
                 let videoBorder = document.querySelector(video_border_id);
 
-                
+
 
 
                 let fsEl = document.querySelector("#ent_fs_" + data.id);
@@ -167,7 +167,7 @@
                 let exEl = document.querySelector("#ent_ex_" + data.id);
                 let titEl = document.querySelector("#ent_tit_" + data.id);
                 let backgroundEl = document.querySelector('#aframe-scene-container');
-                
+
                 let playerEl = document.querySelector('#player');
                 let rightHand = document.querySelector('#oculusRight');
                 //videoMesh.material.wireframe = true;
@@ -188,12 +188,12 @@
 
                 video.addEventListener("ended", (e) => {
                     playUpd(plEl);
-                    
+
                 })
 
                 function restoreVidPos(border, disp, panel) {
                     let offsetX = 20;
-                    
+
 
                     var curr_rot = border.getAttribute('rotation');
 
@@ -203,7 +203,7 @@
                         THREE.MathUtils.degToRad(0),
                         THREE.MathUtils.degToRad(0)
                     );
-                    
+
                     console.log(border);
 
                     console.log(border.getAttribute("original-scale"));
@@ -213,7 +213,7 @@
                         THREE.MathUtils.degToRad(data.orig_rot[1] * (180 / Math.PI)),
                         THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
                     );
-                    
+
 
 
                 }
@@ -226,7 +226,7 @@
 
 
                     let rotateB = videoBorder.getAttribute("rotation");
-       
+
 
                     let videoMesh = videoDisplay.getObject3D("mesh");
                     let borderMesh = videoBorder.getObject3D("mesh");
@@ -243,7 +243,7 @@
 
                     let screen_img_src = "#video_fullScreen_" + this.data;
                     let borderCords = videoBorder.getAttribute("position");
-            
+
                     restoreVidPos(videoBorder, videoDisplay, videoPanel);
 
 
@@ -265,7 +265,7 @@
                 //fsEl.object3D.position.set(0, 0, 0);
 
                 function addToCam(obj, non_visible, trans, opac) {
-                   
+
                     if (non_visible) {
                         obj.object3D.renderOrder = 9999999;
                         //clipIntersection
@@ -277,10 +277,10 @@
                         obj.setAttribute("scale", "1 1 1");
                         //obj.setAttribute("position", pos);
 
-                     
-               
 
-                
+
+
+
 
                     }
                     else {
@@ -370,7 +370,7 @@
                     cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
                     backgroundEl.setAttribute("background", "color", "black");
                     backgroundEl.setAttribute("overlay", "");
-                    
+
 
                     cam.add(videoBorder);
                     cam.add(videoDisplay);
@@ -391,23 +391,23 @@
 
                     }
                     for (let i = 0; i < entCollection.length; i++) {
-                        
-                        
-                        
+
+
+
                         console.log(videoDisplay);
                         console.log(entCollection[i]);
                         if (entCollection[i] !=videoDisplay){
                             entCollection[i].setAttribute("visible", "false");
                             console.log(entCollection[i].getAttribute("visible"));
                             entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
-                            
-                            
+
+
                         }
-                           
+
                         visCollection.push(i);
 
 
-                       
+
 
                     }
                     if (playerEl.getAttribute("wasd-controls")){
@@ -500,9 +500,9 @@
                         console.log(videoPanel.getAttribute("visible"));
                         playUpd(plEl);
 
-                        
-                    
-                    
+
+
+
                         if (video.paused) {
                             console.log("border clicked");
                         }
@@ -567,16 +567,16 @@
                     let cam = document.getElementById("player");
                     //this.el.emit("event1");
                     /*
-    
+
                     var entity_main = document.createElement('a-plane');
                     var title_main = document.createElement('a-text');
-    
+
                     var desc_main = document.createElement('a-text');
                     */
 
                     let entitycheck = document.getElementById(this.data.id_img);
                     if (!entitycheck) {
-                    
+
 
                         var entity_esc = document.createElement('a-plane');
 
@@ -596,15 +596,15 @@
                 });
 
                 this.el.addEventListener("img_open", e => {
-                 
+
                     console.log("Clicked");
                     removeEventListener('click', click_event, false);
-                    
+
                 });
                 this.el.addEventListener("animationcomplete", e => {
-                  
+
                     console.log("Animation completed");
-                  
+
                 });
             }
         });
@@ -660,7 +660,7 @@
             const movementSpeed = 0.1;
             cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
             cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
-            
+
 
             console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
             });
@@ -709,11 +709,7 @@
                     ⚪️
                 </button>
 
-                <button id="stop-recording-btn" class="buttonStopRecord" title="Save capture" disabled>
-                    ◼️
-                </button>
-
-                <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video" disabled>
+                <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video" style="visibility: hidden">
                     💾️️
                 </a>
 
@@ -1055,8 +1051,9 @@
 
         let record_button = document.getElementById('start-recording-btn');
         let video_preview = document.getElementById('video-preview');
-        let stop_button = document.getElementById('stop-recording-btn');
+
         let download_button = document.getElementById('download-recording-btn');
+        download_button.style.visibility = 'hidden';
         let upload_button = document.getElementById('upload-recording-btn');
         let capture_label = document.getElementById('captured-video-label');
         let recording = document.getElementById('recording');
@@ -1082,8 +1079,7 @@
         function stopRecording(stream) {
             stream.getTracks().forEach(track => track.stop());
             record_button.disabled = false;
-            stop_button.disabled = true;
-            download_button.disabled = false;
+            download_button.style.visibility = 'visible';
             upload_button.disabled = false;
         }
 
@@ -1104,7 +1100,7 @@
             }).then(stream => {
 
                 record_button.disabled = true;
-                stop_button.disabled = false;
+                download_button.style.visibility = 'hidden';
 
                 video_preview.style.display = 'block';
                 video_preview.srcObject = stream;
@@ -1122,6 +1118,7 @@
 
                     recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
                     recording.src = URL.createObjectURL(recordedBlob);
+                    download_button.style.visibility = 'visible';
                     download_button.href = recording.src;
                     download_button.download = "RecordedVideo.webm";
 
@@ -1130,10 +1127,6 @@
                         recordedBlob.type + " media.";
 
                 });
-        }, false);
-
-        stop_button.addEventListener("click", function () {
-            stopRecording(video_preview.srcObject);
         }, false);
 
         upload_button.addEventListener("click", function () {
@@ -1166,7 +1159,7 @@
                 }
             }).then(function (data) {
 
-                fetch(mv_url + '/dam/project/' + mv_project_id, {
+                fetch(mv_url + '/dam/project/' + mv_project_id + '/projectOutput', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',

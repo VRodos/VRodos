@@ -444,7 +444,7 @@ function vrodos_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $ty
 
 
 // Asset: Used to save screenshot
-function vrodos_upload_asset_screenshot($image, $imgTitle, $parentPostId, $projectId) {
+function vrodos_upload_asset_screenshot($image, $parentPostId, $projectId) {
 
     $DS = DIRECTORY_SEPARATOR;
 
@@ -466,7 +466,7 @@ function vrodos_upload_asset_screenshot($image, $imgTitle, $parentPostId, $proje
     // UPLOAD NEW FILE:
 
     // Generate a hashed filename in order to avoid overwrites for the same names
-    $hashed_filename = $parentPostId .'_'. $imgTitle.'_asset_screenshot.png';
+    $hashed_filename = $parentPostId .'_'. time() .'_asset_screenshot.png';
 
     // Remove all sizes of thumbnails creation procedure
     add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
