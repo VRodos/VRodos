@@ -403,7 +403,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_camera = $dom->createElement( "a-entity" );
             $a_camera->setAttribute( "camera", "near: 0.1; far: 7000.0;" );
             $a_camera->setAttribute( "id", "cameraA" );
-            $a_camera->setAttribute( "look-controls", "" );
+            // $a_camera->setAttribute( "look-controls", "" );
             // $a_camera->setAttribute( "near", "0.1" );
             // $a_camera->setAttribute( "far", "7000.0" );
 
@@ -418,7 +418,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_entity_oc_left->setAttribute( "oculus-touch-controls", "hand: left" );
 
             // $ascenePlayer->setAttribute( "camera", "" );
-            // $ascenePlayer->setAttribute( "look-controls", "" );
+            $ascenePlayer->setAttribute( "look-controls", "pointerLockEnabled: false" );
             $ascenePlayer->setAttribute( "wasd-controls", "acceleration:20" );
             $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:true;" );
 
