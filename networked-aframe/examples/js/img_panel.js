@@ -174,8 +174,11 @@ AFRAME.registerComponent('info-panel', {
         this.el.classList.remove("openPOI");
         this.el.object3D.visible = false;
         this.el.emit("resetmat");
-        this.playerEl.setAttribute("movement-controls", "speed: 10");
-        this.playerEl.setAttribute("look-controls", "enabled: true");
+        if (this.playerEl.getAttribute("wasd-controls")){
+            this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
+        }else
+            this.cam.setAttribute("wasd-controls-enabled", "true");
+        //this.playerEl.setAttribute("look-controls", "enabled: true");
 
         this.scen.setAttribute("raycaster","objects: .raycastable");
 
@@ -189,7 +192,7 @@ AFRAME.registerComponent('info-panel', {
         }
         this.TitleEl.components.text.material.depthTest = true;
 
-        this.cam.setAttribute("wasd-controls-enabled", "true");
+        ///this.cam.setAttribute("wasd-controls-enabled", "true");
 
 
     }
