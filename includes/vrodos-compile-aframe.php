@@ -420,13 +420,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             // $ascenePlayer->setAttribute( "camera", "" );
             // $ascenePlayer->setAttribute( "look-controls", "" );
             $ascenePlayer->setAttribute( "wasd-controls", "acceleration:20" );
-            // $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:true;" );
+            $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:true;" );
 
-            // $a_asset_avt = $dom->createElement( "a-assets" );
-            // $a_asset_avt->setAttribute("id", "avatar_glb");
-            // $a_asset_avt->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/goomba.glb");
+            $a_asset_avt = $dom->createElement( "a-assets" );
+            $a_asset_avt->setAttribute("id", "avatar_glb");
+            $a_asset_avt->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/goomba.glb");
 
-            // $ascene->appendChild( $a_asset_avt );
+            $ascene->appendChild( $a_asset_avt );
 
             // $a_assets = $dom->createElement( "a-assets" );
             // $a_asset_sph = $dom->createElement( "video" );
