@@ -13,34 +13,8 @@ const port = args[2] ? args[2] : 5832;
 
 fs.readFile(path.resolve(__dirname) + '/keys.json').then((keys) => {
 
-    // Do something with the data
+    // Turn servers are needed for mobile devices in public networks
     const myIceServers = [keys];
-/*    const myIceServers = [
-
-        // New ICE servers, subscription based.
-        {
-            urls: "turn:openrelay.metered.ca:80",
-            username: "openrelayproject",
-            credential: "openrelayproject",
-        /
-
-        // Turn servers are needed for mobile devices in public networks !!!!
-
-        // {"urls":"stun:openrelay.metered.ca:80"},
-        // {"urls":"stun.nextcloud.com:443"}
-        //  {"urls":"stun:stun1.l.google.com:19302"}
-        //{"urls":"stun:stun2.l.google.com:19302"},
-        // {
-        //   "urls":"turn:[ADDRESS]:[PORT]",
-        //   "username":"[USERNAME]",
-        //   "credential":"[CREDENTIAL]"
-        // },
-        // {
-        //   "urls":"turn:[ADDRESS]:[PORT][?transport=tcp]",
-        //   "username":"[USERNAME]",
-        //   "credential":"[CREDENTIAL]"
-        // }
-    ];*/
 
     // Set process name
     process.title = "networked-aframe-server-" +port;

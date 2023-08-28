@@ -38,12 +38,6 @@
 
 <script>
 
-    window.ntExample = {
-        randomColor: () => {
-            return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
-        }
-    };
-
     AFRAME.registerComponent('clear-frustum-culling', {
         init: function () {
             let el = this.el;
@@ -59,31 +53,29 @@
         }
     });
 
-        AFRAME.registerComponent('scene-settings', {
-            schema: {
-                color:{type: "string", default: "#ffffff"},
-                pr_type:{type: "string", default: "default"},
-                img_link:{type: "string", default: "no_link"},
-             },
-            init: function () {
-                console.log(this.data.pr_type);
+    AFRAME.registerComponent('scene-settings', {
+        schema: {
+            color:{type: "string", default: "#ffffff"},
+            pr_type:{type: "string", default: "default"},
+            img_link:{type: "string", default: "no_link"},
+        },
+        init: function () {
+            console.log(this.data.pr_type);
 
-                let cam = document.querySelector("#cameraA");
-                console.log(cam);
-                if (this.data.pr_type == "virtualproduction_games" || this.data.pr_type == "archaeology_games")
-                    cam.setAttribute("camera", "fov: 60");
-                else{
-                    cam.setAttribute("fov", "60");
-                    cam.setAttribute("camera", "fov: 60"); //temp based on camera settings
+            let cam = document.querySelector("#cameraA");
+            console.log(cam);
+            if (this.data.pr_type == "virtualproduction_games" || this.data.pr_type == "archaeology_games")
+                cam.setAttribute("camera", "fov: 60");
+            else{
+                cam.setAttribute("fov", "60");
+                cam.setAttribute("camera", "fov: 60"); //temp based on camera settings
 
-                }
-
-
-
-                let backgroundEl = document.querySelector('#aframe-scene-container');
-                backgroundEl.setAttribute("background", "color", this.data.color);
             }
-        });
+
+            let backgroundEl = document.querySelector('#aframe-scene-container');
+            backgroundEl.setAttribute("background", "color", this.data.color);
+        }
+    });
 
 
     AFRAME.registerComponent('static-mask-me', {
@@ -169,57 +161,57 @@
 
 
 
-                let fsEl = document.querySelector("#ent_fs_" + data.id);
-                let plEl = document.querySelector("#ent_pl_" + data.id);
-                let exEl = document.querySelector("#ent_ex_" + data.id);
-                let titEl = document.querySelector("#ent_tit_" + data.id);
-                let backgroundEl = document.querySelector('#aframe-scene-container');
+            let fsEl = document.querySelector("#ent_fs_" + data.id);
+            let plEl = document.querySelector("#ent_pl_" + data.id);
+            let exEl = document.querySelector("#ent_ex_" + data.id);
+            let titEl = document.querySelector("#ent_tit_" + data.id);
+            let backgroundEl = document.querySelector('#aframe-scene-container');
 
-                let playerEl = document.querySelector('#player');
-                let rightHand = document.querySelector('#oculusRight');
-                //videoMesh.material.wireframe = true;
-                let bcgCol = backgroundEl.getAttribute("scene-settings");
-                let cam = document.querySelector("#cameraA");
-                let camRig = document.querySelector("#camera-rig");
+            let playerEl = document.querySelector('#player');
+            let rightHand = document.querySelector('#oculusRight');
+            //videoMesh.material.wireframe = true;
+            let bcgCol = backgroundEl.getAttribute("scene-settings");
+            let cam = document.querySelector("#cameraA");
+            let camRig = document.querySelector("#camera-rig");
 
-                let media_panel = document.getElementById("mediaPanel");
-                let recording_controls = document.getElementById("upload-recording-btn");
+            let media_panel = document.getElementById("mediaPanel");
+            let recording_controls = document.getElementById("upload-recording-btn");
 
-                cam.add(videoPanel);
-
-
+            cam.add(videoPanel);
 
 
-                const entCollection = document.getElementsByClassName("hideable");
 
 
-                video.addEventListener("ended", (e) => {
-                    playUpd(plEl);
-
-                })
-
-                function restoreVidPos(border, disp, panel) {
-                    let offsetX = 20;
+            const entCollection = document.getElementsByClassName("hideable");
 
 
-                    var curr_rot = border.getAttribute('rotation');
+            video.addEventListener("ended", (e) => {
+                playUpd(plEl);
 
-                    //console.log(curr_rot);
-                    border.object3D.rotation.set(
-                        THREE.MathUtils.degToRad(0),
-                        THREE.MathUtils.degToRad(0),
-                        THREE.MathUtils.degToRad(0)
-                    );
+            })
 
-                    console.log(border);
+            function restoreVidPos(border, disp, panel) {
+                let offsetX = 20;
 
-                    console.log(border.getAttribute("original-scale"));
 
-                    border.object3D.rotation.set(
-                        THREE.MathUtils.degToRad(data.orig_rot[0] * (180 / Math.PI)),
-                        THREE.MathUtils.degToRad(data.orig_rot[1] * (180 / Math.PI)),
-                        THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
-                    );
+                var curr_rot = border.getAttribute('rotation');
+
+                //console.log(curr_rot);
+                border.object3D.rotation.set(
+                    THREE.MathUtils.degToRad(0),
+                    THREE.MathUtils.degToRad(0),
+                    THREE.MathUtils.degToRad(0)
+                );
+
+                console.log(border);
+
+                console.log(border.getAttribute("original-scale"));
+
+                border.object3D.rotation.set(
+                    THREE.MathUtils.degToRad(data.orig_rot[0] * (180 / Math.PI)),
+                    THREE.MathUtils.degToRad(data.orig_rot[1] * (180 / Math.PI)),
+                    THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
+                );
 
 
 
@@ -232,7 +224,7 @@
             backgroundEl.addEventListener('loaded', function () {
 
 
-                    let rotateB = videoBorder.getAttribute("rotation");
+                let rotateB = videoBorder.getAttribute("rotation");
 
 
                 let videoMesh = videoDisplay.getObject3D("mesh");
@@ -248,10 +240,10 @@
                 var box3 = new THREE.Box3();
                 var size = new THREE.Vector3(); // create once and reuse
 
-                    let screen_img_src = "#video_fullScreen_" + this.data;
-                    let borderCords = videoBorder.getAttribute("position");
+                let screen_img_src = "#video_fullScreen_" + this.data;
+                let borderCords = videoBorder.getAttribute("position");
 
-                    restoreVidPos(videoBorder, videoDisplay, videoPanel);
+                restoreVidPos(videoBorder, videoDisplay, videoPanel);
 
 
 
@@ -271,14 +263,14 @@
 
             //fsEl.object3D.position.set(0, 0, 0);
 
-                function addToCam(obj, non_visible, trans, opac) {
+            function addToCam(obj, non_visible, trans, opac) {
 
-                    if (non_visible) {
-                        obj.object3D.renderOrder = 9999999;
-                        //clipIntersection
-                        obj.components.material.material.depthTest = false;
-                        obj.components.material.material.transparent = trans;
-                        obj.components.material.material.opacity = opac;
+                if (non_visible) {
+                    obj.object3D.renderOrder = 9999999;
+                    //clipIntersection
+                    obj.components.material.material.depthTest = false;
+                    obj.components.material.material.transparent = trans;
+                    obj.components.material.material.opacity = opac;
 
                     obj.setAttribute("visible", "true");
                     obj.setAttribute("scale", "1 1 1");
@@ -354,73 +346,73 @@
                 else {
                     video.pause();
 
-                    }
-                    videoDisplay.classList.remove("non-clickable");
-                    videoPanel.classList.remove("non-clickable");
-                    backgroundEl.setAttribute("raycaster","objects: .raycastable");
-                    if(rightHand)
-                        rightHand.setAttribute("raycaster","objects: .raycastable");
-                });
+                }
+                videoDisplay.classList.remove("non-clickable");
+                videoPanel.classList.remove("non-clickable");
+                backgroundEl.setAttribute("raycaster","objects: .raycastable");
+                if(rightHand)
+                    rightHand.setAttribute("raycaster","objects: .raycastable");
+            });
 
 
 
-                fsEl.addEventListener("mouseup", function (event) {
-                    if (camRig)                                          //TODO change based on project type
-                        camRig.setAttribute("position", "0 0 0");
-                    else{
-                        cam.setAttribute("position", "0 0 0");
-                        media_panel.setAttribute( "style", 'visibility: hidden;' );
-                        recording_controls.setAttribute('style', 'visibility: hidden;');
-                    }
+            fsEl.addEventListener("mouseup", function (event) {
+                if (camRig)                                          //TODO change based on project type
+                    camRig.setAttribute("position", "0 0 0");
+                else{
+                    cam.setAttribute("position", "0 0 0");
+                    media_panel.setAttribute( "style", 'visibility: hidden;' );
+                    recording_controls.setAttribute('style', 'visibility: hidden;');
+                }
 
 
-                    cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
-                    backgroundEl.setAttribute("background", "color", "black");
-                    backgroundEl.setAttribute("overlay", "");
+                cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
+                backgroundEl.setAttribute("background", "color", "black");
+                backgroundEl.setAttribute("overlay", "");
 
 
-                    cam.add(videoBorder);
-                    cam.add(videoDisplay);
-                    videoBorder.setAttribute("height", "15");
-                    videoBorder.setAttribute("width", "20");
-                    videoDisplay.setAttribute("height", "15");
-                    videoDisplay.setAttribute("width", "20");
-                    videoBorder.setAttribute("position", "0 0 -25");
-                    videoDisplay.setAttribute("position", "0 0 -25");
-                    videoBorder.setAttribute("scale", "1 1 1");
-                    videoDisplay.setAttribute("scale", "1 1 1");
-                    videoBorder.setAttribute("rotation", "0 0 0");
-                    videoDisplay.setAttribute("rotation", "0 0 0");
-                    console.log(videoBorder);
+                cam.add(videoBorder);
+                cam.add(videoDisplay);
+                videoBorder.setAttribute("height", "15");
+                videoBorder.setAttribute("width", "20");
+                videoDisplay.setAttribute("height", "15");
+                videoDisplay.setAttribute("width", "20");
+                videoBorder.setAttribute("position", "0 0 -25");
+                videoDisplay.setAttribute("position", "0 0 -25");
+                videoBorder.setAttribute("scale", "1 1 1");
+                videoDisplay.setAttribute("scale", "1 1 1");
+                videoBorder.setAttribute("rotation", "0 0 0");
+                videoDisplay.setAttribute("rotation", "0 0 0");
+                console.log(videoBorder);
 
                 if (video.paused) {
                     video.play();
 
-                    }
-                    for (let i = 0; i < entCollection.length; i++) {
+                }
+                for (let i = 0; i < entCollection.length; i++) {
 
 
 
-                        console.log(videoDisplay);
-                        console.log(entCollection[i]);
-                        if (entCollection[i] !=videoDisplay){
-                            entCollection[i].setAttribute("visible", "false");
-                            console.log(entCollection[i].getAttribute("visible"));
-                            entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
+                    console.log(videoDisplay);
+                    console.log(entCollection[i]);
+                    if (entCollection[i] !=videoDisplay){
+                        entCollection[i].setAttribute("visible", "false");
+                        console.log(entCollection[i].getAttribute("visible"));
+                        entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
 
-
-                        }
-
-                        visCollection.push(i);
-
-
-                       
 
                     }
-                    if (playerEl.getAttribute("wasd-controls")){
-                        playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
-                    }else
-                        cam.setAttribute("wasd-controls-enabled", "false");
+
+                    visCollection.push(i);
+
+
+
+
+                }
+                if (playerEl.getAttribute("wasd-controls")){
+                    playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+                }else
+                    cam.setAttribute("wasd-controls-enabled", "false");
 
 
                 playUpd(plEl);
@@ -432,26 +424,26 @@
 
 
 
-                function restoreVid(){
-                    console.log("playing");
-                    //video.pause();
-                    if (camRig)
-                        camRig.setAttribute("position", "0 0.6 0");
-                    else{
-                        cam.setAttribute("position", "0 0.6 0");
-                        media_panel.setAttribute( "style", 'visibility: visible;' );        //TODO change based on project type
-                        recording_controls.setAttribute('style', 'visibility: visible;');
-                    }
+            function restoreVid(){
+                console.log("playing");
+                //video.pause();
+                if (camRig)
+                    camRig.setAttribute("position", "0 0.6 0");
+                else{
+                    cam.setAttribute("position", "0 0.6 0");
+                    media_panel.setAttribute( "style", 'visibility: visible;' );        //TODO change based on project type
+                    recording_controls.setAttribute('style', 'visibility: visible;');
+                }
 
-                    cam.setAttribute("camera", "fov", 60);
-                    //console.log(backgroundEl);
-                    let bcgCol = backgroundEl.getAttribute("scene-settings").color;
-                    console.log(bcgCol);
-                    backgroundEl.setAttribute("background", "color", bcgCol);
-                    //console.log(visCollection);
-                    //restoreVidPos(videoBorder, videoDisplay, videoPanel);
-                    for (let i = 0; i < visCollection.length; i++) {
-                        entCollection[visCollection[i]].setAttribute("visible", "true");
+                cam.setAttribute("camera", "fov", 60);
+                //console.log(backgroundEl);
+                let bcgCol = backgroundEl.getAttribute("scene-settings").color;
+                console.log(bcgCol);
+                backgroundEl.setAttribute("background", "color", bcgCol);
+                //console.log(visCollection);
+                //restoreVidPos(videoBorder, videoDisplay, videoPanel);
+                for (let i = 0; i < visCollection.length; i++) {
+                    entCollection[visCollection[i]].setAttribute("visible", "true");
 
                     console.log(entCollection[visCollection[i]].getAttribute("original-scale"));
 
@@ -460,49 +452,49 @@
 
                     //videoDisplay.setAttribute("position", origPosDisplay);
 
-                    }
-                   
-                    if (playerEl.getAttribute("wasd-controls")){
-                        playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
-                    }else
-                        cam.setAttribute("wasd-controls-enabled", "true");
-                    //playerEl.setAttribute("look-controls", "enabled: true");
-                    backgroundEl.add(videoBorder);
-                    backgroundEl.add(videoDisplay);
-                    let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
-                    let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-
-
-                    videoBorder.setAttribute("height", "3");
-                    videoBorder.setAttribute("width", "4");
-
-                    videoDisplay.setAttribute("height", "3");
-                    videoDisplay.setAttribute("width", "4");
-                    videoBorder.setAttribute("position", p_x);
-                    videoDisplay.setAttribute("position", p_x);
-                    videoBorder.setAttribute("scale", videoBorder.getAttribute("original-scale"));
-                    videoDisplay.setAttribute("scale", videoBorder.getAttribute("original-scale")); 
-
-                    videoBorder.setAttribute("rotation", r_x);
-                    videoDisplay.setAttribute("rotation", r_x);
-                    //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-                    console.log(videoBorder.getAttribute("rotation"));
-                    console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
-                    visCollection = [];
                 }
-                if (video.getAttribute("src")){
-                    videoBorder.addEventListener("mouseup", function (event) {
-                        addToCam(videoPanel, true, true, 1);
-                        addToCam(fsEl, true, true, 1);
-                        addToCam(plEl, true, true, 1);
-                        addToCam(exEl, true, true, 1);
-                        addToCamText(titEl, true, true, 1);
-                        //console.log(titEl.components);
-                        videoDisplay.classList.add("non-clickable");
-                        videoPanel.classList.add("non-clickable");
-                        backgroundEl.setAttribute("raycaster","objects: .non-clickable");
-                        if(rightHand)
-                            rightHand.setAttribute("raycaster","objects: .non-clickable");
+
+                if (playerEl.getAttribute("wasd-controls")){
+                    playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
+                }else
+                    cam.setAttribute("wasd-controls-enabled", "true");
+                //playerEl.setAttribute("look-controls", "enabled: true");
+                backgroundEl.add(videoBorder);
+                backgroundEl.add(videoDisplay);
+                let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
+                let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
+
+
+                videoBorder.setAttribute("height", "3");
+                videoBorder.setAttribute("width", "4");
+
+                videoDisplay.setAttribute("height", "3");
+                videoDisplay.setAttribute("width", "4");
+                videoBorder.setAttribute("position", p_x);
+                videoDisplay.setAttribute("position", p_x);
+                videoBorder.setAttribute("scale", videoBorder.getAttribute("original-scale"));
+                videoDisplay.setAttribute("scale", videoBorder.getAttribute("original-scale"));
+
+                videoBorder.setAttribute("rotation", r_x);
+                videoDisplay.setAttribute("rotation", r_x);
+                //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
+                console.log(videoBorder.getAttribute("rotation"));
+                console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
+                visCollection = [];
+            }
+            if (video.getAttribute("src")){
+                videoBorder.addEventListener("mouseup", function (event) {
+                    addToCam(videoPanel, true, true, 1);
+                    addToCam(fsEl, true, true, 1);
+                    addToCam(plEl, true, true, 1);
+                    addToCam(exEl, true, true, 1);
+                    addToCamText(titEl, true, true, 1);
+                    //console.log(titEl.components);
+                    videoDisplay.classList.add("non-clickable");
+                    videoPanel.classList.add("non-clickable");
+                    backgroundEl.setAttribute("raycaster","objects: .non-clickable");
+                    if(rightHand)
+                        rightHand.setAttribute("raycaster","objects: .non-clickable");
 
                     console.log(videoPanel.getAttribute("visible"));
                     playUpd(plEl);
@@ -510,13 +502,13 @@
 
 
 
-                        if (video.paused) {
-                            console.log("border clicked");
-                        }
-                        else if (video.play){
-                            //addToCam(videoPanel, "35 5 -25", false);
-                            restoreVid();
-                            //playUpd(plEl);
+                    if (video.paused) {
+                        console.log("border clicked");
+                    }
+                    else if (video.play){
+                        //addToCam(videoPanel, "35 5 -25", false);
+                        restoreVid();
+                        //playUpd(plEl);
 
                     }
                     if (video.ended){
@@ -569,20 +561,20 @@
 
 
 
-                let click_event = this.el.addEventListener("click", e => {
-                    this.el.emit("img_open");
-                    let cam = document.getElementById("player");
-                    //this.el.emit("event1");
-                    /*
+            let click_event = this.el.addEventListener("click", e => {
+                this.el.emit("img_open");
+                let cam = document.getElementById("player");
+                //this.el.emit("event1");
+                /*
 
-                    var entity_main = document.createElement('a-plane');
-                    var title_main = document.createElement('a-text');
+                var entity_main = document.createElement('a-plane');
+                var title_main = document.createElement('a-text');
 
-                    var desc_main = document.createElement('a-text');
-                    */
+                var desc_main = document.createElement('a-text');
+                */
 
-                    let entitycheck = document.getElementById(this.data.id_img);
-                    if (!entitycheck) {
+                let entitycheck = document.getElementById(this.data.id_img);
+                if (!entitycheck) {
 
 
                     var entity_esc = document.createElement('a-plane');
@@ -602,19 +594,19 @@
                 }
             });
 
-                this.el.addEventListener("img_open", e => {
+            this.el.addEventListener("img_open", e => {
 
-                    console.log("Clicked");
-                    removeEventListener('click', click_event, false);
+                console.log("Clicked");
+                removeEventListener('click', click_event, false);
 
-                });
-                this.el.addEventListener("animationcomplete", e => {
+            });
+            this.el.addEventListener("animationcomplete", e => {
 
-                    console.log("Animation completed");
+                console.log("Animation completed");
 
-                });
-            }
-        });
+            });
+        }
+    });
 
     AFRAME.registerComponent('left-thumbstick', {
         init: function () {
@@ -663,10 +655,10 @@
                 // Calculate movement direction based on camera rotation
                 const direction = new THREE.Vector3(-Math.sin(angleY), 0, -Math.cos(angleY));
 
-            // Apply movement to the camera rig's position
-            const movementSpeed = 0.1;
-            cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
-            cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
+                // Apply movement to the camera rig's position
+                const movementSpeed = 0.1;
+                cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
+                cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
 
 
                 console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
@@ -674,63 +666,19 @@
         }
     });
 
-    AFRAME.registerComponent('player-info', {
-        // notice that color and name are both listed in the schema; NAF will only keep
-        // properties declared in the schema in sync.
-        schema: {
-            name: { type: 'string', default: 'user-' + Math.round(Math.random() * 10000) },
-            color: {
-                type: 'color', // btw: color is just a string under the hood in A-Frame
-                default: window.ntExample.randomColor()
-            }
-        },
-
-        init: function () {
-            this.head = this.el.querySelector('.head');
-            this.nametag = this.el.querySelector('.nametag');
-
-            this.ownedByLocalUser = this.el.id === 'player';
-            if (this.ownedByLocalUser) {
-                // populate the html overlay with the correct name on init
-                this.nametagInput = document.getElementById('username-overlay');
-                this.nametagInput.value = this.data.name;
-
-                // add the initial color to the html overlay color picker button
-                document.querySelector('button').style.backgroundColor = this.data.color;
-                document.querySelector('button').style.color = this.data.color;
-            }
-        },
-
-        // here as an example, not used in current demo. Could build a user list, expanding on this.
-        listUsers: function () {
-            console.log(
-                'userlist',
-                [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.name)
-            );
-        },
-
-        newRandomColor: function () {
-            this.el.setAttribute('player-info', 'color', window.ntExample.randomColor());
-        },
-
-        update: function () {
-            if (this.head) this.head.setAttribute('material', 'color', this.data.color);
-            if (this.nametag) this.nametag.setAttribute('value', this.data.name);
-        }
-    });
 
 
 </script>
 
-    <div id="mediaPanel">
-        <div class="wrapperVideoElement" style="visibility: hidden">
-            <video id="video-preview" width="300" height="200" autoplay muted></video>
-            <video id="recording" hidden></video>
-        </div>
+<div id="mediaPanel">
+    <div class="wrapperVideoElement" style="visibility: hidden">
+        <video id="video-preview" width="300" height="200" autoplay muted></video>
+        <video id="recording" hidden></video>
+    </div>
 
-        <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-            <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
-            <div id="directorline" style=""></div>
+    <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
+        <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
+        <div id="directorline" style=""></div>
 
 
         <div class="wrapperControlElement">
@@ -750,22 +698,22 @@
             </button>
         </div>
 
-            <div class="wrapperControlElement" >
-                <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
-                    &#127909; &#9654; &#128101;
-                </button>
-            </div>
+        <div class="wrapperControlElement" >
+            <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
+                &#127909; &#9654; &#128101;
+            </button>
+        </div>
 
-            <div class="wrapperControlLineElement">
-                <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
-                    ⚪️
-                </button>
+        <div class="wrapperControlLineElement">
+            <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
+                ⚪️
+            </button>
 
-                <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video" style="visibility: hidden">
-                    💾️️
-                </a>
+            <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video" style="visibility: hidden">
+                💾️️
+            </a>
 
-                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden;"
+            <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden;"
                     title="Upload Recording to MediaVerse" disabled>
                 ⬆️️️
             </button>
@@ -786,21 +734,6 @@
 </div>
 
 
-<button id="color-changer"
-        style="z-index: 100; bottom: 24px; left: 24px; position: fixed"
-        onclick="let newColor = window.ntExample.randomColor();
-             document.getElementById('player').setAttribute('player-info', 'color', newColor);
-             document.querySelector('button').style.backgroundColor = newColor;
-             document.querySelector('button').style.color = newColor;
-    ">
-    ■
-</button>
-
-<input  id="username-overlay"
-        style="z-index: 100; bottom: 24px; left: 48px; position: fixed"
-        oninput="document.getElementById('player').setAttribute('player-info', 'name', this.value)"
-/>
-
 
 <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
          renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
@@ -814,33 +747,6 @@
 
 
     <a-assets>
-
-        <template id="rig-template">
-            <a-entity></a-entity>
-        </template>
-        <template id="head-template">
-            <a-entity class="avatar" player-info>
-                <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
-                <a-entity class="face" position="0 0.05 0">
-                    <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04">
-                        <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
-                    </a-sphere>
-                    <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
-                        <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
-                    </a-sphere>
-                </a-entity>
-
-                <!-- here we add a text component for a nametag; the value will be updated by the player-info component -->
-                <a-text
-                        class="nametag"
-                        value="?"
-                        rotation="0 180 0"
-                        position=".25 -.35 0"
-                        side="double"
-                        scale=".5 .5 .5"
-                ></a-text>
-            </a-entity>
-        </template>
 
         <!-- Avatar Template -->
         <template id="avatar-template">
@@ -858,44 +764,44 @@
                          render-order-change="2000">
                 </a-plane>
 
-                    <a-plane id="screenPlane"
-                            color="#FFF"
-                            width="0"
-                            height="0"
-                            position="0 0.6 -0.15"
-                            material="side: double"
-                            networked-video-source="streamName:screen">
-                    </a-plane>
-                </a-entity>
-            </template>
+                <a-plane id="screenPlane"
+                         color="#FFF"
+                         width="0"
+                         height="0"
+                         position="0 0.6 -0.15"
+                         material="side: double"
+                         networked-video-source="streamName:screen">
+                </a-plane>
+            </a-entity>
+        </template>
 
-            <template id="avatar-template-expo">
-                <a-entity class="avatar">
-                    <!-- <a-entity position="0 -0.5 0" class="model" gltf-model="#avatar_glb"></a-entity> -->
-                    <a-sphere class="head" visible="true"  random-color> </a-sphere>
-                </a-entity>
-            </template>
+        <template id="avatar-template-expo">
+            <a-entity class="avatar">
+                <!-- <a-entity position="0 -0.5 0" class="model" gltf-model="#avatar_glb"></a-entity> -->
+                <a-sphere class="head" visible="true"  random-color> </a-sphere>
+            </a-entity>
+        </template>
 
-            <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: black; shader: flat"></a-mixin>
-            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: white; shader: flat"
-                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
-                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
-            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
-                material="color: white; shader: flat" material="shader: flat" position="0 0 0.005"></a-mixin>
-            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.5; height: 0.81"
-                material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin>
-            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5"
-                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
-            <a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2"
-                material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
-        </a-assets>
+        <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                 material="color: black; shader: flat"></a-mixin>
+        <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                 material="color: white; shader: flat"
+                 animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
+                 animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
+        <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
+                 material="color: white; shader: flat" material="shader: flat" position="0 0 0.005"></a-mixin>
+        <a-mixin id="poiImage" geometry="primitive: plane; width: 1.5; height: 0.81"
+                 material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin>
+        <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5"
+                 material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
+        <a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2"
+                 material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
+    </a-assets>
 
 
-        <!-- Pawn -->
-        <a-entity id="player">
-        </a-entity>
+    <!-- Pawn -->
+    <a-entity id="player">
+    </a-entity>
 
 
 </a-scene>
@@ -1105,26 +1011,26 @@
         }
     });
 
-        /* Define custom schema for syncing avatar color, set by random-color */
-        NAF.schemas.add({
-            template: '#avatar-template',
-            components: [
-                'position',
-                'rotation'
-            ],
-        });
+    /* Define custom schema for syncing avatar color, set by random-color */
+    NAF.schemas.add({
+        template: '#avatar-template',
+        components: [
+            'position',
+            'rotation'
+        ],
+    });
 
-        NAF.schemas.add({
-            template: '#avatar-template-expo',
-            components: [
-                'position',
-                'rotation',
-                {
-                    selector: '.model',
-                    component: 'gltf-model'
-                }
-            ]
-        });
+    NAF.schemas.add({
+        template: '#avatar-template-expo',
+        components: [
+            'position',
+            'rotation',
+            {
+                selector: '.model',
+                component: 'gltf-model'
+            }
+        ]
+    });
 
     /* Called by Networked-Aframe when connected to server */
     function onConnect() {
