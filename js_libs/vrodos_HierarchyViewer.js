@@ -18,7 +18,7 @@ function resetInScene(name){
 function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML){
 
     jQuery('#hierarchy-viewer').append(
-        '<li class="hierarchyItem mdc-list-item" id="' + obj.uuid + '">' +
+        '<li class="hierarchyItem mdc-list-item" id="' + obj.uuid + '" data-name="' +obj.name+'">' +
         '<a href="javascript:void(0);" class="hierarchyItem mdc-list-item" ' +
         'style="font-size: 9pt; line-height:12pt" ' +
         'data-mdc-auto-init="MDCRipple" title="'+ obj.title +'" onclick="onMouseDoubleClickFocus(event,\'' + obj.uuid + '\')">' +

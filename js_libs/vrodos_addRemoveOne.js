@@ -559,7 +559,8 @@ function deleterFomScene(uuid) {
         envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name));
 
         // Sun target spot remove from hierarchy viewer
-        jQuery('#hierarchy-viewer').find('#' + "lightTargetSpot_" + objectSelected.name).remove();
+        let target = "lightTargetSpot_" + objectSelected.name;
+        jQuery("[data-name='" +target +"']").remove();
 
         // Light Helper (for all lights)
         envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + objectSelected.name));
