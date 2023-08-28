@@ -67,6 +67,7 @@
                     cam.setAttribute("camera", "fov: 60");
                 else{
                     cam.setAttribute("fov", "60");
+                    cam.setAttribute("camera", "fov: 60"); //temp based on camera settings
                     
                 }
 
@@ -428,7 +429,7 @@
                     console.log("playing");
                     //video.pause();
                     if (camRig)
-                        camRig.setAttribute("position", "0 1.6 0");
+                        camRig.setAttribute("position", "0 0.6 0");
                     else{
                         cam.setAttribute("position", "0 0.6 0");
                         media_panel.setAttribute( "style", 'visibility: visible;' );        //TODO change based on project type
@@ -437,7 +438,8 @@
 
                     cam.setAttribute("camera", "fov", 60);
                     //console.log(backgroundEl);
-                    let bcgCol = backgroundEl.getAttribute("scene-settings");
+                    let bcgCol = backgroundEl.getAttribute("scene-settings").color;
+                    console.log(bcgCol);
                     backgroundEl.setAttribute("background", "color", bcgCol);
                     //console.log(visCollection);
                     //restoreVidPos(videoBorder, videoDisplay, videoPanel);
@@ -453,7 +455,10 @@
 
                     }
                    
-                    cam.setAttribute("wasd-controls-enabled", "true");
+                    if (playerEl.getAttribute("wasd-controls")){
+                        playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
+                    }else
+                        cam.setAttribute("wasd-controls-enabled", "true");
                     //playerEl.setAttribute("look-controls", "enabled: true");
                     backgroundEl.add(videoBorder);
                     backgroundEl.add(videoDisplay);
@@ -743,6 +748,8 @@
         adapter: easyrtc;
        " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
 
+       
+
 
         <a-assets>
             <!-- Avatar Template -->
@@ -774,8 +781,7 @@
 
             <template id="avatar-template-expo">
                 <a-entity class="avatar">
-                    <a-sphere class="head" visible="true" random-color>
-                    </a-sphere>
+                    <a-entity position="0 -0.5 0" class="model" gltf-model="#avatar_glb"></a-entity>
                 </a-entity>
             </template>
 
@@ -794,6 +800,7 @@
             <a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2"
                 material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
         </a-assets>
+    
 
         <!-- Pawn -->
         <a-entity id="player">
@@ -1022,7 +1029,11 @@
             template: '#avatar-template-expo',
             components: [
                 'position',
-                'rotation'
+                'rotation',
+                {
+                    selector: '.model',
+                    component: 'gltf-model'
+                }
             ]
         });
 

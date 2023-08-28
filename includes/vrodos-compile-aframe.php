@@ -371,7 +371,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         // $a_asset_sky = $dom->createElement( "img" );
         // $a_asset_sky->setAttribute("id", "custom_sky");
-        // $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/sky.jpg");
+        // $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_1k.hdr");
 
         // $a_entity_sky = $dom->createElement( "a-sky" );
         // $a_entity_sky->setAttribute("id", "sky");
@@ -395,7 +395,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         if ($projectType == 'vrexpo_games') {
             $a_entity_expo = $dom->createElement( "a-entity" );
             $a_entity_expo->setAttribute( "id", "camera-rig" );
-            $a_entity_expo->setAttribute( "position", "0 1.6 0" );
+            $a_entity_expo->setAttribute( "position", "0 0.6 0" );
             $a_entity_expo->setAttribute( "custom-movement", "" );
             $a_entity_expo->setAttribute( "show-position", "" );
             //$a_entity_expo->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false;" );
@@ -419,10 +419,30 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             // $ascenePlayer->setAttribute( "camera", "" );
             // $ascenePlayer->setAttribute( "look-controls", "" );
-            $ascenePlayer->setAttribute( "wasd-controls", "" );
-            $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false;" );
+            $ascenePlayer->setAttribute( "wasd-controls", "acceleration:20" );
+            // $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:true;" );
 
-            
+            // $a_asset_avt = $dom->createElement( "a-assets" );
+            // $a_asset_avt->setAttribute("id", "avatar_glb");
+            // $a_asset_avt->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/goomba.glb");
+
+            // $ascene->appendChild( $a_asset_avt );
+
+            // $a_assets = $dom->createElement( "a-assets" );
+            // $a_asset_sph = $dom->createElement( "video" );
+            // $a_asset_sph->setAttribute("id", "sphere");
+            // $a_asset_sph->setAttribute("autoplay", "");
+            // $a_asset_sph->setAttribute("loop", "true");
+            // $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/MM_Demo.mp4");
+
+            // $a_assets->appendChild( $a_asset_sph );
+            // $ascene->appendChild( $a_assets );
+
+            // $a_asset_sph = $dom->createElement( "a-videosphere" );
+            // $a_asset_sph->setAttribute("src",  "#sphere");
+
+            // $ascene->appendChild( $a_asset_sph );
+
             $a_entity_expo->appendChild( $a_camera );
             $a_entity_expo->appendChild( $a_entity_oc_right );
             $a_entity_expo->appendChild( $a_entity_oc_left );
@@ -433,7 +453,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $ascenePlayer->setAttribute( "position", "0 0.6 0" );
             $ascenePlayer->setAttribute( "networked", "template:#avatar-template;attachTemplateToLocal:false;" );
             $ascenePlayer->setAttribute( "show-position", "" );
-            $ascenePlayer->setAttribute( "wasd-controls", "fly:false; acceleration:10" );
+            $ascenePlayer->setAttribute( "wasd-controls", "fly:false; acceleration:20" );
             $ascenePlayer->setAttribute( "look-controls", "pointerLockEnabled: false" );
 
             $a_entity = $dom->createElement( "a-entity" );
@@ -703,7 +723,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $sc_z = $contentObject->scale[2];
                 $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                 //$a_entity->setAttribute("camera-listener", "");
-                $a_entity->setAttribute("class", "clickable raycastable");
+                $a_entity->setAttribute("class", "clickable hideable raycastable");
 
 
                 $a_entity_fs = $dom->createElement("a-plane");
