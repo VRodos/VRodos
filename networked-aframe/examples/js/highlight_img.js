@@ -5,7 +5,7 @@ AFRAME.registerComponent('highlight', {
         this.backgroundEl = document.querySelector('#exit_' + this.data);
         this.buttonEl = document.querySelector('#button_poi_' + this.data);
         if (this.buttonEl == null) {
-            this.buttonEl = document.querySelector('#' + this.data);
+            this.buttonEl = document.querySelector('#entity_' + this.data);
             console.log(this.buttonEl);
         }
         this.onClick = this.onClick.bind(this);

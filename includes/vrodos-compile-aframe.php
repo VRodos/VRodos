@@ -622,7 +622,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $fileOperations->setMaterial( $material, $contentObject );
                 $fileOperations->setAffineTransformations( $a_entity, $contentObject );
                 $a_entity->setAttribute( "class", "override-materials raycastable hideable" );
-                $a_entity->setAttribute( "id", $uuid );
+                $a_entity->setAttribute( "id", "entity_$uuid" );  //in order to be highlightable it has to be formatted entity_id
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
@@ -795,7 +795,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $ascenePlayer->appendChild($a_entity_panel);
                 //$a_entity_panel->setAttribute("overlay", "");
 
-//$a_entity_panel->setAttribute("renderOrder", "9999999");
+                //$a_entity_panel->setAttribute("renderOrder", "9999999");
                 //$a_entity_panel->setAttribute("visible", "false");
                 //$a_entity_panel->setAttribute("scale", "0.00001 0.000001 0.000001");
 
@@ -857,7 +857,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $fileOperations->setMaterial( $material, $contentObject );
                 $fileOperations->setAffineTransformations( $a_entity, $contentObject );                     //TODO: Include glb in the beginning, update to proper cat name
                 //$a_entity->setAttribute( "class", "" );
-                $a_entity->setAttribute( "id", $uuid );
+                $a_entity->setAttribute( "id", "entity_$uuid" );
                 $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                 $a_entity->setAttribute( "material", $material );
                 $a_entity->setAttribute( "clear-frustum-culling", "" );
