@@ -85,15 +85,10 @@
                 <div class="progressSliderSubLine progressDecrease"></div>
             </div>
 
-
             <div id="compilationProgressText" class="CenterContents mdc-typography--title"></div>
+            <div id="previewApp" class="previewApp" style="display:inline-block"></div>
 
-            <div id="previewApp" class="previewApp" style="display:inline-block">
-
-            </div>
-
-            <div class="" id="appResultDiv" style="margin-top:20px;display:none">
-                <!--                <a class="mdc-typography--title" href="" id="vrodos-ziplink" style="display:none;"> <i style="vertical-align: text-bottom" class="material-icons">file_download</i> Download Zip</a>-->
+            <div id="appResultDiv" style="margin-top:20px;display:none">
 
 
                 <a class="mdc-typography--title" href="" id="vrodos-weblink" style="margin-left:30px" target="_blank">Web link</a>
@@ -108,7 +103,6 @@
                     <i class="material-icons" style="cursor: pointer; float: right;">content_copy</i></button>
 
                 <a id="openWebLinkhref" href="https://google.com" title="open index.html in a new full window" target="_blank" style="color:darkslateblue" onclick="jQuery('#compileCancelBtn')[0].click();">Open link</a>
-
 
 
             </div>

@@ -1,3 +1,4 @@
+
 function vrodos_compileAjax(showPawnPositions) {
 
     // In which platform to compile, e.g. Aframe
@@ -84,9 +85,9 @@ function vrodos_compileAjax(showPawnPositions) {
                     iframe.src = urlAddress;
                 }
 
-                previewerConstruct(urlExperienceSequence["index"], "iFramePreviewAframeIndex", "Index");
-                previewerConstruct(urlExperienceSequence["MasterClient"], "iFramePreviewAframeMasterClient", "Director");
-                previewerConstruct(urlExperienceSequence["SimpleClient"],"iFramePreviewAframeSimpleClient", "Actor");
+                //previewerConstruct(urlExperienceSequence["index"], "iFramePreviewAframeIndex", "Index");
+                //previewerConstruct(urlExperienceSequence["MasterClient"], "iFramePreviewAframeMasterClient", "Director");
+                //previewerConstruct(urlExperienceSequence["SimpleClient"],"iFramePreviewAframeSimpleClient", "Actor");
 
                 jQuery("#appResultDiv").show();
                 jQuery("#vrodos-weblink")[0].href=urlExperienceSequence["index"];

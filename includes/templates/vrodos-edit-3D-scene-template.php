@@ -48,6 +48,8 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_style('vrodos_datgui');
     wp_enqueue_style('vrodos_3D_editor');
     wp_enqueue_style('vrodos_3D_editor_browser');
+
+    wp_enqueue_script('vrodos_html2canvas');
 }
 add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
 

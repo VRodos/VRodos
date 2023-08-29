@@ -78,7 +78,7 @@
                 this.head = this.el.querySelector('.head');
                 this.nametag = this.el.querySelector('.nametag');
 
-                this.ownedByLocalUser = this.el.id === 'player';
+                this.ownedByLocalUser = this.el.id === 'cameraA';
                 if (this.ownedByLocalUser) {
                     // populate the html overlay with the correct name on init
                     this.nametagInput = document.getElementById('username-overlay');
@@ -749,7 +749,7 @@
         id="color-changer"
         style="z-index: 100; bottom: 24px; left: 24px; position: fixed"
         onclick="let newColor = window.ntExample.randomColor();
-             document.getElementById('player').setAttribute('player-info', 'color', newColor);
+             document.getElementById('camera-rig').setAttribute('player-info', 'color', newColor);
              document.querySelector('button').style.backgroundColor = newColor;
              document.querySelector('button').style.color = newColor;
     "
@@ -759,8 +759,9 @@
 <input
         id="username-overlay"
         style="z-index: 100; bottom: 24px; left: 48px; position: fixed"
-        oninput="document.getElementById('player').setAttribute('player-info', 'name', this.value)"
+        oninput="document.getElementById('camera-rig').setAttribute('player-info', 'name', this.value)"
 />
+
 
 <div id="mediaPanel">
     <div class="wrapperVideoElement" style="visibility: hidden">
@@ -829,48 +830,17 @@
 
 <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
          renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
-         vr-mode-ui="enabled: true" networked-scene="
-        room: roomname;
-        debug: true;
-        audio: true;
-        adapter: easyrtc;
+         vr-mode-ui="enabled: true"
+         networked-scene="
+            room: roomname;
+            debug: true;
+            audio: true;
+            adapter: easyrtc;
        " environment="ground:none" cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
-
-
 
     <a-assets>
 
-        <template id="rig-template">
-            <a-entity></a-entity>
-        </template>
-
         <!-- Avatar Template -->
-        <template id="avatar-template">
-            <a-entity class="avatar"
-                      networked-audio-source>
-
-                <a-plane id="videoPlaneGreen"
-                         class="videoPlaneGreenClass"
-                         color="#FFF"
-                         width="1"
-                         height="0.75"
-                         position="0 0.6 -0.15"
-                         material="side: double"
-                         networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
-                         render-order-change="2000">
-                </a-plane>
-
-                <a-plane id="screenPlane"
-                         color="#FFF"
-                         width="0"
-                         height="0"
-                         position="0 0.6 -0.15"
-                         material="side: double"
-                         networked-video-source="streamName:screen">
-                </a-plane>
-            </a-entity>
-        </template>
-
         <template id="avatar-template-expo">
             <a-entity class="avatar" player-info>
                 <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
@@ -911,16 +881,6 @@
                  material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
     </a-assets>
 
-    <a-entity id="rig" movement-controls="fly:true;" spawn-in-circle="radius:3" networked="template:#rig-template;">
-        <a-entity
-                id="player"
-                camera
-                position="0 1.6 0"
-                look-controls
-                networked="template:#avatar-template-expo;"
-                visible="false"
-        ></a-entity>
-    </a-entity>
 
     <!-- Pawn -->
     <a-entity id="player">
@@ -1134,16 +1094,18 @@
         }
     });
 
-    /* Define custom schema for syncing avatar color, set by random-color */
+    // NOT NEEDED: avatar-template uses webcam so no color.
+    /*/!* Define custom schema for syncing avatar color, set by random-color *!/
     NAF.schemas.add({
         template: '#avatar-template',
         components: [
             'position',
             'rotation'
         ],
-    });
+    });*/
 
-    NAF.schemas.add({
+    // In comments because right now we set the color from another function
+    /*NAF.schemas.add({
         template: '#avatar-template-expo',
         components: [
             'position',
@@ -1153,7 +1115,7 @@
                 component: 'gltf-model'
             }
         ]
-    });
+    });*/
 
     /* Called by Networked-Aframe when connected to server */
     function onConnect() {
