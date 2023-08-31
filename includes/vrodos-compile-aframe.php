@@ -404,7 +404,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_camera->setAttribute( "camera", "near: 0.1; far: 7000.0;" );
             $a_camera->setAttribute( "id", "cameraA" );
             //$a_camera->setAttribute( "networked", "template:#avatar-template-expo;" );
-            $a_camera->setAttribute( "visible", "false" ); // So you dont see your avatar
             // $a_camera->setAttribute( "look-controls", "" );
             // $a_camera->setAttribute( "near", "0.1" );
             // $a_camera->setAttribute( "far", "7000.0" );
