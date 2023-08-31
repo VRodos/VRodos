@@ -75,7 +75,28 @@ Two types of servers are needed:
         - Create a free account.
         - On your dashboard create an App.
         - Add Credential, then on the created entry click on Instructions.
-        - Copy all objects from array into a json file called `keys.json` and save the file in folder `networked-aframe/server` 
+        - Create a `keys.json` file inside folder `networked-aframe/server` and add all objects from array into the json file like this:
+
+       ```
+        {
+            "iceServers": [
+            {
+                "urls": "stun:stun.relay.metered.ca:80"
+            },
+            {
+                "urls": "turn:a.relay.metered.ca:80",
+                "username": "*********",
+                "credential": "******"
+            },
+            {
+                "urls": "turn:a.relay.metered.ca:80?transport=tcp",
+                "username": "******",
+                "credential": "******"
+            },
+            ...
+            ]
+        }
+        ```
 
     3) Run server using a port number you want, or leave it blank for default port (5832):
        > node .\easyrtc-server.js port_number
