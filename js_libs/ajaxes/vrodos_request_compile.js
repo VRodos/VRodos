@@ -56,38 +56,28 @@ function vrodos_compileAjax(showPawnPositions) {
                     'Finished'
                 );
 
-                function previewerConstruct(urlAddress, iFrameId, captionText){
+                function createLinks(url, captionText){
 
                     let compile_dialogue_div = document.getElementById("previewApp");
 
-                    // Preview Index
-                    let iframe = compile_dialogue_div.children[iFrameId];
+                    let section = document.createElement('div');
 
-                    if (!iframe) {
-                        iframe = document.createElement('iframe');
-                        iframe.style.background = "yellowBright";
-                        iframe.style.width = "320px";
-                        iframe.style.height = "200px";
-                        iframe.style.margin = "auto";
-                        iframe.style.border = "1px solid black";
-                        iframe.style.marginLeft = "10px";
-                        iframe.setAttribute('id', iFrameId); // assign an id
+                    let title = document.createElement('span');
+                    title.innerText = captionText +': ';
+                    section.append(title);
 
-                        caption_iframe = document.createElement('span');
-                        caption_iframe.setAttribute("class", "captioniframe");
-                        caption_iframe.innerText = captionText;
 
-                        compile_dialogue_div.append(caption_iframe);
+                    let link = document.createElement('a');
+                    link.innerText = url;
+                    link.href = url;
+                    section.append(link);
 
-                        compile_dialogue_div.append(iframe);
-                    }
-
-                    iframe.src = urlAddress;
+                    compile_dialogue_div.append(section);
                 }
 
-                //previewerConstruct(urlExperienceSequence["index"], "iFramePreviewAframeIndex", "Index");
-                //previewerConstruct(urlExperienceSequence["MasterClient"], "iFramePreviewAframeMasterClient", "Director");
-                //previewerConstruct(urlExperienceSequence["SimpleClient"],"iFramePreviewAframeSimpleClient", "Actor");
+                createLinks(urlExperienceSequence["index"], "Index");
+                createLinks(urlExperienceSequence["MasterClient"], "Director");
+                createLinks(urlExperienceSequence["SimpleClient"],"Actor");
 
                 jQuery("#appResultDiv").show();
                 jQuery("#vrodos-weblink")[0].href=urlExperienceSequence["index"];

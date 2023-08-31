@@ -41,8 +41,6 @@
                         ?>
                     </ul>
                 </div>
-
-
             </div>
             <input id="platformInput" type="hidden" value="platform-Aframe">
 
@@ -55,9 +53,9 @@
                        style="padding: 2px;display: inline-block; text-align: left; margin-left:15px;"/>
             </div>-->
 
-            <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background" style="float: left; margin-top:60px; margin-bottom:30px">
+            <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background" style="float: right;">
                 <i title="Instructions" class="material-icons AlignIconToBottom">help</i>
-                Click on "Proceed" in order to build the output project scene
+                Click on "Build" in order to construct the Virtual world.
             </div>
 
             <div class="mdc-typography--caption mdc-theme--text-primary-on-background"
@@ -65,8 +63,6 @@
                 <i title="Memory Usage" class="material-icons AlignIconToBottom">memory</i>
                 <span  id="unityTaskMemValue">0</span> KB
             </div>
-
-
 
             <hr class="WhiteSpaceSeparator">
 
@@ -86,10 +82,10 @@
             </div>
 
             <div id="compilationProgressText" class="CenterContents mdc-typography--title"></div>
+
             <div id="previewApp" class="previewApp" style="display:inline-block"></div>
 
             <div id="appResultDiv" style="margin-top:20px;display:none">
-
 
                 <a class="mdc-typography--title" href="" id="vrodos-weblink" style="margin-left:30px" target="_blank">Web link</a>
 
