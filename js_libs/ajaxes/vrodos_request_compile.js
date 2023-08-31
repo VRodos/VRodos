@@ -56,9 +56,10 @@ function vrodos_compileAjax(showPawnPositions) {
                     'Finished'
                 );
 
-                function createLinks(url, captionText){
+                let compile_dialogue_div = document.getElementById("previewApp");
+                compile_dialogue_div.innerHTML = "";
 
-                    let compile_dialogue_div = document.getElementById("previewApp");
+                function createLinks(url, captionText){
 
                     let section = document.createElement('div');
 
@@ -66,10 +67,10 @@ function vrodos_compileAjax(showPawnPositions) {
                     title.innerText = captionText +': ';
                     section.append(title);
 
-
                     let link = document.createElement('a');
                     link.innerText = url;
-                    link.href = url;
+                    link.setAttribute("href", url);
+                    link.setAttribute("target", '_blank');
                     section.append(link);
 
                     compile_dialogue_div.append(section);
