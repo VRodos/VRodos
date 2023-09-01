@@ -35,6 +35,7 @@
 
     <script>
 
+        /* PLAYER AVATARS (COLOR AND NAME) */
         // Temporary workaround for template declaration; see issue 167
         NAF.schemas.getComponentsOriginal = NAF.schemas.getComponents;
         NAF.schemas.getComponents = (template) => {
@@ -44,15 +45,10 @@
                     components: [
                         'position',
                         'rotation',
-
-                        // In this example, we don't sync the material.color itself, like the basic example;
-                        // we instead sync player-info, which includes color setting + updating.
-                        // (you can see an example of the other pattern in the basic.html demo)
                         'player-info'
                     ]
                 });
             }
-
             const components = NAF.schemas.getComponentsOriginal(template);
             return components;
         };
@@ -107,6 +103,8 @@
                 if (this.nametag) this.nametag.setAttribute('value', this.data.name);
             }
         });
+
+        /* END - PLAYER AVATARS (COLOR AND NAME) */
 
 
         AFRAME.registerComponent('clear-frustum-culling', {
@@ -738,30 +736,27 @@
         });
 
 
-
     </script>
 
 </head>
 
 <body id="master-client-body">
 
-<button
-        id="color-changer"
-        style="z-index: 100; bottom: 24px; left: 24px; position: fixed"
-        onclick="let newColor = window.ntExample.randomColor();
+
+<div id="chatControlsOverlay" style="position: fixed; bottom: 200px; left:0; z-index:100">
+    <button id="color-changer" onclick="
+            let newColor = window.ntExample.randomColor();
              document.getElementById('player').setAttribute('player-info', 'color', newColor);
              document.querySelector('button').style.backgroundColor = newColor;
              document.querySelector('button').style.color = newColor;
-    "
->
-    ■
-</button>
-<input
-        id="username-overlay"
-        style="z-index: 100; bottom: 24px; left: 48px; position: fixed"
-        oninput="document.getElementById('player').setAttribute('player-info', 'name', this.value)"
-/>
-
+        ">■</button>
+    <input id="username-overlay" maxlength="24" size="15" oninput="document.getElementById('player').setAttribute('player-info', 'name', this.value)" placeholder="Username" />
+    <input type="text" id="chatInput" placeholder="Message">
+    <button id="chatButton" style="right: 0;">SEND</button>
+</div>
+<div id="chatUI" style="width: 400px; height: 200px; position: fixed; background-color: rgba(0,0,0,.38); overflow:auto; z-index:100; bottom: 0; left:0; display: flex; flex-direction: column-reverse">
+    <div id="chatMessages"></div>
+</div>
 
 <div id="mediaPanel">
     <div class="wrapperVideoElement" style="visibility: hidden">
@@ -892,6 +887,24 @@
 
 
 <script>
+
+    /* CHAT COMPONENT */
+    let chatBtn = document.getElementById('chatButton');
+    let chatInput = document.getElementById('chatInput');
+    let chatLog = document.getElementById('chatMessages');
+
+    chatBtn.addEventListener("click", evt => {
+        let player_object = document.getElementById('player').getAttribute('player-info', 'name');
+
+        let date = new Date;
+        let dateString = '[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + ']';
+
+        chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
+        NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
+        NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
+            chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
+        } )
+    })
 
     const api_pattern_single = {
         ThresholdMin: 0.106,
