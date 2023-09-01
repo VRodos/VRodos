@@ -738,6 +738,21 @@
 
     </script>
 
+    <style>
+        .ChatComponentStyle {
+            width: 400px;
+            height: 200px;
+            position: fixed;
+            background-color: rgba(0,0,0,.38);
+            overflow:auto;
+            z-index:100;
+            bottom: 0;
+            left:0;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+    </style>
+
 </head>
 
 <body id="master-client-body">
@@ -754,7 +769,7 @@
     <input type="text" id="chatInput" placeholder="Message">
     <button id="chatButton" style="right: 0;">SEND</button>
 </div>
-<div id="chatUI" style="width: 400px; height: 200px; position: fixed; background-color: rgba(0,0,0,.38); overflow:auto; z-index:100; bottom: 0; left:0; display: flex; flex-direction: column-reverse">
+<div id="chatUI" class="ChatComponentStyle">
     <div id="chatMessages"></div>
 </div>
 
@@ -861,6 +876,21 @@
             </a-entity>
         </template>
 
+        <template id="avatar-template">
+            <a-entity class="avatar" networked-audio-source>
+
+                <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="1" height="0.75"
+                         position="0 0.6 -0.15" material="side: double"
+                         networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                         render-order-change="2000">
+                </a-plane>
+
+                <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
+                         material="side: double" networked-video-source="streamName:screen">
+                </a-plane>
+            </a-entity>
+        </template>
+
         <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
                  material="color: black; shader: flat"></a-mixin>
         <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
@@ -877,11 +907,8 @@
                  material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
     </a-assets>
 
-
     <!-- Pawn -->
-    <a-entity id="player">
-    </a-entity>
-
+    <a-entity id="player"></a-entity>
 
 </a-scene>
 

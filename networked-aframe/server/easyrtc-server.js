@@ -23,7 +23,7 @@ process.title = "networked-aframe-server-" +port;
 // Setup and configure Express http server.
 const app = express();
 
-app.use(express.static(path.resolve(__dirname, "..", "examples")));
+app.use(express.static(path.resolve(__dirname, "..", "out")));
 
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -49,22 +49,11 @@ if (process.env.NODE_ENV === "development") {
 const webServer = http.createServer(app);
 
 const socketServer = require("socket.io")(webServer, {
-
     origins: [
         'http://localhost:'+port,
         'https://vrodos-multiplaying.iti.gr/',
         '*:*'
     ],
-
-    /*handlePreflightRequest: (req, res) => {
-        const headers = {
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            "Access-Control-Allow-Origin": "http://localhost:5832", //or the specific origin you want to give access to,
-            "Access-Control-Allow-Credentials": true
-        };
-        res.writeHead(200, headers);
-        res.end();
-    }*/
 });
 
 
