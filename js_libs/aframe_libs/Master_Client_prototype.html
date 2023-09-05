@@ -32,6 +32,7 @@
 
     <script src="js/indicators_aframe.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
+    <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
     <script>
 
@@ -739,10 +740,18 @@
     </script>
 
     <style>
-        .ChatComponentStyle {
-            width: 400px;
-            height: 200px;
-            position: fixed;
+        .ChatWrapperStyle {
+            position: absolute;
+            bottom: 0;
+            height: auto;
+        }
+        .ChatWrapperStyleExpanded {
+            position: absolute;
+            height: auto;
+        }
+
+        .ChatMessagesStyle {
+            width: 450px;
             background-color: rgba(0,0,0,.38);
             overflow:auto;
             z-index:100;
@@ -751,26 +760,55 @@
             display: flex;
             flex-direction: column-reverse;
         }
+        .ChatMessagesStyleNormal {
+            height: 200px;
+            position: relative;
+        }
+        .ChatMessagesStyleExpanded {
+            height: 100%;
+            position: fixed;
+        }
+        .ChatMessagesStyleMinimized {
+            height: 0;
+            position: relative;
+        }
+
+        .IconButtonStyle {
+            background-color: transparent;
+            cursor: pointer;
+            border: none;
+            height: 24px;
+            width: 24px;
+            margin: 0 auto;
+            padding: 0 2px 0 2px;
+        }
+        .IconButtonStyle i {
+            text-shadow: 0 0 3px #fff;
+        }
+
     </style>
 
 </head>
 
 <body id="master-client-body">
 
-
-<div id="chatControlsOverlay" style="position: fixed; bottom: 200px; left:0; z-index:100">
-    <button id="color-changer" onclick="
+<div class="ChatWrapperStyle" id="chat-wrapper-el">
+    <div id="chatControlsOverlay" style="position: relative; top: 0; left:0; z-index:101; height: 30px;">
+        <button id="color-changer" onclick="
             let newColor = window.ntExample.randomColor();
              document.getElementById('player').setAttribute('player-info', 'color', newColor);
              document.querySelector('button').style.backgroundColor = newColor;
              document.querySelector('button').style.color = newColor;
         ">■</button>
-    <input id="username-overlay" maxlength="24" size="15" oninput="document.getElementById('player').setAttribute('player-info', 'name', this.value)" placeholder="Username" />
-    <input type="text" id="chatInput" placeholder="Message">
-    <button id="chatButton" style="right: 0;">SEND</button>
-</div>
-<div id="chatUI" class="ChatComponentStyle">
-    <div id="chatMessages"></div>
+        <input id="username-overlay" maxlength="24" size="15" oninput="document.getElementById('player').setAttribute('player-info', 'name', this.value)" placeholder="Username" />
+        <input type="text" id="chatInput" placeholder="Message">
+        <button id="send-msg-chat-btn" style="right: 0; cursor: pointer">SEND</button>
+        <button id="expand-chat-btn" class="IconButtonStyle" title="Chat Size"><i class="material-icons">unfold_more</i></button>
+        <button id="minimize-chat-btn" class="IconButtonStyle" title="Minimize"><i class="material-icons">expand_more</i></button>
+    </div>
+    <div class="ChatMessagesStyle ChatMessagesStyleNormal" id="chat-messages-wrapper">
+        <div id="chat-messages"></div>
+    </div>
 </div>
 
 <div id="mediaPanel">
@@ -916,15 +954,17 @@
 <script>
 
     /* CHAT COMPONENT */
-    let chatBtn = document.getElementById('chatButton');
+    let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
     let chatInput = document.getElementById('chatInput');
-    let chatLog = document.getElementById('chatMessages');
+    let chatLog = document.getElementById('chat-messages');
 
-    chatBtn.addEventListener("click", evt => {
+    sendMsgChatBtn.addEventListener("click", evt => {
         let player_object = document.getElementById('player').getAttribute('player-info', 'name');
 
         let date = new Date;
-        let dateString = '[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + ']';
+        let dateString = '[' + String(date.getHours()).padStart(2, '0') + ':' +
+            String(date.getMinutes()).padStart(2, '0') + ':' +
+            String(date.getSeconds()).padStart(2, '0') + ']';
 
         chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
         NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
@@ -932,6 +972,52 @@
             chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
         } )
     })
+
+    let chatExpanded = false;
+    let chatMinimized = false;
+    document.getElementById('expand-chat-btn').addEventListener("click", function() {
+        let chatWrapper = document.getElementById("chat-wrapper-el");
+        let messagesWrapper = document.getElementById("chat-messages-wrapper");
+
+        if (chatMinimized) {
+            chatExpanded = false;
+        }
+        else {
+            if (chatExpanded) {
+                chatWrapper.classList.add("ChatWrapperStyle");
+                chatWrapper.classList.remove("ChatWrapperStyleExpanded");
+                messagesWrapper.classList.add("ChatMessagesStyleNormal");
+                messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
+                chatExpanded = false;
+            } else {
+                chatWrapper.classList.add("ChatWrapperStyleExpanded");
+                chatWrapper.classList.remove("ChatWrapperStyle");
+                messagesWrapper.classList.add("ChatMessagesStyleExpanded");
+                messagesWrapper.classList.remove("ChatMessagesStyleNormal");
+                chatExpanded = true;
+            }
+        }
+    });
+
+    document.getElementById('minimize-chat-btn').addEventListener("click", function() {
+        let chatWrapper = document.getElementById("chat-wrapper-el");
+        let messagesWrapper = document.getElementById("chat-messages-wrapper");
+
+        chatWrapper.classList.add("ChatWrapperStyle");
+        chatWrapper.classList.remove("ChatWrapperStyleExpanded");
+        messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
+
+        if (chatMinimized) {
+            messagesWrapper.classList.add("ChatMessagesStyleNormal");
+            messagesWrapper.classList.remove("ChatMessagesStyleMinimized");
+            chatMinimized = false;
+        } else {
+            messagesWrapper.classList.add("ChatMessagesStyleMinimized");
+            messagesWrapper.classList.remove("ChatMessagesStyleNormal");
+            chatExpanded = false;
+            chatMinimized = true;
+        }
+    });
 
     const api_pattern_single = {
         ThresholdMin: 0.106,
