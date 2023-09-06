@@ -429,18 +429,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             $ascene->appendChild( $a_asset_avt );
 
-            $a_assets = $dom->createElement( "a-assets" );
-            $a_asset_sph = $dom->createElement( "img" );
-            $a_asset_sph->setAttribute("id", "sphere");
-            $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg");
+            // $a_assets = $dom->createElement( "a-assets" );
+            // $a_asset_sph = $dom->createElement( "img" );
+            // $a_asset_sph->setAttribute("id", "sphere");
+            // $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg");
 
-            $a_assets->appendChild( $a_asset_sph );
-            $ascene->appendChild( $a_assets );
+            // $a_assets->appendChild( $a_asset_sph );
+            // $ascene->appendChild( $a_assets );
 
-            $a_sky_sph = $dom->createElement( "a-sky" );
-            $a_sky_sph->setAttribute("src",  "#sphere");
+            // $a_sky_sph = $dom->createElement( "a-sky" );
+            // $a_sky_sph->setAttribute("src",  "#sphere");
 
-            $ascene->appendChild( $a_sky_sph );
+            // $ascene->appendChild( $a_sky_sph );
 
             $a_entity_expo->appendChild( $a_camera );
             $a_entity_expo->appendChild( $a_entity_oc_right );
