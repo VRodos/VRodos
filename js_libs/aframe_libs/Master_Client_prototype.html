@@ -134,7 +134,7 @@
 
                 let cam = document.querySelector("#cameraA");
                 console.log(cam);
-                if (this.data.pr_type == "virtualproduction_games" || this.data.pr_type == "archaeology_games")
+                if (this.data.pr_type !== "vrexpo_games")
                     cam.setAttribute("camera", "fov: 60");
                 else{
                     cam.setAttribute("fov", "60");
@@ -789,7 +789,6 @@
         .IconButtonStyle i {
             text-shadow: 0 0 3px #fff;
         }
-
     </style>
 
 </head>
@@ -1394,15 +1393,6 @@
             })
         });
     });
-
-    /* Scale down div when in compile preview */
-    (function () {
-        if (window.innerWidth < 400) {
-            let actionsDiv = document.getElementById("actionsDiv");
-            actionsDiv.style.transformOrigin = "0px 200px";
-            actionsDiv.style.scale = "0.3";
-        }
-    })();
 
     /* x button show clacket. key code 88 */
     document.addEventListener('keydown', function (e) {
