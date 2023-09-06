@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="el">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Πύλη συμμετοχής</title>
-    <meta name="description" content="Πάρε μέρος στο έργο !">
+    <title>Take part</title>
+    <meta name="description" content="Take part">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -30,8 +30,8 @@
 <a-scene
         id="aframe-scene-container"
         background="color: black"
-         vr-mode-ui="enabled: false"
-         networked-scene="
+        vr-mode-ui="enabled: false"
+        networked-scene="
       room: roomname;
       debug: true;
       adapter: easyrtc;
@@ -89,53 +89,53 @@
 
 
     <!-- VR STUFF -->
-   <!-- <script type="module">
+    <!-- <script type="module">
 
-    / XR globals. Several additional reference spaces are required because of
-      // how the teleportation mechanic in onSelect works.
-      let xrButton = null;
-      let xrImmersiveRefSpaceBase = null;
-      let xrImmersiveRefSpaceOffset = null;
-      let xrInlineRefSpaceBase = null;
-      let xrInlineRefSpaceOffset = null;
-      let xrViewerSpaces = {};
+     / XR globals. Several additional reference spaces are required because of
+       // how the teleportation mechanic in onSelect works.
+       let xrButton = null;
+       let xrImmersiveRefSpaceBase = null;
+       let xrImmersiveRefSpaceOffset = null;
+       let xrInlineRefSpaceBase = null;
+       let xrInlineRefSpaceOffset = null;
+       let xrViewerSpaces = {};
 
-      let trackingSpaceOriginInWorldSpace = vec3.create();
-      let trackingSpaceHeadingDegrees = 0;  // around +Y axis, positive angles rotate left
-      let floorSize = 10;
-      let floorPosition = [0, -floorSize / 2 + 0.01, 0];
-      let floorNode = null;
+       let trackingSpaceOriginInWorldSpace = vec3.create();
+       let trackingSpaceHeadingDegrees = 0;  // around +Y axis, positive angles rotate left
+       let floorSize = 10;
+       let floorPosition = [0, -floorSize / 2 + 0.01, 0];
+       let floorNode = null;
 
-      // WebGL scene globals.
-      let gl = null;
-      let renderer = null;
-      let scene = new Scene();
-      if (hideStats) {
-        scene.enableStats(false);
-      }
+       // WebGL scene globals.
+       let gl = null;
+       let renderer = null;
+       let scene = new Scene();
+       if (hideStats) {
+         scene.enableStats(false);
+       }
 
 
-      
 
-      let boxes = [];
 
-      function initXR() {
-        xrButton = new WebXRButton({
-          onRequestSession: onRequestSession,
-          onEndSession: onEndSession
-        });
-        document.querySelector('header').appendChild(xrButton.domElement);
+       let boxes = [];
 
-        if (navigator.xr) {
-          navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
-            xrButton.enabled = supported;
-          });
+       function initXR() {
+         xrButton = new WebXRButton({
+           onRequestSession: onRequestSession,
+           onEndSession: onEndSession
+         });
+         document.querySelector('header').appendChild(xrButton.domElement);
 
-          navigator.xr.requestSession('inline').then(onSessionStarted);
-        }
-      }
-      initXR();
-    </script>-->
+         if (navigator.xr) {
+           navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+             xrButton.enabled = supported;
+           });
+
+           navigator.xr.requestSession('inline').then(onSessionStarted);
+         }
+       }
+       initXR();
+     </script>-->
 
 
 </a-scene>
@@ -165,13 +165,13 @@
 
             switch (key) {
                 case "_connected":
-                    str = (lang==="el" ? "έχεις συνδεθεί στον διακομιστή στο δωμάτιο " : "you are now connected to server at room ") + room;
+                    str = "You are now connected to server at room: " + room;
                     break;
                 case "_selectPosition":
-                    str = lang==="el" ? "επέλεξε θέση στη σκηνή:" : "select a position in the scene:";
+                    str = "Select a position in the scene: ";
                     break;
                 case "_position":
-                    str = (lang==="el" ? "Θέση " : "Position " ) + position;
+                    str = "Position: " + position;
                     break;
             }
 
@@ -273,7 +273,7 @@
         document.getElementById("view-fullscreen").style.display = "none";
     }
 
-    var noSleep = new NoSleep();
+    let noSleep = new NoSleep();
     noSleep.enable(); // keep the screen on!
 </script>
 

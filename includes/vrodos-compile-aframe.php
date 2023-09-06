@@ -321,7 +321,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $content = str_replace("project_sceneId", $project_title." - ".$scene_title[0], $content);
 
         // Write back to root
-        return $fileOperations->writer($fileOperations->plugin_path_dir . "/networked-aframe/examples/" . "index_" . $scene_id . ".html", $content);
+        return $fileOperations->writer($fileOperations->plugin_path_dir . "/networked-aframe/out/" . "index_" . $scene_id . ".html", $content);
     }
 
 
@@ -336,7 +336,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $content = str_replace("roomname", "room".$scene_id, $content);
 
         $content = str_replace('background="color: #000000"', 'background="color: '.$scene_json->metadata->ClearColor.'"' , $content);
-
 
         $fogstring = substr($content, strpos($content, 'fog='), strpos($content, 'renderer=')-9-strpos($content, 'fog='));
 
@@ -637,9 +636,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                    continue;
 
 
-
-
-
                 // $ascenePlayer->appendChild( $a_entity );
 
             } else if ($contentObject->category_slug == 'video') {
@@ -673,9 +669,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_asset_pas->setAttribute("id", "video_pas_$uuid");
                 //$a_asset_pas->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/pause.png");
                 $a_asset_pas->setAttribute("src",  plugins_url( '../VRodos/assets/images/pause.png', dirname(__FILE__)));
-
-
-
 
 
 
@@ -1068,10 +1061,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
 
-
-
-
-
                 $ascenePlayer->appendChild($a_panel_entity);
 
             }
@@ -1080,7 +1069,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $contentNew = $dom->saveHTML();
 
         // Write back to root
-        return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/examples/Master_Client_'.$scene_id.".html", $contentNew);
+        return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/out/Master_Client_'.$scene_id.".html", $contentNew);
     }
 
 
@@ -1165,7 +1154,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $contentNew = $dom->saveHTML($dom->documentElement);
 
         // Write back to root
-        return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/examples/Simple_Client_'.$scene_id.".html", $contentNew);
+        return $fileOperations->writer($fileOperations->plugin_path_dir.'/networked-aframe/out/Simple_Client_'.$scene_id.".html", $contentNew);
     }
 
 

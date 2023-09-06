@@ -460,7 +460,31 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         <div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
                             <em class="material-icons mdc-theme--text-hint-on-light ">label</em>&nbsp;<!--icon-->
                             <?php
-                            $cat_terms = get_terms('vrodos_asset3d_cat', ['hide_empty' => false]);
+
+                            // Check if project is of MV type then dont show chat component.
+                            $ids_to_exclude = array();
+                            if ($game_category !== 'vrexpo_games') {
+                                $get_terms_to_exclude =  get_terms(
+                                    array(
+                                        'fields'  => 'ids',
+                                        'slug'    => array(
+                                            'chat' ),
+                                        'taxonomy' => 'vrodos_asset3d_cat',
+                                    )
+                                );
+                                if( !is_wp_error( $get_terms_to_exclude ) && count($get_terms_to_exclude) > 0){
+                                    $ids_to_exclude = $get_terms_to_exclude;
+                                }
+                            }
+
+                            $cat_terms = get_terms(
+                                'vrodos_asset3d_cat',
+                                array(
+                                    'hide_empty' => false,
+                                    'exclude'    => $ids_to_exclude,
+                                )
+                            );
+
                             $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
                             if($asset_id == null) { ?>
                                 <span id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
