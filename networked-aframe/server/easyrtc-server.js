@@ -52,6 +52,7 @@ const socketServer = require("socket.io")(webServer, {
     origins: [
         'http://localhost:'+port,
         'https://vrodos-multiplaying.iti.gr/',
+        'https://vrexpo-multi.iti.gr/',
         '*:*'
     ],
 });
