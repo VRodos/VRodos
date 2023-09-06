@@ -145,7 +145,7 @@ AFRAME.registerComponent('info-panel', {
             this.buttonNextEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonPrevEl.object3D.visible = true;
-        this.buttonPrevEl.object3D.scale.set(1, 1, 1);
+        this.buttonPrevEl.object3D.scale.set(0.7, 0.7, 0.7);
         
     },
     onPrevButtonClick: function (evt) {
@@ -157,7 +157,7 @@ AFRAME.registerComponent('info-panel', {
             this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonNextEl.object3D.visible = true;
-        this.buttonNextEl.object3D.scale.set(1, 1, 1);
+        this.buttonNextEl.object3D.scale.set(0.7, 0.7, 0.7);
         
     },
     

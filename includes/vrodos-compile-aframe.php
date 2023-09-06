@@ -432,12 +432,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_assets = $dom->createElement( "a-assets" );
             $a_asset_sph = $dom->createElement( "img" );
             $a_asset_sph->setAttribute("id", "sphere");
-            $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/sky.jpg");
+            $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg");
 
             $a_assets->appendChild( $a_asset_sph );
             $ascene->appendChild( $a_assets );
 
-            $a_sky_sph = $dom->createElement( "a-videosphere" );
+            $a_sky_sph = $dom->createElement( "a-sky" );
             $a_sky_sph->setAttribute("src",  "#sphere");
 
             $ascene->appendChild( $a_sky_sph );
@@ -1035,7 +1035,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $next_desc_entity->setAttribute("mixin", "poiImgNext");
                         $next_desc_entity->setAttribute("material", "src: #right_img_$uuid; depthTest: false; transparent: true");
                         $next_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
-                        $next_desc_entity->setAttribute("original-scale", "1 1 1");
+                        $next_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
 
                         $a_panel_entity->appendChild( $next_desc_entity);
 
@@ -1044,7 +1044,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $prev_desc_entity->setAttribute("mixin", "poiImgPrev");
                         $prev_desc_entity->setAttribute("material", "src: #left_img_$uuid; depthTest: false; transparent: true");
                         $prev_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
-                        $prev_desc_entity->setAttribute("original-scale", "1 1 1");
+                        $prev_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
 
                         $a_panel_entity->appendChild( $prev_desc_entity);
                     }
