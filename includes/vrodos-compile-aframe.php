@@ -429,20 +429,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             $ascene->appendChild( $a_asset_avt );
 
-            // $a_assets = $dom->createElement( "a-assets" );
-            // $a_asset_sph = $dom->createElement( "video" );
-            // $a_asset_sph->setAttribute("id", "sphere");
-            // $a_asset_sph->setAttribute("autoplay", "");
-            // $a_asset_sph->setAttribute("loop", "true");
-            // $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/MM_Demo.mp4");
+            $a_assets = $dom->createElement( "a-assets" );
+            $a_asset_sph = $dom->createElement( "img" );
+            $a_asset_sph->setAttribute("id", "sphere");
+            $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/sky.jpg");
 
-            // $a_assets->appendChild( $a_asset_sph );
-            // $ascene->appendChild( $a_assets );
+            $a_assets->appendChild( $a_asset_sph );
+            $ascene->appendChild( $a_assets );
 
-            // $a_asset_sph = $dom->createElement( "a-videosphere" );
-            // $a_asset_sph->setAttribute("src",  "#sphere");
+            $a_sky_sph = $dom->createElement( "a-videosphere" );
+            $a_sky_sph->setAttribute("src",  "#sphere");
 
-            // $ascene->appendChild( $a_asset_sph );
+            $ascene->appendChild( $a_sky_sph );
 
             $a_entity_expo->appendChild( $a_camera );
             $a_entity_expo->appendChild( $a_entity_oc_right );
@@ -879,6 +877,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_image_asset_exp = $dom->createElement( "a-assets" );
                 $a_image_asset_main = $dom->createElement( "a-assets" );
                 $a_image_asset_esc = $dom->createElement( "a-assets" );
+                $a_image_asset_left = $dom->createElement( "a-assets" );
+                $a_image_asset_right = $dom->createElement( "a-assets" );
 
 
 
@@ -892,6 +892,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_image_asset_esc->setAttribute("id", "esc_img_$uuid");
                 $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
 
+                $a_image_asset_left->setAttribute("id", "left_img_$uuid");
+                $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left.png', dirname(__FILE__)));
+
+                $a_image_asset_right->setAttribute("id", "right_img_$uuid");
+                $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right.png', dirname(__FILE__)));
+
 
 
                 //$a_asset->appendChild(a_image_asset);
@@ -900,6 +906,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $ascene->appendChild($a_image_asset_exp);
                 $ascene->appendChild($a_image_asset_main);
                 $ascene->appendChild($a_image_asset_esc);
+
+                $ascene->appendChild($a_image_asset_left);
+                $ascene->appendChild($a_image_asset_right);
 
 
                 $sc_x = $contentObject->scale[0];
@@ -1017,9 +1026,40 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_desc_img_entity->setAttribute("position", "-0.68 -0.3 0");
                     //plugins_url( '../VRodos/assets/fonts/Arimo-VariableFont_wght-msdf.json', dirname(__FILE__))
                     $desc_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Regular-msdf.json', dirname(__FILE__));
+                    $content_length = 90;
+
+                    if (strlen($contentObject->poi_img_content) > $content_length){
+                       
+                        $next_desc_entity = $dom->createElement("a-entity");
+                        $next_desc_entity->setAttribute("id", "next_$uuid");
+                        $next_desc_entity->setAttribute("mixin", "poiImgNext");
+                        $next_desc_entity->setAttribute("material", "src: #right_img_$uuid; depthTest: false; transparent: true");
+                        $next_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
+                        $next_desc_entity->setAttribute("original-scale", "1 1 1");
+
+                        $a_panel_entity->appendChild( $next_desc_entity);
+
+                        $prev_desc_entity = $dom->createElement("a-entity");
+                        $prev_desc_entity->setAttribute("id", "prev_$uuid");
+                        $prev_desc_entity->setAttribute("mixin", "poiImgPrev");
+                        $prev_desc_entity->setAttribute("material", "src: #left_img_$uuid; depthTest: false; transparent: true");
+                        $prev_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
+                        $prev_desc_entity->setAttribute("original-scale", "1 1 1");
+
+                        $a_panel_entity->appendChild( $prev_desc_entity);
+                    }
+                    
+
+                    
+                    $a_desc_img_entity = $dom->createElement("a-entity");
+                    $a_desc_img_entity->setAttribute("id", "desc_$uuid");
+                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.3 0");
+                      
 
                     $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value: $contentObject->poi_img_content");
                     $a_panel_entity->appendChild($a_desc_img_entity);
+                
+                    
                 }
                 else{
                     $a_main_img_entity->setAttribute("mixin", "poiImageFull");
