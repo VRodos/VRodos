@@ -88,7 +88,6 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
     // For autosave after each action
     var mapActions = {}; // You could also use an array
 
-
     var showPawnPositions = "false";
 </script>
 
@@ -589,7 +588,6 @@ wp_head();
     <script type="text/javascript">
 
         let mdc = window.mdc;
-        let MDCSelect = mdc.select.MDCSelect;
 
         mdc.autoInit();
 
@@ -610,7 +608,6 @@ wp_head();
         jQuery(document).ready(function(){
 
             vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
-
 
             // make asset browser draggable: not working without get_footer
             // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
@@ -888,7 +885,7 @@ wp_head();
         }
 
         // Only in Undo redo as javascript not php!
-        function parseJSON_LoadScene(scene_json){
+        function parseJSON_LoadScene(scene_json) {
 
             resources3D = parseJSON_javascript(scene_json, uploadDir);
 
