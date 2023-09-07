@@ -12,8 +12,14 @@ AFRAME.registerComponent('info-panel', {
         this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
-
         this.cam = document.querySelector("#cameraA");
+        
+        this.buttonEl = document.querySelector('#button_poi_' + this.data);
+        this.buttonNextEl = document.querySelector('#next_' + this.data);
+        this.buttonPrevEl = document.querySelector('#prev_' + this.data);
+        this.backgroundEl = document.querySelector('#exit_' + this.data);
+
+        this.desc_list = [];
               
         this.cam.add(this.infoPanel);
         
@@ -23,11 +29,40 @@ AFRAME.registerComponent('info-panel', {
             img.onerror = (err) => cb(err);
             img.src = url;
         };
-        console.log(this.ImageAsset.getAttribute("src"));
+
+        let content_length = 90;
+
+        this.chunks = Math.floor((this.DescriptionEl.getAttribute("text").value).length / content_length);
+        if ((this.DescriptionEl.getAttribute("text").value).length % content_length > 0 && ((this.DescriptionEl.getAttribute("text").value).length > content_length )){
+            this.chunks +=1;
+        }
+            
+        //console.log((this.DescriptionEl.getAttribute("text").value).length);
+        
+        for (let x = 0; x < this.chunks; x++) {
+            let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length -1);
+            this.desc_list.push(output);
+            
+        }
+
+
+
+        if (this.chunks > 1){
+            this.DescriptionEl.setAttribute("text","value",this.desc_list[0]);
+            this.buttonPrevEl.object3D.visible = false;
+            this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
+
+        }
+            
+        
+
+        //this.DescriptionEl.getAttribute("text").value = desc_list[0];
+        
         let expected_width, expected_height;
         if (this.DescriptionEl) {
             expected_width = 1.5;
             expected_height = 0.81;
+            
         }
         else {
             expected_width = 1.5;
@@ -76,24 +111,56 @@ AFRAME.registerComponent('info-panel', {
 
 
 
-
         this.onMenuButtonClick = this.onMenuButtonClick.bind(this);
         this.onBackgroundClick = this.onBackgroundClick.bind(this);
-        this.buttonEl = document.querySelector('#button_poi_' + this.data);
-        this.backgroundEl = document.querySelector('#exit_' + this.data);
+        if (this.buttonNextEl)
+            this.onNextButtonClick = this.onNextButtonClick.bind(this);
+        if (this.buttonPrevEl)
+            this.onPrevButtonClick = this.onPrevButtonClick.bind(this);
+    
 
         
-
+        this.readingPos = 0;
         this.buttonEl.addEventListener('click', this.onMenuButtonClick);
-        //this.buttonEl.addEventListener('force-close-others', this.onMenuButtonClick);
+        if (this.buttonNextEl)
+            this.buttonNextEl.addEventListener('click', this.onNextButtonClick);
+        if (this.buttonPrevEl)
+            this.buttonPrevEl.addEventListener('click', this.onPrevButtonClick);
+        // this.buttonEl.addEventListener('force-close-others', this.onMenuButtonClick);
         this.backgroundEl.addEventListener('click', this.onBackgroundClick);
        
-        this.backgroundEl.addEventListener('raycaster-intersected', evt => {
-            console.log("Intersected");
-        });
+        // this.backgroundEl.addEventListener('raycaster-intersected', evt => {
+        //     console.log("Intersected");
+        // });
 
 
     },
+   
+    onNextButtonClick: function (evt) {
+             
+        this.readingPos += 1;
+        this.DescriptionEl.setAttribute("text","value",this.desc_list[this.readingPos]);
+        if(this.readingPos == this.chunks -1) {
+            this.buttonNextEl.object3D.visible = false;
+            this.buttonNextEl.object3D.scale.set(0.001, 0.001, 0.001);
+        }
+        this.buttonPrevEl.object3D.visible = true;
+        this.buttonPrevEl.object3D.scale.set(0.7, 0.7, 0.7);
+        
+    },
+    onPrevButtonClick: function (evt) {
+             
+        this.readingPos -= 1;
+        this.DescriptionEl.setAttribute("text","value",this.desc_list[this.readingPos]);
+        if(this.readingPos == 0) {
+            this.buttonPrevEl.object3D.visible = false;
+            this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
+        }
+        this.buttonNextEl.object3D.visible = true;
+        this.buttonNextEl.object3D.scale.set(0.7, 0.7, 0.7);
+        
+    },
+    
 
     onMenuButtonClick: function (evt) {
 
