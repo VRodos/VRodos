@@ -24,8 +24,9 @@
 
             <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background">
                 <i title="Instructions" class="material-icons AlignIconToBottom">help</i>
-                Click on "Build" in order to construct the Virtual world.
+                Click on "Build" in order to construct the virtual world.
             </div>
+
 
             <h2 id="compileProgressTitle" style="display: none" class="CenterContents mdc-typography--headline"></h2>
 
@@ -40,7 +41,13 @@
                 <div class="progressSliderSubLine progressDecrease"></div>
             </div>
 
-            <div id="compilationProgressText" class="CenterContents mdc-typography--title"></div>
+            <div id="compilationProgressText" class="mdc-typography--title"></div>
+
+            <hr class="WhiteSpaceSeparator" style="margin-top: 0;">
+
+            <a id="compileProceedBtn" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" style="width: 20%;">Build</a>
+
+            <hr class="separator">
 
             <div id="previewApp" class="previewApp" style="display:inline-block"></div>
 
@@ -59,9 +66,7 @@
 
         <footer class="mdc-dialog__footer">
             <a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Close</a>
-            <a id="compileProceedBtn" type="button"
-               class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised ">Build</a>
-            <!--            LinkDisabled-->
+
         </footer>
     </div>
     <div class="mdc-dialog__backdrop"></div>
