@@ -422,11 +422,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $ascenePlayer->setAttribute( "wasd-controls", "acceleration:20" );
             $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:true;" );
 
-            $a_asset_avt = $dom->createElement( "a-assets" );
-            $a_asset_avt->setAttribute("id", "avatar_glb");
-            $a_asset_avt->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/goomba.glb");
+            // $a_asset_avt = $dom->createElement( "a-assets" );
+            // $a_asset_avt->setAttribute("id", "avatar_glb");
+            // $a_asset_avt->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/goomba.glb");
 
-            $ascene->appendChild( $a_asset_avt );
+            // $ascene->appendChild( $a_asset_avt );
 
             // $a_assets = $dom->createElement( "a-assets" );
             // $a_asset_sph = $dom->createElement( "img" );
@@ -1029,6 +1029,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $next_desc_entity->setAttribute("material", "src: #right_img_$uuid; depthTest: false; transparent: true");
                         $next_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
                         $next_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
+                        $next_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
 
                         $a_panel_entity->appendChild( $next_desc_entity);
 
@@ -1038,6 +1039,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $prev_desc_entity->setAttribute("material", "src: #left_img_$uuid; depthTest: false; transparent: true");
                         $prev_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
                         $prev_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
+                        $prev_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
 
                         $a_panel_entity->appendChild( $prev_desc_entity);
                     }
