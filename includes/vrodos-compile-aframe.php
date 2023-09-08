@@ -1042,13 +1042,21 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $prev_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
 
                         $a_panel_entity->appendChild( $prev_desc_entity);
+
+                        $a_count_page_entity = $dom->createElement("a-entity");
+                        $a_count_page_entity->setAttribute("id", "page_$uuid");
+                        $a_count_page_entity->setAttribute("position", "0.41 -0.8 0");
+                          
+    
+                        $a_count_page_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 0.8; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value:");
+                        $a_panel_entity->appendChild($a_count_page_entity);
                     }
                     
 
                     
                     $a_desc_img_entity = $dom->createElement("a-entity");
                     $a_desc_img_entity->setAttribute("id", "desc_$uuid");
-                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.3 0");
+                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.4 0");
                       
 
                     $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value: $contentObject->poi_img_content");
