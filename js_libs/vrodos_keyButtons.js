@@ -98,7 +98,7 @@ let keydown_handler = (ev) => {
         case 46:
             // If focus is on main screen but not at inputs
             if (ev.composedPath()[0].tagName === "BODY") {
-                deleterFomScene(transform_controls.object.uuid);
+                deleteFomScene(transform_controls.object.uuid);
             }
             break;//  delete
     }
