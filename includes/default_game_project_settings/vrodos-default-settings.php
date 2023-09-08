@@ -37,7 +37,7 @@ function vrodos_create_asset_categories(){
         'chat' => [
             'name' => 'Chat',
             'slug' => 'chat',
-            'description' => 'A chatbox component.',
+            'description' => 'A chatbox component. It is a 3d object that when clicked, a user can join a chat session',
             'ic' => 'chat'
         ],
         'poi-link' => [
