@@ -616,6 +616,28 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 case 'chat':
 
+                    $sc_x = $contentObject->scale[0];
+                    $sc_y = $contentObject->scale[1];
+                    $sc_z = $contentObject->scale[2];
+
+                    $a_entity = $dom->createElement( "a-entity" );
+                    $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
+                    $a_entity->appendChild( $dom->createTextNode( '' ) );
+
+                    $material = "";
+                    $fileOperations->setAffineTransformations( $a_entity, $contentObject );
+                    $a_entity->setAttribute( "class", "override-materials hideable" );
+                    $a_entity->setAttribute( "id", $uuid );
+                    $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
+                    $a_entity->setAttribute( "material", $material );
+                    $a_entity->setAttribute( "clear-frustum-culling", "" );
+
+                    $ascene->appendChild( $a_entity );
+
+                    // Enable chat html component
+                    $chat_wrapper = $dom->getElementById('chat-wrapper-el');
+
+
 
                     break;
 
