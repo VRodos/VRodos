@@ -516,7 +516,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
  *
  * @param nameToRemove
  */
-function deleterFomScene(uuid) {
+function deleteFomScene(uuid) {
 
     let resChildren = Object.values(resources3D);
     let envirChildren = Object.values(envir.scene.children);

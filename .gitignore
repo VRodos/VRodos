@@ -131,7 +131,6 @@ test_compiler/
 /semantics/
 /peer-calls/
 /includes/translate/
-/networked-aframe/out/js/
 /networked-aframe/out/*.html
 /networked-aframe/server/keys.json
 

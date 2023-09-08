@@ -35,7 +35,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
 
 function CreateDeleteButton(obj){
     return '<a href="javascript:void(0);" class="hierarchyItemDelete mdc-list-item" aria-label="Delete asset"' +
-        ' title="Delete asset object" onclick="' + 'deleterFomScene(\'' + obj.uuid + '\');' + '">' +
+        ' title="Delete asset object" onclick="' + 'deleteFomScene(\'' + obj.uuid + '\');' + '">' +
         '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Delete">delete </i>' + '</a>';
 }
 
@@ -56,7 +56,7 @@ function setBackgroundColorHierarchyViewer(id) {
 
     jQuery('#hierarchy-viewer li').each(
         function (idx, li) {
-            jQuery(li)[0].style.background = 'rgb(244, 244, 244)';
+            jQuery(li)[0].style.background = 'rgb(223, 223, 223)';
         }
     );
 

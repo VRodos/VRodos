@@ -24,12 +24,9 @@
     display: block;
 }
 
-
-
 /* Three js */
 #vr_editor_main_div {
     position: fixed;
-    /*top:30px;*/
     top: 0;
     left: 0;
     right: 0;
@@ -89,7 +86,7 @@
 /* rightPanelToggleOnOff*/
 .scenesListToggleStyle {
     position: absolute;
-    bottom: 0px;
+    bottom: 0;
     width: 40px;
     left: 0;
     z-index: 1001;
@@ -113,16 +110,10 @@
 }
 
 
-
-
-
-
-
-
 #compileGameBtn {
     position: absolute;
     top: 5px;
-    right: 0px;
+    right: 0;
     height: 20px;
     line-height: 1.4em;
 }
@@ -155,12 +146,6 @@
     font-size: 0.6vw;
 }
 
-
-
-
-/* Links have red color
-a { color:red }
-*/
 
 /* This disables the mouse rotation of canvas
 canvas { pointer-events:none; z-index:10; }
@@ -271,65 +256,24 @@ canvas { pointer-events:none; z-index:10; }
     margin-bottom: 1px;
 }
 
-
-
-.VrWalkInButtonStyle a i,
-.EditorObjOverlapSelectStyle a i {
-    /*padding-top: 4px;*/
-}
-
 /*Right Panel*/
 
-.VrEditorOptionsBtnStyle {
-    width: 100%;
-    /*position: absolute;*/
-    /*right: 0;*/
-    /*top: 2px;*/
-    /*width: 48px;*/
-    /*min-width: 0;*/
-    /*padding: 0;*/
-    /*margin: 0;*/
+
+.EditorToolbarBtnStyle {
+    width:45px;
+    height:35px;
+    min-width:20px;
 }
 
-
-/*row2*/
-.EditorTourToggleBtn {
-    width: 20%;
-    min-width: 20px;
-    padding: 0px;
-    padding-top: 3px;
-    /*display:inline;*/
-    /*position: absolute;*/
-    /*right: 15%;*/
-    /*top: 4%;*/
-}
-
-.EditorDimensionToggleBtn {
-    width: 20%;
-    min-width: 20px;
-    padding: 0px;
-    /*position: absolute;*/
-    /*right: 10%;*/
-    /*top: 4%;*/
-}
-
-.VrWalkInButtonStyle {
-    width: 45px;
-    min-width: 20px;
-    z-index: 1200;
-    display: inline-block;
-    /*position: absolute;*/
-    /*right: 0;*/
-    /*top: 4%;*/
+.EditorToolbarBtnStyle i {
+    padding-top: 5px;
+    margin-left: -5px;
 }
 
 .ThirdPersonVrWalkInButtonStyle {
     width: 25%;
     min-width: 20px;
     padding-top: 4px;
-    /*position: absolute;*/
-    /*right: 5%;*/
-    /*top: 4%;*/
 }
 
 /*row3*/
