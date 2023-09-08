@@ -76,7 +76,7 @@
     </div>
 
     <!-- Set Clear Color -->
-    <div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0px; padding:0px; height:70px; background: rgba(255,255,255,0.5)">
+    <div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0; padding:0; height:70px; background: rgba(255,255,255,0.5)">
 
         <ul class="RadioButtonList" style="margin:0">
             <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="" style="height:30px; margin:0; font-size:xx-small">
@@ -91,24 +91,12 @@
                 </div>
                 <label id="sceneColorRadio-label" for="sceneColorRadio" style="margin-bottom: 0;">Color</label>
 
-                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0px;font-size: 10px;width: 50px;" >
+                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
 
-                <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px">
-
+                <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
 
             </li>
 
-            <!--            <li class="mdc-form-field" id="sceneEnvMapRadioListItem" onclick="" style="height:30px; margin:0px; font-size:xx-small">-->
-            <!--                <div class="mdc-radio" >-->
-            <!--                    <input class="mdc-radio__native-control" type="radio" id="sceneEnvMapRadio"-->
-            <!--                           name="sceneEnvMapTypeRadio" value="envmap" checked>-->
-            <!--                    <div class="mdc-radio__background">-->
-            <!--                        <div class="mdc-radio__outer-circle"></div>-->
-            <!--                        <div class="mdc-radio__inner-circle"></div>-->
-            <!--                    </div>-->
-            <!--                </div>-->
-            <!--                <label id="sceneEnvMapRadio-label" for="sceneEnvMapRadio" style="margin-bottom: 0;">Environmental map</label>-->
-            <!--            </li>-->
         </ul>
 
         <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above"
@@ -117,38 +105,11 @@
 
     </div>
 
-
-
-    <!-- Enable Environmental texture  -->
-    <div id="sceneEnvironmentTextureDiv"
-         class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
-         style="width:100%; margin:0; padding:0; height:30px; background: rgba(255,255,255,0.5)">
-
-        <input type="checkbox"
-               id="sceneEnvironmentTexture"
-               style="width:15px;display:flex !important;float:right;position:absolute;right:5px;top:10px;padding:0;"
-               name="sceneEnvironmentTexture" form="3dAssetForm"
-               onchange="enableSceneEnvironmentTexture(this.checked)">
-
-        <label for="sceneEnvironmentTexture"
-               class="mdc-textfield__label mdc-textfield__label--float-above"
-               style="background: none; font-size:10px; width: 70%;padding:5px;font-weight:bold">Enable environment texture</label>
-    </div>
-
-    <!-- Enable Environmental texture  -->
     <div id="sceneFogDiv"
          style="border: 1px black solid; width:100%; margin:0; padding:0; height:140px; background: rgba(255,255,255,0.5); overflow-y: auto;">
 
         <div style="background: none; margin:5px; font-size:10px; width: 70%; font-weight: bold; color:gray ">Fog</div>
 
-
-        <!--        <input type="checkbox"-->
-        <!--               id="sceneEnvironmentTexture"-->
-        <!--               style="width:15px;display:flex !important;float:right;position:absolute;right:5px;top:10px;padding:0;"-->
-        <!--               name="sceneEnvironmentTexture" form="3dAssetForm"-->
-        <!--               onchange="enableSceneEnvironmentTexture(this.checked)">-->
-
-        <!--        loadProjectTypeDescription();-->
         <ul class="RadioButtonList" id="FogTypeRadioButtonList" onclick="loadFogType()" style="margin-bottom:0;display:block">
 
             <li class="mdc-form-field">

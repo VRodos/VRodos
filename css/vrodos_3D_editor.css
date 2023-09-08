@@ -280,37 +280,16 @@ canvas { pointer-events:none; z-index:10; }
 
 /*Right Panel*/
 
-.VrEditorOptionsBtnStyle {
-    width: 100%;
-    /*position: absolute;*/
-    /*right: 0;*/
-    /*top: 2px;*/
-    /*width: 48px;*/
-    /*min-width: 0;*/
-    /*padding: 0;*/
-    /*margin: 0;*/
+
+.EditorToolbarBtnStyle {
+    width:45px;
+    height:35px;
+    min-width:20px;
 }
 
-
-/*row2*/
-.EditorTourToggleBtn {
-    width: 20%;
-    min-width: 20px;
-    padding: 0px;
-    padding-top: 3px;
-    /*display:inline;*/
-    /*position: absolute;*/
-    /*right: 15%;*/
-    /*top: 4%;*/
-}
-
-.EditorDimensionToggleBtn {
-    width: 20%;
-    min-width: 20px;
-    padding: 0px;
-    /*position: absolute;*/
-    /*right: 10%;*/
-    /*top: 4%;*/
+.EditorToolbarBtnStyle i {
+    padding-top: 5px;
+    margin-left: -5px;
 }
 
 .VrWalkInButtonStyle {
@@ -318,9 +297,6 @@ canvas { pointer-events:none; z-index:10; }
     min-width: 20px;
     z-index: 1200;
     display: inline-block;
-    /*position: absolute;*/
-    /*right: 0;*/
-    /*top: 4%;*/
 }
 
 .ThirdPersonVrWalkInButtonStyle {

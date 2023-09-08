@@ -452,20 +452,18 @@ wp_head();
                         <!--  Dimensionality 2D 3D toggle -->
                         <a id="dim-change-btn" data-mdc-auto-init="MDCRipple"
                            title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-                           class="EditorDimensionToggleBtn mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"
-                           style="width:45px;height:35px;min-width:20px">
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
                             2D
                         </a>
                     </div>
 
                     <!-- The button to start walking in the 3d environment -->
                     <div class="environmentButton">
-                        <div id="firstPersonBlocker" class="VrWalkInButtonStyle" style="display:inline-block">
+                        <div id="firstPersonBlocker">
                             <a type="button" id="firstPersonBlockerBtn" data-toggle='on'
-                               class="mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
+                               class="EditorToolbarBtnStyle mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
                                title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys"
-                               data-mdc-auto-init="MDCRipple"
-                               style="width:45px; height:35px; min-width:20px; padding:5px">
+                               data-mdc-auto-init="MDCRipple">
                                 <i class="material-icons">person</i>
                             </a>
                         </div>
@@ -475,8 +473,7 @@ wp_head();
                     <div class="environmentButton">
                         <a type="button" id="toggle-tour-around-btn" data-toggle='off' data-mdc-auto-init="MDCRipple"
                            title="Auto-rotate 3D tour"
-                           class="EditorTourToggleBtn mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"
-                           style="width:45px;height:35px;min-width:20px">
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
                             <i class="material-icons">rotate_90_degrees_ccw</i>
                         </a>
                     </div>
@@ -484,14 +481,22 @@ wp_head();
 
                     <!-- Cogwheel options -->
                     <div class="environmentButton">
-                        <div id="row_cogwheel" class="row-right-panel" style="display:inline-block">
+                        <div id="row_cogwheel" class="row-right-panel">
                             <a type="button" id="optionsPopupBtn"
-                               class="VrEditorOptionsBtnStyle mdc-button mdc-button--raised mdc-button--primary mdc-button--dense"
-                               style="width:45px;min-width:20px;height:35px;padding:2px"
+                               class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--primary mdc-button--dense"
                                title="Edit scene options" data-mdc-auto-init="MDCRipple">
                                 <i class="material-icons">settings</i>
                             </a>
                         </div>
+                    </div>
+
+                    <div class="environmentButton">
+                        <input hidden type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" />
+                        <a id="env_texture-change-btn" data-mdc-auto-init="MDCRipple"
+                           title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
+                            <i class="material-icons">texture</i>
+                        </a>
                     </div>
 
                 </div>
@@ -719,6 +724,12 @@ wp_head();
         manager.onProgress = function ( url, loaded, total ) {
             document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
         };
+
+        let toggleEnvTexture = (el) => {
+            jQuery("#env_texture-change-btn").toggleClass('mdc-theme--secondary-bg');
+            el.checked = !el.checked;
+            envir.scene.environment = el.checked ? null : envir.maintexture;
+        }
 
 
         // When all are finished loading place them in the correct position

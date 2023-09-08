@@ -253,18 +253,6 @@ canvas { pointer-events:none; z-index:10; }
 
 /*Right Panel*/
 
-.VrEditorOptionsBtnStyle {
-    width:100%;
-    /*position: absolute;*/
-    /*right: 0;*/
-    /*top: 2px;*/
-    /*width: 48px;*/
-    /*min-width: 0;*/
-    /*padding: 0;*/
-    /*margin: 0;*/
-}
-
-
 /*row2*/
 .EditorTourToggleBtn {
     width:20%;
@@ -276,14 +264,6 @@ canvas { pointer-events:none; z-index:10; }
     /*top: 4%;*/
 }
 
-.EditorDimensionToggleBtn {
-    width:20%;
-    min-width: 20px;
-    padding:0;
-    /*position: absolute;*/
-    /*right: 10%;*/
-    /*top: 4%;*/
-}
 
 .VrWalkInButtonStyle {
     /*width:45px;*/
