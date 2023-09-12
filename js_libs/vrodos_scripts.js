@@ -53,6 +53,45 @@ function updateClearColorPicker(picker){
     envir.scene.background = new THREE.Color(hex);
 }
 
+function saveChanges() {
+    jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
+
+    // Export using a custom variant of the old deprecated class SceneExporter
+    let exporter = new THREE.SceneExporter();
+    //env.getObjectByName(name).follow_camera = 2;
+    document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
+
+    //let test = document.getElementById('vrodos_scene_json_input').value;
+
+    //var json = JSON.stringify(test);
+
+    //console.log(test);
+
+    vrodos_saveSceneAjax();
+    //.forEach(element => console.log(element));
+}
+
+function bcgRadioSelect(option){
+    let custom_img = document.getElementById('ImgUploadBcg');
+    if (option.value == 3){
+       
+        custom_img.disabled = false;
+        //custom_img.style.display = "block";
+    }
+    else{
+        custom_img.disabled = true;
+        //custom_img.style.display = "none";
+    }
+    envir.scene.getObjectByName("avatarCamera").bcg_selection = option.value;
+    saveChanges();
+    //envir.scene.getObjectByName(updName).sceneID_target = option.value;
+}
+
+function customImageSelect(){
+    let custom_img = document.getElementById('ImgUploadBcg');
+    console.log(custom_img.value);
+}
+
 function updateFogColorPicker(picker){
 
     document.getElementById('FogColor').value = picker.toRGBString();

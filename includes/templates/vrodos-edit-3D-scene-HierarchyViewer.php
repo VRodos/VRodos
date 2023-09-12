@@ -76,10 +76,24 @@
     </div>
 
     <!-- Set Clear Color -->
-    <div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0; padding:0; height:70px; background: rgba(255,255,255,0.5)">
+
+    
+   
+    <div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0; padding:0; height:150px; background: rgba(255,255,255,0.5)">
 
         <ul class="RadioButtonList" style="margin:0">
-            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="" style="height:30px; margin:0; font-size:xx-small">
+            <li class="mdc-form-field" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0"  style="height:30px; margin:0; font-size:xx-small">
+                    <div class="mdc-radio">
+                        <input class="mdc-radio__native-control" type="radio" id="sceneNone"
+                            name="sceneColorTypeRadio" value="None"> 
+                        <div class="mdc-radio__background">
+                            <div class="mdc-radio__outer-circle"></div>
+                            <div class="mdc-radio__inner-circle"></div>
+                        </div>
+                    </div>
+                    <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">None</label>
+            </li>
+            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1" style="height:30px; margin:0; font-size:xx-small">
                 <div class="mdc-radio">
                     <input class="mdc-radio__native-control" type="radio" id="sceneColorRadio"
                            name="sceneColorTypeRadio" value="color">
@@ -96,11 +110,35 @@
                 <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
 
             </li>
+            <li class="mdc-form-field" id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2" style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio">
+                    <input class="mdc-radio__native-control" type="radio" id="sceneSky"
+                           name="sceneColorTypeRadio" value="sky"> 
+                    <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
+                    </div>
+                </div>
+                <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">Sky</label>
+            </li>
+            <li class="mdc-form-field" id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3" style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio">
+                    <input class="mdc-radio__native-control" type="radio" id="sceneCustomImage"
+                           name="sceneColorTypeRadio" value="Custom_img"> 
+                    <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
+                    </div>
+                </div>
+                <label id="sceneCustomImageRadio-label" for="sceneCustomImageRadio" style="margin-bottom: 0;">Custom Image</label>
+                <input id="ImgUploadBcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" multiple accept=".jpg,.png" disabled onchange="customImageSelect()" style="font-size: 10px;" />
+       
+            </li>
 
         </ul>
 
         <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above"
-               style="background: none;font-size:10px; width: 70%;padding:5px">Scene Background</label>
+               style="background: none;font-size:10px; width: 70%;padding:5px ">Scene Background</label>
 
 
     </div>
