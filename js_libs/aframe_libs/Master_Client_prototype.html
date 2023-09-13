@@ -133,9 +133,10 @@
                 pr_type:{type: "string", default: "default"},
                 img_link:{type: "string", default: "no_link"},
                 selChoice:{type: "string", default: "0"},
+                presChoice:{type: "string", default: "default"},
             },
             init: function () {
-                console.log(this.data.pr_type);
+                console.log(this.data.presChoice);
 
                 let cam = document.querySelector("#cameraA");
                 console.log(cam);
@@ -157,7 +158,8 @@
                         backgroundEl.setAttribute("background", "color", this.data.color);
                         break;
                     case "2":
-                        backgroundEl.setAttribute("environment", "ground:none");
+                        backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
+                        backgroundEl.setAttribute("environment", "ground", "none");
                         break;
                     case "3":
                         let customImgAsset = document.querySelector('#custom_sky');

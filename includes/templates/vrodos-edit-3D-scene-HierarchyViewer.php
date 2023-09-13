@@ -105,7 +105,7 @@
                 </div>
                 <label id="sceneColorRadio-label" for="sceneColorRadio" style="margin-bottom: 0;">Color</label>
 
-                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
+                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
 
                 <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
 
@@ -119,7 +119,13 @@
                         <div class="mdc-radio__inner-circle"></div>
                     </div>
                 </div>
-                <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">Sky</label>
+                <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">Presets</label>
+                <select name="presetsBcg" id="presetsBcg" disabled style="margin-right: 100px; font-size: 10px;">
+                <option value="default">Default</option>
+                <option value="egypt">Egypt</option>
+                <option value="forest">Forest</option>
+                <option value="goldmine">Goldmine</option>
+                </select>
             </li>
             <li class="mdc-form-field" id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3" style="height:30px; margin:0; font-size:xx-small">
                 <div class="mdc-radio">
@@ -131,11 +137,11 @@
                     </div>
                 </div>
                 <label id="sceneCustomImageRadio-label" for="sceneCustomImageRadio" style="margin-bottom: 0;">Custom Image</label>
-                <input id="ImgUploadBcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" multiple accept=".jpg,.png" disabled onchange="customImageSelect()" style="font-size: 10px;" />
+                <input id="ImgUploadBcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" multiple accept=".jpg,.png" disabled onchange="imgUpload()" style="font-size: 10px;" />
        
             </li>
-
         </ul>
+      
 
         <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above"
                style="background: none;font-size:10px; width: 70%;padding:5px ">Scene Background</label>

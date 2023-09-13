@@ -374,19 +374,21 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         //print_r($objects->avatarCamera->isCamera);
         
         $bcg_choice = $objects->avatarCamera->bcg_selection;
+        $preset_choice = $objects->avatarCamera->preset_selection;
         if ($bcg_choice == "3"){
             
             $a_asset_sky = $dom->createElement( "img" );
             $a_asset_sky->setAttribute("id", "custom_sky");
-            // $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg"); TODO: load source link from file 
+            $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg"); 
             $a_asset->appendChild($a_asset_sky);
             $ascene->appendChild($a_asset);
         }
+
             
         if (!empty($sceneColor)){
-            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice");
+            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice");
         }else{
-            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice");
+            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice");
         }
 
         if ($projectType == 'vrexpo_games') {

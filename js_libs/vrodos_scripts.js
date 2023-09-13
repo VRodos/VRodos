@@ -51,6 +51,7 @@ function updateClearColorPicker(picker){
     var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
     //envir.renderer.setClearColor(hex);
     envir.scene.background = new THREE.Color(hex);
+    saveChanges();
 }
 
 function saveChanges() {
@@ -72,24 +73,59 @@ function saveChanges() {
 }
 
 function bcgRadioSelect(option){
-    let custom_img = document.getElementById('ImgUploadBcg');
-    if (option.value == 3){
-       
-        custom_img.disabled = false;
-        //custom_img.style.display = "block";
-    }
-    else{
-        custom_img.disabled = true;
-        //custom_img.style.display = "none";
+    let color_sel = document.getElementById('jscolorpick');
+    let custom_img_sel = document.getElementById('ImgUploadBcg');
+    let preset_sel = document.getElementById('presetsBcg');
+
+    switch (option.value) {
+    case 0:
+        custom_img_sel.disabled = true;
+        preset_sel.disabled = true;
+        color_sel.disabled = true;
+        break;
+    case 1: 
+        color_sel.disabled = false;
+        preset_sel.disabled = true;
+        custom_img_sel.disabled = true;
+        break;
+    case 2 : 
+        custom_img_sel.disabled = true;
+        preset_sel.disabled = false;
+        color_sel.disabled = true;
+        envir.scene.getObjectByName("avatarCamera").preset_selection = preset_sel.value;
+        break;
+    case 3 : 
+        custom_img_sel.disabled = false;
+        preset_sel.disabled = true;
+        color_sel.disabled = true;
+        break;
     }
     envir.scene.getObjectByName("avatarCamera").bcg_selection = option.value;
     saveChanges();
     //envir.scene.getObjectByName(updName).sceneID_target = option.value;
 }
 
-function customImageSelect(){
+function imgUpload(){
+    //readLocalImageAsSceneIcon(this);
+
     let custom_img = document.getElementById('ImgUploadBcg');
-    console.log(custom_img.value);
+    //console.log(custom_img.value);
+   
+    let post_data = {
+        "action": "image_upload_action",
+        "sceneID": my_ajax_object_compile.sceneId,
+        "projectId": my_ajax_object_compile.projectId,  
+        "img_path": custom_img.value
+    };
+   
+    jQuery.ajax({
+        type: "POST",
+        url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
+        data: post_data,
+        success: function (response) {
+          console.log(JSON.parse(response.responseText).data);
+        },
+    });
 }
 
 function updateFogColorPicker(picker){
