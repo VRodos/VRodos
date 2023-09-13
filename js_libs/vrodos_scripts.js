@@ -118,14 +118,14 @@ function imgUpload(){
         "img_path": custom_img.value
     };
    
-    jQuery.ajax({
-        type: "POST",
-        url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
-        data: post_data,
-        success: function (response) {
-          console.log(JSON.parse(response.responseText).data);
-        },
-    });
+    // jQuery.ajax({
+    //     type: "POST",
+    //     url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
+    //     data: post_data,
+    //     success: function (response) {
+    //       console.log(JSON.parse(response.responseText).data);
+    //     },
+    // });
 }
 
 function updateFogColorPicker(picker){
