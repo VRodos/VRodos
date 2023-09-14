@@ -683,6 +683,12 @@ function vrodos_update_expert_log_callback()
     wp_die();
 }
 
+function image_upload_action_callback(){
+	/// TODO upload image 
+	///$data = $_POST['data'];
+    ///wp_send_json_success($data);
+}
+
 
 //====================== PROJECT ASSEMBLY AND COMPILATION =================================================================
 

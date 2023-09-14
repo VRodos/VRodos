@@ -963,6 +963,8 @@ add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_b
 
 add_action( 'wp_ajax_vrodos_compile_action', 'vrodos_compile_action_callback' );
 
+add_action('wp_ajax_image_upload_action', 'image_upload_action_callback');
+
 
 
 //-------- Remove Gutenberg for Widgets ---------

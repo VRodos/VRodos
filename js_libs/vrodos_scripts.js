@@ -106,26 +106,25 @@ function bcgRadioSelect(option){
 }
 
 function imgUpload(){
-    //readLocalImageAsSceneIcon(this);
 
     let custom_img = document.getElementById('ImgUploadBcg');
-    //console.log(custom_img.value);
+    
    
     let post_data = {
         "action": "image_upload_action",
         "sceneID": my_ajax_object_compile.sceneId,
         "projectId": my_ajax_object_compile.projectId,  
-        "img_path": custom_img.value
+        "img_path": custom_img.value    ///$_Post with value needed here?
     };
    
-    // jQuery.ajax({
-    //     type: "POST",
-    //     url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
-    //     data: post_data,
-    //     success: function (response) {
-    //       console.log(JSON.parse(response.responseText).data);
-    //     },
-    // });
+    jQuery.ajax({
+        type: "POST",
+        url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
+        data: post_data,
+        success: function (response) {
+          console.log(response);
+        },
+    });
 }
 
 function updateFogColorPicker(picker){
