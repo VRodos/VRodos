@@ -366,29 +366,29 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $pj_type = wp_get_post_terms($project_id, 'vrodos_game_type');
 
         $projectType = $pj_type[0]->slug;
-        // $a_asset = $dom->createElement( "a-assets" );
+        $a_asset = $dom->createElement( "a-assets" );
 
-        // $a_asset_sky = $dom->createElement( "img" );
-        // $a_asset_sky->setAttribute("id", "custom_sky");
-        // $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_1k.hdr");
-
-        // $a_entity_sky = $dom->createElement( "a-sky" );
-        // $a_entity_sky->setAttribute("id", "sky");
-        // $a_entity_sky->setAttribute("src",  "#custom_sky");
-
-        // $a_asset->appendChild($a_asset_sky);
-        // $ascene->appendChild($a_asset);
 
         // $ascene->appendChild($a_entity_sky);
 
+        //print_r($objects->avatarCamera->isCamera);
 
+        $bcg_choice = $objects->avatarCamera->bcg_selection;
+        $preset_choice = $objects->avatarCamera->preset_selection;
+        if ($bcg_choice == "3"){
 
+            $a_asset_sky = $dom->createElement( "img" );
+            $a_asset_sky->setAttribute("id", "custom_sky");
+            $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg");
+            $a_asset->appendChild($a_asset_sky);
+            $ascene->appendChild($a_asset);
+        }
 
 
         if (!empty($sceneColor)){
-            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; img_link:custom_sky");
+            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice");
         }else{
-            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; img_link:custom_sky");
+            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice");
         }
 
         if ($projectType == 'vrexpo_games') {
@@ -1050,14 +1050,23 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                             $prev_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
                             $prev_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
 
-                            $a_panel_entity->appendChild( $prev_desc_entity);
-                        }
+                        $a_panel_entity->appendChild( $prev_desc_entity);
+
+                        $a_count_page_entity = $dom->createElement("a-entity");
+                        $a_count_page_entity->setAttribute("id", "page_$uuid");
+                        $a_count_page_entity->setAttribute("position", "0.35 -0.8 -0.1");
 
 
-                        $a_desc_img_entity = $dom->createElement("a-entity");
-                        $a_desc_img_entity->setAttribute("id", "desc_$uuid");
-                        $a_desc_img_entity->setAttribute("position", "-0.68 -0.3 0");
+                        $a_count_page_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 0.8; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value:");
+                        $a_panel_entity->appendChild($a_count_page_entity);
+                    }
+                    
 
+                    
+                    $a_desc_img_entity = $dom->createElement("a-entity");
+                    $a_desc_img_entity->setAttribute("id", "desc_$uuid");
+                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.4 0");
+                      
 
                         $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value: $contentObject->poi_img_content");
                         $a_panel_entity->appendChild($a_desc_img_entity);

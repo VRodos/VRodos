@@ -214,6 +214,12 @@ wp_localize_script( 'ajax-script_savescene', 'my_ajax_object_savescene',
     array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
 );
 
+// Upload Image
+wp_enqueue_script( 'ajax-script_uploadimage', $pluginpath.'/js_libs/ajaxes/uploadimage.js', array('jquery') );
+wp_localize_script( 'ajax-script_uploadimage', 'my_ajax_object_uploadimage',
+    array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
+);
+
 // Delete Asset
 wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.
     '/js_libs/ajaxes/delete_asset.js', array('jquery') );

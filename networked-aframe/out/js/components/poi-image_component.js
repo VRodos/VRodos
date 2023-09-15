@@ -7,6 +7,7 @@ AFRAME.registerComponent('info-panel', {
         this.ImageAsset = document.querySelector('#main_img_' + this.data);
         this.TitleEl = document.querySelector('#title_' + this.data);
         this.DescriptionEl = document.querySelector('#desc_' + this.data);
+        this.PageEl = document.querySelector('#page_' + this.data);
         this.infoPanel = document.querySelector('#infoPanel_' + this.data);
         this.escEl = document.querySelector('#exit_' + this.data);
         this.scen = document.querySelector('#aframe-scene-container'); 
@@ -20,6 +21,7 @@ AFRAME.registerComponent('info-panel', {
         this.backgroundEl = document.querySelector('#exit_' + this.data);
 
         this.desc_list = [];
+        this.readingPos = 0;
               
         this.cam.add(this.infoPanel);
         
@@ -57,6 +59,9 @@ AFRAME.registerComponent('info-panel', {
                 this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
 
             }
+            this.indPos = this.readingPos + 1;
+            if(this.PageEl)
+                this.PageEl.setAttribute("text", "value", "page " + this.indPos + " out of " + this.chunks);
         }   
         
 
@@ -124,7 +129,7 @@ AFRAME.registerComponent('info-panel', {
     
 
         
-        this.readingPos = 0;
+        
         this.buttonEl.addEventListener('click', this.onMenuButtonClick);
         if (this.buttonNextEl)
             this.buttonNextEl.addEventListener('click', this.onNextButtonClick);
@@ -143,6 +148,11 @@ AFRAME.registerComponent('info-panel', {
     onNextButtonClick: function (evt) {
              
         this.readingPos += 1;
+
+        this.indPos = this.readingPos + 1;
+        if(this.PageEl)
+            this.PageEl.setAttribute("text", "value", "page " + this.indPos + " out of " + this.chunks);
+        
         this.DescriptionEl.setAttribute("text","value",this.desc_list[this.readingPos]);
         if(this.readingPos == this.chunks -1) {
             this.buttonNextEl.object3D.visible = false;
@@ -155,6 +165,10 @@ AFRAME.registerComponent('info-panel', {
     onPrevButtonClick: function (evt) {
              
         this.readingPos -= 1;
+        this.indPos = this.readingPos + 1;
+        if(this.PageEl)
+            this.PageEl.setAttribute("text", "value", "page " + this.indPos + " out of " + this.chunks);
+
         this.DescriptionEl.setAttribute("text","value",this.desc_list[this.readingPos]);
         if(this.readingPos == 0) {
             this.buttonPrevEl.object3D.visible = false;
@@ -200,6 +214,13 @@ AFRAME.registerComponent('info-panel', {
         else {
             this.DescriptionEl.components.text.material.depthTest = false;
             this.DescriptionEl.object3D.renderOrder = 9999999;
+        }
+        if (!this.PageEl) {
+            console.log("No Desc");
+        }
+        else {
+            this.PageEl.components.text.material.depthTest = false;
+            this.PageEl.object3D.renderOrder = 9999999;
         }
               
         if (!this.TitleEl) {

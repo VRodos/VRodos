@@ -37,6 +37,58 @@ function updateClearColorPicker(picker){
     var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
     //envir.renderer.setClearColor(hex);
     envir.scene.background = new THREE.Color(hex);
+    saveChanges();
+}
+
+function saveChanges() {
+    jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
+
+    // Export using a custom variant of the old deprecated class SceneExporter
+    let exporter = new THREE.SceneExporter();
+    //env.getObjectByName(name).follow_camera = 2;
+    document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
+
+    //let test = document.getElementById('vrodos_scene_json_input').value;
+
+    //var json = JSON.stringify(test);
+
+    //console.log(test);
+
+    vrodos_saveSceneAjax();
+    //.forEach(element => console.log(element));
+}
+
+function bcgRadioSelect(option){
+    let color_sel = document.getElementById('jscolorpick');
+    let custom_img_sel = document.getElementById('img_upload_bcg');
+    let preset_sel = document.getElementById('presetsBcg');
+
+    switch (option.value) {
+    case 0:
+        custom_img_sel.disabled = true;
+        preset_sel.disabled = true;
+        color_sel.disabled = true;
+        break;
+    case 1: 
+        color_sel.disabled = false;
+        preset_sel.disabled = true;
+        custom_img_sel.disabled = true;
+        break;
+    case 2 : 
+        custom_img_sel.disabled = true;
+        preset_sel.disabled = false;
+        color_sel.disabled = true;
+        envir.scene.getObjectByName("avatarCamera").preset_selection = preset_sel.value;
+        break;
+    case 3 : 
+        custom_img_sel.disabled = false;
+        preset_sel.disabled = true;
+        color_sel.disabled = true;
+        break;
+    }
+    envir.scene.getObjectByName("avatarCamera").bcg_selection = option.value;
+    saveChanges();
+    //envir.scene.getObjectByName(updName).sceneID_target = option.value;
 }
 
 function updateFogColorPicker(picker){

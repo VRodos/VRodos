@@ -25,11 +25,11 @@
     <script src="js/spawn-in-circle.component.js"></script>
 
     <script src="js/highlight_img.js"></script>
-
-    <script src="js/poi-image_component.js"></script>
-    <script src="js/poi-link_component.js"></script>
-    <script src="js/door_component.js"></script>
-    <script src="js/video_component.js"></script>
+    
+    <script src="js/components/poi-image_component.js"></script>
+    <script src="js/components/poi-link_component.js"></script>
+    <script src="js/components/door_component.js"></script>
+    <script src="js/components/video_component.js"></script>
 
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.controls.min.js"></script>
     <script src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
@@ -132,9 +132,11 @@
                 color:{type: "string", default: "#ffffff"},
                 pr_type:{type: "string", default: "default"},
                 img_link:{type: "string", default: "no_link"},
+                selChoice:{type: "string", default: "0"},
+                presChoice:{type: "string", default: "default"},
             },
             init: function () {
-                console.log(this.data.pr_type);
+                console.log(this.data.presChoice);
 
                 let cam = document.querySelector("#cameraA");
                 console.log(cam);
@@ -145,9 +147,38 @@
                     cam.setAttribute("camera", "fov: 60"); //temp based on camera settings
 
                 }
-
                 let backgroundEl = document.querySelector('#aframe-scene-container');
-                backgroundEl.setAttribute("background", "color", this.data.color);
+                if (!this.data.selChoice)
+                    this.data.selChoice = "0";
+                switch(this.data.selChoice){
+                    case "0":
+                        backgroundEl.setAttribute("background", "color", "#ffffff");
+                        break;
+                    case "1":
+                        backgroundEl.setAttribute("background", "color", this.data.color);
+                        break;
+                    case "2":
+                        backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
+                        backgroundEl.setAttribute("environment", "ground", "none");
+                        break;
+                    case "3":
+                        let customImgAsset = document.querySelector('#custom_sky');
+                        if(customImgAsset.getAttribute("src")){
+                            let skyElem = document.createElement('a-sky');
+                            skyElem.setAttribute("id", "sky");
+                            skyElem.setAttribute("src",  "#custom_sky");
+                            backgroundEl.appendChild(skyElem);
+                        }
+                        else{
+                            backgroundEl.setAttribute("background", "color", "#ffffff");
+                        }
+
+                        break;
+
+                }
+
+                // let backgroundEl = document.querySelector('#aframe-scene-container');
+                // backgroundEl.setAttribute("background", "color", this.data.color);
             }
         });
 
@@ -488,6 +519,7 @@
 
     <!-- Pawn -->
     <a-entity id="player"></a-entity>
+
 
 </a-scene>
 

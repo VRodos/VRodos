@@ -85,14 +85,71 @@
             <input type="checkbox" title="Enable global chat" id="enableBroadcastCheckbox" name="enableBroadcastCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleBroadcastChat(this.checked)">
             <label for="enableBroadcastCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Enable chat broadcast</label>
         </div>
-        <!-- Set Background Color -->
-        <div style="display: block">
-            <label for="sceneClearColor" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Background Color</label>
-            <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
-            <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
 
 
-        </div>
+
+        <ul class="RadioButtonList" style="margin:0">
+            <li class="mdc-form-field" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0"  style="height:30px; margin:0; font-size:xx-small">
+                    <div class="mdc-radio">
+                        <input class="mdc-radio__native-control" type="radio" id="sceneNone"
+                            name="sceneColorTypeRadio" value="None">
+                        <div class="mdc-radio__background">
+                            <div class="mdc-radio__outer-circle"></div>
+                            <div class="mdc-radio__inner-circle"></div>
+                        </div>
+                    </div>
+                    <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">None</label>
+            </li>
+            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1" style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio">
+                    <input class="mdc-radio__native-control" type="radio" id="sceneColorRadio"
+                           name="sceneColorTypeRadio" value="color">
+                    <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
+                    </div>
+
+                </div>
+                <label for="sceneColorRadio" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Background Color</label>
+                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
+                <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
+
+            </li>
+            <li class="mdc-form-field" id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2" style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio">
+                    <input class="mdc-radio__native-control" type="radio" id="sceneSky"
+                           name="sceneColorTypeRadio" value="sky">
+                    <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
+                    </div>
+                </div>
+                <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">Presets</label>
+                <select name="presetsBcg" id="presetsBcg" disabled style="margin-right: 100px; font-size: 10px;">
+                <option value="default">Default</option>
+                <option value="egypt">Egypt</option>
+                <option value="forest">Forest</option>
+                <option value="goldmine">Goldmine</option>
+                </select>
+            </li>
+            <li class="mdc-form-field" id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3" style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio">
+                    <input class="mdc-radio__native-control" type="radio" id="sceneCustomImage"
+                           name="sceneColorTypeRadio" value="Custom_img">
+                    <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
+                    </div>
+                </div>
+                <label id="sceneCustomImageRadio-label" for="sceneCustomImageRadio" style="margin-bottom: 0;">Custom Image</label>
+                <input id="img_upload_bcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".png" disabled onchange="imgUpload()" style="font-size: 10px;" />
+
+            </li>
+        </ul>
+
+
+        <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above"
+               style="background: none;font-size:10px; width: 70%;padding:5px ">Scene Background</label>
 
     </div>
 
