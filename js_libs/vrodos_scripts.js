@@ -74,7 +74,7 @@ function saveChanges() {
 
 function bcgRadioSelect(option){
     let color_sel = document.getElementById('jscolorpick');
-    let custom_img_sel = document.getElementById('ImgUploadBcg');
+    let custom_img_sel = document.getElementById('img_upload_bcg');
     let preset_sel = document.getElementById('presetsBcg');
 
     switch (option.value) {
@@ -103,28 +103,6 @@ function bcgRadioSelect(option){
     envir.scene.getObjectByName("avatarCamera").bcg_selection = option.value;
     saveChanges();
     //envir.scene.getObjectByName(updName).sceneID_target = option.value;
-}
-
-function imgUpload(){
-
-    let custom_img = document.getElementById('ImgUploadBcg');
-    
-   
-    let post_data = {
-        "action": "image_upload_action",
-        "sceneID": my_ajax_object_compile.sceneId,
-        "projectId": my_ajax_object_compile.projectId,  
-        "img_path": custom_img.value    ///$_Post with value needed here?
-    };
-   
-    jQuery.ajax({
-        type: "POST",
-        url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
-        data: post_data,
-        success: function (response) {
-          console.log(response);
-        },
-    });
 }
 
 function updateFogColorPicker(picker){
