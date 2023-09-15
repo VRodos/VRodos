@@ -56,13 +56,13 @@
          style="display: block; width:100%; margin:0; padding:0; height:30px; background: rgba(255,255,255,0.5)">
 
         <input type="checkbox"
-               title="Lock Scale aspect ratio"
+               title="Constrain Scale dims to one value"
                id="scaleLockCheckbox"
                name="scaleLockCheckbox"
                form="3dAssetForm"
                class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light"
                onchange="keepScaleAspectRatio(this.checked)">
-        <label for="scaleLockCheckbox" class="mdc-typography--subheading2" style="vertical-align: middle; cursor: pointer;">Lock Scale aspect ratio</label>
+        <label for="scaleLockCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Constrain Scale dims to single value</label>
 
     </div>
 
@@ -75,33 +75,24 @@
         </div>
     </div>
 
-    <!-- Set Clear Color -->
-    <div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0; padding:0; height:70px; background: rgba(255,255,255,0.5)">
+    <!-- Extra options -->
+    <div style="width:100%; margin:0; padding:6px; height: 90px; background: rgba(255,255,255,0.5)">
 
-        <ul class="RadioButtonList" style="margin:0">
-            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="" style="height:30px; margin:0; font-size:xx-small">
-                <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="sceneColorRadio"
-                           name="sceneColorTypeRadio" value="color">
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
+        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Scene options</span>
 
-                </div>
-                <label id="sceneColorRadio-label" for="sceneColorRadio" style="margin-bottom: 0;">Color</label>
+        <!-- Set Broadcast chat -->
+        <div style="display: block">
+            <input type="checkbox" title="Enable global chat" id="enableBroadcastCheckbox" name="enableBroadcastCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleBroadcastChat(this.checked)">
+            <label for="enableBroadcastCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Enable chat broadcast</label>
+        </div>
+        <!-- Set Background Color -->
+        <div style="display: block">
+            <label for="sceneClearColor" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Background Color</label>
+            <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
+            <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
 
-                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
 
-                <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
-
-            </li>
-
-        </ul>
-
-        <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above"
-               style="background: none;font-size:10px; width: 70%;padding:5px">Scene Background</label>
-
+        </div>
 
     </div>
 

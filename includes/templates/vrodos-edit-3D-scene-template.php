@@ -405,7 +405,7 @@ wp_head();
                     <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
                     </div>
 
-                    <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true" title="When adding a Sun, an automatic horizon is added to the scene, negating any Background color you have selected.">
                         <header draggable="false" class="notdraggable">Sun</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/sun.png"/>

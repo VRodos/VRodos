@@ -30,6 +30,10 @@
         envir.scene.keepScaleAspectRatio = value;
     }
 
+    function toggleBroadcastChat(value) {
+        envir.scene.chatBroadcastEnabled = value;
+    }
+
     function changeRendererToneMapping(value) {
         envir.renderer.toneMappingExposure = value;
     }
