@@ -735,6 +735,8 @@ THREE.SceneExporter.prototype = {
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableEnvironmentTexture" : "' + (!!envir.scene.environment) + '",',
             '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
+            '		"backgroundPresetOption" : "' + (envir.scene.preset_selection ? envir.scene.preset_selection : 'None') + '",',
+            '		"backgroundStyleOption" : "' + (envir.scene.bcg_selection ? envir.scene.bcg_selection : '0') + '",',
             '		"objects"       : ' + nobjects + //+  ',',
             '	},',
             '	"urlBaseType": "relativeToScene",',
