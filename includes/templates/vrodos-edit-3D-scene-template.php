@@ -920,10 +920,14 @@ wp_head();
         document.getElementsByTagName("html")[0].style.overflow="hidden";
 
         // Init UI values
-        document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
 
 
-</script>
+        if (resources3D["enableGeneralChat"]) {
+            document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
+        }
+
+
+    </script>
 <?php }
 
 // Add sceneType variable in js envir

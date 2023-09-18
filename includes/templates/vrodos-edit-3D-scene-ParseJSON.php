@@ -26,7 +26,12 @@ class ParseJSON
         }
 
         echo 'resources3D["toneMappingExposure"]= "' . $json_metadata->toneMappingExposure . '";';
-        echo 'resources3D["enableGeneralChat"]= "' . $json_metadata->enableGeneralChat . '";';
+
+        if (property_exists($json_metadata, "enableGeneralChat")){
+            echo 'resources3D["enableGeneralChat"]= "' . $json_metadata->enableGeneralChat . '";';
+        }
+
+
         echo '</script>';
 
 

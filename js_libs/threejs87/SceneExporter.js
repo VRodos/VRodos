@@ -720,6 +720,7 @@ THREE.SceneExporter.prototype = {
         if (objects.substr(objects.length - 2, 1) == ',')
             objects = objects.substr(0, objects.length - 2) + '\n';
 
+
         var output = [
             '{',
             '	"metadata": {',

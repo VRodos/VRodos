@@ -532,30 +532,6 @@ function vrodos_segment_obj_action_callback() {
 
 
 
-//---- AJAX COMPILE 3: Enlist the split objs -------------
-function vrodos_enlist_splitted_objs_action_callback(){
-
-	$DS = DIRECTORY_SEPARATOR;
-	$path = wp_upload_dir()['basedir'].$DS.$_POST['path'];
-
-	$files = new RecursiveIteratorIterator(
-		new RecursiveDirectoryIterator($path),
-		RecursiveIteratorIterator::LEAVES_ONLY
-	);
-
-	foreach ($files as $name => $file) {
-		// Skip directories (they would be added automatically)
-		if (!$file->isDir() and pathinfo($file,PATHINFO_EXTENSION)=='obj')
-		{
-			echo "<a href='".wp_upload_dir()['baseurl']."/".$_POST['path'].basename($file)."' >".basename($file)."</a><br />";
-		}
-	}
-
-	wp_die();
-}
-
-
-
 //======================= CONTENT INTERLINKING =========================================================================
 
 function vrodos_fetch_description_action_callback(){
