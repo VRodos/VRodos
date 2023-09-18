@@ -324,8 +324,7 @@ wp_head();
 
 ?>
 
-<?php if ( !is_user_logged_in() ) {
-    ?>
+<?php if ( !is_user_logged_in() ) { ?>
 
     <!-- if user not logged in, then prompt to log in -->
     <div class="DisplayBlock CenterContents">
@@ -395,7 +394,6 @@ wp_head();
                       ><?php echo json_encode(json_decode($sceneJSON), JSON_PRETTY_PRINT ); ?>
                   </textarea>
                 </div>
-
 
 
 
@@ -611,10 +609,6 @@ wp_head();
         compileDialog.focusTrap_.deactivate();
 
 
-        // Less top margin if not Admin
-        // if (!isUserAdmin)
-        //     document.getElementById("vr_editor_main_div").style.top = "28px";
-
         // load asset browser with data
         jQuery(document).ready(function(){
 
@@ -736,7 +730,6 @@ wp_head();
             el.checked = !el.checked;
             envir.scene.environment = !el.checked ? null : envir.maintexture;
         }
-
 
         // When all are finished loading place them in the correct position
         manager.onLoad = function () {
@@ -925,7 +918,11 @@ wp_head();
         }
 
         document.getElementsByTagName("html")[0].style.overflow="hidden";
-    </script>
+
+        document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
+
+
+</script>
 <?php }
 
 // Add sceneType variable in js envir

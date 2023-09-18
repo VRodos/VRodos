@@ -14,11 +14,6 @@ class ParseJSON
         $content_JSON = json_decode($sceneToLoad);
         $json_metadata = $content_JSON->metadata;
 
-        /*echo($sceneToLoad);
-        var_dump($content_JSON);
-            exit;*/
-
-
         echo '<script>';
         echo 'resources3D["ClearColor"]= "' . $json_metadata->ClearColor . '";';
 
@@ -32,6 +27,7 @@ class ParseJSON
 
         echo 'resources3D["toneMappingExposure"]= "' . $json_metadata->toneMappingExposure . '";';
         echo 'resources3D["enableEnvironmentTexture"]= "' . $json_metadata->enableEnvironmentTexture . '";';
+        echo 'resources3D["enableGeneralChat"]= "' . $json_metadata->enableGeneralChat . '";';
         echo '</script>';
 
 

@@ -77,8 +77,8 @@
 
         <!-- Set Broadcast chat -->
         <div style="display: block">
-            <input type="checkbox" title="Enable global chat" id="enableBroadcastCheckbox" name="enableBroadcastCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleBroadcastChat(this.checked)">
-            <label for="enableBroadcastCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Enable chat broadcast</label>
+            <input type="checkbox" title="Enable global chat" id="enableGeneralChatCheckbox" name="enableGeneralChatCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleBroadcastChat(this.checked)">
+            <label for="enableGeneralChatCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Enable general chat</label>
         </div>
 
         <hr>

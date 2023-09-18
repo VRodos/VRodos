@@ -31,7 +31,7 @@
     }
 
     function toggleBroadcastChat(value) {
-        envir.scene.chatBroadcastEnabled = value;
+        envir.scene.enableGeneralChat = value;
     }
 
     function changeRendererToneMapping(value) {

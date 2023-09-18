@@ -186,52 +186,6 @@ THREE.SceneExporter.prototype = {
             }
         });
 
-        var defcamera = LabelString(activeCamera ? getObjectName(activeCamera) : "");
-        var deffog = LabelString(scene.fog ? getFogName(scene.fog) : "");
-
-        function CameraString(o, n) {
-
-            if (o instanceof THREE.PerspectiveCamera) {
-
-
-
-                var output = [
-
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
-                    '	"type"     : "PerspectiveCamera",',
-                    '	"fov"      : ' + o.fov + ',',
-                    '	"aspect"   : ' + o.aspect + ',',
-                    '	"near"     : ' + o.near + ',',
-                    '	"far"      : ' + o.far + ',',
-                    '	"position" : ' + Vector3String(o.position) + (o.children.length ? ',' : '')
-
-                ];
-
-            } else if (o instanceof THREE.OrthographicCamera) {
-
-                var output = [
-
-                    '\t\t' + LabelString(getObjectName(o)) + ' : {',
-                    '	"type"     : "OrthographicCamera",',
-                    '	"left"     : ' + o.left + ',',
-                    '	"right"    : ' + o.right + ',',
-                    '	"top"      : ' + o.top + ',',
-                    '	"bottom"   : ' + o.bottom + ',',
-                    '	"near"     : ' + o.near + ',',
-                    '	"far"      : ' + o.far + ',',
-                    '	"position" : ' + Vector3String(o.position) + (o.children.length ? ',' : '')
-
-                ];
-
-            } else {
-
-                var output = [];
-
-            }
-
-            return generateMultiLineString(output, '\n\t\t', n);
-
-        }
 
         function ObjectString(o, n) {
 
@@ -780,6 +734,7 @@ THREE.SceneExporter.prototype = {
             envir.scene.fog ? '		"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",' : '',
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableEnvironmentTexture" : "' + (!!envir.scene.environment) + '",',
+            '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
             '		"objects"       : ' + nobjects + //+  ',',
             '	},',
             '	"urlBaseType": "relativeToScene",',
