@@ -495,10 +495,10 @@ wp_head();
                     </div>
 
                     <div class="environmentButton">
-                        <input hidden type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" />
+                        <input hidden type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
                         <a id="env_texture-change-btn" data-mdc-auto-init="MDCRipple"
                            title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
-                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary mdc-theme--secondary-bg">
                             <i class="material-icons">texture</i>
                         </a>
                     </div>
@@ -919,6 +919,7 @@ wp_head();
 
         document.getElementsByTagName("html")[0].style.overflow="hidden";
 
+        // Init UI values
         document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
 
 
