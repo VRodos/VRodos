@@ -89,20 +89,6 @@ class VRodos_LightsPawn_Loader {
                     return;
                 }
 
-
-                if (name === 'enableEnvironmentTexture') {
-
-                    let enableEnvironmentTexture = (resources3D['enableEnvironmentTexture'] === 'true');
-
-                    envir.scene.environment = enableEnvironmentTexture ? envir.maintexture : "";
-
-                    if (document.getElementById('sceneEnvironmentTexture')) {
-                        document.getElementById('sceneEnvironmentTexture').checked = enableEnvironmentTexture;
-                    }
-
-                    return;
-                }
-
                 let clearToParse = null;
                 if (resources3D[name]['category_name']) {
 

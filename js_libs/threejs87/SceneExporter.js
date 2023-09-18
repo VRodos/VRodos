@@ -720,6 +720,7 @@ THREE.SceneExporter.prototype = {
         if (objects.substr(objects.length - 2, 1) == ',')
             objects = objects.substr(0, objects.length - 2) + '\n';
 
+
         var output = [
             '{',
             '	"metadata": {',
@@ -733,7 +734,6 @@ THREE.SceneExporter.prototype = {
             envir.scene.fog ? '		"fognear" : "' + (envir.scene.fog.near ? envir.scene.fog.near : '1000000') + '",' : '',
             envir.scene.fog ? '		"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",' : '',
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
-            '		"enableEnvironmentTexture" : "' + (!!envir.scene.environment) + '",',
             '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
             '		"backgroundPresetOption" : "' + (envir.scene.preset_selection ? envir.scene.preset_selection : 'None') + '",',
             '		"backgroundStyleOption" : "' + (envir.scene.bcg_selection ? envir.scene.bcg_selection : '0') + '",',
