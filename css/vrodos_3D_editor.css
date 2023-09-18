@@ -242,11 +242,11 @@ canvas { pointer-events:none; z-index:10; }
 .right-elements-panel-style {
     position: absolute;
     right: 0;
-    top: 0;
+    top: 60px;
     width: 300px;
     height: 100%;
     background-color: darkgray;
-    /*border: 1px solid rgba(0,0,0,.5);*/
+    display: block;
     z-index: 2;
 }
 
@@ -354,10 +354,6 @@ canvas { pointer-events:none; z-index:10; }
 .HierarchyViewerStyle {
     display: flex;
     width: 100%;
-    /*overflow-y: auto;*/
-    /*position: absolute;*/
-    /*right: 0;*/
-    /*top: 30%;*/
     background-color: #dfdfdf;
 }
 

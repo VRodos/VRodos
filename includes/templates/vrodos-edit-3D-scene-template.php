@@ -734,7 +734,7 @@ wp_head();
         let toggleEnvTexture = (el) => {
             jQuery("#env_texture-change-btn").toggleClass('mdc-theme--secondary-bg');
             el.checked = !el.checked;
-            envir.scene.environment = el.checked ? null : envir.maintexture;
+            envir.scene.environment = !el.checked ? null : envir.maintexture;
         }
 
 
