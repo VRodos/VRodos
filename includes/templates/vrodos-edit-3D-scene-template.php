@@ -949,11 +949,15 @@ wp_head();
                 custom_img_sel.disabled = true;
                 preset_sel.disabled = false;
                 color_sel.disabled = true;
+                envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
+                envir.scene.preset_selection = resources3D["backgroundPresetOption"];
+                // envir.scene.backgroundPresetOption = preset_sel.value;
                 //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
 
                 for(let index = 0; index < preset_sel.options.length;index++){
                     if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
                         preset_sel.options[index].selected = true;
+                        //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
                     }
                 }
                 break;
@@ -962,8 +966,12 @@ wp_head();
                 custom_img_sel.disabled = false;
                 preset_sel.disabled = true;
                 color_sel.disabled = true;
+                envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
                 break;
-           }
+            }
+            envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+           
+            //saveChanges();
 
         }
 
