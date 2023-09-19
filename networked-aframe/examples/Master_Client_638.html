@@ -1,43 +1,5 @@
 <!DOCTYPE html>
-<html lang="el">
-
-<head>
-    <meta charset="utf-8" />
-    <title>Collaborative content creation</title>
-    <meta name="description" content="Collaborative content creation" />
-
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-
-    <script src="js/aframe/1.3.0/aframe.min.js"></script>
-    <script src="js/socketio/2.3.0/socket.io.slim.js"></script>
-    <script src="js/datgui/0.7.7/dat.gui.min.js"></script>
-
-    <script src="../easyrtc/easyrtc.js"></script>
-    <script src="../dist/networked-aframe.js"></script>
-
-    <script src="js/a-water_alphamask_master.js"></script>
-    <script src="js/sunsky/3.0.3/aframe-sun-sky.min.js"></script>
-    <script src="js/randomizer/3.0.1/aframe-randomizer-components.min.js"></script>
-
-    <script src="js/particles/aframe-particle-system-component.min.js"></script>
-    <script src="js/spawn-in-circle.component.js"></script>
-
-    <script src="js/highlight_img.js"></script>
-    <script src="js/img_panel.js"></script>
-    
-
-    <script src="js/indicators_aframe.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js"></script>
-    
-
-</head>
-
-<body id="master-client-body">
+<html lang="el"><head><meta charset="utf-8"><title>Collaborative content creation</title><meta name="description" content="Collaborative content creation"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><script src="js/aframe/1.3.0/aframe.min.js"></script><script src="js/socketio/2.3.0/socket.io.slim.js"></script><script src="js/datgui/0.7.7/dat.gui.min.js"></script><script src="../easyrtc/easyrtc.js"></script><script src="../dist/networked-aframe.js"></script><script src="js/a-water_alphamask_master.js"></script><script src="js/sunsky/3.0.3/aframe-sun-sky.min.js"></script><script src="js/randomizer/3.0.1/aframe-randomizer-components.min.js"></script><script src="js/particles/aframe-particle-system-component.min.js"></script><script src="js/spawn-in-circle.component.js"></script><script src="js/highlight_img.js"></script><script src="js/img_panel.js"></script><script src="js/indicators_aframe.js"></script><link rel="stylesheet" type="text/css" href="css/adv-screen.css"></head><body id="master-client-body">
 
     <script>
         AFRAME.registerComponent('clear-frustum-culling', {
@@ -589,13 +551,9 @@
         });
 
 
-    </script>
-
-    <div>
+    </script><div>
         <div class="wrapperVideoElement" style="visibility: hidden">
-            <video id="video-preview" width="300" height="200" autoplay muted></video>
-            <video id="recording" hidden></video>
-        </div>
+            <video id="video-preview" width="300" height="200" autoplay muted></video><video id="recording" hidden></video></div>
 
         <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
             <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
@@ -604,7 +562,7 @@
 
             <div class="wrapperControlElement">
                 <label for="roomNameShow" title="Name of Room">&#127917;</label>
-                <span id="roomNameShow">roomname</span>
+                <span id="roomNameShow">room638</span>
             </div>
 
             <div class="wrapperControlElement">
@@ -613,8 +571,7 @@
             </div>
 
             <div class="wrapperControlElement">
-                <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying"
-                    title="Obtain status and control green screens">
+                <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying" title="Obtain status and control green screens">
                     &#128260; &#9989;
                 </button>
             </div>
@@ -627,20 +584,19 @@
 
             <div class="wrapperControlLineElement">
                 <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
-                    ⚪️
+                    &#9898;&#65039;
                 </button>
 
                 <button id="stop-recording-btn" class="buttonStopRecord" title="Save capture" disabled>
-                    ◼️
+                    &#9724;&#65039;
                 </button>
 
                 <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video" disabled>
-                    💾️️
+                    &#128190;&#65039;&#65039;
                 </a>
 
-                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden"
-                    title="Upload Recording to MediaVerse" disabled>
-                    ⬆️️️
+                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: visible;" title="Upload Recording to MediaVerse" disabled>
+                    &#11014;&#65039;&#65039;&#65039;
                 </button>
             </div>
             <div class="wrapperControlElement">
@@ -652,72 +608,17 @@
             </div>
 
             <div id="panelsSizeControlsDiv"></div>
-            <input id="node-url-input" hidden disabled />
-            <input id="node-token-input" hidden disabled />
-            <input id="mv-project-id-input" hidden disabled />
-        </div>
+            <input id="node-url-input" hidden disabled value=""><input id="node-token-input" hidden disabled value=""><input id="mv-project-id-input" hidden disabled></div>
     </div>
 
  <!-- ORESTIS -->
 
-    <a-scene xr="mode: immersive-vr" oculus-touch-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
-        renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
-        vr-mode-ui="enabled: true" networked-scene="
-        room: roomname;
+    <a-scene oculus-touch-controls-enabled id="aframe-scene-container" fog="type: ; color: ; far: ; density: 0; near: " renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white" vr-mode-ui="enabled: true" networked-scene="
+        room: room638;
         debug: true;
         audio: true;
         adapter: easyrtc;
-       " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
-
-
-
-        <a-assets>
-            <!-- Avatar Template -->
-            <template id="avatar-template">
-                    <a-sphere color="yellow" position="0 0 -4" radius="2"></a-sphere>
-            </template>
-
-            <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: black; shader: flat"></a-mixin>
-            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: white; shader: flat"
-                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
-                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
-            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
-                material="color: white; shader: flat" material="shader: flat" position="0 0 0.005"></a-mixin>
-            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.5; height: 0.81"
-                material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin>
-            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5"
-                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
-            <a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2"
-                material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
-        </a-assets>
-
-        <!-- Pawn -->
-        <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;"
-        show-position look-controls="pointerLockEnabled: false;">
-
-            <a-sphere class="head" visible="false" random-color>
-            </a-sphere>
-
-            <a-entity id="camera-rig" position="0 1.6 0" custom-movement>
-                <a-camera id="cameraA" near="0.1" far="7000.0">  </a-camera>
-                <a-entity id="oculusRight" oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="lineColor: red; objects: .raycastable"></a-entity>
-                <a-entity id="oculusLeft" oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" laser-controls="hand: left" raycaster="lineColor: blue; objects: .raycastable"></a-entity>
-                <!-- <a-entity camera look-controls></a-entity> -->
-            </a-entity> 
-            
-        </a-entity>
-         
-
-
-        <a-box class="raycastable" position="0 0 -3" color="red"></a-box>
-
-
-</a-scene>
-
-
-<script>
+       " environment cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable" scene-settings="#ededed"><a-assets><!-- Avatar Template --><template id="avatar-template"><a-sphere color="yellow" position="0 0 -4" radius="2"></a-sphere></template><a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192" material="color: black; shader: flat"></a-mixin><a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192" material="color: white; shader: flat" animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1" animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin><a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432" material="color: white; shader: flat" position="0 0 0.005"></a-mixin><a-mixin id="poiImage" geometry="primitive: plane; width: 1.5; height: 0.81" material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin><a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5" material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin><a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2" material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin></a-assets><!-- Pawn --><a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" show-position look-controls="pointerLockEnabled: false;"><a-sphere class="head" visible="false" random-color></a-sphere><a-entity id="camera-rig" position="0 1.6 0" custom-movement><a-camera id="cameraA" near="0.1" far="7000.0"></a-camera><a-entity id="oculusRight" oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="lineColor: red; objects: .raycastable"></a-entity><a-entity id="oculusLeft" oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" laser-controls="hand: left" raycaster="lineColor: blue; objects: .raycastable"></a-entity><!-- <a-entity camera look-controls></a-entity> --></a-entity></a-entity><a-box class="raycastable" position="0 0 -3" color="red"></a-box></a-scene><script>
 
 
   // Get all clickable entities
@@ -731,7 +632,33 @@
   });
 
 
+//   AFRAME.registerComponent('custom-movement', {
+//   init: function () {
+//     const cameraEl = document.querySelector('a-camera');
+//     const cameraRig = this.el;
 
+//     this.el.addEventListener('thumbstickmoved', (event) => {
+//       const thumbstickX = event.detail.x;
+//       const thumbstickY = event.detail.y;
+
+//       // Get camera rotation
+//       const rotation = cameraEl.getAttribute('rotation');
+//       const angleY = THREE.Math.degToRad(rotation.y);
+//       //const angleX = THREE.Math.degToRad(rotation.x);
+
+//       // Calculate movement direction based on camera rotation
+//       const direction = new THREE.Vector3(-Math.sin(angleY), 0, -Math.cos(angleY));
+
+//       // Apply movement to the camera rig's position
+//       const movementSpeed = 0.1;
+//       cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
+//       cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
+     
+
+//       console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
+//     });
+//   }
+// });
 
   // Attach the custom-movement component to the camera rig entity
 //  document.querySelector('#camera-rig').setAttribute('custom-movement', '');
@@ -1180,11 +1107,4 @@
             return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
         };
 
-    </script>
-
-    <!-- This will change the glb materials -->
-    <script src="js/glb_material_changer.js"></script>
-
-</body>
-
-</html>
+    </script><!-- This will change the glb materials --><script src="js/glb_material_changer.js"></script></body></html>

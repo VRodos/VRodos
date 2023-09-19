@@ -514,7 +514,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
 
-            } else if ($contentObject->category_slug == 'video') {
+            } else if ($contentObject->category_slug == 'video') { //VIDEO POSITION
                 //print_r(empty($contentObject->video_link));
 
 
@@ -635,7 +635,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $a_entity_panel->setAttribute("height", "0.3");
                 $a_entity_panel->setAttribute("width", "0.2");
                 //$a_entity_panel->setAttribute("color", "red");
-                $a_entity_panel->setAttribute("position", "1 0 -1");
+                $a_entity_panel->setAttribute("position", "1 0 -3");
                 $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
                 $a_entity_panel->setAttribute("visible", "false");
                 //$a_entity_panel->setAttribute("renderOrder", "9999999");
