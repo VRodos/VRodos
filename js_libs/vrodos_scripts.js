@@ -63,6 +63,7 @@ function bcgRadioSelect(option){
     let custom_img_sel = document.getElementById('img_upload_bcg');
     let preset_sel = document.getElementById('presetsBcg');
 
+
     switch (option.value) {
     case 0:
         custom_img_sel.disabled = true;
@@ -78,8 +79,9 @@ function bcgRadioSelect(option){
         custom_img_sel.disabled = true;
         preset_sel.disabled = false;
         color_sel.disabled = true;
-        envir.scene.getObjectByName("avatarCamera").preset_selection = preset_sel.value;
+        //envir.scene.getObjectByName("avatarCamera").preset_selection = preset_sel.value;
         envir.scene.preset_selection = preset_sel.value;
+        envir.scene.backgroundPresetOption = preset_sel.value;
         break;
     case 3 : 
         custom_img_sel.disabled = false;
@@ -87,8 +89,9 @@ function bcgRadioSelect(option){
         color_sel.disabled = true;
         break;
     }
-    envir.scene.getObjectByName("avatarCamera").bcg_selection = option.value;
+    //envir.scene.getObjectByName("avatarCamera").bcg_selection = option.value;
     envir.scene.bcg_selection = option.value;
+    envir.scene.backgroundStyleOption = option.value;
     saveChanges();
     //envir.scene.getObjectByName(updName).sceneID_target = option.value;
 }

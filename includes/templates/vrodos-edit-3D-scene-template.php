@@ -918,12 +918,53 @@ wp_head();
         }
 
         document.getElementsByTagName("html")[0].style.overflow="hidden";
+        let color_sel = document.getElementById('jscolorpick');
+        let custom_img_sel = document.getElementById('img_upload_bcg');
+        let preset_sel = document.getElementById('presetsBcg');
 
         // Init UI values
 
 
         if (resources3D["enableGeneralChat"]) {
             document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
+        }
+        if (resources3D["backgroundStyleOption"]) {
+            let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+           
+            switch (selOption){
+            case 0:
+                document.getElementById("sceneNone").checked = true;
+                custom_img_sel.disabled = true;
+                preset_sel.disabled = true;
+                color_sel.disabled = true;
+                break;
+            case 1:
+                document.getElementById("sceneColorRadio").checked = true;
+                color_sel.disabled = false;
+                preset_sel.disabled = true;
+                custom_img_sel.disabled = true;
+                break;
+            case 2:
+                document.getElementById("sceneSky").checked = true;
+                custom_img_sel.disabled = true;
+                preset_sel.disabled = false;
+                color_sel.disabled = true;
+                //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+
+                for(let index = 0; index < preset_sel.options.length;index++){
+                    if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
+                        preset_sel.options[index].selected = true;
+                    }
+                }
+                break;
+            case 3:
+                document.getElementById("sceneCustomImage").checked = true;
+                custom_img_sel.disabled = false;
+                preset_sel.disabled = true;
+                color_sel.disabled = true;
+                break;
+           }
+
         }
 
 

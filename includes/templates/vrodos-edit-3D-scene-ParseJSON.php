@@ -31,9 +31,15 @@ class ParseJSON
             echo 'resources3D["enableGeneralChat"]= "' . $json_metadata->enableGeneralChat . '";';
         }
 
+        if (property_exists($json_metadata, "backgroundPresetOption"))
+            echo 'resources3D["backgroundPresetOption"]= "' . $json_metadata->backgroundPresetOption . '";';
 
-        echo 'resources3D["backgroundPresetOption"]= "' . $json_metadata->backgroundPresetOption . '";';
-        echo 'resources3D["backgroundStyleOption"]= "' . $json_metadata->backgroundStyleOption . '";';
+        if (property_exists($json_metadata, "backgroundImagePath"))
+            echo 'resources3D["backgroundImagePath"]= "' . $json_metadata->backgroundImagePath . '";';
+        
+        if (property_exists($json_metadata, "backgroundStyleOption"))
+            echo 'resources3D["backgroundStyleOption"]= "' . $json_metadata->backgroundStyleOption . '";';
+
         
         echo '</script>';
 

@@ -373,13 +373,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         //print_r($objects->avatarCamera->isCamera);
 
-        $bcg_choice = $objects->avatarCamera->bcg_selection;
-        $preset_choice = $objects->avatarCamera->preset_selection;
+       
+
+        $bcg_choice = $scene_json->metadata->backgroundStyleOption;
+        $preset_choice = $scene_json->metadata->backgroundPresetOption;
+        $image_path = $scene_json->metadata->backgroundImagePath;
+        //wp_upload_dir( '../uploads/Models/8664/8665_1695106416_scene_bcg.png', dirname(__FILE__))
+        //print_r(wp_upload_dir());
         if ($bcg_choice == "3"){
 
             $a_asset_sky = $dom->createElement( "img" );
             $a_asset_sky->setAttribute("id", "custom_sky");
-            $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg");
+            $a_asset_sky->setAttribute("src", $image_path );
             $a_asset->appendChild($a_asset_sky);
             $ascene->appendChild($a_asset);
         }

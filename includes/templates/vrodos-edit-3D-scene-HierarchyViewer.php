@@ -139,7 +139,7 @@
                     </div>
                 </div>
                 <label id="sceneCustomImageRadio-label" for="sceneCustomImageRadio" style="margin-bottom: 0;">Custom Image</label>
-                <input id="img_upload_bcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".png" disabled onchange="imgUpload()" style="font-size: 10px;" />
+                <input id="img_upload_bcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" multiple accept=".jpg, .png" disabled onchange="imgUpload()" style="font-size: 10px;" />
 
             </li>
         </ul>
