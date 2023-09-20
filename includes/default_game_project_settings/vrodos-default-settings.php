@@ -34,12 +34,12 @@ function vrodos_create_asset_categories(){
             'description' => 'An interactable 3D object. Launches a popup window on click that features a contact form.',
             'ic' => 'help'
         ],*/
-        'chat' => [
+       /* 'chat' => [
             'name' => 'Chat',
             'slug' => 'chat',
             'description' => 'A chatbox component. It is a 3D object that when clicked, a user can join a chat session',
             'ic' => 'chat'
-        ],
+        ],*/
         'poi-link' => [
             'name' => 'POI - Link',
             'slug' => 'poi-link',

@@ -741,16 +741,12 @@ THREE.SceneExporter.prototype = {
             '		"objects"       : ' + nobjects + //+  ',',
             '	},',
             '	"urlBaseType": "relativeToScene",',
-            '',
             '	"objects" :',
             '	{',
             objects,
             '	}',    // Original line:   '	},',
-            '',
             '}'
         ].join('\n');
-
-        //console.log(output);
 
         return output; //JSON.parse( output );
     }

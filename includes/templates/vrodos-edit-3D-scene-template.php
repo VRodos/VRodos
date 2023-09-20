@@ -366,11 +366,10 @@ wp_head();
 
                         <!-- View Json code UI -->
                         <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
-                           class="ToggleUIButtonStyle mdc-theme--secondary mdc-theme--text-hint-on-light"
+                           class="mdc-theme--secondary mdc-theme--text-hint-on-light"
                            title="View json of scene"
-                           style="padding-top:1px; width:70px; left: calc(60% + 112px); position:absolute; top:5px">
-                            json:
-                            <i class="material-icons" style="background: none; opacity:1; font-size:11pt">visibility_off</i>
+                           style="width:70px; left: calc(60% + 112px); position:absolute; bottom: 0; cursor: pointer; text-decoration: none;">
+                            <i class="material-icons" style="font-size: 11pt">visibility_off</i> JSON
                         </a>
                     </div>
 
