@@ -32,6 +32,7 @@
 
     function toggleBroadcastChat(value) {
         envir.scene.enableGeneralChat = value;
+        saveChanges();
     }
 
     function changeRendererToneMapping(value) {
