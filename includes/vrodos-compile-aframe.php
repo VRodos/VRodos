@@ -262,31 +262,17 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 }
 
                 $dom->saveHTML();
-            }else{
+            }else {
 
                 $media_panel->setAttribute( "style", 'visibility: hidden;' );
                 $recording_controls->setAttribute('style', 'visibility: hidden;');
-
             }
 
-
-
-//			$f = fopen("output_compile_director.txt","w");
-//			fwrite($f, "----------------".chr(13));
-////
-////			foreach ($dom->getElementsByTagName('a-scene') as $node) {
-////
-////				$string_ascene = $dom->saveHtml($node);
-////				$string_ascene = str_replace('background="color: #aaaaaa"','background="color: #00ff00"', $string_ascene);
-////				$ascene = $dom->loadHTML($string_ascene);
-////
-////			}
-////
-////     			fwrite($f, print_r($scene_json->metadata->ClearColor, true));
-//////			fwrite($f, "ASCENE".chr(13));
-//////			fwrite($f, print_r($ascene, true));
-//			fwrite($f, "----------------");
-//			fclose($f);
+            // Toggle general chat
+            if (filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN)  === true) {
+                $chat_wrapper = $dom->getElementById('chat-wrapper-el');
+                $chat_wrapper->setAttribute( "style", 'visibility: visible;' );
+            }
 
 
             // ============ Scene Iteration kernel ==============
@@ -373,7 +359,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         //print_r($objects->avatarCamera->isCamera);
 
-       
+
 
         $bcg_choice = $scene_json->metadata->backgroundStyleOption;
         $preset_choice = $scene_json->metadata->backgroundPresetOption;
@@ -617,33 +603,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     //$a_entity->setAttribute( "class", "collidable" );
 
                     $ascene->appendChild( $a_entity );
-                    break;
-
-                case 'chat':
-
-                    $sc_x = $contentObject->scale[0];
-                    $sc_y = $contentObject->scale[1];
-                    $sc_z = $contentObject->scale[2];
-
-                    $a_entity = $dom->createElement( "a-entity" );
-                    $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
-                    $a_entity->appendChild( $dom->createTextNode( '' ) );
-
-                    $material = "";
-                    $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                    $a_entity->setAttribute( "class", "override-materials hideable" );
-                    $a_entity->setAttribute( "id", $uuid );
-                    $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
-                    $a_entity->setAttribute( "material", $material );
-                    $a_entity->setAttribute( "clear-frustum-culling", "" );
-
-                    $ascene->appendChild( $a_entity );
-
-                    // Enable chat html component
-                    $chat_wrapper = $dom->getElementById('chat-wrapper-el');
-
-
-
                     break;
 
 
@@ -1055,23 +1014,23 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                             $prev_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
                             $prev_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
 
-                        $a_panel_entity->appendChild( $prev_desc_entity);
+                            $a_panel_entity->appendChild( $prev_desc_entity);
 
-                        $a_count_page_entity = $dom->createElement("a-entity");
-                        $a_count_page_entity->setAttribute("id", "page_$uuid");
-                        $a_count_page_entity->setAttribute("position", "0.35 -0.8 -0.1");
+                            $a_count_page_entity = $dom->createElement("a-entity");
+                            $a_count_page_entity->setAttribute("id", "page_$uuid");
+                            $a_count_page_entity->setAttribute("position", "0.35 -0.8 -0.1");
 
 
-                        $a_count_page_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 0.8; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value:");
-                        $a_panel_entity->appendChild($a_count_page_entity);
-                    }
-                    
+                            $a_count_page_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 0.8; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value:");
+                            $a_panel_entity->appendChild($a_count_page_entity);
+                        }
 
-                    
-                    $a_desc_img_entity = $dom->createElement("a-entity");
-                    $a_desc_img_entity->setAttribute("id", "desc_$uuid");
-                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.4 0");
-                      
+
+
+                        $a_desc_img_entity = $dom->createElement("a-entity");
+                        $a_desc_img_entity->setAttribute("id", "desc_$uuid");
+                        $a_desc_img_entity->setAttribute("position", "-0.68 -0.4 0");
+
 
                         $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value: $contentObject->poi_img_content");
                         $a_panel_entity->appendChild($a_desc_img_entity);

@@ -62,16 +62,14 @@ function vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
 
         '<i class="material-icons mdc-theme--text-icon-on-dark sceneProjectTypeLabel"'.
         ' title="'.$project_type.'">'.$project_type_icon.
-        '</i>'.
-//                $project_type.
-        '<i class="material-icons mdc-theme--text-icon-on-dark chevronRight">chevron_right</i>'.
-        $project_post->post_title.
+        '</i> '.
+        '<span title="Project Title">'. $project_post->post_title.'</span>'.
         '<i class="material-icons mdc-theme--text-icon-on-dark chevronRight">chevron_right</i>'.
         '</div>'.
 
-        //Title Name at breadcrumps
+        // Title Name at breadcrumps
         '<input id="sceneTitleInput" name="sceneTitleInput"'.
-        ' title="Scene title" placeholder="Scene title"'.
+        ' title="Scene Title" placeholder="Scene Title"'.
         ' value="'.$scene_title.'" type="text"'.
         ' class="mdc-textfield__input mdc-theme--text-primary-on-dark"'.
         ' aria-controls="title-validation-msg" minlength="3" required>'.
