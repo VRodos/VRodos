@@ -517,7 +517,7 @@ function vrodos_upload_asset_screenshot($image, $parentPostId, $projectId) {
             'post_title' => preg_replace('/\.[^.]+$/', '', basename($new_filename)),
             'post_content' => '',
             'post_status' => 'inherit',
-            'guid' => wp_upload_dir()['baseurl'].'/Models/'.$hashed_filename
+            'guid' => wp_upload_dir()['baseurl'].'/models/'.$hashed_filename
         );
 
         // Attach to
