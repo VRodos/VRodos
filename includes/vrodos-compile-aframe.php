@@ -382,11 +382,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         //print_r(wp_upload_dir());
         if ($bcg_choice == "3"){
 
-            $a_asset_sky = $dom->createElement( "img" );
-            $a_asset_sky->setAttribute("id", "custom_sky");
-            $a_asset_sky->setAttribute("src", $image_path );
-            $a_asset->appendChild($a_asset_sky);
-            $ascene->appendChild($a_asset);
+            if ($image_path)
+            {
+                $a_asset_sky = $dom->createElement( "img" );
+                $a_asset_sky->setAttribute("id", "custom_sky");
+                $a_asset_sky->setAttribute("src", $image_path );
+                $a_asset->appendChild($a_asset_sky);
+                $ascene->appendChild($a_asset);
+            }else{
+                $bcg_choice = "0";
+            }
         }
 
 
