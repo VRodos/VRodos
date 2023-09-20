@@ -660,112 +660,106 @@ function vrodos_update_expert_log_callback()
 }
 
 function image_upload_action_callback(){
-	/// TODO upload image 
-	
-	$data = $_POST["image"]; 
-	$project_id = $_POST["projectid"];
-	$scene_id = $_POST["sceneid"];
-	$img_type = $_POST["imagetype"];
-	//$filename=$_FILES['image']['tmp_name'];
-	//$projectId = $_REQUEST['projectId'];
 
-	// echo $data;
-	//var_dump($data);
-	//require_once(ABSPATH . 'wp-admin/includes/admin.php');
-	require_once(ABSPATH . 'wp-admin/includes/admin.php');
 	$DS = DIRECTORY_SEPARATOR;
 
-	//$hashed_filename = '_'.'_temp_bcg.png';
-	if ($img_type == "image/png")
-		$hashed_filename = $scene_id .'_'. time() .'_scene_bcg.png';
-	else
-		$hashed_filename = $scene_id .'_'. time() .'_scene_bcg.jpg';
+	$project_id = $_POST["projectid"];
+	$scene_id = $_POST["sceneid"];
 
-	// wp_handle_upload($data);
-	
-	$upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS . 'models' . $DS . $project_id . $DS;
-    if (!is_dir($upload_path)) {
-        mkdir( $upload_path, 0777, true );
-    }
+	add_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
+	require_once( ABSPATH . 'wp-admin/includes/admin.php' );
 
-	require_once( ABSPATH . 'wp-admin/includes/file.php' );
+	// DELETE EXISTING FILE: See if has already a thumbnail and delete the file in the filesystem
+	$scene_background_ids = get_post_meta($scene_id,'vrodos_scene_bg_image');
+	if (!empty($scene_background_ids) && !empty($scene_background_ids[0])) {
+		// Remove previous file from file system
 
-    // Without that I'm getting a debug error!?
-    if (!function_exists('wp_get_current_user')) {
-        require_once(ABSPATH . 'wp-includes/pluggable.php');
-    }
+		$prevMeta = get_post_meta($scene_background_ids[0], '_wp_attachment_metadata', false);
 
-	
-	// if ( $_FILES['image']['error'] > 0 ){
-    //     echo 'Error: ' . $_FILES['image']['error'] . '<br>';
-    // }
-    // else {
-    //     if($file_return = move_uploaded_file($_FILES['image']['tmp_name'], $upload_path . $hashed_filename))
-	// 	{
-	// 		echo "File Uploaded Successfully";
-	// 	}
-    // }
-
-	//$image_upload = file_put_contents($upload_path . $hashed_filename, $_FILES['image']['tmp_name']);
-	// $attachment_id = vrodos_insert_attachment_post($file_return, $scene_id );
-    // if( !isset( $file_return['error'] ) && !isset( $file_return['upload_error_handler'] ) ) {
-
-    //     // Id of attachment post
-    //     //$attachment_id = vrodos_insert_attachment_post($file_return, $scene_id );
-
-    //     // if( 0 < intval( $attachment_id, 10 ) ) {
-    //     //     return $attachment_id;
-    //     // }
-
-    // }
-
-	 // ----------------------------------------------------------------------------------------------------------
-	 //add_filter('wp_handle_upload_prefilter', 'custom_upload_filter' );
-	 add_filter('upload_dir', 'vrodos_upload_filter');
-
-	 $upload = wp_handle_upload( 
-		$_FILES['image'], 
-		array( 'test_form' => false ) 
-	);
-	remove_filter('upload_dir', 'vrodos_upload_filter');
-	//remove_filter('wp_handle_upload_prefilter', 'custom_upload_filter' );
-	
-	if( ! empty( $upload[ 'error' ] ) ) {
-		wp_die( $upload[ 'error' ] );
+		if (count($prevMeta)>0) {
+			if (file_exists($prevMeta[0]['file'])) {
+				unlink($prevMeta[0]['file']);
+			}
+		}
 	}
-	
-	$attachment_id = wp_insert_attachment(
-		array(
-			'guid'           => $upload[ 'url' ],
-			'post_mime_type' => $upload[ 'type' ],
-			'post_title'     => basename( $upload[ 'file' ] ),
-			'post_content'   => '',
-			'post_status'    => 'inherit',
-		),
-		$upload[ 'file' ]
-	);
-	
-	if( is_wp_error( $attachment_id ) || ! $attachment_id ) {
-		wp_die( 'Upload error.' );
+
+
+	$upload_dir = wp_upload_dir();
+	$upload_path = str_replace('/',$DS,$upload_dir['basedir']) . $DS . 'scenes' . $DS . $scene_id . $DS;
+
+	// Make Scene folder
+	if (!is_dir($upload_path)) {
+		mkdir( $upload_path, 0777, true );
 	}
-	
-	// update medatata, regenerate image sizes
-	require_once( ABSPATH . 'wp-admin/includes/image.php' );
-	
-	wp_update_attachment_metadata(
-		$attachment_id,
-		wp_generate_attachment_metadata( $attachment_id, $upload[ 'file' ] )
-	);
-	
-	
-	
-	
-	
-	
-	$content = json_encode(array( 'url' => $upload[ 'url' ] ));
-    
+
+	$image = $_POST["image"];
+	$fn = $_POST["filename"];
+	$ext = $_POST["imagetype"];
+
+	$hashed_filename = $project_id . '_' . $scene_id.'_bg.'. $ext;
+
+	// Write file string to a file in server
+	file_put_contents($upload_path . $hashed_filename,
+		base64_decode(substr($image, strpos($image, ",") + 1)));
+
+	$new_filename = str_replace("\\","/", $upload_path .$hashed_filename);
+
+	//--- End of upload ---
+
+	// DATABASE UPDATE
+	// If post meta already exists
+	if (!empty($scene_background_ids) && !empty($scene_background_ids[0])) {
+
+		$scene_bg_id = $scene_background_ids[0];
+
+		// Update the post title into the database
+		wp_update_post( array('ID' => $scene_bg_id, 'post_title' => $new_filename));
+
+		// Update meta _wp_attached_file
+		update_post_meta($scene_bg_id, '_wp_attached_file', $new_filename);
+
+		// update also _attachment_meta
+		$data = wp_get_attachment_metadata( $scene_bg_id);
+
+		$data['file'] = $new_filename;
+
+		wp_update_attachment_metadata( $scene_bg_id, $data );
+
+		update_post_meta($scene_id, 'vrodos_scene_bg_image', $scene_bg_id);
+
+	} else { // If post does not exist
+
+		$attachment = array(
+			'post_mime_type' => 'image/' .$ext,
+			'post_title' => preg_replace('/\.[^.]+$/', '', basename($new_filename)),
+			'post_content' => '',
+			'post_status' => 'inherit',
+			'guid' => $upload_path.$hashed_filename
+		);
+
+		// Attach to
+		$attachment_id = wp_insert_attachment($attachment, $new_filename, $scene_id);
+
+		require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+		$attachment_data = wp_generate_attachment_metadata($attachment_id, $new_filename);
+
+		wp_update_attachment_metadata($attachment_id, $attachment_data);
+
+		update_post_meta($scene_id, 'vrodos_scene_bg_image', $attachment_id);
+
+		remove_filter('intermediate_image_sizes_advanced',
+			'vrodos_remove_allthumbs_sizes', 10);
+
+		if (0 < intval($attachment_id, 10)) {
+			return $attachment_id;
+		}
+	}
+
+	$content = json_encode(array( 'url' => $new_filename ));
+
     echo $content;
-    
+
     wp_die();
 
 }
