@@ -754,9 +754,12 @@ function image_upload_action_callback(){
 		if (0 < intval($attachment_id, 10)) {
 			return $attachment_id;
 		}
+
 	}
 
-	$content = json_encode(array( 'url' => $new_filename ));
+	$final_path = $attachment_id ? wp_get_attachment_url( $attachment_id ) : wp_get_attachment_url( $scene_bg_id );
+
+	$content = json_encode(array( 'url' => $final_path ));
 
     echo $content;
 
