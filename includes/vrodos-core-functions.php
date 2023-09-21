@@ -751,9 +751,9 @@ function image_upload_action_callback(){
 		remove_filter('intermediate_image_sizes_advanced',
 			'vrodos_remove_allthumbs_sizes', 10);
 
-		if (0 < intval($attachment_id, 10)) {
-			return $attachment_id;
-		}
+		// if (0 < intval($attachment_id, 10)) {
+		// 	return $attachment_id;
+		// }
 
 	}
 
