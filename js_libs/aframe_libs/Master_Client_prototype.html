@@ -527,11 +527,14 @@
 <script>
 
     // Event listener when VR is toggled
-    document.querySelector('a-scene').addEventListener('enter-vr', toggleVRComponents())
+    document.querySelector('a-scene').addEventListener('enter-vr',  function () {
+        console.log("enter");
+    });
 
-    let toggleVRComponents = () => {
+    document.querySelector('a-scene').addEventListener('exit-vr',  function () {
+        console.log("exit");
+    });
 
-    }
 
     /* CHAT COMPONENT */
     let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
