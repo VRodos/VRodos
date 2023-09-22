@@ -162,14 +162,19 @@
                         backgroundEl.setAttribute("environment", "ground", "none");
                         break;
                     case "3":
-                        let customImgAsset = document.querySelector('#custom_sky');
-                        if(customImgAsset.getAttribute("src")){
-                            let skyElem = document.createElement('a-sky');
-                            skyElem.setAttribute("id", "sky");
-                            skyElem.setAttribute("src",  "#custom_sky");
-                            backgroundEl.appendChild(skyElem);
+                        try {
+                            let customImgAsset = document.querySelector('#custom_sky');
+                            if(customImgAsset.getAttribute("src")){
+                                let skyElem = document.createElement('a-sky');
+                                skyElem.setAttribute("id", "sky");
+                                skyElem.setAttribute("src",  "#custom_sky");
+                                backgroundEl.appendChild(skyElem);
+                            }
+                            else{
+                                backgroundEl.setAttribute("background", "color", "#ffffff");
+                            }
                         }
-                        else{
+                        catch(err) {
                             backgroundEl.setAttribute("background", "color", "#ffffff");
                         }
 
