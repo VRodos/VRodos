@@ -235,7 +235,6 @@ AFRAME.registerComponent('info-panel', {
         }
       
         if (!this.ImageAsset.getAttribute("src")) {
-            this.ImageEl.components.material.material.depthTest = false;
             console.log("No Image");
             
         }
