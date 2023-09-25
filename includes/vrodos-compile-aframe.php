@@ -875,13 +875,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $a_image_asset_main->setAttribute("src",$contentObject->poi_img_path);
 
                     $a_image_asset_esc->setAttribute("id", "esc_img_$uuid");
-                    $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
+                    //$a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
+                    $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x_ecf0f1.png', dirname(__FILE__)));
+                    
 
                     $a_image_asset_left->setAttribute("id", "left_img_$uuid");
-                    $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left.png', dirname(__FILE__)));
+                    //$a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left.png', dirname(__FILE__)));
+                    $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left_ecf0f1.png', dirname(__FILE__)));
+
 
                     $a_image_asset_right->setAttribute("id", "right_img_$uuid");
-                    $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right.png', dirname(__FILE__)));
+                    //$a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right.png', dirname(__FILE__)));
+                    $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right_ecf0f1.png', dirname(__FILE__)));
 
 
                     //$a_asset->appendChild(a_image_asset);

@@ -9,7 +9,7 @@ AFRAME.registerComponent('info-panel', {
         this.DescriptionEl = document.querySelector('#desc_' + this.data);
         this.PageEl = document.querySelector('#page_' + this.data);
         this.infoPanel = document.querySelector('#infoPanel_' + this.data);
-        this.escEl = document.querySelector('#exit_' + this.data);
+        //this.escEl = document.querySelector('#exit_' + this.data);
         this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
@@ -19,6 +19,11 @@ AFRAME.registerComponent('info-panel', {
         this.buttonNextEl = document.querySelector('#next_' + this.data);
         this.buttonPrevEl = document.querySelector('#prev_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
+
+        if(this.buttonNextEl)
+            this.buttonNextEl.object3D.renderOrder = 9999999;
+        if(this.buttonPrevEl)
+            this.buttonPrevEl.object3D.renderOrder = 9999999;
 
         this.desc_list = [];
         this.readingPos = 0;
@@ -104,11 +109,11 @@ AFRAME.registerComponent('info-panel', {
                     }
 
                 }
-                let esc_pad = (panel_pad / 2) + 0.1;
+                //let esc_pad = (panel_pad / 2) + 0.1;
 
                 let upd_mixin = "width: " + expected_width + "; height: " + expected_height;
                 let panel_mixin = "width: " + panel_pad + "; height: 1.8";
-                this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
+                //this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
                 this.ImageEl.setAttribute("geometry", "primitive: plane;" + upd_mixin);
                 this.infoPanel.setAttribute("geometry", "primitive: plane;" + panel_mixin);
             });
@@ -160,6 +165,7 @@ AFRAME.registerComponent('info-panel', {
         }
         this.buttonPrevEl.object3D.visible = true;
         this.buttonPrevEl.setAttribute("scale", this.buttonPrevEl.getAttribute("original-scale"));
+
         
     },
     onPrevButtonClick: function (evt) {
@@ -190,6 +196,7 @@ AFRAME.registerComponent('info-panel', {
         }
         this.el.classList.add("openPOI");
         this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
+        this.backgroundEl.setAttribute("material", "color", "white");
         this.backgroundEl.object3D.visible = true;
         this.scen.setAttribute("raycaster","objects: .non-clickable");
 
@@ -203,7 +210,7 @@ AFRAME.registerComponent('info-panel', {
         this.buttonEl.object3D.depthTest = false;
 
         this.backgroundEl.object3D.renderOrder = 9999999;
-        this.buttonEl.object3D.renderOrder = 9999999;
+        this.buttonEl.object3D.renderOrder = 99999;
         //clipIntersection
         this.buttonEl.components.material.material.depthTest = false;
 
@@ -213,14 +220,14 @@ AFRAME.registerComponent('info-panel', {
         }
         else {
             this.DescriptionEl.components.text.material.depthTest = false;
-            this.DescriptionEl.object3D.renderOrder = 9999999;
+            this.DescriptionEl.object3D.renderOrder = 99999;
         }
         if (!this.PageEl) {
             console.log("No Desc");
         }
         else {
             this.PageEl.components.text.material.depthTest = false;
-            this.PageEl.object3D.renderOrder = 9999999;
+            this.PageEl.object3D.renderOrder = 99999;
         }
               
         if (!this.TitleEl) {
@@ -228,7 +235,7 @@ AFRAME.registerComponent('info-panel', {
         }
         else {
             this.TitleEl.components.text.material.depthTest = false;
-            this.TitleEl.object3D.renderOrder = 9999999;
+            this.TitleEl.object3D.renderOrder = 99999;
         }
       
         if (!this.ImageAsset.getAttribute("src")) {
@@ -237,7 +244,7 @@ AFRAME.registerComponent('info-panel', {
         }
         else {
             this.ImageEl.components.material.material.depthTest = false;
-            this.ImageEl.object3D.renderOrder = 9999999;
+            this.ImageEl.object3D.renderOrder = 99999;
             console.log(this.ImageEl.components);
         }
 
