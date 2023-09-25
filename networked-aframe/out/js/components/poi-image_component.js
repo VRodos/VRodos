@@ -48,10 +48,8 @@ AFRAME.registerComponent('info-panel', {
                 this.chunks +=1;
             }
                 
-            //console.log((this.DescriptionEl.getAttribute("text").value).length);
-            
             for (let x = 0; x < this.chunks; x++) {
-                let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length -1);
+                let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length);
                 this.desc_list.push(output);
                 
             }
@@ -98,14 +96,12 @@ AFRAME.registerComponent('info-panel', {
                     while (expected_height > 0.81) {
                         expected_width = expected_width / 2;
                         expected_height = expected_height / 2;
-                        console.log("reach 1");
 
                     }
                 } else {
                     while (expected_height > 1.5) {
                         expected_width = expected_width / 2;
                         expected_height = expected_height / 2;
-                        console.log("reach 2");
                     }
 
                 }
@@ -188,7 +184,7 @@ AFRAME.registerComponent('info-panel', {
 
     onMenuButtonClick: function (evt) {
 
-        this.el.emit("force-close",{value: this.data, el: this.el});
+        //this.el.emit("force-close",{value: this.data, el: this.el});
         let poi_elems = document.getElementsByClassName('openPOI');
         for (let i = 0; i < poi_elems.length; ++i) {
             poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
@@ -196,7 +192,7 @@ AFRAME.registerComponent('info-panel', {
         }
         this.el.classList.add("openPOI");
         this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
-        this.backgroundEl.setAttribute("material", "color", "white");
+        // this.backgroundEl.setAttribute("material", "color", "white");
         this.backgroundEl.object3D.visible = true;
         this.scen.setAttribute("raycaster","objects: .non-clickable");
 
