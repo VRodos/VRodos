@@ -184,6 +184,15 @@ AFRAME.registerComponent('info-panel', {
 
     onMenuButtonClick: function (evt) {
 
+        if (!browsingModeVR) {
+
+            document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
+            document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
+            document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text").value;
+            (new mdc.dialog.MDCDialog(document.querySelector('#poi-img-dialog'))).show();
+
+        } else {
+
         //this.el.emit("force-close",{value: this.data, el: this.el});
         let poi_elems = document.getElementsByClassName('openPOI');
         for (let i = 0; i < poi_elems.length; ++i) {
@@ -196,14 +205,14 @@ AFRAME.registerComponent('info-panel', {
         this.backgroundEl.object3D.visible = true;
         this.scen.setAttribute("raycaster","objects: .non-clickable");
 
-        this.el.object3D.scale.set(1, 1, 1);
-        if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
-        this.el.object3D.visible = true;
-        this.el.components.material.material.depthTest = false;
-        //this.backgroundEl.sceneEl.renderer.sortObjects = true;
-        this.backgroundEl.components.material.material.depthTest = false;
-        //this.backgroundEl.components.material.material.clipIntersection = false;
-        this.buttonEl.object3D.depthTest = false;
+            this.el.object3D.scale.set(1, 1, 1);
+            if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
+            this.el.object3D.visible = true;
+            this.el.components.material.material.depthTest = false;
+            //this.backgroundEl.sceneEl.renderer.sortObjects = true;
+            this.backgroundEl.components.material.material.depthTest = false;
+            //this.backgroundEl.components.material.material.clipIntersection = false;
+            this.buttonEl.object3D.depthTest = false;
 
         this.backgroundEl.object3D.renderOrder = 9999999;
         this.buttonEl.object3D.renderOrder = 99999;
@@ -244,21 +253,22 @@ AFRAME.registerComponent('info-panel', {
             console.log(this.ImageEl.components);
         }
 
-        this.infoPanel.components.material.material.depthTest = false;
-        this.infoPanel.object3D.renderOrder = 9999;
-       
-        if (this.playerEl.getAttribute("wasd-controls")){
-            this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+            this.infoPanel.components.material.material.depthTest = false;
+            this.infoPanel.object3D.renderOrder = 9999;
+
+            if (this.playerEl.getAttribute("wasd-controls")){
+                this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+            }
+            else
+                this.cam.setAttribute("wasd-controls-enabled", "false");
+            //playerEl.setAttribute("look-controls", "enabled: false");
+            //this.playerEl.setAttribute("movement-controls", "speed: 0");
+            //this.playerEl.setAttribute("look-controls", "enabled: false");
+
+
+            this.ImageEl.object3D.visible = true;
+
         }
-        else
-            this.cam.setAttribute("wasd-controls-enabled", "false");
-        //playerEl.setAttribute("look-controls", "enabled: false");
-        //this.playerEl.setAttribute("movement-controls", "speed: 0");
-        //this.playerEl.setAttribute("look-controls", "enabled: false");
-
-       
-
-        this.ImageEl.object3D.visible = true;
 
     },
 
