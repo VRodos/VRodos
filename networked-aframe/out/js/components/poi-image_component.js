@@ -159,7 +159,7 @@ AFRAME.registerComponent('info-panel', {
             this.buttonNextEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonPrevEl.object3D.visible = true;
-        this.buttonPrevEl.object3D.scale.set(0.7, 0.7, 0.7);
+        this.buttonPrevEl.setAttribute("scale", this.buttonPrevEl.getAttribute("original-scale"));
         
     },
     onPrevButtonClick: function (evt) {
@@ -175,7 +175,7 @@ AFRAME.registerComponent('info-panel', {
             this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonNextEl.object3D.visible = true;
-        this.buttonNextEl.object3D.scale.set(0.7, 0.7, 0.7);
+        this.buttonNextEl.setAttribute("scale", this.buttonNextEl.getAttribute("original-scale"));
         
     },
     
@@ -189,7 +189,7 @@ AFRAME.registerComponent('info-panel', {
             poi_elems[i].object3D.visible = false;
         }
         this.el.classList.add("openPOI");
-        this.backgroundEl.object3D.scale.set(1, 1, 1);
+        this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
         this.backgroundEl.object3D.visible = true;
         this.scen.setAttribute("raycaster","objects: .non-clickable");
 
@@ -260,9 +260,9 @@ AFRAME.registerComponent('info-panel', {
     },
 
     onBackgroundClick: function (evt) {
-        this.backgroundEl.object3D.scale.set(0.001, 0.001, 0.001);
+        this.backgroundEl.object3D.scale.set(0.0001, 0.0001, 0.0001);
         this.backgroundEl.object3D.visible = false;
-        this.el.object3D.scale.set(0.001, 0.001, 0.001);
+        this.el.object3D.scale.set(0.0001, 0.0001, 0.0001);
         this.el.classList.remove("openPOI");
         this.el.object3D.visible = false;
         this.el.emit("resetmat");

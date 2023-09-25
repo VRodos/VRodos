@@ -683,7 +683,6 @@ function image_upload_action_callback(){
 		}
 	}
 
-
 	$upload_dir = wp_upload_dir();
 	$upload_path = str_replace('/',$DS,$upload_dir['basedir']) . $DS . 'scenes' . $DS . $scene_id . $DS;
 
@@ -696,7 +695,7 @@ function image_upload_action_callback(){
 	$fn = $_POST["filename"];
 	$ext = $_POST["imagetype"];
 
-	$hashed_filename = $project_id . '_' . $scene_id.'_bg.'. $ext;
+	$hashed_filename = $project_id .'_'. time() . '_' . $scene_id.'_bg.'. $ext;
 
 	// Write file string to a file in server
 	file_put_contents($upload_path . $hashed_filename,
