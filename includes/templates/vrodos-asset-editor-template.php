@@ -88,7 +88,10 @@ $current_user = wp_get_current_user();
 $login_username = $current_user->user_login;
 $isUserAdmin = current_user_can('administrator');
 
-$isEditMode = true;
+$isEditMode = null;
+if (isset($_GET['preview'])) {
+    $isEditMode = !($_GET['preview'] == '1');
+}
 
 // Default image to show when there are no images for the asset
 $defaultImage = plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  );
@@ -365,29 +368,15 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             </div>
 
             <div style="text-align: left; width: 100%;">
-                <?php if ($isEditMode) { ?>
 
-                    <a title="Back" class="vrodos-back-button hideAtLocked mdc-button" style="float:left; min-width: 0;" href="<?php echo $goBackToLink;?>">
-                        <em style="font-size:32px;" class="material-icons arrowback">arrow_back</em></a>
-                    <?php
-                }
+
+                <a title="Back" class="vrodos-back-button hideAtLocked mdc-button" style="float:left; min-width: 0;" href="<?php echo $goBackToLink;?>">
+                    <em style="font-size:32px;" class="material-icons arrowback">arrow_back</em></a>
+                <?php
+
 
                 // UPPER BUTTONS
                 if($asset_id != null ){
-
-                    if ( !$isEditMode) {
-
-                        // Display EDIT BUTTON
-                        $curr_uri = $_SERVER['REQUEST_URI'];
-                        $targetparams = str_replace("preview=1","preview=0",$curr_uri);
-                        $editLink2 = ( empty( $_SERVER['HTTPS'] ) ? 'http://' : 'https://' ).
-                            $_SERVER['HTTP_HOST'].$targetparams;
-                        ?>
-
-                        <a class="mdc-button mdc-button--primary mdc-theme--primary"
-                           href="<?php echo $editLink2; ?>" data-mdc-auto-init="MDCRipple">EDIT Asset</a>
-
-                    <?php }
                 }?>
                 <h2 style="display: inline-block; margin: 0  " class="mdc-typography--headline mdc-theme--text-primary-on-light" >Asset editor</h2>
                 <!-- Author -->
@@ -420,7 +409,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 <br>
 
                 <!-- EDIT MODE -->
-                <?php if(($isOwner || $isUserAdmin) && $isEditMode) { ?>
+                <?php if(($isOwner || $isUserAdmin) ) { ?>
 
                 <div style="display:flex; width: 100%;">
                     <!-- Title -->
