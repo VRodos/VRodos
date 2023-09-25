@@ -210,7 +210,7 @@ AFRAME.registerComponent('info-panel', {
         //clipIntersection
         this.buttonEl.components.material.material.depthTest = false;
 
-        this.ImageEl.components.material.material.depthTest = false;
+        
         if (!this.DescriptionEl) {
             console.log("No Desc");
         }
@@ -235,6 +235,7 @@ AFRAME.registerComponent('info-panel', {
         }
       
         if (!this.ImageAsset.getAttribute("src")) {
+            this.ImageEl.components.material.material.depthTest = false;
             console.log("No Image");
             
         }
