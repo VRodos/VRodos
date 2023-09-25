@@ -88,10 +88,7 @@ $current_user = wp_get_current_user();
 $login_username = $current_user->user_login;
 $isUserAdmin = current_user_can('administrator');
 
-$isEditMode = null;
-if (isset($_GET['preview'])) {
-    $isEditMode = !($_GET['preview'] == '1');
-}
+$isEditMode = true;
 
 // Default image to show when there are no images for the asset
 $defaultImage = plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  );
@@ -863,7 +860,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
         document.getElementById("jscolorpick").value = back_3d_color;
 
         let isLoggedIn = <?php echo $isUserloggedIn ? 1: 0; ?>;
-        let isEditMode = (isLoggedIn === 1) ? <?php echo $_GET['preview'] === '1' ? 0 : 1; ?> : 0 ;
+        let isEditMode = (isLoggedIn === 1) ? 1 : 0 ;
         console.log("isEditModeA:", isEditMode);
 
         let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";

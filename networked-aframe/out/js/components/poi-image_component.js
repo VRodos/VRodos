@@ -182,80 +182,90 @@ AFRAME.registerComponent('info-panel', {
 
     onMenuButtonClick: function (evt) {
 
-        this.el.emit("force-close",{value: this.data, el: this.el});
-        let poi_elems = document.getElementsByClassName('openPOI');
-        for (let i = 0; i < poi_elems.length; ++i) {
-            poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
-            poi_elems[i].object3D.visible = false;
-        }
-        this.el.classList.add("openPOI");
-        this.backgroundEl.object3D.scale.set(1, 1, 1);
-        this.backgroundEl.object3D.visible = true;
-        this.scen.setAttribute("raycaster","objects: .non-clickable");
+        if (!browsingModeVR) {
 
-        this.el.object3D.scale.set(1, 1, 1);
-        if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
-        this.el.object3D.visible = true;
-        this.el.components.material.material.depthTest = false;
-        //this.backgroundEl.sceneEl.renderer.sortObjects = true;
-        this.backgroundEl.components.material.material.depthTest = false;
-        //this.backgroundEl.components.material.material.clipIntersection = false;
-        this.buttonEl.object3D.depthTest = false;
+            document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
+            document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
+            document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text").value;
+            (new mdc.dialog.MDCDialog(document.querySelector('#poi-img-dialog'))).show();
 
-        this.backgroundEl.object3D.renderOrder = 9999999;
-        this.buttonEl.object3D.renderOrder = 9999999;
-        //clipIntersection
-        this.buttonEl.components.material.material.depthTest = false;
+        } else {
 
-        this.ImageEl.components.material.material.depthTest = false;
-        if (!this.DescriptionEl) {
-            console.log("No Desc");
-        }
-        else {
-            this.DescriptionEl.components.text.material.depthTest = false;
-            this.DescriptionEl.object3D.renderOrder = 9999999;
-        }
-        if (!this.PageEl) {
-            console.log("No Desc");
-        }
-        else {
-            this.PageEl.components.text.material.depthTest = false;
-            this.PageEl.object3D.renderOrder = 9999999;
-        }
-              
-        if (!this.TitleEl) {
-            console.log("No Title");
-        }
-        else {
-            this.TitleEl.components.text.material.depthTest = false;
-            this.TitleEl.object3D.renderOrder = 9999999;
-        }
-      
-        if (!this.ImageAsset.getAttribute("src")) {
-            console.log("No Image");
-            
-        }
-        else {
+            this.el.emit("force-close",{value: this.data, el: this.el});
+            let poi_elems = document.getElementsByClassName('openPOI');
+            for (let i = 0; i < poi_elems.length; ++i) {
+                poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
+                poi_elems[i].object3D.visible = false;
+            }
+            this.el.classList.add("openPOI");
+            this.backgroundEl.object3D.scale.set(1, 1, 1);
+            this.backgroundEl.object3D.visible = true;
+            this.scen.setAttribute("raycaster","objects: .non-clickable");
+
+            this.el.object3D.scale.set(1, 1, 1);
+            if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
+            this.el.object3D.visible = true;
+            this.el.components.material.material.depthTest = false;
+            //this.backgroundEl.sceneEl.renderer.sortObjects = true;
+            this.backgroundEl.components.material.material.depthTest = false;
+            //this.backgroundEl.components.material.material.clipIntersection = false;
+            this.buttonEl.object3D.depthTest = false;
+
+            this.backgroundEl.object3D.renderOrder = 9999999;
+            this.buttonEl.object3D.renderOrder = 9999999;
+            //clipIntersection
+            this.buttonEl.components.material.material.depthTest = false;
+
             this.ImageEl.components.material.material.depthTest = false;
-            this.ImageEl.object3D.renderOrder = 9999999;
-            console.log(this.ImageEl.components);
+            if (!this.DescriptionEl) {
+                console.log("No Desc");
+            }
+            else {
+                this.DescriptionEl.components.text.material.depthTest = false;
+                this.DescriptionEl.object3D.renderOrder = 9999999;
+            }
+            if (!this.PageEl) {
+                console.log("No Desc");
+            }
+            else {
+                this.PageEl.components.text.material.depthTest = false;
+                this.PageEl.object3D.renderOrder = 9999999;
+            }
+
+            if (!this.TitleEl) {
+                console.log("No Title");
+            }
+            else {
+                this.TitleEl.components.text.material.depthTest = false;
+                this.TitleEl.object3D.renderOrder = 9999999;
+            }
+
+            if (!this.ImageAsset.getAttribute("src")) {
+                console.log("No Image");
+
+            }
+            else {
+                this.ImageEl.components.material.material.depthTest = false;
+                this.ImageEl.object3D.renderOrder = 9999999;
+                console.log(this.ImageEl.components);
+            }
+
+            this.infoPanel.components.material.material.depthTest = false;
+            this.infoPanel.object3D.renderOrder = 9999;
+
+            if (this.playerEl.getAttribute("wasd-controls")){
+                this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+            }
+            else
+                this.cam.setAttribute("wasd-controls-enabled", "false");
+            //playerEl.setAttribute("look-controls", "enabled: false");
+            //this.playerEl.setAttribute("movement-controls", "speed: 0");
+            //this.playerEl.setAttribute("look-controls", "enabled: false");
+
+
+            this.ImageEl.object3D.visible = true;
+
         }
-
-        this.infoPanel.components.material.material.depthTest = false;
-        this.infoPanel.object3D.renderOrder = 9999;
-       
-        if (this.playerEl.getAttribute("wasd-controls")){
-            this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
-        }
-        else
-            this.cam.setAttribute("wasd-controls-enabled", "false");
-        //playerEl.setAttribute("look-controls", "enabled: false");
-        //this.playerEl.setAttribute("movement-controls", "speed: 0");
-        //this.playerEl.setAttribute("look-controls", "enabled: false");
-
-       
-
-        this.ImageEl.object3D.visible = true;
 
     },
 
