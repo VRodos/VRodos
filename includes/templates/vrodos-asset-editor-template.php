@@ -1001,7 +1001,10 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                     //vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
                     asset_viewer_3d_kernel.resizeDisplayGL();
-                    document.getElementById('formSubmitBtn').disabled = false;
+                    if (document.getElementById('formSubmitBtn')) {
+                        document.getElementById('formSubmitBtn').disabled = false;
+                    }
+
                     let descText = document.getElementById('categoryDescription');
 
                     let slug = '';
