@@ -2,7 +2,6 @@ AFRAME.registerComponent('info-panel', {
     schema: { type: "string", default: "default value" },
     init: function () {
 
-
         this.ImageEl = document.querySelector('#top_img_' + this.data);
         this.ImageAsset = document.querySelector('#main_img_' + this.data);
         this.TitleEl = document.querySelector('#title_' + this.data);

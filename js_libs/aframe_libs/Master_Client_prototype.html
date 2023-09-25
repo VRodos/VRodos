@@ -560,7 +560,6 @@
     <!-- Pawn -->
     <a-entity id="player"></a-entity>
 
-
 </a-scene>
 
 
@@ -568,16 +567,12 @@
 
     // Event listener when VR is toggled
     document.querySelector('a-scene').addEventListener('enter-vr',  function () {
-        console.log("enter");
         browsingModeVR = true;
     });
 
     document.querySelector('a-scene').addEventListener('exit-vr',  function () {
-        console.log("exit");
         browsingModeVR = false;
     });
-
-    // To delete after poi is ready
 
 
     /* CHAT COMPONENT */
