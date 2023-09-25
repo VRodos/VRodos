@@ -975,7 +975,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_title_img_entity->setAttribute("id", "title_$uuid");
 
                     $tit_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
-                    $a_title_img_entity->setAttribute("text", "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: white; value: $contentObject->poi_img_title");
+                    $a_title_img_entity->setAttribute("text", "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: white;");
+                    $a_title_img_entity->setAttribute("title_to_add", "$contentObject->poi_img_title");
                     $a_title_img_entity->setAttribute( "class", "hideable" );
                     $a_title_img_entity->setAttribute("original-scale", "1 1 1");
 
@@ -1043,7 +1044,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $a_desc_img_entity->setAttribute("position", "-0.68 -0.4 0");
 
 
-                        $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value: $contentObject->poi_img_content");
+                        $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value:");
+                        $a_desc_img_entity->setAttribute("text_to_add", "$contentObject->poi_img_content");
                         $a_panel_entity->appendChild($a_desc_img_entity);
 
 

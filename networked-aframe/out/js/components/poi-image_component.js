@@ -14,11 +14,15 @@ AFRAME.registerComponent('info-panel', {
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
         this.cam = document.querySelector("#cameraA");
+
         
         this.buttonEl = document.querySelector('#button_poi_' + this.data);
         this.buttonNextEl = document.querySelector('#next_' + this.data);
         this.buttonPrevEl = document.querySelector('#prev_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
+
+        this.TitleEl.setAttribute("text","value",this.TitleEl.getAttribute("title_to_add"));
+        this.DescriptionEl.setAttribute("text","value",this.DescriptionEl.getAttribute("text_to_add"));
 
         if(this.buttonNextEl)
             this.buttonNextEl.object3D.renderOrder = 9999999;
