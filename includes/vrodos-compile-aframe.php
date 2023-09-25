@@ -875,13 +875,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $a_image_asset_main->setAttribute("src",$contentObject->poi_img_path);
 
                     $a_image_asset_esc->setAttribute("id", "esc_img_$uuid");
-                    $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
+                    //$a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
+                    $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x_ecf0f1.png', dirname(__FILE__)));
+                    
 
                     $a_image_asset_left->setAttribute("id", "left_img_$uuid");
-                    $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left.png', dirname(__FILE__)));
+                    //$a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left.png', dirname(__FILE__)));
+                    $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left_ecf0f1.png', dirname(__FILE__)));
+
 
                     $a_image_asset_right->setAttribute("id", "right_img_$uuid");
-                    $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right.png', dirname(__FILE__)));
+                    //$a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right.png', dirname(__FILE__)));
+                    $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right_ecf0f1.png', dirname(__FILE__)));
 
 
                     //$a_asset->appendChild(a_image_asset);
@@ -979,7 +984,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_exit_img_entity->setAttribute("mixin", "poiEsc");
                     $a_exit_img_entity->setAttribute("material", "src: #esc_img_$uuid; depthTest: false; transparent: true");
                     $a_exit_img_entity->setAttribute("class", "raycastable hideable non-clickable" );
-                    $a_exit_img_entity->setAttribute("original-scale", "1 1 1");
+                    $a_exit_img_entity->setAttribute("scale", "0.2 0.2 0.2");
+                    $a_exit_img_entity->setAttribute("original-scale", "0.2 0.2 0.2");
 
 
                     $a_panel_entity->appendChild($a_exit_img_entity);
@@ -1006,8 +1012,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                             $next_desc_entity->setAttribute("mixin", "poiImgNext");
                             $next_desc_entity->setAttribute("material", "src: #right_img_$uuid; depthTest: false; transparent: true");
                             $next_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
-                            $next_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
-                            $next_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
+                            $next_desc_entity->setAttribute("scale", "0.1 0.1 0.1");
+                            $next_desc_entity->setAttribute("original-scale", "0.1 0.1 0.1");
 
                             $a_panel_entity->appendChild( $next_desc_entity);
 
@@ -1016,8 +1022,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                             $prev_desc_entity->setAttribute("mixin", "poiImgPrev");
                             $prev_desc_entity->setAttribute("material", "src: #left_img_$uuid; depthTest: false; transparent: true");
                             $prev_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
-                            $prev_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
-                            $prev_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
+                            $prev_desc_entity->setAttribute("scale", "0.1 0.1 0.1");
+                            $prev_desc_entity->setAttribute("original-scale", "0.1 0.1 0.1");
 
                             $a_panel_entity->appendChild( $prev_desc_entity);
 

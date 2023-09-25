@@ -9,7 +9,7 @@ AFRAME.registerComponent('info-panel', {
         this.DescriptionEl = document.querySelector('#desc_' + this.data);
         this.PageEl = document.querySelector('#page_' + this.data);
         this.infoPanel = document.querySelector('#infoPanel_' + this.data);
-        this.escEl = document.querySelector('#exit_' + this.data);
+        //this.escEl = document.querySelector('#exit_' + this.data);
         this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
@@ -19,6 +19,11 @@ AFRAME.registerComponent('info-panel', {
         this.buttonNextEl = document.querySelector('#next_' + this.data);
         this.buttonPrevEl = document.querySelector('#prev_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
+
+        if(this.buttonNextEl)
+            this.buttonNextEl.object3D.renderOrder = 9999999;
+        if(this.buttonPrevEl)
+            this.buttonPrevEl.object3D.renderOrder = 9999999;
 
         this.desc_list = [];
         this.readingPos = 0;
@@ -42,11 +47,9 @@ AFRAME.registerComponent('info-panel', {
             if ((this.DescriptionEl.getAttribute("text").value).length % content_length > 0 && ((this.DescriptionEl.getAttribute("text").value).length > content_length )){
                 this.chunks +=1;
             }
-                
-            //console.log((this.DescriptionEl.getAttribute("text").value).length);
-            
+
             for (let x = 0; x < this.chunks; x++) {
-                let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length -1);
+                let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length);
                 this.desc_list.push(output);
                 
             }
@@ -93,22 +96,20 @@ AFRAME.registerComponent('info-panel', {
                     while (expected_height > 0.81) {
                         expected_width = expected_width / 2;
                         expected_height = expected_height / 2;
-                        console.log("reach 1");
 
                     }
                 } else {
                     while (expected_height > 1.5) {
                         expected_width = expected_width / 2;
                         expected_height = expected_height / 2;
-                        console.log("reach 2");
                     }
 
                 }
-                let esc_pad = (panel_pad / 2) + 0.1;
+                //let esc_pad = (panel_pad / 2) + 0.1;
 
                 let upd_mixin = "width: " + expected_width + "; height: " + expected_height;
                 let panel_mixin = "width: " + panel_pad + "; height: 1.8";
-                this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
+                //this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
                 this.ImageEl.setAttribute("geometry", "primitive: plane;" + upd_mixin);
                 this.infoPanel.setAttribute("geometry", "primitive: plane;" + panel_mixin);
             });
@@ -159,7 +160,8 @@ AFRAME.registerComponent('info-panel', {
             this.buttonNextEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonPrevEl.object3D.visible = true;
-        this.buttonPrevEl.object3D.scale.set(0.7, 0.7, 0.7);
+        this.buttonPrevEl.setAttribute("scale", this.buttonPrevEl.getAttribute("original-scale"));
+
         
     },
     onPrevButtonClick: function (evt) {
@@ -175,7 +177,7 @@ AFRAME.registerComponent('info-panel', {
             this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonNextEl.object3D.visible = true;
-        this.buttonNextEl.object3D.scale.set(0.7, 0.7, 0.7);
+        this.buttonNextEl.setAttribute("scale", this.buttonNextEl.getAttribute("original-scale"));
         
     },
     
@@ -191,14 +193,15 @@ AFRAME.registerComponent('info-panel', {
 
         } else {
 
-            this.el.emit("force-close",{value: this.data, el: this.el});
+            //this.el.emit("force-close",{value: this.data, el: this.el});
             let poi_elems = document.getElementsByClassName('openPOI');
             for (let i = 0; i < poi_elems.length; ++i) {
                 poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
                 poi_elems[i].object3D.visible = false;
             }
             this.el.classList.add("openPOI");
-            this.backgroundEl.object3D.scale.set(1, 1, 1);
+            this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
+            // this.backgroundEl.setAttribute("material", "color", "white");
             this.backgroundEl.object3D.visible = true;
             this.scen.setAttribute("raycaster","objects: .non-clickable");
 
@@ -211,44 +214,44 @@ AFRAME.registerComponent('info-panel', {
             //this.backgroundEl.components.material.material.clipIntersection = false;
             this.buttonEl.object3D.depthTest = false;
 
-            this.backgroundEl.object3D.renderOrder = 9999999;
-            this.buttonEl.object3D.renderOrder = 9999999;
-            //clipIntersection
-            this.buttonEl.components.material.material.depthTest = false;
+        this.backgroundEl.object3D.renderOrder = 9999999;
+        this.buttonEl.object3D.renderOrder = 99999;
+        //clipIntersection
+        this.buttonEl.components.material.material.depthTest = false;
 
+
+        if (!this.DescriptionEl) {
+            console.log("No Desc");
+        }
+        else {
+            this.DescriptionEl.components.text.material.depthTest = false;
+            this.DescriptionEl.object3D.renderOrder = 99999;
+        }
+        if (!this.PageEl) {
+            console.log("No Desc");
+        }
+        else {
+            this.PageEl.components.text.material.depthTest = false;
+            this.PageEl.object3D.renderOrder = 99999;
+        }
+
+        if (!this.TitleEl) {
+            console.log("No Title");
+        }
+        else {
+            this.TitleEl.components.text.material.depthTest = false;
+            this.TitleEl.object3D.renderOrder = 99999;
+        }
+
+        if (!this.ImageAsset.getAttribute("src")) {
+            console.log("No Image");
+
+        }
+        else {
             this.ImageEl.components.material.material.depthTest = false;
-            if (!this.DescriptionEl) {
-                console.log("No Desc");
-            }
-            else {
-                this.DescriptionEl.components.text.material.depthTest = false;
-                this.DescriptionEl.object3D.renderOrder = 9999999;
-            }
-            if (!this.PageEl) {
-                console.log("No Desc");
-            }
-            else {
-                this.PageEl.components.text.material.depthTest = false;
-                this.PageEl.object3D.renderOrder = 9999999;
-            }
-
-            if (!this.TitleEl) {
-                console.log("No Title");
-            }
-            else {
-                this.TitleEl.components.text.material.depthTest = false;
-                this.TitleEl.object3D.renderOrder = 9999999;
-            }
-
-            if (!this.ImageAsset.getAttribute("src")) {
-                console.log("No Image");
-
-            }
-            else {
-                this.ImageEl.components.material.material.depthTest = false;
-                this.ImageEl.object3D.renderOrder = 9999999;
-                console.log(this.ImageEl.components);
-            }
+            this.ImageEl.object3D.renderOrder = 99999;
+            console.log(this.ImageEl.components);
+        }
 
             this.infoPanel.components.material.material.depthTest = false;
             this.infoPanel.object3D.renderOrder = 9999;
@@ -270,9 +273,9 @@ AFRAME.registerComponent('info-panel', {
     },
 
     onBackgroundClick: function (evt) {
-        this.backgroundEl.object3D.scale.set(0.001, 0.001, 0.001);
+        this.backgroundEl.object3D.scale.set(0.0001, 0.0001, 0.0001);
         this.backgroundEl.object3D.visible = false;
-        this.el.object3D.scale.set(0.001, 0.001, 0.001);
+        this.el.object3D.scale.set(0.0001, 0.0001, 0.0001);
         this.el.classList.remove("openPOI");
         this.el.object3D.visible = false;
         this.el.emit("resetmat");
