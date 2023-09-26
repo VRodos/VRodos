@@ -13,11 +13,15 @@ AFRAME.registerComponent('info-panel', {
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
         this.cam = document.querySelector("#cameraA");
-        
+
+
         this.buttonEl = document.querySelector('#button_poi_' + this.data);
         this.buttonNextEl = document.querySelector('#next_' + this.data);
         this.buttonPrevEl = document.querySelector('#prev_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
+
+        this.TitleEl.setAttribute("text","value",this.TitleEl.getAttribute("title_to_add"));
+        this.DescriptionEl.setAttribute("text","value",this.DescriptionEl.getAttribute("text_to_add"));
 
         if(this.buttonNextEl)
             this.buttonNextEl.object3D.renderOrder = 9999999;
@@ -46,7 +50,7 @@ AFRAME.registerComponent('info-panel', {
             if ((this.DescriptionEl.getAttribute("text").value).length % content_length > 0 && ((this.DescriptionEl.getAttribute("text").value).length > content_length )){
                 this.chunks +=1;
             }
-
+                
             for (let x = 0; x < this.chunks; x++) {
                 let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length);
                 this.desc_list.push(output);
@@ -192,17 +196,17 @@ AFRAME.registerComponent('info-panel', {
 
         } else {
 
-            //this.el.emit("force-close",{value: this.data, el: this.el});
-            let poi_elems = document.getElementsByClassName('openPOI');
-            for (let i = 0; i < poi_elems.length; ++i) {
-                poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
-                poi_elems[i].object3D.visible = false;
-            }
-            this.el.classList.add("openPOI");
-            this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
-            // this.backgroundEl.setAttribute("material", "color", "white");
-            this.backgroundEl.object3D.visible = true;
-            this.scen.setAttribute("raycaster","objects: .non-clickable");
+        //this.el.emit("force-close",{value: this.data, el: this.el});
+        let poi_elems = document.getElementsByClassName('openPOI');
+        for (let i = 0; i < poi_elems.length; ++i) {
+            poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
+            poi_elems[i].object3D.visible = false;
+        }
+        this.el.classList.add("openPOI");
+        this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
+        // this.backgroundEl.setAttribute("material", "color", "white");
+        this.backgroundEl.object3D.visible = true;
+        this.scen.setAttribute("raycaster","objects: .non-clickable");
 
             this.el.object3D.scale.set(1, 1, 1);
             if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
