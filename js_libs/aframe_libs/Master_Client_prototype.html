@@ -60,9 +60,7 @@
                     ]
                 });
             }
-
-            const components = NAF.schemas.getComponentsOriginal(template);
-            return components;
+            return NAF.schemas.getComponentsOriginal(template);
         };
 
         window.ntExample = {
@@ -509,7 +507,7 @@
             <a-entity class="avatar" player-info>
 
                 <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
-                <a-entity class="face" position="0 0.05 0" >
+                <a-entity class="face" position="0 0.05 0">
                     <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04" >
                         <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2" ></a-sphere>
                     </a-sphere>
@@ -565,11 +563,7 @@
                  material="shader: flat; transparent: true" position="-0.1 -0.79 0.002"></a-mixin>
     </a-assets>
 
-
-
-    <!-- Needed for MEDIAVERSE projects - DO NOT DELETE -->
     <a-entity id="player"></a-entity>
-
 
 
 </a-scene>
@@ -586,21 +580,26 @@
         browsingModeVR = false;
     });
 
+    // Hide eyes from my avatar on self
+    const parent_avatar = document.getElementById('cameraA');
+    let my_face = parent.querySelector('.face');
+    my_face.setAttribute("visible", "false");
+
+
     /* CHAT COMPONENT */
     let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
     let chatInput = document.getElementById('chatInput');
     let chatLog = document.getElementById('chat-messages');
 
     NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
-
-        let dateString = getCurrentDateString();
+        let dateString = getChatCurrentTimeString();
         chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
     } )
 
     sendMsgChatBtn.addEventListener("click", evt => {
         let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
 
-        let dateString = getCurrentDateString();
+        let dateString = getChatCurrentTimeString();
         chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
         NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
 
@@ -854,29 +853,6 @@
         }
     });
 
-    // NOT NEEDED: avatar-template uses webcam so no color.
-    /*/!* Define custom schema for syncing avatar color, set by random-color *!/
-    NAF.schemas.add({
-        template: '#avatar-template',
-        components: [
-            'position',
-            'rotation'
-        ],
-    });*/
-
-    // In comments because right now we set the color from another function
-    /*NAF.schemas.add({
-        template: '#avatar-template-expo',
-        components: [
-            'position',
-            'rotation',
-            {
-                selector: '.model',
-                component: 'gltf-model'
-            }
-        ]
-    });*/
-
     /* Called by Networked-Aframe when connected to server */
     function onConnect() {
         console.log("onConnect", new Date());
@@ -1080,7 +1056,7 @@
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
     };
 
-    let getCurrentDateString = () => {
+    let getChatCurrentTimeString = () => {
         let date = new Date;
         return '[' + String(date.getHours()).padStart(2, '0') + ':' +
             String(date.getMinutes()).padStart(2, '0') + ':' +
