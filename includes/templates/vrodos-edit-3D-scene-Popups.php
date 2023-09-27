@@ -30,6 +30,10 @@
         envir.scene.keepScaleAspectRatio = value;
     }
 
+    function toggleBroadcastChat(value) {
+        envir.scene.enableGeneralChat = value;
+    }
+
     function changeRendererToneMapping(value) {
         envir.renderer.toneMappingExposure = value;
     }
@@ -682,7 +686,7 @@ checked="true">
 
 <div style=" position: relative; width: 40%; float: left; clear:both; font-size: 12px">
         <input type="text" id="poi_image_desc_text" name="poiImgDesc" placeholder="The description of the Poi" class="changablefont mdc-textfield__input mdc-theme--text-primary-on-light"
-style="width: 250px;" maxlength="100"
+style="width: 250px;" 
 value="" />
     </div>
 

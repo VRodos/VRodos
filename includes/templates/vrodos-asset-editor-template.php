@@ -207,7 +207,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         // NoCloning: Upload files from POST but check first
         // if any 3D files have been selected for upload
         if (count($_FILES['multipleFilesInput']['name']) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ){
-            vrodos_create_asset_3DFilesExtra_frontend($asset_id, $assetTitle, $gameSlug, $project_id);
+            vrodos_create_asset_3DFilesExtra_frontend($asset_id, $project_id, $assetCatID);
         }
 
         update_post_meta($asset_id, 'vrodos_asset3d_isCloned', 'false');
@@ -215,7 +215,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     }
 
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
-        vrodos_upload_asset_screenshot($_POST['sshotFileInput'], $assetTitle, $asset_id, $project_id);
+        vrodos_upload_asset_screenshot($_POST['sshotFileInput'], $asset_id, $project_id);
     }
 
     // Save custom parameters according to asset type.
@@ -226,7 +226,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
                 vrodos_create_asset_addVideo_frontend($asset_id);
             }
             if (isset($_POST['videoSshotFileInput'])) {
-                vrodos_upload_asset_screenshot($_POST['videoSshotFileInput'], $assetTitle, $asset_id, $project_id);
+                vrodos_upload_asset_screenshot($_POST['videoSshotFileInput'], $asset_id, $project_id);
             }
             update_post_meta($asset_id, 'vrodos_asset3d_video_title', $_POST['videoTitle']);
             update_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', isset($_POST['video_autoloop_checkbox']));
@@ -240,10 +240,6 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
             update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', $_POST['poiImgTitle']);
             update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', $_POST['poiImgDescription']);
 
-            break;
-
-        case 'chat':
-            update_post_meta($asset_id, 'vrodos_asset3d_chat_type', $_POST['chatTypeRadio']);
             break;
 
         case 'poi-link':
@@ -460,7 +456,31 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         <div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
                             <em class="material-icons mdc-theme--text-hint-on-light ">label</em>&nbsp;<!--icon-->
                             <?php
-                            $cat_terms = get_terms('vrodos_asset3d_cat', ['hide_empty' => false]);
+
+                            // Check if project is of MV type then dont show chat component.
+                            $ids_to_exclude = array();
+                            if ($game_category !== 'vrexpo_games') {
+                                $get_terms_to_exclude =  get_terms(
+                                    array(
+                                        'fields'  => 'ids',
+                                        'slug'    => array(
+                                            'chat' ),
+                                        'taxonomy' => 'vrodos_asset3d_cat',
+                                    )
+                                );
+                                if( !is_wp_error( $get_terms_to_exclude ) && count($get_terms_to_exclude) > 0){
+                                    $ids_to_exclude = $get_terms_to_exclude;
+                                }
+                            }
+
+                            $cat_terms = get_terms(
+                                'vrodos_asset3d_cat',
+                                array(
+                                    'hide_empty' => false,
+                                    'exclude'    => $ids_to_exclude,
+                                )
+                            );
+
                             $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
                             if($asset_id == null) { ?>
                                 <span id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
@@ -712,75 +732,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     </div>
 
 
-                    <div id="chat_section" class="assetEditorColumn" style="display: none;">
-                        <h3 class="mdc-typography--title">Chat Type</h3>
-                        <?php
-                        $chatTypeP2p = '';
-                        $chatTypeBroadcast = '';
-                        $chatTypeHelp = '';
-                        $chat_type = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
-                        if($chat_type === 'p2p') {
-                            $chatTypeP2p = 'checked';
-                        } else if ($chat_type === 'broadcast') {
-                            $chatTypeBroadcast = 'checked';
-                        }
-                        else {
-                            $chatTypeHelp = 'checked';
-                        }
-                        ?>
-
-                        <ul class="RadioButtonList" onclick="loadChatTypeDescription();">
-                            <li class="mdc-form-field">
-                                <div class="mdc-radio">
-                                    <input class="mdc-radio__native-control" type="radio" id="chatTypeP2P"
-                                           name="chatTypeRadio" value="p2p" <?php echo $chatTypeP2p; ?>>
-                                    <div class="mdc-radio__background">
-                                        <div class="mdc-radio__outer-circle"></div>
-                                        <div class="mdc-radio__inner-circle"></div>
-                                    </div>
-                                </div>
-                                <label id="chatTypeP2P-label" for="chatTypeP2P">
-                                    <i class="material-icons">group</i>
-                                    <span style="vertical-align: super">P2P</span>
-                                </label>
-                            </li>
-
-                            <li class="mdc-form-field">
-                                <div class="mdc-radio">
-                                    <input class="mdc-radio__native-control" type="radio" id="chatTypeBroadcast"
-                                           name="chatTypeRadio" value="broadcast" <?php echo $chatTypeBroadcast; ?>>
-                                    <div class="mdc-radio__background">
-                                        <div class="mdc-radio__outer-circle"></div>
-                                        <div class="mdc-radio__inner-circle"></div>
-                                    </div>
-                                </div>
-                                <label id="chatTypeBroadcast-label" for="chatTypeBroadcast">
-                                    <i class="material-icons">public</i>
-                                    <span style="vertical-align: super">Broadcast</span>
-                                </label>
-                            </li>
-
-                            <li class="mdc-form-field">
-                                <div class="mdc-radio">
-                                    <input class="mdc-radio__native-control" type="radio" id="chatTypeHelp"
-                                           name="chatTypeRadio" value="help" <?php echo $chatTypeHelp; ?>>
-                                    <div class="mdc-radio__background">
-                                        <div class="mdc-radio__outer-circle"></div>
-                                        <div class="mdc-radio__inner-circle"></div>
-                                    </div>
-                                </div>
-                                <label id="chatTypeHelp-label" for="chatTypeHelp">
-                                    <i class="material-icons">help</i>
-                                    <span style="vertical-align: super">Help</span>
-                                </label>
-                            </li>
-                        </ul>
-                        <span id="chat-type-label"
-                              class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">
-                        </span>
-                    </div>
-
-
                 </div>
 
                 <!-- CATEGORY IPR -->
@@ -985,7 +936,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     document.getElementById('glb_file_section').style.display = "block";
                     document.getElementById('screenshot_section').style.display = "block";
                     document.getElementById('ipr_section').style.display = "none";
-                    document.getElementById('chat_section').style.display = "none";
                     document.getElementById('poi_help_section').style.display = "none";
                     document.getElementById('poi_link_section').style.display = "none";
                     document.getElementById('video_section').style.display = "none";
@@ -1001,8 +951,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         case "chat":
                             document.getElementById('ipr_section').style.display = "none";
-                            document.getElementById('chat_section').style.display = "block";
-                            loadChatTypeDescription();
                             break;
                         case "poi-help":
                             document.getElementById('ipr_section').style.display = "none";
@@ -1122,20 +1070,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             let ctx = canvas.getContext('2d');
             ctx.drawImage( video, 0, 0, 320, 240);
             videoSshotFileInput.value = canvas.toDataURL('image/png');
-        };
-
-        let loadChatTypeDescription = () => {
-            let checked = document.querySelector('input[name="chatTypeRadio"]:checked').value;
-
-            let content = '';
-            if (checked === 'p2p') {
-                content = "A private chat between users. (Not yet implemented)";
-            } else if (checked === 'broadcast') {
-                content = "The default chat type. A visitor can send a message to the room and will be viewed by all attendees.";
-            } else if (checked === 'help') {
-                content = "A private chat between visitor and the exhibitor or administrator.";
-            }
-            document.getElementById('chat-type-label').innerHTML = content;
         };
 
     </script>

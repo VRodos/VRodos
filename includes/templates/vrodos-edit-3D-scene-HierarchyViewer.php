@@ -8,10 +8,6 @@
 <!-- Right Panel -->
 <div id="right-elements-panel" class="right-elements-panel-style">
 
-    <!-- Title -->
-    <div id="vr_editor_right_panel_title" class="row-right-panel">Scene controls</div>
-
-
     <!-- 4 Buttons in a row -->
     <div id="row2" class="row-right-panel"></div>
 
@@ -29,7 +25,6 @@
     <div id="row5" class="row-right-panel" style="padding-top:6px; padding-left:5px; padding-bottom:6px; background:whitesmoke">
 		<span class="mdc-typography--subheading2 mdc-theme--text-secondary-on-light"
               style="max-width:50px; font-size:8pt !important; line-height: 1em; letter-spacing: 0">Axes controls:</span>
-
 
         <!-- Translate, Rotate, Scale Buttons -->
         <div id="object-manipulation-toggle"
@@ -56,13 +51,13 @@
          style="display: block; width:100%; margin:0; padding:0; height:30px; background: rgba(255,255,255,0.5)">
 
         <input type="checkbox"
-               title="Lock Scale aspect ratio"
+               title="Constrain Scale dims to one value"
                id="scaleLockCheckbox"
                name="scaleLockCheckbox"
                form="3dAssetForm"
                class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light"
                onchange="keepScaleAspectRatio(this.checked)">
-        <label for="scaleLockCheckbox" class="mdc-typography--subheading2" style="vertical-align: middle; cursor: pointer;">Lock Scale aspect ratio</label>
+        <label for="scaleLockCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Constrain Scale dims to single value</label>
 
     </div>
 
@@ -75,11 +70,34 @@
         </div>
     </div>
 
-    <!-- Set Clear Color -->
-    <div id="sceneClearColorDiv" class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded" data-mdc-auto-init="MDCTextfield" style="width:100%; margin:0px; padding:0px; height:70px; background: rgba(255,255,255,0.5)">
+    <!-- Extra options -->
+    <div style="width:100%; margin:0; height: 32%; overflow-y: scroll; background: rgba(255,255,255,0.5)">
 
-        <ul class="RadioButtonList" style="margin:0">
-            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="" style="height:30px; margin:0; font-size:xx-small">
+        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Scene options</span>
+
+        <!-- Set Broadcast chat -->
+        <div style="display: block">
+            <input type="checkbox" title="Enable global chat" id="enableGeneralChatCheckbox" name="enableGeneralChatCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleBroadcastChat(this.checked)">
+            <label for="enableGeneralChatCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Enable general chat</label>
+        </div>
+
+        <hr>
+
+        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Background style</span>
+
+        <ul class="RadioButtonList" style="padding: 0;">
+            <li class="mdc-form-field" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0"  style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio">
+                    <input class="mdc-radio__native-control" type="radio" id="sceneNone"
+                           name="sceneColorTypeRadio" value="None">
+                    <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
+                    </div>
+                </div>
+                <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">None</label>
+            </li>
+            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1" style="height:30px; margin:0; font-size:xx-small">
                 <div class="mdc-radio">
                     <input class="mdc-radio__native-control" type="radio" id="sceneColorRadio"
                            name="sceneColorTypeRadio" value="color">
@@ -89,66 +107,47 @@
                     </div>
 
                 </div>
-                <label id="sceneColorRadio-label" for="sceneColorRadio" style="margin-bottom: 0;">Color</label>
-
-                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" style="margin-left: 30px;padding: 0px;font-size: 10px;width: 50px;" >
-
-                <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px">
-
+                <label for="sceneColorRadio" style="vertical-align: middle; cursor: pointer; font-size:xx-small">Background Color</label>
+                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
+                <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
 
             </li>
+            <li class="mdc-form-field" id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2" style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio">
+                    <input class="mdc-radio__native-control" type="radio" id="sceneSky"
+                           name="sceneColorTypeRadio" value="sky">
+                    <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
+                    </div>
+                </div>
+                <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">Presets</label>
+                <select name="presetsBcg" id="presetsBcg" disabled style="margin-right: 100px; font-size: 10px;">
+                    <option value="default">Default</option>
+                    <option value="egypt">Egypt</option>
+                    <option value="forest">Forest</option>
+                    <option value="goldmine">Goldmine</option>
+                </select>
+            </li>
+            <li class="mdc-form-field" id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3" style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio">
+                    <input class="mdc-radio__native-control" type="radio" id="sceneCustomImage"
+                           name="sceneColorTypeRadio" value="Custom_img">
+                    <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
+                    </div>
+                </div>
+                <label id="sceneCustomImageRadio-label" for="sceneCustomImageRadio" style="margin-bottom: 0;">Custom Image</label>
+                <input id="img_upload_bcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".png" disabled onchange="imgUpload()" style="font-size: 10px;" />
 
-            <!--            <li class="mdc-form-field" id="sceneEnvMapRadioListItem" onclick="" style="height:30px; margin:0px; font-size:xx-small">-->
-            <!--                <div class="mdc-radio" >-->
-            <!--                    <input class="mdc-radio__native-control" type="radio" id="sceneEnvMapRadio"-->
-            <!--                           name="sceneEnvMapTypeRadio" value="envmap" checked>-->
-            <!--                    <div class="mdc-radio__background">-->
-            <!--                        <div class="mdc-radio__outer-circle"></div>-->
-            <!--                        <div class="mdc-radio__inner-circle"></div>-->
-            <!--                    </div>-->
-            <!--                </div>-->
-            <!--                <label id="sceneEnvMapRadio-label" for="sceneEnvMapRadio" style="margin-bottom: 0;">Environmental map</label>-->
-            <!--            </li>-->
+            </li>
         </ul>
 
-        <label for="sceneClearColor" class="mdc-textfield__label mdc-textfield__label--float-above"
-               style="background: none;font-size:10px; width: 70%;padding:5px">Scene Background</label>
+        <hr>
 
+        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Fog</span>
 
-    </div>
-
-
-
-    <!-- Enable Environmental texture  -->
-    <div id="sceneEnvironmentTextureDiv"
-         class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
-         style="width:100%; margin:0; padding:0; height:30px; background: rgba(255,255,255,0.5)">
-
-        <input type="checkbox"
-               id="sceneEnvironmentTexture"
-               style="width:15px;display:flex !important;float:right;position:absolute;right:5px;top:10px;padding:0;"
-               name="sceneEnvironmentTexture" form="3dAssetForm"
-               onchange="enableSceneEnvironmentTexture(this.checked)">
-
-        <label for="sceneEnvironmentTexture"
-               class="mdc-textfield__label mdc-textfield__label--float-above"
-               style="background: none; font-size:10px; width: 70%;padding:5px;font-weight:bold">Enable environment texture</label>
-    </div>
-
-    <!-- Enable Environmental texture  -->
-    <div id="sceneFogDiv"
-         style="border: 1px black solid; width:100%; margin:0; padding:0; height:140px; background: rgba(255,255,255,0.5); overflow-y: auto;">
-
-        <div style="background: none; margin:5px; font-size:10px; width: 70%; font-weight: bold; color:gray ">Fog</div>
-
-
-        <!--        <input type="checkbox"-->
-        <!--               id="sceneEnvironmentTexture"-->
-        <!--               style="width:15px;display:flex !important;float:right;position:absolute;right:5px;top:10px;padding:0;"-->
-        <!--               name="sceneEnvironmentTexture" form="3dAssetForm"-->
-        <!--               onchange="enableSceneEnvironmentTexture(this.checked)">-->
-
-        <!--        loadProjectTypeDescription();-->
         <ul class="RadioButtonList" id="FogTypeRadioButtonList" onclick="loadFogType()" style="margin-bottom:0;display:block">
 
             <li class="mdc-form-field">
@@ -195,26 +194,26 @@
         <input type="text" id="FogType" name="FogType" class="mdc-textfield__input"
                form="3dAssetForm" value="none" style="visibility:hidden;display:none"/>
 
-        <div id="fogvalues" style="display:block">
 
-            <span style="display:block; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px">Color:
-                
+        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Fog values</span>
+
+        <span style="display:block; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px">Color:
+
                 <input id="jscolorpickFog" class="mdc-textfield__input jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px" >
 
                 <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
             </span>
 
-            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Near limit (linear only):
+        <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Near limit (linear only):
                 <input type="text" id="FogNear" class="mdc-textfield__input" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="0" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
             </span>
 
-            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Far limit (linear only):
+        <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Far limit (linear only):
                 <input type="text" id="FogFar" class="mdc-textfield__input" name="FogFar" form="3dAssetForm" value="230"  onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
             </span>
 
-            <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Density (exponential only):
+        <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Density (exponential only):
                 <input type="text" id="FogDensity" class="mdc-textfield__input" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
             </span>
-        </div>
     </div>
 </div>

@@ -48,6 +48,8 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_style('vrodos_datgui');
     wp_enqueue_style('vrodos_3D_editor');
     wp_enqueue_style('vrodos_3D_editor_browser');
+
+    wp_enqueue_script('vrodos_html2canvas');
 }
 add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
 
@@ -85,7 +87,6 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 
     // For autosave after each action
     var mapActions = {}; // You could also use an array
-
 
     var showPawnPositions = "false";
 </script>
@@ -213,6 +214,12 @@ wp_localize_script( 'ajax-script_savescene', 'my_ajax_object_savescene',
     array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
 );
 
+// Upload Image
+wp_enqueue_script( 'ajax-script_uploadimage', $pluginpath.'/js_libs/ajaxes/uploadimage.js', array('jquery') );
+wp_localize_script( 'ajax-script_uploadimage', 'my_ajax_object_uploadimage',
+    array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $current_scene_id )
+);
+
 // Delete Asset
 wp_enqueue_script( 'ajax-script_deleteasset', $pluginpath.
     '/js_libs/ajaxes/delete_asset.js', array('jquery') );
@@ -317,8 +324,7 @@ wp_head();
 
 ?>
 
-<?php if ( !is_user_logged_in() ) {
-    ?>
+<?php if ( !is_user_logged_in() ) { ?>
 
     <!-- if user not logged in, then prompt to log in -->
     <div class="DisplayBlock CenterContents">
@@ -391,7 +397,6 @@ wp_head();
 
 
 
-
                 <!-- Lights -->
                 <div class="environmentBar hidable">
 
@@ -404,7 +409,7 @@ wp_head();
                     <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
                     </div>
 
-                    <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true" title="When adding a Sun, an automatic horizon is added to the scene, negating any Background color you have selected.">
                         <header draggable="false" class="notdraggable">Sun</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/sun.png"/>
@@ -451,20 +456,18 @@ wp_head();
                         <!--  Dimensionality 2D 3D toggle -->
                         <a id="dim-change-btn" data-mdc-auto-init="MDCRipple"
                            title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-                           class="EditorDimensionToggleBtn mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"
-                           style="width:45px;height:35px;min-width:20px">
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
                             2D
                         </a>
                     </div>
 
                     <!-- The button to start walking in the 3d environment -->
                     <div class="environmentButton">
-                        <div id="firstPersonBlocker" class="VrWalkInButtonStyle" style="display:inline-block">
+                        <div id="firstPersonBlocker">
                             <a type="button" id="firstPersonBlockerBtn" data-toggle='on'
-                               class="mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
+                               class="EditorToolbarBtnStyle mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
                                title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys"
-                               data-mdc-auto-init="MDCRipple"
-                               style="width:45px; height:35px; min-width:20px; padding:5px">
+                               data-mdc-auto-init="MDCRipple">
                                 <i class="material-icons">person</i>
                             </a>
                         </div>
@@ -474,8 +477,7 @@ wp_head();
                     <div class="environmentButton">
                         <a type="button" id="toggle-tour-around-btn" data-toggle='off' data-mdc-auto-init="MDCRipple"
                            title="Auto-rotate 3D tour"
-                           class="EditorTourToggleBtn mdc-button mdc-button--raised mdc-button--dense mdc-button--primary"
-                           style="width:45px;height:35px;min-width:20px">
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
                             <i class="material-icons">rotate_90_degrees_ccw</i>
                         </a>
                     </div>
@@ -483,14 +485,22 @@ wp_head();
 
                     <!-- Cogwheel options -->
                     <div class="environmentButton">
-                        <div id="row_cogwheel" class="row-right-panel" style="display:inline-block">
+                        <div id="row_cogwheel" class="row-right-panel">
                             <a type="button" id="optionsPopupBtn"
-                               class="VrEditorOptionsBtnStyle mdc-button mdc-button--raised mdc-button--primary mdc-button--dense"
-                               style="width:45px;min-width:20px;height:35px;padding:2px"
+                               class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--primary mdc-button--dense"
                                title="Edit scene options" data-mdc-auto-init="MDCRipple">
                                 <i class="material-icons">settings</i>
                             </a>
                         </div>
+                    </div>
+
+                    <div class="environmentButton">
+                        <input hidden type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
+                        <a id="env_texture-change-btn" data-mdc-auto-init="MDCRipple"
+                           title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary mdc-theme--secondary-bg">
+                            <i class="material-icons">texture</i>
+                        </a>
                     </div>
 
                 </div>
@@ -587,7 +597,6 @@ wp_head();
     <script type="text/javascript">
 
         let mdc = window.mdc;
-        let MDCSelect = mdc.select.MDCSelect;
 
         mdc.autoInit();
 
@@ -600,15 +609,10 @@ wp_head();
         compileDialog.focusTrap_.deactivate();
 
 
-        // Less top margin if not Admin
-        // if (!isUserAdmin)
-        //     document.getElementById("vr_editor_main_div").style.top = "28px";
-
         // load asset browser with data
         jQuery(document).ready(function(){
 
             vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
-
 
             // make asset browser draggable: not working without get_footer
             // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
@@ -721,6 +725,11 @@ wp_head();
             document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
         };
 
+        let toggleEnvTexture = (el) => {
+            jQuery("#env_texture-change-btn").toggleClass('mdc-theme--secondary-bg');
+            el.checked = !el.checked;
+            envir.scene.environment = !el.checked ? null : envir.maintexture;
+        }
 
         // When all are finished loading place them in the correct position
         manager.onLoad = function () {
@@ -886,7 +895,7 @@ wp_head();
         }
 
         // Only in Undo redo as javascript not php!
-        function parseJSON_LoadScene(scene_json){
+        function parseJSON_LoadScene(scene_json) {
 
             resources3D = parseJSON_javascript(scene_json, uploadDir);
 
@@ -909,6 +918,15 @@ wp_head();
         }
 
         document.getElementsByTagName("html")[0].style.overflow="hidden";
+
+        // Init UI values
+
+
+        if (resources3D["enableGeneralChat"]) {
+            document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
+        }
+
+
     </script>
 <?php }
 

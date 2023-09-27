@@ -8,7 +8,6 @@ A plugin for WordPress to transform your website into a multipurpose 3D media ma
 - Digital Signage management tool capable for visualizing 3D media
 - VR applications authoring tool with a 3D scene editor
 
-
 Features
 
 - Formats support:  GLB.
@@ -22,27 +21,6 @@ Interface Pages
 - Asset Editor
 
 
-
-
-[comment]: <> (##Basic Interfaces)
-
-[comment]: <> (Asset Uploader and Previewer)
-
-[comment]: <> (![Example Asset]&#40;AssetExample.jpg&#41;)
-
-[comment]: <> (Scene synthesis)
-
-[comment]: <> (![Example Scene]&#40;SceneExample.jpg&#41;)
-
-
-[comment]: <> (### What is this repository for? ###)
-
-
-[comment]: <> (Other features)
-
-[comment]: <> (- Lights &#40;Spot, Directional, Sphere&#41;)
-
-
 ### Do you have a demo?
 
 * https://vrodos.iti.gr
@@ -52,13 +30,12 @@ Interface Pages
 
 ### Installation instructions ###
 
-**Prerequisites:** 
-* Apache 2, 
-* MySQL 5, 
-* WordPress 6, 
-* Php 7, 
-* Node.js 16, 
-* Express 4 for Node.js 
+**Prerequisites:**
+* Apache 2,
+* MySQL 5,
+* WordPress 6,
+* Php 7,
+* Node.js 16
 
 
 **Instructions for installation in WordPress**
@@ -71,69 +48,95 @@ Interface Pages
 
 - Download mdc and other node modules
 
-    -- VRodos > npm install
+  -- In root folder `VRodos` run `npm install`.
 
 - Set permalinks to Day / Name (2nd option)
-- Add to menu 
--- Assets List Page
--- Project Manager page
+- Add to menu
+  -- Assets List Page
+  -- Project Manager page
 
-
-[comment]: <> (### Peer calls ###)
-
-[comment]: <> (A visitor to an artifact can speak with an expert through node.js peer-calls. It is installed in an iframe in artifact page.)
-
-[comment]: <> (It starts in server in the peer-calls folder with)
-
-[comment]: <> (* sudo npm run build)
-
-[comment]: <> (* sudo npm start  )
-
-
-[comment]: <> (### Who do I talk to? ###)
-
-[comment]: <> (* I am coordinating and contributing to this repository: Dimitrios Ververidis, ververid [at] iti.gr, jimver04 [at] gmail.com)
-
-### Troubleshooting
-
-* Wordpress API is not working :  Settings -> Permalinks -> Post name (as Structure)  
-
-
-* CORS
-  You need wordpress at port 80 (apache2 standard) to allow to give content to aframe at node.js server at port 5832
-
-Add this to .htaccess
-
-<IfModule mod_headers.c>
-	Header set Access-Control-Allow-Origin "*"
-</IfModule>
-
-* Big 3D models
- 
-  Add these to .htaccess to allow big files to be uploaded to wordpress 
-
-  - php_value upload_max_filesize 512M
-  - php_value post_max_size 512M
-  - php_value memory_limit 1024M
-  - php_value max_execution_time 1800
-  - php_value max_input_time 1800
-  - php_value max_input_vars 4000
-
+  
 
 ### Servers install and run
 
 Two types of servers are needed:
 
-  - Apache server, e.g. locally using Xampp (Windows and Linux are supported).
-    - It can run on http://127.0.0.1:80
-    - Xampp server is used for the content of the scenes.
-    - Xampp contains also mysql server which is needed for WordPress to work (and somewhere to save the data).
-  - Node.js server for Networked-Aframe. To start Node.js server 
-    1) Go to networked-aframe/server and type: 
-        > npm install --force
-        
+- Apache server, e.g. on windows locally using Xampp / Wamp etc.
+    - Server is used for the content of the scenes.
+    - Server contains also mysql server which is needed for WordPress to work (and somewhere to save the data).
+- Node.js server for Networked-Aframe. To start Node.js server
+    1) Go to networked-aframe/server and type:
+       > npm install --force
+
         - Force is needed because some packages are obsolete
-    2) Run server:
-        > start node .\easyrtc-server.js
+
+    2) A WebRTC TURN server is used for the collaborative functionality of VROdos. Create a free account for OpenRelay, and save server keys in a json file. 
+        - Go to: https://dashboard.metered.ca/signup?tool=turnserver
+        - Create a free account.
+        - On your dashboard create an App.
+        - Add Credential, then on the created entry click on Instructions.
+        - Create a `keys.json` file inside folder `networked-aframe/server` and add all objects from array into the json file like this:
+
+       ```
+        {
+            "iceServers": [
+            {
+                "urls": "stun:stun.relay.metered.ca:80"
+            },
+            {
+                "urls": "turn:a.relay.metered.ca:80",
+                "username": "*********",
+                "credential": "******"
+            },
+            {
+                "urls": "turn:a.relay.metered.ca:80?transport=tcp",
+                "username": "******",
+                "credential": "******"
+            },
+            ...
+            ]
+        }
+        ```
+
+    3) Run server using a port number you want, or leave it blank for default port (5832):
+       > node .\easyrtc-server.js port_number
         
-        - Go to http://127.0.0.1:5832/index_60.html - where 60 should be replaced with the id of your scene - to see if your server is delivering anything. Xampp server should be up and running as a prerequisite because the content is fetched from http://127.0.0.1:80 as Node.js handles only streaming data for the multi-playing.
+       Examples:
+       
+       `node .\easyrtc-server.js`
+       
+        Runs in default port 5832.
+    
+       `node .\easyrtc-server.js 5840`
+       
+        Runs in port passed as argument 5840
+    
+    Now after building a scene in the 3D editor, the collaborative functionality between users is enabled. 
+        
+
+### Troubleshooting
+
+* Wordpress API is not working :  Settings -> Permalinks -> Post name (as Structure)
+
+
+* CORS
+  You need wordpress at port 80 (apache2 standard) to allow to give content to aframe at node.js server at port 5832, or whichever port you have used when running easyRTC service.
+
+####Add this to .htaccess
+
+`<IfModule mod_headers.c>`
+
+	Header set Access-Control-Allow-Origin "*"
+
+`</IfModule>`
+
+#### Big 3D models
+
+  Add these to .htaccess to allow big files to be uploaded to wordpress
+
+    - php_value upload_max_filesize 512M
+    - php_value post_max_size 512M
+    - php_value memory_limit 1024M
+    - php_value max_execution_time 1800
+    - php_value max_input_time 1800
+    - php_value max_input_vars 4000

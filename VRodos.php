@@ -200,7 +200,6 @@ function vrodos_register_styles() {
 
     wp_register_style( 'vrodos_backend', plugin_dir_url( __FILE__ ) . 'css/vrodos_backend.css' );
     wp_register_style( 'vrodos_3D_editor', plugin_dir_url( __FILE__ ) . 'css/vrodos_3D_editor.css' );
-    wp_register_style( 'vrodos_3D_viewer', plugin_dir_url( __FILE__ ) . 'css/vrodos_3D_viewer.css' );
     wp_register_style( 'vrodos_datgui', plugin_dir_url( __FILE__ ) . 'css/dat-gui.css' );
 
     wp_register_style( 'vrodos_dashboard_table', plugin_dir_url( __FILE__ ) . 'css/vrodos_dashboard_table_style.css' );
@@ -963,6 +962,8 @@ add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_b
 // Add the assepile php
 
 add_action( 'wp_ajax_vrodos_compile_action', 'vrodos_compile_action_callback' );
+
+add_action('wp_ajax_image_upload_action', 'image_upload_action_callback');
 
 
 

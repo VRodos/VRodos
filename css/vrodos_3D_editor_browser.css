@@ -13,18 +13,9 @@
 	top: 0;
 	background-color: rgba(0, 0, 0, 0.12);
 	box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-	/*padding: 0 6px 0 6px;*/
+	overflow-y: scroll;
+	overflow-x: hidden;
 }
-
-
-/*  For Mobiles
-@media all and (max-width: 800px) {
-	.filemanager {
-		margin: 5% auto 0;
-		padding: 1px;
-	}
-}
-*/
 
 
 
@@ -422,11 +413,9 @@ button.tablinks {
 }
 
 .addNewAsset3DEditor{
-	height: 70px;
-	position: absolute;
+	position: sticky;
+	float: right;
 	bottom: 0;
-	right: 0;
-	margin-right: -24px;
 	display: block;
 	background: transparent;
 	z-index: 500;

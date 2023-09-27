@@ -419,7 +419,6 @@ function loadButtonActions() {
     });
 
 
-
     // Main canvas handlers
 
     let canvas3D = jQuery("#vr_editor_main_div canvas").get(0);
