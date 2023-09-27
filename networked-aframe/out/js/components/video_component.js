@@ -76,20 +76,13 @@ AFRAME.registerComponent('video-controls', {
                 THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
             );
 
-
-
         }
-
-
-
 
 
         backgroundEl.addEventListener('loaded', function () {
 
             restoreVidPos(videoBorder, videoDisplay, videoPanel);
         });
-
-
 
 
 
@@ -109,7 +102,7 @@ AFRAME.registerComponent('video-controls', {
 
                 obj.setAttribute("visible", "true");
                 obj.setAttribute("scale", "1 1 1");
-            
+
             }
             else {
                 obj.setAttribute("visible", "false");
@@ -251,7 +244,7 @@ AFRAME.registerComponent('video-controls', {
                 if (entCollection[visCollection[i]].getAttribute("original-scale"))
                     entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
                 else
-                    entCollection[visCollection[i]].setAttribute("scale", "1 1 1"); 
+                    entCollection[visCollection[i]].setAttribute("scale", "1 1 1");
             }
 
             if (playerEl.getAttribute("wasd-controls")){

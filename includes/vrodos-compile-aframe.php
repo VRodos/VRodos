@@ -388,11 +388,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         }
 
         if ($projectType == 'vrexpo_games') {
-            $a_entity_expo = $dom->createElement( "a-entity" );
-            $a_entity_expo->setAttribute( "id", "camera-rig" );
-            $a_entity_expo->setAttribute( "position", "0 0.6 0" );
-            $a_entity_expo->setAttribute( "custom-movement", "" );
-            $a_entity_expo->setAttribute( "show-position", "" );
+            //$a_entity_expo = $dom->createElement( "a-entity" );
+            $ascenePlayer->setAttribute( "id", "camera-rig" );
+            $ascenePlayer->setAttribute( "position", "0 0.6 0" );
+            $ascenePlayer->setAttribute( "custom-movement", "" );
+            $ascenePlayer->setAttribute( "show-position", "" );
+
+            //$ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
 
             $a_camera = $dom->createElement( "a-camera" );
             $a_camera->setAttribute( "camera", "" );
@@ -415,10 +417,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_entity_oc_left->setAttribute( "oculus-thumbstick-controls", "moveEnabled: true" );
 
 
-            $a_entity_expo->appendChild( $a_camera );
-            $a_entity_expo->appendChild( $a_entity_oc_right );
-            $a_entity_expo->appendChild( $a_entity_oc_left );
-            $ascenePlayer->appendChild( $a_entity_expo );
+            $ascenePlayer->appendChild( $a_camera );
+            $ascenePlayer->appendChild( $a_entity_oc_right );
+            $ascenePlayer->appendChild( $a_entity_oc_left );
+            //$ascenePlayer->appendChild( $a_entity_expo );
 
 
         }else{
