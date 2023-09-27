@@ -190,8 +190,16 @@ AFRAME.registerComponent('info-panel', {
         if (!browsingModeVR) {
 
             document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
-            document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
-            document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text").value;
+
+            if (this.ImageAsset.getAttribute("src")) {
+                document.getElementById("poi-img-dialog-image").style.display = "inline";
+                document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
+            } else  {
+                document.getElementById("poi-img-dialog-image").style.display = "none";
+            }
+
+
+            document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
             (new mdc.dialog.MDCDialog(document.querySelector('#poi-img-dialog'))).show();
 
         } else {
