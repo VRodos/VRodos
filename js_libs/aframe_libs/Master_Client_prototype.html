@@ -45,6 +45,7 @@
         // Global variable to switch between interfaces for interaction modes.
         let browsingModeVR = false;
 
+
         /* PLAYER AVATARS (COLOR AND NAME) */
         // Temporary workaround for template declaration; see issue 167
         NAF.schemas.getComponentsOriginal = NAF.schemas.getComponents;
@@ -59,15 +60,7 @@
                     ]
                 });
             }
-            if (!NAF.schemas.hasTemplate('#avatar-face-template-expo')) {
-                NAF.schemas.add({
-                    template: '#avatar-face-template-expo',
-                    components: [
-                        'position',
-                        'rotation'
-                    ]
-                });
-            }
+
             const components = NAF.schemas.getComponentsOriginal(template);
             return components;
         };
@@ -264,7 +257,7 @@
         AFRAME.registerComponent('left-thumbstick', {
             init: function () {
                 var hand = this.el;
-                var cameraRig = document.querySelector('#player');
+                var cameraRig = document.querySelector('#cameraA');
 
                 hand.addEventListener('thumbstickmoved', function (event) {
                     var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
@@ -508,14 +501,7 @@
     <a-assets>
 
         <template id="avatar-face-template-expo" >
-            <a-entity class="face" position="0 0.05 0" >
-                <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04" >
-                    <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2" ></a-sphere>
-                </a-sphere>
-                <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
-                    <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
-                </a-sphere>
-            </a-entity>
+
         </template>
 
         <!-- Avatar Template -->
@@ -523,7 +509,14 @@
             <a-entity class="avatar" player-info>
 
                 <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
-                <a-entity id="avatar-face" networked="template:#avatar-face-template-expo;attachTemplateToLocal:false"></a-entity>
+                <a-entity class="face" position="0 0.05 0" >
+                    <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04" >
+                        <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2" ></a-sphere>
+                    </a-sphere>
+                    <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
+                        <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                    </a-sphere>
+                </a-entity>
 
                 <!-- here we add a text component for a nametag; the value will be updated by the player-info component -->
                 <a-text
@@ -578,6 +571,7 @@
     <a-entity id="player"></a-entity>
 
 
+
 </a-scene>
 
 
@@ -597,19 +591,19 @@
     let chatInput = document.getElementById('chatInput');
     let chatLog = document.getElementById('chat-messages');
 
+    NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
+
+        let dateString = getCurrentDateString();
+        chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
+    } )
+
     sendMsgChatBtn.addEventListener("click", evt => {
         let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
 
-        let date = new Date;
-        let dateString = '[' + String(date.getHours()).padStart(2, '0') + ':' +
-            String(date.getMinutes()).padStart(2, '0') + ':' +
-            String(date.getSeconds()).padStart(2, '0') + ']';
-
+        let dateString = getCurrentDateString();
         chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
         NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
-        NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
-            chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
-        } )
+
     })
 
     let chatExpanded = false;
@@ -1085,6 +1079,13 @@
 
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
     };
+
+    let getCurrentDateString = () => {
+        let date = new Date;
+        return '[' + String(date.getHours()).padStart(2, '0') + ':' +
+            String(date.getMinutes()).padStart(2, '0') + ':' +
+            String(date.getSeconds()).padStart(2, '0') + ']';
+    }
 
 </script>
 
