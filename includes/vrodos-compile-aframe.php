@@ -262,31 +262,17 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 }
 
                 $dom->saveHTML();
-            }else{
+            }else {
 
                 $media_panel->setAttribute( "style", 'visibility: hidden;' );
                 $recording_controls->setAttribute('style', 'visibility: hidden;');
-
             }
 
-
-
-//			$f = fopen("output_compile_director.txt","w");
-//			fwrite($f, "----------------".chr(13));
-////
-////			foreach ($dom->getElementsByTagName('a-scene') as $node) {
-////
-////				$string_ascene = $dom->saveHtml($node);
-////				$string_ascene = str_replace('background="color: #aaaaaa"','background="color: #00ff00"', $string_ascene);
-////				$ascene = $dom->loadHTML($string_ascene);
-////
-////			}
-////
-////     			fwrite($f, print_r($scene_json->metadata->ClearColor, true));
-//////			fwrite($f, "ASCENE".chr(13));
-//////			fwrite($f, print_r($ascene, true));
-//			fwrite($f, "----------------");
-//			fclose($f);
+            // Toggle general chat
+            if (filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN)  === true) {
+                $chat_wrapper = $dom->getElementById('chat-wrapper-el');
+                $chat_wrapper->setAttribute( "style", 'visibility: visible;' );
+            }
 
 
             // ============ Scene Iteration kernel ==============
@@ -373,15 +359,25 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         //print_r($objects->avatarCamera->isCamera);
 
-        $bcg_choice = $objects->avatarCamera->bcg_selection;
-        $preset_choice = $objects->avatarCamera->preset_selection;
+
+
+        $bcg_choice = $scene_json->metadata->backgroundStyleOption;
+        $preset_choice = $scene_json->metadata->backgroundPresetOption;
+        $image_path = $scene_json->metadata->backgroundImagePath;
+        //wp_upload_dir( '../uploads/Models/8664/8665_1695106416_scene_bcg.png', dirname(__FILE__))
+        //print_r(wp_upload_dir());
         if ($bcg_choice == "3"){
 
-            $a_asset_sky = $dom->createElement( "img" );
-            $a_asset_sky->setAttribute("id", "custom_sky");
-            $a_asset_sky->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg");
-            $a_asset->appendChild($a_asset_sky);
-            $ascene->appendChild($a_asset);
+            if ($image_path)
+            {
+                $a_asset_sky = $dom->createElement( "img" );
+                $a_asset_sky->setAttribute("id", "custom_sky");
+                $a_asset_sky->setAttribute("src", $image_path );
+                $a_asset->appendChild($a_asset_sky);
+                $ascene->appendChild($a_asset);
+            }else{
+                $bcg_choice = "0";
+            }
         }
 
 
@@ -392,17 +388,21 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         }
 
         if ($projectType == 'vrexpo_games') {
-            $a_entity_expo = $dom->createElement( "a-entity" );
-            $a_entity_expo->setAttribute( "id", "camera-rig" );
-            $a_entity_expo->setAttribute( "position", "0 0.6 0" );
-            $a_entity_expo->setAttribute( "custom-movement", "" );
-            $a_entity_expo->setAttribute( "show-position", "" );
-            //$a_entity_expo->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false;" );
+            //$a_entity_expo = $dom->createElement( "a-entity" );
+            $ascenePlayer->setAttribute( "id", "camera-rig" );
+            $ascenePlayer->setAttribute( "position", "0 0.6 0" );
+            $ascenePlayer->setAttribute( "custom-movement", "" );
+            $ascenePlayer->setAttribute( "show-position", "" );
+
+            //$ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
 
             $a_camera = $dom->createElement( "a-camera" );
-            $a_camera->setAttribute( "camera", "near: 0.1; far: 7000.0;" );
+            $a_camera->setAttribute( "camera", "" );
             $a_camera->setAttribute( "id", "cameraA" );
-           
+            $a_camera->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
+            $a_camera->setAttribute( "look-controls", "" );
+            $a_camera->setAttribute( "wasd-controls", "acceleration:20" );            
+
             $a_entity_oc_right = $dom->createElement( "a-entity" );
             $a_entity_oc_right->setAttribute( "id", "oculusRight" );
             $a_entity_oc_right->setAttribute( "oculus-touch-controls", "hand: right" );
@@ -417,35 +417,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_entity_oc_left->setAttribute( "oculus-thumbstick-controls", "moveEnabled: true" );
 
 
-
-            // $ascenePlayer->setAttribute( "camera", "" );
-            $ascenePlayer->setAttribute( "look-controls", "pointerLockEnabled: false" );
-            $ascenePlayer->setAttribute( "wasd-controls", "acceleration:20" );
-            $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:true;" );
-
-            // $a_asset_avt = $dom->createElement( "a-assets" );
-            // $a_asset_avt->setAttribute("id", "avatar_glb");
-            // $a_asset_avt->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/goomba.glb");
-
-            // $ascene->appendChild( $a_asset_avt );
-
-            // $a_assets = $dom->createElement( "a-assets" );
-            // $a_asset_sph = $dom->createElement( "img" );
-            // $a_asset_sph->setAttribute("id", "sphere");
-            // $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg");
-
-            // $a_assets->appendChild( $a_asset_sph );
-            // $ascene->appendChild( $a_assets );
-
-            // $a_sky_sph = $dom->createElement( "a-sky" );
-            // $a_sky_sph->setAttribute("src",  "#sphere");
-
-            // $ascene->appendChild( $a_sky_sph );
-
-            $a_entity_expo->appendChild( $a_camera );
-            $a_entity_expo->appendChild( $a_entity_oc_right );
-            $a_entity_expo->appendChild( $a_entity_oc_left );
-            $ascenePlayer->appendChild( $a_entity_expo );
+            $ascenePlayer->appendChild( $a_camera );
+            $ascenePlayer->appendChild( $a_entity_oc_right );
+            $ascenePlayer->appendChild( $a_entity_oc_left );
+            //$ascenePlayer->appendChild( $a_entity_expo );
 
 
         }else{
@@ -613,33 +588,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     //$a_entity->setAttribute( "class", "collidable" );
 
                     $ascene->appendChild( $a_entity );
-                    break;
-
-                case 'chat':
-
-                    $sc_x = $contentObject->scale[0];
-                    $sc_y = $contentObject->scale[1];
-                    $sc_z = $contentObject->scale[2];
-
-                    $a_entity = $dom->createElement( "a-entity" );
-                    $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
-                    $a_entity->appendChild( $dom->createTextNode( '' ) );
-
-                    $material = "";
-                    $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                    $a_entity->setAttribute( "class", "override-materials hideable" );
-                    $a_entity->setAttribute( "id", $uuid );
-                    $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
-                    $a_entity->setAttribute( "material", $material );
-                    $a_entity->setAttribute( "clear-frustum-culling", "" );
-
-                    $ascene->appendChild( $a_entity );
-
-                    // Enable chat html component
-                    $chat_wrapper = $dom->getElementById('chat-wrapper-el');
-
-
-
                     break;
 
 
@@ -907,13 +855,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $a_image_asset_main->setAttribute("src",$contentObject->poi_img_path);
 
                     $a_image_asset_esc->setAttribute("id", "esc_img_$uuid");
-                    $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
+                    //$a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x.png', dirname(__FILE__)));
+                    $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x_ecf0f1.png', dirname(__FILE__)));
+                    
 
                     $a_image_asset_left->setAttribute("id", "left_img_$uuid");
-                    $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left.png', dirname(__FILE__)));
+                    //$a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left.png', dirname(__FILE__)));
+                    $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left_ecf0f1.png', dirname(__FILE__)));
+
 
                     $a_image_asset_right->setAttribute("id", "right_img_$uuid");
-                    $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right.png', dirname(__FILE__)));
+                    //$a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right.png', dirname(__FILE__)));
+                    $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right_ecf0f1.png', dirname(__FILE__)));
 
 
                     //$a_asset->appendChild(a_image_asset);
@@ -1002,7 +955,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_title_img_entity->setAttribute("id", "title_$uuid");
 
                     $tit_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
-                    $a_title_img_entity->setAttribute("text", "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: white; value: $contentObject->poi_img_title");
+                    $a_title_img_entity->setAttribute("text", "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: white;");
+                    $a_title_img_entity->setAttribute("title_to_add", "$contentObject->poi_img_title");
                     $a_title_img_entity->setAttribute( "class", "hideable" );
                     $a_title_img_entity->setAttribute("original-scale", "1 1 1");
 
@@ -1011,7 +965,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_exit_img_entity->setAttribute("mixin", "poiEsc");
                     $a_exit_img_entity->setAttribute("material", "src: #esc_img_$uuid; depthTest: false; transparent: true");
                     $a_exit_img_entity->setAttribute("class", "raycastable hideable non-clickable" );
-                    $a_exit_img_entity->setAttribute("original-scale", "1 1 1");
+                    $a_exit_img_entity->setAttribute("scale", "0.2 0.2 0.2");
+                    $a_exit_img_entity->setAttribute("original-scale", "0.2 0.2 0.2");
 
 
                     $a_panel_entity->appendChild($a_exit_img_entity);
@@ -1038,8 +993,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                             $next_desc_entity->setAttribute("mixin", "poiImgNext");
                             $next_desc_entity->setAttribute("material", "src: #right_img_$uuid; depthTest: false; transparent: true");
                             $next_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
-                            $next_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
-                            $next_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
+                            $next_desc_entity->setAttribute("scale", "0.1 0.1 0.1");
+                            $next_desc_entity->setAttribute("original-scale", "0.1 0.1 0.1");
 
                             $a_panel_entity->appendChild( $next_desc_entity);
 
@@ -1048,28 +1003,29 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                             $prev_desc_entity->setAttribute("mixin", "poiImgPrev");
                             $prev_desc_entity->setAttribute("material", "src: #left_img_$uuid; depthTest: false; transparent: true");
                             $prev_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
-                            $prev_desc_entity->setAttribute("scale", "0.7 0.7 0.7");
-                            $prev_desc_entity->setAttribute("original-scale", "0.7 0.7 0.7");
+                            $prev_desc_entity->setAttribute("scale", "0.1 0.1 0.1");
+                            $prev_desc_entity->setAttribute("original-scale", "0.1 0.1 0.1");
 
-                        $a_panel_entity->appendChild( $prev_desc_entity);
+                            $a_panel_entity->appendChild( $prev_desc_entity);
 
-                        $a_count_page_entity = $dom->createElement("a-entity");
-                        $a_count_page_entity->setAttribute("id", "page_$uuid");
-                        $a_count_page_entity->setAttribute("position", "0.35 -0.8 -0.1");
+                            $a_count_page_entity = $dom->createElement("a-entity");
+                            $a_count_page_entity->setAttribute("id", "page_$uuid");
+                            $a_count_page_entity->setAttribute("position", "0.35 -0.8 -0.1");
 
 
-                        $a_count_page_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 0.8; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value:");
-                        $a_panel_entity->appendChild($a_count_page_entity);
-                    }
-                    
+                            $a_count_page_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 0.8; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value:");
+                            $a_panel_entity->appendChild($a_count_page_entity);
+                        }
 
-                    
-                    $a_desc_img_entity = $dom->createElement("a-entity");
-                    $a_desc_img_entity->setAttribute("id", "desc_$uuid");
-                    $a_desc_img_entity->setAttribute("position", "-0.68 -0.4 0");
-                      
 
-                        $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value: $contentObject->poi_img_content");
+
+                        $a_desc_img_entity = $dom->createElement("a-entity");
+                        $a_desc_img_entity->setAttribute("id", "desc_$uuid");
+                        $a_desc_img_entity->setAttribute("position", "-0.68 -0.4 0");
+
+
+                        $a_desc_img_entity->setAttribute("text", "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: white; value:");
+                        $a_desc_img_entity->setAttribute("text_to_add", "$contentObject->poi_img_content");
                         $a_panel_entity->appendChild($a_desc_img_entity);
 
 

@@ -86,7 +86,8 @@
         <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Background style</span>
 
         <ul class="RadioButtonList" style="padding: 0;">
-            <li class="mdc-form-field" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0"  style="height:30px; margin:0; font-size:xx-small">
+            <label for="sceneNone">
+            <li class="mdc-form-field" for="sceneNone" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0"  style="height:30px; margin:0; font-size:xx-small">
                 <div class="mdc-radio">
                     <input class="mdc-radio__native-control" type="radio" id="sceneNone"
                            name="sceneColorTypeRadio" value="None">
@@ -95,10 +96,12 @@
                         <div class="mdc-radio__inner-circle"></div>
                     </div>
                 </div>
-                <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">None</label>
+                <label id="sceneSkyRadio-label" for="sceneNone" style="margin-bottom: 0;">None</label>
             </li>
-            <li class="mdc-form-field" id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1" style="height:30px; margin:0; font-size:xx-small">
-                <div class="mdc-radio">
+            </label>
+            <label for="sceneColorRadio">
+            <li class="mdc-form-field"  id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1" style="height:30px; margin:0; font-size:xx-small">
+                <div class="mdc-radio" >
                     <input class="mdc-radio__native-control" type="radio" id="sceneColorRadio"
                            name="sceneColorTypeRadio" value="color">
                     <div class="mdc-radio__background">
@@ -112,7 +115,9 @@
                 <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
 
             </li>
-            <li class="mdc-form-field" id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2" style="height:30px; margin:0; font-size:xx-small">
+            </label>
+            <label for="sceneSky">
+            <li class="mdc-form-field"  id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2" style="height:30px; margin:0; font-size:xx-small">
                 <div class="mdc-radio">
                     <input class="mdc-radio__native-control" type="radio" id="sceneSky"
                            name="sceneColorTypeRadio" value="sky">
@@ -121,15 +126,31 @@
                         <div class="mdc-radio__inner-circle"></div>
                     </div>
                 </div>
-                <label id="sceneSkyRadio-label" for="sceneSkyRadio" style="margin-bottom: 0;">Presets</label>
+                <label id="sceneSkyRadio-label" for="sceneSky" style="margin-bottom: 0;">Presets</label>
                 <select name="presetsBcg" id="presetsBcg" disabled style="margin-right: 100px; font-size: 10px;">
                     <option value="default">Default</option>
                     <option value="egypt">Egypt</option>
                     <option value="forest">Forest</option>
+                    <option value="contact">Contact</option>
+                    <option value="checkerboard">Checkerboard</option>
                     <option value="goldmine">Goldmine</option>
+                    <option value="goaland">Goaland</option>
+                    <option value="yavapai">Yavapai</option>
+                    <option value="threetowers">Threetowers</option>
+                    <option value="arches">Arches</option>
+                    <option value="tron">Tron</option>
+                    <option value="japan">Japan</option>
+                    <option value="dream">Dream</option>
+                    <option value="poison">Poison</option>
+                    <option value="volcano">Volcano</option>
+                    <option value="starry">Starry</option>
+                    <option value="osiris">Osiris</option>
+                    <option value="moon">Moon</option>
                 </select>
             </li>
-            <li class="mdc-form-field" id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3" style="height:30px; margin:0; font-size:xx-small">
+            </label>
+            <label for="sceneCustomImage">
+            <li class="mdc-form-field"  id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3" style="height:30px; margin:0; font-size:xx-small">
                 <div class="mdc-radio">
                     <input class="mdc-radio__native-control" type="radio" id="sceneCustomImage"
                            name="sceneColorTypeRadio" value="Custom_img">
@@ -138,10 +159,10 @@
                         <div class="mdc-radio__inner-circle"></div>
                     </div>
                 </div>
-                <label id="sceneCustomImageRadio-label" for="sceneCustomImageRadio" style="margin-bottom: 0;">Custom Image</label>
-                <input id="img_upload_bcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".png" disabled onchange="imgUpload()" style="font-size: 10px;" />
-
+                <label id="sceneCustomImageRadio-label" for="sceneCustomImage" style="margin-bottom: 0;">Custom Image</label>
+                <input id="img_upload_bcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()" style="font-size: 10px;" />
             </li>
+            </label>
         </ul>
 
         <hr>

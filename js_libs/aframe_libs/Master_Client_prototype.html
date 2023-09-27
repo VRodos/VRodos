@@ -25,7 +25,7 @@
     <script src="js/spawn-in-circle.component.js"></script>
 
     <script src="js/highlight_img.js"></script>
-    
+
     <script src="js/components/poi-image_component.js"></script>
     <script src="js/components/poi-link_component.js"></script>
     <script src="js/components/door_component.js"></script>
@@ -35,10 +35,15 @@
     <script src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
 
     <script src="js/indicators_aframe.js"></script>
+    <script src="dist/material-components-web.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
+    <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
     <script>
+
+        // Global variable to switch between interfaces for interaction modes.
+        let browsingModeVR = false;
 
         /* PLAYER AVATARS (COLOR AND NAME) */
         // Temporary workaround for template declaration; see issue 167
@@ -79,7 +84,7 @@
                 this.head = this.el.querySelector('.head');
                 this.nametag = this.el.querySelector('.nametag');
 
-                this.ownedByLocalUser = this.el.id === 'player';
+                this.ownedByLocalUser = this.el.id === 'cameraA';
                 if (this.ownedByLocalUser) {
                     // populate the html overlay with the correct name on init
                     this.nametagInput = document.getElementById('username-overlay');
@@ -153,25 +158,29 @@
                 switch(this.data.selChoice){
                     case "0":
                         backgroundEl.setAttribute("background", "color", "#ffffff");
+                        
                         break;
                     case "1":
                         backgroundEl.setAttribute("background", "color", this.data.color);
                         break;
                     case "2":
                         backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
-                        backgroundEl.setAttribute("environment", "ground", "none");
+                        backgroundEl.setAttribute("environment", "ground", "flat");
                         break;
                     case "3":
+                      
                         let customImgAsset = document.querySelector('#custom_sky');
                         if(customImgAsset.getAttribute("src")){
                             let skyElem = document.createElement('a-sky');
                             skyElem.setAttribute("id", "sky");
                             skyElem.setAttribute("src",  "#custom_sky");
                             backgroundEl.appendChild(skyElem);
+                            console.log(customImgAsset.getAttribute("src"));
                         }
                         else{
                             backgroundEl.setAttribute("background", "color", "#ffffff");
                         }
+                      
 
                         break;
 
@@ -266,6 +275,9 @@
                 const cameraEl = document.querySelector('a-camera');
                 const cameraRig = this.el;
 
+                console.log ("Custom-movement exists");
+                console.log (cameraEl);
+
                 this.el.addEventListener('thumbstickmoved', (event) => {
                     const thumbstickX = event.detail.x;
                     const thumbstickY = event.detail.y;
@@ -346,15 +358,15 @@
 
 <body id="master-client-body">
 
-<div class="ChatWrapperStyle" id="chat-wrapper-el">
+<div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
     <div id="chatControlsOverlay" style="position: relative; top: 0; left:0; z-index:101; height: 30px;">
         <button id="color-changer" onclick="
             let newColor = window.ntExample.randomColor();
-             document.getElementById('player').setAttribute('player-info', 'color', newColor);
+             document.getElementById('cameraA').setAttribute('player-info', 'color', newColor);
              document.querySelector('button').style.backgroundColor = newColor;
              document.querySelector('button').style.color = newColor;
         ">■</button>
-        <input id="username-overlay" maxlength="24" size="15" oninput="document.getElementById('player').setAttribute('player-info', 'name', this.value)" placeholder="Username" />
+        <input id="username-overlay" maxlength="24" size="15" oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)" placeholder="Username" />
         <input type="text" id="chatInput" placeholder="Message">
         <button id="send-msg-chat-btn" style="right: 0; cursor: pointer">SEND</button>
         <button id="expand-chat-btn" class="IconButtonStyle" title="Chat Size"><i class="material-icons">unfold_more</i></button>
@@ -430,7 +442,36 @@
 
  <!-- ORESTIS -->
 
- 
+<!-- IMG POI Dialog component -->
+<aside id="poi-img-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+       aria-labelledby="Image POI popup" aria-describedby="Show Image POI details"
+       data-mdc-auto-init="MDCDialog">
+    <div class="mdc-dialog__surface">
+        <header class="mdc-dialog__header">
+            <h2 id="poi-img-dialog-title" class="mdc-dialog__header__title"></h2>
+        </header>
+
+        <section class="mdc-dialog__body">
+            <div class="mdc-layout-grid">
+                <div class="mdc-layout-grid__inner">
+                    <div class="mdc-layout-grid__cell--span-12">
+                        <div style="text-align: center">
+                            <img src="" alt="Image POI Image" id="poi-img-dialog-image" style="width: auto; max-width: 100%;max-height: 260px;"/>
+                        </div>
+                        <div style="text-align: left; overflow-y: auto;  max-height: 300px;">
+                            <span  class="mdc-typography--body1" id="poi-img-dialog-description"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="mdc-dialog__footer">
+            <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised" >OK</a>
+        </footer>
+    </div>
+    <div class="mdc-dialog__backdrop"></div>
+</aside>
 
 <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
          renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: blue"
@@ -498,43 +539,31 @@
                  material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin>
         <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5"
                  material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
-        <a-mixin id="poiEsc" geometry="primitive: plane; width: 0.1; height: 0.2"
-                 material="shader: flat; transparent: true" position="1 0.8 0.002"></a-mixin>
-        <a-mixin id="poiImgNext" geometry="primitive: plane; width: 0.1; height: 0.2"
-                 material="shader: flat; transparent: true" position="0.9 -0.3 0.002"></a-mixin>
-        <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 0.1; height: 0.2"
-                 material="shader: flat; transparent: true" position="-0.9 -0.3 0.002"></a-mixin>
+        <a-mixin id="poiEsc" geometry="primitive: plane; width: 1; height: 1"
+                  position="0.62 0.8 0.002"></a-mixin>
+        <a-mixin id="poiImgNext" geometry="primitive: plane; width: 1; height: 1"
+                 material="shader: flat; transparent: true" position="0.1 -0.79 0.002"></a-mixin>
+        <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 1; height: 1"
+                 material="shader: flat; transparent: true" position="-0.1 -0.79 0.002"></a-mixin>
     </a-assets>
 
-    <!-- Pawn -->
+    <!-- Needed for MEDIAVERSE projects - DO NOT DELETE -->
     <a-entity id="player"></a-entity>
-    <!-- <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;"
-    show-position look-controls="pointerLockEnabled: false;"> -->
-
-     <!-- <a-sphere class="head" visible="false" random-color>
-     </a-sphere> -->
-    <!-- <a-entity id="player">
-         <a-entity id="camera-rig" position="0 1.6 0" custom-movement>
-            <a-camera id="cameraA" near="0.1" far="7000.0">  </a-camera>
-                <a-entity id="oculusRight" oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="lineColor: red; objects: .raycastable"></a-entity>
-                <a-entity id="oculusLeft" oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" laser-controls="hand: left" raycaster="lineColor: blue; objects: .raycastable"></a-entity>
-         </a-entity>
-    </a-entity>  -->
-     
-    <!-- <a-entity id="player">
-        <a-entity id="camera-rig" position="0 1.6 0" custom-movement>
-           <a-camera id="cameraA" near="0.1" far="7000.0">  </a-camera>
-               <a-entity id="oculusRight" oculus-touch-controls="hand: right" laser-controls="hand: right" raycaster="lineColor: red; objects: .raycastable"></a-entity>
-               <a-entity id="oculusLeft" oculus-touch-controls="hand: left" oculus-thumbstick-controls="moveEnabled: true" laser-controls="hand: left" raycaster="lineColor: blue; objects: .raycastable"></a-entity>
-        </a-entity>
-   </a-entity>  -->
-
-   
 
 </a-scene>
 
 
 <script>
+
+    // Event listener when VR is toggled
+    document.querySelector('a-scene').addEventListener('enter-vr',  function () {
+        browsingModeVR = true;
+    });
+
+    document.querySelector('a-scene').addEventListener('exit-vr',  function () {
+        browsingModeVR = false;
+    });
+
 
     /* CHAT COMPONENT */
     let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
@@ -542,7 +571,7 @@
     let chatLog = document.getElementById('chat-messages');
 
     sendMsgChatBtn.addEventListener("click", evt => {
-        let player_object = document.getElementById('player').getAttribute('player-info', 'name');
+        let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
 
         let date = new Date;
         let dateString = '[' + String(date.getHours()).padStart(2, '0') + ':' +

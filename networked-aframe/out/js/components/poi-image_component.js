@@ -2,23 +2,31 @@ AFRAME.registerComponent('info-panel', {
     schema: { type: "string", default: "default value" },
     init: function () {
 
-
         this.ImageEl = document.querySelector('#top_img_' + this.data);
         this.ImageAsset = document.querySelector('#main_img_' + this.data);
         this.TitleEl = document.querySelector('#title_' + this.data);
         this.DescriptionEl = document.querySelector('#desc_' + this.data);
         this.PageEl = document.querySelector('#page_' + this.data);
         this.infoPanel = document.querySelector('#infoPanel_' + this.data);
-        this.escEl = document.querySelector('#exit_' + this.data);
+        //this.escEl = document.querySelector('#exit_' + this.data);
         this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#player');
         this.cam = document.querySelector("#cameraA");
-        
+
+
         this.buttonEl = document.querySelector('#button_poi_' + this.data);
         this.buttonNextEl = document.querySelector('#next_' + this.data);
         this.buttonPrevEl = document.querySelector('#prev_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
+
+        this.TitleEl.setAttribute("text","value",this.TitleEl.getAttribute("title_to_add"));
+        this.DescriptionEl.setAttribute("text","value",this.DescriptionEl.getAttribute("text_to_add"));
+
+        if(this.buttonNextEl)
+            this.buttonNextEl.object3D.renderOrder = 9999999;
+        if(this.buttonPrevEl)
+            this.buttonPrevEl.object3D.renderOrder = 9999999;
 
         this.desc_list = [];
         this.readingPos = 0;
@@ -43,10 +51,8 @@ AFRAME.registerComponent('info-panel', {
                 this.chunks +=1;
             }
                 
-            //console.log((this.DescriptionEl.getAttribute("text").value).length);
-            
             for (let x = 0; x < this.chunks; x++) {
-                let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length -1);
+                let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length);
                 this.desc_list.push(output);
                 
             }
@@ -93,22 +99,20 @@ AFRAME.registerComponent('info-panel', {
                     while (expected_height > 0.81) {
                         expected_width = expected_width / 2;
                         expected_height = expected_height / 2;
-                        console.log("reach 1");
 
                     }
                 } else {
                     while (expected_height > 1.5) {
                         expected_width = expected_width / 2;
                         expected_height = expected_height / 2;
-                        console.log("reach 2");
                     }
 
                 }
-                let esc_pad = (panel_pad / 2) + 0.1;
+                //let esc_pad = (panel_pad / 2) + 0.1;
 
                 let upd_mixin = "width: " + expected_width + "; height: " + expected_height;
                 let panel_mixin = "width: " + panel_pad + "; height: 1.8";
-                this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
+                //this.escEl.setAttribute("position", esc_pad + " 0.8 0.002");
                 this.ImageEl.setAttribute("geometry", "primitive: plane;" + upd_mixin);
                 this.infoPanel.setAttribute("geometry", "primitive: plane;" + panel_mixin);
             });
@@ -159,7 +163,8 @@ AFRAME.registerComponent('info-panel', {
             this.buttonNextEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonPrevEl.object3D.visible = true;
-        this.buttonPrevEl.object3D.scale.set(0.7, 0.7, 0.7);
+        this.buttonPrevEl.setAttribute("scale", this.buttonPrevEl.getAttribute("original-scale"));
+
         
     },
     onPrevButtonClick: function (evt) {
@@ -175,94 +180,113 @@ AFRAME.registerComponent('info-panel', {
             this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonNextEl.object3D.visible = true;
-        this.buttonNextEl.object3D.scale.set(0.7, 0.7, 0.7);
+        this.buttonNextEl.setAttribute("scale", this.buttonNextEl.getAttribute("original-scale"));
         
     },
     
 
     onMenuButtonClick: function (evt) {
 
-        this.el.emit("force-close",{value: this.data, el: this.el});
+        if (!browsingModeVR) {
+
+            document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
+
+            if (this.ImageAsset.getAttribute("src")) {
+                document.getElementById("poi-img-dialog-image").style.display = "inline";
+                document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
+            } else  {
+                document.getElementById("poi-img-dialog-image").style.display = "none";
+            }
+
+
+            document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
+            (new mdc.dialog.MDCDialog(document.querySelector('#poi-img-dialog'))).show();
+
+        } else {
+
+        //this.el.emit("force-close",{value: this.data, el: this.el});
         let poi_elems = document.getElementsByClassName('openPOI');
         for (let i = 0; i < poi_elems.length; ++i) {
             poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
             poi_elems[i].object3D.visible = false;
         }
         this.el.classList.add("openPOI");
-        this.backgroundEl.object3D.scale.set(1, 1, 1);
+        this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
+        // this.backgroundEl.setAttribute("material", "color", "white");
         this.backgroundEl.object3D.visible = true;
         this.scen.setAttribute("raycaster","objects: .non-clickable");
 
-        this.el.object3D.scale.set(1, 1, 1);
-        if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
-        this.el.object3D.visible = true;
-        this.el.components.material.material.depthTest = false;
-        //this.backgroundEl.sceneEl.renderer.sortObjects = true;
-        this.backgroundEl.components.material.material.depthTest = false;
-        //this.backgroundEl.components.material.material.clipIntersection = false;
-        this.buttonEl.object3D.depthTest = false;
+            this.el.object3D.scale.set(1, 1, 1);
+            if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
+            this.el.object3D.visible = true;
+            this.el.components.material.material.depthTest = false;
+            //this.backgroundEl.sceneEl.renderer.sortObjects = true;
+            this.backgroundEl.components.material.material.depthTest = false;
+            //this.backgroundEl.components.material.material.clipIntersection = false;
+            this.buttonEl.object3D.depthTest = false;
 
         this.backgroundEl.object3D.renderOrder = 9999999;
-        this.buttonEl.object3D.renderOrder = 9999999;
+        this.buttonEl.object3D.renderOrder = 99999;
         //clipIntersection
         this.buttonEl.components.material.material.depthTest = false;
 
-        this.ImageEl.components.material.material.depthTest = false;
+
         if (!this.DescriptionEl) {
             console.log("No Desc");
         }
         else {
             this.DescriptionEl.components.text.material.depthTest = false;
-            this.DescriptionEl.object3D.renderOrder = 9999999;
+            this.DescriptionEl.object3D.renderOrder = 99999;
         }
         if (!this.PageEl) {
             console.log("No Desc");
         }
         else {
             this.PageEl.components.text.material.depthTest = false;
-            this.PageEl.object3D.renderOrder = 9999999;
+            this.PageEl.object3D.renderOrder = 99999;
         }
-              
+
         if (!this.TitleEl) {
             console.log("No Title");
         }
         else {
             this.TitleEl.components.text.material.depthTest = false;
-            this.TitleEl.object3D.renderOrder = 9999999;
+            this.TitleEl.object3D.renderOrder = 99999;
         }
-      
+
         if (!this.ImageAsset.getAttribute("src")) {
             console.log("No Image");
-            
+
         }
         else {
             this.ImageEl.components.material.material.depthTest = false;
-            this.ImageEl.object3D.renderOrder = 9999999;
+            this.ImageEl.object3D.renderOrder = 99999;
             console.log(this.ImageEl.components);
         }
 
-        this.infoPanel.components.material.material.depthTest = false;
-        this.infoPanel.object3D.renderOrder = 9999;
-       
-        if (this.playerEl.getAttribute("wasd-controls")){
-            this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+            this.infoPanel.components.material.material.depthTest = false;
+            this.infoPanel.object3D.renderOrder = 9999;
+
+            if (this.playerEl.getAttribute("wasd-controls")){
+                this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+            }
+            else
+                this.cam.setAttribute("wasd-controls-enabled", "false");
+            //playerEl.setAttribute("look-controls", "enabled: false");
+            //this.playerEl.setAttribute("movement-controls", "speed: 0");
+            //this.playerEl.setAttribute("look-controls", "enabled: false");
+
+
+            this.ImageEl.object3D.visible = true;
+
         }
-        else
-            this.cam.setAttribute("wasd-controls-enabled", "false");
-        //playerEl.setAttribute("look-controls", "enabled: false");
-        //this.playerEl.setAttribute("movement-controls", "speed: 0");
-        //this.playerEl.setAttribute("look-controls", "enabled: false");
-
-       
-
-        this.ImageEl.object3D.visible = true;
 
     },
 
     onBackgroundClick: function (evt) {
-        this.backgroundEl.object3D.scale.set(0.001, 0.001, 0.001);
+        this.backgroundEl.object3D.scale.set(0.0001, 0.0001, 0.0001);
         this.backgroundEl.object3D.visible = false;
-        this.el.object3D.scale.set(0.001, 0.001, 0.001);
+        this.el.object3D.scale.set(0.0001, 0.0001, 0.0001);
         this.el.classList.remove("openPOI");
         this.el.object3D.visible = false;
         this.el.emit("resetmat");

@@ -65,16 +65,11 @@ function vrodos_register_scripts() {
     //=========================== THREE js 87 scripts ============================================
 
     $scriptsB = array(
-        array( 'vrodos_load87_OBJloader', $pluginDirJS.'threejs87/OBJLoader.js'),
-        array( 'vrodos_load87_OBJloader2', $pluginDirJS.'threejs87/OBJLoader2.js'),
-        array( 'vrodos_load87_WWOBJloader2', $pluginDirJS. 'threejs87/WWOBJLoader2.js'),
-        array( 'vrodos_load87_MTLloader', $pluginDirJS.'threejs87/MTLLoader.js'),
         array( 'vrodos_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
         array( 'vrodos_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
         array( 'vrodos_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
         array( 'vrodos_load87_datgui', $pluginDirJS.'threejs87/dat.gui.js'),
 
-        array( 'vrodos_load87_PDBloader', $pluginDirJS.'threejs87/PDBLoader.js'),
         array( 'vrodos_load87_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
         array( 'vrodos_load87_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
         array( 'vrodos_load87_sceneexporter', $pluginDirJS.'threejs87/SceneExporter.js'),

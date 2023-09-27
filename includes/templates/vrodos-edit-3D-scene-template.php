@@ -366,11 +366,10 @@ wp_head();
 
                         <!-- View Json code UI -->
                         <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
-                           class="ToggleUIButtonStyle mdc-theme--secondary mdc-theme--text-hint-on-light"
+                           class="mdc-theme--secondary mdc-theme--text-hint-on-light"
                            title="View json of scene"
-                           style="padding-top:1px; width:70px; left: calc(60% + 112px); position:absolute; top:5px">
-                            json:
-                            <i class="material-icons" style="background: none; opacity:1; font-size:11pt">visibility_off</i>
+                           style="width:70px; left: calc(60% + 112px); position:absolute; bottom: 0; cursor: pointer; text-decoration: none;">
+                            <i class="material-icons" style="font-size: 11pt">visibility_off</i> JSON
                         </a>
                     </div>
 
@@ -918,12 +917,61 @@ wp_head();
         }
 
         document.getElementsByTagName("html")[0].style.overflow="hidden";
+        let color_sel = document.getElementById('jscolorpick');
+        let custom_img_sel = document.getElementById('img_upload_bcg');
+        let preset_sel = document.getElementById('presetsBcg');
 
         // Init UI values
 
 
         if (resources3D["enableGeneralChat"]) {
             document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
+        }
+        if (resources3D["backgroundStyleOption"]) {
+            let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+           
+            switch (selOption){
+            case 0:
+                document.getElementById("sceneNone").checked = true;
+                custom_img_sel.disabled = true;
+                preset_sel.disabled = true;
+                color_sel.disabled = true;
+                break;
+            case 1:
+                document.getElementById("sceneColorRadio").checked = true;
+                color_sel.disabled = false;
+                preset_sel.disabled = true;
+                custom_img_sel.disabled = true;
+                break;
+            case 2:
+                document.getElementById("sceneSky").checked = true;
+                custom_img_sel.disabled = true;
+                preset_sel.disabled = false;
+                color_sel.disabled = true;
+                envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
+                envir.scene.preset_selection = resources3D["backgroundPresetOption"];
+                // envir.scene.backgroundPresetOption = preset_sel.value;
+                //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+
+                for(let index = 0; index < preset_sel.options.length;index++){
+                    if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
+                        preset_sel.options[index].selected = true;
+                        //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
+                    }
+                }
+                break;
+            case 3:
+                document.getElementById("sceneCustomImage").checked = true;
+                custom_img_sel.disabled = false;
+                preset_sel.disabled = true;
+                color_sel.disabled = true;
+                envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
+                break;
+            }
+            envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+           
+            //saveChanges();
+
         }
 
 

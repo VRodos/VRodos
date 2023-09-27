@@ -228,7 +228,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
             if (isset($_POST['videoSshotFileInput'])) {
                 vrodos_upload_asset_screenshot($_POST['videoSshotFileInput'], $asset_id, $project_id);
             }
-            update_post_meta($asset_id, 'vrodos_asset3d_video_title', $_POST['videoTitle']);
+            update_post_meta($asset_id, 'vrodos_asset3d_video_title', sanitize_text_field($_POST['videoTitle']));
             update_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', isset($_POST['video_autoloop_checkbox']));
             break;
 
@@ -237,8 +237,8 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
             if (isset($_FILES['imageFileInput'])) {
                 vrodos_create_asset_addImages_frontend($asset_id, $_FILES['imageFileInput']);
             }
-            update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', $_POST['poiImgTitle']);
-            update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', $_POST['poiImgDescription']);
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', sanitize_text_field($_POST['poiImgTitle']));
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', sanitize_text_field($_POST['poiImgDescription']));
 
             break;
 
@@ -368,29 +368,15 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             </div>
 
             <div style="text-align: left; width: 100%;">
-                <?php if ($isEditMode) { ?>
 
-                    <a title="Back" class="vrodos-back-button hideAtLocked mdc-button" style="float:left; min-width: 0;" href="<?php echo $goBackToLink;?>">
-                        <em style="font-size:32px;" class="material-icons arrowback">arrow_back</em></a>
-                    <?php
-                }
+
+                <a title="Back" class="vrodos-back-button hideAtLocked mdc-button" style="float:left; min-width: 0;" href="<?php echo $goBackToLink;?>">
+                    <em style="font-size:32px;" class="material-icons arrowback">arrow_back</em></a>
+                <?php
+
 
                 // UPPER BUTTONS
                 if($asset_id != null ){
-
-                    if ( !$isEditMode) {
-
-                        // Display EDIT BUTTON
-                        $curr_uri = $_SERVER['REQUEST_URI'];
-                        $targetparams = str_replace("preview=1","preview=0",$curr_uri);
-                        $editLink2 = ( empty( $_SERVER['HTTPS'] ) ? 'http://' : 'https://' ).
-                            $_SERVER['HTTP_HOST'].$targetparams;
-                        ?>
-
-                        <a class="mdc-button mdc-button--primary mdc-theme--primary"
-                           href="<?php echo $editLink2; ?>" data-mdc-auto-init="MDCRipple">EDIT Asset</a>
-
-                    <?php }
                 }?>
                 <h2 style="display: inline-block; margin: 0  " class="mdc-typography--headline mdc-theme--text-primary-on-light" >Asset editor</h2>
                 <!-- Author -->
@@ -423,7 +409,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 <br>
 
                 <!-- EDIT MODE -->
-                <?php if(($isOwner || $isUserAdmin) && $isEditMode) { ?>
+                <?php if(($isOwner || $isUserAdmin) ) { ?>
 
                 <div style="display:flex; width: 100%;">
                     <!-- Title -->
@@ -863,7 +849,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
         document.getElementById("jscolorpick").value = back_3d_color;
 
         let isLoggedIn = <?php echo $isUserloggedIn ? 1: 0; ?>;
-        let isEditMode = (isLoggedIn === 1) ? <?php echo $_GET['preview'] === '1' ? 0 : 1; ?> : 0 ;
+        let isEditMode = (isLoggedIn === 1) ? 1 : 0 ;
         console.log("isEditModeA:", isEditMode);
 
         let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
@@ -1015,7 +1001,10 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                     //vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
                     asset_viewer_3d_kernel.resizeDisplayGL();
-                    document.getElementById('formSubmitBtn').disabled = false;
+                    if (document.getElementById('formSubmitBtn')) {
+                        document.getElementById('formSubmitBtn').disabled = false;
+                    }
+
                     let descText = document.getElementById('categoryDescription');
 
                     let slug = '';

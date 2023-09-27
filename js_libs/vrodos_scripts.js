@@ -63,32 +63,45 @@ function bcgRadioSelect(option){
     let custom_img_sel = document.getElementById('img_upload_bcg');
     let preset_sel = document.getElementById('presetsBcg');
 
+
     switch (option.value) {
     case 0:
         custom_img_sel.disabled = true;
         preset_sel.disabled = true;
         color_sel.disabled = true;
+        var hex = rgbToHex(255, 255, 255);
+        //envir.renderer.setClearColor(hex);
+        envir.scene.background = new THREE.Color(hex);
+        //document.getElementById('assetback3dcolor').value = "ffffff"
         break;
     case 1: 
         color_sel.disabled = false;
         preset_sel.disabled = true;
         custom_img_sel.disabled = true;
+        envir.scene.background = new THREE.Color("#"+document.getElementById('jscolorpick').value);
         break;
     case 2 : 
         custom_img_sel.disabled = true;
         preset_sel.disabled = false;
         color_sel.disabled = true;
-        envir.scene.getObjectByName("avatarCamera").preset_selection = preset_sel.value;
+        envir.scene.preset_selection = preset_sel.value;
+        envir.scene.backgroundPresetOption = preset_sel.value;
         break;
     case 3 : 
         custom_img_sel.disabled = false;
         preset_sel.disabled = true;
         color_sel.disabled = true;
+        // if (envir.scene.img_bcg_path)
+        // {
+        //     const loader = new THREE.TextureLoader();
+        //     envir.scene.background = loader.load( envir.scene.img_bcg_path  );
+        // }
         break;
+        
     }
-    envir.scene.getObjectByName("avatarCamera").bcg_selection = option.value;
+    envir.scene.bcg_selection = option.value;
+    envir.scene.backgroundStyleOption = option.value;
     saveChanges();
-    //envir.scene.getObjectByName(updName).sceneID_target = option.value;
 }
 
 function updateFogColorPicker(picker){

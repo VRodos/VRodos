@@ -719,8 +719,8 @@ THREE.SceneExporter.prototype = {
 
         if (objects.substr(objects.length - 2, 1) == ',')
             objects = objects.substr(0, objects.length - 2) + '\n';
-
-
+        
+    
         var output = [
             '{',
             '	"metadata": {',
@@ -735,19 +735,18 @@ THREE.SceneExporter.prototype = {
             envir.scene.fog ? '		"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",' : '',
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
+            '		"backgroundPresetOption" : "' + (envir.scene.preset_selection ? envir.scene.preset_selection : 'None') + '",',
+            '		"backgroundStyleOption" : "' + (envir.scene.bcg_selection ? envir.scene.bcg_selection : '0') + '",',
+            '		"backgroundImagePath" : "' + (envir.scene.img_bcg_path ? envir.scene.img_bcg_path : '0') + '",',
             '		"objects"       : ' + nobjects + //+  ',',
             '	},',
             '	"urlBaseType": "relativeToScene",',
-            '',
             '	"objects" :',
             '	{',
             objects,
             '	}',    // Original line:   '	},',
-            '',
             '}'
         ].join('\n');
-
-        //console.log(output);
 
         return output; //JSON.parse( output );
     }

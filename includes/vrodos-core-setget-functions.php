@@ -132,9 +132,6 @@ function get_assets($games_slugs){
             $sshotID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true); // Screenshot Image ID
             $sshotPath = $sshotID ? wp_get_attachment_url( $sshotID ) : '';           // Screenshot Image PATH
 
-            $sceneId = $_REQUEST['vrodos_scene'];
-            $scenebcgID = get_post_meta($sceneId, '_wp_scene_bcg_file', true); // Scene Background ID
-
             $author_id = get_post_field ('post_author', $asset_id);
             $author_displayname = get_the_author_meta( 'display_name' , $author_id );
             $author_username = get_the_author_meta( 'nickname' , $author_id );
@@ -152,7 +149,6 @@ function get_assets($games_slugs){
                 'glb_id'=>$glbID,
                 'glb_path'=>$glbPath,
                 'path'=>$glbPath,
-                'scene_background_path'=>$scenebcgID,
                 'screenshot_id'=>$sshotID,
                 'screenshot_path'=>$sshotPath,
                 'is_cloned'=> get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true),
@@ -184,14 +180,7 @@ function get_assets($games_slugs){
                 case 'poi-link':
                     $data_arr['poi_link_url'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
                     break;
-                // case 'avatarYawObject':
-                //     $data_arr['scene_backgroundav_path'] = "h";
-                //     break;
             }
-            if($asset_cat_arr[0]->name == 'avatarYawObject'){
-                $data_arr['scene_backgroundav_path'] = "h";
-            }
-
             array_push($allAssets, $data_arr);
 
         endwhile;
@@ -273,9 +262,7 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
 
             $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true); // GLB ID
             $glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
-            $sceneId = wp_get_post_terms($asset_id, 'vrodos_scene_pgame');
-
-            $scenebcgID = get_post_meta($sceneId, '_wp_scene_bcg_file', true); // Scene Background ID
+           
 
             $sshotID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true); // Screenshot Image ID
             $sshotPath = $sshotID ? wp_get_attachment_url( $sshotID ) : '';           // Screenshot Image PATH
@@ -291,7 +278,6 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
                 'glb_id'=>$glbID,
                 'glb_path'=>$glbPath,
                 'path'=>$glbPath,
-                'scene_background_path'=>$scenebcgID,
                 'screenshot_id'=>$sshotID,
                 'screenshot_path'=>$sshotPath,
                 'is_cloned'=> get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true),
@@ -317,15 +303,8 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
                 case 'poi-link':
                     $data_arr['poi_link_url'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
                     break;
-                // case 'avatarYawObject':
-                //     $data_arr['scene_backgroundav_path'] = "h";
-                //     break;
-
             }
-            if($asset_cat_arr[0]->name == 'avatarYawObject'){
-                $data_arr['scene_backgroundav_path'] = "h";
-            }
-
+           
             array_push($allAssets, $data_arr);
 
         endwhile;
