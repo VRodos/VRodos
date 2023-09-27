@@ -131,7 +131,21 @@
                     <option value="default">Default</option>
                     <option value="egypt">Egypt</option>
                     <option value="forest">Forest</option>
+                    <option value="contact">Contact</option>
+                    <option value="checkerboard">Checkerboard</option>
                     <option value="goldmine">Goldmine</option>
+                    <option value="goaland">Goaland</option>
+                    <option value="yavapai">Yavapai</option>
+                    <option value="threetowers">Threetowers</option>
+                    <option value="arches">Arches</option>
+                    <option value="tron">Tron</option>
+                    <option value="japan">Japan</option>
+                    <option value="dream">Dream</option>
+                    <option value="poison">Poison</option>
+                    <option value="volcano">Volcano</option>
+                    <option value="starry">Starry</option>
+                    <option value="osiris">Osiris</option>
+                    <option value="moon">Moon</option>
                 </select>
             </li>
             </label>
