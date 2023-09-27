@@ -393,49 +393,27 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_entity_expo->setAttribute( "position", "0 0.6 0" );
             $a_entity_expo->setAttribute( "custom-movement", "" );
             $a_entity_expo->setAttribute( "show-position", "" );
-            //$a_entity_expo->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false;" );
 
-            $a_camera = $dom->createElement( "a-entity" );
-            $a_camera->setAttribute( "camera", "near: 0.1; far: 7000.0;" );
+            $a_camera = $dom->createElement( "a-camera" );
+            $a_camera->setAttribute( "camera", "" );
             $a_camera->setAttribute( "id", "cameraA" );
-            //$a_camera->setAttribute( "networked", "template:#avatar-template-expo;" );
-            // $a_camera->setAttribute( "look-controls", "" );
-            // $a_camera->setAttribute( "near", "0.1" );
-            // $a_camera->setAttribute( "far", "7000.0" );
+            $a_camera->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
+            $a_camera->setAttribute( "look-controls", "" );
+            $a_camera->setAttribute( "wasd-controls", "acceleration:20" );            
 
             $a_entity_oc_right = $dom->createElement( "a-entity" );
             $a_entity_oc_right->setAttribute( "id", "oculusRight" );
             $a_entity_oc_right->setAttribute( "oculus-touch-controls", "hand: right" );
             $a_entity_oc_right->setAttribute( "laser-controls", "hand: right" );
-            $a_entity_oc_right->setAttribute( "raycaster", "objects: .raycastable" );
+            $a_entity_oc_right->setAttribute( "raycaster", "lineColor: red; objects: .raycastable" );
 
             $a_entity_oc_left = $dom->createElement( "a-entity" );
-            $a_entity_oc_left->setAttribute( "id", "oculusRight" );
+            $a_entity_oc_left->setAttribute( "id", "oculusLeft" );
             $a_entity_oc_left->setAttribute( "oculus-touch-controls", "hand: left" );
+            $a_entity_oc_left->setAttribute( "laser-controls", "hand: left" );
+            $a_entity_oc_left->setAttribute( "raycaster", "lineColor: blue; objects: .raycastable" );
+            $a_entity_oc_left->setAttribute( "oculus-thumbstick-controls", "moveEnabled: true" );
 
-            // $ascenePlayer->setAttribute( "camera", "" );
-            $ascenePlayer->setAttribute( "look-controls", "pointerLockEnabled: false" );
-            $ascenePlayer->setAttribute( "wasd-controls", "acceleration:20" );
-            $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:true;" );
-
-            // $a_asset_avt = $dom->createElement( "a-assets" );
-            // $a_asset_avt->setAttribute("id", "avatar_glb");
-            // $a_asset_avt->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/goomba.glb");
-
-            // $ascene->appendChild( $a_asset_avt );
-
-            // $a_assets = $dom->createElement( "a-assets" );
-            // $a_asset_sph = $dom->createElement( "img" );
-            // $a_asset_sph->setAttribute("id", "sphere");
-            // $a_asset_sph->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/meadow_4k.jpg");
-
-            // $a_assets->appendChild( $a_asset_sph );
-            // $ascene->appendChild( $a_assets );
-
-            // $a_sky_sph = $dom->createElement( "a-sky" );
-            // $a_sky_sph->setAttribute("src",  "#sphere");
-
-            // $ascene->appendChild( $a_sky_sph );
 
             $a_entity_expo->appendChild( $a_camera );
             $a_entity_expo->appendChild( $a_entity_oc_right );
