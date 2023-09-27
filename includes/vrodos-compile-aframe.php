@@ -389,19 +389,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         if ($projectType == 'vrexpo_games') {
             //$a_entity_expo = $dom->createElement( "a-entity" );
-            $ascenePlayer->setAttribute( "id", "camera-rig" );
-            $ascenePlayer->setAttribute( "position", "0 0.6 0" );
+            //$ascenePlayer->setAttribute( "id", "camera-rig" );
+            $ascenePlayer->setAttribute( "position", "0 0.2 0" );
             $ascenePlayer->setAttribute( "custom-movement", "" );
             $ascenePlayer->setAttribute( "show-position", "" );
-
             //$ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
 
             $a_camera = $dom->createElement( "a-camera" );
             $a_camera->setAttribute( "camera", "" );
             $a_camera->setAttribute( "id", "cameraA" );
-            $a_camera->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
+            $a_camera->setAttribute( "networked", "template:#avatar-template-expo;" );
             $a_camera->setAttribute( "look-controls", "" );
-            $a_camera->setAttribute( "wasd-controls", "acceleration:20" );            
+            $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
 
             $a_entity_oc_right = $dom->createElement( "a-entity" );
             $a_entity_oc_right->setAttribute( "id", "oculusRight" );
