@@ -11,7 +11,7 @@ AFRAME.registerComponent('info-panel', {
         //this.escEl = document.querySelector('#exit_' + this.data);
         this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
-        this.playerEl = document.querySelector('#player');
+        this.playerEl = document.querySelector('#cameraA');
         this.cam = document.querySelector("#cameraA");
 
 
@@ -20,8 +20,10 @@ AFRAME.registerComponent('info-panel', {
         this.buttonPrevEl = document.querySelector('#prev_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
 
-        this.TitleEl.setAttribute("text","value",this.TitleEl.getAttribute("title_to_add"));
-        this.DescriptionEl.setAttribute("text","value",this.DescriptionEl.getAttribute("text_to_add"));
+        if (this.TitleEl)
+            this.TitleEl.setAttribute("text","value",this.TitleEl.getAttribute("title_to_add"));
+        if(this.DescriptionEl)
+            this.DescriptionEl.setAttribute("text","value",this.DescriptionEl.getAttribute("text_to_add"));
 
         if(this.buttonNextEl)
             this.buttonNextEl.object3D.renderOrder = 9999999;
@@ -189,7 +191,8 @@ AFRAME.registerComponent('info-panel', {
 
         if (!browsingModeVR) {
 
-            document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
+            if(this.TitleEl)
+                document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
 
             if (this.ImageAsset.getAttribute("src")) {
                 document.getElementById("poi-img-dialog-image").style.display = "inline";
@@ -199,7 +202,8 @@ AFRAME.registerComponent('info-panel', {
             }
 
 
-            document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
+            if(this.DescriptionEl)
+                document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
             (new mdc.dialog.MDCDialog(document.querySelector('#poi-img-dialog'))).show();
 
         } else {
