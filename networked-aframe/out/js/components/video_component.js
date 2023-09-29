@@ -38,7 +38,7 @@ AFRAME.registerComponent('video-controls', {
 
         let playerEl = document.querySelector('#cameraA');
         let rightHand = document.querySelector('#oculusRight');
-        let bcgCol = backgroundEl.getAttribute("scene-settings");
+        
         let cam = document.querySelector("#cameraA");
         let camRig = document.querySelector("#camera-rig");
 
@@ -178,10 +178,13 @@ AFRAME.registerComponent('video-controls', {
 
 
         fsEl.addEventListener("mouseup", function (event) {
-            if (camRig)                                          //TODO change based on project type
-                camRig.setAttribute("position", "0 0 0");
-            else{
-                cam.setAttribute("position", "0 0 0");
+
+            let projType = backgroundEl.getAttribute("scene-settings").pr_type;
+           
+            if (projType != "vrexpo_games")
+            {
+          
+                //cam.setAttribute("position", "0 0 0");
                 media_panel.setAttribute( "style", 'visibility: hidden;' );
                 recording_controls.setAttribute('style', 'visibility: hidden;');
             }
@@ -228,9 +231,10 @@ AFRAME.registerComponent('video-controls', {
         });
 
         function restoreVid(){
-            if (camRig)
-                camRig.setAttribute("position", "0 0.6 0");
-            else{
+            let projType = backgroundEl.getAttribute("scene-settings").pr_type;
+           
+            if (projType != "vrexpo_games")
+            {
                 cam.setAttribute("position", "0 0.6 0");
                 media_panel.setAttribute( "style", 'visibility: visible;' );        //TODO change based on project type
                 recording_controls.setAttribute('style', 'visibility: visible;');
@@ -276,7 +280,7 @@ AFRAME.registerComponent('video-controls', {
             visCollection = [];
         }
         if (video.getAttribute("src")){
-            videoBorder.addEventListener("mouseup", function (event) {
+            videoBorder.addEventListener("click", function (event) {
                 addToCam(videoPanel, true, true, 1);
                 addToCam(fsEl, true, true, 1);
                 addToCam(plEl, true, true, 1);
