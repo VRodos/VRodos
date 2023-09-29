@@ -91,11 +91,13 @@ function bcgRadioSelect(option){
         custom_img_sel.disabled = false;
         preset_sel.disabled = true;
         color_sel.disabled = true;
-        // if (envir.scene.img_bcg_path)
-        // {
-        //     const loader = new THREE.TextureLoader();
-        //     envir.scene.background = loader.load( envir.scene.img_bcg_path  );
-        // }
+        if (envir.scene.img_bcg_path)
+        {
+            //const loader = new THREE.TextureLoader();
+            //envir.scene.background = loader.load( envir.scene.img_bcg_path  );
+            document.getElementById('uploadImgThumb').src = envir.scene.img_bcg_path;
+            document.getElementById('uploadImgThumb').hidden = false;
+        }
         break;
         
     }
