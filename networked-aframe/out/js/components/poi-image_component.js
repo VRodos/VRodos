@@ -225,10 +225,10 @@ AFRAME.registerComponent('info-panel', {
                 document.getElementById("poi-img-dialog-image").style.display = "none";
             }
 
-
             if(this.DescriptionEl)
                 document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
             (new mdc.dialog.MDCDialog(document.querySelector('#poi-img-dialog'))).show();
+
 
         } else {
 

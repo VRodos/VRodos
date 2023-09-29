@@ -275,29 +275,59 @@ AFRAME.registerComponent('video-controls', {
             console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
             visCollection = [];
         }
-        if (video.getAttribute("src")){
-            videoBorder.addEventListener("mouseup", function (event) {
-                addToCam(videoPanel, true, true, 1);
-                addToCam(fsEl, true, true, 1);
-                addToCam(plEl, true, true, 1);
-                addToCam(exEl, true, true, 1);
-                addToCamText(titEl, true, true, 1);
-                videoDisplay.classList.add("non-clickable");
-                videoPanel.classList.add("non-clickable");
-                backgroundEl.setAttribute("raycaster","objects: .non-clickable");
-                if(rightHand)
-                    rightHand.setAttribute("raycaster","objects: .non-clickable");
-                playUpd(plEl);
 
-                if (video.paused) {
-                    console.log("border clicked");
+        if (video.getAttribute("src")){
+
+            videoBorder.addEventListener("click", function (event) {
+
+                if (!browsingModeVR) {
+
+                    let video_element = document.getElementById("video-panel-video");
+                    video_element.innerHTML = '';
+                    let video_source = document.createElement('source');
+                    let video_file_url = video.getAttribute("src");
+
+                    video_source.setAttribute('src', video_file_url );
+                    video_source.setAttribute('type', 'video/'+ video_file_url.split('.')[1]);
+                    video_element.appendChild(video_source);
+
+                    let video_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#video-controls-dialog'));
+
+                    let closeDialogListener = function(event) {
+                        video_element.pause();
+                        video_dialog_element.unlisten("MDCDialog:cancel", closeDialogListener);
+                    };
+                    video_dialog_element.show();
+                    video_dialog_element.listen("MDCDialog:cancel", closeDialogListener);
+
+
+                } else {
+
+                    addToCam(videoPanel, true, true, 1);
+                    addToCam(fsEl, true, true, 1);
+                    addToCam(plEl, true, true, 1);
+                    addToCam(exEl, true, true, 1);
+                    addToCamText(titEl, true, true, 1);
+                    videoDisplay.classList.add("non-clickable");
+                    videoPanel.classList.add("non-clickable");
+                    backgroundEl.setAttribute("raycaster","objects: .non-clickable");
+                    if(rightHand)
+                        rightHand.setAttribute("raycaster","objects: .non-clickable");
+                    playUpd(plEl);
+
+                    if (video.paused) {
+                        console.log("border clicked");
+                    }
+                    else if (video.play){
+                        restoreVid();
+                    }
+                    if (video.ended){
+                        restoreVid();
+                    }
+
                 }
-                else if (video.play){
-                    restoreVid();
-                }
-                if (video.ended){
-                    restoreVid();
-                }
+
+
             });
         }
 

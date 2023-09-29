@@ -484,6 +484,23 @@
     <div class="mdc-dialog__backdrop"></div>
 </aside>
 
+<aside id="video-controls-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+       aria-labelledby="Video controls popup" aria-describedby="Show Video controls">
+    <div class="mdc-dialog__surface">
+
+        <video controls controlsList="nodownload" id="video-panel-video" height="100%" width="100%" >
+            Your browser does not support video.
+        </video>
+
+        <footer class="mdc-dialog__footer">
+            <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--cancel mdc-button--raised">Close</a>
+            <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised" style="display: none;" tabIndex="0">OK</a>
+        </footer>
+    </div>
+    <div class="mdc-dialog__backdrop"></div>
+</aside>
+
+
 <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
          renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
          vr-mode-ui="enabled: true"
