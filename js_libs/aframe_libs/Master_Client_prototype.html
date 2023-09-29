@@ -45,7 +45,6 @@
         // Global variable to switch between interfaces for interaction modes.
         let browsingModeVR = false;
 
-
         /* PLAYER AVATARS (COLOR AND NAME) */
         // Temporary workaround for template declaration; see issue 167
         NAF.schemas.getComponentsOriginal = NAF.schemas.getComponents;
@@ -144,12 +143,17 @@
                 console.log(this.data.presChoice);
 
                 let cam = document.querySelector("#cameraA");
-                console.log(cam);
+
                 if (this.data.pr_type !== "vrexpo_games")
                     cam.setAttribute("camera", "fov: 60");
                 else{
                     cam.setAttribute("fov", "60");
                     cam.setAttribute("camera", "fov: 60"); //temp based on camera settings
+
+                    // Hide eyes from my avatar on self
+                    const parent_avatar = document.getElementById('cameraA');
+                    let my_face = parent_avatar.querySelector('.face');
+                    my_face.setAttribute("visible", "false");
 
                 }
                 let backgroundEl = document.querySelector('#aframe-scene-container');
@@ -601,10 +605,7 @@
         browsingModeVR = false;
     });
 
-    // Hide eyes from my avatar on self
-    const parent_avatar = document.getElementById('cameraA');
-    let my_face = parent_avatar.querySelector('.face');
-    my_face.setAttribute("visible", "false");
+
 
 
     /* CHAT COMPONENT */

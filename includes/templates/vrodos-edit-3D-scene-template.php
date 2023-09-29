@@ -923,10 +923,10 @@ wp_head();
 
         // Init UI values
 
-
-        if (resources3D["enableGeneralChat"]) {
+        if (JSON.parse(resources3D["enableGeneralChat"])) {
             document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
         }
+
         if (resources3D["backgroundStyleOption"]) {
             let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
            
