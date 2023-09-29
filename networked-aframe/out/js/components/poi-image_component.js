@@ -11,7 +11,7 @@ AFRAME.registerComponent('info-panel', {
         //this.escEl = document.querySelector('#exit_' + this.data);
         this.scen = document.querySelector('#aframe-scene-container'); 
         let btn = "button_poi_" + this.data;
-        this.playerEl = document.querySelector('#player');
+        this.playerEl = document.querySelector('#cameraA');
         this.cam = document.querySelector("#cameraA");
 
 
@@ -19,12 +19,21 @@ AFRAME.registerComponent('info-panel', {
         this.buttonNextEl = document.querySelector('#next_' + this.data);
         this.buttonPrevEl = document.querySelector('#prev_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
+        this.buttonNextPanelEl = document.querySelector('#next_panel_' + this.data);
+        this.buttonPrevPanelEl = document.querySelector('#prev_panel_' + this.data);
+        
 
-        this.TitleEl.setAttribute("text","value",this.TitleEl.getAttribute("title_to_add"));
-        this.DescriptionEl.setAttribute("text","value",this.DescriptionEl.getAttribute("text_to_add"));
+        if (this.TitleEl)
+            this.TitleEl.setAttribute("text","value",this.TitleEl.getAttribute("title_to_add"));
+        if(this.DescriptionEl)
+            this.DescriptionEl.setAttribute("text","value",this.DescriptionEl.getAttribute("text_to_add"));
 
         if(this.buttonNextEl)
             this.buttonNextEl.object3D.renderOrder = 9999999;
+        if(this.buttonNextPanelEl)
+            this.buttonNextPanelEl.object3D.renderOrder = 99999;
+        if(this.buttonPrevPanelEl)
+            this.buttonPrevPanelEl.object3D.renderOrder = 99999;
         if(this.buttonPrevEl)
             this.buttonPrevEl.object3D.renderOrder = 9999999;
 
@@ -63,6 +72,8 @@ AFRAME.registerComponent('info-panel', {
                 this.DescriptionEl.setAttribute("text","value",this.desc_list[0]);
                 this.buttonPrevEl.object3D.visible = false;
                 this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
+                this.buttonPrevPanelEl.object3D.visible = false;
+                this.buttonPrevPanelEl.object3D.scale.set(0.001, 0.001, 0.001);
 
             }
             this.indPos = this.readingPos + 1;
@@ -75,13 +86,13 @@ AFRAME.registerComponent('info-panel', {
         
         let expected_width, expected_height;
         if (this.DescriptionEl) {
-            expected_width = 1.5;
-            expected_height = 0.81;
+            expected_width = 1.4;
+            expected_height = 0.75;
             
         }
         else {
-            expected_width = 1.5;
-            expected_height = 1.5;
+            expected_width = 1.4;
+            expected_height = 1.4;
         }
         if (this.ImageAsset.getAttribute("src")){
             getMeta(this.ImageAsset.getAttribute("src"), (err, img) => {
@@ -92,22 +103,24 @@ AFRAME.registerComponent('info-panel', {
             
                 console.log("EXP:" + expected_height + " " + expected_width);
                 let panel_pad;
-                expected_width > 1.5 ? panel_pad = expected_width : panel_pad = 1.5;
+                expected_width > 1.4 ? panel_pad = expected_width : panel_pad = 1.4;
 
 
                 if (!this.DescriptionEl) {
-                    while (expected_height > 0.81) {
+                    while (expected_height > 0.8) {
                         expected_width = expected_width / 2;
                         expected_height = expected_height / 2;
 
                     }
                 } else {
-                    while (expected_height > 1.5) {
+                    while (expected_height > 1.4) {
                         expected_width = expected_width / 2;
                         expected_height = expected_height / 2;
                     }
-
                 }
+                if (expected_width>= 0.8)
+                        panel_pad =1.5;
+
                 //let esc_pad = (panel_pad / 2) + 0.1;
 
                 let upd_mixin = "width: " + expected_width + "; height: " + expected_height;
@@ -130,13 +143,15 @@ AFRAME.registerComponent('info-panel', {
             this.onNextButtonClick = this.onNextButtonClick.bind(this);
         if (this.buttonPrevEl)
             this.onPrevButtonClick = this.onPrevButtonClick.bind(this);
+       
     
-
-        
-        
         this.buttonEl.addEventListener('click', this.onMenuButtonClick);
         if (this.buttonNextEl)
             this.buttonNextEl.addEventListener('click', this.onNextButtonClick);
+        if (this.buttonNextPanelEl)
+            this.buttonNextPanelEl.addEventListener('click', this.onNextButtonClick);
+        if (this.buttonPrevPanelEl)
+            this.buttonPrevPanelEl.addEventListener('click', this.onPrevButtonClick);
         if (this.buttonPrevEl)
             this.buttonPrevEl.addEventListener('click', this.onPrevButtonClick);
         // this.buttonEl.addEventListener('force-close-others', this.onMenuButtonClick);
@@ -161,9 +176,14 @@ AFRAME.registerComponent('info-panel', {
         if(this.readingPos == this.chunks -1) {
             this.buttonNextEl.object3D.visible = false;
             this.buttonNextEl.object3D.scale.set(0.001, 0.001, 0.001);
+
+            this.buttonNextPanelEl.object3D.visible = false;
+            this.buttonNextPanelEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonPrevEl.object3D.visible = true;
         this.buttonPrevEl.setAttribute("scale", this.buttonPrevEl.getAttribute("original-scale"));
+        this.buttonPrevPanelEl.object3D.visible = true;
+        this.buttonPrevPanelEl.setAttribute("scale", this.buttonPrevPanelEl.getAttribute("original-scale"));
 
         
     },
@@ -178,9 +198,15 @@ AFRAME.registerComponent('info-panel', {
         if(this.readingPos == 0) {
             this.buttonPrevEl.object3D.visible = false;
             this.buttonPrevEl.object3D.scale.set(0.001, 0.001, 0.001);
+
+            this.buttonPrevPanelEl.object3D.visible = false;
+            this.buttonPrevPanelEl.object3D.scale.set(0.001, 0.001, 0.001);
         }
         this.buttonNextEl.object3D.visible = true;
         this.buttonNextEl.setAttribute("scale", this.buttonNextEl.getAttribute("original-scale"));
+
+        this.buttonNextPanelEl.object3D.visible = true;
+        this.buttonNextPanelEl.setAttribute("scale", this.buttonNextPanelEl.getAttribute("original-scale"));
         
     },
     
@@ -189,7 +215,8 @@ AFRAME.registerComponent('info-panel', {
 
         if (!browsingModeVR) {
 
-            document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
+            if(this.TitleEl)
+                document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
 
             if (this.ImageAsset.getAttribute("src")) {
                 document.getElementById("poi-img-dialog-image").style.display = "inline";
@@ -199,7 +226,8 @@ AFRAME.registerComponent('info-panel', {
             }
 
 
-            document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
+            if(this.DescriptionEl)
+                document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
             (new mdc.dialog.MDCDialog(document.querySelector('#poi-img-dialog'))).show();
 
         } else {

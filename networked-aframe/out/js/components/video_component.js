@@ -36,7 +36,7 @@ AFRAME.registerComponent('video-controls', {
         let titEl = document.querySelector("#ent_tit_" + data.id);
         let backgroundEl = document.querySelector('#aframe-scene-container');
 
-        let playerEl = document.querySelector('#player');
+        let playerEl = document.querySelector('#cameraA');
         let rightHand = document.querySelector('#oculusRight');
         let bcgCol = backgroundEl.getAttribute("scene-settings");
         let cam = document.querySelector("#cameraA");
