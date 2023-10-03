@@ -395,7 +395,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $ascenePlayer->setAttribute( "show-position", "" );
 
             //$ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
+            
 
+            //OCULUS
             $a_camera = $dom->createElement( "a-camera" );
             $a_camera->setAttribute( "camera", "" );
             $a_camera->setAttribute( "id", "cameraA" );
@@ -407,7 +409,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_entity_oc_right->setAttribute( "id", "oculusRight" );
             $a_entity_oc_right->setAttribute( "oculus-touch-controls", "hand: right" );
             $a_entity_oc_right->setAttribute( "laser-controls", "hand: right" );
-            $a_entity_oc_right->setAttribute( "raycaster", "lineColor: red; objects: .raycastable" );
+            $a_entity_oc_right->setAttribute( "raycaster", "lineColor: red ;objects: .raycastable" );
+
+           
+
 
             $a_entity_oc_left = $dom->createElement( "a-entity" );
             $a_entity_oc_left->setAttribute( "id", "oculusLeft" );
@@ -731,11 +736,14 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_entity_ex->setAttribute("material", "color: #ffffff; shader: flat;");
                     $a_entity_ex->setAttribute("class", "clickable raycastable non-clickable");
 
+
+                    //Video panel
                     $a_entity_panel = $dom->createElement("a-plane");
                     $a_entity_panel->setAttribute("id", "vid-panel_$uuid");
                     $a_entity_panel->setAttribute("height", "0.3");
                     $a_entity_panel->setAttribute("width", "0.2");
                     //$a_entity_panel->setAttribute("color", "red");
+                    //$a_entity_panel->setAttribute("position", "1 0 -1");
                     $a_entity_panel->setAttribute("position", "1 0 -1");
                     $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
                     $a_entity_panel->setAttribute("visible", "false");

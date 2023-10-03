@@ -40,6 +40,11 @@
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
+
+    <!-- AVATAR STUFF -->
+    
+
+
     <script>
 
         // Global variable to switch between interfaces for interaction modes.
@@ -490,7 +495,18 @@
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
             <a-entity class="avatar" player-info>
-                <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
+                <a-entity
+                id="ready-player-me-avatar"
+                position="0.2 -0.22 0.2"
+                rotation="0 180 0" 
+                gltf-model="url(https://models.readyplayer.me/6516a0a71c810b0e7e7c8556.glb)"
+                animation-mixer
+                
+                >
+                <!-- animation="property: rotation; from: 0 0 0; to: 0 180 0; loop: true; dur: 1000"   -->
+            </a-entity>
+
+                <!-- <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
                 <a-entity class="face" position="0 0.05 0">
                     <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04">
                         <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
@@ -498,7 +514,7 @@
                     <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
                         <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
                     </a-sphere>
-                </a-entity>
+                </a-entity> -->
 
                 <!-- here we add a text component for a nametag; the value will be updated by the player-info component -->
                 <a-text
@@ -549,6 +565,9 @@
 
     <!-- Needed for MEDIAVERSE projects - DO NOT DELETE -->
     <a-entity id="player"></a-entity>
+
+
+    
 
 </a-scene>
 
