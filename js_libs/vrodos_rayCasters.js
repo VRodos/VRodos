@@ -306,12 +306,12 @@ function showProperties(event, object) {
 
     switch (object.category_slug) {
         case 'decoration':
-            displayArtifactProperties(event, name);
+            // Don't display a popup in decoration. You can only change name and glb file from asset editor!
             break;
         case 'poi-imagetext':
             displayPoiImageTextProperties(event, name);
             break;
-        case 'Points of Interest (Video)':
+        case 'video':
             displayPoiVideoProperties(event, name);
             break;
         case 'door':
@@ -319,12 +319,6 @@ function showProperties(event, object) {
             break;
         case 'poi-link':
             displayLinkProperties(event, name);
-            break;
-        case 'Gate':
-            displayGateProperties(event, name);
-            break;
-        case 'Box':
-            displayBoxProperties(event, name);
             break;
         case 'lightSun':
             displaySunProperties(event, name);
@@ -339,194 +333,6 @@ function showProperties(event, object) {
             displayAmbientProperties(event, name);
             break;
     }
-}
-
-/**
- *  Box label set
- */
-function displayBoxProperties(event, nameBoxSource) {
-
-    // Save the previous Box values (in case of  direct mouse click on another Box)
-    jQuery("#chemistryGateComponent").trigger("change");
-
-    clearAndUnbind("chemistryGateComponent");
-
-    var ppDiv = document.getElementById("chemistryGatePopupDiv");
-    var ppSelect = document.getElementById("chemistryGateComponent");
-
-    // Show Selection
-    jQuery("#chemistryGatePopupDiv").show();
-
-    ppDiv.style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppDiv.style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-
-    // Add options
-    var option;
-
-    // Prompt "Select"
-    option = document.createElement("option");
-    option.text = "Select a functional group";
-    option.value = "Select a functional group";
-    option.selected = true;
-    option.disabled = true;
-    ppSelect.add(option);
-
-    // Add available Functional Groups from database
-    var availFunctionalGroups = ['Various', 'Alcohol', 'Ketone'];
-
-
-    // Add options for each intersected object
-    for (var fgroup of availFunctionalGroups) {
-        option = document.createElement("option");
-        option.text = fgroup;
-        option.value = fgroup;
-        option.style.background = "#fff";
-        ppSelect.add(option);
-    }
-
-    // - Prompt "Cancel" -
-    option = document.createElement("option");
-    option.text = "Cancel";
-    option.value = "Cancel";
-    option.style.background = "#b7afaa";
-    ppSelect.add(option);
-    // -------------------
-
-    // On popup change
-    jQuery("#chemistryGateComponent").change(function (e) {
-
-        // Get the value
-        var valfgroup = jQuery("#chemistryGateComponent").val();
-
-        if (!valfgroup)
-            return;
-
-        if (valfgroup && valfgroup != "Cancel" && valfgroup != "Select") {
-            envir.scene.getObjectByName(nameBoxSource).chemical_functional_group = valfgroup.trim();
-        }
-
-        jQuery("#chemistryGatePopupDiv").hide();
-
-        clearAndUnbind("chemistryGateComponent");
-    });
-}
-
-/**
- *  Gate
- *
- * @param event
- * @param nameGateSource
- */
-function displayGateProperties(event, nameGateSource) {
-
-    // Save the previous MicroscopeTextbook values (in case of  direct mouse click on another microscope or textbook)
-    jQuery("#chemistrySceneSelectComponent").trigger("change");
-
-    clearAndUnbind("chemistrySceneSelectComponent");
-
-    var ppDiv = document.getElementById("chemistrySceneSelectPopupDiv");
-    var ppSelect = document.getElementById("chemistrySceneSelectComponent");
-
-    // Show the whole popup div
-    showWholePopupDiv(jQuery("#chemistrySceneSelectPopupDiv"), event);
-
-
-    // Add options
-    var option;
-
-    // Prompt "Select"
-    option = document.createElement("option");
-    option.text = "Select a scene";
-    option.value = "Select a scene";
-    option.selected = true;
-    option.disabled = true;
-    ppSelect.add(option);
-
-
-    //scenesTargetChemistry
-    // Add options for each intersected object
-    for (var sceneNameAndID of scenesTargetChemistry) {
-        option = document.createElement("option");
-        option.text = sceneNameAndID.examName;
-        option.value = sceneNameAndID.examID;
-        option.style.background = "#fff";
-        ppSelect.add(option);
-    }
-
-    // - Prompt "Cancel" -
-    option = document.createElement("option");
-    option.text = "Cancel";
-    option.value = "Cancel";
-    option.style.background = "#b7afaa";
-    ppSelect.add(option);
-    // -------------------
-
-    // Set from saved value
-    if (envir.scene.getObjectByName(nameGateSource).sceneID_target) {
-
-        jQuery("#chemistrySceneSelectComponent").val(
-            envir.scene.getObjectByName(nameGateSource).sceneID_target
-        );
-    }
-
-    //mdc.textfield.MDCTextfield.attachTo(document.getElementById('doorInputTextfield'));
-
-    // On popup change
-    jQuery("#chemistrySceneSelectComponent").change(function (e) {
-
-        // Get the value
-        var valTargetScene = jQuery("#chemistrySceneSelectComponent").find('option:selected').val();
-        var nameTargetScene = jQuery("#chemistrySceneSelectComponent").find('option:selected').text();
-
-        if (!valTargetScene)
-            return;
-
-        if (nameTargetScene && nameTargetScene != "Cancel" && nameTargetScene != "Select") {
-            envir.scene.getObjectByName(nameGateSource).sceneName_target = nameTargetScene;
-            envir.scene.getObjectByName(nameGateSource).sceneID_target = valTargetScene;
-        }
-        jQuery("#chemistrySceneSelectPopupDiv").hide();
-
-        clearAndUnbind("chemistrySceneSelectComponent");
-        //clearAndUnbindMicroscopeTextbookProperties();
-    });
-
-}
-
-/**
- *  Artifact properties
- *
- * @param event
- * @param name
- */
-function displayArtifactProperties(event, name) {
-
-    // The whole popup div
-    var ppPropertiesDiv = jQuery("#popUpArtifactPropertiesDiv");
-
-    // The checkbox only
-    var chboxReward = jQuery("#artifact_reward_checkbox");
-
-    var chboxOverrideMaterial = jQuery("#artifact_override_material_checkbox");
-
-    // Save the previous artifact properties values (in case of  direct mouse click on another item)
-    chboxReward.trigger("change");
-
-    chboxOverrideMaterial.trigger("change");
-
-    clearAndUnbind(null, null, "artifact_reward_checkbox");
-
-    clearAndUnbind(null, null, "artifact_override_material_checkbox");
-
-    chboxReward.prop('checked', envir.scene.getObjectByName(name).isreward === 1);
-    chboxOverrideMaterial.prop('checked', envir.scene.getObjectByName(name).overrideMaterial === "true");
-
-    // Show Selection
-    ppPropertiesDiv.show(function () { initPopsVals(); });
-    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-
-
 }
 
 /**
