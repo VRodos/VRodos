@@ -971,7 +971,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_exit_img_entity->setAttribute("scale", "0.2 0.2 0.2");
                     $a_exit_img_entity->setAttribute("original-scale", "0.2 0.2 0.2");
 
+                    $exit_desc_entity_panel = $dom->createElement("a-entity");
+                    $exit_desc_entity_panel->setAttribute("id", "exit_panel_$uuid");
+                    $exit_desc_entity_panel->setAttribute("mixin", "poiEscFrame");
+                    $exit_desc_entity_panel->setAttribute("scale", "1 1 1");
+                    $exit_desc_entity_panel->setAttribute("original-scale", "1 1 1");
+                    $exit_desc_entity_panel->setAttribute("class", "raycastable hideable non-clickable" );
+
+
                     $a_panel_entity->appendChild($a_exit_img_entity);
+                    $a_panel_entity->appendChild($exit_desc_entity_panel);
                     $a_panel_entity->appendChild($a_main_img_entity);
                     $a_panel_entity->appendChild($a_title_img_entity);
 
