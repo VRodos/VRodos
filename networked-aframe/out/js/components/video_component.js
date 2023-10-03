@@ -44,6 +44,34 @@ AFRAME.registerComponent('video-controls', {
 
         let media_panel = document.getElementById("mediaPanel");
         let recording_controls = document.getElementById("upload-recording-btn");
+        
+
+        const visibleHeightAtZDepth = ( depth ) => {
+            const camera = AFRAME.scenes[0].camera;
+            // compensate for cameras not positioned at z=0
+            const cameraOffset = camera.position.z;
+            if ( depth < cameraOffset ) depth -= cameraOffset;
+            else depth += cameraOffset;
+          
+            // vertical fov in radians
+            const vFOV = camera.fov * Math.PI / 180; 
+          
+            // Math.abs to ensure the result is always positive
+            return 2 * Math.tan( vFOV / 2 ) * Math.abs( depth );
+          };
+          
+        const visibleWidthAtZDepth = ( depth ) => {
+            const camera = AFRAME.scenes[0].camera;
+            const height = visibleHeightAtZDepth( depth, camera );
+            let width = height * camera.aspect;
+            return width;
+        };
+
+
+        let panel_pos_dynamic;
+        let panel_z = -1;
+
+        
 
         cam.add(videoPanel);
 
@@ -91,7 +119,7 @@ AFRAME.registerComponent('video-controls', {
         let width = 20;
         let dist = 25;
 
-        function addToCam(obj, non_visible, trans, opac) {
+        function handleCamEntity(obj, non_visible, trans, opac) {
 
             if (non_visible) {
                 obj.object3D.renderOrder = 9999999;
@@ -112,7 +140,7 @@ AFRAME.registerComponent('video-controls', {
 
         };
 
-        function addToCamText(obj, non_visible, trans, opac) {
+        function handleCamEntityText(obj, non_visible, trans, opac) {
             if (non_visible) {
                 obj.object3D.renderOrder = 9999999;
                 //clipIntersection
@@ -159,7 +187,9 @@ AFRAME.registerComponent('video-controls', {
         });
 
         exEl.addEventListener("mouseup", function (event) {
-            addToCam(videoPanel, false, true, 0.3);
+           
+            videoPanel.setAttribute("position", panel_pos_dynamic);
+            handleCamEntity(videoPanel, false, true, 0.3);
             if (video.paused) {
                 console.log("Video Paused. Exiting...")
 
@@ -209,6 +239,12 @@ AFRAME.registerComponent('video-controls', {
             videoDisplay.setAttribute("rotation", "0 0 0");
             console.log(videoBorder);
 
+            handleCamEntity(videoPanel, false, true, 1);
+            handleCamEntity(fsEl, false, true, 1);
+            handleCamEntity(plEl, false, true, 1);
+            handleCamEntity(exEl, false, true, 1);
+            handleCamEntityText(titEl, false, true, 1);
+
             if (video.paused) {
                 video.play();
 
@@ -230,7 +266,31 @@ AFRAME.registerComponent('video-controls', {
             playUpd(plEl);
         });
 
+        function removeVRTraces(){
+            restoreVid();
+            videoPanel.setAttribute("position", panel_pos_dynamic);
+            handleCamEntity(videoPanel, false, true, 0.3);
+            if (video.paused) {
+                console.log("Video Paused. Exiting...")
+
+            }
+            else {
+                video.pause();
+
+            }
+            videoDisplay.classList.remove("non-clickable");
+            videoPanel.classList.remove("non-clickable");
+            backgroundEl.setAttribute("raycaster","objects: .raycastable");
+            if(rightHand)
+                rightHand.setAttribute("raycaster","objects: .raycastable");
+
+        }
+
         function restoreVid(){
+
+
+
+
             let projType = backgroundEl.getAttribute("scene-settings").pr_type;
 
             if (projType != "vrexpo_games")
@@ -279,11 +339,18 @@ AFRAME.registerComponent('video-controls', {
             console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
             visCollection = [];
         }
+        document.querySelector('a-scene').addEventListener('exit-vr',  function () {
+            removeVRTraces()
+        });
+     
 
+       
         if (video.getAttribute("src")){
 
             videoBorder.addEventListener("click", function (event) {
 
+                panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z; //From rightmost position  subtract panel width (0.2) and padding
+               
                 if (!browsingModeVR) {
 
                     let video_element = document.getElementById("video-panel-video");
@@ -306,21 +373,23 @@ AFRAME.registerComponent('video-controls', {
 
 
                 } else {
-
-                    addToCam(videoPanel, true, true, 1);
-                    addToCam(fsEl, true, true, 1);
-                    addToCam(plEl, true, true, 1);
-                    addToCam(exEl, true, true, 1);
-                    addToCamText(titEl, true, true, 1);
-                    videoDisplay.classList.add("non-clickable");
-                    videoPanel.classList.add("non-clickable");
-                    backgroundEl.setAttribute("raycaster","objects: .non-clickable");
-                    if(rightHand)
-                        rightHand.setAttribute("raycaster","objects: .non-clickable");
-                    playUpd(plEl);
-
+                    handleCamEntity(videoPanel, true, true, 1);
+                    handleCamEntity(fsEl, true, true, 1);
+                    handleCamEntity(plEl, true, true, 1);
+                    handleCamEntity(exEl, true, true, 1);
+                    handleCamEntityText(titEl, true, true, 1);
+                 
                     if (video.paused) {
                         console.log("border clicked");
+                       
+                        videoPanel.setAttribute("position", panel_pos_dynamic);
+                        
+                        videoDisplay.classList.add("non-clickable");
+                        videoPanel.classList.add("non-clickable");
+                        backgroundEl.setAttribute("raycaster","objects: .non-clickable");
+                        if(rightHand)
+                            rightHand.setAttribute("raycaster","objects: .non-clickable");
+                        playUpd(plEl);
                     }
                     else if (video.play){
                         restoreVid();
