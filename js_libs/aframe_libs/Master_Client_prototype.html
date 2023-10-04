@@ -261,19 +261,7 @@
         })
 
 
-        AFRAME.registerComponent('left-thumbstick', {
-            init: function () {
-                var hand = this.el;
-                var cameraRig = document.querySelector('#camera-rig');
-
-                hand.addEventListener('thumbstickmoved', function (event) {
-                    var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
-                    cameraRig.object3D.position.add(movementVector.multiplyScalar(cameraRig.getAttribute('movement-controls').data.speed));
-                });
-            }
-        });
-
-        //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
+    
 
         AFRAME.registerComponent('show-position', {
             init: function () {
