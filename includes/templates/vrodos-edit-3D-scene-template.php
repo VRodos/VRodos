@@ -927,6 +927,7 @@ wp_head();
         if (resources3D["enableGeneralChat"]) {
             document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
         }
+        
         if (resources3D["backgroundStyleOption"]) {
             let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
            
@@ -965,9 +966,15 @@ wp_head();
                 custom_img_sel.disabled = false;
                 preset_sel.disabled = true;
                 color_sel.disabled = true;
-                envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
                 break;
             }
+            envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
+            if (resources3D["backgroundImagePath"] && resources3D["backgroundImagePath"] != 0){
+                console.log(resources3D["backgroundImagePath"]);
+                document.getElementById('uploadImgThumb').src = resources3D["backgroundImagePath"];
+                document.getElementById('uploadImgThumb').hidden = false;
+            }
+           
             envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
            
             //saveChanges();

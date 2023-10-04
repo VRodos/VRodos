@@ -35,6 +35,7 @@ function imgUpload(){
                     let data = JSON.parse(cleanResponse)
                     console.log(data.url);
                     envir.scene.img_bcg_path = data.url;
+                    
 
                     jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
@@ -48,6 +49,8 @@ function imgUpload(){
                     //var json = JSON.stringify(test);
 
                     //console.log(test);
+                    document.getElementById('uploadImgThumb').src = data.url;
+                    document.getElementById('uploadImgThumb').hidden = false;
 
                     vrodos_saveSceneAjax();
                 }

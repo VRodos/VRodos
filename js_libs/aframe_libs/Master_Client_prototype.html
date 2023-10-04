@@ -64,8 +64,7 @@
                     ]
                 });
             }
-            const components = NAF.schemas.getComponentsOriginal(template);
-            return components;
+            return NAF.schemas.getComponentsOriginal(template);
         };
 
         window.ntExample = {
@@ -149,12 +148,17 @@
                 console.log(this.data.presChoice);
 
                 let cam = document.querySelector("#cameraA");
-                console.log(cam);
+
                 if (this.data.pr_type !== "vrexpo_games")
                     cam.setAttribute("camera", "fov: 60");
                 else{
                     cam.setAttribute("fov", "60");
                     cam.setAttribute("camera", "fov: 60"); //temp based on camera settings
+
+                    // Hide eyes from my avatar on self
+                    const parent_avatar = document.getElementById('cameraA');
+                    let my_face = parent_avatar.querySelector('.face');
+                    my_face.setAttribute("visible", "false");
 
                 }
                 let backgroundEl = document.querySelector('#aframe-scene-container');
@@ -163,7 +167,7 @@
                 switch(this.data.selChoice){
                     case "0":
                         backgroundEl.setAttribute("background", "color", "#ffffff");
-                        
+
                         break;
                     case "1":
                         backgroundEl.setAttribute("background", "color", this.data.color);
@@ -173,7 +177,7 @@
                         backgroundEl.setAttribute("environment", "ground", "flat");
                         break;
                     case "3":
-                      
+
                         let customImgAsset = document.querySelector('#custom_sky');
                         if(customImgAsset.getAttribute("src")){
                             let skyElem = document.createElement('a-sky');
@@ -185,7 +189,7 @@
                         else{
                             backgroundEl.setAttribute("background", "color", "#ffffff");
                         }
-                      
+
 
                         break;
 
@@ -478,6 +482,23 @@
     <div class="mdc-dialog__backdrop"></div>
 </aside>
 
+<aside id="video-controls-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+       aria-labelledby="Video controls popup" aria-describedby="Show Video controls">
+    <div class="mdc-dialog__surface">
+
+        <video controls controlsList="nodownload" id="video-panel-video" height="100%" width="100%" >
+            Your browser does not support video.
+        </video>
+
+        <footer class="mdc-dialog__footer">
+            <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--cancel mdc-button--raised">Close</a>
+            <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised" style="display: none;" tabIndex="0">OK</a>
+        </footer>
+    </div>
+    <div class="mdc-dialog__backdrop"></div>
+</aside>
+
+
 <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
          renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: blue"
          vr-mode-ui="enabled: true"
@@ -491,6 +512,10 @@
     <!--environment="ground:none"-->
 
     <a-assets>
+
+        <template id="avatar-face-template-expo" >
+
+        </template>
 
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
@@ -508,8 +533,8 @@
 
                 <!-- <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
                 <a-entity class="face" position="0 0.05 0">
-                    <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04">
-                        <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                    <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04" >
+                        <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2" ></a-sphere>
                     </a-sphere>
                     <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
                         <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
@@ -551,23 +576,26 @@
                  animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
         <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
                  material="color: white; shader: flat" material="shader: flat" position="0 0 0.005"></a-mixin>
-        <a-mixin id="poiImage" geometry="primitive: plane; width: 1.5; height: 0.81"
-                 material="shader: flat; transparent: true" position="0 0.495 0.002"></a-mixin>
-        <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.5; height: 1.5"
+        <a-mixin id="poiImage" geometry="primitive: plane; width: 1.4; height: 0.8"
+                 material="shader: flat;  transparent: true" position="0 0.455 0.002"></a-mixin>
+        <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.4; height: 1.4"
                  material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
         <a-mixin id="poiEsc" geometry="primitive: plane; width: 1; height: 1"
-                  position="0.62 0.8 0.002"></a-mixin>
+                 position="0.58 0.78 0.002"></a-mixin>
         <a-mixin id="poiImgNext" geometry="primitive: plane; width: 1; height: 1"
-                 material="shader: flat; transparent: true" position="0.1 -0.79 0.002"></a-mixin>
+                 material="shader: flat; transparent: true" position="1 -0.5 0.002"></a-mixin>
         <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 1; height: 1"
-                 material="shader: flat; transparent: true" position="-0.1 -0.79 0.002"></a-mixin>
+                 material="shader: flat; transparent: true" position="-1 -0.5 0.002"></a-mixin>
+        <a-mixin id="poiEscFrame" geometry="primitive: circle; radius: 0.1"
+                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true" position="0.58 0.78 0.002"></a-mixin>
+        <a-mixin id="poiImgPrevFrame" geometry="primitive: circle; radius: 0.1"
+                 material="shader: flat; color: #f1f2f6; depthTest: false; transparent: true" position="-1 -0.5 0.002"></a-mixin>
+        <a-mixin id="poiImgNextFrame" geometry="primitive: circle; radius: 0.1"
+                 material="shader: flat; color: #f1f2f6; depthTest: false; transparent: true" position=" 1 -0.5 0.002"></a-mixin>
     </a-assets>
 
-    <!-- Needed for MEDIAVERSE projects - DO NOT DELETE -->
     <a-entity id="player"></a-entity>
 
-
-    
 
 </a-scene>
 
@@ -584,24 +612,25 @@
     });
 
 
+
+
     /* CHAT COMPONENT */
     let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
     let chatInput = document.getElementById('chatInput');
     let chatLog = document.getElementById('chat-messages');
 
+    NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
+        let dateString = getChatCurrentTimeString();
+        chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
+    } )
+
     sendMsgChatBtn.addEventListener("click", evt => {
         let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
 
-        let date = new Date;
-        let dateString = '[' + String(date.getHours()).padStart(2, '0') + ':' +
-            String(date.getMinutes()).padStart(2, '0') + ':' +
-            String(date.getSeconds()).padStart(2, '0') + ']';
-
+        let dateString = getChatCurrentTimeString();
         chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
         NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
-        NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
-            chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
-        } )
+
     })
 
     let chatExpanded = false;
@@ -852,29 +881,6 @@
         }
     });
 
-    // NOT NEEDED: avatar-template uses webcam so no color.
-    /*/!* Define custom schema for syncing avatar color, set by random-color *!/
-    NAF.schemas.add({
-        template: '#avatar-template',
-        components: [
-            'position',
-            'rotation'
-        ],
-    });*/
-
-    // In comments because right now we set the color from another function
-    /*NAF.schemas.add({
-        template: '#avatar-template-expo',
-        components: [
-            'position',
-            'rotation',
-            {
-                selector: '.model',
-                component: 'gltf-model'
-            }
-        ]
-    });*/
-
     /* Called by Networked-Aframe when connected to server */
     function onConnect() {
         console.log("onConnect", new Date());
@@ -1077,6 +1083,13 @@
 
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
     };
+
+    let getChatCurrentTimeString = () => {
+        let date = new Date;
+        return '[' + String(date.getHours()).padStart(2, '0') + ':' +
+            String(date.getMinutes()).padStart(2, '0') + ':' +
+            String(date.getSeconds()).padStart(2, '0') + ']';
+    }
 
 </script>
 
