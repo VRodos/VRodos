@@ -112,11 +112,11 @@ AFRAME.registerComponent('info-panel', {
                 expected_width > 1.4 ? panel_pad = expected_width : panel_pad = 1.4;
 
                 if (!this.DescriptionEl) {
-                    if (img.naturalWidth /1000 < expected_width && img.naturalHeight /1000 < expected_height)
+                    if (img.naturalWidth /987  < expected_width && img.naturalHeight /987  < expected_height)
                     {
 
-                        expected_width = img.naturalWidth /1000;
-                        expected_height = img.naturalHeight /1000;
+                        expected_width = img.naturalWidth /987 ;
+                        expected_height = img.naturalHeight /987 ;
 
 
                     }else{
@@ -130,10 +130,10 @@ AFRAME.registerComponent('info-panel', {
                     
                 } else {
 
-                    if (img.naturalWidth /1000 < expected_width && img.naturalHeight /1000 < expected_height)
+                    if (img.naturalWidth /987  < expected_width && img.naturalHeight /987  < expected_height)
                     {
-                        expected_width = img.naturalWidth /1000;
-                        expected_height = img.naturalHeight /1000;
+                        expected_width = img.naturalWidth /987 ;
+                        expected_height = img.naturalHeight /987 ;
 
 
                     }else{
