@@ -62,6 +62,7 @@ function bcgRadioSelect(option){
     let color_sel = document.getElementById('jscolorpick');
     let custom_img_sel = document.getElementById('img_upload_bcg');
     let preset_sel = document.getElementById('presetsBcg');
+    
 
 
     switch (option.value) {
@@ -91,11 +92,14 @@ function bcgRadioSelect(option){
         custom_img_sel.disabled = false;
         preset_sel.disabled = true;
         color_sel.disabled = true;
-        // if (envir.scene.img_bcg_path)
-        // {
-        //     const loader = new THREE.TextureLoader();
-        //     envir.scene.background = loader.load( envir.scene.img_bcg_path  );
-        // }
+        if (envir.scene.img_bcg_path && envir.scene.img_bcg_path !=0)
+        {
+           
+            //const loader = new THREE.TextureLoader();
+            //envir.scene.background = loader.load( envir.scene.img_bcg_path  );
+            document.getElementById('uploadImgThumb').src = envir.scene.img_bcg_path;
+            document.getElementById('uploadImgThumb').hidden = false;
+        }
         break;
         
     }

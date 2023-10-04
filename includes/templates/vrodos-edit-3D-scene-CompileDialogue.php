@@ -43,11 +43,11 @@
 
             <div id="compilationProgressText" class="mdc-typography--title"></div>
 
-            <hr class="WhiteSpaceSeparator" style="margin-top: 0;">
+            <hr class="WhiteSpaceSeparator" style="margin-top: 0;" tabIndex="0">
 
             <a id="compileProceedBtn" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" style="width: 20%;">Build</a>
 
-            <hr class="separator">
+            <hr class="separator" >
 
             <div id="previewApp" class="previewApp" style="display:inline-block"></div>
 

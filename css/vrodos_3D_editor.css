@@ -588,6 +588,18 @@ html [type="button"],
     font-size: 18px;
 }
 
+.thumbnailImg img {
+    border: 1px solid #ddd;
+    width:30px;
+    border-radius: 4px;  
+    transform: scale(1);
+  }
+  
+.thumbnailImg img:hover {
+    box-shadow: 0 0 2px 1px rgba(10, 54, 248, 0.5);  /* TODO Match with VROdos blue theme*/
+    transform: scale(3);
+}
+
 
 .ImageContainer {
     /*width:100%;*/

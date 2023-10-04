@@ -160,6 +160,9 @@
                     </div>
                 </div>
                 <label id="sceneCustomImageRadio-label" for="sceneCustomImage" style="margin-bottom: 0;">Custom Image</label>
+                <div class="thumbnailImg">
+                <img id="uploadImgThumb" hidden>
+                </div>
                 <input id="img_upload_bcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()" style="font-size: 10px;" />
             </li>
             </label>
