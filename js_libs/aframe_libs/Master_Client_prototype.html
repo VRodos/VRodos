@@ -40,11 +40,6 @@
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
-
-    <!-- AVATAR STUFF -->
-    
-
-
     <script>
 
         // Global variable to switch between interfaces for interaction modes.
@@ -156,9 +151,9 @@
                     cam.setAttribute("camera", "fov: 60"); //temp based on camera settings
 
                     // Hide eyes from my avatar on self
-                    const parent_avatar = document.getElementById('cameraA');
-                    let my_face = parent_avatar.querySelector('.face');
-                    my_face.setAttribute("visible", "false");
+                    // const parent_avatar = document.getElementById('cameraA');
+                    // let my_face = parent_avatar.querySelector('.face');
+                    // my_face.setAttribute("visible", "false");
 
                 }
                 let backgroundEl = document.querySelector('#aframe-scene-container');
@@ -261,7 +256,19 @@
         })
 
 
-    
+        AFRAME.registerComponent('left-thumbstick', {
+            init: function () {
+                var hand = this.el;
+                var cameraRig = document.querySelector('#cameraA');
+
+                hand.addEventListener('thumbstickmoved', function (event) {
+                    var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
+                    cameraRig.object3D.position.add(movementVector.multiplyScalar(cameraRig.getAttribute('movement-controls').data.speed));
+                });
+            }
+        });
+
+        //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
 
         AFRAME.registerComponent('show-position', {
             init: function () {
@@ -303,8 +310,9 @@
                     cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
                     cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
 
-            //console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
-            });
+
+                    console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
+                });
             }
         });
 
@@ -449,8 +457,6 @@
     </div>
 </div>
 
- <!-- ORESTIS -->
-
 <!-- IMG POI Dialog component -->
 <aside id="poi-img-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
        aria-labelledby="Image POI popup" aria-describedby="Show Image POI details"
@@ -500,7 +506,7 @@
 
 
 <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
-         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: blue"
+         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
          vr-mode-ui="enabled: true"
          networked-scene="
             room: roomname;
@@ -525,10 +531,9 @@
                 position="0.2 -0.22 0.2"
                 rotation="0 180 0" 
                 gltf-model="url(https://models.readyplayer.me/6516a0a71c810b0e7e7c8556.glb)"
-                animation-mixer
-                
+                animation-mixer                               
                 >
-                <!-- animation="property: rotation; from: 0 0 0; to: 0 180 0; loop: true; dur: 1000"   -->
+                <!--    -->
             </a-entity>
 
                 <!-- <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
