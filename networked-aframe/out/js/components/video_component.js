@@ -53,8 +53,10 @@ AFRAME.registerComponent('video-controls', {
             if ( depth < cameraOffset ) depth -= cameraOffset;
             else depth += cameraOffset;
           
+            console.log(camera.fov);
             // vertical fov in radians
-            const vFOV = camera.fov * Math.PI / 180; 
+            //const vFOV = camera.fov * Math.PI / 180; 
+            const vFOV = 60 * Math.PI / 180;        //FoV should be taken from camera but in extreme cases the fov is not restored on time
           
             // Math.abs to ensure the result is always positive
             return 2 * Math.tan( vFOV / 2 ) * Math.abs( depth );
