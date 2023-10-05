@@ -137,9 +137,7 @@ AFRAME.registerComponent('video-controls', {
             else {
                 obj.setAttribute("visible", "false");
                 obj.setAttribute("scale", "0.001 0.001 0.001");
-
             }
-
         };
 
         function handleCamEntityText(obj, non_visible, trans, opac) {
@@ -350,7 +348,7 @@ AFRAME.registerComponent('video-controls', {
         if (video.getAttribute("src")){
 
             videoBorder.addEventListener("click", function (event) {
-
+                    //video ui component
                 panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z; //From rightmost position  subtract panel width (0.2) and padding
                
                 if (!browsingModeVR) {
