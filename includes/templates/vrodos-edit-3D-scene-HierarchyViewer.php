@@ -111,7 +111,7 @@
 
                 </div>
                 <label for="sceneColorRadio" style="vertical-align: middle; cursor: pointer; font-size:xx-small">Background Color</label>
-                <input id="jscolorpick" class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
+                <input id="jscolorpick" hidden class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
                 <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
 
             </li>
@@ -127,7 +127,7 @@
                     </div>
                 </div>
                 <label id="sceneSkyRadio-label" for="sceneSky" style="margin-bottom: 0;">Presets</label>
-                <select name="presetsBcg" id="presetsBcg" disabled style="margin-right: 100px; font-size: 10px;">
+                <select name="presetsBcg" hidden id="presetsBcg" disabled style=" font-size: 10px;">
                     <option value="default">Default</option>
                     <option value="egypt">Egypt</option>
                     <option value="forest">Forest</option>
@@ -163,7 +163,7 @@
                 <div class="thumbnailImg">
                 <img id="uploadImgThumb" hidden>
                 </div>
-                <input id="img_upload_bcg" class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()" style="font-size: 10px;" />
+                <input id="img_upload_bcg" hidden class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()" style="margin-left: 50px; font-size: 10px;" />
             </li>
             </label>
         </ul>

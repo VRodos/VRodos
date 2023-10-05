@@ -921,6 +921,8 @@ wp_head();
         let custom_img_sel = document.getElementById('img_upload_bcg');
         let preset_sel = document.getElementById('presetsBcg');
 
+        let img_thumb = document.getElementById('uploadImgThumb');
+
         // Init UI values
 
 
@@ -937,18 +939,33 @@ wp_head();
                 custom_img_sel.disabled = true;
                 preset_sel.disabled = true;
                 color_sel.disabled = true;
+
+                color_sel.hidden = true;
+                preset_sel.hidden = true;
+                custom_img_sel.hidden = true;
+                img_thumb.hidden = true;
                 break;
             case 1:
                 document.getElementById("sceneColorRadio").checked = true;
                 color_sel.disabled = false;
                 preset_sel.disabled = true;
                 custom_img_sel.disabled = true;
+
+                color_sel.hidden = false;
+                preset_sel.hidden = true;
+                custom_img_sel.hidden = true;
+                img_thumb.hidden = true;
                 break;
             case 2:
                 document.getElementById("sceneSky").checked = true;
                 custom_img_sel.disabled = true;
                 preset_sel.disabled = false;
                 color_sel.disabled = true;
+
+                color_sel.hidden = true;
+                preset_sel.hidden = false;
+                custom_img_sel.hidden = true;
+                img_thumb.hidden = true;
                 envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
                 envir.scene.preset_selection = resources3D["backgroundPresetOption"];
                 // envir.scene.backgroundPresetOption = preset_sel.value;
@@ -966,14 +983,19 @@ wp_head();
                 custom_img_sel.disabled = false;
                 preset_sel.disabled = true;
                 color_sel.disabled = true;
+
+                color_sel.hidden = true;
+                preset_sel.hidden = true;
+                custom_img_sel.hidden = false;
+
+                if (resources3D["backgroundImagePath"] ){
+                    img_thumb.hidden.src = resources3D["backgroundImagePath"];
+                    img_thumb.hidden.hidden = false;
+                }
                 break;
             }
             envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-            if (resources3D["backgroundImagePath"] && resources3D["backgroundImagePath"] != 0){
-                console.log(resources3D["backgroundImagePath"]);
-                document.getElementById('uploadImgThumb').src = resources3D["backgroundImagePath"];
-                document.getElementById('uploadImgThumb').hidden = false;
-            }
+          
            
             envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
            
