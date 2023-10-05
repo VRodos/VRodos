@@ -132,7 +132,6 @@ AFRAME.registerComponent('video-controls', {
 
                 obj.setAttribute("visible", "true");
                 obj.setAttribute("scale", "1 1 1");
-
             }
             else {
                 obj.setAttribute("visible", "false");
@@ -348,8 +347,8 @@ AFRAME.registerComponent('video-controls', {
         if (video.getAttribute("src")){
 
             videoBorder.addEventListener("click", function (event) {
-                    //video ui component
-                panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z; //From rightmost position  subtract panel width (0.2) and padding
+                //video ui component
+                panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 1) + " " + "0" + " " + panel_z; //From rightmost position  subtract panel width (0.2) and padding
                
                 if (!browsingModeVR) {
 
