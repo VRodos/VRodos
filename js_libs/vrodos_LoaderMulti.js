@@ -6,14 +6,14 @@
 
 class VRodos_LoaderMulti {
 
-    constructor(who) {
-    };
+    constructor(who) { };
 
     load(manager, resources3D, pluginPath) {
 
         const loader = new THREE.GLTFLoader(manager);
 
         for (let n in resources3D) {
+
             (function (name) {
 
                 if (name === 'ClearColor' || name === 'toneMappingExposure' | name === 'enableEnvironmentTexture')
@@ -37,7 +37,6 @@ class VRodos_LoaderMulti {
 
                         // called when the resource is loaded
                         function (objectMain) {
-
 
                             let object = objectMain.scene.children[0];
                             object.name = "Camera3Dmodel";
@@ -96,8 +95,8 @@ class VRodos_LoaderMulti {
                                 let glbURL = resourcesGLB['glbURL'];
                                 if (resources3D[name]['category_slug'] == "video")
                                     glbURL = pluginPath + '/assets/objects/tv_flat_scaled_rotated.glb';
-                                // Instantiate a loader
 
+                                // Instantiate a loader
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
                                 document.getElementById("result_download").innerHTML = "Loading ...";
 
@@ -117,7 +116,17 @@ class VRodos_LoaderMulti {
                                         object = setObjectProperties(object.scene, name, resources3D);
 
                                         object.isSelectableMesh = true;
+
+
+                                        // workaround to show files that are getting hidden
+                                        if (object.children ==='') {
+                                            object.children = {};
+                                        }
+                                        console.log(object.children);
+
                                         envir.scene.add(object);
+
+
                                     },
                                     // called while loading is progressing
                                     function (xhr) {
@@ -128,7 +137,7 @@ class VRodos_LoaderMulti {
                                     },
                                     // called when loading has errors
                                     function (error) {
-                                        console.log('An GLB loading error happened. Error 1590', error);
+                                        console.log('A GLB loading error happened. Error 1590', error);
                                     }
                                 );
                             },
@@ -143,10 +152,10 @@ class VRodos_LoaderMulti {
 
                     } else {
 
-                        //alert("Unsupported 3D model format. Error 118.");
-                        // console.log("name", name);
-                        // console.log("glbID", resources3D[name]['glbID']);
-                        // console.log("Unsupported 3D model format: ERROR: 118");
+                        /*console.log("Unsupported 3D model format. Error 118.");
+                        console.log("name", name);
+                        console.log("glbID", resources3D[name]['glbID']);
+                        console.log("Unsupported 3D model format: ERROR: 118");*/
                     }
                 }
             })(n);
@@ -164,7 +173,6 @@ function setObjectProperties(object, name, resources3D) {
         }
     }
 
-
     object.isSelectableMesh = true;
     object.isLight = resources3D[name]['isLight'];
     object.fnPath = resources3D[name]['path'];
@@ -173,8 +181,8 @@ function setObjectProperties(object, name, resources3D) {
     object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
     object['glb_id'] = resources3D[name]['glb_id'];
 
-
-    if (resources3D[name]['overrideMaterial'] === "true") {
+    // Not needed anymore, we dont override textures anymore
+    /*if (resources3D[name]['overrideMaterial'] === "true") {
         if (object.children[0].isMesh) {
             object.children[0].material.color.setHex("0x" + resources3D[name]['color']);
             object.children[0].material.emissive.setHex("0x" + resources3D[name]['emissive']);
@@ -184,16 +192,9 @@ function setObjectProperties(object, name, resources3D) {
             object.children[0].receiveShadow = true;
             object.children[0].castShadow = true;
         }
-    }
+    }*/
     //============== Video texture ==========
 
-
-    if (resources3D[name]['videoTextureSrc']) {
-        if (resources3D[name]['videoTextureSrc'] !== "undefined") {
-            console.log("The object has video texture:", resources3D[name]['videoTextureSrc'])
-            startVideo(resources3D, name);
-        }
-    }
 
     object.position.set(
         resources3D[name]['trs']['translation'][0],
@@ -212,56 +213,4 @@ function setObjectProperties(object, name, resources3D) {
 
 
     return object;
-}
-
-function startVideo(resources3D, name) {
-
-    var videoDom = Array();
-    var videoTexture = Array();
-
-    videoDom[name] = document.createElement('video');
-    videoDom[name].autoplay = true;
-    videoDom[name].muted = true;
-    videoDom[name].src = resources3D[name]['videoTextureSrc'];
-    videoDom[name].load();
-    videoTexture[name] = new THREE.VideoTexture(videoDom[name]);
-
-    videoTexture[name].wrapS = videoTexture[name].wrapT = THREE.RepeatWrapping;
-
-    var rX = resources3D[name]['videoTextureRepeatX'];
-    var rY = resources3D[name]['videoTextureRepeatY'];
-
-    videoTexture[name].repeat.set(rX, rY);
-    videoTexture[name].rotation = resources3D[name]['videoTextureRotation'];
-
-    var cX = resources3D[name]['videoTextureCenterX'];
-    var cY = resources3D[name]['videoTextureCenterY'];
-    videoTexture[name].center = new THREE.Vector2(cX, cY);
-
-
-    var cHex = "#" + resources3D[name]['color'];
-
-    var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture[name], side: THREE.DoubleSide, color: cHex });
-
-
-    setTimeout(function () {
-
-        envir.scene.getObjectByName(name).children[0].material = movieMaterial;
-
-        // const promise = videoDom[name].play();
-        // if(promise !== undefined){
-        //     promise.then(() => {
-        //         // Autoplay started
-        //     }).catch(error => {
-        //         // Autoplay was prevented.
-        //         videoDom[name].muted = false;
-        //         videoDom[name].play();
-        //     });
-        // }
-
-        document.body.addEventListener("mousemove", function () {
-            videoDom[name].play();
-        });
-
-    }, 1000);
 }

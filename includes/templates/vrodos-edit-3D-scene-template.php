@@ -596,7 +596,6 @@ wp_head();
     <script type="text/javascript">
 
         let mdc = window.mdc;
-
         mdc.autoInit();
 
         // Delete scene dialogue
@@ -607,196 +606,275 @@ wp_head();
         let compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
         compileDialog.focusTrap_.deactivate();
 
-
-        // load asset browser with data
-        jQuery(document).ready(function(){
-
-            vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
-
-            // make asset browser draggable: not working without get_footer
-            // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
-        });
-
-    </script>
-
-
-    <!--  Part 3: Start 3D with Javascript   -->
-    <script>
-
-        // id of animation frame is used for canceling animation when dat-gui changes
-        let id_animation_frame;
-
-        // all 3d dom
         let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
-
-        // Selected object name
-        var selected_object_name = '';
-
-        // Add 3D gui widgets to gui vr_editor_main_div
-        let guiContainer = document.getElementById('numerical_gui-container');
-        guiContainer.appendChild(controlInterface.domElement);
-        // guiContainer.appendChild(controlInterface.rotate.domElement);
-        // guiContainer.appendChild(controlInterface.scale.domElement);
-
-        // camera, scene, renderer, lights, stats, floor, browse_controls are all children of Environmentals instance
         var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
         envir.is2d = true;
-
-        // Controls with axes (Transform, Rotate, Scale)
 
         var transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
 
+        // id of animation frame is used for canceling animation when dat-gui changes
+        let id_animation_frame;
 
-        // ----------- Extend capabilities of Transform Controls ----------------
-
-        // // lines denoting angle for rotation mode
-        // angle_line_geometryX = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,1.1,0], 3 ) );
-        // angle_line_geometryY = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,0,1.1], 3 ) );
-        // angle_line_geometryZ = new THREE.BufferGeometry().setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0,0,1.1,0], 3 ) );
-        //
-        //
-        //
-        // var angle_lineX = new THREE.Line( angle_line_geometryX, new THREE.GizmoLineMaterial( { color: 0xff0000 } ) );
-        // angle_lineX.visible = false;
-        // angle_lineX.renderOrder = 1;
-        // angle_lineX.name = "red";
-        // var angle_lineY = new THREE.Line( angle_line_geometryY, new THREE.GizmoLineMaterial( { color: 0x00ff00 } ) );
-        // angle_lineY.visible = false;
-        // angle_lineY.renderOrder = 1;
-        // angle_lineY.name = "green";
-        // var angle_lineZ = new THREE.Line( angle_line_geometryZ, new THREE.GizmoLineMaterial( { color: 0x0000ff } ) );
-        // angle_lineZ.visible = false;
-        // angle_lineZ.renderOrder = 1;
-        // angle_lineZ.name = "blue";
-        //
-        //
-        // transform_controls.children.unshift( angle_lineZ );
-        // transform_controls.children.unshift( angle_lineY );
-        // transform_controls.children.unshift( angle_lineX );
-        //
-        // // 2D info label
-        // var textInfo = document.createElement('div');
-        // textInfo.className = 'label';
-        // textInfo.style.color = 'rgb(' + 255 + ',' + 255 + ',' + 255 + ')';
-        // textInfo.style.background= 'rgb(' + 210 + ',' + 210 + ',' + 210 + ')';
-        // textInfo.style.padding = "5px";
-        // textInfo.style.borderRadius="20px";
-        // textInfo.textContent = "";
-        //
-        // var labelInfo = new THREE.CSS2DObject(textInfo);
-        //
-        // transform_controls.add(labelInfo);
-
-        // ---------------------------------------------------------------------
-
+        // Selected object name
+        var selected_object_name = '';
 
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
         let firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
-        // Hide (right click) panel
-        hideObjectPropertiesPanels();
+        // load asset browser with data
+        jQuery(document).ready( function(){
 
-        // Add Listeners for: When Dat.Gui changes update php, javascript vars and transform_controls
-        controllerDatGuiOnChange();
+            vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
+            // make asset browser draggable: not working without get_footer
+            // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
 
-        // Add lights on scene
-        let lightsPawnLoader = new VRodos_LightsPawn_Loader();
-        lightsPawnLoader.load(resources3D);
 
-        // Add all in hierarchy viewer
-        setHierarchyViewer();
+            // Add 3D gui widgets to gui vr_editor_main_div
+            let guiContainer = document.getElementById('numerical_gui-container');
+            guiContainer.appendChild(controlInterface.domElement);
+            // guiContainer.appendChild(controlInterface.rotate.domElement);
+            // guiContainer.appendChild(controlInterface.scale.domElement);
 
-        // Add transform controls to scene
-        envir.scene.add(transform_controls);
 
-        // Load Manager
-        // Make progress bar visible
-        jQuery("#progress").get(0).style.display = "block";
-        jQuery("#progressWrapper").get(0).style.visibility = "visible";
-        document.getElementById("result_download").innerHTML = "Loading";
+            // Hide (right click) panel
+            hideObjectPropertiesPanels();
 
-        // Make a Loading Manager
-        let manager = new THREE.LoadingManager();
+            // Add Listeners for: When Dat.Gui changes update php, javascript vars and transform_controls
+            controllerDatGuiOnChange();
 
-        // On progress messages (loading)
-        manager.onProgress = function ( url, loaded, total ) {
-            document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
-        };
+            // Add lights on scene
+            let lightsPawnLoader = new VRodos_LightsPawn_Loader();
+            lightsPawnLoader.load(resources3D);
 
-        let toggleEnvTexture = (el) => {
-            jQuery("#env_texture-change-btn").toggleClass('mdc-theme--secondary-bg');
-            el.checked = !el.checked;
-            envir.scene.environment = !el.checked ? null : envir.maintexture;
+            // Add all in hierarchy viewer
+            setHierarchyViewer();
+
+            // Add transform controls to scene
+            envir.scene.add(transform_controls);
+
+            // Load Manager
+            // Make progress bar visible
+            jQuery("#progress").get(0).style.display = "block";
+            jQuery("#progressWrapper").get(0).style.visibility = "visible";
+            document.getElementById("result_download").innerHTML = "Loading";
+
+            // Make a Loading Manager
+            let manager = new THREE.LoadingManager();
+
+            // On progress messages (loading)
+            manager.onProgress = function ( url, loaded, total ) {
+                document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
+            };
+
+            // When all are finished loading place them in the correct position
+            manager.onLoad = function () {
+
+                // Get the last inserted object
+                let l = Object.keys(resources3D).length;
+                let name = Object.keys(resources3D)[l - 1]; //Object.keys(resources3D).pop();
+
+                let objItem = envir.scene.getObjectByName(name);
+
+                if (objItem === undefined) {
+                    return;
+                } else {
+                    console.log(name, objItem);
+                    attachToControls(name, objItem);
+                }
+
+                // Find scene dimension in order to configure camera in 2D view (Y axis distance)
+                findSceneDimensions();
+                envir.updateCameraGivenSceneLimits();
+
+                setHierarchyViewer();
+                setDatGuiInitialVales(objItem);
+
+
+                for (let n in resources3D) {
+                    (function (name) {
+
+                        // Set Target light for Spots
+                        if (resources3D[name]['category_name'] === 'lightSpot') {
+                            let lightSpot = envir.scene.getObjectByName(name);
+                            lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
+                        }
+                    })(n);
+                }
+
+                // Avoid culling by frustum
+                envir.scene.traverse(function (obj) {
+                    obj.frustumCulled = false;
+                });
+
+                // Remote shadows. Recheck in v141
+                envir.scene.children.forEach(function(item,index){
+                    if(item.type ==="DirectionalLight" || item.type==="SpotLight" || item.type==="PointLight"){
+                        item.shadow.mapSize.width = 0;
+                        item.shadow.mapSize.height = 0;
+                    }
+                });
+
+                // Update Light Helpers to point to each object (spot light)
+                envir.scene.traverse(function(child) {
+                        if (child.light != undefined)
+                            child.update();
+                    }
+                );
+
+                jQuery("#progressWrapper").get(0).style.visibility = "hidden";
+            }; // End of manager
+
+            // Loader of assets
+            let loaderMulti = new VRodos_LoaderMulti();
+            loaderMulti.load(manager, resources3D, pluginPath);
+
+
+            //--- initiate PointerLockControls ---------------
+            initPointerLock();
+
+            animate();
+
+            // Set all buttons actions
+            loadButtonActions();
+
+            document.getElementsByTagName("html")[0].style.overflow="hidden";
+            let color_sel = document.getElementById('jscolorpick');
+            let custom_img_sel = document.getElementById('img_upload_bcg');
+            let preset_sel = document.getElementById('presetsBcg');
+
+            // Init UI values
+
+            if (resources3D["enableGeneralChat"]) {
+                document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
+            }
+
+            if (resources3D["backgroundStyleOption"]) {
+                let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+
+                switch (selOption){
+                    case 0:
+                        document.getElementById("sceneNone").checked = true;
+                        custom_img_sel.disabled = true;
+                        preset_sel.disabled = true;
+                        color_sel.disabled = true;
+                        break;
+                    case 1:
+                        document.getElementById("sceneColorRadio").checked = true;
+                        color_sel.disabled = false;
+                        preset_sel.disabled = true;
+                        custom_img_sel.disabled = true;
+                        break;
+                    case 2:
+                        document.getElementById("sceneSky").checked = true;
+                        custom_img_sel.disabled = true;
+                        preset_sel.disabled = false;
+                        color_sel.disabled = true;
+                        envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
+                        envir.scene.preset_selection = resources3D["backgroundPresetOption"];
+                        // envir.scene.backgroundPresetOption = preset_sel.value;
+                        //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+
+                        for(let index = 0; index < preset_sel.options.length;index++){
+                            if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
+                                preset_sel.options[index].selected = true;
+                                //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
+                            }
+                        }
+                        break;
+                    case 3:
+                        document.getElementById("sceneCustomImage").checked = true;
+                        custom_img_sel.disabled = false;
+                        preset_sel.disabled = true;
+                        color_sel.disabled = true;
+                        break;
+                }
+                envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
+                if (resources3D["backgroundImagePath"] && resources3D["backgroundImagePath"] != 0){
+                    console.log(resources3D["backgroundImagePath"]);
+                    document.getElementById('uploadImgThumb').src = resources3D["backgroundImagePath"];
+                    document.getElementById('uploadImgThumb').hidden = false;
+                }
+
+                envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+
+                //saveChanges();
+            }
+        });
+
+
+        <!--  Part 3: Start 3D with Javascript   -->
+
+        function updatePositionsAndControls()
+        {
+            // envir.orbitControls.update();
+            // updatePointerLockControls();
+
+            // Now update the translation and rotation input texts at datgui from transform controls
+            if (transform_controls.object) {
+                const affines = ['position', 'rotation', 'scale'];
+                for (let j=0; j<3; j++ ) {
+                    for (let i = 0; i < 3; i++) {
+                        if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
+
+                            controlInterface.__controllers[j*3+i].updateDisplay();
+                        }
+                    }
+                }
+                updatePositionsPhpAndJavsFromControlsAxes();
+            }
         }
 
-        // When all are finished loading place them in the correct position
-        manager.onLoad = function () {
+        // Only in Undo redo as javascript not php!
+        function parseJSON_LoadScene(scene_json) {
 
-            // Get the last inserted object
-            let l = Object.keys(resources3D).length;
-            let name = Object.keys(resources3D)[l - 1]; //Object.keys(resources3D).pop();
+            resources3D = parseJSON_javascript(scene_json, uploadDir);
 
-            let objItem = envir.scene.getObjectByName(name);
+            // CLEAR SCENE
+            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
 
-            if (objItem === undefined){
-                return;
-            } else {
-                console.log(name, objItem);
-                attachToControls(name, objItem);
+            for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
+                if (!preserveElements.includes(envir.scene.children[i].name))
+                    envir.scene.remove(envir.scene.children[i]);
             }
-
-            // Find scene dimension in order to configure camera in 2D view (Y axis distance)
-            findSceneDimensions();
-            envir.updateCameraGivenSceneLimits();
 
             setHierarchyViewer();
-            setDatGuiInitialVales(objItem);
+
+            transform_controls = envir.scene.getObjectByName('myTransformControls');
+            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
+
+            loaderMulti = new VRodos_LoaderMulti("2");
+            loaderMulti.load(manager, resources3D);
+        }
+
+        function attachToControls(name, objItem){
+
+            let trs_tmp = resources3D[name]['trs'];
+            transform_controls.attach(objItem);
+
+            // highlight
+            envir.outlinePass.selectedObjects = [objItem];
+
+            transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
+                trs_tmp['translation'][2]);
+            transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
+                trs_tmp['rotation'][2]);
+            transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
 
-            for (let n in resources3D) {
-                (function (name) {
+            jQuery('#object-manipulation-toggle').show();
+            jQuery('#axis-manipulation-buttons').show();
+            jQuery('#double-sided-switch').show();
 
-                    // Set Target light for Spots
-                    if (resources3D[name]['category_name'] === 'lightSpot') {
-                        let lightSpot = envir.scene.getObjectByName(name);
-                        lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
-                    }
-                })(n);
-            }
+            showObjectPropertiesPanel(transform_controls.getMode());
 
-            // Avoid culling by frustum
-            envir.scene.traverse(function (obj) {
-                obj.frustumCulled = false;
-            });
+            selected_object_name = name;
+            transform_controls.setMode("translate");
 
-            // Remote shadows. Recheck in v141
-            envir.scene.children.forEach(function(item,index){
-                if(item.type ==="DirectionalLight" || item.type==="SpotLight" || item.type==="PointLight"){
-                    item.shadow.mapSize.width = 0;
-                    item.shadow.mapSize.height = 0;
-                }
-            });
+            // Resize controls based on object size
+            setTransformControlsSize();
+        }
 
-            // Update Light Helpers to point to each object (spot light)
-            envir.scene.traverse(function(child) {
-                    if (child.light != undefined)
-                        child.update();
-                }
-            );
-
-            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
-        }; // End of manager
-
-        // Loader of assets
-        let loaderMulti = new VRodos_LoaderMulti();
-        loaderMulti.load(manager, resources3D, pluginPath);
-
-
-        //--- initiate PointerLockControls ---------------
-        initPointerLock();
-
-        // ANIMATE
         function animate()
         {
             if(isPaused) {
@@ -838,149 +916,11 @@ wp_head();
             //envir.cubeCamera.update( envir.renderer, envir.scene );
         }
 
-        // UPDATE
-        function updatePositionsAndControls()
-        {
-            // envir.orbitControls.update();
-            // updatePointerLockControls();
-
-
-            // Now update the translation and rotation input texts at datgui from transform controls
-            if (transform_controls.object) {
-                const affines = ['position', 'rotation', 'scale'];
-                for (let j=0; j<3; j++ ) {
-                    for (let i = 0; i < 3; i++) {
-                        if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
-
-                            controlInterface.__controllers[j*3+i].updateDisplay();
-                        }
-                    }
-                }
-                updatePositionsPhpAndJavsFromControlsAxes();
-            }
+        let toggleEnvTexture = (el) => {
+            jQuery("#env_texture-change-btn").toggleClass('mdc-theme--secondary-bg');
+            el.checked = !el.checked;
+            envir.scene.environment = !el.checked ? null : envir.maintexture;
         }
-
-        animate();
-
-        // Set all buttons actions
-        loadButtonActions();
-
-        function attachToControls(name, objItem){
-
-            let trs_tmp = resources3D[name]['trs'];
-            transform_controls.attach(objItem);
-
-            // highlight
-            envir.outlinePass.selectedObjects = [objItem];
-
-            transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
-                trs_tmp['translation'][2]);
-            transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
-                trs_tmp['rotation'][2]);
-            transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
-
-
-            jQuery('#object-manipulation-toggle').show();
-            jQuery('#axis-manipulation-buttons').show();
-            jQuery('#double-sided-switch').show();
-
-            showObjectPropertiesPanel(transform_controls.getMode());
-
-            selected_object_name = name;
-            transform_controls.setMode("translate");
-
-            // Resize controls based on object size
-            setTransformControlsSize();
-        }
-
-        // Only in Undo redo as javascript not php!
-        function parseJSON_LoadScene(scene_json) {
-
-            resources3D = parseJSON_javascript(scene_json, uploadDir);
-
-            // CLEAR SCENE
-            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
-
-            for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
-
-                if (!preserveElements.includes(envir.scene.children[i].name))
-                    envir.scene.remove(envir.scene.children[i]);
-            }
-
-            setHierarchyViewer();
-
-            transform_controls = envir.scene.getObjectByName('myTransformControls');
-            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
-
-            loaderMulti = new VRodos_LoaderMulti("2");
-            loaderMulti.load(manager, resources3D);
-        }
-
-        document.getElementsByTagName("html")[0].style.overflow="hidden";
-        let color_sel = document.getElementById('jscolorpick');
-        let custom_img_sel = document.getElementById('img_upload_bcg');
-        let preset_sel = document.getElementById('presetsBcg');
-
-        // Init UI values
-
-
-        if (resources3D["enableGeneralChat"]) {
-            document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
-        }
-        
-        if (resources3D["backgroundStyleOption"]) {
-            let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
-           
-            switch (selOption){
-            case 0:
-                document.getElementById("sceneNone").checked = true;
-                custom_img_sel.disabled = true;
-                preset_sel.disabled = true;
-                color_sel.disabled = true;
-                break;
-            case 1:
-                document.getElementById("sceneColorRadio").checked = true;
-                color_sel.disabled = false;
-                preset_sel.disabled = true;
-                custom_img_sel.disabled = true;
-                break;
-            case 2:
-                document.getElementById("sceneSky").checked = true;
-                custom_img_sel.disabled = true;
-                preset_sel.disabled = false;
-                color_sel.disabled = true;
-                envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                envir.scene.preset_selection = resources3D["backgroundPresetOption"];
-                // envir.scene.backgroundPresetOption = preset_sel.value;
-                //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
-
-                for(let index = 0; index < preset_sel.options.length;index++){
-                    if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
-                        preset_sel.options[index].selected = true;
-                        //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
-                    }
-                }
-                break;
-            case 3:
-                document.getElementById("sceneCustomImage").checked = true;
-                custom_img_sel.disabled = false;
-                preset_sel.disabled = true;
-                color_sel.disabled = true;
-                break;
-            }
-            envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-            if (resources3D["backgroundImagePath"] && resources3D["backgroundImagePath"] != 0){
-                console.log(resources3D["backgroundImagePath"]);
-                document.getElementById('uploadImgThumb').src = resources3D["backgroundImagePath"];
-                document.getElementById('uploadImgThumb').hidden = false;
-            }
-           
-            envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
-           
-            //saveChanges();
-
-        }
-
 
     </script>
 <?php }

@@ -1,5 +1,5 @@
 //  AJAX: FETCH Assets 3d
-function vrodos_fetchListAvailableAssetsAjax(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) {
+let vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) => {
 
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_fbrowse.ajax_url,

@@ -933,12 +933,6 @@ add_action('wp_ajax_vrodos_delete_asset_action', 'vrodos_delete_asset3d_frontend
 
 // AJAX for fetching assets
 
-// Front-end FBX Logged in
-add_action('wp_ajax_vrodos_fetch_fbx_asset_action', 'vrodos_fetch_fbx_asset3d_frontend_callback');
-
-// Front-end FBX not Logged in
-add_action('wp_ajax_nopriv_vrodos_fetch_fbx_asset_action', 'vrodos_fetch_fbx_asset3d_frontend_callback');
-
 
 // Front-end GLB Logged in
 add_action('wp_ajax_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_asset3d_frontend_callback');
