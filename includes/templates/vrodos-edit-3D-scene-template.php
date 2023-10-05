@@ -988,9 +988,9 @@ wp_head();
                 preset_sel.hidden = true;
                 custom_img_sel.hidden = false;
 
-                if (resources3D["backgroundImagePath"] ){
-                    img_thumb.hidden.src = resources3D["backgroundImagePath"];
-                    img_thumb.hidden.hidden = false;
+                if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
+                    img_thumb.src = resources3D["backgroundImagePath"];
+                    img_thumb.hidden = false;
                 }
                 break;
             }
