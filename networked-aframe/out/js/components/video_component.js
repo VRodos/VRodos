@@ -55,8 +55,8 @@ AFRAME.registerComponent('video-controls', {
           
             console.log(camera.fov);
             // vertical fov in radians
-            //const vFOV = camera.fov * Math.PI / 180; 
-            const vFOV = 60 * Math.PI / 180;        //FoV should be taken from camera but in extreme cases the fov is not restored on time
+            const vFOV = camera.fov * Math.PI / 180; 
+            //const vFOV = 60 * Math.PI / 180;        //FoV should be taken from camera but in extreme cases the fov is not restored on time
           
             // Math.abs to ensure the result is always positive
             return 2 * Math.tan( vFOV / 2 ) * Math.abs( depth );
@@ -222,17 +222,15 @@ AFRAME.registerComponent('video-controls', {
             }
 
 
-            cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
+            //cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
             backgroundEl.setAttribute("background", "color", "black");
             backgroundEl.setAttribute("overlay", "");
-
-
             cam.add(videoBorder);
             cam.add(videoDisplay);
-            videoBorder.setAttribute("height", "15");
-            videoBorder.setAttribute("width", "20");
-            videoDisplay.setAttribute("height", "15");
-            videoDisplay.setAttribute("width", "20");
+            videoBorder.setAttribute("height", visibleHeightAtZDepth(-25));
+            videoBorder.setAttribute("width", visibleWidthAtZDepth(-25));
+            videoDisplay.setAttribute("height", visibleHeightAtZDepth(-25));
+            videoDisplay.setAttribute("width", visibleWidthAtZDepth(-25));
             videoBorder.setAttribute("position", "0 0 -25");
             videoDisplay.setAttribute("position", "0 0 -25");
             videoBorder.setAttribute("scale", "1 1 1");
