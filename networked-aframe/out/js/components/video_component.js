@@ -44,6 +44,9 @@ AFRAME.registerComponent('video-controls', {
 
         let media_panel = document.getElementById("mediaPanel");
         let recording_controls = document.getElementById("upload-recording-btn");
+
+        if(video.getAttribute("autoplay-manual") == "true")
+            video.play();
         
 
         const visibleHeightAtZDepth = ( depth ) => {
@@ -71,11 +74,13 @@ AFRAME.registerComponent('video-controls', {
 
 
         let panel_pos_dynamic;
+        let is_fs = false;
         let panel_z = -1;
 
         
 
         cam.add(videoPanel);
+        
 
 
 
@@ -171,6 +176,7 @@ AFRAME.registerComponent('video-controls', {
             obj.setAttribute("material", "depthTest: false");
             obj.setAttribute("material", "transparent: true");
             obj.setAttribute("material", "opacity: 1");
+            console.log("video.paused:"+video.paused);
 
         };
 
@@ -211,6 +217,7 @@ AFRAME.registerComponent('video-controls', {
 
         fsEl.addEventListener("mouseup", function (event) {
 
+            is_fs = true;
             let projType = backgroundEl.getAttribute("scene-settings").pr_type;
 
             if (projType != "vrexpo_games")
@@ -225,6 +232,8 @@ AFRAME.registerComponent('video-controls', {
             //cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
             backgroundEl.setAttribute("background", "color", "black");
             backgroundEl.setAttribute("overlay", "");
+            videoDisplay.classList.add("non-clickable");
+            videoPanel.classList.add("non-clickable");
             cam.add(videoBorder);
             cam.add(videoDisplay);
             videoBorder.setAttribute("height", visibleHeightAtZDepth(-25));
@@ -284,6 +293,22 @@ AFRAME.registerComponent('video-controls', {
             if(rightHand)
                 rightHand.setAttribute("raycaster","objects: .raycastable");
 
+        }
+        function restorePanel(){
+            
+            handleCamEntity(videoPanel, true, true, 1);
+            handleCamEntity(fsEl, true, true, 1);
+            handleCamEntity(plEl, true, true, 1);
+            handleCamEntity(exEl, true, true, 1);
+            handleCamEntityText(titEl, true, true, 1);
+            videoPanel.setAttribute("position", panel_pos_dynamic);
+            
+            // videoDisplay.classList.add("non-clickable");
+            // videoPanel.classList.add("non-clickable");
+            backgroundEl.setAttribute("raycaster","objects: .non-clickable");
+            if(rightHand)
+                rightHand.setAttribute("raycaster","objects: .non-clickable");
+            playUpd(plEl);
         }
 
         function restoreVid(){
@@ -373,31 +398,14 @@ AFRAME.registerComponent('video-controls', {
 
 
                 } else {
-                    handleCamEntity(videoPanel, true, true, 1);
-                    handleCamEntity(fsEl, true, true, 1);
-                    handleCamEntity(plEl, true, true, 1);
-                    handleCamEntity(exEl, true, true, 1);
-                    handleCamEntityText(titEl, true, true, 1);
-                 
-                    if (video.paused) {
-                        console.log("border clicked");
-                       
-                        videoPanel.setAttribute("position", panel_pos_dynamic);
-                        
-                        videoDisplay.classList.add("non-clickable");
-                        videoPanel.classList.add("non-clickable");
-                        backgroundEl.setAttribute("raycaster","objects: .non-clickable");
-                        if(rightHand)
-                            rightHand.setAttribute("raycaster","objects: .non-clickable");
-                        playUpd(plEl);
-                    }
-                    else if (video.play){
-                        restoreVid();
-                    }
-                    if (video.ended){
-                        restoreVid();
-                    }
+                    
 
+                    if(is_fs){
+                        restoreVid();
+                        is_fs = false;
+                    }
+                    restorePanel();
+                    
                 }
             });
         }

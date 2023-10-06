@@ -656,6 +656,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_video_asset->setAttribute("id", "video_$uuid");
 
                     $contentObject->video_loop == 1 ? $a_video_asset->setAttribute( "loop", "true") : $a_video_asset->setAttribute( "loop", "false");
+                    if ( $contentObject->video_loop == 1){
+                        $a_video_asset->setAttribute( "autoplay-manual", "true");
+                    }
+                    else{
+                        $a_video_asset->setAttribute( "autoplay-manual", "false");
+                    }
+
 
                     //$contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
                     if ($contentObject->video_path != "false"){
