@@ -208,6 +208,9 @@ AFRAME.registerComponent('video-controls', {
             }
             videoDisplay.classList.remove("non-clickable");
             videoPanel.classList.remove("non-clickable");
+
+         
+
             backgroundEl.setAttribute("raycaster","objects: .raycastable");
             if(rightHand)
                 rightHand.setAttribute("raycaster","objects: .raycastable");
@@ -228,7 +231,10 @@ AFRAME.registerComponent('video-controls', {
                 recording_controls.setAttribute('style', 'visibility: hidden;');
             }
 
+            if(backgroundEl.getAttribute("scene-settings").selChoice == "2")
+                backgroundEl.setAttribute("environment", "ground", "none");
 
+            
             //cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
             backgroundEl.setAttribute("background", "color", "black");
             backgroundEl.setAttribute("overlay", "");
@@ -324,6 +330,9 @@ AFRAME.registerComponent('video-controls', {
                 media_panel.setAttribute( "style", 'visibility: visible;' );        //TODO change based on project type
                 recording_controls.setAttribute('style', 'visibility: visible;');
             }
+
+            if(backgroundEl.getAttribute("scene-settings").selChoice == "2")
+                backgroundEl.setAttribute("environment", "ground", "flat");
 
             cam.setAttribute("camera", "fov", 60);
             let bcgCol = backgroundEl.getAttribute("scene-settings").color;
