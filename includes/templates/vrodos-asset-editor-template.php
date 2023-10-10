@@ -621,7 +621,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                             <input id="poiImgTitle" type="text"
                                    class="mdc-textfield__input mdc-theme--text-primary-on-light"
                                    name="poiImgTitle"
-                                   aria-controls="title-validation-msg" minlength="3" maxlength="25"
+                                   aria-controls="title-validation-msg" minlength="3" maxlength="50"
                                    value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_imgtxt_title', true);?>">
 
                             <label for="poiImgTitle" class="mdc-textfield__label">

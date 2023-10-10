@@ -623,7 +623,7 @@ wp_head();
         let firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
         // load asset browser with data
-        jQuery(document).ready( function(){
+        jQuery(document).ready( function() {
 
             vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
             // make asset browser draggable: not working without get_footer
@@ -674,14 +674,16 @@ wp_head();
                 let l = Object.keys(resources3D).length;
                 let name = Object.keys(resources3D)[l - 1]; //Object.keys(resources3D).pop();
 
-                let objItem = envir.scene.getObjectByName(name);
+                let objItem;
 
-                if (objItem === undefined) {
-                    return;
-                } else {
+                if (envir.scene.getObjectByName(name)) {
+                    objItem = envir.scene.getObjectByName(name);
                     console.log(name, objItem);
                     attachToControls(name, objItem);
+                } else {
+                    return;
                 }
+
 
                 // Find scene dimension in order to configure camera in 2D view (Y axis distance)
                 findSceneDimensions();
@@ -723,16 +725,17 @@ wp_head();
                 );
 
                 jQuery("#progressWrapper").get(0).style.visibility = "hidden";
+
             }; // End of manager
 
             // Loader of assets
             let loaderMulti = new VRodos_LoaderMulti();
             loaderMulti.load(manager, resources3D, pluginPath);
 
-
             //--- initiate PointerLockControls ---------------
             initPointerLock();
 
+            // DELETE LOBBY OBJ
             animate();
 
             // Set all buttons actions
@@ -816,7 +819,6 @@ wp_head();
                 for (let j=0; j<3; j++ ) {
                     for (let i = 0; i < 3; i++) {
                         if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
-
                             controlInterface.__controllers[j*3+i].updateDisplay();
                         }
                     }
@@ -877,6 +879,7 @@ wp_head();
 
         function animate()
         {
+
             if(isPaused) {
                 return;
             }
@@ -888,10 +891,11 @@ wp_head();
                 (envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar) : envir.cameraOrbit;
 
             // Render it
-            //envir.renderer.render( envir.scene, curr_camera);
-
+            // envir.renderer.render( envir.scene, curr_camera);
             // Label is for setting labels to objects
-            envir.labelRenderer.render( envir.scene, curr_camera);
+
+            envir.labelRenderer.render(envir.scene, curr_camera);
+
 
             // Animation
             if (envir.flagPlayAnimation) {

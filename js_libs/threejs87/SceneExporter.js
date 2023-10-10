@@ -59,13 +59,12 @@ THREE.SceneExporter.prototype = {
                 var node = object.children[i];
 
                 if ((node.name === 'rayLine' ||
-                    node.name === 'rayLine' ||
                     node.name === 'mylightAvatar' ||
                     node.name === 'mylightOrbit' ||
                     node.name === 'SteveShieldMesh' ||
                     node.name === 'Steve' ||
                     node.name === 'SteveMesh' || node.name === 'avatarPitchObject' ||
-                    node.name === 'orbitCamera' || node.name === 'myAxisHelper' || node.name === 'myAxisHelper' ||
+                    node.name === 'orbitCamera' || node.name === 'myAxisHelper' ||
                     node.name === 'myGridHelper' || node.name === 'myTransformControls'
                     || node['category_name'] === 'lightHelper'
                     || node['category_name'] === 'lightTargetSpot'
@@ -138,7 +137,6 @@ THREE.SceneExporter.prototype = {
                     nobjects += 1;
                 }
 
-
                 if (node.children.length > 0) {
                     linesArray.push(PaddingString(pad + 1) + '\t\t"children" : {');
                 }
@@ -146,9 +144,7 @@ THREE.SceneExporter.prototype = {
                 createObjectsList(node, pad + 2, pad + 2);
 
                 if (node.children.length > 0) {
-
                     linesArray.push(PaddingString(pad + 1) + "\t\t}");
-
                 }
 
                 linesArray.push(PaddingString(pad) + "\t\t}"
@@ -222,8 +218,8 @@ THREE.SceneExporter.prototype = {
                 let stringObj = JSON.stringify(entryObject);
                 stringObj = stringObj.slice(0, -1);
 
-                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
 
+                var output = ['\t\t' + ',' + LabelString(getObjectName(o)) + ' : ' + stringObj + (o.children.length ? ',' : '') ];
             }
             else if (o['category_name'] === "lightSun") {
 
@@ -247,6 +243,7 @@ THREE.SceneExporter.prototype = {
                 entryObject.targetposition = [o.target.position.x, o.target.position.y, o.target.position.z];
                 entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
                 entryObject.lightintensity = o.intensity;
+
                 delete entryObject.intensity;
 
                 let stringObj = JSON.stringify(entryObject);
@@ -719,8 +716,8 @@ THREE.SceneExporter.prototype = {
 
         if (objects.substr(objects.length - 2, 1) == ',')
             objects = objects.substr(0, objects.length - 2) + '\n';
-        
-    
+
+
         var output = [
             '{',
             '	"metadata": {',

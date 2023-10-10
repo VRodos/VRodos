@@ -96,6 +96,7 @@ class VRodos_LoaderMulti {
                                 if (resources3D[name]['category_slug'] == "video")
                                     glbURL = pluginPath + '/assets/objects/tv_flat_scaled_rotated.glb';
 
+
                                 // Instantiate a loader
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
                                 document.getElementById("result_download").innerHTML = "Loading ...";
@@ -104,6 +105,7 @@ class VRodos_LoaderMulti {
 
                                     // called when the resource is loaded
                                     function (object) {
+
 
                                         if (object.animations.length > 0) {
                                             // Animation set
@@ -117,12 +119,10 @@ class VRodos_LoaderMulti {
 
                                         object.isSelectableMesh = true;
 
-
-                                        // workaround to show files that are getting hidden
+                                        // TODO TEMP - HOTFIX THAT SEEMS TO WORK AROUND FIXING RANDOMLY DISAPPEARING 3D OBJECTS FROM EDITOR!
                                         if (object.children ==='') {
-                                            object.children = {};
+                                            object.children = [];
                                         }
-                                        console.log(object.children);
 
                                         envir.scene.add(object);
 

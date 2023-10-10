@@ -43,7 +43,6 @@ class ParseJSON
         
         echo '</script>';
 
-
         $json_objects = $content_JSON->objects;
 
         // For light target
