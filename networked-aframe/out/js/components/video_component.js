@@ -206,11 +206,11 @@ AFRAME.registerComponent('video-controls', {
                 video.pause();
 
             }
-            videoDisplay.classList.remove("non-clickable");
-            videoPanel.classList.remove("non-clickable");
+            // videoDisplay.classList.remove("non-clickable");
+            // videoPanel.classList.remove("non-clickable");
 
          
-
+            
             backgroundEl.setAttribute("raycaster","objects: .raycastable");
             if(rightHand)
                 rightHand.setAttribute("raycaster","objects: .raycastable");
@@ -239,7 +239,7 @@ AFRAME.registerComponent('video-controls', {
             backgroundEl.setAttribute("background", "color", "black");
             backgroundEl.setAttribute("overlay", "");
             videoDisplay.classList.add("non-clickable");
-            videoPanel.classList.add("non-clickable");
+            // videoPanel.classList.add("non-clickable");
             cam.add(videoBorder);
             cam.add(videoDisplay);
             videoBorder.setAttribute("height", visibleHeightAtZDepth(-25));
@@ -293,8 +293,8 @@ AFRAME.registerComponent('video-controls', {
                 video.pause();
 
             }
-            videoDisplay.classList.remove("non-clickable");
-            videoPanel.classList.remove("non-clickable");
+            // videoDisplay.classList.remove("non-clickable");
+            // videoPanel.classList.remove("non-clickable");
             backgroundEl.setAttribute("raycaster","objects: .raycastable");
             if(rightHand)
                 rightHand.setAttribute("raycaster","objects: .raycastable");
@@ -309,11 +309,11 @@ AFRAME.registerComponent('video-controls', {
             handleCamEntityText(titEl, true, true, 1);
             videoPanel.setAttribute("position", panel_pos_dynamic);
             
-            // videoDisplay.classList.add("non-clickable");
-            // videoPanel.classList.add("non-clickable");
+            // videoDisplay.classList.remove("raycastable");
+            // videoBorder.classList.remove("raycastable");
             backgroundEl.setAttribute("raycaster","objects: .non-clickable");
-            if(rightHand)
-                rightHand.setAttribute("raycaster","objects: .non-clickable");
+            // if(rightHand)
+            //     rightHand.setAttribute("raycaster","objects: .non-clickable");
             playUpd(plEl);
         }
 
@@ -384,7 +384,7 @@ AFRAME.registerComponent('video-controls', {
             videoBorder.addEventListener("click", function (event) {
 
                 panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z; //From rightmost position  subtract panel width (0.2) and padding
-               
+                
                 if (!browsingModeVR) {
 
                     let video_element = document.getElementById("video-panel-video");
@@ -412,9 +412,10 @@ AFRAME.registerComponent('video-controls', {
                     if(is_fs){
                         restoreVid();
                         is_fs = false;
+                        videoDisplay.classList.remove("non-clickable");
                     }
-                    restorePanel();
                     
+                    restorePanel();
                 }
             });
         }
