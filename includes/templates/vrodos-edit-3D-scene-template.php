@@ -750,6 +750,7 @@ wp_head();
 
             if (resources3D["enableGeneralChat"]) {
                 document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
+                envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
             }
 
             if (resources3D["backgroundStyleOption"]) {

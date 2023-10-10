@@ -608,7 +608,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_entity->setAttribute( "clear-frustum-culling", "" );
                     //$a_entity->setAttribute("class", "");
                     $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
-                    $a_entity->setAttribute("highlight", "$uuid");
+                    //$a_entity->setAttribute("highlight", "$uuid");
 
 
                     if (!empty($contentObject->sceneID_target))

@@ -106,7 +106,6 @@ class VRodos_LoaderMulti {
                                     // called when the resource is loaded
                                     function (object) {
 
-
                                         if (object.animations.length > 0) {
                                             // Animation set
                                             object.mixer = new THREE.AnimationMixer(object.scene);
@@ -125,7 +124,6 @@ class VRodos_LoaderMulti {
                                         }
 
                                         envir.scene.add(object);
-
 
                                     },
                                     // called while loading is progressing
