@@ -126,9 +126,13 @@
         AFRAME.registerComponent('glow', {
             schema: {
                 color: {default: '#ffffff', type: 'color'},
-                intensity: {default: 1.0}
+                intensity: {default: 1.0},
+                id:{default: ''}
             },
             init: function () {
+                this.backgroundEl = document.querySelector('#exit_' + this.data.id);
+                this.buttonEl = document.querySelector('#button_poi_' + this.data.id);
+
                 this.el.addEventListener('object3dset', function () {
                     this.update();
                 }.bind(this));

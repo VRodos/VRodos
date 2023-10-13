@@ -51,6 +51,12 @@ AFRAME.registerComponent('video-controls', {
             video.play();
         
 
+        if(video.getAttribute("autoplay-manual") == "true"){
+            video.play();
+        }else{
+            videoDisplay.classList.add("raycastable");
+        }
+            
         const visibleHeightAtZDepth = ( depth ) => {
             const camera = AFRAME.scenes[0].camera;
             // compensate for cameras not positioned at z=0
