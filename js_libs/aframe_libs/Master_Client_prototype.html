@@ -535,16 +535,18 @@
 </aside>
 
 
-<a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
-         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic;  precision:high;"
+<a-scene oculus-go-controls-enabled id="aframe-scene-container" fog="type: linear; color: #AAB; far: 230; near: 0"
+         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic; precision:high;"
          vr-mode-ui="enabled: true"
+         cursor="rayOrigin: mouse; fuse: false"
+         raycaster="objects: .raycastable;"
          networked-scene="
             room: roomname;
             debug: true;
             audio: true;
             adapter: easyrtc;
             connectOnLoad: true;
-       "  cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .raycastable">
+       ">
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
@@ -630,6 +632,10 @@
 
     document.querySelector('a-scene').addEventListener('exit-vr',  function () {
         browsingModeVR = false;
+    });
+
+    document.querySelector('#scene-assets').addEventListener('loaded', function() {
+        console.log('loaded');
     });
 
 
