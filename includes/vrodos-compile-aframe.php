@@ -619,7 +619,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                     $gltf_model->appendChild( $dom->createTextNode( '' ) );
 
-
                     $material = "";
                     $fileOperations->setMaterial( $material, $contentObject );
                     $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
@@ -628,8 +627,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "material", $material );
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     //$a_entity->setAttribute("class", "");
-                    $gltf_model->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
-                    //$a_entity->setAttribute("highlight", "$uuid");
+
+                    /*$gltf_model->setAttribute("highlight", "$uuid");*/
 
 
                     if (!empty($contentObject->sceneID_target))

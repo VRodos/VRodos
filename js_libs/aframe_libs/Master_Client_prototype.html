@@ -535,12 +535,14 @@
 </aside>
 
 
-<a-scene oculus-go-controls-enabled id="aframe-scene-container" fog="type: linear; color: #AAB; far: 230; near: 0"
-         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic; precision:high;"
-         vr-mode-ui="enabled: true"
-         cursor="rayOrigin: mouse; fuse: false"
-         raycaster="objects: .raycastable;"
-         networked-scene="
+<a-scene  id="aframe-scene-container"
+          fog="type: linear; color: #AAB; far: 230; near: 0"
+          renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic; precision:high;"
+          oculus-go-controls-enabled
+          vr-mode-ui="enabled: true"
+          cursor="rayOrigin: mouse; fuse: false"
+          raycaster="objects: .raycastable; enabled: true"
+          networked-scene="
             room: roomname;
             debug: true;
             audio: true;
@@ -620,14 +622,14 @@
                  material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
         <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
                  material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true" position="0.15 0.15 0.000001"></a-mixin>
-        
+
         <!-- <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
                  material="shader: flat; color: #dfe4ea; " position=" 0 0.11 0.000001"></a-mixin> -->
-<!-- 
-                 <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.2; height: 0.3"
-                 material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
-        <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
-                 material="shader: flat; color: #dfe4ea; " position=" 0 0.2 0.000001"></a-mixin> -->
+        <!--
+                         <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.2; height: 0.3"
+                         material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
+                <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
+                         material="shader: flat; color: #dfe4ea; " position=" 0 0.2 0.000001"></a-mixin> -->
     </a-assets>
 
     <a-entity id="player"></a-entity>
