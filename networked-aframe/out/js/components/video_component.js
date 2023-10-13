@@ -20,18 +20,13 @@ AFRAME.registerComponent('video-controls', {
         let video = document.querySelector(video_id);
 
         let video_display_id = "#video-display_" + data.id;
-        let video_border_id = "#video-border_" + data.id;
         let vid_panel_id = "#vid-panel_" + data.id;
 
         let videoDisplay = document.querySelector(video_display_id);
         let videoPanel = document.querySelector(vid_panel_id);
-        let videoBorder = document.querySelector(video_border_id);
-
-
-
-
         let fsEl = document.querySelector("#ent_fs_" + data.id);
         let plEl = document.querySelector("#ent_pl_" + data.id);
+        let pauseEl = document.querySelector("#ent_ex_" + data.id);
         let exEl = document.querySelector("#ent_ex_" + data.id);
         let exFrameEl = document.querySelector("#exit_vid_panel_" + data.id);
         let titEl = document.querySelector("#ent_tit_" + data.id);
@@ -45,6 +40,13 @@ AFRAME.registerComponent('video-controls', {
         let media_panel = document.getElementById("mediaPanel");
         let recording_controls = document.getElementById("upload-recording-btn");
 
+        let assets = document.getElementById("scene-assets");
+
+        let panel_pos_dynamic;
+        let is_fs = false;
+        let panel_z = -1;
+
+       
         if(video.getAttribute("autoplay-manual") == "true")
             video.play();
         
@@ -56,7 +58,6 @@ AFRAME.registerComponent('video-controls', {
             if ( depth < cameraOffset ) depth -= cameraOffset;
             else depth += cameraOffset;
           
-            console.log(camera.fov);
             // vertical fov in radians
             const vFOV = camera.fov * Math.PI / 180; 
             //const vFOV = 60 * Math.PI / 180;        //FoV should be taken from camera but in extreme cases the fov is not restored on time
@@ -73,13 +74,6 @@ AFRAME.registerComponent('video-controls', {
         };
 
 
-        let panel_pos_dynamic;
-        let is_fs = false;
-        let panel_z = -1;
-
-        
-       
-        
 
         cam.add(videoPanel);
         
@@ -95,7 +89,7 @@ AFRAME.registerComponent('video-controls', {
 
         })
 
-        function restoreVidPos(border, disp, panel) {
+        function restoreVidPos(border, panel) {
             let offsetX = 20;
 
 
@@ -118,7 +112,7 @@ AFRAME.registerComponent('video-controls', {
 
         backgroundEl.addEventListener('loaded', function () {
 
-            restoreVidPos(videoBorder, videoDisplay, videoPanel);
+            restoreVidPos(videoDisplay, videoPanel);
         });
 
 
@@ -177,28 +171,27 @@ AFRAME.registerComponent('video-controls', {
         function playUpd(obj) {
             if (video.paused) {
                 obj.setAttribute("src", "#video_pl_" + data.id);
-
+                
             }
             else {
                 obj.setAttribute("src", "#video_pas_" + data.id);
+                
             }
             obj.setAttribute("material", "depthTest: false");
             obj.setAttribute("material", "transparent: true");
             obj.setAttribute("material", "opacity: 1");
-            console.log("video.paused:"+video.paused);
 
         };
 
         plEl.addEventListener("mouseup", function (event) {
             if (video.paused) {
                 video.play();
-
+                
             }
             else {
                 video.pause();
 
             }
-
             playUpd(plEl);
 
         });
@@ -276,19 +269,12 @@ AFRAME.registerComponent('video-controls', {
             backgroundEl.setAttribute("overlay", "");
             videoDisplay.classList.add("non-clickable");
             // videoPanel.classList.add("non-clickable");
-            cam.add(videoBorder);
             cam.add(videoDisplay);
-            videoBorder.setAttribute("height", visibleHeightAtZDepth(-25));
-            videoBorder.setAttribute("width", visibleWidthAtZDepth(-25));
             videoDisplay.setAttribute("height", visibleHeightAtZDepth(-25));
             videoDisplay.setAttribute("width", visibleWidthAtZDepth(-25));
-            videoBorder.setAttribute("position", "0 0 -25");
             videoDisplay.setAttribute("position", "0 0 -25");
-            videoBorder.setAttribute("scale", "1 1 1");
             videoDisplay.setAttribute("scale", "1 1 1");
-            videoBorder.setAttribute("rotation", "0 0 0");
             videoDisplay.setAttribute("rotation", "0 0 0");
-            console.log(videoBorder);
 
             handleCamEntity(videoPanel, false, true, 1);
             handleCamEntity(fsEl, false, true, 1);
@@ -305,7 +291,6 @@ AFRAME.registerComponent('video-controls', {
 
                 if (entCollection[i] !=videoDisplay){
                     entCollection[i].setAttribute("visible", "false");
-                    console.log(entCollection[i].getAttribute("visible"));
                     entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
                 }
 
@@ -349,7 +334,6 @@ AFRAME.registerComponent('video-controls', {
             videoPanel.setAttribute("position", panel_pos_dynamic);
             
             // videoDisplay.classList.remove("raycastable");
-            // videoBorder.classList.remove("raycastable");
             backgroundEl.setAttribute("raycaster","objects: .non-clickable");
             if(rightHand)
                 rightHand.setAttribute("raycaster","objects: .non-clickable");
@@ -389,27 +373,18 @@ AFRAME.registerComponent('video-controls', {
             }else
                 cam.setAttribute("wasd-controls-enabled", "true");
             //playerEl.setAttribute("look-controls", "enabled: true");
-            backgroundEl.add(videoBorder);
             backgroundEl.add(videoDisplay);
             let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
             let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
 
 
-            videoBorder.setAttribute("height", "3");
-            videoBorder.setAttribute("width", "4");
-
             videoDisplay.setAttribute("height", "3");
             videoDisplay.setAttribute("width", "4");
-            videoBorder.setAttribute("position", p_x);
             videoDisplay.setAttribute("position", p_x);
-            videoBorder.setAttribute("scale", videoBorder.getAttribute("original-scale"));
-            videoDisplay.setAttribute("scale", videoBorder.getAttribute("original-scale"));
+            videoDisplay.setAttribute("scale", videoDisplay.getAttribute("original-scale"));
 
-            videoBorder.setAttribute("rotation", r_x);
             videoDisplay.setAttribute("rotation", r_x);
             //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-            console.log(videoBorder.getAttribute("rotation"));
-            console.log(data.orig_rot[0] + " " + data.orig_rot[1] + " " + data.orig_rot[2]);
             visCollection = [];
         }
         document.querySelector('a-scene').addEventListener('exit-vr',  function () {
@@ -420,7 +395,7 @@ AFRAME.registerComponent('video-controls', {
        
         if (video.getAttribute("src")){
 
-            videoBorder.addEventListener("click", function (event) {
+            videoDisplay.addEventListener("click", function (event) {
 
                 panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z; //From rightmost position  subtract panel width (0.2) and padding
                 
@@ -456,7 +431,7 @@ AFRAME.registerComponent('video-controls', {
                         let orig_preset = backgroundEl.getAttribute("scene-settings").presChoice; 
                         if(backgroundEl.getAttribute("scene-settings").selChoice == "2"){
                             backgroundEl.setAttribute("environment", "preset", orig_preset);
-                            backgroundEl.setAttribute("environment", "ground", flat);
+                            backgroundEl.setAttribute("environment", "ground", "flat");
                         }
                     }
                     
