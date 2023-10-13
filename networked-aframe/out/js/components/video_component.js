@@ -78,6 +78,8 @@ AFRAME.registerComponent('video-controls', {
         let panel_z = -1;
 
         
+       
+        
 
         cam.add(videoPanel);
         
@@ -250,7 +252,8 @@ AFRAME.registerComponent('video-controls', {
 
             is_fs = true;
             let projType = backgroundEl.getAttribute("scene-settings").pr_type;
-
+            
+    
             if (projType != "vrexpo_games")
             {
 
@@ -259,8 +262,14 @@ AFRAME.registerComponent('video-controls', {
                 recording_controls.setAttribute('style', 'visibility: hidden;');
             }
 
-            if(backgroundEl.getAttribute("scene-settings").selChoice == "2")
+            if(backgroundEl.getAttribute("scene-settings").selChoice == "2"){
+                backgroundEl.setAttribute("environment", "preset", "default");
                 backgroundEl.setAttribute("environment", "ground", "none");
+                //backgroundEl.setAttribute("environment", "dressing", "none");
+                //backgroundEl.setAttribute("environment", "playArea", "10");
+                // backgroundEl.setAttribute("environment", "dressingAmount", "0");
+                
+            }
 
             
             backgroundEl.setAttribute("background", "color", "black");
@@ -438,14 +447,20 @@ AFRAME.registerComponent('video-controls', {
 
                 } else {
                     
-
+                    restorePanel();
                     if(is_fs){
                         restoreVid();
                         is_fs = false;
                         videoDisplay.classList.remove("non-clickable");
+
+                        let orig_preset = backgroundEl.getAttribute("scene-settings").presChoice; 
+                        if(backgroundEl.getAttribute("scene-settings").selChoice == "2"){
+                            backgroundEl.setAttribute("environment", "preset", orig_preset);
+                            backgroundEl.setAttribute("environment", "ground", flat);
+                        }
                     }
                     
-                    restorePanel();
+                    
                 }
             });
         }
