@@ -691,9 +691,9 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                             Between 3 - 25 characters
                         </p>
 
-                        <input type="checkbox" title="Select if you want the video to automativally loop." id="video_autoloop_checkbox"
+                        <input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="video_autoloop_checkbox"
                                name="video_autoloop_checkbox" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $video_autoloop; ?>/>
-                        <label for="video_autoloop_checkbox" class="mdc-typography--subheading2" style="vertical-align: middle; cursor: pointer;">Autoloop</label>
+                        <label for="video_autoloop_checkbox" class="mdc-typography--subheading2" style="vertical-align: middle; cursor: pointer;">Autoplay</label>
                     </div>
 
                     <div class="assetEditorColumn" id="poi_image_file_section" style="display: none;">
