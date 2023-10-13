@@ -33,9 +33,9 @@ AFRAME.registerComponent('video-controls', {
         let fsEl = document.querySelector("#ent_fs_" + data.id);
         let plEl = document.querySelector("#ent_pl_" + data.id);
         let exEl = document.querySelector("#ent_ex_" + data.id);
+        let exFrameEl = document.querySelector("#exit_vid_panel_" + data.id);
         let titEl = document.querySelector("#ent_tit_" + data.id);
         let backgroundEl = document.querySelector('#aframe-scene-container');
-
         let playerEl = document.querySelector('#cameraA');
         let rightHand = document.querySelector('#oculusRight');
 
@@ -128,12 +128,19 @@ AFRAME.registerComponent('video-controls', {
 
         function handleCamEntity(obj, non_visible, trans, opac) {
 
+            // backgroundEl.renderer.sortObjects = true;
+            
             if (non_visible) {
                 obj.object3D.renderOrder = 9999999;
                 //clipIntersection
                 obj.components.material.material.depthTest = false;
                 obj.components.material.material.transparent = trans;
                 obj.components.material.material.opacity = opac;
+                // if(obj == lineEl){
+                //     obj.object3D.renderOrder = 999999999999;
+                //     obj.components.material.material.transparent = false;
+                // }
+                
 
                 obj.setAttribute("visible", "true");
                 obj.setAttribute("scale", "1 1 1");
@@ -193,8 +200,7 @@ AFRAME.registerComponent('video-controls', {
             playUpd(plEl);
 
         });
-
-        exEl.addEventListener("mouseup", function (event) {
+        exFrameEl.addEventListener("mouseup", function (event) {
            
             videoPanel.setAttribute("position", panel_pos_dynamic);
             handleCamEntity(videoPanel, false, true, 0.3);
@@ -206,6 +212,28 @@ AFRAME.registerComponent('video-controls', {
                 video.pause();
 
             }
+            // videoDisplay.classList.remove("non-clickable");
+            // videoPanel.classList.remove("non-clickable");
+
+         
+            
+            backgroundEl.setAttribute("raycaster","objects: .raycastable");
+            if(rightHand)
+                rightHand.setAttribute("raycaster","objects: .raycastable");
+        });
+
+        exEl.addEventListener("mouseup", function (event) {
+           
+            videoPanel.setAttribute("position", panel_pos_dynamic);
+            handleCamEntity(videoPanel, false, true, 0.3);
+            // if (video.paused) {
+            //     console.log("Video Paused. Exiting...")
+
+            // }
+            // else {
+            //     video.pause();
+
+            // }
             // videoDisplay.classList.remove("non-clickable");
             // videoPanel.classList.remove("non-clickable");
 
@@ -235,7 +263,6 @@ AFRAME.registerComponent('video-controls', {
                 backgroundEl.setAttribute("environment", "ground", "none");
 
             
-            //cam.setAttribute("camera", "fov", 2 * Math.atan((height / 2) / (dist)) * (180 / Math.PI));
             backgroundEl.setAttribute("background", "color", "black");
             backgroundEl.setAttribute("overlay", "");
             videoDisplay.classList.add("non-clickable");
@@ -258,6 +285,7 @@ AFRAME.registerComponent('video-controls', {
             handleCamEntity(fsEl, false, true, 1);
             handleCamEntity(plEl, false, true, 1);
             handleCamEntity(exEl, false, true, 1);
+            // handleCamEntity(lineEl, false, true, 1);
             handleCamEntityText(titEl, false, true, 1);
 
             if (video.paused) {
@@ -283,7 +311,8 @@ AFRAME.registerComponent('video-controls', {
 
         function removeVRTraces(){
             restoreVid();
-            videoPanel.setAttribute("position", panel_pos_dynamic);
+            // panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z;
+            // videoPanel.setAttribute("position", panel_pos_dynamic);
             handleCamEntity(videoPanel, false, true, 0.3);
             if (video.paused) {
                 console.log("Video Paused. Exiting...")
@@ -306,14 +335,15 @@ AFRAME.registerComponent('video-controls', {
             handleCamEntity(fsEl, true, true, 1);
             handleCamEntity(plEl, true, true, 1);
             handleCamEntity(exEl, true, true, 1);
+            // handleCamEntity(lineEl, true, true, 1);
             handleCamEntityText(titEl, true, true, 1);
             videoPanel.setAttribute("position", panel_pos_dynamic);
             
             // videoDisplay.classList.remove("raycastable");
             // videoBorder.classList.remove("raycastable");
             backgroundEl.setAttribute("raycaster","objects: .non-clickable");
-            // if(rightHand)
-            //     rightHand.setAttribute("raycaster","objects: .non-clickable");
+            if(rightHand)
+                rightHand.setAttribute("raycaster","objects: .non-clickable");
             playUpd(plEl);
         }
 
