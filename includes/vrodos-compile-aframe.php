@@ -677,6 +677,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_video_asset->setAttribute("id", "video_$uuid");
 
                     $contentObject->video_loop == 1 ? $a_video_asset->setAttribute( "loop", "true") : $a_video_asset->setAttribute( "loop", "false");
+                    if ( $contentObject->video_loop == 1){
+                        $a_video_asset->setAttribute( "autoplay-manual", "true");
+                    }
+                    else{
+                        $a_video_asset->setAttribute( "autoplay-manual", "false");
+                    }
+
 
                     //$contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
                     if ($contentObject->video_path != "false"){
@@ -722,61 +729,101 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $a_entity_fs = $dom->createElement("a-plane");
                     $a_entity_fs->setAttribute("id", "ent_fs_$uuid");
-                    $a_entity_fs->setAttribute("height", "0.1");
-                    $a_entity_fs->setAttribute("width", "0.1");
+                    $a_entity_fs->setAttribute("height", "0.08");
+                    $a_entity_fs->setAttribute("width", "0.08");
                     $a_entity_fs->setAttribute("src", "#video_fullScreen_$uuid");
                     $a_entity_fs->setAttribute("renderOrder", "9999999");
-                    $a_entity_fs->setAttribute("position", "-0.05 0 0.000001");
-                    $a_entity_fs->setAttribute("material", "color: #ffffff; shader: flat");
+                    $a_entity_fs->setAttribute("position", "-0.05 -0.03 0.000001");
+                    $a_entity_fs->setAttribute("material", "shader: flat");
                     $a_entity_fs->setAttribute("class", "clickable raycastable non-clickable");
 
                     $a_entity_pl = $dom->createElement("a-plane");
                     $a_entity_pl->setAttribute("id", "ent_pl_$uuid");
-                    $a_entity_pl->setAttribute("height", "0.1");
-                    $a_entity_pl->setAttribute("width", "0.1");
+                    $a_entity_pl->setAttribute("height", "0.08");
+                    $a_entity_pl->setAttribute("width", "0.08");
                     $a_entity_pl->setAttribute("src", "#video_pl_$uuid");
                     $a_entity_pl->setAttribute("renderOrder", "9999999");
-                    $a_entity_pl->setAttribute("position", "0.05 0 0.000001");
-                    $a_entity_pl->setAttribute("material", "color: #ffffff; shader: flat;");
+                    $a_entity_pl->setAttribute("position", "0.05 -0.03 0.000001");
+                    $a_entity_pl->setAttribute("material", "shader: flat;");
                     $a_entity_pl->setAttribute("class", "clickable raycastable non-clickable");
                     //$fileOperations->setAffineTransformations($a_entity_fs, $contentObject);
                     //$ascene->appendChild($a_entity_fs);
                     $a_entity_ex = $dom->createElement("a-plane");
                     $a_entity_ex->setAttribute("id", "ent_ex_$uuid");
-                    $a_entity_ex->setAttribute("height", "0.1");
-                    $a_entity_ex->setAttribute("width", "0.1");
+                    $a_entity_ex->setAttribute("height", "0.08");
+                    $a_entity_ex->setAttribute("width", "0.08");
                     $a_entity_ex->setAttribute("src", "#video_exit_$uuid");
                     $a_entity_ex->setAttribute("renderOrder", "9999999");
-                    $a_entity_ex->setAttribute("position", "0.05 0.1 0.000001");
-                    $a_entity_ex->setAttribute("material", "color: #ffffff; shader: flat;");
+                    //$a_entity_ex->setAttribute("position", "0.15 0.05 0.000001");
+                    $a_entity_ex->setAttribute("position", "0.15 0.15 0.000001");
+                    // $a_entity_ex->setAttribute("position", "0.05 0.1 0.000001");
+                    $a_entity_ex->setAttribute("material", "shader: flat;");
                     $a_entity_ex->setAttribute("class", "clickable raycastable non-clickable");
 
                     $a_entity_panel = $dom->createElement("a-plane");
                     $a_entity_panel->setAttribute("id", "vid-panel_$uuid");
-                    $a_entity_panel->setAttribute("height", "0.3");
-                    $a_entity_panel->setAttribute("width", "0.2");
+                    // $a_entity_panel->setAttribute("height", "0.3");
+                    // $a_entity_panel->setAttribute("width", "0.2");
                     //$a_entity_panel->setAttribute("color", "red");
-                    $a_entity_panel->setAttribute("position", "1 0 -1");
+                    //$a_entity_panel->setAttribute("position", "1 0 -1");
                     $a_entity_panel->setAttribute("scale", "0.00001 0.00001 0.00001");
                     $a_entity_panel->setAttribute("visible", "false");
                     //$a_entity_panel->setAttribute("renderOrder", "9999999");
-                    $a_entity_panel->setAttribute("material", "color: #ffffff; shader: flat; ");
+                    // $a_entity_panel->setAttribute("material", "color: #ffffff; shader: flat; ");
                     $a_entity_panel->setAttribute("class", "clickable raycastable");
+                    $a_entity_panel->setAttribute("mixin", "vidFrame");
+                    
+
+                    $exit_vid_entity_panel = $dom->createElement("a-entity");
+                    $exit_vid_entity_panel->setAttribute("id", "exit_vid_panel_$uuid");
+                    $exit_vid_entity_panel->setAttribute("mixin", "poiVidEscFrame");
+                    $exit_vid_entity_panel->setAttribute("scale", "1 1 1");
+                    $exit_vid_entity_panel->setAttribute("original-scale", "1 1 1");
+                    $exit_vid_entity_panel->setAttribute("class", "raycastable hideable non-clickable" );
 
 
                     //$ascene->appendChild($a_entity_panel);
 
                     $a_title_vid_entity = $dom->createElement("a-entity");
                     $a_title_vid_entity->setAttribute("id", "ent_tit_$uuid");
-                    $a_title_vid_entity->setAttribute("position", "-0.1 0.17 0.000001");
+                    // $a_title_vid_entity->setAttribute("position", "-0.2 0.11 0.000001");
+                    // $a_title_vid_entity->setAttribute("position", "-0.18 0.2 0.000001");
+                    $a_title_vid_entity->setAttribute("position", "-0.18 0.05 0.000001");
 
                     $vid_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
-                    $a_title_vid_entity->setAttribute("text", "depthTest:false; negate:false;shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: black; value: $contentObject->video_title");
+                    $a_title_vid_entity->setAttribute("text", "depthTest:false; negate:false;shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: #2f3542; value: $contentObject->video_title");
                     $a_title_vid_entity->setAttribute( "class", "clickable raycastable" );
+
+                    $a_vid_entity_panel = $dom->createElement("a-entity");
+                    $a_vid_entity_panel->setAttribute("id", "$a_vid_entity_panel_$uuid");
+                    
+                    $a_vid_entity_panel->setAttribute("scale", "1 1 1");
+                    $a_vid_entity_panel->setAttribute("original-scale", "1 1 1");
+                    $a_vid_entity_panel->setAttribute("class", "raycastable hideable non-clickable" );
+
+                    $a_vid_title_entity_panel = $dom->createElement("a-entity");
+                    $a_vid_title_entity_panel->setAttribute("id", "$a_title_vid_entity_panel_$uuid");
+                    $a_vid_title_entity_panel->setAttribute("mixin", "vidTitleFrame");
+                    $a_vid_title_entity_panel->setAttribute("scale", "1 1 1");
+                    $a_vid_title_entity_panel->setAttribute("original-scale", "1 1 1");
+                    $a_vid_title_entity_panel->setAttribute("class", "raycastable hideable non-clickable" );
+
+                         
+                    // $line_entity_panel = $dom->createElement("a-entity");
+                    // $line_entity_panel->setAttribute("id", "line_$uuid");
+                    // $line_entity_panel->setAttribute("line", "start: -5 0 0.1; end: 5 0 0.1; color: red");
+                    // $line_entity_panel->setAttribute("scale", "1 1 1");
+                    // $line_entity_panel->setAttribute("material", "shader: flat;");
+                    // $line_entity_panel->setAttribute("original-scale", "1 1 1");
+                    // $line_entity_panel->setAttribute("class", " hideable" );
 
 
                     //shader: msdf; anchor: left; width: 1.5;
                     $a_entity_panel->appendChild($a_title_vid_entity);
+                    $a_entity_panel->appendChild($a_vid_title_entity_panel);
+                    // $a_entity_panel->appendChild($line_entity_panel);
+                    $a_entity_panel->appendChild($exit_vid_entity_panel);
+                    $a_entity_panel->appendChild($a_vid_entity_panel);
                     $a_entity_panel->appendChild($a_entity_fs);
                     $a_entity_panel->appendChild($a_entity_pl);
                     $a_entity_panel->appendChild($a_entity_ex);

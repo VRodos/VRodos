@@ -62,6 +62,10 @@ function bcgRadioSelect(option){
     let color_sel = document.getElementById('jscolorpick');
     let custom_img_sel = document.getElementById('img_upload_bcg');
     let preset_sel = document.getElementById('presetsBcg');
+    let img_thumb = document.getElementById('uploadImgThumb');
+
+    
+    
     
 
 
@@ -70,6 +74,10 @@ function bcgRadioSelect(option){
         custom_img_sel.disabled = true;
         preset_sel.disabled = true;
         color_sel.disabled = true;
+        color_sel.hidden = true;
+        preset_sel.hidden = true;
+        custom_img_sel.hidden = true;
+        img_thumb.hidden = true;
         var hex = rgbToHex(255, 255, 255);
         //envir.renderer.setClearColor(hex);
         envir.scene.background = new THREE.Color(hex);
@@ -80,6 +88,10 @@ function bcgRadioSelect(option){
         preset_sel.disabled = true;
         custom_img_sel.disabled = true;
         envir.scene.background = new THREE.Color("#"+document.getElementById('jscolorpick').value);
+        color_sel.hidden = false;
+        preset_sel.hidden = true;
+        custom_img_sel.hidden = true;
+        img_thumb.hidden = true;
         break;
     case 2 : 
         custom_img_sel.disabled = true;
@@ -87,11 +99,20 @@ function bcgRadioSelect(option){
         color_sel.disabled = true;
         envir.scene.preset_selection = preset_sel.value;
         envir.scene.backgroundPresetOption = preset_sel.value;
+        color_sel.hidden = true;
+        preset_sel.hidden = false;
+        custom_img_sel.hidden = true;
+        img_thumb.hidden = true;
         break;
     case 3 : 
         custom_img_sel.disabled = false;
         preset_sel.disabled = true;
         color_sel.disabled = true;
+        color_sel.hidden = true;
+        preset_sel.hidden = true;
+        custom_img_sel.hidden = false;
+        img_thumb.hidden = false;
+
         if (envir.scene.img_bcg_path && envir.scene.img_bcg_path !=0)
         {
            
