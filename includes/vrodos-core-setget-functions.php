@@ -281,7 +281,7 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
                 'screenshot_id'=>$sshotID,
                 'screenshot_path'=>$sshotPath,
                 'is_cloned'=> get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true),
-                'is_joker'=> get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true),
+                'is_joker'=> get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true)
             ];
 
             switch ($asset_cat_arr[0]->slug) {

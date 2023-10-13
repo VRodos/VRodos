@@ -506,7 +506,7 @@
 
 
 <a-scene oculus-go-controls-enabled id="aframe-scene-container"  fog="type: linear; color: #AAB; far: 230; near: 0"
-         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic" background="color: white"
+         renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic;  precision:high;"
          vr-mode-ui="enabled: true"
          networked-scene="
             room: roomname;
@@ -618,8 +618,6 @@
     document.querySelector('a-scene').addEventListener('exit-vr',  function () {
         browsingModeVR = false;
     });
-
-
 
 
     /* CHAT COMPONENT */
