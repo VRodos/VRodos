@@ -269,9 +269,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             }
 
             // Toggle general chat
+            $chat_wrapper = $dom->getElementById('chat-wrapper-el');
             if (filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN)  === true) {
-                $chat_wrapper = $dom->getElementById('chat-wrapper-el');
-                $chat_wrapper->setAttribute( "style", 'visibility: visible;' );
+                $chat_wrapper->setAttribute( "data-visible", 'true' );
+            } else {
+                $chat_wrapper->setAttribute( "data-visible", 'false' );
             }
 
 
@@ -589,6 +591,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "class", "override-materials hideable" );
                     $gltf_model->setAttribute( "material", $material );
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
+                    $gltf_model->setAttribute( "preload", "auto" );
                     //$a_entity->setAttribute( "ammo-body", "type: dynamic;" );
                     //$a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );
                     //$a_entity->setAttribute( "class", "collidable" );
@@ -628,7 +631,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     //$a_entity->setAttribute("class", "");
 
-                    /*$gltf_model->setAttribute("highlight", "$uuid");*/
+                    /*$gltf_model->setAttribute("highlight", "entity_$uuid");*/
 
 
                     if (!empty($contentObject->sceneID_target))
