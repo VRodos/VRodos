@@ -748,60 +748,82 @@ wp_head();
 
             // Init UI values
 
+            let img_thumb = document.getElementById('uploadImgThumb');
+
             if (resources3D["enableGeneralChat"]) {
                 document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
                 envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
             }
 
             if (resources3D["backgroundStyleOption"]) {
-                let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+            let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+           
+            switch (selOption){
+            case 0:
+                document.getElementById("sceneNone").checked = true;
+                custom_img_sel.disabled = true;
+                preset_sel.disabled = true;
+                color_sel.disabled = true;
 
-                switch (selOption){
-                    case 0:
-                        document.getElementById("sceneNone").checked = true;
-                        custom_img_sel.disabled = true;
-                        preset_sel.disabled = true;
-                        color_sel.disabled = true;
-                        break;
-                    case 1:
-                        document.getElementById("sceneColorRadio").checked = true;
-                        color_sel.disabled = false;
-                        preset_sel.disabled = true;
-                        custom_img_sel.disabled = true;
-                        break;
-                    case 2:
-                        document.getElementById("sceneSky").checked = true;
-                        custom_img_sel.disabled = true;
-                        preset_sel.disabled = false;
-                        color_sel.disabled = true;
-                        envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                        envir.scene.preset_selection = resources3D["backgroundPresetOption"];
-                        // envir.scene.backgroundPresetOption = preset_sel.value;
-                        //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+                color_sel.hidden = true;
+                preset_sel.hidden = true;
+                custom_img_sel.hidden = true;
+                img_thumb.hidden = true;
+                break;
+            case 1:
+                document.getElementById("sceneColorRadio").checked = true;
+                color_sel.disabled = false;
+                preset_sel.disabled = true;
+                custom_img_sel.disabled = true;
 
-                        for(let index = 0; index < preset_sel.options.length;index++){
-                            if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
-                                preset_sel.options[index].selected = true;
-                                //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
-                            }
-                        }
-                        break;
-                    case 3:
-                        document.getElementById("sceneCustomImage").checked = true;
-                        custom_img_sel.disabled = false;
-                        preset_sel.disabled = true;
-                        color_sel.disabled = true;
-                        break;
+                color_sel.hidden = false;
+                preset_sel.hidden = true;
+                custom_img_sel.hidden = true;
+                img_thumb.hidden = true;
+                break;
+            case 2:
+                document.getElementById("sceneSky").checked = true;
+                custom_img_sel.disabled = true;
+                preset_sel.disabled = false;
+                color_sel.disabled = true;
+
+                color_sel.hidden = true;
+                preset_sel.hidden = false;
+                custom_img_sel.hidden = true;
+                img_thumb.hidden = true;
+                envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
+                envir.scene.preset_selection = resources3D["backgroundPresetOption"];
+                // envir.scene.backgroundPresetOption = preset_sel.value;
+                //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+
+                for(let index = 0; index < preset_sel.options.length;index++){
+                    if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
+                        preset_sel.options[index].selected = true;
+                        //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
+                    }
                 }
-                envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-                if (resources3D["backgroundImagePath"] && resources3D["backgroundImagePath"] != 0){
-                    console.log(resources3D["backgroundImagePath"]);
-                    document.getElementById('uploadImgThumb').src = resources3D["backgroundImagePath"];
-                    document.getElementById('uploadImgThumb').hidden = false;
+                break;
+            case 3:
+                document.getElementById("sceneCustomImage").checked = true;
+                custom_img_sel.disabled = false;
+                preset_sel.disabled = true;
+                color_sel.disabled = true;
+
+                color_sel.hidden = true;
+                preset_sel.hidden = true;
+                custom_img_sel.hidden = false;
+
+                if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
+                    img_thumb.src = resources3D["backgroundImagePath"];
+                    img_thumb.hidden = false;
                 }
-
-                envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
-
+                break;
+            }
+            envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
+          
+           
+            envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+           
                 //saveChanges();
             }
         });
