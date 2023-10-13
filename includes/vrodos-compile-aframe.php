@@ -565,56 +565,77 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                 case 'decoration':
 
+                    $assets = $dom->getElementById('scene-assets');
+
+                    $asset_item = $dom->createElement( "a-asset-item" );
+                    $asset_item->setAttribute( "id", $uuid );
+                    $asset_item->setAttribute( "src", "" . $contentObject->glb_path . "" );
+                    $asset_item->setAttribute( "response-type", "arraybuffer" );
+
+                    $assets->appendChild( $asset_item );
+
+
                     $sc_x = $contentObject->scale[0];
                     $sc_y = $contentObject->scale[1];
                     $sc_z = $contentObject->scale[2];
 
-                    //print_r($contentObject->category_name);
-                    $a_entity = $dom->createElement( "a-entity" );
-                    $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
-                    $a_entity->appendChild( $dom->createTextNode( '' ) );
-
+                    $gltf_model = $dom->createElement( "a-entity" );
+                    $gltf_model->setAttribute( "gltf-model","#". $uuid );
+                    $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
+                    $gltf_model->appendChild( $dom->createTextNode( '' ) );
                     $material = "";
+                    $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
                     //$fileOperations->setMaterial( $material, $contentObject );
-                    $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                    $a_entity->setAttribute( "class", "override-materials hideable" );
-                    $a_entity->setAttribute( "id", $uuid );
-                    $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
-                    $a_entity->setAttribute( "material", $material );
-                    $a_entity->setAttribute( "clear-frustum-culling", "" );
+                    $gltf_model->setAttribute( "class", "override-materials hideable" );
+                    $gltf_model->setAttribute( "material", $material );
+                    $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     //$a_entity->setAttribute( "ammo-body", "type: dynamic;" );
                     //$a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );
                     //$a_entity->setAttribute( "class", "collidable" );
 
-                    $ascene->appendChild( $a_entity );
+                    $ascene->appendChild( $gltf_model );
+
+                    //$ascene->appendChild( $a_entity );
                     break;
 
 
                 case 'door':
 
-                    $a_entity = $dom->createElement( "a-entity" );
-                    $a_entity->appendChild( $dom->createTextNode( '' ) );
+                    $assets = $dom->getElementById('scene-assets');
+
+                    $asset_item = $dom->createElement( "a-asset-item" );
+                    $asset_item->setAttribute( "id", "entity_$uuid" );
+                    $asset_item->setAttribute( "src", "" . $contentObject->glb_path . "" );
+                    $asset_item->setAttribute( "response-type", "arraybuffer" );
+
+                    $assets->appendChild( $asset_item );
+
                     $sc_x = $contentObject->scale[0];
                     $sc_y = $contentObject->scale[1];
                     $sc_z = $contentObject->scale[2];
 
+                    $gltf_model = $dom->createElement( "a-entity" );
+                    $gltf_model->setAttribute( "gltf-model","#". "entity_$uuid" );
+                    $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
+                    $gltf_model->appendChild( $dom->createTextNode( '' ) );
+
+
                     $material = "";
                     $fileOperations->setMaterial( $material, $contentObject );
-                    $fileOperations->setAffineTransformations( $a_entity, $contentObject );
-                    $a_entity->setAttribute( "class", "override-materials raycastable hideable" );
-                    $a_entity->setAttribute( "id", "entity_$uuid" );  //in order to be highlightable it has to be formatted entity_id
-                    $a_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
-                    $a_entity->setAttribute( "material", $material );
-                    $a_entity->setAttribute( "clear-frustum-culling", "" );
+                    $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
+                    $gltf_model->setAttribute( "class", "override-materials raycastable hideable" );
+
+                    $gltf_model->setAttribute( "material", $material );
+                    $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     //$a_entity->setAttribute("class", "");
-                    $a_entity->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
+                    $gltf_model->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                     //$a_entity->setAttribute("highlight", "$uuid");
 
 
                     if (!empty($contentObject->sceneID_target))
-                        includeDoorFunctionality($a_entity, $contentObject->sceneID_target, $fileOperations);
+                        includeDoorFunctionality($gltf_model, $contentObject->sceneID_target, $fileOperations);
 
-                    $ascene->appendChild( $a_entity );
+                    $ascene->appendChild( $gltf_model );
 
                     break;
 
