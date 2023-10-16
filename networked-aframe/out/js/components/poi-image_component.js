@@ -266,7 +266,7 @@ AFRAME.registerComponent('info-panel', {
             poi_elems[i].object3D.visible = false;
         }
         this.el.classList.add("openPOI");
-        this.scen.components.raycaster.refreshObjects();
+        // this.scen.components.raycaster.refreshObjects();
         this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
         // this.backgroundEl.setAttribute("material", "color", "white");
         this.backgroundEl.object3D.visible = true;

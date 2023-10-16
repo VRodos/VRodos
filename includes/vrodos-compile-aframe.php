@@ -636,6 +636,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "material", $material );
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     //$a_entity->setAttribute("class", "");
+                    //$a_entity->setAttribute("highlight", "$uuid");
 
                     $gltf_model->setAttribute("highlight", "entity_$uuid");
 
@@ -858,7 +859,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     $gltf_model->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                     $gltf_model->setAttribute('link-listener', $contentObject->poi_link_url);
-                    //$a_entity->setAttribute("highlight", "$uuid");
+                    $gltf_model->setAttribute("highlight", "$uuid");
 
 
                     $ascene->appendChild( $gltf_model );

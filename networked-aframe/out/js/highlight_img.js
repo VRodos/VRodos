@@ -3,14 +3,11 @@ AFRAME.registerComponent('highlight', {
     init: function () {
         //var backgroundEl = document.querySelector('#exit_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
-        this.buttonEl = document.querySelector('#button_poi_' + this.data);
-        if (this.buttonEl == null) {
-            this.buttonEl = document.querySelector('#entity_' + this.data);
-            console.log(this.buttonEl);
-        }
-
-        console.log(this);
-
+        //this.buttonEl = document.querySelector('#button_poi_' + this.data);
+        // if (this.buttonEl == null) {
+        //     this.buttonEl = document.querySelector('#entity_' + this.data);
+        //     console.log(this.buttonEl);
+        // }
         this.onClick = this.onClick.bind(this);
         this.onMouseEnter = this.onMouseEnter.bind(this);
         this.onMouseLeave = this.onMouseLeave.bind(this);
@@ -18,20 +15,20 @@ AFRAME.registerComponent('highlight', {
 
         //backgroundEl.addEventListener('click', this.reset);
 
-        this.buttonEl.addEventListener('click', this.onBackgroundClick);
-        this.buttonEl.addEventListener('mouseenter', this.onMouseEnter);
-        this.buttonEl.addEventListener('mouseleave', this.onMouseLeave);
-        this.buttonEl.addEventListener('click', this.onClick);
+        this.el.addEventListener('click', this.onBackgroundClick);
+        this.el.addEventListener('mouseenter', this.onMouseEnter);
+        this.el.addEventListener('mouseleave', this.onMouseLeave);
+        this.el.addEventListener('click', this.onClick);
         var flag = "test";
 
-        const realWorldPosition = this.buttonEl.object3D.getWorldPosition(new THREE.Vector3());
+        // const realWorldPosition = this.buttonEl.object3D.getWorldPosition(new THREE.Vector3());
 
 
 
 
 
 
-        this.buttonEl.addEventListener("animationcomplete", e => {
+        this.el.addEventListener("animationcomplete", e => {
             //this.el.object3D.visible = false;
 
             //this.buttonEl.emit("temp");
