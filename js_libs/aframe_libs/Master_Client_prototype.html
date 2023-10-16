@@ -203,9 +203,43 @@
                         backgroundEl.setAttribute("background", "color", this.data.color);
                         break;
                     case "2":
-                        backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
-                        //backgroundEl.setAttribute("environment", "ground", "flat");
-                        backgroundEl.setAttribute("environment", "playArea", "1.4");
+                        if (this.data.presChoice == "ocean")
+                        {
+                            console.log(this.data.presChoice);
+                            let sky = document.createElement('a-sky');
+                            sky.setAttribute("color", "#a4bede");
+                            backgroundEl.appendChild(sky);
+
+                            let plane = document.createElement('a-plane');
+                            plane.setAttribute("color", "#ffffff");
+                            plane.setAttribute("position", "0 4.5 0");
+                            plane.setAttribute("height", "11");
+                            plane.setAttribute("width", "11");
+                            plane.setAttribute("rotation", "90 90 0");
+                            plane.setAttribute("material", "opacity:0.4");
+                            plane.setAttribute("scale", "15 15 15");
+                            backgroundEl.appendChild(plane);
+
+                            let entity = document.createElement('a-entity');
+                            entity.setAttribute("color", "#b6e8fe");
+                            entity.setAttribute("position", "0 4 0");
+
+                            let ocean = document.createElement('a-ocean');
+                            ocean.setAttribute("width", "50");
+                            ocean.setAttribute("depth", "50");
+                            ocean.setAttribute("density", "40");
+
+                            let animation = document.createElement('a-animation');
+                            animation.setAttribute("attribute", "visible");
+                            animation.setAttribute("delay", "25000");
+                            animation.setAttribute("to", "true");
+
+                        }else{
+                            backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
+                            //backgroundEl.setAttribute("environment", "ground", "flat");
+                            backgroundEl.setAttribute("environment", "playArea", "1.4");
+                        }
+                        
 
                         break;
                     case "3":

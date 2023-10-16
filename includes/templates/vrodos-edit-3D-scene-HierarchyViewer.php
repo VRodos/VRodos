@@ -146,6 +146,7 @@
                     <option value="starry">Starry</option>
                     <option value="osiris">Osiris</option>
                     <option value="moon">Moon</option>
+                    <option value="ocean">Ocean</option>
                 </select>
             </li>
             </label>
