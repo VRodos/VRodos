@@ -233,6 +233,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $ascene = $dom->getElementById('aframe-scene-container');
             $ascenePlayer = $dom->getElementById('player');
 
+            $title = $dom->getElementsByTagName("title");
+            $title = $title->item(0)->nodeValue; 
+
             // If MediaVerse project, then enable upload to MV Node.
             $media_panel = $dom->getElementById('mediaPanel');
             $recording_controls = $dom->getElementById('upload-recording-btn');
@@ -283,7 +286,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $objects = $scene_json->objects;
             //print_r($objects);
 
-            return array("dom" => $dom, "html" => $html, "head" => $head, "body" => $body, "ascene" => $ascene, "ascenePlayer" => $ascenePlayer, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv);
+            return array("dom" => $dom, "html" => $html, "head" => $head, "title" => $title, "body" => $body, "ascene" => $ascene, "ascenePlayer" => $ascenePlayer, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv);
         }
 
     }
@@ -316,6 +319,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
     // STEP 2: Create the director file
     function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index, $project_id){
+
 
         // Read prototype
         $content = $fileOperations->reader($fileOperations->plugin_path_dir
@@ -350,7 +354,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $objects = $basicDomElements['objects'];
         $ascene = $basicDomElements['ascene'];
         $ascenePlayer = $basicDomElements['ascenePlayer'];
+        $title = $basicDomElements['title'];
         $sceneColor = $scene_json->metadata->ClearColor;
+
+        //print_r($title);
 
         $pj_type = wp_get_post_terms($project_id, 'vrodos_game_type');
 
@@ -406,6 +413,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
 
             $a_cursor = $dom->createElement( "a-entity" );
+            $a_cursor->setAttribute( "id", "cursor" );
             $a_cursor->setAttribute( "cursor", "rayOrigin: mouse; fuse: false" );
             $a_cursor->setAttribute( "raycaster", "objects: .raycastable" );
 
@@ -444,8 +452,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             $ascenePlayer->appendChild( $a_entity );
         }
-
-
+       
         //print($scene_id)
 
         //$i = array_search($scene_id, array_keys($scene_id_list));

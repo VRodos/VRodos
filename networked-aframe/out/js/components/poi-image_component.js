@@ -19,6 +19,7 @@ AFRAME.registerComponent('info-panel', {
         this.buttonNextEl = document.querySelector('#next_' + this.data);
         this.buttonPrevEl = document.querySelector('#prev_' + this.data);
         this.backgroundEl = document.querySelector('#exit_' + this.data);
+        this.cursorEl = document.querySelector('#cursor');
         this.buttonNextPanelEl = document.querySelector('#next_panel_' + this.data);
         this.buttonPrevPanelEl = document.querySelector('#prev_panel_' + this.data);
         this.buttonEscPanelEl = document.querySelector('#exit_panel_' + this.data);
@@ -270,7 +271,7 @@ AFRAME.registerComponent('info-panel', {
         this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
         // this.backgroundEl.setAttribute("material", "color", "white");
         this.backgroundEl.object3D.visible = true;
-        this.scen.setAttribute("raycaster","objects: .non-clickable");
+        this.cursorEl.setAttribute("raycaster","objects: .non-clickable");
 
             this.el.object3D.scale.set(1, 1, 1);
             if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
@@ -352,7 +353,7 @@ AFRAME.registerComponent('info-panel', {
             this.cam.setAttribute("wasd-controls-enabled", "true");
         //this.playerEl.setAttribute("look-controls", "enabled: true");
 
-        this.scen.setAttribute("raycaster","objects: .raycastable");
+        this.cursorEl.setAttribute("raycaster","objects: .raycastable");
 
         this.el.components.material.material.depthTest = true;
         this.ImageEl.components.material.material.depthTest = true;
