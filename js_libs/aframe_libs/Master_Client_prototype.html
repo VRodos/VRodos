@@ -192,8 +192,8 @@
                 this.el.addEventListener("loaded", () => {
                     console.log("Scene Loaded");
 
-                    var entity = document.querySelector('[sound]');
-                    entity.components.sound.playSound();
+                    /*var entity = document.querySelector('[sound]');
+                    entity.components.sound.playSound();*/
 
                 });
                 if (!this.data.selChoice)
@@ -550,9 +550,8 @@
           fog="type: linear; color: #AAB; far: 230; near: 0"
           renderer="antialias: true;
             sortObjects: true;
-            toneMapping:
-            ACESFilmic;
-            precision:high;"
+            toneMapping: ACESFilmic;
+            precision: high;"
           oculus-go-controls-enabled
           vr-mode-ui="enabled: true"
           loading-screen="dotsColor: gray; backgroundColor: black"
