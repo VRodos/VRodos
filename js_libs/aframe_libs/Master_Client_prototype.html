@@ -187,10 +187,15 @@
                     my_face.setAttribute("visible", "false");
 
                 }
+                let backgroundEl = document.querySelector('#aframe-scene-container');
                 this.el.addEventListener("loaded", () => {
                     backgroundEl.components.raycaster.refreshObjects();
+                    console.log("Scene Loaded");
+                    console.log(this.el.renderer);
+
                 });
-                let backgroundEl = document.querySelector('#aframe-scene-container');
+
+
                 if (!this.data.selChoice)
                     this.data.selChoice = "0";
                 switch(this.data.selChoice){
@@ -668,15 +673,7 @@
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';
         }
 
-        console.log(document.querySelector('a-scene').renderer);
-
     });
-
-    // Scene has loaded
-    document.querySelector('a-scene').addEventListener('loaded',  function () {
-        console.log('Scene Loaded');
-    });
-
 
 
     /* CHAT COMPONENT */
