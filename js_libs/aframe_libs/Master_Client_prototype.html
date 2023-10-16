@@ -188,6 +188,9 @@
                     my_face.setAttribute("visible", "false");
 
                 }
+                this.el.addEventListener("loaded", () => {
+                    backgroundEl.components.raycaster.refreshObjects();
+                });
                 let backgroundEl = document.querySelector('#aframe-scene-container');
                 if (!this.data.selChoice)
                     this.data.selChoice = "0";

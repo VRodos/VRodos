@@ -55,7 +55,10 @@ AFRAME.registerComponent('video-controls', {
             video.play();
         }else{
             videoDisplay.classList.add("raycastable");
+          
+            
         }
+        
             
         const visibleHeightAtZDepth = ( depth ) => {
             const camera = AFRAME.scenes[0].camera;
@@ -114,15 +117,7 @@ AFRAME.registerComponent('video-controls', {
             );
 
         }
-
-
-        backgroundEl.addEventListener('loaded', function () {
-
-            restoreVidPos(videoDisplay, videoPanel);
-        });
-
-
-
+    
         let visCollection = [];
         let height = 15;
         let width = 20;
@@ -274,6 +269,7 @@ AFRAME.registerComponent('video-controls', {
             backgroundEl.setAttribute("background", "color", "black");
             backgroundEl.setAttribute("overlay", "");
             videoDisplay.classList.add("non-clickable");
+            backgroundEl.components.raycaster.refreshObjects();
             // videoPanel.classList.add("non-clickable");
             cam.add(videoDisplay);
             videoDisplay.setAttribute("height", visibleHeightAtZDepth(-25));
@@ -352,7 +348,7 @@ AFRAME.registerComponent('video-controls', {
 
 
             let projType = backgroundEl.getAttribute("scene-settings").pr_type;
-
+            console.log(backgroundEl.components.raycaster);
             if (projType != "vrexpo_games")
             {
                 cam.setAttribute("position", "0 0.6 0");
