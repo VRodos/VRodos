@@ -536,11 +536,15 @@
 
 <a-scene  id="aframe-scene-container"
           fog="type: linear; color: #AAB; far: 230; near: 0"
-          renderer="antialias: true; sortObjects: true; toneMapping: ACESFilmic; precision:high;"
+          renderer="antialias: true;
+            sortObjects: true;
+            toneMapping:
+            ACESFilmic;
+            precision:high;"
           oculus-go-controls-enabled
           vr-mode-ui="enabled: true"
           cursor="rayOrigin: mouse; fuse: false"
-          raycaster="objects: .raycastable; enabled: true"
+          raycaster="objects: .raycastable; autoRefresh: true"
           loading-screen="dotsColor: gray; backgroundColor: black"
           networked-scene="
             room: roomname;
@@ -648,15 +652,24 @@
         browsingModeVR = false;
     });
 
+    // All asets have loaded
     document.querySelector('#scene-assets').addEventListener('loaded', function() {
 
-        console.log('loaded');
+        console.log('Assets Loaded');
 
         if(document.getElementById("chat-wrapper-el").getAttribute('data-visible') === 'true') {
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';
         }
 
+        console.log(document.querySelector('a-scene').renderer);
+
     });
+
+    // Scene has loaded
+    document.querySelector('a-scene').addEventListener('loaded',  function () {
+        console.log('Scene Loaded');
+    });
+
 
 
     /* CHAT COMPONENT */

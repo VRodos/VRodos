@@ -191,6 +191,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             $html = $dom->documentElement;
             $head = $dom->documentElement->childNodes[0];
+
             $body = $dom->getElementById('simple-client-body');
             $actionsDiv = $dom->getElementById('actionsDiv');
             $ascene = $dom->getElementById('aframe-scene-container');
