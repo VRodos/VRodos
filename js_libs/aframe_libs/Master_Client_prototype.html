@@ -192,8 +192,8 @@
                 this.el.addEventListener("loaded", () => {
                     console.log("Scene Loaded");
 
-                    /*var entity = document.querySelector('[sound]');
-                    entity.components.sound.playSound();*/
+                    var entity = document.querySelector('[sound]');
+                    entity.components.sound.playSound();
 
                 });
                 if (!this.data.selChoice)
@@ -547,6 +547,7 @@
 
 
 <a-scene  id="aframe-scene-container"
+          fog="type: linear; color: #AAB; far: 230; near: 0"
           renderer="antialias: true;
             sortObjects: true;
             toneMapping:
