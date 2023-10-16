@@ -948,7 +948,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
                     $a_panel_entity->setAttribute("geometry", "primitive: plane; width: 1.5; height: 1.8");
-                    $a_panel_entity->setAttribute("material", "color: #f1f2f6; shader: flat; depthTest: false; transparent: true");
+                    $a_panel_entity->setAttribute("material", "color: #d3eaf2; shader: flat; depthTest: false; transparent: true");
                     $a_panel_entity->setAttribute("class", "raycastable hideable ");
                     //$a_panel_entity->setAttribute("outline", "");
                     $a_panel_entity->setAttribute("original-scale", "0.001 0.001 0.001");
