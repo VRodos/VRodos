@@ -405,6 +405,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_camera->setAttribute( "look-controls", "" );
             $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
 
+            $a_cursor = $dom->createElement( "a-entity" );
+            $a_cursor->setAttribute( "cursor", "rayOrigin: mouse; fuse: false" );
+            $a_cursor->setAttribute( "raycaster", "objects: .raycastable" );
+
             $a_entity_oc_right = $dom->createElement( "a-entity" );
             $a_entity_oc_right->setAttribute( "id", "oculusRight" );
             $a_entity_oc_right->setAttribute( "oculus-touch-controls", "hand: right" );
@@ -418,7 +422,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_entity_oc_left->setAttribute( "raycaster", "lineColor: blue; objects: .raycastable" );
             $a_entity_oc_left->setAttribute( "oculus-thumbstick-controls", "moveEnabled: true" );
 
-
+            $a_camera->appendChild($a_cursor);
             $ascenePlayer->appendChild( $a_camera );
             $ascenePlayer->appendChild( $a_entity_oc_right );
             $ascenePlayer->appendChild( $a_entity_oc_left );
