@@ -289,11 +289,13 @@
                             sound.setAttribute("src", "#underwater-sound");
                             sound.setAttribute("loop", "true");
                             sound.setAttribute("positional", "false");
+                            //sound.setAttribute("autoplay", "true");
                             sound.setAttribute("volume", "1");
                             sound.setAttribute("position", "0 4 0");
 
                             backgroundEl.appendChild(sound);
 
+                            sound.play();
 
                         }else{
                             backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
