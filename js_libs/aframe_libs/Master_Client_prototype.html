@@ -191,6 +191,10 @@
                 let backgroundEl = document.querySelector('#aframe-scene-container');
                 this.el.addEventListener("loaded", () => {
                     console.log("Scene Loaded");
+
+                    /*var entity = document.querySelector('[sound]');
+                    entity.components.sound.playSound();*/
+
                 });
                 if (!this.data.selChoice)
                     this.data.selChoice = "0";
@@ -543,7 +547,6 @@
 
 
 <a-scene  id="aframe-scene-container"
-          fog="type: linear; color: #AAB; far: 230; near: 0"
           renderer="antialias: true;
             sortObjects: true;
             toneMapping:
@@ -562,6 +565,8 @@
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
+
+        <audio preload="auto" id="underwater-sound" src="../media/sound/underwater.mp3"></audio>
 
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
