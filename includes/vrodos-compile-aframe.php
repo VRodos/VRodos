@@ -813,7 +813,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_video->setAttribute("src", "#video_$uuid");
                     $a_video->setAttribute("material", "shader: flat; side: double");
                     $a_video->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
-                    $a_video->setAttribute("class", "clickable hideable raycastable");
+                    $a_video->setAttribute("class", "clickable hideable");
                     //$a_entity->setAttribute("id", "video-border_$uuid");
                   
                     $fileOperations->setAffineTransformations($a_video, $contentObject);
