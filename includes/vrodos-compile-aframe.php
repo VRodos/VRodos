@@ -233,9 +233,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $ascene = $dom->getElementById('aframe-scene-container');
             $ascenePlayer = $dom->getElementById('player');
 
-            $title = $dom->getElementsByTagName("title");
-            $title = $title->item(0)->nodeValue; 
-
             // If MediaVerse project, then enable upload to MV Node.
             $media_panel = $dom->getElementById('mediaPanel');
             $recording_controls = $dom->getElementById('upload-recording-btn');
@@ -286,7 +283,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $objects = $scene_json->objects;
             //print_r($objects);
 
-            return array("dom" => $dom, "html" => $html, "head" => $head, "title" => $title, "body" => $body, "ascene" => $ascene, "ascenePlayer" => $ascenePlayer, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv);
+            return array("dom" => $dom, "html" => $html, "head" => $head, "body" => $body, "ascene" => $ascene, "ascenePlayer" => $ascenePlayer, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv);
         }
 
     }
@@ -354,7 +351,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $objects = $basicDomElements['objects'];
         $ascene = $basicDomElements['ascene'];
         $ascenePlayer = $basicDomElements['ascenePlayer'];
-        $title = $basicDomElements['title'];
         $sceneColor = $scene_json->metadata->ClearColor;
 
         //print_r($title);
@@ -363,6 +359,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         $projectType = $pj_type[0]->slug;
         $a_asset = $dom->createElement( "a-assets" );
+
+        $dom->getElementsByTagName("title")->item(0)->nodeValue = $scene_title[$index];
+        //$dom->getElementsByTagName("title")->item(0)->nodeValue = $project_title;
+    
 
 
         // $ascene->appendChild($a_entity_sky);
