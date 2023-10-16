@@ -299,7 +299,6 @@
 
                             backgroundEl.appendChild(sound);
 
-                            sound.play();
 
                         }else{
                             backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
@@ -644,7 +643,7 @@
 
 
 <a-scene  id="aframe-scene-container"
-          fog="type: linear; color: #AAB; far: 230; near: 0"
+          fog="type: exponential; color: #0894d3; density: 0.06;"
           renderer="antialias: true;
             sortObjects: true;
             toneMapping: ACESFilmic;
@@ -662,8 +661,6 @@
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
-
-        <audio preload="auto" id="underwater-sound" src="../media/sound/underwater.mp3"></audio>
 
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
@@ -745,6 +742,8 @@
     </a-assets>
 
     <a-entity id="player"></a-entity>
+
+
 
 </a-scene>
 
