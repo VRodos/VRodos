@@ -269,7 +269,7 @@ AFRAME.registerComponent('video-controls', {
             backgroundEl.setAttribute("background", "color", "black");
             backgroundEl.setAttribute("overlay", "");
             videoDisplay.classList.add("non-clickable");
-            backgroundEl.components.raycaster.refreshObjects();
+            // backgroundEl.components.raycaster.refreshObjects();
             // videoPanel.classList.add("non-clickable");
             cam.add(videoDisplay);
             videoDisplay.setAttribute("height", visibleHeightAtZDepth(-25));
