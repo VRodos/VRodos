@@ -189,10 +189,7 @@
                 }
                 let backgroundEl = document.querySelector('#aframe-scene-container');
                 this.el.addEventListener("loaded", () => {
-                    backgroundEl.components.raycaster.refreshObjects();
                     console.log("Scene Loaded");
-                    console.log(this.el.renderer);
-
                 });
 
 
