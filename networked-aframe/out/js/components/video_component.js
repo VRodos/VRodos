@@ -240,7 +240,7 @@ AFRAME.registerComponent('video-controls', {
 
          
             
-            backgroundEl.setAttribute("raycaster","objects: .raycastable");
+            cursorEl.setAttribute("raycaster","objects: .raycastable");
             if(rightHand)
                 rightHand.setAttribute("raycaster","objects: .raycastable");
         });
