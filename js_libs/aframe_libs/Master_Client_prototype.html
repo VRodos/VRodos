@@ -207,9 +207,106 @@
                         backgroundEl.setAttribute("background", "color", this.data.color);
                         break;
                     case "2":
-                        backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
-                        //backgroundEl.setAttribute("environment", "ground", "flat");
-                        backgroundEl.setAttribute("environment", "playArea", "1.4");
+                        if (this.data.presChoice == "ocean")
+                        {
+                            console.log(this.data.presChoice);
+                            let sky = document.createElement('a-sky');
+                            sky.setAttribute("color", "#a4bede");
+                            backgroundEl.appendChild(sky);
+
+                            let plane = document.createElement('a-plane');
+                            plane.setAttribute("color", "#ffffff");
+                            plane.setAttribute("position", "0 4.5 0");
+                            plane.setAttribute("height", "11");
+                            plane.setAttribute("width", "11");
+                            plane.setAttribute("rotation", "90 90 0");
+                            plane.setAttribute("material", "opacity:0.4");
+                            plane.setAttribute("scale", "15 15 15");
+                            backgroundEl.appendChild(plane);
+
+                            let entity = document.createElement('a-entity');
+                            entity.setAttribute("color", "#b6e8fe");
+                            entity.setAttribute("position", "0 4 0");
+
+                            let ocean_top = document.createElement('a-ocean');
+                            ocean_top.setAttribute("width", "50");
+                            ocean_top.setAttribute("depth", "50");
+                            ocean_top.setAttribute("density", "40");
+                            
+
+
+                            let animation = document.createElement('a-animation');
+                            animation.setAttribute("attribute", "visible");
+                            animation.setAttribute("delay", "25000");
+                            animation.setAttribute("to", "true");
+                            
+                            ocean_top.appendChild(animation);
+                            entity.appendChild(ocean_top);
+                            backgroundEl.appendChild(entity);
+
+                            
+                            let ocean_shadow = document.createElement('a-ocean');
+                            ocean_shadow.setAttribute("width", "50");
+                            ocean_shadow.setAttribute("depth", "50");
+                            ocean_shadow.setAttribute("density", "50");
+                            ocean_shadow.setAttribute("color", "#75705e");
+                            ocean_shadow.setAttribute("position", "0 -0.15 0");
+                            ocean_shadow.setAttribute("opacity", "0.03");
+
+                            let animation_shadow = document.createElement('a-animation');
+                            animation_shadow.setAttribute("attribute", "visible");
+                            animation_shadow.setAttribute("delay", "55000");
+                            animation_shadow.setAttribute("to", "true");
+
+                            ocean_shadow.appendChild(animation_shadow);
+
+                            backgroundEl.appendChild( ocean_shadow);
+
+                            let plane_seafloor = document.createElement('a-plane');
+                            plane_seafloor.setAttribute("id", "seafloorCoral");
+                            plane_seafloor.setAttribute("color", "#d9d0ae");
+                            plane_seafloor.setAttribute("position", "0 0 0");
+                            plane_seafloor.setAttribute("height", "4");
+                            plane_seafloor.setAttribute("width", "4");
+                            plane_seafloor.setAttribute("rotation", "-90 0 0");
+                            plane_seafloor.setAttribute("scale", "15 15 15");
+
+                            backgroundEl.appendChild(plane_seafloor);
+
+                            let light_a = document.createElement('a-entity');
+                            light_a.setAttribute("light", "type: hemisphere; color: #ffffff; groundColor: #000000; intensity: 0.9;");
+                            light_a.setAttribute("position", "25 8 -25");
+
+                            let light_b = document.createElement('a-entity');
+                            light_b.setAttribute("light", "type: hemisphere; color: #ffffff; groundColor: #000000; intensity: 0.3;");
+                            light_b.setAttribute("position", "25 8 25");
+                            
+                            let light_c = document.createElement('a-entity');
+                            light_c.setAttribute("light", "type: ambient; color: #ffffff; intensity: 0.5;");
+                            light_c.setAttribute("position", "25 8 -25");
+
+                            backgroundEl.appendChild(light_a);
+                            backgroundEl.appendChild(light_b);
+                            backgroundEl.appendChild(light_c);
+
+                            let sound = document.createElement('a-entity');
+                            sound.setAttribute("src", "#underwater-sound");
+                            sound.setAttribute("loop", "true");
+                            sound.setAttribute("positional", "false");
+                            //sound.setAttribute("autoplay", "true");
+                            sound.setAttribute("volume", "1");
+                            sound.setAttribute("position", "0 4 0");
+
+                            backgroundEl.appendChild(sound);
+
+                            sound.play();
+
+                        }else{
+                            backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
+                            //backgroundEl.setAttribute("environment", "ground", "flat");
+                            backgroundEl.setAttribute("environment", "playArea", "1.4");
+                        }
+                        
 
                         break;
                     case "3":
