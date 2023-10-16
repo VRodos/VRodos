@@ -612,7 +612,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $assets = $dom->getElementById('scene-assets');
 
                     $asset_item = $dom->createElement( "a-asset-item" );
-                    $asset_item->setAttribute( "id", "entity_$uuid" );
+                    $asset_item->setAttribute( "id", $uuid );
                     $asset_item->setAttribute( "src", "" . $contentObject->glb_path . "" );
                     $asset_item->setAttribute( "response-type", "arraybuffer" );
 
@@ -623,7 +623,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $sc_z = $contentObject->scale[2];
 
                     $gltf_model = $dom->createElement( "a-entity" );
-                    $gltf_model->setAttribute( "gltf-model","#". "entity_$uuid" );
+                    $gltf_model->setAttribute( "id", "entity_$uuid" );
+                    $gltf_model->setAttribute( "gltf-model","#". "$uuid" );
                     $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                     $gltf_model->appendChild( $dom->createTextNode( '' ) );
 
@@ -636,8 +637,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     //$a_entity->setAttribute("class", "");
 
-                    /*$gltf_model->setAttribute("highlight", "entity_$uuid");*/
-
+                    $gltf_model->setAttribute("highlight", "entity_$uuid");
 
                     if (!empty($contentObject->sceneID_target))
                         includeDoorFunctionality($gltf_model, $contentObject->sceneID_target, $fileOperations);
@@ -1076,7 +1076,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
     }
 
 
-    function includeDoorFunctionality($a_entity, $door_link, $fileOperations){
+    function includeDoorFunctionality($a_entity, $door_link, $fileOperations) {
         $a_entity->setAttribute('door-listener', $fileOperations->nodeJSpath()."Master_Client_{$door_link}.html");
 
     }

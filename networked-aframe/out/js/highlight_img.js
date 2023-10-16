@@ -8,6 +8,9 @@ AFRAME.registerComponent('highlight', {
             this.buttonEl = document.querySelector('#entity_' + this.data);
             console.log(this.buttonEl);
         }
+
+        console.log(this);
+
         this.onClick = this.onClick.bind(this);
         this.onMouseEnter = this.onMouseEnter.bind(this);
         this.onMouseLeave = this.onMouseLeave.bind(this);
