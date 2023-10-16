@@ -285,6 +285,14 @@
                             backgroundEl.appendChild(light_b);
                             backgroundEl.appendChild(light_c);
 
+                            let sound = document.createElement('a-entity');
+                            sound.setAttribute("src", "#underwater-sound");
+                            sound.setAttribute("loop", "true");
+                            sound.setAttribute("positional", "false");
+                            sound.setAttribute("volume", "1");
+                            sound.setAttribute("position", "0 4 0");
+
+                            backgroundEl.appendChild(sound);
 
 
                         }else{
