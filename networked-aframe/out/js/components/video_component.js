@@ -42,7 +42,7 @@ AFRAME.registerComponent('video-controls', {
         let recording_controls = document.getElementById("upload-recording-btn");
 
         let assets = document.getElementById("scene-assets");
-
+        let selPreset = backgroundEl.getAttribute("scene-settings").presChoice;
         let panel_pos_dynamic;
         let is_fs = false;
         let panel_z = -1;
@@ -251,7 +251,8 @@ AFRAME.registerComponent('video-controls', {
 
             is_fs = true;
             let projType = backgroundEl.getAttribute("scene-settings").pr_type;
-            
+            let selCh = backgroundEl.getAttribute("scene-settings").selChoice;
+            let selPreset = backgroundEl.getAttribute("scene-settings").presChoice;
     
             if (projType != "vrexpo_games")
             {
@@ -261,13 +262,21 @@ AFRAME.registerComponent('video-controls', {
                 recording_controls.setAttribute('style', 'visibility: hidden;');
             }
 
-            if(backgroundEl.getAttribute("scene-settings").selChoice == "2"){
+            if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset != "ocean"){
                 backgroundEl.setAttribute("environment", "preset", "default");
                 backgroundEl.setAttribute("environment", "ground", "none");
                 //backgroundEl.setAttribute("environment", "dressing", "none");
                 //backgroundEl.setAttribute("environment", "playArea", "10");
                 // backgroundEl.setAttribute("environment", "dressingAmount", "0");
                 
+            }else if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset == "ocean"){
+                backgroundEl.setAttribute("fog","type: linear; color: #AAB; far: 230; near: 0");
+                const oceanCollection = document.getElementsByClassName("ocean_asset");
+
+                for (let i = 0; i < oceanCollection.length; i++) {
+                    oceanCollection[i].setAttribute("visible", "false");
+                    // entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");                  
+                }
             }
 
             
@@ -287,6 +296,7 @@ AFRAME.registerComponent('video-controls', {
             handleCamEntity(fsEl, false, true, 1);
             handleCamEntity(plEl, false, true, 1);
             handleCamEntity(exEl, false, true, 1);
+            handleCamEntity(exFrameEl, false, true, 1);
             // handleCamEntity(lineEl, false, true, 1);
             handleCamEntityText(titEl, false, true, 1);
 
@@ -311,6 +321,7 @@ AFRAME.registerComponent('video-controls', {
         });
 
         function removeVRTraces(){
+            let selPreset = backgroundEl.getAttribute("scene-settings").presChoice;
             restoreVid();
             // panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z;
             // videoPanel.setAttribute("position", panel_pos_dynamic);
@@ -336,9 +347,17 @@ AFRAME.registerComponent('video-controls', {
                 videoDisplay.classList.remove("non-clickable");
 
                 let orig_preset = backgroundEl.getAttribute("scene-settings").presChoice; 
-                if(backgroundEl.getAttribute("scene-settings").selChoice == "2"){
+                if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset != "ocean"){
                     backgroundEl.setAttribute("environment", "preset", orig_preset);
                     backgroundEl.setAttribute("environment", "ground", "flat");
+                }else if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset == "ocean"){
+                    backgroundEl.setAttribute("fog","type: linear; color: #AAB; far: 230; near: 0");
+                    const oceanCollection = document.getElementsByClassName("ocean_asset");
+
+                    for (let i = 0; i < oceanCollection.length; i++) {
+                        oceanCollection[i].setAttribute("visible", "true");
+                        // entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");                  
+                    }
                 }
             }
 
@@ -349,8 +368,10 @@ AFRAME.registerComponent('video-controls', {
             handleCamEntity(fsEl, true, true, 1);
             handleCamEntity(plEl, true, true, 1);
             handleCamEntity(exEl, true, true, 1);
+            handleCamEntity(exFrameEl, true, true, 1);
             // handleCamEntity(lineEl, true, true, 1);
             handleCamEntityText(titEl, true, true, 1);
+            
             videoPanel.setAttribute("position", panel_pos_dynamic);
             
             // videoDisplay.classList.remove("raycastable");
@@ -363,8 +384,7 @@ AFRAME.registerComponent('video-controls', {
         function restoreVid(){
 
 
-
-
+    
             let projType = backgroundEl.getAttribute("scene-settings").pr_type;
             //console.log(backgroundEl.components.raycaster);
             if (projType != "vrexpo_games")
@@ -374,8 +394,8 @@ AFRAME.registerComponent('video-controls', {
                 recording_controls.setAttribute('style', 'visibility: visible;');
             }
 
-            if(backgroundEl.getAttribute("scene-settings").selChoice == "2")
-                backgroundEl.setAttribute("environment", "ground", "flat");
+            // if(backgroundEl.getAttribute("scene-settings").selChoice == "2")
+            //     backgroundEl.setAttribute("environment", "ground", "flat");
 
             cam.setAttribute("camera", "fov", 60);
             let bcgCol = backgroundEl.getAttribute("scene-settings").color;
@@ -445,9 +465,21 @@ AFRAME.registerComponent('video-controls', {
                         videoDisplay.classList.remove("non-clickable");
 
                         let orig_preset = backgroundEl.getAttribute("scene-settings").presChoice; 
-                        if(backgroundEl.getAttribute("scene-settings").selChoice == "2"){
+                        if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && orig_preset != "ocean"){
                             backgroundEl.setAttribute("environment", "preset", orig_preset);
                             backgroundEl.setAttribute("environment", "ground", "flat");
+                            console.log("restored")
+                        }else if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && orig_preset == "ocean"){
+                            console.log("In ocean");
+                            const oceanCollection = document.getElementsByClassName("ocean_asset");
+
+                            for (let i = 0; i < oceanCollection.length; i++) {
+                                oceanCollection[i].setAttribute("visible", "true");
+                                // entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");                  
+                            }
+                            backgroundEl.setAttribute("fog","type: exponential; color: #0894d3; density: 0.06;");
+                            
+                            
                         }
                     }
                     
