@@ -222,16 +222,19 @@
                             plane.setAttribute("rotation", "90 90 0");
                             plane.setAttribute("material", "opacity:0.4");
                             plane.setAttribute("scale", "15 15 15");
+                            plane.setAttribute("class", "ocean_asset");
                             backgroundEl.appendChild(plane);
 
                             let entity = document.createElement('a-entity');
                             entity.setAttribute("color", "#b6e8fe");
                             entity.setAttribute("position", "0 4 0");
+                            entity.setAttribute("class", "ocean_asset");
 
                             let ocean_top = document.createElement('a-ocean');
                             ocean_top.setAttribute("width", "50");
                             ocean_top.setAttribute("depth", "50");
                             ocean_top.setAttribute("density", "40");
+                            ocean_top.setAttribute("class", "ocean_asset");
                             
 
 
@@ -252,6 +255,7 @@
                             ocean_shadow.setAttribute("color", "#75705e");
                             ocean_shadow.setAttribute("position", "0 -0.15 0");
                             ocean_shadow.setAttribute("opacity", "0.03");
+                            ocean_shadow.setAttribute("class", "ocean_asset");
 
                             let animation_shadow = document.createElement('a-animation');
                             animation_shadow.setAttribute("attribute", "visible");
@@ -270,6 +274,7 @@
                             plane_seafloor.setAttribute("width", "4");
                             plane_seafloor.setAttribute("rotation", "-90 0 0");
                             plane_seafloor.setAttribute("scale", "15 15 15");
+                            plane_seafloor.setAttribute("class", "ocean_asset");
 
                             backgroundEl.appendChild(plane_seafloor);
 
@@ -289,15 +294,23 @@
                             backgroundEl.appendChild(light_b);
                             backgroundEl.appendChild(light_c);
 
+                            
+                            let audio_track = document.createElement('audio');
+                            audio_track.setAttribute("preload", "auto");
+                            audio_track.setAttribute("id", "underwater-sound");
+                            audio_track.setAttribute("src", "../media/sound/underwater.mp3");
+                         
+                            backgroundEl.appendChild(audio_track);
+
                             let sound = document.createElement('a-entity');
-                            sound.setAttribute("src", "#underwater-sound");
-                            sound.setAttribute("loop", "true");
-                            sound.setAttribute("positional", "false");
-                            //sound.setAttribute("autoplay", "true");
-                            sound.setAttribute("volume", "1");
+                            sound.setAttribute("sound", "src: #underwater-sound; loop: true; volume: 1; positional:false");
                             sound.setAttribute("position", "0 4 0");
+                            sound.setAttribute("autoplay-sound", "");
 
                             backgroundEl.appendChild(sound);
+
+
+                            backgroundEl.setAttribute("fog","type: exponential; color: #0894d3; density: 0.06;");
 
 
                         }else{
@@ -332,6 +345,15 @@
             }
         });
 
+        AFRAME.registerComponent('autoplay-sound', {
+        init:function() {
+
+
+            this.el.addEventListener("loaded", () => {
+                this.el.components.sound.playSound();
+            });
+        }
+        });
 
         AFRAME.registerComponent('static-mask-me', {
             init: function () {
@@ -643,7 +665,7 @@
 
 
 <a-scene  id="aframe-scene-container"
-          fog="type: exponential; color: #0894d3; density: 0.06;"
+          fog="type: linear; color: #AAB; far: 230; near: 0"
           renderer="antialias: true;
             sortObjects: true;
             toneMapping: ACESFilmic;
@@ -730,7 +752,7 @@
         <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.4; height: 0.14"
                  material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
         <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
-                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true" position="0.15 0.15 0.000001"></a-mixin>
+                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; " position="0.15 0.15 0.000001"></a-mixin>
 
         <!-- <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
                  material="shader: flat; color: #dfe4ea; " position=" 0 0.11 0.000001"></a-mixin> -->

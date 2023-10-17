@@ -759,7 +759,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_entity_ex->setAttribute("src", "#video_exit_$uuid");
                     $a_entity_ex->setAttribute("renderOrder", "9999999");
                     $a_entity_ex->setAttribute("position", "0.15 0.15 0.000001");
-                    $a_entity_ex->setAttribute("material", "shader: flat;");
+                    $a_entity_ex->setAttribute("material", "shader: flat; depthTest: false;");
                     $a_entity_ex->setAttribute("class", "clickable raycastable non-clickable");
 
                     $a_entity_panel = $dom->createElement("a-plane");
