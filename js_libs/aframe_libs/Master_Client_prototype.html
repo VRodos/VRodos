@@ -44,6 +44,9 @@
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
+    <!-- <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script> -->
+    <!--<script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>-->
+
     <script>
 
         // Global variable to switch between interfaces for interaction modes.
@@ -235,19 +238,19 @@
                             ocean_top.setAttribute("depth", "50");
                             ocean_top.setAttribute("density", "40");
                             ocean_top.setAttribute("class", "ocean_asset");
-                            
+
 
 
                             let animation = document.createElement('a-animation');
                             animation.setAttribute("attribute", "visible");
                             animation.setAttribute("delay", "25000");
                             animation.setAttribute("to", "true");
-                            
+
                             ocean_top.appendChild(animation);
                             entity.appendChild(ocean_top);
                             backgroundEl.appendChild(entity);
 
-                            
+
                             let ocean_shadow = document.createElement('a-ocean');
                             ocean_shadow.setAttribute("width", "50");
                             ocean_shadow.setAttribute("depth", "50");
@@ -285,7 +288,7 @@
                             let light_b = document.createElement('a-entity');
                             light_b.setAttribute("light", "type: hemisphere; color: #ffffff; groundColor: #000000; intensity: 0.3;");
                             light_b.setAttribute("position", "25 8 25");
-                            
+
                             let light_c = document.createElement('a-entity');
                             light_c.setAttribute("light", "type: ambient; color: #ffffff; intensity: 0.5;");
                             light_c.setAttribute("position", "25 8 -25");
@@ -294,12 +297,12 @@
                             backgroundEl.appendChild(light_b);
                             backgroundEl.appendChild(light_c);
 
-                            
+
                             let audio_track = document.createElement('audio');
                             audio_track.setAttribute("preload", "auto");
                             audio_track.setAttribute("id", "underwater-sound");
                             audio_track.setAttribute("src", "../media/sound/underwater.mp3");
-                         
+
                             backgroundEl.appendChild(audio_track);
 
                             let sound = document.createElement('a-entity');
@@ -318,7 +321,7 @@
                             //backgroundEl.setAttribute("environment", "ground", "flat");
                             backgroundEl.setAttribute("environment", "playArea", "1.4");
                         }
-                        
+
 
                         break;
                     case "3":
@@ -671,6 +674,7 @@
             toneMapping: ACESFilmic;
             precision: high;"
           oculus-go-controls-enabled
+          start-animation
           vr-mode-ui="enabled: true"
           loading-screen="dotsColor: gray; backgroundColor: black"
           networked-scene="
@@ -685,6 +689,7 @@
     <a-assets id="scene-assets">
 
         <!-- Avatar Template -->
+        <!-- TODO AVATARS entity might need to be put in comments-->
         <template id="avatar-template-expo">
             <a-entity class="avatar" player-info>
 
@@ -697,6 +702,18 @@
                         <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
                     </a-sphere>
                 </a-entity>
+
+
+            <a-entity
+                id="ready-player-me-avatar"
+                position="0.2 -0.22 0.2"
+                rotation="0 180 0"
+                gltf-model="url(https://models.readyplayer.me/6516a0a71c810b0e7e7c8556.glb)"
+                animation-mixer="clip: test; autoPlay: true"
+                visible="true"
+                event-set__start-animation="_event: start-scene; _target: #animation-model; animation__start-animation.startEvents: start-animation">
+            </a-entity>
+
 
                 <!-- here we add a text component for a nametag; the value will be updated by the player-info component -->
                 <a-text
@@ -771,6 +788,33 @@
 
 
 <script>
+
+AFRAME.registerComponent('start-animation', {
+        init: function () {
+            console.log('start-animation component initialized');
+
+            const avatar = document.querySelector('#ready-player-me-avatar');
+            const animationModel = document.querySelector('#animation-model');
+
+
+            if (!avatar || !animationModel) {
+                console.error('Avatar or animation model not found.');
+                return;
+            }
+
+            console.log('Found avatar and animation model.');
+
+            // Trigger the animation when the scene starts
+            animationModel.emit('start-scene');
+
+            // Show the avatar and animation models
+            //avatar.setAttribute('visible', 'true');
+            console.log(avatar.getAttribute('visible'));
+
+            //console.log("test");
+            //animationModel.setAttribute('visible', 'true');
+        }
+    });
 
     // Event listener when VR is toggled
     document.querySelector('a-scene').addEventListener('enter-vr',  function () {
