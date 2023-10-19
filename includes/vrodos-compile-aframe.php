@@ -214,7 +214,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         }
 
 
-        function createBasicDomStructureAframeDirector($content, $scene_json, $project_id)
+        function createBasicDomStructureAframeDirector($content, $scene_json, $project_id, $scene_id, $scene_id_list)
         {
 
             // Start Creating Aframe page
@@ -276,6 +276,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $chat_wrapper->setAttribute( "data-visible", 'false' );
             }
 
+            // Check if current scene id is Base scene, in order to select avatar once
+            $is_base_scene_element = $dom->getElementById('is-base-scene-input');
+            if (min($scene_id_list) == $scene_id) {
+                $is_base_scene_element->setAttribute('value', 'true');
+            } else {
+                $is_base_scene_element->setAttribute('value', 'false');
+            }
+
+
+
 
             // ============ Scene Iteration kernel ==============
             $metadata = $scene_json->metadata;
@@ -314,7 +324,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
     // STEP 2: Create the director file
-    function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index, $project_id){
+    function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index, $project_id, $scene_id_list){
 
 
         // Read prototype
@@ -344,7 +354,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         }
 
 
-        $basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json, $project_id);
+        $basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json, $project_id, $scene_id, $scene_id_list);
 
         $dom = $basicDomElements['dom'];
         $objects = $basicDomElements['objects'];
@@ -1178,7 +1188,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 // Step 2: Create the Master client file
     foreach (array_reverse($scene_id_list) as $key => &$value){
         createIndexFile($project_title, $value, $scene_title, $fileOperations);
-        createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id);
+        createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id, $scene_id_list);
         createSimpleClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations);
     }
 

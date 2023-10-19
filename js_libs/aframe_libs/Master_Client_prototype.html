@@ -147,8 +147,11 @@
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
 
-                    // Launch avatar selection dialog
-                    (new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))).show();
+                    // if base scene, launch avatar selector and set local storage
+                    if (document.getElementById("is-base-scene-input").value === 'true') {
+                        (new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))).show();
+                    }
+
 
                 });
 
@@ -492,7 +495,6 @@
             position: absolute;
             height: auto;
         }
-
         .ChatMessagesStyle {
             width: 450px;
             background-color: rgba(0,0,0,.7);
@@ -616,7 +618,7 @@
         <div id="panelsSizeControlsDiv"></div>
         <input id="node-url-input" hidden disabled />
         <input id="node-token-input" hidden disabled />
-        <input id="mv-project-id-input" hidden disabled />
+        <input id="is-base-scene-input" hidden disabled />
     </div>
 </div>
 
