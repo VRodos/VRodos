@@ -14,7 +14,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
     }
 
 
-    // Start node js server at 5832
+    // Start node js server at port 5832
     $strCmd = "node ".plugin_dir_path( __DIR__  )."/networked-aframe/server/easyrtc-server.js";
 
     if ( PHP_OS == "WINNT"){

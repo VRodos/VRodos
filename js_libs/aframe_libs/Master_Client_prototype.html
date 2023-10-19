@@ -39,13 +39,9 @@
     <script src="dist/material-components-web.min.js"></script>
 
 
-
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
-
-    <!-- <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script> -->
-    <!--<script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>-->
 
     <script>
 
@@ -122,35 +118,6 @@
 
         /* END - PLAYER AVATARS (COLOR AND NAME) */
 
-
-        /**
-         * Basic emissive effect.
-         */
-        AFRAME.registerComponent('glow', {
-            schema: {
-                color: {default: '#ffffff', type: 'color'},
-                intensity: {default: 1.0},
-                id:{default: ''}
-            },
-            init: function () {
-                this.backgroundEl = document.querySelector('#exit_' + this.data.id);
-                this.buttonEl = document.querySelector('#button_poi_' + this.data.id);
-
-                this.el.addEventListener('object3dset', function () {
-                    this.update();
-                }.bind(this));
-            },
-            update: function () {
-                var data = this.data;
-                this.el.object3D.traverse(function (node) {
-                    if (node.isMesh) {
-                        node.material.emissive.copy(new THREE.Color(data.color));
-                        node.material.emissiveIntensity = data.intensity;
-                    }
-                });
-            }
-        });
-
         AFRAME.registerComponent('clear-frustum-culling', {
             init: function () {
                 let el = this.el;
@@ -177,6 +144,21 @@
             init: function () {
                 console.log(this.data.presChoice);
 
+                // Event - When scene is loaded
+                this.el.addEventListener("loaded", () => {
+
+                    // Launch avatar selection dialog
+                    (new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))).show();
+
+                });
+
+                this.el.addEventListener("enter-vr", () => {
+                    browsingModeVR = true;
+                });
+                this.el.addEventListener("exit-vr", () => {
+                    browsingModeVR = false;
+                });
+
                 let cam = document.querySelector("#cameraA");
 
                 if (this.data.pr_type !== "vrexpo_games")
@@ -189,18 +171,13 @@
                     const parent_avatar = document.getElementById('cameraA');
                     let my_face = parent_avatar.querySelector('.face');
                     my_face.setAttribute("visible", "false");
-
                 }
+
                 let backgroundEl = document.querySelector('#aframe-scene-container');
-                this.el.addEventListener("loaded", () => {
-                    console.log("Scene Loaded");
 
-                    /*var entity = document.querySelector('[sound]');
-                    entity.components.sound.playSound();*/
-
-                });
                 if (!this.data.selChoice)
                     this.data.selChoice = "0";
+
                 switch(this.data.selChoice){
                     case "0":
                         backgroundEl.setAttribute("background", "color", "#ffffff");
@@ -349,13 +326,11 @@
         });
 
         AFRAME.registerComponent('autoplay-sound', {
-        init:function() {
-
-
-            this.el.addEventListener("loaded", () => {
-                this.el.components.sound.playSound();
-            });
-        }
+            init:function() {
+                this.el.addEventListener("loaded", () => {
+                    this.el.components.sound.playSound();
+                });
+            }
         });
 
         AFRAME.registerComponent('static-mask-me', {
@@ -478,6 +453,32 @@
             }
         });
 
+        AFRAME.registerComponent('start-animation', {
+            init: function () {
+                console.log('start-animation component initialized');
+
+                const avatar = document.querySelector('#ready-player-me-avatar');
+                /*const animationModel = document.querySelector('#animation-model');*/
+
+
+                if (!avatar /*|| !animationModel*/) {
+                    console.error('Avatar or animation model not found.');
+                    return;
+                }
+
+                console.log('Found avatar and animation model.');
+
+                // Trigger the animation when the scene starts
+                //animationModel.emit('start-scene');
+
+                // Show the avatar and animation models
+                //avatar.setAttribute('visible', 'true');
+                console.log(avatar.getAttribute('visible'));
+
+                //console.log("test");
+                //animationModel.setAttribute('visible', 'true');
+            }
+        });
 
     </script>
 
@@ -619,6 +620,38 @@
     </div>
 </div>
 
+
+<!-- Avatar selection -->
+<aside id="avatar-selection-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+       aria-labelledby="Avatar selection popup" aria-describedby="You can select an avatar"
+       data-mdc-auto-init="MDCDialog">
+    <div class="mdc-dialog__surface">
+        <header class="mdc-dialog__header">
+            <h2 class="mdc-dialog__header__title">Select your avatar</h2>
+        </header>
+
+        <section class="mdc-dialog__body">
+            <div class="mdc-layout-grid">
+                <div class="mdc-layout-grid__inner">
+                    <div class="mdc-layout-grid__cell--span-12">
+                        <div style="text-align: center">
+                            <img src="" alt="Image POI Image" style="width: auto; max-width: 100%;max-height: 260px;"/>
+                        </div>
+                        <div style="text-align: left; overflow-y: auto;  max-height: 300px;">
+                            <span class="mdc-typography--body1" ></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="mdc-dialog__footer">
+            <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised" >OK</a>
+        </footer>
+    </div>
+    <div class="mdc-dialog__backdrop"></div>
+</aside>
+
 <!-- IMG POI Dialog component -->
 <aside id="poi-img-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
        aria-labelledby="Image POI popup" aria-describedby="Show Image POI details"
@@ -667,17 +700,17 @@
 </aside>
 
 
-<a-scene  id="aframe-scene-container"
-          fog="type: linear; color: #AAB; far: 230; near: 0"
-          renderer="antialias: true;
+<a-scene oculus-go-controls-enabled
+         start-animation
+         id="aframe-scene-container"
+         fog="type: linear; color: #AAB; far: 230; near: 0"
+         renderer="antialias: true;
             sortObjects: true;
             toneMapping: ACESFilmic;
             precision: high;"
-          oculus-go-controls-enabled
-          start-animation
-          vr-mode-ui="enabled: true"
-          loading-screen="dotsColor: gray; backgroundColor: black"
-          networked-scene="
+         vr-mode-ui="enabled: true"
+         loading-screen="dotsColor: gray; backgroundColor: black"
+         networked-scene="
             room: roomname;
             debug: true;
             audio: true;
@@ -688,11 +721,12 @@
 
     <a-assets id="scene-assets">
 
-        <!-- Avatar Template -->
-        <!-- TODO AVATARS entity might need to be put in comments-->
+        <!-- Avatar template for Expo projects-->
+        <!-- TODO Show respectful avatar based on player option-->
         <template id="avatar-template-expo">
             <a-entity class="avatar" player-info>
 
+                <!-- Sphere Avatar-->
                 <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
                 <a-entity class="face" position="0 0.05 0">
                     <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04" >
@@ -703,19 +737,18 @@
                     </a-sphere>
                 </a-entity>
 
+                <!-- ReadyPlayerMe Avatar-->
+                <a-entity
+                        id="ready-player-me-avatar"
+                        position="0.2 -0.22 0.2"
+                        rotation="0 180 0"
+                        gltf-model="url(https://models.readyplayer.me/6530d2847c7ea066869603af.glb)"
+                        animation-mixer="clip: test; autoPlay: true"
+                        visible="true"
+                        event-set__start-animation="_event: start-scene; animation__start-animation.startEvents: start-animation">
+                </a-entity>
 
-            <a-entity
-                id="ready-player-me-avatar"
-                position="0.2 -0.22 0.2"
-                rotation="0 180 0"
-                gltf-model="url(https://models.readyplayer.me/6516a0a71c810b0e7e7c8556.glb)"
-                animation-mixer="clip: test; autoPlay: true"
-                visible="true"
-                event-set__start-animation="_event: start-scene; _target: #animation-model; animation__start-animation.startEvents: start-animation">
-            </a-entity>
-
-
-                <!-- here we add a text component for a nametag; the value will be updated by the player-info component -->
+                <!-- Text component for a nametag; the value will be updated by the player-info component -->
                 <a-text
                         class="nametag"
                         value="?"
@@ -727,6 +760,7 @@
             </a-entity>
         </template>
 
+        <!-- Avatar template for MediaVerse projects-->
         <template id="avatar-template">
             <a-entity class="avatar" networked-audio-source>
 
@@ -782,125 +816,23 @@
 
     <a-entity id="player"></a-entity>
 
-
-
 </a-scene>
 
 
 <script>
-
-AFRAME.registerComponent('start-animation', {
-        init: function () {
-            console.log('start-animation component initialized');
-
-            const avatar = document.querySelector('#ready-player-me-avatar');
-            const animationModel = document.querySelector('#animation-model');
-
-
-            if (!avatar || !animationModel) {
-                console.error('Avatar or animation model not found.');
-                return;
-            }
-
-            console.log('Found avatar and animation model.');
-
-            // Trigger the animation when the scene starts
-            animationModel.emit('start-scene');
-
-            // Show the avatar and animation models
-            //avatar.setAttribute('visible', 'true');
-            console.log(avatar.getAttribute('visible'));
-
-            //console.log("test");
-            //animationModel.setAttribute('visible', 'true');
-        }
-    });
-
-    // Event listener when VR is toggled
-    document.querySelector('a-scene').addEventListener('enter-vr',  function () {
-        browsingModeVR = true;
-    });
-
-    document.querySelector('a-scene').addEventListener('exit-vr',  function () {
-        browsingModeVR = false;
-    });
 
     // All asets have loaded
     document.querySelector('#scene-assets').addEventListener('loaded', function() {
 
         console.log('Assets Loaded');
 
+        // Don't show HTML component (chat) while loader is active
         if(document.getElementById("chat-wrapper-el").getAttribute('data-visible') === 'true') {
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';
         }
 
     });
 
-
-    /* CHAT COMPONENT */
-    let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
-    let chatInput = document.getElementById('chatInput');
-    let chatLog = document.getElementById('chat-messages');
-
-    NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
-        let dateString = getChatCurrentTimeString();
-        chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
-    } )
-
-    sendMsgChatBtn.addEventListener("click", evt => {
-        let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
-
-        let dateString = getChatCurrentTimeString();
-        chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
-        NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
-
-    })
-
-    let chatExpanded = false;
-    let chatMinimized = false;
-    document.getElementById('expand-chat-btn').addEventListener("click", function() {
-        let chatWrapper = document.getElementById("chat-wrapper-el");
-        let messagesWrapper = document.getElementById("chat-messages-wrapper");
-
-        if (chatMinimized) {
-            chatExpanded = false;
-        }
-        else {
-            if (chatExpanded) {
-                chatWrapper.classList.add("ChatWrapperStyle");
-                chatWrapper.classList.remove("ChatWrapperStyleExpanded");
-                messagesWrapper.classList.add("ChatMessagesStyleNormal");
-                messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
-                chatExpanded = false;
-            } else {
-                chatWrapper.classList.add("ChatWrapperStyleExpanded");
-                chatWrapper.classList.remove("ChatWrapperStyle");
-                messagesWrapper.classList.add("ChatMessagesStyleExpanded");
-                messagesWrapper.classList.remove("ChatMessagesStyleNormal");
-                chatExpanded = true;
-            }
-        }
-    });
-
-    document.getElementById('minimize-chat-btn').addEventListener("click", function() {
-        let chatWrapper = document.getElementById("chat-wrapper-el");
-        let messagesWrapper = document.getElementById("chat-messages-wrapper");
-
-        chatWrapper.classList.add("ChatWrapperStyle");
-        chatWrapper.classList.remove("ChatWrapperStyleExpanded");
-        messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
-
-        if (chatMinimized) {
-            messagesWrapper.classList.add("ChatMessagesStyleNormal");
-            messagesWrapper.classList.remove("ChatMessagesStyleMinimized");
-            chatMinimized = false;
-        } else {
-            messagesWrapper.classList.add("ChatMessagesStyleMinimized");
-            messagesWrapper.classList.remove("ChatMessagesStyleNormal");
-            chatExpanded = false;
-            chatMinimized = true;
-        }
-    });
 
     const api_pattern_single = {
         ThresholdMin: 0.106,
@@ -1307,18 +1239,12 @@ AFRAME.registerComponent('start-animation', {
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
     };
 
-    let getChatCurrentTimeString = () => {
-        let date = new Date;
-        return '[' + String(date.getHours()).padStart(2, '0') + ':' +
-            String(date.getMinutes()).padStart(2, '0') + ':' +
-            String(date.getSeconds()).padStart(2, '0') + ']';
-    }
-
 </script>
 
 <!-- This will change the glb materials -->
 <!-- <script src="js/glb_material_changer.js"></script> -->
 
+<script src="js/components/chat_component.js"></script>
 </body>
 
 </html>
