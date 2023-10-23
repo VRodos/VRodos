@@ -35,6 +35,9 @@
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
     <script src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
 
+    <!-- Import Model Viewer component (to integrate ReadyPlayerMe api) -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+
     <script src="js/indicators_aframe.js"></script>
     <script src="dist/material-components-web.min.js"></script>
 
@@ -534,6 +537,40 @@
         .IconButtonStyle i {
             text-shadow: 0 0 3px #fff;
         }
+
+        .AvatarTypeSelection img {
+            display: block;
+        }
+
+        .AvatarTypeSelection label {
+            /*width: 20vw;
+            height: 20vw;*/
+            padding: 1vw;
+        }
+
+        .AvatarTypeSelection input[type=radio] {
+            display: none;
+        }
+
+        .AvatarTypeSelection label:hover {
+            opacity:0.6;
+            cursor: pointer;
+        }
+
+        .AvatarTypeSelection label:active {
+            opacity:0.4;
+            cursor: pointer;
+        }
+
+        .AvatarTypeSelection input[type=radio]:checked + label {
+            border: 10px solid rgb(228, 207, 94);
+        }
+
+        #modelviewer {
+            height: 400px;
+            width: 600px;
+        }
+
     </style>
 
 </head>
@@ -629,7 +666,7 @@
        data-mdc-auto-init="MDCDialog">
     <div class="mdc-dialog__surface">
         <header class="mdc-dialog__header">
-            <h2 class="mdc-dialog__header__title">Select your avatar</h2>
+            <h2 class="mdc-dialog__header__title">Welcome to our virtual exposition</h2>
         </header>
 
         <section class="mdc-dialog__body">
@@ -637,10 +674,32 @@
                 <div class="mdc-layout-grid__inner">
                     <div class="mdc-layout-grid__cell--span-12">
                         <div style="text-align: center">
-                            <img src="" alt="Image POI Image" style="width: auto; max-width: 100%;max-height: 260px;"/>
-                        </div>
-                        <div style="text-align: left; overflow-y: auto;  max-height: 300px;">
-                            <span class="mdc-typography--body1" ></span>
+                            <h3 class="mdc-typography--headline">Please select an avatar type</h3>
+                            <form name="avatarRadiosForm">
+                                <div class="mdc-form-field AvatarTypeSelection">
+                                    <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio" name="avatar-radios" value="no-avatar" checked>
+                                    <label for="no-avatar-radio" onclick="toggleAvatarDialogBtn(false)">
+                                        <img src="media/img/no-avatar.png" width="128" height="128" style="opacity:.6" />
+                                        <span>No avatar</span>
+                                    </label>
+
+                                    <input class="mdc-radio__native-control" type="radio" id="blob-radio" value="blob" name="avatar-radios" >
+                                    <label for="blob-radio" onclick="toggleAvatarDialogBtn(false)">
+                                        <img src="media/img/blob-avatar.png" width="128" height="128" />
+                                        <span>A Blob</span>
+                                        <br>
+                                        <span>(Default)</span>
+                                    </label>
+
+                                    <input class="mdc-radio__native-control" type="radio" id="rpm-radio" value="rpm" name="avatar-radios" >
+                                    <label for="rpm-radio" onclick="toggleAvatarDialogBtn(true)">
+                                        <img src="media/img/rpm-avatar.png" width="128" height="128" />
+                                        <span>Your personalized</span>
+                                        <br>
+                                        <span>3D avatar</span>
+                                    </label>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -648,7 +707,8 @@
         </section>
 
         <footer class="mdc-dialog__footer">
-            <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised" >OK</a>
+            <a id="launchReadyPlayerMeBtn" style="display: none;" class="mdc-button mdc-button--secondary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">Launch Customizer</a>
+            <a id="selectAvatarBtn" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
         </footer>
     </div>
     <div class="mdc-dialog__backdrop"></div>
@@ -835,6 +895,16 @@
 
     });
 
+    let toggleAvatarDialogBtn = (showRPMBtn) => {
+        if (showRPMBtn) {
+            document.getElementById("launchReadyPlayerMeBtn").style.display = "inline-block";
+            document.getElementById("selectAvatarBtn").style.display = "none";
+        }
+        else {
+            document.getElementById("launchReadyPlayerMeBtn").style.display = "none";
+            document.getElementById("selectAvatarBtn").style.display = "inline-block";
+        }
+    }
 
     const api_pattern_single = {
         ThresholdMin: 0.106,
