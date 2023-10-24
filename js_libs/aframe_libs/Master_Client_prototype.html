@@ -192,8 +192,12 @@
                 this.el.addEventListener("loaded", () => {
                     console.log("Scene Loaded");
 
-                    var entity = document.querySelector('[sound]');
-                    entity.components.sound.playSound();
+                    // let lightEl = document.querySelector('#lighttarget');
+                    // // lightEl.setAttribute("light", "shadow-camera-automatic", "#41132111-4c3f-4741-9c8a-343e71fc4b46");
+                    // console.log(lightEl);
+
+                    // var entity = document.querySelector('[sound]');
+                    // entity.components.sound.playSound();
                 });
                 if (!this.data.selChoice)
                     this.data.selChoice = "0";
@@ -316,6 +320,12 @@
                             backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
                             //backgroundEl.setAttribute("environment", "ground", "flat");
                             backgroundEl.setAttribute("environment", "playArea", "1.4");
+                            backgroundEl.setAttribute("environment", "shadow", "true");
+
+                            let groundEl = document.getElementsByClassName('environmentGround')[0];
+                            console.log("Ground:");
+                            groundEl.setAttribute("shadow", "cast: true; receive: true");
+                            console.log(groundEl);
                         }
                         
 
@@ -765,8 +775,17 @@
 
     <a-entity id="player"></a-entity>
 
+</a-scene>
 
-    
+    <!-- <a-box position="-1 3 -3" rotation="0 45 0" color="#4CC3D9" shadow="cast: true;"></a-box> -->
+    <!-- <a-plane position="0 0 -4" rotation="-90 0 0" width="20" height="20" color="#7BC8A4" shadow="receive: true;"></a-plane>
+     -->
+    <!-- <a-entity light="type:directional;intensity:0.2;castShadow: true;"></a-entity> -->
+    <!-- <a-entity id="sun" light="type: directional; color: #FFF; intensity: 0.9; castShadow: true;
+    shadowCameraVisible: false;
+    " position="10 50 -10">
+</a-entity>
+     -->
 </a-scene>
 
 

@@ -469,6 +469,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 case 'lightSun':
                     $a_light = $dom->createElement( "a-light" );
                     $a_light->appendChild( $dom->createTextNode( '' ) );
+                    $a_light->setAttribute("id", "lighttarget");
                     $fileOperations->setAffineTransformations($a_light, $contentObject);
 
                     $a_light_target = $dom->createElement( "a-entity" );
@@ -480,10 +481,23 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $a_light->setAttribute("light", "type:directional;".
                         "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-                        "intensity:".($contentObject->lightintensity).";"
+                        "intensity:".($contentObject->lightintensity).";".
+                        "castShadow: true;".
+                        "shadowMapHeight: 2048;".
+                        "shadowMapWidth: 2048;".
+                        "shadowCameraTop: 200;".
+                        "shadowCameraRight: 200;".
+                        "shadowCameraFar: 5000;".
+                        "shadowCameraLeft: -200;".
+                        "shadowCameraBottom: -200;".
+                        "shadowBias: -0.0001;".
+                        // "shadow-camera-automatic: '#41132111-4c3f-4741-9c8a-343e71fc4b46';".
+                        "shadowCameraVisible: false;"
+                    //#41132111-4c3f-4741-9c8a-343e71fc4b46';
                     );
 
                     $a_light->setAttribute("target", "#".$uuid."target");
+                    //$a_light->setAttribute("shdadow-camera-automatic", "#environmentGround");
 
                     // Define the sun at the sky and add it to scene
                     // <a-sun-sky material="side:back; sunPosition: 1.0 1.0 0.0"></a-sun-sky>
@@ -533,6 +547,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
                         "intensity:".$contentObject->lightintensity.";".
                         "distance:".$contentObject->lightdistance.";".
+                        "castShadow: false;".
                         "decay:".$contentObject->lightdecay.";"
                     //."radius:".$contentObject->shadowRadius
                     );
@@ -604,6 +619,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "material", $material );
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     $gltf_model->setAttribute( "preload", "auto" );
+                    $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );
+
                     //$a_entity->setAttribute( "ammo-body", "type: dynamic;" );
                     //$a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );
                     //$a_entity->setAttribute( "class", "collidable" );
@@ -634,6 +651,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "gltf-model","#". "$uuid" );
                     $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                     $gltf_model->appendChild( $dom->createTextNode( '' ) );
+                    $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );
 
                     $material = "";
                     $fileOperations->setMaterial( $material, $contentObject );
@@ -867,6 +885,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute('original-scale', "$sc_x $sc_y $sc_z");
                     $gltf_model->setAttribute('link-listener', $contentObject->poi_link_url);
                     $gltf_model->setAttribute("highlight", "$uuid");
+                    $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );
 
 
                     $ascene->appendChild( $gltf_model );
@@ -937,6 +956,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $a_button_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
                     $a_button_entity->setAttribute( "material", $material );
+                    $a_button_entity->setAttribute( "shadow", "cast: true; receive: true" );
 
                     $a_menu_entity->appendChild($a_button_entity);
                     $a_ui_entity->appendChild($a_menu_entity);
