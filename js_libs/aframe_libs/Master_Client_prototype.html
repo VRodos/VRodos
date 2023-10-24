@@ -31,7 +31,6 @@
     <script src="js/components/door_component.js"></script>
     <script src="js/components/video_component.js"></script>
 
-    <!--<script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.controls.min.js"></script>-->
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
     <script src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
 
@@ -61,20 +60,16 @@
                     components: [
                         'position',
                         'rotation',
-                        'player-info'
+                        'player-info',
+                        {
+                            selector: '.rpm_avatar', // the model entity has a .model class
+                            component: 'gltf-model' // we want the gltf-model component to sync between clients
+                        },
                     ]
                 });
             }
             return NAF.schemas.getComponentsOriginal(template);
         };
-
-        window.ntExample = {
-            randomColor: () => {
-                return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
-            }
-        };
-
-        /* END - PLAYER AVATARS (COLOR AND NAME) */
 
         AFRAME.registerComponent('clear-frustum-culling', {
             init: function () {
@@ -100,6 +95,7 @@
                 presChoice:{type: "string", default: "default"},
             },
             init: function () {
+
                 console.log(this.data.presChoice);
 
                 // Event - When scene is loaded
@@ -117,7 +113,15 @@
                                 type: 'color', // btw: color is just a string under the hood in A-Frame
                                 default: window.ntExample.randomColor()
                             },
+                            visible: {
+                                type: 'string',
+                                default: 'false'
+                            },
                             gltf: {
+                                default: '',
+                                type: 'string'
+                            },
+                            avatarType: {
                                 default: '',
                                 type: 'string'
                             }
@@ -125,6 +129,7 @@
 
                         init: function () {
                             this.head = this.el.querySelector('.head');
+                            this.face = this.el.querySelector('.face');
                             this.nametag = this.el.querySelector('.nametag');
                             this.rpm_model = this.el.querySelector('.rpm_avatar');
 
@@ -133,8 +138,6 @@
                                 // populate the html overlay with the correct name on init
                                 this.nametagInput = document.getElementById('username-overlay');
                                 this.nametagInput.value = this.data.name;
-
-                                document.querySelector('#ready-player-me-avatar').setAttribute('gltf-model', this.data.gltf);
 
                                 // add the initial color to the html overlay color picker button
                                 document.querySelector('button').style.backgroundColor = this.data.color;
@@ -155,11 +158,16 @@
                         },
 
                         update: function () {
-                            if (this.head) this.head.setAttribute('material', 'color', this.data.color);
+
+
+                            if (this.head){
+                                this.head.setAttribute('material', 'color', this.data.color);
+
+                            }
+
                             if (this.nametag) this.nametag.setAttribute('value', this.data.name);
 
                             if (this.rpm_model) {
-                                console.log("in: ", this.data.gltf);
                                 this.rpm_model.removeAttribute('gltf-model');
                                 this.rpm_model.setAttribute('gltf-model', this.data.gltf);
                             }
@@ -167,8 +175,8 @@
                     });
 
 
-                    // if base scene, launch avatar selector and set local storage
-                    if (document.getElementById("is-base-scene-input").value === 'true') {
+                    // If base scene, launch avatar selector and set local storage
+                    if (document.getElementById("is-base-scene-input").value === 'true' ) {
                         (new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))).show();
                     }
 
@@ -192,7 +200,8 @@
                     // Hide eyes from my avatar on self
                     const parent_avatar = document.getElementById('cameraA');
                     let my_face = parent_avatar.querySelector('.face');
-                    my_face.setAttribute("visible", "false");
+                    if (my_face) my_face.setAttribute("visible", "false");
+
                 }
 
                 let backgroundEl = document.querySelector('#aframe-scene-container');
@@ -495,7 +504,6 @@
 
                 // Show the avatar and animation models
                 //avatar.setAttribute('visible', 'true');
-                console.log(avatar.getAttribute('visible'));
 
                 //console.log("test");
                 //animationModel.setAttribute('visible', 'true');
@@ -582,7 +590,7 @@
             border: 10px solid rgb(228, 207, 94);
         }
 
-        .frame {
+        .RpmIframeStyle {
             width: 1080px;
             height: 800px;
             margin: 0 auto;
@@ -732,7 +740,7 @@
 
         <footer class="mdc-dialog__footer">
             <a id="launchReadyPlayerMeBtn" onclick="displayRPMIframe()" style="display: none;" class="mdc-button mdc-button--secondary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">Launch Customizer</a>
-            <a id="selectAvatarBtn" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
+            <a id="selectAvatarBtn" onclick="selectAvatarType()" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
         </footer>
     </div>
     <div class="mdc-dialog__backdrop"></div>
@@ -788,8 +796,7 @@
 
 <!--Ready Player Me iframe-->
 <div style="text-align: center;">
-    <iframe id="rpm-iframe" class="frame" allow="camera *; microphone *; clipboard-write" hidden></iframe>
-    <p id="avatarUrl" style="display:none;">Avatar URL:</p>
+    <iframe id="rpm-iframe" class="RpmIframeStyle" allow="camera *; microphone *; clipboard-write" hidden></iframe>
 </div>
 
 <a-scene oculus-go-controls-enabled
@@ -815,8 +822,20 @@
 
         <!-- Avatar template for Expo projects-->
         <!-- TODO Show respectful avatar based on player option-->
-        <template id="avatar-template-expo">
+        <template id="avatar-template-expo" >
             <a-entity class="avatar" player-info>
+
+                <!-- ReadyPlayerMe Avatar-->
+                <a-entity
+                        gltf-model
+                        id="ready-player-me-avatar"
+                        class="rpm_avatar"
+                        position="0 0 -0.5"
+                        rotation="0 180 0"
+                        animation-mixer="clip: test; autoPlay: true"
+                        visible="true"
+                        event-set__start-animation="_event: start-scene; animation__start-animation.startEvents: start-animation">
+                </a-entity>
 
                 <!-- Sphere Avatar-->
                 <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
@@ -829,17 +848,6 @@
                     </a-sphere>
                 </a-entity>
 
-                <!-- ReadyPlayerMe Avatar-->
-                <a-entity
-                        id="ready-player-me-avatar"
-                        class="rpm_avatar"
-                        position="0.2 -0.22 0.2"
-                        rotation="0 180 0"
-                        gltf-model=""
-                        animation-mixer="clip: test; autoPlay: true"
-                        visible="true"
-                        event-set__start-animation="_event: start-scene; animation__start-animation.startEvents: start-animation">
-                </a-entity>
 
                 <!-- Text component for a nametag; the value will be updated by the player-info component -->
                 <a-text
@@ -937,6 +945,10 @@
         }
     }
 
+    let selectAvatarType = () => {
+        document.getElementById('cameraA').setAttribute('player-info', 'avatarType', document.querySelector('input[name="avatar-radios"]:checked').value);
+    }
+
     // Ready player me iframe code
     const rpm_iframe = document.getElementById('rpm-iframe');
 
@@ -969,13 +981,8 @@
         // Now add it in Aframe canvas
         if (json.eventName === 'v1.avatar.exported') {
             console.log(`Avatar URL: ${json.data.url}`);
-            document.getElementById('avatarUrl').innerHTML = `Avatar URL: ${json.data.url}`;
+            /*document.getElementById('avatarUrl').innerHTML = `Avatar URL: ${json.data.url}`;*/
             document.getElementById('rpm-iframe').hidden = true;
-
-            // Update local
-            document.querySelector('#ready-player-me-avatar').removeAttribute("gltf-model");
-            document.querySelector('#ready-player-me-avatar').setAttribute('gltf-model', json.data.url);
-
 
             // Update remote
             document.getElementById('cameraA').setAttribute('player-info', 'gltf', json.data.url);
@@ -1404,6 +1411,12 @@
         const i = Math.floor(Math.log(bytes) / Math.log(k))
 
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+    };
+
+    window.ntExample = {
+        randomColor: () => {
+            return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
+        }
     };
 
 </script>
