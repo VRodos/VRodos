@@ -14,7 +14,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
     }
 
 
-    // Start node js server at 5832
+    // Start node js server at port 5832
     $strCmd = "node ".plugin_dir_path( __DIR__  )."/networked-aframe/server/easyrtc-server.js";
 
     if ( PHP_OS == "WINNT"){
@@ -191,7 +191,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             $html = $dom->documentElement;
             $head = $dom->documentElement->childNodes[0];
-
             $body = $dom->getElementById('simple-client-body');
             $actionsDiv = $dom->getElementById('actionsDiv');
             $ascene = $dom->getElementById('aframe-scene-container');
@@ -215,7 +214,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         }
 
 
-        function createBasicDomStructureAframeDirector($content, $scene_json, $project_id)
+        function createBasicDomStructureAframeDirector($content, $scene_json, $project_id, $scene_id, $scene_id_list)
         {
 
             // Start Creating Aframe page
@@ -277,6 +276,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                 $chat_wrapper->setAttribute( "data-visible", 'false' );
             }
 
+            // Check if current scene id is Base scene, in order to select avatar once
+            $is_base_scene_element = $dom->getElementById('is-base-scene-input');
+            if (min($scene_id_list) == $scene_id) {
+                $is_base_scene_element->setAttribute('value', 'true');
+            } else {
+                $is_base_scene_element->setAttribute('value', 'false');
+            }
+
+
+
 
             // ============ Scene Iteration kernel ==============
             $metadata = $scene_json->metadata;
@@ -315,7 +324,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
     // STEP 2: Create the director file
-    function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index, $project_id){
+    function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $showPawnPositions, $index, $project_id, $scene_id_list){
 
 
         // Read prototype
@@ -345,7 +354,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         }
 
 
-        $basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json, $project_id);
+        $basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json, $project_id, $scene_id, $scene_id_list);
 
         $dom = $basicDomElements['dom'];
         $objects = $basicDomElements['objects'];
@@ -362,7 +371,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         $dom->getElementsByTagName("title")->item(0)->nodeValue = $scene_title[$index];
         //$dom->getElementsByTagName("title")->item(0)->nodeValue = $project_title;
-    
+
 
 
         // $ascene->appendChild($a_entity_sky);
@@ -405,10 +414,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $ascenePlayer->setAttribute( "show-position", "" );
             //$ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
 
+            //OCULUS
             $a_camera = $dom->createElement( "a-camera" );
             $a_camera->setAttribute( "camera", "" );
             $a_camera->setAttribute( "id", "cameraA" );
-            $a_camera->setAttribute( "networked", "template:#avatar-template-expo;" );
+            $a_camera->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
             $a_camera->setAttribute( "look-controls", "" );
             $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
 
@@ -452,7 +462,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             $ascenePlayer->appendChild( $a_entity );
         }
-       
+
         //print($scene_id)
 
         //$i = array_search($scene_id, array_keys($scene_id_list));
@@ -690,7 +700,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_asset_fs->setAttribute("id", "video_fullScreen_$uuid");
                     //$a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/fullscreen.png");
                     $a_asset_fs->setAttribute("src",  plugins_url( '../VRodos/assets/images/fullscreen.png', dirname(__FILE__)));
-                    
+
 
                     $a_asset_ex = $dom->createElement( "img" );
                     $a_asset_ex->setAttribute("mixin", "vid_panel");
@@ -778,7 +788,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_entity_pl->setAttribute("position", "0.05 -0.03 0.000001");
                     $a_entity_pl->setAttribute("material", "shader: flat;");
                     $a_entity_pl->setAttribute("class", "clickable raycastable non-clickable");
-                   
+
                     $a_entity_ex = $dom->createElement("a-plane");
                     $a_entity_ex->setAttribute("id", "ent_ex_$uuid");
                     $a_entity_ex->setAttribute("height", "0.08");
@@ -789,6 +799,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_entity_ex->setAttribute("material", "shader: flat; depthTest: false;");
                     $a_entity_ex->setAttribute("class", "clickable raycastable non-clickable");
 
+
+                    //Video panel
                     $a_entity_panel = $dom->createElement("a-plane");
                     $a_entity_panel->setAttribute("id", "vid-panel_$uuid");
 
@@ -797,7 +809,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $a_entity_panel->setAttribute("class", "clickable raycastable");
                     $a_entity_panel->setAttribute("mixin", "vidFrame");
-                    
+
 
                     $exit_vid_entity_panel = $dom->createElement("a-entity");
                     $exit_vid_entity_panel->setAttribute("id", "exit_vid_panel_$uuid");
@@ -821,7 +833,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $a_vid_entity_panel = $dom->createElement("a-entity");
                     $a_vid_entity_panel->setAttribute("id", "$a_vid_entity_panel_$uuid");
-                    
+
                     $a_vid_entity_panel->setAttribute("scale", "1 1 1");
                     $a_vid_entity_panel->setAttribute("original-scale", "1 1 1");
                     $a_vid_entity_panel->setAttribute("class", "raycastable hideable non-clickable" );
@@ -842,7 +854,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_entity_panel->appendChild($a_entity_ex);
 
                     $ascenePlayer->appendChild($a_entity_panel);
-                  
+
                     $a_video = $dom->createElement("a-plane");
                     $a_video->setAttribute("id", "video-display_$uuid");
                     $a_video->setAttribute('video-controls', "id: $uuid; orig_pos:$pos_x,$pos_y,$pos_z; orig_rot:$rot_x,$rot_y,$rot_z");
@@ -854,7 +866,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_video->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                     $a_video->setAttribute("class", "clickable hideable");
                     //$a_entity->setAttribute("id", "video-border_$uuid");
-                  
+
                     $fileOperations->setAffineTransformations($a_video, $contentObject);
 
                     // $a_entity->setAttribute("height", "3");                      //TODO reformat without a entity component
@@ -1205,7 +1217,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 // Step 2: Create the Master client file
     foreach (array_reverse($scene_id_list) as $key => &$value){
         createIndexFile($project_title, $value, $scene_title, $fileOperations);
-        createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id);
+        createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id, $scene_id_list);
         createSimpleClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations);
     }
 

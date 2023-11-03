@@ -31,13 +31,14 @@
     <script src="js/components/door_component.js"></script>
     <script src="js/components/video_component.js"></script>
 
-    <!--<script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.controls.min.js"></script>-->
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
     <script src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
 
+    <!-- Import Model Viewer component (to integrate ReadyPlayerMe api) -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+
     <script src="js/indicators_aframe.js"></script>
     <script src="dist/material-components-web.min.js"></script>
-
 
 
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
@@ -59,94 +60,16 @@
                     components: [
                         'position',
                         'rotation',
-                        'player-info'
+                        'player-info',
+                        {
+                            selector: '.rpm_avatar', // the model entity has a .model class
+                            component: 'gltf-model' // we want the gltf-model component to sync between clients
+                        },
                     ]
                 });
             }
             return NAF.schemas.getComponentsOriginal(template);
         };
-
-        window.ntExample = {
-            randomColor: () => {
-                return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
-            }
-        };
-
-        AFRAME.registerComponent('player-info', {
-            // notice that color and name are both listed in the schema; NAF will only keep
-            // properties declared in the schema in sync.
-            schema: {
-                name: { type: 'string', default: 'user-' + Math.round(Math.random() * 10000) },
-                color: {
-                    type: 'color', // btw: color is just a string under the hood in A-Frame
-                    default: window.ntExample.randomColor()
-                }
-            },
-
-            init: function () {
-                this.head = this.el.querySelector('.head');
-                this.nametag = this.el.querySelector('.nametag');
-
-                this.ownedByLocalUser = this.el.id === 'cameraA';
-                if (this.ownedByLocalUser) {
-                    // populate the html overlay with the correct name on init
-                    this.nametagInput = document.getElementById('username-overlay');
-                    this.nametagInput.value = this.data.name;
-
-                    // add the initial color to the html overlay color picker button
-                    document.querySelector('button').style.backgroundColor = this.data.color;
-                    document.querySelector('button').style.color = this.data.color;
-                }
-            },
-
-            // here as an example, not used in current demo. Could build a user list, expanding on this.
-            listUsers: function () {
-                console.log(
-                    'userlist',
-                    [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.name)
-                );
-            },
-
-            newRandomColor: function () {
-                this.el.setAttribute('player-info', 'color', window.ntExample.randomColor());
-            },
-
-            update: function () {
-                if (this.head) this.head.setAttribute('material', 'color', this.data.color);
-                if (this.nametag) this.nametag.setAttribute('value', this.data.name);
-            }
-        });
-
-        /* END - PLAYER AVATARS (COLOR AND NAME) */
-
-
-        /**
-         * Basic emissive effect.
-         */
-        AFRAME.registerComponent('glow', {
-            schema: {
-                color: {default: '#ffffff', type: 'color'},
-                intensity: {default: 1.0},
-                id:{default: ''}
-            },
-            init: function () {
-                this.backgroundEl = document.querySelector('#exit_' + this.data.id);
-                this.buttonEl = document.querySelector('#button_poi_' + this.data.id);
-
-                this.el.addEventListener('object3dset', function () {
-                    this.update();
-                }.bind(this));
-            },
-            update: function () {
-                var data = this.data;
-                this.el.object3D.traverse(function (node) {
-                    if (node.isMesh) {
-                        node.material.emissive.copy(new THREE.Color(data.color));
-                        node.material.emissiveIntensity = data.intensity;
-                    }
-                });
-            }
-        });
 
         AFRAME.registerComponent('clear-frustum-culling', {
             init: function () {
@@ -172,7 +95,99 @@
                 presChoice:{type: "string", default: "default"},
             },
             init: function () {
+
                 console.log(this.data.presChoice);
+
+                // Event - When scene is loaded
+                this.el.addEventListener("loaded", () => {
+
+                    AFRAME.registerComponent('player-info', {
+                        // notice that color and name are both listed in the schema; NAF will only keep
+                        // properties declared in the schema in sync.
+                        schema: {
+                            name: {
+                                type: 'string',
+                                default: 'user-' + Math.round(Math.random() * 10000)
+                            },
+                            color: {
+                                type: 'color', // btw: color is just a string under the hood in A-Frame
+                                default: window.ntExample.randomColor()
+                            },
+                            visible: {
+                                type: 'string',
+                                default: 'false'
+                            },
+                            gltf: {
+                                default: '',
+                                type: 'string'
+                            },
+                            avatarType: {
+                                default: '',
+                                type: 'string'
+                            }
+                        },
+
+                        init: function () {
+                            this.head = this.el.querySelector('.head');
+                            this.face = this.el.querySelector('.face');
+                            this.nametag = this.el.querySelector('.nametag');
+                            this.rpm_model = this.el.querySelector('.rpm_avatar');
+
+                            this.ownedByLocalUser = this.el.id === 'cameraA';
+                            if (this.ownedByLocalUser) {
+                                // populate the html overlay with the correct name on init
+                                this.nametagInput = document.getElementById('username-overlay');
+                                this.nametagInput.value = this.data.name;
+
+                                // add the initial color to the html overlay color picker button
+                                document.querySelector('button').style.backgroundColor = this.data.color;
+                                document.querySelector('button').style.color = this.data.color;
+                            }
+                        },
+
+                        // here as an example, not used in current demo. Could build a user list, expanding on this.
+                        listUsers: function () {
+                            console.log(
+                                'userlist',
+                                [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.name)
+                            );
+                        },
+
+                        newRandomColor: function () {
+                            this.el.setAttribute('player-info', 'color', window.ntExample.randomColor());
+                        },
+
+                        update: function () {
+
+
+                            if (this.head){
+                                this.head.setAttribute('material', 'color', this.data.color);
+
+                            }
+
+                            if (this.nametag) this.nametag.setAttribute('value', this.data.name);
+
+                            if (this.rpm_model) {
+                                this.rpm_model.removeAttribute('gltf-model');
+                                this.rpm_model.setAttribute('gltf-model', this.data.gltf);
+                            }
+                        }
+                    });
+
+
+                    // If base scene, launch avatar selector and set local storage
+                    if (document.getElementById("is-base-scene-input").value === 'true' ) {
+                        (new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))).show();
+                    }
+
+                });
+
+                this.el.addEventListener("enter-vr", () => {
+                    browsingModeVR = true;
+                });
+                this.el.addEventListener("exit-vr", () => {
+                    browsingModeVR = false;
+                });
 
                 let cam = document.querySelector("#cameraA");
 
@@ -185,22 +200,15 @@
                     // Hide eyes from my avatar on self
                     const parent_avatar = document.getElementById('cameraA');
                     let my_face = parent_avatar.querySelector('.face');
-                    my_face.setAttribute("visible", "false");
+                    if (my_face) my_face.setAttribute("visible", "false");
 
                 }
+
                 let backgroundEl = document.querySelector('#aframe-scene-container');
-                this.el.addEventListener("loaded", () => {
-                    console.log("Scene Loaded");
 
-                    // let lightEl = document.querySelector('#lighttarget');
-                    // // lightEl.setAttribute("light", "shadow-camera-automatic", "#41132111-4c3f-4741-9c8a-343e71fc4b46");
-                    // console.log(lightEl);
-
-                    // var entity = document.querySelector('[sound]');
-                    // entity.components.sound.playSound();
-                });
                 if (!this.data.selChoice)
                     this.data.selChoice = "0";
+
                 switch(this.data.selChoice){
                     case "0":
                         backgroundEl.setAttribute("background", "color", "#ffffff");
@@ -238,19 +246,19 @@
                             ocean_top.setAttribute("depth", "50");
                             ocean_top.setAttribute("density", "40");
                             ocean_top.setAttribute("class", "ocean_asset");
-                            
+
 
 
                             let animation = document.createElement('a-animation');
                             animation.setAttribute("attribute", "visible");
                             animation.setAttribute("delay", "25000");
                             animation.setAttribute("to", "true");
-                            
+
                             ocean_top.appendChild(animation);
                             entity.appendChild(ocean_top);
                             backgroundEl.appendChild(entity);
 
-                            
+
                             let ocean_shadow = document.createElement('a-ocean');
                             ocean_shadow.setAttribute("width", "50");
                             ocean_shadow.setAttribute("depth", "50");
@@ -288,7 +296,7 @@
                             let light_b = document.createElement('a-entity');
                             light_b.setAttribute("light", "type: hemisphere; color: #ffffff; groundColor: #000000; intensity: 0.3;");
                             light_b.setAttribute("position", "25 8 25");
-                            
+
                             let light_c = document.createElement('a-entity');
                             light_c.setAttribute("light", "type: ambient; color: #ffffff; intensity: 0.5;");
                             light_c.setAttribute("position", "25 8 -25");
@@ -297,12 +305,12 @@
                             backgroundEl.appendChild(light_b);
                             backgroundEl.appendChild(light_c);
 
-                            
+
                             let audio_track = document.createElement('audio');
                             audio_track.setAttribute("preload", "auto");
                             audio_track.setAttribute("id", "underwater-sound");
                             audio_track.setAttribute("src", "../media/sound/underwater.mp3");
-                         
+
                             backgroundEl.appendChild(audio_track);
 
                             let sound = document.createElement('a-entity');
@@ -327,7 +335,7 @@
                             groundEl.setAttribute("shadow", "cast: true; receive: true");
                             console.log(groundEl);
                         }
-                        
+
 
                         break;
                     case "3":
@@ -355,13 +363,11 @@
         });
 
         AFRAME.registerComponent('autoplay-sound', {
-        init:function() {
-
-
-            this.el.addEventListener("loaded", () => {
-                this.el.components.sound.playSound();
-            });
-        }
+            init:function() {
+                this.el.addEventListener("loaded", () => {
+                    this.el.components.sound.playSound();
+                });
+            }
         });
 
         AFRAME.registerComponent('static-mask-me', {
@@ -484,6 +490,31 @@
             }
         });
 
+        AFRAME.registerComponent('start-animation', {
+            init: function () {
+                console.log('start-animation component initialized');
+
+                const avatar = document.querySelector('#ready-player-me-avatar');
+                /*const animationModel = document.querySelector('#animation-model');*/
+
+
+                if (!avatar /*|| !animationModel*/) {
+                    console.error('Avatar or animation model not found.');
+                    return;
+                }
+
+                console.log('Found avatar and animation model.');
+
+                // Trigger the animation when the scene starts
+                //animationModel.emit('start-scene');
+
+                // Show the avatar and animation models
+                //avatar.setAttribute('visible', 'true');
+
+                //console.log("test");
+                //animationModel.setAttribute('visible', 'true');
+            }
+        });
 
     </script>
 
@@ -497,7 +528,6 @@
             position: absolute;
             height: auto;
         }
-
         .ChatMessagesStyle {
             width: 450px;
             background-color: rgba(0,0,0,.7);
@@ -537,6 +567,48 @@
         .IconButtonStyle i {
             text-shadow: 0 0 3px #fff;
         }
+
+        .AvatarTypeSelection img {
+            display: block;
+        }
+
+        .AvatarTypeSelection label {
+            /*width: 20vw;
+            height: 20vw;*/
+            padding: 1vw;
+        }
+
+        .AvatarTypeSelection input[type=radio] {
+            display: none;
+        }
+
+        .AvatarTypeSelection label:hover {
+            opacity:0.6;
+            cursor: pointer;
+        }
+
+        .AvatarTypeSelection label:active {
+            opacity:0.4;
+            cursor: pointer;
+        }
+
+        .AvatarTypeSelection input[type=radio]:checked + label {
+            border: 10px solid rgb(228, 207, 94);
+        }
+
+        .RpmIframeStyle {
+            width: 1080px;
+            height: 800px;
+            margin: 0 auto;
+            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
+            Droid Sans, Helvetica Neue, sans-serif;
+            padding: 20px;
+            font-size: 14px;
+            border: none;
+            position: relative;
+            z-index: 9999;
+        }
+
     </style>
 
 </head>
@@ -621,9 +693,65 @@
         <div id="panelsSizeControlsDiv"></div>
         <input id="node-url-input" hidden disabled />
         <input id="node-token-input" hidden disabled />
-        <input id="mv-project-id-input" hidden disabled />
+        <input id="is-base-scene-input" hidden disabled />
     </div>
 </div>
+
+
+<!-- Avatar selection -->
+<aside id="avatar-selection-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+       aria-labelledby="Avatar selection popup" aria-describedby="You can select an avatar"
+       data-mdc-auto-init="MDCDialog">
+    <div class="mdc-dialog__surface">
+        <header class="mdc-dialog__header">
+            <h2 class="mdc-dialog__header__title">Welcome to our virtual exposition</h2>
+        </header>
+
+        <section class="mdc-dialog__body">
+            <div class="mdc-layout-grid">
+                <div class="mdc-layout-grid__inner">
+                    <div class="mdc-layout-grid__cell--span-12">
+                        <div style="text-align: center">
+                            <h3 class="mdc-typography--headline">Please select an avatar type</h3>
+                            <form name="avatarRadiosForm">
+                                <div class="mdc-form-field AvatarTypeSelection">
+                                    <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio" name="avatar-radios" value="no-avatar" checked>
+                                    <label for="no-avatar-radio" onclick="toggleAvatarDialogBtn(false)">
+                                        <img src="media/img/no-avatar.png" width="128" height="128" style="opacity:.6" />
+                                        <span>No avatar</span>
+                                    </label>
+
+                                    <input class="mdc-radio__native-control" type="radio" id="blob-radio" value="blob" name="avatar-radios" >
+                                    <label for="blob-radio" onclick="toggleAvatarDialogBtn(false)">
+                                        <img src="media/img/blob-avatar.png" width="128" height="128" />
+                                        <span>A Blob</span>
+                                        <br>
+                                        <span>(Default)</span>
+                                    </label>
+
+                                    <input class="mdc-radio__native-control" type="radio" id="rpm-radio" value="rpm" name="avatar-radios" >
+                                    <label for="rpm-radio" onclick="toggleAvatarDialogBtn(true)">
+                                        <img src="media/img/rpm-avatar.png" width="128" height="128" />
+                                        <span>Your personalized</span>
+                                        <br>
+                                        <span>3D avatar</span>
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="mdc-dialog__footer">
+            <a id="launchReadyPlayerMeBtn" onclick="displayRPMIframe()" style="display: none;" class="mdc-button mdc-button--secondary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">Launch Customizer</a>
+            <a id="selectAvatarBtn" onclick="selectAvatarType()" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
+        </footer>
+    </div>
+    <div class="mdc-dialog__backdrop"></div>
+</aside>
+
 
 <!-- IMG POI Dialog component -->
 <aside id="poi-img-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
@@ -672,18 +800,22 @@
     <div class="mdc-dialog__backdrop"></div>
 </aside>
 
+<!--Ready Player Me iframe-->
+<div style="text-align: center;">
+    <iframe id="rpm-iframe" class="RpmIframeStyle" allow="camera *; microphone *; clipboard-write" hidden></iframe>
+</div>
 
-<a-scene  id="aframe-scene-container"
-          fog="type: linear; color: #AAB; far: 230; near: 0"
-          renderer="antialias: true;
+<a-scene oculus-go-controls-enabled
+         start-animation
+         id="aframe-scene-container"
+         fog="type: linear; color: #AAB; far: 230; near: 0"
+         renderer="antialias: true;
             sortObjects: true;
-            toneMapping:
-            ACESFilmic;
-            precision:high;"
-          oculus-go-controls-enabled
-          vr-mode-ui="enabled: true"
-          loading-screen="dotsColor: gray; backgroundColor: black"
-          networked-scene="
+            toneMapping: ACESFilmic;
+            precision: high;"
+         vr-mode-ui="enabled: true"
+         loading-screen="dotsColor: gray; backgroundColor: black"
+         networked-scene="
             room: roomname;
             debug: true;
             audio: true;
@@ -698,7 +830,19 @@
         <template id="avatar-template-expo">
             <a-entity class="avatar" player-info>
 
-                <a-entity gltf-model="#idle" animation-mixer></a-entity>
+                <!-- ReadyPlayerMe Avatar-->
+                <a-entity
+                        gltf-model
+                        id="ready-player-me-avatar"
+                        class="rpm_avatar"
+                        position="0 0 -0.5"
+                        rotation="0 180 0"
+                        animation-mixer="clip: test; autoPlay: true"
+                        visible="true"
+                        event-set__start-animation="_event: start-scene; animation__start-animation.startEvents: start-animation">
+                </a-entity>
+
+                <!-- Sphere Avatar-->
                 <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
                 <a-entity class="face" position="0 0.05 0">
                     <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04" >
@@ -709,7 +853,8 @@
                     </a-sphere>
                 </a-entity>
 
-                <!-- here we add a text component for a nametag; the value will be updated by the player-info component -->
+
+                <!-- Text component for a nametag; the value will be updated by the player-info component -->
                 <a-text
                         class="nametag"
                         value="?"
@@ -721,10 +866,11 @@
             </a-entity>
         </template>
 
+        <!-- Avatar template for MediaVerse projects-->
         <template id="avatar-template">
             <a-entity class="avatar" networked-audio-source>
 
-                <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="1" height="0.75"
+                <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="2" height="1.5"
                          position="0 0.6 -0.15" material="side: double"
                          networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
                          render-order-change="2000">
@@ -778,105 +924,94 @@
 
 </a-scene>
 
-    <!-- <a-box position="-1 3 -3" rotation="0 45 0" color="#4CC3D9" shadow="cast: true;"></a-box> -->
-    <!-- <a-plane position="0 0 -4" rotation="-90 0 0" width="20" height="20" color="#7BC8A4" shadow="receive: true;"></a-plane>
-     -->
-    <!-- <a-entity light="type:directional;intensity:0.2;castShadow: true;"></a-entity> -->
-    <!-- <a-entity id="sun" light="type: directional; color: #FFF; intensity: 0.9; castShadow: true;
-    shadowCameraVisible: false;
-    " position="10 50 -10">
-</a-entity>
-     -->
-</a-scene>
-
 
 <script>
-
-    // Event listener when VR is toggled
-    document.querySelector('a-scene').addEventListener('enter-vr',  function () {
-        browsingModeVR = true;
-    });
-
-    document.querySelector('a-scene').addEventListener('exit-vr',  function () {
-        browsingModeVR = false;
-    });
 
     // All asets have loaded
     document.querySelector('#scene-assets').addEventListener('loaded', function() {
 
         console.log('Assets Loaded');
 
+        // Don't show HTML component (chat) while loader is active
         if(document.getElementById("chat-wrapper-el").getAttribute('data-visible') === 'true') {
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';
         }
 
     });
 
-
-    /* CHAT COMPONENT */
-    let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
-    let chatInput = document.getElementById('chatInput');
-    let chatLog = document.getElementById('chat-messages');
-
-    NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
-        let dateString = getChatCurrentTimeString();
-        chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
-    } )
-
-    sendMsgChatBtn.addEventListener("click", evt => {
-        let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
-
-        let dateString = getChatCurrentTimeString();
-        chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
-        NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
-
-    })
-
-    let chatExpanded = false;
-    let chatMinimized = false;
-    document.getElementById('expand-chat-btn').addEventListener("click", function() {
-        let chatWrapper = document.getElementById("chat-wrapper-el");
-        let messagesWrapper = document.getElementById("chat-messages-wrapper");
-
-        if (chatMinimized) {
-            chatExpanded = false;
+    let toggleAvatarDialogBtn = (showRPMBtn) => {
+        if (showRPMBtn) {
+            document.getElementById("launchReadyPlayerMeBtn").style.display = "inline-block";
+            document.getElementById("selectAvatarBtn").style.display = "none";
         }
         else {
-            if (chatExpanded) {
-                chatWrapper.classList.add("ChatWrapperStyle");
-                chatWrapper.classList.remove("ChatWrapperStyleExpanded");
-                messagesWrapper.classList.add("ChatMessagesStyleNormal");
-                messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
-                chatExpanded = false;
-            } else {
-                chatWrapper.classList.add("ChatWrapperStyleExpanded");
-                chatWrapper.classList.remove("ChatWrapperStyle");
-                messagesWrapper.classList.add("ChatMessagesStyleExpanded");
-                messagesWrapper.classList.remove("ChatMessagesStyleNormal");
-                chatExpanded = true;
-            }
+            document.getElementById("launchReadyPlayerMeBtn").style.display = "none";
+            document.getElementById("selectAvatarBtn").style.display = "inline-block";
         }
-    });
+    }
 
-    document.getElementById('minimize-chat-btn').addEventListener("click", function() {
-        let chatWrapper = document.getElementById("chat-wrapper-el");
-        let messagesWrapper = document.getElementById("chat-messages-wrapper");
+    let selectAvatarType = () => {
+        document.getElementById('cameraA').setAttribute('player-info', 'avatarType', document.querySelector('input[name="avatar-radios"]:checked').value);
+    }
 
-        chatWrapper.classList.add("ChatWrapperStyle");
-        chatWrapper.classList.remove("ChatWrapperStyleExpanded");
-        messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
+    // Ready player me iframe code
+    const rpm_iframe = document.getElementById('rpm-iframe');
 
-        if (chatMinimized) {
-            messagesWrapper.classList.add("ChatMessagesStyleNormal");
-            messagesWrapper.classList.remove("ChatMessagesStyleMinimized");
-            chatMinimized = false;
-        } else {
-            messagesWrapper.classList.add("ChatMessagesStyleMinimized");
-            messagesWrapper.classList.remove("ChatMessagesStyleNormal");
-            chatExpanded = false;
-            chatMinimized = true;
+    const subdomain = 'vrodos'; // Replace with your custom subdomain
+    rpm_iframe.src = `https://${subdomain}.readyplayer.me/avatar?frameApi`;
+
+    window.addEventListener('message', subscribe);
+    document.addEventListener('message', subscribe);
+
+    function subscribe(event) {
+        const json = parse(event);
+
+        if (json?.source !== 'readyplayerme') {
+            return;
         }
-    });
+
+        // Susbribe to all events sent from Ready Player Me once frame is ready
+        if (json.eventName === 'v1.frame.ready') {
+            rpm_iframe.contentWindow.postMessage(
+                JSON.stringify({
+                    target: 'readyplayerme',
+                    type: 'subscribe',
+                    eventName: 'v1.**'
+                }),
+                '*'
+            );
+        }
+
+        // Get avatar GLB URL
+        // Now add it in Aframe canvas
+        if (json.eventName === 'v1.avatar.exported') {
+            console.log(`Avatar URL: ${json.data.url}`);
+            /*document.getElementById('avatarUrl').innerHTML = `Avatar URL: ${json.data.url}`;*/
+            document.getElementById('rpm-iframe').hidden = true;
+
+            // Update remote
+            document.getElementById('cameraA').setAttribute('player-info', 'gltf', json.data.url);
+
+        }
+
+        // Get user id
+        if (json.eventName === 'v1.user.set') {
+            console.log(`User with id ${json.data.id} set: ${JSON.stringify(json)}`);
+        }
+    }
+
+    function parse(event) {
+        try {
+            return JSON.parse(event.data);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function displayRPMIframe() {
+        document.getElementById('rpm-iframe').hidden = false;
+    }
+
 
     const api_pattern_single = {
         ThresholdMin: 0.106,
@@ -1283,18 +1418,18 @@
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
     };
 
-    let getChatCurrentTimeString = () => {
-        let date = new Date;
-        return '[' + String(date.getHours()).padStart(2, '0') + ':' +
-            String(date.getMinutes()).padStart(2, '0') + ':' +
-            String(date.getSeconds()).padStart(2, '0') + ']';
-    }
+    window.ntExample = {
+        randomColor: () => {
+            return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
+        }
+    };
 
 </script>
 
 <!-- This will change the glb materials -->
 <!-- <script src="js/glb_material_changer.js"></script> -->
 
+<script src="js/components/chat_component.js"></script>
 </body>
 
 </html>

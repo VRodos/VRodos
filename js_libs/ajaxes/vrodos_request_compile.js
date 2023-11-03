@@ -78,6 +78,7 @@ function vrodos_compileAjax(showPawnPositions) {
 
             if (projectType === 'vrexpo') {
                 createLinks(urlExperienceSequence["MasterClient"], "Exposition link");
+                createLinks(urlExperienceSequence["SimpleClient"], "Actor link");
             } else {
                 createLinks(urlExperienceSequence["index"], "Index");
                 createLinks(urlExperienceSequence["MasterClient"], "Director");
