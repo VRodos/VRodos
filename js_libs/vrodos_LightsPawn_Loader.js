@@ -135,24 +135,26 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['targetposition'][1],
                         resources3D[name]['targetposition'][2]); // where it points
 
-                    //console.log("name", name);
-
                     lightSun.name = name;
                     lightSun.asset_name = "mylightSun";
                     lightSun.category_name = "lightSun";
                     lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
 
+                    
+                    console.log("Loaded sun");
+                    console.log(resources3D[name].name);
+                    console.log(lightSun.name);
+                    console.log(resources3D[name]['shadowCameraBottom']);
                     lightSun.castShadow = true;
-
-
-                    lightSun.shadow.camera.near = 0.5;
-                    lightSun.shadow.camera.far = 1000;
-
-                    lightSun.shadow.camera.left = -30;
-                    lightSun.shadow.camera.right = 30;
-                    lightSun.shadow.camera.top = 30;
-                    lightSun.shadow.camera.bottom = -30;
+                    lightSun.castingShadow = resources3D[name]['castingShadow'];
+                    lightSun.shadowMapHeight = resources3D[name]['shadowMapHeight'];
+                    lightSun.shadowMapWidth = resources3D[name]['shadowMapWidth'];
+                    lightSun.shadowCameraTop = resources3D[name]['shadowCameraTop'];
+                    lightSun.shadowCameraBottom = resources3D[name]['shadowCameraBottom'];
+                    lightSun.shadowCameraLeft = resources3D[name]['shadowCameraLeft'];
+                    lightSun.shadowCameraRight = resources3D[name]['shadowCameraRight'];
+                    lightSun.shadowBias = resources3D[name]['shadowBias'];
 
                     //// Add Sun Helper
                     var sunSphere = new THREE.Mesh(
@@ -254,6 +256,16 @@ class VRodos_LightsPawn_Loader {
                     lightLamp.isLight = true;
                     lightLamp.castShadow = true;
                     lightLamp.shadow.radius = parseFloat(resources3D[name]['shadowRadius']);
+
+                    lightLamp.lampcastingShadow = resources3D[name]['lampcastingShadow'];
+                    lightLamp.lampshadowMapHeight = resources3D[name]['lampshadowMapHeight'];
+                    lightLamp.lampshadowMapWidth = resources3D[name]['lampshadowMapWidth'];
+                    lightLamp.lampshadowCameraTop = resources3D[name]['lampshadowCameraTop'];
+                    lightLamp.lampshadowCameraBottom = resources3D[name]['lampshadowCameraBottom'];
+                    lightLamp.lampshadowCameraLeft = resources3D[name]['lampshadowCameraLeft'];
+                    lightLamp.lampshadowCameraRight = resources3D[name]['lampshadowCameraRight'];
+                    lightLamp.lampshadowBias = resources3D[name]['lampshadowBias'];
+
 
                     envir.scene.add(lightLamp);
 

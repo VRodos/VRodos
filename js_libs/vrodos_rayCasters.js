@@ -284,6 +284,7 @@ function contextMenuClick(event) {
     if (intersected.length === 0)
         return;
 
+       
     // Check if right-clicked is the one selected already with left-click
     if (intersected[0].name === transform_controls.object.name) {
         showProperties(event, intersected[0]);
@@ -303,7 +304,7 @@ function showProperties(event, object) {
     //var objectParent  = inters.object.parent;
     var name = object.name;
     //console.log(name);
-
+    console.log(object);
     switch (object.category_slug) {
         case 'decoration':
             // Don't display a popup in decoration. You can only change name and glb file from asset editor!
@@ -320,20 +321,38 @@ function showProperties(event, object) {
         case 'poi-link':
             displayLinkProperties(event, name);
             break;
+        // case 'lightSun':
+        //     displaySunProperties(event, name);
+        //     break;
+        // case 'lightLamp':
+        //     displayLampProperties(event, name);
+        //     break;
+        // case 'lightSpot':
+        //     displaySpotProperties(event, name);
+        //     break;
+        // case 'lightAmbient':
+        //     displayAmbientProperties(event, name);
+        //     break;
+    }
+    switch (object.category_name) {
         case 'lightSun':
             displaySunProperties(event, name);
             break;
         case 'lightLamp':
             displayLampProperties(event, name);
             break;
-        case 'lightSpot':
-            displaySpotProperties(event, name);
-            break;
-        case 'lightAmbient':
-            displayAmbientProperties(event, name);
-            break;
+        // case 'lightSpot':
+        //     displaySpotProperties(event, name);
+        //     break;
+        // case 'lightAmbient':
+        //     displayAmbientProperties(event, name);
+        //     break;
     }
 }
+function sanitizeInputValue(value) {
+    var re = new RegExp('^$|^-?(\\d+)?(\\.?\\d*)?$');
+    return value.match(re) === null ? 0 : Number(value);
+  }
 
 /**
  * Poi video properties
@@ -345,22 +364,199 @@ function displaySunProperties(event, name) {
 
     // The whole popup div
     var ppPropertiesDiv = jQuery("#popUpSunPropertiesDiv");
+    var chbox = jQuery("#castShadow");
 
+    var textCameraBottomjQ = jQuery("#sunShadowCameraBottom");
+    var textCameraBottom = document.getElementById('sunShadowCameraBottom');
+    var textCameraTopjQ = jQuery("#sunShadowCameraTop");
+    var textCameraTop = document.getElementById('sunShadowCameraTop');
+    var textCameraLeftjQ = jQuery("#sunShadowCameraLeft");
+    var textCameraLeft = document.getElementById('sunShadowCameraLeft');
+    var textCameraRightjQ = jQuery("#sunShadowCameraRight");
+    var textCameraRight = document.getElementById('sunShadowCameraRight');
+    var textMapHeightjQ = jQuery("#sunshadowMapHeight");
+    var textMapHeight = document.getElementById('sunshadowMapHeight');
+    var textMapWidthjQ = jQuery("#sunshadowMapWidth");
+    var textMapWidth = document.getElementById('sunshadowMapWidth');
+    var textBiasjQ = jQuery("#sunshadowBias");
+    var textBias = document.getElementById('sunshadowBias');
+
+    // jQuery("#sunShadowCameraBottom").unbind('change');
+    // textCameraBottom.trigger("change");
+
+    clearAndUnbind(null, null, "sunShadowCameraBottom");
+    clearAndUnbind(null, null, "sunShadowCameraTop");
+    clearAndUnbind(null, null, "sunShadowCameraLeft");
+    clearAndUnbind(null, null, "sunShadowCameraRight");
+    clearAndUnbind(null, null, "sunshadowMapHeight");
+    clearAndUnbind(null, null, "sunshadowMapWidth");
+    clearAndUnbind(null, null, "sunshadowBias");
+    
+
+    chbox.prop('checked', envir.scene.getObjectByName(name).castingShadow);
+    
+    //textCameraBottom.attr('value', envir.scene.getObjectByName(name).shadowCameraBottom);
+    //textCameraTop.attr('value', envir.scene.getObjectByName(name).shadowCameraTop);
+    //textCameraLeft.attr('value', envir.scene.getObjectByName(name).shadowCameraLeft);
+    //textCameraRight.attr('value', envir.scene.getObjectByName(name).shadowCameraRight);
+    //textMapHeight.attr('value', envir.scene.getObjectByName(name).shadowMapHeight);
+    //textMapWidth.attr('value', envir.scene.getObjectByName(name).shadowMapWidth);
+    //textBias.attr('value', envir.scene.getObjectByName(name).shadowBias);
+
+    textCameraBottom.value = envir.scene.getObjectByName(name).shadowCameraBottom;
+    textCameraTop.value = envir.scene.getObjectByName(name).shadowCameraTop;
+    textCameraLeft.value = envir.scene.getObjectByName(name).shadowCameraLeft;
+    textCameraRight.value = envir.scene.getObjectByName(name).shadowCameraRight;
+    textMapHeight.value = envir.scene.getObjectByName(name).shadowMapHeight;
+    textMapWidth.value = envir.scene.getObjectByName(name).shadowMapWidth;
+    textBias.value = envir.scene.getObjectByName(name).shadowBias;
+
+    console.log(envir.scene.getObjectByName(name).shadowCameraBottom );
+    
     //jQuery("#sunColor")
-    jQuery("#sunColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
-    jQuery("#sunIntensity")[0].value = transform_controls.object.intensity;
+    
+    
 
-    document.getElementById("sunColor").value = transform_controls.object.children[0].material.color.getHexString();
-    jQuery("#sunColor")[0].style.background = "#" + jQuery("#sunColor")[0].value;
 
     // Show Selection
     ppPropertiesDiv.show();
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
     ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+
+    jQuery("#sunColor").change(function (e) {
+        //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
+        jQuery("#sunColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
+        // jQuery("#sunIntensity")[0].value = transform_controls.object.intensity;
+    
+        document.getElementById("sunColor").value = transform_controls.object.children[0].material.color.getHexString();
+        jQuery("#sunColor")[0].style.background = "#" + jQuery("#sunColor")[0].value;
+    
+        saveChanges();
+    });
+    jQuery("#sunIntensity").change(function (e) {
+        envir.scene.getObjectByName(name).lightintensity = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+
+    
+    textCameraBottomjQ.change(function (e) {
+        //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
+        envir.scene.getObjectByName(name).shadowCameraBottom = sanitizeInputValue(this.value);
+        //console.log(textCameraBottom);
+        saveChanges();
+    });
+
+    textCameraTopjQ.change(function (e) {
+        envir.scene.getObjectByName(name).shadowCameraTop = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textCameraLeftjQ.change(function (e) {
+        envir.scene.getObjectByName(name).shadowCameraLeft = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textCameraRightjQ.change(function (e) {
+        envir.scene.getObjectByName(name).shadowCameraRight = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textMapHeightjQ.change(function (e) {
+        envir.scene.getObjectByName(name).shadowMapHeight = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textMapWidthjQ.change(function (e) {
+        envir.scene.getObjectByName(name).shadowMapWidth = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textBiasjQ.change(function (e) {
+        envir.scene.getObjectByName(name).shadowBias = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    chbox.change(function (e) {
+        envir.scene.getObjectByName(name).castingShadow = this.checked ? 1 : 0;
+        saveChanges();
+    });
 }
 
 // LAMP PROPERTIES DIV show
 function displayLampProperties(event, name) {
+
+   
+    var chbox = jQuery("#lampcastShadow");
+
+    var textCameraBottomjQ = jQuery("#lampShadowCameraBottom");
+    var textCameraBottom = document.getElementById('lampShadowCameraBottom');
+    var textCameraTopjQ = jQuery("#lampShadowCameraTop");
+    var textCameraTop = document.getElementById('lampShadowCameraTop');
+    var textCameraLeftjQ = jQuery("#lampShadowCameraLeft");
+    var textCameraLeft = document.getElementById('lampShadowCameraLeft');
+    var textCameraRightjQ = jQuery("#lampShadowCameraRight");
+    var textCameraRight = document.getElementById('lampShadowCameraRight');
+    var textMapHeightjQ = jQuery("#lampshadowMapHeight");
+    var textMapHeight = document.getElementById('lampshadowMapHeight');
+    var textMapWidthjQ = jQuery("#lampshadowMapWidth");
+    var textMapWidth = document.getElementById('lampshadowMapWidth');
+    var textBiasjQ = jQuery("#lampshadowBias");
+    var textBias = document.getElementById('lampshadowBias');
+
+    // jQuery("#lampShadowCameraBottom").unbind('change');
+    // textCameraBottom.trigger("change");
+
+    clearAndUnbind(null, null, "lampShadowCameraBottom");
+    clearAndUnbind(null, null, "lampShadowCameraTop");
+    clearAndUnbind(null, null, "lampShadowCameraLeft");
+    clearAndUnbind(null, null, "lampShadowCameraRight");
+    clearAndUnbind(null, null, "lampshadowMapHeight");
+    clearAndUnbind(null, null, "lampshadowMapWidth");
+    clearAndUnbind(null, null, "lampshadowBias");
+
+    chbox.prop('checked', envir.scene.getObjectByName(name).lampcastingShadow);
+
+    textCameraBottom.value = envir.scene.getObjectByName(name).lampshadowCameraBottom;
+    textCameraTop.value = envir.scene.getObjectByName(name).lampshadowCameraTop;
+    textCameraLeft.value = envir.scene.getObjectByName(name).lampshadowCameraLeft;
+    textCameraRight.value = envir.scene.getObjectByName(name).lampshadowCameraRight;
+    textMapHeight.value = envir.scene.getObjectByName(name).lampshadowMapHeight;
+    textMapWidth.value = envir.scene.getObjectByName(name).lampshadowMapWidth;
+    textBias.value = envir.scene.getObjectByName(name).lampshadowBias;
+    
+
+    // chbox.prop('checked', envir.scene.getObjectByName(name).castingShadow);
+
+    textCameraBottomjQ.change(function (e) {
+        //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
+        envir.scene.getObjectByName(name).lampshadowCameraBottom = sanitizeInputValue(this.value);
+        //console.log(textCameraBottom);
+        saveChanges();
+    });
+
+    textCameraTopjQ.change(function (e) {
+        envir.scene.getObjectByName(name).lampshadowCameraTop = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textCameraLeftjQ.change(function (e) {
+        envir.scene.getObjectByName(name).lampshadowCameraLeft = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textCameraRightjQ.change(function (e) {
+        envir.scene.getObjectByName(name).lampshadowCameraRight = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textMapHeightjQ.change(function (e) {
+        envir.scene.getObjectByName(name).lampshadowMapHeight = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textMapWidthjQ.change(function (e) {
+        envir.scene.getObjectByName(name).lampshadowMapWidth = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    textBiasjQ.change(function (e) {
+        envir.scene.getObjectByName(name).lampshadowBias = sanitizeInputValue(this.value);
+        saveChanges();
+    });
+    chbox.change(function (e) {
+        envir.scene.getObjectByName(name).lampcastingShadow = this.checked ? 1 : 0;
+        saveChanges();
+    });
+
 
     // The whole popup div
     var ppPropertiesDiv = jQuery("#popUpLampPropertiesDiv");
@@ -371,8 +567,16 @@ function displayLampProperties(event, name) {
     jQuery("#lampDecay")[0].value = transform_controls.object.decay;
     jQuery("#lampDistance")[0].value = transform_controls.object.distance;
 
-    document.getElementById("lampColor").value = transform_controls.object.children[0].material.color.getHexString();
-    jQuery("#lampColor")[0].style.background = "#" + jQuery("#lampColor")[0].value;
+    jQuery("#lampColor").change(function (e) {
+        //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
+        jQuery("#lampColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
+        // jQuery("#sunIntensity")[0].value = transform_controls.object.intensity;
+    
+        document.getElementById("lampColor").value = transform_controls.object.children[0].material.color.getHexString();
+        jQuery("#lampColor")[0].style.background = "#" + jQuery("#lampColor")[0].value;
+    
+        saveChanges();
+    });
 
     // Show Selection
     ppPropertiesDiv.show();
@@ -569,7 +773,7 @@ function displayLinkProperties(event, name) {
     var popUpLinkPropertiesDiv = jQuery("#popUpLinkPropertiesDiv");
     var popupLinkSelect = jQuery("#poi_link_text");
 
-    clearAndUnbind(null, null, "popupLinkSelect");
+    clearAndUnbind(null, null, "poi_link_text");
     if (envir.scene.getObjectByName(name).poi_link_url)
         popupLinkSelect.val(envir.scene.getObjectByName(name).poi_link_url);
 

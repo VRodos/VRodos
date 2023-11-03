@@ -478,19 +478,19 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_light_target->setAttribute("id", $uuid."target");
 
                     $ascene->appendChild($a_light_target);
-
                     $a_light->setAttribute("light", "type:directional;".
                         "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-                        "intensity:".($contentObject->lightintensity).";".
-                        "castShadow: true;".
-                        "shadowMapHeight: 2048;".
-                        "shadowMapWidth: 2048;".
-                        "shadowCameraTop: 200;".
-                        "shadowCameraRight: 200;".
-                        "shadowCameraFar: 5000;".
-                        "shadowCameraLeft: -200;".
-                        "shadowCameraBottom: -200;".
-                        "shadowBias: -0.0001;".
+                        // "intensity:".($contentObject->lightintensity).";".
+                        "castShadow:".($contentObject->castingShadow).";".
+                       
+                        "shadowMapHeight:".($contentObject->shadowMapHeight).";".
+                        // "shadowCameraFar: 5000;".
+                        "shadowMapWidth:".($contentObject->shadowMapWidth).";".
+                        "shadowCameraTop:".($contentObject->shadowCameraTop).";".
+                        "shadowCameraRight:".($contentObject->shadowCameraRight).";".
+                        "shadowCameraLeft:".($contentObject->shadowCameraLeft).";".
+                        "shadowCameraBottom:".($contentObject->shadowCameraBottom).";".
+                        "shadowBias:".($contentObject->shadowBias).";".
                         // "shadow-camera-automatic: '#41132111-4c3f-4741-9c8a-343e71fc4b46';".
                         "shadowCameraVisible: false;"
                     //#41132111-4c3f-4741-9c8a-343e71fc4b46';
@@ -547,8 +547,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
                         "intensity:".$contentObject->lightintensity.";".
                         "distance:".$contentObject->lightdistance.";".
-                        "castShadow: false;".
-                        "decay:".$contentObject->lightdecay.";"
+                        "castShadow:".($contentObject->lampcastingShadow).";".
+                        "shadowMapHeight:".($contentObject->lampshadowMapHeight).";".
+                        "shadowMapWidth:".($contentObject->lampshadowMapWidth).";".
+                        "shadowCameraTop:".($contentObject->lampshadowCameraTop).";".
+                        "shadowCameraRight:".($contentObject->lampshadowCameraRight).";".
+                        "shadowCameraLeft:".($contentObject->lampshadowCameraLeft).";".
+                        "shadowCameraBottom:".($contentObject->lampshadowCameraBottom).";".
+                        "shadowBias:".($contentObject->lampshadowBias).";".
+                        // "shadow-camera-automatic: '#41132111-4c3f-4741-9c8a-343e71fc4b46';".
+                        "shadowCameraVisible: false;"
                     //."radius:".$contentObject->shadowRadius
                     );
 
@@ -620,6 +628,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     $gltf_model->setAttribute( "preload", "auto" );
                     $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );
+                    $gltf_model->setAttribute( "animation-mixer", "" );
 
                     //$a_entity->setAttribute( "ammo-body", "type: dynamic;" );
                     //$a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );

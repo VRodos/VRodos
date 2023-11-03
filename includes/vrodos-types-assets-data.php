@@ -29,6 +29,8 @@ $table_of_asset_fields = array(
     array('poi_img_link'                   , 'poi_img_link'                   , 'vrodos_asset3d_poi_img_link', 'string', '', true, true),
     array('poi_onlyimg'                   , 'poi_onlyimg'                   , 'vrodos_asset3d_poi_onlyimg', 'string', '0', true, true),
 
+    array('sun_cast_shadow'                   , 'sun_cast_shadow'                   , 'vrodos_asset3d_sun_cast_shadow', 'string', '1', true, true),
+
 
     array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'string', '', true, true),
     array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'string', '', true, true),

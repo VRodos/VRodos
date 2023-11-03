@@ -16,17 +16,34 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         resources3D[nameModel][Object.keys(dataDrag)[entry]] = Object.values(dataDrag)[entry];
     }
 
+    
+    console.log( resources3D[nameModel]);
+    console.log( "Sun added");
+    
+    
     if (categoryName === 'lightSun') {
 
+        console.log(Object.keys(dataDrag));
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
-        lightSun.shadowMapHeight = 200;
-        lightSun.shadowMapWidth = 200;
+        lightSun.castingShadow = true;
+        lightSun.shadowMapHeight = "1024";
+        lightSun.shadowMapWidth = "1024";
+        lightSun.shadowCameraTop = "200";
+        lightSun.shadowCameraBottom = "-200";
+        lightSun.shadowCameraLeft = "-200";
+        lightSun.shadowCameraRight = "200";
+        lightSun.shadowBias = "-0.0001";
+        lightSun.defaultColor = "0xffff00";
+        lightSun.castingShadow = true;
         lightSun.name = nameModel;
         lightSun['asset_name'] = "mylightSun";
         lightSun.isSelectableMesh = true;
         lightSun['category_name'] = "lightSun";
+        lightSun['category_slug'] = "lightSun";
         lightSun.isLight = true;
+
+        var hexcol = "0xffff00";
 
         //// Add Sun Helper
         var sunSphere = new THREE.Mesh(
@@ -114,8 +131,25 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         addInHierarchyViewer(insertedObject);
 
         addInHierarchyViewer(lightTargetSpot);
-
         // Auto-save
+       
+
+
+
+        transform_controls.object.color.setHex(hexcol);
+
+        // Sun as Sphere
+        transform_controls.object.children[0].material.color.setHex(hexcol);
+
+        // Sun Helper
+        var lightHelper = envir.scene.getObjectByName("lightHelper_" + transform_controls.object.name);
+        lightHelper.children[0].material.color.setHex(hexcol);
+        lightHelper.children[1].material.color.setHex(hexcol);
+
+        // TargetSpot
+        var lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
+        lightTargetSpot.children[0].material.color.setHex(hexcol);
+
         triggerAutoSave();
 
     }
@@ -131,6 +165,16 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightLamp.isLight = true;
         lightLamp.castShadow = true;
 
+        lightLamp.lampcastingShadow = true;
+        lightLamp.lampshadowMapHeight = "1024";
+        lightLamp.lampshadowMapWidth = "1024";
+        lightLamp.lampshadowCameraTop = "200";
+        lightLamp.lampshadowCameraBottom = "-200";
+        lightLamp.lampshadowCameraLeft = "-200";
+        lightLamp.lampshadowCameraRight = "200";
+        lightLamp.lampshadowBias = "-0.0001";
+        
+        var hexcol = "0xffff00";
         //// Add Lamp Helper
         var lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(0.5, 16, 8),
@@ -171,6 +215,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         envir.outlinePass.selectedObjects = [insertedObject];
         //envir.renderer.setClearColor(0xeeeeee, 1);
         //envir.scene.add(transform_controls);
+        transform_controls.object.color.setHex(hexcol);
+        transform_controls.object.power = 10;
+        
 
         // Position
         transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
