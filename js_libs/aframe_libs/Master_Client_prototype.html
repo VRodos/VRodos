@@ -133,6 +133,8 @@
                             this.nametag = this.el.querySelector('.nametag');
                             this.rpm_model = this.el.querySelector('.rpm_avatar');
 
+                            this.avatar_type = this.el.querySelector('.avatar_type');
+
                             this.ownedByLocalUser = this.el.id === 'cameraA';
                             if (this.ownedByLocalUser) {
                                 // populate the html overlay with the correct name on init
@@ -159,13 +161,28 @@
 
                         update: function () {
 
+                            if (this.data.avatarType) {
+                                console.log("AVATAR: ", this.data.avatarType);
 
-                            if (this.head){
-                                this.head.setAttribute('material', 'color', this.data.color);
+                                if (this.data.avatarType === 'no-avatar') {
 
+                                    const parent_avatar = document.getElementById('cameraA');
+                                    let my_head = parent_avatar.querySelector('.head');
+                                    let my_face = parent_avatar.querySelector('.face');
+                                    if (my_face) my_face.setAttribute("visible", "false");
+                                    if (my_head) my_head.setAttribute("visible", "false");
+
+                                } else if (this.data.avatarType === 'blob') {
+
+                                    if (this.head) {
+                                        this.head.setAttribute('material', 'color', this.data.color);
+                                    }
+
+                                }
                             }
 
                             if (this.nametag) this.nametag.setAttribute('value', this.data.name);
+
 
                             if (this.rpm_model) {
                                 this.rpm_model.removeAttribute('gltf-model');
@@ -710,13 +727,13 @@
                             <form name="avatarRadiosForm">
                                 <div class="mdc-form-field AvatarTypeSelection">
                                     <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio" name="avatar-radios" value="no-avatar" checked>
-                                    <label for="no-avatar-radio" onclick="toggleAvatarDialogBtn(false)">
+                                    <label for="no-avatar-radio">
                                         <img src="media/img/no-avatar.png" width="128" height="128" style="opacity:.6" />
                                         <span>No avatar</span>
                                     </label>
 
                                     <input class="mdc-radio__native-control" type="radio" id="blob-radio" value="blob" name="avatar-radios" >
-                                    <label for="blob-radio" onclick="toggleAvatarDialogBtn(false)">
+                                    <label for="blob-radio">
                                         <img src="media/img/blob-avatar.png" width="128" height="128" />
                                         <span>A Blob</span>
                                         <br>
@@ -724,7 +741,7 @@
                                     </label>
 
                                     <input class="mdc-radio__native-control" type="radio" id="rpm-radio" value="rpm" name="avatar-radios" >
-                                    <label for="rpm-radio" onclick="toggleAvatarDialogBtn(true)">
+                                    <label for="rpm-radio">
                                         <img src="media/img/rpm-avatar.png" width="128" height="128" />
                                         <span>Your personalized</span>
                                         <br>
@@ -739,7 +756,6 @@
         </section>
 
         <footer class="mdc-dialog__footer">
-            <a id="launchReadyPlayerMeBtn" onclick="displayRPMIframe()" style="display: none;" class="mdc-button mdc-button--secondary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">Launch Customizer</a>
             <a id="selectAvatarBtn" onclick="selectAvatarType()" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
         </footer>
     </div>
@@ -934,19 +950,13 @@
 
     });
 
-    let toggleAvatarDialogBtn = (showRPMBtn) => {
-        if (showRPMBtn) {
-            document.getElementById("launchReadyPlayerMeBtn").style.display = "inline-block";
-            document.getElementById("selectAvatarBtn").style.display = "none";
-        }
-        else {
-            document.getElementById("launchReadyPlayerMeBtn").style.display = "none";
-            document.getElementById("selectAvatarBtn").style.display = "inline-block";
-        }
-    }
-
     let selectAvatarType = () => {
-        document.getElementById('cameraA').setAttribute('player-info', 'avatarType', document.querySelector('input[name="avatar-radios"]:checked').value);
+
+        let radioVal = document.querySelector('input[name="avatar-radios"]:checked').value;
+        document.getElementById('cameraA').setAttribute('player-info', 'avatarType', radioVal);
+        if (radioVal === 'rpm'){
+            document.getElementById('rpm-iframe').hidden = false;
+        }
     }
 
     // Ready player me iframe code
@@ -1001,10 +1011,6 @@
         } catch (error) {
             return null;
         }
-    }
-
-    function displayRPMIframe() {
-        document.getElementById('rpm-iframe').hidden = false;
     }
 
 
