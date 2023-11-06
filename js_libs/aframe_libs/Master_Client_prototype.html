@@ -166,6 +166,13 @@
 
                                 if (this.data.avatarType === 'no-avatar') {
 
+
+                                    if (!this.ownedByLocalUser) {
+                                        this.head.setAttribute("visible", "false");
+                                        this.face.setAttribute("visible", "false");
+
+                                    }
+
                                     const parent_avatar = document.getElementById('cameraA');
                                     let my_head = parent_avatar.querySelector('.head');
                                     let my_face = parent_avatar.querySelector('.face');
@@ -176,17 +183,25 @@
 
                                     if (this.head) {
                                         this.head.setAttribute('material', 'color', this.data.color);
+                                        this.head.setAttribute('visible', 'true');
+                                        this.face.setAttribute('visible', 'true');
+                                    }
+                                    if (this.nametag) {
+                                        this.nametag.setAttribute('value', this.data.name);
+                                        this.nametag.setAttribute('visible', 'true');
                                     }
 
+                                } else if (this.data.avatarType === 'rpm') {
+
+                                    if (this.rpm_model) {
+                                        this.rpm_model.removeAttribute('gltf-model');
+                                        this.rpm_model.setAttribute('gltf-model', this.data.gltf);
+                                    }
+                                    if (this.nametag) {
+                                        this.nametag.setAttribute('value', this.data.name);
+                                        this.nametag.setAttribute('visible', 'true');
+                                    }
                                 }
-                            }
-
-                            if (this.nametag) this.nametag.setAttribute('value', this.data.name);
-
-
-                            if (this.rpm_model) {
-                                this.rpm_model.removeAttribute('gltf-model');
-                                this.rpm_model.setAttribute('gltf-model', this.data.gltf);
                             }
                         }
                     });
@@ -194,7 +209,15 @@
 
                     // If base scene, launch avatar selector and set local storage
                     if (document.getElementById("is-base-scene-input").value === 'true' ) {
-                        (new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))).show();
+
+                        let avatar_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))
+
+                        let closeAvatarDialogListener = function(event) {
+                            avatar_dialog_element.unlisten("MDCDialog:cancel", closeAvatarDialogListener);
+                            selectAvatarType('no-avatar');
+                        };
+                        avatar_dialog_element.show();
+                        avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
                     }
 
                 });
@@ -854,8 +877,8 @@
                 </a-entity>
 
                 <!-- Sphere Avatar-->
-                <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
-                <a-entity class="face" position="0 0.05 0">
+                <a-sphere class="head" scale="0.2 0.22 0.2" visible="false"></a-sphere>
+                <a-entity class="face" position="0 0.05 0" visible="false">
                     <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04" >
                         <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2" ></a-sphere>
                     </a-sphere>
@@ -873,6 +896,7 @@
                         position=".25 -.35 0"
                         side="double"
                         scale=".5 .5 .5"
+                        visible="false"
                 ></a-text>
             </a-entity>
         </template>
@@ -950,9 +974,10 @@
 
     });
 
-    let selectAvatarType = () => {
+    let selectAvatarType = (val) => {
 
-        let radioVal = document.querySelector('input[name="avatar-radios"]:checked').value;
+        let radioVal = val ? val : document.querySelector('input[name="avatar-radios"]:checked').value;
+
         document.getElementById('cameraA').setAttribute('player-info', 'avatarType', radioVal);
         if (radioVal === 'rpm'){
             document.getElementById('rpm-iframe').hidden = false;
@@ -969,7 +994,7 @@
     document.addEventListener('message', subscribe);
 
     function subscribe(event) {
-        const json = parse(event);
+        const json = parseRPMEvent(event);
 
         if (json?.source !== 'readyplayerme') {
             return;
@@ -990,8 +1015,8 @@
         // Get avatar GLB URL
         // Now add it in Aframe canvas
         if (json.eventName === 'v1.avatar.exported') {
+
             console.log(`Avatar URL: ${json.data.url}`);
-            /*document.getElementById('avatarUrl').innerHTML = `Avatar URL: ${json.data.url}`;*/
             document.getElementById('rpm-iframe').hidden = true;
 
             // Update remote
@@ -1005,7 +1030,7 @@
         }
     }
 
-    function parse(event) {
+    function parseRPMEvent(event) {
         try {
             return JSON.parse(event.data);
         } catch (error) {
