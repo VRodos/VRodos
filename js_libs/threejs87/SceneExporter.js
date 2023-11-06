@@ -243,6 +243,7 @@ THREE.SceneExporter.prototype = {
                 entryObject.targetposition = [o.target.position.x, o.target.position.y, o.target.position.z];
                 entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
                 entryObject.lightintensity = o.intensity;
+                entryObject.shadowCameraBottom =  o.shadowCameraBottom;
 
                 delete entryObject.intensity;
 

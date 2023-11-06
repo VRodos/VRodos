@@ -63,6 +63,29 @@
         transform_controls.object.children[0].material.metalness = parseFloat(document.getElementById("ObjectMetalness").value);
     }
 
+    function validate(evt) {
+        var theEvent = evt || window.event;
+
+        // Handle paste
+        if (theEvent.type === 'paste') {
+            key = event.clipboardData.getData('text/plain');
+        } else {
+        // Handle key press
+            var key = theEvent.keyCode || theEvent.which;
+            key = String.fromCharCode(key);
+        }
+        var regex = /^$|^-?(\\d+)?(\\.?\\d*)?$/; //^-?[0-9]*(?:\.[0-9]+)?$/
+        var re = new RegExp('^$|^-?(\\d+)?(\\.?\\d*)?$');
+        if( !regex.test(key) ) {
+            theEvent.returnValue = false;
+            if(theEvent.preventDefault) theEvent.preventDefault();
+        }
+    }
+
+    
+
+
+
     /// Sun Color Selector
     function updateSunColorPickerLight(picker) {
 
@@ -191,7 +214,77 @@
     <input type="text" id="sunColor" name="sunColor" title="Set a hex number, ffffff is the default (white)"
            value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateSunColorPickerLight(this)'}"
            style="width: 70px;display: inline-block;padding: 2px;text-align: right;" />
+    <label for="castShadow" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+        Enable Shadows:</label>
 
+    <input type="checkbox" id="castShadow" name="castShadow" value="shadow_bool" checked="true" title="Enable cast shadow functionality"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+
+           
+    <label for="sunShadowCameraBottom" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Bottom:</label>
+
+    <input type="text"   id="sunShadowCameraBottom" name="sunShadowCameraBottom" 
+           value="-200" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+    
+    <label for="sunShadowCameraTop" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Top:</label>
+
+    <input type="text"  id="sunShadowCameraTop" name="sunShadowCameraTop" 
+           value="200" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+
+    <label for="sunShadowCameraLeft" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Left:</label>
+
+    <input type="text"  id="sunShadowCameraLeft" name="sunShadowCameraLeft" 
+           value="-200" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+    
+    <label for="sunShadowCameraRight" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Right:</label>
+
+    <input type="text"  id="sunShadowCameraRight" name="sunShadowCameraRight" 
+           value="200" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+
+    <label for="sunshadowMapHeight" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Map Height:</label>
+
+    <input type="text"  id="sunshadowMapHeight" name="sunshadowMapHeight" 
+           value="1024" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+    
+    <label for="sunshadowMapWidth" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Map Width:</label>
+
+    <input type="text"  id="sunshadowMapWidth" name="sunshadowMapWidth" 
+           value="1024" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+    
+    <label for="sunshadowBias" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Bias:</label>
+
+    <input type="text" id="sunshadowBias"  name="sunshadowBias" 
+           value="-0.0001" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
 </div>
 
 <!-- Lamp @ Archaeology: Popup menu to for Lamp Decay, Power, Distance and Color -->
@@ -200,7 +293,7 @@
 
     <!-- The close button-->
     <a style="float: right;" type="button" class="mdc-theme--primary"
-       onclick='this.parentNode.style.display = "none";  return false;'>
+       onclick='this.parentNode.style.display = "none"; saveChanges(); return false;'>
         <i class="material-icons" style="cursor: pointer; float: right;">close</i>
     </a>
 
@@ -210,9 +303,9 @@
         Set Lamp Power:</label>
 
     <input type="text" id="lampPower" name="lampPower" title="Set a number from 0 to infinite, 1 is the default"
-           value="1" maxlength="4" class="mdc-textfield__input"
+           value="10" maxlength="4" class="mdc-textfield__input"
            style="width: 6ch; padding: 2px; display: inline; text-align: right;"
-           onkeyup="transform_controls.object.intensity = this.value" />
+           onkeyup="transform_controls.object.power = this.value" />
 
     <!-- The Color of the Lamp-->
     <label for="lampColor" class="mdc-textfield__label"
@@ -252,6 +345,78 @@
            value="8" maxlength="3" class="mdc-textfield__input"
            style="width: 7ch; padding: 2px; display: inline-block;text-align: right;"
            onkeyup="transform_controls.object.shadow.radius = this.value" />
+
+    <label for="lampcastShadow" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+        Enable Shadows:</label>
+
+    <input type="checkbox" id="lampcastShadow" name="lampcastShadow" value="shadow_bool" checked="true" title="Enable cast shadow functionality"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+       
+    <label for="lampShadowCameraBottom" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Bottom:</label>
+
+    <input type="text"   id="lampShadowCameraBottom" name="lampShadowCameraBottom" 
+           value="-200" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+    
+    <label for="lampShadowCameraTop" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Top:</label>
+
+    <input type="text"  id="lampShadowCameraTop" name="lampShadowCameraTop" 
+           value="200" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+
+    <label for="lampShadowCameraLeft" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Left:</label>
+
+    <input type="text"  id="lampShadowCameraLeft" name="lampShadowCameraLeft" 
+           value="-200" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+    
+    <label for="lampShadowCameraRight" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Right:</label>
+
+    <input type="text"  id="lampShadowCameraRight" name="lampShadowCameraRight" 
+           value="200" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+
+    <label for="lampshadowMapHeight" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Map Height:</label>
+
+    <input type="text"  id="lampshadowMapHeight" name="lampshadowMapHeight" 
+           value="1024" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+    
+    <label for="lampshadowMapWidth" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Map Width:</label>
+
+    <input type="text"  id="lampshadowMapWidth" name="lampshadowMapWidth" 
+           value="1024" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+    
+    <label for="lampshadowBias" class="mdc-textfield__label"
+           style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+         Shadow Bias:</label>
+
+    <input type="text" id="lampshadowBias"  name="lampshadowBias" 
+           value="-0.0001" maxlength="6" class="mdc-textfield__input"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+
 </div>
 
 <!-- Spot @ Archaeology: Popup menu to for Lamp Decay, Power, Distance and Color -->

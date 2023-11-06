@@ -373,6 +373,12 @@
                             backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
                             //backgroundEl.setAttribute("environment", "ground", "flat");
                             backgroundEl.setAttribute("environment", "playArea", "1.4");
+                            backgroundEl.setAttribute("environment", "shadow", "true");
+
+                            let groundEl = document.getElementsByClassName('environmentGround')[0];
+                            console.log("Ground:");
+                            groundEl.setAttribute("shadow", "cast: true; receive: true");
+                            console.log(groundEl);
                         }
 
 
@@ -863,11 +869,12 @@
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
-
-        <!-- Avatar template for Expo projects-->
-        <!-- TODO Show respectful avatar based on player option-->
-        <template id="avatar-template-expo" >
+        <a-asset-item id="idle" src="../media/sound/idle.glb"></a-asset-item>
+        <!-- Avatar Template -->
+        <template id="avatar-template-expo">
             <a-entity class="avatar" player-info>
+
+                <!-- <a-entity gltf-model="#idle" animation-mixer></a-entity> -->
 
                 <!-- ReadyPlayerMe Avatar-->
                 <a-entity

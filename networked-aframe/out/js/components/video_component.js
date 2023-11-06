@@ -14,58 +14,43 @@ AFRAME.registerComponent('video-controls', {
     },
     init: function () {
 
+        this.video_id = "#video_" + this.data.id;
+        this.video = document.querySelector(this.video_id);
+        this.video_display_id = "#video-display_" + this.data.id;
+        this.vid_panel_id = "#vid-panel_" + this.data.id;
+        this.videoDisplay = document.querySelector(this.video_display_id);
+        this.videoPanel = document.querySelector(this.vid_panel_id);
+        this.fsEl = document.querySelector("#ent_fs_" + this.data.id);
+        this.plEl = document.querySelector("#ent_pl_" + this.data.id);
+        this.pauseEl = document.querySelector("#ent_ex_" + this.data.id);
+        this.exEl = document.querySelector("#ent_ex_" + this.data.id);
+        this.exFrameEl = document.querySelector("#exit_vid_panel_" + this.data.id);
+        this.titEl = document.querySelector("#ent_tit_" + this.data.id);
+        this.backgroundEl = document.querySelector('#aframe-scene-container');
+        this.cursorEl = document.querySelector('#cursor');
+        this.playerEl = document.querySelector('#cameraA');
+        this.rightHand = document.querySelector('#oculusRight');
+        this.cam = document.querySelector("#cameraA");
+        this.media_panel = document.getElementById("mediaPanel");
+        this.recording_controls = document.getElementById("upload-recording-btn");
+        this.panel_pos_dynamic;
+        this.is_fs = false;
+        this.panel_z = -1;
+        this.restorePanel = this.restorePanel.bind(this);
+        this.restoreVid = this.restoreVid.bind(this);
+        this.removeVRTraces = this.removeVRTraces.bind(this);
+        this.visCollection = [];
 
-        let data = this.data;
-        let video_id = "#video_" + data.id;
-        let video = document.querySelector(video_id);
+        this.panelElems = [this.videoPanel, this.fsEl, this.plEl, this.exEl, this.exFrameEl];
+        document.querySelector('a-scene').addEventListener('exit-vr', this.removeVRTraces);
 
-        let video_display_id = "#video-display_" + data.id;
-        let vid_panel_id = "#vid-panel_" + data.id;
-
-        let videoDisplay = document.querySelector(video_display_id);
-        let videoPanel = document.querySelector(vid_panel_id);
-        let fsEl = document.querySelector("#ent_fs_" + data.id);
-        let plEl = document.querySelector("#ent_pl_" + data.id);
-        let pauseEl = document.querySelector("#ent_ex_" + data.id);
-        let exEl = document.querySelector("#ent_ex_" + data.id);
-        let exFrameEl = document.querySelector("#exit_vid_panel_" + data.id);
-        let titEl = document.querySelector("#ent_tit_" + data.id);
-        let backgroundEl = document.querySelector('#aframe-scene-container');
-        let cursorEl = document.querySelector('#cursor');
-        let playerEl = document.querySelector('#cameraA');
-        let rightHand = document.querySelector('#oculusRight');
-
-        let cam = document.querySelector("#cameraA");
-        let camRig = document.querySelector("#camera-rig");
-
-        let media_panel = document.getElementById("mediaPanel");
-        let recording_controls = document.getElementById("upload-recording-btn");
-
-        let assets = document.getElementById("scene-assets");
-        let selPreset = backgroundEl.getAttribute("scene-settings").presChoice;
-        let panel_pos_dynamic;
-        let is_fs = false;
-        let panel_z = -1;
-
-        document.querySelector('a-scene').addEventListener('exit-vr',  function () {
-            removeVRTraces()
-        });
-
-       
-        if(video.getAttribute("autoplay-manual") == "true")
-            video.play();
-        
-
-        if(video.getAttribute("autoplay-manual") == "true"){
-            video.play();
+        if(this.video.getAttribute("autoplay-manual") == "true"){
+            this.video.play();
         }else{
-            videoDisplay.classList.add("raycastable");
-          
-            
+            this.videoDisplay.classList.add("raycastable");                    
         }
-        
-            
-        const visibleHeightAtZDepth = ( depth ) => {
+             
+        this.visibleHeightAtZDepth = ( depth ) => {
             const camera = AFRAME.scenes[0].camera;
             // compensate for cameras not positioned at z=0
             const cameraOffset = camera.position.z;
@@ -80,414 +65,339 @@ AFRAME.registerComponent('video-controls', {
             return 2 * Math.tan( vFOV / 2 ) * Math.abs( depth );
           };
           
-        const visibleWidthAtZDepth = ( depth ) => {
+        this.visibleWidthAtZDepth = ( depth ) => {
             const camera = AFRAME.scenes[0].camera;
-            const height = visibleHeightAtZDepth( depth, camera );
+            const height = this.visibleHeightAtZDepth( depth, camera );
             let width = height * camera.aspect;
             return width;
         };
 
+        this.cam.add(this.videoPanel);
 
+        this.entCollection = document.getElementsByClassName("hideable");
 
-        cam.add(videoPanel);
+        this.video.addEventListener("ended", (e) => {
+            this.playUpd(this.plEl);
+        });
         
-
-
-
-
-        const entCollection = document.getElementsByClassName("hideable");
-
-
-        video.addEventListener("ended", (e) => {
-            playUpd(plEl);
-
-        })
-
-        function restoreVidPos(border, panel) {
-            let offsetX = 20;
-
-
-            var curr_rot = border.getAttribute('rotation');
-
-            border.object3D.rotation.set(
-                THREE.MathUtils.degToRad(0),
-                THREE.MathUtils.degToRad(0),
-                THREE.MathUtils.degToRad(0)
-            );
-
-            border.object3D.rotation.set(
-                THREE.MathUtils.degToRad(data.orig_rot[0] * (180 / Math.PI)),
-                THREE.MathUtils.degToRad(data.orig_rot[1] * (180 / Math.PI)),
-                THREE.MathUtils.degToRad(data.orig_rot[2] * (180 / Math.PI))
-            );
-
+        if (this.video.getAttribute("src")){
+            this.onVideoClick = this.onVideoClick.bind(this);
+            this.exitPanel = this.exitPanel.bind(this);
+            this.playVideo = this.playVideo.bind(this);
+            this.onFullScreenClick = this.onFullScreenClick.bind(this);
+            this.videoDisplay.addEventListener('click', this.onVideoClick);
         }
-    
-        let visCollection = [];
-        let height = 15;
-        let width = 20;
-        let dist = 25;
+    },
 
-        function handleCamEntity(obj, non_visible, trans, opac) {
+    removeVRTraces: function(evt){
+        this.exEl.removeEventListener('click', this.exitPanel);
+        this.exFrameEl.removeEventListener('click', this.exitPanel);
+        this.plEl.removeEventListener('click', this.playVideo);
+        this.fsEl.removeEventListener('click', this.onFullScreenClick);
 
-            // backgroundEl.renderer.sortObjects = true;
-            
-            if (non_visible) {
-                obj.object3D.renderOrder = 9999999;
-                //clipIntersection
-                obj.components.material.material.depthTest = false;
-                obj.components.material.material.transparent = trans;
-                obj.components.material.material.opacity = opac;
-                // if(obj == lineEl){
-                //     obj.object3D.renderOrder = 999999999999;
-                //     obj.components.material.material.transparent = false;
-                // }
-                
+        this.handleCamEntity = this.handleCamEntity.bind(this);
+        this.handleCamEntityText = this.handleCamEntityText.bind(this);
+        this.playUpd = this.playUpd.bind(this); 
+        this.restoreVid();
+        this.panelElems.map((elem) => this.handleCamEntity(elem, false, true, 1));
+        this.handleCamEntityText(this.titEl, false, true, 1);
+        if (this.video.paused) {
+            console.log("Video Paused. Exiting...")
+        }
+        else {
+            this.video.pause();
+        }
+        this.cursorEl.setAttribute("raycaster","objects: .raycastable");
+        if(this.rightHand)
+            this.rightHand.setAttribute("raycaster","objects: .raycastable");
 
-                obj.setAttribute("visible", "true");
-                obj.setAttribute("scale", "1 1 1");
+        browsingModeVR = false;
 
-            }
-            else {
-                obj.setAttribute("visible", "false");
-                obj.setAttribute("scale", "0.001 0.001 0.001");
-
-            }
-
-        };
-
-        function handleCamEntityText(obj, non_visible, trans, opac) {
-            if (non_visible) {
-                obj.object3D.renderOrder = 9999999;
-                //clipIntersection
-                obj.components.text.material.depthTest = false;
-                obj.components.text.material.transparent = trans;
-                obj.components.text.material.opacity = opac;
-
-                obj.setAttribute("visible", "true");
-                obj.setAttribute("scale", "1 1 1");
-            }
-            else {
-                obj.setAttribute("visible", "false");
-                obj.setAttribute("scale", "0.001 0.001 0.001");
-
-            }
-
-        };
-        function playUpd(obj) {
-            if (video.paused) {
-                obj.setAttribute("src", "#video_pl_" + data.id);
-                
-            }
-            else {
-                obj.setAttribute("src", "#video_pas_" + data.id);
-                
-            }
-            obj.setAttribute("material", "depthTest: false");
-            obj.setAttribute("material", "transparent: true");
-            obj.setAttribute("material", "opacity: 1");
-
-        };
-
-        plEl.addEventListener("mouseup", function (event) {
-            if (video.paused) {
-                video.play();
-                
-            }
-            else {
-                video.pause();
-
-            }
-            playUpd(plEl);
-
-        });
-        exFrameEl.addEventListener("mouseup", function (event) {
-           
-            videoPanel.setAttribute("position", panel_pos_dynamic);
-            handleCamEntity(videoPanel, false, true, 0.3);
-            if (video.paused) {
-                console.log("Video Paused. Exiting...")
-
-            }
-            else {
-                video.pause();
-
-            }
-            // videoDisplay.classList.remove("non-clickable");
-            // videoPanel.classList.remove("non-clickable");
-
-         
-            
-            cursorEl.setAttribute("raycaster","objects: .raycastable");
-            if(rightHand)
-                rightHand.setAttribute("raycaster","objects: .raycastable");
-        });
-
-        exEl.addEventListener("mouseup", function (event) {
-           
-            videoPanel.setAttribute("position", panel_pos_dynamic);
-            handleCamEntity(videoPanel, false, true, 0.3);
-            // if (video.paused) {
-            //     console.log("Video Paused. Exiting...")
-
-            // }
-            // else {
-            //     video.pause();
-
-            // }
-            // videoDisplay.classList.remove("non-clickable");
-            // videoPanel.classList.remove("non-clickable");
-
-         
-            
-            cursorEl.setAttribute("raycaster","objects: .raycastable");
-            if(rightHand)
-                rightHand.setAttribute("raycaster","objects: .raycastable");
-        });
-
-
-
-        fsEl.addEventListener("mouseup", function (event) {
-
-            is_fs = true;
-            let projType = backgroundEl.getAttribute("scene-settings").pr_type;
-            let selCh = backgroundEl.getAttribute("scene-settings").selChoice;
-            let selPreset = backgroundEl.getAttribute("scene-settings").presChoice;
-    
-            if (projType != "vrexpo_games")
-            {
-
-                //cam.setAttribute("position", "0 0 0");
-                media_panel.setAttribute( "style", 'visibility: hidden;' );
-                recording_controls.setAttribute('style', 'visibility: hidden;');
-            }
-
-            if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset != "ocean"){
-                backgroundEl.setAttribute("environment", "preset", "default");
-                backgroundEl.setAttribute("environment", "ground", "none");
-                //backgroundEl.setAttribute("environment", "dressing", "none");
-                //backgroundEl.setAttribute("environment", "playArea", "10");
-                // backgroundEl.setAttribute("environment", "dressingAmount", "0");
-                
-            }else if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset == "ocean"){
-                backgroundEl.setAttribute("fog","type: linear; color: #AAB; far: 230; near: 0");
+        if(this.is_fs){
+            this.is_fs = false;
+            this.videoDisplay.classList.remove("non-clickable");
+            let orig_preset = this.backgroundEl.getAttribute("scene-settings").presChoice; 
+            if(this.backgroundEl.getAttribute("scene-settings").selChoice == "2" && orig_preset != "ocean"){
+                this.backgroundEl.setAttribute("environment", "preset", orig_preset);
+                this.backgroundEl.setAttribute("environment", "ground", "flat");
+            }else if(this.backgroundEl.getAttribute("scene-settings").selChoice == "2" && orig_preset == "ocean"){
                 const oceanCollection = document.getElementsByClassName("ocean_asset");
-
                 for (let i = 0; i < oceanCollection.length; i++) {
-                    oceanCollection[i].setAttribute("visible", "false");
-                    // entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");                  
+                    oceanCollection[i].setAttribute("visible", "true");          
                 }
+                this.backgroundEl.setAttribute("fog","type: exponential; color: #0894d3; density: 0.06;");
             }
-
-            
-            backgroundEl.setAttribute("background", "color", "black");
-            backgroundEl.setAttribute("overlay", "");
-            videoDisplay.classList.add("non-clickable");
-            // backgroundEl.components.raycaster.refreshObjects();
-            //videoPanel.classList.add("non-clickable");
-            cam.add(videoDisplay);
-            videoDisplay.setAttribute("height", visibleHeightAtZDepth(-25));
-            videoDisplay.setAttribute("width", visibleWidthAtZDepth(-25));
-            videoDisplay.setAttribute("position", "0 0 -25");
-            videoDisplay.setAttribute("scale", "1 1 1");
-            videoDisplay.setAttribute("rotation", "0 0 0");
-
-            handleCamEntity(videoPanel, false, true, 1);
-            handleCamEntity(fsEl, false, true, 1);
-            handleCamEntity(plEl, false, true, 1);
-            handleCamEntity(exEl, false, true, 1);
-            handleCamEntity(exFrameEl, false, true, 1);
-            // handleCamEntity(lineEl, false, true, 1);
-            handleCamEntityText(titEl, false, true, 1);
-
-            if (video.paused) {
-                video.play();
-
-            }
-            for (let i = 0; i < entCollection.length; i++) {
-
-                if (entCollection[i] !=videoDisplay){
-                    entCollection[i].setAttribute("visible", "false");
-                    entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
-                }
-
-                visCollection.push(i);
-            }
-            if (playerEl.getAttribute("wasd-controls")){
-                playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
-            }else
-                cam.setAttribute("wasd-controls-enabled", "false");
-            playUpd(plEl);
-        });
-
-        function removeVRTraces(){
-            let selPreset = backgroundEl.getAttribute("scene-settings").presChoice;
-            restoreVid();
-            // panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z;
-            // videoPanel.setAttribute("position", panel_pos_dynamic);
-            handleCamEntity(videoPanel, false, true, 0.3);
-            if (video.paused) {
-                console.log("Video Paused. Exiting...")
-
-            }
-            else {
-                video.pause();
-
-            }
-            // videoDisplay.classList.remove("non-clickable");
-            // videoPanel.classList.remove("non-clickable");
-            cursorEl.setAttribute("raycaster","objects: .raycastable");
-            if(rightHand)
-                rightHand.setAttribute("raycaster","objects: .raycastable");
-
-            browsingModeVR = false;
-
-            if(is_fs){
-                is_fs = false;
-                videoDisplay.classList.remove("non-clickable");
-
-                let orig_preset = backgroundEl.getAttribute("scene-settings").presChoice; 
-                if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset != "ocean"){
-                    backgroundEl.setAttribute("environment", "preset", orig_preset);
-                    backgroundEl.setAttribute("environment", "ground", "flat");
-                }else if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset == "ocean"){
-                    backgroundEl.setAttribute("fog","type: linear; color: #AAB; far: 230; near: 0");
-                    const oceanCollection = document.getElementsByClassName("ocean_asset");
-
-                    for (let i = 0; i < oceanCollection.length; i++) {
-                        oceanCollection[i].setAttribute("visible", "true");
-                        // entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");                  
-                    }
-                }
-            }
-
         }
-        function restorePanel(){
-            
-            handleCamEntity(videoPanel, true, true, 1);
-            handleCamEntity(fsEl, true, true, 1);
-            handleCamEntity(plEl, true, true, 1);
-            handleCamEntity(exEl, true, true, 1);
-            handleCamEntity(exFrameEl, true, true, 1);
-            // handleCamEntity(lineEl, true, true, 1);
-            handleCamEntityText(titEl, true, true, 1);
-            
-            videoPanel.setAttribute("position", panel_pos_dynamic);
-            
-            // videoDisplay.classList.remove("raycastable");
-            cursorEl.setAttribute("raycaster","objects: .non-clickable");
-            if(rightHand)
-                rightHand.setAttribute("raycaster","objects: .non-clickable");
-            playUpd(plEl);
+    },
+
+    playUpd: function(obj) {
+        if (this.video.paused) {
+            obj.setAttribute("src", "#video_pl_" + this.data.id);   
         }
+        else {
+            obj.setAttribute("src", "#video_pas_" + this.data.id);
+        }
+        obj.setAttribute("material", "depthTest: false");
+        obj.setAttribute("material", "transparent: true");
+        obj.setAttribute("material", "opacity: 1");
+    },
 
-        function restoreVid(){
+    playVideo: function(event) {
+        if (this.video.paused) {
+            this.video.play();
+        }
+        else {
+            this.video.pause();
+        }
+        this.playUpd(this.plEl);
+    },
 
+    exitPanel: function (event) {
+        this.exEl.removeEventListener('click', this.exitPanel);
+        this.exFrameEl.removeEventListener('click', this.exitPanel);
+        this.plEl.removeEventListener('click', this.playVideo);
+        this.fsEl.removeEventListener('click', this.onFullScreenClick);
+        this.handleCamEntity = this.handleCamEntity.bind(this);
 
+        this.handleCamEntityText = this.handleCamEntityText.bind(this);
+        this.playUpd = this.playUpd.bind(this);
+        this.videoPanel.setAttribute("position", this.panel_pos_dynamic);
+        this.panelElems.map((elem) => this.handleCamEntity(elem, false, true, 1));
+        this.handleCamEntityText(this.titEl, false, true, 1);
+
+        if (this.video.paused) {
+            console.log("video Paused. Exiting...");
+        }
+        else {
+            this.video.pause();
+        }
+        this.cursorEl.setAttribute("raycaster","objects: .raycastable");
+        if(this.rightHand)
+            this.rightHand.setAttribute("raycaster","objects: .raycastable");
+    },
+
+    handleCamEntityText: function (obj, non_visible, trans, opac) {
+        if (non_visible) {
+            obj.object3D.renderOrder = 9999999;
+            //clipIntersection
+            obj.components.text.material.depthTest = false;
+            obj.components.text.material.transparent = trans;
+            obj.components.text.material.opacity = opac;
+            obj.setAttribute("visible", "true");
+            obj.setAttribute("scale", "1 1 1");
+        }
+        else {
+            obj.setAttribute("visible", "false");
+            obj.setAttribute("scale", "0.0001 0.0001 0.0001");
+        }
+    },
     
-            let projType = backgroundEl.getAttribute("scene-settings").pr_type;
-            //console.log(backgroundEl.components.raycaster);
-            if (projType != "vrexpo_games")
-            {
-                cam.setAttribute("position", "0 0.6 0");
-                media_panel.setAttribute( "style", 'visibility: visible;' );        //TODO change based on project type
-                recording_controls.setAttribute('style', 'visibility: visible;');
-            }
+    restorePanel: function (){
+        this.handleCamEntity = this.handleCamEntity.bind(this);
+        this.handleCamEntityText = this.handleCamEntityText.bind(this);
+        this.playUpd = this.playUpd.bind(this);
+        this.panelElems.map((elem) => this.handleCamEntity(elem, true, true, 1));
+        this.handleCamEntityText(this.titEl, true, true, 1);
+        
+        this.videoPanel.setAttribute("position", this.panel_pos_dynamic);
+        this.cursorEl.setAttribute("raycaster","objects: .non-clickable");
+        if(this.rightHand)
+            this.rightHand.setAttribute("raycaster","objects: .non-clickable");
+        this.playUpd(this.plEl);
 
-            // if(backgroundEl.getAttribute("scene-settings").selChoice == "2")
-            //     backgroundEl.setAttribute("environment", "ground", "flat");
+        this.exEl.addEventListener('click', this.exitPanel);
+        this.exFrameEl.addEventListener('click', this.exitPanel);
+        this.plEl.addEventListener('click', this.playVideo);
+        this.fsEl.addEventListener('click', this.onFullScreenClick);
+    },
 
-            cam.setAttribute("camera", "fov", 60);
-            let bcgCol = backgroundEl.getAttribute("scene-settings").color;
-            backgroundEl.setAttribute("background", "color", bcgCol);
-            for (let i = 0; i < visCollection.length; i++) {
-                entCollection[visCollection[i]].setAttribute("visible", "true");
-                if (entCollection[visCollection[i]].getAttribute("original-scale"))
-                    entCollection[visCollection[i]].setAttribute("scale", entCollection[visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
-                else
-                    entCollection[visCollection[i]].setAttribute("scale", "1 1 1");
-            }
-
-            if (playerEl.getAttribute("wasd-controls")){
-                playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
-            }else
-                cam.setAttribute("wasd-controls-enabled", "true");
-            //playerEl.setAttribute("look-controls", "enabled: true");
-            backgroundEl.add(videoDisplay);
-            let p_x = data.orig_pos[0] + ' ' + data.orig_pos[1] + ' ' + data.orig_pos[2];
-            let r_x = data.orig_rot[0] * (180 / Math.PI) + ' ' + data.orig_rot[1] * (180 / Math.PI) + ' ' + data.orig_rot[2] * (180 / Math.PI);
-
-
-            videoDisplay.setAttribute("height", "3");
-            videoDisplay.setAttribute("width", "4");
-            videoDisplay.setAttribute("position", p_x);
-            videoDisplay.setAttribute("scale", videoDisplay.getAttribute("original-scale"));
-
-            videoDisplay.setAttribute("rotation", r_x);
-            //videoDisplay.setAttribute("position", "%s %s %s", p_x, p_y, p_z);
-            visCollection = [];
+    restoreVid: function(){
+        this.restorePanel = this.restorePanel.bind(this);
+        let projType = this.backgroundEl.getAttribute("scene-settings").pr_type;
+        if (projType != "vrexpo_games")
+        {
+            this.cam.setAttribute("position", "0 0.6 0");
+            this.media_panel.setAttribute( "style", 'visibility: visible;' );        //TODO change based on project type
+            this.recording_controls.setAttribute('style', 'visibility: visible;');
+        }
+        this.cam.setAttribute("camera", "fov", 60);
+        let bcgCol = this.backgroundEl.getAttribute("scene-settings").color;
+        this.backgroundEl.setAttribute("background", "color", bcgCol);
+        for (let i = 0; i < this.visCollection.length; i++) {
+            this.entCollection[this.visCollection[i]].setAttribute("visible", "true");
+            if (this.entCollection[this.visCollection[i]].getAttribute("original-scale"))
+                this.entCollection[this.visCollection[i]].setAttribute("scale", this.entCollection[this.visCollection[i]].getAttribute("original-scale"));    //TODO: incorporate asset manager solution to avoid this
+            else
+                this.entCollection[this.visCollection[i]].setAttribute("scale", "1 1 1");
         }
 
-       
-        if (video.getAttribute("src")){
+        if (this.playerEl.getAttribute("wasd-controls")){
+            this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
+        }else
+            this.cam.setAttribute("wasd-controls-enabled", "true");
+        
+        this.backgroundEl.add(this.videoDisplay);
+        
+        let p_x = this.data.orig_pos[0] + ' ' + this.data.orig_pos[1] + ' ' + this.data.orig_pos[2];
+        let r_x = this.data.orig_rot[0] * (180 / Math.PI) + ' ' + this.data.orig_rot[1] * (180 / Math.PI) + ' ' + this.data.orig_rot[2] * (180 / Math.PI);
 
-            videoDisplay.addEventListener("click", function (event) {
+        this.videoDisplay.setAttribute("height", "3");
+        this.videoDisplay.setAttribute("width", "4");
+        this.videoDisplay.setAttribute("position", p_x);
+        this.videoDisplay.setAttribute("scale", this.videoDisplay.getAttribute("original-scale"));
+        this.videoDisplay.setAttribute("rotation", r_x);
+        this.visCollection = [];
+    },
+    
+    updatePlayEntity: function (obj) {
+        if (this.video.paused) {
+            obj.setAttribute("src", "#video_pl_" + this.data.id);          
+        }
+        else {
+            obj.setAttribute("src", "#video_pas_" + this.data.id);     
+        }
+        obj.setAttribute("material", "depthTest: false");
+        obj.setAttribute("material", "transparent: true");
+        obj.setAttribute("material", "opacity: 1");
+    },
 
-                panel_pos_dynamic =  (visibleWidthAtZDepth(panel_z)/2 - 0.3) + " " + "0" + " " + panel_z; //From rightmost position  subtract panel width (0.2) and padding
-                
-                if (!browsingModeVR) {
+    handleCamEntity: function (obj, non_visible, trans, opac) {
+        if (non_visible) {
+            obj.object3D.renderOrder = 9999999;
+            //clipIntersection
+            obj.components.material.material.depthTest = false;
+            obj.components.material.material.transparent = trans;
+            obj.components.material.material.opacity = opac;          
+            obj.setAttribute("visible", "true");
+            obj.setAttribute("scale", "1 1 1");
+        }
+        else {
+            obj.setAttribute("visible", "false");
+            obj.setAttribute("scale", "0.0001 0.0001 0.0001");
+        }
 
-                    let video_element = document.getElementById("video-panel-video");
-                    video_element.innerHTML = '';
-                    let video_source = document.createElement('source');
-                    let video_file_url = video.getAttribute("src");
+    },
+   
+    onVideoClick:  function (evt) {
+        
+        this.panel_pos_dynamic =  (this.visibleWidthAtZDepth(this.panel_z)/2 - 0.3) + " " + "0" + " " + this.panel_z; //From rightmost position  subtract panel width (0.2) and padding
+        this.restorePanel = this.restorePanel.bind(this);
+        
+        if (!browsingModeVR) {
+            let video_element = document.getElementById("video-panel-video");
+            video_element.innerHTML = '';
+            let video_source = document.createElement('source');
+            let video_file_url = this.video.getAttribute("src");
 
-                    video_source.setAttribute('src', video_file_url );
-                    video_source.setAttribute('type', 'video/'+ video_file_url.split('.')[1]);
-                    video_element.appendChild(video_source);
+            video_source.setAttribute('src', video_file_url );
+            video_source.setAttribute('type', 'video/'+ video_file_url.split('.')[1]);
+            video_element.appendChild(video_source);
 
-                    let video_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#video-controls-dialog'));
+            let video_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#video-controls-dialog'));
 
-                    let closeDialogListener = function(event) {
-                        video_element.pause();
-                        video_dialog_element.unlisten("MDCDialog:cancel", closeDialogListener);
-                    };
-                    video_dialog_element.show();
-                    video_dialog_element.listen("MDCDialog:cancel", closeDialogListener);
-
-
-                } else {
-                    
-                    restorePanel();
-                    if(is_fs){
-                        restoreVid();
-                        is_fs = false;
-                        videoDisplay.classList.remove("non-clickable");
-
-                        let orig_preset = backgroundEl.getAttribute("scene-settings").presChoice; 
-                        if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && orig_preset != "ocean"){
-                            backgroundEl.setAttribute("environment", "preset", orig_preset);
-                            backgroundEl.setAttribute("environment", "ground", "flat");
-                            console.log("restored")
-                        }else if(backgroundEl.getAttribute("scene-settings").selChoice == "2" && orig_preset == "ocean"){
-                            console.log("In ocean");
-                            const oceanCollection = document.getElementsByClassName("ocean_asset");
-
-                            for (let i = 0; i < oceanCollection.length; i++) {
-                                oceanCollection[i].setAttribute("visible", "true");
-                                // entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");                  
-                            }
-                            backgroundEl.setAttribute("fog","type: exponential; color: #0894d3; density: 0.06;");
-                            
-                            
-                        }
+            let closeDialogListener = function(event) {
+                video_element.pause();
+                video_dialog_element.unlisten("MDCDialog:cancel", closeDialogListener);
+            };
+            video_dialog_element.show();
+            video_dialog_element.listen("MDCDialog:cancel", closeDialogListener);
+        } else {
+            this.restorePanel();
+            if(this.is_fs){
+                this.restoreVid();
+                this.is_fs = false;
+                this.videoDisplay.classList.remove("non-clickable");
+                let orig_preset = this.backgroundEl.getAttribute("scene-settings").presChoice; 
+                if(this.backgroundEl.getAttribute("scene-settings").selChoice == "2" && orig_preset != "ocean"){
+                    this.backgroundEl.setAttribute("environment", "preset", orig_preset);
+                    this.backgroundEl.setAttribute("environment", "ground", "flat");
+                }else if(this.backgroundEl.getAttribute("scene-settings").selChoice == "2" && orig_preset == "ocean"){
+                    const oceanCollection = document.getElementsByClassName("ocean_asset");
+                    for (let i = 0; i < oceanCollection.length; i++) {
+                        oceanCollection[i].setAttribute("visible", "true");          
                     }
-                    
-                    
+                    this.backgroundEl.setAttribute("fog","type: exponential; color: #0894d3; density: 0.06;");
                 }
-            });
+            }
+        }
+    },
+    
+    onFullScreenClick:  function (evt) {
+        this.is_fs = true;
+        let projType = this.backgroundEl.getAttribute("scene-settings").pr_type;
+        let selPreset = this.backgroundEl.getAttribute("scene-settings").presChoice;
+        this.fsEl = document.querySelector("#ent_fs_" + this.data.id);
+        this.plEl = document.querySelector("#ent_pl_" + this.data.id);
+        this.pauseEl = document.querySelector("#ent_ex_" + this.data.id);
+        this.exEl = document.querySelector("#ent_ex_" + this.data.id);
+        this.exFrameEl = document.querySelector("#exit_vid_panel_" + this.data.id);
+        this.titEl = document.querySelector("#ent_tit_" + this.data.id);        
+        this.updatePlayEntity = this.updatePlayEntity.bind(this);
+        this.handleCamEntity = this.handleCamEntity.bind(this);
+        
+        this.visibleHeightAtZDepth = ( depth ) => {
+            const camera = AFRAME.scenes[0].camera;
+            const cameraOffset = camera.position.z;
+            if ( depth < cameraOffset ) depth -= cameraOffset;
+            else depth += cameraOffset;
+            const vFOV = camera.fov * Math.PI / 180; 
+            return 2 * Math.tan( vFOV / 2 ) * Math.abs( depth );
+          };
+          
+        this.visibleWidthAtZDepth = ( depth ) => {
+            const camera = AFRAME.scenes[0].camera;
+            const height = this.visibleHeightAtZDepth( depth, camera );
+            let width = height * camera.aspect;
+            return width;
+        };
+
+        if (projType != "vrexpo_games")
+        {
+            this.media_panel.setAttribute( "style", 'visibility: hidden;' );
+            this.recording_controls.setAttribute('style', 'visibility: hidden;');
         }
 
-    }
+        if(this.backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset != "ocean"){
+            this.backgroundEl.setAttribute("environment", "preset", "default");
+            this.backgroundEl.setAttribute("environment", "ground", "none");
+        }else if(this.backgroundEl.getAttribute("scene-settings").selChoice == "2" && selPreset == "ocean"){
+            this.backgroundEl.setAttribute("fog","type: linear; color: #AAB; far: 230; near: 0");
+            const oceanCollection = document.getElementsByClassName("ocean_asset");
 
+            for (let i = 0; i < oceanCollection.length; i++) {
+                oceanCollection[i].setAttribute("visible", "false");  
+            }
+        }
+
+        this.backgroundEl.setAttribute("background", "color", "black");
+        this.backgroundEl.setAttribute("overlay", "");
+        this.videoDisplay.classList.add("non-clickable");
+        this.cam.add(this.videoDisplay);        
+        this.videoDisplay.setAttribute("height", this.visibleHeightAtZDepth(-25));
+        this.videoDisplay.setAttribute("width", this.visibleWidthAtZDepth(-25));
+        this.videoDisplay.setAttribute("position", "0 0 -25");
+        this.videoDisplay.setAttribute("scale", "1 1 1");
+        this.videoDisplay.setAttribute("rotation", "0 0 0");
+        
+        this.panelElems.map((elem) => this.handleCamEntity(elem, false, true, 1));
+        this.handleCamEntityText(this.titEl, false, true, 1);
+
+        if (this.video.paused) {
+            this.video.play();
+        }
+        
+        for (let i = 0; i < this.entCollection.length; i++) {
+
+            if (this.entCollection[i] !=this.videoDisplay){
+                this.entCollection[i].setAttribute("visible", "false");
+                this.entCollection[i].setAttribute("scale", "0.00001 0.00001 0.00001");
+            }
+            this.visCollection.push(i);
+        }
+        if (this.playerEl.getAttribute("wasd-controls")){
+            this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
+        }else
+            this.cam.setAttribute("wasd-controls-enabled", "false");
+            this.updatePlayEntity(this.plEl);
+    }
 });
