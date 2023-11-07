@@ -96,8 +96,6 @@
             },
             init: function () {
 
-                console.log(this.data.presChoice);
-
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
 
@@ -383,9 +381,8 @@
                             backgroundEl.setAttribute("environment", "shadow", "true");
 
                             let groundEl = document.getElementsByClassName('environmentGround')[0];
-                            console.log("Ground:");
                             groundEl.setAttribute("shadow", "cast: true; receive: true");
-                            console.log(groundEl);
+                            //console.log(groundEl);
                         }
 
 
@@ -398,7 +395,7 @@
                             skyElem.setAttribute("id", "sky");
                             skyElem.setAttribute("src",  "#custom_sky");
                             backgroundEl.appendChild(skyElem);
-                            console.log(customImgAsset.getAttribute("src"));
+                            //console.log(customImgAsset.getAttribute("src"));
                         }
                         else{
                             backgroundEl.setAttribute("background", "color", "#ffffff");
@@ -517,8 +514,7 @@
                 const cameraEl = document.querySelector('a-camera');
                 const cameraRig = this.el;
 
-                console.log ("Custom-movement exists");
-                console.log (cameraEl);
+                //console.log (cameraEl);
 
                 this.el.addEventListener('thumbstickmoved', (event) => {
                     const thumbstickX = event.detail.x;
@@ -537,25 +533,16 @@
                     cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
 
 
-                    console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
+                    //console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
                 });
             }
         });
 
         AFRAME.registerComponent('start-animation', {
             init: function () {
-                console.log('start-animation component initialized');
 
                 const avatar = document.querySelector('#ready-player-me-avatar');
                 /*const animationModel = document.querySelector('#animation-model');*/
-
-
-                if (!avatar /*|| !animationModel*/) {
-                    console.error('Avatar or animation model not found.');
-                    return;
-                }
-
-                console.log('Found avatar and animation model.');
 
                 // Trigger the animation when the scene starts
                 //animationModel.emit('start-scene');
@@ -984,8 +971,6 @@
     // All asets have loaded
     document.querySelector('#scene-assets').addEventListener('loaded', function() {
 
-        console.log('Assets Loaded');
-
         // Don't show HTML component (chat) while loader is active
         if(document.getElementById("chat-wrapper-el").getAttribute('data-visible') === 'true') {
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';
@@ -1261,7 +1246,8 @@
 
     /* Called by Networked-Aframe when connected to server */
     function onConnect() {
-        console.log("onConnect", new Date());
+
+        let OnConnectDate = new Date();
 
         const screenBtnEle = document.getElementById('screen-btn-sendscreen');
         screenBtnEle.addEventListener('click', function () {

@@ -148,7 +148,7 @@ AFRAME.registerComponent('info-panel', {
                         panel_pad =1.5;
 
                 //let esc_pad = (panel_pad / 2) + 0.1;
-                console.log("EXP:" + expected_height + " " + expected_width);
+                // console.log("EXP:" + expected_height + " " + expected_width);
 
                 let upd_mixin = "width: " + expected_width + "; height: " + expected_height;
                 let panel_mixin = "width: " + panel_pad + "; height: 1.8";
