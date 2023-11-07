@@ -162,11 +162,9 @@
 
                                 if (this.data.avatarType === 'no-avatar') {
 
-
                                     if (!this.ownedByLocalUser) {
                                         this.head.setAttribute("visible", "false");
                                         this.face.setAttribute("visible", "false");
-
                                     }
 
                                     const parent_avatar = document.getElementById('cameraA');
@@ -194,9 +192,18 @@
                                         this.rpm_model.removeAttribute('gltf-model');
                                         this.rpm_model.setAttribute('gltf-model', this.data.gltf);
 
-                                        // Event listener when the 3d model has actually loaded
+                                        // Event listener when the 3D model has actually loaded
                                         this.rpm_model.addEventListener('model-loaded', () => {
                                             let avatarType = this.rpm_model.object3DMap.mesh.children[0].userData.name;
+
+
+
+                                            if (avatarType !== 'Armature') {
+                                                console.log(this.rpm_model.object3DMap.mesh.children[0].children);
+                                            }
+
+
+                                            // Change Y position of model based on type
                                             let avatarPosition = avatarType === 'Armature' ? '0 -1.4 -0.5' : '0 -0.3 -0.5';
                                             this.rpm_model.setAttribute('position', avatarPosition);
                                         }, {once : true});
@@ -212,8 +219,8 @@
                     });
 
 
-                    // If base scene, launch avatar selector and set local storage
-                    if (document.getElementById("is-base-scene-input").value === 'true' ) {
+                    // If base scene, launch avatar selector
+                    /*if (document.getElementById("is-base-scene-input").value === 'true' ) {*/
 
                         let avatar_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))
 
@@ -223,7 +230,7 @@
                         };
                         avatar_dialog_element.show();
                         avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
-                    }
+                    /*}*/
 
                 });
 
