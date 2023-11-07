@@ -354,11 +354,7 @@
 
 
                         break;
-
                 }
-
-                // let backgroundEl = document.querySelector('#aframe-scene-container');
-                // backgroundEl.setAttribute("background", "color", this.data.color);
             }
         });
 
@@ -367,6 +363,69 @@
                 this.el.addEventListener("loaded", () => {
                     this.el.components.sound.playSound();
                 });
+            }
+        });
+
+        AFRAME.registerComponent('avatar-animation-handler', {
+            init:function() {
+               
+                console.log("avatar loaded");
+                
+            }
+        });
+
+        AFRAME.registerComponent('animation-embed', {
+            init:function() {
+                const animations = [
+                  ["idle", "../media/sound/avatar_place.glb"],
+                  ["walking", "../media/sound/avatar_place.glb"]
+                ];
+
+                var loader = new THREE.GLTFLoader();
+                var model = document.getElementById("model");
+
+            this.el.addEventListener("model-loaded", e => {
+                var objectMesh = this.el.getObject3D("mesh");
+                //console.log(objectMesh.animations);
+
+                var link = "../media/sound/avatar_place.glb";
+                loader.load(link, function (gltf) {
+                    console.log(gltf.animations[0]);
+                    objectMesh.animations[0] = gltf.animations[0];
+                    model.setAttribute('animation-mixer', "clip: idle;");
+                });
+                });
+           this.el.object3D.traverse((child) => {
+            //console.log(child);
+            
+                if (child.type === 'Mesh') {
+
+                    const material = child.material;
+                    //material.side = THREE.FrontSide;
+                    console.log(child);
+                }
+        })
+                
+            }
+        });
+
+        AFRAME.registerComponent('position-listener', {
+            init:function() {
+                const avatar = document.getElementById("animated_avatar");
+                console.log(avatar);
+                },
+            tick() {
+                const newValue = this.el.getAttribute('position');
+                const stringCoords = AFRAME.utils.coordinates.stringify(newValue);
+                if (this.lastValue !== stringCoords) {
+                    this.el.emit('positionChanged', newValue);
+                    this.lastValue = stringCoords;
+
+                    document.getElementById("animated_avatar").setAttribute("animation-mixer", "clip: walking");
+                    console.log("moved");
+                }else{
+                    document.getElementById("animated_avatar").setAttribute("animation-mixer", "clip: idle");
+                }
             }
         });
 
@@ -494,7 +553,7 @@
             init: function () {
                 console.log('start-animation component initialized');
 
-                const avatar = document.querySelector('#ready-player-me-avatar');
+                const avatar = document.getElementById('animated_avatar');
                 /*const animationModel = document.querySelector('#animation-model');*/
 
 
@@ -806,7 +865,6 @@
 </div>
 
 <a-scene oculus-go-controls-enabled
-         start-animation
          id="aframe-scene-container"
          fog="type: linear; color: #AAB; far: 230; near: 0"
          renderer="antialias: true;
@@ -825,15 +883,21 @@
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
-        <a-asset-item id="idle" src="../media/sound/idle.glb"></a-asset-item>
+        <!-- <a-asset-item id="idle" src="../media/sound/avatar_place.glb"></a-asset-item>
+
+        <a-asset-item id="model" src="../media/sound/emo.glb"></a-asset-item> -->
+
+       
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
             <a-entity class="avatar" player-info>
 
-                <!-- <a-entity gltf-model="#idle" animation-mixer></a-entity> -->
+                <a-entity gltf-model="#idle"  class="rpm_avatar"
+                position="0 0 -0.5"
+                rotation="0 180 0" id ="animated_avatar" avatar-animation-handler animation-mixer = "clip: walking"></a-entity>
 
                 <!-- ReadyPlayerMe Avatar-->
-                <a-entity
+                <!-- <a-entity
                         gltf-model
                         id="ready-player-me-avatar"
                         class="rpm_avatar"
@@ -842,7 +906,7 @@
                         animation-mixer="clip: test; autoPlay: true"
                         visible="true"
                         event-set__start-animation="_event: start-scene; animation__start-animation.startEvents: start-animation">
-                </a-entity>
+                </a-entity> -->
 
                 <!-- Sphere Avatar-->
                 <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
@@ -923,6 +987,12 @@
     </a-assets>
 
     <a-entity id="player"></a-entity>
+
+    <!-- <a-entity gltf-model="#model" position="0 0 -10" 
+    rotation="0 180 0" id ="animated_avatar_org" animation-embed></a-entity> -->
+
+    <!-- <a-entity gltf-model="#idle" position="2 0 -10" 
+    rotation="0 180 0" id ="animated_avatar_org" animation-embed animation-mixer = "clip: walking"></a-entity> -->
 
 </a-scene>
 
