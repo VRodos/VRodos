@@ -57,7 +57,7 @@
                form="3dAssetForm"
                class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light"
                onchange="keepScaleAspectRatio(this.checked)">
-        <label for="scaleLockCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Constrain Scale dims to single value</label>
+        <label for="scaleLockCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Constrain Scale dims to single value</label>
 
     </div>
 
@@ -78,7 +78,7 @@
         <!-- Set Broadcast chat -->
         <div style="display: block">
             <input type="checkbox" title="Enable global chat" id="enableGeneralChatCheckbox" name="enableGeneralChatCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleBroadcastChat(this.checked)">
-            <label for="enableGeneralChatCheckbox" class="mdc-typography--body1" style="vertical-align: middle; cursor: pointer;">Enable general chat</label>
+            <label for="enableGeneralChatCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Enable general chat</label>
         </div>
 
         <hr>
