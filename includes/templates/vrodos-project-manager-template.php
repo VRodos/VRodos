@@ -130,7 +130,7 @@ $login_username = $current_user->user_login;
                             <li class="mdc-form-field">
                                 <div class="mdc-radio">
                                     <input class="mdc-radio__native-control" type="radio" id="gameTypeArchRadio"
-                                           checked="" name="projectTypeRadio" value="archaeology_games">
+                                           name="projectTypeRadio" value="archaeology_games">
                                     <div class="mdc-radio__background">
                                         <div class="mdc-radio__outer-circle"></div>
                                         <div class="mdc-radio__inner-circle"></div>
@@ -149,7 +149,7 @@ $login_username = $current_user->user_login;
                             <li class="mdc-form-field">
                                 <div class="mdc-radio">
                                     <input class="mdc-radio__native-control" type="radio" id="gameTypeVRExpoRadio"
-                                           checked="" name="projectTypeRadio" value="vrexpo_games">
+                                           checked name="projectTypeRadio" value="vrexpo_games">
                                     <div class="mdc-radio__background">
                                         <div class="mdc-radio__outer-circle"></div>
                                         <div class="mdc-radio__inner-circle"></div>
@@ -168,7 +168,7 @@ $login_username = $current_user->user_login;
                             <li class="mdc-form-field">
                                 <div class="mdc-radio">
                                     <input class="mdc-radio__native-control" type="radio" id="gameTypeVirtualProductionRadio"
-                                           checked="" name="projectTypeRadio" value="virtualproduction_games">
+                                            name="projectTypeRadio" value="virtualproduction_games">
                                     <div class="mdc-radio__background">
                                         <div class="mdc-radio__outer-circle"></div>
                                         <div class="mdc-radio__inner-circle"></div>
