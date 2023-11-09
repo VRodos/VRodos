@@ -418,8 +418,6 @@ canvas { pointer-events:none; z-index:10; }
 }
 
 
-
-
 .RemoveAssetFromSceneBtnStyle i,
 .VrEditorOptionsBtnStyle i,
 .HierarchyToggleStyle i,
@@ -443,20 +441,16 @@ canvas { pointer-events:none; z-index:10; }
 #pauseRendering {
     width: 40px;
     min-width: 30px;
-    padding: 0;
-    padding-top: 4px;
+    padding: 4px 0 0 0;
     margin: 0;
     background: gray;
 }
 
 
 
-
-
-
 .AxisManipulationBtns a {
     min-width: 0;
-    margin: 0 0 0 0px;
+    margin: 0 0 0 0;
     height: 18px;
     vertical-align: top;
     line-height: 1.5em;
@@ -560,7 +554,7 @@ html [type="button"],
 
 .cardTitle {
     width: 70%;
-    margin: 0px;
+    margin: 0;
     font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
@@ -574,7 +568,7 @@ html [type="button"],
     min-width: 30px;
     margin: 0 !important;
     max-height: 25px;
-    padding: 0px;
+    padding: 0;
     margin-top: 3px;
 }
 
@@ -714,7 +708,6 @@ html [type="button"],
 .lightpawnbutton header {
     color: #fff;
     text-shadow: #000 0 1px;
-    box-shadow: 5px;
     padding: 1px;
     background: black;
     font-size: 8pt;
