@@ -36,7 +36,7 @@ Now let's setup the required dependencies. Create a file called `package.json` a
   },
   "author": "YOUR_NAME",
   "dependencies": {
-    "networked-aframe": "^0.8.0"
+    "networked-aframe": "^0.11.0"
   }
 }
 ```
@@ -110,10 +110,10 @@ Here's the template we'll start with:
 ```html
 <html>
   <head>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
     <script src="/easyrtc/easyrtc.js"></script>
-    <script src="https://unpkg.com/networked-aframe@^0.8.0/dist/networked-aframe.min.js"></script>
+    <script src="https://unpkg.com/networked-aframe@^0.11.0/dist/networked-aframe.min.js"></script>
   </head>
   <body>
     <a-scene></a-scene>
@@ -122,8 +122,8 @@ Here's the template we'll start with:
 ```
 
 Please don't use `https://unpkg.com/networked-aframe/dist/networked-aframe.min.js` for production, this will download the latest major release that may contain breaking changes.
-It's ok for a testing environment to specify "@^0.8.0" in the url so it downloads the latest minor version that shouldn't have breaking changes.
-For production you want to pin to a specific version like `https://unpkg.com/networked-aframe@0.8.3/dist/networked-aframe.min.js`.
+It's ok for a testing environment to specify "@^0.11.0" in the url so it downloads the latest minor version that shouldn't have breaking changes.
+For production you want to pin to a specific version like `https://unpkg.com/networked-aframe@0.11.0/dist/networked-aframe.min.js`.
 
 If you want to use a more recent build from github master that is not released yet, you can use:
 
@@ -370,42 +370,4 @@ Check out the Networked-Aframe documentation for more features and help. And aga
 I would love love love you to send me cool examples you've made, and I'm looking to include more default examples with credit to the author, so [let me know](https://twitter.com/haydenlee37) what you make!
 
 [@HaydenLee37](https://twitter.com/haydenlee37)
-
---------
-
-#Permanent run NAF for Linux based servers
-
-When you start NAF with `npm start` then the Process generated is contextualized with the terminal window, i.e. if you close the window or restart the server, the process stops.  
-
-In order to have NAF running in your linux server permantently, i.e. to avoid the aforementioned misshappenings then you should use pm2 in order to convert node NAF server in a daemon service. 
-PM2 is a Production Process Manager for Node.js applications with a built-in Load Balancer (http://pm2.io/).
-
-Steps
--  Install PM2
-
-`$ sudo npm install -g pm2`
-
-- Go to /server folder and start easyrtc-server.js as a service with pm2
- 
-`$ pm2 start easyrtc-server.js -i 4`
-
-Note that `-i 4` sets as maximum 4 instances of NAF at your server which can significantly improve performance when many players enter. 
-
-
-Monitor:
-
-`$ pm2 monitor`
-
-Make pm2 auto-boot at server restart:
-
-`$ pm2 startup`
-
-
-#Stopping NAF when started with pm2
-
-How to stop NAF ?
-
-`pm2 stop easyrtc-server.js` 
-
-
 
