@@ -840,7 +840,8 @@
     <iframe id="rpm-iframe" class="RpmIframeStyle" allow="camera *; microphone *; clipboard-write" hidden></iframe>
 </div>
 
-<a-scene oculus-go-controls-enabled
+<a-scene
+        oculus-go-controls-enabled
          start-animation
          id="aframe-scene-container"
          fog="type: linear; color: #AAB; far: 230; near: 0"
@@ -855,6 +856,7 @@
             debug: true;
             audio: true;
             adapter: easyrtc;
+            serverURL: /;
             connectOnLoad: true;
        ">
     <!--environment="ground:none"-->
