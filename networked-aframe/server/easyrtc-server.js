@@ -23,6 +23,19 @@ process.title = "networked-aframe-server-" +port;
 // Setup and configure Express http server.
 const app = express();
 
+// Serve the bundle in-memory in development (needs to be before the express.static)
+if (process.env.NODE_ENV === "development") {
+    const webpackMiddleware = require("webpack-dev-middleware");
+    const webpack = require("webpack");
+    const config = require("../webpack.config");
+
+    app.use(
+        webpackMiddleware(webpack(config), {
+            publicPath: "/dist/"
+        })
+    );
+}
+
 app.use(express.static(path.resolve(__dirname, "..", "out")));
 
 app.use(function(req, res, next) {

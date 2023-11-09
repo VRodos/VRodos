@@ -1,14 +1,17 @@
+const path = require("path");
+
 module.exports = {
     entry  : './src/index.js',
     output : {
-        path     : __dirname,
-        filename : './dist/networked-aframe.js'
+        path     : path.resolve(__dirname, 'dist'),
+        publicPath: '/dist/',
+        filename : 'networked-aframe.js'
     },
     mode: 'development',
     module : {
         rules: [
             {
-                test: /.js$/,
+                test: /\.js$/,
                 use: {
                     loader: 'babel-loader',
                     options: {
