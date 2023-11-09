@@ -290,7 +290,9 @@ AFRAME.registerComponent('video-controls', {
             let video_file_url = this.video.getAttribute("src");
 
             video_source.setAttribute('src', video_file_url );
-            video_source.setAttribute('type', 'video/'+ video_file_url.split('.')[1]);
+
+            let extension_pos = video_file_url.lastIndexOf('.');
+            video_source.setAttribute('type', 'video/'+ video_file_url.substring(extension_pos + 1));
             video_element.appendChild(video_source);
 
             let video_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#video-controls-dialog'));
