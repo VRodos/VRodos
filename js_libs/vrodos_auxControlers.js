@@ -370,9 +370,14 @@ function setDatGuiInitialVales(object){
     gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
     gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
 
-    dg_controller[0].domElement.children[0].value = transform_controls.object.position.x;
-    dg_controller[1].domElement.children[0].value = transform_controls.object.position.y;
-    dg_controller[2].domElement.children[0].value = transform_controls.object.position.z;
+    // dg_controller[0].domElement.children[0].value = transform_controls.object.position.x;
+    // dg_controller[1].domElement.children[0].value = transform_controls.object.position.y;
+    // dg_controller[2].domElement.children[0].value = transform_controls.object.position.z;
+
+    dg_controller[0].domElement.children[0].value = (Math.round(transform_controls.object.position.x * 100) / 100).toFixed(2);
+    dg_controller[1].domElement.children[0].value = (Math.round(transform_controls.object.position.y * 100) / 100).toFixed(2);
+    dg_controller[2].domElement.children[0].value = (Math.round(transform_controls.object.position.z * 100) / 100).toFixed(2);
+
 
     dg_controller[3].domElement.children[0].value = transform_controls.object.rotation.x;
     dg_controller[4].domElement.children[0].value = transform_controls.object.rotation.y;

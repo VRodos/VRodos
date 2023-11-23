@@ -404,6 +404,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_camera->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
             $a_camera->setAttribute( "look-controls", "" );
             $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
+            $a_camera->setAttribute("entity-movement-emitter","");
+            $a_camera->setAttribute("entity-rotation-emitter","");
+        
+
+            
+           
+            // $a_camera->setAttribute( "position-listener", "" );
 
             $a_cursor = $dom->createElement( "a-entity" );
             $a_cursor->setAttribute( "id", "cursor" );
@@ -470,11 +477,17 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );
                     $a_light_target->setAttribute("id", $uuid."target");
 
+                    if ($contentObject->castingShadow == "1"){
+                        $is_casting_shadow = "true";
+                    }else{
+                        $is_casting_shadow = "false";
+                    }
+
                     $ascene->appendChild($a_light_target);
                     $a_light->setAttribute("light", "type:directional;".
                         "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
                         // "intensity:".($contentObject->lightintensity).";".
-                        "castShadow:".($contentObject->castingShadow).";".
+                        "castShadow:".($is_casting_shadow).";".
                        
                         "shadowMapHeight:".($contentObject->shadowMapHeight).";".
                         // "shadowCameraFar: 5000;".
@@ -536,11 +549,17 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $a_light->appendChild( $dom->createTextNode( '' ) );
                     $fileOperations->setAffineTransformations($a_light, $contentObject);
 
+                    if ($contentObject->lampcastingShadow == "1"){
+                        $is_casting_shadow = "true";
+                    }else{
+                        $is_casting_shadow = "false";
+                    }
+
                     $a_light->setAttribute("light", "type:point;".
                         "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
                         "intensity:".$contentObject->lightintensity.";".
                         "distance:".$contentObject->lightdistance.";".
-                        "castShadow:".($contentObject->lampcastingShadow).";".
+                        "castShadow:".($is_casting_shadow).";".
                         "shadowMapHeight:".($contentObject->lampshadowMapHeight).";".
                         "shadowMapWidth:".($contentObject->lampshadowMapWidth).";".
                         "shadowCameraTop:".($contentObject->lampshadowCameraTop).";".
@@ -621,7 +640,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );
                     $gltf_model->setAttribute( "preload", "auto" );
                     $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );
-                    $gltf_model->setAttribute( "animation-mixer", "" );
+                    // $gltf_model->setAttribute( "animation-mixer", "" );
 
                     //$a_entity->setAttribute( "ammo-body", "type: dynamic;" );
                     //$a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );

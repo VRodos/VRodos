@@ -59,10 +59,12 @@
                         'position',
                         'rotation',
                         'player-info',
+                        'avatar-movement-info',
                         {
                             selector: '.rpm_avatar', // the model entity has a .model class
-                            component: 'gltf-model' // we want the gltf-model component to sync between clients
+                            component: 'gltf-model', // we want the gltf-model component to sync between clients
                         },
+                      
                     ]
                 });
             }
@@ -96,6 +98,64 @@
 
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
+                    AFRAME.registerComponent('avatar-movement-info', {
+                        // notice that color and name are both listed in the schema; NAF will only keep
+                        // properties declared in the schema in sync.
+                        schema: {
+                            movementState: {
+                                type: 'string',
+                                default: ''
+                            }
+                            
+                        },
+
+                        init: function () {
+                            this.rpm_model = this.el.querySelector('.rpm_avatar');
+                        },
+
+                        update: function () {
+
+                            if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
+                                    //elem.setAttribute("animation-player", evt.detail);
+                                    if(this.data.movementState != "stop"){
+                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
+                                    }else{
+                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
+                                    }
+                                    
+                            }
+                        }
+                    });
+
+                    AFRAME.registerComponent('avatar-rotation-info', {
+                        // notice that color and name are both listed in the schema; NAF will only keep
+                        // properties declared in the schema in sync.
+                        schema: {
+                            rotationState: {
+                                type: 'string',
+                                default: ''
+                            }
+                            
+                        },
+
+                        init: function () {
+                            this.rpm_model = this.el.querySelector('.rpm_avatar');
+                        },
+
+                        update: function () {
+
+                            if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
+                                    //elem.setAttribute("animation-player", evt.detail);
+                                    if(this.data.movementState != "stop"){
+                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
+                                    }else{
+                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
+                                    }
+                                    
+                            }
+                        }
+                    });
+                    
 
                     AFRAME.registerComponent('player-info', {
                         // notice that color and name are both listed in the schema; NAF will only keep
@@ -116,7 +176,16 @@
                             avatarType: {
                                 default: '',
                                 type: 'string'
+                            },
+                            currentState: {
+                                default: '',
+                                type: 'string'
+                            },
+                            animationsLoaded: {
+                                default: '',
+                                type: 'string'
                             }
+                            
                         },
 
                         init: function () {
@@ -124,7 +193,22 @@
                             this.face = this.el.querySelector('.face');
                             this.nametag = this.el.querySelector('.nametag');
                             this.rpm_model = this.el.querySelector('.rpm_avatar');
+                            this.anims_loaded = false;
+                        
+                            var elem = this.el; 
+                            if (elem.querySelector('.rpm_avatar')) {
+                                elem.querySelector('.rpm_avatar').addEventListener('stateadded', function (evt) {     
+                                if (evt.detail == 'loadedanimations'){
+                                    console.log("Animations loaded");
+                                    this.anims_loaded = true;
+                                    elem.addState('anims_loaded');
+                                    
+                                }
+                            });
 
+                            
+                            }
+                            
                             this.avatar_type = this.el.querySelector('.avatar_type');
 
                             this.ownedByLocalUser = this.el.id === 'cameraA';
@@ -135,7 +219,7 @@
 
                                 // add the initial color to the html overlay color picker button
                                 document.querySelector('button').style.backgroundColor = this.data.color;
-                                document.querySelector('button').style.color = this.data.color;
+                                document.querySelector('button').style.color = this.data.color;                             
                             }
                         },
 
@@ -153,6 +237,7 @@
 
                         update: function () {
 
+                            var elem = this.el; 
                             if (this.data.avatarType) {
 
                                 if (this.data.avatarType === 'no-avatar') {
@@ -267,7 +352,6 @@
                     case "2":
                         if (this.data.presChoice == "ocean")
                         {
-                            console.log(this.data.presChoice);
                             let sky = document.createElement('a-sky');
                             sky.setAttribute("color", "#a4bede");
                             backgroundEl.appendChild(sky);
@@ -379,7 +463,6 @@
 
                             let groundEl = document.getElementsByClassName('environmentGround')[0];
                             groundEl.setAttribute("shadow", "cast: true; receive: true");
-                            //console.log(groundEl);
                         }
 
 
@@ -392,7 +475,6 @@
                             skyElem.setAttribute("id", "sky");
                             skyElem.setAttribute("src",  "#custom_sky");
                             backgroundEl.appendChild(skyElem);
-                            //console.log(customImgAsset.getAttribute("src"));
                         }
                         else{
                             backgroundEl.setAttribute("background", "color", "#ffffff");
@@ -400,19 +482,106 @@
 
 
                         break;
-
                 }
-
-                // let backgroundEl = document.querySelector('#aframe-scene-container');
-                // backgroundEl.setAttribute("background", "color", this.data.color);
             }
         });
-
         AFRAME.registerComponent('autoplay-sound', {
             init:function() {
                 this.el.addEventListener("loaded", () => {
                     this.el.components.sound.playSound();
                 });
+            }
+        });
+
+        AFRAME.registerComponent('entity-movement-emitter', {
+            schema: {
+                clip:{type: "string", default: "idle"},
+            },
+            init:function() {
+
+                var bind = AFRAME.utils.bind;
+                var shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
+                var elem = this.el;
+
+                document.addEventListener('keydown', function(event) {
+                    if(event.keyCode === 87) {        
+                        if (shouldCaptureKeyEvent(event)) { 
+                            document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingforward");
+                    }
+                    }else if(event.keyCode === 83){
+                        if (shouldCaptureKeyEvent(event)) { 
+                            elem.emit('avatar-changed-animation', "walkingdown", false);
+                            document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingdown");
+                        }
+                        
+                    }else if(event.keyCode === 68){
+                        if (shouldCaptureKeyEvent(event)) { 
+                            elem.emit('avatar-changed-animation', "walkingright", false);
+                            document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingright");
+                        }
+                        
+                    }else if(event.keyCode === 65){
+                        if (shouldCaptureKeyEvent(event)) { 
+                            elem.emit('avatar-changed-animation', "walkingleft", false);
+                            document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingleft");
+                        }    
+                    }
+                    else{
+                        elem.emit('avatar-changed-animation', "idle", false);
+                    }
+                            
+                });
+                document.addEventListener('keyup', function(event) {
+                        elem.emit('avatar-changed-animation', "stopped", false);
+                        document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "stop");
+                });
+
+                
+            }
+        });
+
+        AFRAME.registerComponent('entity-rotation-emitter', {
+            init:function() {
+
+                var bind = AFRAME.utils.bind;
+               this.el.addEventListener('componentchanged', function (evt) {
+                    if (evt.detail.name === 'rotation') {
+                        console.log('Entity has rotated');
+                    }
+                    console.log(evt.detail);
+                });
+
+                
+            }
+        });
+
+        
+
+        AFRAME.registerComponent('animation-embed', {
+            schema: {
+                clip:{type: "string", default: "idle"},
+            },
+            init:function() {
+                const animations = ["idle","walking"];
+                var loader = new THREE.GLTFLoader();
+                var id = this.data.glb_id;
+
+                this.el.addEventListener("model-loaded", e => {
+                    var objectMesh = this.el.getObject3D("mesh");
+                    var bind = AFRAME.utils.bind;
+                    var shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
+                    var link = "../media/sound/multimalev2.glb";
+                    var elem = this.el;
+                    this.loaded_anims = false;
+                    loader.load(link, function (gltf) {
+                        for (i = 0; i < gltf.animations.length; i++) {
+                            objectMesh.animations[i] = gltf.animations[i];
+                        } 
+                        elem.removeAttribute('animation-mixer');
+                        elem.setAttribute('animation-mixer', "clip: idle");
+                        elem.addState('loadedanimations');
+                    });              
+                });        
             }
         });
 
@@ -511,8 +680,6 @@
                 const cameraEl = document.querySelector('a-camera');
                 const cameraRig = this.el;
 
-                //console.log (cameraEl);
-
                 this.el.addEventListener('thumbstickmoved', (event) => {
                     const thumbstickX = event.detail.x;
                     const thumbstickY = event.detail.y;
@@ -528,9 +695,6 @@
                     const movementSpeed = 0.1;
                     cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
                     cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
-
-
-                    //console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
                 });
             }
         });
@@ -538,7 +702,7 @@
         AFRAME.registerComponent('start-animation', {
             init: function () {
 
-                const avatar = document.querySelector('#ready-player-me-avatar');
+                const avatar = document.getElementById('animated_avatar');
                 /*const animationModel = document.querySelector('#animation-model');*/
 
                 // Trigger the animation when the scene starts
@@ -862,23 +1026,26 @@
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
-        <a-asset-item id="idle" src="../media/sound/idle.glb"></a-asset-item>
+        <!-- <a-asset-item id="idle" src="../media/sound/avatar_place.glb"></a-asset-item>
+
+        <a-asset-item id="model" src="../media/sound/fem.glb"></a-asset-item> -->
+
+       
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
-            <a-entity class="avatar" player-info>
+            <a-entity class="avatar hideable" player-info avatar-movement-info>
 
-                <!-- <a-entity gltf-model="#idle" animation-mixer></a-entity> -->
 
                 <!-- ReadyPlayerMe Avatar-->
                 <a-entity
                         gltf-model
+                        animation-embed="glb_id:ready-player-me-avatar"
                         id="ready-player-me-avatar"
                         class="rpm_avatar"
                         position="0 -1.4 -0.5"
                         rotation="0 180 0"
-                        animation-mixer="clip: test; autoPlay: true"
                         visible="true"
-                        event-set__start-animation="_event: start-scene; animation__start-animation.startEvents: start-animation">
+                        >
                 </a-entity>
 
                 <!-- Sphere Avatar-->
@@ -908,7 +1075,7 @@
 
         <!-- Avatar template for MediaVerse projects-->
         <template id="avatar-template">
-            <a-entity class="avatar" networked-audio-source>
+            <a-entity class="avatar hideable" networked-audio-source>
 
                 <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="2" height="1.5"
                          position="0 0.6 -0.15" material="side: double"
@@ -950,17 +1117,10 @@
                  material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
         <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
                  material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; " position="0.15 0.15 0.000001"></a-mixin>
-
-        <!-- <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
-                 material="shader: flat; color: #dfe4ea; " position=" 0 0.11 0.000001"></a-mixin> -->
-        <!--
-                         <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.2; height: 0.3"
-                         material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
-                <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
-                         material="shader: flat; color: #dfe4ea; " position=" 0 0.2 0.000001"></a-mixin> -->
     </a-assets>
 
     <a-entity id="player"></a-entity>
+
 
 </a-scene>
 

@@ -364,7 +364,8 @@ function displaySunProperties(event, name) {
 
     // The whole popup div
     var ppPropertiesDiv = jQuery("#popUpSunPropertiesDiv");
-    var chbox = jQuery("#castShadow");
+    var chboxjQ = jQuery("#castShadow");
+    var chbox = document.getElementById('castShadow');
 
     var textCameraBottomjQ = jQuery("#sunShadowCameraBottom");
     var textCameraBottom = document.getElementById('sunShadowCameraBottom');
@@ -391,9 +392,10 @@ function displaySunProperties(event, name) {
     clearAndUnbind(null, null, "sunshadowMapHeight");
     clearAndUnbind(null, null, "sunshadowMapWidth");
     clearAndUnbind(null, null, "sunshadowBias");
+    clearAndUnbind(null, null, "castShadow");
     
 
-    chbox.prop('checked', envir.scene.getObjectByName(name).castingShadow);
+    chboxjQ.prop('checked', envir.scene.getObjectByName(name).castingShadow);
     
     //textCameraBottom.attr('value', envir.scene.getObjectByName(name).shadowCameraBottom);
     //textCameraTop.attr('value', envir.scene.getObjectByName(name).shadowCameraTop);
@@ -410,6 +412,7 @@ function displaySunProperties(event, name) {
     textMapHeight.value = envir.scene.getObjectByName(name).shadowMapHeight;
     textMapWidth.value = envir.scene.getObjectByName(name).shadowMapWidth;
     textBias.value = envir.scene.getObjectByName(name).shadowBias;
+    chbox.value = envir.scene.getObjectByName(name).castingShadow;
 
     console.log(envir.scene.getObjectByName(name).shadowCameraBottom );
     
@@ -470,7 +473,7 @@ function displaySunProperties(event, name) {
         envir.scene.getObjectByName(name).shadowBias = sanitizeInputValue(this.value);
         saveChanges();
     });
-    chbox.change(function (e) {
+    chboxjQ.change(function (e) {
         envir.scene.getObjectByName(name).castingShadow = this.checked ? 1 : 0;
         saveChanges();
     });
@@ -480,8 +483,8 @@ function displaySunProperties(event, name) {
 function displayLampProperties(event, name) {
 
    
-    var chbox = jQuery("#lampcastShadow");
-
+    var chboxjQ = jQuery("#lampcastShadow");
+    var chbox = document.getElementById('lampcastShadow');
     var textCameraBottomjQ = jQuery("#lampShadowCameraBottom");
     var textCameraBottom = document.getElementById('lampShadowCameraBottom');
     var textCameraTopjQ = jQuery("#lampShadowCameraTop");
@@ -507,8 +510,9 @@ function displayLampProperties(event, name) {
     clearAndUnbind(null, null, "lampshadowMapHeight");
     clearAndUnbind(null, null, "lampshadowMapWidth");
     clearAndUnbind(null, null, "lampshadowBias");
+    clearAndUnbind(null, null, "lampcastShadow");
 
-    chbox.prop('checked', envir.scene.getObjectByName(name).lampcastingShadow);
+    // chbox.prop('checked', envir.scene.getObjectByName(name).lampcastingShadow);
 
     textCameraBottom.value = envir.scene.getObjectByName(name).lampshadowCameraBottom;
     textCameraTop.value = envir.scene.getObjectByName(name).lampshadowCameraTop;
@@ -517,7 +521,7 @@ function displayLampProperties(event, name) {
     textMapHeight.value = envir.scene.getObjectByName(name).lampshadowMapHeight;
     textMapWidth.value = envir.scene.getObjectByName(name).lampshadowMapWidth;
     textBias.value = envir.scene.getObjectByName(name).lampshadowBias;
-    
+    chbox.value = envir.scene.getObjectByName(name).lampcastingShadow;
 
     // chbox.prop('checked', envir.scene.getObjectByName(name).castingShadow);
 
@@ -552,7 +556,7 @@ function displayLampProperties(event, name) {
         envir.scene.getObjectByName(name).lampshadowBias = sanitizeInputValue(this.value);
         saveChanges();
     });
-    chbox.change(function (e) {
+    chboxjQ.change(function (e) {
         envir.scene.getObjectByName(name).lampcastingShadow = this.checked ? 1 : 0;
         saveChanges();
     });
