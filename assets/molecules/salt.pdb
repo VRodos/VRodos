@@ -1,9 +1,0 @@
-HEADER    MOLECULE
-COMPND    SODIUM CHLORIDE BIG CRYSTAL
-AUTHOR    A. W. MAVERICK
-ATOM      1 CL     UNK   1      -5.640  -2.820  -4.230  1.00  0.00
-ATOM      2 NA     UNK   1      -5.640  -2.820  -1.410  1.00  0.00
-CONECT    1    2    5   13
-CONECT    2    1    3    6   14
-MASTER    0    0    0    0    0    0    0    0   60    0   60    0
-END
