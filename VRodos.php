@@ -9,21 +9,6 @@
  */
 
 
-
-/*
- * Please change root .htaccess for uploading big 3D model files
- *
- *
-php_value upload_max_filesize 256M
-php_value post_max_size 512M
-php_value max_input_time 2400
-
-// in php you can check their values with
-
-echo ini_get('post_max_size').chr(10);
-echo ini_get('max_input_time').chr(10);
---
- */
 // Only these variables can change with php
 // @ini_set( 'memory_limit', '512M');
 @ini_set( 'max_execution_time', '2400' );
@@ -1031,7 +1016,7 @@ margin-right: 20px;">
                             <h2>Welcome to VRodos!</h2>
                             <p>
                                 <a href="https://vrodos.iti.gr">
-                                    Learn more about VRodos 0.7 version.</a>
+                                    Learn more about VRodos 2.0 version.</a>
                             </p>
                         </div>
                         <div class="welcome-panel-column-container">
@@ -1075,103 +1060,6 @@ margin-right: 20px;">
                     <tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <th>Scenes</th>
-                        <td> <?php
-
-                            $args = array(
-                                'post_type' => 'vrodos_scene',
-                                'posts_per_page' => -1
-                            );
-
-                            $query = new WP_Query($args);
-
-                            echo $query->found_posts . "</br>";
-
-                            ?></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <th>Assets</th>
-                        <td> <?php
-
-                            $args = array(
-                                'post_type' => 'vrodos_asset3d',
-                                'posts_per_page' => -1
-                            );
-
-                            $query = new WP_Query($args);
-
-                            echo $query->found_posts;
-                            ?>
-                        </td>
-                        <td> <?php
-
-                            $args = array(
-                                'post_type' => 'vrodos_asset3d',
-                                'posts_per_page' => -1
-                            );
-
-                            $query = new WP_Query($args);
-
-                            //echo $query->found_posts;
-                            if ($query->have_posts() ) :
-
-                                while ( $query->have_posts() ) : $query->the_post();
-                                    echo  get_the_ID() ." <br />";
-
-                                endwhile;
-
-                                wp_reset_postdata();
-                            endif;
-                            ?>
-                        </td>
-                        <td><?php
-
-                            $args = array(
-                                'post_type' => 'vrodos_asset3d',
-                                'posts_per_page' => -1
-                            );
-
-                            $query = new WP_Query($args);
-
-                            //echo $query->found_posts;
-                            if ($query->have_posts() ) :
-
-                                while ( $query->have_posts() ) : $query->the_post();
-                                    echo  get_the_title() . "</br>";
-
-                                endwhile;
-                                wp_reset_postdata();
-                            endif;
-                            ?>
-                        </td>
-                        <td><?php
-
-                            $args = array(
-                                'post_type' => 'vrodos_asset3d',
-                                'posts_per_page' => -1
-                            );
-
-                            $query = new WP_Query($args);
-
-                            // echo $query->found_posts;
-                            if ($query->have_posts() ) :
-
-                                while ( $query->have_posts() ) : $query->the_post();
-                                    $post_terms = wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame');
-                                    if($post_terms){
-                                        echo $post_terms[0]->name . " <br />";
-                                    }
-                                endwhile;
-
-                                wp_reset_postdata();
-                            endif;
-                            ?></td>
-
-                    </tr>
                     <tr>
                         <th>Games</th>
                         <td><?php
@@ -1229,28 +1117,110 @@ margin-right: 20px;">
                             ?></td>
                         <td></td>
                     </tr>
-                    </tbody>
-                </table></div>
+                    <tr>
+                        <th>Scenes</th>
+                        <td> <?php
 
+                            $args = array(
+                                'post_type' => 'vrodos_scene',
+                                'posts_per_page' => -1
+                            );
+
+                            $query = new WP_Query($args);
+
+                            echo $query->found_posts . "</br>";
+
+                            ?></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Assets</th>
+                        <td> <?php
+
+                            $args = array(
+                                'post_type' => 'vrodos_asset3d',
+                                'posts_per_page' => -1
+                            );
+
+                            $query = new WP_Query($args);
+
+                            echo $query->found_posts;
+                            ?>
+                        </td>
+                        <td><!-- --><?php
+                            /*
+                                                        $args = array(
+                                                            'post_type' => 'vrodos_asset3d',
+                                                            'posts_per_page' => -1
+                                                        );
+
+                                                        $query = new WP_Query($args);
+
+                                                        //echo $query->found_posts;
+                                                        if ($query->have_posts() ) :
+
+                                                            while ( $query->have_posts() ) : $query->the_post();
+                                                                echo  get_the_ID() ." <br />";
+
+                                                            endwhile;
+
+                                                            wp_reset_postdata();
+                                                        endif;
+                                                        */?>
+                        </td>
+                        <td><?php
+                            /*
+                                                        $args = array(
+                                                            'post_type' => 'vrodos_asset3d',
+                                                            'posts_per_page' => -1
+                                                        );
+
+                                                        $query = new WP_Query($args);
+
+                                                        //echo $query->found_posts;
+                                                        if ($query->have_posts() ) :
+
+                                                            while ( $query->have_posts() ) : $query->the_post();
+                                                                echo  get_the_title() . "</br>";
+
+                                                            endwhile;
+                                                            wp_reset_postdata();
+                                                        endif;
+                                                        */?>
+                        </td>
+                        <td><?php
+                            /*
+                                                        $args = array(
+                                                            'post_type' => 'vrodos_asset3d',
+                                                            'posts_per_page' => -1
+                                                        );
+
+                                                        $query = new WP_Query($args);
+
+                                                        // echo $query->found_posts;
+                                                        if ($query->have_posts() ) :
+
+                                                            while ( $query->have_posts() ) : $query->the_post();
+                                                                $post_terms = wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame');
+                                                                if($post_terms){
+                                                                    echo $post_terms[0]->name . " <br />";
+                                                                }
+                                                            endwhile;
+
+                                                            wp_reset_postdata();
+                                                        endif;
+                                                        */?></td>
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
 
-
     <hr class="wp-block-separator"/>
-    <!--	<h2> Authoring process</h2>-->
-
-    <!--	<figure class="wp-block-table"><table><tbody><tr><td>1. Make new project</td><td>2. Add your own asset</td><td>3. Compile and play</td></tr><tr><td>-->
-    <!--					<iframe src="https://www.youtube.com/embed/3RokEN-co9Y" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" width="560" height="315" frameborder="0"></iframe>-->
-    <!--				</td><td>-->
-    <!--					<iframe src="https://www.youtube.com/embed/iMJdcrztVmY" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" width="560" height="315" frameborder="0"></iframe>-->
-    <!--				</td><td>-->
-    <!--					<iframe src="https://www.youtube.com/embed/RWWUy1MD3j8" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" width="560" height="315" frameborder="0"></iframe>-->
-    <!--				</td></tr></tbody></table>-->
-    <!--	</figure>-->
-
-
-
-
     <?php
 }

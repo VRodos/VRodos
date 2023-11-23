@@ -99,18 +99,23 @@ $link_to_edit = home_url().'/vrodos-asset-editor-page/?';
 if ($single_project_asset_list)
     $link_to_edit = $link_to_edit. "singleproject=true&";
 
+$allProjectsPage = vrodos_getEditpage('allgames');
+$goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
+
 ?>
 
 
 <!-- Display assets Grid-->
 <div class="assets-list-front mdc-layout-grid">
 
+    <a title="Back to all Projects" style="margin-left:10px; margin-right:10px" href="<?php echo $goBackTo_AllProjects_link; ?>"><i class="material-icons mdc-theme--text-primary sceneArrowBack">arrow_back</i></a>
+
     <span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">Assets Manager</span>
 
     <?php
     if ($isUserloggedIn){ ?>
 
-        <span style="float:right; margin-right:5px; display:inline-table;margin-top:10px">Welcome,
+        <span class="mdc-typography--body1 mdc-theme--text-primary-on-background" style="float:right; margin-right:5px; display:inline-table;margin-top:10px">Welcome,
         <a href="<?php echo home_url(); ?>/account/" style="color:dodgerblue">
               <?php echo $current_user->display_name;?>
         </a>
@@ -128,15 +133,14 @@ if ($single_project_asset_list)
     }
     ?>
     <br />
-    <p><?php echo $helpMessage ?></p>
+    <p class="mdc-typography--body1 mdc-theme--text-primary-on-background "><?php echo $helpMessage ?></p>
 
     <?php if ($single_project_asset_list){ ?>
         <!--<span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php /*echo $current_game_project_post->post_title;*/?></span>-->
     <?php } else if (!$isUserloggedIn) { ?>
         <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $isUserloggedIn?" private": ""; ?> assets </span>
     <?php } else if ($isUserloggedIn) { ?>
-        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $isUserloggedIn?" private": ""; ?> assets in own projects</span>
-    <?php } ?>
+            <?php } ?>
 
     <div class="mdc-layout-grid__inner grid-system-custom">
 

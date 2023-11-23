@@ -1442,3 +1442,12 @@ video {
 #previewProgressLabelSingle{
     left:0; right: 0; top: 26px;color:white !important; mix-blend-mode: difference;
 }
+
+input[type=checkbox] {
+    -webkit-appearance: auto;
+}
+
+input[type=radio] {
+    height: 100%;
+    width: 100%;
+}

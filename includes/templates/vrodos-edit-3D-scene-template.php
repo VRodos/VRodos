@@ -494,7 +494,7 @@ wp_head();
                     </div>
 
                     <div class="environmentButton">
-                        <input hidden type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
+                        <input style="display: none" type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
                         <a id="env_texture-change-btn" data-mdc-auto-init="MDCRipple"
                            title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
                            class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary mdc-theme--secondary-bg">

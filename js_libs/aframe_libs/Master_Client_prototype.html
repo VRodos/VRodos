@@ -10,19 +10,18 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <script src="js/aframe/1.3.0/aframe.min.js"></script>
-    <script src="js/socketio/2.3.0/socket.io.slim.js"></script>
+    <script src="js/aframe/1.4.2/aframe-v1.4.2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
     <script src="js/datgui/0.7.7/dat.gui.min.js"></script>
 
     <script src="../easyrtc/easyrtc.js"></script>
     <script src="../dist/networked-aframe.js"></script>
 
     <!--<script src="js/a-water_alphamask_master.js"></script>-->
-    <script src="js/sunsky/3.0.3/aframe-sun-sky.min.js"></script>
+    <script src="js/sunsky/3.0.4/aframe-sun-sky.min.js"></script>
     <script src="js/randomizer/3.0.1/aframe-randomizer-components.min.js"></script>
 
     <script src="js/particles/aframe-particle-system-component.min.js"></script>
-    <script src="js/spawn-in-circle.component.js"></script>
 
     <script src="js/highlight_img.js"></script>
 
@@ -39,7 +38,6 @@
 
     <script src="js/indicators_aframe.js"></script>
     <script src="dist/material-components-web.min.js"></script>
-
 
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
@@ -97,8 +95,6 @@
                 presChoice:{type: "string", default: "default"},
             },
             init: function () {
-
-                console.log(this.data.presChoice);
 
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
@@ -173,10 +169,6 @@
                                 type: 'color', // btw: color is just a string under the hood in A-Frame
                                 default: window.ntExample.randomColor()
                             },
-                            visible: {
-                                type: 'string',
-                                default: 'false'
-                            },
                             gltf: {
                                 default: '',
                                 type: 'string'
@@ -217,6 +209,8 @@
                             
                             }
                             
+                            this.avatar_type = this.el.querySelector('.avatar_type');
+
                             this.ownedByLocalUser = this.el.id === 'cameraA';
                             if (this.ownedByLocalUser) {
                                 // populate the html overlay with the correct name on init
@@ -242,29 +236,80 @@
                         },
 
                         update: function () {
-                            var elem = this.el; 
-                           
+
+                            if (this.data.avatarType) {
+
+                                if (this.data.avatarType === 'no-avatar') {
+
+                                    if (!this.ownedByLocalUser) {
+                                        this.head.setAttribute("visible", "false");
+                                        this.face.setAttribute("visible", "false");
+                                    }
+
+                                    const parent_avatar = document.getElementById('cameraA');
+                                    let my_head = parent_avatar.querySelector('.head');
+                                    let my_face = parent_avatar.querySelector('.face');
+                                    if (my_face) my_face.setAttribute("visible", "false");
+                                    if (my_head) my_head.setAttribute("visible", "false");
+
+                                } else if (this.data.avatarType === 'blob') {
+
+                                    if (this.head) {
+                                        this.head.setAttribute('material', 'color', this.data.color);
+                                        this.head.setAttribute('visible', 'true');
+                                        this.face.setAttribute('visible', 'true');
+                                    }
+                                    if (this.nametag) {
+                                        this.nametag.setAttribute('value', this.data.name);
+                                        this.nametag.setAttribute('visible', 'true');
+                                    }
+
+                                } else if (this.data.avatarType === 'rpm') {
+
+                                    if (this.rpm_model) {
+                                        // Set GLTF path to entity
+                                        this.rpm_model.removeAttribute('gltf-model');
+                                        this.rpm_model.setAttribute('gltf-model', this.data.gltf);
+
+                                        // Event listener when the 3D model has actually loaded
+                                        this.rpm_model.addEventListener('model-loaded', () => {
+                                            let avatarType = this.rpm_model.object3DMap.mesh.children[0].userData.name;
 
 
-                            if (this.head){
-                                this.head.setAttribute('material', 'color', this.data.color);
 
-                            }
+                                            if (avatarType !== 'Armature') {
+                                                console.log(this.rpm_model.object3DMap.mesh.children[0].children);
+                                            }
 
-                            if (this.nametag) this.nametag.setAttribute('value', this.data.name);
 
-                            if (this.rpm_model) {
-                                this.rpm_model.removeAttribute('gltf-model');
-                                this.rpm_model.setAttribute('gltf-model', this.data.gltf);
+                                            // Change Y position of model based on type
+                                            let avatarPosition = avatarType === 'Armature' ? '0 -1.4 -0.5' : '0 -0.3 -0.5';
+                                            this.rpm_model.setAttribute('position', avatarPosition);
+                                        }, {once : true});
+                                    }
+
+                                    if (this.nametag) {
+                                        this.nametag.setAttribute('value', this.data.name);
+                                        this.nametag.setAttribute('visible', 'true');
+                                    }
+                                }
                             }
                         }
                     });
 
 
-                    // If base scene, launch avatar selector and set local storage
-                    if (document.getElementById("is-base-scene-input").value === 'true' ) {
-                        (new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))).show();
-                    }
+                    // If base scene, launch avatar selector
+                    /*if (document.getElementById("is-base-scene-input").value === 'true' ) {*/
+
+                        let avatar_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))
+
+                        let closeAvatarDialogListener = function(event) {
+                            avatar_dialog_element.unlisten("MDCDialog:cancel", closeAvatarDialogListener);
+                            selectAvatarType('no-avatar');
+                        };
+                        avatar_dialog_element.show();
+                        avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
+                    /*}*/
 
                 });
 
@@ -655,18 +700,9 @@
 
         AFRAME.registerComponent('start-animation', {
             init: function () {
-                console.log('start-animation component initialized');
 
                 const avatar = document.getElementById('animated_avatar');
                 /*const animationModel = document.querySelector('#animation-model');*/
-
-
-                if (!avatar /*|| !animationModel*/) {
-                    console.error('Avatar or animation model not found.');
-                    return;
-                }
-
-                console.log('Found avatar and animation model.');
 
                 // Trigger the animation when the scene starts
                 //animationModel.emit('start-scene');
@@ -879,13 +915,13 @@
                             <form name="avatarRadiosForm">
                                 <div class="mdc-form-field AvatarTypeSelection">
                                     <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio" name="avatar-radios" value="no-avatar" checked>
-                                    <label for="no-avatar-radio" onclick="toggleAvatarDialogBtn(false)">
+                                    <label for="no-avatar-radio">
                                         <img src="media/img/no-avatar.png" width="128" height="128" style="opacity:.6" />
                                         <span>No avatar</span>
                                     </label>
 
                                     <input class="mdc-radio__native-control" type="radio" id="blob-radio" value="blob" name="avatar-radios" >
-                                    <label for="blob-radio" onclick="toggleAvatarDialogBtn(false)">
+                                    <label for="blob-radio">
                                         <img src="media/img/blob-avatar.png" width="128" height="128" />
                                         <span>A Blob</span>
                                         <br>
@@ -893,7 +929,7 @@
                                     </label>
 
                                     <input class="mdc-radio__native-control" type="radio" id="rpm-radio" value="rpm" name="avatar-radios" >
-                                    <label for="rpm-radio" onclick="toggleAvatarDialogBtn(true)">
+                                    <label for="rpm-radio">
                                         <img src="media/img/rpm-avatar.png" width="128" height="128" />
                                         <span>Your personalized</span>
                                         <br>
@@ -908,7 +944,6 @@
         </section>
 
         <footer class="mdc-dialog__footer">
-            <a id="launchReadyPlayerMeBtn" onclick="displayRPMIframe()" style="display: none;" class="mdc-button mdc-button--secondary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">Launch Customizer</a>
             <a id="selectAvatarBtn" onclick="selectAvatarType()" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
         </footer>
     </div>
@@ -968,7 +1003,9 @@
     <iframe id="rpm-iframe" class="RpmIframeStyle" allow="camera *; microphone *; clipboard-write" hidden></iframe>
 </div>
 
-<a-scene oculus-go-controls-enabled
+<a-scene
+        oculus-go-controls-enabled
+         start-animation
          id="aframe-scene-container"
          fog="type: linear; color: #AAB; far: 230; near: 0"
          renderer="antialias: true;
@@ -976,12 +1013,13 @@
             toneMapping: ACESFilmic;
             precision: high;"
          vr-mode-ui="enabled: true"
-         loading-screen="dotsColor: gray; backgroundColor: black"
+         loading-screen="dotsColor: gray; backgroundColor: black;"
          networked-scene="
             room: roomname;
             debug: true;
             audio: true;
             adapter: easyrtc;
+            serverURL: /;
             connectOnLoad: true;
        ">
     <!--environment="ground:none"-->
@@ -1003,15 +1041,15 @@
                         animation-embed="glb_id:ready-player-me-avatar"
                         id="ready-player-me-avatar"
                         class="rpm_avatar"
-                        position="0 0 -0.5"
+                        position="0 -1.4 -0.5"
                         rotation="0 180 0"
                         visible="true"
                         >
                 </a-entity>
 
                 <!-- Sphere Avatar-->
-                <a-sphere class="head" scale="0.2 0.22 0.2"></a-sphere>
-                <a-entity class="face" position="0 0.05 0">
+                <a-sphere class="head" scale="0.2 0.22 0.2" visible="false"></a-sphere>
+                <a-entity class="face" position="0 0.05 0" visible="false">
                     <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04" >
                         <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2" ></a-sphere>
                     </a-sphere>
@@ -1026,9 +1064,10 @@
                         class="nametag"
                         value="?"
                         rotation="0 180 0"
-                        position=".25 -.35 0"
+                        position="0.25 -0.35 0"
                         side="double"
                         scale=".5 .5 .5"
+                        visible="false"
                 ></a-text>
             </a-entity>
         </template>
@@ -1090,8 +1129,6 @@
     // All asets have loaded
     document.querySelector('#scene-assets').addEventListener('loaded', function() {
 
-        console.log('Assets Loaded');
-
         // Don't show HTML component (chat) while loader is active
         if(document.getElementById("chat-wrapper-el").getAttribute('data-visible') === 'true') {
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';
@@ -1099,19 +1136,14 @@
 
     });
 
-    let toggleAvatarDialogBtn = (showRPMBtn) => {
-        if (showRPMBtn) {
-            document.getElementById("launchReadyPlayerMeBtn").style.display = "inline-block";
-            document.getElementById("selectAvatarBtn").style.display = "none";
-        }
-        else {
-            document.getElementById("launchReadyPlayerMeBtn").style.display = "none";
-            document.getElementById("selectAvatarBtn").style.display = "inline-block";
-        }
-    }
+    let selectAvatarType = (val) => {
 
-    let selectAvatarType = () => {
-        document.getElementById('cameraA').setAttribute('player-info', 'avatarType', document.querySelector('input[name="avatar-radios"]:checked').value);
+        let radioVal = val ? val : document.querySelector('input[name="avatar-radios"]:checked').value;
+
+        document.getElementById('cameraA').setAttribute('player-info', 'avatarType', radioVal);
+        if (radioVal === 'rpm'){
+            document.getElementById('rpm-iframe').hidden = false;
+        }
     }
 
     // Ready player me iframe code
@@ -1124,7 +1156,7 @@
     document.addEventListener('message', subscribe);
 
     function subscribe(event) {
-        const json = parse(event);
+        const json = parseRPMEvent(event);
 
         if (json?.source !== 'readyplayerme') {
             return;
@@ -1145,8 +1177,7 @@
         // Get avatar GLB URL
         // Now add it in Aframe canvas
         if (json.eventName === 'v1.avatar.exported') {
-            console.log(`Avatar URL: ${json.data.url}`);
-            /*document.getElementById('avatarUrl').innerHTML = `Avatar URL: ${json.data.url}`;*/
+
             document.getElementById('rpm-iframe').hidden = true;
 
             // Update remote
@@ -1160,16 +1191,12 @@
         }
     }
 
-    function parse(event) {
+    function parseRPMEvent(event) {
         try {
             return JSON.parse(event.data);
         } catch (error) {
             return null;
         }
-    }
-
-    function displayRPMIframe() {
-        document.getElementById('rpm-iframe').hidden = false;
     }
 
 
@@ -1377,7 +1404,8 @@
 
     /* Called by Networked-Aframe when connected to server */
     function onConnect() {
-        console.log("onConnect", new Date());
+
+        let OnConnectDate = new Date();
 
         const screenBtnEle = document.getElementById('screen-btn-sendscreen');
         screenBtnEle.addEventListener('click', function () {
