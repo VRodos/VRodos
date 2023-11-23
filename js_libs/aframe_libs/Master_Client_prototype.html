@@ -61,10 +61,12 @@
                         'position',
                         'rotation',
                         'player-info',
+                        'avatar-movement-info',
                         {
                             selector: '.rpm_avatar', // the model entity has a .model class
-                            component: 'gltf-model' // we want the gltf-model component to sync between clients
+                            component: 'gltf-model', // we want the gltf-model component to sync between clients
                         },
+                      
                     ]
                 });
             }
@@ -100,6 +102,64 @@
 
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
+                    AFRAME.registerComponent('avatar-movement-info', {
+                        // notice that color and name are both listed in the schema; NAF will only keep
+                        // properties declared in the schema in sync.
+                        schema: {
+                            movementState: {
+                                type: 'string',
+                                default: ''
+                            }
+                            
+                        },
+
+                        init: function () {
+                            this.rpm_model = this.el.querySelector('.rpm_avatar');
+                        },
+
+                        update: function () {
+
+                            if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
+                                    //elem.setAttribute("animation-player", evt.detail);
+                                    if(this.data.movementState != "stop"){
+                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
+                                    }else{
+                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
+                                    }
+                                    
+                            }
+                        }
+                    });
+
+                    AFRAME.registerComponent('avatar-rotation-info', {
+                        // notice that color and name are both listed in the schema; NAF will only keep
+                        // properties declared in the schema in sync.
+                        schema: {
+                            rotationState: {
+                                type: 'string',
+                                default: ''
+                            }
+                            
+                        },
+
+                        init: function () {
+                            this.rpm_model = this.el.querySelector('.rpm_avatar');
+                        },
+
+                        update: function () {
+
+                            if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
+                                    //elem.setAttribute("animation-player", evt.detail);
+                                    if(this.data.movementState != "stop"){
+                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
+                                    }else{
+                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
+                                    }
+                                    
+                            }
+                        }
+                    });
+                    
 
                     AFRAME.registerComponent('player-info', {
                         // notice that color and name are both listed in the schema; NAF will only keep
@@ -124,7 +184,16 @@
                             avatarType: {
                                 default: '',
                                 type: 'string'
+                            },
+                            currentState: {
+                                default: '',
+                                type: 'string'
+                            },
+                            animationsLoaded: {
+                                default: '',
+                                type: 'string'
                             }
+                            
                         },
 
                         init: function () {
@@ -132,7 +201,22 @@
                             this.face = this.el.querySelector('.face');
                             this.nametag = this.el.querySelector('.nametag');
                             this.rpm_model = this.el.querySelector('.rpm_avatar');
+                            this.anims_loaded = false;
+                        
+                            var elem = this.el; 
+                            if (elem.querySelector('.rpm_avatar')) {
+                                elem.querySelector('.rpm_avatar').addEventListener('stateadded', function (evt) {     
+                                if (evt.detail == 'loadedanimations'){
+                                    console.log("Animations loaded");
+                                    this.anims_loaded = true;
+                                    elem.addState('anims_loaded');
+                                    
+                                }
+                            });
 
+                            
+                            }
+                            
                             this.ownedByLocalUser = this.el.id === 'cameraA';
                             if (this.ownedByLocalUser) {
                                 // populate the html overlay with the correct name on init
@@ -141,7 +225,7 @@
 
                                 // add the initial color to the html overlay color picker button
                                 document.querySelector('button').style.backgroundColor = this.data.color;
-                                document.querySelector('button').style.color = this.data.color;
+                                document.querySelector('button').style.color = this.data.color;                             
                             }
                         },
 
@@ -158,6 +242,8 @@
                         },
 
                         update: function () {
+                            var elem = this.el; 
+                           
 
 
                             if (this.head){
@@ -220,7 +306,6 @@
                     case "2":
                         if (this.data.presChoice == "ocean")
                         {
-                            console.log(this.data.presChoice);
                             let sky = document.createElement('a-sky');
                             sky.setAttribute("color", "#a4bede");
                             backgroundEl.appendChild(sky);
@@ -331,9 +416,7 @@
                             backgroundEl.setAttribute("environment", "shadow", "true");
 
                             let groundEl = document.getElementsByClassName('environmentGround')[0];
-                            console.log("Ground:");
                             groundEl.setAttribute("shadow", "cast: true; receive: true");
-                            console.log(groundEl);
                         }
 
 
@@ -346,7 +429,6 @@
                             skyElem.setAttribute("id", "sky");
                             skyElem.setAttribute("src",  "#custom_sky");
                             backgroundEl.appendChild(skyElem);
-                            console.log(customImgAsset.getAttribute("src"));
                         }
                         else{
                             backgroundEl.setAttribute("background", "color", "#ffffff");
@@ -357,7 +439,6 @@
                 }
             }
         });
-
         AFRAME.registerComponent('autoplay-sound', {
             init:function() {
                 this.el.addEventListener("loaded", () => {
@@ -366,66 +447,95 @@
             }
         });
 
-        AFRAME.registerComponent('avatar-animation-handler', {
+        AFRAME.registerComponent('entity-movement-emitter', {
+            schema: {
+                clip:{type: "string", default: "idle"},
+            },
             init:function() {
-               
-                console.log("avatar loaded");
+
+                var bind = AFRAME.utils.bind;
+                var shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
+                var elem = this.el;
+
+                document.addEventListener('keydown', function(event) {
+                    if(event.keyCode === 87) {        
+                        if (shouldCaptureKeyEvent(event)) { 
+                            document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingforward");
+                    }
+                    }else if(event.keyCode === 83){
+                        if (shouldCaptureKeyEvent(event)) { 
+                            elem.emit('avatar-changed-animation', "walkingdown", false);
+                            document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingdown");
+                        }
+                        
+                    }else if(event.keyCode === 68){
+                        if (shouldCaptureKeyEvent(event)) { 
+                            elem.emit('avatar-changed-animation', "walkingright", false);
+                            document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingright");
+                        }
+                        
+                    }else if(event.keyCode === 65){
+                        if (shouldCaptureKeyEvent(event)) { 
+                            elem.emit('avatar-changed-animation', "walkingleft", false);
+                            document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingleft");
+                        }    
+                    }
+                    else{
+                        elem.emit('avatar-changed-animation', "idle", false);
+                    }
+                            
+                });
+                document.addEventListener('keyup', function(event) {
+                        elem.emit('avatar-changed-animation', "stopped", false);
+                        document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "stop");
+                });
+
                 
             }
         });
+
+        AFRAME.registerComponent('entity-rotation-emitter', {
+            init:function() {
+
+                var bind = AFRAME.utils.bind;
+               this.el.addEventListener('componentchanged', function (evt) {
+                    if (evt.detail.name === 'rotation') {
+                        console.log('Entity has rotated');
+                    }
+                    console.log(evt.detail);
+                });
+
+                
+            }
+        });
+
+        
 
         AFRAME.registerComponent('animation-embed', {
+            schema: {
+                clip:{type: "string", default: "idle"},
+            },
             init:function() {
-                const animations = [
-                  ["idle", "../media/sound/avatar_place.glb"],
-                  ["walking", "../media/sound/avatar_place.glb"]
-                ];
-
+                const animations = ["idle","walking"];
                 var loader = new THREE.GLTFLoader();
-                var model = document.getElementById("model");
+                var id = this.data.glb_id;
 
-            this.el.addEventListener("model-loaded", e => {
-                var objectMesh = this.el.getObject3D("mesh");
-                //console.log(objectMesh.animations);
-
-                var link = "../media/sound/avatar_place.glb";
-                loader.load(link, function (gltf) {
-                    console.log(gltf.animations[0]);
-                    objectMesh.animations[0] = gltf.animations[0];
-                    model.setAttribute('animation-mixer', "clip: idle;");
-                });
-                });
-           this.el.object3D.traverse((child) => {
-            //console.log(child);
-            
-                if (child.type === 'Mesh') {
-
-                    const material = child.material;
-                    //material.side = THREE.FrontSide;
-                    console.log(child);
-                }
-        })
-                
-            }
-        });
-
-        AFRAME.registerComponent('position-listener', {
-            init:function() {
-                const avatar = document.getElementById("animated_avatar");
-                console.log(avatar);
-                },
-            tick() {
-                const newValue = this.el.getAttribute('position');
-                const stringCoords = AFRAME.utils.coordinates.stringify(newValue);
-                if (this.lastValue !== stringCoords) {
-                    this.el.emit('positionChanged', newValue);
-                    this.lastValue = stringCoords;
-
-                    document.getElementById("animated_avatar").setAttribute("animation-mixer", "clip: walking");
-                    console.log("moved");
-                }else{
-                    document.getElementById("animated_avatar").setAttribute("animation-mixer", "clip: idle");
-                }
+                this.el.addEventListener("model-loaded", e => {
+                    var objectMesh = this.el.getObject3D("mesh");
+                    var bind = AFRAME.utils.bind;
+                    var shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
+                    var link = "../media/sound/multimalev2.glb";
+                    var elem = this.el;
+                    this.loaded_anims = false;
+                    loader.load(link, function (gltf) {
+                        for (i = 0; i < gltf.animations.length; i++) {
+                            objectMesh.animations[i] = gltf.animations[i];
+                        } 
+                        elem.removeAttribute('animation-mixer');
+                        elem.setAttribute('animation-mixer', "clip: idle");
+                        elem.addState('loadedanimations');
+                    });              
+                });        
             }
         });
 
@@ -524,9 +634,6 @@
                 const cameraEl = document.querySelector('a-camera');
                 const cameraRig = this.el;
 
-                console.log ("Custom-movement exists");
-                console.log (cameraEl);
-
                 this.el.addEventListener('thumbstickmoved', (event) => {
                     const thumbstickX = event.detail.x;
                     const thumbstickY = event.detail.y;
@@ -542,9 +649,6 @@
                     const movementSpeed = 0.1;
                     cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
                     cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
-
-
-                    console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
                 });
             }
         });
@@ -885,27 +989,24 @@
     <a-assets id="scene-assets">
         <!-- <a-asset-item id="idle" src="../media/sound/avatar_place.glb"></a-asset-item>
 
-        <a-asset-item id="model" src="../media/sound/emo.glb"></a-asset-item> -->
+        <a-asset-item id="model" src="../media/sound/fem.glb"></a-asset-item> -->
 
        
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
-            <a-entity class="avatar hideable" player-info>
-<!-- 
-                <a-entity gltf-model="#idle"  class="rpm_avatar"
-                position="0 0 -0.5"
-                rotation="0 180 0" id ="animated_avatar" avatar-animation-handler animation-mixer = "clip: walking"></a-entity> -->
+            <a-entity class="avatar hideable" player-info avatar-movement-info>
+
 
                 <!-- ReadyPlayerMe Avatar-->
                 <a-entity
                         gltf-model
+                        animation-embed="glb_id:ready-player-me-avatar"
                         id="ready-player-me-avatar"
                         class="rpm_avatar"
                         position="0 0 -0.5"
                         rotation="0 180 0"
-                        animation-mixer="clip: test; autoPlay: true"
                         visible="true"
-                        event-set__start-animation="_event: start-scene; animation__start-animation.startEvents: start-animation">
+                        >
                 </a-entity>
 
                 <!-- Sphere Avatar-->
@@ -976,23 +1077,10 @@
                  material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
         <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
                  material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; " position="0.15 0.15 0.000001"></a-mixin>
-
-        <!-- <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
-                 material="shader: flat; color: #dfe4ea; " position=" 0 0.11 0.000001"></a-mixin> -->
-        <!--
-                         <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.2; height: 0.3"
-                         material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
-                <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
-                         material="shader: flat; color: #dfe4ea; " position=" 0 0.2 0.000001"></a-mixin> -->
     </a-assets>
 
     <a-entity id="player"></a-entity>
 
-    <!-- <a-entity gltf-model="#model" position="0 0 -10" 
-    rotation="0 180 0" id ="animated_avatar_org" animation-embed></a-entity> -->
-
-    <!-- <a-entity gltf-model="#idle" position="2 0 -10" 
-    rotation="0 180 0" id ="animated_avatar_org" animation-embed animation-mixer = "clip: walking"></a-entity> -->
 
 </a-scene>
 

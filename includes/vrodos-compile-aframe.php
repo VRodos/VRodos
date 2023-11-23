@@ -421,6 +421,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_camera->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
             $a_camera->setAttribute( "look-controls", "" );
             $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
+            $a_camera->setAttribute("entity-movement-emitter","");
+            $a_camera->setAttribute("entity-rotation-emitter","");
+        
+
+            
+           
             // $a_camera->setAttribute( "position-listener", "" );
 
             $a_cursor = $dom->createElement( "a-entity" );
