@@ -900,3 +900,131 @@ html [type="button"],
     text-shadow: 0px 0px 5px black;
     margin-left: 15px;
 }
+
+
+.dg {
+    max-font-size: 12pt;
+    min-font-size: 10pt;
+    font-size: 0.7vw;
+    color: #000;
+    text-shadow: none !important;
+}
+
+.dg.main {
+    padding: 0;
+    width:100% !important;
+}
+
+.dg.main.taller-than-window .close-button {
+    border-top: 1px solid #ddd;
+}
+
+.dg.main .close-button {
+    background-color: #ccc;
+}
+
+.dg.main .close-button:hover {
+    background-color: #ddd;
+}
+
+
+.dg li:not(.folder) {
+    background: #fafafa;
+    border-bottom: 1px solid #ddd;
+    cursor: auto;
+    overflow: hidden;
+    padding: 0 4px 0 5px;
+}
+
+/*.dg li:not(.folder) {*/
+/*cursor: auto;*/
+/*height: 27px;*/
+/*line-height: 27px;*/
+/*overflow: hidden;*/
+/*padding: 0 4px 0 5px;*/
+/*}*/
+
+
+.dg li.save-row .button {
+    text-shadow: none !important;
+}
+
+.dg li.title {
+    background: #e8e8e8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+}
+
+.dg .cr.function:hover,.dg .cr.boolean:hover {
+    background: #fff;
+}
+
+.dg .c input[type=text] {
+    background: #e9e9e9;
+}
+
+.dg .c input[type=text]:hover {
+    background: #eee;
+}
+
+.dg .c input[type=text]:focus {
+    background: #eee;
+    color: #555;
+}
+
+.dg .c .slider {
+    background: #e9e9e9;
+    height: 0.6vw;
+}
+
+
+.dg .c .slider:hover {
+    background: #eee;
+}
+
+.dg .slider {
+    float: left;
+    width: 66%;
+    margin-left: -5px;
+    margin-right: 0;
+    height: 19px;
+    margin-top: 0.5vw;
+}
+
+.dg li {
+    margin-bottom:0;
+}
+
+.dg .c .button {
+    height:0;
+    visibility: hidden;
+}
+
+.dg .c .checkbox {
+    height:0.6vw;
+}
+
+.dg .c input[type=checkbox] {
+    margin-top:0;
+    height:1vw;
+
+}
+
+.dg .cr.number {
+    border-left: none;
+}
+
+.dg .c .slider-fg, .dg .c .slider:hover .slider-fg {
+    background: #3f51b5;
+}
+
+.dg .cr.number input[type=text] {
+    color: #3f51b5;
+    font-size: 0.6vw;
+    text-align: center;
+    height: 20px;
+
+}
+
+/*Hide close button*/
+.dg.main .close-button.close-bottom {
+    display: none;
+}

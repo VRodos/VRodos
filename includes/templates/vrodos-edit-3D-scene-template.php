@@ -33,7 +33,7 @@ function vrodos_load_vreditor_scripts()
     // Hierarchy Viewer
     wp_enqueue_script( 'vrodos_HierarchyViewer' );
 
-    wp_enqueue_script( 'vrodos_load87_datgui' );
+    wp_enqueue_script( 'vrodos_load_datgui' );
     wp_enqueue_script( 'vrodos_load141_OrbitControls' );
     wp_enqueue_script( 'vrodos_load141_TransformControls' );
     wp_enqueue_script( 'vrodos_load141_PointerLockControls' );

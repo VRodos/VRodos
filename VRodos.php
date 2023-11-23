@@ -53,7 +53,7 @@ function vrodos_register_scripts() {
         array( 'vrodos_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
         array( 'vrodos_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
         array( 'vrodos_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
-        array( 'vrodos_load87_datgui', $pluginDirJS.'threejs87/dat.gui.js'),
+        array( 'vrodos_load_datgui', $pluginDirJS.'datgui/0.7.9/dat.gui.min.js'),
 
         array( 'vrodos_load87_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
         array( 'vrodos_load87_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
@@ -180,7 +180,7 @@ function vrodos_register_styles() {
 
     wp_register_style( 'vrodos_backend', plugin_dir_url( __FILE__ ) . 'css/vrodos_backend.css' );
     wp_register_style( 'vrodos_3D_editor', plugin_dir_url( __FILE__ ) . 'css/vrodos_3D_editor.css' );
-    wp_register_style( 'vrodos_datgui', plugin_dir_url( __FILE__ ) . 'css/dat-gui.css' );
+    wp_register_style( 'vrodos_datgui', plugin_dir_url( __FILE__ ) . 'js_libs/datgui/0.7.9/dat.gui.css' );
 
     wp_register_style( 'vrodos_dashboard_table', plugin_dir_url( __FILE__ ) . 'css/vrodos_dashboard_table_style.css' );
 
