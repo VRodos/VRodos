@@ -277,11 +277,11 @@ function loadButtonActions() {
     // UNDO button
     jQuery('#undo-scene-button').click(function () {
 
+        post_revision_no += 1;
+
         document.getElementById('redo-scene-button').style.visibility = 'visible';
 
         jQuery('#undo-scene-button').html("...").addClass("LinkDisabled");
-
-        post_revision_no += 1;
 
         vrodos_undoSceneAjax(uploadDir, post_revision_no);
     });
@@ -289,16 +289,16 @@ function loadButtonActions() {
     // REDO button
     jQuery('#redo-scene-button').click(function () {
 
-      if (post_revision_no > 1) {
+        if (post_revision_no >= 1) {
             post_revision_no -= 1;
 
             jQuery('#redo-scene-button').html("...").addClass("LinkDisabled");
             vrodos_undoSceneAjax();
-        }
-        else {
-            document.getElementById('redo-scene-button').style.visibility = 'hidden';
-        }
 
+            if (post_revision_no <= 1) {
+                document.getElementById('redo-scene-button').style.visibility = 'hidden';
+            }
+        }
     });
 
 

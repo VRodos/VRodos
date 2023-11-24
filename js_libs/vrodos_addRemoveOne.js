@@ -15,11 +15,6 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     for (let entry in Object.keys(dataDrag)) {
         resources3D[nameModel][Object.keys(dataDrag)[entry]] = Object.values(dataDrag)[entry];
     }
-
-    
-    console.log( resources3D[nameModel]);
-    console.log( "Sun added");
-    
     
     if (categoryName === 'lightSun') {
 
@@ -43,7 +38,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSun['category_slug'] = "lightSun";
         lightSun.isLight = true;
 
-        var hexcol = "0xffff00";
+        let hexcol = "0xffff00";
 
         //// Add Sun Helper
         var sunSphere = new THREE.Mesh(
@@ -174,7 +169,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightLamp.lampshadowCameraRight = "200";
         lightLamp.lampshadowBias = "-0.0001";
         
-        var hexcol = "0xffff00";
+        let hexcol = "0xffff00";
         //// Add Lamp Helper
         var lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(0.5, 16, 8),

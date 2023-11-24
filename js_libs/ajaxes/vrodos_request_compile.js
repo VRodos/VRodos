@@ -94,7 +94,7 @@ function vrodos_compileAjax(showPawnPositions) {
 
             document.getElementById("openWebLinkhref").setAttribute("href", urlExperienceSequence["index"]);
 
-            console.log("Ajax Aframe Success");
+            console.log("Build Success");
         },
         error : function(xhr, ajaxOptions, thrownError) {
             console.log("Ajax Aframe ERROR 189: " + thrownError);

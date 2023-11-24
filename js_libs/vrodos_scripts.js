@@ -3,9 +3,7 @@
 function setTransformControlsSize(){
 
     let dims = findDimensions(transform_controls.object);
-
     let sizeT = 0.25 * Math.log((Math.max(...dims) + 1)  + 1) ;
-
     transform_controls.setSize(sizeT );
 }
 
@@ -17,12 +15,12 @@ function vrodos_fillin_widget_assettrs( selectedObject ) {
 }
 
 function unixTimestamp_to_time(tStr) {
-    var unix_timestamp = parseInt(tStr);
-    var date = new Date(unix_timestamp * 1000);
-    var hours = date.getHours();
-    var minutes = "0" + date.getMinutes();
-    var seconds = "0" + date.getSeconds();
-    var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+    let unix_timestamp = parseInt(tStr);
+    let date = new Date(unix_timestamp * 1000);
+    let hours = date.getHours();
+    let minutes = "0" + date.getMinutes();
+    let seconds = "0" + date.getSeconds();
+    let formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     return date.getDate() + '/' + date.getMonth() + '/' + date.getFullYear() + ' ' + formattedTime;
 }
 
@@ -34,7 +32,7 @@ function rgbToHex(red, green, blue) {
 
 function updateClearColorPicker(picker){
     document.getElementById('sceneClearColor').value = picker.toRGBString();
-    var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
+    let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
     //envir.renderer.setClearColor(hex);
     envir.scene.background = new THREE.Color(hex);
     saveChanges();
@@ -45,17 +43,9 @@ function saveChanges() {
 
     // Export using a custom variant of the old deprecated class SceneExporter
     let exporter = new THREE.SceneExporter();
-    //env.getObjectByName(name).follow_camera = 2;
     document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-    //let test = document.getElementById('vrodos_scene_json_input').value;
-
-    //var json = JSON.stringify(test);
-
-    //console.log(test);
-
     vrodos_saveSceneAjax();
-    //.forEach(element => console.log(element));
 }
 
 function bcgRadioSelect(option){
@@ -63,10 +53,6 @@ function bcgRadioSelect(option){
     let custom_img_sel = document.getElementById('img_upload_bcg');
     let preset_sel = document.getElementById('presetsBcg');
     let img_thumb = document.getElementById('uploadImgThumb');
-
-    
-    
-    
 
 
     switch (option.value) {
@@ -173,14 +159,5 @@ function updateFog(){
         }
 
     }
-
     triggerAutoSave();
 }
-
-
-
-
-
-
-
-

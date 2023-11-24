@@ -73,8 +73,8 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 ?>
 
 <script type="text/javascript">
-    // keep track for the undo-redo function
-    post_revision_no = 1;
+    // Keep track for the undo-redo function
+    var post_revision_no = 1;
 
     // is rendering paused
     isPaused = false;
