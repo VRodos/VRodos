@@ -69,8 +69,6 @@ function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
 
 
 
-
-
 //==========================================================================================================================================
 //==========================================================================================================================================
 
@@ -88,9 +86,6 @@ function vrodos_the_slug_exists($post_name) {
 function vrodos_create_joker_projects() {
 
 	$userID = get_current_user_id();
-	//$virtualplace_tax = get_term_by('slug', 'virtual_place', 'vrodos_game_cat');
-	//$realplace_tax = get_term_by('slug', 'real_place', 'vrodos_game_cat');
-
 
 	if (!vrodos_the_slug_exists('archaeology-joker')) {
 
@@ -170,190 +165,7 @@ function vrodos_default_page() {
 
 add_filter('login_redirect', 'vrodos_default_page');
 
-
-//GUIDs & FIDs
-
-// 32 chars Hex (identifier for the resource)
-function vrodos_create_guids($objTypeSTR, $objID, $extra_id_material=null){
-
-	switch ($objTypeSTR) {
-		case 'unity':  $objType = "1"; break;
-		case 'folder': $objType = "2"; break;
-		case 'obj': $objType = "3"; break;
-		case 'mat': $objType = "4".$extra_id_material; break; // an obj can have two or more mat
-		case 'jpg': $objType = "5".$extra_id_material; break; // an obj can have multiple textures jpg
-		//case 'tile': $objType = "6".$extra_id_material; break; // an obj can have multiple textures jpg
-	}
-
-	return str_pad($objType, 4, "0", STR_PAD_LEFT) . str_pad($objID, 28, "0", STR_PAD_LEFT);
-}
-
-// 10 chars Decimal (identifier for the GameObject) (e.g. dino1, dino2 have different fid but share the same guid)
-
-
-
-
 //==========================================================================================================================================
-//==========================================================================================================================================
-//Create sample data when a user is registered (changed it to "when a game is created")
-
-//add_action( 'user_register', 'vrodos_registrationhook_createGame', 10, 1 );
-
-function vrodos_registrationhook_createGame( $user_id ) {
-
-	$user_info = get_userdata($user_id);
-	$username = $user_info->user_login;
-
-	$archaeology_tax = get_term_by('slug', 'archaeology_games', 'vrodos_game_type');
-	$game_type_chosen_id = $archaeology_tax->term_id;
-
-	$game_taxonomies = array(
-		'vrodos_game_type' => array(
-			$game_type_chosen_id,
-		)
-	);
-
-	$game_title = $username . ' Sample Game';
-
-	$game_information = array(
-		'post_title' => $game_title,
-		'post_content' => '',
-		'post_type' => 'vrodos_game',
-		'post_status' => 'publish',
-		'tax_input' => $game_taxonomies,
-		'post_author' => $user_id,
-	);
-
-	$game_id = wp_insert_post($game_information);
-
-	vrodos_registrationhook_createAssets($user_id,$username,$game_id);
-
-}
-
-function vrodos_registrationhook_createAssets($user_id,$username,$game_id){
-	$game_post = get_post($game_id);
-	$game_slug = $game_post->post_name;
-
-	$parentGame_tax = get_term_by('slug', $game_slug, 'vrodos_asset3d_pgame');
-	$parentGame_tax_id = $parentGame_tax->term_id;
-
-	$artifact_tax = get_term_by('slug', 'artifact', 'vrodos_asset3d_cat');
-	$artifact_tax_id = $artifact_tax->term_id;
-	$artifact_text_obj = (object) [
-		'assetTitleForm' => $username . ' Sample Artifact',
-		'assetDescForm' => 'Artifact item created as sample'
-	];
-
-	$door_tax = get_term_by('slug', 'door', 'vrodos_asset3d_cat');
-	$door_tax_id = $door_tax->term_id;
-	$doorTitle = $username . ' Sample Door';
-	$doorDesc = 'Door item created as sample';
-
-	$poiImage_tax = get_term_by('slug', 'pois_imagetext', 'vrodos_asset3d_cat');
-	$poiImage_tax_id = $poiImage_tax->term_id;
-	$poiImageTitle = $username . ' Sample POI Image';
-	$poiImageDesc = 'POI Image item created as sample';
-
-	$poiVideo_tax = get_term_by('slug', 'pois_video', 'vrodos_asset3d_cat');
-	$poiVideo_tax_id = $poiVideo_tax->term_id;
-	$poiVideoTitle = $username . ' Sample POI Video';
-	$poiVideoDesc = 'POI Video item created as sample';
-
-	$site_tax = get_term_by('slug', 'site', 'vrodos_asset3d_cat');
-	$site_tax_id = $site_tax->term_id;
-	$siteTitle = $username . ' Sample Site';
-	$siteDesc = 'Site item created as sample';
-
-	$newArtifact_ID = vrodos_create_asset_frontend($parentGame_tax_id, $artifact_tax_id, $game_slug, null, $artifact_text_obj, null, null, null );
-	$newDoor_ID = vrodos_create_asset_frontend($parentGame_tax_id, $door_tax_id, $game_slug);
-	$newPOIimage_ID = vrodos_create_asset_frontend($parentGame_tax_id, $poiImage_tax_id, $game_slug);
-	$newPOIvideo_ID = vrodos_create_asset_frontend($parentGame_tax_id, $poiVideo_tax_id, $game_slug);
-	$newSite_ID = vrodos_create_asset_frontend($parentGame_tax_id, $site_tax_id, $game_slug);
-
-	vrodos_registrationhook_uploadAssets_noTexture($artifact_text_obj['assetTitleForm'],$newArtifact_ID,$game_slug,'artifact');
-	vrodos_registrationhook_uploadAssets_noTexture($doorTitle,$newDoor_ID,$game_slug,'door');
-	vrodos_registrationhook_uploadAssets_noTexture($poiImageTitle,$newPOIimage_ID,$game_slug,'poi_image');
-	vrodos_registrationhook_uploadAssets_noTexture($poiVideoTitle,$newPOIvideo_ID,$game_slug,'poi_video');
-	vrodos_registrationhook_uploadAssets_noTexture($siteTitle,$newSite_ID,$game_slug,'site');
-}
-
-function vrodos_registrationhook_uploadAssets_noTexture($assetTitleForm,$asset_newID,$gameSlug,$assetTypeNumber){
-
-	$has_image = false; $has_video = false;
-	if($assetTypeNumber == 'artifact'){
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/artifact/star.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/artifact/star_yellow.obj");
-	}elseif($assetTypeNumber == 'door') {
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/door/door_green.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/door/door_green.obj");
-	}elseif($assetTypeNumber == 'poi_image') {
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_image_text/star.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_image_text/star_blue.obj");
-		$has_image = true;
-		$image_content = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_image_text/image.jpg";
-	}elseif($assetTypeNumber == 'poi_video') {
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_video/star.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_video/star_red.obj");
-		$has_video = true;
-		$video_content = WP_PLUGIN_DIR . "/vrodos/includes/files/samples/poi_video/bunny.mp4";
-	}elseif($assetTypeNumber == 'site') {
-		$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/Site1/site1.mtl");
-		$obj_content = file_get_contents(WP_PLUGIN_DIR . "/vrodos/includes/files/samples/Site1/site1.obj");
-	}
-
-	$mtlFile_id = vrodos_upload_AssetText($mtl_content, 'material'.$assetTitleForm, $asset_newID, null, null);
-	$mtlFile_filename = basename(get_attached_file($mtlFile_id));
-
-	// OBJ
-	$mtlFile_filename_notxt = substr( $mtlFile_filename, 0, -4 );
-	$mtlFile_filename_withMTLext = $mtlFile_filename_notxt . '.mtl';
-	$obj_content = preg_replace("/.*\b" . 'mtllib' . "\b.*\n/ui", "mtllib " . $mtlFile_filename_withMTLext . "\n", $obj_content);
-	$objFile_id = vrodos_upload_AssetText($obj_content, 'obj'.$assetTitleForm, $asset_newID, null, null);
-
-	if($has_image){
-		$attachment_id = vrodos_upload_img_vid_aud( $image_content, $asset_newID);
-		set_post_thumbnail( $asset_newID, $attachment_id );
-	}
-
-	if($has_video){
-		$attachment_video_id = vrodos_upload_img_vid_aud( $video_content, $asset_newID);
-		update_post_meta( $asset_newID, 'vrodos_asset3d_video', $attachment_video_id );
-	}
-
-	// Set value of attachment IDs at custom fields
-	update_post_meta($asset_newID, 'vrodos_asset3d_mtl', $mtlFile_id);
-	update_post_meta($asset_newID, 'vrodos_asset3d_obj', $objFile_id);
-
-}
-
-//function vrodos_registrationhook_uploadAssets_withTexture($assetTitleForm,$asset_newID,$gameSlug,$assetTypeNumber){
-//
-//	$texture_content = WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/Site1/site1.jpg";
-//	$mtl_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/Site1/site1.mtl");
-//	$obj_content = file_get_contents(WP_PLUGIN_DIR . "/wordpressunity3deditor/includes/files/samples/Site1/site1.obj");
-//
-//	$textureFile_id = vrodos_upload_Assetimg64($texture_content, 'texture_'.$assetTitleForm, $asset_newID, $gameSlug);
-//	$textureFile_filename = basename(get_attached_file($textureFile_id));
-//
-//	$mtl_content = preg_replace("/.*\b" . 'map_Kd' . "\b.*/ui", "map_Kd " . $textureFile_filename, $mtl_content);
-//	$mtlFile_id = vrodos_upload_AssetText($mtl_content, 'material'.$assetTitleForm, $asset_newID, $gameSlug);
-//	$mtlFile_filename = basename(get_attached_file($mtlFile_id));
-//
-//	// OBJ
-//	$mtlFile_filename_notxt = substr( $mtlFile_filename, 0, -4 );
-//	$mtlFile_filename_withMTLext = $mtlFile_filename_notxt . '.mtl';
-//	$obj_content = preg_replace("/.*\b" . 'mtllib' . "\b.*\n/ui", "mtllib " . $mtlFile_filename_withMTLext . "\n", $obj_content);
-//	$objFile_id = vrodos_upload_AssetText($obj_content, 'obj'.$assetTitleForm, $asset_newID, $gameSlug);
-//
-//	// Set value of attachment IDs at custom fields
-//	update_post_meta($asset_newID, 'vrodos_asset3d_mtl', $mtlFile_id);
-//	update_post_meta($asset_newID, 'vrodos_asset3d_obj', $objFile_id);
-//	update_post_meta( $asset_newID, 'vrodos_asset3d_diffimage', $textureFile_id );
-//}
-
-//==========================================================================================================================================
-
-
 //Important GET functions
 
 
@@ -821,8 +633,6 @@ function vrodos_save_scene_async_action_callback()
 
 
 
-
-
 // Undo button for scenes
 function vrodos_undo_scene_async_action_callback()
 {
@@ -835,7 +645,7 @@ function vrodos_undo_scene_async_action_callback()
 //    fwrite($ff, $revision_number);
 //
 
-	$rev=wp_get_post_revisions( $current_scene_id,
+	$rev = wp_get_post_revisions( $current_scene_id,
 		[
 			'offset'           => $revision_number,    // Start from the previous change
 			'posts_per_page'  => 1,    // Only a single revision
@@ -879,31 +689,6 @@ function vrodos_redo_scene_async_action_callback()
 
 	echo $res!=0 ? 'true' : 'false';
 	wp_die();
-}
-
-/**
- *   This function is for compiling the \test_compiler\game_windows  project
- */
-function fake_compile_for_a_test_project()
-{
-	// 1. Start the compile
-	$gcwd = getcwd(); // get cwd (wp-admin probably)
-
-	chdir("../wp-content/plugins/vrodos/test_compiler/game_windows/");
-
-	// Windows
-	$output = shell_exec('start /b starter.bat /c');
-
-	// WebGL
-	//$output = shell_exec('start /b starterWebGL.bat /c');
-
-	// go back to previous directory (wp-admin probably)
-	chdir($gcwd);
-
-	// Write to wp-admin dir the shell_exec cmd result
-	$h = fopen('output.txt', 'w');
-	fwrite($h, $output);
-	fclose($h);
 }
 
 ?>
