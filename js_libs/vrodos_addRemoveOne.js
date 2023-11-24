@@ -557,13 +557,35 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     }
 }
 
+
+function deleteFomScene(uuid, name) {
+
+    if (name) {
+        document.getElementById("confirm-asset-deletion-title").innerHTML = 'Delete ' + name + '?';
+        document.getElementById("confirm-asset-deletion-description").innerHTML = 'Do you really want to delete the asset named <b>' + name + '</b>?';
+    }
+
+    let delete_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#confirm-deletion-dialog'));
+    let closeDialogListener = function(event) {
+        delete_dialog_element.unlisten("MDCDialog:cancel", closeDialogListener);
+    };
+    delete_dialog_element.show();
+    delete_dialog_element.listen("MDCDialog:cancel", closeDialogListener);
+
+
+    let delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
+    delete_btn_element.addEventListener('click', function() {
+        deleteAssetFromScene(uuid)
+    });
+}
+
 /**
  *
  * Delete from scene
  *
- * @param nameToRemove
+ * @param uuid
  */
-function deleteFomScene(uuid) {
+function deleteAssetFromScene(uuid) {
 
     let resChildren = Object.values(resources3D);
     let envirChildren = Object.values(envir.scene.children);
@@ -578,7 +600,7 @@ function deleteFomScene(uuid) {
     }
 
     // 2. Find actual object inside scene
-    var objectSelected;
+    let objectSelected;
     for (let i in envirChildren) {
         if (typeof envirChildren[i] === 'object' && envirChildren[i] !== null) {
             if (envirChildren[i].uuid == uuid) {
@@ -629,140 +651,5 @@ function deleteFomScene(uuid) {
     // Save scene
     triggerAutoSave();
 
-    // // Only Player exists then hide delete button (single one)
-    // if(envir.scene.children.length>5){
-    //     let lastObject = envir.scene.children[envir.scene.children.length - 2];
-    //
-    //     // place controls to last inserted obj
-    //     transform_controls.attach(lastObject);
-    //
-    //     envir.outlinePass.selectedObjects = [lastObject];
-    //
-    //     // highlight
-    //     envir.composer = [];
-    //     envir.setComposerAndPasses();
-    // }
 }
-
-
-
-
-
-
-// /**
-//  *    ----------- Check for Recycle Bin Drag ----------------------------
-//  */
-// function checkForRecycle(){
-//
-//     var raycasterRecycleBin = new THREE.Raycaster();
-//     var mouseDrag = new THREE.Vector2();
-//
-//     // handle scrolling of window
-//     var offtop = envir.vr_editor_main_div.getBoundingClientRect().top;
-//     var offleft =envir.vr_editor_main_div.getBoundingClientRect().left;
-//
-//     // translate into -1 to 1 values
-//     mouseDrag.x =   ( (event.clientX - offleft)  / envir.vr_editor_main_div.clientWidth ) * 2 - 1;
-//     mouseDrag.y = - ( (event.clientY - offtop) / envir.vr_editor_main_div.clientHeight ) * 2 + 1;
-//
-//     // calculate objects intersecting the picking ray
-//     raycasterRecycleBin.setFromCamera( mouseDrag, envir.cameraOrbit );
-//
-//     var intersects = raycasterRecycleBin.intersectObjects( [envir.cameraOrbit.children[0]], false );
-//
-//     if(intersects.length>0)
-//         putInRecyleBin(transform_controls.object.name);
-// }
-//
-// /**
-//  *
-//  * -- Put in recycle bin --
-//  *
-//  * @param nameToRemove
-//  */
-// function putInRecyleBin(nameToRemove){
-//
-//     var container = document.paramsform;
-//
-//     // Delete Variables
-//     delArchive[nameToRemove] = resources3D[nameToRemove];
-//     delete resources3D[nameToRemove];
-//
-//     // Remove from scene and add to recycle bin
-//     var objectSelected = envir.scene.getObjectByName(nameToRemove);
-//
-//     transform_controls.detach(objectSelected);
-//
-//     // prevent orbiting
-//     document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
-//
-//     envir.scene.remove(objectSelected);
-//     objectSelected.position.set(0,0,0);
-//
-//     var bbox = new THREE.Box3().setFromObject(objectSelected);
-//
-//     var scale_factor_x = 2/(bbox.max.x - bbox.min.x);
-//     var scale_factor_y = 2/(bbox.max.y - bbox.min.y);
-//     var scale_factor_z = 2/(bbox.max.z - bbox.min.z);
-//
-//     if (scale_factor_x > 1000)
-//         scale_factor_x = 1;
-//
-//     if (scale_factor_y > 1000)
-//         scale_factor_y = 1;
-//
-//     if (scale_factor_z > 1000)
-//         scale_factor_z = 1;
-//
-//
-//     objectSelected.scale.set(scale_factor_x, scale_factor_y, scale_factor_z);
-//     objectSelected.isInRecycleBin = true;
-//
-//     // Removed items are added to the cameraOrbit ??? Find something better
-//     envir.cameraOrbit.children[0].add(objectSelected);
-//
-//     // Make trs box visible - invisible
-//     //if (obj_ARR.length > 0) {
-//     //    transform_controls.attach(obj_ARR[0]);
-//     //    transform_controls.traverse(function(node){if(node.name=='trs_modeChanger') node.visible=true});
-//     //}else
-//     //    transform_controls.traverse(function(node){if(node.name=='trs_modeChanger') node.visible=false});
-//
-// }
-//
-//
-// /**
-//  * Expand items from recycle bin
-//  *
-//  */
-// function enlistDeletedObjects(){
-//
-//     for(var i=0; i < envir.cameraOrbit.children[0].children.length; i++){
-//         if (envir.cameraOrbit.children[0].children[i] instanceof THREE.Group){
-//             var recycledItem = envir.cameraOrbit.children[0].children[i];
-//             recycledItem.position.set(0, (i+1)*4, 0);
-//             recycledItem.isInRecycleBin = true;
-//         }
-//     }
-//
-//     isRecycleBinDeployed = true;
-// }
-//
-// /**
-//  *   Collapse items in recycle bin
-//  *
-//  */
-// function delistDeletedObjects(){
-//
-//     for(var i=0; i < envir.cameraOrbit.children[0].children.length; i++){
-//         if (envir.cameraOrbit.children[0].children[i] instanceof THREE.Group){
-//             var recycledItem = envir.cameraOrbit.children[0].children[i];
-//             recycledItem.position.set(0,0,0);
-//             recycledItem.isInRecycleBin = true;
-//         }
-//     }
-//
-//     isRecycleBinDeployed = false;
-// }
-
 
