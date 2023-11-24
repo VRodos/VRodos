@@ -725,6 +725,7 @@ THREE.SceneExporter.prototype = {
             '		"formatVersion" : 4.0,',
             '		"type"		: "scene",',
             '		"generatedBy"	: "SceneExporter.js",',
+            '		"timestamp"	: '+ Date.now()  +',',
             '		"ClearColor" : "#' + (envir.scene.background.isColor ? envir.scene.background.getHexString() : '000000') + '",',
             envir.scene.fog ? '		"fogtype" : "' + (envir.scene.fog.isFog ? "linear" : "exponential") + '",' : '',
             envir.scene.fog ? '		"fogcolor" : "#' + (envir.scene.fog.color ? envir.scene.fog.color.getHexString() : '000000') + '",' : '',

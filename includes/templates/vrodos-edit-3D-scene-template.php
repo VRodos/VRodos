@@ -360,9 +360,9 @@ wp_head();
 
                     <!-- Undo - Save - Redo -->
                     <div id="save-scene-elements">
-                        <a id="undo-scene-button" title="Undo last change"><i class="material-icons">undo</i></a>
-                        <a id="save-scene-button" title="Save all changes you made to the current scene">All changes saved</a>
-                        <a id="redo-scene-button" title="Redo last change"><i class="material-icons">redo</i></a>
+                        <a id="undo-scene-button" title="Undo last change - You must save to keep the reverted version"><i class="material-icons">undo</i></a>
+                        <a id="save-scene-button" title="Save all changes you made to the current scene">Save Scene</a>
+                        <a id="redo-scene-button" title="Redo last change - You must save to keep the newer version"><i class="material-icons">redo</i></a>
 
                         <!-- View Json code UI -->
                         <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
