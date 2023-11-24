@@ -15,7 +15,6 @@ class VRodos_LightsPawn_Loader {
         for (let n in resources3D) {
             (function (name) {
 
-
                 if (name === 'fogtype') {
                     if (resources3D[name] === 'linear') {
 
@@ -29,7 +28,6 @@ class VRodos_LightsPawn_Loader {
                         envir.scene.fog = new THREE.FogExp2(resources3D['fogcolor'],
                             parseFloat(resources3D['fogdensity'])
                         );
-
                     }
 
                     // Set the UIs too
@@ -43,12 +41,10 @@ class VRodos_LightsPawn_Loader {
                         document.getElementById('RadioExponentialFog').checked = true;
                     }
 
-
                     document.getElementById('jscolorpickFog').value = resources3D['fogcolor'];
                     document.getElementById('FogNear').value = parseFloat(resources3D['fognear'])
                     document.getElementById('FogFar').value = parseFloat(resources3D['fogfar']);
                     document.getElementById('FogDensity').value = parseFloat(resources3D['fogdensity']);
-
 
                     return;
                 }
@@ -56,8 +52,6 @@ class VRodos_LightsPawn_Loader {
 
                 if (name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity')
                     return;
-
-
 
                 // Scene Settings
                 if (name === 'ClearColor') {
@@ -97,7 +91,6 @@ class VRodos_LightsPawn_Loader {
                     if(!clearToParse)
                         return;
                 }
-
 
 
                 if (resources3D[name]['category_name'] === 'lightSun') {
@@ -140,12 +133,6 @@ class VRodos_LightsPawn_Loader {
                     lightSun.category_name = "lightSun";
                     lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
-
-                    
-                    console.log("Loaded sun");
-                    console.log(resources3D[name].name);
-                    console.log(lightSun.name);
-                    console.log(resources3D[name]['shadowCameraBottom']);
                     lightSun.castShadow = true;
                     lightSun.castingShadow = resources3D[name]['castingShadow'];
                     lightSun.shadowMapHeight = resources3D[name]['shadowMapHeight'];
@@ -165,13 +152,8 @@ class VRodos_LightsPawn_Loader {
                     sunSphere.name = "SunSphere";
                     lightSun.add(sunSphere);
 
-
-
                     // lightSun.shadow.mapSize.width = 200;
                     // lightSun.shadow.mapSize.height = 200;
-
-
-
 
                     var lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, colora);
                     lightSunHelper.isLightHelper = true;
@@ -217,8 +199,6 @@ class VRodos_LightsPawn_Loader {
                     var lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
                     lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
                     envir.scene.add(lightSunShadowhelper);
-
-
 
 
                 }
@@ -373,8 +353,6 @@ class VRodos_LightsPawn_Loader {
 
                     updateSpot();
 
-
-
                 }
                 else if (resources3D[name]['category_name'] === 'lightAmbient') {
 
@@ -419,8 +397,6 @@ class VRodos_LightsPawn_Loader {
                     ambientSphere.isSelectableMesh = true;
                     ambientSphere.name = "ambientSphere";
                     lightAmbient.add(ambientSphere);
-
-
 
                     envir.scene.add(lightAmbient);
 
@@ -480,7 +456,6 @@ class VRodos_LightsPawn_Loader {
                                 }
                             }
 
-
                             var pawnLabelDiv = document.createElement('div');
                             pawnLabelDiv.className = '';
                             pawnLabelDiv.textContent = 'Actor ' + indexPawn;
@@ -493,8 +468,6 @@ class VRodos_LightsPawn_Loader {
                             pawn.add(pawnLabel);
                             //pawnLabel.layers.set( 0 );
 
-
-
                             envir.scene.add(pawn);
 
                             // If we do not attach them, they are not visible in Editor !
@@ -503,7 +476,6 @@ class VRodos_LightsPawn_Loader {
                                     attachToControls(name, envir.scene.getObjectByName(name));
                                 }
                             }
-
                             setHierarchyViewer();
 
                         },
@@ -516,12 +488,8 @@ class VRodos_LightsPawn_Loader {
                             console.log('An error happened while loading Pawn. Error 455');
                         }
                     );
-
                 }
-
             })(n);
         }
-
     }
-
 }

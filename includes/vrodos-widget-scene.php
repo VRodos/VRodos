@@ -528,8 +528,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
 
         
         <script>
-            
-            
+
             
             loaderMulti = new VRodos_LoaderMulti("1");
         

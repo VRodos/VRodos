@@ -649,6 +649,9 @@ wp_head();
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
         let firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
+        // Make a Loading Manager
+        var manager = new THREE.LoadingManager();
+
         // load asset browser with data
         jQuery(document).ready( function() {
 
@@ -686,8 +689,7 @@ wp_head();
             jQuery("#progressWrapper").get(0).style.visibility = "visible";
             document.getElementById("result_download").innerHTML = "Loading";
 
-            // Make a Loading Manager
-            let manager = new THREE.LoadingManager();
+
 
             // On progress messages (loading)
             manager.onProgress = function ( url, loaded, total ) {
@@ -853,29 +855,9 @@ wp_head();
 
                 //saveChanges();
             }
-        });
 
 
-        <!--  Part 3: Start 3D with Javascript   -->
-
-        function updatePositionsAndControls()
-        {
-            // envir.orbitControls.update();
-            // updatePointerLockControls();
-
-            // Now update the translation and rotation input texts at datgui from transform controls
-            if (transform_controls.object) {
-                const affines = ['position', 'rotation', 'scale'];
-                for (let j=0; j<3; j++ ) {
-                    for (let i = 0; i < 3; i++) {
-                        if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
-                            controlInterface.__controllers[j*3+i].updateDisplay();
-                        }
-                    }
-                }
-                updatePositionsPhpAndJavsFromControlsAxes();
-            }
-        }
+        }); // End of document ready
 
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json) {
@@ -898,6 +880,29 @@ wp_head();
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
         }
+
+        <!--  Part 3: Start 3D with Javascript   -->
+
+        function updatePositionsAndControls()
+        {
+            // envir.orbitControls.update();
+            // updatePointerLockControls();
+
+            // Now update the translation and rotation input texts at datgui from transform controls
+            if (transform_controls.object) {
+                const affines = ['position', 'rotation', 'scale'];
+                for (let j=0; j<3; j++ ) {
+                    for (let i = 0; i < 3; i++) {
+                        if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
+                            controlInterface.__controllers[j*3+i].updateDisplay();
+                        }
+                    }
+                }
+                updatePositionsPhpAndJavsFromControlsAxes();
+            }
+        }
+
+
 
         function attachToControls(name, objItem){
 
