@@ -34,30 +34,13 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $scene_content_text[$key] = $scene_post[$key]->post_content;
         $scene_title[$key] = $scene_post[$key]->post_title;
 
-        //foreach ( $scene_json[$key]->objects as &$o ) {
-        // $cp_poi_img_desc[$key] = $o->poi_img_desc;
-
-        //}
-
-
         // Transform JSON text into JSON objects by decode function
-        //$scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
+        // $scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
         $scene_json[$key] = json_decode( $scene_content_text[$key] );
-
-        //print_r($scene_json);
 
 
         //print_r($scene_json[$key]->objects->poi_img_title);   //TODO remove space for desc and title
         $objCount = 0;
-
-        /*  foreach ( $scene_json[$key]->objects as &$o ) {
-              $cp_poi_img_desc[$key][$objCount] = $o->poi_img_content;
-              $cp_poi_img_title[$key][$objCount] = $o->poi_img_title;
-              $objCount++;
-
-
-          }*/
-        //print_r($cp_poi_img_desc);
 
         //$scene_content_text[$key] = trim( preg_replace( '/\s+/S', '', $scene_content_text[$key] ) );
         $scene_json[$key] = json_decode( $scene_content_text[$key] );

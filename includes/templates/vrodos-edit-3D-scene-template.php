@@ -33,7 +33,7 @@ function vrodos_load_vreditor_scripts()
     // Hierarchy Viewer
     wp_enqueue_script( 'vrodos_HierarchyViewer' );
 
-    wp_enqueue_script( 'vrodos_load87_datgui' );
+    wp_enqueue_script( 'vrodos_load_datgui' );
     wp_enqueue_script( 'vrodos_load141_OrbitControls' );
     wp_enqueue_script( 'vrodos_load141_TransformControls' );
     wp_enqueue_script( 'vrodos_load141_PointerLockControls' );
@@ -592,6 +592,33 @@ wp_head();
 
     </div>
 
+    <aside id="confirm-deletion-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+           aria-labelledby="Confirm asset delete dialog" aria-describedby="Confirm that you want to delete selected asset">
+        <div class="mdc-dialog__surface">
+            <header class="mdc-dialog__header">
+                <h2 id="confirm-asset-deletion-title" class="mdc-dialog__header__title">Delete Asset</h2>
+            </header>
+
+            <section class="mdc-dialog__body">
+                <div class="mdc-layout-grid">
+                    <div class="mdc-layout-grid__inner">
+                        <div class="mdc-layout-grid__cell--span-12">
+                            <span class="mdc-typography--title" id="confirm-asset-deletion-description">Do you really want to delete the selected asset?</span>
+                            <br>
+                            <span class="mdc-typography--subheading2">WARNING: This action cannot be undone!</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="mdc-dialog__footer">
+                <a class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button mdc-theme--text-hint-on-light">Cancel</a>
+                <a id="delete-asset-btn-confirmation" class="mdc-button--raised mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept">DELETE</a>
+            </footer>
+        </div>
+        <div class="mdc-dialog__backdrop"></div>
+    </aside>
+
     <!-- Scripts part 1: The GUIs -->
     <script type="text/javascript">
 
@@ -621,6 +648,9 @@ wp_head();
 
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
         let firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+
+        // Make a Loading Manager
+        var manager = new THREE.LoadingManager();
 
         // load asset browser with data
         jQuery(document).ready( function() {
@@ -659,8 +689,7 @@ wp_head();
             jQuery("#progressWrapper").get(0).style.visibility = "visible";
             document.getElementById("result_download").innerHTML = "Loading";
 
-            // Make a Loading Manager
-            let manager = new THREE.LoadingManager();
+
 
             // On progress messages (loading)
             manager.onProgress = function ( url, loaded, total ) {
@@ -678,7 +707,6 @@ wp_head();
 
                 if (envir.scene.getObjectByName(name)) {
                     objItem = envir.scene.getObjectByName(name);
-                    console.log(name, objItem);
                     attachToControls(name, objItem);
                 } else {
                     return;
@@ -755,101 +783,81 @@ wp_head();
                 envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
             }
             if (resources3D["backgroundStyleOption"]) {
-            let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+                let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
 
-          
-           
-            switch (selOption){
-            case 0:
-                document.getElementById("sceneNone").checked = true;
-                custom_img_sel.disabled = true;
-                preset_sel.disabled = true;
-                color_sel.disabled = true;
 
-                color_sel.hidden = true;
-                preset_sel.hidden = true;
-                custom_img_sel.hidden = true;
-                img_thumb.hidden = true;
-                break;
-            case 1:
-                document.getElementById("sceneColorRadio").checked = true;
-                color_sel.disabled = false;
-                preset_sel.disabled = true;
-                custom_img_sel.disabled = true;
 
-                color_sel.hidden = false;
-                preset_sel.hidden = true;
-                custom_img_sel.hidden = true;
-                img_thumb.hidden = true;
-                break;
-            case 2:
-                document.getElementById("sceneSky").checked = true;
-                custom_img_sel.disabled = true;
-                preset_sel.disabled = false;
-                color_sel.disabled = true;
+                switch (selOption){
+                    case 0:
+                        document.getElementById("sceneNone").checked = true;
+                        custom_img_sel.disabled = true;
+                        preset_sel.disabled = true;
+                        color_sel.disabled = true;
 
-                color_sel.hidden = true;
-                preset_sel.hidden = false;
-                custom_img_sel.hidden = true;
-                img_thumb.hidden = true;
-                envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                envir.scene.preset_selection = resources3D["backgroundPresetOption"];
-                // envir.scene.backgroundPresetOption = preset_sel.value;
-                //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+                        color_sel.hidden = true;
+                        preset_sel.hidden = true;
+                        custom_img_sel.hidden = true;
+                        img_thumb.hidden = true;
+                        break;
+                    case 1:
+                        document.getElementById("sceneColorRadio").checked = true;
+                        color_sel.disabled = false;
+                        preset_sel.disabled = true;
+                        custom_img_sel.disabled = true;
 
-                for(let index = 0; index < preset_sel.options.length;index++){
-                    if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
-                        preset_sel.options[index].selected = true;
-                        //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
-                    }
+                        color_sel.hidden = false;
+                        preset_sel.hidden = true;
+                        custom_img_sel.hidden = true;
+                        img_thumb.hidden = true;
+                        break;
+                    case 2:
+                        document.getElementById("sceneSky").checked = true;
+                        custom_img_sel.disabled = true;
+                        preset_sel.disabled = false;
+                        color_sel.disabled = true;
+
+                        color_sel.hidden = true;
+                        preset_sel.hidden = false;
+                        custom_img_sel.hidden = true;
+                        img_thumb.hidden = true;
+                        envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
+                        envir.scene.preset_selection = resources3D["backgroundPresetOption"];
+                        // envir.scene.backgroundPresetOption = preset_sel.value;
+                        //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+
+                        for(let index = 0; index < preset_sel.options.length;index++){
+                            if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
+                                preset_sel.options[index].selected = true;
+                                //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
+                            }
+                        }
+                        break;
+                    case 3:
+                        document.getElementById("sceneCustomImage").checked = true;
+                        custom_img_sel.disabled = false;
+                        preset_sel.disabled = true;
+                        color_sel.disabled = true;
+
+                        color_sel.hidden = true;
+                        preset_sel.hidden = true;
+                        custom_img_sel.hidden = false;
+
+                        if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
+                            img_thumb.src = resources3D["backgroundImagePath"];
+                            img_thumb.hidden = false;
+                        }
+                        break;
                 }
-                break;
-            case 3:
-                document.getElementById("sceneCustomImage").checked = true;
-                custom_img_sel.disabled = false;
-                preset_sel.disabled = true;
-                color_sel.disabled = true;
+                envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
 
-                color_sel.hidden = true;
-                preset_sel.hidden = true;
-                custom_img_sel.hidden = false;
 
-                if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
-                    img_thumb.src = resources3D["backgroundImagePath"];
-                    img_thumb.hidden = false;
-                }
-                break;
-            }
-            envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-          
-           
-            envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
-           
+                envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+
                 //saveChanges();
             }
-        });
 
 
-        <!--  Part 3: Start 3D with Javascript   -->
-
-        function updatePositionsAndControls()
-        {
-            // envir.orbitControls.update();
-            // updatePointerLockControls();
-
-            // Now update the translation and rotation input texts at datgui from transform controls
-            if (transform_controls.object) {
-                const affines = ['position', 'rotation', 'scale'];
-                for (let j=0; j<3; j++ ) {
-                    for (let i = 0; i < 3; i++) {
-                        if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
-                            controlInterface.__controllers[j*3+i].updateDisplay();
-                        }
-                    }
-                }
-                updatePositionsPhpAndJavsFromControlsAxes();
-            }
-        }
+        }); // End of document ready
 
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json) {
@@ -872,6 +880,29 @@ wp_head();
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D);
         }
+
+        <!--  Part 3: Start 3D with Javascript   -->
+
+        function updatePositionsAndControls()
+        {
+            // envir.orbitControls.update();
+            // updatePointerLockControls();
+
+            // Now update the translation and rotation input texts at datgui from transform controls
+            if (transform_controls.object) {
+                const affines = ['position', 'rotation', 'scale'];
+                for (let j=0; j<3; j++ ) {
+                    for (let i = 0; i < 3; i++) {
+                        if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
+                            controlInterface.__controllers[j*3+i].updateDisplay();
+                        }
+                    }
+                }
+                updatePositionsPhpAndJavsFromControlsAxes();
+            }
+        }
+
+
 
         function attachToControls(name, objItem){
 

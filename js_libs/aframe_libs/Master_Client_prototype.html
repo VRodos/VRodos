@@ -12,16 +12,13 @@
 
     <script src="js/aframe/1.4.2/aframe-v1.4.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
-    <script src="js/datgui/0.7.7/dat.gui.min.js"></script>
+    <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
 
     <script src="../easyrtc/easyrtc.js"></script>
     <script src="../dist/networked-aframe.js"></script>
 
     <!--<script src="js/a-water_alphamask_master.js"></script>-->
     <script src="js/sunsky/3.0.4/aframe-sun-sky.min.js"></script>
-    <script src="js/randomizer/3.0.1/aframe-randomizer-components.min.js"></script>
-
-    <script src="js/particles/aframe-particle-system-component.min.js"></script>
 
     <script src="js/highlight_img.js"></script>
 
@@ -64,7 +61,7 @@
                             selector: '.rpm_avatar', // the model entity has a .model class
                             component: 'gltf-model', // we want the gltf-model component to sync between clients
                         },
-                      
+
                     ]
                 });
             }
@@ -106,7 +103,7 @@
                                 type: 'string',
                                 default: ''
                             }
-                            
+
                         },
 
                         init: function () {
@@ -116,13 +113,13 @@
                         update: function () {
 
                             if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
-                                    //elem.setAttribute("animation-player", evt.detail);
-                                    if(this.data.movementState != "stop"){
-                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
-                                    }else{
-                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
-                                    }
-                                    
+                                //elem.setAttribute("animation-player", evt.detail);
+                                if(this.data.movementState != "stop"){
+                                    this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
+                                }else{
+                                    this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
+                                }
+
                             }
                         }
                     });
@@ -135,7 +132,7 @@
                                 type: 'string',
                                 default: ''
                             }
-                            
+
                         },
 
                         init: function () {
@@ -145,17 +142,17 @@
                         update: function () {
 
                             if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
-                                    //elem.setAttribute("animation-player", evt.detail);
-                                    if(this.data.movementState != "stop"){
-                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
-                                    }else{
-                                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
-                                    }
-                                    
+                                //elem.setAttribute("animation-player", evt.detail);
+                                if(this.data.movementState != "stop"){
+                                    this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
+                                }else{
+                                    this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
+                                }
+
                             }
                         }
                     });
-                    
+
 
                     AFRAME.registerComponent('player-info', {
                         // notice that color and name are both listed in the schema; NAF will only keep
@@ -185,7 +182,7 @@
                                 default: '',
                                 type: 'string'
                             }
-                            
+
                         },
 
                         init: function () {
@@ -194,21 +191,21 @@
                             this.nametag = this.el.querySelector('.nametag');
                             this.rpm_model = this.el.querySelector('.rpm_avatar');
                             this.anims_loaded = false;
-                        
-                            var elem = this.el; 
-                            if (elem.querySelector('.rpm_avatar')) {
-                                elem.querySelector('.rpm_avatar').addEventListener('stateadded', function (evt) {     
-                                if (evt.detail == 'loadedanimations'){
-                                    console.log("Animations loaded");
-                                    this.anims_loaded = true;
-                                    elem.addState('anims_loaded');
-                                    
-                                }
-                            });
 
-                            
+                            var elem = this.el;
+                            if (elem.querySelector('.rpm_avatar')) {
+                                elem.querySelector('.rpm_avatar').addEventListener('stateadded', function (evt) {
+                                    if (evt.detail == 'loadedanimations'){
+                                        console.log("Animations loaded");
+                                        this.anims_loaded = true;
+                                        elem.addState('anims_loaded');
+
+                                    }
+                                });
+
+
                             }
-                            
+
                             this.avatar_type = this.el.querySelector('.avatar_type');
 
                             this.ownedByLocalUser = this.el.id === 'cameraA';
@@ -219,7 +216,7 @@
 
                                 // add the initial color to the html overlay color picker button
                                 document.querySelector('button').style.backgroundColor = this.data.color;
-                                document.querySelector('button').style.color = this.data.color;                             
+                                document.querySelector('button').style.color = this.data.color;
                             }
                         },
 
@@ -237,7 +234,7 @@
 
                         update: function () {
 
-                            var elem = this.el; 
+                            var elem = this.el;
                             if (this.data.avatarType) {
 
                                 if (this.data.avatarType === 'no-avatar') {
@@ -274,17 +271,10 @@
 
                                         // Event listener when the 3D model has actually loaded
                                         this.rpm_model.addEventListener('model-loaded', () => {
+
                                             let avatarType = this.rpm_model.object3DMap.mesh.children[0].userData.name;
-
-
-
-                                            if (avatarType !== 'Armature') {
-                                                console.log(this.rpm_model.object3DMap.mesh.children[0].children);
-                                            }
-
-
                                             // Change Y position of model based on type
-                                            let avatarPosition = avatarType === 'Armature' ? '0 -1.4 -0.5' : '0 -0.3 -0.5';
+                                            let avatarPosition = avatarType === 'Armature' ? '0 -1.4 -0.5' : '0 -1.0 -0.5';
                                             this.rpm_model.setAttribute('position', avatarPosition);
                                         }, {once : true});
                                     }
@@ -302,14 +292,14 @@
                     // If base scene, launch avatar selector
                     /*if (document.getElementById("is-base-scene-input").value === 'true' ) {*/
 
-                        let avatar_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))
+                    let avatar_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))
 
-                        let closeAvatarDialogListener = function(event) {
-                            avatar_dialog_element.unlisten("MDCDialog:cancel", closeAvatarDialogListener);
-                            selectAvatarType('no-avatar');
-                        };
-                        avatar_dialog_element.show();
-                        avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
+                    let closeAvatarDialogListener = function(event) {
+                        avatar_dialog_element.unlisten("MDCDialog:cancel", closeAvatarDialogListener);
+                        selectAvatarType('no-avatar');
+                    };
+                    avatar_dialog_element.show();
+                    avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
                     /*}*/
 
                 });
@@ -504,39 +494,39 @@
                 var elem = this.el;
 
                 document.addEventListener('keydown', function(event) {
-                    if(event.keyCode === 87) {        
-                        if (shouldCaptureKeyEvent(event)) { 
+                    if(event.keyCode === 87) {
+                        if (shouldCaptureKeyEvent(event)) {
                             document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingforward");
-                    }
+                        }
                     }else if(event.keyCode === 83){
-                        if (shouldCaptureKeyEvent(event)) { 
+                        if (shouldCaptureKeyEvent(event)) {
                             elem.emit('avatar-changed-animation', "walkingdown", false);
                             document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingdown");
                         }
-                        
+
                     }else if(event.keyCode === 68){
-                        if (shouldCaptureKeyEvent(event)) { 
+                        if (shouldCaptureKeyEvent(event)) {
                             elem.emit('avatar-changed-animation', "walkingright", false);
                             document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingright");
                         }
-                        
+
                     }else if(event.keyCode === 65){
-                        if (shouldCaptureKeyEvent(event)) { 
+                        if (shouldCaptureKeyEvent(event)) {
                             elem.emit('avatar-changed-animation', "walkingleft", false);
                             document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "walkingleft");
-                        }    
+                        }
                     }
                     else{
                         elem.emit('avatar-changed-animation', "idle", false);
                     }
-                            
+
                 });
                 document.addEventListener('keyup', function(event) {
-                        elem.emit('avatar-changed-animation', "stopped", false);
-                        document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "stop");
+                    elem.emit('avatar-changed-animation', "stopped", false);
+                    document.getElementById('cameraA').setAttribute('avatar-movement-info', 'movementState', "stop");
                 });
 
-                
+
             }
         });
 
@@ -544,18 +534,16 @@
             init:function() {
 
                 var bind = AFRAME.utils.bind;
-               this.el.addEventListener('componentchanged', function (evt) {
+                this.el.addEventListener('componentchanged', function (evt) {
                     if (evt.detail.name === 'rotation') {
                         console.log('Entity has rotated');
                     }
                     console.log(evt.detail);
                 });
-
-                
             }
         });
 
-        
+
 
         AFRAME.registerComponent('animation-embed', {
             schema: {
@@ -1018,16 +1006,16 @@
 
 <a-scene
         oculus-go-controls-enabled
-         start-animation
-         id="aframe-scene-container"
-         fog="type: linear; color: #AAB; far: 230; near: 0"
-         renderer="antialias: true;
+        start-animation
+        id="aframe-scene-container"
+        fog="type: linear; color: #AAB; far: 230; near: 0"
+        renderer="antialias: true;
             sortObjects: true;
             toneMapping: ACESFilmic;
             precision: high;"
-         vr-mode-ui="enabled: true"
-         loading-screen="dotsColor: gray; backgroundColor: black;"
-         networked-scene="
+        vr-mode-ui="enabled: true"
+        loading-screen="dotsColor: gray; backgroundColor: black;"
+        networked-scene="
             room: roomname;
             debug: true;
             audio: true;
@@ -1042,7 +1030,7 @@
 
         <a-asset-item id="model" src="../media/sound/fem.glb"></a-asset-item> -->
 
-       
+
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
             <a-entity class="avatar hideable" player-info avatar-movement-info>
@@ -1054,10 +1042,10 @@
                         animation-embed="glb_id:ready-player-me-avatar"
                         id="ready-player-me-avatar"
                         class="rpm_avatar"
-                        position="0 -1.4 -0.5"
+                        position="0 0 -0.5"
                         rotation="0 180 0"
                         visible="true"
-                        >
+                >
                 </a-entity>
 
                 <!-- Sphere Avatar-->

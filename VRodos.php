@@ -5,7 +5,7 @@
  * Description: Make your wordpress website a VR site
  * Author: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
  * Author URI: https://vrodos.iti.gr
- * Version: 2.0
+ * Version: 2.1
  */
 
 
@@ -53,7 +53,7 @@ function vrodos_register_scripts() {
         array( 'vrodos_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
         array( 'vrodos_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
         array( 'vrodos_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
-        array( 'vrodos_load87_datgui', $pluginDirJS.'threejs87/dat.gui.js'),
+        array( 'vrodos_load_datgui', $pluginDirJS.'datgui/0.7.9/dat.gui.min.js'),
 
         array( 'vrodos_load87_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
         array( 'vrodos_load87_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
@@ -180,10 +180,9 @@ function vrodos_register_styles() {
 
     wp_register_style( 'vrodos_backend', plugin_dir_url( __FILE__ ) . 'css/vrodos_backend.css' );
     wp_register_style( 'vrodos_3D_editor', plugin_dir_url( __FILE__ ) . 'css/vrodos_3D_editor.css' );
-    wp_register_style( 'vrodos_datgui', plugin_dir_url( __FILE__ ) . 'css/dat-gui.css' );
+    wp_register_style( 'vrodos_datgui', plugin_dir_url( __FILE__ ) . 'js_libs/datgui/0.7.9/dat.gui.css' );
 
     wp_register_style( 'vrodos_dashboard_table', plugin_dir_url( __FILE__ ) . 'css/vrodos_dashboard_table_style.css' );
-
 
     wp_register_style( 'vrodos_3D_editor_browser', plugin_dir_url( __FILE__ ).'css/vrodos_3D_editor_browser.css' );
     wp_register_style( 'vrodos_material_stylesheet',  plugin_dir_url( __FILE__ ).'node_modules/material-components-web/dist/material-components-web.css' );
@@ -314,12 +313,6 @@ add_action( 'save_post', 'vrodos_games_taxtype_box_content_save' );
 // 55
 add_action( 'manage_vrodos_game_posts_custom_column' , 'vrodos_set_custom_vrodos_game_columns_fill', 10, 2 );
 
-// 40
-// Don't create Assembler & Compiles boxes in project backend
-// Compile project only from front.
-//add_action('admin_menu', 'vrodos_games_databox_add');
-// 32
-//add_action('save_post', 'vrodos_games_databox_save');
 
 //---------------------- Scenes ----------------------------------------------------
 
@@ -503,17 +496,6 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-compile-aframe.php'
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
 
-
-
-//------------------- Archaeology related -----------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-archaeology-yamls.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
-
-// 22
-add_action( 'init', 'vrodos_create_asset_categories');
-
-// 23
-add_action( 'init', 'vrodos_scenes_types_archaeology_standard_cre' );
 
 
 // ---- Content interlinking ----------

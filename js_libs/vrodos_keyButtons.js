@@ -100,7 +100,7 @@ let keydown_handler = (ev) => {
             if (ev.composedPath()[0].tagName === "BODY") {
                 deleteFomScene(transform_controls.object.uuid);
             }
-            break;//  delete
+            break; //  delete
     }
 };
 let keyup_handler = (ev) => {
