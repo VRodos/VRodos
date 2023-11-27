@@ -149,7 +149,6 @@ function vrodos_register_scripts() {
 
 
     //----Various for scene editor
-
     $scriptsD = array(
         array( 'vrodos_3d_editor_environmentals', $pluginDirJS.'vrodos_3d_editor_environmentals.js'),
         array( 'vrodos_keyButtons', $pluginDirJS.'vrodos_keyButtons.js'),
@@ -932,6 +931,16 @@ function disable_widgets_block_editor() {
 }
 add_action( 'after_setup_theme', 'disable_widgets_block_editor' );
 
+
+// Limit Scene revisions to N
+function ns_limit_revisions($num, $post){
+
+    $N = 50; // Keep only the latest N revisions
+    $target_types = array('vrodos_scene');
+    $is_target_type = in_array($post->post_type, $target_types);
+    return $is_target_type ? $N : $num;
+}
+add_filter('wp_revisions_to_keep', 'ns_limit_revisions', 10, 2);
 
 
 //-------- Uninstall -------------------

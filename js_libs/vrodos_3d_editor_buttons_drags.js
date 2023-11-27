@@ -258,6 +258,11 @@ function loadButtonActions() {
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
     jQuery('#save-scene-button').click(function () {
 
+        let save_scene_btn = document.getElementById("save-scene-button");
+        if (save_scene_btn.classList.contains("LinkDisabled")){
+            return;
+        }
+
         jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
         // Export using a custom variant of the old deprecated class SceneExporter
