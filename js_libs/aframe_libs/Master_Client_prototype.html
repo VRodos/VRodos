@@ -41,6 +41,25 @@
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
     <script>
+       
+       const vectorRequiresUpdate = epsilon => {
+            return () => {
+                let prev = null;
+
+                return curr => {
+                if (prev === null) {
+                    prev = new THREE.Vector3(curr.x, curr.y, curr.z);
+                    return true;
+                } else if (!NAF.utils.almostEqualVec3(prev, curr, epsilon)) {
+                    curr.x = 0;
+                    prev.copy(curr);
+                    return true;
+                }
+
+                return false;
+                };
+            };
+        };
 
         // Global variable to switch between interfaces for interaction modes.
         let browsingModeVR = false;
@@ -54,13 +73,16 @@
                     template: '#avatar-template-expo',
                     components: [
                         'position',
-                        'rotation',
                         'player-info',
                         'avatar-movement-info',
                         {
                             selector: '.rpm_avatar', // the model entity has a .model class
                             component: 'gltf-model', // we want the gltf-model component to sync between clients
                         },
+                        {
+                            component: 'rotation',
+                            requiresNetworkUpdate: vectorRequiresUpdate(0.5)
+                        }
 
                     ]
                 });
