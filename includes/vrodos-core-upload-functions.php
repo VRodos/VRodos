@@ -202,29 +202,6 @@ function vrodos_upload_img_vid_aud($file, $parent_post_id) {
     return false;
 }
 
-
-// Upload images for only for 2D scenes
-function vrodos_upload_img($parent_post_id, $file = array()) {
-
-    // Require admin power
-    require_once( ABSPATH . 'wp-admin/includes/admin.php' );
-
-    // Upload file
-    $file_return = wp_handle_upload( $file, array('test_form' => false ) );
-
-    if( !isset( $file_return['error'] ) && !isset( $file_return['upload_error_handler'] ) ) {
-
-        // Id of attachment post
-        $attachment_id = vrodos_insert_attachment_post($file_return, $parent_post_id );
-
-        if( 0 < intval( $attachment_id, 10 ) ) {
-            return $attachment_id;
-        }
-
-    }
-    return false;
-}
-
 // Insert attachment post
 function vrodos_insert_attachment_post($file_return, $parent_post_id ){
 
@@ -362,66 +339,6 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type)
     return false;
 }
 
-
-
-// Asset: Used to save textures
-function vrodos_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $type) {
-
-    $DS = DIRECTORY_SEPARATOR;
-
-    // UPLOAD NEW FILE:
-    $hashed_filename = $parent_post_id.'_'.$imgTitle . '.' . $type;
-
-    // Remove all sizes of thumbnails creation procedure
-    add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
-
-    // Get admin power
-    require_once(ABSPATH . 'wp-admin/includes/admin.php');
-
-    // Get upload directory and do some sanitization
-    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'models'.$DS;
-
-
-    // Write file string to a file in server
-    file_put_contents($upload_path . $hashed_filename,
-        base64_decode(substr($imagefile, strpos($imagefile, ",") + 1)));
-
-    $new_filename_path = str_replace("\\","/", $upload_path . $hashed_filename);
-
-    //--- End of upload ---
-
-
-    // Add post of texture (type: attachment)
-    $attachment = array(
-        'post_mime_type' => 'image/'.($type==='png'?'png':'jpeg'),
-        'post_title' => preg_replace('/\.[^.]+$/', '', $hashed_filename),
-        'post_content' => '',
-        'post_status' => 'inherit',
-        'guid' => wp_upload_dir()['baseurl'].'/Models/'.$hashed_filename
-    );
-
-    // Attach to
-    $attachment_id = wp_insert_attachment($attachment, $new_filename_path, $parent_post_id);
-
-    require_once(ABSPATH . 'wp-admin/includes/image.php');
-
-    $attachment_data = wp_generate_attachment_metadata($attachment_id, $new_filename_path);
-
-    wp_update_attachment_metadata($attachment_id, $attachment_data);
-
-    // store each texture in a post meta that receives multiple files
-    add_post_meta($parent_post_id, 'vrodos_asset3d_diffimage', $attachment_id);
-
-    remove_filter('intermediate_image_sizes_advanced',
-        'vrodos_remove_allthumbs_sizes', 10);
-
-    if (0 < intval($attachment_id, 10)) {
-        return $attachment_id;
-    }
-
-
-    return false;
-}
 
 
 // Asset: Used to save screenshot
