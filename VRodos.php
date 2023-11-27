@@ -53,7 +53,6 @@ function vrodos_register_scripts() {
         array( 'vrodos_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
         array( 'vrodos_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
         array( 'vrodos_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
-        array( 'vrodos_load_datgui', $pluginDirJS.'datgui/0.7.9/dat.gui.min.js'),
 
         array( 'vrodos_load87_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
         array( 'vrodos_load87_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
@@ -167,6 +166,8 @@ function vrodos_register_scripts() {
     for ( $i = 0 ; $i < count($scriptsD); $i ++){
         wp_register_script($scriptsD[$i][0] , $scriptsD[$i][1], null, null, false );
     }
+
+    wp_register_script('vrodos_load_datgui', $pluginDirJS.'datgui/0.7.9/dat.gui.min.js', null, null, false );
 }
 
 
