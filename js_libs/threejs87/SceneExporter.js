@@ -719,6 +719,17 @@ THREE.SceneExporter.prototype = {
             objects = objects.substr(0, objects.length - 2) + '\n';
 
 
+        // Create fog string to avoid large gaps in the string
+        let fogString = '';
+        if(envir.scene.fog) {
+            fogString ='' +
+            '"fogtype" : "' + (envir.scene.fog.isFog ? "linear" : "exponential") + '",' +
+            '"fogcolor" : "#' + (envir.scene.fog.color ? envir.scene.fog.color.getHexString() : '000000') + '",' +
+            '"fogfar" : "' + (envir.scene.fog.far ? envir.scene.fog.far : '1000000') + '",' +
+            '"fognear" : "' + (envir.scene.fog.near ? envir.scene.fog.near : '1000000') + '",' +
+            '"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",';
+        }
+
         var output = [
             '{',
             '	"metadata": {',
@@ -727,11 +738,7 @@ THREE.SceneExporter.prototype = {
             '		"generatedBy"	: "SceneExporter.js",',
             '		"timestamp"	: '+ Date.now()  +',',
             '		"ClearColor" : "#' + (envir.scene.background.isColor ? envir.scene.background.getHexString() : '000000') + '",',
-            envir.scene.fog ? '		"fogtype" : "' + (envir.scene.fog.isFog ? "linear" : "exponential") + '",' : '',
-            envir.scene.fog ? '		"fogcolor" : "#' + (envir.scene.fog.color ? envir.scene.fog.color.getHexString() : '000000') + '",' : '',
-            envir.scene.fog ? '		"fogfar" : "' + (envir.scene.fog.far ? envir.scene.fog.far : '1000000') + '",' : '',
-            envir.scene.fog ? '		"fognear" : "' + (envir.scene.fog.near ? envir.scene.fog.near : '1000000') + '",' : '',
-            envir.scene.fog ? '		"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",' : '',
+            fogString,
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
             '		"backgroundPresetOption" : "' + (envir.scene.preset_selection ? envir.scene.preset_selection : 'None') + '",',
