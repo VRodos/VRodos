@@ -41,22 +41,22 @@
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
     <script>
-       
-       const vectorRequiresUpdate = epsilon => {
+
+        const vectorRequiresUpdate = epsilon => {
             return () => {
                 let prev = null;
 
                 return curr => {
-                if (prev === null) {
-                    prev = new THREE.Vector3(curr.x, curr.y, curr.z);
-                    return true;
-                } else if (!NAF.utils.almostEqualVec3(prev, curr, epsilon)) {
-                    curr.x = 0;
-                    prev.copy(curr);
-                    return true;
-                }
+                    if (prev === null) {
+                        prev = new THREE.Vector3(curr.x, curr.y, curr.z);
+                        return true;
+                    } else if (!NAF.utils.almostEqualVec3(prev, curr, epsilon)) {
+                        curr.x = 0;
+                        prev.copy(curr);
+                        return true;
+                    }
 
-                return false;
+                    return false;
                 };
             };
         };
@@ -578,7 +578,7 @@
 
                 this.el.addEventListener("model-loaded", e => {
                     var objectMesh = this.el.getObject3D("mesh");
-                    
+
                     var bind = AFRAME.utils.bind;
                     var shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
                     var link = "../assets/templates/multimalev2.glb";
@@ -586,24 +586,23 @@
                     this.loaded_anims = false;
                     if (this.el.object3DMap.mesh.children[0].userData.name === "Armature"){
                         loader.load(link, function (gltf) {
-                            for (i = 0; i < gltf.animations.length; i++) {
+                            for (let i = 0; i < gltf.animations.length; i++) {
                                 objectMesh.animations[i] = gltf.animations[i];
-                            } 
+                            }
                             elem.removeAttribute('animation-mixer');
                             elem.setAttribute('animation-mixer', "clip: idle");
                             elem.addState('loadedanimations');
-                        });            
+                        });
                     }else {
                         elem.addState('noanimations');
-                        
+
                         elem.object3D.traverse((child) => {
                             if (child.name.includes('Hand')){
                                 child.visible = false;
                             }
-                            
                         });
-                    }     
-                });        
+                    }
+                });
             }
         });
 
