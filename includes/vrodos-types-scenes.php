@@ -16,19 +16,6 @@ $vrodos_scenes_metas_definition = array(
             'id' => 'vrodos_scene_caption',
             'type' => 'textarea',
             'std' => ''
-        ),
-        array(
-            'name' => 'Scene Latitude',
-            'desc' => 'Scene\'s Latitude',
-            'id' => 'vrodos_scene_lat',
-            'type' => 'text',
-            'std' => ''
-        ),array(
-            'name' => 'Scene Longitude',
-            'desc' => 'Scene\'s Longitude',
-            'id' => 'vrodos_scene_lng',
-            'type' => 'text',
-            'std' => ''
         )
     )
 );
