@@ -3,7 +3,7 @@
 // Create metabox with Custom Fields for Scene -($vrodos_databox4)
 //$def_json = vrodos_getDefaultJSONscene('energy');
 
-//All information about scenes meta fields
+// All information about scenes meta fields
 $vrodos_scenes_metas_definition = array(
     'id' => 'vrodos-scenes-databox',
     'page' => 'vrodos_scene',
@@ -45,7 +45,7 @@ function vrodos_scenes_construct() {
     );
     $args = array(
         'labels' => $labels,
-        'description' => 'Displays all the Scenes of a Game',
+        'description' => 'Displays all the Scenes of a Project',
         'public' => true,
         'exclude_from_search' => true,
         'publicly_queryable' => false,

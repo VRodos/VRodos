@@ -222,8 +222,8 @@ add_action('admin_enqueue_scripts', 'vrodos_register_styles' );
 
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
 
-// Order : 4
-add_action( 'init', 'vrodos_add_customroles');
+// Order : 4 (Right now only admin get full access) - Rework this to allow users of a custom role to access backend
+// add_action( 'init', 'vrodos_add_customroles');
 
 // Order: 5  -> Add extra field (meta for user actually) to view in backend named as 'mvnode_token' & mvnode_url
 add_action( 'show_user_profile', 'extra_user_profile_field_mvnode_token' );
@@ -350,6 +350,14 @@ add_action( 'manage_vrodos_scene_posts_custom_column' , 'vrodos_set_custom_vrodo
 add_action('admin_menu', 'vrodos_scenes_meta_definitions_add');
 // Save metas
 add_action('save_post', 'vrodos_scenes_metas_save');
+
+/// Exported Scenes
+include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-scenes-exported.php');
+
+add_action('init', 'vrodos_scenes_exported_construct');
+add_action('init', 'vrodos_scenes_exported_parent_scene_tax_define');
+
+
 
 ////===================================== Assets ============================================
 
@@ -992,8 +1000,7 @@ function vrodos_remove_db_residues(){
 
 
 // Main backend info page
-function vrodos_plugin_main_page(){
-    ?>
+function vrodos_plugin_main_page(){ ?>
 
     <div id="wpbody" role="main">
         <div id="wpbody-content">
