@@ -427,18 +427,42 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_cursor->setAttribute( "cursor", "rayOrigin: mouse; fuse: false" );
             $a_cursor->setAttribute( "raycaster", "objects: .raycastable" );
 
-            $a_entity_oc_right = $dom->createElement( "a-entity" );
-            $a_entity_oc_right->setAttribute( "id", "oculusRight" );
-            $a_entity_oc_right->setAttribute( "oculus-touch-controls", "hand: right" );
-            $a_entity_oc_right->setAttribute( "laser-controls", "hand: right" );
-            $a_entity_oc_right->setAttribute( "raycaster", "lineColor: red; objects: .raycastable" );
+            // $a_entity_oc_right = $dom->createElement( "a-entity" );
+            // $a_entity_oc_right->setAttribute( "id", "oculusRight" );
+            // $a_entity_oc_right->setAttribute( "oculus-touch-controls", "hand: right" );
+            // $a_entity_oc_right->setAttribute( "laser-controls", "hand: right" );
+            // $a_entity_oc_right->setAttribute( "raycaster", "lineColor: black; objects: .raycastable" );
 
-            $a_entity_oc_left = $dom->createElement( "a-entity" );
-            $a_entity_oc_left->setAttribute( "id", "oculusLeft" );
-            $a_entity_oc_left->setAttribute( "oculus-touch-controls", "hand: left" );
-            $a_entity_oc_left->setAttribute( "laser-controls", "hand: left" );
-            $a_entity_oc_left->setAttribute( "raycaster", "lineColor: blue; objects: .raycastable" );
-            $a_entity_oc_left->setAttribute( "oculus-thumbstick-controls", "moveEnabled: true" );
+            // $a_entity_oc_left = $dom->createElement( "a-entity" );
+            // $a_entity_oc_left->setAttribute( "id", "oculusLeft" );
+            // $a_entity_oc_left->setAttribute( "oculus-touch-controls", "hand: left" );
+            // $a_entity_oc_left->setAttribute( "laser-controls", "hand: left" );
+            // $a_entity_oc_left->setAttribute( "raycaster", "lineColor: black; objects: .raycastable" );
+            // $a_entity_oc_left->setAttribute( "oculus-thumbstick-controls", "moveEnabled: true" );
+
+
+            // $a_entity_oc_right->setAttribute( "raycaster", "lineColor: #FF0000; objects: .raycastable; lineOpacity: 0.8; showLine: true; far: 10" );
+            // $a_entity_oc_left->setAttribute( "raycaster", "lineColor: #0000FF; objects: .raycastable; lineOpacity: 0.8; showLine: true; far: 10" );
+            // $a_entity_oc_right->setAttribute( "sound", "src: #click-sound; volume: 0.5" );
+            // $a_entity_oc_left->setAttribute( "sound", "src: #click-sound; volume: 0.5" );
+
+
+            $a_entity_oc_right = $dom->createElement("a-entity");
+            $a_entity_oc_right->setAttribute("id", "oculusRight");
+            $a_entity_oc_right->setAttribute("oculus-touch-controls", "hand: right");
+            $a_entity_oc_right->setAttribute("laser-controls", "hand: right");
+            $a_entity_oc_right->setAttribute("raycaster", "lineColor: black; objects: .raycastable");
+            $a_entity_oc_right->setAttribute("transparent", "true"); // Ensure transparency is set to true
+            $a_entity_oc_right->setAttribute("render-order", "9999999"); // Set a high render-order value
+
+            $a_entity_oc_left = $dom->createElement("a-entity");
+            $a_entity_oc_left->setAttribute("id", "oculusLeft");
+            $a_entity_oc_left->setAttribute("oculus-touch-controls", "hand: left");
+            $a_entity_oc_left->setAttribute("laser-controls", "hand: left");
+            $a_entity_oc_left->setAttribute("raycaster", "lineColor: black; objects: .raycastable ");
+            $a_entity_oc_left->setAttribute("transparent", "true"); // Ensure transparency is set to true
+            $a_entity_oc_left->setAttribute("oculus-thumbstick-controls", "moveEnabled: true");
+            $a_entity_oc_left->setAttribute("render-order", "9999999"); // Set a high render-order value
 
             $a_camera->appendChild($a_cursor);
             $ascenePlayer->appendChild( $a_camera );
