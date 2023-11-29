@@ -119,13 +119,6 @@ function vrodos_plugin_menu(){
 	);
 
     add_submenu_page('vrodos-plugin',
-        'Scenes (Exported)',
-        'Scenes (Exported)',
-        'manage_options',
-        'edit.php?post_type=vrodos_scene_exp'
-    );
-
-    add_submenu_page('vrodos-plugin',
         'Scene Types',
         'Scene Types',
         'manage_options',
