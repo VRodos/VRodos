@@ -1058,7 +1058,7 @@ margin-right: 20px;">
                     </thead>
                     <tbody>
                     <tr>
-                        <th>Games</th>
+                        <th>Projects</th>
                         <td><?php
 
                             $args = array(
@@ -1146,69 +1146,9 @@ margin-right: 20px;">
                             echo $query->found_posts;
                             ?>
                         </td>
-                        <td><!-- --><?php
-                            /*
-                                                        $args = array(
-                                                            'post_type' => 'vrodos_asset3d',
-                                                            'posts_per_page' => -1
-                                                        );
-
-                                                        $query = new WP_Query($args);
-
-                                                        //echo $query->found_posts;
-                                                        if ($query->have_posts() ) :
-
-                                                            while ( $query->have_posts() ) : $query->the_post();
-                                                                echo  get_the_ID() ." <br />";
-
-                                                            endwhile;
-
-                                                            wp_reset_postdata();
-                                                        endif;
-                                                        */?>
-                        </td>
-                        <td><?php
-                            /*
-                                                        $args = array(
-                                                            'post_type' => 'vrodos_asset3d',
-                                                            'posts_per_page' => -1
-                                                        );
-
-                                                        $query = new WP_Query($args);
-
-                                                        //echo $query->found_posts;
-                                                        if ($query->have_posts() ) :
-
-                                                            while ( $query->have_posts() ) : $query->the_post();
-                                                                echo  get_the_title() . "</br>";
-
-                                                            endwhile;
-                                                            wp_reset_postdata();
-                                                        endif;
-                                                        */?>
-                        </td>
-                        <td><?php
-                            /*
-                                                        $args = array(
-                                                            'post_type' => 'vrodos_asset3d',
-                                                            'posts_per_page' => -1
-                                                        );
-
-                                                        $query = new WP_Query($args);
-
-                                                        // echo $query->found_posts;
-                                                        if ($query->have_posts() ) :
-
-                                                            while ( $query->have_posts() ) : $query->the_post();
-                                                                $post_terms = wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame');
-                                                                if($post_terms){
-                                                                    echo $post_terms[0]->name . " <br />";
-                                                                }
-                                                            endwhile;
-
-                                                            wp_reset_postdata();
-                                                        endif;
-                                                        */?></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
 
                     </tr>
                     </tbody>
