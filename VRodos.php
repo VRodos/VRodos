@@ -351,13 +351,6 @@ add_action('admin_menu', 'vrodos_scenes_meta_definitions_add');
 // Save metas
 add_action('save_post', 'vrodos_scenes_metas_save');
 
-/// Exported Scenes
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-scenes-exported.php');
-
-add_action('init', 'vrodos_scenes_exported_construct');
-add_action('init', 'vrodos_scenes_exported_parent_scene_tax_define');
-
-
 
 ////===================================== Assets ============================================
 

@@ -64,15 +64,11 @@ function vrodos_add_capabilities_to_admin() {
 
     // Caps about Scenes
     $role->add_cap( 'publish_vrodos_scene' );
-    $role->add_cap( 'publish_vrodos_scene_exported' );
     $role->add_cap( 'edit_vrodos_scene' );
-    $role->add_cap( 'edit_vrodos_scene_exported' );
     $role->add_cap( 'edit_others_vrodos_scene' );
     $role->add_cap( 'delete_vrodos_scene' );
-    $role->add_cap( 'delete_vrodos_scene_exported' );
     $role->add_cap( 'delete_others_vrodos_scene' );
     $role->add_cap( 'read_vrodos_scene' );
-    $role->add_cap( 'read_vrodos_scene_exported' );
     $role->add_cap( 'read_private_vrodos_scene' );
 
     // Caps about Assets
@@ -88,9 +84,7 @@ function vrodos_add_capabilities_to_admin() {
     $role->add_cap( 'manage_vrodos_project_type' );
     $role->add_cap( 'edit_vrodos_project_type' );
     $role->add_cap( 'manage_vrodos_taxpgame' );
-    $role->add_cap( 'manage_vrodos_exported_scene_parent_tax' );
     $role->add_cap( 'edit_vrodos_taxpgame' );
-    $role->add_cap( 'edit_vrodos_exported_scene_parent_tax' );
     $role->add_cap( 'manage_vrodos_scene_yaml' );
     $role->add_cap( 'edit_vrodos_scene_yaml' );
     
