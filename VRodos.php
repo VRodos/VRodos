@@ -1,11 +1,12 @@
 <?php
+
 /**
  * Plugin Name: VRodos
  * Plugin URI: https://vrodos.iti.gr
  * Description: Make your wordpress website a VR site
  * Author: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
  * Author URI: https://vrodos.iti.gr
- * Version: 2.1
+ * Version: 2.2
  */
 
 
@@ -995,12 +996,19 @@ function vrodos_remove_db_residues(){
 // Main backend info page
 function vrodos_plugin_main_page() {
     $allProjectsPage = vrodos_getEditpage('allgames');
+
+    if ( is_admin() ) {
+        if( ! function_exists( 'get_plugin_data' ) ) {
+            require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+        }
+        $plugin_data = get_plugin_data( __FILE__ );
+    }
     ?>
 
     <div id="wpbody" role="main">
         <div id="wpbody-content">
             <div class="wrap">
-                <h1>VRodos Dashboard</h1>
+                <h1>VRodos Dashboard (<?php echo $plugin_data['Version'] ?>)</h1>
                 <div id="welcome-panel" class="welcome-panel" style="background: #1b4d0d url(images/about-texture.png) center repeat ">
                     <div class="welcome-panel-content">
                         <div class="welcome-panel-header">
