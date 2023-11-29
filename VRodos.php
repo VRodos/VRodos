@@ -993,7 +993,9 @@ function vrodos_remove_db_residues(){
 
 
 // Main backend info page
-function vrodos_plugin_main_page(){ ?>
+function vrodos_plugin_main_page() {
+    $allProjectsPage = vrodos_getEditpage('allgames');
+    ?>
 
     <div id="wpbody" role="main">
         <div id="wpbody-content">
@@ -1008,29 +1010,24 @@ margin-right: 20px;">
                             <h2>Welcome to VRodos!</h2>
                             <p>
                                 <a href="https://vrodos.iti.gr">
-                                    Learn more about VRodos 2.0 version.</a>
+                                    Learn more about VRodos </a>
                             </p>
                         </div>
                         <div class="welcome-panel-column-container">
                             <div class="welcome-panel-column">
                                 <div class="welcome-panel-icon-pages"></div>
                                 <div class="welcome-panel-column-content">
-                                    <h3>3D Models Repository</h3>
-                                    <p>Database with web interfaces for 3D models management.</p>
+                                    <a href="<?php echo esc_url( get_permalink($allProjectsPage[0]->ID)); ?>" class="mdc-button mdc-button--raised">Access Project Manager</a>
                                 </div>
                             </div>
                             <div class="welcome-panel-column">
                                 <div class="welcome-panel-icon-layout"></div>
                                 <div class="welcome-panel-column-content">
-                                    <h3>Authoring tool for VR applications</h3>
-                                    <p>An authoring tool for VR applications in Unity3D format without programming.</p>
                                 </div>
                             </div>
                             <div class="welcome-panel-column">
                                 <div class="welcome-panel-icon-styles"></div>
                                 <div class="welcome-panel-column-content">
-                                    <h3>Management tool for Digital Labels.</h3>
-                                    <p>Authoring tool for Digital Labels with 3D data.</p>
                                 </div>
                             </div>
                         </div>
