@@ -1045,7 +1045,7 @@ margin-right: 20px;">
 
             <div class="table_stuff">
                 <table>
-                    <caption>Info of VRodos Types</caption>
+                    <caption>Overview</caption>
                     <thead>
 
                     <tr>
