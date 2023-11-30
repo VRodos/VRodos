@@ -2,6 +2,8 @@
 // Remove the admin bar
 //add_action('get_header', 'vrodos_remove_admin_login_header');
 
+wp_enqueue_style('vrodos_frontend_stylesheet');
+
 // Is on back or front end ?
 $isAdmin = is_admin() ? 'back' : 'front';
 ?>

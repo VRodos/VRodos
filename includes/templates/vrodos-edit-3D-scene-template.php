@@ -1,5 +1,7 @@
 <?php
 
+wp_enqueue_style('vrodos_frontend_stylesheet');
+
 $perma_structure = (bool)get_option('permalink_structure');
 $parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
 $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';

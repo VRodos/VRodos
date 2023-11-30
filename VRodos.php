@@ -205,7 +205,7 @@ function vrodos_register_styles() {
     wp_enqueue_script('vrodos_material_scripts');
     wp_enqueue_style( 'vrodos_material_icons', plugin_dir_url( __FILE__ ) . 'css/material-icons/material-icons.css' );
 //    wp_enqueue_style( 'vrodos_glyphter_icons', plugin_dir_url( __FILE__ ) . 'css/glyphter-font/Glyphter.css' );
-    wp_enqueue_style('vrodos_frontend_stylesheet');
+
 
     wp_enqueue_style('vrodos_backend');
 
