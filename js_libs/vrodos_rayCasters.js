@@ -182,6 +182,9 @@ function selectorMajor(event, objectSel, whocalls) {
 
     if (event.button === 0) {
 
+        // document.getElementById('numerical_gui-container').style.visibility = 'visible';
+        document.getElementById('numerical_gui-container').style.display="block";
+
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.uuid);
 

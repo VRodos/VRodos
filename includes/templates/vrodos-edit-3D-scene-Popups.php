@@ -35,6 +35,11 @@
         saveChanges();
     }
 
+    function toggleDisableMovement(value) {
+        envir.scene.disableMovement = value;
+        saveChanges();
+    }
+
     function changeRendererToneMapping(value) {
         envir.renderer.toneMappingExposure = value;
     }

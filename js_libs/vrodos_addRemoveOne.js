@@ -527,6 +527,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             envir.setComposerAndPasses();
             envir.outlinePass.selectedObjects = [insertedObject];
 
+            console.log("Add remove");
+
             selected_object_name = nameModel;
 
             // Dimensions
@@ -538,6 +540,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             // Auto-save
             triggerAutoSave();
 
+            //document.getElementById('numerical_gui-container').style.visibility = 'visible';
+            document.getElementById('numerical_gui-container').style.display="block";
             // Hide progress dialogue
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
         };
@@ -571,6 +575,8 @@ function deleteFomScene(uuid, name) {
     let delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
     delete_btn_element.addEventListener('click', function() {
         deleteAssetFromScene(uuid)
+        // document.getElementById('numerical_gui-container').style.visibility = 'hidden';
+        document.getElementById('numerical_gui-container').style.display="none";
     });
 }
 

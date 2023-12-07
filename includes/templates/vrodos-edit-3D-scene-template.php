@@ -782,6 +782,12 @@ wp_head();
                 document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
                 envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
             }
+
+            
+            if (resources3D["disableMovement"]) {
+                document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
+                envir.scene.disableMovement = JSON.parse(resources3D["disableMovement"]);
+            }
             if (resources3D["backgroundStyleOption"]) {
                 let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
 

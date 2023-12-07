@@ -233,8 +233,9 @@ AFRAME.registerComponent('video-controls', {
 
         if (this.playerEl.getAttribute("wasd-controls")){
             this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
-        }else
-            this.cam.setAttribute("wasd-controls-enabled", "true");
+        }
+        // else
+        //     this.cam.setAttribute("wasd-controls-enabled", "true");
         
         this.backgroundEl.add(this.videoDisplay);
         
@@ -398,8 +399,9 @@ AFRAME.registerComponent('video-controls', {
         }
         if (this.playerEl.getAttribute("wasd-controls")){
             this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
-        }else
-            this.cam.setAttribute("wasd-controls-enabled", "false");
+        }
+        // else
+        //     this.cam.setAttribute("wasd-controls-enabled", "false");
             this.updatePlayEntity(this.plEl);
     }
 });

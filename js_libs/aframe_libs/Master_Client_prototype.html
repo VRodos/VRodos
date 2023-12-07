@@ -112,9 +112,19 @@
                 img_link:{type: "string", default: "no_link"},
                 selChoice:{type: "string", default: "0"},
                 presChoice:{type: "string", default: "default"},
+                movement_disabled:{type: "string", default: "0"},
             },
             init: function () {
 
+                console.log("move: " + this.data.movement_disabled);
+                if (this.data.movement_disabled == "1")
+                    if(this.data.pr_type == "vrexpo_games")
+                        document.getElementById('cameraA').removeAttribute('wasd-controls');
+                    else
+                        document.getElementById('player').removeAttribute('wasd-controls');
+                // console.log(wasd_controls);
+                
+                
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
                     AFRAME.registerComponent('avatar-movement-info', {
