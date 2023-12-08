@@ -201,7 +201,7 @@ function vrodos_register_styles() {
 
     // TODO: When ready for production, ignore  node_modules folder and move the 2 material css & js files to another folder.
     // Material & Frontend CSS & Scripts
-    wp_enqueue_style('vrodos_material_stylesheet');
+
     wp_enqueue_script('vrodos_material_scripts');
     wp_enqueue_style( 'vrodos_material_icons', plugin_dir_url( __FILE__ ) . 'css/material-icons/material-icons.css' );
 //    wp_enqueue_style( 'vrodos_glyphter_icons', plugin_dir_url( __FILE__ ) . 'css/glyphter-font/Glyphter.css' );
@@ -435,7 +435,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php'
 add_action( 'init', 'vrodos_create_joker_projects', 100, 2 );
 
 // Remove Admin bar for non admins
-add_action('after_setup_theme', 'vrodos_remove_admin_bar');
+// add_action('after_setup_theme', 'vrodos_remove_admin_bar');
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
 
@@ -482,7 +482,7 @@ register_activation_hook(__FILE__,'vrodos_create_pages');
 
 // Add Project Manager and Assets List pages to menu automatically;
 // Some messages also
-register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
+//register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
 
 // -------------  Games versions table -------------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-db-table-creations.php' );

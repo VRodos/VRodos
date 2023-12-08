@@ -493,8 +493,6 @@ function loadButtonActions() {
 
             setVisiblityLightHelpingElements(false);
 
-            //jQuery("#wpadminbar").hide();
-
             // footer that is high up below admin bar
             //jQuery("#colophon").hide();
 
@@ -517,9 +515,6 @@ function loadButtonActions() {
             envir.outlinePass.enabled = true;
 
             setVisiblityLightHelpingElements(true);
-
-            // wp admin bar show
-            //jQuery("#wpadminbar").show();
 
             // footer that is high up below admin bar
             //jQuery("#colophon").show();
