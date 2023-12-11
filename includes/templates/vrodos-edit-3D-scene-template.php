@@ -884,7 +884,7 @@ wp_head();
             transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
             loaderMulti = new VRodos_LoaderMulti("2");
-            loaderMulti.load(manager, resources3D);
+            loaderMulti.load(manager, resources3D,pluginPath);
         }
 
         <!--  Part 3: Start 3D with Javascript   -->

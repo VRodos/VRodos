@@ -166,8 +166,11 @@ function setObjectProperties(object, name, resources3D) {
 
     // Automatically load values that are available
     for (let entry in Object.keys(resources3D[name])) {
-        if (!['id', 'translation', 'position', 'rotation', 'scale', 'quaternion'].includes(Object.keys(resources3D[name])[entry])) {
+        if (!['id', 'translation', 'position', 'rotation', 'scale', 'quaternion', 'children', 'trs'].includes(Object.keys(resources3D[name])[entry])) {
             object[[Object.keys(resources3D[name])[entry]]] = Object.values(resources3D[name])[entry];
+
+            console.log([Object.keys(resources3D[name])[entry]]);
+            console.log([Object.values(resources3D[name])[entry]]);
         }
     }
 
