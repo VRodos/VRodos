@@ -306,8 +306,6 @@ function showProperties(event, object) {
 
     //var objectParent  = inters.object.parent;
     var name = object.name;
-    //console.log(name);
-    console.log(object);
     switch (object.category_slug) {
         case 'decoration':
             // Don't display a popup in decoration. You can only change name and glb file from asset editor!
@@ -416,9 +414,7 @@ function displaySunProperties(event, name) {
     textMapWidth.value = envir.scene.getObjectByName(name).shadowMapWidth;
     textBias.value = envir.scene.getObjectByName(name).shadowBias;
     chbox.value = envir.scene.getObjectByName(name).castingShadow;
-
-    console.log(envir.scene.getObjectByName(name).shadowCameraBottom );
-    
+   
     //jQuery("#sunColor")
     
     

@@ -103,4 +103,6 @@ function addInHierarchyViewer(obj) {
 
     // Add as a list item
     AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj));
+
+    setBackgroundColorHierarchyViewer(obj.uuid);
 }
