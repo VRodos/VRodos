@@ -90,11 +90,11 @@ $assets = get_assets($user_games_slugs);
 if (!$isUserloggedIn)
     $link_to_add = wp_login_url();
 else if ($isUserloggedIn && $single_project_asset_list)
-    $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $current_game_project_id .'&singleproject=true&preview=0&#EnglishEdit');
+    $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $current_game_project_id .'&singleproject=true&preview=0');
 else if ($isUserAdmin && !$single_project_asset_list)
-    $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0#EnglishEdit');
+    $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0');
 else if ($isUserloggedIn)
-    $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0#EnglishEdit');
+    $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0');
 
 
 $link_to_edit = home_url().'/vrodos-asset-editor-page/?';
@@ -107,168 +107,173 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
 ?>
 
+<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
-<!-- Display assets Grid-->
-<div class="assets-list-front mdc-layout-grid">
-
-    <a title="Back to all Projects" style="margin-left:10px; margin-right:10px" href="<?php echo $goBackTo_AllProjects_link; ?>"><i class="material-icons mdc-theme--text-primary sceneArrowBack">arrow_back</i></a>
-
-    <span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">Assets Manager</span>
-
-    <?php
-    if ($isUserloggedIn){ ?>
-
-        <span class="mdc-typography--body1 mdc-theme--text-primary-on-background" style="float:right; margin-right:5px; display:inline-table;margin-top:10px">Welcome,
-        <a href="<?php echo home_url(); ?>/account/" style="color:dodgerblue">
-              <?php echo $current_user->display_name;?>
-        </a>
-        </span>
-
-        <?php
-
-        if( $single_project_asset_list){
-            $helpMessage = 'A list of your private Assets belonging to the project <b>'.$current_game_project_post->post_title.'</b>.';
-        } else {
-            $helpMessage = 'Add a Shared Asset here. If you want it to be private, make a project and add the asset there.';
-        }
-    } else {
-        $helpMessage = 'Login to a) add a Shared Asset or b) to create a Project and add your private Assets there';
-    }
-    ?>
-    <br />
-    <p class="mdc-typography--body1 mdc-theme--text-primary-on-background "><?php echo $helpMessage ?></p>
-
-    <?php if ($single_project_asset_list){ ?>
-        <!--<span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php /*echo $current_game_project_post->post_title;*/?></span>-->
-    <?php } else if (!$isUserloggedIn) { ?>
-        <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $isUserloggedIn?" private": ""; ?> assets </span>
-    <?php } else if ($isUserloggedIn) { ?>
-            <?php } ?>
-
-    <div class="mdc-layout-grid__inner grid-system-custom">
-
-
-        <!-- Card to add asset -->
-
-        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="" >
-            <div class="asset-shared-thumbnail mdc-card mdc-theme--background"
-                 style="height:100%;min-height:120px;position:relative;background:<?php echo $single_project_asset_list? 'lightgreen': 'orangered';?>">
-                <a href="<?php echo $link_to_add; ?>">
-                    <i class="addAssetCardIcon material-icons" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>">add_circle</i>
-                    <span class="addAssetCardWords" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>"><?php echo $single_project_asset_list? 'Private Asset': 'Shared Asset';?></span>
-                </a>
-            </div>
-        </div>
-
-
-
-        <!-- Each Asset -->
-        <?php foreach ($assets as $asset) {  ?>
-
-            <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="position:relative">
-
-                <div class="asset-shared-thumbnail mdc-card mdc-theme--background" id="<?php echo $asset['asset_id']; ?>">
-
-                    <?php $pGameId= get_page_by_path($asset['asset_parent_game_slug'], OBJECT, 'vrodos_game')->ID; ?>
-
-                    <!-- Edit url -->
-                    <a class="editasseturl" href="<?php echo $link_to_edit.'vrodos_game='.$pGameId.'&vrodos_asset='.$asset['asset_id'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English'; ?>">
-                        <?php if ($asset['screenshot_path']){ ?>
-                            <img src="<?php echo $asset['screenshot_path']; ?>" class="asset-shared-thumbnail">
-                        <?php } else { ?>
-                            <div style="min-height: 226px;width:70%" class="DisplayBlock mdc-theme--secondary-bg CenterContents">
-                                <i style="font-size: 64px; padding-top: 80px;" class="material-icons mdc-theme--text-icon-on-background">insert_photo</i>
-                            </div>
-                        <?php } ?>
-                    </a>
-
-                    <!-- Title -->
-                    <h1 class="assetsListCardTitle mdc-card__title mdc-typography--title" style="">
-                        <a class="mdc-theme--secondary"
-                           href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.
-                               '&vrodos_asset='.$asset['asset_id'].'#English';
-                           ?>"><?php echo $asset['asset_name'];?></a>
-                    </h1>
-
-                    <!-- Author -->
-                    <p class="sharedAssetsUsername mdc-typography--caption">
-                        <img style="width:20px;height:20px;border-radius: 50%;vertical-align:middle" src="<?php echo get_avatar_url($asset['author_id']);?>">
-                        <a href="<?php echo home_url().'/user/'.$asset['author_username']; ?>"
-                           style="color:white; mix-blend-mode: difference;">
-                            <?php echo $asset['author_displayname']; ?>
-                        </a>
-                    </p>
-
-
-                    <!-- Category -->
-                    <!--                        <p class="assetsListCardCategory mdc-card__title mdc-typography--body1">-->
-                    <!--                            --><?php //echo $asset['categoryName'];?>
-                    <!--                        </p>-->
-
-                    <!-- DELETE BUTTON -->
-                    <?php
-                    // For joker assets, If the user is not administrator he should not be able to delete or edit them.
-                    if( $isUserAdmin || ($user_id == $asset['author_id'])) {  ?>
-
-                        <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" style="background: rgba(214,30,30,0.7);"
-                           class="deleteAssetListButton mdc-button mdc-button--compact mdc-card__action"
-                           onclick="vrodos_deleteAssetAjax(<?php echo $asset['asset_id'];?>,'<?php echo $joker_project_slug ?>',<?php echo $asset['is_cloned'];?>)"
-                        ><i class="material-icons mdc-theme--text-hint-on-light">delete</i></a>
-
-                    <?php } ?>
-
-                    <!-- Parent Game -->
-                    <?php if ($asset['is_joker']=='true') { ?>
-                        <span class="sharedAssetsIndicator mdc-typography--subheading1" style="color:black; background: rgba(184,248,184,0.6);">Shared</span>
-                    <?php } else { ?>
-                        <span class="sharedAssetsIndicator mdc-typography--subheading1"
-                              style="color:black; background: rgba(250,250,210,0.6);">
-                            <?php echo "@".$asset['asset_parent_game']; ?></span>
-                    <?php } ?>
-
-
-                    <!-- id = "phonering-Scladina terrain" -->
-
-                    <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['asset_name'] ?>">
-                        <div class="phonering-alo-ph-circle"></div>
-                        <div class="phonering-alo-ph-circle-fill"></div>
-                        <a href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['asset_id'].'&preview=1&directcall=1&#English';?>"
-                           class="pps-btn-img" title="teleconference_ring">
-                            <div class="phonering-alo-ph-img-circle"></div>
-                        </a>
-                    </div>
-
-                </div>
-            </div>
-        <?php } ?>
+    <!-- if user not logged in, then prompt to log in -->
+    <div class="DisplayBlock CenterContents">
+        <i style="font-size: 64px; padding-top: 80px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
+        <p class="mdc-typography--title"> Please <a class="mdc-theme--secondary"
+                                                    href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform</p>
+        <p class="mdc-typography--title"> Or
+            <a class="mdc-theme--secondary" href="<?php echo wp_registration_url(); ?>">register</a>
+            if you don't have an account</p>
     </div>
 
-    <!--  No Assets Empty Repo-->
-    <?php if ( !$assets ) :  ?>
+    <hr class="WhiteSpaceSeparator">
+
+
+
+<?php } else { ?>
+
+    <!-- Display assets Grid-->
+    <div class="assets-list-front mdc-layout-grid">
+
+        <a title="Back to all Projects" style="margin-left:10px; margin-right:10px" href="<?php echo $goBackTo_AllProjects_link; ?>"><i class="material-icons mdc-theme--text-primary sceneArrowBack">arrow_back</i></a>
+
+        <span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">Assets Manager</span>
+
+        <?php
+        if ($isUserloggedIn) {
+
+            if( $single_project_asset_list){
+                $helpMessage = 'A list of your private Assets belonging to the project <b>'.$current_game_project_post->post_title.'</b>.';
+            } else {
+                $helpMessage = 'Add a Shared Asset here. It will be accessible by all projects. If you want it to be private, make a project and add the asset there.';
+            }
+
+        } else {
+            $helpMessage = 'Login to a) add a Shared Asset or b) to create a Project and add your private Assets there';
+        }
+        ?>
+        <br />
+        <p class="mdc-typography--body1 mdc-theme--text-primary-on-background "><?php echo $helpMessage ?></p>
+
+        <?php if ($single_project_asset_list){ ?>
+            <!--<span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php /*echo $current_game_project_post->post_title;*/?></span>-->
+        <?php } else if (!$isUserloggedIn) { ?>
+            <span class="mdc-theme--text-primary-on-background" style="display:inline-table;margin-bottom:20px;">for <?php echo $isUserloggedIn?" private": ""; ?> assets </span>
+        <?php } ?>
+
         <div class="mdc-layout-grid__inner grid-system-custom">
-            <hr class="WhiteSpaceSeparator">
-            <div class="CenterContents" style="width:70%; min-height:800px;">
-                <i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true" title="No assets available">
-                    insert_photo
-                </i>
-                <h3 class="mdc-typography--headline">No Assets available</h3>
-                <hr class="WhiteSpaceSeparator">
+
+
+            <!-- Card to add asset -->
+
+            <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="" >
+                <div class="asset-shared-thumbnail mdc-card mdc-theme--background"
+                     style="height:100%;min-height:120px;position:relative;background:<?php echo $single_project_asset_list? 'lightgreen': 'orangered';?>">
+                    <a href="<?php echo $link_to_add; ?>">
+                        <i class="addAssetCardIcon material-icons" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>">add_circle</i>
+                        <span class="addAssetCardWords" style="<?php if(!$isUserloggedIn){?> filter:invert(30%) <?php }?>"><?php echo $single_project_asset_list? 'Private Asset': 'Shared Asset';?></span>
+                    </a>
+                </div>
             </div>
+
+
+
+            <!-- Each Asset -->
+            <?php foreach ($assets as $asset) {  ?>
+
+                <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="position:relative">
+
+                    <div class="asset-shared-thumbnail mdc-card mdc-theme--background" id="<?php echo $asset['asset_id']; ?>">
+
+                        <?php $pGameId= get_page_by_path($asset['asset_parent_game_slug'], OBJECT, 'vrodos_game')->ID; ?>
+
+                        <!-- Edit url -->
+                        <a class="editasseturl" href="<?php echo $link_to_edit.'vrodos_game='.$pGameId.'&vrodos_asset='.$asset['asset_id'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English'; ?>">
+                            <?php if ($asset['screenshot_path']){ ?>
+                                <img src="<?php echo $asset['screenshot_path']; ?>" class="asset-shared-thumbnail">
+                            <?php } else { ?>
+                                <div style="min-height: 226px;width:70%" class="DisplayBlock mdc-theme--secondary-bg CenterContents">
+                                    <i style="font-size: 64px; padding-top: 80px;" class="material-icons mdc-theme--text-icon-on-background">insert_photo</i>
+                                </div>
+                            <?php } ?>
+                        </a>
+
+                        <!-- Title -->
+                        <h1 class="assetsListCardTitle mdc-card__title mdc-typography--title" style="">
+                            <a class="mdc-theme--secondary"
+                               href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.
+                                   '&vrodos_asset='.$asset['asset_id'].'#English';
+                               ?>"><?php echo $asset['asset_name'];?></a>
+                        </h1>
+
+                        <!-- Author -->
+                        <p class="sharedAssetsUsername mdc-typography--caption">
+                            <img style="width:20px;height:20px;border-radius: 50%;vertical-align:middle" src="<?php echo get_avatar_url($asset['author_id']);?>">
+                            <a href="<?php echo home_url().'/user/'.$asset['author_username']; ?>"
+                               style="color:white; mix-blend-mode: difference;">
+                                <?php echo $asset['author_displayname']; ?>
+                            </a>
+                        </p>
+
+
+                        <!-- Category -->
+                        <!--                        <p class="assetsListCardCategory mdc-card__title mdc-typography--body1">-->
+                        <!--                            --><?php //echo $asset['categoryName'];?>
+                        <!--                        </p>-->
+
+                        <!-- DELETE BUTTON -->
+                        <?php
+                        // For joker assets, If the user is not administrator he should not be able to delete or edit them.
+                        if( $isUserAdmin || ($user_id == $asset['author_id'])) {  ?>
+
+                            <a id="deleteAssetBtn" data-mdc-auto-init="MDCRipple" title="Delete asset" style="background: rgba(214,30,30,0.7);"
+                               class="deleteAssetListButton mdc-button mdc-button--compact mdc-card__action"
+                               onclick="vrodos_deleteAssetAjax(<?php echo $asset['asset_id'];?>,'<?php echo $joker_project_slug ?>',<?php echo $asset['is_cloned'];?>)"
+                            ><i class="material-icons mdc-theme--text-hint-on-light">delete</i></a>
+
+                        <?php } ?>
+
+                        <!-- Parent Game -->
+                        <?php if ($asset['is_joker']=='true') { ?>
+                            <span class="sharedAssetsIndicator mdc-typography--subheading1" style="color:black; background: rgba(184,248,184,0.6);">Shared</span>
+                        <?php } else { ?>
+                            <span class="sharedAssetsIndicator mdc-typography--subheading1"
+                                  style="color:black; background: rgba(250,250,210,0.6);">
+                            <?php echo "@".$asset['asset_parent_game']; ?></span>
+                        <?php } ?>
+
+
+                        <!-- id = "phonering-Scladina terrain" -->
+
+                        <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['asset_name'] ?>">
+                            <div class="phonering-alo-ph-circle"></div>
+                            <div class="phonering-alo-ph-circle-fill"></div>
+                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['asset_id'].'&preview=1&directcall=1&#English';?>"
+                               class="pps-btn-img" title="teleconference_ring">
+                                <div class="phonering-alo-ph-img-circle"></div>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            <?php } ?>
         </div>
-    <?php endif; ?>
-</div>
+
+        <!--  No Assets Empty Repo-->
+        <?php if ( !$assets ) :  ?>
+            <div class="mdc-layout-grid__inner grid-system-custom">
+                <hr class="WhiteSpaceSeparator">
+                <div class="CenterContents" style="width:70%; min-height:800px;">
+                    <i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true" title="No assets available">
+                        insert_photo
+                    </i>
+                    <h3 class="mdc-typography--headline">No Assets available</h3>
+                    <hr class="WhiteSpaceSeparator">
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
 
 
-
-<!--<div class="sidebar-shared-assets-front">
+    <!--<div class="sidebar-shared-assets-front">
     <?php /*get_sidebar(); */?>
 </div>-->
-
+<?php } ?>
 
 <script type="text/javascript">
-
-    //  vrodos_periodically_update_conf_log();
-    //setInterval(vrodos_periodically_update_conf_log,3000);
 
     var mdc = window.mdc;
     mdc.autoInit();

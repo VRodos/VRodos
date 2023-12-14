@@ -327,7 +327,7 @@ wp_head();
 
 ?>
 
-<?php if ( !is_user_logged_in() ) { ?>
+<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
     <!-- if user not logged in, then prompt to log in -->
     <div class="DisplayBlock CenterContents">
