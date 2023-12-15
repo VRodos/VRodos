@@ -246,7 +246,12 @@ class VRodos_LightsPawn_Loader {
                     lightLamp.lampshadowCameraRight = resources3D[name]['lampshadowCameraRight'];
                     lightLamp.lampshadowBias = resources3D[name]['lampshadowBias'];
 
+                    if (lightLamp.children ==='') {
+                        lightLamp.children = [];
+                    }
 
+
+                    console.log(lightLamp);
                     envir.scene.add(lightLamp);
 
                     // Add Lamp Sphere
@@ -268,19 +273,17 @@ class VRodos_LightsPawn_Loader {
                     lightLampHelper.update();
 
                     // If we do not attach them, they are not visible in Editor !
-                    if (typeof transform_controls !== "undefined") {
-                        if (typeof attachToControls !== "undefined") {
-                            attachToControls(name, envir.scene.getObjectByName(name));
-                        }
-                    }
+                    // if (typeof transform_controls !== "undefined") {
+                    //     if (typeof attachToControls !== "undefined") {
+                    //         attachToControls(name, envir.scene.getObjectByName(name));
+                    //     }
+                    // }
 
                 }
                 // SPOT
                 else if (resources3D[name]['category_name'] === 'lightSpot') {
 
-                    var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
-                        resources3D[name]['lightcolor'][1],
-                        resources3D[name]['lightcolor'][2]);
+                    var colora = new THREE.Color(0.996, 1, 0);
 
                     var lightintensity = resources3D[name]['lightintensity'];
                     var lightdecay = resources3D[name]['lightdecay'];
@@ -345,13 +348,13 @@ class VRodos_LightsPawn_Loader {
                     lightSpotHelper.update();
 
                     // If we do not attach them, they are not visible in Editor !
-                    if (typeof transform_controls !== "undefined") {
-                        if (typeof attachToControls !== "undefined") {
-                            attachToControls(name, envir.scene.getObjectByName(name));
-                        }
-                    }
+                    // if (typeof transform_controls !== "undefined") {
+                    //     if (typeof attachToControls !== "undefined") {
+                    //         attachToControls(name, envir.scene.getObjectByName(name));
+                    //     }
+                    // }
 
-                    updateSpot();
+                    // updateSpot();
 
                 }
                 else if (resources3D[name]['category_name'] === 'lightAmbient') {
@@ -402,12 +405,12 @@ class VRodos_LightsPawn_Loader {
 
 
                     // If we do not attach them, they are not visible in Editor !
-                    if (typeof transform_controls !== "undefined") {
-                        if (typeof attachToControls !== "undefined") {
-                            attachToControls(name, envir.scene.getObjectByName(name));
+                    // if (typeof transform_controls !== "undefined") {
+                    //     if (typeof attachToControls !== "undefined") {
+                    //         attachToControls(name, envir.scene.getObjectByName(name));
 
-                        }
-                    }
+                    //     }
+                    // }
 
                 }
                 else if (resources3D[name]['category_name'] === 'pawn') {
@@ -471,11 +474,11 @@ class VRodos_LightsPawn_Loader {
                             envir.scene.add(pawn);
 
                             // If we do not attach them, they are not visible in Editor !
-                            if (typeof transform_controls !== "undefined") {
-                                if (typeof attachToControls !== "undefined") {
-                                    attachToControls(name, envir.scene.getObjectByName(name));
-                                }
-                            }
+                            // if (typeof transform_controls !== "undefined") {
+                            //     if (typeof attachToControls !== "undefined") {
+                            //         attachToControls(name, envir.scene.getObjectByName(name));
+                            //     }
+                            // }
                             setHierarchyViewer();
 
                         },

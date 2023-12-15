@@ -877,16 +877,20 @@ wp_head();
                 if (!preserveElements.includes(envir.scene.children[i].name))
                     envir.scene.remove(envir.scene.children[i]);
             }
+            var lightsLoader = new VRodos_LightsPawn_Loader();
+            lightsLoader.load(resources3D);
 
             setHierarchyViewer();
+            //setHierarchyViewerLight();
 
             transform_controls = envir.scene.getObjectByName('myTransformControls');
             transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
+            
             loaderMulti = new VRodos_LoaderMulti("2");
             loaderMulti.load(manager, resources3D,pluginPath);
-        }
 
+        }
         <!--  Part 3: Start 3D with Javascript   -->
 
         function updatePositionsAndControls()

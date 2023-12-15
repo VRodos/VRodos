@@ -115,11 +115,20 @@ function bcgRadioSelect(option){
     saveChanges();
 }
 
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+}
+
 function updateFogColorPicker(picker){
 
     document.getElementById('FogColor').value = picker.toRGBString();
-
-    updateFog();
+  
+    updateFog("editing");
 }
 
 function loadFogType() {
@@ -132,12 +141,13 @@ function loadFogType() {
         document.getElementById('FogType').value = "exponential";
     }
 
-    updateFog();
+    updateFog("editing");
 }
 
-function updateFog(){
+function updateFog(whencalled){
 
     let picker = document.getElementById('jscolorpickFog').jscolor;
+
 
     let fogType = document.getElementById('FogType').value;
     let fogNear = document.getElementById('FogNear').value
@@ -159,5 +169,6 @@ function updateFog(){
         }
 
     }
-    triggerAutoSave();
+    if(whencalled != "undo")
+        triggerAutoSave();
 }
