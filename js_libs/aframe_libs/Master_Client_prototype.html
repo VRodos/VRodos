@@ -43,6 +43,13 @@
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
+
+
+    <!---- Blink Controls ---->   
+
+    <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
+
+
     <script>
 
         // Global variable to switch between interfaces for interaction modes.
@@ -477,7 +484,6 @@
 
 
 
-        //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
 
         AFRAME.registerComponent('show-position', {
             init: function () {
@@ -502,13 +508,17 @@
 
                 //console.log (cameraEl);
 
-                this.el.addEventListener('thumbstickmoved', (event) => {
+                const thumbL = document.querySelector('#leftHand');
+                const thumbR = document.querySelector('#rightHand');
+
+                thumbL.addEventListener('thumbstickmoved', (event) => {
                     const thumbstickX = event.detail.x;
                     const thumbstickY = event.detail.y;
 
                     // Get camera rotation
                     const rotation = cameraEl.getAttribute('rotation');
-                    const angleY = THREE.Math.degToRad(rotation.y);
+                    const angleY = (rotation.y * Math.PI) / 180;
+                    
 
                     // Calculate movement direction based on camera rotation
                     const direction = new THREE.Vector3(-Math.sin(angleY), 0, -Math.cos(angleY));
@@ -521,6 +531,14 @@
 
                     //console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
                 });
+
+                thumbR.addEventListener('thumbstickmoved', (event) => {
+                    
+                    console.log('Right thumbstick activated');
+                    
+
+                });
+
             }
         });
 
@@ -950,6 +968,10 @@
     </a-assets>
 
     <a-entity id="player"></a-entity>
+
+    <a-entity id="leftHand" oculus-touch-controls="hand: left"></a-entity>
+    <a-entity id="rightHand" oculus-touch-controls="hand: right"></a-entity>
+
 
 </a-scene>
 
