@@ -66,14 +66,17 @@ function dragDropVerticalRayCasting(event) {
 
 // On Double click center screen and focus to that object
 function onMouseDoubleClickFocus(event, id) {
-
+    
     if (typeof id == 'undefined') {
         id = envir.scene.getObjectById(selected_object_name);
+        
     }
 
     if (arguments.length === 2) {
-        if (envir.scene.getObjectById(id))
-            selectorMajor(event, envir.scene.getObjectById(id), "1");
+        if (envir.scene.getObjectByProperty( 'uuid' , id)){
+            selectorMajor(event, envir.scene.getObjectByProperty( 'uuid' , id), "1");
+        }
+            
     }
 
     // This makes the camera (in 3D mode) to go on top of the selected item
