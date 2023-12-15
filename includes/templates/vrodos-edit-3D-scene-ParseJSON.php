@@ -31,6 +31,10 @@ class ParseJSON
             echo 'resources3D["enableGeneralChat"]= "' . $json_metadata->enableGeneralChat . '";';
         }
 
+        if (property_exists($json_metadata, "disableMovement")){
+            echo 'resources3D["disableMovement"]= "' . $json_metadata->disableMovement . '";';
+        }
+
         if (property_exists($json_metadata, "backgroundPresetOption"))
             echo 'resources3D["backgroundPresetOption"]= "' . $json_metadata->backgroundPresetOption . '";';
 

@@ -14,10 +14,42 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
     let scene_json_metadata = scene_json_obj['metadata'];
 
+    resources3D_new["SceneSettings"] = {};
     for (let key in scene_json_metadata) {
         let value = scene_json_metadata[key];
         if (key === 'ClearColor') {
-            resources3D_new["SceneSettings"] = { 'ClearColor': value };
+            // resources3D_new["SceneSettings"] = { 'ClearColor': value };
+            Object.assign(resources3D_new["SceneSettings"], { 'ClearColor': value });
+        }
+        if (key === 'disableMovement') {
+            Object.assign(resources3D_new["SceneSettings"], { 'disableMovement': value });
+        }
+        if (key === 'enableGeneralChat') {
+            Object.assign(resources3D_new["SceneSettings"], { 'enableGeneralChat': value });
+        }
+        if (key === 'backgroundPresetOption') {
+            Object.assign(resources3D_new["SceneSettings"], { 'backgroundPresetOption': value });
+        }
+        if (key === 'backgroundStyleOption') {
+            Object.assign(resources3D_new["SceneSettings"], { 'backgroundStyleOption': value });
+        }
+        if (key === 'backgroundImagePath' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'backgroundImagePath': value });
+        }
+        if (key === 'fogtype' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogtype': value });
+        }
+        if (key === 'fogcolor' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogcolor': value });
+        }
+        if (key === 'fogfar' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogfar': value });
+        }
+        if (key === 'fognear' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fognear': value });
+        }
+        if (key === 'fogdensity' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogdensity': value });
         }
     }
 
@@ -71,6 +103,5 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
         }
     }
-    console.log(resources3D_new);
     return resources3D_new;
 }

@@ -6,6 +6,7 @@ function loadButtonActions() {
     // Compile Project button
     jQuery("#compileGameBtn").click(function () {
         compileDialog.show();
+        saveChanges();
 
         // Pause Rendering
         isPaused = true;
@@ -32,7 +33,7 @@ function loadButtonActions() {
 
     // Compile Proceed
     jQuery("#compileProceedBtn").click(function () {
-
+        
         jQuery("#platform-select").addClass("mdc-select--disabled").attr("aria-disabled", "true");
         jQuery("#compileProgressSlider").show();
         jQuery("#compileProgressTitle").show();
@@ -156,7 +157,6 @@ function loadButtonActions() {
     function deleteScene(btn) {
 
         let scene_id = btn.dataset.sceneid;
-        console.log(scene_id);
         var dialogTitle = document.getElementById("delete-dialog-title");
         var dialogDescription = document.getElementById("delete-dialog-description");
         var sceneTitle = document.getElementById(scene_id + "-title").textContent.trim();
@@ -199,8 +199,6 @@ function loadButtonActions() {
         function (ev) {
 
             let dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
-
-            console.log(dataDrag);
 
             let categoryName = dataDrag['category_name'];
             let nameModel = dataDrag.title;

@@ -18,7 +18,6 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     
     if (categoryName === 'lightSun') {
 
-        console.log(Object.keys(dataDrag));
         var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
         lightSun.castingShadow = true;
@@ -538,6 +537,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             // Auto-save
             triggerAutoSave();
 
+            //document.getElementById('numerical_gui-container').style.visibility = 'visible';
+            document.getElementById('numerical_gui-container').style.display="block";
+            setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
             // Hide progress dialogue
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
         };
@@ -567,11 +569,30 @@ function deleteFomScene(uuid, name) {
     delete_dialog_element.show();
     delete_dialog_element.listen("MDCDialog:cancel", closeDialogListener);
 
-
+    let delUuid = uuid;
+    let selUuid;
+    if( typeof(transform_controls.object) != "undefined" )
+        selUuid = transform_controls.object.uuid;
+    else
+        selUuid = "unassigned";
+    // var selUuid = (typeof checkUuid != "undefined") ? checkUuid : "unassigned";
     let delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
     delete_btn_element.addEventListener('click', function() {
-        deleteAssetFromScene(uuid)
-    });
+        transform_controls.detach();
+        deleteAssetFromScene(uuid);
+        if(selUuid != "unassigned"){
+             if (delUuid != selUuid){
+            transform_controls.attach(envir.scene.getObjectByProperty( 'uuid' , selUuid));
+            setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , selUuid));
+            }
+            else{
+                document.getElementById('numerical_gui-container').style.display="none";
+            }
+        }else{
+            document.getElementById('numerical_gui-container').style.display="none";
+        }
+       
+    }, { once: true });
 }
 
 /**
@@ -614,21 +635,24 @@ function deleteAssetFromScene(uuid) {
     isPaused = false;
 
     // If deleting light then remove also its LightHelper and lightTargetSpot and Shadow Helper
-    if (objectSelected.isLight) {
+    if (typeof(objectSelected) != "undefined"){
+        if (objectSelected.isLight) {
 
-        // Sun Shadow Helper
-        envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name));
-
-        // Sun target spot
-        envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name));
-
-        // Sun target spot remove from hierarchy viewer
-        let target = "lightTargetSpot_" + objectSelected.name;
-        jQuery("[data-name='" +target +"']").remove();
-
-        // Light Helper (for all lights)
-        envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + objectSelected.name));
+            // Sun Shadow Helper
+            envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name));
+    
+            // Sun target spot
+            envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name));
+    
+            // Sun target spot remove from hierarchy viewer
+            let target = "lightTargetSpot_" + objectSelected.name;
+            jQuery("[data-name='" +target +"']").remove();
+    
+            // Light Helper (for all lights)
+            envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + objectSelected.name));
+        }
     }
+    
 
     transform_controls.detach(objectSelected);
 

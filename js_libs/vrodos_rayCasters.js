@@ -66,14 +66,17 @@ function dragDropVerticalRayCasting(event) {
 
 // On Double click center screen and focus to that object
 function onMouseDoubleClickFocus(event, id) {
-
+    
     if (typeof id == 'undefined') {
         id = envir.scene.getObjectById(selected_object_name);
+        
     }
 
     if (arguments.length === 2) {
-        if (envir.scene.getObjectById(id))
-            selectorMajor(event, envir.scene.getObjectById(id), "1");
+        if (envir.scene.getObjectByProperty( 'uuid' , id)){
+            selectorMajor(event, envir.scene.getObjectByProperty( 'uuid' , id), "1");
+        }
+            
     }
 
     // This makes the camera (in 3D mode) to go on top of the selected item
@@ -181,6 +184,9 @@ function onLeftMouseDown(event) {
 function selectorMajor(event, objectSel, whocalls) {
 
     if (event.button === 0) {
+
+        // document.getElementById('numerical_gui-container').style.visibility = 'visible';
+        document.getElementById('numerical_gui-container').style.display="block";
 
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.uuid);
@@ -303,8 +309,6 @@ function showProperties(event, object) {
 
     //var objectParent  = inters.object.parent;
     var name = object.name;
-    //console.log(name);
-    console.log(object);
     switch (object.category_slug) {
         case 'decoration':
             // Don't display a popup in decoration. You can only change name and glb file from asset editor!
@@ -413,9 +417,7 @@ function displaySunProperties(event, name) {
     textMapWidth.value = envir.scene.getObjectByName(name).shadowMapWidth;
     textBias.value = envir.scene.getObjectByName(name).shadowBias;
     chbox.value = envir.scene.getObjectByName(name).castingShadow;
-
-    console.log(envir.scene.getObjectByName(name).shadowCameraBottom );
-    
+   
     //jQuery("#sunColor")
     
     

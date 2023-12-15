@@ -785,6 +785,12 @@ wp_head();
                 document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
                 envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
             }
+
+            
+            if (resources3D["disableMovement"]) {
+                document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
+                envir.scene.disableMovement = JSON.parse(resources3D["disableMovement"]);
+            }
             if (resources3D["backgroundStyleOption"]) {
                 let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
 
@@ -874,16 +880,20 @@ wp_head();
                 if (!preserveElements.includes(envir.scene.children[i].name))
                     envir.scene.remove(envir.scene.children[i]);
             }
+            var lightsLoader = new VRodos_LightsPawn_Loader();
+            lightsLoader.load(resources3D);
 
             setHierarchyViewer();
+            //setHierarchyViewerLight();
 
             transform_controls = envir.scene.getObjectByName('myTransformControls');
             transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
+            
             loaderMulti = new VRodos_LoaderMulti("2");
-            loaderMulti.load(manager, resources3D);
-        }
+            loaderMulti.load(manager, resources3D,pluginPath);
 
+        }
         <!--  Part 3: Start 3D with Javascript   -->
 
         function updatePositionsAndControls()

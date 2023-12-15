@@ -327,8 +327,8 @@ AFRAME.registerComponent('info-panel', {
             if (this.playerEl.getAttribute("wasd-controls")){
                 this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
             }
-            else
-                this.cam.setAttribute("wasd-controls-enabled", "false");
+            // else
+            //     this.cam.setAttribute("wasd-controls-enabled", "false");
             //playerEl.setAttribute("look-controls", "enabled: false");
             //this.playerEl.setAttribute("movement-controls", "speed: 0");
             //this.playerEl.setAttribute("look-controls", "enabled: false");
@@ -349,8 +349,9 @@ AFRAME.registerComponent('info-panel', {
         this.el.emit("resetmat");
         if (this.playerEl.getAttribute("wasd-controls")){
             this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
-        }else
-            this.cam.setAttribute("wasd-controls-enabled", "true");
+        }
+        // else
+        //     this.cam.setAttribute("wasd-controls-enabled", "true");
         //this.playerEl.setAttribute("look-controls", "enabled: true");
 
         this.cursorEl.setAttribute("raycaster","objects: .raycastable");

@@ -396,11 +396,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             }
         }
 
+        $movement_disabled = filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN);
 
         if (!empty($sceneColor)){
-            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice");
+            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled");
         }else{
-            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice");
+            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled");
         }
 
         if ($projectType == 'vrexpo_games') {
@@ -417,7 +418,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_camera->setAttribute( "id", "cameraA" );
             $a_camera->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
             $a_camera->setAttribute( "look-controls", "" );
-            $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
+            //if($movement_disabled != "1")
+            // print_r($scene_json->metadata->disableMovement);
+            // if (filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN)  === true)
+            //     $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
             $a_camera->setAttribute("entity-movement-emitter","");
             $a_camera->setAttribute("entity-rotation-emitter","");
         
@@ -455,8 +459,15 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $ascenePlayer->setAttribute( "position", "0 0.6 0" );
             $ascenePlayer->setAttribute( "networked", "template:#avatar-template;attachTemplateToLocal:false;" );
             $ascenePlayer->setAttribute( "show-position", "" );
+             //if($movement_disabled != "1")
+            // if (filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN)  === true)
             $ascenePlayer->setAttribute( "wasd-controls", "fly:false; acceleration:20" );
             $ascenePlayer->setAttribute( "look-controls", "pointerLockEnabled: false" );
+
+            $a_cursor = $dom->createElement( "a-entity" );
+            $a_cursor->setAttribute( "id", "cursor" );
+            $a_cursor->setAttribute( "cursor", "rayOrigin: mouse; fuse: false" );
+            $a_cursor->setAttribute( "raycaster", "objects: .raycastable" );
 
             $a_entity = $dom->createElement( "a-entity" );
             $a_entity->setAttribute( "id", "cameraA" );
@@ -464,6 +475,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_entity->setAttribute( "camera", "near: 0.1; far: 7000.0;" );
             $a_entity->setAttribute( "position", "0 0.6 0" );
 
+            $a_entity->appendChild($a_cursor);
             $ascenePlayer->appendChild( $a_entity );
         }
 

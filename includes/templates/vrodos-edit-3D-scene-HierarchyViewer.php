@@ -81,6 +81,13 @@
             <label for="enableGeneralChatCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Enable general chat</label>
         </div>
 
+        
+        <div style="display: block">
+            <input type="checkbox" title="Disable movement" id="moveDisableCheckbox" name="moveDisableCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleDisableMovement(this.checked)">
+            <label for="moveDisableCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Disable movement</label>
+        </div>
+
+
         <hr>
 
         <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Background style</span>
