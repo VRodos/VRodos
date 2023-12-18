@@ -329,10 +329,18 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    lightLamp.scale.set(resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale']);
+                    // lightLamp.scale.set(resources3D[name]['trs']['scale'],
+                    //     resources3D[name]['trs']['scale'],
+                    //     resources3D[name]['trs']['scale']);
 
+                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                        lightLamp.scale.set(
+                       resources3D[name]['scale'][0],
+                       resources3D[name]['scale'][1],
+                       resources3D[name]['scale'][2]);
+                   }else{
+                    lightLamp.scale.set(1,1,1);
+                   }
                     lightLamp.name = name;
                     lightLamp.asset_name = "mylightLamp";
                     lightLamp.category_name = "lightLamp";
@@ -415,9 +423,20 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    lightSpot.scale.set(resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale']);
+                    // lightSpot.scale.set(resources3D[name]['trs']['scale'],
+                    //     resources3D[name]['trs']['scale'],
+                    //     resources3D[name]['trs']['scale']);
+
+                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                        lightSpot.scale.set(
+                       resources3D[name]['scale'][0],
+                       resources3D[name]['scale'][1],
+                       resources3D[name]['scale'][2]);
+                   }else{
+                    lightSpot.scale.set(1,1,1);
+                   }
+
+
 
                     lightSpot.name = name;
                     lightSpot.asset_name = "mylightSpot";
@@ -469,8 +488,6 @@ class VRodos_LightsPawn_Loader {
                 }
                 else if (resources3D[name]['category_name'] === 'lightAmbient') {
 
-                    //console.log("resources3D", resources3D);
-
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
                         resources3D[name]['lightcolor'][2]);
@@ -491,10 +508,17 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    lightAmbient.scale.set(resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale']);
+                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                        lightAmbient.scale.set(
+                           resources3D[name]['scale'][0],
+                           resources3D[name]['scale'][1],
+                           resources3D[name]['scale'][2]);
+                    }else{
+                        lightAmbient.scale.set(1,1,1);
+                    }
 
+          
+                    //lightAmbient.scale.set(1,1,1);
                     lightAmbient.name = name;
                     lightAmbient.asset_name = "mylightAmbient";
                     lightAmbient.category_name = "lightAmbient";
@@ -513,6 +537,7 @@ class VRodos_LightsPawn_Loader {
 
                     envir.scene.add(lightAmbient);
 
+                 
 
                     // If we do not attach them, they are not visible in Editor !
                     // if (typeof transform_controls !== "undefined") {
