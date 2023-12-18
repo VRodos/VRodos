@@ -66,7 +66,7 @@
         <div class="HierarchyViewerStyle mdc-card" id="hierarchy-viewer-container">
             <span class="HierarchyViewerTitle mdc-typography--subheading1 mdc-theme--text-primary-on-background">Hierarchy Viewer</span>
             <hr class="mdc-list-divider">
-            <ul class="mdc-list" id="hierarchy-viewer" style="max-height: 300px; overflow-y: auto; padding-left: 14px;"></ul>
+            <ul class="mdc-list" id="hierarchy-viewer" style="max-height: 200px; overflow-y: auto; padding-left: 14px;"></ul>
         </div>
     </div>
 
@@ -180,7 +180,7 @@
 
         <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Fog</span>
 
-        <ul class="RadioButtonList" id="FogTypeRadioButtonList" onclick="loadFogType()" style="margin-bottom:0;display:block">
+        <ul class="RadioButtonList" id="FogTypeRadioButtonList" onclick="loadFogType()" style="margin-bottom:50px;display:block">
 
             <li class="mdc-form-field">
                 <div class="mdc-radio">
@@ -227,25 +227,25 @@
                form="3dAssetForm" value="none" style="visibility:hidden;display:none"/>
 
 
-        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Fog values</span>
+        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background" id="FogValues" style="display:none">Fog values</span>
 
-        <span style="display:block; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px">Color:
+        <span style="display:none; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px " class="colorElement">Color:
 
-                <input id="jscolorpickFog" class="mdc-textfield__input jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px" >
+                <input id="jscolorpickFog" class=" mdc-textfield__input jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px" >
 
-                <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
+                <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input colorElement" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
             </span>
 
-        <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Near limit (linear only):
-                <input type="text" id="FogNear" class="mdc-textfield__input" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="0" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
+        <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Near limit (linear only):
+                <input type="text" id="FogNear" class="mdc-textfield__input linearElement" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="0" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
             </span>
 
-        <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Far limit (linear only):
-                <input type="text" id="FogFar" class="mdc-textfield__input" name="FogFar" form="3dAssetForm" value="230"  onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
+        <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Far limit (linear only):
+                <input type="text" id="FogFar" class="mdc-textfield__input linearElement" name="FogFar" form="3dAssetForm" value="230"  onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
             </span>
 
-        <span style="display:block; margin:10px; font-size:9pt; font-weight: bold; color:black">Density (exponential only):
-                <input type="text" id="FogDensity" class="mdc-textfield__input" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
+        <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="exponentialElement">Density (exponential only):
+                <input type="text" id="FogDensity" class="mdc-textfield__input exponentialElement" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
             </span>
     </div>
 </div>
