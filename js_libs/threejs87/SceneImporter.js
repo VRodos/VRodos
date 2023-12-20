@@ -84,13 +84,14 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
         };
 
         // Lamp has 0 rotation
-        if (name.includes('lightLamp')) {
-            resources3D_new[name].trs.rotation = [0,0,0];
-            resources3D_new[name].trs.scale = 1;
-        }
+        // if (name.includes('lightLamp')) {
+        //     resources3D_new[name].trs.rotation = [0,0,0];
+        //     resources3D_new[name].trs.scale = 1;
+        // }
 
         // If 3d asset
-        let conditions = ['lightsun', 'lightSpot', 'lightAmbient', 'Pawn', 'lightLamp'];
+        // let conditions = ['lightsun', 'lightSpot', 'lightAmbient', 'Pawn', 'lightLamp'];
+        let conditions = [];
         if (!conditions.some(el => name.includes(el))) {
 
             resources3D_new[name].path = UPLOAD_DIR + value['fnPath'];

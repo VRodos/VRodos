@@ -43,7 +43,6 @@ class VRodos_LightsPawn_Loader {
                         envir.scene.fog = new THREE.FogExp2(resources3D[name].fogcolor,
                             parseFloat(resources3D[name].fogdensity)
                         );
-                        console.log("You are here");
                         for (var i = 0; i < linear_elems.length; ++i) {
                             var item = linear_elems[i];  
                             item.style.display="none";
@@ -85,8 +84,6 @@ class VRodos_LightsPawn_Loader {
                     return;
                 }
 
-
-                console.log(resources3D['fogtype']);
                  if (name === 'fogtype'){
 
                     if (resources3D['fogtype'] === 'linear') {
@@ -329,18 +326,18 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    // lightLamp.scale.set(resources3D[name]['trs']['scale'],
-                    //     resources3D[name]['trs']['scale'],
-                    //     resources3D[name]['trs']['scale']);
+                    lightLamp.scale.set(resources3D[name]['trs']['scale'][0],
+                        resources3D[name]['trs']['scale'][1],
+                        resources3D[name]['trs']['scale'][2]);
 
-                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
-                        lightLamp.scale.set(
-                       resources3D[name]['scale'][0],
-                       resources3D[name]['scale'][1],
-                       resources3D[name]['scale'][2]);
-                   }else{
-                    lightLamp.scale.set(1,1,1);
-                   }
+                //     if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                //         lightLamp.scale.set(
+                //        resources3D[name]['scale'][0],
+                //        resources3D[name]['scale'][1],
+                //        resources3D[name]['scale'][2]);
+                //    }else{
+                //     lightLamp.scale.set(1,1,1);
+                //    }
                     lightLamp.name = name;
                     lightLamp.asset_name = "mylightLamp";
                     lightLamp.category_name = "lightLamp";
@@ -423,18 +420,20 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    // lightSpot.scale.set(resources3D[name]['trs']['scale'],
-                    //     resources3D[name]['trs']['scale'],
-                    //     resources3D[name]['trs']['scale']);
+                    lightSpot.scale.set(resources3D[name]['trs']['scale'][0],
+                        resources3D[name]['trs']['scale'][1],
+                        resources3D[name]['trs']['scale'][2]);
 
-                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
-                        lightSpot.scale.set(
-                       resources3D[name]['scale'][0],
-                       resources3D[name]['scale'][1],
-                       resources3D[name]['scale'][2]);
-                   }else{
+                //     if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                //         lightSpot.scale.set(
+                //        resources3D[name]['scale'][0],
+                //        resources3D[name]['scale'][1],
+                //        resources3D[name]['scale'][2]);
+                //    }else{
                     lightSpot.scale.set(1,1,1);
-                   }
+                //    }
+
+                console.log(resources3D[name]['trs']['scale']);
 
 
 
@@ -508,14 +507,18 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
-                        lightAmbient.scale.set(
-                           resources3D[name]['scale'][0],
-                           resources3D[name]['scale'][1],
-                           resources3D[name]['scale'][2]);
-                    }else{
-                        lightAmbient.scale.set(1,1,1);
-                    }
+                    lightAmbient.scale.set(resources3D[name]['trs']['scale'][0],
+                        resources3D[name]['trs']['scale'][1],
+                        resources3D[name]['trs']['scale'][2]);
+
+                    // if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                    //     lightAmbient.scale.set(
+                    //        resources3D[name]['scale'][0],
+                    //        resources3D[name]['scale'][1],
+                    //        resources3D[name]['scale'][2]);
+                    // }else{
+                    //     lightAmbient.scale.set(1,1,1);
+                    // }
 
           
                     //lightAmbient.scale.set(1,1,1);

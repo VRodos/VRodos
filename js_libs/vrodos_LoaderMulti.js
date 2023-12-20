@@ -255,6 +255,9 @@ class VRodos_LoaderMulti {
                                 document.getElementById('RadioExponentialFog').checked =true;
                             }
                         }
+                        else{
+                            document.getElementById('RadioNoFog').checked = true;
+                        }
                         if (resources3D[name].fogcolor){
                             document.getElementById('jscolorpickFog').jscolor.fromString(resources3D[name].fogcolor);
                         }
