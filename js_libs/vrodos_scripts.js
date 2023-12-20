@@ -39,6 +39,12 @@ function updateClearColorPicker(picker){
 }
 
 function saveChanges() {
+
+    let save_scene_btn = document.getElementById("save-scene-button");
+    if (save_scene_btn.classList.contains("LinkDisabled")){
+        return;
+    }
+
     jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
     // Export using a custom variant of the old deprecated class SceneExporter

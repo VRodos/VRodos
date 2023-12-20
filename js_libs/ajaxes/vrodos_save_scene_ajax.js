@@ -14,6 +14,7 @@ function vrodos_saveSceneAjax() {
         type: 'POST',
         data: postdata,
         success: function (data) {
+
             let save_scene_btn = document.getElementById("save-scene-button");
             save_scene_btn.innerHTML = "All changes saved";
 
@@ -26,6 +27,8 @@ function vrodos_saveSceneAjax() {
         error: function (xhr, ajaxOptions, thrownError) {
 
             console.log("Ajax Save Scene: ERROR: 156 - " + thrownError);
+
+            alert("Save Scene Error - " + thrownError);
 
             jQuery('#save-scene-button').html("Save scene").removeClass("LinkDisabled");
 

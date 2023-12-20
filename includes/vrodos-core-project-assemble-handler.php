@@ -111,7 +111,7 @@ function vrodos_fetch_list_projects_callback() {
             if (current_user_can('administrator')){
                 // ToDo: replace current_user_can with smth like current_user_is
 
-            } elseif (current_user_can('project_master')) {
+            } elseif (current_user_can('administrator')) {
 
                 $collaborators = get_post_meta(get_the_ID(),'vrodos_project_collaborators_ids')[0];
 

@@ -1,15 +1,13 @@
 <?php
 
-function vrodos_add_customroles() {
+/*function vrodos_add_customroles() {
     
-    // These two roles to be removed it is for old version overlap
+    // Remove old version roles if they exist
     remove_role( 'adv_game_master');
     remove_role( 'teacher');
-
-    // This is the new role
-    add_role( 'project_master', 'Project Master');
+    remove_role( 'project_master');
     
-    $role = get_role( 'project_master' );
+    $role = get_role( 'administrator' );
 
     // Caps about Games
     $role->add_cap( 'publish_vrodos_project' );
@@ -17,11 +15,15 @@ function vrodos_add_customroles() {
     $role->add_cap( 'edit_vrodos_project' );
     $role->add_cap( 'delete_vrodos_project' );
 
-    // Caps about Scenes
+    // Caps about Scenes (along with exported ones)
     $role->add_cap( 'publish_vrodos_scene' );
+    $role->add_cap( 'publish_vrodos_scene_exported' );
     $role->add_cap( 'edit_vrodos_scene' );
+    $role->add_cap( 'edit_vrodos_scene_exported' );
     $role->add_cap( 'delete_vrodos_scene' );
+    $role->add_cap( 'delete_vrodos_scene_exported' );
     $role->add_cap( 'read_vrodos_scene' );
+    $role->add_cap( 'read_vrodos_scene_exported' );
 
     // Caps about Assets
     $role->add_cap( 'publish_vrodos_asset3d' );
@@ -46,7 +48,7 @@ function vrodos_add_customroles() {
     $role->add_cap( 'edit_vrodos_asset3d_pgame' );
     
     unset( $role );
-}
+}*/
 
 function vrodos_add_capabilities_to_admin() {
     $role = get_role( 'administrator' );
@@ -66,8 +68,8 @@ function vrodos_add_capabilities_to_admin() {
     $role->add_cap( 'edit_others_vrodos_scene' );
     $role->add_cap( 'delete_vrodos_scene' );
     $role->add_cap( 'delete_others_vrodos_scene' );
-    $role->add_cap( 'read_private_vrodos_scene' );
     $role->add_cap( 'read_vrodos_scene' );
+    $role->add_cap( 'read_private_vrodos_scene' );
 
     // Caps about Assets
     $role->add_cap( 'publish_vrodos_asset3d' );

@@ -42,7 +42,7 @@ label {
 .WhiteSpaceSeparator {
     margin-top:30px;
     margin-bottom: 30px;
-    border:0px;
+    border:0;
     color:white;
     display:table;
 }
@@ -1447,7 +1447,7 @@ input[type=checkbox] {
     -webkit-appearance: auto;
 }
 
-input[type=radio] {
+input[type=radio].mdc-radio__native-control {
     height: 100%;
     width: 100%;
 }

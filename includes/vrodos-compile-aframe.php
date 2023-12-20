@@ -290,7 +290,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
     // Step 1: Create the index.html file by replacing certain parts only
     function createIndexFile($project_title, $scene_id, $scene_title, $fileOperations)
     {
-
+        // static html (old)
         $filenameSource = $fileOperations->plugin_path_dir."/js_libs/aframe_libs/index_prototype.html";
 
         // Read prototype
@@ -300,6 +300,20 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $content = str_replace("Client.html","Client_".$scene_id.".html",$content);
         //$content = str_replace("ProjectAndSceneId", $project_title.", ".$scene_title[0]." (".$scene_id.")", $content);
         $content = str_replace("project_sceneId", $project_title." - ".$scene_title[0], $content);
+
+        // WP php page (New)
+        // Page data
+        /*$my_post = array(
+            'post_title'    => 'My awesome page',
+            'post_content'  => 'This is the content of my awesome page.',
+            'post_status'   => 'publish',
+            'post_author'   => 1,
+            'post_type'     => 'page'  // Set the post type to 'page'
+        );
+
+        // Insert the post into the database
+        wp_insert_post( $my_post );*/
+
 
         // Write back to root
         return $fileOperations->writer($fileOperations->plugin_path_dir . "/networked-aframe/out/" . "index_" . $scene_id . ".html", $content);

@@ -2,6 +2,9 @@
 // Remove the admin bar
 //add_action('get_header', 'vrodos_remove_admin_login_header');
 
+wp_enqueue_style('vrodos_frontend_stylesheet');
+wp_enqueue_style('vrodos_material_stylesheet');
+
 // Is on back or front end ?
 $isAdmin = is_admin() ? 'back' : 'front';
 ?>
@@ -315,7 +318,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
 ?>
 
-<?php if ( !is_user_logged_in() ) {
+<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) {
     $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
     ?>
 
@@ -833,8 +836,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
     <script type="text/javascript">
         'use strict';
-
-        hideAdminBar();
 
         const assetVideoSrc = document.getElementById("assetVideoSource");
         const assetVideoTag = document.getElementById("assetVideoTag");

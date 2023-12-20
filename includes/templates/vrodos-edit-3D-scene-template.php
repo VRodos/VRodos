@@ -1,5 +1,8 @@
 <?php
 
+wp_enqueue_style('vrodos_frontend_stylesheet');
+wp_enqueue_style('vrodos_material_stylesheet');
+
 $perma_structure = (bool)get_option('permalink_structure');
 $parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
 $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
@@ -324,7 +327,7 @@ wp_head();
 
 ?>
 
-<?php if ( !is_user_logged_in() ) { ?>
+<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
     <!-- if user not logged in, then prompt to log in -->
     <div class="DisplayBlock CenterContents">

@@ -1,11 +1,12 @@
 <?php
+
 /**
  * Plugin Name: VRodos
  * Plugin URI: https://vrodos.iti.gr
  * Description: Make your wordpress website a VR site
  * Author: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
  * Author URI: https://vrodos.iti.gr
- * Version: 2.1
+ * Version: 2.2
  */
 
 
@@ -53,7 +54,6 @@ function vrodos_register_scripts() {
         array( 'vrodos_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
         array( 'vrodos_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
         array( 'vrodos_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
-        array( 'vrodos_load_datgui', $pluginDirJS.'datgui/0.7.9/dat.gui.min.js'),
 
         array( 'vrodos_load87_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
         array( 'vrodos_load87_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
@@ -150,7 +150,6 @@ function vrodos_register_scripts() {
 
 
     //----Various for scene editor
-
     $scriptsD = array(
         array( 'vrodos_3d_editor_environmentals', $pluginDirJS.'vrodos_3d_editor_environmentals.js'),
         array( 'vrodos_keyButtons', $pluginDirJS.'vrodos_keyButtons.js'),
@@ -167,6 +166,8 @@ function vrodos_register_scripts() {
     for ( $i = 0 ; $i < count($scriptsD); $i ++){
         wp_register_script($scriptsD[$i][0] , $scriptsD[$i][1], null, null, false );
     }
+
+    wp_register_script('vrodos_load_datgui', $pluginDirJS.'datgui/0.7.9/dat.gui.min.js', null, null, false );
 }
 
 
@@ -200,11 +201,11 @@ function vrodos_register_styles() {
 
     // TODO: When ready for production, ignore  node_modules folder and move the 2 material css & js files to another folder.
     // Material & Frontend CSS & Scripts
-    wp_enqueue_style('vrodos_material_stylesheet');
+
     wp_enqueue_script('vrodos_material_scripts');
     wp_enqueue_style( 'vrodos_material_icons', plugin_dir_url( __FILE__ ) . 'css/material-icons/material-icons.css' );
 //    wp_enqueue_style( 'vrodos_glyphter_icons', plugin_dir_url( __FILE__ ) . 'css/glyphter-font/Glyphter.css' );
-    wp_enqueue_style('vrodos_frontend_stylesheet');
+
 
     wp_enqueue_style('vrodos_backend');
 
@@ -222,8 +223,8 @@ add_action('admin_enqueue_scripts', 'vrodos_register_styles' );
 
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
 
-// Order : 4
-add_action( 'init', 'vrodos_add_customroles');
+// Order : 4 (Right now only admin get full access) - Rework this to allow users of a custom role to access backend
+// add_action( 'init', 'vrodos_add_customroles');
 
 // Order: 5  -> Add extra field (meta for user actually) to view in backend named as 'mvnode_token' & mvnode_url
 add_action( 'show_user_profile', 'extra_user_profile_field_mvnode_token' );
@@ -351,6 +352,7 @@ add_action('admin_menu', 'vrodos_scenes_meta_definitions_add');
 // Save metas
 add_action('save_post', 'vrodos_scenes_metas_save');
 
+
 ////===================================== Assets ============================================
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
@@ -433,7 +435,7 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php'
 add_action( 'init', 'vrodos_create_joker_projects', 100, 2 );
 
 // Remove Admin bar for non admins
-add_action('after_setup_theme', 'vrodos_remove_admin_bar');
+// add_action('after_setup_theme', 'vrodos_remove_admin_bar');
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
 
@@ -480,7 +482,7 @@ register_activation_hook(__FILE__,'vrodos_create_pages');
 
 // Add Project Manager and Assets List pages to menu automatically;
 // Some messages also
-register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
+//register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
 
 // -------------  Games versions table -------------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-db-table-creations.php' );
@@ -932,6 +934,16 @@ function disable_widgets_block_editor() {
 add_action( 'after_setup_theme', 'disable_widgets_block_editor' );
 
 
+// Limit Scene revisions to N
+function ns_limit_revisions($num, $post){
+
+    $N = 50; // Keep only the latest N revisions
+    $target_types = array('vrodos_scene');
+    $is_target_type = in_array($post->post_type, $target_types);
+    return $is_target_type ? $N : $num;
+}
+add_filter('wp_revisions_to_keep', 'ns_limit_revisions', 10, 2);
+
 
 //-------- Uninstall -------------------
 register_uninstall_hook(__FILE__, 'vrodos_remove_db_residues');
@@ -982,13 +994,21 @@ function vrodos_remove_db_residues(){
 
 
 // Main backend info page
-function vrodos_plugin_main_page(){
+function vrodos_plugin_main_page() {
+    $allProjectsPage = vrodos_getEditpage('allgames');
+
+    if ( is_admin() ) {
+        if( ! function_exists( 'get_plugin_data' ) ) {
+            require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+        }
+        $plugin_data = get_plugin_data( __FILE__ );
+    }
     ?>
 
     <div id="wpbody" role="main">
         <div id="wpbody-content">
             <div class="wrap">
-                <h1>VRodos Dashboard</h1>
+                <h1>VRodos Dashboard (<?php echo $plugin_data['Version'] ?>)</h1>
                 <div id="welcome-panel" class="welcome-panel" style="background: #1b4d0d url(images/about-texture.png) center repeat ">
                     <div class="welcome-panel-content">
                         <div class="welcome-panel-header">
@@ -998,29 +1018,24 @@ margin-right: 20px;">
                             <h2>Welcome to VRodos!</h2>
                             <p>
                                 <a href="https://vrodos.iti.gr">
-                                    Learn more about VRodos 2.0 version.</a>
+                                    Learn more about VRodos </a>
                             </p>
                         </div>
                         <div class="welcome-panel-column-container">
                             <div class="welcome-panel-column">
                                 <div class="welcome-panel-icon-pages"></div>
                                 <div class="welcome-panel-column-content">
-                                    <h3>3D Models Repository</h3>
-                                    <p>Database with web interfaces for 3D models management.</p>
+                                    <a href="<?php echo esc_url( get_permalink($allProjectsPage[0]->ID)); ?>" class="mdc-button mdc-button--raised">Access Project Manager</a>
                                 </div>
                             </div>
                             <div class="welcome-panel-column">
                                 <div class="welcome-panel-icon-layout"></div>
                                 <div class="welcome-panel-column-content">
-                                    <h3>Authoring tool for VR applications</h3>
-                                    <p>An authoring tool for VR applications in Unity3D format without programming.</p>
                                 </div>
                             </div>
                             <div class="welcome-panel-column">
                                 <div class="welcome-panel-icon-styles"></div>
                                 <div class="welcome-panel-column-content">
-                                    <h3>Management tool for Digital Labels.</h3>
-                                    <p>Authoring tool for Digital Labels with 3D data.</p>
                                 </div>
                             </div>
                         </div>
@@ -1030,7 +1045,7 @@ margin-right: 20px;">
 
             <div class="table_stuff">
                 <table>
-                    <caption>Info of VRodos Types</caption>
+                    <caption>Overview</caption>
                     <thead>
 
                     <tr>
@@ -1043,7 +1058,7 @@ margin-right: 20px;">
                     </thead>
                     <tbody>
                     <tr>
-                        <th>Games</th>
+                        <th>Projects</th>
                         <td><?php
 
                             $args = array(
@@ -1131,69 +1146,9 @@ margin-right: 20px;">
                             echo $query->found_posts;
                             ?>
                         </td>
-                        <td><!-- --><?php
-                            /*
-                                                        $args = array(
-                                                            'post_type' => 'vrodos_asset3d',
-                                                            'posts_per_page' => -1
-                                                        );
-
-                                                        $query = new WP_Query($args);
-
-                                                        //echo $query->found_posts;
-                                                        if ($query->have_posts() ) :
-
-                                                            while ( $query->have_posts() ) : $query->the_post();
-                                                                echo  get_the_ID() ." <br />";
-
-                                                            endwhile;
-
-                                                            wp_reset_postdata();
-                                                        endif;
-                                                        */?>
-                        </td>
-                        <td><?php
-                            /*
-                                                        $args = array(
-                                                            'post_type' => 'vrodos_asset3d',
-                                                            'posts_per_page' => -1
-                                                        );
-
-                                                        $query = new WP_Query($args);
-
-                                                        //echo $query->found_posts;
-                                                        if ($query->have_posts() ) :
-
-                                                            while ( $query->have_posts() ) : $query->the_post();
-                                                                echo  get_the_title() . "</br>";
-
-                                                            endwhile;
-                                                            wp_reset_postdata();
-                                                        endif;
-                                                        */?>
-                        </td>
-                        <td><?php
-                            /*
-                                                        $args = array(
-                                                            'post_type' => 'vrodos_asset3d',
-                                                            'posts_per_page' => -1
-                                                        );
-
-                                                        $query = new WP_Query($args);
-
-                                                        // echo $query->found_posts;
-                                                        if ($query->have_posts() ) :
-
-                                                            while ( $query->have_posts() ) : $query->the_post();
-                                                                $post_terms = wp_get_post_terms(get_the_ID(), 'vrodos_asset3d_pgame');
-                                                                if($post_terms){
-                                                                    echo $post_terms[0]->name . " <br />";
-                                                                }
-                                                            endwhile;
-
-                                                            wp_reset_postdata();
-                                                        endif;
-                                                        */?></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
 
                     </tr>
                     </tbody>

@@ -612,7 +612,8 @@ function vrodos_save_scene_async_action_callback()
 			$_POST['scene_screenshot'],
 			'scene_'.$_POST['scene_id'].'_featimg',
 			$_POST['scene_id'],
-			'jpg', true);
+			'jpg',
+			true);
 
 	// Set thumbnail of post
 	set_post_thumbnail( $_POST['scene_id'], $attachment_id );
@@ -673,7 +674,8 @@ function vrodos_redo_scene_async_action_callback()
 			$_POST['scene_screenshot'],
 			'scene_'.$_POST['scene_id'].'_featimg',
 			$_POST['scene_id'],
-			'jpg' , true);
+			'jpg' ,
+			true);
 
 		set_post_thumbnail( $_POST['scene_id'], $attachment_id );
 	}

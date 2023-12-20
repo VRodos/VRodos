@@ -212,7 +212,7 @@ function change_user_dropdown( $query_args, $r ){
             unset($query_args['who']);
         }
 
-        $query_args['role__in'] = array('administrator', 'project_master');
+        $query_args['role__in'] = array('administrator');
     }
 
     return $query_args;

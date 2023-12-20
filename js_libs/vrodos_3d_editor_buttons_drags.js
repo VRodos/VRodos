@@ -256,6 +256,11 @@ function loadButtonActions() {
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
     jQuery('#save-scene-button').click(function () {
 
+        let save_scene_btn = document.getElementById("save-scene-button");
+        if (save_scene_btn.classList.contains("LinkDisabled")){
+            return;
+        }
+
         jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
         // Export using a custom variant of the old deprecated class SceneExporter
@@ -486,8 +491,6 @@ function loadButtonActions() {
 
             setVisiblityLightHelpingElements(false);
 
-            //jQuery("#wpadminbar").hide();
-
             // footer that is high up below admin bar
             //jQuery("#colophon").hide();
 
@@ -510,9 +513,6 @@ function loadButtonActions() {
             envir.outlinePass.enabled = true;
 
             setVisiblityLightHelpingElements(true);
-
-            // wp admin bar show
-            //jQuery("#wpadminbar").show();
 
             // footer that is high up below admin bar
             //jQuery("#colophon").show();

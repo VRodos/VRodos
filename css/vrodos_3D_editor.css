@@ -1,20 +1,3 @@
-/*:root {*/
-/*    --adminbar-height: 0px !important;*/
-/*    --login-bar-height: 0;*/
-/*    --menu-bar-height: 0;*/
-/*    --wp-admin--admin-bar--height: 0px;*/
-/*}*/
-
-/*html {*/
-/*    --adminbar-height: 0px !important;*/
-/*    --login-bar-height: 0;*/
-/*    --menu-bar-height: 0;*/
-/*    --wp-admin--admin-bar--height: 0px;*/
-/*}*/
-
-.navigation-top {
-    display: none;
-}
 
 .panel {
     display: none;
