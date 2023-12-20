@@ -27,7 +27,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSun.shadowCameraBottom = "-200";
         lightSun.shadowCameraLeft = "-200";
         lightSun.shadowCameraRight = "200";
-        lightSun.shadowBias = "-0.0001";
+        lightSun.shadowBias = "-0.001";
         lightSun.defaultColor = "0xffff00";
         lightSun.castingShadow = true;
         lightSun.name = nameModel;
@@ -172,7 +172,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightLamp.lampshadowCameraBottom = "-200";
         lightLamp.lampshadowCameraLeft = "-200";
         lightLamp.lampshadowCameraRight = "200";
-        lightLamp.lampshadowBias = "-0.0001";
+        lightLamp.lampshadowBias = "-0.001";
         
         let hexcol = "0xffff00";
         //// Add Lamp Helper
