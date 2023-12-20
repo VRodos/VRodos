@@ -18,7 +18,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     
     if (categoryName === 'lightSun') {
 
-        var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
+        let lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
         lightSun.castingShadow = true;
         lightSun.shadowMapHeight = "1024";
@@ -40,7 +40,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         let hexcol = "0xffff00";
 
         //// Add Sun Helper
-        var sunSphere = new THREE.Mesh(
+        let sunSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
@@ -50,14 +50,14 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // end of sphere
 
         // Helper
-        var lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0x555500);
+        let lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0x555500);
         lightSunHelper.isLightHelper = true;
         lightSunHelper.name = 'lightHelper_' + lightSun.name;
         lightSunHelper['category_name'] = 'lightHelper';
         lightSunHelper.parentLightName = lightSun.name;
 
         // Target spot: Where Sun points
-        var lightTargetSpot = new THREE.Object3D();
+        let lightTargetSpot = new THREE.Object3D();
 
         lightTargetSpot.add(new THREE.Mesh(
             new THREE.SphereBufferGeometry(0.5, 16, 8),
@@ -88,8 +88,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSunHelper.update();
 
         // Add transform controls
-        var insertedObject = envir.scene.getObjectByName(nameModel);
-        var trs_tmp = resources3D[nameModel]['trs'];
+        let insertedObject = envir.scene.getObjectByName(nameModel);
+        let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -112,8 +112,6 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
 
-
-
         selected_object_name = nameModel;
 
         setTransformControlsSize();
@@ -121,20 +119,15 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         document.getElementById('numerical_gui-container').style.display="block";
         setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
 
-
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
-
         //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
-
 
         // Add in scene
         addInHierarchyViewer(insertedObject);
-
         addInHierarchyViewer(lightTargetSpot);
+
         // Auto-save
        
-
-
 
         transform_controls.object.color.setHex(hexcol);
 
@@ -142,12 +135,12 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.object.children[0].material.color.setHex(hexcol);
 
         // Sun Helper
-        var lightHelper = envir.scene.getObjectByName("lightHelper_" + transform_controls.object.name);
+        let lightHelper = envir.scene.getObjectByName("lightHelper_" + transform_controls.object.name);
         lightHelper.children[0].material.color.setHex(hexcol);
         lightHelper.children[1].material.color.setHex(hexcol);
 
         // TargetSpot
-        var lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
+        lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
         lightTargetSpot.children[0].material.color.setHex(hexcol);
 
         triggerAutoSave();
@@ -155,8 +148,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     }
     else if (categoryName === 'lightLamp') {
 
-        var lightLamp = new THREE.PointLight(0xffffff, 1, 100, 2);
-
+        let lightLamp = new THREE.PointLight(0xffffff, 1, 100, 2);
 
         lightLamp.name = nameModel;
         lightLamp['asset_name'] = "mylightLamp";
@@ -176,7 +168,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         
         let hexcol = "0xffff00";
         //// Add Lamp Helper
-        var lampSphere = new THREE.Mesh(
+        let lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(0.5, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
@@ -186,7 +178,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // end of sphere
 
         // Helper
-        var lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
+        let lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
         lightLampHelper.isLightHelper = true;
         lightLampHelper.name = 'lightHelper_' + lightLamp.name;
         lightLampHelper['category_name'] = 'lightHelper';
@@ -198,8 +190,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightLampHelper.update();
 
         // Add transform controls
-        var insertedObject = envir.scene.getObjectByName(nameModel);
-        var trs_tmp = resources3D[nameModel]['trs'];
+        let insertedObject = envir.scene.getObjectByName(nameModel);
+        let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -248,7 +240,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     }
     else if (categoryName === 'lightSpot') {
 
-        var lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
+        let lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
 
         lightSpot.name = nameModel;
         lightSpot['asset_name'] = "mylightSpot";
@@ -257,7 +249,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSpot.isLight = true;
 
         //// Add Lamp Helper
-        var lampSphere = new THREE.Mesh(
+        let lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
@@ -271,7 +263,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // end of sphere
 
         // Helper
-        var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0x555500);
+        let lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0x555500);
         lightSpotHelper.isLightHelper = true;
         lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
         lightSpotHelper['category_name'] = 'lightHelper';
@@ -283,8 +275,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSpotHelper.update();
 
         // Add transform controls
-        var insertedObject = envir.scene.getObjectByName(nameModel);
-        var trs_tmp = resources3D[nameModel]['trs'];
+        let insertedObject = envir.scene.getObjectByName(nameModel);
+        let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -329,7 +321,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
     } else if (categoryName === 'lightAmbient') {
 
-        var lightAmbient = new THREE.AmbientLight(0xffffff, 1);
+        let lightAmbient = new THREE.AmbientLight(0xffffff, 1);
 
         lightAmbient.name = nameModel;
         lightAmbient['asset_name'] = "mylightAmbient";
@@ -338,7 +330,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightAmbient.isLight = true;
 
         //// Add Lamp Helper
-        var lampSphere = new THREE.Mesh(
+        let lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffffff })
         );
@@ -352,8 +344,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         envir.scene.add(lightAmbient);
 
         // Add transform controls
-        var insertedObject = envir.scene.getObjectByName(nameModel);
-        var trs_tmp = resources3D[nameModel]['trs'];
+        let insertedObject = envir.scene.getObjectByName(nameModel);
+        let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -406,7 +398,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             function (gltf) {
 
 
-                var Pawn = gltf.scene.children[0];
+                let Pawn = gltf.scene.children[0];
                 Pawn.name = nameModel;
                 Pawn['asset_name'] = "myActor";
                 Pawn.isSelectableMesh = true;
@@ -415,7 +407,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
 
                 // Give a number to Pawn
-                var indexPawn = 1;
+                let indexPawn = 1;
                 for (let ch of envir.scene.children) {
                     if (ch.name.includes("Pawn")) {
                         indexPawn += 1;
@@ -423,14 +415,14 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
                 }
 
 
-                var pawnLabelDiv = document.createElement('div');
+                let pawnLabelDiv = document.createElement('div');
                 pawnLabelDiv.className = '';
                 pawnLabelDiv.textContent = 'Actor ' + indexPawn;
                 pawnLabelDiv.style.marginTop = '-1em';
                 pawnLabelDiv.style.fontSize = '26px';
                 pawnLabelDiv.style.color = "yellow";
                 //pawnLabelDiv.style.letterSpacing = '2px';
-                var pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
+                let pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
                 pawnLabel.position.set(0, 1.5, 0);
                 Pawn.add(pawnLabel);
                 //pawnLabel.layers.set( 0 );
@@ -439,9 +431,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
                 envir.scene.add(Pawn);
 
                 // Add transform controls
-                var insertedObject = envir.scene.getObjectByName(nameModel);
+                let insertedObject = envir.scene.getObjectByName(nameModel);
 
-                var trs_tmp = resources3D[nameModel]['trs'];
+                let trs_tmp = resources3D[nameModel]['trs'];
 
                 trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -496,7 +488,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         document.getElementById("result_download").innerHTML = "Loading";
 
         // Make a manager for the GLB
-        var manager = new THREE.LoadingManager();
+        let manager = new THREE.LoadingManager();
         // On progress messages
         manager.onProgress = function (item, loaded, total) {
             document.getElementById("result_download").innerHTML = resources3D[nameModel]['asset_name'] + " loading part " + loaded + " / " + total;
@@ -509,7 +501,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             let insertedObject = envir.scene.getObjectByName(nameModel);
 
             // Affine transformations
-            var trs_tmp = resources3D[nameModel]['trs'];
+            let trs_tmp = resources3D[nameModel]['trs'];
 
             insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
             insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
