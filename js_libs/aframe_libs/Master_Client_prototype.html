@@ -306,7 +306,7 @@
 
                                             let avatarType = this.rpm_model.object3DMap.mesh.children[0].userData.name;
                                             // Change Y position of model based on type
-                                            let avatarPosition = avatarType === 'Armature' ? '0 -1.68 -0.5' : '0 -.4 -0.5';
+                                            let avatarPosition = avatarType === 'Armature' ? '0 -1.68 0' : '0 -.4 0';
                                             this.rpm_model.setAttribute('position', avatarPosition);
                                         }, {once : true});
                                     }
