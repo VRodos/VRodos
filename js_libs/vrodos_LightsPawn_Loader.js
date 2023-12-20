@@ -11,48 +11,152 @@ class VRodos_LightsPawn_Loader {
 
     load(resources3D) {
 
+        var linear_elems = document.getElementsByClassName('linearElement');
+        var expo_elems = document.getElementsByClassName('exponentialElement');
+        var color_elems = document.getElementsByClassName('colorElement');
+        
+        
+
         // Lights and Scene Settings loop
         for (let n in resources3D) {
             (function (name) {
+                if (name === 'SceneSettings') {
+                   
+                    if (resources3D[name].fogtype === 'linear') {
+                        envir.scene.fog = new THREE.Fog(resources3D[name].fogcolor,
+                            parseFloat(resources3D[name].fognear),
+                            parseFloat(resources3D[name].fogfar)
+                        );
+                        for (var i = 0; i < linear_elems.length; ++i) {
+                            var item = linear_elems[i];  
+                            item.style.display="block";
+                        }
+                        for (var i = 0; i < expo_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="none";
+                        }
+                        for (var i = 0; i < color_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="block";
+                        }
+                    } else if (resources3D[name].fogtype === 'exponential') {
+                        envir.scene.fog = new THREE.FogExp2(resources3D[name].fogcolor,
+                            parseFloat(resources3D[name].fogdensity)
+                        );
+                        console.log("You are here");
+                        for (var i = 0; i < linear_elems.length; ++i) {
+                            var item = linear_elems[i];  
+                            item.style.display="none";
+                        }
+                        for (var i = 0; i < expo_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="block";
+                        }
+                        for (var i = 0; i < color_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="block";
+                        }
+                    } else{
+                        for (var i = 0; i < linear_elems.length; ++i) {
+                            var item = linear_elems[i];  
+                            item.style.display="none";
+                        }
+                        for (var i = 0; i < expo_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="none";
+                        }
+                        for (var i = 0; i < color_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="none";
+                        }
+                        document.getElementById('jscolorpickFog').value = 0;
+                        document.getElementById('FogNear').value = 0;
+                        document.getElementById('FogFar').value = 0;
+                        document.getElementById('FogDensity').value = 0;
+                    }
+                    document.getElementById('FogType').value = resources3D[name].fogtype;
+                    if (resources3D[name].fogtype === "none") {
+                        document.getElementById('RadioNoFog').checked = true;
+                    } else if (resources3D[name].fogtype === "linear") {
+                        document.getElementById('RadioLinearFog').checked = true;
+                    } else if (resources3D[name].fogtype === "exponential") {
+                        document.getElementById('RadioExponentialFog').checked = true;
+                    }                 
+                    return;
+                }
 
-                if (name === 'fogtype') {
-                    if (resources3D[name] === 'linear') {
 
+                console.log(resources3D['fogtype']);
+                 if (name === 'fogtype'){
+
+                    if (resources3D['fogtype'] === 'linear') {
                         envir.scene.fog = new THREE.Fog(resources3D['fogcolor'],
                             parseFloat(resources3D['fognear']),
                             parseFloat(resources3D['fogfar'])
                         );
 
-                    } else if (resources3D[name] === 'exponential') {
-
+                        for (var i = 0; i < linear_elems.length; ++i) {
+                            var item = linear_elems[i];  
+                            item.style.display="block";
+                        }
+                        for (var i = 0; i < expo_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="none";
+                        }
+                        for (var i = 0; i < color_elems.length; ++i) {
+                            var item = color_elems[i];  
+                            item.style.display="block";
+                        }
+                        document.getElementById("FogValues").style.display="none";
+                    } else if (resources3D['fogtype'] === 'exponential') {
                         envir.scene.fog = new THREE.FogExp2(resources3D['fogcolor'],
                             parseFloat(resources3D['fogdensity'])
                         );
+                        for (var i = 0; i < linear_elems.length; ++i) {
+                            var item = linear_elems[i];  
+                            item.style.display="none";
+                        }
+                        for (var i = 0; i < expo_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="block";
+                        }
+                        for (var i = 0; i < color_elems.length; ++i) {
+                            var item = color_elems[i];  
+                            item.style.display="block";
+                        }
+                        document.getElementById("FogValues").style.display="block";
+                    } else{
+                        for (var i = 0; i < linear_elems.length; ++i) {
+                            var item = linear_elems[i];  
+                            item.style.display="none";
+                        }
+                        for (var i = 0; i < expo_elems.length; ++i) {
+                            var item = expo_elems[i];  
+                            item.style.display="none";
+                        }
+                        for (var i = 0; i < color_elems.length; ++i) {
+                            var item = color_elems[i];  
+                            item.style.display="none";
+                        }
+                        document.getElementById("FogValues").style.display="none";
+                        document.getElementById('jscolorpickFog').value = 0;
+                        document.getElementById('FogNear').value = 0;
+                        document.getElementById('FogFar').value = 0;
+                        document.getElementById('FogDensity').value = 0;
                     }
-
-                    // Set the UIs too
-                    document.getElementById('FogType').value = resources3D[name];
-
-                    if (resources3D[name] === "none") {
+                    document.getElementById('FogType').value = resources3D['fogtype'];
+                    console.log(resources3D['fogtype']);
+                    if (resources3D['fogtype'] === "none") {
                         document.getElementById('RadioNoFog').checked = true;
-                    } else if (resources3D[name] === "linear") {
+                    } else if (resources3D['fogtype'] === "linear") {
                         document.getElementById('RadioLinearFog').checked = true;
-                    } else if (resources3D[name] === "exponential") {
+                    } else if (resources3D['fogtype'] === "exponential") {
                         document.getElementById('RadioExponentialFog').checked = true;
-                    }
+                    }                 
 
-                    document.getElementById('jscolorpickFog').value = resources3D['fogcolor'];
-                    document.getElementById('FogNear').value = parseFloat(resources3D['fognear'])
-                    document.getElementById('FogFar').value = parseFloat(resources3D['fogfar']);
-                    document.getElementById('FogDensity').value = parseFloat(resources3D['fogdensity']);
-
-                    return;
-                }
-
-
-                if (name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity')
-                    return;
-
+                     return;
+                 }
+                            
                 // Scene Settings
                 if (name === 'ClearColor') {
 
@@ -225,10 +329,18 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    lightLamp.scale.set(resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale']);
+                    // lightLamp.scale.set(resources3D[name]['trs']['scale'],
+                    //     resources3D[name]['trs']['scale'],
+                    //     resources3D[name]['trs']['scale']);
 
+                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                        lightLamp.scale.set(
+                       resources3D[name]['scale'][0],
+                       resources3D[name]['scale'][1],
+                       resources3D[name]['scale'][2]);
+                   }else{
+                    lightLamp.scale.set(1,1,1);
+                   }
                     lightLamp.name = name;
                     lightLamp.asset_name = "mylightLamp";
                     lightLamp.category_name = "lightLamp";
@@ -246,12 +358,12 @@ class VRodos_LightsPawn_Loader {
                     lightLamp.lampshadowCameraRight = resources3D[name]['lampshadowCameraRight'];
                     lightLamp.lampshadowBias = resources3D[name]['lampshadowBias'];
 
-                    if (lightLamp.children ==='') {
-                        lightLamp.children = [];
-                    }
+                    // if (lightLamp.children ==='') {
+                    //     lightLamp.children = [];
+                    // }
 
 
-                    console.log(lightLamp);
+                    // console.log(lightLamp);
                     envir.scene.add(lightLamp);
 
                     // Add Lamp Sphere
@@ -270,14 +382,20 @@ class VRodos_LightsPawn_Loader {
                     lightLampHelper.category_name = 'lightHelper';
                     lightLampHelper.parentLightName = lightLamp.name;
                     envir.scene.add(lightLampHelper);
-                    lightLampHelper.update();
+
+               
+                    //lightLampHelper.update();
+
+                    
+                    
 
                     // If we do not attach them, they are not visible in Editor !
                     // if (typeof transform_controls !== "undefined") {
                     //     if (typeof attachToControls !== "undefined") {
-                    //         attachToControls(name, envir.scene.getObjectByName(name));
+                            // attachToControls(name, envir.scene.getObjectByName(name));
                     //     }
                     // }
+
 
                 }
                 // SPOT
@@ -305,9 +423,20 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    lightSpot.scale.set(resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale']);
+                    // lightSpot.scale.set(resources3D[name]['trs']['scale'],
+                    //     resources3D[name]['trs']['scale'],
+                    //     resources3D[name]['trs']['scale']);
+
+                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                        lightSpot.scale.set(
+                       resources3D[name]['scale'][0],
+                       resources3D[name]['scale'][1],
+                       resources3D[name]['scale'][2]);
+                   }else{
+                    lightSpot.scale.set(1,1,1);
+                   }
+
+
 
                     lightSpot.name = name;
                     lightSpot.asset_name = "mylightSpot";
@@ -359,8 +488,6 @@ class VRodos_LightsPawn_Loader {
                 }
                 else if (resources3D[name]['category_name'] === 'lightAmbient') {
 
-                    //console.log("resources3D", resources3D);
-
                     var colora = new THREE.Color(resources3D[name]['lightcolor'][0],
                         resources3D[name]['lightcolor'][1],
                         resources3D[name]['lightcolor'][2]);
@@ -381,10 +508,17 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    lightAmbient.scale.set(resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale'],
-                        resources3D[name]['trs']['scale']);
+                    if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
+                        lightAmbient.scale.set(
+                           resources3D[name]['scale'][0],
+                           resources3D[name]['scale'][1],
+                           resources3D[name]['scale'][2]);
+                    }else{
+                        lightAmbient.scale.set(1,1,1);
+                    }
 
+          
+                    //lightAmbient.scale.set(1,1,1);
                     lightAmbient.name = name;
                     lightAmbient.asset_name = "mylightAmbient";
                     lightAmbient.category_name = "lightAmbient";
@@ -403,6 +537,7 @@ class VRodos_LightsPawn_Loader {
 
                     envir.scene.add(lightAmbient);
 
+                 
 
                     // If we do not attach them, they are not visible in Editor !
                     // if (typeof transform_controls !== "undefined") {

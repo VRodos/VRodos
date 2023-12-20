@@ -268,7 +268,7 @@ class VRodos_LoaderMulti {
                             document.getElementById('FogDensity').value = JSON.parse(resources3D[name].fogdensity);
                         }
 
-                        updateFog("undo");
+                        //updateFog("undo");
 
                         if (resources3D[name].backgroundStyleOption){
                             envir.scene.bcg_selection = JSON.parse(resources3D[name].backgroundStyleOption);

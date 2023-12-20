@@ -111,9 +111,15 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
         transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
+
+
+
         selected_object_name = nameModel;
 
         setTransformControlsSize();
+
+        document.getElementById('numerical_gui-container').style.display="block";
+        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
 
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
@@ -226,6 +232,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // var sizeT = Math.max(...dims);
         // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
+        document.getElementById('numerical_gui-container').style.display="block";
+        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
+
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
@@ -301,6 +310,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Dimensions
         setTransformControlsSize();
+
+        document.getElementById('numerical_gui-container').style.display="block";
+        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
         // var dims = findDimensions(transform_controls.object);
         // var sizeT = Math.max(...dims);
         // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
