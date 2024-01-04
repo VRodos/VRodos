@@ -235,6 +235,7 @@ class VRodos_LightsPawn_Loader {
                     lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
                     lightSun.castShadow = true;
+                    lightSun.locked = resources3D[name]['locked'];
                     lightSun.castingShadow = resources3D[name]['castingShadow'];
                     lightSun.shadowMapHeight = resources3D[name]['shadowMapHeight'];
                     lightSun.shadowMapWidth = resources3D[name]['shadowMapWidth'];
@@ -346,6 +347,7 @@ class VRodos_LightsPawn_Loader {
                     lightLamp.castShadow = true;
                     lightLamp.shadow.radius = parseFloat(resources3D[name]['shadowRadius']);
 
+                    lightLamp.locked = resources3D[name]['locked'];
                     lightLamp.lampcastingShadow = resources3D[name]['lampcastingShadow'];
                     lightLamp.lampshadowMapHeight = resources3D[name]['lampshadowMapHeight'];
                     lightLamp.lampshadowMapWidth = resources3D[name]['lampshadowMapWidth'];
@@ -433,15 +435,14 @@ class VRodos_LightsPawn_Loader {
                     lightSpot.scale.set(1,1,1);
                 //    }
 
-                console.log(resources3D[name]['trs']['scale']);
-
-
 
                     lightSpot.name = name;
                     lightSpot.asset_name = "mylightSpot";
                     lightSpot.category_name = "lightSpot";
                     lightSpot.isSelectableMesh = true;
                     lightSpot.isLight = true;
+                    lightSpot.locked = resources3D[name]['locked'];
+                    
 
                     lightSpot.castShadow = true;
 
@@ -527,6 +528,7 @@ class VRodos_LightsPawn_Loader {
                     lightAmbient.category_name = "lightAmbient";
                     lightAmbient.isSelectableMesh = true;
                     lightAmbient.isLight = true;
+                    lightAmbient.locked = resources3D[name]['locked'];
 
 
                     //// Add Sun Helper

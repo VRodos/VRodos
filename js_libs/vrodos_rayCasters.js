@@ -73,7 +73,7 @@ function onMouseDoubleClickFocus(event, id) {
     }
 
     if (arguments.length === 2) {
-        if (envir.scene.getObjectByProperty( 'uuid' , id)){
+        if (envir.scene.getObjectByProperty( 'uuid' , id) && !envir.scene.getObjectByProperty( 'uuid' , id).locked){
             selectorMajor(event, envir.scene.getObjectByProperty( 'uuid' , id), "1");
         }
             
@@ -103,7 +103,6 @@ function onLeftMouseDown(event) {
     // If doing affine transformations with transform controls, then ignore select
     if (transform_controls.dragging)
         return;
-
 
     // Middle click return
     if (event.button === 1)
@@ -143,10 +142,8 @@ function onLeftMouseDown(event) {
     // If only one object is intersected
     if (intersects.length === 1) {
 
-
-        //let selObj = false ? intersects[0].object : ;
-
-        selectorMajor(event, intersects[0], "2");
+        if(!intersects[0].locked)
+            selectorMajor(event, intersects[0], "2");
         return;
     }
 
@@ -169,7 +166,8 @@ function onLeftMouseDown(event) {
 
 
 
-    selectorMajor(event, intersects[i + 1], "3");
+    if(!intersects[0].locked)
+        selectorMajor(event, intersects[i + 1], "3");
 
 
 }// onMouseDown

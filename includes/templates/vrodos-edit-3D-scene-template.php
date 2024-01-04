@@ -710,7 +710,15 @@ wp_head();
 
                 if (envir.scene.getObjectByName(name)) {
                     objItem = envir.scene.getObjectByName(name);
-                    attachToControls(name, objItem);
+                   
+                    if (objItem.locked){
+                        document.getElementById('numerical_gui-container').style.display="none";
+                    }
+                    else{
+                        attachToControls(name, objItem);
+                        setDatGuiInitialVales(objItem);
+                    }
+                        
                 } else {
                     return;
                 }
@@ -721,8 +729,7 @@ wp_head();
                 envir.updateCameraGivenSceneLimits();
 
                 setHierarchyViewer();
-                setDatGuiInitialVales(objItem);
-
+               
 
                 for (let n in resources3D) {
                     (function (name) {

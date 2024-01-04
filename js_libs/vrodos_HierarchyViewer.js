@@ -15,7 +15,7 @@ function resetInScene(name){
     }
 }
 
-function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML){
+function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML){
 
     jQuery('#hierarchy-viewer').append(
         '<li class="hierarchyItem mdc-list-item" id="' + obj.uuid + '" data-name="' +obj.name+'">' +
@@ -29,6 +29,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
         '</a>' +
         deleteButtonHTML +
         resetButtonHTML +
+        lockButtonHTML +
         '</li>');
 }
 
@@ -37,6 +38,15 @@ function CreateDeleteButton(obj) {
     return '<a href="javascript:void(0);" class="hierarchyItemDelete mdc-list-item" aria-label="Delete asset"' +
         ' title="Delete asset object" onclick="' + 'deleteFomScene(\'' + obj.uuid + '\', \'' + obj.asset_name + '\');' + '">' +
         '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Delete">delete </i>' + '</a>';
+}
+
+
+function CreateLockButton(obj) {
+    let lock_ic;
+    lock_ic = (obj.locked) ? 'lock_outline' : 'lock_open';
+    return '<a href="javascript:void(0);" class="hierarchyItemLock mdc-list-item" aria-label="Lock asset"' +
+        ' title="Lock asset object" onclick="' + 'lockOnScene(\'' + obj.uuid + '\', \'' + obj.asset_name + '\');' + '">' +
+        '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Lock">' + lock_ic + ' </i>' + '</a>';
 }
 
 function CreateResetButton(obj){
@@ -67,6 +77,13 @@ function setBackgroundColorHierarchyViewer(id) {
 function setHierarchyViewer() {
 
     jQuery('#hierarchy-viewer').empty();
+    let editorObject = transform_controls.object;
+
+   
+    // if (editorObject.locked){
+    //     transform_controls.detach();
+    // }
+
 
     envir.scene.traverse(function (obj) {
 
@@ -84,8 +101,11 @@ function setHierarchyViewer() {
             let deleteButton = obj['category_name'] === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
                 CreateDeleteButton(obj);
 
+            let lockButton = obj['category_name'] === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
+                CreateLockButton(obj);
+
             // Add as a list item
-            AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj));
+            AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj),  lockButton);
         }
     });
 }
@@ -102,7 +122,7 @@ function addInHierarchyViewer(obj) {
     let deleteButton = obj['category_name'] === "lightTargetSpot" ? "" : CreateDeleteButton(obj);
 
     // Add as a list item
-    AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj));
+    AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj), CreateLockButton(obj));
 
     setBackgroundColorHierarchyViewer(obj.uuid);
 }

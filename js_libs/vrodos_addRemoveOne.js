@@ -599,6 +599,34 @@ function deleteFomScene(uuid, name) {
     }, { once: true });
 }
 
+function lockOnScene(uuid, name) {
+
+    let selectedObject = envir.scene.getObjectByProperty( 'uuid' , uuid);
+    let editorObject = transform_controls.object;
+    let hierarchy_icon = document.getElementById(uuid).querySelector('.hierarchyItemLock').querySelector('.material-icons');
+   
+    if (selectedObject.locked){
+        selectedObject.locked = false;
+        
+        hierarchy_icon.textContent = "lock_open";
+        transform_controls.attach(envir.scene.getObjectByProperty( 'uuid' , uuid));
+        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , uuid));
+        document.getElementById('numerical_gui-container').style.display="block";
+    }else{
+        selectedObject.locked = true;
+        transform_controls.detach();
+        hierarchy_icon.textContent = "lock_outline";
+        if (editorObject){
+            if (uuid == editorObject.uuid){
+                document.getElementById('numerical_gui-container').style.display="none";
+            }
+        }
+    }
+
+    saveChanges();
+
+}
+
 /**
  *
  * Delete from scene
