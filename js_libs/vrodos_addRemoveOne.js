@@ -616,13 +616,11 @@ function lockOnScene(uuid, name) {
         selectedObject.locked = true;
         transform_controls.detach();
         hierarchy_icon.textContent = "lock_outline";
-        if (editorObject){
-            if (uuid == editorObject.uuid){
-                document.getElementById('numerical_gui-container').style.display="none";
-            }
-        }
+        document.getElementById('numerical_gui-container').style.display="none";
     }
 
+    setBackgroundColorHierarchyViewer(uuid);
+    
     saveChanges();
 
 }
