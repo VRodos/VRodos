@@ -274,8 +274,11 @@ AFRAME.registerComponent('info-panel', {
         this.cursorEl.setAttribute("raycaster","objects: .non-clickable");
 
             this.el.object3D.scale.set(1, 1, 1);
+            this.el.object3D.position.z = -2.5;
+            
             if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
-            this.el.object3D.visible = true;
+            this.el.object3D.visible = true;            
+            
             this.el.components.material.material.depthTest = false;
             //this.backgroundEl.sceneEl.renderer.sortObjects = true;
             this.backgroundEl.components.material.material.depthTest = false;

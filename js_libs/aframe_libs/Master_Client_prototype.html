@@ -40,6 +40,14 @@
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
+
+
+    <!---- Blink Controls ---->
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
+
     <script>
 
         const vectorRequiresUpdate = epsilon => {
@@ -123,8 +131,8 @@
                     else
                         document.getElementById('player').removeAttribute('wasd-controls');
                 // console.log(wasd_controls);
-                
-                
+
+
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
                     AFRAME.registerComponent('avatar-movement-info', {
@@ -676,19 +684,7 @@
         })
 
 
-        AFRAME.registerComponent('left-thumbstick', {
-            init: function () {
-                var hand = this.el;
-                var cameraRig = document.querySelector('#cameraA');
 
-                hand.addEventListener('thumbstickmoved', function (event) {
-                    var movementVector = new THREE.Vector3(event.detail.x, 0, event.detail.y);
-                    cameraRig.object3D.position.add(movementVector.multiplyScalar(cameraRig.getAttribute('movement-controls').data.speed));
-                });
-            }
-        });
-
-        //document.querySelector('#left-hand').setAttribute('left-thumbstick', '');
 
         AFRAME.registerComponent('show-position', {
             init: function () {
@@ -711,13 +707,19 @@
                 const cameraEl = document.querySelector('a-camera');
                 const cameraRig = this.el;
 
-                this.el.addEventListener('thumbstickmoved', (event) => {
+                //console.log (cameraEl);
+
+                const thumbL = document.querySelector('#leftHand');
+                const thumbR = document.querySelector('#rightHand');
+
+                thumbL.addEventListener('thumbstickmoved', (event) => {
                     const thumbstickX = event.detail.x;
                     const thumbstickY = event.detail.y;
 
                     // Get camera rotation
                     const rotation = cameraEl.getAttribute('rotation');
-                    const angleY = THREE.Math.degToRad(rotation.y);
+                    const angleY = (rotation.y * Math.PI) / 180;
+
 
                     // Calculate movement direction based on camera rotation
                     const direction = new THREE.Vector3(-Math.sin(angleY), 0, -Math.cos(angleY));
@@ -727,6 +729,23 @@
                     cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
                     cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
                 });
+
+                thumbR.addEventListener('thumbstickmoved', (event) => {
+
+                    // //console.log('Right thumbstick activated');
+                    // if (event.detail.y === 1) {  // Assuming y value of thumbstick indicates a button press
+                    //     const blinkControlsScript = document.createElement('script');
+                    //     blinkControlsScript.src = 'https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js';
+                    //     document.head.appendChild(blinkControlsScript);
+
+                    //     blinkControlsScript.onload = () => {
+                    //     console.log('aframe-blink-controls script loaded');
+                    //     };
+                    // }
+
+
+                });
+
             }
         });
 
@@ -1077,6 +1096,7 @@
                         class="rpm_avatar"
                         position="0 0 -0.5"
                         rotation="0 180 0"
+                        animation-mixer="clip: test; autoPlay: true"
                         visible="true"
                         shadow="cast:true; receive:true;"
                 >
@@ -1151,9 +1171,15 @@
                  material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
         <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
                  material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; " position="0.15 0.15 0.000001"></a-mixin>
+
+
     </a-assets>
 
     <a-entity id="player"></a-entity>
+
+    <!-- oculus hands -->
+    <a-entity id="leftHand" oculus-touch-controls="hand: left" visible="false"></a-entity>
+    <a-entity id="rightHand" oculus-touch-controls="hand: right" visible="false" blink-controls></a-entity>
 
 
 </a-scene>
