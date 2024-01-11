@@ -47,8 +47,9 @@
 
     <!---- Blink Controls ---->   
 
-    <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script> -->
 
+    <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
 
     <script>
 
@@ -534,7 +535,16 @@
 
                 thumbR.addEventListener('thumbstickmoved', (event) => {
                     
-                    console.log('Right thumbstick activated');
+                    // //console.log('Right thumbstick activated');
+                    // if (event.detail.y === 1) {  // Assuming y value of thumbstick indicates a button press
+                    //     const blinkControlsScript = document.createElement('script');
+                    //     blinkControlsScript.src = 'https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js';
+                    //     document.head.appendChild(blinkControlsScript);
+
+                    //     blinkControlsScript.onload = () => {
+                    //     console.log('aframe-blink-controls script loaded');
+                    //     };
+                    // }
                     
 
                 });
@@ -958,19 +968,14 @@
         <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
                  material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; " position="0.15 0.15 0.000001"></a-mixin>
 
-        <!-- <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
-                 material="shader: flat; color: #dfe4ea; " position=" 0 0.11 0.000001"></a-mixin> -->
-        <!--
-                         <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.2; height: 0.3"
-                         material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
-                <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 0.4; height: 0.05"
-                         material="shader: flat; color: #dfe4ea; " position=" 0 0.2 0.000001"></a-mixin> -->
+       
     </a-assets>
 
     <a-entity id="player"></a-entity>
 
-    <a-entity id="leftHand" oculus-touch-controls="hand: left"></a-entity>
-    <a-entity id="rightHand" oculus-touch-controls="hand: right"></a-entity>
+    <!-- oculus hands -->
+    <a-entity id="leftHand" oculus-touch-controls="hand: left" visible="false"></a-entity>
+    <a-entity id="rightHand" oculus-touch-controls="hand: right" visible="false" blink-controls></a-entity>
 
 
 </a-scene>
