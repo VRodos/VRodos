@@ -713,6 +713,28 @@
                 const thumbR = document.querySelector('#rightHand');
 
                 thumbL.addEventListener('thumbstickmoved', (event) => {
+                    // const thumbstickX = event.detail.x;
+                    // const thumbstickY = event.detail.y;
+
+                    // // Get camera rotation
+                    // const rotation = cameraEl.getAttribute('rotation');
+                    // const angleY = (rotation.y * Math.PI) / 180;
+
+
+                    // // Calculate movement direction based on camera rotation
+                    // const direction = new THREE.Vector3(-Math.sin(angleY), 0, -Math.cos(angleY));
+
+                    // // Apply movement to the camera rig's position
+                    // const movementSpeed = 0.1;
+                    // cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
+                    // cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
+
+
+                    // //console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
+                });
+
+                thumbR.addEventListener('thumbstickmoved', (event) => {
+
                     const thumbstickX = event.detail.x;
                     const thumbstickY = event.detail.y;
 
@@ -728,6 +750,9 @@
                     const movementSpeed = 0.1;
                     cameraRig.object3D.translateX(-direction.x * thumbstickY * movementSpeed - direction.z * thumbstickX * movementSpeed);
                     cameraRig.object3D.translateZ(-direction.z * thumbstickY * movementSpeed + direction.x * thumbstickX * movementSpeed);
+
+
+                    //console.log('Camera rotation:', rotation.x, rotation.y, rotation.z);
                 });
 
                 thumbR.addEventListener('thumbstickmoved', (event) => {
