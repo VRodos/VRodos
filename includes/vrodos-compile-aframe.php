@@ -450,7 +450,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $a_entity_oc_left->setAttribute("oculus-touch-controls", "hand: left");
             $a_entity_oc_left->setAttribute("laser-controls", "hand: left");
             $a_entity_oc_left->setAttribute("raycaster", "lineColor: black; objects: .raycastable");
-            $a_entity_oc_left->setAttribute("transparent", "true); // Ensure transparency is set to true
+            $a_entity_oc_left->setAttribute("transparent", "true"); // Ensure transparency is set to true
             $a_entity_oc_left->setAttribute("blink-controls", "");
             $a_entity_oc_left->setAttribute("visible", "false");
             $a_entity_oc_left->setAttribute("render-order", "9999999"); // Set a high render-order value
