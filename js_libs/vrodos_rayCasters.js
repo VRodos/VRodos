@@ -252,8 +252,8 @@ function selectorMajor(event, objectSel, whocalls) {
 
             // case of selecting by hierarchy viewer
 
-            transform_controls.size = 1;
-            transform_controls.visible = false;
+            // transform_controls.size = 1;
+            // transform_controls.visible = false;
 
             // Can not be deleted
             //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;

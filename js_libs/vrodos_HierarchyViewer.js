@@ -4,7 +4,7 @@
 function resetInScene(name){
 
     if (name === "avatarCamera") {
-        envir.avatarControls.getObject().position.set(0, 1.3, 0);
+        envir.avatarControls.getObject().position.set(0, 0.2, 0);
         envir.avatarControls.getObject().quaternion.set(0, 0, 0, 1);
         envir.avatarControls.getObject().children[0].rotation.set(0, 0, 0);
         envir.avatarControls.getObject().children[0].scale.set(1, 1, 1);

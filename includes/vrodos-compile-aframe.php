@@ -396,7 +396,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             }
         }
 
+      
         $movement_disabled = filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN);
+        $cam_position = implode(" ", $scene_json->objects->avatarCamera->position);
+
+        // $cam_rotation = implode(" ", $scene_json->objects->avatarCamera->rotation);
 
         if (!empty($sceneColor)){
             $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled");
@@ -407,7 +411,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         if ($projectType == 'vrexpo_games') {
             //$a_entity_expo = $dom->createElement( "a-entity" );
             //$ascenePlayer->setAttribute( "id", "camera-rig" );
-            $ascenePlayer->setAttribute( "position", "0 0.2 0" );
+            $ascenePlayer->setAttribute( "position", $cam_position );
+            $ascenePlayer->setAttribute("rotation", implode(" ", [
+                -180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1],
+                180 / pi() * $scene_json->objects->avatarCamera->rotation[2]
+            ]));
             $ascenePlayer->setAttribute( "custom-movement", "" );
             $ascenePlayer->setAttribute( "show-position", "" );
             //$ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
@@ -457,6 +465,11 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         }else{
             $ascenePlayer->setAttribute( "position", "0 0.6 0" );
+            //  $ascenePlayer->setAttribute( "position", $cam_position );
+            // $ascenePlayer->setAttribute("rotation", implode(" ", [
+            //     -180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1],
+            //     180 / pi() * $scene_json->objects->avatarCamera->rotation[2]
+            // ]));
             $ascenePlayer->setAttribute( "networked", "template:#avatar-template;attachTemplateToLocal:false;" );
             $ascenePlayer->setAttribute( "show-position", "" );
              //if($movement_disabled != "1")
@@ -612,7 +625,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $ascene->appendChild( $a_light );
                     break;
-
             }
 
 

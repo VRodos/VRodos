@@ -117,10 +117,9 @@ class VRodos_LoaderMulti {
                 if (name == 'avatarCamera') {
 
                     loader.load(pluginPath + "/assets/Steve/camera.glb",
-
+                       
                         // called when the resource is loaded
-                        function (objectMain) {
-
+                        function (objectMain) {    
                             let object = objectMain.scene.children[0];
                             object.name = "Camera3Dmodel";
                             object.children[0].name = "Camera3DmodelMesh";
@@ -141,8 +140,36 @@ class VRodos_LoaderMulti {
 
                             object.add(steveShieldMesh);
                             object.renderOrder = 1;
-
+                      
                             envir.scene.add(object);
+        
+                            //TODO: to delete after veryfying the redundancy 
+                            envir.scene.getObjectByName("avatarCamera").position.set(
+                                resources3D[name].position[0],
+                                resources3D[name].position[1],
+                                resources3D[name].position[2]);
+                       
+                            envir.scene.getObjectByName("avatarCamera").position.set(
+                                resources3D[name]['trs']['translation'][0],
+                                resources3D[name]['trs']['translation'][1],
+                                resources3D[name]['trs']['translation'][2]);
+
+                            envir.scene.getObjectByName("avatarCamera").rotation.set(
+                                resources3D[name]['trs']['rotation'][0],
+                                resources3D[name]['trs']['rotation'][1],
+                                resources3D[name]['trs']['rotation'][2]);
+                            // else{
+                            //     envir.scene.getObjectByName("avatarCamera").position.set(0,0.2,0);
+                            //     envir.scene.getObjectByName("avatarCamera").rotatiob.set(0,0,0);
+
+                            // }
+                            
+                            // console.log(resources3D[name].position);
+
+
+                        
+                            
+    
                             envir.setCamMeshToAvatarControls();
 
                             //object = setObjectProperties(object.scene, name, resources3D);
@@ -351,13 +378,21 @@ class VRodos_LoaderMulti {
                             envir.scene.backgroundStyleOption = JSON.parse(resources3D[name].backgroundStyleOption);
                         }
                     }
-                    else{
+                    else if (name == 'cameraCoords'){
                         // if (resources3D["SceneSettings"].enableGeneralChat) {
                         //     document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D[SceneSettings].enableGeneralChat);
                         //     envir.scene.enableGeneralChat = JSON.parse(resources3D[Settings].enableGeneralChat);
                         // // }
                         // console.log("Unsupported 3D model format. Error 118.");
-                        // console.log("name", name);
+                        envir.scene.getObjectByName("avatarCamera").position.set(
+                            resources3D[name].position[0],
+                            resources3D[name].position[1],
+                            resources3D[name].position[2]);
+
+                        envir.scene.getObjectByName("avatarCamera").rotation.set(
+                            resources3D[name].rotation[0],
+                            resources3D[name].rotation[1],
+                            resources3D[name].rotation[2]);
                         // console.log("glbID", resources3D[name]['glbID']);
                         // console.log("Unsupported 3D model format: ERROR: 118");
                     }
