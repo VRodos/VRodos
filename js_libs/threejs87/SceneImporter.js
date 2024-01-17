@@ -15,6 +15,8 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
     let scene_json_metadata = scene_json_obj['metadata'];
 
     resources3D_new["SceneSettings"] = {};
+    resources3D_new["cameraCoords"] = {};
+    
     for (let key in scene_json_metadata) {
         let value = scene_json_metadata[key];
         if (key === 'ClearColor') {
@@ -62,6 +64,10 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
         let value = scene_json_obj[asset_key];
 
         if (name === 'avatarCamera') {
+            let camera_pos = value.position;
+            let camera_rot = value.rotation;
+            Object.assign(resources3D_new["cameraCoords"], { 'position': camera_pos});
+            Object.assign(resources3D_new["cameraCoords"], { 'rotation': camera_rot});
             continue;
         }
 

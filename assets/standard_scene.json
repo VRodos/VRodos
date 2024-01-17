@@ -12,13 +12,13 @@
   "objects": {
     "avatarCamera": {
       "position": [
-        -1.5073529542515,
-        1.3,
-        3.7404941859495
+        0,
+        0.2,
+        0
       ],
       "rotation": [
         0,
-        -0.911,
+        0,
         0
       ],
       "quaternion": [
