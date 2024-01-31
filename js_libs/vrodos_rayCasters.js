@@ -417,14 +417,16 @@ function displaySunProperties(event, name) {
     chbox.value = envir.scene.getObjectByName(name).castingShadow;
    
     //jQuery("#sunColor")
-    
-    
-
+  
 
     // Show Selection
-    ppPropertiesDiv.show();
+    ppPropertiesDiv.show(); 
+    var popDiv = document.getElementById('popUpSunPropertiesDiv');
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    if (window.innerHeight - event.clientY > popDiv.offsetHeight || window.innerHeight < popDiv.offsetHeight)
+        ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    else
+        ppPropertiesDiv[0].style.top = event.clientY -(popDiv.offsetHeight - (window.innerHeight - event.clientY)) - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
     jQuery("#sunColor").change(function (e) {
         //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
@@ -584,8 +586,13 @@ function displayLampProperties(event, name) {
 
     // Show Selection
     ppPropertiesDiv.show();
+    var popDiv = document.getElementById('popUpLampPropertiesDiv');
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    if (window.innerHeight - event.clientY > popDiv.offsetHeight || window.innerHeight < popDiv.offsetHeight)
+        ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    else
+        ppPropertiesDiv[0].style.top = event.clientY -(popDiv.offsetHeight - (window.innerHeight - event.clientY)) - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+       
 }
 
 
