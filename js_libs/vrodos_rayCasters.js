@@ -186,6 +186,13 @@ function selectorMajor(event, objectSel, whocalls) {
         // document.getElementById('numerical_gui-container').style.visibility = 'visible';
         document.getElementById('numerical_gui-container').style.display="block";
 
+        document.getElementById('translate-switch').checked = true;
+        document.getElementById('rotate-switch').disabled = false;
+        document.getElementById('rotate-switch-label').style = "inherit";
+
+        document.getElementById('scale-switch').disabled = false;
+        document.getElementById('scale-switch-label').style = "inherit";
+      
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.uuid);
 
@@ -249,6 +256,11 @@ function selectorMajor(event, objectSel, whocalls) {
         }
 
         if (objectSel.name === "avatarCamera") {
+            document.getElementById('rotate-switch').disabled = true;
+            document.getElementById('rotate-switch-label').style.color = "grey";
+
+            document.getElementById('scale-switch').disabled = true;
+            document.getElementById('scale-switch-label').style.color = "grey";
 
             // case of selecting by hierarchy viewer
 

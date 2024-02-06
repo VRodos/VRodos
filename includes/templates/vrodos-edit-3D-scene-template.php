@@ -792,7 +792,10 @@ wp_head();
                 document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
                 envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
             }
-
+            if (resources3D["enableAvatar"]) {
+                document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
+                envir.scene.enableAvatar = JSON.parse(resources3D["enableAvatar"]);
+            }
             
             if (resources3D["disableMovement"]) {
                 document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
@@ -928,6 +931,24 @@ wp_head();
 
             let trs_tmp = resources3D[name]['trs'];
             transform_controls.attach(objItem);
+            console.log("attached");
+            console.log(objItem);
+
+            if (objItem.category_name == "avatarYawObject"){
+                document.getElementById('rotate-switch').disabled = true;
+                document.getElementById('rotate-switch-label').style.color = "grey";
+
+                document.getElementById('scale-switch').disabled = true;
+                document.getElementById('scale-switch-label').style.color = "grey";
+            }
+                
+            else{
+                document.getElementById('rotate-switch').disabled = false;
+                document.getElementById('rotate-switch-label').style = "inherit";
+
+                document.getElementById('scale-switch').disabled = false;
+                document.getElementById('scale-switch-label').style = "inherit";
+            }
 
             // highlight
             envir.outlinePass.selectedObjects = [objItem];
@@ -939,6 +960,9 @@ wp_head();
             transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
 
+            console.log(objItem);
+
+            
             jQuery('#object-manipulation-toggle').show();
             jQuery('#axis-manipulation-buttons').show();
             jQuery('#double-sided-switch').show();

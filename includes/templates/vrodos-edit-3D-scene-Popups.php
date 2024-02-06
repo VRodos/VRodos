@@ -35,6 +35,11 @@
         saveChanges();
     }
 
+    function toggleEnableAvatar(value) {
+        envir.scene.enableAvatar = value;
+        saveChanges();
+    }
+
     function toggleDisableMovement(value) {
         envir.scene.disableMovement = value;
         saveChanges();

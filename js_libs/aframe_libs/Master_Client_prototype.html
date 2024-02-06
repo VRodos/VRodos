@@ -42,7 +42,7 @@
 
     <script>
 
-        const vectorRequiresUpdate = epsilon => {
+        const vectorRequiresUpdateRotation = epsilon => {
             return () => {
                 let prev = null;
 
@@ -52,6 +52,7 @@
                         return true;
                     } else if (!NAF.utils.almostEqualVec3(prev, curr, epsilon)) {
                         curr.x = 0;
+
                         prev.copy(curr);
                         return true;
                     }
@@ -81,7 +82,7 @@
                         },
                         {
                             component: 'rotation',
-                            requiresNetworkUpdate: vectorRequiresUpdate(0.5)
+                            requiresNetworkUpdate: vectorRequiresUpdateRotation(0.5)
                         }
 
                     ]
@@ -113,6 +114,10 @@
                 selChoice:{type: "string", default: "0"},
                 presChoice:{type: "string", default: "default"},
                 movement_disabled:{type: "string", default: "0"},
+                avatar_enabled:{type: "string", default: "0"},
+                cam_position:{type: "string", default: "0 1.6 0"},
+                cam_rotation_y:{type: "string", default: "0"},
+                avatar_enabled:{type: "string", default: "0"},
             },
             init: function () {
 
@@ -127,6 +132,14 @@
                 
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
+                    if(this.data.pr_type == "vrexpo_games"){
+                        console.log(this.data.cam_rotation_y);
+                        document.getElementById("cameraA").setAttribute("position", this.data.cam_position);
+                        //document.getElementById("player").setAttribute("rotation", "0 90 0");
+                        
+                        //document.getElementById("cameraA").setAttribute("rotation", this.data.cam_rotation);
+                    }
+                    
                     AFRAME.registerComponent('avatar-movement-info', {
                         // notice that color and name are both listed in the schema; NAF will only keep
                         // properties declared in the schema in sync.
@@ -267,6 +280,7 @@
                         update: function () {
 
                             var elem = this.el;
+                            
                             if (this.data.avatarType) {
 
                                 if (this.data.avatarType === 'no-avatar') {
@@ -301,12 +315,14 @@
                                         this.rpm_model.removeAttribute('gltf-model');
                                         this.rpm_model.setAttribute('gltf-model', this.data.gltf);
 
+                                        
                                         // Event listener when the 3D model has actually loaded
                                         this.rpm_model.addEventListener('model-loaded', () => {
 
                                             let avatarType = this.rpm_model.object3DMap.mesh.children[0].userData.name;
                                             // Change Y position of model based on type
-                                            let avatarPosition = avatarType === 'Armature' ? '0 -1.68 0' : '0 -.4 0';
+                                            
+                                            let avatarPosition = avatarType === 'Armature' ? "0 -1.68  0" : '0 -.4 0';
                                             this.rpm_model.setAttribute('position', avatarPosition);
                                         }, {once : true});
                                     }
@@ -324,14 +340,22 @@
                     // If base scene, launch avatar selector
                     /*if (document.getElementById("is-base-scene-input").value === 'true' ) {*/
 
+                    console.log(document.getElementById("aframe-scene-container").getAttribute("scene-settings").avatar_enabled);
+
+                 
                     let avatar_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))
 
                     let closeAvatarDialogListener = function(event) {
                         avatar_dialog_element.unlisten("MDCDialog:cancel", closeAvatarDialogListener);
                         selectAvatarType('no-avatar');
                     };
-                    avatar_dialog_element.show();
-                    avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
+                    if (document.getElementById("aframe-scene-container").getAttribute("scene-settings").avatar_enabled == 1 && document.getElementById("aframe-scene-container").getAttribute("scene-settings").pr_type == "vrexpo_games"){
+                        avatar_dialog_element.show();
+                        avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
+                    }else{
+                        selectAvatarType('no-avatar');
+                    }
+                   
                     /*}*/
 
                 });

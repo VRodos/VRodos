@@ -31,13 +31,13 @@
              class="ObjectManipulationToggle mdc-typography" style="display: none;">
             <!-- Translate -->
             <input type="radio" id="translate-switch" name="object-manipulation-switch" value="translate" checked/>
-            <label for="translate-switch" class="affineSwitch">Move</label>
+            <label for="translate-switch" id="translate-switch-label" class="affineSwitch">Move</label>
             <!-- Rotate -->
             <input type="radio" id="rotate-switch" name="object-manipulation-switch" value="rotate" />
-            <label for="rotate-switch" class="affineSwitch">Rotate</label>
+            <label for="rotate-switch" id="rotate-switch-label" class="affineSwitch">Rotate</label>
             <!-- Scale -->
             <input type="radio" id="scale-switch" name="object-manipulation-switch" value="scale" />
-            <label for="scale-switch" class="affineSwitch">Scale</label>
+            <label for="scale-switch" id="scale-switch-label" class="affineSwitch">Scale</label>
         </div>
 
         <div id="axis-manipulation-buttons" class="AxisManipulationBtns mdc-typography" style="display: none;">
@@ -79,6 +79,11 @@
         <div style="display: block">
             <input type="checkbox" title="Enable global chat" id="enableGeneralChatCheckbox" name="enableGeneralChatCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleBroadcastChat(this.checked)">
             <label for="enableGeneralChatCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Enable general chat</label>
+        </div>
+
+        <div style="display: block">
+            <input type="checkbox" title="Enable avatar selection" id="enableAvatarCheckbox" name="enableAvatarCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleEnableAvatar(this.checked)">
+            <label for="enableAvatarCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Enable avatar selection</label>
         </div>
 
         

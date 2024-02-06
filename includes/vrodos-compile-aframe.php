@@ -398,24 +398,29 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
       
         $movement_disabled = filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN);
+        $avatar_enabled = filter_var($scene_json->metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN);
         $cam_position = implode(" ", $scene_json->objects->avatarCamera->position);
+        //$cam_rotation = implode(" ", [180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1], 180 / pi() * $scene_json->objects->avatarCamera->rotation[2]]);
 
-        // $cam_rotation = implode(" ", $scene_json->objects->avatarCamera->rotation);
-
+        $cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
         if (!empty($sceneColor)){
-            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled");
+            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y");
         }else{
-            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled");
+            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y");
         }
 
         if ($projectType == 'vrexpo_games') {
             //$a_entity_expo = $dom->createElement( "a-entity" );
             //$ascenePlayer->setAttribute( "id", "camera-rig" );
-            $ascenePlayer->setAttribute( "position", $cam_position );
-            $ascenePlayer->setAttribute("rotation", implode(" ", [
-                -180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1],
-                180 / pi() * $scene_json->objects->avatarCamera->rotation[2]
-            ]));
+            // $ascenePlayer->setAttribute( "position", $cam_position );
+            // $ascenePlayer->setAttribute("rotation", implode(" ", [
+            //     -180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1],
+            //     180 / pi() * $scene_json->objects->avatarCamera->rotation[2]
+            // ]));
+
+            // $avatarTemplateRpm= $dom->getElementById('ready-player-me-avatar');
+
+            // $avatarTemplateRpm->setAttribute("position", "-10, 0, 0");
             $ascenePlayer->setAttribute( "custom-movement", "" );
             $ascenePlayer->setAttribute( "show-position", "" );
             //$ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
