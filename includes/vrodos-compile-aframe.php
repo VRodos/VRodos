@@ -400,13 +400,14 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $movement_disabled = filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN);
         $avatar_enabled = filter_var($scene_json->metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN);
         $cam_position = implode(" ", $scene_json->objects->avatarCamera->position);
+        $public_chat = filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN);
         //$cam_rotation = implode(" ", [180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1], 180 / pi() * $scene_json->objects->avatarCamera->rotation[2]]);
 
         $cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
         if (!empty($sceneColor)){
-            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y");
+            $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat");
         }else{
-            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y");
+            $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat");
         }
 
         if ($projectType == 'vrexpo_games') {
@@ -956,6 +957,38 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $ascene->appendChild( $gltf_model );
 
+                    break;
+                case 'poi-help':
+
+                    $assets = $dom->getElementById('scene-assets');
+
+                    $asset_item = $dom->createElement( "a-asset-item" );
+                    $asset_item->setAttribute( "id", $uuid );
+                    $asset_item->setAttribute( "src", "" . $contentObject->glb_path . "" );
+                    $asset_item->setAttribute( "response-type", "arraybuffer" );
+
+                    $assets->appendChild( $asset_item );
+
+
+                    $sc_x = $contentObject->scale[0];
+                    $sc_y = $contentObject->scale[1];
+                    $sc_z = $contentObject->scale[2];
+
+                    $gltf_model = $dom->createElement( "a-entity" );
+                    $gltf_model->setAttribute( "gltf-model","#". $uuid );
+                    $gltf_model->setAttribute( "id", $uuid );
+                    $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
+                    $gltf_model->appendChild( $dom->createTextNode( '' ) );
+                    $material = "";
+                    $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
+                    $gltf_model->setAttribute( "class", "override-materials raycastable hideable" );
+                    $gltf_model->setAttribute( "material", $material );
+                    $gltf_model->setAttribute( "help-chat", "" );
+                    $gltf_model->setAttribute( "clear-frustum-culling", "" );
+                    $gltf_model->setAttribute( "preload", "auto" );
+                    $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );
+
+                    $ascene->appendChild( $gltf_model );
                     break;
 
                 case 'poi-imagetext':
