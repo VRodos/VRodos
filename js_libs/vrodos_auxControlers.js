@@ -77,21 +77,36 @@ function controllerDatGuiOnChange() {
 
     dg_controller[3].onChange(function (value) {
             cancelAnimationFrame(id_animation_frame);
-            transform_controls.object.rotation.x = gui_controls_funs.dg_r1 / 180 * Math.PI;
+            if (transform_controls.object.category_name == "camera"){
+                transform_controls.object.rotation.x = 0;
+                gui_controls_funs.dg_r1 = 0;
+            }            
+            else
+                transform_controls.object.rotation.x = gui_controls_funs.dg_r1 / 180 * Math.PI;
             animate();
         }
     );
 
     dg_controller[4].onChange(function (value) {
             cancelAnimationFrame(id_animation_frame);
-            transform_controls.object.rotation.y = gui_controls_funs.dg_r2 / 180 * Math.PI;
+            if (transform_controls.object.category_name == "camera"){
+                transform_controls.object.rotation.y = 0;
+                gui_controls_funs.dg_r2 = 0;
+            }            
+            else
+                transform_controls.object.rotation.y = gui_controls_funs.dg_r2 / 180 * Math.PI;
             animate();
         }
     );
 
     dg_controller[5].onChange(function (value) {
             cancelAnimationFrame(id_animation_frame);
-            transform_controls.object.rotation.z = gui_controls_funs.dg_r3 / 180 * Math.PI;
+            if (transform_controls.object.category_name == "camera"){
+                transform_controls.object.rotation.z = 0;
+                gui_controls_funs.dg_r3 = 0;
+            }            
+            else
+                transform_controls.object.rotation.z = gui_controls_funs.dg_r3 / 180 * Math.PI;
             animate();
         }
     );
@@ -102,19 +117,25 @@ function controllerDatGuiOnChange() {
             cancelAnimationFrame(id_animation_frame);
 
             // if (dg_s1_prev) {
-            if (envir.scene.keepScaleAspectRatio) {
-                transform_controls.object.scale.set(value, value, value);
-                dg_controller[7].domElement.children[0].value = value;
-                dg_controller[8].domElement.children[0].value = value;
-            } else {
-                transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
-
+            if (transform_controls.object.category_name == "camera"){
+                transform_controls.object.scale.x = 1;
+                gui_controls_funs.dg_s1 = 1;
             }
-            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
-            // }
+            else{     
+                if (envir.scene.keepScaleAspectRatio) {
+                    transform_controls.object.scale.set(value, value, value);
+                    dg_controller[7].domElement.children[0].value = value;
+                    dg_controller[8].domElement.children[0].value = value;
+                } else {
+                    transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
 
-            dg_s1_prev = value;
-            animate();
+                }
+                envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+                // }
+
+                dg_s1_prev = value;
+                animate();
+            }
         }
     );
 
@@ -123,18 +144,24 @@ function controllerDatGuiOnChange() {
             cancelAnimationFrame( id_animation_frame );
 
             // if (dg_s2_prev) {
-            if (envir.scene.keepScaleAspectRatio) {
-                transform_controls.object.scale.set(value, value, value);
-                dg_controller[6].domElement.children[0].value = value;
-                dg_controller[8].domElement.children[0].value = value;
-            } else {
-                transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
+            if (transform_controls.object.category_name == "camera"){
+                transform_controls.object.scale.y = 1;
+                gui_controls_funs.dg_s2 = 1;
             }
-            envir.scene.dispatchEvent({type:"modificationPendingSave"});
-            // }
+            else{
+                if (envir.scene.keepScaleAspectRatio) {
+                    transform_controls.object.scale.set(value, value, value);
+                    dg_controller[6].domElement.children[0].value = value;
+                    dg_controller[8].domElement.children[0].value = value;
+                } else {
+                    transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
+                }
+                envir.scene.dispatchEvent({type:"modificationPendingSave"});
+                // }
 
-            dg_s2_prev = value;
-            animate();
+                dg_s2_prev = value;
+                animate();
+            }
         }
     );
 
@@ -144,19 +171,25 @@ function controllerDatGuiOnChange() {
             cancelAnimationFrame( id_animation_frame );
 
             // if (dg_s3_prev) {
-            if (envir.scene.keepScaleAspectRatio) {
-                transform_controls.object.scale.set(value, value, value);
-                dg_controller[6].domElement.children[0].value = value;
-                dg_controller[7].domElement.children[0].value = value;
-            } else {
-                transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
+            if (transform_controls.object.category_name == "camera"){
+                transform_controls.object.scale.z = 1;
+                gui_controls_funs.dg_s3 = 1;
             }
+            else{
+                if (envir.scene.keepScaleAspectRatio) {
+                    transform_controls.object.scale.set(value, value, value);
+                    dg_controller[6].domElement.children[0].value = value;
+                    dg_controller[7].domElement.children[0].value = value;
+                } else {
+                    transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
+                }
 
-            envir.scene.dispatchEvent({type:"modificationPendingSave"});
-            // }
+                envir.scene.dispatchEvent({type:"modificationPendingSave"});
+                // }
 
-            dg_s3_prev = value;
-            animate();
+                dg_s3_prev = value;
+                animate();
+            }
         }
     );
 
@@ -209,7 +242,7 @@ function setEventListenerKeyPressControllerConstrained(element) {
 
     // While on Input Field on Focus and pressing enter for value
     element.addEventListener('keydown', function (e) {
-
+        
         // updatePositionsPhpAndJavsFromControlsAxes();
         switch (element.parentElement.parentElement.event3DOperation) {
             case 'Tx':
@@ -226,6 +259,7 @@ function setEventListenerKeyPressControllerConstrained(element) {
                 break;
             case 'Rx':
                 gui_controls_funs.dg_r1 = element.value;
+                
                 transform_controls.object.rotation.x = element.value;
                 break;
             case 'Ry':

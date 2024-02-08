@@ -35,6 +35,11 @@
         saveChanges();
     }
 
+    function toggleEnableAvatar(value) {
+        envir.scene.enableAvatar = value;
+        saveChanges();
+    }
+
     function toggleDisableMovement(value) {
         envir.scene.disableMovement = value;
         saveChanges();
@@ -192,7 +197,7 @@
 
 <!-- Sun @ Archaeology: Popup menu to for Sun Intensity and Color -->
 <div id="popUpSunPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2"
-     style="max-width: 280px; display:none">
+     style="max-width: 280px; display:none;">
 
     <!-- The close button-->
     <a style="float: right;" type="button" class="mdc-theme--primary"

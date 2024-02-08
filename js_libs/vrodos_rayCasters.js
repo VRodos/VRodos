@@ -186,6 +186,13 @@ function selectorMajor(event, objectSel, whocalls) {
         // document.getElementById('numerical_gui-container').style.visibility = 'visible';
         document.getElementById('numerical_gui-container').style.display="block";
 
+        document.getElementById('translate-switch').checked = true;
+        document.getElementById('rotate-switch').disabled = false;
+        document.getElementById('rotate-switch-label').style = "inherit";
+
+        document.getElementById('scale-switch').disabled = false;
+        document.getElementById('scale-switch-label').style = "inherit";
+      
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.uuid);
 
@@ -249,6 +256,11 @@ function selectorMajor(event, objectSel, whocalls) {
         }
 
         if (objectSel.name === "avatarCamera") {
+            document.getElementById('rotate-switch').disabled = true;
+            document.getElementById('rotate-switch-label').style.color = "grey";
+
+            document.getElementById('scale-switch').disabled = true;
+            document.getElementById('scale-switch-label').style.color = "grey";
 
             // case of selecting by hierarchy viewer
 
@@ -417,14 +429,16 @@ function displaySunProperties(event, name) {
     chbox.value = envir.scene.getObjectByName(name).castingShadow;
    
     //jQuery("#sunColor")
-    
-    
-
+  
 
     // Show Selection
-    ppPropertiesDiv.show();
+    ppPropertiesDiv.show(); 
+    var popDiv = document.getElementById('popUpSunPropertiesDiv');
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    if (window.innerHeight - event.clientY > popDiv.offsetHeight || window.innerHeight < popDiv.offsetHeight)
+        ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    else
+        ppPropertiesDiv[0].style.top = event.clientY -(popDiv.offsetHeight - (window.innerHeight - event.clientY)) - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
     jQuery("#sunColor").change(function (e) {
         //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
@@ -584,8 +598,13 @@ function displayLampProperties(event, name) {
 
     // Show Selection
     ppPropertiesDiv.show();
+    var popDiv = document.getElementById('popUpLampPropertiesDiv');
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    if (window.innerHeight - event.clientY > popDiv.offsetHeight || window.innerHeight < popDiv.offsetHeight)
+        ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    else
+        ppPropertiesDiv[0].style.top = event.clientY -(popDiv.offsetHeight - (window.innerHeight - event.clientY)) - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+       
 }
 
 

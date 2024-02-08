@@ -741,6 +741,7 @@ THREE.SceneExporter.prototype = {
             fogString,
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
+            '		"enableAvatar" : "' + (!!envir.scene.enableAvatar) + '",',
             '		"disableMovement" : "' + (!!envir.scene.disableMovement) + '",',
             '		"backgroundPresetOption" : "' + (envir.scene.preset_selection ? envir.scene.preset_selection : 'None') + '",',
             '		"backgroundStyleOption" : "' + (envir.scene.bcg_selection ? envir.scene.bcg_selection : '0') + '",',

@@ -22,6 +22,12 @@ class VRodos_LoaderMulti {
                     envir.scene.enableGeneralChat = JSON.parse(resources3D[name]);
                 }
 
+                
+                if (name === 'enableAvatar'){
+                    document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D[name]);
+                    envir.scene.enableAvatar = JSON.parse(resources3D[name]);
+                }
+
                 if (name === 'disableMovement'){
                     document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D[name]);
                     envir.scene.disableMovement = JSON.parse(resources3D[name]);
@@ -266,6 +272,12 @@ class VRodos_LoaderMulti {
                             document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D[name].enableGeneralChat);
                             envir.scene.enableGeneralChat = JSON.parse(resources3D[name].enableGeneralChat);
                         }
+
+                        if (resources3D[name].enableAvatar) {
+                            document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D[name].enableAvatar);
+                            envir.scene.enableAvatar = JSON.parse(resources3D[name].enableAvatar);
+                        }
+
                         if (resources3D[name].disableMovement){
                             document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D[name].disableMovement);
                             envir.scene.disableMovement = JSON.parse(resources3D[name].disableMovement);      

@@ -29,6 +29,9 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
         if (key === 'enableGeneralChat') {
             Object.assign(resources3D_new["SceneSettings"], { 'enableGeneralChat': value });
         }
+        if (key === 'enableAvatar') {
+            Object.assign(resources3D_new["SceneSettings"], { 'enableAvatar': value });
+        }
         if (key === 'backgroundPresetOption') {
             Object.assign(resources3D_new["SceneSettings"], { 'backgroundPresetOption': value });
         }
