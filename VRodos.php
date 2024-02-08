@@ -440,6 +440,10 @@ add_action( 'init', 'vrodos_create_joker_projects', 100, 2 );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
 
 //Create Initial Asset Categories
+include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
+// 22
+add_action( 'init', 'vrodos_create_asset_categories');
+
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-settings.php' );
 
 
