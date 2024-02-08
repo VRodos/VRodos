@@ -248,6 +248,10 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         case 'poi-link':
             update_post_meta($asset_id, 'vrodos_asset3d_link', $_POST['assetLinkInput']);
             break;
+        
+        case 'poi-help':
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', $_POST['poiChatTitle']);
+            break;
 
         default:
             break;
@@ -651,7 +655,24 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     </div>
 
                     <div id="poi_help_section" class="assetEditorColumn" style="display: none;">
-                        <h3 class="mdc-typography--title">Contact Form</h3>
+                        <!-- <h3 class="mdc-typography--title">Contact Form</h3> -->
+
+                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
+                            <input id="poiChatTitle" type="text"
+                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
+                                   name="poiChatTitle"
+                                   aria-controls="title-chat-validation-msg" minlength="3" maxlength="50"
+                                   value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chattxt_title', true);?>">
+
+                            <label for="poiChatTitle" class="mdc-textfield__label">
+                                Title
+                            </label>
+
+                            <div class="mdc-textfield__bottom-line"></div>
+                        </div>
+                        <p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-chat-validation-msg">
+                            Between 3 - 25 characters
+                        </p>
 
                     </div>
 

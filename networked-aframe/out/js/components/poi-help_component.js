@@ -4,17 +4,19 @@ AFRAME.registerComponent('help-chat', {
         let chatInput = document.getElementById('chatInput');
         let chatLog = document.getElementById('chat-messages');
 
-        const onPrivateMessageStepIndex = function sendPrivateMessage(chat_id){
+        console.log(this.el.getAttribute("title"));
+
+        const onPrivateMessageStepIndex = function sendPrivateMessage(chat_id, element){
             {
                 return function executeOnEvent (event) {
                     let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
                     let dateString = getChatCurrentTimeString();
-                    chatLog.innerHTML += '<span>' + dateString + ' Me: [Private Chat] ' + chatInput.value + '</span><br>';
+                    chatLog.innerHTML += '<span>' + dateString + ' Me: [Private Chat \'' + element.getAttribute("title") + '\'] ' + chatInput.value + '</span><br>';
                     NAF.connection.broadcastData(chat_id, {txt: chatInput.value, player: player_object })
                 }
             }            
         };
-        const onExitPrivateChatStepIndex = function exitPrivateChat(chat_id){
+        const onExitPrivateChatStepIndex = function exitPrivateChat(chat_id, element){
             {
                 return function actualOnStepIndex (event) {     
                     NAF.connection.unsubscribeToDataChannel(chat_id);
@@ -34,16 +36,16 @@ AFRAME.registerComponent('help-chat', {
                 }
             }  
         };
-        const startPrivateMessageNode = (stepIndex) => {
-            sendMsgChatBtn.addEventListener("click", privateMessageHandlers[stepIndex] = onPrivateMessageStepIndex(stepIndex), true);
+        const startPrivateMessageNode = (stepIndex, element) => {
+            sendMsgChatBtn.addEventListener("click", privateMessageHandlers[stepIndex] = onPrivateMessageStepIndex(stepIndex, element), true);
         };      
         const stopPrivateMessageNode = (stepIndex) => {
             sendMsgChatBtn.removeEventListener("click", privateMessageHandlers[stepIndex], true);
         };
         const privateMessageHandlers = [];
         const exitPrivateChatHandlers = [];
-        const startExitPrivateChatNode = (stepIndex) => {
-            document.getElementById('exit-help-btn').addEventListener("click", exitPrivateChatHandlers[stepIndex] = onExitPrivateChatStepIndex(stepIndex), true);
+        const startExitPrivateChatNode = (stepIndex, element) => {
+            document.getElementById('exit-help-btn').addEventListener("click", exitPrivateChatHandlers[stepIndex] = onExitPrivateChatStepIndex(stepIndex, element), true);
         };          
         const stopExitPrivateChatNode = (stepIndex) => {
             document.getElementById('exit-help-btn').removeEventListener("click", exitPrivateChatHandlers[stepIndex], true);
@@ -72,8 +74,8 @@ AFRAME.registerComponent('help-chat', {
                     document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', this.el.getAttribute("id"));
                     document.getElementById('exit-help-btn').style.display = 'inline-block';
 
-                    startPrivateMessageNode(this.el.getAttribute("id")); 
-                    startExitPrivateChatNode(this.el.getAttribute("id")); 
+                    startPrivateMessageNode(this.el.getAttribute("id"), this.el); 
+                    startExitPrivateChatNode(this.el.getAttribute("id"), this.el); 
                     
                     
                 }else{
@@ -83,7 +85,7 @@ AFRAME.registerComponent('help-chat', {
 
                 NAF.connection.subscribeToDataChannel(this.el.getAttribute("id"), (senderId, dataType, data, targetId) => {
                     let dateString = getChatCurrentTimeString();
-                    chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: yellow">' + dateString + ' [Private Chat] ' + data.player.name + ": " + data.txt + '</span><br>';
+                    chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: white">' + dateString + ' [Private Chat \'' + this.el.getAttribute("title") + '\'] ' + data.player.name + ": " + data.txt + '</span><br>';
                 } );
 
             }
