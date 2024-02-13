@@ -28,12 +28,12 @@ function vrodos_create_asset_categories(){
             'description' => 'An interactable 3D object. Launches a popup window on click that features an image and a description.',
             'ic' => 'image'
         ],
-       /* 'poi-help' => [
+       'poi-help' => [
             'name' => 'POI - Help',
             'slug' => 'poi-help',
-            'description' => 'An interactable 3D object. Launches a popup window on click that features a contact form.',
+            'description' => 'An interactable 3D object. Launches a private chat, in order to connect users with administrators.',
             'ic' => 'help'
-        ],*/
+        ],
        /* 'chat' => [
             'name' => 'Chat',
             'slug' => 'chat',
