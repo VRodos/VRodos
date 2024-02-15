@@ -148,6 +148,28 @@
                         
                         //document.getElementById("cameraA").setAttribute("rotation", this.data.cam_rotation);
                     }
+
+                    document.getElementById("private-chat-button").addEventListener("click", () => {
+                        let event = new CustomEvent('chat-selected', {"detail": "private"});
+                        document.dispatchEvent(event);
+                    });
+
+                    document.getElementById("public-chat-button").addEventListener("click", (evt) =>{
+                        let event = new CustomEvent('chat-selected', {"detail": "public"});
+                        document.dispatchEvent(event);
+                    });
+
+                    if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0"){
+                        
+                        document.getElementById("private-chat-button").disabled = true;
+                    }
+                    else{
+                        document.getElementById("public-chat-button").style.visibility = 'visible';
+                        document.getElementById("public-chat-button").classList.add('mdc-tab--active');
+                        document.getElementById("public-chat-button").disabled = true;
+                    }
+
+                    
                     
                     AFRAME.registerComponent('avatar-movement-info', {
                         // notice that color and name are both listed in the schema; NAF will only keep
@@ -273,8 +295,8 @@
                                 this.nametagInput.value = this.data.name;
 
                                 // add the initial color to the html overlay color picker button
-                                document.querySelector('button').style.backgroundColor = this.data.color;
-                                document.querySelector('button').style.color = this.data.color;
+                                document.getElementById('color-changer').style.backgroundColor = this.data.color;
+                                document.getElementById('color-changer').style.color = this.data.color;
                             }
                         },
 
@@ -823,6 +845,34 @@
     </script>
 
     <style>
+        .button-tab {
+            background-color: #fff;
+            border: 0 solid #e2e8f0;
+            border-radius: 1.5rem;
+            box-sizing: border-box;
+            color: #0d172a;
+            cursor: pointer;
+            display: inline-block;
+            font-family: "Basier circle",-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 1rem 1.6rem;
+            text-align: center;
+            text-decoration: none #0d172a solid;
+            text-decoration-thickness: auto;
+            transition: all .1s cubic-bezier(.4, 0, .2, 1);
+            box-shadow: 0px 1px 2px rgba(166, 175, 195, 0.25);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        @media (min-width: 768px) {
+        .button-tab {
+            font-size: 1.125rem;
+            padding: 1rem 2rem;
+        }
+        }
         .ChatWrapperStyle {
             position: absolute;
             bottom: 0;
@@ -912,20 +962,51 @@
             position: relative;
             z-index: 9999;
         }
+        
+
+      
 
     </style>
 
 </head>
 
 <body id="master-client-body">
-
+    
+   
 <div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
+
+    <div class="mdc-tab-bar" role="tablist" style="position: relative; top: 0; right:30px; z-index:101; height: 30px;">
+        <div class="mdc-tab-scroller">
+            <div class="mdc-tab-scroller__scroll-area">
+                <div class="mdc-tab-scroller__scroll-content">
+                    <button id = "public-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="0" style="visibility: hidden">
+                        <span class="mdc-tab__content">
+                            <span class="mdc-tab__text-label">Public</span>
+                        </span>
+                       
+                        <span class="mdc-tab__ripple"></span>
+                    </button>
+
+                    <button id = "private-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="1"  style="visibility: hidden">
+                        <span class="mdc-tab__content">
+                        <span class="mdc-tab__text-label">Private</span>
+                        </span>
+                        <span class="mdc-tab-indicator mdc-tab-indicator">
+                       
+                    </button>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div id="chatControlsOverlay" style="position: relative; top: 0; left:0; z-index:101; height: 30px;">
         <button id="color-changer" onclick="
             let newColor = window.ntExample.randomColor();
              document.getElementById('cameraA').setAttribute('player-info', 'color', newColor);
-             document.querySelector('button').style.backgroundColor = newColor;
-             document.querySelector('button').style.color = newColor;
+             document.getElementById('color-changer').style.backgroundColor = newColor;
+             document.getElementById('color-changer').style.color = newColor;
         ">■</button>
         <input id="username-overlay" maxlength="24" size="15" oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)" placeholder="Username" />
         <input type="text" id="chatInput" placeholder="Message">
