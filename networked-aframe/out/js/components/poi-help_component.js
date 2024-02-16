@@ -1,48 +1,33 @@
 AFRAME.registerComponent('help-chat', {
+    schema: { type: "string", default: "" },
     init: function () {
         let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
         let chatInput = document.getElementById('chatInput');
         let chatLog = document.getElementById('chat-messages');
-
         let roomOccupants;
         let connectedEntities = [];
-
-        console.log("NAF.connection.getConnectedClients()");
-        console.log(NAF.connection.getConnectedClients());
+        let room_id = this.data;
 
         this.el.setAttribute("isActive", "false");
 
         let elem = this.el;
-
-        let entityConnected = false;
-        let entitiesCount;
-
         let currentUsers = 0;
         let syncComplete = false;
 
         function isEqual(a, b) {
-            // check if the lengths are equal
             if (a.length !== b.length) {
                 return false;
             }
-        
             let map = new Map();
             for (let elem of a) {
-                // increment the frequency of each element
                 map.set(elem, (map.get(elem) || 0) + 1);
             }
-        
             for (let elem of b)
             {
-                // if the element is not in the map, the arrays are not equal
                 if (!map.has(elem)) {
                     return false;
                 }
-        
-                // decrement the frequency of each element
                 map.set(elem, map.get(elem) - 1);
-        
-                // if the frequency becomes negative, the arrays are not equal
                 if (map.get(elem) < 0) {
                     return false;
                 }
@@ -50,39 +35,18 @@ AFRAME.registerComponent('help-chat', {
         
             return true;
         }
-                
-        // document.body.addEventListener('entityCreated',evt => {
-        //     console.log("NAF CONNECTED");
-        //     console.log("NAF.connection.getConnectedClients()");
-        //     console.log(NAF);
-        //     console.log(Object.keys(NAF.connection.entities.entities).length);
-        //     console.log(ObjectLength(NAF.connection.entities.entities));
-        //     entitiesCount = Object.keys(NAF.connection.entities.entities).length;
-        //     entityConnected = true;
-        //     currentUsers++;
-        //     //document.getElementById('cameraA').setAttribute('player-info', 'connectedUsers', elem.getAttribute("id"));
-        //     document.getElementById('cameraA').setAttribute('player-info', 'connectedUsers', currentUsers);
-            
-        // }, false); 
 
         document.body.addEventListener('entityCreated',evt => {
-            console.log("NAF ENTITY CREATED");
-           
             if (!roomOccupants){
-                roomOccupants = easyrtc.getRoomOccupantsAsArray('room26996');
+                roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
             }
             connectedEntities.push(evt.detail.el.firstUpdateData.owner);
-            console.log(evt.detail.el.firstUpdateData.owner);
-            console.log(isEqual(roomOccupants,connectedEntities));
-
             if (connectedEntities.indexOf(evt.detail.el.firstUpdateData.owner) < 0){
                 connectedEntities.push(evt.detail.el.firstUpdateData.owner);
             }
-
             if (roomOccupants.indexOf(evt.detail.el.firstUpdateData.owner) < 0){
                 roomOccupants.push(evt.detail.el.firstUpdateData.owner);
             }
-
             if (isEqual(roomOccupants,connectedEntities)){
                 let eventSyncComplete = new CustomEvent('chat-selected', {"detail": "success"});
                 document.dispatchEvent(eventSyncComplete);
@@ -92,101 +56,53 @@ AFRAME.registerComponent('help-chat', {
         }, false); 
 
         document.body.addEventListener('entityRemoved',evt => {
-            console.log("NAF ENTITY REMOVED");
             if (!roomOccupants){
-                roomOccupants = easyrtc.getRoomOccupantsAsArray('room26996');
+                roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
             }
             if (!syncComplete){
                 connectedEntities.push(evt.detail.el.firstUpdateData.owner);
-                console.log(evt.detail.el.firstUpdateData.owner);
-                console.log(isEqual(roomOccupants,connectedEntities));
-
                 if (connectedEntities.indexOf(evt.detail.el.firstUpdateData.owner) > -1){
                     connectedEntities.splice(connectedEntities.indexOf(evt.detail.el.firstUpdateData.owner), 1);
                 }
-
                 if (roomOccupants.indexOf(evt.detail.el.firstUpdateData.owner) > -1){
                     roomOccupants.splice(roomOccupants.indexOf(evt.detail.el.firstUpdateData.owner), 1);
                 }
-    
-    
-    
                 if (isEqual(roomOccupants,connectedEntities)){
                     let eventSyncComplete = new CustomEvent('chat-selected', {"detail": "success"});
                     document.dispatchEvent(eventSyncComplete);
                     syncComplete = true;
                 }
             }
-
             if (isEqual(roomOccupants,connectedEntities)){
                 let eventSyncComplete = new CustomEvent('chat-selected', {"detail": "success"});
                 document.dispatchEvent(eventSyncComplete);
                 syncComplete = true;
             }
-           
-            
-           
-            
+                      
         }, false); 
-
        
         document.body.addEventListener('connected',evt => {
-            console.log("NAF CONNECTED");
-            console.log(NAF.connection.entities.entities);
-            console.log(easyrtc);
-            roomOccupants = easyrtc.getRoomOccupantsAsArray('room26996');
-
-            //connectedEntities = Object.keys(NAF.connection.connectedClients);
+            roomOccupants = easyrtc.getRoomOccupantsAsArray('room' + room_id);
             connectedEntities.push(NAF.clientId);
-            console.log(roomOccupants);
-            console.log(connectedEntities);
-            console.log(isEqual(roomOccupants,connectedEntities));
-            // console.log(evt);
-
+            if (isEqual(roomOccupants,connectedEntities)){
+                let eventSyncComplete = new CustomEvent('chat-selected', {"detail": "success"});
+                document.dispatchEvent(eventSyncComplete);
+                syncComplete = true;
+            }
             for (let key in NAF.connection.entities.entities) {
                 if (NAF.connection.entities.entities.hasOwnProperty(key)) {
                     if(NAF.connection.entities.entities[key].hasOwnProperty('firstUpdateData')){
-                        console.log(key); // 'a'
-                        console.log(NAF.connection.entities.entities[key]); // 'hello'
                         connectedEntities.push(NAF.connection.entities.entities[key].firstUpdateData.owner);
                     }
-                        
                 }
             }  
-            //console.log(NAF.connection.entities.entities);
-            console.log(Object.keys(NAF.entities).length);
-            //console.log(Object.keys(easyrtc.printpeerconns()).length);
-            //console.log(Object.keys(NAF.entities.entities).length);
-            entitiesCount = Object.keys(NAF.entities).length;
-            entityConnected = true;
-            currentUsers--;
-            //document.getElementById('cameraA').setAttribute('player-info', 'connectedUsers', elem.getAttribute("id"));
-            document.getElementById('cameraA').setAttribute('player-info', 'connectedUsers', currentUsers);
-            
         }, false); 
         
 
         if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "1")
-            this.el.setAttribute("currentState", "public");
-               
+            this.el.setAttribute("currentState", "public");               
         let chatLogPrivateHistory = [];
-
-        function addToAttribute(element, attributeName, subAttributeName, value) {
-            element.setAttribute(
-                attributeName, subAttributeName, 
-                (element.getAttribute(attributeName, subAttributeName) || '') + value);
-        }
-
-        function ObjectLength( object ) {
-            var length = 0;
-            for( var key in object ) {
-                if( object.hasOwnProperty(key) ) {
-                    ++length;
-                }
-            }
-            return length;
-        };
-                
+    
         const onPrivateMessageStepIndex = function sendPrivateMessage(chat_id, element){
             {
                 return function executeOnEvent (event) {
@@ -263,7 +179,6 @@ AFRAME.registerComponent('help-chat', {
         });
 
         
-
         elem.addEventListener("click", evt => {
 
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';           
@@ -275,18 +190,6 @@ AFRAME.registerComponent('help-chat', {
             console.log(syncComplete);
             console.log(roomOccupants); 
             console.log(connectedEntities); 
-           
-
-            // let temp = document.getElementById('cameraA').getAttribute('player-info').fullChatTable;
-            // console.log(temp);
-
-            // if (ObjectLength(temp) == 0)
-            //     document.getElementById('cameraA').setAttribute('player-info', 'fullChatTable', temp + "test" );
-            // else
-            //     document.getElementById('cameraA').setAttribute('player-info', 'fullChatTable', temp + "," + "test" );
-
-            // console.log(document.getElementById('cameraA').getAttribute('player-info').fullChatTable);
-
 
             publicChatIsActive = false;
             
@@ -305,23 +208,9 @@ AFRAME.registerComponent('help-chat', {
                 if (chatlist < 2 && syncComplete){
                     chatLog.innerHTML += "<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected. Press X to leave ' + "</pre>";
 
-                    //let fullChatTablesList = document.getElementById('cameraA').getAttribute('player-info', 'fullChatTables');
                     document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', elem.getAttribute("id"));
-
-                    // if (chatlist  === 1)
-                    //     document.getElementById('cameraA').setAttribute('player-info', 'fullChatTable', elem.getAttribute("id"));
-                
-
-                    //document.getElementById('cameraA').setAttribute('player-info', 'fullChatTable', document.getElementById('cameraA').getAttribute('player-info', 'fullChatTable').push(elem.getAttribute("id")));
-
-                    //addToAttribute(document.getElementById('cameraA'), 'player-info', 'fullChatTables', this.el.getAttribute("id"));
                     elem.setAttribute("isActive", "true");
                     document.getElementById('exit-help-btn').style.display = 'inline-block';
-
-                    // let eventChatMembers = new CustomEvent('chat-selected', {"detail": "public"});
-                    // document.dispatchEvent(event);
-
-                    // this.el.emit('eventChatMembers', chatlist + 1, false);
                     elem.setAttribute("currentState", "private");
 
                     startPrivateMessageNode(elem.getAttribute("id"), this.el); 
@@ -330,6 +219,10 @@ AFRAME.registerComponent('help-chat', {
                     
                 }else if (chatlist >= 2 && syncComplete){
                     chatLog.innerHTML += "<pre>" +'<span style=" color: white">•</span> <span style="color: white">' +  ' Current chat is full. Please try again later ' + "</pre>";
+                    document.getElementById("private-chat-button").style.visibility = 'hidden';
+                    chatLogUpdate("public",elem.getAttribute("id"),elem, "Current chat is full. Returning to public chat");
+                    document.getElementById("public-chat-button").disabled = false;
+                    
                 }else if (!syncComplete) {
                     chatLog.innerHTML += "<pre>" +'<span style=" color: white">•</span> <span style="color: white">' +  ' Chat is loading. Please try again later ' + "</pre>";
                 }
@@ -337,13 +230,11 @@ AFRAME.registerComponent('help-chat', {
             }
         });
               
-        
-
-        function chatLogUpdate(currenChatState, chat_id, element){
+        function chatLogUpdate(currenChatState, chat_id, element, chatLogMessage = 'Connected to public chat'){
             switch (currenChatState){
                 case "public":
                     chatLog.innerHTML = "";
-                    chatLog.innerHTML += "<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected to public chat ' + "</pre>";
+                    chatLog.innerHTML += "<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  chatLogMessage + "</pre>";
                     publicChatIsActive = true;
                     chatLogPublicHistory.forEach((element)=> chatLog.innerHTML += "<pre>" + element + "</pre>");
                     stopPrivateMessageNode(chat_id);
@@ -364,6 +255,5 @@ AFRAME.registerComponent('help-chat', {
                 break;
             }
         };
-
     }
 });
