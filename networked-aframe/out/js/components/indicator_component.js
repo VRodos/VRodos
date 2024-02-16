@@ -1,104 +1,71 @@
 AFRAME.registerComponent('indicator-availability', {
+    schema: { isfull: { default: "false" } },
     init: function () {
-        //var backgroundEl = document.querySelector('#exit_' + this.data);
-        // var buttonEl = document.querySelector('#button_poi_' + this.data);
-
-       
-
-        function check1(oldvalue) {
-            undefined === oldvalue && (oldvalue = value);
-            clearcheck = setInterval(repeatcheck,500,oldvalue);
-            function repeatcheck(oldvalue) {
-                if (value !== oldvalue) {
-                    // do something
-                    clearInterval(clearcheck)
-                    console.log("check1 value changed from " +
-                        oldvalue + " to " + value);
-                }
-            }
-        }
-
-        console.log("chatlist: ");
-        //console.log(document.getElementById('cameraA').getAttribute('player-info', 'fullChatTables'));
-
-        // function setReadyListener() {
-        //     const readyListener = () => {
-        //       if (chatlist > 0) {
-        //         console.log("READY LISTENER");
-        //         return alert("Ready!");
-        //       }
-        //       return setTimeout(readyListener, 250);
-        //     };
-        //     readyListener();
-        // }
-
-        let indicatorAsset = document.getElementById('indicator_id');
-        let indicatorEntity = document.createElement('a-entity');
-        let parentEntity = document.createElement('a-entity');
         let element = this.el;
 
-        let chatIsFull = false;
-        indicatorEntity.setAttribute("gltf-model", "#indicator_id");
-        parentEntity.appendChild(indicatorEntity);
-        parentEntity.appendChild(element);
+        document.addEventListener("chat-selected", (evt)=>{
+            let id = element.getAttribute("id");
+            let  chatListCheck = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== id}).length;
+            if(chatListCheck < 2)
+            {
+                element.emit('chat-availability-change', "available", false);
+            }else{
+                element.emit('chat-availability-change', "full", false);
+            }
+        })
 
+        let checkIndicatorEntity = document.createElement('a-entity');
+        let xIndicatorEntity = document.createElement('a-entity');
+        let parentEntity = document.createElement('a-entity');
+        parentEntity.setAttribute("visible", "false");
+        let chatIsFull = false;
+
+        checkIndicatorEntity.setAttribute("visible", "false");
+        checkIndicatorEntity.setAttribute("id", "check_id");
+        checkIndicatorEntity.setAttribute("gltf-model", "#check_indicator_id");
+        checkIndicatorEntity.setAttribute("rotation", "0 270 0");
+
+        xIndicatorEntity.setAttribute("visible", "false");
+        xIndicatorEntity.setAttribute("id", "#x_id");
+        xIndicatorEntity.setAttribute("gltf-model", "#x_indicator_id");
+
+        parentEntity.appendChild(checkIndicatorEntity);
+        parentEntity.appendChild(xIndicatorEntity);
+        parentEntity.appendChild(element);
+        
         document.getElementById("aframe-scene-container").appendChild(parentEntity);
 
-        
-
-        // setReadyListener();
-        
-
-        element.addEventListener("eventChatMembers", (evt) => {
-            console.log(evt);
+        element.addEventListener("chat-availability-change", (evt) => {
+            if (evt.detail === "full"){
+                checkIndicatorEntity.setAttribute("visible", "false");
+                xIndicatorEntity.setAttribute("visible", "true");
+            }else if (evt.detail === "available"){
+                checkIndicatorEntity.setAttribute("visible", "true");
+                xIndicatorEntity.setAttribute("visible", "false");
+            }
         });
-
-        element.addEventListener("click", e => {console.log([...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'])); });
-
-        console.log(([...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.fullChatTable))); 
         element.addEventListener("model-loaded", e => {
 
             let  chatlist = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.fullChatTable).filter(function(x){return x== element.getAttribute("id")});
-
-            console.log(([...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.fullChatTable))); 
-
-                       
-            //this.el.object3D.visible = false;
-
-            //this.buttonEl.emit("temp");
-            
-
-           
-           
-            // console.log(this.excEl + " Found");
-            // this.excEl.object3D.visible = true;
-            //indicatorEntity.object3D.position.set(0, 0, 0);
-            // this.excEl.object3D.scale.set(30, 30, 30);
             let bbox = new THREE.Box3().setFromObject(this.el.object3D);
             const vector = new THREE.Vector3();
             let centered_values = bbox.getCenter(vector);
-
-            indicatorEntity.object3D.position.set(element.getAttribute("position").x, element.getAttribute("position").y + 5, element.getAttribute("position").z);
-            //const realWorldPosition = indicatorEntity.object3D.getWorldPosition(new THREE.Vector3());
-
-
-            // this.excEl.object3D.traverse((child) => {
-            //     if (child.type === 'Mesh') {
-            //         const material = child.material;
-            //         console.log("Mat found");
-            //         console.log(child);
-            //         //child.position.set(0, 0, 0);
-            //         //material.color.r = 0;
-
-            //         //material.color.g = 0;
-            //         material.metalness = 0;
-            //         material.roughness = 0;
-
-            //         material.color.setHex("0xccad00");
-
-
-            //     }
-            // })
+            checkIndicatorEntity.object3D.position.set(element.getAttribute("position").x, element.getAttribute("position").y + 5, element.getAttribute("position").z);
+            xIndicatorEntity.object3D.position.set(element.getAttribute("position").x, element.getAttribute("position").y + 5, element.getAttribute("position").z);
+            parentEntity.setAttribute("visible", "true");
         });
+    },
+    tick:function () {
+        let chat_id = this.el.getAttribute("id");
+        let  chatListUpdate = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== chat_id}).length;
+
+        if (chatListUpdate === 2 && this.data.isfull === "false"){
+            this.el.emit('chat-availability-change', "full", false);
+            this.data.isfull = "true";
+        }else if (chatListUpdate < 2 && this.data.isfull === "true"){
+            this.el.emit('chat-availability-change', "available", false);
+            this.data.isfull = "false";
+        }
+        
     }
 });

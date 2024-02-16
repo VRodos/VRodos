@@ -14,6 +14,16 @@ AFRAME.registerComponent('help-chat', {
         let currentUsers = 0;
         let syncComplete = false;
 
+        function ObjectLength( object ) {
+            let length = 0;
+            for( let key in object ) {
+                if( object.hasOwnProperty(key) ) {
+                    ++length;
+                }
+            }
+            return length;
+        };
+
         function isEqual(a, b) {
             if (a.length !== b.length) {
                 return false;
@@ -201,12 +211,18 @@ AFRAME.registerComponent('help-chat', {
                 chatLog.innerHTML = "";
 
                 let  chatlist = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== elem.getAttribute("id")}).length;
+                let reservedTables = document.getElementById('cameraA').getAttribute('player-info').fullChatTable;
 
                 chatLog.innerHTML +="<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connecting to private chat \'' + elem.getAttribute("title") + '\'' +"</pre>" ;
 
                
                 if (chatlist < 2 && syncComplete){
-                    chatLog.innerHTML += "<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected. Press X to leave ' + "</pre>";
+                    chatLog.innerHTML += "<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected. Press X to leave ' + "</pre>"; 
+                    
+                    // if (ObjectLength(reservedTables) == 0 && chatlist === 1)
+                    //     document.getElementById('cameraA').setAttribute('player-info', 'fullChatTable', reservedTables + elem.getAttribute("id") );
+                    // else
+                    //     document.getElementById('cameraA').setAttribute('player-info', 'fullChatTable', reservedTables + "," + elem.getAttribute("id") );
 
                     document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', elem.getAttribute("id"));
                     elem.setAttribute("isActive", "true");
@@ -215,7 +231,10 @@ AFRAME.registerComponent('help-chat', {
 
                     startPrivateMessageNode(elem.getAttribute("id"), this.el); 
                     startExitPrivateChatNode(elem.getAttribute("id"), this.el); 
-                    
+
+                   
+
+                            
                     
                 }else if (chatlist >= 2 && syncComplete){
                     chatLog.innerHTML += "<pre>" +'<span style=" color: white">•</span> <span style="color: white">' +  ' Current chat is full. Please try again later ' + "</pre>";
