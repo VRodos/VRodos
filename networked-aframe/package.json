@@ -1,6 +1,6 @@
 {
   "name": "networked-aframe",
-  "version": "0.11.1",
+  "version": "0.12.1",
   "description": "A web framework for building multi-user virtual reality experiences.",
   "homepage": "",
   "main": "src/index.js",
@@ -15,8 +15,8 @@
     "dist": "npm run dist:min && npm run dist:max",
     "dist:max": "webpack --config webpack.config.js",
     "dist:min": "webpack --config webpack.prod.config.js",
-
-    "prepare": "npm run dist && shx cp -r dist examples",
+    "lint": "eslint src examples server tests *.js",
+    "prepare": "husky install && npm run dist && shx cp -r dist examples",
     "start": "node ./server/easyrtc-server.js",
     "start-socketio": "node ./server/socketio-server.js",
     "test": "karma start ./tests/unit/karma.conf.js",
@@ -39,7 +39,7 @@
     "chai": "^4.3.6",
     "cross-env": "^7.0.3",
     "eslint": "^8.21.0",
-    "husky": "^8.0.3",
+    "husky": "^8.0.1",
     "karma": "^6.4.0",
     "karma-chrome-launcher": "^3.1.1",
     "karma-coverage": "^2.2.0",
