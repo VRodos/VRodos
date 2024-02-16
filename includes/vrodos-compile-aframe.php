@@ -999,7 +999,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "gltf-model","#". $uuid );
                     $gltf_model->setAttribute( "id", $uuid );
                     $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
-                    $gltf_model->setAttribute("indicator-availability", "isfull: $chat_indicator_full");
+                    if($contentObject->poi_chat_indicators == "enabled")
+                        $gltf_model->setAttribute("indicator-availability", "isfull: $chat_indicator_full");
 
                     
                     $gltf_model->appendChild( $dom->createTextNode( '' ) );
