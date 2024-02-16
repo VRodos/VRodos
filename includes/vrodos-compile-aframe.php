@@ -976,6 +976,12 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $assets->appendChild( $asset_item );
 
+                    $asset_indicator_item = $dom->createElement( "a-asset-item" );
+                    $asset_indicator_item->setAttribute( "id", "indicator_id" );
+                    $asset_indicator_item->setAttribute( "src", "" . $fileOperations->plugin_path_url .  "/assets/pawn.glb" . "");
+                    $asset_indicator_item->setAttribute( "response-type", "arraybuffer" );  
+                    
+                    $assets->appendChild( $asset_indicator_item );
 
                     $sc_x = $contentObject->scale[0];
                     $sc_y = $contentObject->scale[1];
@@ -985,6 +991,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "gltf-model","#". $uuid );
                     $gltf_model->setAttribute( "id", $uuid );
                     $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
+                    $gltf_model->setAttribute("indicator-availability", "");
+
+                    
                     $gltf_model->appendChild( $dom->createTextNode( '' ) );
                     $material = "";
                     $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
