@@ -46,6 +46,14 @@ AFRAME.registerComponent('help-chat', {
             return true;
         }
 
+        document.querySelector('a-scene').addEventListener('enter-vr', ()=>{
+            elem.classList.remove("raycastable");
+        });
+
+        document.querySelector('a-scene').addEventListener('exit-vr', ()=>{
+            elem.classList.add("raycastable");
+        });
+
         document.body.addEventListener('entityCreated',evt => {
             if (!roomOccupants){
                 roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);

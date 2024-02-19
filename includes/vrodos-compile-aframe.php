@@ -1006,7 +1006,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->appendChild( $dom->createTextNode( '' ) );
                     $material = "";
                     $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
-                    $gltf_model->setAttribute( "class", "override-materials raycastable hideable" );
+                    $gltf_model->setAttribute( "class", "override-materials raycastable hideable non-vr" );
                     $gltf_model->setAttribute( "material", $material );
                     $gltf_model->setAttribute( "help-chat", "$scene_id" );
                     $gltf_model->setAttribute( "clear-frustum-culling", "" );

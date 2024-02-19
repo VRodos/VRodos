@@ -24,10 +24,14 @@ AFRAME.registerComponent('indicator-availability', {
         checkIndicatorEntity.setAttribute("id", "check_id");
         checkIndicatorEntity.setAttribute("gltf-model", "#check_indicator_id");
         checkIndicatorEntity.setAttribute("rotation", "0 270 0");
+        checkIndicatorEntity.classList.add("non-vr");
+        checkIndicatorEntity.classList.add("hideable");
 
         xIndicatorEntity.setAttribute("visible", "false");
         xIndicatorEntity.setAttribute("id", "#x_id");
         xIndicatorEntity.setAttribute("gltf-model", "#x_indicator_id");
+        xIndicatorEntity.classList.add("non-vr");
+        xIndicatorEntity.classList.add("hideable");
 
         parentEntity.appendChild(checkIndicatorEntity);
         parentEntity.appendChild(xIndicatorEntity);
