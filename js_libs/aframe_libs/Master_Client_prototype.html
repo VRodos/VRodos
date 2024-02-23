@@ -172,7 +172,7 @@
 
                     document.getElementById("public-chat-button").addEventListener("click", (evt) =>{
                         let event = new CustomEvent('chat-selected', {"detail": "public"});
-                        document.dispatchEvent(event);
+                        document.dispatchEvent(event);                        
                     });
 
                     if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0"){
@@ -263,10 +263,6 @@
                                 type: 'string'
                             },
                             avatarType: {
-                                default: '',
-                                type: 'string'
-                            },
-                            currentState: {
                                 default: '',
                                 type: 'string'
                             },

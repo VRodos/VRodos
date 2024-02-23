@@ -7,9 +7,7 @@ AFRAME.registerComponent('help-chat', {
         let roomOccupants;
         let connectedEntities = [];
         let room_id = this.data;
-
         this.el.setAttribute("isActive", "false");
-
         let elem = this.el;
         let currentUsers = 0;
         let syncComplete = false;
@@ -23,7 +21,6 @@ AFRAME.registerComponent('help-chat', {
             }
             return length;
         };
-
         function isEqual(a, b) {
             if (a.length !== b.length) {
                 return false;
@@ -42,18 +39,15 @@ AFRAME.registerComponent('help-chat', {
                     return false;
                 }
             }
-        
             return true;
         }
 
         document.querySelector('a-scene').addEventListener('enter-vr', ()=>{
             elem.classList.remove("raycastable");
         });
-
         document.querySelector('a-scene').addEventListener('exit-vr', ()=>{
             elem.classList.add("raycastable");
         });
-
         document.body.addEventListener('entityCreated',evt => {
             if (!roomOccupants){
                 roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
@@ -66,44 +60,49 @@ AFRAME.registerComponent('help-chat', {
                 roomOccupants.push(evt.detail.el.firstUpdateData.owner);
             }
             if (isEqual(roomOccupants,connectedEntities)){
-                let eventSyncComplete = new CustomEvent('chat-selected', {"detail": "success"});
+                let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
                 document.dispatchEvent(eventSyncComplete);
                 syncComplete = true;
             }
             
         }, false); 
+        // document.body.addEventListener('clientConnected',evt => {
+        //     console.log('clientConnected');
+        //     console.log(evt.detail);
+        // }, false);
+        document.body.addEventListener('clientDisconnected',evt => {
 
-        document.body.addEventListener('entityRemoved',evt => {
+            console.log("evt.detail");
+            console.log(evt.detail);
             if (!roomOccupants){
                 roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
             }
             if (!syncComplete){
-                connectedEntities.push(evt.detail.el.firstUpdateData.owner);
-                if (connectedEntities.indexOf(evt.detail.el.firstUpdateData.owner) > -1){
-                    connectedEntities.splice(connectedEntities.indexOf(evt.detail.el.firstUpdateData.owner), 1);
+                // connectedEntities.push(evt.detail.el.firstUpdateData.owner);
+                if (connectedEntities.indexOf(evt.detail.clientId) > -1){
+                    connectedEntities.splice(connectedEntities.indexOf(evt.detail.clientId), 1);
                 }
-                if (roomOccupants.indexOf(evt.detail.el.firstUpdateData.owner) > -1){
-                    roomOccupants.splice(roomOccupants.indexOf(evt.detail.el.firstUpdateData.owner), 1);
+                if (roomOccupants.indexOf(evt.detail.clientId) > -1){
+                    roomOccupants.splice(roomOccupants.indexOf(evt.detail.clientId), 1);
                 }
                 if (isEqual(roomOccupants,connectedEntities)){
-                    let eventSyncComplete = new CustomEvent('chat-selected', {"detail": "success"});
+                    let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
                     document.dispatchEvent(eventSyncComplete);
                     syncComplete = true;
                 }
             }
             if (isEqual(roomOccupants,connectedEntities)){
-                let eventSyncComplete = new CustomEvent('chat-selected', {"detail": "success"});
+                let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
                 document.dispatchEvent(eventSyncComplete);
                 syncComplete = true;
             }
                       
         }, false); 
-       
         document.body.addEventListener('connected',evt => {
             roomOccupants = easyrtc.getRoomOccupantsAsArray('room' + room_id);
             connectedEntities.push(NAF.clientId);
             if (isEqual(roomOccupants,connectedEntities)){
-                let eventSyncComplete = new CustomEvent('chat-selected', {"detail": "success"});
+                let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
                 document.dispatchEvent(eventSyncComplete);
                 syncComplete = true;
             }
@@ -116,11 +115,9 @@ AFRAME.registerComponent('help-chat', {
             }  
         }, false); 
         
-
         if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "1")
             this.el.setAttribute("currentState", "public");               
         let chatLogPrivateHistory = [];
-    
         const onPrivateMessageStepIndex = function sendPrivateMessage(chat_id, element){
             {
                 return function executeOnEvent (event) {
@@ -136,15 +133,11 @@ AFRAME.registerComponent('help-chat', {
             {
                 return function actualOnStepIndex (event) {     
                     NAF.connection.unsubscribeToDataChannel(chat_id);
-
                     stopPrivateMessageNode(chat_id);
-                    
                     document.getElementById('exit-help-btn').style.display = 'none';
                     document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', '');
                     element.setAttribute("isActive", "false");
-
                     chatLog.innerHTML += "<pre>" +'<span style=" color: white">•</span> <span style="color: white">' +  ' Exiting Private Chat ' + "</pre>";
-
                     stopExitPrivateChatNode(chat_id); 
 
                     if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0")
@@ -168,7 +161,6 @@ AFRAME.registerComponent('help-chat', {
                     chatLog.innerHTML += "<pre>" + '<span style=" color: ' + data.player.color + '">•</span> <span style="color: white">' + dateString + ' [Private Chat \'' + element.getAttribute("title") + '\'] ' + data.player.name + ": " + data.txt + '</span> </pre> <br>';
                 chatLogPrivateHistory.push(dateString + ' [Private Chat \'' + element.getAttribute("title") + '\'] ' + data.player.name + ": " + data.txt);
             } );
-
             sendMsgChatBtn.addEventListener("click", privateMessageHandlers[stepIndex] = onPrivateMessageStepIndex(stepIndex, element), true);
         };      
         const stopPrivateMessageNode = (stepIndex) => {
@@ -184,7 +176,6 @@ AFRAME.registerComponent('help-chat', {
             document.getElementById("private-chat-button").style.visibility = 'hidden';
             chatLogPrivateHistory = [];
         };
-
         document.addEventListener("chat-selected", (evt) =>{
             if (this.el.getAttribute("isActive") == "true"){
                  if (this.el.getAttribute("currentState") == evt.detail){
@@ -195,55 +186,33 @@ AFRAME.registerComponent('help-chat', {
                 }
             }         
         });
-
-        
         elem.addEventListener("click", evt => {
-
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';           
             document.getElementById("public-chat-button").classList.remove('mdc-tab--active');
             document.getElementById("public-chat-button").disabled = false;
             document.getElementById("private-chat-button").style.visibility = 'visible';
             document.getElementById("private-chat-button").classList.add('mdc-tab--active');
-
-            console.log(syncComplete);
-            console.log(roomOccupants); 
-            console.log(connectedEntities); 
-
             publicChatIsActive = false;
             
             if (document.getElementById('cameraA').getAttribute('player-info').currentPrivateChat){
                 chatLog.innerHTML += "<pre>" +'<span style=" color: white">•</span> <span style="color: white">' +  ' You are already in a private chat ' + "</pre>";
             }else{
-                 
                 sendMsgChatBtn.removeEventListener("click",sendPublicMessage);
                 chatLog.innerHTML = "";
-
                 let  chatlist = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== elem.getAttribute("id")}).length;
-                let reservedTables = document.getElementById('cameraA').getAttribute('player-info').fullChatTable;
-
                 chatLog.innerHTML +="<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connecting to private chat \'' + elem.getAttribute("title") + '\'' +"</pre>" ;
-
                
                 if (chatlist < 2 && syncComplete){
                     chatLog.innerHTML += "<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected. Press X to leave ' + "</pre>"; 
                     
-                    // if (ObjectLength(reservedTables) == 0 && chatlist === 1)
-                    //     document.getElementById('cameraA').setAttribute('player-info', 'fullChatTable', reservedTables + elem.getAttribute("id") );
-                    // else
-                    //     document.getElementById('cameraA').setAttribute('player-info', 'fullChatTable', reservedTables + "," + elem.getAttribute("id") );
-
                     document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', elem.getAttribute("id"));
                     elem.setAttribute("isActive", "true");
                     document.getElementById('exit-help-btn').style.display = 'inline-block';
                     elem.setAttribute("currentState", "private");
 
-                    startPrivateMessageNode(elem.getAttribute("id"), this.el); 
-                    startExitPrivateChatNode(elem.getAttribute("id"), this.el); 
-
-                   
-
-                            
-                    
+                    startPrivateMessageNode(elem.getAttribute("id"), elem); 
+                    startExitPrivateChatNode(elem.getAttribute("id"), elem); 
+                                                
                 }else if (chatlist >= 2 && syncComplete){
                     chatLog.innerHTML += "<pre>" +'<span style=" color: white">•</span> <span style="color: white">' +  ' Current chat is full. Please try again later ' + "</pre>";
                     document.getElementById("private-chat-button").style.visibility = 'hidden';
@@ -252,6 +221,8 @@ AFRAME.registerComponent('help-chat', {
                     
                 }else if (!syncComplete) {
                     chatLog.innerHTML += "<pre>" +'<span style=" color: white">•</span> <span style="color: white">' +  ' Chat is loading. Please try again later ' + "</pre>";
+                    document.getElementById("private-chat-button").style.visibility = 'hidden';
+                    chatLogUpdate("public",elem.getAttribute("id"),elem, "Chat is loading. Please try again later");
                 }
                                              
             }

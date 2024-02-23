@@ -3,7 +3,7 @@ AFRAME.registerComponent('indicator-availability', {
     init: function () {
         let element = this.el;
 
-        document.addEventListener("chat-selected", (evt)=>{
+        document.addEventListener("chat-ready", (evt)=>{
             let id = element.getAttribute("id");
             let  chatListCheck = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== id}).length;
             if(chatListCheck < 2)
