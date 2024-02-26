@@ -210,9 +210,11 @@ function vrodos_fetch_game_assets_action_callback() {
 
     $response = vrodos_get_assets_by_game($_POST['gameProjectSlug'], $_POST['gameProjectID']);
 
-    for ($i=0; $i<count($response); $i++){
-        $response[$i]['name'] = $response[$i]['assetName'];
-        $response[$i]['type'] = 'file';
+    for ($i=0; $i<count($response); $i++) {
+        if (array_key_exists('assetName', $response[$i])) {
+            $response[$i]['name'] = $response[$i]['assetName'];
+            $response[$i]['type'] = 'file';
+        }
     }
 
     $jsonResp =  json_encode(
