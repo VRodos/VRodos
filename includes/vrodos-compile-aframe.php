@@ -275,7 +275,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             $objects = $scene_json->objects;
             //print_r($objects);
 
-            return array("dom" => $dom, "html" => $html, "head" => $head, "body" => $body, "ascene" => $ascene, "ascenePlayer" => $ascenePlayer, "metadata" => $metadata, "objects" => $objects, "actionsDiv" => $actionsDiv);
+            return array(
+                "dom" => $dom,
+                "html" => $html,
+                "head" => $head,
+                "body" => $body,
+                "ascene" => $ascene,
+                "ascenePlayer" => $ascenePlayer,
+                "metadata" => $metadata,
+                "objects" => $objects,
+                "actionsDiv" => $actionsDiv);
         }
 
     }

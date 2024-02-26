@@ -10,10 +10,10 @@
 
     <script src="js/aframe/1.4.2/aframe-v1.4.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
-    <script src="js/datgui/0.7.7/dat.gui.min.js"></script>
+    <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
 
 
-    <script src="easyrtc/easyrtc.js"></script>
+    <script src="../easyrtc/easyrtc.js"></script>
     <script src="../dist/networked-aframe.js"></script>
     <script src="../js/NoSleep.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
@@ -235,9 +235,10 @@
     // Add to a div the input stream of the rendered screen
     function scanForStreamsAndShowInFullScreen(){
 
-        for (let e in window.NAF.entities.entities){
-            for (let i=0; i < window.NAF.entities.entities[e].children.length; i++){
+        for (let e in window.NAF.entities.entities) {
+            for (let i=0; i < window.NAF.entities.entities[e].children.length; i++) {
                 let nvs = window.NAF.entities.entities[e].children[i].components['networked-video-source'];
+
                 if(nvs!==undefined){
                     if(nvs.videoTexture!==undefined && nvs.videoTexture!==null) {
                         if (nvs.el.id === 'screenPlane'){

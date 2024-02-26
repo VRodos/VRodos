@@ -370,7 +370,7 @@ THREE.SceneExporter.prototype = {
 
                 entryObject.position = [o.position.x, o.position.y, o.position.z];
                 entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
-                entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+                entryObject.scale = [1,1,1];
                 entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
 
                 let stringObj = JSON.stringify(entryObject);

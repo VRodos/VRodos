@@ -11,6 +11,7 @@
     <meta http-equiv="Expires" content="0" />
 
     <script src="js/aframe/1.4.2/aframe-v1.4.2.min.js"></script>
+    <!--<script src="js/aframe/1.5.0/aframe-v1.5.0.min.js"></script>-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
     <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
 
@@ -1235,10 +1236,6 @@
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
-        <!-- <a-asset-item id="idle" src="../media/sound/avatar_place.glb"></a-asset-item>
-
-        <a-asset-item id="model" src="../media/sound/fem.glb"></a-asset-item> -->
-
 
         <!-- Avatar Template -->
         <template id="avatar-template-expo">
@@ -1333,6 +1330,7 @@
     </a-assets>
 
     <a-entity id="player"></a-entity>
+    <a-entity id="actor"></a-entity>
 
     <!-- oculus hands -->
     <a-entity id="leftHand" oculus-touch-controls="hand: left" visible="false"></a-entity>

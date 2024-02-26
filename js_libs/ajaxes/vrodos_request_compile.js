@@ -25,7 +25,6 @@ function vrodos_compileAjax(showPawnPositions) {
         '<i title="Instructions" class="material-icons AlignIconToBottom">info</i> ' +
         'Please wait while we build your scene'
     );
-
     // ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
     jQuery.ajax({
         url :  isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
