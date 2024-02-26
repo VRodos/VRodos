@@ -345,19 +345,22 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $fogstring = substr($content, strpos($content, 'fog='), strpos($content, 'renderer=')-9-strpos($content, 'fog='));
 
         // Replace Fog string
-        if ($scene_json->metadata->fogtype != "none") {
-            $content = str_replace( $fogstring,
+        if (isset($scene_json->metadata->fogtype)) {
+            if ($scene_json->metadata->fogtype != "none") {
+                $content = str_replace( $fogstring,
 
-                'fog="type: ' . $scene_json->metadata->fogtype .
-                '; color: ' . $scene_json->metadata->fogcolor .
-                '; far: ' . $scene_json->metadata->fogfar .
-                '; density: ' . ( 1.5 * $scene_json->metadata->fogdensity ) .
-                '; near: ' . $scene_json->metadata->fognear . '"',
+                    'fog="type: ' . $scene_json->metadata->fogtype .
+                    '; color: ' . $scene_json->metadata->fogcolor .
+                    '; far: ' . $scene_json->metadata->fogfar .
+                    '; density: ' . ( 1.5 * $scene_json->metadata->fogdensity ) .
+                    '; near: ' . $scene_json->metadata->fognear . '"',
 
-                $content );
+                    $content );
+            }
         } else {
             $content = str_replace( $fogstring, " ", $content );
         }
+
 
 
         $basicDomElements = $fileOperations->createBasicDomStructureAframeDirector($content, $scene_json, $project_id, $scene_id, $scene_id_list);
@@ -405,7 +408,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             }
         }
 
-      
+
         $movement_disabled = filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN);
         $avatar_enabled = filter_var($scene_json->metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN);
         $cam_position = implode(" ", $scene_json->objects->avatarCamera->position);
@@ -447,10 +450,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             //     $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
             $a_camera->setAttribute("entity-movement-emitter","");
             $a_camera->setAttribute("entity-rotation-emitter","");
-        
 
-            
-           
+
+
+
             // $a_camera->setAttribute( "position-listener", "" );
 
             $a_cursor = $dom->createElement( "a-entity" );
@@ -494,7 +497,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             // ]));
             $ascenePlayer->setAttribute( "networked", "template:#avatar-template;attachTemplateToLocal:false;" );
             $ascenePlayer->setAttribute( "show-position", "" );
-             //if($movement_disabled != "1")
+            //if($movement_disabled != "1")
             // if (filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN)  === true)
             $ascenePlayer->setAttribute( "wasd-controls", "fly:false; acceleration:20" );
             $ascenePlayer->setAttribute( "look-controls", "pointerLockEnabled: false" );
@@ -549,7 +552,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
                         // "intensity:".($contentObject->lightintensity).";".
                         "castShadow:".($is_casting_shadow).";".
-                       
+
                         "shadowMapHeight:".($contentObject->shadowMapHeight).";".
                         // "shadowCameraFar: 5000;".
                         "shadowMapWidth:".($contentObject->shadowMapWidth).";".
@@ -988,15 +991,15 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $asset_indicator_item = $dom->createElement( "a-asset-item" );
                     $asset_indicator_item->setAttribute( "id", "check_indicator_id" );
                     $asset_indicator_item->setAttribute( "src", "" . $fileOperations->plugin_path_url .  "/assets/checkmark.glb" . "");
-                    $asset_indicator_item->setAttribute( "response-type", "arraybuffer" );  
-                    
+                    $asset_indicator_item->setAttribute( "response-type", "arraybuffer" );
+
                     $assets->appendChild( $asset_indicator_item );
 
                     $asset_indicator_item = $dom->createElement( "a-asset-item" );
                     $asset_indicator_item->setAttribute( "id", "x_indicator_id" );
                     $asset_indicator_item->setAttribute( "src", "" . $fileOperations->plugin_path_url .  "/assets/xmark.glb" . "");
-                    $asset_indicator_item->setAttribute( "response-type", "arraybuffer" );  
-                    
+                    $asset_indicator_item->setAttribute( "response-type", "arraybuffer" );
+
                     $assets->appendChild( $asset_indicator_item );
 
                     $sc_x = $contentObject->scale[0];
@@ -1011,7 +1014,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     if($contentObject->poi_chat_indicators == "enabled")
                         $gltf_model->setAttribute("indicator-availability", "isfull: $chat_indicator_full");
 
-                    
+
                     $gltf_model->appendChild( $dom->createTextNode( '' ) );
                     $material = "";
                     $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
@@ -1023,7 +1026,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                     $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );
                     $gltf_model->setAttribute( "title", $contentObject->poi_chat_title );
 
-                    
+
 
                     $ascene->appendChild( $gltf_model );
                     break;
@@ -1044,9 +1047,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
                     $a_image_asset_esc->setAttribute("id", "esc_img_$uuid");
                     $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x_2f3542.png', dirname(__FILE__)));
-                    
 
-                    
+
+
                     $a_image_asset_left->setAttribute("id", "left_img_$uuid");
                     $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left_2f3542.png', dirname(__FILE__)));
 
@@ -1183,7 +1186,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                             $prev_desc_entity = $dom->createElement("a-entity");
                             $prev_desc_entity->setAttribute("id", "prev_$uuid");
                             $prev_desc_entity->setAttribute("mixin", "poiImgPrev");
-                            
+
                             $prev_desc_entity->setAttribute("material", "src: #left_img_$uuid; depthTest: false; transparent: true");
                             $prev_desc_entity->setAttribute("class", "raycastable hideable non-clickable" );
                             $prev_desc_entity->setAttribute("scale", "0.14 0.14 0.14");
