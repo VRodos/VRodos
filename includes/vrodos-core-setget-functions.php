@@ -211,7 +211,7 @@ function vrodos_fetch_game_assets_action_callback() {
     $response = vrodos_get_assets_by_game($_POST['gameProjectSlug'], $_POST['gameProjectID']);
 
     for ($i=0; $i<count($response); $i++) {
-        if (array_key_exists('assetName', $response[$i])) {
+        if (isset($response[$i]['assetName'])) {
             $response[$i]['name'] = $response[$i]['assetName'];
             $response[$i]['type'] = 'file';
         }
@@ -268,7 +268,7 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
 
             $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true); // GLB ID
             $glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
-           
+
 
             $sshotID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true); // Screenshot Image ID
             $sshotPath = $sshotID ? wp_get_attachment_url( $sshotID ) : '';           // Screenshot Image PATH
@@ -314,7 +314,7 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
                     $data_arr['poi_chat_indicators'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true);
                     break;
             }
-           
+
             array_push($allAssets, $data_arr);
 
         endwhile;
