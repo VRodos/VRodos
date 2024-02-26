@@ -578,7 +578,7 @@ class VRodos_LightsPawn_Loader {
                                 resources3D[name]['trs']['rotation'][1],
                                 resources3D[name]['trs']['rotation'][2]);
 
-                            pawn.scale.set([1,1,1]);
+                            pawn.scale.set(1,1,1);
 
                             pawn.name = name;
                             pawn.asset_name = "myActor";
@@ -609,6 +609,7 @@ class VRodos_LightsPawn_Loader {
                             pawn.add(pawnLabel);
                             //pawnLabel.layers.set( 0 );
 
+                            console.log(pawn);
                             envir.scene.add(pawn);
 
                             // If we do not attach them, they are not visible in Editor !

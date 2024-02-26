@@ -282,7 +282,7 @@ AFRAME.registerComponent('video-controls', {
     onVideoClick:  function (evt) {
         
         this.panel_pos_dynamic =  (this.visibleWidthAtZDepth(this.panel_z)/2-1) + " " + "-0.3" + " " + this.panel_z; //From rightmost position  subtract panel width (0.2) and padding
-        this.el.object3D.position.z = -2.5;
+        // this.el.object3D.position.z = -2.5;
         this.restorePanel = this.restorePanel.bind(this);
         
         if (!browsingModeVR) {
