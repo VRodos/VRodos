@@ -12,6 +12,22 @@ AFRAME.registerComponent('help-chat', {
         let currentUsers = 0;
         let syncComplete = false;
 
+        const getUniqueNumbers = (arr1, arr2) => {
+            let uniqueOfBoth = arr1.filter((ele) => {
+              return arr2.indexOf(ele) !== -1
+            })
+          
+            let uniqueOfList1 = arr1.filter((ele) => {
+              return arr2.indexOf(ele) == -1
+            })
+          
+            let uniqueOfList2 = arr2.filter((ele) => {
+              return arr1.indexOf(ele) == -1
+            })
+          
+            return uniqueOfList2;
+        }
+
         function ObjectLength( object ) {
             let length = 0;
             for( let key in object ) {
@@ -70,20 +86,33 @@ AFRAME.registerComponent('help-chat', {
         //     console.log('clientConnected');
         //     console.log(evt.detail);
         // }, false);
+        document.body.addEventListener('entityRemoved',evt => {
+            console.log('entityRemoved');
+            roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
+            let result = getUniqueNumbers(roomOccupants, connectedEntities);
+            let i = 0;
+            
+            while (i < result.length) {
+                let index = connectedEntities.indexOf(result[i]);
+                if (index > -1) { 
+                    connectedEntities.splice(index, 1); 
+                }
+                i++;
+            }
+        }, false);
         document.body.addEventListener('clientDisconnected',evt => {
-
-            console.log("evt.detail");
-            console.log(evt.detail);
             if (!roomOccupants){
                 roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
             }
             if (!syncComplete){
-                // connectedEntities.push(evt.detail.el.firstUpdateData.owner);
                 if (connectedEntities.indexOf(evt.detail.clientId) > -1){
                     connectedEntities.splice(connectedEntities.indexOf(evt.detail.clientId), 1);
+                    console.log(connectedEntities.indexOf(evt.detail.clientId));
+                    
                 }
                 if (roomOccupants.indexOf(evt.detail.clientId) > -1){
                     roomOccupants.splice(roomOccupants.indexOf(evt.detail.clientId), 1);
+                    console.log(connectedEntities.indexOf(evt.detail.clientId));
                 }
                 if (isEqual(roomOccupants,connectedEntities)){
                     let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
@@ -96,8 +125,7 @@ AFRAME.registerComponent('help-chat', {
                 document.dispatchEvent(eventSyncComplete);
                 syncComplete = true;
             }
-                      
-        }, false); 
+        }, false);  
         document.body.addEventListener('connected',evt => {
             roomOccupants = easyrtc.getRoomOccupantsAsArray('room' + room_id);
             connectedEntities.push(NAF.clientId);
