@@ -253,11 +253,16 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
             // Toggle general chat
             $chat_wrapper = $dom->getElementById('chat-wrapper-el');
-            if (filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN)  === true) {
-                $chat_wrapper->setAttribute( "data-visible", 'true' );
+            if (isset($scene_json->metadata->enableGeneralChat)) {
+                if (filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN) === true) {
+                    $chat_wrapper->setAttribute( "data-visible", 'true' );
+                } else {
+                    $chat_wrapper->setAttribute( "data-visible", 'false' );
+                }
             } else {
                 $chat_wrapper->setAttribute( "data-visible", 'false' );
             }
+
 
             // Check if current scene id is Base scene, in order to select avatar once
             $is_base_scene_element = $dom->getElementById('is-base-scene-input');
@@ -389,9 +394,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
 
-        $bcg_choice = $scene_json->metadata->backgroundStyleOption;
-        $preset_choice = $scene_json->metadata->backgroundPresetOption;
-        $image_path = $scene_json->metadata->backgroundImagePath;
+        $bcg_choice = $scene_json->metadata->backgroundStyleOption ?? '';
+        $preset_choice = $scene_json->metadata->backgroundPresetOption ?? '';
+        $image_path = $scene_json->metadata->backgroundImagePath ?? '';
         //wp_upload_dir( '../uploads/Models/8664/8665_1695106416_scene_bcg.png', dirname(__FILE__))
         //print_r(wp_upload_dir());
         if ($bcg_choice == "3"){
@@ -412,15 +417,20 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $movement_disabled = isset($scene_json->metadata->disableMovement) ? filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN) : FALSE;
         $avatar_enabled = isset($scene_json->metadata->enableAvatar) ? filter_var($scene_json->metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN) : FALSE;
         $cam_position = implode(" ", $scene_json->objects->avatarCamera->position);
-        $public_chat = filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN);
+        $public_chat = isset($scene_json->metadata->enableGeneralChat) ? filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN) : FALSE;
         //$cam_rotation = implode(" ", [180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1], 180 / pi() * $scene_json->objects->avatarCamera->rotation[2]]);
 
         $cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
-        if (!empty($sceneColor)){
+        if (!empty($sceneColor)) {
             $ascene->setAttribute("scene-settings", "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat");
         }else{
             $ascene->setAttribute("scene-settings", "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat");
         }
+
+
+        // Set networked properties
+        $enable_director_audio = ($projectType == 'vrexpo_games') ? 'false' : 'true';
+        $ascene->setAttribute("networked-scene", "room: roomname; debug: true; audio: $enable_director_audio; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;");
 
         if ($projectType == 'vrexpo_games') {
             //$a_entity_expo = $dom->createElement( "a-entity" );
@@ -525,7 +535,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         foreach($objects as $nameObject => $contentObject) {
 
-            $uuid = $contentObject->uuid;
+            $uuid = $contentObject->uuid ?? '';
 
             if (isset($contentObject->category_name)) {
                 // Switch for lights
@@ -1298,7 +1308,9 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
             fwrite($f, print_r($basicDomElements['actionsDiv'], true));
             fclose($f);*/
 
-            if ( $contentObject->category_name == 'pawn' ) {
+            $cat_name = $contentObject->category_name ?? '';
+
+            if ( $cat_name == 'pawn' ) {
                 $i++;
                 $buttonDiv = $dom->createElement( "button" );
 
