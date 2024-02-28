@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <title>Collaborative content creation</title>
     <meta name="description" content="Collaborative content creation" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -30,12 +31,12 @@
     <script src="js/components/door_component.js"></script>
     <script src="js/components/video_component.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
-    <script src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.3.4/dist/aframe-environment-component.min.js"></script>
+
 
     <!-- Import Model Viewer component (to integrate ReadyPlayerMe api) -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.4.0/dist/model-viewer-module.min.js"></script>
 
     <script src="js/indicators_aframe.js"></script>
     <script src="dist/material-components-web.min.js"></script>
@@ -54,7 +55,7 @@
 
     <script>
 
-        
+
 
         const vectorRequiresUpdateRotation = epsilon => {
             return () => {
@@ -136,7 +137,7 @@
 
                 let connectionResolve;
                 let connectionPromise = new Promise((resolve, reject) => {
-                connectionResolve = resolve;
+                    connectionResolve = resolve;
 
 
                 })
@@ -162,7 +163,7 @@
                         console.log(this.data.cam_rotation_y);
                         document.getElementById("cameraA").setAttribute("position", this.data.cam_position);
                         //document.getElementById("player").setAttribute("rotation", "0 90 0");
-                        
+
                         //document.getElementById("cameraA").setAttribute("rotation", this.data.cam_rotation);
                     }
 
@@ -173,11 +174,11 @@
 
                     document.getElementById("public-chat-button").addEventListener("click", (evt) =>{
                         let event = new CustomEvent('chat-selected', {"detail": "public"});
-                        document.dispatchEvent(event);                        
+                        document.dispatchEvent(event);
                     });
 
                     if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0"){
-                        
+
                         document.getElementById("private-chat-button").disabled = true;
                     }
                     else{
@@ -186,8 +187,8 @@
                         document.getElementById("public-chat-button").disabled = true;
                     }
 
-                    
-                    
+
+
                     AFRAME.registerComponent('avatar-movement-info', {
                         // notice that color and name are both listed in the schema; NAF will only keep
                         // properties declared in the schema in sync.
@@ -336,7 +337,7 @@
                         update: function () {
 
                             var elem = this.el;
-                            
+
                             if (this.data.avatarType) {
 
                                 if (this.data.avatarType === 'no-avatar') {
@@ -371,13 +372,13 @@
                                         this.rpm_model.removeAttribute('gltf-model');
                                         this.rpm_model.setAttribute('gltf-model', this.data.gltf);
 
-                                        
+
                                         // Event listener when the 3D model has actually loaded
                                         this.rpm_model.addEventListener('model-loaded', () => {
 
                                             let avatarType = this.rpm_model.object3DMap.mesh.children[0].userData.name;
                                             // Change Y position of model based on type
-                                            
+
                                             let avatarPosition = avatarType === 'Armature' ? "0 -1.68  0" : '0 -.4 0';
                                             this.rpm_model.setAttribute('position', avatarPosition);
                                         }, {once : true});
@@ -398,7 +399,7 @@
 
                     console.log(document.getElementById("aframe-scene-container").getAttribute("scene-settings").avatar_enabled);
 
-                 
+
                     let avatar_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))
 
                     let closeAvatarDialogListener = function(event) {
@@ -411,7 +412,7 @@
                     }else{
                         selectAvatarType('no-avatar');
                     }
-                   
+
                     /*}*/
 
                 });
@@ -889,10 +890,10 @@
         }
 
         @media (min-width: 768px) {
-        .button-tab {
-            font-size: 1.125rem;
-            padding: 1rem 2rem;
-        }
+            .button-tab {
+                font-size: 1.125rem;
+                padding: 1rem 2rem;
+            }
         }
         .ChatWrapperStyle {
             position: absolute;
@@ -983,17 +984,15 @@
             position: relative;
             z-index: 9999;
         }
-        
 
-      
+
+
 
     </style>
 
 </head>
 
 <body id="master-client-body">
-    
-   
 <div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
 
     <div class="mdc-tab-bar" role="tablist" style="position: relative; top: 0; right:30px; z-index:101; height: 30px;">
@@ -1004,7 +1003,7 @@
                         <span class="mdc-tab__content">
                             <span class="mdc-tab__text-label">Public</span>
                         </span>
-                       
+
                         <span class="mdc-tab__ripple"></span>
                     </button>
 
@@ -1013,9 +1012,9 @@
                         <span class="mdc-tab__text-label">Private</span>
                         </span>
                         <span class="mdc-tab-indicator mdc-tab-indicator">
-                       
+
                     </button>
-                    
+
                 </div>
             </div>
         </div>
@@ -1119,7 +1118,7 @@
                 <div class="mdc-layout-grid__inner">
                     <div class="mdc-layout-grid__cell--span-12">
                         <div style="text-align: center">
-                            <h3 class="mdc-typography--headline">Please select an avatar type</h3>
+                            <h3 class="mdc-typography--headline">Please select an avatar type:</h3>
                             <form name="avatarRadiosForm">
                                 <div class="mdc-form-field AvatarTypeSelection">
                                     <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio" name="avatar-radios" value="no-avatar" checked>
@@ -1224,15 +1223,7 @@
         shadow="type: pcfsoft;"
         vr-mode-ui="enabled: true"
         loading-screen="dotsColor: gray; backgroundColor: black;"
-        networked-scene="
-            room: roomname;
-            debug: true;
-            audio: true;
-            adapter: easyrtc;
-            serverURL: /;
-            connectOnLoad: true;
-            onConnect:connectionResolve;
-       ">
+      >
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
