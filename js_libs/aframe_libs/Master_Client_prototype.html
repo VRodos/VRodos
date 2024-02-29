@@ -1352,9 +1352,8 @@
     }
 
     // Ready player me iframe code
-    const rpm_iframe = document.getElementById('rpm-iframe');
-
     const subdomain = 'vrodos'; // Replace with your custom subdomain
+    const rpm_iframe = document.getElementById('rpm-iframe');
     rpm_iframe.src = `https://${subdomain}.readyplayer.me/avatar?frameApi`;
 
     window.addEventListener('message', subscribe);
@@ -1382,7 +1381,6 @@
         // Get avatar GLB URL
         // Now add it in Aframe canvas
         if (json.eventName === 'v1.avatar.exported') {
-
             document.getElementById('rpm-iframe').hidden = true;
 
             // Update remote
