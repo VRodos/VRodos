@@ -578,7 +578,10 @@ class VRodos_LightsPawn_Loader {
                                 resources3D[name]['trs']['rotation'][1],
                                 resources3D[name]['trs']['rotation'][2]);
 
-                            pawn.scale.set(1,1,1);
+                            pawn.scale.set(
+                                resources3D[name]['trs']['rotation'][0],
+                                resources3D[name]['trs']['rotation'][1],
+                                resources3D[name]['trs']['rotation'][2]);
 
                             pawn.name = name;
                             pawn.asset_name = "myActor";

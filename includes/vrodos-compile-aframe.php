@@ -1268,13 +1268,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
 
 // Step 3: Create the Simple client file
-    function createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations){
+    function createSimpleClient($project_title, $scene_id, $scene_title, $scene_json, $fileOperations, $project_id){
 
         // Read prototype
         $content = $fileOperations->reader($fileOperations->plugin_path_dir
             ."/js_libs/aframe_libs/Simple_Client_prototype.html");
 
         // Modify strings
+        $pj_type = wp_get_post_terms($project_id, 'vrodos_game_type');
+        $projectType = $pj_type[0]->slug;
+        $app_name = ($projectType == 'vrexpo_games') ? 'vrexpo' : 'vrodos';
+
+        $content = str_replace("appname", $app_name, $content);
         $content = str_replace("roomname", "room".$scene_id, $content);
 
         // Create Basic dom structure for an aframe page
@@ -1356,7 +1361,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
     foreach (array_reverse($scene_id_list) as $key => &$value){
         createIndexFile($project_title, $value, $scene_title, $fileOperations);
         createMasterClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $showPawnPositions, $key, $project_id, $scene_id_list);
-        createSimpleClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations);
+        createSimpleClient($project_title, $value, $scene_title, $scene_json[$key], $fileOperations, $project_id);
     }
 
 // Step 3; Create Simple Client
