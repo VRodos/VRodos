@@ -14,10 +14,47 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
     let scene_json_metadata = scene_json_obj['metadata'];
 
+    resources3D_new["SceneSettings"] = {};
+    resources3D_new["cameraCoords"] = {};
+    
     for (let key in scene_json_metadata) {
         let value = scene_json_metadata[key];
         if (key === 'ClearColor') {
-            resources3D_new["SceneSettings"] = { 'ClearColor': value };
+            // resources3D_new["SceneSettings"] = { 'ClearColor': value };
+            Object.assign(resources3D_new["SceneSettings"], { 'ClearColor': value });
+        }
+        if (key === 'disableMovement') {
+            Object.assign(resources3D_new["SceneSettings"], { 'disableMovement': value });
+        }
+        if (key === 'enableGeneralChat') {
+            Object.assign(resources3D_new["SceneSettings"], { 'enableGeneralChat': value });
+        }
+        if (key === 'enableAvatar') {
+            Object.assign(resources3D_new["SceneSettings"], { 'enableAvatar': value });
+        }
+        if (key === 'backgroundPresetOption') {
+            Object.assign(resources3D_new["SceneSettings"], { 'backgroundPresetOption': value });
+        }
+        if (key === 'backgroundStyleOption') {
+            Object.assign(resources3D_new["SceneSettings"], { 'backgroundStyleOption': value });
+        }
+        if (key === 'backgroundImagePath' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'backgroundImagePath': value });
+        }
+        if (key === 'fogtype' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogtype': value });
+        }
+        if (key === 'fogcolor' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogcolor': value });
+        }
+        if (key === 'fogfar' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogfar': value });
+        }
+        if (key === 'fognear' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fognear': value });
+        }
+        if (key === 'fogdensity' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogdensity': value });
         }
     }
 
@@ -30,6 +67,10 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
         let value = scene_json_obj[asset_key];
 
         if (name === 'avatarCamera') {
+            let camera_pos = value.position;
+            let camera_rot = value.rotation;
+            Object.assign(resources3D_new["cameraCoords"], { 'position': camera_pos});
+            Object.assign(resources3D_new["cameraCoords"], { 'rotation': camera_rot});
             continue;
         }
 
@@ -52,13 +93,14 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
         };
 
         // Lamp has 0 rotation
-        if (name.includes('lightLamp')) {
-            resources3D_new[name].trs.rotation = [0,0,0];
-            resources3D_new[name].trs.scale = 1;
-        }
+        // if (name.includes('lightLamp')) {
+        //     resources3D_new[name].trs.rotation = [0,0,0];
+        //     resources3D_new[name].trs.scale = 1;
+        // }
 
         // If 3d asset
-        let conditions = ['lightsun', 'lightSpot', 'lightAmbient', 'Pawn', 'lightLamp'];
+        // let conditions = ['lightsun', 'lightSpot', 'lightAmbient', 'Pawn', 'lightLamp'];
+        let conditions = [];
         if (!conditions.some(el => name.includes(el))) {
 
             resources3D_new[name].path = UPLOAD_DIR + value['fnPath'];
@@ -71,6 +113,5 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
 
         }
     }
-    console.log(resources3D_new);
     return resources3D_new;
 }

@@ -31,6 +31,14 @@ class ParseJSON
             echo 'resources3D["enableGeneralChat"]= "' . $json_metadata->enableGeneralChat . '";';
         }
 
+        if (property_exists($json_metadata, "enableAvatar")){
+            echo 'resources3D["enableAvatar"]= "' . $json_metadata->enableAvatar . '";';
+        }
+
+        if (property_exists($json_metadata, "disableMovement")){
+            echo 'resources3D["disableMovement"]= "' . $json_metadata->disableMovement . '";';
+        }
+
         if (property_exists($json_metadata, "backgroundPresetOption"))
             echo 'resources3D["backgroundPresetOption"]= "' . $json_metadata->backgroundPresetOption . '";';
 
@@ -58,12 +66,17 @@ class ParseJSON
         $r_y = 0;
         $r_z = 0;
 
+        
+        $t_x = 0;
+        $t_y = 0;
+        $t_z = 0;
+
         foreach ($json_objects as $key => $value) {
 
             $name = $key;
 
             if ($name == 'avatarCamera') {
-
+      
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
                 $r_z = 0;
@@ -193,9 +206,9 @@ class ParseJSON
 
 
             // Common for all
-            $t_x = $value->position[0] ? : 0;
-            $t_y = $value->position[1] ? : 0;
-            $t_z = $value->position[2] ? : 0;
+                $t_x = $value->position[0] ? : 0;
+                $t_y = $value->position[1] ? : 0;
+                $t_z = $value->position[2] ? : 0;     
 
             $s_x = $value->scale[0] ? : 0;
             $s_y = $value->scale[1] ? : 0;

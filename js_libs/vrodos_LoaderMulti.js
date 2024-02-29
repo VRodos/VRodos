@@ -11,11 +11,100 @@ class VRodos_LoaderMulti {
     load(manager, resources3D, pluginPath) {
 
         const loader = new THREE.GLTFLoader(manager);
+        
 
         for (let n in resources3D) {
 
             (function (name) {
+                
+                if (name === 'enableGeneralChat'){
+                    document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D[name]);
+                    envir.scene.enableGeneralChat = JSON.parse(resources3D[name]);
+                }
 
+                
+                if (name === 'enableAvatar'){
+                    document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D[name]);
+                    envir.scene.enableAvatar = JSON.parse(resources3D[name]);
+                }
+
+                if (name === 'disableMovement'){
+                    document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D[name]);
+                    envir.scene.disableMovement = JSON.parse(resources3D[name]);
+                }
+
+                if (name === 'backgroundStyleOption'){
+                    envir.scene.bcg_selection = JSON.parse(resources3D[name]);
+
+                    let color_sel = document.getElementById('jscolorpick');
+                    let custom_img_sel = document.getElementById('img_upload_bcg');
+                    let preset_sel = document.getElementById('presetsBcg');
+
+                    let img_thumb = document.getElementById('uploadImgThumb');
+
+                
+                    switch (envir.scene.bcg_selection){
+                        case 0:
+                            document.getElementById("sceneNone").checked = true;
+                            custom_img_sel.disabled = true;
+                            preset_sel.disabled = true;
+                            color_sel.disabled = true;
+    
+                            color_sel.hidden = true;
+                            preset_sel.hidden = true;
+                            custom_img_sel.hidden = true;
+                            img_thumb.hidden = true;
+                            break;
+                        case 1:
+                            document.getElementById("sceneColorRadio").checked = true;
+                            color_sel.disabled = false;
+                            preset_sel.disabled = true;
+                            custom_img_sel.disabled = true;
+    
+                            color_sel.hidden = false;
+                            preset_sel.hidden = true;
+                            custom_img_sel.hidden = true;
+                            img_thumb.hidden = true;
+                            break;
+                        case 2:
+                            document.getElementById("sceneSky").checked = true;
+                            custom_img_sel.disabled = true;
+                            preset_sel.disabled = false;
+                            color_sel.disabled = true;
+    
+                            color_sel.hidden = true;
+                            preset_sel.hidden = false;
+                            custom_img_sel.hidden = true;
+                            img_thumb.hidden = true;
+                            envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
+                            envir.scene.preset_selection = resources3D["backgroundPresetOption"];
+                         
+                            for(let index = 0; index < preset_sel.options.length;index++){
+                                if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
+                                    preset_sel.options[index].selected = true;
+                                }
+                            }
+                            break;
+                        case 3:
+                            document.getElementById("sceneCustomImage").checked = true;
+                            custom_img_sel.disabled = false;
+                            preset_sel.disabled = true;
+                            color_sel.disabled = true;
+    
+                            color_sel.hidden = true;
+                            preset_sel.hidden = true;
+                            custom_img_sel.hidden = false;
+    
+                            if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
+                                img_thumb.src = resources3D["backgroundImagePath"];
+                                img_thumb.hidden = false;
+                            }
+                            break;
+                    }
+                    envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
+                    envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+                }
+                   
                 if (name === 'ClearColor' || name === 'toneMappingExposure' | name === 'enableEnvironmentTexture')
                     return;
 
@@ -34,10 +123,9 @@ class VRodos_LoaderMulti {
                 if (name == 'avatarCamera') {
 
                     loader.load(pluginPath + "/assets/Steve/camera.glb",
-
+                       
                         // called when the resource is loaded
-                        function (objectMain) {
-
+                        function (objectMain) {    
                             let object = objectMain.scene.children[0];
                             object.name = "Camera3Dmodel";
                             object.children[0].name = "Camera3DmodelMesh";
@@ -58,8 +146,36 @@ class VRodos_LoaderMulti {
 
                             object.add(steveShieldMesh);
                             object.renderOrder = 1;
-
+                      
                             envir.scene.add(object);
+        
+                            //TODO: to delete after veryfying the redundancy 
+                            envir.scene.getObjectByName("avatarCamera").position.set(
+                                resources3D[name].position[0],
+                                resources3D[name].position[1],
+                                resources3D[name].position[2]);
+                       
+                            envir.scene.getObjectByName("avatarCamera").position.set(
+                                resources3D[name]['trs']['translation'][0],
+                                resources3D[name]['trs']['translation'][1],
+                                resources3D[name]['trs']['translation'][2]);
+
+                            envir.scene.getObjectByName("avatarCamera").rotation.set(
+                                resources3D[name]['trs']['rotation'][0],
+                                resources3D[name]['trs']['rotation'][1],
+                                resources3D[name]['trs']['rotation'][2]);
+                            // else{
+                            //     envir.scene.getObjectByName("avatarCamera").position.set(0,0.2,0);
+                            //     envir.scene.getObjectByName("avatarCamera").rotatiob.set(0,0,0);
+
+                            // }
+                            
+                            // console.log(resources3D[name].position);
+
+
+                        
+                            
+    
                             envir.setCamMeshToAvatarControls();
 
                             //object = setObjectProperties(object.scene, name, resources3D);
@@ -148,12 +264,149 @@ class VRodos_LoaderMulti {
                             }
                         });
 
-                    } else {
+                    } 
+                    else if (name =="SceneSettings") {
 
-                        /*console.log("Unsupported 3D model format. Error 118.");
-                        console.log("name", name);
-                        console.log("glbID", resources3D[name]['glbID']);
-                        console.log("Unsupported 3D model format: ERROR: 118");*/
+                      
+                       if (resources3D[name].enableGeneralChat) {
+                            document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D[name].enableGeneralChat);
+                            envir.scene.enableGeneralChat = JSON.parse(resources3D[name].enableGeneralChat);
+                        }
+
+                        if (resources3D[name].enableAvatar) {
+                            document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D[name].enableAvatar);
+                            envir.scene.enableAvatar = JSON.parse(resources3D[name].enableAvatar);
+                        }
+
+                        if (resources3D[name].disableMovement){
+                            document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D[name].disableMovement);
+                            envir.scene.disableMovement = JSON.parse(resources3D[name].disableMovement);      
+                        }
+
+                        if (resources3D[name].fogtype){
+                            document.getElementById('FogType').value = resources3D[name].fogtype;
+
+                            if (resources3D[name].fogtype == "none") {
+                                document.getElementById('RadioNoFog').checked = true;
+                            } else if ( resources3D[name].fogtype == "linear") {
+                                document.getElementById('RadioLinearFog').checked = true;
+                            } else if ( resources3D[name].fogtype == "exponential") {
+                                document.getElementById('RadioExponentialFog').checked =true;
+                            }
+                        }
+                        else{
+                            document.getElementById('RadioNoFog').checked = true;
+                        }
+                        if (resources3D[name].fogcolor){
+                            document.getElementById('jscolorpickFog').jscolor.fromString(resources3D[name].fogcolor);
+                        }
+                        if (resources3D[name].fogfar){
+                            document.getElementById('FogFar').value = JSON.parse(resources3D[name].fogfar);
+                        }
+                        if (resources3D[name].fognear){
+                            document.getElementById('FogNear').value = JSON.parse(resources3D[name].fognear);
+                        }
+                        if (resources3D[name].fogdensity){
+                            document.getElementById('FogDensity').value = JSON.parse(resources3D[name].fogdensity);
+                        }
+
+                        //updateFog("undo");
+
+                        if (resources3D[name].backgroundStyleOption){
+                            envir.scene.bcg_selection = JSON.parse(resources3D[name].backgroundStyleOption);
+                            envir.scene.backgroundStyleOption = JSON.parse(resources3D[name].backgroundStyleOption);
+                         
+                              
+                            let color_sel = document.getElementById('jscolorpick');
+                            let custom_img_sel = document.getElementById('img_upload_bcg');
+                            let preset_sel = document.getElementById('presetsBcg');
+        
+                            let img_thumb = document.getElementById('uploadImgThumb');
+        
+                        
+                            switch (envir.scene.bcg_selection){
+                                case 0:
+                                    document.getElementById("sceneNone").checked = true;
+                                    custom_img_sel.disabled = true;
+                                    preset_sel.disabled = true;
+                                    color_sel.disabled = true;
+            
+                                    var hex = rgbToHex(255, 255, 255);
+                                    //envir.renderer.setClearColor(hex);
+                                    envir.scene.background = new THREE.Color(hex);
+                                    color_sel.hidden = true;
+                                    preset_sel.hidden = true;
+                                    custom_img_sel.hidden = true;
+                                    img_thumb.hidden = true;
+                                    break;
+                                case 1:
+                                    document.getElementById("sceneColorRadio").checked = true;
+                                    color_sel.disabled = false;
+                                    preset_sel.disabled = true;
+                                    custom_img_sel.disabled = true;
+            
+                                    color_sel.hidden = false;
+                                    preset_sel.hidden = true;
+                                    custom_img_sel.hidden = true;
+                                    img_thumb.hidden = true;
+                                    break;
+                                case 2:
+                                    document.getElementById("sceneSky").checked = true;
+                                    custom_img_sel.disabled = true;
+                                    preset_sel.disabled = false;
+                                    color_sel.disabled = true;
+            
+                                    color_sel.hidden = true;
+                                    preset_sel.hidden = false;
+                                    custom_img_sel.hidden = true;
+                                    img_thumb.hidden = true;
+                                    envir.scene.backgroundPresetOption = resources3D[name].backgroundPresetOption;
+                                    envir.scene.preset_selection = resources3D[name].backgroundPresetOption;
+                                 
+                                    for(let index = 0; index < preset_sel.options.length;index++){
+                                        if(preset_sel.options[index].value == resources3D[name].backgroundPresetOption){
+                                            preset_sel.options[index].selected = true;
+                                        }
+                                    }
+                                    break;
+                                case 3:
+                                    document.getElementById("sceneCustomImage").checked = true;
+                                    custom_img_sel.disabled = false;
+                                    preset_sel.disabled = true;
+                                    color_sel.disabled = true;
+            
+                                    color_sel.hidden = true;
+                                    preset_sel.hidden = true;
+                                    custom_img_sel.hidden = false;
+            
+                                    if (resources3D[name].backgroundImagePath  && resources3D[name].backgroundImagePath !=0 ){
+                                        img_thumb.src = resources3D[name].backgroundImagePath;
+                                        img_thumb.hidden = false;
+                                    }
+                                    break;
+                            }
+                            envir.scene.img_bcg_path = resources3D[name].backgroundImagePath;
+                            envir.scene.bcg_selection = JSON.parse(resources3D[name].backgroundStyleOption);
+                            envir.scene.backgroundStyleOption = JSON.parse(resources3D[name].backgroundStyleOption);
+                        }
+                    }
+                    else if (name == 'cameraCoords'){
+                        // if (resources3D["SceneSettings"].enableGeneralChat) {
+                        //     document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D[SceneSettings].enableGeneralChat);
+                        //     envir.scene.enableGeneralChat = JSON.parse(resources3D[Settings].enableGeneralChat);
+                        // // }
+                        // console.log("Unsupported 3D model format. Error 118.");
+                        envir.scene.getObjectByName("avatarCamera").position.set(
+                            resources3D[name].position[0],
+                            resources3D[name].position[1],
+                            resources3D[name].position[2]);
+
+                        envir.scene.getObjectByName("avatarCamera").rotation.set(
+                            resources3D[name].rotation[0],
+                            resources3D[name].rotation[1],
+                            resources3D[name].rotation[2]);
+                        // console.log("glbID", resources3D[name]['glbID']);
+                        // console.log("Unsupported 3D model format: ERROR: 118");
                     }
                 }
             })(n);
@@ -166,7 +419,7 @@ function setObjectProperties(object, name, resources3D) {
 
     // Automatically load values that are available
     for (let entry in Object.keys(resources3D[name])) {
-        if (!['id', 'translation', 'position', 'rotation', 'scale', 'quaternion'].includes(Object.keys(resources3D[name])[entry])) {
+        if (!['id', 'translation', 'position', 'rotation', 'scale', 'quaternion', 'children', 'trs'].includes(Object.keys(resources3D[name])[entry])) {
             object[[Object.keys(resources3D[name])[entry]]] = Object.values(resources3D[name])[entry];
         }
     }

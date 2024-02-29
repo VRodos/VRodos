@@ -180,6 +180,10 @@ function get_assets($games_slugs){
                 case 'poi-link':
                     $data_arr['poi_link_url'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
                     break;
+                case 'poi-help':
+                    $data_arr['poi_chat_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', true);
+                    $data_arr['poi_chat_indicators'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true);
+                    break;
             }
             array_push($allAssets, $data_arr);
 
@@ -206,9 +210,11 @@ function vrodos_fetch_game_assets_action_callback() {
 
     $response = vrodos_get_assets_by_game($_POST['gameProjectSlug'], $_POST['gameProjectID']);
 
-    for ($i=0; $i<count($response); $i++){
-        $response[$i]['name'] = $response[$i]['assetName'];
-        $response[$i]['type'] = 'file';
+    for ($i=0; $i<count($response); $i++) {
+        if (isset($response[$i]['assetName'])) {
+            $response[$i]['name'] = $response[$i]['assetName'];
+            $response[$i]['type'] = 'file';
+        }
     }
 
     $jsonResp =  json_encode(
@@ -262,7 +268,7 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
 
             $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true); // GLB ID
             $glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
-           
+
 
             $sshotID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true); // Screenshot Image ID
             $sshotPath = $sshotID ? wp_get_attachment_url( $sshotID ) : '';           // Screenshot Image PATH
@@ -303,8 +309,12 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
                 case 'poi-link':
                     $data_arr['poi_link_url'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
                     break;
+                case 'poi-help':
+                    $data_arr['poi_chat_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', true);
+                    $data_arr['poi_chat_indicators'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true);
+                    break;
             }
-           
+
             array_push($allAssets, $data_arr);
 
         endwhile;

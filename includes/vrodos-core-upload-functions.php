@@ -24,8 +24,6 @@ function vrodos_upload_dir_forScenesOrAssets( $args ) {
 }
 
 
-
-
 // Disable all auto created thumbnails for Assets3D
 function vrodos_disable_imgthumbs_assets( $image_sizes ){
 
@@ -111,7 +109,7 @@ function vrodos_upload_image_dir( $dir ) {
         ) + $dir;
 }
 
-// Change general upload directory to Models
+// Change general upload directory to /models
 function vrodos_upload_filter( $args  ) {
 
     $newdir =  '/models';
@@ -204,29 +202,6 @@ function vrodos_upload_img_vid_aud($file, $parent_post_id) {
     return false;
 }
 
-
-// Upload images for only for 2D scenes
-function vrodos_upload_img($parent_post_id, $file = array()) {
-
-    // Require admin power
-    require_once( ABSPATH . 'wp-admin/includes/admin.php' );
-
-    // Upload file
-    $file_return = wp_handle_upload( $file, array('test_form' => false ) );
-
-    if( !isset( $file_return['error'] ) && !isset( $file_return['upload_error_handler'] ) ) {
-
-        // Id of attachment post
-        $attachment_id = vrodos_insert_attachment_post($file_return, $parent_post_id );
-
-        if( 0 < intval( $attachment_id, 10 ) ) {
-            return $attachment_id;
-        }
-
-    }
-    return false;
-}
-
 // Insert attachment post
 function vrodos_insert_attachment_post($file_return, $parent_post_id ){
 
@@ -259,12 +234,12 @@ function vrodos_insert_attachment_post($file_return, $parent_post_id ){
 
 
 // Immitation of $_FILE through $_POST . This works only for jpgs and pngs
-function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, $type) {
+function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type) {
 
     $DS = DIRECTORY_SEPARATOR;
 
     // DELETE EXISTING FILE: See  if has already a thumbnail and delete the file in the filesystem
-    $thumbnails_ids = get_post_meta($parent_post_id,'_thumbnail_id');
+    $thumbnails_ids = get_post_meta($scene_id,'_thumbnail_id');
 
     if (count($thumbnails_ids) > 0) {
 
@@ -279,7 +254,7 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, 
     // UPLOAD NEW FILE:
 
     // Generate a hashed filename in order to avoid overwrites for the same names
-    $hashed_filename = md5($imgTitle . microtime()) . '_' . $imgTitle . '.' . $type;
+    $hashed_filename = 'scene_' . $scene_id . '_sshot.' . $type;
 
     // Remove all sizes of thumbnails creation procedure
     add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
@@ -288,8 +263,10 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, 
     require_once(ABSPATH . 'wp-admin/includes/admin.php');
 
     // Get upload directory and do some sanitization
-    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'models'.$DS;
-
+    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'scenes' . $DS . $scene_id . $DS;
+    if (!is_dir($upload_path)) {
+        mkdir( $upload_path, 0777, true );
+    }
 
     // Write file string to a file in server
     $image_upload = file_put_contents($upload_path . $hashed_filename,
@@ -305,26 +282,7 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, 
         require_once(ABSPATH . 'wp-includes/pluggable.php');
     }
 
-    $file = array(
-        'name' => $hashed_filename,
-        'type' => 'image/png',
-        'tmp_name' => $upload_path . $hashed_filename,
-        'error' => 0,
-        'size' => filesize($upload_path . $hashed_filename),
-    );
-
-    // Change directory to models
-    add_filter('upload_dir', 'vrodos_upload_filter');
-
-    // upload file to server
-    // @new use $file instead of $image_upload
-    $file_return = wp_handle_sideload($file, array('test_form' => false));
-
-    // Remove filter for /Models folder upload
-    remove_filter('upload_dir', 'vrodos_upload_filter');
-
-    $new_filename = $file_return['file'];
-    $new_filename = str_replace("\\","/", $new_filename);
+    $new_filename = str_replace("\\","/", $upload_path .$hashed_filename);
     //--- End of upload ---
 
 
@@ -354,15 +312,15 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, 
     } else {
 
         $attachment = array(
-            'post_mime_type' => $file_return['type'],
+            'post_mime_type' => $image_upload['type'],
             'post_title' => preg_replace('/\.[^.]+$/', '', basename($new_filename)),
             'post_content' => '',
             'post_status' => 'inherit',
-            'guid' => $file_return['url']
+            'guid' => $image_upload['url']
         );
 
         // Attach to
-        $attachment_id = wp_insert_attachment($attachment, $new_filename, $parent_post_id);
+        $attachment_id = wp_insert_attachment($attachment, $new_filename, $scene_id);
 
         require_once(ABSPATH . 'wp-admin/includes/image.php');
 
@@ -381,66 +339,6 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $parent_post_id, 
     return false;
 }
 
-
-
-// Asset: Used to save textures
-function vrodos_upload_asset_texture($imagefile, $imgTitle, $parent_post_id, $type) {
-
-    $DS = DIRECTORY_SEPARATOR;
-
-    // UPLOAD NEW FILE:
-    $hashed_filename = $parent_post_id.'_'.$imgTitle . '.' . $type;
-
-    // Remove all sizes of thumbnails creation procedure
-    add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
-
-    // Get admin power
-    require_once(ABSPATH . 'wp-admin/includes/admin.php');
-
-    // Get upload directory and do some sanitization
-    $upload_path = str_replace('/', $DS, wp_upload_dir()['basedir']) . $DS .'models'.$DS;
-
-
-    // Write file string to a file in server
-    file_put_contents($upload_path . $hashed_filename,
-        base64_decode(substr($imagefile, strpos($imagefile, ",") + 1)));
-
-    $new_filename_path = str_replace("\\","/", $upload_path . $hashed_filename);
-
-    //--- End of upload ---
-
-
-    // Add post of texture (type: attachment)
-    $attachment = array(
-        'post_mime_type' => 'image/'.($type==='png'?'png':'jpeg'),
-        'post_title' => preg_replace('/\.[^.]+$/', '', $hashed_filename),
-        'post_content' => '',
-        'post_status' => 'inherit',
-        'guid' => wp_upload_dir()['baseurl'].'/Models/'.$hashed_filename
-    );
-
-    // Attach to
-    $attachment_id = wp_insert_attachment($attachment, $new_filename_path, $parent_post_id);
-
-    require_once(ABSPATH . 'wp-admin/includes/image.php');
-
-    $attachment_data = wp_generate_attachment_metadata($attachment_id, $new_filename_path);
-
-    wp_update_attachment_metadata($attachment_id, $attachment_data);
-
-    // store each texture in a post meta that receives multiple files
-    add_post_meta($parent_post_id, 'vrodos_asset3d_diffimage', $attachment_id);
-
-    remove_filter('intermediate_image_sizes_advanced',
-        'vrodos_remove_allthumbs_sizes', 10);
-
-    if (0 < intval($attachment_id, 10)) {
-        return $attachment_id;
-    }
-
-
-    return false;
-}
 
 
 // Asset: Used to save screenshot

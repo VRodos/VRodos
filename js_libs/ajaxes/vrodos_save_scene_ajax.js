@@ -14,11 +14,21 @@ function vrodos_saveSceneAjax() {
         type: 'POST',
         data: postdata,
         success: function (data) {
-            jQuery('#save-scene-button').html("All changes saved").removeClass("LinkDisabled");
+
+            let save_scene_btn = document.getElementById("save-scene-button");
+            save_scene_btn.innerHTML = "All changes saved";
+
+            let enableSaveFunctionality = () => {
+                save_scene_btn.innerHTML = "Save Scene";
+                save_scene_btn.classList.remove("LinkDisabled");
+            };
+            setTimeout(enableSaveFunctionality,2000);
         },
         error: function (xhr, ajaxOptions, thrownError) {
 
             console.log("Ajax Save Scene: ERROR: 156 - " + thrownError);
+
+            alert("Save Scene Error - " + thrownError);
 
             jQuery('#save-scene-button').html("Save scene").removeClass("LinkDisabled");
 
@@ -47,8 +57,8 @@ function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
             jQuery('#undo-scene-button').html("<i class='material-icons'>undo</i>").removeClass("LinkDisabled");
             jQuery('#redo-scene-button').html("<i class='material-icons'>redo</i>").removeClass("LinkDisabled");
 
-                //console.log(scene_json);
-                parseJSON_LoadScene(scene_json);
+            //console.log(scene_json);
+            parseJSON_LoadScene(scene_json);
         },
         error: function (xhr, ajaxOptions, thrownError) {
 

@@ -4,16 +4,18 @@
     <meta charset="utf-8">
     <title>Take part</title>
     <meta name="description" content="Take part">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="js/socketio/2.3.0/socket.io.slim.js"></script>
-    <script src="js/datgui/0.7.7/dat.gui.min.js"></script>
+    <script src="js/aframe/1.4.2/aframe-v1.4.2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
+    <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
 
 
-    <script src="easyrtc/easyrtc.js"></script>
+    <script src="../easyrtc/easyrtc.js"></script>
     <script src="../dist/networked-aframe.js"></script>
     <script src="../js/NoSleep.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
@@ -32,11 +34,14 @@
         background="color: black"
         vr-mode-ui="enabled: false"
         networked-scene="
-      room: roomname;
-      debug: true;
-      adapter: easyrtc;
-      audio: true;
-      video: true;
+        app: appname;
+        room: roomname;
+        debug: true;
+        adapter: easyrtc;
+        audio: true;
+        video: true;
+        connectOnLoad: true;
+        serverURL: /;
     ">
 
     <a-assets>
@@ -233,9 +238,10 @@
     // Add to a div the input stream of the rendered screen
     function scanForStreamsAndShowInFullScreen(){
 
-        for (let e in window.NAF.entities.entities){
-            for (let i=0; i < window.NAF.entities.entities[e].children.length; i++){
+        for (let e in window.NAF.entities.entities) {
+            for (let i=0; i < window.NAF.entities.entities[e].children.length; i++) {
                 let nvs = window.NAF.entities.entities[e].children[i].components['networked-video-source'];
+
                 if(nvs!==undefined){
                     if(nvs.videoTexture!==undefined && nvs.videoTexture!==null) {
                         if (nvs.el.id === 'screenPlane'){

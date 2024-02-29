@@ -25,7 +25,6 @@ function vrodos_compileAjax(showPawnPositions) {
         '<i title="Instructions" class="material-icons AlignIconToBottom">info</i> ' +
         'Please wait while we build your scene'
     );
-
     // ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
     jQuery.ajax({
         url :  isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
@@ -94,7 +93,7 @@ function vrodos_compileAjax(showPawnPositions) {
 
             document.getElementById("openWebLinkhref").setAttribute("href", urlExperienceSequence["index"]);
 
-            console.log("Ajax Aframe Success");
+            console.log("Build Success");
         },
         error : function(xhr, ajaxOptions, thrownError) {
             console.log("Ajax Aframe ERROR 189: " + thrownError);

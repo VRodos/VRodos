@@ -178,7 +178,7 @@ AFRAME.registerComponent('video-controls', {
 
     handleCamEntityText: function (obj, non_visible, trans, opac) {
         if (non_visible) {
-            obj.object3D.renderOrder = 9999999;
+            //obj.object3D.renderOrder = 9999999;
             //clipIntersection
             obj.components.text.material.depthTest = false;
             obj.components.text.material.transparent = trans;
@@ -233,8 +233,9 @@ AFRAME.registerComponent('video-controls', {
 
         if (this.playerEl.getAttribute("wasd-controls")){
             this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
-        }else
-            this.cam.setAttribute("wasd-controls-enabled", "true");
+        }
+        // else
+        //     this.cam.setAttribute("wasd-controls-enabled", "true");
         
         this.backgroundEl.add(this.videoDisplay);
         
@@ -263,7 +264,7 @@ AFRAME.registerComponent('video-controls', {
 
     handleCamEntity: function (obj, non_visible, trans, opac) {
         if (non_visible) {
-            obj.object3D.renderOrder = 9999999;
+            //obj.object3D.renderOrder = 9999999;
             //clipIntersection
             obj.components.material.material.depthTest = false;
             obj.components.material.material.transparent = trans;
@@ -280,7 +281,8 @@ AFRAME.registerComponent('video-controls', {
    
     onVideoClick:  function (evt) {
         
-        this.panel_pos_dynamic =  (this.visibleWidthAtZDepth(this.panel_z)/2 - 0.3) + " " + "0" + " " + this.panel_z; //From rightmost position  subtract panel width (0.2) and padding
+        this.panel_pos_dynamic =  (this.visibleWidthAtZDepth(this.panel_z)/2-1) + " " + "-0.3" + " " + this.panel_z; //From rightmost position  subtract panel width (0.2) and padding
+        // this.el.object3D.position.z = -2.5;
         this.restorePanel = this.restorePanel.bind(this);
         
         if (!browsingModeVR) {
@@ -398,8 +400,9 @@ AFRAME.registerComponent('video-controls', {
         }
         if (this.playerEl.getAttribute("wasd-controls")){
             this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
-        }else
-            this.cam.setAttribute("wasd-controls-enabled", "false");
+        }
+        // else
+        //     this.cam.setAttribute("wasd-controls-enabled", "false");
             this.updatePlayEntity(this.plEl);
     }
 });

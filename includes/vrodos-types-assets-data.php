@@ -4,10 +4,6 @@
 $table_of_asset_fields = array(
 
     // Short , full, id, type, default, single, show_in_rest
-    array('MTL File', 'MTL File', 'vrodos_asset3d_mtl', 'string',  '', true, true),
-    array('Obj File', 'Obj File', 'vrodos_asset3d_obj', 'string',  '', true, true),
-    array('Fbx File', 'Fbx File', 'vrodos_asset3d_fbx', 'string',  '', true, true),
-    array('PDB File', 'PDB File', 'vrodos_asset3d_pdb', 'string',  '', true, true),
     array('GLB File', 'GLB File', 'vrodos_asset3d_glb', 'string',  '', true, true),
 
     array('Audio File'                 , 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'string', '', true, true),
@@ -17,25 +13,6 @@ $table_of_asset_fields = array(
     array('Next Scene (Only for Doors)', 'Next Scene'                 , 'vrodos_asset3d_scene','string', '', true, true),
     array('Video'                      , 'Video'                      , 'vrodos_asset3d_video', 'string', '', true, true),
     array('isreward'                   , 'isreward'                   , 'vrodos_asset3d_isreward', 'string', '0', true, true),
-    array('follow_camera'                   , 'follow_camera'                   , 'vrodos_asset3d_follow_camera', 'string', '0', true, true),
-    array('image_link'                   , 'image_link'                   , 'vrodos_asset3d_image_link', 'string', '', true, true),
-    array('video_link'                   , 'video_link'                   , 'vrodos_asset3d_video_link', 'string', '', true, true),
-    array('follow_camera_x'                   , 'follow_camera_x'                   , 'vrodos_asset3d_follow_camera_x', 'string', '', true, true),
-    array('follow_camera_y'                   , 'follow_camera_y'                   , 'vrodos_asset3d_follow_camera_y', 'string', '', true, true),
-    array('follow_camera_z'                   , 'follow_camera_z'                   , 'vrodos_asset3d_follow_camera_z', 'string', '', true, true),
-
-    array('poi_img_title'                   , 'poi_img_title'                   , 'vrodos_asset3d_poi_img_title', 'string', '', true, true),
-    array('poi_img_desc'                   , 'poi_img_desc'                   , 'vrodos_asset3d_poi_img_desc', 'string', '', true, true),
-    array('poi_img_link'                   , 'poi_img_link'                   , 'vrodos_asset3d_poi_img_link', 'string', '', true, true),
-    array('poi_onlyimg'                   , 'poi_onlyimg'                   , 'vrodos_asset3d_poi_onlyimg', 'string', '0', true, true),
-
-    array('sun_cast_shadow'                   , 'sun_cast_shadow'                   , 'vrodos_asset3d_sun_cast_shadow', 'string', '1', true, true),
-
-
-    array('Image 1', 'Image 1', 'vrodos_asset3d_image1', 'string', '', true, true),
-    array('Image 2', 'Image 2', 'vrodos_asset3d_image2', 'string', '', true, true),
-    array('Image 3', 'Image 3', 'vrodos_asset3d_image3', 'string', '', true, true),
-    array('Image 4', 'Image 4', 'vrodos_asset3d_image4', 'string', '', true, true),
 
     array('isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'string', 'false', true, true),
     array('isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'string', 'false', true, true),
@@ -44,10 +21,6 @@ $table_of_asset_fields = array(
     array('back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'string', "rgb(221, 185, 155)", true, true),
 
     array('Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'string', '0,0,0,0,0,0,0,0,0', true, true),
-
-    array('KidsDescription', 'Description in English for kids', 'vrodos_asset3d_description_kids', 'string', '', true, true),
-    array('ExpertsDescription', 'Description in English for experts', 'vrodos_asset3d_description_experts','string', '', true, true),
-    array('PerceptionDescription', 'Description in English for people with perception disabilities', 'vrodos_asset3d_description_perception', 'string', '', true, true)
 
 );
 
@@ -150,19 +123,8 @@ function vrodos_assets_databox_show(){
 
             $showSection = 'table-row';
             switch ($extension) {
-                case 'mtl':
-                case 'obj':
-                case 'fbx':
-                case 'pdb':
-                case 'diffimage':
-                case 'image1':
-                case 'image2':
-                case 'image3':
-                case 'image4':
-                case 'kids':
-                case 'experts':
-                case 'perception':
                 case 'audio':
+                case 'diffimage':
                 case 'scene':
                 case 'video':
                 case 'fonts':
@@ -321,9 +283,9 @@ function vrodos_assets_databox_show(){
             document.getElementById("vrodos_asset3d_screenimage_btn").onclick = function() {
                 uploadAssetToPage('vrodos_asset3d_screenimage', 'image', 'Screenshot Image');
             }
-           /* document.getElementById("vrodos_asset3d_diffimage_btn").onclick = function() {
-                uploadAssetToPage('vrodos_asset3d_diffimage', 'image', 'Diffusion Image');
-            }*/
+            /* document.getElementById("vrodos_asset3d_diffimage_btn").onclick = function() {
+                 uploadAssetToPage('vrodos_asset3d_diffimage', 'image', 'Diffusion Image');
+             }*/
             /*document.getElementById("vrodos_asset3d_image1_btn").onclick = function() {
                 uploadAssetToPage('vrodos_asset3d_image1', 'image', 'Image 1');
             }
@@ -429,139 +391,4 @@ function vrodos_assets_databox_save($post_id) {
     }
 }
 
-
-
-function vrodos_assets_fetch_description_box_content($post){
-
-    echo '<div id="vrodos_fetchDescription_bt" class="vrodos_fetchContentButton"
-     onclick="vrodos_fetchDescriptionAjax()">Fetch Description</div>';
-    ?>
-
-    <br /><br />
-
-    Source:<br />
-    <select name="fetch_source" id="fetch_source">
-        <option value="Wikipedia">Wikipedia</option>
-        <option value="Europeana">Europeana</option>
-    </select>
-
-    <br />
-    <br />
-
-    Language<br />
-    <select name="fetch_lang" id="fetch_lang">
-        <option value="en">English</option>
-        <option value="el">Greek</option>
-        <option value="fr">French</option>
-        <option value="de">German</option>
-    </select>
-
-    <br />
-    <br />
-    Terms to search:<input type="text" size="30" name="vrodos_titles_search" id="vrodos_titles_search" value="<?php echo $post->post_title?>">
-
-    <br />
-    <br />
-
-    Full text:<input type="checkbox" name="vrodos_fulltext_chkbox" id="vrodos_fulltext_chkbox" value="">
-
-
-    <?php
-}
-
-function vrodos_assets_fetch_image_box_content($post){
-
-    echo '<div id="vrodos_fetchImage_bt" class="vrodos_fetchContentButton" onclick="vrodos_fetchImageAjax()">Fetch Image</div>';
-    ?>
-
-    <br /><br />
-
-    Source:<br />
-    <select name="fetch_source_image" id="fetch_source_image">
-        <option value="Wikipedia">Wikipedia</option>
-        <option value="Europeana">Europeana</option>
-    </select>
-
-    <br />
-    <br />
-
-    Language<br />
-    <select name="fetch_lang_image" id="fetch_lang_image">
-        <option value="en">English</option>
-        <option value="el">Greek</option>
-        <option value="fr">French</option>
-        <option value="de">German</option>
-    </select>
-
-    <br />
-    <br />
-    Terms to search:<input type="text" size="30" name="vrodos_titles_image_search_image" id="vrodos_titles_image_search_image" value="<?php echo $post->post_title?>">
-
-    <br />
-    <br />
-
-
-
-    <div id="image_find_results">
-        <?php
-
-        echo '<div id="display_img_res" class="imageresbin" style="display:none">';
-        for ($i=0;$i<10;$i++) {
-            echo '<img id = "image_res_'.$i.'" class="image_fetch_img" />';
-            echo '<div id = "image_res_'.$i.'_url" class="image_fetch_div_url" style="margin-bottom:5px"></div >';
-            echo '<a href="" id = "image_res_'.$i.'_title" class="img_res_title_f" target = "_blank" style="margin-bottom:10px"></a >';
-        }
-
-        echo '</div>';
-        ?>
-    </div>
-
-
-    <?php
-}
-
-function vrodos_assets_fetch_video_box_content($post){
-
-    echo '<div id="vrodos_fetchVideo_bt" class="vrodos_fetchContentButton" onclick="vrodos_fetchVideoAjax()">Fetch Video</div>';
-    ?>
-
-    <br /><br />
-
-    Source:<br />
-    <select name="fetch_source_video" id="fetch_source_video">
-        <option value="Wikipedia">Wikipedia</option>
-        <option value="Europeana">Europeana</option>
-    </select>
-
-    <br />
-    <br />
-
-    Language<br />
-    <select name="fetch_lang_video" id="fetch_lang_video">
-        <option value="en">English</option>
-        <option value="el">Greek</option>
-        <option value="fr">French</option>
-        <option value="de">German</option>
-    </select>
-
-    <br />
-    <br />
-    Terms to search:<input type="text" size="30" name="vrodos_titles_video_search_video" id="vrodos_titles_video_search_video" value="<?php echo $post->post_title?>">
-    Wikipedia example:<br /> "Sarmientosaurus 3D skull"
-    <br />
-    <br />
-
-    <div id="video_find_results">
-
-        <video id="videoplayer1" width="240" height="160" autoplay controls>
-            <source id="video_res_1" src="" type="video/mp4">
-            <source id="video_res_1" src="" type="video/ogg">
-            <source id="video_res_1" src="" type="video/ogv">
-        </video>
-        <div id="video_res_1_url" class="video_fetch_div_url"></div><br />
-        <div id="video_res_1_title" class="video_res_title_f"></div><br />
-
-    </div>
-
-    <?php
-}
+?>

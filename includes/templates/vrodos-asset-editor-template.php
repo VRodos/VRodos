@@ -2,6 +2,9 @@
 // Remove the admin bar
 //add_action('get_header', 'vrodos_remove_admin_login_header');
 
+wp_enqueue_style('vrodos_frontend_stylesheet');
+wp_enqueue_style('vrodos_material_stylesheet');
+
 // Is on back or front end ?
 $isAdmin = is_admin() ? 'back' : 'front';
 ?>
@@ -245,6 +248,14 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         case 'poi-link':
             update_post_meta($asset_id, 'vrodos_asset3d_link', $_POST['assetLinkInput']);
             break;
+        
+        case 'poi-help':
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', $_POST['poiChatTitle']);
+            if(isset($_POST['poiChatIndicators']))
+                update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', $_POST['poiChatIndicators']);
+            else
+                update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', "disabled");
+            break;
 
         default:
             break;
@@ -315,7 +326,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
 ?>
 
-<?php if ( !is_user_logged_in() ) {
+<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) {
     $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
     ?>
 
@@ -648,7 +659,42 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     </div>
 
                     <div id="poi_help_section" class="assetEditorColumn" style="display: none;">
-                        <h3 class="mdc-typography--title">Contact Form</h3>
+                        <!-- <h3 class="mdc-typography--title">Contact Form</h3> -->
+
+                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
+                            <input id="poiChatTitle" type="text"
+                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
+                                   name="poiChatTitle"
+                                   aria-controls="title-chat-validation-msg" minlength="3" maxlength="50"
+                                   value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chattxt_title', true);?>">
+
+                            <label for="poiChatTitle" class="mdc-textfield__label">
+                                Title
+                            </label>
+
+                            <div class="mdc-textfield__bottom-line"></div>
+                        </div>
+                        <p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-chat-validation-msg">
+                            Between 3 - 25 characters
+                        </p>
+
+                        <div class="mdc-touch-target-wrapper">
+                            <h3 class="mdc-typography--title">Enable indicators</h3>
+                            <div class="mdc-checkbox mdc-checkbox--touch">
+                                <input id="poiChatIndicators"type="checkbox"
+                                    class="mdc-checkbox__native-control"
+                                    name="poiChatIndicators"
+                                  <?php  
+                                  if (get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) == "enabled")
+                                    echo "checked";
+                                ?>
+                                    value="enabled">
+                                <div class="mdc-checkbox__background">
+                                <div class="mdc-checkbox__mixedmark"></div>
+                                </div>
+                                <div class="mdc-checkbox__ripple"></div>
+                            </div>
+                        </div>
 
                     </div>
 
@@ -833,8 +879,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
     <script type="text/javascript">
         'use strict';
-
-        hideAdminBar();
 
         const assetVideoSrc = document.getElementById("assetVideoSource");
         const assetVideoTag = document.getElementById("assetVideoTag");

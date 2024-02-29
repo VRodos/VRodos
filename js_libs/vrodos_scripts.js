@@ -3,9 +3,7 @@
 function setTransformControlsSize(){
 
     let dims = findDimensions(transform_controls.object);
-
     let sizeT = 0.25 * Math.log((Math.max(...dims) + 1)  + 1) ;
-
     transform_controls.setSize(sizeT );
 }
 
@@ -17,12 +15,12 @@ function vrodos_fillin_widget_assettrs( selectedObject ) {
 }
 
 function unixTimestamp_to_time(tStr) {
-    var unix_timestamp = parseInt(tStr);
-    var date = new Date(unix_timestamp * 1000);
-    var hours = date.getHours();
-    var minutes = "0" + date.getMinutes();
-    var seconds = "0" + date.getSeconds();
-    var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+    let unix_timestamp = parseInt(tStr);
+    let date = new Date(unix_timestamp * 1000);
+    let hours = date.getHours();
+    let minutes = "0" + date.getMinutes();
+    let seconds = "0" + date.getSeconds();
+    let formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     return date.getDate() + '/' + date.getMonth() + '/' + date.getFullYear() + ' ' + formattedTime;
 }
 
@@ -34,28 +32,26 @@ function rgbToHex(red, green, blue) {
 
 function updateClearColorPicker(picker){
     document.getElementById('sceneClearColor').value = picker.toRGBString();
-    var hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
+    let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
     //envir.renderer.setClearColor(hex);
     envir.scene.background = new THREE.Color(hex);
     saveChanges();
 }
 
 function saveChanges() {
+
+    let save_scene_btn = document.getElementById("save-scene-button");
+    if (save_scene_btn.classList.contains("LinkDisabled")){
+        return;
+    }
+
     jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
     // Export using a custom variant of the old deprecated class SceneExporter
     let exporter = new THREE.SceneExporter();
-    //env.getObjectByName(name).follow_camera = 2;
     document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-    //let test = document.getElementById('vrodos_scene_json_input').value;
-
-    //var json = JSON.stringify(test);
-
-    //console.log(test);
-
     vrodos_saveSceneAjax();
-    //.forEach(element => console.log(element));
 }
 
 function bcgRadioSelect(option){
@@ -63,10 +59,6 @@ function bcgRadioSelect(option){
     let custom_img_sel = document.getElementById('img_upload_bcg');
     let preset_sel = document.getElementById('presetsBcg');
     let img_thumb = document.getElementById('uploadImgThumb');
-
-    
-    
-    
 
 
     switch (option.value) {
@@ -129,11 +121,20 @@ function bcgRadioSelect(option){
     saveChanges();
 }
 
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+}
+
 function updateFogColorPicker(picker){
 
     document.getElementById('FogColor').value = picker.toRGBString();
-
-    updateFog();
+  
+    updateFog("editing");
 }
 
 function loadFogType() {
@@ -146,24 +147,60 @@ function loadFogType() {
         document.getElementById('FogType').value = "exponential";
     }
 
-    updateFog();
+    updateFog("editing");
 }
 
-function updateFog(){
+function updateFog(whencalled){
 
     let picker = document.getElementById('jscolorpickFog').jscolor;
+
 
     let fogType = document.getElementById('FogType').value;
     let fogNear = document.getElementById('FogNear').value
     let fogFar = document.getElementById('FogFar').value;
     let fogDensity = document.getElementById('FogDensity').value;
 
+    var linear_elems = document.getElementsByClassName('linearElement');
+    var expo_elems = document.getElementsByClassName('exponentialElement');
+    var color_elems = document.getElementsByClassName('colorElement');
+    
+
     let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
 
     if(fogType === 'linear') {
         envir.scene.fog = new THREE.Fog(hex, fogNear, fogFar);
+        document.getElementById("FogValues").style.display="block";
+
+        for (var i = 0; i < linear_elems.length; ++i) {
+            var item = linear_elems[i];  
+            item.style.display="block";
+        }
+
+        for (var i = 0; i < expo_elems.length; ++i) {
+            var item = expo_elems[i];  
+            item.style.display="none";
+        }
+        for (var i = 0; i < color_elems.length; ++i) {
+            var item = color_elems[i];  
+            item.style.display="block";
+        }
+
     } else if(fogType === 'exponential') {
         envir.scene.fog = new THREE.FogExp2(hex, fogDensity);
+        document.getElementById("FogValues").style.display="block";
+
+        for (var i = 0; i < linear_elems.length; ++i) {
+            var item = linear_elems[i];  
+            item.style.display="none";
+        }
+        for (var i = 0; i < expo_elems.length; ++i) {
+            var item = expo_elems[i];  
+            item.style.display="block";
+        }
+        for (var i = 0; i < color_elems.length; ++i) {
+            var item = color_elems[i];  
+            item.style.display="block";
+        }
     } else if(fogType === 'none') {
         if (envir.scene.fog){
             envir.scene.fog = null;
@@ -171,16 +208,28 @@ function updateFog(){
         } else {
             console.log("fog does not exists");
         }
+        
+            
+        for (var i = 0; i < linear_elems.length; ++i) {
+            var item = linear_elems[i];  
+            item.style.display="none";
+        }
+
+        for (var i = 0; i < expo_elems.length; ++i) {
+            var item = expo_elems[i];  
+            item.style.display="none";
+        }
+        document.getElementById("FogValues").style.display="none";  
+        for (var i = 0; i < color_elems.length; ++i) {
+            var item = color_elems[i];  
+            item.style.display="none";
+        }
 
     }
-
-    triggerAutoSave();
+    if(whencalled != "undo"){
+        console.log("saving...");
+        triggerAutoSave();
+    }
+        
+        // saveChanges();
 }
-
-
-
-
-
-
-
-

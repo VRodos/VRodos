@@ -6,6 +6,7 @@ function loadButtonActions() {
     // Compile Project button
     jQuery("#compileGameBtn").click(function () {
         compileDialog.show();
+        saveChanges();
 
         // Pause Rendering
         isPaused = true;
@@ -32,7 +33,7 @@ function loadButtonActions() {
 
     // Compile Proceed
     jQuery("#compileProceedBtn").click(function () {
-
+        
         jQuery("#platform-select").addClass("mdc-select--disabled").attr("aria-disabled", "true");
         jQuery("#compileProgressSlider").show();
         jQuery("#compileProgressTitle").show();
@@ -156,7 +157,6 @@ function loadButtonActions() {
     function deleteScene(btn) {
 
         let scene_id = btn.dataset.sceneid;
-        console.log(scene_id);
         var dialogTitle = document.getElementById("delete-dialog-title");
         var dialogDescription = document.getElementById("delete-dialog-description");
         var sceneTitle = document.getElementById(scene_id + "-title").textContent.trim();
@@ -199,8 +199,6 @@ function loadButtonActions() {
         function (ev) {
 
             let dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
-
-            console.log(dataDrag);
 
             let categoryName = dataDrag['category_name'];
             let nameModel = dataDrag.title;
@@ -258,6 +256,11 @@ function loadButtonActions() {
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
     jQuery('#save-scene-button').click(function () {
 
+        let save_scene_btn = document.getElementById("save-scene-button");
+        if (save_scene_btn.classList.contains("LinkDisabled")){
+            return;
+        }
+
         jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
         // Export using a custom variant of the old deprecated class SceneExporter
@@ -277,28 +280,28 @@ function loadButtonActions() {
     // UNDO button
     jQuery('#undo-scene-button').click(function () {
 
-        /*document.getElementById('redo-scene-button').style.visibility = 'visible';
+        post_revision_no += 1;
+
+        document.getElementById('redo-scene-button').style.visibility = 'visible';
 
         jQuery('#undo-scene-button').html("...").addClass("LinkDisabled");
 
-        post_revision_no += 1;
-
-        vrodos_undoSceneAjax(uploadDir, post_revision_no);*/
+        vrodos_undoSceneAjax(uploadDir, post_revision_no);
     });
 
     // REDO button
     jQuery('#redo-scene-button').click(function () {
 
-      /*  if (post_revision_no > 1) {
+        if (post_revision_no >= 1) {
             post_revision_no -= 1;
 
             jQuery('#redo-scene-button').html("...").addClass("LinkDisabled");
             vrodos_undoSceneAjax();
-        }
-        else {
-            document.getElementById('redo-scene-button').style.visibility = 'hidden';
-        }*/
 
+            if (post_revision_no <= 1) {
+                document.getElementById('redo-scene-button').style.visibility = 'hidden';
+            }
+        }
     });
 
 
@@ -488,8 +491,6 @@ function loadButtonActions() {
 
             setVisiblityLightHelpingElements(false);
 
-            //jQuery("#wpadminbar").hide();
-
             // footer that is high up below admin bar
             //jQuery("#colophon").hide();
 
@@ -512,9 +513,6 @@ function loadButtonActions() {
             envir.outlinePass.enabled = true;
 
             setVisiblityLightHelpingElements(true);
-
-            // wp admin bar show
-            //jQuery("#wpadminbar").show();
 
             // footer that is high up below admin bar
             //jQuery("#colophon").show();

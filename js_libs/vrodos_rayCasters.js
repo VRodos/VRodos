@@ -66,14 +66,17 @@ function dragDropVerticalRayCasting(event) {
 
 // On Double click center screen and focus to that object
 function onMouseDoubleClickFocus(event, id) {
-
+    
     if (typeof id == 'undefined') {
         id = envir.scene.getObjectById(selected_object_name);
+        
     }
 
     if (arguments.length === 2) {
-        if (envir.scene.getObjectById(id))
-            selectorMajor(event, envir.scene.getObjectById(id), "1");
+        if (envir.scene.getObjectByProperty( 'uuid' , id) && !envir.scene.getObjectByProperty( 'uuid' , id).locked){
+            selectorMajor(event, envir.scene.getObjectByProperty( 'uuid' , id), "1");
+        }
+            
     }
 
     // This makes the camera (in 3D mode) to go on top of the selected item
@@ -100,7 +103,6 @@ function onLeftMouseDown(event) {
     // If doing affine transformations with transform controls, then ignore select
     if (transform_controls.dragging)
         return;
-
 
     // Middle click return
     if (event.button === 1)
@@ -140,10 +142,8 @@ function onLeftMouseDown(event) {
     // If only one object is intersected
     if (intersects.length === 1) {
 
-
-        //let selObj = false ? intersects[0].object : ;
-
-        selectorMajor(event, intersects[0], "2");
+        if(!intersects[0].locked)
+            selectorMajor(event, intersects[0], "2");
         return;
     }
 
@@ -166,7 +166,8 @@ function onLeftMouseDown(event) {
 
 
 
-    selectorMajor(event, intersects[i + 1], "3");
+    if(!intersects[0].locked)
+        selectorMajor(event, intersects[i + 1], "3");
 
 
 }// onMouseDown
@@ -182,6 +183,16 @@ function selectorMajor(event, objectSel, whocalls) {
 
     if (event.button === 0) {
 
+        // document.getElementById('numerical_gui-container').style.visibility = 'visible';
+        document.getElementById('numerical_gui-container').style.display="block";
+
+        document.getElementById('translate-switch').checked = true;
+        document.getElementById('rotate-switch').disabled = false;
+        document.getElementById('rotate-switch-label').style = "inherit";
+
+        document.getElementById('scale-switch').disabled = false;
+        document.getElementById('scale-switch-label').style = "inherit";
+      
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.uuid);
 
@@ -245,11 +256,16 @@ function selectorMajor(event, objectSel, whocalls) {
         }
 
         if (objectSel.name === "avatarCamera") {
+            document.getElementById('rotate-switch').disabled = true;
+            document.getElementById('rotate-switch-label').style.color = "grey";
+
+            document.getElementById('scale-switch').disabled = true;
+            document.getElementById('scale-switch-label').style.color = "grey";
 
             // case of selecting by hierarchy viewer
 
-            transform_controls.size = 1;
-            transform_controls.visible = false;
+            // transform_controls.size = 1;
+            // transform_controls.visible = false;
 
             // Can not be deleted
             //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
@@ -303,8 +319,6 @@ function showProperties(event, object) {
 
     //var objectParent  = inters.object.parent;
     var name = object.name;
-    //console.log(name);
-    console.log(object);
     switch (object.category_slug) {
         case 'decoration':
             // Don't display a popup in decoration. You can only change name and glb file from asset editor!
@@ -364,7 +378,8 @@ function displaySunProperties(event, name) {
 
     // The whole popup div
     var ppPropertiesDiv = jQuery("#popUpSunPropertiesDiv");
-    var chbox = jQuery("#castShadow");
+    var chboxjQ = jQuery("#castShadow");
+    var chbox = document.getElementById('castShadow');
 
     var textCameraBottomjQ = jQuery("#sunShadowCameraBottom");
     var textCameraBottom = document.getElementById('sunShadowCameraBottom');
@@ -391,9 +406,10 @@ function displaySunProperties(event, name) {
     clearAndUnbind(null, null, "sunshadowMapHeight");
     clearAndUnbind(null, null, "sunshadowMapWidth");
     clearAndUnbind(null, null, "sunshadowBias");
+    clearAndUnbind(null, null, "castShadow");
     
 
-    chbox.prop('checked', envir.scene.getObjectByName(name).castingShadow);
+    chboxjQ.prop('checked', envir.scene.getObjectByName(name).castingShadow);
     
     //textCameraBottom.attr('value', envir.scene.getObjectByName(name).shadowCameraBottom);
     //textCameraTop.attr('value', envir.scene.getObjectByName(name).shadowCameraTop);
@@ -410,18 +426,19 @@ function displaySunProperties(event, name) {
     textMapHeight.value = envir.scene.getObjectByName(name).shadowMapHeight;
     textMapWidth.value = envir.scene.getObjectByName(name).shadowMapWidth;
     textBias.value = envir.scene.getObjectByName(name).shadowBias;
-
-    console.log(envir.scene.getObjectByName(name).shadowCameraBottom );
-    
+    chbox.value = envir.scene.getObjectByName(name).castingShadow;
+   
     //jQuery("#sunColor")
-    
-    
-
+  
 
     // Show Selection
-    ppPropertiesDiv.show();
+    ppPropertiesDiv.show(); 
+    var popDiv = document.getElementById('popUpSunPropertiesDiv');
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    if (window.innerHeight - event.clientY > popDiv.offsetHeight || window.innerHeight < popDiv.offsetHeight)
+        ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    else
+        ppPropertiesDiv[0].style.top = event.clientY -(popDiv.offsetHeight - (window.innerHeight - event.clientY)) - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
     jQuery("#sunColor").change(function (e) {
         //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
@@ -470,7 +487,7 @@ function displaySunProperties(event, name) {
         envir.scene.getObjectByName(name).shadowBias = sanitizeInputValue(this.value);
         saveChanges();
     });
-    chbox.change(function (e) {
+    chboxjQ.change(function (e) {
         envir.scene.getObjectByName(name).castingShadow = this.checked ? 1 : 0;
         saveChanges();
     });
@@ -480,8 +497,8 @@ function displaySunProperties(event, name) {
 function displayLampProperties(event, name) {
 
    
-    var chbox = jQuery("#lampcastShadow");
-
+    var chboxjQ = jQuery("#lampcastShadow");
+    var chbox = document.getElementById('lampcastShadow');
     var textCameraBottomjQ = jQuery("#lampShadowCameraBottom");
     var textCameraBottom = document.getElementById('lampShadowCameraBottom');
     var textCameraTopjQ = jQuery("#lampShadowCameraTop");
@@ -507,8 +524,9 @@ function displayLampProperties(event, name) {
     clearAndUnbind(null, null, "lampshadowMapHeight");
     clearAndUnbind(null, null, "lampshadowMapWidth");
     clearAndUnbind(null, null, "lampshadowBias");
+    clearAndUnbind(null, null, "lampcastShadow");
 
-    chbox.prop('checked', envir.scene.getObjectByName(name).lampcastingShadow);
+    // chbox.prop('checked', envir.scene.getObjectByName(name).lampcastingShadow);
 
     textCameraBottom.value = envir.scene.getObjectByName(name).lampshadowCameraBottom;
     textCameraTop.value = envir.scene.getObjectByName(name).lampshadowCameraTop;
@@ -517,7 +535,7 @@ function displayLampProperties(event, name) {
     textMapHeight.value = envir.scene.getObjectByName(name).lampshadowMapHeight;
     textMapWidth.value = envir.scene.getObjectByName(name).lampshadowMapWidth;
     textBias.value = envir.scene.getObjectByName(name).lampshadowBias;
-    
+    chbox.value = envir.scene.getObjectByName(name).lampcastingShadow;
 
     // chbox.prop('checked', envir.scene.getObjectByName(name).castingShadow);
 
@@ -552,7 +570,7 @@ function displayLampProperties(event, name) {
         envir.scene.getObjectByName(name).lampshadowBias = sanitizeInputValue(this.value);
         saveChanges();
     });
-    chbox.change(function (e) {
+    chboxjQ.change(function (e) {
         envir.scene.getObjectByName(name).lampcastingShadow = this.checked ? 1 : 0;
         saveChanges();
     });
@@ -580,8 +598,13 @@ function displayLampProperties(event, name) {
 
     // Show Selection
     ppPropertiesDiv.show();
+    var popDiv = document.getElementById('popUpLampPropertiesDiv');
     ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    if (window.innerHeight - event.clientY > popDiv.offsetHeight || window.innerHeight < popDiv.offsetHeight)
+        ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    else
+        ppPropertiesDiv[0].style.top = event.clientY -(popDiv.offsetHeight - (window.innerHeight - event.clientY)) - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+       
 }
 
 
@@ -1043,6 +1066,12 @@ function displayPoiImageTextProperties(event, name) {
 //  */
 
 function saveChanges() {
+
+    let save_scene_btn = document.getElementById("save-scene-button");
+    if (save_scene_btn.classList.contains("LinkDisabled")){
+        return;
+    }
+
     jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
 
     // Export using a custom variant of the old deprecated class SceneExporter

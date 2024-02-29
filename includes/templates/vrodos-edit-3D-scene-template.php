@@ -1,5 +1,8 @@
 <?php
 
+wp_enqueue_style('vrodos_frontend_stylesheet');
+wp_enqueue_style('vrodos_material_stylesheet');
+
 $perma_structure = (bool)get_option('permalink_structure');
 $parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
 $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
@@ -33,7 +36,7 @@ function vrodos_load_vreditor_scripts()
     // Hierarchy Viewer
     wp_enqueue_script( 'vrodos_HierarchyViewer' );
 
-    wp_enqueue_script( 'vrodos_load87_datgui' );
+    wp_enqueue_script( 'vrodos_load_datgui' );
     wp_enqueue_script( 'vrodos_load141_OrbitControls' );
     wp_enqueue_script( 'vrodos_load141_TransformControls' );
     wp_enqueue_script( 'vrodos_load141_PointerLockControls' );
@@ -73,8 +76,8 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 ?>
 
 <script type="text/javascript">
-    // keep track for the undo-redo function
-    post_revision_no = 1;
+    // Keep track for the undo-redo function
+    var post_revision_no = 1;
 
     // is rendering paused
     isPaused = false;
@@ -324,7 +327,7 @@ wp_head();
 
 ?>
 
-<?php if ( !is_user_logged_in() ) { ?>
+<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
     <!-- if user not logged in, then prompt to log in -->
     <div class="DisplayBlock CenterContents">
@@ -360,9 +363,9 @@ wp_head();
 
                     <!-- Undo - Save - Redo -->
                     <div id="save-scene-elements">
-                        <a id="undo-scene-button" title="Undo last change"><i class="material-icons">undo</i></a>
-                        <a id="save-scene-button" title="Save all changes you made to the current scene">All changes saved</a>
-                        <a id="redo-scene-button" title="Redo last change"><i class="material-icons">redo</i></a>
+                        <a id="undo-scene-button" title="Undo last change - You must save to keep the reverted version"><i class="material-icons">undo</i></a>
+                        <a id="save-scene-button" title="Save all changes you made to the current scene">Save Scene</a>
+                        <a id="redo-scene-button" title="Redo last change - You must save to keep the newer version"><i class="material-icons">redo</i></a>
 
                         <!-- View Json code UI -->
                         <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
@@ -592,6 +595,33 @@ wp_head();
 
     </div>
 
+    <aside id="confirm-deletion-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+           aria-labelledby="Confirm asset delete dialog" aria-describedby="Confirm that you want to delete selected asset">
+        <div class="mdc-dialog__surface">
+            <header class="mdc-dialog__header">
+                <h2 id="confirm-asset-deletion-title" class="mdc-dialog__header__title">Delete Asset</h2>
+            </header>
+
+            <section class="mdc-dialog__body">
+                <div class="mdc-layout-grid">
+                    <div class="mdc-layout-grid__inner">
+                        <div class="mdc-layout-grid__cell--span-12">
+                            <span class="mdc-typography--title" id="confirm-asset-deletion-description">Do you really want to delete the selected asset?</span>
+                            <br>
+                            <span class="mdc-typography--subheading2">WARNING: This action cannot be undone!</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="mdc-dialog__footer">
+                <a class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button mdc-theme--text-hint-on-light">Cancel</a>
+                <a id="delete-asset-btn-confirmation" class="mdc-button--raised mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept">DELETE</a>
+            </footer>
+        </div>
+        <div class="mdc-dialog__backdrop"></div>
+    </aside>
+
     <!-- Scripts part 1: The GUIs -->
     <script type="text/javascript">
 
@@ -621,6 +651,9 @@ wp_head();
 
         //var firstPersonBlocker = document.getElementById('firstPersonBlocker');
         let firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+
+        // Make a Loading Manager
+        var manager = new THREE.LoadingManager();
 
         // load asset browser with data
         jQuery(document).ready( function() {
@@ -659,8 +692,7 @@ wp_head();
             jQuery("#progressWrapper").get(0).style.visibility = "visible";
             document.getElementById("result_download").innerHTML = "Loading";
 
-            // Make a Loading Manager
-            let manager = new THREE.LoadingManager();
+
 
             // On progress messages (loading)
             manager.onProgress = function ( url, loaded, total ) {
@@ -678,8 +710,15 @@ wp_head();
 
                 if (envir.scene.getObjectByName(name)) {
                     objItem = envir.scene.getObjectByName(name);
-                    console.log(name, objItem);
-                    attachToControls(name, objItem);
+                   
+                    if (objItem.locked){
+                        document.getElementById('numerical_gui-container').style.display="none";
+                    }
+                    else{
+                        attachToControls(name, objItem);
+                        setDatGuiInitialVales(objItem);
+                    }
+                        
                 } else {
                     return;
                 }
@@ -690,8 +729,7 @@ wp_head();
                 envir.updateCameraGivenSceneLimits();
 
                 setHierarchyViewer();
-                setDatGuiInitialVales(objItem);
-
+               
 
                 for (let n in resources3D) {
                     (function (name) {
@@ -754,82 +792,118 @@ wp_head();
                 document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
                 envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
             }
-            if (resources3D["backgroundStyleOption"]) {
-            let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
-
-          
-           
-            switch (selOption){
-            case 0:
-                document.getElementById("sceneNone").checked = true;
-                custom_img_sel.disabled = true;
-                preset_sel.disabled = true;
-                color_sel.disabled = true;
-
-                color_sel.hidden = true;
-                preset_sel.hidden = true;
-                custom_img_sel.hidden = true;
-                img_thumb.hidden = true;
-                break;
-            case 1:
-                document.getElementById("sceneColorRadio").checked = true;
-                color_sel.disabled = false;
-                preset_sel.disabled = true;
-                custom_img_sel.disabled = true;
-
-                color_sel.hidden = false;
-                preset_sel.hidden = true;
-                custom_img_sel.hidden = true;
-                img_thumb.hidden = true;
-                break;
-            case 2:
-                document.getElementById("sceneSky").checked = true;
-                custom_img_sel.disabled = true;
-                preset_sel.disabled = false;
-                color_sel.disabled = true;
-
-                color_sel.hidden = true;
-                preset_sel.hidden = false;
-                custom_img_sel.hidden = true;
-                img_thumb.hidden = true;
-                envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                envir.scene.preset_selection = resources3D["backgroundPresetOption"];
-                // envir.scene.backgroundPresetOption = preset_sel.value;
-                //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
-
-                for(let index = 0; index < preset_sel.options.length;index++){
-                    if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
-                        preset_sel.options[index].selected = true;
-                        //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
-                    }
-                }
-                break;
-            case 3:
-                document.getElementById("sceneCustomImage").checked = true;
-                custom_img_sel.disabled = false;
-                preset_sel.disabled = true;
-                color_sel.disabled = true;
-
-                color_sel.hidden = true;
-                preset_sel.hidden = true;
-                custom_img_sel.hidden = false;
-
-                if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
-                    img_thumb.src = resources3D["backgroundImagePath"];
-                    img_thumb.hidden = false;
-                }
-                break;
+            if (resources3D["enableAvatar"]) {
+                document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
+                envir.scene.enableAvatar = JSON.parse(resources3D["enableAvatar"]);
             }
-            envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-          
-           
-            envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
-           
+            
+            if (resources3D["disableMovement"]) {
+                document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
+                envir.scene.disableMovement = JSON.parse(resources3D["disableMovement"]);
+            }
+            if (resources3D["backgroundStyleOption"]) {
+                let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+
+
+
+                switch (selOption){
+                    case 0:
+                        document.getElementById("sceneNone").checked = true;
+                        custom_img_sel.disabled = true;
+                        preset_sel.disabled = true;
+                        color_sel.disabled = true;
+
+                        color_sel.hidden = true;
+                        preset_sel.hidden = true;
+                        custom_img_sel.hidden = true;
+                        img_thumb.hidden = true;
+                        break;
+                    case 1:
+                        document.getElementById("sceneColorRadio").checked = true;
+                        color_sel.disabled = false;
+                        preset_sel.disabled = true;
+                        custom_img_sel.disabled = true;
+
+                        color_sel.hidden = false;
+                        preset_sel.hidden = true;
+                        custom_img_sel.hidden = true;
+                        img_thumb.hidden = true;
+                        break;
+                    case 2:
+                        document.getElementById("sceneSky").checked = true;
+                        custom_img_sel.disabled = true;
+                        preset_sel.disabled = false;
+                        color_sel.disabled = true;
+
+                        color_sel.hidden = true;
+                        preset_sel.hidden = false;
+                        custom_img_sel.hidden = true;
+                        img_thumb.hidden = true;
+                        envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
+                        envir.scene.preset_selection = resources3D["backgroundPresetOption"];
+                        // envir.scene.backgroundPresetOption = preset_sel.value;
+                        //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+
+                        for(let index = 0; index < preset_sel.options.length;index++){
+                            if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
+                                preset_sel.options[index].selected = true;
+                                //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
+                            }
+                        }
+                        break;
+                    case 3:
+                        document.getElementById("sceneCustomImage").checked = true;
+                        custom_img_sel.disabled = false;
+                        preset_sel.disabled = true;
+                        color_sel.disabled = true;
+
+                        color_sel.hidden = true;
+                        preset_sel.hidden = true;
+                        custom_img_sel.hidden = false;
+
+                        if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
+                            img_thumb.src = resources3D["backgroundImagePath"];
+                            img_thumb.hidden = false;
+                        }
+                        break;
+                }
+                envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
+
+
+                envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+
                 //saveChanges();
             }
-        });
 
 
+        }); // End of document ready
+
+        // Only in Undo redo as javascript not php!
+        function parseJSON_LoadScene(scene_json) {
+
+            resources3D = parseJSON_javascript(scene_json, uploadDir);
+
+            // CLEAR SCENE
+            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
+
+            for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
+                if (!preserveElements.includes(envir.scene.children[i].name))
+                    envir.scene.remove(envir.scene.children[i]);
+            }
+            var lightsLoader = new VRodos_LightsPawn_Loader();
+            lightsLoader.load(resources3D);
+
+            setHierarchyViewer();
+            //setHierarchyViewerLight();
+
+            transform_controls = envir.scene.getObjectByName('myTransformControls');
+            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
+
+            
+            loaderMulti = new VRodos_LoaderMulti("2");
+            loaderMulti.load(manager, resources3D,pluginPath);
+
+        }
         <!--  Part 3: Start 3D with Javascript   -->
 
         function updatePositionsAndControls()
@@ -851,32 +925,30 @@ wp_head();
             }
         }
 
-        // Only in Undo redo as javascript not php!
-        function parseJSON_LoadScene(scene_json) {
 
-            resources3D = parseJSON_javascript(scene_json, uploadDir);
-
-            // CLEAR SCENE
-            let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
-
-            for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
-                if (!preserveElements.includes(envir.scene.children[i].name))
-                    envir.scene.remove(envir.scene.children[i]);
-            }
-
-            setHierarchyViewer();
-
-            transform_controls = envir.scene.getObjectByName('myTransformControls');
-            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
-
-            loaderMulti = new VRodos_LoaderMulti("2");
-            loaderMulti.load(manager, resources3D);
-        }
 
         function attachToControls(name, objItem){
 
             let trs_tmp = resources3D[name]['trs'];
             transform_controls.attach(objItem);
+            console.log("attached");
+            console.log(objItem);
+
+            if (objItem.category_name == "avatarYawObject"){
+                document.getElementById('rotate-switch').disabled = true;
+                document.getElementById('rotate-switch-label').style.color = "grey";
+
+                document.getElementById('scale-switch').disabled = true;
+                document.getElementById('scale-switch-label').style.color = "grey";
+            }
+                
+            else{
+                document.getElementById('rotate-switch').disabled = false;
+                document.getElementById('rotate-switch-label').style = "inherit";
+
+                document.getElementById('scale-switch').disabled = false;
+                document.getElementById('scale-switch-label').style = "inherit";
+            }
 
             // highlight
             envir.outlinePass.selectedObjects = [objItem];
@@ -888,6 +960,9 @@ wp_head();
             transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
 
+            console.log(objItem);
+
+            
             jQuery('#object-manipulation-toggle').show();
             jQuery('#axis-manipulation-buttons').show();
             jQuery('#double-sided-switch').show();

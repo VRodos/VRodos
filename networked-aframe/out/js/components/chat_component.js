@@ -3,19 +3,28 @@ let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
 let chatInput = document.getElementById('chatInput');
 let chatLog = document.getElementById('chat-messages');
 
-NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
-    let dateString = getChatCurrentTimeString();
-    chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
-} )
+let publicChatIsActive = true;
 
-sendMsgChatBtn.addEventListener("click", evt => {
+let chatLogPublicHistory = [];
+
+
+function sendPublicMessage() {
     let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
 
     let dateString = getChatCurrentTimeString();
-    chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
+    chatLog.innerHTML += '<pre>' + dateString + ' Me: ' + chatInput.value + '</pre>';
+    chatLogPublicHistory.push(dateString + ' Me: ' + chatInput.value);
     NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
+}
 
-})
+NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
+    let dateString = getChatCurrentTimeString();
+    if (publicChatIsActive)
+        chatLog.innerHTML += '<pre style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</pre>';
+    chatLogPublicHistory.push(dateString + ' ' + data.player.name + ": " + data.txt);
+} )
+
+sendMsgChatBtn.addEventListener("click",sendPublicMessage);
 
 let chatExpanded = false;
 let chatMinimized = false;

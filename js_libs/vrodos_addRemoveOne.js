@@ -15,16 +15,10 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     for (let entry in Object.keys(dataDrag)) {
         resources3D[nameModel][Object.keys(dataDrag)[entry]] = Object.values(dataDrag)[entry];
     }
-
-    
-    console.log( resources3D[nameModel]);
-    console.log( "Sun added");
-    
     
     if (categoryName === 'lightSun') {
 
-        console.log(Object.keys(dataDrag));
-        var lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
+        let lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
         lightSun.castingShadow = true;
         lightSun.shadowMapHeight = "1024";
@@ -33,7 +27,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSun.shadowCameraBottom = "-200";
         lightSun.shadowCameraLeft = "-200";
         lightSun.shadowCameraRight = "200";
-        lightSun.shadowBias = "-0.0001";
+        lightSun.shadowBias = "-0.001";
         lightSun.defaultColor = "0xffff00";
         lightSun.castingShadow = true;
         lightSun.name = nameModel;
@@ -43,10 +37,10 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSun['category_slug'] = "lightSun";
         lightSun.isLight = true;
 
-        var hexcol = "0xffff00";
+        let hexcol = "0xffff00";
 
         //// Add Sun Helper
-        var sunSphere = new THREE.Mesh(
+        let sunSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
@@ -56,14 +50,14 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // end of sphere
 
         // Helper
-        var lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0x555500);
+        let lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0x555500);
         lightSunHelper.isLightHelper = true;
         lightSunHelper.name = 'lightHelper_' + lightSun.name;
         lightSunHelper['category_name'] = 'lightHelper';
         lightSunHelper.parentLightName = lightSun.name;
 
         // Target spot: Where Sun points
-        var lightTargetSpot = new THREE.Object3D();
+        let lightTargetSpot = new THREE.Object3D();
 
         lightTargetSpot.add(new THREE.Mesh(
             new THREE.SphereBufferGeometry(0.5, 16, 8),
@@ -94,8 +88,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSunHelper.update();
 
         // Add transform controls
-        var insertedObject = envir.scene.getObjectByName(nameModel);
-        var trs_tmp = resources3D[nameModel]['trs'];
+        let insertedObject = envir.scene.getObjectByName(nameModel);
+        let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -117,24 +111,23 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
         transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
 
+
         selected_object_name = nameModel;
 
         setTransformControlsSize();
 
+        document.getElementById('numerical_gui-container').style.display="block";
+        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
-
         //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
-
 
         // Add in scene
         addInHierarchyViewer(insertedObject);
-
         addInHierarchyViewer(lightTargetSpot);
+
         // Auto-save
        
-
-
 
         transform_controls.object.color.setHex(hexcol);
 
@@ -142,12 +135,12 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.object.children[0].material.color.setHex(hexcol);
 
         // Sun Helper
-        var lightHelper = envir.scene.getObjectByName("lightHelper_" + transform_controls.object.name);
+        let lightHelper = envir.scene.getObjectByName("lightHelper_" + transform_controls.object.name);
         lightHelper.children[0].material.color.setHex(hexcol);
         lightHelper.children[1].material.color.setHex(hexcol);
 
         // TargetSpot
-        var lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
+        lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
         lightTargetSpot.children[0].material.color.setHex(hexcol);
 
         triggerAutoSave();
@@ -155,8 +148,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     }
     else if (categoryName === 'lightLamp') {
 
-        var lightLamp = new THREE.PointLight(0xffffff, 1, 100, 2);
-
+        let lightLamp = new THREE.PointLight(0xffffff, 1, 100, 2);
 
         lightLamp.name = nameModel;
         lightLamp['asset_name'] = "mylightLamp";
@@ -172,11 +164,11 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightLamp.lampshadowCameraBottom = "-200";
         lightLamp.lampshadowCameraLeft = "-200";
         lightLamp.lampshadowCameraRight = "200";
-        lightLamp.lampshadowBias = "-0.0001";
+        lightLamp.lampshadowBias = "-0.001";
         
-        var hexcol = "0xffff00";
+        let hexcol = "0xffff00";
         //// Add Lamp Helper
-        var lampSphere = new THREE.Mesh(
+        let lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(0.5, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
@@ -186,7 +178,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // end of sphere
 
         // Helper
-        var lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
+        let lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
         lightLampHelper.isLightHelper = true;
         lightLampHelper.name = 'lightHelper_' + lightLamp.name;
         lightLampHelper['category_name'] = 'lightHelper';
@@ -198,8 +190,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightLampHelper.update();
 
         // Add transform controls
-        var insertedObject = envir.scene.getObjectByName(nameModel);
-        var trs_tmp = resources3D[nameModel]['trs'];
+        let insertedObject = envir.scene.getObjectByName(nameModel);
+        let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -232,6 +224,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // var sizeT = Math.max(...dims);
         // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
+        document.getElementById('numerical_gui-container').style.display="block";
+        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
+
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
@@ -245,7 +240,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     }
     else if (categoryName === 'lightSpot') {
 
-        var lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
+        let lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
 
         lightSpot.name = nameModel;
         lightSpot['asset_name'] = "mylightSpot";
@@ -254,7 +249,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSpot.isLight = true;
 
         //// Add Lamp Helper
-        var lampSphere = new THREE.Mesh(
+        let lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
@@ -268,7 +263,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // end of sphere
 
         // Helper
-        var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0x555500);
+        let lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0x555500);
         lightSpotHelper.isLightHelper = true;
         lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
         lightSpotHelper['category_name'] = 'lightHelper';
@@ -280,8 +275,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSpotHelper.update();
 
         // Add transform controls
-        var insertedObject = envir.scene.getObjectByName(nameModel);
-        var trs_tmp = resources3D[nameModel]['trs'];
+        let insertedObject = envir.scene.getObjectByName(nameModel);
+        let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -307,6 +302,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Dimensions
         setTransformControlsSize();
+
+        document.getElementById('numerical_gui-container').style.display="block";
+        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
         // var dims = findDimensions(transform_controls.object);
         // var sizeT = Math.max(...dims);
         // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
@@ -323,7 +321,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
     } else if (categoryName === 'lightAmbient') {
 
-        var lightAmbient = new THREE.AmbientLight(0xffffff, 1);
+        let lightAmbient = new THREE.AmbientLight(0xffffff, 1);
 
         lightAmbient.name = nameModel;
         lightAmbient['asset_name'] = "mylightAmbient";
@@ -332,7 +330,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightAmbient.isLight = true;
 
         //// Add Lamp Helper
-        var lampSphere = new THREE.Mesh(
+        let lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffffff })
         );
@@ -346,8 +344,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         envir.scene.add(lightAmbient);
 
         // Add transform controls
-        var insertedObject = envir.scene.getObjectByName(nameModel);
-        var trs_tmp = resources3D[nameModel]['trs'];
+        let insertedObject = envir.scene.getObjectByName(nameModel);
+        let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -400,7 +398,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             function (gltf) {
 
 
-                var Pawn = gltf.scene.children[0];
+                let Pawn = gltf.scene.children[0];
                 Pawn.name = nameModel;
                 Pawn['asset_name'] = "myActor";
                 Pawn.isSelectableMesh = true;
@@ -409,7 +407,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
 
                 // Give a number to Pawn
-                var indexPawn = 1;
+                let indexPawn = 1;
                 for (let ch of envir.scene.children) {
                     if (ch.name.includes("Pawn")) {
                         indexPawn += 1;
@@ -417,14 +415,14 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
                 }
 
 
-                var pawnLabelDiv = document.createElement('div');
+                let pawnLabelDiv = document.createElement('div');
                 pawnLabelDiv.className = '';
                 pawnLabelDiv.textContent = 'Actor ' + indexPawn;
                 pawnLabelDiv.style.marginTop = '-1em';
                 pawnLabelDiv.style.fontSize = '26px';
                 pawnLabelDiv.style.color = "yellow";
                 //pawnLabelDiv.style.letterSpacing = '2px';
-                var pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
+                let pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
                 pawnLabel.position.set(0, 1.5, 0);
                 Pawn.add(pawnLabel);
                 //pawnLabel.layers.set( 0 );
@@ -433,9 +431,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
                 envir.scene.add(Pawn);
 
                 // Add transform controls
-                var insertedObject = envir.scene.getObjectByName(nameModel);
+                let insertedObject = envir.scene.getObjectByName(nameModel);
 
-                var trs_tmp = resources3D[nameModel]['trs'];
+                let trs_tmp = resources3D[nameModel]['trs'];
 
                 trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -490,7 +488,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         document.getElementById("result_download").innerHTML = "Loading";
 
         // Make a manager for the GLB
-        var manager = new THREE.LoadingManager();
+        let manager = new THREE.LoadingManager();
         // On progress messages
         manager.onProgress = function (item, loaded, total) {
             document.getElementById("result_download").innerHTML = resources3D[nameModel]['asset_name'] + " loading part " + loaded + " / " + total;
@@ -503,7 +501,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             let insertedObject = envir.scene.getObjectByName(nameModel);
 
             // Affine transformations
-            var trs_tmp = resources3D[nameModel]['trs'];
+            let trs_tmp = resources3D[nameModel]['trs'];
 
             insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
             insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
@@ -543,6 +541,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             // Auto-save
             triggerAutoSave();
 
+            //document.getElementById('numerical_gui-container').style.visibility = 'visible';
+            document.getElementById('numerical_gui-container').style.display="block";
+            setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
             // Hide progress dialogue
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
         };
@@ -557,13 +558,80 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     }
 }
 
+
+function deleteFomScene(uuid, name) {
+
+    if (name) {
+        document.getElementById("confirm-asset-deletion-title").innerHTML = 'Delete ' + name + '?';
+        document.getElementById("confirm-asset-deletion-description").innerHTML = 'Do you really want to delete the asset named <b>' + name + '</b>?';
+    }
+
+    let delete_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#confirm-deletion-dialog'));
+    let closeDialogListener = function(event) {
+        delete_dialog_element.unlisten("MDCDialog:cancel", closeDialogListener);
+    };
+    delete_dialog_element.show();
+    delete_dialog_element.listen("MDCDialog:cancel", closeDialogListener);
+
+    let delUuid = uuid;
+    let selUuid;
+    if( typeof(transform_controls.object) != "undefined" )
+        selUuid = transform_controls.object.uuid;
+    else
+        selUuid = "unassigned";
+    // var selUuid = (typeof checkUuid != "undefined") ? checkUuid : "unassigned";
+    let delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
+    delete_btn_element.addEventListener('click', function() {
+        transform_controls.detach();
+        deleteAssetFromScene(uuid);
+        if(selUuid != "unassigned"){
+             if (delUuid != selUuid){
+            transform_controls.attach(envir.scene.getObjectByProperty( 'uuid' , selUuid));
+            setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , selUuid));
+            }
+            else{
+                document.getElementById('numerical_gui-container').style.display="none";
+            }
+        }else{
+            document.getElementById('numerical_gui-container').style.display="none";
+        }
+       
+    }, { once: true });
+}
+
+function lockOnScene(uuid, name) {
+
+    let selectedObject = envir.scene.getObjectByProperty( 'uuid' , uuid);
+    let editorObject = transform_controls.object;
+    let hierarchy_icon = document.getElementById(uuid).querySelector('.hierarchyItemLock').querySelector('.material-icons');
+   
+    if (selectedObject.locked){
+        selectedObject.locked = false;
+        
+        hierarchy_icon.textContent = "lock_open";
+        transform_controls.attach(envir.scene.getObjectByProperty( 'uuid' , uuid));
+        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , uuid));
+        document.getElementById('numerical_gui-container').style.display="block";
+    }else{
+        selectedObject.locked = true;
+        transform_controls.detach();
+        hierarchy_icon.textContent = "lock_outline";
+        document.getElementById('numerical_gui-container').style.display="none";
+    }
+
+    setBackgroundColorHierarchyViewer(uuid);
+    
+    saveChanges();
+
+}
+
 /**
  *
  * Delete from scene
  *
- * @param nameToRemove
+ * @param uuid
  */
-function deleteFomScene(uuid) {
+function deleteAssetFromScene(uuid) {
 
     let resChildren = Object.values(resources3D);
     let envirChildren = Object.values(envir.scene.children);
@@ -578,7 +646,7 @@ function deleteFomScene(uuid) {
     }
 
     // 2. Find actual object inside scene
-    var objectSelected;
+    let objectSelected;
     for (let i in envirChildren) {
         if (typeof envirChildren[i] === 'object' && envirChildren[i] !== null) {
             if (envirChildren[i].uuid == uuid) {
@@ -597,21 +665,24 @@ function deleteFomScene(uuid) {
     isPaused = false;
 
     // If deleting light then remove also its LightHelper and lightTargetSpot and Shadow Helper
-    if (objectSelected.isLight) {
+    if (typeof(objectSelected) != "undefined"){
+        if (objectSelected.isLight) {
 
-        // Sun Shadow Helper
-        envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name));
-
-        // Sun target spot
-        envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name));
-
-        // Sun target spot remove from hierarchy viewer
-        let target = "lightTargetSpot_" + objectSelected.name;
-        jQuery("[data-name='" +target +"']").remove();
-
-        // Light Helper (for all lights)
-        envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + objectSelected.name));
+            // Sun Shadow Helper
+            envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name));
+    
+            // Sun target spot
+            envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name));
+    
+            // Sun target spot remove from hierarchy viewer
+            let target = "lightTargetSpot_" + objectSelected.name;
+            jQuery("[data-name='" +target +"']").remove();
+    
+            // Light Helper (for all lights)
+            envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + objectSelected.name));
+        }
     }
+    
 
     transform_controls.detach(objectSelected);
 
@@ -629,140 +700,5 @@ function deleteFomScene(uuid) {
     // Save scene
     triggerAutoSave();
 
-    // // Only Player exists then hide delete button (single one)
-    // if(envir.scene.children.length>5){
-    //     let lastObject = envir.scene.children[envir.scene.children.length - 2];
-    //
-    //     // place controls to last inserted obj
-    //     transform_controls.attach(lastObject);
-    //
-    //     envir.outlinePass.selectedObjects = [lastObject];
-    //
-    //     // highlight
-    //     envir.composer = [];
-    //     envir.setComposerAndPasses();
-    // }
 }
-
-
-
-
-
-
-// /**
-//  *    ----------- Check for Recycle Bin Drag ----------------------------
-//  */
-// function checkForRecycle(){
-//
-//     var raycasterRecycleBin = new THREE.Raycaster();
-//     var mouseDrag = new THREE.Vector2();
-//
-//     // handle scrolling of window
-//     var offtop = envir.vr_editor_main_div.getBoundingClientRect().top;
-//     var offleft =envir.vr_editor_main_div.getBoundingClientRect().left;
-//
-//     // translate into -1 to 1 values
-//     mouseDrag.x =   ( (event.clientX - offleft)  / envir.vr_editor_main_div.clientWidth ) * 2 - 1;
-//     mouseDrag.y = - ( (event.clientY - offtop) / envir.vr_editor_main_div.clientHeight ) * 2 + 1;
-//
-//     // calculate objects intersecting the picking ray
-//     raycasterRecycleBin.setFromCamera( mouseDrag, envir.cameraOrbit );
-//
-//     var intersects = raycasterRecycleBin.intersectObjects( [envir.cameraOrbit.children[0]], false );
-//
-//     if(intersects.length>0)
-//         putInRecyleBin(transform_controls.object.name);
-// }
-//
-// /**
-//  *
-//  * -- Put in recycle bin --
-//  *
-//  * @param nameToRemove
-//  */
-// function putInRecyleBin(nameToRemove){
-//
-//     var container = document.paramsform;
-//
-//     // Delete Variables
-//     delArchive[nameToRemove] = resources3D[nameToRemove];
-//     delete resources3D[nameToRemove];
-//
-//     // Remove from scene and add to recycle bin
-//     var objectSelected = envir.scene.getObjectByName(nameToRemove);
-//
-//     transform_controls.detach(objectSelected);
-//
-//     // prevent orbiting
-//     document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
-//
-//     envir.scene.remove(objectSelected);
-//     objectSelected.position.set(0,0,0);
-//
-//     var bbox = new THREE.Box3().setFromObject(objectSelected);
-//
-//     var scale_factor_x = 2/(bbox.max.x - bbox.min.x);
-//     var scale_factor_y = 2/(bbox.max.y - bbox.min.y);
-//     var scale_factor_z = 2/(bbox.max.z - bbox.min.z);
-//
-//     if (scale_factor_x > 1000)
-//         scale_factor_x = 1;
-//
-//     if (scale_factor_y > 1000)
-//         scale_factor_y = 1;
-//
-//     if (scale_factor_z > 1000)
-//         scale_factor_z = 1;
-//
-//
-//     objectSelected.scale.set(scale_factor_x, scale_factor_y, scale_factor_z);
-//     objectSelected.isInRecycleBin = true;
-//
-//     // Removed items are added to the cameraOrbit ??? Find something better
-//     envir.cameraOrbit.children[0].add(objectSelected);
-//
-//     // Make trs box visible - invisible
-//     //if (obj_ARR.length > 0) {
-//     //    transform_controls.attach(obj_ARR[0]);
-//     //    transform_controls.traverse(function(node){if(node.name=='trs_modeChanger') node.visible=true});
-//     //}else
-//     //    transform_controls.traverse(function(node){if(node.name=='trs_modeChanger') node.visible=false});
-//
-// }
-//
-//
-// /**
-//  * Expand items from recycle bin
-//  *
-//  */
-// function enlistDeletedObjects(){
-//
-//     for(var i=0; i < envir.cameraOrbit.children[0].children.length; i++){
-//         if (envir.cameraOrbit.children[0].children[i] instanceof THREE.Group){
-//             var recycledItem = envir.cameraOrbit.children[0].children[i];
-//             recycledItem.position.set(0, (i+1)*4, 0);
-//             recycledItem.isInRecycleBin = true;
-//         }
-//     }
-//
-//     isRecycleBinDeployed = true;
-// }
-//
-// /**
-//  *   Collapse items in recycle bin
-//  *
-//  */
-// function delistDeletedObjects(){
-//
-//     for(var i=0; i < envir.cameraOrbit.children[0].children.length; i++){
-//         if (envir.cameraOrbit.children[0].children[i] instanceof THREE.Group){
-//             var recycledItem = envir.cameraOrbit.children[0].children[i];
-//             recycledItem.position.set(0,0,0);
-//             recycledItem.isInRecycleBin = true;
-//         }
-//     }
-//
-//     isRecycleBinDeployed = false;
-// }
-
 

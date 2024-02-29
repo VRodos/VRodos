@@ -35,6 +35,16 @@
         saveChanges();
     }
 
+    function toggleEnableAvatar(value) {
+        envir.scene.enableAvatar = value;
+        saveChanges();
+    }
+
+    function toggleDisableMovement(value) {
+        envir.scene.disableMovement = value;
+        saveChanges();
+    }
+
     function changeRendererToneMapping(value) {
         envir.renderer.toneMappingExposure = value;
     }
@@ -187,7 +197,7 @@
 
 <!-- Sun @ Archaeology: Popup menu to for Sun Intensity and Color -->
 <div id="popUpSunPropertiesDiv" class="EditorObjOverlapSelectStyle mdc-theme--background mdc-elevation--z2"
-     style="max-width: 280px; display:none">
+     style="max-width: 280px; display:none;">
 
     <!-- The close button-->
     <a style="float: right;" type="button" class="mdc-theme--primary"
@@ -279,10 +289,10 @@
     
     <label for="sunshadowBias" class="mdc-textfield__label"
            style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
-         Shadow Bias:</label>
+         Shadow Bias (Try decrementing e.g.: -0.001, if your scene objects have a large Y distance from ground):</label>
 
     <input type="text" id="sunshadowBias"  name="sunshadowBias" 
-           value="-0.0001" maxlength="6" class="mdc-textfield__input"
+           value="-0.001" maxlength="6" class="mdc-textfield__input"
            style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
             />
 </div>
@@ -410,10 +420,10 @@
     
     <label for="lampshadowBias" class="mdc-textfield__label"
            style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
-         Shadow Bias:</label>
+        Shadow Bias (Try decrementing e.g.: -0.001, if your scene objects have a large Y distance from ground):</label>
 
     <input type="text" id="lampshadowBias"  name="lampshadowBias" 
-           value="-0.0001" maxlength="6" class="mdc-textfield__input"
+           value="-0.001" maxlength="6" class="mdc-textfield__input"
            style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
             />
 

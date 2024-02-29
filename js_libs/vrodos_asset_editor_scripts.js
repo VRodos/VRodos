@@ -263,9 +263,3 @@ function setScreenshotHandler(){
     }
 
 }
-
-function hideAdminBar(){
-    // Hide admin bar of wordpress
-    jQuery("#wpadminbar").hide();
-    jQuery(".js no-svg").css("margin-top:0px");
-}

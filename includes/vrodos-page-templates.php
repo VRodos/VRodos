@@ -132,7 +132,7 @@ function vrodos_create_pages() {
     // 1. Project Manager
     if (! vrodos_get_page_by_slug('vrodos-project-manager-page')) {
         $new_page_id = wp_insert_post(array(
-            'post_title' => 'Project Manager Page',
+            'post_title' => 'VROdos - Project Manager',
             'post_type' => 'page',
             'post_name' => 'vrodos-project-manager-page', //vrodos-main
             'comment_status' => 'closed',
@@ -156,7 +156,7 @@ function vrodos_create_pages() {
     // 2. Assets List Page
     if (! vrodos_get_page_by_slug('vrodos-assets-list-page')) {
         $new_page_id = wp_insert_post(array(
-            'post_title' => 'Assets List Page',
+            'post_title' => 'VROdos - Assets List',
             'post_type' => 'page',
             'post_name' => 'vrodos-assets-list-page',
             'comment_status' => 'closed',
@@ -177,7 +177,7 @@ function vrodos_create_pages() {
     //  3. 3D Editor
     if (! vrodos_get_page_by_slug('vrodos-edit-3d-scene-page')) {
         $new_page_id = wp_insert_post(array(
-            'post_title' => 'Scene 3D Editor Page',
+            'post_title' => 'VROdos - Scene 3D Editor',
             'post_type' => 'page',
             'post_name' => 'vrodos-edit-3d-scene-page',
             'comment_status' => 'closed',
@@ -199,7 +199,7 @@ function vrodos_create_pages() {
     if (! vrodos_get_page_by_slug('vrodos-asset-editor-page')) {
 
         $new_page_id = wp_insert_post(array(
-            'post_title' => 'Asset Editor Page',
+            'post_title' => 'VROdos - Asset Editor',
             'post_type' => 'page',
             'post_name' => 'vrodos-asset-editor-page',
             'comment_status' => 'closed',

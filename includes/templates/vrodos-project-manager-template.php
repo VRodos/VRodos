@@ -1,5 +1,7 @@
 <?php
 
+wp_enqueue_style('vrodos_frontend_stylesheet');
+wp_enqueue_style('vrodos_material_stylesheet');
 
 $perma_structure = (bool)get_option('permalink_structure');
 $parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
@@ -54,7 +56,7 @@ get_header();
 <span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-left:10px;margin-top:20px"><?php echo $full_title; ?> Manager</span>
 
 <!-- if user not logged in then show a hint to login -->
-<?php if ( !is_user_logged_in() ) {
+<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) {
     $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
     ?>
 
@@ -79,14 +81,6 @@ $login_username = $current_user->user_login;
 <!-- HELP button -->
 <br/>
     <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light"> <i>Create a new <?php echo $single; ?> or edit an existing one</i></span>
-
-    <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="float:right; right:0; display:inline-table;margin-top:10px; margin-right:10px;">Welcome,
-        <a href="<?php echo get_site_url() ?>/account/" style="color:dodgerblue">
-              <?php
-              echo $current_user->display_name;?>
-        </a>
-    </span>
-
 
 <div class="mdc-layout-grid FrontPageStyle">
     <div class="mdc-layout-grid__inner">
@@ -168,7 +162,7 @@ $login_username = $current_user->user_login;
                             <li class="mdc-form-field">
                                 <div class="mdc-radio">
                                     <input class="mdc-radio__native-control" type="radio" id="gameTypeVirtualProductionRadio"
-                                            name="projectTypeRadio" value="virtualproduction_games">
+                                           name="projectTypeRadio" value="virtualproduction_games">
                                     <div class="mdc-radio__background">
                                         <div class="mdc-radio__outer-circle"></div>
                                         <div class="mdc-radio__inner-circle"></div>
