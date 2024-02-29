@@ -89,7 +89,7 @@ easyrtc.events.on("easyrtcAuth", (socket, easyrtcid, msg, socketCallback, callba
 
         callback(err, connectionObj);
     });
-});
+})
 
 // To test, lets print the credential to the console for every room join!
 easyrtc.events.on("roomJoin", (connectionObj, roomName, roomParameter, callback) => {
@@ -100,20 +100,6 @@ easyrtc.events.on("roomJoin", (connectionObj, roomName, roomParameter, callback)
 // Start EasyRTC server
 easyrtc.listen(app, socketServer, null, (err, rtcRef) => {
     console.log("Initiated");
-
-    rtcRef.events.on("disconnect", (reason, details) => {
-        // the reason of the disconnection, for example "transport error"
-        console.log(reason);
-
-        // the low-level reason of the disconnection, for example "xhr post error"
-        console.log(details.message);
-
-        // some additional description, for example the status code of the HTTP response
-        console.log(details.description);
-
-        // some additional context, for example the XMLHttpRequest object
-        console.log(details.context);
-    });
 
     rtcRef.events.on("roomCreate", (appObj, creatorConnectionObj, roomName, roomOptions, callback) => {
         console.log("roomCreate fired! Trying to create: " + roomName);

@@ -430,7 +430,8 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
 
         // Set networked properties
         $enable_director_audio = ($projectType == 'vrexpo_games') ? 'false' : 'true';
-        $ascene->setAttribute("networked-scene", "room: room$scene_id; debug: true; audio: $enable_director_audio; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;");
+        $app_name = ($projectType == 'vrexpo_games') ? 'vrexpo' : 'vrodos';
+        $ascene->setAttribute("networked-scene", "app: $app_name; room: room$scene_id; debug: true; audio: $enable_director_audio; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;");
 
         if ($projectType == 'vrexpo_games') {
             //$a_entity_expo = $dom->createElement( "a-entity" );
