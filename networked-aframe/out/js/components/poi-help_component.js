@@ -87,7 +87,6 @@ AFRAME.registerComponent('help-chat', {
         //     console.log(evt.detail);
         // }, false);
         document.body.addEventListener('entityRemoved',evt => {
-            console.log('entityRemoved');
             roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
             let result = getUniqueNumbers(roomOccupants, connectedEntities);
             let i = 0;

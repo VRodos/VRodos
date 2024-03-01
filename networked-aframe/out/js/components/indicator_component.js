@@ -2,9 +2,11 @@ AFRAME.registerComponent('indicator-availability', {
     schema: { isfull: { default: "false" } },
     init: function () {
         let element = this.el;
+        this.initSync = false;
 
         document.addEventListener("chat-ready", (evt)=>{
             let id = element.getAttribute("id");
+            this.initSync = true;
             let  chatListCheck = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== id}).length;
             if(chatListCheck < 2)
             {
@@ -63,10 +65,10 @@ AFRAME.registerComponent('indicator-availability', {
         let chat_id = this.el.getAttribute("id");
         let  chatListUpdate = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== chat_id}).length;
 
-        if (chatListUpdate === 2 && this.data.isfull === "false"){
+        if (chatListUpdate === 2 || this.initSync == false){
             this.el.emit('chat-availability-change', "full", false);
             this.data.isfull = "true";
-        }else if (chatListUpdate < 2 && this.data.isfull === "true"){
+        }else if (chatListUpdate < 2){
             this.el.emit('chat-availability-change', "available", false);
             this.data.isfull = "false";
         }
