@@ -1,12 +1,22 @@
 AFRAME.registerComponent('indicator-availability', {
-    schema: { isfull: { default: "false" } },
+    schema: { 
+        isfull: { default: "false" },
+        num_participants: {type: "string", default: "2" }
+    },
     init: function () {
         let element = this.el;
+        this.initSync = false;
+        this.maxParticipants = Number(this.data.num_participants);
+
+        if (this.maxParticipants ===  -1)
+            this.maxParticipants = Number.MAX_SAFE_INTEGER;
+            
 
         document.addEventListener("chat-ready", (evt)=>{
             let id = element.getAttribute("id");
+            this.initSync = true;
             let  chatListCheck = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== id}).length;
-            if(chatListCheck < 2)
+            if(chatListCheck < this.maxParticipants)
             {
                 element.emit('chat-availability-change', "available", false);
             }else{
@@ -63,10 +73,10 @@ AFRAME.registerComponent('indicator-availability', {
         let chat_id = this.el.getAttribute("id");
         let  chatListUpdate = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== chat_id}).length;
 
-        if (chatListUpdate === 2 && this.data.isfull === "false"){
+        if (chatListUpdate === this.maxParticipants || this.initSync == false){
             this.el.emit('chat-availability-change', "full", false);
             this.data.isfull = "true";
-        }else if (chatListUpdate < 2 && this.data.isfull === "true"){
+        }else if (chatListUpdate < this.maxParticipants){
             this.el.emit('chat-availability-change', "available", false);
             this.data.isfull = "false";
         }

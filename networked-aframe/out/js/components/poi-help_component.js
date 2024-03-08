@@ -1,16 +1,24 @@
 AFRAME.registerComponent('help-chat', {
-    schema: { type: "string", default: "" },
+    schema: {
+        scene_id: {type: "string", default: "false" },
+        num_participants: {type: "string", default: "2" }
+    },
     init: function () {
         let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
         let chatInput = document.getElementById('chatInput');
         let chatLog = document.getElementById('chat-messages');
         let roomOccupants;
         let connectedEntities = [];
-        let room_id = this.data;
+        let room_id = this.data.scene_id;
+        let maxParticipants = Number(this.data.num_participants);
         this.el.setAttribute("isActive", "false");
         let elem = this.el;
         let currentUsers = 0;
         let syncComplete = false;
+
+        if (maxParticipants ===  -1)
+            maxParticipants = Number.MAX_SAFE_INTEGER;
+            
 
         const getUniqueNumbers = (arr1, arr2) => {
             let uniqueOfBoth = arr1.filter((ele) => {
@@ -87,7 +95,6 @@ AFRAME.registerComponent('help-chat', {
         //     console.log(evt.detail);
         // }, false);
         document.body.addEventListener('entityRemoved',evt => {
-            console.log('entityRemoved');
             roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
             let result = getUniqueNumbers(roomOccupants, connectedEntities);
             let i = 0;
@@ -230,7 +237,7 @@ AFRAME.registerComponent('help-chat', {
                 let  chatlist = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== elem.getAttribute("id")}).length;
                 chatLog.innerHTML +="<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connecting to private chat \'' + elem.getAttribute("title") + '\'' +"</pre>" ;
                
-                if (chatlist < 2 && syncComplete){
+                if (chatlist < maxParticipants && syncComplete){
                     chatLog.innerHTML += "<pre>" + '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected. Press X to leave ' + "</pre>"; 
                     
                     document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', elem.getAttribute("id"));
@@ -241,7 +248,7 @@ AFRAME.registerComponent('help-chat', {
                     startPrivateMessageNode(elem.getAttribute("id"), elem); 
                     startExitPrivateChatNode(elem.getAttribute("id"), elem); 
                                                 
-                }else if (chatlist >= 2 && syncComplete){
+                }else if (chatlist >= maxParticipants && syncComplete){
                     chatLog.innerHTML += "<pre>" +'<span style=" color: white">•</span> <span style="color: white">' +  ' Current chat is full. Please try again later ' + "</pre>";
                     document.getElementById("private-chat-button").style.visibility = 'hidden';
                     chatLogUpdate("public",elem.getAttribute("id"),elem, "Current chat is full. Returning to public chat");
