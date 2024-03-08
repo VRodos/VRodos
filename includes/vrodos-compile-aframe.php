@@ -1027,16 +1027,18 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $gltf_model->setAttribute( "gltf-model","#". $uuid );
                         $gltf_model->setAttribute( "id", $uuid );
                         $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
+                        $num_participants = $contentObject->poi_chat_participants;
                         if($contentObject->poi_chat_indicators == "enabled")
-                            $gltf_model->setAttribute("indicator-availability", "isfull: $chat_indicator_full");
+                            $gltf_model->setAttribute("indicator-availability", "isfull: $chat_indicator_full; num_participants: $num_participants");
 
 
                         $gltf_model->appendChild( $dom->createTextNode( '' ) );
                         $material = "";
+                       
                         $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
                         $gltf_model->setAttribute( "class", "override-materials raycastable hideable non-vr" );
                         $gltf_model->setAttribute( "material", $material );
-                        $gltf_model->setAttribute( "help-chat", "$scene_id" );
+                        $gltf_model->setAttribute( "help-chat", "scene_id: $scene_id; num_participants: $num_participants" );
                         $gltf_model->setAttribute( "clear-frustum-culling", "" );
                         $gltf_model->setAttribute( "preload", "auto" );
                         $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );

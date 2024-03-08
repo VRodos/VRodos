@@ -182,6 +182,7 @@ function get_assets($games_slugs){
                     break;
                 case 'poi-help':
                     $data_arr['poi_chat_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', true);
+                    $data_arr['poi_chat_participants'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatnum_people', true);
                     $data_arr['poi_chat_indicators'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true);
                     break;
             }
@@ -311,6 +312,7 @@ function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
                     break;
                 case 'poi-help':
                     $data_arr['poi_chat_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', true);
+                    $data_arr['poi_chat_participants'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatnum_people', true);
                     $data_arr['poi_chat_indicators'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true);
                     break;
             }

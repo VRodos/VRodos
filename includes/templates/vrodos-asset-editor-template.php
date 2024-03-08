@@ -251,6 +251,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         
         case 'poi-help':
             update_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', $_POST['poiChatTitle']);
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_chatnum_people', $_POST['poiChatNumPeople']);
             if(isset($_POST['poiChatIndicators']))
                 update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', $_POST['poiChatIndicators']);
             else
@@ -678,7 +679,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                             Between 3 - 25 characters
                         </p>
 
-                        <div class="mdc-touch-target-wrapper">
+                        <div class="mdc-touch-target-wrapper" style="margin-top: 0; float:left; width:100%;">
                             <h3 class="mdc-typography--title">Enable indicators</h3>
                             <div class="mdc-checkbox mdc-checkbox--touch">
                                 <input id="poiChatIndicators"type="checkbox"
@@ -690,11 +691,27 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                                 ?>
                                     value="enabled">
                                 <div class="mdc-checkbox__background">
-                                <div class="mdc-checkbox__mixedmark"></div>
+                                    <div class="mdc-checkbox__mixedmark"></div>
                                 </div>
                                 <div class="mdc-checkbox__ripple"></div>
                             </div>
                         </div>
+
+                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 50px; float:left; width: 25%;">
+                        <label for="poiChatNumPeople" class="mdc-textfield__label">
+                                Max. participants
+                        </label>
+                            <input id="poiChatNumPeople" type="number"
+                                title="Set to -1 for unlimited users" 
+                                class="mdc-textfield__input mdc-theme--text-primary-on-light"
+                                name="poiChatNumPeople"
+                                min="-1"
+                                value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chatnum_people', true);?>">
+                            <div class="mdc-textfield__bottom-line"></div>
+                         
+                        </div>
+                        
+                        
 
                     </div>
 
