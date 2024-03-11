@@ -681,19 +681,15 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         <div class="mdc-touch-target-wrapper" style="margin-top: 0; float:left; width:100%;">
                             <h3 class="mdc-typography--title">Enable indicators</h3>
-                            <div class="mdc-checkbox mdc-checkbox--touch">
+                            <div class="mdc-checkbox mdc-checkbox">
                                 <input id="poiChatIndicators"type="checkbox"
-                                    class="mdc-checkbox__native-control"
+                                    class=""
                                     name="poiChatIndicators"
                                   <?php  
                                   if (get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) == "enabled")
                                     echo "checked";
                                 ?>
                                     value="enabled">
-                                <div class="mdc-checkbox__background">
-                                    <div class="mdc-checkbox__mixedmark"></div>
-                                </div>
-                                <div class="mdc-checkbox__ripple"></div>
                             </div>
                         </div>
 
