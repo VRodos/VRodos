@@ -118,7 +118,6 @@ class VRodos_LoaderMulti {
                     if (resources3D[name]['category_name'].startsWith("light") || resources3D[name]['category_name'].startsWith("pawn"))
                         return;
                 }
-
                 // Load Camera object
                 if (name == 'avatarCamera') {
 
@@ -215,7 +214,7 @@ class VRodos_LoaderMulti {
 
                                 // Instantiate a loader
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
-                                document.getElementById("result_download").innerHTML = "Loading ...";
+                                document.getElementById("result_download").innerHTML = "Loading ...";                               
 
                                 loader.load(glbURL,
 

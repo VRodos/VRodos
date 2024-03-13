@@ -1011,3 +1011,10 @@ html [type="button"],
 .dg.main .close-button.close-bottom {
     display: none;
 }
+
+
+a.disabled {
+    pointer-events: none;
+    background-color: transparent;
+
+}

@@ -685,6 +685,7 @@ wp_head();
 
             // Add transform controls to scene
             envir.scene.add(transform_controls);
+            document.getElementById("compileGameBtn").classList.add("disabled");
 
             // Load Manager
             // Make progress bar visible
@@ -764,6 +765,7 @@ wp_head();
 
                 jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
+                document.getElementById("compileGameBtn").classList.remove("disabled");
             }; // End of manager
 
             // Loader of assets
