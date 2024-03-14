@@ -421,8 +421,6 @@ function vrodos_delete_asset3d_frontend_callback(){
 
         $containerFolder = wp_upload_dir()['basedir'].'/models/';
 
-        // ------- FBX --------
-
         // Get texture attachments of post
         $args = array(
             'posts_per_page' => 100,
@@ -436,8 +434,6 @@ function vrodos_delete_asset3d_frontend_callback(){
 
         foreach ($attachments_array as $k){
             $child_post_id = $k->ID;
-
-            //$fbxID = get_post_meta($asset_id, 'vrodos_asset3d_fbx', true); // True : single value
 
             // Delete the file from the system
             wp_delete_file($containerFolder.basename(get_attached_file($child_post_id)));
