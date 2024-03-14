@@ -1028,7 +1028,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $gltf_model->setAttribute( "id", $uuid );
                         $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
                         $num_participants = $contentObject->poi_chat_participants;
-                        if($contentObject->poi_chat_indicators == "enabled")
+                        if(filter_var($contentObject->poi_chat_indicators, FILTER_VALIDATE_BOOLEAN) === true)
                             $gltf_model->setAttribute("indicator-availability", "isfull: $chat_indicator_full; num_participants: $num_participants");
 
 
