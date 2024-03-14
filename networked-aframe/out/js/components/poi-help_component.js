@@ -19,6 +19,8 @@ AFRAME.registerComponent('help-chat', {
         if (maxParticipants ===  -1)
             maxParticipants = Number.MAX_SAFE_INTEGER;
 
+        let private_button_label = document.getElementById('private-chat-button-label');
+        private_button_label.innerHTML = this.el.getAttribute("title");
 
         const getUniqueNumbers = (arr1, arr2) => {
             let uniqueOfBoth = arr1.filter((ele) => {
@@ -159,8 +161,8 @@ AFRAME.registerComponent('help-chat', {
                 return function executeOnEvent (event) {
                     let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
                     let dateString = getChatCurrentTimeString();
-                    chatLog.innerHTML += '<span>' + dateString + ' Me: [Private Chat \'' + element.getAttribute("title") + '\'] </span><span>' + chatInput.value + '</span><br>';
-                    chatLogPrivateHistory.push(dateString + ' Me: [Private Chat \'' + element.getAttribute("title") + '\'] ' + chatInput.value);
+                    chatLog.innerHTML += '<span>' + dateString + ' Me: </span><span>' + chatInput.value + '</span><br>';
+                    chatLogPrivateHistory.push(dateString + ' Me: ' + chatInput.value);
                     NAF.connection.broadcastData(chat_id, {txt: chatInput.value, player: player_object })
                 }
             }
@@ -183,7 +185,7 @@ AFRAME.registerComponent('help-chat', {
                         chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected to public chat <br>';
                         publicChatIsActive = true;
                         chatLogPublicHistory.forEach((element)=> chatLog.innerHTML += "<span>" + element + "</span>");
-                        sendMsgChatBtn.addEventListener("click",sendPublicMessage);
+                        sendMsgChatBtn.addEventListener("click", sendPublicMessage);
                         document.getElementById("public-chat-button").classList.add('mdc-tab--active');
                         document.getElementById("private-chat-button").classList.remove('mdc-tab--active');
                     }
@@ -194,8 +196,8 @@ AFRAME.registerComponent('help-chat', {
             NAF.connection.subscribeToDataChannel(element.getAttribute("id"), (senderId, dataType, data, targetId) => {
                 let dateString = getChatCurrentTimeString();
                 if (element.getAttribute("currentState") == "private")
-                    chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: white">' + dateString + ' [Private Chat \'' + element.getAttribute("title") + '\'] ' + data.player.name + ": </span><span>" + data.txt + '</span> <br>';
-                chatLogPrivateHistory.push(dateString + ' [Private Chat \'' + element.getAttribute("title") + '\'] ' + data.player.name + ": " + data.txt);
+                    chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: white">' + dateString + ' ' + data.player.name + ": </span><span>" + data.txt + '</span> <br>';
+                chatLogPrivateHistory.push(dateString + ' ' + data.player.name + ": " + data.txt);
             } );
             sendMsgChatBtn.addEventListener("click", privateMessageHandlers[stepIndex] = onPrivateMessageStepIndex(stepIndex, element), true);
         };
