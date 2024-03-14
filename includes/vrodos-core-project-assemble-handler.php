@@ -465,14 +465,7 @@ function vrodos_delete_asset3d_frontend_callback(){
         // Delete attachment
         wp_delete_attachment($objID, true);
 
-        // ---------- Diffusion image ----------
-        $difID = get_post_meta($asset_id, 'vrodos_asset3d_diffimage', true);
 
-        // Delete the file from the system
-        wp_delete_file($containerFolder.basename(get_attached_file($difID)));
-
-        // Delete attachment
-        wp_delete_attachment($difID, true);
 
         // ---------- Screenshot ---------------
         $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
