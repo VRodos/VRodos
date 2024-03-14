@@ -1045,7 +1045,6 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $gltf_model->setAttribute( "title", $contentObject->poi_chat_title );
 
 
-
                         $ascene->appendChild( $gltf_model );
                         break;
 
