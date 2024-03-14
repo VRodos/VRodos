@@ -2,15 +2,15 @@
 
 // Local
 function loadButtonActions() {
-
+ 
     // Compile Project button
     jQuery("#compileGameBtn").click(function () {
         compileDialog.show();
-        saveChanges();
 
         // Pause Rendering
         isPaused = true;
         jQuery("#pauseRendering").get(0).childNodes[1].innerText = "play_arrow";
+        saveChanges();
     });
 
 

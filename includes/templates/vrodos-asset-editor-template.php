@@ -679,25 +679,23 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                             Between 3 - 25 characters
                         </p>
 
-                        <div class="mdc-touch-target-wrapper" style="margin-top: 0; float:left; width:100%;">
-                            <h3 class="mdc-typography--title">Enable indicators</h3>
-                            <div class="mdc-checkbox mdc-checkbox--touch">
-                                <input id="poiChatIndicators"type="checkbox"
-                                    class="mdc-checkbox__native-control"
-                                    name="poiChatIndicators"
-                                  <?php  
-                                  if (get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) == "enabled")
-                                    echo "checked";
-                                ?>
-                                    value="enabled">
-                                <div class="mdc-checkbox__background">
-                                    <div class="mdc-checkbox__mixedmark"></div>
+                        <div class="mdc-touch-target-wrapper" style="width:100%;">
+                            <div style="display:flex; align-items: center;">
+                                <h3 class="mdc-typography--title">Enable indicators:</h3>
+                                <div class="mdc-checkbox mdc-checkbox">
+                                    <input id="poiChatIndicators"type="checkbox"
+                                        class=""
+                                        name="poiChatIndicators"
+                                    <?php  
+                                    if (get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) == "enabled")
+                                        echo "checked";
+                                    ?>
+                                        value="enabled">
                                 </div>
-                                <div class="mdc-checkbox__ripple"></div>
                             </div>
                         </div>
 
-                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 50px; float:left; width: 25%;">
+                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="float:left; width: 25%;">
                         <label for="poiChatNumPeople" class="mdc-textfield__label">
                                 Max. participants
                         </label>
