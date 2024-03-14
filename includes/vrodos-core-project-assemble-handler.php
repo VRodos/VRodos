@@ -421,15 +421,6 @@ function vrodos_delete_asset3d_frontend_callback(){
 
         $containerFolder = wp_upload_dir()['basedir'].'/models/';
 
-        // ------- MTL --------
-        $mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true); // True : single value
-
-        // Delete the file from the system
-        wp_delete_file($containerFolder.basename(get_attached_file($mtlID)));
-
-        // Delete attachment
-        wp_delete_attachment($mtlID, true); // True : Not go to trash
-
         // ------- FBX --------
 
         // Get texture attachments of post
