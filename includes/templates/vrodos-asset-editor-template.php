@@ -652,11 +652,11 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                                       type="text"><?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_imgtxt_content', true);?></textarea>
 
                         </div>
-
                     </div>
 
                     <div id="poi_help_section" class="assetEditorColumn" style="display: none;">
-                        <!-- <h3 class="mdc-typography--title">Contact Form</h3> -->
+
+                        <h3 class="mdc-typography--title" style="margin-bottom: 5px;">Chat Options</h3>
 
                         <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
                             <input id="poiChatTitle" type="text"
@@ -666,7 +666,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                                    value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chattxt_title', true);?>">
 
                             <label for="poiChatTitle" class="mdc-textfield__label">
-                                Title
+                                Chat Title (appears on entering chat)
                             </label>
 
                             <div class="mdc-textfield__bottom-line"></div>
@@ -676,21 +676,20 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         </p>
 
 
-                        <h3 class="mdc-typography--title">Chat indicator</h3>
-
                         <?php $indicator_enabled = get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) ? 'checked' : ''; ?>
 
                         <input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="poiChatIndicators"
                                name="poiChatIndicators" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $indicator_enabled; ?>/>
-                        <label for="poiChatIndicators" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Enable Indicator</label>
+                        <label for="poiChatIndicators" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Chat Indicator</label>
 
+                        <h3 class="mdc-typography--title" style="margin-bottom: 5px;">Chat max participants</h3>
 
-                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" >
+                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
                             <label for="poiChatNumPeople" class="mdc-textfield__label">
-                                Max participants
+                                -1 for unlimited | Max: 8
                             </label>
                             <input id="poiChatNumPeople" type="number"
-                                   title="Set to -1 for unlimited users"
+                                   title="Number of participants"
                                    class="mdc-textfield__input mdc-theme--text-primary-on-light"
                                    name="poiChatNumPeople"
                                    min="-1"
