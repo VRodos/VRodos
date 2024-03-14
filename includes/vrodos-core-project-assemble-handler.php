@@ -443,14 +443,14 @@ function vrodos_delete_asset3d_frontend_callback(){
         }
 
 
-        // ---------- OBJ -------
-        $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true);
+        // ---------- GLB -------
+        $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
 
         // Delete the file from the system
-        wp_delete_file($containerFolder.basename(get_attached_file($objID)));
+        wp_delete_file($containerFolder.basename(get_attached_file($glbID)));
 
         // Delete attachment
-        wp_delete_attachment($objID, true);
+        wp_delete_attachment($glbID, true);
 
 
 
