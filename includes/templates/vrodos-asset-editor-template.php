@@ -248,15 +248,11 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         case 'poi-link':
             update_post_meta($asset_id, 'vrodos_asset3d_link', $_POST['assetLinkInput']);
             break;
-        
+
         case 'poi-help':
             update_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', $_POST['poiChatTitle']);
             update_post_meta($asset_id, 'vrodos_asset3d_poi_chatnum_people', $_POST['poiChatNumPeople']);
-            if(isset($_POST['poiChatIndicators']))
-                update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', $_POST['poiChatIndicators']);
-            else
-                update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', "disabled");
-            break;
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', isset($_POST['poiChatIndicators']));
 
         default:
             break;
@@ -679,37 +675,31 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                             Between 3 - 25 characters
                         </p>
 
-                        <div class="mdc-touch-target-wrapper" style="width:100%;">
-                            <div style="display:flex; align-items: center;">
-                                <h3 class="mdc-typography--title">Enable indicators:</h3>
-                                <div class="mdc-checkbox mdc-checkbox">
-                                    <input id="poiChatIndicators"type="checkbox"
-                                        class=""
-                                        name="poiChatIndicators"
-                                    <?php  
-                                    if (get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) == "enabled")
-                                        echo "checked";
-                                    ?>
-                                        value="enabled">
-                                </div>
-                            </div>
+
+                        <h3 class="mdc-typography--title">Chat indicator</h3>
+
+                        <?php $indicator_enabled = get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) ? 'checked' : ''; ?>
+
+                        <input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="poiChatIndicators"
+                               name="poiChatIndicators" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $indicator_enabled; ?>/>
+                        <label for="poiChatIndicators" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Enable Indicator</label>
+
+
+                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" >
+                            <label for="poiChatNumPeople" class="mdc-textfield__label">
+                                Max participants
+                            </label>
+                            <input id="poiChatNumPeople" type="number"
+                                   title="Set to -1 for unlimited users"
+                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
+                                   name="poiChatNumPeople"
+                                   min="-1"
+                                   max="8"
+                                   value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chatnum_people', true);?>">
+                            <div class="mdc-textfield__bottom-line"></div>
+
                         </div>
 
-                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="float:left; width: 25%;">
-                        <label for="poiChatNumPeople" class="mdc-textfield__label">
-                                Max. participants
-                        </label>
-                            <input id="poiChatNumPeople" type="number"
-                                title="Set to -1 for unlimited users" 
-                                class="mdc-textfield__input mdc-theme--text-primary-on-light"
-                                name="poiChatNumPeople"
-                                min="-1"
-                                value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chatnum_people', true);?>">
-                            <div class="mdc-textfield__bottom-line"></div>
-                         
-                        </div>
-                        
-                        
 
                     </div>
 
