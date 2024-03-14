@@ -986,12 +986,9 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         case "chat":
                             document.getElementById('ipr_section').style.display = "none";
-                            break;
-                        case "poi-help":
-                            document.getElementById('ipr_section').style.display = "none";
                             document.getElementById('poi_help_section').style.display = "block";
-
                             break;
+
                         case "poi-imagetext":
                             document.getElementById('poi_image_text_section').style.display = "block";
                             document.getElementById('poi_image_file_section').style.display = "block";
