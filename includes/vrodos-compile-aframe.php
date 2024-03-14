@@ -993,7 +993,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $ascene->appendChild( $gltf_model );
 
                         break;
-                    case 'poi-help':
+                    case 'chat':
 
                         $assets = $dom->getElementById('scene-assets');
 
