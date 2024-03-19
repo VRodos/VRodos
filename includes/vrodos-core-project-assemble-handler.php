@@ -475,6 +475,30 @@ function vrodos_delete_asset3d_frontend_callback(){
     wp_die();
 }
 
+function vrodos_hide_asset3d_frontend_callback(){
+    $asset_id = $_POST['asset_id'];
+    $gameSlug = $_POST['game_slug'];
+   
+    $containerFolder = wp_upload_dir()['basedir'].'/models/';
+
+    // Get texture attachments of post
+    $args = array(
+        'posts_per_page' => 100,
+        'order'          => 'DESC',
+        'post_parent'    => $asset_id
+    );
+
+    $attachments_array =  get_children( $args,OBJECT );  //returns Array ( [$image_ID].
+
+    update_post_meta($asset_id, 'vrodos_asset3d_hidden', true);
+
+    $is_deleted = get_post_meta($asset_id, 'vrodos_asset3d_hidden', true);
+
+    echo $is_deleted;
+
+    wp_die();
+}
+
 
 
 

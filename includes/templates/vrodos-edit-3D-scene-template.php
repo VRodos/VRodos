@@ -230,6 +230,13 @@ wp_localize_script( 'ajax-script_deleteasset', 'my_ajax_object_deleteasset',
     array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
 );
 
+wp_enqueue_script( 'ajax-script_hideasset', $pluginpath.
+    '/js_libs/ajaxes/hide_asset.js', array('jquery') );
+wp_localize_script( 'ajax-script_hideasset', 'my_ajax_object_hideasset',
+    array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+);
+
+
 // Fetch Asset
 wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.
     '/js_libs/ajaxes/fetch_asset.js', array('jquery') );
@@ -659,6 +666,7 @@ wp_head();
         jQuery(document).ready( function() {
 
             vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
+
             // make asset browser draggable: not working without get_footer
             // jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
 

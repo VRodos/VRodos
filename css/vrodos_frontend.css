@@ -64,6 +64,10 @@ label {
     opacity: .54;
 }
 
+.hide{
+    display:none !important;  
+}
+
 /* Breadcrumbs style */
 ul.EditPageBreadcrumb {
     list-style: none;

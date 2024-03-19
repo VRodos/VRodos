@@ -183,9 +183,11 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     draggable_string = draggable_string.concat('data-'+Object.keys(f)[entry] + '="' + Object.values(f)[entry]) + '" ';
                 }
 
-
-
-                let file = jQuery('<li draggable="true" id="asset-' + f['asset_id'] + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
+                let display_option;
+                if (f['is_deleted'] == 1){
+                    display_option = 'none';
+                }
+                let file = jQuery('<li style="display:' + display_option + ';" draggable="true" id="asset-' + f['asset_id'] + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
                     ' title="Drag the card into the plane"' +
                     draggable_string +'>' + img +
 
@@ -206,7 +208,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
                     (f['is_joker'] === 'false' ?
                             ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-' + f['asset_id']
-                                + '" onclick="vrodos_deleteAssetAjax(' +
+                                + '" onclick="vrodos_hideAssetAjax(' +
                                 f['asset_id'] + ', \'' + gameProjectSlug + '\',' + f['is_cloned'] + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
                             ''
                     )

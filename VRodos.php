@@ -904,6 +904,8 @@ add_action( 'wp_ajax_vrodos_fetch_video_action', 'vrodos_fetch_video_action_call
 // AJAX for delete asset
 add_action('wp_ajax_vrodos_delete_asset_action', 'vrodos_delete_asset3d_frontend_callback');
 
+// AJAX for hide asset
+add_action('wp_ajax_vrodos_hide_asset_action', 'vrodos_hide_asset3d_frontend_callback');
 // AJAX for fetching assets
 
 

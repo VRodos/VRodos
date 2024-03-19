@@ -197,6 +197,10 @@ class ParseJSON
                     $value->is_joker = 'false';
                 }
 
+                if (!property_exists($value, 'is_deleted')) {
+                    $value->is_deleted = 'false';
+                }
+
                 $r_x = $value->rotation[0];
                 $r_y = $value->rotation[1];
                 $r_z = $value->rotation[2];
