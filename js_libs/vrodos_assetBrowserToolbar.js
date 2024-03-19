@@ -204,13 +204,13 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                                 '\'" class="deleteAssetbutton mdc-button mdc-button--dense">View</a>')
                     ) +
 
-                    (f['is_joker'] === 'false' ?
-                            ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-' + f['asset_id']
-                                + '" onclick="vrodos_deleteAssetAjax(' +
-                                f['asset_id'] + ', \'' + gameProjectSlug + '\',' + f['is_cloned'] + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
-                            ''
-                    )
-                    +
+                    // (f['is_joker'] === 'false' ?
+                    //         ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-' + f['asset_id']
+                    //             + '" onclick="vrodos_deleteAssetAjax(' +
+                    //             f['asset_id'] + ', \'' + gameProjectSlug + '\',' + f['is_cloned'] + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
+                    //         ''
+                    // )
+                    // +
 
                     '</span>' +
                     '<div id="deleteAssetProgressBar-' + f['asset_id'] + '" class="progressSlider" style="position: absolute;bottom: 0;display: none;">\n' +
