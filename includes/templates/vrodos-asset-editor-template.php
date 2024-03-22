@@ -692,13 +692,13 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
                             <label for="poiChatNumPeople" class="mdc-textfield__label">
-                                -1 for unlimited | Max: 8
+                                Max: 8
                             </label>
                             <input id="poiChatNumPeople" type="number"
                                    title="Number of participants"
                                    class="mdc-textfield__input mdc-theme--text-primary-on-light"
                                    name="poiChatNumPeople"
-                                   min="-1"
+                                   min="2"
                                    max="8"
                                    value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chatnum_people', true);?>">
                             <div class="mdc-textfield__bottom-line"></div>
