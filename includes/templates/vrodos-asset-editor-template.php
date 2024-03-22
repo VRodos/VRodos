@@ -164,7 +164,6 @@ $goBackToLink = $scene_id != 0 ?
     <script>
         let path_url = null;
         let glb_file_name = null;
-        let poi_image_filename = null;
         let no_img_path = '<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)); ?>';
     </script>
 
@@ -298,7 +297,6 @@ if($asset_id != null) {
 
     <script>
         glb_file_name= "<?php echo $asset_3d_files['glb'];?>";
-        poi_image_filename = "<?php wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_poi_imgtxt_image",true) );?>"
     </script>
 
     <?php
