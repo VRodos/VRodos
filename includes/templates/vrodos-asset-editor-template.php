@@ -164,6 +164,7 @@ $goBackToLink = $scene_id != 0 ?
     <script>
         let path_url = null;
         let glb_file_name = null;
+        let poi_image_filename = null;
         let no_img_path = '<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)); ?>';
     </script>
 
@@ -238,9 +239,11 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
         case 'poi-imagetext':
 
-            if (isset($_FILES['imageFileInput'])) {
+            $existing_img = $_FILES['imageFileInput'];
+            if ( $existing_img['error'] != 4  ) {
                 vrodos_create_asset_addImages_frontend($asset_id, $_FILES['imageFileInput']);
             }
+
             update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', sanitize_text_field($_POST['poiImgTitle']));
             update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', sanitize_text_field($_POST['poiImgDescription']));
 
@@ -295,6 +298,7 @@ if($asset_id != null) {
 
     <script>
         glb_file_name= "<?php echo $asset_3d_files['glb'];?>";
+        poi_image_filename = "<?php wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_poi_imgtxt_image",true) );?>"
     </script>
 
     <?php
@@ -765,8 +769,8 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         <img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo $imagePoiImageURL; ?>" alt="Asset Image Text POI image">
 
-                        <input type="file" name="imageFileInput" value="<?php echo $imagePoiImageURL ?>"
-                               id="imageFileInput" accept="image/png, image/jpg,  image/jpeg"/>
+                        <input type="file" name="imageFileInput" value=""
+                               id="imageFileInput" accept="image/png, image/jpg, image/jpeg"/>
 
                     </div>
 
@@ -1071,11 +1075,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                 }
 
 
-
-
                 document.getElementById('imageFileInput').onchange = function (evt) {
-
-                    console.log(evt);
 
                     let tgt = evt.target || window.event.srcElement,
                         files = tgt.files;
@@ -1089,9 +1089,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         fr.readAsDataURL(files[0]);
                     }
                     else {
-
                         document.getElementById('imagePoiPreviewImg').src = no_img_path;
-
                     }
                 }
 
