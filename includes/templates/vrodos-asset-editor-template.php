@@ -164,6 +164,7 @@ $goBackToLink = $scene_id != 0 ?
     <script>
         let path_url = null;
         let glb_file_name = null;
+        let no_img_path = '<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)); ?>';
     </script>
 
 <?php
@@ -272,7 +273,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
 //---------------------------- End of handle Submit  -------------------------
 
-// When asset was created in the past and now we want to edit it. We should get the attachments obj, mtl
+// When asset was created in the past and now we want to edit it. We should get the attachments glb
 if($asset_id != null) {
 
     // Get post
@@ -756,6 +757,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         } else {
                             $imagePoiImageURL = wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_poi_imgtxt_image",true) );
 
+
                             if ($imagePoiImageURL == false) {
                                 $imagePoiImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
                             }
@@ -763,7 +765,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         <img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo $imagePoiImageURL; ?>" alt="Asset Image Text POI image">
 
-                        <input type="file" name="imageFileInput" value=""
+                        <input type="file" name="imageFileInput" value="<?php echo $imagePoiImageURL ?>"
                                id="imageFileInput" accept="image/png, image/jpg,  image/jpeg"/>
 
                     </div>
@@ -1068,7 +1070,13 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     return slug;
                 }
 
+
+
+
                 document.getElementById('imageFileInput').onchange = function (evt) {
+
+                    console.log(evt);
+
                     let tgt = evt.target || window.event.srcElement,
                         files = tgt.files;
 
@@ -1081,8 +1089,9 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         fr.readAsDataURL(files[0]);
                     }
                     else {
-                        // fallback -- perhaps submit the input to an iframe and temporarily store
-                        // them on the server until the user's session ends.
+
+                        document.getElementById('imagePoiPreviewImg').src = no_img_path;
+
                     }
                 }
 
