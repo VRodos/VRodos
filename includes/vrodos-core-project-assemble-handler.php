@@ -480,6 +480,7 @@ function vrodos_delete_asset3d_frontend_callback(){
 
 //Fetch GLB Asset
 function vrodos_fetch_glb_asset3d_frontend_callback(){
+    wp_reset_postdata();
 
     $asset_id = $_POST['asset_id'];
 

@@ -63,7 +63,6 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
 add_action('wp_enqueue_scripts', 'vrodos_loadAsset3DManagerScriptsAndStyles' );
 
 // End Of Scripts Loading
-
 $perma_structure = get_option('permalink_structure');
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
 if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
@@ -176,6 +175,7 @@ $goBackToLink = $scene_id != 0 ?
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'],
         'post_nonce')) {
 
+    
     $assetTitle = isset($_POST['assetTitle']) ? esc_attr(strip_tags($_POST['assetTitle'])) : '';
     $assetCatID = intval($_POST['term_id']); //ID of Asset Category (hidden input)
     $assetCatTerm = get_term_by('id', $assetCatID, 'vrodos_asset3d_cat');
