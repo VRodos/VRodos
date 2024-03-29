@@ -20,8 +20,10 @@ function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
     document.getElementById("glbFileInput").value = "";
 
     // Clear select 3D files input
-    if (document.getElementById("fileUploadInput"))
+    if (document.getElementById("fileUploadInput")){
         document.getElementById("fileUploadInput").value = "";
+    }
+        
 
     document.getElementById("sshotFileInput").value = "";
 

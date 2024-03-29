@@ -212,6 +212,7 @@ class VRodos_LoaderMulti {
                                     glbURL = pluginPath + '/assets/objects/tv_flat_scaled_rotated.glb';
 
 
+                                    console.log(glbURL);
                                 // Instantiate a loader
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
                                 document.getElementById("result_download").innerHTML = "Loading ...";                               
@@ -239,7 +240,7 @@ class VRodos_LoaderMulti {
                                         }
 
                                         envir.scene.add(object);
-
+                                        object.glb_path = glbURL;
                                     },
                                     // called while loading is progressing
                                     function (xhr) {
@@ -430,6 +431,8 @@ function setObjectProperties(object, name, resources3D) {
     // avoid revealing the full path. Use the relative in the saving format.
     object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
     object['glb_id'] = resources3D[name]['glb_id'];
+
+    console.log(object.fnPath);
 
     // Not needed anymore, we dont override textures anymore
     /*if (resources3D[name]['overrideMaterial'] === "true") {

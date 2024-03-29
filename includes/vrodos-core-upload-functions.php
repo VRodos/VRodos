@@ -464,19 +464,19 @@ function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $The
         mkdir( $upload_path, 0777, true );
     }
 
-    //$hashed_filename = md5( $textTitle . microtime() ) . '_' . $textTitle.'.txt';
+    $hashed_filename = md5( $textTitle . microtime() ) . '_' . $textTitle.'.txt';
 
-    $hashed_filename = $parent_post_id . '_' . $textTitle.'.txt';
+    //$hashed_filename = $parent_post_id . '_' . $textTitle.'.txt';
 
-    if ($textContent) {
+    // if ($textContent) {
         file_put_contents($upload_path . $hashed_filename, $textContent);
         $type = 'text/plain';
-    } else {
+    // } else {
         move_uploaded_file(
             $TheFiles['multipleFilesInput']['tmp_name'][$index_file],
             $upload_path . $hashed_filename);
         $type = 'application/octet-stream';
-    }
+    // }
 
     //------------------- 2 Add post to DB as 'attachment' ----------------------------
     $file_url = $upload_dir['baseurl'].'/models/'. $project_id . '/'.$hashed_filename;
@@ -488,6 +488,8 @@ function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $The
         'post_status' => 'inherit',
         'guid' => $file_url      //$file_return['url']
     );
+
+    
 
     $attachment_id = wp_insert_attachment( $attachment, $file_url, $parent_post_id );
 
