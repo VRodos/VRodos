@@ -502,7 +502,7 @@ function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $The
     $fbxpath = str_replace('\\','/', $upload_path . $hashed_filename);
 
     update_post_meta($attachment_id, '_wp_attached_file', $fbxpath);
-    echo '<script>console.log("Upload: ' . $fbxpath . '")</script>';
+    
 
     remove_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
 
