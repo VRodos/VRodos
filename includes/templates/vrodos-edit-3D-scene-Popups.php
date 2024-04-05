@@ -222,7 +222,7 @@
         Sun Color in Hex:</label>
 
     <input type="text" id="sunColor" name="sunColor" title="Set a hex number, ffffff is the default (white)"
-           value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateSunColorPickerLight(this)'}"
+           value="ffff00" maxlength="6" class="jscolor {onFineChange:'updateSunColorPickerLight(this)'}"
            style="width: 70px;display: inline-block;padding: 2px;text-align: right;" />
     <label for="castShadow" class="mdc-textfield__label"
            style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
