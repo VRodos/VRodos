@@ -235,6 +235,7 @@ class VRodos_LightsPawn_Loader {
                     lightSun.isSelectableMesh = true;
                     lightSun.isLight = true;
                     lightSun.castShadow = true;
+                    lightSun.sunSky = resources3D[name]['sunSky'];
                     lightSun.locked = resources3D[name]['locked'];
                     lightSun.castingShadow = resources3D[name]['castingShadow'];
                     lightSun.shadowMapHeight = resources3D[name]['shadowMapHeight'];

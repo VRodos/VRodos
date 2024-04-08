@@ -597,7 +597,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
                         $a_sun_sky->setAttribute("material", $materialSunSky);
 
-                        $ascene->appendChild( $a_sun_sky );
+                        if ($contentObject->sunSky == "1"){
+                            $ascene->appendChild( $a_sun_sky );
+                        }
+
                         $ascene->appendChild( $a_light );
 
                         break;

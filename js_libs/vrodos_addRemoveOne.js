@@ -20,6 +20,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         let lightSun = new THREE.DirectionalLight(0xffffff, 1); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
         lightSun.castShadow = true;
+        lightSun.sunSky = true;
         lightSun.castingShadow = true;
         lightSun.shadowMapHeight = "1024";
         lightSun.shadowMapWidth = "1024";
