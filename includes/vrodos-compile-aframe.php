@@ -607,15 +607,22 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $a_light->appendChild( $dom->createTextNode( '' ) );
                         $fileOperations->setAffineTransformations($a_light, $contentObject);
 
+                        $a_light_target = $dom->createElement( "a-entity" );
+                        $a_light_target->appendChild( $dom->createTextNode( '' ) );
+                        $a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );
+                        $a_light_target->setAttribute("id", $uuid."target");
+
                         $a_light->setAttribute("light", "type:spot;".
                             "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-                            "intensity:".$contentObject->lightintensity.";".
+                            "intensity: 2".
                             "distance:".$contentObject->lightdistance.";".
                             "decay:".$contentObject->lightdecay.";".
                             "angle:".($contentObject->lightangle * 180 / 3.141) .";".
-                            "penumbra:".$contentObject->lightpenumbra.";".
-                            "target:#".$contentObject->lighttargetobjectname
+                            "penumbra:".$contentObject->lightpenumbra.";"
                         );
+
+                        $a_light->setAttribute("target", "#".$uuid."target");
+                        $ascene->appendChild($a_light_target);
 
                         $ascene->appendChild( $a_light );
                         break;

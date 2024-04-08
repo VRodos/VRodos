@@ -248,6 +248,16 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSpot['category_name'] = "lightSpot";
         lightSpot.isLight = true;
 
+        let lightTargetSpot = new THREE.Object3D();
+
+        lightTargetSpot.add(new THREE.Mesh(
+            new THREE.SphereBufferGeometry(0.5, 16, 8),
+            new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+        ));
+
+        let trs_tmp = resources3D[nameModel]['trs'];
+
+
         //// Add Lamp Helper
         let lampSphere = new THREE.Mesh(
             new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
@@ -263,20 +273,35 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // end of sphere
 
         // Helper
-        let lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0x555500);
-        lightSpotHelper.isLightHelper = true;
-        lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
-        lightSpotHelper['category_name'] = 'lightHelper';
-        lightSpotHelper.parentLightName = lightSpot.name;
+        // let lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0x555500);
+        // lightSpotHelper.isLightHelper = true;
+        // lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
+        // lightSpotHelper['category_name'] = 'lightHelper';
+        // lightSpotHelper.parentLightName = lightSpot.name;
+
+        
+        lightTargetSpot.isSelectableMesh = true;
+        lightTargetSpot.name = "lightTargetSpot_" + lightSpot.name;
+        lightTargetSpot['category_name'] = "lightTargetSpot";
+        lightTargetSpot.isLightTargetSpot = true;
+        lightTargetSpot.isLight = false;
+        lightTargetSpot.position = new THREE.Vector3(0,0,0);
+        lightTargetSpot.parentLight = lightSpot;
+        // lightTargetSpot.parentLightHelper = lightSpotHelper;
+
+        lightSpot.target.position = lightTargetSpot.position;
+
 
         envir.scene.add(lightSpot);
-        envir.scene.add(lightSpotHelper);
+        // envir.scene.add(lightSpotHelper);
+        envir.scene.add(lightTargetSpot);
 
-        lightSpotHelper.update();
+        lightSpot.target.updateMatrixWorld();
+        // lightSpotHelper.update();
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = resources3D[nameModel]['trs'];
+        //let trs_tmp = resources3D[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -315,6 +340,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add in scene
         addInHierarchyViewer(insertedObject);
+        addInHierarchyViewer(lightTargetSpot);
+
+        lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
 
         triggerAutoSave();
 

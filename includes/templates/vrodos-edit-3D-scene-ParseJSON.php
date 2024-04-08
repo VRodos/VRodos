@@ -131,9 +131,10 @@ class ParseJSON
                 $r_y = $value->rotation[1];
                 $r_z = $value->rotation[2];
 
-                $target_position_x = 0;
-                $target_position_y = 0;
-                $target_position_z = 0;
+                $target_position_x = $value->targetposition[0];
+                $target_position_y = $value->targetposition[1];
+                $target_position_z = $value->targetposition[2];
+
 
                 $light_color_r = $value->lightcolor[0];
                 $light_color_g = $value->lightcolor[1];
@@ -141,7 +142,7 @@ class ParseJSON
 
                 $value->lightangle = 0.7;
                 $value->lightpenumbra = 0;
-                $value->lighttargetobjectname = '';
+                // $value->lighttargetobjectname = '';
 
 
                 $value->path = "";

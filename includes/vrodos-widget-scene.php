@@ -514,12 +514,12 @@ class vrodos_3d_widget_scene extends WP_Widget {
         
                 // Set Target light for Spots
                 for (let n in resources3D) {
-                    (function (name) {
-                        if (resources3D[name]['categoryName'] === 'lightSpot') {
-                            let lightSpot = envir.scene.getObjectByName(name);
-                            lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
-                        }
-                    })(n);
+                    // (function (name) {
+                    //     if (resources3D[name]['categoryName'] === 'lightSpot') {
+                    //         let lightSpot = envir.scene.getObjectByName(name);
+                    //         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
+                    //     }
+                    // })(n);
                 }
         
             }; // End of manager
