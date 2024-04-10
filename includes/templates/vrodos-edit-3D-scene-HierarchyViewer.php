@@ -238,7 +238,7 @@
 
                 <input id="jscolorpickFog" class=" mdc-textfield__input jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px" >
 
-                <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input colorElement" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
+                <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input colorElement" form="3dAssetForm" value="" style="visibility: hidden; height: 20px; width:20px;">
             </span>
 
         <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Near limit (linear only):

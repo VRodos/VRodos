@@ -797,8 +797,19 @@ wp_head();
             if (resources3D["enableAvatar"]) {
                 document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
                 envir.scene.enableAvatar = JSON.parse(resources3D["enableAvatar"]);
+            }         
+            // if (resources3D["fogtype"]) {
+            //     //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
+            //     envir.scene.fogtype = JSON.parse(resources3D["fogtype"]);
+            // }
+            if (resources3D["fogCategory"]) {
+                //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
+                envir.scene.fogCategory = JSON.parse(resources3D["fogCategory"]);
+                // envir.scene.fogcolor = JSON.parse(resources3D["fogcolor"]);
+                envir.scene.fognear = JSON.parse(resources3D["fognear"]);
+                envir.scene.fogfar = JSON.parse(resources3D["fogfar"]);
+                envir.scene.fogdensity = JSON.parse(resources3D["fogdensity"]);
             }
-            
             if (resources3D["disableMovement"]) {
                 document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
                 envir.scene.disableMovement = JSON.parse(resources3D["disableMovement"]);
