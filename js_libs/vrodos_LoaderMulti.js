@@ -173,18 +173,18 @@ class VRodos_LoaderMulti {
                     else{
                         document.getElementById('RadioNoFog').checked = true;
                     }
-                    if (resources3D["fogcolor"]){
-                        document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D["fogcolor"]);
-                    }
-                    if (resources3D["fogfar"]){
-                        document.getElementById('FogFar').value = JSON.parse(resources3D["fogfar"]);
-                    }
-                    if (resources3D["fognear"]){
-                        document.getElementById('FogNear').value = JSON.parse(resources3D["fognear"]);
-                    }
-                    if (resources3D["fogdensity"]){
-                        document.getElementById('FogDensity').value = JSON.parse(resources3D["fogdensity"]);
-                    }
+                    // if (resources3D["fogcolor"]){
+                    //     document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D["fogcolor"]);
+                    // }
+                    // if (resources3D["fogfar"]){
+                    //     document.getElementById('FogFar').value = JSON.parse(resources3D["fogfar"]);
+                    // }
+                    // if (resources3D["fognear"]){
+                    //     document.getElementById('FogNear').value = JSON.parse(resources3D["fognear"]);
+                    // }
+                    // if (resources3D["fogdensity"]){
+                    //     document.getElementById('FogDensity').value = JSON.parse(resources3D["fogdensity"]);
+                    // }
                     //updateFog("undo");
                 }
 

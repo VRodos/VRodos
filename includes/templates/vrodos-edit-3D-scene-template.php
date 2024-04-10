@@ -806,9 +806,10 @@ wp_head();
                 //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
                 envir.scene.fogCategory = JSON.parse(resources3D["fogCategory"]);
                 // envir.scene.fogcolor = JSON.parse(resources3D["fogcolor"]);
-                envir.scene.fognear = JSON.parse(resources3D["fognear"]);
-                envir.scene.fogfar = JSON.parse(resources3D["fogfar"]);
-                envir.scene.fogdensity = JSON.parse(resources3D["fogdensity"]);
+                
+                envir.scene.fognear = resources3D["fognear"];
+                envir.scene.fogfar = resources3D["fogfar"];
+                envir.scene.fogdensity = resources3D["fogdensity"];
             }
             if (resources3D["disableMovement"]) {
                 document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
