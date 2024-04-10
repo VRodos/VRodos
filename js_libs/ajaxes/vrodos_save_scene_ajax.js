@@ -21,7 +21,9 @@ function vrodos_saveSceneAjax() {
             let enableSaveFunctionality = () => {
                 save_scene_btn.innerHTML = "Save Scene";
                 save_scene_btn.classList.remove("LinkDisabled");
+                document.getElementById("compileGameBtn").classList.remove("disabled");
             };
+            document.getElementById("compileGameBtn").classList.add("disabled");
             setTimeout(enableSaveFunctionality,2000);
         },
         error: function (xhr, ajaxOptions, thrownError) {

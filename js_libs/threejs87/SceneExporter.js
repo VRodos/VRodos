@@ -742,7 +742,7 @@ THREE.SceneExporter.prototype = {
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
             '		"fogCategory" : "' + (envir.scene.fogCategory ? envir.scene.fogCategory : 0) + '",',
-            '       "fogcolor" : "' + (envir.scene.fogcolor ? envir.scene.fogcolor : '#000000') + '",',
+            '       "fogcolor" : "' + (envir.scene.fogcolor ? envir.scene.fogcolor : '#FFFFFF') + '",',
             '       "fogfar" : "' + (envir.scene.fogfar ? envir.scene.fogfar : '1000') + '",' ,
             '       "fognear" : "' + (envir.scene.fognear ? envir.scene.fognear : '0') + '",', 
             '       "fogdensity" : "' + (envir.scene.fogdensity ? envir.scene.fogdensity : '0.00000001') + '",',

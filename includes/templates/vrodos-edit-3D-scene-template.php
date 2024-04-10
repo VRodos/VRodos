@@ -378,7 +378,7 @@ wp_head();
 
                     <!-- Compile Button -->
                     <a id="compileGameBtn"
-                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right"
+                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right "
                        data-mdc-auto-init="MDCRipple"
                        title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
                         Build Project
