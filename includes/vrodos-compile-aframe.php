@@ -350,12 +350,17 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $fogstring = substr($content, strpos($content, 'fog='), strpos($content, 'renderer=')-9-strpos($content, 'fog='));
 
         // Replace Fog string
-        if (isset($scene_json->metadata->fogtype)) {
-            if ($scene_json->metadata->fogtype != "none") {
+        if (isset($scene_json->metadata->fogCategory)) {
+            if ($scene_json->metadata->fogCategory != "0") {
+
+                if ($scene_json->metadata->fogCategory === "1")
+                    $fogtype = "linear";
+                else
+                    $fogtype = "exponential";
                 $content = str_replace( $fogstring,
 
-                    'fog="type: ' . $scene_json->metadata->fogtype .
-                    '; color: ' . $scene_json->metadata->fogcolor .
+                    'fog="type: ' . $fogtype .
+                    '; color: #' . $scene_json->metadata->fogcolor .
                     '; far: ' . $scene_json->metadata->fogfar .
                     '; density: ' . ( 1.5 * $scene_json->metadata->fogdensity ) .
                     '; near: ' . $scene_json->metadata->fognear . '"',
@@ -597,7 +602,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
                         $a_sun_sky->setAttribute("material", $materialSunSky);
 
-                        $ascene->appendChild( $a_sun_sky );
+                        if ($contentObject->sunSky == "1"){
+                            $ascene->appendChild( $a_sun_sky );
+                        }
+
                         $ascene->appendChild( $a_light );
 
                         break;

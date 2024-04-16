@@ -109,8 +109,83 @@ class VRodos_LoaderMulti {
                     return;
 
                 // Fog is not parsed here but in LightsPawn_Loader
-                if (name === 'fogtype' || name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity') {
-                    return;
+                if (name === 'fogCategory') {
+                    if (resources3D[name]){
+                        //document.getElementById('FogType').value = resources3D[name].fogtype;
+                        var linear_elems = document.getElementsByClassName('linearElement');
+                        var expo_elems = document.getElementsByClassName('exponentialElement');
+                        var color_elems = document.getElementsByClassName('colorElement');
+
+                        console.log(linear_elems);
+                        if (resources3D[name] === "0") {
+                            document.getElementById('RadioNoFog').checked = true;
+                            for (var i = 0; i < linear_elems.length; ++i) {
+                                var item = linear_elems[i];  
+                                item.style.display="none";
+                            }
+                    
+                            for (var i = 0; i < expo_elems.length; ++i) {
+                                var item = expo_elems[i];  
+                                item.style.display="none";
+                            }
+                            document.getElementById("FogValues").style.display="none";  
+                            for (var i = 0; i < color_elems.length; ++i) {
+                                var item = color_elems[i];  
+                                item.style.display="none";
+                            }
+                            document.getElementById('FogType').value = "none";
+                        } else if ( resources3D[name] === "1") {
+                            document.getElementById('RadioLinearFog').checked = true;
+                            document.getElementById("FogValues").style.display="block";
+
+                            for (var i = 0; i < linear_elems.length; ++i) {
+                                var item = linear_elems[i];  
+                                item.style.display="block";
+                            }
+                    
+                            for (var i = 0; i < expo_elems.length; ++i) {
+                                var item = expo_elems[i];  
+                                item.style.display="none";
+                            }
+                            for (var i = 0; i < color_elems.length; ++i) {
+                                var item = color_elems[i];  
+                                item.style.display="block";
+                            }
+                            document.getElementById('FogType').value = "linear";
+                        } else if ( resources3D[name] === "2") {
+                            document.getElementById('FogType').value = "exponential";
+                            for (var i = 0; i < linear_elems.length; ++i) {
+                                var item = linear_elems[i];  
+                                item.style.display="none";
+                            }
+                            for (var i = 0; i < expo_elems.length; ++i) {
+                                var item = expo_elems[i];  
+                                item.style.display="block";
+                            }
+                            for (var i = 0; i < color_elems.length; ++i) {
+                                var item = color_elems[i];  
+                                item.style.display="block";
+                            }
+                            document.getElementById("FogValues").style.display="block";
+                            document.getElementById('RadioExponentialFog').checked =true;
+                        }
+                    }
+                    else{
+                        document.getElementById('RadioNoFog').checked = true;
+                    }
+                    // if (resources3D["fogcolor"]){
+                    //     document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D["fogcolor"]);
+                    // }
+                    // if (resources3D["fogfar"]){
+                    //     document.getElementById('FogFar').value = JSON.parse(resources3D["fogfar"]);
+                    // }
+                    // if (resources3D["fognear"]){
+                    //     document.getElementById('FogNear').value = JSON.parse(resources3D["fognear"]);
+                    // }
+                    // if (resources3D["fogdensity"]){
+                    //     document.getElementById('FogDensity').value = JSON.parse(resources3D["fogdensity"]);
+                    // }
+                    //updateFog("undo");
                 }
 
                 // Lights are in a different loop
@@ -282,23 +357,82 @@ class VRodos_LoaderMulti {
                             document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D[name].disableMovement);
                             envir.scene.disableMovement = JSON.parse(resources3D[name].disableMovement);      
                         }
+                       
 
-                        if (resources3D[name].fogtype){
-                            document.getElementById('FogType').value = resources3D[name].fogtype;
+                        if (resources3D[name].fogCategory){
+                            //document.getElementById('FogType').value = resources3D[name].fogtype;
 
-                            if (resources3D[name].fogtype == "none") {
+                            var linear_elems = document.getElementsByClassName('linearElement');
+                            var expo_elems = document.getElementsByClassName('exponentialElement');
+                            var color_elems = document.getElementsByClassName('colorElement');
+                            
+                            
+
+                            console.log(resources3D[name].fogCategory);
+                            if (resources3D[name].fogCategory === "0") {
                                 document.getElementById('RadioNoFog').checked = true;
-                            } else if ( resources3D[name].fogtype == "linear") {
+                                document.getElementById('FogType').value = "none";
+
+                                for (var i = 0; i < linear_elems.length; ++i) {
+                                    var item = linear_elems[i];  
+                                    item.style.display="none";
+                                }
+                                for (var i = 0; i < expo_elems.length; ++i) {
+                                    var item = expo_elems[i];  
+                                    item.style.display="none";
+                                }
+                                for (var i = 0; i < color_elems.length; ++i) {
+                                    var item = color_elems[i];  
+                                    item.style.display="none";
+                                }
+                                document.getElementById("FogValues").style.display="none";
+                            } else if ( resources3D[name].fogCategory === "1") {
                                 document.getElementById('RadioLinearFog').checked = true;
-                            } else if ( resources3D[name].fogtype == "exponential") {
+                                document.getElementById('FogType').value = "linear";
+                                document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D[name].fogcolor);
+                                document.getElementById('FogNear').value = JSON.parse(resources3D[name].fognear);
+                                document.getElementById('FogFar').value = JSON.parse(resources3D[name].fogfar);
+
+                                for (var i = 0; i < linear_elems.length; ++i) {
+                                    var item = linear_elems[i];  
+                                    item.style.display="block";
+                                }
+                                for (var i = 0; i < expo_elems.length; ++i) {
+                                    var item = expo_elems[i];  
+                                    item.style.display="none";
+                                }
+                                for (var i = 0; i < color_elems.length; ++i) {
+                                    var item = color_elems[i];  
+                                    item.style.display="block";
+                                }
+                                document.getElementById("FogValues").style.display="none";
+                            } else if ( resources3D[name].fogCategory === "2") {
+                                document.getElementById('FogType').value = "exponential";
                                 document.getElementById('RadioExponentialFog').checked =true;
+                                document.getElementById('FogDensity').value = JSON.parse(resources3D[name].fogdensity);
+                                document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D[name].fogcolor);
+                               
+
+                                for (var i = 0; i < linear_elems.length; ++i) {
+                                    var item = linear_elems[i];  
+                                    item.style.display="none";
+                                }
+                                for (var i = 0; i < expo_elems.length; ++i) {
+                                    var item = expo_elems[i];  
+                                    item.style.display="block";
+                                }
+                                for (var i = 0; i < color_elems.length; ++i) {
+                                    var item = color_elems[i];  
+                                    item.style.display="block";
+                                }
+                                document.getElementById("FogValues").style.display="block";
                             }
                         }
                         else{
                             document.getElementById('RadioNoFog').checked = true;
                         }
                         if (resources3D[name].fogcolor){
-                            document.getElementById('jscolorpickFog').jscolor.fromString(resources3D[name].fogcolor);
+                            document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D[name].fogcolor);
                         }
                         if (resources3D[name].fogfar){
                             document.getElementById('FogFar').value = JSON.parse(resources3D[name].fogfar);

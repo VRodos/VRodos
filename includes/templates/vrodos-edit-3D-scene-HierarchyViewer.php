@@ -71,7 +71,7 @@
     </div>
 
     <!-- Extra options -->
-    <div style="width:100%; margin:0; height: 32%; overflow-y: scroll; background: rgba(255,255,255,0.5)">
+    <div style="width:100%; margin:0; height: 28%; overflow-y: scroll; background: rgba(255,255,255,0.5)">
 
         <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Scene options</span>
 
@@ -238,11 +238,11 @@
 
                 <input id="jscolorpickFog" class=" mdc-textfield__input jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px" >
 
-                <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input colorElement" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
+                <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input colorElement" form="3dAssetForm" value="" style="visibility: hidden; height: 20px; width:20px;">
             </span>
 
         <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Near limit (linear only):
-                <input type="text" id="FogNear" class="mdc-textfield__input linearElement" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="0" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
+                <input type="text" id="FogNear" class="mdc-textfield__input linearElement" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="000000" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
             </span>
 
         <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Far limit (linear only):

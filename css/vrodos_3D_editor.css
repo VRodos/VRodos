@@ -1015,6 +1015,4 @@ html [type="button"],
 
 a.disabled {
     pointer-events: none;
-    background-color: transparent;
-
 }

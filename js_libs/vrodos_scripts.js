@@ -139,18 +139,27 @@ function updateFogColorPicker(picker){
 
 function loadFogType() {
 
+    console.log("hj");
+
     if (document.getElementById('RadioNoFog').checked) {
+        envir.scene.fogCategory = 0;
         document.getElementById('FogType').value = "none";
     } else if (document.getElementById('RadioLinearFog').checked) {
+        envir.scene.fogCategory = 1;
         document.getElementById('FogType').value = "linear";
     } else if (document.getElementById('RadioExponentialFog').checked) {
+        envir.scene.fogCategory = 2;
         document.getElementById('FogType').value = "exponential";
     }
 
     updateFog("editing");
 }
-
 function updateFog(whencalled){
+
+    envir.scene.fogcolor = 0;
+    envir.scene.fognear = 0;
+    envir.scene.fogfar = 0;
+    envir.scene.fogdensity = 0;
 
     let picker = document.getElementById('jscolorpickFog').jscolor;
 
@@ -163,12 +172,26 @@ function updateFog(whencalled){
     var linear_elems = document.getElementsByClassName('linearElement');
     var expo_elems = document.getElementsByClassName('exponentialElement');
     var color_elems = document.getElementsByClassName('colorElement');
+
+    let colorHex = picker.rgb.map(function(x){             //For each array element
+        x = parseInt(x).toString(16);      //Convert to a base16 string
+        return (x.length==1) ? "0"+x : x;  //Add zero if we get only one character
+    });
+
+    colorHex = colorHex.join("");
+    
+    envir.scene.fogcolor = colorHex;
+    envir.scene.fognear = fogNear;
+    envir.scene.fogfar = fogFar;
+    envir.scene.fogdensity = fogDensity;
+    
+    console.log(document.getElementById("FogValues"));
     
 
     let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
 
     if(fogType === 'linear') {
-        envir.scene.fog = new THREE.Fog(hex, fogNear, fogFar);
+        // envir.scene.fog = new THREE.Fog(hex, fogNear, fogFar);
         document.getElementById("FogValues").style.display="block";
 
         for (var i = 0; i < linear_elems.length; ++i) {
@@ -185,8 +208,9 @@ function updateFog(whencalled){
             item.style.display="block";
         }
 
+       
     } else if(fogType === 'exponential') {
-        envir.scene.fog = new THREE.FogExp2(hex, fogDensity);
+        // envir.scene.fog = new THREE.FogExp2(hex, fogDensity);
         document.getElementById("FogValues").style.display="block";
 
         for (var i = 0; i < linear_elems.length; ++i) {
@@ -228,7 +252,7 @@ function updateFog(whencalled){
     }
     if(whencalled != "undo"){
         console.log("saving...");
-        triggerAutoSave();
+        saveChanges();
     }
         
         // saveChanges();

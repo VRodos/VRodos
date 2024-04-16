@@ -44,6 +44,9 @@ function parseJSON_javascript(scene_json, UPLOAD_DIR) {
         if (key === 'fogtype' ) {
             Object.assign(resources3D_new["SceneSettings"], { 'fogtype': value });
         }
+        if (key === 'fogCategory' ) {
+            Object.assign(resources3D_new["SceneSettings"], { 'fogCategory': value });
+        }
         if (key === 'fogcolor' ) {
             Object.assign(resources3D_new["SceneSettings"], { 'fogcolor': value });
         }

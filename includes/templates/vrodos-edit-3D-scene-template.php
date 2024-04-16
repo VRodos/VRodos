@@ -378,7 +378,7 @@ wp_head();
 
                     <!-- Compile Button -->
                     <a id="compileGameBtn"
-                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right"
+                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right "
                        data-mdc-auto-init="MDCRipple"
                        title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
                         Build Project
@@ -797,8 +797,20 @@ wp_head();
             if (resources3D["enableAvatar"]) {
                 document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
                 envir.scene.enableAvatar = JSON.parse(resources3D["enableAvatar"]);
+            }         
+            // if (resources3D["fogtype"]) {
+            //     //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
+            //     envir.scene.fogtype = JSON.parse(resources3D["fogtype"]);
+            // }
+            if (resources3D["fogCategory"]) {
+                //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
+                envir.scene.fogCategory = JSON.parse(resources3D["fogCategory"]);
+                // envir.scene.fogcolor = JSON.parse(resources3D["fogcolor"]);
+                
+                envir.scene.fognear = resources3D["fognear"];
+                envir.scene.fogfar = resources3D["fogfar"];
+                envir.scene.fogdensity = resources3D["fogdensity"];
             }
-            
             if (resources3D["disableMovement"]) {
                 document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
                 envir.scene.disableMovement = JSON.parse(resources3D["disableMovement"]);

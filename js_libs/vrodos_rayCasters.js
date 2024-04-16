@@ -380,6 +380,8 @@ function displaySunProperties(event, name) {
     var ppPropertiesDiv = jQuery("#popUpSunPropertiesDiv");
     var chboxjQ = jQuery("#castShadow");
     var chbox = document.getElementById('castShadow');
+    var chboxsunSkyjQ = jQuery("#sunSky");
+    var chboxsunSky = document.getElementById('sunSky');
 
     var textCameraBottomjQ = jQuery("#sunShadowCameraBottom");
     var textCameraBottom = document.getElementById('sunShadowCameraBottom');
@@ -407,9 +409,12 @@ function displaySunProperties(event, name) {
     clearAndUnbind(null, null, "sunshadowMapWidth");
     clearAndUnbind(null, null, "sunshadowBias");
     clearAndUnbind(null, null, "castShadow");
+    clearAndUnbind(null, null, "sunSky");
     
 
     chboxjQ.prop('checked', envir.scene.getObjectByName(name).castingShadow);
+    chboxsunSkyjQ.prop('checked', envir.scene.getObjectByName(name).sunSky);
+    console.log(envir.scene.getObjectByName(name).sunSky);
     
     //textCameraBottom.attr('value', envir.scene.getObjectByName(name).shadowCameraBottom);
     //textCameraTop.attr('value', envir.scene.getObjectByName(name).shadowCameraTop);
@@ -427,6 +432,7 @@ function displaySunProperties(event, name) {
     textMapWidth.value = envir.scene.getObjectByName(name).shadowMapWidth;
     textBias.value = envir.scene.getObjectByName(name).shadowBias;
     chbox.value = envir.scene.getObjectByName(name).castingShadow;
+    chboxsunSky.value = envir.scene.getObjectByName(name).sunSky;
    
     //jQuery("#sunColor")
   
@@ -489,6 +495,10 @@ function displaySunProperties(event, name) {
     });
     chboxjQ.change(function (e) {
         envir.scene.getObjectByName(name).castingShadow = this.checked ? 1 : 0;
+        saveChanges();
+    });
+    chboxsunSkyjQ.change(function (e) {
+        envir.scene.getObjectByName(name).sunSky = this.checked ? 1 : 0;
         saveChanges();
     });
 }
