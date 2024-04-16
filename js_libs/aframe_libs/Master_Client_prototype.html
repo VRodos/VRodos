@@ -2,13 +2,15 @@
 <html lang="en">
 
 <head>
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-NGVSL3GK');</script>
-    <!-- End Google Tag Manager -->
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-63HJZ7CJRR"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-63HJZ7CJRR');
+    </script>
 
     <meta charset="utf-8" />
     <title>Collaborative content creation</title>
@@ -177,11 +179,17 @@
                     document.getElementById("private-chat-button").addEventListener("click", () => {
                         let event = new CustomEvent('chat-selected', {"detail": "private"});
                         document.dispatchEvent(event);
+                        gtag('event', 'chat_private_msg_dispatched', {
+                            'test': 'test_field'
+                        });
                     });
 
                     document.getElementById("public-chat-button").addEventListener("click", (evt) =>{
                         let event = new CustomEvent('chat-selected', {"detail": "public"});
                         document.dispatchEvent(event);
+                        gtag('event', 'chat_public_msg_dispatched', {
+                            'test': 'test_field'
+                        });
                     });
 
                     if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0"){
@@ -1002,10 +1010,6 @@
 </head>
 
 <body id="master-client-body">
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NGVSL3GK"
-                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
 
 <div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
 

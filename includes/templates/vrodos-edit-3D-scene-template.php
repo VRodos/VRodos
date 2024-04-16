@@ -458,9 +458,7 @@ wp_head();
                         <!--  Dimensionality 2D 3D toggle -->
                         <a id="dim-change-btn" data-mdc-auto-init="MDCRipple"
                            title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
-                            2D
-                        </a>
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">2D</a>
                     </div>
 
                     <!-- The button to start walking in the 3d environment -->
