@@ -430,9 +430,9 @@ class VRodos_LightsPawn_Loader {
                         resources3D[name]['trs']['rotation'][1],
                         resources3D[name]['trs']['rotation'][2]);
 
-                    lightSpot.scale.set(resources3D[name]['trs']['scale'][0],
-                        resources3D[name]['trs']['scale'][1],
-                        resources3D[name]['trs']['scale'][2]);
+                    // lightSpot.scale.set(resources3D[name]['trs']['scale'][0],
+                    //     resources3D[name]['trs']['scale'][1],
+                    //     resources3D[name]['trs']['scale'][2]);
 
                 //     if(isNaN(resources3D[name]['scale'][0]) && resources3D[name]['scale'][0] !=0 && isNaN(resources3D[name]['scale'][1]) && resources3D[name]['scale'][1] !=0 && isNaN(resources3D[name]['scale'][3]) && resources3D[name]['scale'][3] !=0){
                 //         lightSpot.scale.set(
@@ -442,6 +442,12 @@ class VRodos_LightsPawn_Loader {
                 //    }else{
                     lightSpot.scale.set(1,1,1);
                 //    }
+
+                // lightSpot.target.position.set(resources3D[name]['targetposition'][0],
+                // resources3D[name]['targetposition'][1],
+                // resources3D[name]['targetposition'][2]); // where it points
+
+
 
 
                     lightSpot.name = name;
@@ -472,17 +478,47 @@ class VRodos_LightsPawn_Loader {
                     lightSpot.add(spotSphere);
                     // end of sphere
 
+                    var lightTargetSpot = new THREE.Object3D();
+
+                    lightTargetSpot.add(new THREE.Mesh(
+                        new THREE.SphereBufferGeometry(0.5, 16, 8),
+                        new THREE.MeshBasicMaterial({ color: colora })
+                    ));
+
+                    lightTargetSpot.isSelectableMesh = true;
+                    lightTargetSpot.name = "lightTargetSpot_" + lightSpot.name;
+                    lightTargetSpot.asset_name = "lightTargetSpot_" + lightSpot.asset_name;
+                    lightTargetSpot.category_name = "lightTargetSpot";
+                    lightTargetSpot.isLightTargetSpot = true;
+
+                    console.log("Pos: " + resources3D[name]['targetposition'][0]);
+
+                    lightTargetSpot.position.set(resources3D[name]['targetposition'][0],
+                        resources3D[name]['targetposition'][1],
+                        resources3D[name]['targetposition'][2]);
+
+                    lightTargetSpot.parentLight = lightSpot;
+                    // lightTargetSpot.parentLightHelper = lightSpotHelper;
+
+                    envir.scene.add(lightTargetSpot);
+
+                    lightSpot.target.updateMatrixWorld();
+
+                    lightSpot.target.position.set(lightTargetSpot.position.x, lightTargetSpot.position.y,
+                        lightTargetSpot.position.z);
+
                     // Add Spot cone Helper
-                    var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, colora);
-                    lightSpotHelper.isLightHelper = true;
-                    lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
-                    lightSpotHelper.category_name = 'lightHelper';
-                    lightSpotHelper.parentLightName = lightSpot.name;
+                    // var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, colora);
+                    // lightSpotHelper.isLightHelper = true;
+                    // lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
+                    // lightSpotHelper.category_name = 'lightHelper';
+                    // lightSpotHelper.parentLightName = lightSpot.name;
 
                     envir.scene.add(lightSpot);
-                    envir.scene.add(lightSpotHelper);
+                    triggerAutoSave();
+                    // envir.scene.add(lightSpotHelper);
 
-                    lightSpotHelper.update();
+                    // lightSpotHelper.update();
 
                     // If we do not attach them, they are not visible in Editor !
                     // if (typeof transform_controls !== "undefined") {

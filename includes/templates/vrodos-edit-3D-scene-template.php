@@ -733,14 +733,14 @@ wp_head();
                
 
                 for (let n in resources3D) {
-                    (function (name) {
+                    // (function (name) {
 
-                        // Set Target light for Spots
-                        if (resources3D[name]['category_name'] === 'lightSpot') {
-                            let lightSpot = envir.scene.getObjectByName(name);
-                            lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
-                        }
-                    })(n);
+                    //     // Set Target light for Spots
+                    //     if (resources3D[name]['category_name'] === 'lightSpot') {
+                    //         let lightSpot = envir.scene.getObjectByName(name);
+                    //         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
+                    //     }
+                    // })(n);
                 }
 
                 // Avoid culling by frustum

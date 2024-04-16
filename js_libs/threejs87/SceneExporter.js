@@ -306,6 +306,7 @@ THREE.SceneExporter.prototype = {
                 entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
                 entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
                 entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.targetposition = [o.target.position.x, o.target.position.y, o.target.position.z];
                 entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
                 entryObject.lightintensity = o.intensity;
                 delete entryObject.intensity;
@@ -317,7 +318,7 @@ THREE.SceneExporter.prototype = {
                 delete entryObject.angle;
                 entryObject.lightpenumbra = o.penumbra;
                 delete entryObject.penumbra;
-                entryObject.lighttargetobjectname = o.target.name;
+                // entryObject.lighttargetobjectname = o.target.name;
 
                 let stringObj = JSON.stringify(entryObject);
                 stringObj = stringObj.slice(0, -1);
