@@ -232,6 +232,14 @@
            style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
             />
 
+    <label for="sunSky" class="mdc-textfield__label"
+    style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+        Create Sky</label>
+
+    <input type="checkbox" id="sunSky" name="sunSky" value="sky_bool" checked="true" title="Add horizon (not compatible with presets)"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+
            
     <label for="sunShadowCameraBottom" class="mdc-textfield__label"
            style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">

@@ -722,14 +722,15 @@ THREE.SceneExporter.prototype = {
 
         // Create fog string to avoid large gaps in the string
         let fogString = '';
-        if(envir.scene.fog) {
-            fogString ='' +
-            '"fogtype" : "' + (envir.scene.fog.isFog ? "linear" : "exponential") + '",' +
-            '"fogcolor" : "#' + (envir.scene.fog.color ? envir.scene.fog.color.getHexString() : '000000') + '",' +
-            '"fogfar" : "' + (envir.scene.fog.far ? envir.scene.fog.far : '1000000') + '",' +
-            '"fognear" : "' + (envir.scene.fog.near ? envir.scene.fog.near : '1000000') + '",' +
-            '"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",';
-        }
+        // if(envir.scene.fogCategory) {
+        //     // fogString ='' +
+        //     // '"fogCategory" : "' + (envir.scene.fogCategory ? envir.scene.fogCategory : 'none') + '",';
+        //     // '"fogcolor" : "#' + (envir.scene.fog.color ? envir.scene.fog.color.getHexString() : '000000') + '",' +
+        //     // '"fogfar" : "' + (envir.scene.fog.far ? envir.scene.fog.far : '1000000') + '",' +
+        //     // '"fognear" : "' + (envir.scene.fog.near ? envir.scene.fog.near : '1000000') + '",' +
+        //     // '"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",';
+            
+        // }
 
         var output = [
             '{',
@@ -739,9 +740,13 @@ THREE.SceneExporter.prototype = {
             '		"generatedBy"	: "SceneExporter.js",',
             '		"timestamp"	: '+ Date.now()  +',',
             '		"ClearColor" : "#' + (envir.scene.background.isColor ? envir.scene.background.getHexString() : '000000') + '",',
-            fogString,
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
+            '		"fogCategory" : "' + (envir.scene.fogCategory ? envir.scene.fogCategory : 0) + '",',
+            '       "fogcolor" : "' + (envir.scene.fogcolor ? envir.scene.fogcolor : '#FFFFFF') + '",',
+            '       "fogfar" : "' + (envir.scene.fogfar ? envir.scene.fogfar : '1000') + '",' ,
+            '       "fognear" : "' + (envir.scene.fognear ? envir.scene.fognear : '0') + '",', 
+            '       "fogdensity" : "' + (envir.scene.fogdensity ? envir.scene.fogdensity : '0.00000001') + '",',
             '		"enableAvatar" : "' + (!!envir.scene.enableAvatar) + '",',
             '		"disableMovement" : "' + (!!envir.scene.disableMovement) + '",',
             '		"backgroundPresetOption" : "' + (envir.scene.preset_selection ? envir.scene.preset_selection : 'None') + '",',

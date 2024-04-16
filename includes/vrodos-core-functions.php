@@ -627,7 +627,7 @@ function vrodos_save_scene_async_action_callback()
 
 	$res = wp_update_post($scene_new_info);
 	update_post_meta($_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption']);
-
+	
 	echo $res!=0 ? 'true' : 'false';
 	wp_die();
 }

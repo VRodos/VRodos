@@ -17,8 +17,9 @@ class ParseJSON
         echo '<script>';
         echo 'resources3D["ClearColor"]= "' . $json_metadata->ClearColor . '";';
 
-        if (property_exists($json_metadata, "fogtype")) {
-            echo 'resources3D["fogtype"]= "' . $json_metadata->fogtype . '";';
+        if (property_exists($json_metadata, "fogCategory")) {
+            //echo 'resources3D["fogtype"]= "' . $json_metadata->fogtype . '";';
+            echo 'resources3D["fogCategory"]= "' . $json_metadata->fogCategory . '";';
             echo 'resources3D["fogcolor"]= "' . $json_metadata->fogcolor . '";';
             echo 'resources3D["fognear"]= "' . $json_metadata->fognear . '";';
             echo 'resources3D["fogfar"]= "' . $json_metadata->fogfar . '";';
@@ -34,10 +35,13 @@ class ParseJSON
         if (property_exists($json_metadata, "enableAvatar")){
             echo 'resources3D["enableAvatar"]= "' . $json_metadata->enableAvatar . '";';
         }
-
         if (property_exists($json_metadata, "disableMovement")){
             echo 'resources3D["disableMovement"]= "' . $json_metadata->disableMovement . '";';
         }
+
+        // if (property_exists($json_metadata, "fogCategory")){
+        //     echo 'resources3D["fogCategory"]= "' . $json_metadata->fogCategory . '";';
+        // }
 
         if (property_exists($json_metadata, "backgroundPresetOption"))
             echo 'resources3D["backgroundPresetOption"]= "' . $json_metadata->backgroundPresetOption . '";';
