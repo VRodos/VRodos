@@ -402,13 +402,13 @@ wp_head();
                 <!-- Lights -->
                 <div class="environmentBar hidable">
 
-                    <div class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
+                    <div title="An entry point for Actors, they can choose one of multiple points when logging in" class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
                         <header draggable="false" class="notdraggable">Actor</header>
                         <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0"
                              src="<?php echo $pluginpath?>/images/lights/pawn.png"/>
                     </div>
 
-                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
+                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;padding:0;margin: 0 2px;">
                     </div>
 
                     <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true" title="When adding a Sun, an automatic horizon is added to the scene, negating any Background color you have selected.">
@@ -417,19 +417,19 @@ wp_head();
                              src="<?php echo $pluginpath?>/images/lights/sun.png"/>
                     </div>
 
-                    <div class="lightpawnbutton" data-lightPawn="Lamp" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Lamp" draggable="true" title="The lamp emits lighting close to objects.">
                         <header draggable="false" class="notdraggable">Lamp</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/lamp.png"/>
                     </div>
 
-                    <div class="lightpawnbutton" data-lightPawn="Spot" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Spot" draggable="true" title="The Spot light is a directional light to a specific target.">
                         <header draggable="false" class="notdraggable">Spot</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/spot.png"/>
                     </div>
 
-                    <div class="lightpawnbutton" data-lightPawn="Ambient" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Ambient" draggable="true" title="Ambient light emits a strong light to illuminate areas.">
                         <header draggable="false" class="notdraggable" style="font-size: 7pt">Ambient</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/ambient_light.png"/>
