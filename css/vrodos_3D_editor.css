@@ -1016,3 +1016,10 @@ html [type="button"],
 a.disabled {
     pointer-events: none;
 }
+
+button#compileGameBtn:disabled,
+.mdc-button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    opacity: 0.2;
+}

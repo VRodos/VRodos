@@ -377,12 +377,12 @@ wp_head();
                     </div>
 
                     <!-- Compile Button -->
-                    <a id="compileGameBtn"
-                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right "
+                    <button id="compileGameBtn"
+                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg"
                        data-mdc-auto-init="MDCRipple"
                        title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
                         Build Project
-                    </a>
+                    </button>
 
                 </div>
                 <!--Compile Dialogue html-->
@@ -683,7 +683,7 @@ wp_head();
 
             // Add transform controls to scene
             envir.scene.add(transform_controls);
-            document.getElementById("compileGameBtn").classList.add("disabled");
+            document.getElementById("compileGameBtn").disabled = true;
 
             // Load Manager
             // Make progress bar visible
@@ -763,7 +763,7 @@ wp_head();
 
                 jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
-                document.getElementById("compileGameBtn").classList.remove("disabled");
+                document.getElementById("compileGameBtn").disabled = false;
             }; // End of manager
 
             // Loader of assets
