@@ -145,9 +145,11 @@ AFRAME.registerComponent('video-controls', {
     playVideo: function(event) {
         if (this.video.paused) {
             this.video.play();
+            gtag('event', 'poivideo_video_play');
         }
         else {
             this.video.pause();
+            gtag('event', 'poivideo_video_pause');
         }
         this.playUpd(this.plEl);
     },
@@ -327,6 +329,9 @@ AFRAME.registerComponent('video-controls', {
     },
     
     onFullScreenClick:  function (evt) {
+
+        gtag('event', 'poivideo_video_fullscreen');
+
         this.is_fs = true;
         let projType = this.backgroundEl.getAttribute("scene-settings").pr_type;
         let selPreset = this.backgroundEl.getAttribute("scene-settings").presChoice;

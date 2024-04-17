@@ -179,17 +179,13 @@
                     document.getElementById("private-chat-button").addEventListener("click", () => {
                         let event = new CustomEvent('chat-selected', {"detail": "private"});
                         document.dispatchEvent(event);
-                        gtag('event', 'chat_private_msg_dispatched', {
-                            'test': 'test_field'
-                        });
+                        gtag('event', 'chat_private_msg_dispatched');
                     });
 
                     document.getElementById("public-chat-button").addEventListener("click", (evt) =>{
                         let event = new CustomEvent('chat-selected', {"detail": "public"});
                         document.dispatchEvent(event);
-                        gtag('event', 'chat_public_msg_dispatched', {
-                            'test': 'test_field'
-                        });
+                        gtag('event', 'chat_public_msg_dispatched');
                     });
 
                     if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0"){
@@ -434,9 +430,11 @@
 
                 this.el.addEventListener("enter-vr", () => {
                     browsingModeVR = true;
+                    gtag('event', 'vr_enabled');
                 });
                 this.el.addEventListener("exit-vr", () => {
                     browsingModeVR = false;
+                    gtag('event', 'vr_disabled');
                 });
 
                 let cam = document.querySelector("#cameraA");
@@ -1041,6 +1039,7 @@
              document.getElementById('cameraA').setAttribute('player-info', 'color', newColor);
              document.getElementById('color-changer').style.backgroundColor = newColor;
              document.getElementById('color-changer').style.color = newColor;
+             gtag('event', 'player_color_change');
         ">■</button>
         <input id="username-overlay" maxlength="24" size="15" oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)" placeholder="Username" />
         <input type="text" id="chatInput" placeholder="Message">

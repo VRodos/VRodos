@@ -9,7 +9,7 @@ AFRAME.registerComponent('info-panel', {
         this.PageEl = document.querySelector('#page_' + this.data);
         this.infoPanel = document.querySelector('#infoPanel_' + this.data);
         //this.escEl = document.querySelector('#exit_' + this.data);
-        this.scen = document.querySelector('#aframe-scene-container'); 
+        this.scen = document.querySelector('#aframe-scene-container');
         let btn = "button_poi_" + this.data;
         this.playerEl = document.querySelector('#cameraA');
         this.cam = document.querySelector("#cameraA");
@@ -23,7 +23,7 @@ AFRAME.registerComponent('info-panel', {
         this.buttonNextPanelEl = document.querySelector('#next_panel_' + this.data);
         this.buttonPrevPanelEl = document.querySelector('#prev_panel_' + this.data);
         this.buttonEscPanelEl = document.querySelector('#exit_panel_' + this.data);
-        
+
 
         if (this.TitleEl)
             this.TitleEl.setAttribute("text","value",this.TitleEl.getAttribute("title_to_add"));
@@ -40,13 +40,13 @@ AFRAME.registerComponent('info-panel', {
             this.buttonPrevEl.object3D.renderOrder = 9999999;
         if(this.buttonEscPanelEl)
             this.buttonEscPanelEl.object3D.renderOrder = 9999999;
-      
+
 
         this.desc_list = [];
         this.readingPos = 0;
-              
+
         this.cam.add(this.infoPanel);
-        
+
         const getMeta = (url, cb) => {
             const img = new Image();
             img.onload = () => cb(null, img);
@@ -64,11 +64,11 @@ AFRAME.registerComponent('info-panel', {
             if ((this.DescriptionEl.getAttribute("text").value).length % content_length > 0 && ((this.DescriptionEl.getAttribute("text").value).length > content_length )){
                 this.chunks +=1;
             }
-                
+
             for (let x = 0; x < this.chunks; x++) {
                 let output = (this.DescriptionEl.getAttribute("text").value).substring( x * content_length, x * content_length + content_length);
                 this.desc_list.push(output);
-                
+
             }
 
 
@@ -84,17 +84,17 @@ AFRAME.registerComponent('info-panel', {
             this.indPos = this.readingPos + 1;
             if(this.PageEl)
                 this.PageEl.setAttribute("text", "value", "page " + this.indPos + " out of " + this.chunks);
-        }   
-        
+        }
+
 
         //this.DescriptionEl.getAttribute("text").value = desc_list[0];
-        
+
         let expected_width, expected_height, exceed_height;
         if (this.DescriptionEl) {
             expected_width = 1.4;
             expected_height = 0.75;
             exceed_height = 0.8;
-            
+
         }
         else {
             expected_width = 1.4;
@@ -107,8 +107,8 @@ AFRAME.registerComponent('info-panel', {
                 let aspect_ratio;
                 img.naturalWidth > img.naturalHeight ? aspect_ratio = img.naturalWidth / img.naturalHeight : aspect_ratio = img.naturalHeight / img.naturalWidth;
                 img.naturalWidth > img.naturalHeight ? expected_height = expected_width / aspect_ratio : expected_width = expected_height / aspect_ratio;
-            
-               
+
+
                 let panel_pad;
                 expected_width > 1.4 ? panel_pad = expected_width : panel_pad = 1.4;
 
@@ -125,10 +125,10 @@ AFRAME.registerComponent('info-panel', {
                         while (expected_height > exceed_height) {
                             expected_width = expected_width / 2;
                             expected_height = expected_height / 2;
-    
+
                         }
                     }
-                    
+
                 } else {
 
                     if (img.naturalWidth /987  < expected_width && img.naturalHeight /987  < expected_height)
@@ -142,10 +142,10 @@ AFRAME.registerComponent('info-panel', {
                             expected_width = expected_width / 2;
                             expected_height = expected_height / 2;
                         }
-                    }     
+                    }
                 }
                 if (expected_width>= 0.8)
-                        panel_pad =1.5;
+                    panel_pad =1.5;
 
                 //let esc_pad = (panel_pad / 2) + 0.1;
                 // console.log("EXP:" + expected_height + " " + expected_width);
@@ -170,8 +170,8 @@ AFRAME.registerComponent('info-panel', {
             this.onNextButtonClick = this.onNextButtonClick.bind(this);
         if (this.buttonPrevEl)
             this.onPrevButtonClick = this.onPrevButtonClick.bind(this);
-       
-    
+
+
         this.buttonEl.addEventListener('click', this.onMenuButtonClick);
         if (this.buttonNextEl)
             this.buttonNextEl.addEventListener('click', this.onNextButtonClick);
@@ -184,22 +184,22 @@ AFRAME.registerComponent('info-panel', {
         // this.buttonEl.addEventListener('force-close-others', this.onMenuButtonClick);
         this.backgroundEl.addEventListener('click', this.onBackgroundClick);
         this.buttonEscPanelEl.addEventListener('click', this.onBackgroundClick);
-       
+
         // this.backgroundEl.addEventListener('raycaster-intersected', evt => {
         //     console.log("Intersected");
         // });
 
 
     },
-   
+
     onNextButtonClick: function (evt) {
-             
+
         this.readingPos += 1;
 
         this.indPos = this.readingPos + 1;
         if(this.PageEl)
             this.PageEl.setAttribute("text", "value", "page " + this.indPos + " out of " + this.chunks);
-        
+
         this.DescriptionEl.setAttribute("text","value",this.desc_list[this.readingPos]);
         if(this.readingPos == this.chunks -1) {
             this.buttonNextEl.object3D.visible = false;
@@ -213,10 +213,10 @@ AFRAME.registerComponent('info-panel', {
         this.buttonPrevPanelEl.object3D.visible = true;
         this.buttonPrevPanelEl.setAttribute("scale", this.buttonPrevPanelEl.getAttribute("original-scale"));
 
-        
+
     },
     onPrevButtonClick: function (evt) {
-             
+
         this.readingPos -= 1;
         this.indPos = this.readingPos + 1;
         if(this.PageEl)
@@ -235,11 +235,13 @@ AFRAME.registerComponent('info-panel', {
 
         this.buttonNextPanelEl.object3D.visible = true;
         this.buttonNextPanelEl.setAttribute("scale", this.buttonNextPanelEl.getAttribute("original-scale"));
-        
+
     },
-    
+
 
     onMenuButtonClick: function (evt) {
+
+        gtag('event', 'poiimgtext_open');
 
         if (!browsingModeVR) {
 
@@ -260,69 +262,69 @@ AFRAME.registerComponent('info-panel', {
 
         } else {
 
-        //this.el.emit("force-close",{value: this.data, el: this.el});
-        let poi_elems = document.getElementsByClassName('openPOI');
-        for (let i = 0; i < poi_elems.length; ++i) {
-            poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
-            poi_elems[i].object3D.visible = false;
-        }
-        this.el.classList.add("openPOI");
-        // this.scen.components.raycaster.refreshObjects();
-        this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
-        // this.backgroundEl.setAttribute("material", "color", "white");
-        this.backgroundEl.object3D.visible = true;
-        this.cursorEl.setAttribute("raycaster","objects: .non-clickable");
+            //this.el.emit("force-close",{value: this.data, el: this.el});
+            let poi_elems = document.getElementsByClassName('openPOI');
+            for (let i = 0; i < poi_elems.length; ++i) {
+                poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
+                poi_elems[i].object3D.visible = false;
+            }
+            this.el.classList.add("openPOI");
+            // this.scen.components.raycaster.refreshObjects();
+            this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
+            // this.backgroundEl.setAttribute("material", "color", "white");
+            this.backgroundEl.object3D.visible = true;
+            this.cursorEl.setAttribute("raycaster","objects: .non-clickable");
 
             this.el.object3D.scale.set(1, 1, 1);
             this.el.object3D.position.z = -2.5;
-            
+
             if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
-            this.el.object3D.visible = true;            
-            
+            this.el.object3D.visible = true;
+
             this.el.components.material.material.depthTest = false;
             //this.backgroundEl.sceneEl.renderer.sortObjects = true;
             this.backgroundEl.components.material.material.depthTest = false;
             //this.backgroundEl.components.material.material.clipIntersection = false;
             this.buttonEl.object3D.depthTest = false;
 
-        this.backgroundEl.object3D.renderOrder = 99999999;
-        this.buttonEl.object3D.renderOrder = 99999;
-        //clipIntersection
-        this.buttonEl.components.material.material.depthTest = false;
+            this.backgroundEl.object3D.renderOrder = 99999999;
+            this.buttonEl.object3D.renderOrder = 99999;
+            //clipIntersection
+            this.buttonEl.components.material.material.depthTest = false;
 
 
-        if (!this.DescriptionEl) {
-            console.log("No Desc");
-        }
-        else {
-            this.DescriptionEl.components.text.material.depthTest = false;
-            this.DescriptionEl.object3D.renderOrder = 99999;
-        }
-        if (!this.PageEl) {
-            console.log("No Desc");
-        }
-        else {
-            this.PageEl.components.text.material.depthTest = false;
-            this.PageEl.object3D.renderOrder = 99999;
-        }
+            if (!this.DescriptionEl) {
+                console.log("No Desc");
+            }
+            else {
+                this.DescriptionEl.components.text.material.depthTest = false;
+                this.DescriptionEl.object3D.renderOrder = 99999;
+            }
+            if (!this.PageEl) {
+                console.log("No Desc");
+            }
+            else {
+                this.PageEl.components.text.material.depthTest = false;
+                this.PageEl.object3D.renderOrder = 99999;
+            }
 
-        if (!this.TitleEl) {
-            console.log("No Title");
-        }
-        else {
-            this.TitleEl.components.text.material.depthTest = false;
-            this.TitleEl.object3D.renderOrder = 99999;
-        }
+            if (!this.TitleEl) {
+                console.log("No Title");
+            }
+            else {
+                this.TitleEl.components.text.material.depthTest = false;
+                this.TitleEl.object3D.renderOrder = 99999;
+            }
 
-        if (!this.ImageAsset.getAttribute("src")) {
-            console.log("No Image");
+            if (!this.ImageAsset.getAttribute("src")) {
+                console.log("No Image");
 
-        }
-        else {
-            this.ImageEl.components.material.material.depthTest = false;
-            this.ImageEl.object3D.renderOrder = 99999;
-            console.log(this.ImageEl.components);
-        }
+            }
+            else {
+                this.ImageEl.components.material.material.depthTest = false;
+                this.ImageEl.object3D.renderOrder = 99999;
+                console.log(this.ImageEl.components);
+            }
 
             this.infoPanel.components.material.material.depthTest = false;
             this.infoPanel.object3D.renderOrder = 9999;

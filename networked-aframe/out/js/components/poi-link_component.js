@@ -7,6 +7,7 @@ AFRAME.registerComponent('link-listener', {
                 if (!this.data.match(/^https?:\/\//i)) {
                     this.data = '//' + this.data;
                 }
+                gtag('event', 'poilink_link_open');
                 window.open(this.data);
             });
         }
