@@ -164,6 +164,7 @@ AFRAME.registerComponent('help-chat', {
                     chatLog.innerHTML += '<span>' + dateString + ' Me: </span><span>' + chatInput.value + '</span><br>';
                     chatLogPrivateHistory.push(dateString + ' Me: ' + chatInput.value);
                     NAF.connection.broadcastData(chat_id, {txt: chatInput.value, player: player_object })
+                    gtag('event', 'chat_private_msg_dispatched');
                 }
             }
         };
@@ -232,6 +233,8 @@ AFRAME.registerComponent('help-chat', {
             document.getElementById("private-chat-button").classList.add('mdc-tab--active');
             publicChatIsActive = false;
 
+            gtag('event', 'chat_initiation');
+
             if (document.getElementById('cameraA').getAttribute('player-info').currentPrivateChat){
                 chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' You are already in a private chat ' + "</span><br>";
             }else{
@@ -242,6 +245,7 @@ AFRAME.registerComponent('help-chat', {
 
                 if (chatlist < maxParticipants && syncComplete){
                     chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected. Press X to leave ' + "</span><br>";
+                    gtag('event', 'chat_join');
 
                     document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', elem.getAttribute("id"));
                     elem.setAttribute("isActive", "true");

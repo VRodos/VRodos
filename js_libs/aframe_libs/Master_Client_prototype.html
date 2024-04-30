@@ -179,13 +179,13 @@
                     document.getElementById("private-chat-button").addEventListener("click", () => {
                         let event = new CustomEvent('chat-selected', {"detail": "private"});
                         document.dispatchEvent(event);
-                        gtag('event', 'chat_private_msg_dispatched');
+                        gtag('event', 'chat_private_tab_selected');
                     });
 
                     document.getElementById("public-chat-button").addEventListener("click", (evt) =>{
                         let event = new CustomEvent('chat-selected', {"detail": "public"});
                         document.dispatchEvent(event);
-                        gtag('event', 'chat_public_msg_dispatched');
+                        gtag('event', 'chat_public_tab_selected');
                     });
 
                     if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0"){
