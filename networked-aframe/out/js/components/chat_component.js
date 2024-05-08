@@ -14,7 +14,8 @@ function sendPublicMessage() {
     let dateString = getChatCurrentTimeString();
     chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
     chatLogPublicHistory.push(dateString + ' Me: ' + chatInput.value);
-    NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object });
+    NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
+    gtag('event', 'chat_public_msg_dispatched');
 }
 
 NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
