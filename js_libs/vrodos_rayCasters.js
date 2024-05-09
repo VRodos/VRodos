@@ -1083,6 +1083,7 @@ function saveChanges() {
     }
 
     jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
+    document.getElementById("compileGameBtn").disabled = true;
 
     // Export using a custom variant of the old deprecated class SceneExporter
     let exporter = new THREE.SceneExporter();
