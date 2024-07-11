@@ -79,17 +79,25 @@ AFRAME.registerComponent('help-chat', {
             if (!roomOccupants){
                 roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
             }
-            connectedEntities.push(evt.detail.el.firstUpdateData.owner);
-            if (connectedEntities.indexOf(evt.detail.el.firstUpdateData.owner) < 0){
+            console.log(evt.detail.el.id);
+            if(evt.detail.el.id == "cameraA"){
+                console.log("Local User loaded");
+            }
+            else{
+
                 connectedEntities.push(evt.detail.el.firstUpdateData.owner);
-            }
-            if (roomOccupants.indexOf(evt.detail.el.firstUpdateData.owner) < 0){
-                roomOccupants.push(evt.detail.el.firstUpdateData.owner);
-            }
-            if (isEqual(roomOccupants,connectedEntities)){
-                let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
-                document.dispatchEvent(eventSyncComplete);
-                syncComplete = true;
+            
+                if (connectedEntities.indexOf(evt.detail.el.firstUpdateData.owner) < 0){
+                    connectedEntities.push(evt.detail.el.firstUpdateData.owner);
+                }
+                if (roomOccupants.indexOf(evt.detail.el.firstUpdateData.owner) < 0){
+                    roomOccupants.push(evt.detail.el.firstUpdateData.owner);
+                }
+                if (isEqual(roomOccupants,connectedEntities)){
+                    let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
+                    document.dispatchEvent(eventSyncComplete);
+                    syncComplete = true;
+                }
             }
 
         }, false);
