@@ -222,13 +222,21 @@
         Sun Color in Hex:</label>
 
     <input type="text" id="sunColor" name="sunColor" title="Set a hex number, ffffff is the default (white)"
-           value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateSunColorPickerLight(this)'}"
+           value="ffff00" maxlength="6" class="jscolor {onFineChange:'updateSunColorPickerLight(this)'}"
            style="width: 70px;display: inline-block;padding: 2px;text-align: right;" />
     <label for="castShadow" class="mdc-textfield__label"
            style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
         Enable Shadows:</label>
 
     <input type="checkbox" id="castShadow" name="castShadow" value="shadow_bool" checked="true" title="Enable cast shadow functionality"
+           style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
+            />
+
+    <label for="sunSky" class="mdc-textfield__label"
+    style="top: 8px; position: initial; width: 150px; display: inline-block;margin-top: 15px;">
+        Create Sky</label>
+
+    <input type="checkbox" id="sunSky" name="sunSky" value="sky_bool" checked="true" title="Add horizon (not compatible with presets)"
            style="width: 6ch;padding: 2px;display: inline-block; text-align: right;"
             />
 

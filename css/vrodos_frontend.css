@@ -1383,7 +1383,7 @@ video {
     position: absolute;
     left: 0;
     bottom: 0;
-    top: 0;
+    top: 20px;
     display: block;
     height: 100%;
 }

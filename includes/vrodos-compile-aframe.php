@@ -350,12 +350,17 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
         $fogstring = substr($content, strpos($content, 'fog='), strpos($content, 'renderer=')-9-strpos($content, 'fog='));
 
         // Replace Fog string
-        if (isset($scene_json->metadata->fogtype)) {
-            if ($scene_json->metadata->fogtype != "none") {
+        if (isset($scene_json->metadata->fogCategory)) {
+            if ($scene_json->metadata->fogCategory != "0") {
+
+                if ($scene_json->metadata->fogCategory === "1")
+                    $fogtype = "linear";
+                else
+                    $fogtype = "exponential";
                 $content = str_replace( $fogstring,
 
-                    'fog="type: ' . $scene_json->metadata->fogtype .
-                    '; color: ' . $scene_json->metadata->fogcolor .
+                    'fog="type: ' . $fogtype .
+                    '; color: #' . $scene_json->metadata->fogcolor .
                     '; far: ' . $scene_json->metadata->fogfar .
                     '; density: ' . ( 1.5 * $scene_json->metadata->fogdensity ) .
                     '; near: ' . $scene_json->metadata->fognear . '"',
@@ -597,7 +602,10 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
                         $a_sun_sky->setAttribute("material", $materialSunSky);
 
-                        $ascene->appendChild( $a_sun_sky );
+                        if ($contentObject->sunSky == "1"){
+                            $ascene->appendChild( $a_sun_sky );
+                        }
+
                         $ascene->appendChild( $a_light );
 
                         break;
@@ -607,15 +615,22 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $a_light->appendChild( $dom->createTextNode( '' ) );
                         $fileOperations->setAffineTransformations($a_light, $contentObject);
 
+                        $a_light_target = $dom->createElement( "a-entity" );
+                        $a_light_target->appendChild( $dom->createTextNode( '' ) );
+                        $a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );
+                        $a_light_target->setAttribute("id", $uuid."target");
+
                         $a_light->setAttribute("light", "type:spot;".
                             "color:".$fileOperations->colorRGB2Hex($contentObject->lightcolor).";".
-                            "intensity:".$contentObject->lightintensity.";".
+                            "intensity: 2".
                             "distance:".$contentObject->lightdistance.";".
                             "decay:".$contentObject->lightdecay.";".
                             "angle:".($contentObject->lightangle * 180 / 3.141) .";".
-                            "penumbra:".$contentObject->lightpenumbra.";".
-                            "target:#".$contentObject->lighttargetobjectname
+                            "penumbra:".$contentObject->lightpenumbra.";"
                         );
+
+                        $a_light->setAttribute("target", "#".$uuid."target");
+                        $ascene->appendChild($a_light_target);
 
                         $ascene->appendChild( $a_light );
                         break;
@@ -993,7 +1008,7 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $ascene->appendChild( $gltf_model );
 
                         break;
-                    case 'poi-help':
+                    case 'chat':
 
                         $assets = $dom->getElementById('scene-assets');
 
@@ -1027,21 +1042,22 @@ function vrodos_compile_aframe($project_id, $scene_id_list, $showPawnPositions)
                         $gltf_model->setAttribute( "gltf-model","#". $uuid );
                         $gltf_model->setAttribute( "id", $uuid );
                         $gltf_model->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
-                        if($contentObject->poi_chat_indicators == "enabled")
-                            $gltf_model->setAttribute("indicator-availability", "isfull: $chat_indicator_full");
+                        $num_participants = $contentObject->poi_chat_participants;
+                        if(filter_var($contentObject->poi_chat_indicators, FILTER_VALIDATE_BOOLEAN) === true)
+                            $gltf_model->setAttribute("indicator-availability", "isfull: $chat_indicator_full; num_participants: $num_participants");
 
 
                         $gltf_model->appendChild( $dom->createTextNode( '' ) );
                         $material = "";
+
                         $fileOperations->setAffineTransformations( $gltf_model, $contentObject );
                         $gltf_model->setAttribute( "class", "override-materials raycastable hideable non-vr" );
                         $gltf_model->setAttribute( "material", $material );
-                        $gltf_model->setAttribute( "help-chat", "$scene_id" );
+                        $gltf_model->setAttribute( "help-chat", "scene_id: $scene_id; num_participants: $num_participants" );
                         $gltf_model->setAttribute( "clear-frustum-culling", "" );
                         $gltf_model->setAttribute( "preload", "auto" );
                         $gltf_model->setAttribute( "shadow", "cast: true; receive: true" );
                         $gltf_model->setAttribute( "title", $contentObject->poi_chat_title );
-
 
 
                         $ascene->appendChild( $gltf_model );

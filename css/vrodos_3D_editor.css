@@ -1011,3 +1011,15 @@ html [type="button"],
 .dg.main .close-button.close-bottom {
     display: none;
 }
+
+
+a.disabled {
+    pointer-events: none;
+}
+
+button#compileGameBtn:disabled,
+.mdc-button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    opacity: 0.2;
+}

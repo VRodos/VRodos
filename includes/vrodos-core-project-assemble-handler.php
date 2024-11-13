@@ -421,17 +421,6 @@ function vrodos_delete_asset3d_frontend_callback(){
 
         $containerFolder = wp_upload_dir()['basedir'].'/models/';
 
-        // ------- MTL --------
-        $mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true); // True : single value
-
-        // Delete the file from the system
-        wp_delete_file($containerFolder.basename(get_attached_file($mtlID)));
-
-        // Delete attachment
-        wp_delete_attachment($mtlID, true); // True : Not go to trash
-
-        // ------- FBX --------
-
         // Get texture attachments of post
         $args = array(
             'posts_per_page' => 100,
@@ -446,8 +435,6 @@ function vrodos_delete_asset3d_frontend_callback(){
         foreach ($attachments_array as $k){
             $child_post_id = $k->ID;
 
-            //$fbxID = get_post_meta($asset_id, 'vrodos_asset3d_fbx', true); // True : single value
-
             // Delete the file from the system
             wp_delete_file($containerFolder.basename(get_attached_file($child_post_id)));
 
@@ -456,23 +443,16 @@ function vrodos_delete_asset3d_frontend_callback(){
         }
 
 
-        // ---------- OBJ -------
-        $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true);
+        // ---------- GLB -------
+        $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
 
         // Delete the file from the system
-        wp_delete_file($containerFolder.basename(get_attached_file($objID)));
+        wp_delete_file($containerFolder.basename(get_attached_file($glbID)));
 
         // Delete attachment
-        wp_delete_attachment($objID, true);
+        wp_delete_attachment($glbID, true);
 
-        // ---------- Diffusion image ----------
-        $difID = get_post_meta($asset_id, 'vrodos_asset3d_diffimage', true);
 
-        // Delete the file from the system
-        wp_delete_file($containerFolder.basename(get_attached_file($difID)));
-
-        // Delete attachment
-        wp_delete_attachment($difID, true);
 
         // ---------- Screenshot ---------------
         $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
@@ -500,6 +480,7 @@ function vrodos_delete_asset3d_frontend_callback(){
 
 //Fetch GLB Asset
 function vrodos_fetch_glb_asset3d_frontend_callback(){
+    wp_reset_postdata();
 
     $asset_id = $_POST['asset_id'];
 

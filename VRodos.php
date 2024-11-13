@@ -622,7 +622,7 @@ function vrodos_lost_password_redirect() {
     $confirm = ( isset($_GET['checkemail'] ) ? $_GET['checkemail'] : '' );
 
     if( $confirm ) {
-        wp_redirect( get_site_url( ).'/vrodos-project-manager-page/' );
+        wp_redirect( get_site_url( ));
         exit;
     }
 }

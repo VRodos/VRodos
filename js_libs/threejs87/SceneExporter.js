@@ -306,6 +306,7 @@ THREE.SceneExporter.prototype = {
                 entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
                 entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
                 entryObject.quaternion = [quatR_light._x, quatR_light._y, quatR_light._z, quatR_light._w];
+                entryObject.targetposition = [o.target.position.x, o.target.position.y, o.target.position.z];
                 entryObject.lightcolor = [parseFloat(o.color.r).toFixed(3), parseFloat(o.color.g).toFixed(3), parseFloat(o.color.b).toFixed(3)];
                 entryObject.lightintensity = o.intensity;
                 delete entryObject.intensity;
@@ -317,7 +318,7 @@ THREE.SceneExporter.prototype = {
                 delete entryObject.angle;
                 entryObject.lightpenumbra = o.penumbra;
                 delete entryObject.penumbra;
-                entryObject.lighttargetobjectname = o.target.name;
+                // entryObject.lighttargetobjectname = o.target.name;
 
                 let stringObj = JSON.stringify(entryObject);
                 stringObj = stringObj.slice(0, -1);
@@ -721,14 +722,15 @@ THREE.SceneExporter.prototype = {
 
         // Create fog string to avoid large gaps in the string
         let fogString = '';
-        if(envir.scene.fog) {
-            fogString ='' +
-            '"fogtype" : "' + (envir.scene.fog.isFog ? "linear" : "exponential") + '",' +
-            '"fogcolor" : "#' + (envir.scene.fog.color ? envir.scene.fog.color.getHexString() : '000000') + '",' +
-            '"fogfar" : "' + (envir.scene.fog.far ? envir.scene.fog.far : '1000000') + '",' +
-            '"fognear" : "' + (envir.scene.fog.near ? envir.scene.fog.near : '1000000') + '",' +
-            '"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",';
-        }
+        // if(envir.scene.fogCategory) {
+        //     // fogString ='' +
+        //     // '"fogCategory" : "' + (envir.scene.fogCategory ? envir.scene.fogCategory : 'none') + '",';
+        //     // '"fogcolor" : "#' + (envir.scene.fog.color ? envir.scene.fog.color.getHexString() : '000000') + '",' +
+        //     // '"fogfar" : "' + (envir.scene.fog.far ? envir.scene.fog.far : '1000000') + '",' +
+        //     // '"fognear" : "' + (envir.scene.fog.near ? envir.scene.fog.near : '1000000') + '",' +
+        //     // '"fogdensity" : "' + (envir.scene.fog.density ? envir.scene.fog.density : '0.00000001') + '",';
+            
+        // }
 
         var output = [
             '{',
@@ -738,9 +740,13 @@ THREE.SceneExporter.prototype = {
             '		"generatedBy"	: "SceneExporter.js",',
             '		"timestamp"	: '+ Date.now()  +',',
             '		"ClearColor" : "#' + (envir.scene.background.isColor ? envir.scene.background.getHexString() : '000000') + '",',
-            fogString,
             '		"toneMappingExposure" : "' + envir.renderer.toneMappingExposure + '",',
             '		"enableGeneralChat" : "' + (!!envir.scene.enableGeneralChat) + '",',
+            '		"fogCategory" : "' + (envir.scene.fogCategory ? envir.scene.fogCategory : 0) + '",',
+            '       "fogcolor" : "' + (envir.scene.fogcolor ? envir.scene.fogcolor : '#FFFFFF') + '",',
+            '       "fogfar" : "' + (envir.scene.fogfar ? envir.scene.fogfar : '1000') + '",' ,
+            '       "fognear" : "' + (envir.scene.fognear ? envir.scene.fognear : '0') + '",', 
+            '       "fogdensity" : "' + (envir.scene.fogdensity ? envir.scene.fogdensity : '0.00000001') + '",',
             '		"enableAvatar" : "' + (!!envir.scene.enableAvatar) + '",',
             '		"disableMovement" : "' + (!!envir.scene.disableMovement) + '",',
             '		"backgroundPresetOption" : "' + (envir.scene.preset_selection ? envir.scene.preset_selection : 'None') + '",',

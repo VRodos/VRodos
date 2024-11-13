@@ -44,6 +44,19 @@ AFRAME.registerComponent('video-controls', {
         this.panelElems = [this.videoPanel, this.fsEl, this.plEl, this.exEl, this.exFrameEl];
         document.querySelector('a-scene').addEventListener('exit-vr', this.removeVRTraces);
 
+        let video = document.getElementById("video-panel-video");
+        video.addEventListener('play', playing_no_vr);
+
+        video.addEventListener('pause', pausing_no_vr);
+
+        function playing_no_vr(e) {
+            gtag('event', 'poivideo_video_play');
+        }
+
+         function pausing_no_vr(e) {
+            gtag('event', 'poivideo_video_pause');
+        }
+        
         if(this.video.getAttribute("autoplay-manual") == "true"){
             this.video.play();
         }else{
@@ -145,9 +158,11 @@ AFRAME.registerComponent('video-controls', {
     playVideo: function(event) {
         if (this.video.paused) {
             this.video.play();
+            gtag('event', 'poivideo_video_play_vr');
         }
         else {
             this.video.pause();
+            gtag('event', 'poivideo_video_pause_vr');
         }
         this.playUpd(this.plEl);
     },
@@ -284,6 +299,8 @@ AFRAME.registerComponent('video-controls', {
         this.panel_pos_dynamic =  (this.visibleWidthAtZDepth(this.panel_z)/2-1) + " " + "-0.3" + " " + this.panel_z; //From rightmost position  subtract panel width (0.2) and padding
         // this.el.object3D.position.z = -2.5;
         this.restorePanel = this.restorePanel.bind(this);
+
+        gtag('event', 'video_click');
         
         if (!browsingModeVR) {
             let video_element = document.getElementById("video-panel-video");
@@ -327,6 +344,9 @@ AFRAME.registerComponent('video-controls', {
     },
     
     onFullScreenClick:  function (evt) {
+
+        gtag('event', 'poivideo_video_fullscreen_vr');
+
         this.is_fs = true;
         let projType = this.backgroundEl.getAttribute("scene-settings").pr_type;
         let selPreset = this.backgroundEl.getAttribute("scene-settings").presChoice;

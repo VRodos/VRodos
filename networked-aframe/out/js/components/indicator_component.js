@@ -1,12 +1,22 @@
 AFRAME.registerComponent('indicator-availability', {
-    schema: { isfull: { default: "false" } },
+    schema: { 
+        isfull: { default: "false" },
+        num_participants: {type: "string", default: "2" }
+    },
     init: function () {
         let element = this.el;
+        this.initSync = false;
+        this.maxParticipants = Number(this.data.num_participants);
+
+        if (this.maxParticipants ===  -1)
+            this.maxParticipants = Number.MAX_SAFE_INTEGER;
+            
 
         document.addEventListener("chat-ready", (evt)=>{
             let id = element.getAttribute("id");
+            this.initSync = true;
             let  chatListCheck = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== id}).length;
-            if(chatListCheck < 2)
+            if(chatListCheck < this.maxParticipants)
             {
                 element.emit('chat-availability-change', "available", false);
             }else{
@@ -26,7 +36,6 @@ AFRAME.registerComponent('indicator-availability', {
         checkIndicatorEntity.setAttribute("rotation", "0 270 0");
         checkIndicatorEntity.classList.add("non-vr");
         checkIndicatorEntity.classList.add("hideable");
-
         xIndicatorEntity.setAttribute("visible", "false");
         xIndicatorEntity.setAttribute("id", "#x_id");
         xIndicatorEntity.setAttribute("gltf-model", "#x_indicator_id");
@@ -54,8 +63,8 @@ AFRAME.registerComponent('indicator-availability', {
             let bbox = new THREE.Box3().setFromObject(this.el.object3D);
             const vector = new THREE.Vector3();
             let centered_values = bbox.getCenter(vector);
-            checkIndicatorEntity.object3D.position.set(element.getAttribute("position").x, element.getAttribute("position").y + 5, element.getAttribute("position").z);
-            xIndicatorEntity.object3D.position.set(element.getAttribute("position").x, element.getAttribute("position").y + 5, element.getAttribute("position").z);
+            checkIndicatorEntity.object3D.position.set(element.getAttribute("position").x, bbox.max.y + 1, element.getAttribute("position").z);
+            xIndicatorEntity.object3D.position.set(element.getAttribute("position").x, bbox.max.y + 1, element.getAttribute("position").z);
             parentEntity.setAttribute("visible", "true");
         });
     },
@@ -63,10 +72,10 @@ AFRAME.registerComponent('indicator-availability', {
         let chat_id = this.el.getAttribute("id");
         let  chatListUpdate = [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.currentPrivateChat).filter(function(x){return x== chat_id}).length;
 
-        if (chatListUpdate === 2 && this.data.isfull === "false"){
+        if (chatListUpdate === this.maxParticipants || this.initSync == false){
             this.el.emit('chat-availability-change', "full", false);
             this.data.isfull = "true";
-        }else if (chatListUpdate < 2 && this.data.isfull === "true"){
+        }else if (chatListUpdate < this.maxParticipants){
             this.el.emit('chat-availability-change', "available", false);
             this.data.isfull = "false";
         }

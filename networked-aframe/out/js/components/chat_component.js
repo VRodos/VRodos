@@ -12,15 +12,16 @@ function sendPublicMessage() {
     let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
 
     let dateString = getChatCurrentTimeString();
-    chatLog.innerHTML += '<pre>' + dateString + ' Me: ' + chatInput.value + '</pre>';
+    chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
     chatLogPublicHistory.push(dateString + ' Me: ' + chatInput.value);
     NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
+    gtag('event', 'chat_public_msg_dispatched');
 }
 
 NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
     let dateString = getChatCurrentTimeString();
     if (publicChatIsActive)
-        chatLog.innerHTML += '<pre style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</pre>';
+        chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
     chatLogPublicHistory.push(dateString + ' ' + data.player.name + ": " + data.txt);
 } )
 

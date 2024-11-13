@@ -17,8 +17,9 @@ class ParseJSON
         echo '<script>';
         echo 'resources3D["ClearColor"]= "' . $json_metadata->ClearColor . '";';
 
-        if (property_exists($json_metadata, "fogtype")) {
-            echo 'resources3D["fogtype"]= "' . $json_metadata->fogtype . '";';
+        if (property_exists($json_metadata, "fogCategory")) {
+            //echo 'resources3D["fogtype"]= "' . $json_metadata->fogtype . '";';
+            echo 'resources3D["fogCategory"]= "' . $json_metadata->fogCategory . '";';
             echo 'resources3D["fogcolor"]= "' . $json_metadata->fogcolor . '";';
             echo 'resources3D["fognear"]= "' . $json_metadata->fognear . '";';
             echo 'resources3D["fogfar"]= "' . $json_metadata->fogfar . '";';
@@ -34,10 +35,13 @@ class ParseJSON
         if (property_exists($json_metadata, "enableAvatar")){
             echo 'resources3D["enableAvatar"]= "' . $json_metadata->enableAvatar . '";';
         }
-
         if (property_exists($json_metadata, "disableMovement")){
             echo 'resources3D["disableMovement"]= "' . $json_metadata->disableMovement . '";';
         }
+
+        // if (property_exists($json_metadata, "fogCategory")){
+        //     echo 'resources3D["fogCategory"]= "' . $json_metadata->fogCategory . '";';
+        // }
 
         if (property_exists($json_metadata, "backgroundPresetOption"))
             echo 'resources3D["backgroundPresetOption"]= "' . $json_metadata->backgroundPresetOption . '";';
@@ -131,9 +135,10 @@ class ParseJSON
                 $r_y = $value->rotation[1];
                 $r_z = $value->rotation[2];
 
-                $target_position_x = 0;
-                $target_position_y = 0;
-                $target_position_z = 0;
+                $target_position_x = $value->targetposition[0];
+                $target_position_y = $value->targetposition[1];
+                $target_position_z = $value->targetposition[2];
+
 
                 $light_color_r = $value->lightcolor[0];
                 $light_color_g = $value->lightcolor[1];
@@ -141,7 +146,7 @@ class ParseJSON
 
                 $value->lightangle = 0.7;
                 $value->lightpenumbra = 0;
-                $value->lighttargetobjectname = '';
+                // $value->lighttargetobjectname = '';
 
 
                 $value->path = "";

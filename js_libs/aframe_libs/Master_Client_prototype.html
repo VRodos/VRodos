@@ -2,6 +2,16 @@
 <html lang="en">
 
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-63HJZ7CJRR"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-63HJZ7CJRR');
+    </script>
+
     <meta charset="utf-8" />
     <title>Collaborative content creation</title>
     <meta name="description" content="Collaborative content creation" />
@@ -12,6 +22,8 @@
     <meta http-equiv="Expires" content="0" />
 
     <script src="js/aframe/1.4.2/aframe-v1.4.2.min.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-master.min.js"></script>-->
+
     <!--<script src="js/aframe/1.5.0/aframe-v1.5.0.min.js"></script>-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
     <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
@@ -157,7 +169,8 @@
 
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
-                    if(this.data.pr_type == "vrexpo_games"){
+
+                    if(this.data.pr_type === "vrexpo_games"){
                         console.log(this.data.cam_rotation_y);
                         document.getElementById("cameraA").setAttribute("position", this.data.cam_position);
                         //document.getElementById("player").setAttribute("rotation", "0 90 0");
@@ -168,11 +181,13 @@
                     document.getElementById("private-chat-button").addEventListener("click", () => {
                         let event = new CustomEvent('chat-selected', {"detail": "private"});
                         document.dispatchEvent(event);
+                        gtag('event', 'chat_private_tab_selected');
                     });
 
                     document.getElementById("public-chat-button").addEventListener("click", (evt) =>{
                         let event = new CustomEvent('chat-selected', {"detail": "public"});
                         document.dispatchEvent(event);
+                        gtag('event', 'chat_public_tab_selected');
                     });
 
                     if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0"){
@@ -417,9 +432,11 @@
 
                 this.el.addEventListener("enter-vr", () => {
                     browsingModeVR = true;
+                    gtag('event', 'vr_enabled');
                 });
                 this.el.addEventListener("exit-vr", () => {
                     browsingModeVR = false;
+                    gtag('event', 'vr_disabled');
                 });
 
                 let cam = document.querySelector("#cameraA");
@@ -867,31 +884,33 @@
     <style>
         .button-tab {
             background-color: #fff;
-            border: 0 solid #e2e8f0;
+            border: none;
             border-radius: 1.5rem;
             box-sizing: border-box;
             color: #0d172a;
             cursor: pointer;
             display: inline-block;
-            font-family: "Basier circle",-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
-            font-size: 1.1rem;
+            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
+            Droid Sans, Helvetica Neue, sans-serif;
+            font-size: 0.8em;
             font-weight: 600;
-            padding: 1rem 1.6rem;
+            padding: 0;
             text-align: center;
             text-decoration: none #0d172a solid;
-            text-decoration-thickness: auto;
             transition: all .1s cubic-bezier(.4, 0, .2, 1);
-            box-shadow: 0px 1px 2px rgba(166, 175, 195, 0.25);
+            box-shadow: 0 1px 2px rgba(166, 175, 195, 0.25);
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
         }
 
-        @media (min-width: 768px) {
-            .button-tab {
-                font-size: 1.125rem;
-                padding: 1rem 2rem;
-            }
+        .mdc-tab {
+            background-color: rgba(255,255,255,.54);
+            color: rgba(0,0,0,.23);
+        }
+        .mdc-tab--active {
+            background-color: white;
+            color: black;
         }
         .ChatWrapperStyle {
             position: absolute;
@@ -991,31 +1010,28 @@
 </head>
 
 <body id="master-client-body">
+
 <div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
 
     <div class="mdc-tab-bar" role="tablist" style="position: relative; top: 0; right:30px; z-index:101; height: 30px;">
         <div class="mdc-tab-scroller">
-            <div class="mdc-tab-scroller__scroll-area">
-                <div class="mdc-tab-scroller__scroll-content">
-                    <button id = "public-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="0" style="visibility: hidden">
+
+            <button id="public-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="0" style="visibility: hidden">
                         <span class="mdc-tab__content">
                             <span class="mdc-tab__text-label">Public</span>
                         </span>
 
-                        <span class="mdc-tab__ripple"></span>
-                    </button>
+            </button>
 
-                    <button id = "private-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="1"  style="visibility: hidden">
+            <button id="private-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="1"  style="visibility: hidden">
                         <span class="mdc-tab__content">
-                        <span class="mdc-tab__text-label">Private</span>
+                            <span id="private-chat-button-label" class="mdc-tab__text-label">Private</span>
                         </span>
-                        <span class="mdc-tab-indicator mdc-tab-indicator">
 
-                    </button>
+            </button>
 
-                </div>
-            </div>
         </div>
+
     </div>
 
 
@@ -1025,6 +1041,7 @@
              document.getElementById('cameraA').setAttribute('player-info', 'color', newColor);
              document.getElementById('color-changer').style.backgroundColor = newColor;
              document.getElementById('color-changer').style.color = newColor;
+             gtag('event', 'player_color_change');
         ">■</button>
         <input id="username-overlay" maxlength="24" size="15" oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)" placeholder="Username" />
         <input type="text" id="chatInput" placeholder="Message">
@@ -1221,7 +1238,7 @@
         shadow="type: pcfsoft;"
         vr-mode-ui="enabled: true"
         loading-screen="dotsColor: gray; backgroundColor: black;"
-      >
+>
     <!--environment="ground:none"-->
 
     <a-assets id="scene-assets">
@@ -1352,9 +1369,8 @@
     }
 
     // Ready player me iframe code
-    const rpm_iframe = document.getElementById('rpm-iframe');
-
     const subdomain = 'vrodos'; // Replace with your custom subdomain
+    const rpm_iframe = document.getElementById('rpm-iframe');
     rpm_iframe.src = `https://${subdomain}.readyplayer.me/avatar?frameApi`;
 
     window.addEventListener('message', subscribe);
@@ -1382,7 +1398,6 @@
         // Get avatar GLB URL
         // Now add it in Aframe canvas
         if (json.eventName === 'v1.avatar.exported') {
-
             document.getElementById('rpm-iframe').hidden = true;
 
             // Update remote

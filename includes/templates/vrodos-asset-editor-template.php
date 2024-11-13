@@ -63,7 +63,6 @@ function vrodos_loadAsset3DManagerScriptsAndStyles() {
 add_action('wp_enqueue_scripts', 'vrodos_loadAsset3DManagerScriptsAndStyles' );
 
 // End Of Scripts Loading
-
 $perma_structure = get_option('permalink_structure');
 if( $perma_structure){$parameter_Scenepass = '?vrodos_scene=';} else{$parameter_Scenepass = '&vrodos_scene=';}
 if( $perma_structure){$parameter_pass = '?vrodos_game=';} else{$parameter_pass = '&vrodos_game=';}
@@ -164,6 +163,7 @@ $goBackToLink = $scene_id != 0 ?
     <script>
         let path_url = null;
         let glb_file_name = null;
+        let no_img_path = '<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)); ?>';
     </script>
 
 <?php
@@ -174,6 +174,7 @@ $goBackToLink = $scene_id != 0 ?
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'],
         'post_nonce')) {
 
+    
     $assetTitle = isset($_POST['assetTitle']) ? esc_attr(strip_tags($_POST['assetTitle'])) : '';
     $assetCatID = intval($_POST['term_id']); //ID of Asset Category (hidden input)
     $assetCatTerm = get_term_by('id', $assetCatID, 'vrodos_asset3d_cat');
@@ -237,9 +238,11 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
         case 'poi-imagetext':
 
-            if (isset($_FILES['imageFileInput'])) {
+            $existing_img = $_FILES['imageFileInput'];
+            if ( $existing_img['error'] != 4  ) {
                 vrodos_create_asset_addImages_frontend($asset_id, $_FILES['imageFileInput']);
             }
+
             update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', sanitize_text_field($_POST['poiImgTitle']));
             update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', sanitize_text_field($_POST['poiImgDescription']));
 
@@ -248,13 +251,11 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         case 'poi-link':
             update_post_meta($asset_id, 'vrodos_asset3d_link', $_POST['assetLinkInput']);
             break;
-        
-        case 'poi-help':
+
+        case 'chat':
             update_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', $_POST['poiChatTitle']);
-            if(isset($_POST['poiChatIndicators']))
-                update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', $_POST['poiChatIndicators']);
-            else
-                update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', "disabled");
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_chatnum_people', $_POST['poiChatNumPeople']);
+            update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', isset($_POST['poiChatIndicators']));
             break;
 
         default:
@@ -274,7 +275,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
 //---------------------------- End of handle Submit  -------------------------
 
-// When asset was created in the past and now we want to edit it. We should get the attachments obj, mtl
+// When asset was created in the past and now we want to edit it. We should get the attachments glb
 if($asset_id != null) {
 
     // Get post
@@ -655,11 +656,11 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                                       type="text"><?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_imgtxt_content', true);?></textarea>
 
                         </div>
-
                     </div>
 
                     <div id="poi_help_section" class="assetEditorColumn" style="display: none;">
-                        <!-- <h3 class="mdc-typography--title">Contact Form</h3> -->
+
+                        <h3 class="mdc-typography--title" style="margin-bottom: 5px;">Chat Options</h3>
 
                         <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
                             <input id="poiChatTitle" type="text"
@@ -669,7 +670,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                                    value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chattxt_title', true);?>">
 
                             <label for="poiChatTitle" class="mdc-textfield__label">
-                                Title
+                                Chat Title (appears on entering chat)
                             </label>
 
                             <div class="mdc-textfield__bottom-line"></div>
@@ -678,23 +679,30 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                             Between 3 - 25 characters
                         </p>
 
-                        <div class="mdc-touch-target-wrapper">
-                            <h3 class="mdc-typography--title">Enable indicators</h3>
-                            <div class="mdc-checkbox mdc-checkbox--touch">
-                                <input id="poiChatIndicators"type="checkbox"
-                                    class="mdc-checkbox__native-control"
-                                    name="poiChatIndicators"
-                                  <?php  
-                                  if (get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) == "enabled")
-                                    echo "checked";
-                                ?>
-                                    value="enabled">
-                                <div class="mdc-checkbox__background">
-                                <div class="mdc-checkbox__mixedmark"></div>
-                                </div>
-                                <div class="mdc-checkbox__ripple"></div>
-                            </div>
+
+                        <?php $indicator_enabled = get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) ? 'checked' : ''; ?>
+
+                        <input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="poiChatIndicators"
+                               name="poiChatIndicators" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $indicator_enabled; ?>/>
+                        <label for="poiChatIndicators" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Chat Indicator</label>
+
+                        <h3 class="mdc-typography--title" style="margin-bottom: 5px;">Chat max participants</h3>
+
+                        <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
+                            <label for="poiChatNumPeople" class="mdc-textfield__label">
+                                Max: 8
+                            </label>
+                            <input id="poiChatNumPeople" type="number"
+                                   title="Number of participants"
+                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
+                                   name="poiChatNumPeople"
+                                   min="2"
+                                   max="8"
+                                   value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chatnum_people', true);?>">
+                            <div class="mdc-textfield__bottom-line"></div>
+
                         </div>
+
 
                     </div>
 
@@ -751,6 +759,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         } else {
                             $imagePoiImageURL = wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_poi_imgtxt_image",true) );
 
+
                             if ($imagePoiImageURL == false) {
                                 $imagePoiImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
                             }
@@ -759,7 +768,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         <img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo $imagePoiImageURL; ?>" alt="Asset Image Text POI image">
 
                         <input type="file" name="imageFileInput" value=""
-                               id="imageFileInput" accept="image/png, image/jpg,  image/jpeg"/>
+                               id="imageFileInput" accept="image/png, image/jpg, image/jpeg"/>
 
                     </div>
 
@@ -981,12 +990,9 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
 
                         case "chat":
                             document.getElementById('ipr_section').style.display = "none";
-                            break;
-                        case "poi-help":
-                            document.getElementById('ipr_section').style.display = "none";
                             document.getElementById('poi_help_section').style.display = "block";
-
                             break;
+
                         case "poi-imagetext":
                             document.getElementById('poi_image_text_section').style.display = "block";
                             document.getElementById('poi_image_file_section').style.display = "block";
@@ -1066,7 +1072,9 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                     return slug;
                 }
 
+
                 document.getElementById('imageFileInput').onchange = function (evt) {
+
                     let tgt = evt.target || window.event.srcElement,
                         files = tgt.files;
 
@@ -1079,8 +1087,7 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
                         fr.readAsDataURL(files[0]);
                     }
                     else {
-                        // fallback -- perhaps submit the input to an iframe and temporarily store
-                        // them on the server until the user's session ends.
+                        document.getElementById('imagePoiPreviewImg').src = no_img_path;
                     }
                 }
 

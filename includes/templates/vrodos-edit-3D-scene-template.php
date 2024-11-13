@@ -377,12 +377,12 @@ wp_head();
                     </div>
 
                     <!-- Compile Button -->
-                    <a id="compileGameBtn"
-                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg w3-display-right"
+                    <button id="compileGameBtn"
+                       class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg"
                        data-mdc-auto-init="MDCRipple"
                        title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
                         Build Project
-                    </a>
+                    </button>
 
                 </div>
                 <!--Compile Dialogue html-->
@@ -402,13 +402,13 @@ wp_head();
                 <!-- Lights -->
                 <div class="environmentBar hidable">
 
-                    <div class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
+                    <div title="An entry point for Actors, they can choose one of multiple points when logging in" class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
                         <header draggable="false" class="notdraggable">Actor</header>
                         <img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0"
                              src="<?php echo $pluginpath?>/images/lights/pawn.png"/>
                     </div>
 
-                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;margin:0;padding:0;margin-left:2px;margin-right:2px">
+                    <div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;padding:0;margin: 0 2px;">
                     </div>
 
                     <div class="lightpawnbutton" data-lightPawn="Sun" draggable="true" title="When adding a Sun, an automatic horizon is added to the scene, negating any Background color you have selected.">
@@ -417,19 +417,19 @@ wp_head();
                              src="<?php echo $pluginpath?>/images/lights/sun.png"/>
                     </div>
 
-                    <div class="lightpawnbutton" data-lightPawn="Lamp" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Lamp" draggable="true" title="The lamp emits lighting close to objects.">
                         <header draggable="false" class="notdraggable">Lamp</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/lamp.png"/>
                     </div>
 
-                    <div class="lightpawnbutton" data-lightPawn="Spot" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Spot" draggable="true" title="The Spot light is a directional light to a specific target.">
                         <header draggable="false" class="notdraggable">Spot</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/spot.png"/>
                     </div>
 
-                    <div class="lightpawnbutton" data-lightPawn="Ambient" draggable="true">
+                    <div class="lightpawnbutton" data-lightPawn="Ambient" draggable="true" title="Ambient light emits a strong light to illuminate areas.">
                         <header draggable="false" class="notdraggable" style="font-size: 7pt">Ambient</header>
                         <img draggable="false" class="lighticon notdraggable"
                              src="<?php echo $pluginpath?>/images/lights/ambient_light.png"/>
@@ -458,9 +458,7 @@ wp_head();
                         <!--  Dimensionality 2D 3D toggle -->
                         <a id="dim-change-btn" data-mdc-auto-init="MDCRipple"
                            title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
-                            2D
-                        </a>
+                           class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">2D</a>
                     </div>
 
                     <!-- The button to start walking in the 3d environment -->
@@ -685,6 +683,7 @@ wp_head();
 
             // Add transform controls to scene
             envir.scene.add(transform_controls);
+            document.getElementById("compileGameBtn").disabled = true;
 
             // Load Manager
             // Make progress bar visible
@@ -732,14 +731,14 @@ wp_head();
                
 
                 for (let n in resources3D) {
-                    (function (name) {
+                    // (function (name) {
 
-                        // Set Target light for Spots
-                        if (resources3D[name]['category_name'] === 'lightSpot') {
-                            let lightSpot = envir.scene.getObjectByName(name);
-                            lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
-                        }
-                    })(n);
+                    //     // Set Target light for Spots
+                    //     if (resources3D[name]['category_name'] === 'lightSpot') {
+                    //         let lightSpot = envir.scene.getObjectByName(name);
+                    //         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
+                    //     }
+                    // })(n);
                 }
 
                 // Avoid culling by frustum
@@ -764,6 +763,7 @@ wp_head();
 
                 jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
+                document.getElementById("compileGameBtn").disabled = false;
             }; // End of manager
 
             // Loader of assets
@@ -795,8 +795,20 @@ wp_head();
             if (resources3D["enableAvatar"]) {
                 document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
                 envir.scene.enableAvatar = JSON.parse(resources3D["enableAvatar"]);
+            }         
+            // if (resources3D["fogtype"]) {
+            //     //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
+            //     envir.scene.fogtype = JSON.parse(resources3D["fogtype"]);
+            // }
+            if (resources3D["fogCategory"]) {
+                //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
+                envir.scene.fogCategory = JSON.parse(resources3D["fogCategory"]);
+                // envir.scene.fogcolor = JSON.parse(resources3D["fogcolor"]);
+                
+                envir.scene.fognear = resources3D["fognear"];
+                envir.scene.fogfar = resources3D["fogfar"];
+                envir.scene.fogdensity = resources3D["fogdensity"];
             }
-            
             if (resources3D["disableMovement"]) {
                 document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
                 envir.scene.disableMovement = JSON.parse(resources3D["disableMovement"]);

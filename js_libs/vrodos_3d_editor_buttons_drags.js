@@ -2,15 +2,15 @@
 
 // Local
 function loadButtonActions() {
-
+ 
     // Compile Project button
     jQuery("#compileGameBtn").click(function () {
         compileDialog.show();
-        saveChanges();
 
         // Pause Rendering
         isPaused = true;
         jQuery("#pauseRendering").get(0).childNodes[1].innerText = "play_arrow";
+        saveChanges();
     });
 
 
@@ -262,6 +262,7 @@ function loadButtonActions() {
         }
 
         jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
+        document.getElementById("compileGameBtn").disabled = true;
 
         // Export using a custom variant of the old deprecated class SceneExporter
         let exporter = new THREE.SceneExporter();
