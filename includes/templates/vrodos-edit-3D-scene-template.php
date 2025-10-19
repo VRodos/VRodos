@@ -132,8 +132,11 @@ if ($project_type === 'Archaeology') {
 $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
-$sceneJSON = $scene_post->post_content ? $scene_post->post_content :
-    vrodos_getDefaultJSONscene(strtolower($project_type));
+$scene_json_from_db = $scene_post->post_content ? $scene_post->post_content : vrodos_getDefaultJSONscene(strtolower($project_type));
+
+// Create a scene model to validate and structure the data.
+$scene_model = new Vrodos_Scene_Model($scene_json_from_db);
+$sceneJSON = $scene_model->to_json();
 
 // Load resources 3D
 $SceneParserPHP = new ParseJSON($upload_url);

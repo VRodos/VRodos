@@ -56,35 +56,44 @@ The `refactor-upload-functions` branch contains all of these changes. The result
 
 ---
 
-## 3. Proposed Next Steps: Task 2 - Refactor Scene Data Handling
+## 3. Completed Work: Task 2 - Refactor Scene Data Handling
 
-With the upload system stabilized, the next logical area to refactor is the handling of the scene data itself.
+With the upload system stabilized, the second phase of the refactoring focused on the handling of the scene data itself.
 
-### Current State:
-- Scene data is saved as a large, unstructured JSON blob directly into the `post_content` field of the `vrodos_scene` custom post type.
-- This approach is difficult to debug, query, and extend. Any change to the scene structure requires complex string manipulation in both PHP and JavaScript.
+### Summary of Changes:
+The core of this work involved replacing the unstructured JSON blob for scene data with a formal PHP data model.
 
-### Proposed Plan:
-1.  **Analyze the JavaScript:**
-    - **Objective:** Fully understand the structure of the scene JSON.
-    - **Action:** Investigate the 3D editor's JavaScript files (likely located in the `/js_libs/` directory, with AJAX handlers in `/js_libs/ajaxes/`). The key is to identify the code that serializes the Three.js scene graph into a JSON object before it is sent to the server via the `vrodos_save_scene_async_action` AJAX call.
+1.  **Created a Formal Data Model:**
+    - **Previous State:** Scene data was saved as a large, unstructured JSON blob directly into the `post_content` field of the `vrodos_scene` custom post type.
+    - **New State:** A new `Vrodos_Scene_Model` class was created in `includes/vrodos-scene-model.php`. This class provides a clear, predictable, and maintainable structure for scene data, with properties for metadata and objects.
 
-2.  **Define a Formal Data Model:**
-    - **Objective:** Create a predictable and maintainable structure for scene data.
-    - **Action:** Based on the analysis, define a formal PHP class (e.g., `Vrodos_Scene_Model`) that represents the structure of a scene. This class would have properties for scene settings, environmental controls, and an array of objects representing the assets within the scene. This provides a single source of truth for the data structure.
+2.  **Refactored Save/Load Logic:**
+    - **Save Logic:** The AJAX handler for saving scenes (`vrodos_save_scene_async_action_callback`) was moved to a dedicated file (`includes/vrodos-ajax-hooks.php`) to improve code organization. The handler was updated to instantiate the `Vrodos_Scene_Model` from the incoming JSON, ensuring the data is validated and structured before being serialized back to a JSON string for storage. This removes risky operations like `wp_strip_all_tags` on the JSON string.
+    - **Load Logic:** The scene editor template (`includes/templates/vrodos-edit-3D-scene-template.php`) was updated to pass the stored `post_content` through the `Vrodos_Scene_Model`. This ensures that data is consistently structured, whether it's a new or existing scene.
 
-3.  **Refactor Save/Load Logic:**
-    - **Objective:** Implement the new data model.
-    - **Action (Backend):** Modify the PHP AJAX handler (`vrodos_save_scene_async_action_callback` in `VRodos.php`) to use the new `Vrodos_Scene_Model`. Instead of saving the raw JSON blob, the handler should sanitize the incoming data, map it to the properties of the new data model, and then serialize the model object for storage. This is a good opportunity to move the save logic out of the main plugin file and into a dedicated file in the `includes` directory.
-    - **Action (Frontend):** Modify the JavaScript code that loads a scene to correctly parse the new, structured data from the server and reconstruct the Three.js scene.
+3.  **Improved Code Organization:**
+    - The AJAX save logic was successfully decoupled from the `vrodos-core-functions.php` file and is now located in `vrodos-ajax-hooks.php`, making the code easier to navigate and maintain.
 
-### Expected Benefits:
-- **Maintainability:** A clear data model makes the code much easier to understand and modify.
-- **Debugging:** It will be simpler to validate and debug scene data.
-- **Extensibility:** Adding new features to scenes will be a matter of adding properties to the model, not complex JSON manipulation.
-- **Performance:** A structured data model is the first step toward future performance optimizations, such as selectively loading parts of a scene.
+The `refactor-scene-data-handling` branch contains all of these changes. The result is a more robust and maintainable scene data system that aligns with best practices and prepares the codebase for future feature development.
 
-This next phase will be a significant step toward making the entire VRodos codebase cleaner, more robust, and ready for future development.
+---
+
+## 4. Proposed Next Steps: Task 3 - Consolidate Three.js Versions
+
+This is the most significant technical challenge and will provide a massive improvement in stability and performance.
+
+- **Problem:** The plugin loads at least five different versions of Three.js (r87, r119, r124, r125, r141) to support various components. This creates a large footprint, potential for conflicts, and a maintenance nightmare.
+- **Proposed Plan:**
+    1.  **Inventory & Audit:** Systematically go through the JavaScript files to identify which components are tied to which Three.js version and why. Document the dependencies.
+    2.  **Select a Target Version:** Choose a single, modern, and stable version of Three.js as the target for the entire application. This decision should consider compatibility with the existing A-Frame version.
+    3.  **Migrate Components:** Carefully migrate the components, one by one, to the new target version. This will be a delicate process, as the Three.js API has changed significantly over the years. Each migrated component will need to be thoroughly tested.
+    4.  **Remove Old Libraries:** Once all components are migrated, remove the old, unused Three.js library files from the `js_libs` directory and the `wp_register_script` calls from `VRodos.php`.
+
+### Open Questions for Next Session:
+1.  **Choice of Target Version:** Do you have a specific Three.js version in mind, or should I research and propose one? The default approach will be to select the latest stable version that is compatible with A-Frame.
+2.  **Testing and Verification:** Is there a specific scene or set of assets to use as a "golden master" for visual testing during the migration?
+3.  **A-Frame Compatibility:** Do you have any immediate information on the A-Frame version being used and its Three.js dependencies?
+4.  **Phased Approach:** Is it acceptable to have the codebase in a transitional state, with some components using the new Three.js version while others are still on the old ones, as I migrate them one by one?
 
 ---
 

@@ -872,7 +872,7 @@ add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projec
 
 
 // ------ Ajaxes for scenes -----------
-add_action('wp_ajax_vrodos_save_scene_async_action','vrodos_save_scene_async_action_callback');
+require_once(plugin_dir_path(__FILE__) . 'includes/vrodos-ajax-hooks.php');
 add_action('wp_ajax_vrodos_undo_scene_async_action','vrodos_undo_scene_async_action_callback');
 add_action('wp_ajax_vrodos_redo_scene_async_action','vrodos_redo_scene_async_action_callback');
 
