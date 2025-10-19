@@ -2,6 +2,13 @@
 
 function vrodos_create_asset_3DFilesExtra_frontend($assetNewId, $projectId, $assetCatId){
 
+    // Make sure all necessary files are loaded for media handling
+    if (!function_exists('wp_generate_attachment_metadata')) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+    }
+
     // Clear out all previous
 
     // 1. DELETE ATTACHMENTS OF PARENT POST (ASSET POST)

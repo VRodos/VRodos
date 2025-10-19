@@ -199,9 +199,6 @@ function vrodos_insert_attachment_post($file_return, $parent_post_id ){
     // Insert the attachment post to database
     $attachment_id = wp_insert_attachment( $attachment, $file_return['url'], $parent_post_id );
 
-    // Image library needed to create thumbnail
-    // require_once(ABSPATH . 'wp-admin/includes/image.php');
-
     // Generate thumbnail for media library
     $attachment_data = wp_generate_attachment_metadata( $attachment_id, $filename );
 
