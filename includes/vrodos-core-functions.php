@@ -603,34 +603,6 @@ function vrodos_compile_action_callback(){
 
 
 
-function vrodos_save_scene_async_action_callback()
-{
-
-	// Save screenshot
-	if (isset($_POST['scene_screenshot']))
-		$attachment_id = vrodos_upload_scene_screenshot(
-			$_POST['scene_screenshot'],
-			'scene_'.$_POST['scene_id'].'_featimg',
-			$_POST['scene_id'],
-			'jpg',
-			true);
-
-	// Set thumbnail of post
-	set_post_thumbnail( $_POST['scene_id'], $attachment_id );
-
-	// Save json of scene
-	$scene_new_info = array(
-		'ID' => $_POST['scene_id'],
-		'post_title' => $_POST['scene_title'],
-		'post_content' => wp_strip_all_tags(wp_unslash($_POST['scene_json']), true)
-	);
-
-	$res = wp_update_post($scene_new_info);
-	update_post_meta($_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption']);
-	
-	echo $res!=0 ? 'true' : 'false';
-	wp_die();
-}
 
 
 
