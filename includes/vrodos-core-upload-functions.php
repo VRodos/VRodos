@@ -144,15 +144,18 @@ function vrodos_upload_img_vid_aud($file, $parent_post_id) {
     $file_return = _vrodos_handle_asset_upload($file, $parent_post_id);
 
     remove_filter('upload_dir', 'vrodos_upload_dir_forScenesOrAssets');
-    remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     unset($_REQUEST['post_id']);
 
     // if file has been uploaded successfully
     if($file_return && empty($file_return['error'])) {
         $attachment_id = vrodos_insert_attachment_post($file_return, $parent_post_id);
+        remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
         if ($attachment_id) {
             return $attachment_id;
         }
+    } else {
+        // If the upload failed, we should still remove the filter to not affect other uploads.
+        remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     }
 
     return false;
@@ -235,15 +238,18 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type)
     $file_return = wp_upload_bits($filename, null, $decoded_image);
 
     remove_filter('upload_dir', 'vrodos_upload_dir_forScenesOrAssets');
-    remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     unset($_REQUEST['post_id']);
 
     if ($file_return && empty($file_return['error'])) {
         $attachment_id = vrodos_insert_attachment_post($file_return, $scene_id);
+        remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
         if ($attachment_id) {
             set_post_thumbnail($scene_id, $attachment_id);
             return $attachment_id;
         }
+    } else {
+        // If the upload failed, we should still remove the filter to not affect other uploads.
+        remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     }
 
     return false;
@@ -278,15 +284,18 @@ function vrodos_upload_asset_screenshot($image, $parentPostId, $projectId) {
     $file_return = wp_upload_bits($filename, null, $decoded_image);
 
     remove_filter('upload_dir', 'vrodos_upload_dir_forScenesOrAssets');
-    remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     unset($_REQUEST['post_id']);
 
     if ($file_return && empty($file_return['error'])) {
         $attachment_id = vrodos_insert_attachment_post($file_return, $parentPostId);
+        remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
         if ($attachment_id) {
             update_post_meta($parentPostId, 'vrodos_asset3d_screenimage', $attachment_id);
             return $attachment_id;
         }
+    } else {
+        // If the upload failed, we should still remove the filter to not affect other uploads.
+        remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
     }
 
     return false;
