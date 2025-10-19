@@ -127,6 +127,8 @@ function vrodos_upload_filter( $args  ) {
 // Upload image(s) or video or audio for a certain post_id (asset or scene3D)
 function vrodos_upload_img_vid_aud($file, $parent_post_id) {
 
+    _vrodos_load_wp_admin_files();
+
     // For Images (Sprites in Unity)
     if($file['type'] === 'image/jpeg' || $file['type'] === 'image/png') {
         if (strpos($file['name'], 'sprite') == false) {
@@ -171,10 +173,16 @@ function vrodos_upload_img_vid_aud($file, $parent_post_id) {
  * @param int   $parent_post_id The ID of the post this file is attached to.
  * @return array|false The result of wp_handle_upload or false on failure.
  */
-function _vrodos_handle_asset_upload( $file_array, $parent_post_id ) {
-    if ( ! function_exists( 'wp_handle_upload' ) ) {
-        require_once( ABSPATH . 'wp-admin/includes/file.php' );
+function _vrodos_load_wp_admin_files() {
+    if (!function_exists('wp_generate_attachment_metadata')) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
     }
+}
+
+function _vrodos_handle_asset_upload( $file_array, $parent_post_id ) {
+    _vrodos_load_wp_admin_files();
 
     // The 'vrodos_upload_dir_forScenesOrAssets' filter will be applied by the calling function
     // to ensure the correct directory is used.
@@ -215,6 +223,8 @@ function vrodos_insert_attachment_post($file_return, $parent_post_id ){
 // Immitation of $_FILE through $_POST . This works only for jpgs and pngs
 function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type) {
 
+    _vrodos_load_wp_admin_files();
+
     // DELETE EXISTING FILE: See if has already a thumbnail and delete it safely
     $thumbnail_id = get_post_thumbnail_id($scene_id);
     if ($thumbnail_id) {
@@ -225,6 +235,7 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type)
     $_REQUEST['post_id'] = $scene_id;
     add_filter('upload_dir', 'vrodos_upload_dir_forScenesOrAssets');
     add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
+    add_filter('big_image_size_threshold', '__return_false');
 
     // The wp_upload_bits function is now mocked in the isolated test script.
     // if (!function_exists('wp_upload_bits')) {
@@ -243,6 +254,7 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type)
     if ($file_return && empty($file_return['error'])) {
         $attachment_id = vrodos_insert_attachment_post($file_return, $scene_id);
         remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
+        remove_filter('big_image_size_threshold', '__return_false');
         if ($attachment_id) {
             set_post_thumbnail($scene_id, $attachment_id);
             return $attachment_id;
@@ -250,6 +262,7 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type)
     } else {
         // If the upload failed, we should still remove the filter to not affect other uploads.
         remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
+        remove_filter('big_image_size_threshold', '__return_false');
     }
 
     return false;
@@ -259,6 +272,8 @@ function vrodos_upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type)
 
 // Asset: Used to save screenshot
 function vrodos_upload_asset_screenshot($image, $parentPostId, $projectId) {
+
+    _vrodos_load_wp_admin_files();
 
     // DELETE EXISTING FILE
     $asset3d_screenimage_id = get_post_meta($parentPostId, 'vrodos_asset3d_screenimage', true);
@@ -271,6 +286,7 @@ function vrodos_upload_asset_screenshot($image, $parentPostId, $projectId) {
     $_REQUEST['post_id'] = $parentPostId;
     add_filter('upload_dir', 'vrodos_upload_dir_forScenesOrAssets');
     add_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
+    add_filter('big_image_size_threshold', '__return_false');
 
     // The wp_upload_bits function is now mocked in the isolated test script.
     // if (!function_exists('wp_upload_bits')) {
@@ -289,6 +305,7 @@ function vrodos_upload_asset_screenshot($image, $parentPostId, $projectId) {
     if ($file_return && empty($file_return['error'])) {
         $attachment_id = vrodos_insert_attachment_post($file_return, $parentPostId);
         remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
+        remove_filter('big_image_size_threshold', '__return_false');
         if ($attachment_id) {
             update_post_meta($parentPostId, 'vrodos_asset3d_screenimage', $attachment_id);
             return $attachment_id;
@@ -296,6 +313,7 @@ function vrodos_upload_asset_screenshot($image, $parentPostId, $projectId) {
     } else {
         // If the upload failed, we should still remove the filter to not affect other uploads.
         remove_filter('intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2);
+        remove_filter('big_image_size_threshold', '__return_false');
     }
 
     return false;
@@ -305,6 +323,8 @@ function vrodos_upload_asset_screenshot($image, $parentPostId, $projectId) {
 
 // Immitation of $_FILE through $_POST . This is for objs, fbx and mtls
 function vrodos_upload_AssetText($textContent, $textTitle, $parent_post_id, $TheFiles, $index_file, $project_id) {
+
+    _vrodos_load_wp_admin_files();
 
     // Set post_id for the upload directory filter.
     $_REQUEST['post_id'] = $parent_post_id;
