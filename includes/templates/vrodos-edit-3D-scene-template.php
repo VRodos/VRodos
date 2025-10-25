@@ -41,7 +41,6 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script( 'vrodos_load141_TransformControls' );
     wp_enqueue_script( 'vrodos_load141_PointerLockControls' );
 
-
     wp_enqueue_script( 'vrodos_ScenePersistence' );
 
     // Colorpicker for the lights

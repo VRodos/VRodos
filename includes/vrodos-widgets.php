@@ -38,7 +38,7 @@ function vrodos_widget_preamp_scripts() {
     
     // 7. Trackball controls
     wp_enqueue_script('vrodos_load124_TrackballControls');
-    wp_enqueue_script('vrodos_load141_OrbitControls');
+    wp_enqueue_script('vrodos_load87_OrbitControls');
     
     // 8. GLTF Loader
     wp_enqueue_script('vrodos_load119_GLTFLoader');

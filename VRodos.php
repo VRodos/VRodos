@@ -49,6 +49,7 @@ function vrodos_register_scripts() {
         wp_register_script($scriptsA[$i][0] , $scriptsA[$i][1], null, null, false );
     }
 
+
     //=========================== THREE js scripts ============================================
 
     $scriptsC = array(
