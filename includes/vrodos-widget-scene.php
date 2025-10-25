@@ -31,7 +31,7 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_load141_TransformControls');
 	wp_enqueue_script('vrodos_load141_PointerLockControls');
 	
-	
+	wp_enqueue_script('vrodos_ScenePersistence');
  
 	// Colorpicker for the lights
 	wp_enqueue_script('vrodos_jscolorpick');
