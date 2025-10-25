@@ -853,9 +853,8 @@ wp_head();
                         custom_img_sel.hidden = true;
                         img_thumb.hidden = true;
                         envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                        envir.scene.preset_selection = resources3D["backgroundPresetOption"];
                         // envir.scene.backgroundPresetOption = preset_sel.value;
-                        //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+                        //preset_select.value = resources3D["backgroundPresetOption"];
 
                         for(let index = 0; index < preset_sel.options.length;index++){
                             if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
@@ -883,7 +882,7 @@ wp_head();
                 envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
 
 
-                envir.scene.bcg_selection = resources3D["backgroundStyleOption"];
+                envir.scene.backgroundStyleOption = resources3D["backgroundStyleOption"];
 
                 //saveChanges();
             }

@@ -34,7 +34,7 @@ class VRodos_LoaderMulti {
                 }
 
                 if (name === 'backgroundStyleOption'){
-                    envir.scene.bcg_selection = resources3D[name];
+                    envir.scene.backgroundStyleOption = resources3D[name];
 
                     let color_sel = document.getElementById('jscolorpick');
                     let custom_img_sel = document.getElementById('img_upload_bcg');
@@ -77,7 +77,6 @@ class VRodos_LoaderMulti {
                             custom_img_sel.hidden = true;
                             img_thumb.hidden = true;
                             envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                            envir.scene.preset_selection = resources3D["backgroundPresetOption"];
                          
                             for(let index = 0; index < preset_sel.options.length;index++){
                                 if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
@@ -102,7 +101,7 @@ class VRodos_LoaderMulti {
                             break;
                     }
                     envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-                    envir.scene.bcg_selection = resources3D["backgroundStyleOption"];
+                    envir.scene.backgroundStyleOption = resources3D["backgroundStyleOption"];
                 }
                    
                 if (name === 'ClearColor' || name === 'toneMappingExposure' | name === 'enableEnvironmentTexture')
@@ -447,7 +446,6 @@ class VRodos_LoaderMulti {
                         //updateFog("undo");
 
                         if (resources3D[name].backgroundStyleOption){
-                            envir.scene.bcg_selection = resources3D[name].backgroundStyleOption;
                             envir.scene.backgroundStyleOption = resources3D[name].backgroundStyleOption;
                          
                               
@@ -458,7 +456,7 @@ class VRodos_LoaderMulti {
                             let img_thumb = document.getElementById('uploadImgThumb');
         
                         
-                            switch (envir.scene.bcg_selection){
+                            switch (envir.scene.backgroundStyleOption){
                                 case 0:
                                     document.getElementById("sceneNone").checked = true;
                                     custom_img_sel.disabled = true;

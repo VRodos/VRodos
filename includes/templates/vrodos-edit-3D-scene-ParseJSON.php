@@ -44,13 +44,13 @@ class ParseJSON
         // }
 
         if (property_exists($json_metadata, "backgroundPresetOption"))
-            echo 'resources3D["backgroundPresetOption"]= "' . $json_metadata->backgroundPresetOption . '";';
+            echo 'resources3D["backgroundPresetOption"]= ' . json_encode($json_metadata->backgroundPresetOption) . ';';
 
         if (property_exists($json_metadata, "backgroundImagePath"))
-            echo 'resources3D["backgroundImagePath"]= "' . $json_metadata->backgroundImagePath . '";';
+            echo 'resources3D["backgroundImagePath"]= ' . json_encode($json_metadata->backgroundImagePath) . ';';
         
         if (property_exists($json_metadata, "backgroundStyleOption"))
-            echo 'resources3D["backgroundStyleOption"]= "' . $json_metadata->backgroundStyleOption . '";';
+            echo 'resources3D["backgroundStyleOption"]= ' . json_encode($json_metadata->backgroundStyleOption) . ';';
 
         
         echo '</script>';
