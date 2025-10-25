@@ -21,7 +21,7 @@ function vrodos_widget_preamp_scripts() {
     
     // 1. Three js library
     wp_enqueue_script('vrodos_load141_threejs');
-    wp_enqueue_script('vrodos_load124_statjs');
+    wp_enqueue_script('vrodos_load141_statjs');
     
     // 2. Obj loader simple; For loading an uploaded obj
     wp_enqueue_script('vrodos_load87_OBJloader');
@@ -37,7 +37,7 @@ function vrodos_widget_preamp_scripts() {
     wp_enqueue_script('vrodos_load141_FBXloader');
     
     // 7. Trackball controls
-    wp_enqueue_script('vrodos_load124_TrackballControls');
+    wp_enqueue_script('vrodos_load141_TrackballControls');
     wp_enqueue_script('vrodos_load87_OrbitControls');
     
     // 8. GLTF Loader
