@@ -790,32 +790,32 @@ wp_head();
             let img_thumb = document.getElementById('uploadImgThumb');
 
             if (resources3D["enableGeneralChat"]) {
-                document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
-                envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
+                document.getElementById("enableGeneralChatCheckbox").checked = resources3D["enableGeneralChat"];
+                envir.scene.enableGeneralChat = resources3D["enableGeneralChat"];
             }
             if (resources3D["enableAvatar"]) {
-                document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
-                envir.scene.enableAvatar = JSON.parse(resources3D["enableAvatar"]);
+                document.getElementById("enableAvatarCheckbox").checked = resources3D["enableAvatar"];
+                envir.scene.enableAvatar = resources3D["enableAvatar"];
             }         
             // if (resources3D["fogtype"]) {
             //     //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
-            //     envir.scene.fogtype = JSON.parse(resources3D["fogtype"]);
+            //     envir.scene.fogtype = resources3D["fogtype"];
             // }
             if (resources3D["fogCategory"]) {
                 //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
-                envir.scene.fogCategory = JSON.parse(resources3D["fogCategory"]);
-                // envir.scene.fogcolor = JSON.parse(resources3D["fogcolor"]);
+                envir.scene.fogCategory = resources3D["fogCategory"];
+                // envir.scene.fogcolor = resources3D["fogcolor"];
                 
                 envir.scene.fognear = resources3D["fognear"];
                 envir.scene.fogfar = resources3D["fogfar"];
                 envir.scene.fogdensity = resources3D["fogdensity"];
             }
             if (resources3D["disableMovement"]) {
-                document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
-                envir.scene.disableMovement = JSON.parse(resources3D["disableMovement"]);
+                document.getElementById("moveDisableCheckbox").checked = resources3D["disableMovement"];
+                envir.scene.disableMovement = resources3D["disableMovement"];
             }
             if (resources3D["backgroundStyleOption"]) {
-                let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+                let  selOption = resources3D["backgroundStyleOption"];
 
 
 
@@ -883,7 +883,7 @@ wp_head();
                 envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
 
 
-                envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+                envir.scene.bcg_selection = resources3D["backgroundStyleOption"];
 
                 //saveChanges();
             }
