@@ -65,17 +65,41 @@ This phase was a major success. It not only removed a significant piece of techn
 
 ---
 
-## 5. Proposed Next Steps: Task 4 - Consolidate Three.js (Phase 2: Remove r119)
+## 5. Completed Work: Task 4 - Consolidate Three.js (Phase 2: Remove r119)
 
-With the `threejs87` library removed, the next logical step is to target the `threejs119` library.
+This phase continued the Three.js consolidation by successfully removing the `threejs119` library.
 
-- **Problem:** `threejs119` is another outdated version that is still being loaded, contributing to the project's complexity and large footprint.
+### Summary of Changes:
+
+1.  **Identified and Migrated All Dependencies:**
+    - A codebase-wide search identified all files that enqueued `threejs119` scripts, including various loaders and post-processing effects.
+    - All dependencies were successfully migrated to their `r141` equivalents.
+
+2.  **Acquired and Integrated Missing Loaders:**
+    - The audit revealed that `FBXLoader.js`, `DDSLoader.js`, and `KTXLoader.js` were missing from the `threejs141` directory.
+    - The correct `r141` versions of these files were sourced from the official Three.js repository and added to the project, ensuring a complete and functional migration.
+
+3.  **Updated and Cleaned Up Script Registrations:**
+    - All `wp_register_script` and `wp_enqueue_script` calls were updated to point to the new `r141` script paths.
+    - The script handles were renamed from `vrodos_load119_` to `vrodos_load141_` for consistency.
+
+4.  **Removed Obsolete Library:**
+    - The `js_libs/threejs119` directory and all its contents were deleted from the codebase, further reducing technical debt.
+
+This second phase has moved the project significantly closer to its goal of using a single, modern version of Three.js.
+
+---
+
+## 6. Proposed Next Steps: Task 5 - Consolidate Three.js (Phase 3: Remove r124)
+
+With the `threejs119` library removed, the next logical step is to target the `threejs124` library.
+
+- **Problem:** `threejs124` is another outdated version that is still being loaded, contributing to the project's complexity.
 - **Proposed Plan:**
-    1.  **Inventory & Audit:** The first step is to perform a `grep` for `vrodos_load119` to identify all the files that still depend on this version.
-    2.  **Identify Key Dependencies:** The audit will likely reveal that `threejs119` is primarily used for specific loaders (e.g., `FBXLoader`, `GLTFLoader`) and rendering components (`EffectComposer`, `OutlinePass`).
-    3.  **Migrate to r141:** The goal is to migrate these dependencies to their `r141` equivalents, which are already available in the project. This will involve:
+    1.  **Inventory & Audit:** The first step is to perform a `grep` for `vrodos_load124` to identify all the files that still depend on this version.
+    2.  **Identify Key Dependencies:** The audit will likely reveal that `threejs124` is primarily used for `stats.js` and `TrackballControls.js`.
+    3.  **Migrate to r141:** The goal is to migrate these dependencies to their `r141` equivalents. This will involve:
+        - Checking if `r141` equivalents exist in the `js_libs/threejs141` directory.
         - Updating the `wp_enqueue_script` calls in the relevant PHP files to point to the `r141` versions of the scripts.
-        - Carefully testing the functionality (e.g., loading an FBX model, using the outline pass) to ensure the migration was successful and to fix any API incompatibilities.
-    4.  **Remove Old Library:** Once all dependencies have been migrated and tested, the `js_libs/threejs119` directory can be safely deleted, and the corresponding `wp_register_script` calls in `VRodos.php` can be removed.
-
-This phased approach will continue the process of modernizing the codebase in a controlled and testable manner, bringing us one step closer to a single, modern version of Three.js.
+        - Carefully testing the functionality to ensure the migration was successful.
+    4.  **Remove Old Library:** Once all dependencies have been migrated and tested, the `js_libs/threejs124` directory can be safely deleted, and the corresponding `wp_register_script` calls in `VRodos.php` can be removed.

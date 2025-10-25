@@ -9,20 +9,20 @@ $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 function vrodos_load_vreditor_scripts()
 {
     wp_enqueue_script('jquery-ui-draggable');
-    wp_enqueue_script('vrodos_load119_threejs');
-    wp_enqueue_script('vrodos_load119_CSS2DRenderer');
-    wp_enqueue_script('vrodos_load119_CopyShader');
-    wp_enqueue_script('vrodos_load119_FXAAShader');
-    wp_enqueue_script('vrodos_load119_EffectComposer');
-    wp_enqueue_script('vrodos_load119_RenderPass');
-    wp_enqueue_script('vrodos_load119_OutlinePass');
-    wp_enqueue_script('vrodos_load119_ShaderPass');
-    wp_enqueue_script('vrodos_load119_FBXloader');
-    wp_enqueue_script('vrodos_load119_RGBELoader');
-    wp_enqueue_script('vrodos_load119_GLTFLoader');
-    wp_enqueue_script('vrodos_load119_DRACOLoader');
-    wp_enqueue_script('vrodos_load119_DDSLoader');
-    wp_enqueue_script('vrodos_load119_KTXLoader');
+    wp_enqueue_script('vrodos_load141_threejs');
+    wp_enqueue_script('vrodos_load141_CSS2DRenderer');
+    wp_enqueue_script('vrodos_load141_CopyShader');
+    wp_enqueue_script('vrodos_load141_FXAAShader');
+    wp_enqueue_script('vrodos_load141_EffectComposer');
+    wp_enqueue_script('vrodos_load141_RenderPass');
+    wp_enqueue_script('vrodos_load141_OutlinePass');
+    wp_enqueue_script('vrodos_load141_ShaderPass');
+    wp_enqueue_script('vrodos_load141_FBXloader');
+    wp_enqueue_script('vrodos_load141_RGBELoader');
+    wp_enqueue_script('vrodos_load141_GLTFLoader');
+    wp_enqueue_script('vrodos_load141_DRACOLoader');
+    wp_enqueue_script('vrodos_load141_DDSLoader');
+    wp_enqueue_script('vrodos_load141_KTXLoader');
     wp_enqueue_script('vrodos_inflate');
 
     // Timestamp script
