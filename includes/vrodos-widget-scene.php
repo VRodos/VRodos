@@ -27,13 +27,10 @@ function vrodos_widget_scene_preamp_scripts() {
 	wp_enqueue_script('vrodos_load_datgui');
 	wp_enqueue_script('vrodos_load87_OBJloader');
 	wp_enqueue_script('vrodos_load87_MTLloader');
-	wp_enqueue_script('vrodos_load87_OrbitControls');
-	wp_enqueue_script('vrodos_load87_TransformControls');
-	wp_enqueue_script('vrodos_load87_PointerLockControls');
+	wp_enqueue_script('vrodos_load141_OrbitControls');
+	wp_enqueue_script('vrodos_load141_TransformControls');
+	wp_enqueue_script('vrodos_load141_PointerLockControls');
 	
-	wp_enqueue_script('vrodos_load87_sceneexporterutils');
-	wp_enqueue_script('vrodos_load87_scene_importer_utils');
-	wp_enqueue_script('vrodos_load87_sceneexporter');
 	
  
 	// Colorpicker for the lights
@@ -538,7 +535,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
             // Only in Undo redo as javascript not php!
             function parseJSON_LoadScene(scene_json){
         
-                resources3D = parseJSON_javascript(scene_json, uploadDir);
+                resources3D = new VrodosSceneImporter().parse(scene_json, uploadDir);
         
                 // CLEAR SCENE
                 let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
