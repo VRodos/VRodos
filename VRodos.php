@@ -53,7 +53,6 @@ function vrodos_register_scripts() {
     //=========================== THREE js scripts ============================================
 
     $scriptsC = array(
-        array( 'vrodos_load124_threejs', $pluginDirJS.'threejs124/three.js'),
         array( 'vrodos_load125_threejs', $pluginDirJS.'threejs125/three.js'),
 
         array( 'vrodos_load141_threejs', $pluginDirJS.'threejs141/three.js'),
@@ -61,7 +60,7 @@ function vrodos_register_scripts() {
         array( 'vrodos_load141_TextGeometry', $pluginDirJS.'threejs141/TextGeometry.js'),
 
 
-        array( 'vrodos_load124_statjs', $pluginDirJS.'threejs124/stats.js'),
+        array( 'vrodos_load141_statjs', $pluginDirJS.'threejs141/stats.js'),
 
         array( 'vrodos_load141_FBXloader', $pluginDirJS.'threejs141/FBXLoader.js'),
         array( 'vrodos_load141_GLTFLoader', $pluginDirJS.'threejs141/GLTFLoader.js'),
@@ -75,15 +74,13 @@ function vrodos_register_scripts() {
         array( 'vrodos_load125_TransformControls', $pluginDirJS.'threejs125/TransformControls.js'),
         array( 'vrodos_load141_TransformControls', $pluginDirJS.'threejs141/TransformControls.js'),
 
-        array( 'vrodos_load124_TrackballControls', $pluginDirJS.'threejs124/TrackballControls.js'),
+        array( 'vrodos_load141_TrackballControls', $pluginDirJS.'threejs141/TrackballControls.js'),
 
         array( 'vrodos_load141_PointerLockControls', $pluginDirJS.'threejs141/PointerLockControls.js'),
 
         array( 'vrodos_load125_TrackballControls', $pluginDirJS.'threejs125/TrackballControls.js'),
 
         array( 'vrodos_load125_CSS2DRenderer', $pluginDirJS.'threejs125/CSS2DRenderer.js'),
-        array( 'vrodos_load141_CSS2DRenderer', $pluginDirJS.'threejs141/CSS2DRenderer.js'),
-
         array( 'vrodos_load141_CSS2DRenderer', $pluginDirJS.'threejs141/CSS2DRenderer.js'),
 
         array( 'vrodos_load125_CopyShader', $pluginDirJS.'threejs125/CopyShader.js'),
