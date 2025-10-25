@@ -9,7 +9,11 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
     resources3D[nameModel] = {
         "path": path,
-        "trs": selected_object_trs
+        "trs": selected_object_trs,
+        "fnPath": path ? path.substring(path.lastIndexOf('/') + 1) : '',
+        "asset_name": nameModel,
+        "category_name": categoryName,
+        "isLight": categoryName.includes("light"),
     };
 
     for (let entry in Object.keys(dataDrag)) {
