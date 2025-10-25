@@ -20,7 +20,7 @@ function vrodos_widget_preamp_scripts() {
     wp_enqueue_script('vrodos_inflate'); // for binary fbx
     
     // 1. Three js library
-    wp_enqueue_script('vrodos_load119_threejs');
+    wp_enqueue_script('vrodos_load141_threejs');
     wp_enqueue_script('vrodos_load124_statjs');
     
     // 2. Obj loader simple; For loading an uploaded obj
@@ -34,17 +34,17 @@ function vrodos_widget_preamp_scripts() {
     wp_enqueue_script('vrodos_load87_MTLloader');
     
     // 6. Fbx loader
-    wp_enqueue_script('vrodos_load119_FBXloader');
+    wp_enqueue_script('vrodos_load141_FBXloader');
     
     // 7. Trackball controls
     wp_enqueue_script('vrodos_load124_TrackballControls');
     wp_enqueue_script('vrodos_load87_OrbitControls');
     
     // 8. GLTF Loader
-    wp_enqueue_script('vrodos_load119_GLTFLoader');
-    wp_enqueue_script('vrodos_load119_DRACOLoader');
-    wp_enqueue_script('vrodos_load119_DDSLoader');
-    wp_enqueue_script('vrodos_load119_KTXLoader');
+    wp_enqueue_script('vrodos_load141_GLTFLoader');
+    wp_enqueue_script('vrodos_load141_DRACOLoader');
+    wp_enqueue_script('vrodos_load141_DDSLoader');
+    wp_enqueue_script('vrodos_load141_KTXLoader');
     
     // Load single asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');

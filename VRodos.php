@@ -53,7 +53,6 @@ function vrodos_register_scripts() {
     //=========================== THREE js scripts ============================================
 
     $scriptsC = array(
-        array( 'vrodos_load119_threejs', $pluginDirJS.'threejs119/three.js'),
         array( 'vrodos_load124_threejs', $pluginDirJS.'threejs124/three.js'),
         array( 'vrodos_load125_threejs', $pluginDirJS.'threejs125/three.js'),
 
@@ -64,25 +63,20 @@ function vrodos_register_scripts() {
 
         array( 'vrodos_load124_statjs', $pluginDirJS.'threejs124/stats.js'),
 
-        array( 'vrodos_load119_FBXloader', $pluginDirJS.'threejs119/FBXLoader.js'),
-        array( 'vrodos_load119_GLTFLoader', $pluginDirJS.'threejs119/GLTFLoader.js'),
+        array( 'vrodos_load141_FBXloader', $pluginDirJS.'threejs141/FBXLoader.js'),
         array( 'vrodos_load141_GLTFLoader', $pluginDirJS.'threejs141/GLTFLoader.js'),
-        array( 'vrodos_load119_DRACOLoader', $pluginDirJS.'threejs119/DRACOLoader.js'),
         array( 'vrodos_load141_DRACOLoader', $pluginDirJS.'threejs141/DRACOLoader.js'),
-        array( 'vrodos_load119_DDSLoader', $pluginDirJS.'threejs119/DDSLoader.js'),
-        array( 'vrodos_load119_KTXLoader', $pluginDirJS.'threejs119/KTXLoader.js'),
+        array( 'vrodos_load141_DDSLoader', $pluginDirJS.'threejs141/DDSLoader.js'),
+        array( 'vrodos_load141_KTXLoader', $pluginDirJS.'threejs141/KTXLoader.js'),
 
-        array( 'vrodos_load119_OrbitControls', $pluginDirJS.'threejs119/OrbitControls.js'),
         array( 'vrodos_load125_OrbitControls', $pluginDirJS.'threejs125/OrbitControls.js'),
         array( 'vrodos_load141_OrbitControls', $pluginDirJS.'threejs141/OrbitControls.js'),
 
-        array( 'vrodos_load119_TransformControls', $pluginDirJS.'threejs119/TransformControls.js'),
         array( 'vrodos_load125_TransformControls', $pluginDirJS.'threejs125/TransformControls.js'),
         array( 'vrodos_load141_TransformControls', $pluginDirJS.'threejs141/TransformControls.js'),
 
         array( 'vrodos_load124_TrackballControls', $pluginDirJS.'threejs124/TrackballControls.js'),
 
-        array( 'vrodos_load119_PointerLockControls', $pluginDirJS.'threejs119/PointerLockControls.js'),
         array( 'vrodos_load141_PointerLockControls', $pluginDirJS.'threejs141/PointerLockControls.js'),
 
         array( 'vrodos_load125_TrackballControls', $pluginDirJS.'threejs125/TrackballControls.js'),
@@ -90,43 +84,29 @@ function vrodos_register_scripts() {
         array( 'vrodos_load125_CSS2DRenderer', $pluginDirJS.'threejs125/CSS2DRenderer.js'),
         array( 'vrodos_load141_CSS2DRenderer', $pluginDirJS.'threejs141/CSS2DRenderer.js'),
 
-        array( 'vrodos_load119_CSS2DRenderer', $pluginDirJS.'threejs119/CSS2DRenderer.js'),
         array( 'vrodos_load141_CSS2DRenderer', $pluginDirJS.'threejs141/CSS2DRenderer.js'),
 
-        array( 'vrodos_load119_CopyShader', $pluginDirJS.'threejs119/CopyShader.js'),
         array( 'vrodos_load125_CopyShader', $pluginDirJS.'threejs125/CopyShader.js'),
         array( 'vrodos_load141_CopyShader', $pluginDirJS.'threejs141/CopyShader.js'),
 
-        array( 'vrodos_load119_FXAAShader', $pluginDirJS.'threejs119/FXAAShader.js'),
         array( 'vrodos_load125_FXAAShader', $pluginDirJS.'threejs125/FXAAShader.js'),
         array( 'vrodos_load141_FXAAShader', $pluginDirJS.'threejs141/FXAAShader.js'),
 
-        array( 'vrodos_load119_EffectComposer', $pluginDirJS.'threejs119/EffectComposer.js'),
         array( 'vrodos_load125_EffectComposer', $pluginDirJS.'threejs125/EffectComposer.js'),
         array( 'vrodos_load141_EffectComposer', $pluginDirJS.'threejs141/EffectComposer.js'),
 
-        array( 'vrodos_load119_RenderPass', $pluginDirJS.'threejs119/RenderPass.js'),
         array( 'vrodos_load125_RenderPass', $pluginDirJS.'threejs125/RenderPass.js'),
         array( 'vrodos_load141_RenderPass', $pluginDirJS.'threejs141/RenderPass.js'),
 
-        array( 'vrodos_load119_OutlinePass', $pluginDirJS.'threejs119/OutlinePass.js'),
         array( 'vrodos_load125_OutlinePass', $pluginDirJS.'threejs125/OutlinePass.js'),
         array( 'vrodos_load141_OutlinePass', $pluginDirJS.'threejs141/OutlinePass.js'),
 
-        array( 'vrodos_load119_ShaderPass', $pluginDirJS.'threejs119/ShaderPass.js'),
         array( 'vrodos_load125_ShaderPass', $pluginDirJS.'threejs125/ShaderPass.js'),
         array( 'vrodos_load141_ShaderPass', $pluginDirJS.'threejs141/ShaderPass.js'),
 
-
-        array( 'vrodos_load119_Font', $pluginDirJS.'threejs119/Font.js'),
-        array( 'vrodos_load119_Loader', $pluginDirJS.'threejs119/Loader.js'),
         array( 'vrodos_load141_FontLoader', $pluginDirJS.'threejs141/FontLoader.js'),
 
-        array( 'vrodos_load119_RGBELoader', $pluginDirJS.'threejs119/RGBELoader.js'),
         array( 'vrodos_load141_RGBELoader', $pluginDirJS.'threejs141/RGBELoader.js'),
-        array( 'vrodos_load119_Cache', $pluginDirJS.'threejs119/Cache.js'),
-        array( 'vrodos_load119_FileLoader', $pluginDirJS.'threejs119/FileLoader.js'),
-        array( 'vrodos_load119_LoadingManager', $pluginDirJS.'threejs119/LoadingManager.js'),
 
     );
 
@@ -711,7 +691,7 @@ add_action( 'widgets_init', 'vrodos_load_widget');
 
 // 54
 // For classification
-//add_action('add_meta_boxes','vrodos_assets_create_right_metaboxes');
+//add_action('add_meta_boxes','vrodos_assets_create_right_metetaboxes');
 
 // Add the fields to the taxonomy, using our callback function
 // 59
