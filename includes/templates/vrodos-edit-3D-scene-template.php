@@ -41,9 +41,7 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script( 'vrodos_load141_TransformControls' );
     wp_enqueue_script( 'vrodos_load141_PointerLockControls' );
 
-    wp_enqueue_script( 'vrodos_load87_sceneexporterutils' );
-    wp_enqueue_script( 'vrodos_load87_scene_importer_utils' );
-    wp_enqueue_script( 'vrodos_load87_sceneexporter' );
+    wp_enqueue_script( 'vrodos_ScenePersistence' );
 
     // Colorpicker for the lights
     wp_enqueue_script('vrodos_jscolorpick');
@@ -792,32 +790,32 @@ wp_head();
             let img_thumb = document.getElementById('uploadImgThumb');
 
             if (resources3D["enableGeneralChat"]) {
-                document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D["enableGeneralChat"]);
-                envir.scene.enableGeneralChat = JSON.parse(resources3D["enableGeneralChat"]);
+                document.getElementById("enableGeneralChatCheckbox").checked = resources3D["enableGeneralChat"];
+                envir.scene.enableGeneralChat = resources3D["enableGeneralChat"];
             }
             if (resources3D["enableAvatar"]) {
-                document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
-                envir.scene.enableAvatar = JSON.parse(resources3D["enableAvatar"]);
+                document.getElementById("enableAvatarCheckbox").checked = resources3D["enableAvatar"];
+                envir.scene.enableAvatar = resources3D["enableAvatar"];
             }         
             // if (resources3D["fogtype"]) {
             //     //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
-            //     envir.scene.fogtype = JSON.parse(resources3D["fogtype"]);
+            //     envir.scene.fogtype = resources3D["fogtype"];
             // }
             if (resources3D["fogCategory"]) {
                 //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
-                envir.scene.fogCategory = JSON.parse(resources3D["fogCategory"]);
-                // envir.scene.fogcolor = JSON.parse(resources3D["fogcolor"]);
+                envir.scene.fogCategory = resources3D["fogCategory"];
+                // envir.scene.fogcolor = resources3D["fogcolor"];
                 
                 envir.scene.fognear = resources3D["fognear"];
                 envir.scene.fogfar = resources3D["fogfar"];
                 envir.scene.fogdensity = resources3D["fogdensity"];
             }
             if (resources3D["disableMovement"]) {
-                document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D["disableMovement"]);
-                envir.scene.disableMovement = JSON.parse(resources3D["disableMovement"]);
+                document.getElementById("moveDisableCheckbox").checked = resources3D["disableMovement"];
+                envir.scene.disableMovement = resources3D["disableMovement"];
             }
             if (resources3D["backgroundStyleOption"]) {
-                let  selOption = JSON.parse(resources3D["backgroundStyleOption"]);
+                let  selOption = resources3D["backgroundStyleOption"];
 
 
 
@@ -855,9 +853,8 @@ wp_head();
                         custom_img_sel.hidden = true;
                         img_thumb.hidden = true;
                         envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                        envir.scene.preset_selection = resources3D["backgroundPresetOption"];
                         // envir.scene.backgroundPresetOption = preset_sel.value;
-                        //preset_select.value = JSON.parse(resources3D["backgroundPresetOption"]);
+                        //preset_select.value = resources3D["backgroundPresetOption"];
 
                         for(let index = 0; index < preset_sel.options.length;index++){
                             if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
@@ -885,7 +882,7 @@ wp_head();
                 envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
 
 
-                envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+                envir.scene.backgroundStyleOption = resources3D["backgroundStyleOption"];
 
                 //saveChanges();
             }
@@ -896,7 +893,7 @@ wp_head();
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json) {
 
-            resources3D = parseJSON_javascript(scene_json, uploadDir);
+            resources3D = new VrodosSceneImporter().parse(scene_json, uploadDir);
 
             // CLEAR SCENE
             let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];

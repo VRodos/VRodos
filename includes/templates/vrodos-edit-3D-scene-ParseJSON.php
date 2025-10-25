@@ -26,17 +26,17 @@ class ParseJSON
             echo 'resources3D["fogdensity"]= "' . $json_metadata->fogdensity . '";';
         }
 
-        echo 'resources3D["toneMappingExposure"]= "' . $json_metadata->toneMappingExposure . '";';
+        echo 'resources3D["toneMappingExposure"]= ' . ($json_metadata->toneMappingExposure ?? 1.0) . ';';
 
         if (property_exists($json_metadata, "enableGeneralChat")){
-            echo 'resources3D["enableGeneralChat"]= "' . $json_metadata->enableGeneralChat . '";';
+            echo 'resources3D["enableGeneralChat"]= ' . json_encode($json_metadata->enableGeneralChat) . ';';
         }
 
         if (property_exists($json_metadata, "enableAvatar")){
-            echo 'resources3D["enableAvatar"]= "' . $json_metadata->enableAvatar . '";';
+            echo 'resources3D["enableAvatar"]= ' . json_encode($json_metadata->enableAvatar) . ';';
         }
         if (property_exists($json_metadata, "disableMovement")){
-            echo 'resources3D["disableMovement"]= "' . $json_metadata->disableMovement . '";';
+            echo 'resources3D["disableMovement"]= ' . json_encode($json_metadata->disableMovement) . ';';
         }
 
         // if (property_exists($json_metadata, "fogCategory")){
@@ -44,13 +44,13 @@ class ParseJSON
         // }
 
         if (property_exists($json_metadata, "backgroundPresetOption"))
-            echo 'resources3D["backgroundPresetOption"]= "' . $json_metadata->backgroundPresetOption . '";';
+            echo 'resources3D["backgroundPresetOption"]= ' . json_encode($json_metadata->backgroundPresetOption) . ';';
 
         if (property_exists($json_metadata, "backgroundImagePath"))
-            echo 'resources3D["backgroundImagePath"]= "' . $json_metadata->backgroundImagePath . '";';
+            echo 'resources3D["backgroundImagePath"]= ' . json_encode($json_metadata->backgroundImagePath) . ';';
         
         if (property_exists($json_metadata, "backgroundStyleOption"))
-            echo 'resources3D["backgroundStyleOption"]= "' . $json_metadata->backgroundStyleOption . '";';
+            echo 'resources3D["backgroundStyleOption"]= ' . json_encode($json_metadata->backgroundStyleOption) . ';';
 
         
         echo '</script>';

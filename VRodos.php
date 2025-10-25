@@ -42,27 +42,13 @@ function vrodos_register_scripts() {
         array('vrodos_AssetViewer_3D_kernel', $pluginDirJS.'vrodos_AssetViewer_3D_kernel.js'),
         array('vrodos_3d_editor_buttons_drags', $pluginDirJS.'vrodos_3d_editor_buttons_drags.js'),
         array('vrodos_vr_editor_analytics', $pluginDirJS.'vrodos_3d_editor_analytics.js'),
+        array( 'vrodos_ScenePersistence', $pluginDirJS.'vrodos_ScenePersistence.js'),
     );
 
     for ( $i = 0 ; $i < count($scriptsA); $i ++){
         wp_register_script($scriptsA[$i][0] , $scriptsA[$i][1], null, null, false );
     }
 
-    //=========================== THREE js 87 scripts ============================================
-
-    $scriptsB = array(
-        array( 'vrodos_load87_OrbitControls', $pluginDirJS.'threejs87/OrbitControls.js'),
-        array( 'vrodos_load87_TransformControls', $pluginDirJS.'threejs87/TransformControls.js'),
-        array( 'vrodos_load87_PointerLockControls', $pluginDirJS.'threejs87/PointerLockControls.js'),
-
-        array( 'vrodos_load87_sceneexporterutils', $pluginDirJS.'threejs87/SceneExporterUtils.js'),
-        array( 'vrodos_load87_scene_importer_utils', $pluginDirJS.'threejs87/SceneImporter.js'),
-        array( 'vrodos_load87_sceneexporter', $pluginDirJS.'threejs87/SceneExporter.js'),
-    );
-
-    for ( $i = 0 ; $i < count($scriptsB); $i ++){
-        wp_register_script($scriptsB[$i][0] , $scriptsB[$i][1], null, null, false );
-    }
 
     //=========================== THREE js scripts ============================================
 

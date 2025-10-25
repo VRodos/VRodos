@@ -264,9 +264,8 @@ function loadButtonActions() {
         jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
         document.getElementById("compileGameBtn").disabled = true;
 
-        // Export using a custom variant of the old deprecated class SceneExporter
-        let exporter = new THREE.SceneExporter();
-
+        // Export using the new VrodosSceneExporter
+        let exporter = new VrodosSceneExporter();
         document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
         //console.log(document.getElementById('vrodos_scene_json_input').value);

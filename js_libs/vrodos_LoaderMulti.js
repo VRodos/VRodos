@@ -18,23 +18,23 @@ class VRodos_LoaderMulti {
             (function (name) {
                 
                 if (name === 'enableGeneralChat'){
-                    document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D[name]);
-                    envir.scene.enableGeneralChat = JSON.parse(resources3D[name]);
+                    document.getElementById("enableGeneralChatCheckbox").checked = resources3D[name];
+                    envir.scene.enableGeneralChat = resources3D[name];
                 }
 
                 
                 if (name === 'enableAvatar'){
-                    document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D[name]);
-                    envir.scene.enableAvatar = JSON.parse(resources3D[name]);
+                    document.getElementById("enableAvatarCheckbox").checked = resources3D[name];
+                    envir.scene.enableAvatar = resources3D[name];
                 }
 
                 if (name === 'disableMovement'){
-                    document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D[name]);
-                    envir.scene.disableMovement = JSON.parse(resources3D[name]);
+                    document.getElementById("moveDisableCheckbox").checked = resources3D[name];
+                    envir.scene.disableMovement = resources3D[name];
                 }
 
                 if (name === 'backgroundStyleOption'){
-                    envir.scene.bcg_selection = JSON.parse(resources3D[name]);
+                    envir.scene.backgroundStyleOption = resources3D[name];
 
                     let color_sel = document.getElementById('jscolorpick');
                     let custom_img_sel = document.getElementById('img_upload_bcg');
@@ -77,7 +77,6 @@ class VRodos_LoaderMulti {
                             custom_img_sel.hidden = true;
                             img_thumb.hidden = true;
                             envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                            envir.scene.preset_selection = resources3D["backgroundPresetOption"];
                          
                             for(let index = 0; index < preset_sel.options.length;index++){
                                 if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
@@ -102,7 +101,7 @@ class VRodos_LoaderMulti {
                             break;
                     }
                     envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-                    envir.scene.bcg_selection = JSON.parse(resources3D["backgroundStyleOption"]);
+                    envir.scene.backgroundStyleOption = resources3D["backgroundStyleOption"];
                 }
                    
                 if (name === 'ClearColor' || name === 'toneMappingExposure' | name === 'enableEnvironmentTexture')
@@ -344,18 +343,18 @@ class VRodos_LoaderMulti {
 
                       
                        if (resources3D[name].enableGeneralChat) {
-                            document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D[name].enableGeneralChat);
-                            envir.scene.enableGeneralChat = JSON.parse(resources3D[name].enableGeneralChat);
+                            document.getElementById("enableGeneralChatCheckbox").checked = resources3D[name].enableGeneralChat;
+                            envir.scene.enableGeneralChat = resources3D[name].enableGeneralChat;
                         }
 
                         if (resources3D[name].enableAvatar) {
-                            document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D[name].enableAvatar);
-                            envir.scene.enableAvatar = JSON.parse(resources3D[name].enableAvatar);
+                            document.getElementById("enableAvatarCheckbox").checked = resources3D[name].enableAvatar;
+                            envir.scene.enableAvatar = resources3D[name].enableAvatar;
                         }
 
                         if (resources3D[name].disableMovement){
-                            document.getElementById("moveDisableCheckbox").checked = JSON.parse(resources3D[name].disableMovement);
-                            envir.scene.disableMovement = JSON.parse(resources3D[name].disableMovement);      
+                            document.getElementById("moveDisableCheckbox").checked = resources3D[name].disableMovement;
+                            envir.scene.disableMovement = resources3D[name].disableMovement;
                         }
                        
 
@@ -435,20 +434,19 @@ class VRodos_LoaderMulti {
                             document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D[name].fogcolor);
                         }
                         if (resources3D[name].fogfar){
-                            document.getElementById('FogFar').value = JSON.parse(resources3D[name].fogfar);
+                            document.getElementById('FogFar').value = resources3D[name].fogfar;
                         }
                         if (resources3D[name].fognear){
-                            document.getElementById('FogNear').value = JSON.parse(resources3D[name].fognear);
+                            document.getElementById('FogNear').value = resources3D[name].fognear;
                         }
                         if (resources3D[name].fogdensity){
-                            document.getElementById('FogDensity').value = JSON.parse(resources3D[name].fogdensity);
+                            document.getElementById('FogDensity').value = resources3D[name].fogdensity;
                         }
 
                         //updateFog("undo");
 
                         if (resources3D[name].backgroundStyleOption){
-                            envir.scene.bcg_selection = JSON.parse(resources3D[name].backgroundStyleOption);
-                            envir.scene.backgroundStyleOption = JSON.parse(resources3D[name].backgroundStyleOption);
+                            envir.scene.backgroundStyleOption = resources3D[name].backgroundStyleOption;
                          
                               
                             let color_sel = document.getElementById('jscolorpick');
@@ -458,7 +456,7 @@ class VRodos_LoaderMulti {
                             let img_thumb = document.getElementById('uploadImgThumb');
         
                         
-                            switch (envir.scene.bcg_selection){
+                            switch (envir.scene.backgroundStyleOption){
                                 case 0:
                                     document.getElementById("sceneNone").checked = true;
                                     custom_img_sel.disabled = true;

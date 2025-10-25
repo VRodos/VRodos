@@ -40,9 +40,8 @@ function imgUpload(){
                     jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
                     document.getElementById("compileGameBtn").disabled = true;
 
-                    // Export using a custom variant of the old deprecated class SceneExporter
-                    let exporter = new THREE.SceneExporter();
-                    //env.getObjectByName(name).follow_camera = 2;
+                    // Export using the new VrodosSceneExporter
+                    let exporter = new VrodosSceneExporter();
                     document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
                     //let test = document.getElementById('vrodos_scene_json_input').value;
