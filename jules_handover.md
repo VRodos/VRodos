@@ -113,13 +113,32 @@ This phase continued the Three.js consolidation by successfully removing the `th
 
 ---
 
-## 7. Proposed Next Steps: Task 6 - Consolidate Three.js (Phase 4: Remove r125)
+## 7. Completed Work: Task 6 - Consolidate Three.js (Phase 4: Remove r125)
 
-With the `threejs124` library removed, the next logical step is to target the `threejs125` library.
+This phase continued the Three.js consolidation by successfully removing the `threejs125` library.
 
-- **Problem:** `threejs125` is another outdated version that is still being loaded, contributing to the project's complexity.
+### Summary of Changes:
+
+1.  **Conducted an Audit:**
+    - A codebase-wide search for `threejs125` confirmed that while the scripts were registered in `VRodos.php`, they were not actually being enqueued or used anywhere in the project.
+
+2.  **Cleaned Up Script Registrations:**
+    - All obsolete `wp_register_script` calls for the `threejs125` library were removed from `VRodos.php`, eliminating the unnecessary code.
+
+3.  **Removed Obsolete Library:**
+    - With the registrations removed, the `js_libs/threejs125` directory and all its contents were deleted from the codebase.
+
+This phase marks a significant milestone. All legacy, standalone Three.js libraries (`r87`, `r119`, `r124`, `r125`) have now been removed. The project now relies solely on the `threejs141` version.
+
+---
+
+## 8. Proposed Next Steps: Task 7 - Finalize Three.js Consolidation (r141 to r147)
+
+With all legacy libraries removed, the final step is to consolidate the project onto a single, modern version of Three.js that aligns with its dependencies.
+
+- **Problem:** The project currently uses `threejs141`, but the version of A-Frame in use (`1.4.2`) has a dependency on Three.js `r147`. To ensure maximum compatibility and stability, the project should be upgraded to `r147`.
 - **Proposed Plan:**
-    1.  **Inventory & Audit:** The first step is to perform a `grep` for `vrodos_load125` to identify all the files that still depend on this version.
-    2.  **Identify Key Dependencies:** The audit will likely reveal a number of controls and shaders that need to be migrated.
-    3.  **Migrate to r141:** The goal is to migrate these dependencies to their `r141` equivalents.
-    4.  **Remove Old Library:** Once all dependencies have been migrated and tested, the `js_libs/threejs125` directory can be safely deleted, and the corresponding `wp_register_script` calls in `VRodos.php` can be removed.
+    1.  **Upgrade the Library:** Replace the contents of the `js_libs/threejs141` directory with the `r147` versions of the core library and all its dependencies (controls, loaders, shaders, etc.).
+    2.  **Update Script Handles:** Rename all `vrodos_load141_` script handles in `VRodos.php` to `vrodos_load147_` for consistency.
+    3.  **Rename Directory:** Rename the `js_libs/threejs141` directory to `js_libs/threejs147`.
+    4.  **Test and Verify:** Thoroughly test the 3D editor to ensure that all functionality remains intact after the upgrade.

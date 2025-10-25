@@ -358,6 +358,11 @@ function loadButtonActions() {
         }
     });
 
+// Event listener to disable orbit controls while dragging
+transform_controls.addEventListener('dragging-changed', function (event) {
+    envir.orbitControls.enabled = !event.value;
+});
+
     // Axis Increase size btn
     jQuery("#axis-size-increase-btn").click(function () {
         transform_controls.setSize(transform_controls.size * 1.1);

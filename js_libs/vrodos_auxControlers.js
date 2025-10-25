@@ -340,22 +340,22 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     }
 
     //--------- rotate_x ----------------------
-    if (transform_controls.object.rotation._x*180/Math.PI !== gui_controls_funs.dg_r1){
-        gui_controls_funs.dg_r1 = transform_controls.object.rotation._x * 180/Math.PI;
+    if (transform_controls.object.rotation.x*180/Math.PI !== gui_controls_funs.dg_r1){
+        gui_controls_funs.dg_r1 = transform_controls.object.rotation.x * 180/Math.PI;
 
         envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
     //---------rotate_y -------------------------------
-    if (transform_controls.object.rotation._y*180/Math.PI !== this.dg_r2){
-        gui_controls_funs.dg_r2 = transform_controls.object.rotation._y * 180/Math.PI;
+    if (transform_controls.object.rotation.y*180/Math.PI !== this.dg_r2){
+        gui_controls_funs.dg_r2 = transform_controls.object.rotation.y * 180/Math.PI;
 
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
     //---------rotate_z -------------------------------
-    if (transform_controls.object.rotation._z*180/Math.PI !== gui_controls_funs.dg_r3){
-        gui_controls_funs.dg_r3 = transform_controls.object.rotation._z * 180/Math.PI;
+    if (transform_controls.object.rotation.z*180/Math.PI !== gui_controls_funs.dg_r3){
+        gui_controls_funs.dg_r3 = transform_controls.object.rotation.z * 180/Math.PI;
 
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
