@@ -578,7 +578,7 @@ class VRodos_AssetViewer_3D_kernel {
         let glbLoader = new THREE.GLTFLoader( manager );
 
         const dracoLoader = new THREE.DRACOLoader();
-        dracoLoader.setDecoderPath( '/wp-content/plugins/vrodos/js_libs/threejs141/draco/' );
+        dracoLoader.setDecoderPath( '/wp-content/plugins/vrodos/js_libs/threejs147/draco/' );
         glbLoader.setDRACOLoader( dracoLoader );
 
 
@@ -703,7 +703,7 @@ class VRodos_AssetViewer_3D_kernel {
             //loader.setDRACOLoader( new THREE.DRACOLoader() );
 
             // const dracoLoader = new THREE.DRACOLoader();
-            // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs119/draco/' );
+            // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs147/draco/' );
             // loader.setDRACOLoader( dracoLoader );
 
             let scope = this;
