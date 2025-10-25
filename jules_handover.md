@@ -25,102 +25,57 @@ The primary goal of this refactoring effort is to address these issues in a care
 
 ## 2. Completed Work: Task 1 - Refactor Asset Upload System
 
-The first phase of the refactoring focused on the asset upload and media handling system, which was identified as a key area of "spaghetti code."
-
-### Summary of Changes:
-The core of this work involved refactoring the functions within `includes/vrodos-core-upload-functions.php`.
-
-1.  **Replaced Manual File Operations with WordPress APIs:**
-    - **Previous State:** The code used fragile PHP functions like `file_put_contents`, `mkdir`, and `unlink` for handling uploads.
-    - **New State:** The code now exclusively uses the standard, secure, and robust WordPress APIs:
-        - `wp_handle_upload` for processing file uploads from `$_FILES`.
-        - `wp_upload_bits` for handling base64-encoded image strings.
-        - `wp_delete_attachment` for safely removing files and their associated database entries.
-
-2.  **Centralized Dependency Loading for AJAX/Frontend Calls:**
-    - **Problem:** A fatal error (`Call to undefined function wp_generate_attachment_metadata`) was occurring when uploads were initiated from the frontend asset editor. This was because the necessary WordPress admin files were not loaded in that context.
-    - **Solution:** A private helper function, `_vrodos_load_wp_admin_files`, was created in `vrodos-core-upload-functions.php`. This function loads all required media files (`file.php`, `media.php`, `image.php`). It is now called at the beginning of every public upload function, ensuring that dependencies are always available, regardless of the execution context.
-
-3.  **Fixed Unwanted Image Generation:**
-    - **Problem:** WordPress was automatically generating extra image sizes (e.g., 150x150 thumbnails) and a `-scaled.jpg` version for large images, which was not desired for this project.
-    - **Solution:** Two WordPress filters are now used during the image upload process:
-        - `add_filter('intermediate_image_sizes_advanced', '__return_empty_array');` (via the `vrodos_remove_allthumbs_sizes` function) to disable thumbnail generation.
-        - `add_filter('big_image_size_threshold', '__return_false');` to disable the "big image" scaler.
-    - These filters are added just before the upload and removed immediately after, preventing side effects elsewhere in the application.
-
-4.  **Preserved Custom File Structure:**
-    - A critical project requirement was to maintain the existing file directory structure: `/wp-content/uploads/<game-slug>/models/`.
-    - This was successfully preserved by continuing to use the `vrodos_upload_dir_forScenesOrAssets` filter during the `wp_handle_upload` and `wp_upload_bits` operations.
-
-The `refactor-upload-functions` branch contains all of these changes. The result is a much cleaner, more secure, and more maintainable asset upload system that aligns with WordPress best practices.
+The first phase of the refactoring focused on the asset upload and media handling system, which was identified as a key area of "spaghetti code." The result is a much cleaner, more secure, and more maintainable asset upload system that aligns with WordPress best practices.
 
 ---
 
 ## 3. Completed Work: Task 2 - Refactor Scene Data Handling
 
-With the upload system stabilized, the second phase of the refactoring focused on the handling of the scene data itself.
+With the upload system stabilized, the second phase of the refactoring focused on the handling of the scene data itself, replacing the unstructured JSON blob for scene data with a formal PHP data model. The result is a more robust and maintainable scene data system.
+
+---
+
+## 4. Completed Work: Task 3 - Modernize Three.js (Phase 1: Remove r87)
+
+This was the first and most critical phase of the Three.js consolidation effort, focused on removing the ancient `threejs87` library.
 
 ### Summary of Changes:
-The core of this work involved replacing the unstructured JSON blob for scene data with a formal PHP data model.
 
-1.  **Created a Formal Data Model:**
-    - **Previous State:** Scene data was saved as a large, unstructured JSON blob directly into the `post_content` field of the `vrodos_scene` custom post type.
-    - **New State:** A new `Vrodos_Scene_Model` class was created in `includes/vrodos-scene-model.php`. This class provides a clear, predictable, and maintainable structure for scene data, with properties for metadata and objects.
+1.  **Replaced Deprecated Scene Exporter/Importer:**
+    - **Problem:** The `threejs87` library provided the core `THREE.SceneExporter`, which was used for saving scene data. This class was removed in modern Three.js versions, and a simple replacement with `scene.toJSON()` was not possible because the application relied on custom logic within the old exporter for data formatting.
+    - **Solution:** A new, self-contained module, `js_libs/vrodos_ScenePersistence.js`, was created. This file contains two new classes:
+        - `VrodosSceneExporter`: A modern implementation that replicates the custom serialization logic of the old exporter, ensuring the output JSON format is compatible with the application's backend.
+        - `VrodosSceneImporter`: A corresponding importer to correctly parse the scene JSON on load.
+    - This new module uses robust, modern methods (`JSON.stringify`) and is the new standard for scene persistence in the application.
 
-2.  **Refactored Save/Load Logic:**
-    - **Save Logic:** The AJAX handler for saving scenes (`vrodos_save_scene_async_action_callback`) was moved to a dedicated file (`includes/vrodos-ajax-hooks.php`) to improve code organization. The handler was updated to instantiate the `Vrodos_Scene_Model` from the incoming JSON, ensuring the data is validated and structured before being serialized back to a JSON string for storage. This removes risky operations like `wp_strip_all_tags` on the JSON string.
-    - **Load Logic:** The scene editor template (`includes/templates/vrodos-edit-3D-scene-template.php`) was updated to pass the stored `post_content` through the `Vrodos_Scene_Model`. This ensures that data is consistently structured, whether it's a new or existing scene.
+2.  **Fixed Multiple Critical Bugs:**
+    - **Problem:** The new exporter initially caused several bugs, including `Unexpected end of JSON input` errors.
+    - **Solution:** A series of fixes were implemented:
+        - **Object Creation:** The `addAssetToCanvas` function was updated to ensure that newly added 3D objects are created with all the necessary properties (e.g., `fnPath`, `category_name`) that the new exporter expects.
+        - **Metadata Serialization:** The exporter was made more robust to handle `undefined` or `false` values for scene-level settings (like `enableGeneralChat`), preventing the creation of malformed JSON.
+        - **Data Type Mismatches:** The entire data flow for scene settings was corrected. The PHP parser (`vrodos-edit-3D-scene-ParseJSON.php`) was updated to use `json_encode` to preserve data types, and incorrect `JSON.parse()` calls were removed from all JavaScript loaders (`vrodos_LoaderMulti.js`, `vrodos-edit-3D-scene-template.php`).
+        - **Property Name Inconsistencies:** A bug where the "background style" was not saving was traced to inconsistent property names (`backgroundStyleOption` vs. `bcg_selection`). This was resolved by standardizing the property names across the entire data flow (UI, exporter, and loaders).
 
-3.  **Improved Code Organization:**
-    - The AJAX save logic was successfully decoupled from the `vrodos-core-functions.php` file and is now located in `vrodos-ajax-hooks.php`, making the code easier to navigate and maintain.
+3.  **Migrated Controls and Removed Obsolete Library:**
+    - The editor controls (`OrbitControls`, `TransformControls`) were successfully migrated from the r87 version to the r141 version.
+    - All `wp_register_script` and `wp_enqueue_script` calls for the old `threejs87` library were removed.
+    - The entire `js_libs/threejs87` directory was deleted, completely removing the old library from the codebase.
 
-The `refactor-scene-data-handling` branch contains all of these changes. The result is a more robust and maintainable scene data system that aligns with best practices and prepares the codebase for future feature development.
-
----
-
-## 4. Proposed Next Steps: Task 3 - Consolidate Three.js Versions
-
-This is the most significant technical challenge and will provide a massive improvement in stability and performance.
-
-- **Problem:** The plugin loads at least five different versions of Three.js (r87, r119, r124, r125, r141) to support various components. This creates a large footprint, potential for conflicts, and a maintenance nightmare.
-- **Proposed Plan:**
-    1.  **Inventory & Audit:** Systematically go through the JavaScript files to identify which components are tied to which Three.js version and why. Document the dependencies.
-    2.  **Select a Target Version:** Choose a single, modern, and stable version of Three.js as the target for the entire application. This decision should consider compatibility with the existing A-Frame version.
-    3.  **Migrate Components:** Carefully migrate the components, one by one, to the new target version. This will be a delicate process, as the Three.js API has changed significantly over the years. Each migrated component will need to be thoroughly tested.
-    4.  **Remove Old Libraries:** Once all components are migrated, remove the old, unused Three.js library files from the `js_libs` directory and the `wp_register_script` calls from `VRodos.php`.
-
-### Open Questions for Next Session:
-1.  **Choice of Target Version:** Do you have a specific Three.js version in mind, or should I research and propose one? The default approach will be to select the latest stable version that is compatible with A-Frame.
-2.  **Testing and Verification:** Is there a specific scene or set of assets to use as a "golden master" for visual testing during the migration?
-3.  **A-Frame Compatibility:** Do you have any immediate information on the A-Frame version being used and its Three.js dependencies?
-4.  **Phased Approach:** Is it acceptable to have the codebase in a transitional state, with some components using the new Three.js version while others are still on the old ones, as I migrate them one by one?
+This phase was a major success. It not only removed a significant piece of technical debt but also fixed a cascade of related bugs, resulting in a much more stable and reliable scene persistence system.
 
 ---
 
-## 4. Long-Term Refactoring Roadmap
+## 5. Proposed Next Steps: Task 4 - Consolidate Three.js (Phase 2: Remove r119)
 
-Beyond the immediate next step of refactoring scene data, here is a proposed high-level roadmap to address the other core challenges in the codebase.
+With the `threejs87` library removed, the next logical step is to target the `threejs119` library.
 
-### Phase 2: Consolidate Three.js Versions
-This is the most significant technical challenge and will provide a massive improvement in stability and performance.
-
-- **Problem:** The plugin loads at least five different versions of Three.js (r87, r119, r124, r125, r141) to support various components. This creates a large footprint, potential for conflicts, and a maintenance nightmare.
+- **Problem:** `threejs119` is another outdated version that is still being loaded, contributing to the project's complexity and large footprint.
 - **Proposed Plan:**
-    1.  **Inventory & Audit:** Systematically go through the JavaScript files to identify which components are tied to which Three.js version and why. Document the dependencies.
-    2.  **Select a Target Version:** Choose a single, modern, and stable version of Three.js as the target for the entire application. This decision should consider compatibility with the existing A-Frame version.
-    3.  **Migrate Components:** Carefully migrate the components, one by one, to the new target version. This will be a delicate process, as the Three.js API has changed significantly over the years. Each migrated component will need to be thoroughly tested.
-    4.  **Remove Old Libraries:** Once all components are migrated, remove the old, unused Three.js library files from the `js_libs` directory and the `wp_register_script` calls from `VRodos.php`.
+    1.  **Inventory & Audit:** The first step is to perform a `grep` for `vrodos_load119` to identify all the files that still depend on this version.
+    2.  **Identify Key Dependencies:** The audit will likely reveal that `threejs119` is primarily used for specific loaders (e.g., `FBXLoader`, `GLTFLoader`) and rendering components (`EffectComposer`, `OutlinePass`).
+    3.  **Migrate to r141:** The goal is to migrate these dependencies to their `r141` equivalents, which are already available in the project. This will involve:
+        - Updating the `wp_enqueue_script` calls in the relevant PHP files to point to the `r141` versions of the scripts.
+        - Carefully testing the functionality (e.g., loading an FBX model, using the outline pass) to ensure the migration was successful and to fix any API incompatibilities.
+    4.  **Remove Old Library:** Once all dependencies have been migrated and tested, the `js_libs/threejs119` directory can be safely deleted, and the corresponding `wp_register_script` calls in `VRodos.php` can be removed.
 
-### Phase 3: Modernize the Frontend Build Process
-- **Problem:** JavaScript files are loaded individually via PHP (`wp_register_script` and `wp_enqueue_script`). There is no modern build system, which prevents the use of modern JavaScript features, modules, and performance optimizations.
-- **Proposed Plan:**
-    1.  **Introduce a Build Tool:** Integrate a modern JavaScript bundler like **Webpack** or **Vite** into the project.
-    2.  **Refactor to Modules:** Convert the existing JavaScript files to use ES6 modules (`import`/`export`). This will make dependencies explicit and the code easier to reason about.
-    3.  **Configure Bundling:** Create a build process that transpiles, bundles, and minifies the JavaScript code into a single (or a few) optimized files.
-    4.  **Update Enqueueing:** Modify `VRodos.php` to enqueue the final bundled JavaScript file(s) instead of the dozens of individual scripts.
-
-### Phase 4: Dedicated Performance Optimization
-- **Problem:** The application has known performance issues, likely due to the large number of libraries, unoptimized code, and inefficient data handling.
-- **Proposed Plan:** With a cleaner codebase, a dedicated performance review can be undertaken.
-    1.  **Backend Performance:** Analyze and optimize database queries. Introduce caching strategies (e.g., WordPress Transients API) for frequently accessed data.
-    2.  **Frontend Performance:** Profile the 3D editor to identify bottlenecks. Optimize the Three.js render loop, reduce the number of draw calls, and implement techniques like lazy loading for assets and components.
+This phased approach will continue the process of modernizing the codebase in a controlled and testable manner, bringing us one step closer to a single, modern version of Three.js.
