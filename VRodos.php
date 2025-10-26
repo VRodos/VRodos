@@ -310,8 +310,6 @@ add_action('save_post', 'vrodos_scenes_metas_save');
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scenes.php' );
-
 // 14
 add_action('init', 'vrodos_assets_construct'); // vrodos_asset3d 'ASSETS 3D'
 
