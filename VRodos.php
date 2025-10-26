@@ -836,10 +836,7 @@ add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projec
 
 //------ Ajaxes for Assets----
 // AJAXES for content interlinking
-add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description_action_callback' );
 //add_action( 'wp_ajax_vrodos_translate_action', 'vrodos_translate_action_callback' );
-add_action( 'wp_ajax_vrodos_fetch_image_action', 'vrodos_fetch_image_action_callback' );
-add_action( 'wp_ajax_vrodos_fetch_video_action', 'vrodos_fetch_video_action_callback' );
 
 
 // Peer conferencing
@@ -855,7 +852,6 @@ add_action( 'wp_ajax_vrodos_fetch_video_action', 'vrodos_fetch_video_action_call
 //add_action( 'wp_ajax_vrodos_classify_obj_action', 'vrodos_classify_obj_action_callback' );
 
 // AJAX for delete asset
-add_action('wp_ajax_vrodos_delete_asset_action', 'vrodos_delete_asset3d_frontend_callback');
 
 // AJAX for fetching assets
 
@@ -868,7 +864,6 @@ add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_ass
 
 
 // Backend
-add_action('wp_ajax_vrodos_fetch_assetmeta_action', 'vrodos_fetch_asset3d_meta_backend_callback');
 
 // ------- Ajaxes for compiling ---------
 
