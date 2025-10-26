@@ -377,37 +377,6 @@ function vrodos_delete_gameproject_frontend_callback(){
     wp_die();
 }
 
-//DELETE spesific SCENE
-function vrodos_delete_scene_frontend_callback(){
-
-    $scene_id = $_POST['scene_id'];
-    $postTitle = get_the_title($scene_id);
-
-    //1. Delete screenshot of scene
-    $postmeta = get_post_meta($scene_id);
-
-    $thumb_id = $postmeta['_thumbnail_id'][0];
-
-    $attached_file = get_post_meta($thumb_id, '_wp_attached_file',true);
-
-    if (file_exists($attached_file)) {
-        unlink($attached_file);
-    }
-
-    //2. Delete meta
-    delete_post_meta( $thumb_id, '_wp_attached_file' );
-    delete_post_meta( $thumb_id, '_wp_attachment_metadata' );
-
-    //3. Delete Scene CUSTOM POST
-    wp_delete_post( $scene_id, true );
-
-    //4. Delete Thumbnail post
-    wp_delete_post( $thumb_id, true );
-
-    echo $postTitle;
-
-    wp_die();
-}
 
 //DELETE Asset with files
 function vrodos_delete_asset3d_frontend_callback(){

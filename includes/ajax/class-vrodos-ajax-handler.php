@@ -12,6 +12,7 @@ class VRodos_AJAX_Handler {
         add_action('wp_ajax_vrodos_save_scene_async_action', array($this, 'save_scene_async_action_callback'));
         add_action('wp_ajax_vrodos_undo_scene_async_action', array($this, 'undo_scene_async_action_callback'));
         add_action('wp_ajax_vrodos_redo_scene_async_action', array($this, 'redo_scene_async_action_callback'));
+        add_action('wp_ajax_vrodos_delete_scene_action', array($this, 'delete_scene_frontend_callback'));
     }
 
     /**
@@ -51,14 +52,8 @@ class VRodos_AJAX_Handler {
     // Undo button for scenes
     public function undo_scene_async_action_callback()
     {
-        //$ff = fopen("undo.log","w");
-
         $revision_number = $_POST['post_revision_no'];
         $current_scene_id = $_POST['scene_id'];
-
-//    fwrite($ff, $current_scene_id);
-//    fwrite($ff, $revision_number);
-//
 
         $rev = wp_get_post_revisions( $current_scene_id,
             [
@@ -69,10 +64,6 @@ class VRodos_AJAX_Handler {
             ]
         );
         $sceneToLoad = reset($rev)->post_content;
-
-//    fwrite($ff, $sceneToLoad);
-//    fclose($ff);
-
 
         echo $sceneToLoad;
         wp_die();
@@ -104,6 +95,38 @@ class VRodos_AJAX_Handler {
         update_post_meta($_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption']);
 
         echo $res!=0 ? 'true' : 'false';
+        wp_die();
+    }
+
+    //DELETE spesific SCENE
+    public function delete_scene_frontend_callback(){
+
+        $scene_id = $_POST['scene_id'];
+        $postTitle = get_the_title($scene_id);
+
+        //1. Delete screenshot of scene
+        $postmeta = get_post_meta($scene_id);
+
+        $thumb_id = $postmeta['_thumbnail_id'][0];
+
+        $attached_file = get_post_meta($thumb_id, '_wp_attached_file',true);
+
+        if (file_exists($attached_file)) {
+            unlink($attached_file);
+        }
+
+        //2. Delete meta
+        delete_post_meta( $thumb_id, '_wp_attached_file' );
+        delete_post_meta( $thumb_id, '_wp_attachment_metadata' );
+
+        //3. Delete Scene CUSTOM POST
+        wp_delete_post( $scene_id, true );
+
+        //4. Delete Thumbnail post
+        wp_delete_post( $thumb_id, true );
+
+        echo $postTitle;
+
         wp_die();
     }
 }

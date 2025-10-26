@@ -832,7 +832,6 @@ add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projec
 
 
 // Ajax for deleting scene
-add_action('wp_ajax_vrodos_delete_scene_action','vrodos_delete_scene_frontend_callback');
 
 
 //------ Ajaxes for Assets----
