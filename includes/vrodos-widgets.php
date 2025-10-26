@@ -5,58 +5,58 @@ function vrodos_widget_preamp_scripts() {
 
     // I do not want to load the scripts when I am on the edit 3d scene
     global $template;
-	if (basename($template)==="vrodos-edit-3D-scene-template.php"){
+    if (is_string($template) && basename($template) === "vrodos-edit-3D-scene-template.php") {
         return;
     }
 
     // Stylesheet
     wp_enqueue_style('vrodos_widgets_stylesheet');
-    
+
     // Load single asset kernel
     // Three js : for simple rendering
     wp_enqueue_script('vrodos_scripts');
-    
+
     // For fbx binary
     wp_enqueue_script('vrodos_inflate'); // for binary fbx
-    
+
     // 1. Three js library
     wp_enqueue_script('vrodos_load141_threejs');
     wp_enqueue_script('vrodos_load141_statjs');
-    
+
     // 2. Obj loader simple; For loading an uploaded obj
     wp_enqueue_script('vrodos_load141_OBJLoader');
-    
+
     // 3. Obj loader 2: For preview loading
-    
+
     // 4. Mtl loader
     wp_enqueue_script('vrodos_load141_MTLLoader');
-    
+
     // 6. Fbx loader
     wp_enqueue_script('vrodos_load141_FBXloader');
-    
+
     // 7. Trackball controls
     wp_enqueue_script('vrodos_load141_TrackballControls');
     wp_enqueue_script('vrodos_load141_OrbitControls');
-    
+
     // 8. GLTF Loader
     wp_enqueue_script('vrodos_load141_GLTFLoader');
     wp_enqueue_script('vrodos_load141_DRACOLoader');
     wp_enqueue_script('vrodos_load141_DDSLoader');
     wp_enqueue_script('vrodos_load141_KTXLoader');
-    
+
     // Load single asset
     wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
-	
+
     // Helping scripts
-	wp_enqueue_script('vrodos_scripts');
-    
+    wp_enqueue_script('vrodos_scripts');
+
     $pluginpath = dirname (plugin_dir_url( __DIR__  ));
-    
+
     // Fetch Asset
     wp_enqueue_script( 'ajax-script_fetchasset_meta', $pluginpath.'/vrodos/js_libs/ajaxes/fetch_asset.js', array('jquery') );
-    
+
     wp_localize_script( 'ajax-script_fetchasset_meta', 'my_ajax_object_fetchasset_meta',
-        array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+            array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
     );
 }
 
@@ -65,75 +65,75 @@ function vrodos_widget_preamp_scripts() {
 
 // Creating the widget
 class vrodos_3d_widget extends WP_Widget {
-	
-	protected static $did_script = false;
-    
+
+    protected static $did_script = false;
+
     function __construct() {
-	
-	
-        
+
+
+
         parent::__construct(
-                        // Base ID of your widget
-                        'vrodos_3d_widget',
+        // Base ID of your widget
+                'vrodos_3d_widget',
 
-                        // Widget name will appear in UI
-                        __('VRodos 3D Model Widget', 'vrodos_3d_widget_domain'),
-        
-                        // Widget description
-                        array( 'description' => __( 'A widget to place 3D models', 'vrodos_widget_domain' ), )
+                // Widget name will appear in UI
+                __('VRodos 3D Model Widget', 'vrodos_3d_widget_domain'),
+
+                // Widget description
+                array( 'description' => __( 'A widget to place 3D models', 'vrodos_widget_domain' ), )
         );
-	
-	    //add_action('wp_enqueue_scripts', array($this, 'vrodos_widget_scripts_switch'));
-	
-	    // Back-end
-	    add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts', 10);
-	
-	   
 
-        
+        //add_action('wp_enqueue_scripts', array($this, 'vrodos_widget_scripts_switch'));
+
+        // Back-end
+        add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts', 10);
+
+
+
+
         // Enque only if widget is active (dragged in the sidebar in back-end)
-	    if ( is_active_widget( false, false, $this->id_base, true ) ) {
-		    add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts', 10);
-	    }
+        if ( is_active_widget( false, false, $this->id_base, true ) ) {
+            add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts', 10);
+        }
     }
 
-    
+
     // Widget Backend
     public function form( $instance ) {
-        
+
         $title = isset( $instance[ 'title' ] ) ? $instance[ 'title' ] : '';
         $titleshow = isset( $instance[ 'titleshow' ] ) ? $instance[ 'titleshow' ] : 'false';
-        
+
         $asset_id =  isset( $instance[ 'asset_id' ] ) ? $instance[ 'asset_id' ] : __( 'Insert asset id', 'vrodos_3d_widget_domain' );
         $camerapositionx = isset( $instance[ 'camerapositionx' ] ) ?  $instance[ 'camerapositionx' ] : 0;
         $camerapositiony = isset( $instance[ 'camerapositiony' ] ) ?  $instance[ 'camerapositiony' ] : 0;
         $camerapositionz = isset( $instance[ 'camerapositionz' ] ) ?  $instance[ 'camerapositionz' ] : -1;
-        
+
         $canvaswidth = isset( $instance[ 'canvaswidth' ] )? $instance[ 'canvaswidth' ] : '600px';
         $canvasheight = isset( $instance[ 'canvasheight' ] )? $instance[ 'canvasheight' ] : '400px';
-    
+
         $canvasbackgroundcolor = isset( $instance[ 'canvasbackgroundcolor' ] )? $instance[ 'canvasbackgroundcolor' ] : 'transparent';
-        
+
         $enablezoom = isset( $instance[ 'enablezoom' ] )? $instance[ 'enablezoom' ] : 'true';
-    
+
         $enablepan = isset( $instance[ 'enablepan' ] )? $instance[ 'enablepan' ] : 'false';
-    
+
         $canvasposition = isset( $instance[ 'canvasposition' ] )? $instance[ 'canvasposition' ] : 'relative';
-        
+
         $canvastop = isset( $instance[ 'canvastop' ] )? $instance[ 'canvastop' ] : '';
         $canvasbottom = isset( $instance[ 'canvasbottom' ] )? $instance[ 'canvasbottom' ] : '';
         $canvasleft = isset( $instance[ 'canvasleft' ] )? $instance[ 'canvasleft' ] : '';
         $canvasright = isset( $instance[ 'canvasright' ] )? $instance[ 'canvasright' ] : '';
-    
+
         $customcss = isset( $instance[ 'customcss' ] )? $instance[ 'customcss' ] : '';
-        
+
         // Widget admin form
         ?>
         <p>
             <label for="<?php echo $this->get_field_id( 'title' ); ?>">
                 <?php _e( 'Title (No Gaps):' ); ?>
             </label>
-            
+
             <input class="widefat"
                    id="<?php echo $this->get_field_id( 'title' ); ?>"
                    name="<?php echo $this->get_field_name( 'title' ); ?>"
@@ -154,37 +154,37 @@ class vrodos_3d_widget extends WP_Widget {
                    value="<?php echo esc_attr( $titleshow ); ?>"
             />
         </p>
-        
-        
+
+
         <p>
             <label for="<?php echo $this->get_field_id( 'asset_id' ); ?>">
                 <?php _e( 'Asset id:' ); ?>
             </label>
-            
+
 
             <select
-                class   ="widefat"
-                onchange="vrodos_fillin_widget_assettrs(this)"
-                id      ="<?php echo $this->get_field_id( 'asset_id');?>"
-                name    ="<?php echo $this->get_field_name( 'asset_id');?>"
-                data-widgetserialno ="<?php echo $this->number;?>"
+                    class   ="widefat"
+                    onchange="vrodos_fillin_widget_assettrs(this)"
+                    id      ="<?php echo $this->get_field_id( 'asset_id');?>"
+                    name    ="<?php echo $this->get_field_name( 'asset_id');?>"
+                    data-widgetserialno ="<?php echo $this->number;?>"
             >
 
                 <option value="">Select one</option>
-                
-            <?php
+
+                <?php
                 // Get all assets
                 $assets = get_assets([]);
-                
+
                 // Iterate for the drop down
                 for ($i=0;$i<count($assets);$i++){
-                    
+
                     echo '<option value="'.$assets[$i]['assetid'].'" '.(esc_attr( $asset_id )==$assets[$i]['assetid']?'selected':'').'>'.
-                        $assets[$i]['assetName'].
-                        '</option>';
-                    
+                            $assets[$i]['assetName'].
+                            '</option>';
+
                 }
-            ?>
+                ?>
             </select>
         </p>
 
@@ -256,8 +256,8 @@ class vrodos_3d_widget extends WP_Widget {
         </p>
 
 
-        
-        
+
+
 
         <p>
             <label for="<?php echo $this->get_field_id( 'canvasbackgroundcolor' ); ?>">
@@ -272,7 +272,7 @@ class vrodos_3d_widget extends WP_Widget {
             />
         </p>
 
-        
+
         <p>
             <label for="<?php echo $this->get_field_id( 'enablezoom' ); ?>">
                 <?php _e( 'Enable Zoom:' ); ?>
@@ -285,7 +285,7 @@ class vrodos_3d_widget extends WP_Widget {
                    value="<?php echo esc_attr( $enablezoom ); ?>"
             />
         </p>
-        
+
 
         <p>
             <label for="<?php echo $this->get_field_id( 'enablepan' ); ?>">
@@ -381,74 +381,74 @@ class vrodos_3d_widget extends WP_Widget {
         </p>
 
         <?php
-        
+
     }
-    
-    
+
+
     // Creating widget front-end
     public function widget( $args, $instance ) {
-     
 
-        
+
+
         $title = $instance['title']; //apply_filters( 'widget_title', $instance['title'] );
         $titleshow = $instance['titleshow'] ; //apply_filters( 'widget_titleshow', $instance['titleshow'] );
         $asset_id = $instance['asset_id'];    //apply_filters( 'widget_asset_id', $instance['asset_id'] );
 
-        
+
         $camerapositionx = $instance['camerapositionx'];
-                                // apply_filters( 'widget_camerapositionx', $instance['camerapositionx'] );
+        // apply_filters( 'widget_camerapositionx', $instance['camerapositionx'] );
         $camerapositiony = $instance['camerapositiony'] ;//apply_filters( 'widget_camerapositiony', $instance['camerapositiony'] );
         $camerapositionz = $instance['camerapositionz']; //apply_filters( 'widget_camerapositionz', $instance['camerapositionz'] );
-    
+
         $canvaswidth = $instance['canvaswidth']; //apply_filters( 'widget_canvaswidth', $instance['canvaswidth'] );
         $canvasheight = $instance['canvasheight']; //apply_filters( 'widget_canvasheight', $instance['canvasheight'] );
-    
+
         $canvasbackgroundcolor = $instance['canvasbackgroundcolor']; //apply_filters( 'widget_canvasbackgroundcolor', $instance['canvasbackgroundcolor'] );
         $enablepan = $instance['enablepan']; //apply_filters( 'widget_enablepan', $instance['enablepan'] );
         $enablezoom = $instance['enablezoom']; //apply_filters( 'widget_enablezoom', $instance['enablezoom'] );
-    
+
         $canvasposition = $instance['canvasposition']; //apply_filters( 'widget_canvasposition', $instance['canvasposition'] );
-    
+
         $canvastop = $instance['canvastop']; //apply_filters( 'widget_canvastop', $instance['canvastop'] );
         $canvasbottom = $instance['canvasbottom']; //apply_filters( 'widget_canvastop', $instance['canvasbottom'] );
         $canvasleft = $instance['canvasleft']; //apply_filters( 'widget_canvastop', $instance['canvasleft'] );
         $canvasright = $instance['canvasright']; //apply_filters( 'widget_canvastop', $instance['canvasright'] );
-    
+
         $customcss = $instance['customcss'];
-    
-      
+
+
         // 1. before and after widget arguments are defined by themes
         echo $args['before_widget'];
 
-        
+
         // The data
         if ( ! empty( $title ) && $titleshow === 'true')
             echo $args['before_title'] . $title . $args['after_title'];
-    
-       
+
+
         // 2. Get  urls from id
-    
+
         // Get post
         $asset_post    = get_post($asset_id);
-    
-        
+
+
         // Get post meta
         $assetpostMeta = get_post_meta($asset_id);
-    
+
         // Background color in canvas
 
         $back_3d_color = $assetpostMeta['vrodos_asset3d_back3dcolor'][0];
-    
-        
-        
+
+
+
         $asset_3d_files = get_3D_model_files($assetpostMeta, $asset_id);
-        
+
         // audio file
         $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
         $attachment_audio_file = get_post( $audioID )->guid;
-        
+
         $styledivcanvas = "position:".$canvasposition.";width:".$canvaswidth.";height:".$canvasheight.
-            ";top:".$canvastop.";bottom:".$canvasbottom.";left:".$canvasleft.";right:".$canvasright.";".$customcss;
+                ";top:".$canvastop.";bottom:".$canvasbottom.";left:".$canvasleft.";right:".$canvasright.";".$customcss;
         ?>
 
         <div id="" class="" style="<?php echo $styledivcanvas ?>">
@@ -463,7 +463,7 @@ class vrodos_3d_widget extends WP_Widget {
                     <div id="previewProgressSliderLineDiv<?php echo $title;?>" class="progressSliderSubLineDiv" style="width: 0;">...</div>
                 </div>
             </div>
-            
+
             <!-- LabelRenderer of Canvas -->
             <div id="divCanvasLabels<?php echo $title;?>" style="position:absolute; width:100%; height:100%;">
 
@@ -476,24 +476,24 @@ class vrodos_3d_widget extends WP_Widget {
             </div>
 
         </div>
-    
+
         <?php
-            if(strpos($attachment_audio_file, "mp3" )!==false ||
-               strpos($attachment_audio_file, "wav" )!==false) {
+        if(strpos($attachment_audio_file, "mp3" )!==false ||
+                strpos($attachment_audio_file, "wav" )!==false) {
             ?>
-            
+
             <audio loop preload="auto" id ='audioFile<?php echo $title;?>'>
                 <source src="<?php echo $attachment_audio_file;?>" type="audio/mp3">
                 <source src="<?php echo $attachment_audio_file;?>" type="audio/wav">
                 Your browser does not support the audio tag.
             </audio>
         <?php } ?>
-    
-        
-        
+
+
+
         <script>
-            
-          
+
+
 
             const path_url<?php echo $title;?> = "<?php echo $asset_3d_files['path'].'/'; ?>";
             const mtl_file_name_widget<?php echo $title;?>= "<?php echo $asset_3d_files['mtl']; ?>";
@@ -512,16 +512,16 @@ class vrodos_3d_widget extends WP_Widget {
 
             const textures_fbx_string_connected_widget<?php echo $title;?> = "<?php echo $asset_3d_files['texturesFbx']; ?>";
             const back_3d_color<?php echo $title;?> = "<?php echo $back_3d_color; ?>";
-            
-            
-            
+
+
+
             const audio_file<?php echo $title;?> = document.getElementById( 'audioFile<?php echo $title;?>' );
 
             const assettrs<?php echo $title;?> = "0,0,0,0,0,0," + camerapositionx<?php echo $title;?> + "," +
-                                              camerapositiony<?php echo $title;?> + "," +
-                                              camerapositionz<?php echo $title;?>;
-        
-                        
+                camerapositiony<?php echo $title;?> + "," +
+                camerapositionz<?php echo $title;?>;
+
+
             const asset_viewer_3d_kernel<?php echo $title;?> = new VRodos_AssetViewer_3D_kernel(
                 document.getElementById( 'divCanvas<?php echo $title;?>' ),
                 document.getElementById( 'divCanvasLabels<?php echo $title;?>' ),
@@ -542,76 +542,76 @@ class vrodos_3d_widget extends WP_Widget {
                 enablepan<?php echo $title;?>, // lock
                 enablezoom<?php echo $title;?>, // enablezoom
                 assettrs<?php echo $title;?>);
-        
+
         </script>
-        
+
         <?php
-        
-        
-        
+
+
+
         // This is where you run the code and display the output
-        
+
         echo $args['after_widget'];
-    
-     
-        
+
+
+
     }
 
 
 
     // Updating widget replacing old instances with new
     public function update( $new_instance, $old_instance ) {
-    
-        
+
+
         $instance = array();
-        
+
         $instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
         $instance['titleshow'] = ( ! empty( $new_instance['titleshow'] ) ) ?
-                            strip_tags( $new_instance['titleshow'] ) : 'false';
-        
+                strip_tags( $new_instance['titleshow'] ) : 'false';
+
         $instance['asset_id'] = ( ! empty( $new_instance['asset_id'] ) ) ? strip_tags( $new_instance['asset_id'] ) : '';
-        
+
         $instance['camerapositionx'] =  !empty($new_instance['camerapositionx']) ?
-                                               strip_tags($new_instance['camerapositionx']) : '0';
-        
+                strip_tags($new_instance['camerapositionx']) : '0';
+
         $instance['camerapositiony'] = ( ! empty( $new_instance['camerapositiony'] ) ) ?
-                                               strip_tags( $new_instance['camerapositiony'] ) : '0';
-        
+                strip_tags( $new_instance['camerapositiony'] ) : '0';
+
         $instance['camerapositionz'] = ( ! empty( $new_instance['camerapositionz'] ) ) ?
-                                               strip_tags( $new_instance['camerapositionz'] ) : '0';
-    
+                strip_tags( $new_instance['camerapositionz'] ) : '0';
+
         $instance['canvaswidth'] = ( ! empty( $new_instance['canvaswidth'] ) ) ?
-            strip_tags( $new_instance['canvaswidth'] ) : '100%';
-    
+                strip_tags( $new_instance['canvaswidth'] ) : '100%';
+
         $instance['canvasheight'] = ( ! empty( $new_instance['canvasheight'] ) ) ?
-            strip_tags( $new_instance['canvasheight'] ) : '100%';
-    
+                strip_tags( $new_instance['canvasheight'] ) : '100%';
+
         $instance['canvasbackgroundcolor'] = ( ! empty( $new_instance['canvasbackgroundcolor'] ) ) ?
-            strip_tags( $new_instance['canvasbackgroundcolor'] ) : 'transparent';
-    
+                strip_tags( $new_instance['canvasbackgroundcolor'] ) : 'transparent';
+
         $instance['enablezoom'] = ( ! empty( $new_instance['enablezoom'] ) ) ?
-            strip_tags( $new_instance['enablezoom'] ) : 'true';
-    
+                strip_tags( $new_instance['enablezoom'] ) : 'true';
+
         $instance['enablepan'] = ( ! empty( $new_instance['enablepan'] ) ) ?
-            strip_tags( $new_instance['enablepan'] ) : 'false';
-    
+                strip_tags( $new_instance['enablepan'] ) : 'false';
+
         $instance['canvasposition'] = ( ! empty( $new_instance['canvasposition'] ) ) ?
-            strip_tags( $new_instance['canvasposition'] ) : 'relative';
-    
-    
-        
-        
+                strip_tags( $new_instance['canvasposition'] ) : 'relative';
+
+
+
+
         $varNames = ['canvastop','canvasbottom','canvasleft','canvasright'];
 
         for ($i=0; $i<count($varNames); $i++){
             $instance[$varNames[$i]] = ( ! empty( $new_instance[$varNames[$i]] ) ) ?
-                strip_tags( $new_instance[$varNames[$i]] ) : '0';
+                    strip_tags( $new_instance[$varNames[$i]] ) : '0';
         }
-    
-    
+
+
         $instance['customcss'] = ( ! empty( $new_instance['customcss'] ) ) ?
-            strip_tags( $new_instance['customcss'] ) : '';
-        
+                strip_tags( $new_instance['customcss'] ) : '';
+
         return $instance;
     }
 }
