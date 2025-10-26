@@ -24,21 +24,19 @@ function vrodos_widget_preamp_scripts() {
     wp_enqueue_script('vrodos_load141_statjs');
     
     // 2. Obj loader simple; For loading an uploaded obj
-    wp_enqueue_script('vrodos_load87_OBJloader');
+    wp_enqueue_script('vrodos_load141_OBJLoader');
     
     // 3. Obj loader 2: For preview loading
-    wp_enqueue_script('vrodos_load87_OBJloader2');
-    wp_enqueue_script('vrodos_load87_WWOBJloader2');
     
     // 4. Mtl loader
-    wp_enqueue_script('vrodos_load87_MTLloader');
+    wp_enqueue_script('vrodos_load141_MTLLoader');
     
     // 6. Fbx loader
     wp_enqueue_script('vrodos_load141_FBXloader');
     
     // 7. Trackball controls
     wp_enqueue_script('vrodos_load141_TrackballControls');
-    wp_enqueue_script('vrodos_load87_OrbitControls');
+    wp_enqueue_script('vrodos_load141_OrbitControls');
     
     // 8. GLTF Loader
     wp_enqueue_script('vrodos_load141_GLTFLoader');
