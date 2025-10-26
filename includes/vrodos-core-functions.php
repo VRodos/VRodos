@@ -346,52 +346,6 @@ function vrodos_segment_obj_action_callback() {
 
 //======================= CONTENT INTERLINKING =========================================================================
 
-function vrodos_fetch_description_action_callback(){
-
-//	$fff = fopen("output_wiki.txt","w");
-//	fwrite($fff, $_POST['externalSource']);
-
-
-	if ($_POST['externalSource']=='Wikipedia')
-		$url = 'https://'.$_POST['lang'].'.wikipedia.org/w/api.php?action=query&format=json&exlimit=3&prop=extracts&'.$_POST['fulltext'].'titles='.$_POST['titles'];
-	else
-		$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query='.$_POST['titles'];//.'&qf=LANGUAGE:'.$_POST['lang'];
-
-	echo  strip_tags(file_get_contents($url));
-
-//	fwrite($fff, $_POST['titles']);
-//	fwrite($fff, htmlspecialchars($_POST['titles']));
-//	fclose($fff);
-
-	wp_die();
-}
-
-function vrodos_fetch_image_action_callback(){
-
-	if ($_POST['externalSource_image']=='Wikipedia')
-		$url = 'https://'.$_POST['lang_image'].'.wikipedia.org/w/api.php?action=query&prop=imageinfo&format=json&iiprop=url&generator=images&titles='.$_POST['titles_image'];
-	else
-		$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query='.$_POST['titles_image'];//.'&qf=LANGUAGE:'.$_POST['lang_image'];
-
-	echo file_get_contents($url);
-
-	wp_die();
-}
-
-function vrodos_fetch_video_action_callback(){
-
-	if ($_POST['externalSource_video']=='Wikipedia'){
-		$url = 'https://'.$_POST['lang_video'].'.wikipedia.org/w/api.php?action=query&format=json&prop=videoinfo&viprop=derivatives&titles=File:'.$_POST['titles_video'].'.ogv';
-	} else {
-		$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query='.$_POST['titles_image'];//.'&qf=LANGUAGE:'.$_POST['lang_image'];
-	}
-
-	$content = file_get_contents($url);
-	echo $content;
-
-	wp_die();
-}
-
 
 function vrodos_notify_confpeers_callback(){
 

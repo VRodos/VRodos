@@ -378,75 +378,6 @@ function vrodos_delete_gameproject_frontend_callback(){
 }
 
 
-//DELETE Asset with files
-function vrodos_delete_asset3d_frontend_callback(){
-
-    $asset_id = $_POST['asset_id'];
-    $gameSlug = $_POST['game_slug'];
-    $isCloned = $_POST['isCloned'];
-
-    // If it is not cloned then it is safe to delete the meta files.
-    if ($isCloned==='false') {
-
-        $containerFolder = wp_upload_dir()['basedir'].'/models/';
-
-        // Get texture attachments of post
-        $args = array(
-            'posts_per_page' => 100,
-            'order'          => 'DESC',
-            'post_parent'    => $asset_id
-        );
-
-        $attachments_array =  get_children( $args,OBJECT );  //returns Array ( [$image_ID].
-
-        // Add texture urls to a string separated by |
-
-        foreach ($attachments_array as $k){
-            $child_post_id = $k->ID;
-
-            // Delete the file from the system
-            wp_delete_file($containerFolder.basename(get_attached_file($child_post_id)));
-
-            // Delete attachment
-            wp_delete_attachment($child_post_id, true); // True : Not go to trash
-        }
-
-
-        // ---------- GLB -------
-        $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
-
-        // Delete the file from the system
-        wp_delete_file($containerFolder.basename(get_attached_file($glbID)));
-
-        // Delete attachment
-        wp_delete_attachment($glbID, true);
-
-
-
-        // ---------- Screenshot ---------------
-        $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
-
-        // Delete the file from the system
-        wp_delete_file($containerFolder.basename(get_attached_file($screenID)));
-
-        // Delete attachment
-        wp_delete_attachment($screenID, true);
-    }
-
-    // Delete all uses of Asset from Scenes (json)
-    vrodos_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug);
-
-    // Delete Asset post from SQL database
-    wp_delete_post( $asset_id, true );
-
-    echo $asset_id;
-
-    wp_die();
-}
-
-
-
-
 //Fetch GLB Asset
 function vrodos_fetch_glb_asset3d_frontend_callback(){
     wp_reset_postdata();
@@ -459,19 +390,6 @@ function vrodos_fetch_glb_asset3d_frontend_callback(){
     $output = new StdClass();
     $output->glbIDs = $glbID;
     $output->glbURL = $glbURL;
-
-    print_r(json_encode($output, JSON_UNESCAPED_SLASHES));
-    wp_die();
-}
-
-
-//Fetch Asset with files
-function vrodos_fetch_asset3d_meta_backend_callback(){
-
-    $asset_id = $_POST['asset_id'];
-
-    $output = new StdClass();
-    $output -> assettrs_saved = get_post_meta($asset_id,'vrodos_asset3d_assettrs', true);
 
     print_r(json_encode($output, JSON_UNESCAPED_SLASHES));
     wp_die();
