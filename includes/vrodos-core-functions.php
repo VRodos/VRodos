@@ -27,45 +27,6 @@ function vrodos_getVideoAttachmentsFromMediaLibrary(){
 
 
 
-function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
-	$gamePost = get_post($project_id);
-	$gameSlug = $gamePost->post_name;
-
-	$scene_type_slug = 'wonderaround-yaml';
-
-	$custom_query_args = array(
-		'post_type' => 'vrodos_scene',
-		'posts_per_page' => -1,
-		'tax_query' => array(
-			'relation' => 'AND',
-			array(
-				'taxonomy' => 'vrodos_scene_pgame',
-				'field'    => 'slug',
-				'terms'    => $gameSlug
-			),
-			array(
-				'taxonomy' => 'vrodos_scene_yaml',
-				'field'    => 'slug',
-				'terms'    => $scene_type_slug,
-			),
-		),
-		'orderby' => 'ID',
-		'order' => 'DESC',
-	);
-	$scene_data = array();
-	$custom_query = new WP_Query( $custom_query_args );
-
-	if ( $custom_query->have_posts() ) {
-		while ($custom_query->have_posts()) {
-			$custom_query->the_post();
-
-			$scene_data['id'] = get_the_ID();
-			$scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
-		}
-	}
-
-	return $scene_data;
-}
 
 
 

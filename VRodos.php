@@ -453,7 +453,6 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
 //------------------- For Compile ---------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-compile-aframe.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
 
 
 
@@ -811,20 +810,13 @@ new VRodos_AJAX_Handler();
 
 // -------- Ajax for game projects ------
 // Ajax for fetching game's assets within asset browser widget at vr_editor
-add_action( 'wp_ajax_vrodos_fetch_game_assets_action', 'vrodos_fetch_game_assets_action_callback' );
 
 // Callback for Ajax for delete game
-add_action('wp_ajax_vrodos_delete_game_action','vrodos_delete_gameproject_frontend_callback');
 
 // Callback for add collaborators
-add_action('wp_ajax_vrodos_collaborate_project_action','vrodos_collaborate_project_frontend_callback');
 
 // Callback for fetching collaborators from db
-add_action('wp_ajax_vrodos_fetch_collaborators_action','vrodos_fetch_collaborators_frontend_callback');
 
-add_action('wp_ajax_vrodos_create_project_action','vrodos_create_project_frontend_callback');
-
-add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projects_callback');
 
 
 
