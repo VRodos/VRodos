@@ -805,6 +805,10 @@ add_action( 'graphql_register_types', function() {
 //                AJAXes   registration
 //
 
+// AJAX Handler Class
+require_once(plugin_dir_path(__FILE__) . 'includes/ajax/class-vrodos-ajax-handler.php');
+new VRodos_AJAX_Handler();
+
 // -------- Ajax for game projects ------
 // Ajax for fetching game's assets within asset browser widget at vr_editor
 add_action( 'wp_ajax_vrodos_fetch_game_assets_action', 'vrodos_fetch_game_assets_action_callback' );
@@ -825,7 +829,6 @@ add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projec
 
 
 // ------ Ajaxes for scenes -----------
-require_once(plugin_dir_path(__FILE__) . 'includes/vrodos-ajax-hooks.php');
 add_action('wp_ajax_vrodos_undo_scene_async_action','vrodos_undo_scene_async_action_callback');
 add_action('wp_ajax_vrodos_redo_scene_async_action','vrodos_redo_scene_async_action_callback');
 
