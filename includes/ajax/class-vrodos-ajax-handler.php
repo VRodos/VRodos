@@ -98,7 +98,7 @@ class VRodos_AJAX_Handler {
         wp_die();
     }
 
-    //DELETE spesific SCENE
+    // DELETE specific SCENE
     public function delete_scene_frontend_callback(){
 
         $scene_id = $_POST['scene_id'];
