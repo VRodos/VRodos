@@ -27,9 +27,6 @@ function vrodos_getVideoAttachmentsFromMediaLibrary(){
 
 
 
-
-
-
 function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
 	$gamePost = get_post($project_id);
 	$gameSlug = $gamePost->post_name;

@@ -284,7 +284,6 @@ function vrodos_fx_admin_notice_notice(){
 }
 
 
-
 // GET page by given type (depending the template) - breacrumb and links for front-end
 function vrodos_getEditpage($type){
 

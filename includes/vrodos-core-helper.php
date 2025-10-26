@@ -24,7 +24,6 @@ function vrodos_project_type_icon($project_category){
     return $project_type_icon;
 }
 
-
 function vrodos_return_project_type($id) {
 
     if (!$id) {

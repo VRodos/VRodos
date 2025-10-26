@@ -203,6 +203,131 @@ function get_assets($games_slugs){
 
 //TODO check them
 
+function vrodos_fetch_game_assets_action_callback() {
+
+
+    // Output the directory listing as JSON
+    header('Content-type: application/json');
+
+    $response = vrodos_get_assets_by_game($_POST['gameProjectSlug'], $_POST['gameProjectID']);
+
+    for ($i=0; $i<count($response); $i++) {
+        if (isset($response[$i]['assetName'])) {
+            $response[$i]['name'] = $response[$i]['assetName'];
+            $response[$i]['type'] = 'file';
+        }
+    }
+
+    $jsonResp =  json_encode(
+        array(
+            "items" => $response
+        )
+    );
+
+    echo $jsonResp;
+    wp_die();
+}
+
+/**
+ * Get the Assets of a game plus its respective joker game assets
+ *
+ * @param $gameProjectSlug
+ * @param $gameProjectID
+ * @return array
+ */
+function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
+
+    $allAssets = [];
+
+//	// find the joker game slug e.g. "Archaeology-joker"
+//	$joker_game_slug = wp_get_post_terms( $gameProjectID, 'vrodos_game_type')[0]->name."-joker";
+//
+//	// Slugs are low case "Archaeology-joker" -> "archaeology-joker"
+//	$joker_game_slug = strtolower($joker_game_slug);
+
+    $queryargs = array(
+        'post_type' => 'vrodos_asset3d',
+        'posts_per_page' => -1,
+        'tax_query' => array(
+            array(
+                'taxonomy' => 'vrodos_asset3d_pgame',
+                'field' => 'slug',
+                'terms' => array($gameProjectSlug, 'vrexpo-joker', 'archaeology-joker', 'virtualproduction-joker')
+            )
+        )
+    );
+
+    $custom_query = new WP_Query( $queryargs );
+
+    if ( $custom_query->have_posts() ) :
+        while ( $custom_query->have_posts() ) :
+
+            $custom_query->the_post();
+
+            $asset_id = get_the_ID();
+            $asset_cat_arr = wp_get_post_terms($asset_id, 'vrodos_asset3d_cat');
+
+            $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true); // GLB ID
+            $glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
+
+
+            $sshotID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true); // Screenshot Image ID
+            $sshotPath = $sshotID ? wp_get_attachment_url( $sshotID ) : '';           // Screenshot Image PATH
+
+            $data_arr = [
+                'asset_name'=>get_the_title(),
+                'asset_slug'=>get_post()->post_name,
+                'asset_id'=>$asset_id,
+                'category_name'=>$asset_cat_arr[0]->name,
+                'category_slug'=>$asset_cat_arr[0]->slug,
+                'category_id'=>$asset_cat_arr[0]->term_id,
+                'category_icon'=> get_term_meta($asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true),
+                'glb_id'=>$glbID,
+                'glb_path'=>$glbPath,
+                'path'=>$glbPath,
+                'screenshot_id'=>$sshotID,
+                'screenshot_path'=>$sshotPath,
+                'is_cloned'=> get_post_meta($asset_id, 'vrodos_asset3d_isCloned', true),
+                'is_joker'=> get_post_meta($asset_id, 'vrodos_asset3d_isJoker', true)
+            ];
+
+            switch ($asset_cat_arr[0]->slug) {
+                case 'video':
+                    $data_arr['video_id'] = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
+                    $data_arr['video_path'] = wp_get_attachment_url( $data_arr['video_id'] );
+                    $data_arr['video_title'] = get_post_meta($asset_id, 'vrodos_asset3d_video_title', true);
+                    $data_arr['video_loop'] = get_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', true);
+                    break;
+                case 'poi-imagetext':
+                    $data_arr['poi_img_id'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', true);
+                    $data_arr['poi_img_path'] = wp_get_attachment_url( $data_arr['poi_img_id'] );
+                    $data_arr['poi_img_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', true);
+                    $data_arr['poi_img_content'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', true);
+                    break;
+            /*    case 'chat':
+                    $data_arr['chat_type'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
+                    break;*/
+                case 'poi-link':
+                    $data_arr['poi_link_url'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
+                    break;
+                case 'chat':
+                    $data_arr['poi_chat_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', true);
+                    $data_arr['poi_chat_participants'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatnum_people', true);
+                    $data_arr['poi_chat_indicators'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true);
+                    break;
+            }
+
+            array_push($allAssets, $data_arr);
+
+        endwhile;
+    endif;
+
+    // Reset postdata
+    wp_reset_postdata();
+
+    return $allAssets;
+}
+
 
 /**
  * Get the Assets of a game plus its respective joker game assets
