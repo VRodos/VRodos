@@ -330,8 +330,6 @@ class VRodos_AJAX_Handler {
     // Fetch list of project through ajax
     public function fetch_list_projects_callback() {
 
-        $f = fopen("output_ajax_delay.txt", "w");
-
         $user_id = $_POST['current_user_id'];
         $parameter_Scenepass = $_POST['parameter_Scenepass'];
 
@@ -347,25 +345,12 @@ class VRodos_AJAX_Handler {
         // Output custom query loop
         if ($custom_query->have_posts()){
 
-            $mt3 = explode(' ', microtime());
-            $t3 = ((int)$mt3[1]) * 1000 + ((int)round($mt3[0] * 1000));
-
-            fwrite($f, "Step 3:".$t3.chr(13));
-
             echo '<ul class="mdc-list mdc-list--two-line mdc-list--avatar-list" style="max-height: 460px; overflow-y: auto">';
             while ($custom_query->have_posts()) :
 
-                $mt4 = explode(' ', microtime());
-                $t4 = ((int)$mt4[1]) * 1000 + ((int)round($mt4[0] * 1000));
-
-                fwrite($f, "Step 4:".$t4.chr(13));
-
                 $custom_query->the_post();
 
-                if (current_user_can('administrator')){
-                    // ToDo: replace current_user_can with smth like current_user_is
-
-                } elseif (current_user_can('administrator')) {
+                if (current_user_can('administrator')) {
 
                     $collaborators = get_post_meta(get_the_ID(),'vrodos_project_collaborators_ids')[0];
 
@@ -385,20 +370,20 @@ class VRodos_AJAX_Handler {
                 if (str_contains($game_title, ' Joker'))
                     continue;
 
-                $game_type_obj = $this->return_project_type($game_id);
+                $game_type_obj = vrodos_return_project_type($game_id);
 
                 $all_game_category = get_the_terms( $game_id, 'vrodos_game_type' );
                 $game_category     = $all_game_category[0]->slug;
-                $scene_data = $this->get_first_scene_id_by_project_id($game_id,$game_category);//first 3D scene id
+                $scene_data = vrodos_getFirstSceneID_byProjectID($game_id,$game_category);//first 3D scene id
 
-                $editscenePage = $this->get_edit_page('scene');
+                $editscenePage = vrodos_getEditpage('scene');
 
                 $edit_scene_page_id = $editscenePage[0]->ID;
 
                 $loadMainSceneLink = esc_url( (get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type']));
 
 
-                $assets_list_page =  $this->get_edit_page('assetslist');
+                $assets_list_page =  vrodos_getEditpage('assetslist');
                 $assets_list_page_id = $assets_list_page[0]->ID;
                 $loadProjectAssets = esc_url( get_permalink($assets_list_page_id) . '?vrodos_project_id=' . $game_id );
 
@@ -482,120 +467,6 @@ class VRodos_AJAX_Handler {
         }
 
         wp_die();
-    }
-
-
-    private function get_edit_page($type){
-
-        switch ($type) {
-            case 'allgames':
-                $templateURL = '/templates/vrodos-project-manager-template.php';
-                break;
-
-            case 'game':
-            case 'assetslist':
-                $templateURL = '/templates/vrodos-assets-list-template.php';
-                break;
-
-            case 'scene':
-                $templateURL = '/templates/vrodos-edit-3D-scene-template.php';
-                break;
-            case 'asset':
-                $templateURL = '/templates/vrodos-asset-editor-template.php';
-                break;
-
-            default:
-                $templateURL = null;
-
-        }
-
-        if ($templateURL) {
-            return get_pages(array(
-                'hierarchical' => 0,
-                'parent' => -1,
-                'meta_key' => '_wp_page_template',
-                'meta_value' => $templateURL
-            ));
-        } else {
-            return false;
-        }
-    }
-
-    private function get_first_scene_id_by_project_id($project_id,$project_type){
-        $gamePost = get_post($project_id);
-        $gameSlug = $gamePost->post_name;
-
-        $scene_type_slug = 'wonderaround-yaml';
-
-        $custom_query_args = array(
-            'post_type' => 'vrodos_scene',
-            'posts_per_page' => -1,
-            'tax_query' => array(
-                'relation' => 'AND',
-                array(
-                    'taxonomy' => 'vrodos_scene_pgame',
-                    'field'    => 'slug',
-                    'terms'    => $gameSlug
-                ),
-                array(
-                    'taxonomy' => 'vrodos_scene_yaml',
-                    'field'    => 'slug',
-                    'terms'    => $scene_type_slug,
-                ),
-            ),
-            'orderby' => 'ID',
-            'order' => 'DESC',
-        );
-        $scene_data = array();
-        $custom_query = new WP_Query( $custom_query_args );
-
-        if ( $custom_query->have_posts() ) {
-            while ($custom_query->have_posts()) {
-                $custom_query->the_post();
-
-                $scene_data['id'] = get_the_ID();
-                $scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
-            }
-        }
-
-        return $scene_data;
-    }
-
-    private function return_project_type($id) {
-
-        if (!$id) {
-            return null;
-        }
-
-        $all_project_category = get_the_terms( $id, 'vrodos_game_type' );
-
-        $project_category = $all_project_category ? $all_project_category[0]->name : null;
-
-        $project_type_icon = $this->project_type_icon($project_category);
-
-        $obj = new stdClass();
-        $obj->string = $project_category;
-        $obj->icon = $project_type_icon;
-
-        return $obj;
-    }
-
-    private function project_type_icon($project_category){
-
-        // Set game type icon
-        switch($project_category){
-            case 'vrexpo':
-                $project_type_icon = "public";
-                break;
-            case 'virtualproduction':
-                $project_type_icon = "theaters";
-                break;
-            case 'Archaeology':
-            default:
-                $project_type_icon = "account_balance";
-                break;
-        }
-        return $project_type_icon;
     }
 
     private function create_default_scenes_for_game($projectSlug, $gameTypeId){

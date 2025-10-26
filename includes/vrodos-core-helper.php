@@ -25,6 +25,25 @@ function vrodos_project_type_icon($project_category){
 }
 
 
+function vrodos_return_project_type($id) {
+
+    if (!$id) {
+        return null;
+    }
+
+    $all_project_category = get_the_terms( $id, 'vrodos_game_type' );
+
+    $project_category = $all_project_category ? $all_project_category[0]->name : null;
+
+    $project_type_icon = vrodos_project_type_icon($project_category);
+
+    $obj = new stdClass();
+    $obj->string = $project_category;
+    $obj->icon = $project_type_icon;
+
+    return $obj;
+}
+
 function vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
                                    $project_type, $project_type_icon, $project_post){
 

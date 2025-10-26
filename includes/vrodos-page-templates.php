@@ -285,6 +285,43 @@ function vrodos_fx_admin_notice_notice(){
 
 
 
+// GET page by given type (depending the template) - breacrumb and links for front-end
+function vrodos_getEditpage($type){
+
+    switch ($type) {
+        case 'allgames':
+            $templateURL = '/templates/vrodos-project-manager-template.php';
+            break;
+
+        case 'game':
+        case 'assetslist':
+            $templateURL = '/templates/vrodos-assets-list-template.php';
+            break;
+
+        case 'scene':
+            $templateURL = '/templates/vrodos-edit-3D-scene-template.php';
+            break;
+        case 'asset':
+            $templateURL = '/templates/vrodos-asset-editor-template.php';
+            break;
+
+        default:
+            $templateURL = null;
+
+    }
+
+    if ($templateURL) {
+        return get_pages(array(
+            'hierarchical' => 0,
+            'parent' => -1,
+            'meta_key' => '_wp_page_template',
+            'meta_value' => $templateURL
+        ));
+    } else {
+        return false;
+    }
+}
+
 // Get page by slug
 function vrodos_get_page_by_slug($slug) {
     if ($pages = get_pages())
