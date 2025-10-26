@@ -24,6 +24,10 @@ $project_scope = 2;
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-manager.php');
 new VRodos_Asset_Manager();
 
+// Post Type Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-post-type-manager.php');
+new VRodos_Post_Type_Manager();
+
 
 
 
@@ -92,17 +96,6 @@ add_action( 'init', 'wpb_custom_new_menu' );
 //---------------------- Game Projects -------------------------------------------------
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-games.php');
 
-
-// Order: 7
-add_action('init', 'vrodos_project_cpt_construct', 1);
-
-// Order: 9
-add_action('init', 'vrodos_project_taxtype_create', 2);
-
-// Order : 2
-add_action( 'init', 'vrodos_projects_taxtypes_define', 3 );
-
-
 // 28
 add_action('transition_post_status','vrodos_on_create_project', 9 , 3);
 
@@ -127,15 +120,6 @@ add_action( 'manage_vrodos_game_posts_custom_column' , 'vrodos_set_custom_vrodos
 //---------------------- Scenes ----------------------------------------------------
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-scenes.php');
-
-// Order : 11
-add_action('init', 'vrodos_scenes_construct'); //vrodos_scene 'SCENES'
-
-// Order: 12
-add_action('init', 'vrodos_scenes_parent_project_tax_define'); //vrodos_scene_pgame  'SCENE GAMES'
-
-// Order: 13
-add_action('init', 'vrodos_scenes_taxyaml'); //vrodos_scene_yaml 'SCENE TYPES'
 
 // Create Scene's Game Box @ scene's backend
 // 52
@@ -167,18 +151,6 @@ add_action('save_post', 'vrodos_scenes_metas_save');
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scenes.php' );
-
-// 14
-add_action('init', 'vrodos_assets_construct'); // vrodos_asset3d 'ASSETS 3D'
-
-// 15
-add_action('init', 'vrodos_assets_taxcategory'); // vrodos_asset3d_cat 'ASSET TYPES'
-
-// 16
-add_action('init', 'vrodos_assets_taxpgame'); // vrodos_asset3d_pgame 'ASSET GAMES'
-
-// 17
-add_action('init', 'vrodos_assets_taxcategory_ipr'); // vrodos_asset3d_ipr_cat 'ASSET IPR'
 
 // Register asset metas
 add_action( 'init', 'vrodos_asset3d_metas_description', 1);
