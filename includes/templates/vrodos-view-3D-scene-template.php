@@ -32,21 +32,13 @@ function vrodos_load_vreditor_scripts()
     wp_enqueue_script('vrodos_HierarchyViewer');
 
     // Fixed at 87 (forked of original 87)
-    wp_enqueue_script('vrodos_load87_OBJloader');
-    wp_enqueue_script('vrodos_load87_MTLloader');
-    wp_enqueue_script('vrodos_load87_OrbitControls');
-    wp_enqueue_script('vrodos_load87_TransformControls');
-    wp_enqueue_script('vrodos_load87_PointerLockControls');
+    wp_enqueue_script('vrodos_load141_OBJLoader');
+    wp_enqueue_script('vrodos_load141_MTLLoader');
+    wp_enqueue_script('vrodos_load141_OrbitControls');
+    wp_enqueue_script('vrodos_load141_TransformControls');
+    wp_enqueue_script('vrodos_load141_PointerLockControls');
 
-    wp_enqueue_script('vrodos_load87_scene_importer_utils');
-
-    wp_enqueue_script( 'vrodos_load119_Font');
-    wp_enqueue_script( 'vrodos_load119_Cache');
-    wp_enqueue_script( 'vrodos_load119_Loader');
-    wp_enqueue_script( 'vrodos_load119_FileLoader');
-    wp_enqueue_script( 'vrodos_load119_LoadingManager');
-    wp_enqueue_script( 'vrodos_load119_FontLoader');
-    wp_enqueue_script( 'vrodos_load119_FileLoader');
+    wp_enqueue_script( 'vrodos_load141_FontLoader');
 
     // Style
     wp_enqueue_style('vrodos_3D_viewer');
@@ -283,9 +275,9 @@ if(is_user_logged_in() ) {
         lightsLoader.load(resources3D);
 
         // ================== Text ============
-        const loader = new FontLoader();
+        const loader = new THREE.FontLoader();
         var textGeometry;
-        loader.load( siteurl + '/wp-content/plugins/VRodos/js_libs/threejs87/helvetiker_regular.typeface.json', function ( font ) {
+        loader.load( siteurl + '/wp-content/plugins/VRodos/js_libs/threejs141/fonts/helvetiker_regular.typeface.json', function ( font ) {
 
             textGeometry = new THREE.TextGeometry('Hello!', {
                 font: font,

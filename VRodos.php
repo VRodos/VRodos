@@ -92,6 +92,9 @@ function vrodos_register_scripts() {
 
         array( 'vrodos_load141_RGBELoader', $pluginDirJS.'threejs141/RGBELoader.js'),
 
+        array( 'vrodos_load141_OBJLoader', $pluginDirJS.'threejs141/OBJLoader.js'),
+        array( 'vrodos_load141_MTLLoader', $pluginDirJS.'threejs141/MTLLoader.js'),
+
     );
 
     for ( $i = 0 ; $i < count($scriptsC); $i ++){
