@@ -871,10 +871,6 @@ add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_ass
 //add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' );
 // Add the assepile php
 
-add_action( 'wp_ajax_vrodos_compile_action', 'vrodos_compile_action_callback' );
-
-add_action('wp_ajax_image_upload_action', 'image_upload_action_callback');
-
 
 
 //-------- Remove Gutenberg for Widgets ---------
