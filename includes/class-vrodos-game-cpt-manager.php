@@ -55,7 +55,7 @@ class VRodos_Game_CPT_Manager {
 
         $post_type = get_post_type($post);
 
-        if ($post_type == 'vrodos_game' && $new_status == 'publish') {
+        if ($post_type == 'vrodos_game' && $new_status == 'publish' && $old_status != 'publish') {
             $projectSlug = $post->post_name;
             $projectTitle = empty($post->post_title) ? 'project-' . $projectSlug : $post->post_title;
 
