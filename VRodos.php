@@ -32,6 +32,10 @@ new VRodos_Post_Type_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-game-cpt-manager.php');
 new VRodos_Game_CPT_Manager();
 
+// Scene CPT Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-scene-cpt-manager.php');
+new VRodos_Scene_CPT_Manager();
+
 //----------------------- USER ROLES -------------------------------------------
 
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
@@ -92,35 +96,6 @@ add_action( 'init', 'wpb_custom_new_menu' );
 //	}
 //	return $items;
 //}
-
-//---------------------- Scenes ----------------------------------------------------
-
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-scenes.php');
-
-// Create Scene's Game Box @ scene's backend
-// 52
-add_action('add_meta_boxes','vrodos_scenes_taxgame_box');
-
-//When the post is saved, also saves vrodos_game_cat
-//33
-add_action( 'save_post', 'vrodos_scenes_taxgame_box_content_save' );
-
-//34
-add_action( 'save_post', 'vrodos_scenes_taxyaml_box_content_save' );
-
-// 56
-add_filter( 'manage_vrodos_scene_posts_columns', 'vrodos_set_custom_vrodos_scene_columns' );
-
-// Add the data to the custom columns for the scene post type
-// 57
-add_action( 'manage_vrodos_scene_posts_custom_column' , 'vrodos_set_custom_vrodos_scene_columns_fill', 10, 2 );
-
-// 41
-// Help scene box
-add_action('admin_menu', 'vrodos_scenes_meta_definitions_add');
-// Save metas
-add_action('save_post', 'vrodos_scenes_metas_save');
-
 
 ////===================================== Assets ============================================
 
