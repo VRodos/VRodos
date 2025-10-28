@@ -185,18 +185,6 @@ This phase continued the "Manager Class Migration" by tackling several more key 
 ## 9. Proposed Next Steps: Continue PHP Refactoring
 
 The "Great Manager Class Migration" has been highly effective. The proposed next step is to continue this process until all remaining procedural code in the `includes/` directory has been encapsulated into logical, single-responsibility classes.
-
-### Remaining Procedural Files to Refactor:
--   `vrodos-core-functions.php`
--   `vrodos-core-helper.php`
--   `vrodos-core-project-assemble-handler.php`
--   `vrodos-core-project-assemble-replace.php`
--   `vrodos-core-setget-functions.php`
--   `vrodos-core-upload-functions.php`
--   `vrodos-page-settings.php`
--   `vrodos-widgets.php`
--   `vrodos-compile-aframe.php`
-
 A methodical approach should be taken, analyzing each file (or group of related files) and creating a new, logically-named manager class for its functionality (e.g., `VRodos_Compiler_Manager`, `VRodos_Widget_Manager`, `VRodos_Upload_Manager`, etc.).
 
 ---

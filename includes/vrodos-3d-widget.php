@@ -1,102 +1,19 @@
 <?php
 
-// Load Scripts
-function vrodos_widget_preamp_scripts() {
-
-    // I do not want to load the scripts when I am on the edit 3d scene
-    global $template;
-    if (is_string($template) && basename($template) === "vrodos-edit-3D-scene-template.php") {
-        return;
-    }
-
-    // Stylesheet
-    wp_enqueue_style('vrodos_widgets_stylesheet');
-
-    // Load single asset kernel
-    // Three js : for simple rendering
-    wp_enqueue_script('vrodos_scripts');
-
-    // For fbx binary
-    wp_enqueue_script('vrodos_inflate'); // for binary fbx
-
-    // 1. Three js library
-    wp_enqueue_script('vrodos_load141_threejs');
-    wp_enqueue_script('vrodos_load141_statjs');
-
-    // 2. Obj loader simple; For loading an uploaded obj
-    wp_enqueue_script('vrodos_load141_OBJLoader');
-
-    // 3. Obj loader 2: For preview loading
-
-    // 4. Mtl loader
-    wp_enqueue_script('vrodos_load141_MTLLoader');
-
-    // 6. Fbx loader
-    wp_enqueue_script('vrodos_load141_FBXloader');
-
-    // 7. Trackball controls
-    wp_enqueue_script('vrodos_load141_TrackballControls');
-    wp_enqueue_script('vrodos_load141_OrbitControls');
-
-    // 8. GLTF Loader
-    wp_enqueue_script('vrodos_load141_GLTFLoader');
-    wp_enqueue_script('vrodos_load141_DRACOLoader');
-    wp_enqueue_script('vrodos_load141_DDSLoader');
-    wp_enqueue_script('vrodos_load141_KTXLoader');
-
-    // Load single asset
-    wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
-
-    // Helping scripts
-    wp_enqueue_script('vrodos_scripts');
-
-    $pluginpath = dirname (plugin_dir_url( __DIR__  ));
-
-    // Fetch Asset
-    wp_enqueue_script( 'ajax-script_fetchasset_meta', $pluginpath.'/vrodos/js_libs/ajaxes/fetch_asset.js', array('jquery') );
-
-    wp_localize_script( 'ajax-script_fetchasset_meta', 'my_ajax_object_fetchasset_meta',
-            array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
-    );
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
 }
-
-
-
 
 // Creating the widget
 class vrodos_3d_widget extends WP_Widget {
 
-    protected static $did_script = false;
-
     function __construct() {
-
-
-
         parent::__construct(
-        // Base ID of your widget
                 'vrodos_3d_widget',
-
-                // Widget name will appear in UI
                 __('VRodos 3D Model Widget', 'vrodos_3d_widget_domain'),
-
-                // Widget description
                 array( 'description' => __( 'A widget to place 3D models', 'vrodos_widget_domain' ), )
         );
-
-        //add_action('wp_enqueue_scripts', array($this, 'vrodos_widget_scripts_switch'));
-
-        // Back-end
-        add_action('admin_enqueue_scripts', 'vrodos_widget_preamp_scripts', 10);
-
-
-
-
-        // Enque only if widget is active (dragged in the sidebar in back-end)
-        if ( is_active_widget( false, false, $this->id_base, true ) ) {
-            add_action('wp_enqueue_scripts', 'vrodos_widget_preamp_scripts', 10);
-        }
     }
-
 
     // Widget Backend
     public function form( $instance ) {
@@ -615,6 +532,3 @@ class vrodos_3d_widget extends WP_Widget {
         return $instance;
     }
 }
-
-
-

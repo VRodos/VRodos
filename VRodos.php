@@ -98,24 +98,9 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_setti
 // 22
 add_action( 'init', 'vrodos_create_asset_categories');
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-settings.php' );
-
-
-
-if( is_admin() ){
-
-
-    $vrodos_settings_page = new vrodos_settingsPage();
-
-    //19
-    add_action( 'init', array( $vrodos_settings_page, 'load_settings' ) );
-
-    //29
-    add_action( 'admin_init', array( $vrodos_settings_page, 'register_general_settings' ) );
-
-    // 43
-    //add_action( 'admin_menu', array( $vrodos_settings_page, 'render_setting') );
-}
+// Settings Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-settings-manager.php');
+new VRodos_Settings_Manager();
 
 
 
@@ -330,16 +315,9 @@ add_action( 'init', 'vrodos_3d_register_block' );
 
 
 
-//----------------------- WIDGETS ---------------------------------------------
-
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
-
-// 47
-// Register and load the widget
-function vrodos_load_widget() {
-    register_widget( 'vrodos_3d_widget' );
-}
-add_action( 'widgets_init', 'vrodos_load_widget');
+// Widget Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-widget-manager.php');
+new VRodos_Widget_Manager();
 
 
 //----------------------- WIDGET SCENE ---------------------------------------------
