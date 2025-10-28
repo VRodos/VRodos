@@ -199,7 +199,7 @@ class VRodos_Game_CPT_Manager {
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'projectId' => $post->ID,
                 'slug' => $slug,
-                'sceneId' => get_post_meta($post->ID, 'vrodos-project-main-scene-id', true)
+                'sceneId' => vrodos_get_project_scene_id($post->ID)
             )
         );
 
@@ -333,4 +333,24 @@ class VRodos_Game_CPT_Manager {
         <?php
     }
 
+}
+
+function vrodos_get_project_scene_id($project_id) {
+    $scenes = get_posts(array(
+        'post_type' => 'vrodos_scene',
+        'posts_per_page' => 1,
+        'tax_query' => array(
+            array(
+                'taxonomy' => 'vrodos_scene_pgame',
+                'field' => 'slug',
+                'terms' => get_post($project_id)->post_name,
+            ),
+        ),
+    ));
+
+    if (!empty($scenes)) {
+        return $scenes[0]->ID;
+    }
+
+    return null;
 }
