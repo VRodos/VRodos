@@ -181,7 +181,6 @@ class VRodos_Game_CPT_Manager {
     public function games_databox_add() {
         add_meta_box($this->vrodos_databox3['id'], 'Game Data', array($this, 'games_databox_show'),
             $this->vrodos_databox3['page'], $this->vrodos_databox3['context'], $this->vrodos_databox3['priority']);
-        add_meta_box('vrodos-games-assembler-box', 'Game Assembler', array($this, 'games_assemblerbox_show'), 'vrodos_game', 'side', 'low');
         add_meta_box('vrodos-games-compiler-box', 'Game Compiler', array($this, 'games_compilerbox_show'), 'vrodos_game', 'side', 'low');
     }
 
@@ -274,6 +273,14 @@ class VRodos_Game_CPT_Manager {
     }
 
     public function games_compilerbox_show() {
+
+        global $post;
+		$project_type_terms = wp_get_object_terms($post->ID, 'vrodos_game_type');
+		$project_type_slug = !empty($project_type_terms) ? $project_type_terms[0]->slug : '';
+
+        echo '<input type="hidden" id="platformInput" value="Aframe" />';
+        echo '<input type="hidden" id="project-type" value="'. esc_attr($project_type_slug) .'" />';
+
         echo '<div id="vrodos_compileButton" onclick="vrodos_compileAjax()">Compile</div>';
         echo '<div id="vrodos_compile_report1"></div>';
         echo '<div id="vrodos_compile_report2"></div>';
@@ -282,10 +289,4 @@ class VRodos_Game_CPT_Manager {
         echo '<div id="vrodos_compile_game_stdoutlog_report" style="font-size: x-small"></div>';
     }
 
-    public function games_assemblerbox_show() {
-        echo '<div id="vrodos_assembleButton" onclick="vrodos_assembleAjax()">Assemble</div>';
-        echo '<br /><br />Analytic report of assemble:<br />';
-        echo '<div id="vrodos_assemble_report1"></div>';
-        echo '<div id="vrodos_assemble_report2"></div>';
-    }
 }
