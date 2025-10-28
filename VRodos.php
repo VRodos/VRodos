@@ -40,29 +40,9 @@ new VRodos_Scene_CPT_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-roles-manager.php');
 new VRodos_Roles_Manager();
 
-//------------------ Menu functions ------------------------------------
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-menu-functions.php');
-
-// Front-end
-// Display login/logout at main menu
-//add_filter( 'wp_nav_menu_items','vrodos_loginout_menu_link', 5, 2 );
-
-// Add scene id as option to menu item
-add_action( 'wp_nav_menu_item_custom_fields', 'vrodos_add_scene_id_to_scene_as_menu_item', 100, 2 );
-
-add_action( 'wp_update_nav_menu_item', 'save_menu_item_desc', 10, 2 );
-
-add_filter( 'wp_get_nav_menu_items','nav_items', 11, 3 );
-
-// Back-end Menu
-// Main VRodos menu
-add_action('admin_menu', 'vrodos_plugin_menu');
-add_filter('parent_file', 'vrodos_correct_admin_menu_highlight');
-
-function wpb_custom_new_menu() {
-    register_nav_menu('3d-menu',__( '3D Menu' ));
-}
-add_action( 'init', 'wpb_custom_new_menu' );
+// Menu Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-menu-manager.php');
+new VRodos_Menu_Manager();
 
 
 //add_filter( 'wp_nav_menu_items', 'add_loginout_link', 10, 2 );
