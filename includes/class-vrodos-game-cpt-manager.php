@@ -273,20 +273,51 @@ class VRodos_Game_CPT_Manager {
     }
 
     public function games_compilerbox_show() {
-
         global $post;
-		$project_type_terms = wp_get_object_terms($post->ID, 'vrodos_game_type');
-		$project_type_slug = !empty($project_type_terms) ? $project_type_terms[0]->slug : '';
+        $project_type_terms = wp_get_object_terms($post->ID, 'vrodos_game_type');
+        $project_type_slug = !empty($project_type_terms) ? $project_type_terms[0]->slug : '';
+        ?>
 
-        echo '<input type="hidden" id="platformInput" value="Aframe" />';
-        echo '<input type="hidden" id="project-type" value="'. esc_attr($project_type_slug) .'" />';
+        <input id="platformInput" type="hidden" value="Aframe">
+        <input id="project-type" type="hidden" value="<?php echo esc_attr($project_type_slug); ?>">
 
-        echo '<div id="vrodos_compileButton" onclick="vrodos_compileAjax()">Compile</div>';
-        echo '<div id="vrodos_compile_report1"></div>';
-        echo '<div id="vrodos_compile_report2"></div>';
-        echo '<div id="vrodos_zipgame_report"></div>';
-        echo '<br /><br />Analytic report of compile:<br />';
-        echo '<div id="vrodos_compile_game_stdoutlog_report" style="font-size: x-small"></div>';
+        <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background">
+            <i title="Instructions" class="material-icons AlignIconToBottom">help</i>
+            Click on "Compile" in order to construct the virtual world.
+        </div>
+
+        <h2 id="compileProgressTitle" style="display: none" class="CenterContents mdc-typography--headline"></h2>
+
+        <div class="progressSlider" id="compileProgressDeterminate" style="display: none;">
+            <div class="progressSliderLine"></div>
+            <div class="progressSliderSubLineDeterminate" id="progressSliderSubLineDeterminateValue"></div>
+        </div>
+
+        <div class="progressSlider" id="compileProgressSlider" style="display: none;">
+            <div class="progressSliderLine"></div>
+            <div class="progressSliderSubLine progressIncrease"></div>
+            <div class="progressSliderSubLine progressDecrease"></div>
+        </div>
+
+        <div id="compilationProgressText" class="mdc-typography--title"></div>
+        <hr class="WhiteSpaceSeparator" style="margin-top: 0;" tabIndex="0">
+        <a id="vrodos_compileButton" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" onclick="vrodos_compileAjax()">Compile</a>
+        <hr class="separator" >
+        <div id="previewApp" class="previewApp" style="display:inline-block"></div>
+        <div id="appResultDiv" style="margin-top:20px;display:none">
+            <a class="mdc-typography--title" href="" id="vrodos-weblink" style="margin-left:30px" target="_blank">Web link</a>
+            <button title="Copy link to clipboard" id="buttonCopyWebLink" style="background: transparent; border: none; color: darkslateblue" >
+                <i class="material-icons" style="cursor: pointer; float: right;">content_copy</i>
+            </button>
+            <a id="openWebLinkhref" href="#" title="Open index.html in new window" target="_blank" style="color:darkslateblue" onclick="jQuery('#compileCancelBtn')[0].click();">Open experience link</a>
+        </div>
+        <a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" style="display:none;">Close</a>
+        <div id="vrodos_compile_report1"></div>
+        <div id="vrodos_compile_report2"></div>
+        <div id="vrodos_zipgame_report"></div>
+        <br /><br />Analytic report of compile:<br />
+        <div id="vrodos_compile_game_stdoutlog_report" style="font-size: x-small"></div>
+        <?php
     }
 
 }
