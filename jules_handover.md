@@ -143,7 +143,7 @@ The established pattern involves:
 3.  Registering all the necessary WordPress hooks (`add_action`, `add_filter`) within the class's `__construct()` method, pointing them to the class's own methods.
 4.  Replacing all the old procedural code in `VRodos.php` and other files with a single `require_once` for the new class file and its instantiation (`new VRodos_AJAX_Handler();`).
 
-### Summary of Changes:
+### Summary of Changes (Phase 1):
 
 1.  **AJAX Logic Centralized:**
     - All AJAX-related functions, previously scattered and with some in a deprecated `vrodos-ajax-hooks.php` file, were moved into the `VRodos_AJAX_Handler` class.
@@ -157,12 +157,49 @@ The established pattern involves:
     - All `register_post_type` and `register_taxonomy` calls, which were previously located in `includes/vrodos-types-*.php` files, were moved into the new `VRodos_Post_Type_Manager` class.
     - This ensures that the core data models of the plugin are defined in a single, logical place.
 
-4.  **Code Cleanup and Bug Fixes:**
-    - The main `VRodos.php` file is now dramatically cleaner and serves primarily as a central loader for these new manager classes.
+### Summary of Changes (Phase 2):
+This phase continued the "Manager Class Migration" by tackling several more key areas of procedural code.
 
+1.  **User Roles and Capabilities Centralized:**
+    - All logic from `vrodos-users-roles.php` was moved into a new `VRodos_Roles_Manager` class.
+    - This class now handles adding custom capabilities to roles and managing custom user profile fields.
 
-## 9. Proposed Next Steps: PHP Refactoring next phase
-Next step is to continue the PHP Refactoring
+2.  **Menu Management Centralized:**
+    - All frontend and backend menu functions from `vrodos-menu-functions.php` were encapsulated within a new `VRodos_Menu_Manager` class.
+    - This class manages the main "VRodos" admin menu, submenu items, and custom fields for menu items.
+
+3.  **Asset CPT Behavior Centralized:**
+    - Logic for the `vrodos_asset3d` Custom Post Type, previously split across `vrodos-types-assets.php` and `vrodos-types-assets-data.php`, was consolidated into a new `VRodos_Asset_CPT_Manager` class.
+    - This follows the established pattern of having a dedicated manager for each CPT's behavior (meta boxes, save hooks, admin columns), separate from its registration.
+
+4.  **Installation and Uninstallation Logic Centralized:**
+    - All plugin lifecycle functions (database table creation, page creation on activation, and database cleanup on uninstall) were moved into a new `VRodos_Install_Manager` class.
+    - This provides a single, clear location for all setup and teardown logic.
+
+5.  **Code Cleanup:**
+    - In each case, the main `VRodos.php` file was cleaned up by removing the old procedural includes and hook registrations, which are now handled by the constructors of the new manager classes.
+    - All of the old, now-redundant procedural files were deleted from the codebase, significantly reducing clutter and the risk of confusion.
+
+---
+
+## 9. Proposed Next Steps: Continue PHP Refactoring
+
+The "Great Manager Class Migration" has been highly effective. The proposed next step is to continue this process until all remaining procedural code in the `includes/` directory has been encapsulated into logical, single-responsibility classes.
+
+### Remaining Procedural Files to Refactor:
+-   `vrodos-core-functions.php`
+-   `vrodos-core-helper.php`
+-   `vrodos-core-project-assemble-handler.php`
+-   `vrodos-core-project-assemble-replace.php`
+-   `vrodos-core-setget-functions.php`
+-   `vrodos-core-upload-functions.php`
+-   `vrodos-page-settings.php`
+-   `vrodos-widgets.php`
+-   `vrodos-compile-aframe.php`
+
+A methodical approach should be taken, analyzing each file (or group of related files) and creating a new, logically-named manager class for its functionality (e.g., `VRodos_Compiler_Manager`, `VRodos_Widget_Manager`, `VRodos_Upload_Manager`, etc.).
+
+---
 
 ## 10. Proposed Next Steps: Finalize Three.js Consolidation (r141 to r147)
 
@@ -174,5 +211,3 @@ With all legacy libraries removed, the final step is to consolidate the project 
     2.  **Update Script Handles:** Rename all `vrodos_load141_` script handles in `VRodos.php` to `vrodos_load147_` for consistency.
     3.  **Rename Directory:** Rename the `js_libs/threejs141` directory to `js_libs/threejs147`.
     4.  **Test and Verify:** Thoroughly test the 3D editor to ensure that all functionality remains intact after the upgrade.
-
----
