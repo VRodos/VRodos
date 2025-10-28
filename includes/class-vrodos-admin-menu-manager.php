@@ -37,11 +37,12 @@ class VRodos_Admin_Menu_Manager {
                 'vrodos_asset3d_ipr_cat'
             );
             if (in_array($taxnow, $taxonomies)) {
+                $post_type = sanitize_text_field($_GET['post_type']);
                 echo '<script>
                     jQuery(document).ready(function($) {
                         $("#toplevel_page_vrodos-plugin").addClass("wp-has-current-submenu wp-menu-open").removeClass("wp-not-current-submenu");
                         $("#toplevel_page_vrodos-plugin > a").addClass("wp-has-current-submenu wp-menu-open").removeClass("wp-not-current-submenu");
-                        $("a[href=\'edit-tags.php?taxonomy=' . $taxnow . '&post_type=' . $typenow . '\']").parent().addClass("current");
+                        $("a[href=\'edit-tags.php?taxonomy=' . $taxnow . '&post_type=' . $post_type . '\']").parent().addClass("current");
                     });
                 </script>';
             }
