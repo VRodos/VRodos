@@ -193,7 +193,6 @@ The "Great Manager Class Migration" has been highly effective. The proposed next
 -   `vrodos-core-project-assemble-replace.php`
 -   `vrodos-core-setget-functions.php`
 -   `vrodos-core-upload-functions.php`
--   `vrodos-page-settings.php`
 -   `vrodos-compile-aframe.php`
 
 A methodical approach should be taken, analyzing each file (or group of related files) and creating a new, logically-named manager class for its functionality (e.g., `VRodos_Compiler_Manager`, `VRodos_Widget_Manager`, `VRodos_Upload_Manager`, etc.).

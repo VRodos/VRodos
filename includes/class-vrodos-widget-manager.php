@@ -15,9 +15,9 @@ class vrodos_3d_widget extends WP_Widget {
 		);
 
 		if ( is_active_widget( false, false, $this->id_base, true ) ) {
-            add_action('wp_enqueue_scripts', array(VRodos_Widget_Manager::class, 'vrodos_widget_preamp_scripts'));
+            add_action('wp_enqueue_scripts', array(VRodos_Widget_Manager::class, 'vrodos_widget_preamp_scripts'), 10);
 		}
-		add_action('admin_enqueue_scripts', array(VRodos_Widget_Manager::class, 'vrodos_widget_preamp_scripts'));
+		add_action('admin_enqueue_scripts', array(VRodos_Widget_Manager::class, 'vrodos_widget_preamp_scripts'), 10);
 	}
 
     // Widget Backend

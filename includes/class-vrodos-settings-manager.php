@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class vrodos_settingsPage {
 
     /*
@@ -267,5 +271,14 @@ class vrodos_settingsPage {
     }
 };
 
+class VRodos_Settings_Manager {
 
-?>
+	public function __construct() {
+		if( is_admin() ){
+			$vrodos_settings_page = new vrodos_settingsPage();
+			add_action( 'init', array( $vrodos_settings_page, 'load_settings' ) );
+			add_action( 'admin_init', array( $vrodos_settings_page, 'register_general_settings' ) );
+			//add_action( 'admin_menu', array( $vrodos_settings_page, 'render_setting') );
+		}
+	}
+}
