@@ -330,16 +330,9 @@ add_action( 'init', 'vrodos_3d_register_block' );
 
 
 
-//----------------------- WIDGETS ---------------------------------------------
-
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widgets.php');
-
-// 47
-// Register and load the widget
-function vrodos_load_widget() {
-    register_widget( 'vrodos_3d_widget' );
-}
-add_action( 'widgets_init', 'vrodos_load_widget');
+// Widget Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-widget-manager.php');
+new VRodos_Widget_Manager();
 
 
 //----------------------- WIDGET SCENE ---------------------------------------------
