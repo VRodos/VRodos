@@ -156,21 +156,23 @@ function vrodos_plugin_menu(){
 
 }
 
-function keep_taxonomy_menu_open($parent_file) {
-	global $current_screen;
-	$taxonomy = $current_screen->taxonomy;
+function vrodos_correct_admin_menu_highlight($parent_file) {
+    global $pagenow, $current_screen, $submenu_file;
 
-    switch ($taxonomy) {
-        case 'vrodos_scene_yaml':
-        case 'vrodos_scene_pgame':
-        case 'vrodos_game_type':
-        case 'vrodos_asset3d_cat':
-        case 'vrodos_asset3d_pgame':
-        case 'vrodos_asset3d_ipr_cat':
-        $parent_file = 'vrodos-plugin';
-            break;
+    $vrodos_post_types = ['vrodos_game', 'vrodos_scene', 'vrodos_asset3d'];
 
+    if (in_array($current_screen->post_type, $vrodos_post_types)) {
+        $parent_file = 'vrodos-plugin'; // Set the main menu slug
+
+        if ($pagenow === 'post.php' || $pagenow === 'post-new.php') {
+            $submenu_file = 'edit.php?post_type=' . $current_screen->post_type;
+        }
+
+        if ($pagenow === 'edit-tags.php') {
+            $submenu_file = 'edit-tags.php?taxonomy=' . $current_screen->taxonomy . '&post_type=' . $current_screen->post_type;
+        }
     }
-	return $parent_file;
+
+    return $parent_file;
 }
 
