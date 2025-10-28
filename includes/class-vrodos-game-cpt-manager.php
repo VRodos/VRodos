@@ -190,6 +190,19 @@ class VRodos_Game_CPT_Manager {
 
         wp_enqueue_script('vrodos_request_compile');
         $slug = $post->post_name;
+
+        $isAdmin = is_admin() ? 'back' : 'front';
+        echo '<script>let isAdmin="'.$isAdmin.'";</script>';
+
+        wp_localize_script('vrodos_request_compile', 'my_ajax_object_compile',
+            array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'projectId' => $post->ID,
+                'slug' => $slug,
+                'sceneId' => get_post_meta($post->ID, 'vrodos-project-main-scene-id', true)
+            )
+        );
+
         wp_localize_script('vrodos_request_compile', 'phpvarsA',
             array('pluginsUrl' => plugins_url(),
                 'PHP_OS' => PHP_OS,
