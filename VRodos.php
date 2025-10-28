@@ -9,6 +9,9 @@
  * Version: 2.2
  */
 
+if ( ! defined( 'VRODOS_PLUGIN_FILE' ) ) {
+    define( 'VRODOS_PLUGIN_FILE', __FILE__ );
+}
 
 // Only these variables can change with php
 // @ini_set( 'memory_limit', '512M');
@@ -36,53 +39,21 @@ new VRodos_Game_CPT_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-scene-cpt-manager.php');
 new VRodos_Scene_CPT_Manager();
 
-//----------------------- USER ROLES -------------------------------------------
+// Roles Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-roles-manager.php');
+new VRodos_Roles_Manager();
 
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
+// Menu Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-menu-manager.php');
+new VRodos_Menu_Manager();
 
-// Order : 4 (Right now only admin get full access) - Rework this to allow users of a custom role to access backend
-// add_action( 'init', 'vrodos_add_customroles');
+// Asset CPT Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-cpt-manager.php');
+new VRodos_Asset_CPT_Manager();
 
-// Order: 5  -> Add extra field (meta for user actually) to view in backend named as 'mvnode_token' & mvnode_url
-add_action( 'show_user_profile', 'extra_user_profile_field_mvnode_token' );
-add_action( 'edit_user_profile', 'extra_user_profile_field_mvnode_token' );
-
-add_action( 'show_user_profile', 'extra_user_profile_field_mvnode_url' );
-add_action( 'edit_user_profile', 'extra_user_profile_field_mvnode_url' );
-
-// Order: 5.5  -> Save mvnode_token & mvnode_url for user in backend
-add_action( 'personal_options_update', 'save_extra_user_profile_field_mvnode_token' );
-add_action( 'edit_user_profile_update', 'save_extra_user_profile_field_mvnode_token' );
-
-add_action( 'personal_options_update', 'save_extra_user_profile_field_mvnode_url' );
-add_action( 'edit_user_profile_update', 'save_extra_user_profile_field_mvnode_url' );
-
-// Order: 6
-add_action( 'init', 'vrodos_add_capabilities_to_admin');
-
-//------------------ Menu functions ------------------------------------
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-menu-functions.php');
-
-// Front-end
-// Display login/logout at main menu
-//add_filter( 'wp_nav_menu_items','vrodos_loginout_menu_link', 5, 2 );
-
-// Add scene id as option to menu item
-add_action( 'wp_nav_menu_item_custom_fields', 'vrodos_add_scene_id_to_scene_as_menu_item', 100, 2 );
-
-add_action( 'wp_update_nav_menu_item', 'save_menu_item_desc', 10, 2 );
-
-add_filter( 'wp_get_nav_menu_items','nav_items', 11, 3 );
-
-// Back-end Menu
-// Main VRodos menu
-add_action('admin_menu', 'vrodos_plugin_menu');
-add_filter('parent_file', 'vrodos_correct_admin_menu_highlight');
-
-function wpb_custom_new_menu() {
-    register_nav_menu('3d-menu',__( '3D Menu' ));
-}
-add_action( 'init', 'wpb_custom_new_menu' );
+// Install Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-install-manager.php');
+new VRodos_Install_Manager();
 
 
 //add_filter( 'wp_nav_menu_items', 'add_loginout_link', 10, 2 );
@@ -98,55 +69,7 @@ add_action( 'init', 'wpb_custom_new_menu' );
 
 ////===================================== Assets ============================================
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
-
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scenes.php' );
-
-// Register asset metas
-add_action( 'init', 'vrodos_asset3d_metas_description', 1);
-
-// 35
-add_action('save_post','vrodos_create_pathdata_asset',10,3);
-
-// 18
-add_action('init','vrodos_allowAuthorEditing');
-
-// 58
-add_filter( 'wp_dropdown_users_args', 'change_user_dropdown', 10, 2 );
-
-// 36
-add_action( 'save_post', 'vrodos_asset_tax_category_box_content_save');
-
-// 37
-add_action( 'save_post', 'vrodos_assets_taxcategory_ipr_box_content_save' );
-
-// 38
-add_action( 'save_post', 'vrodos_asset_project_box_content_save');
-
-
-// Create Asset Taxonomy Boxes (Category & Scene) @ asset's backend
-// 53
-add_action('add_meta_boxes','vrodos_assets_taxcategory_box');
-
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets-data.php' );
-
-// Save data from infobox
-// 39
-add_action('save_post', 'vrodos_assets_databox_save');
-
-// 42
-add_action('admin_menu', 'vrodos_assets_databox_add');
-
-// 48
-//add_action('wp_enqueue_scripts', 'vrodos_assets_scripts_and_styles' );
-
-//
-//// 61
-add_filter( 'manage_vrodos_asset3d_posts_columns', 'vrodos_set_custom_vrodos_asset3d_columns' );
-//
-//// Add the data to the custom columns for the book post type:
-//// 62
-add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'vrodos_set_custom_vrodos_asset3d_columns_fill', 10, 2 );
 
 
 
@@ -205,25 +128,6 @@ add_action( 'plugins_loaded', array( 'vrodosTemplate', 'get_instance' ) );
 // Order 1: Filters inside vrodos-page-templates
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
 
-
-// ---------  Create dedicated pages on plugin activation -------------------------
-// 68
-
-// 1. Project Manager
-// 2. Assets List Page
-// 3. 3D Editor
-// 4. Asset Editor
-register_activation_hook(__FILE__,'vrodos_create_pages');
-
-// Add Project Manager and Assets List pages to menu automatically;
-// Some messages also
-//register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
-
-// -------------  Games versions table -------------------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-db-table-creations.php' );
-
-// 69
-register_activation_hook( __FILE__, 'vrodos_db_create_games_versions_table' );
 
 // ------------------- Add helper functions file ------------------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
@@ -669,54 +573,6 @@ function ns_limit_revisions($num, $post){
     return $is_target_type ? $N : $num;
 }
 add_filter('wp_revisions_to_keep', 'ns_limit_revisions', 10, 2);
-
-
-//-------- Uninstall -------------------
-register_uninstall_hook(__FILE__, 'vrodos_remove_db_residues');
-
-
-function vrodos_remove_db_residues(){
-
-    global $wpdb;
-    $del_prefix = $wpdb->prefix;
-
-    // 1. Options
-    delete_option('vrodos_scene_yaml_children');
-    delete_option('vrodos_game_type_children');
-    delete_option('widget_vrodos_3d_widget');
-    delete_option('vrodos_db_version');
-
-    // 2. Postmeta
-    $wpdb->query("DELETE FROM ".$del_prefix."postmeta WHERE meta_value LIKE '%vrodos%'");
-
-    // 2. Posts
-    $wpdb->query("DELETE FROM ".$del_prefix."posts WHERE post_name LIKE '%vrodos%' OR post_name LIKE '%joker%'");
-
-    // 3. Termmeta
-    $wpdb->query("DELETE FROM ".$del_prefix."termmeta WHERE meta_key LIKE '%vrodos%'");
-
-    // 4. Term
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%-yaml%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%-joker%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%_games%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%pois_%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%decoration%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%door%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%video%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%chat%'");
-
-    // 5. Term relationships
-    // +++
-
-    // 6. Term taxonomy
-    $wpdb->query("DELETE FROM ".$del_prefix."term_taxonomy WHERE taxonomy LIKE '%vrodos%'");
-
-
-    // 7. wp__games_versions table
-    $wpdb->query("DROP TABLE ".$del_prefix."_games_versions");
-}
-
-
 
 
 // Main backend info page
