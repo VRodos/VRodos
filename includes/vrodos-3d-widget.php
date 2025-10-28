@@ -1,13 +1,19 @@
 <?php
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+    exit;
 }
 
 // Creating the widget
 class vrodos_3d_widget extends WP_Widget {
 
-    // Note: The constructor has been removed. All hooks are now handled by VRodos_Widget_Manager.
+    function __construct() {
+        parent::__construct(
+                'vrodos_3d_widget',
+                __('VRodos 3D Model Widget', 'vrodos_3d_widget_domain'),
+                array( 'description' => __( 'A widget to place 3D models', 'vrodos_widget_domain' ), )
+        );
+    }
 
     // Widget Backend
     public function form( $instance ) {
