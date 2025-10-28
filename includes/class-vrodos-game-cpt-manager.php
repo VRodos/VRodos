@@ -42,8 +42,72 @@ class VRodos_Game_CPT_Manager {
         add_action('manage_vrodos_game_posts_custom_column', array($this, 'set_custom_vrodos_game_columns_fill'), 10, 2);
         add_action('add_meta_boxes', array($this, 'games_databox_add'));
         add_action('save_post', array($this, 'games_databox_save'));
+
+        // Set to the lowest priority in order to have game taxes available when joker games are created
+        add_action( 'init', array($this, 'vrodos_create_joker_projects'), 100, 2 );
     }
 
+    public function vrodos_create_joker_projects() {
+
+        $userID = get_current_user_id();
+
+        if (!VRodos_Core_Manager::vrodos_the_slug_exists('archaeology-joker')) {
+
+            $tax_slug = 'archaeology_games';
+            $post_title = 'Archaeology Joker';
+            $post_name = 'archaeology-joker';
+
+            $this->create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
+        }
+
+        if (!VRodos_Core_Manager::vrodos_the_slug_exists('vrexpo-joker')) {
+
+            $tax_slug = 'vrexpo_games';
+            $post_title = 'VRExpo Joker';
+            $post_name = 'vrexpo-joker';
+
+            $this->create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
+        }
+
+        if (!VRodos_Core_Manager::vrodos_the_slug_exists('virtualproduction-joker')) {
+
+            $tax_slug = 'virtualproduction_games';
+            $post_title = 'Virtual Production Joker';
+            $post_name = 'virtualproduction-joker';
+
+            $this->create_post_project_joker($tax_slug, $post_title, $post_name, $userID);
+        }
+    }
+
+    public function create_post_project_joker($tax_slug, $post_title, $post_name, $userID){
+
+        $tax = get_term_by('slug', $tax_slug, 'vrodos_game_type');
+        $tax_id = $tax->term_id;
+        $project_taxonomies_arch = array(
+            'vrodos_game_type' => array(
+                $tax_id,
+            )
+        );
+
+        $project_information_arch = array(
+            'post_title' => $post_title,
+            'post_name' => $post_name,
+            'post_content' => '',
+            'post_type' => 'vrodos_game',
+            'post_status' => 'publish',
+            'tax_input' => $project_taxonomies_arch,
+            'post_author'   => $userID,
+        );
+
+        $post_id = wp_insert_post($project_information_arch);
+        $post = get_post($post_id);
+
+        wp_insert_term($post->post_title,'vrodos_asset3d_pgame',array(
+                'description'=> '-',
+                'slug' => $post->post_name,
+            )
+        );
+    }
 
     // Generate Taxonomy (for scenes & assets) with Project's slug/name
     // Create Default Scenes for this "Project"

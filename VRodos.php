@@ -55,6 +55,10 @@ new VRodos_Asset_CPT_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-install-manager.php');
 new VRodos_Install_Manager();
 
+// Core Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-core-manager.php');
+new VRodos_Core_Manager();
+
 
 //add_filter( 'wp_nav_menu_items', 'add_loginout_link', 10, 2 );
 //function add_loginout_link( $items, $args ) {
@@ -82,14 +86,6 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-upload-functio
 add_filter( 'upload_dir', 'vrodos_upload_dir_forScenesOrAssets' );
 add_filter( 'intermediate_image_sizes', 'vrodos_disable_imgthumbs_assets', 999 );
 add_filter( 'sanitize_file_name', 'vrodos_overwrite_uploads', 10, 1 );
-
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php' );
-
-// Set to the lowest priority in order to have game taxes available when joker games are created
-add_action( 'init', 'vrodos_create_joker_projects', 100, 2 );
-
-// Remove Admin bar for non admins
-// add_action('after_setup_theme', 'vrodos_remove_admin_bar');
 
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
 

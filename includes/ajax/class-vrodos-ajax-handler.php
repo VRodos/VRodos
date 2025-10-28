@@ -20,6 +20,162 @@ class VRodos_AJAX_Handler {
         add_action('wp_ajax_vrodos_fetch_assetmeta_action', array($this, 'fetch_asset3d_meta_backend_callback'));
         add_action('wp_ajax_vrodos_compile_action', array($this, 'compile_action_callback'));
         add_action('wp_ajax_image_upload_action', array($this, 'image_upload_action_callback'));
+
+        // Peer conferencing
+        add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', array($this, 'vrodos_notify_confpeers_callback'));
+        add_action( 'wp_ajax_vrodos_notify_confpeers_action', array($this, 'vrodos_notify_confpeers_callback'));
+        add_action( 'wp_ajax_vrodos_update_expert_log_action', array($this, 'vrodos_update_expert_log_callback'));
+
+        // AJAXES for semantics
+        add_action( 'wp_ajax_vrodos_segment_obj_action', array($this, 'vrodos_segment_obj_action_callback') );
+    }
+
+    //=============================== SEMANTICS ON 3D ============================================================
+
+    // ---- AJAX SEMANTICS 1: run segmentation ----------
+    public function vrodos_segment_obj_action_callback() {
+
+        $DS = DIRECTORY_SEPARATOR;
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+
+            $curr_folder = wp_upload_dir()['basedir'].$DS.$_POST['path'];
+            $curr_folder = str_replace('/','\\',$curr_folder); // full path
+
+            $batfile = wp_upload_dir()['basedir'].$DS.$_POST['path']."segment.bat";
+
+
+            $batfile = str_replace('/','\\',$batfile); // full path
+
+            $fnameobj = basename($_POST['obj']);
+
+            $fnameobj = $curr_folder.$fnameobj;
+
+            // 1 : Generate bat
+            $myfile = fopen($batfile, "w") or die("Unable to open file!");
+
+            $outputpath = wp_upload_dir()['basedir'].$DS.$_POST['path'];
+            $outputpath = str_replace('/','\\',$outputpath); // full path
+
+            $exefile = untrailingslashit(plugin_dir_path(__FILE__)).'\..\semantics\segment3D\pclTesting.exe';
+            $exefile = str_replace("/", "\\", $exefile);
+
+            $iter = $_POST['iter'];
+            $minDist = $_POST['minDist'];
+            $maxDist = $_POST['maxDist'];
+            $minPoints = $_POST['minPoints'];
+            $maxPoints = $_POST['maxPoints'];
+            //$exefile.' '.$fnameobj.' '.$iter.' 0.01 0.2 100 25000 1 '.$outputpath.PHP_EOL.
+
+            $txt = '@echo off'.PHP_EOL.
+                $exefile.' '.$fnameobj.' '.$iter.' '.$minDist.' '.$maxDist.' '.$minPoints.' '.$maxPoints.' 1 '.$outputpath.PHP_EOL.
+                'del "*.pcd"'.PHP_EOL.
+                'del "barycenters.txt"';
+
+            fwrite($myfile, $txt);
+            fclose($myfile);
+
+            shell_exec('del "'.$outputpath.'log.txt"');
+            shell_exec('del "'.$outputpath.'cloud_cluster*.obj"');
+            shell_exec('del "'.$outputpath.'cloud_plane*.obj"');
+
+            // 2: run bat
+            $output = shell_exec($batfile);
+            echo $output;
+
+        } else { // LINUX SERVER // TODO
+
+    //        $game_dirpath = realpath(dirname(__FILE__).'/..').$DS.'test_compiler'.$DS.'game_linux'; //$_GET['game_dirpath'];
+    //
+    //        // 1 : Generate sh
+    //        $myfile = fopen($game_dirpath.$DS."starter_artificial.sh", "w") or print("Unable to open file!");
+    //        $txt = "#/bin/bash"."\n".
+    //            "projectPath=`pwd`"."\n".
+    //            "xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24:32' /opt/Unity/Editor/Unity -batchmode -nographics -logfile stdout.log -force-opengl -quit -projectPath ${projectPath} -buildWindowsPlayer 'builds/myg3.exe'";
+    //        fwrite($myfile, $txt);
+    //        fclose($myfile);
+    //
+    //        // 2: run sh (nohup     '/dev ...' ensures that it is asynchronous called)
+    //        $output = shell_exec('nohup sh starter_artificial.sh'.'> /dev/null 2>/dev/null &');
+        }
+
+        wp_die();
+    }
+
+    //======================= CONTENT INTERLINKING =========================================================================
+
+
+    public function vrodos_notify_confpeers_callback(){
+
+        $ff = fopen("confroom_log.txt","a");
+
+        fwrite($ff,chr(10));
+
+        date_default_timezone_set("Europe/Sofia");
+
+        $strDate = "<tr><td> +1 user</td><td>".$_POST['confroom']."</td><td>".date('d-m-y')."</td><td>".date('h:i:s')."</td></tr>:::".time().":::".$_POST['confroom'];
+        fwrite($ff, $strDate);
+        fclose($ff);
+
+    //    if (document.getElementById("ConfRoomReport"))
+    //        document.getElementById("ConfRoomReport").innerHTML = "1 user in room:".$_POST['confroom'];
+
+        echo $strDate;
+
+
+        wp_die();
+    }
+
+    // Read log content from conferences
+    public function vrodos_update_expert_log_callback()
+    {
+        // reset
+        //unlink("wp-admin/confroom_log.txt");
+        if (!file_exists("confroom_log.txt"))
+            return;
+
+        $file = file("confroom_log.txt");
+
+        $file = str_replace("\n", " ", $file);
+        $file = array_reverse($file);
+
+        $content = '';
+
+        $alerting = [];
+        $rooming = [];
+
+        //    $ff = fopen("output_rooming.txt","w");
+        //    fwrite($ff, chr(10));
+
+        $index_max_recs=0;
+        foreach ($file as $f) {
+
+            if ($index_max_recs < 12) {
+
+                $f = str_replace("\n", " ", $f);
+
+                list($f, $timestamp, $room) = explode(":::", $f);
+
+                //            fwrite($ff, time() . " " . $timestamp . " " . (time() - $timestamp));
+                //            fwrite($ff, chr(10));
+
+
+                if (time() - $timestamp < 20) {
+                    $alerting[] = $timestamp;
+                    $rooming[] = $room;
+                }
+
+                $content = $content . $f;
+
+                $index_max_recs += 1;
+            }
+        }
+        //    fclose($ff);
+
+        $total_content = json_encode([$content, $alerting, $rooming]);
+
+        echo $total_content;
+
+        wp_die();
     }
 
     /**
