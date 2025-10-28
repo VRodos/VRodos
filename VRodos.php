@@ -77,8 +77,7 @@ add_filter( 'wp_get_nav_menu_items','nav_items', 11, 3 );
 // Back-end Menu
 // Main VRodos menu
 add_action('admin_menu', 'vrodos_plugin_menu');
-
-add_action('parent_file', 'keep_taxonomy_menu_open');
+add_filter('parent_file', 'vrodos_correct_admin_menu_highlight');
 
 function wpb_custom_new_menu() {
     register_nav_menu('3d-menu',__( '3D Menu' ));

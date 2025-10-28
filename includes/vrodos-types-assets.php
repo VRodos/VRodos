@@ -70,7 +70,8 @@ function vrodos_assets_tax_select_project_box_content($post){
 
         <?php
         // Use nonce for verification
-        wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_pgame_noncename' );
+        $nonce_field = wp_nonce_field(plugin_basename(__FILE__), 'vrodos_asset3d_pgame_noncename', true, false);
+        echo str_replace(' id="_ajax_nonce"', '', $nonce_field);
         $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_pgame', array('fields' => 'ids') );
 
         $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
@@ -135,7 +136,8 @@ function vrodos_assets_tax_select_category_box_content($post){
 
         <?php
         // Use nonce for verification
-        wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_cat_noncename' );
+        $nonce_field = wp_nonce_field(plugin_basename(__FILE__), 'vrodos_asset3d_cat_noncename', true, false);
+        echo str_replace(' id="_ajax_nonce"', '', $nonce_field);
         $type_IDs = wp_get_object_terms( $post->ID, 'vrodos_asset3d_cat', array('fields' => 'ids') );
 
         $type_ID = $type_IDs ? $type_IDs[0] : 0 ;
@@ -177,7 +179,8 @@ function vrodos_assets_tax_select_iprcategory_box_content($post){
 
         <?php
         // Use nonce for verification
-        wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_asset3d_ipr_cat_noncename' );
+        $nonce_field = wp_nonce_field(plugin_basename(__FILE__), 'vrodos_asset3d_ipr_cat_noncename', true, false);
+        echo str_replace(' id="_ajax_nonce"', '', $nonce_field);
         $type_ids = wp_get_object_terms( $post->ID, 'vrodos_asset3d_ipr_cat', array('fields' => 'ids') );
         $selected_type = empty($type_ids) ? '' : $type_ids[0];
 
