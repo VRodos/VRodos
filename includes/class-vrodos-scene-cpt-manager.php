@@ -61,7 +61,7 @@ class VRodos_Scene_CPT_Manager {
                 'taxonomy' => 'vrodos_scene_pgame',
                 'echo' => 0,
                 'option_none_value' => '-1',
-                'id' => 'vrodos-select-category-dropdown'
+                'id' => 'vrodos-select-pgame-dropdown'
             );
             $select = wp_dropdown_categories($args);
             $replace = "<select$1 required>";
@@ -94,7 +94,7 @@ class VRodos_Scene_CPT_Manager {
                 'taxonomy' => 'vrodos_scene_yaml',
                 'echo' => 0,
                 'option_none_value' => '-1',
-                'id' => 'vrodos-select-category-dropdown'
+                'id' => 'vrodos-select-yaml-dropdown'
             );
             $select = wp_dropdown_categories($args);
             $replace = "<select$1 required>";
