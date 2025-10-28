@@ -42,7 +42,7 @@ class VRodos_Admin_Menu_Manager {
                     jQuery(document).ready(function($) {
                         $("#toplevel_page_vrodos-plugin").addClass("wp-has-current-submenu wp-menu-open").removeClass("wp-not-current-submenu");
                         $("#toplevel_page_vrodos-plugin > a").addClass("wp-has-current-submenu wp-menu-open").removeClass("wp-not-current-submenu");
-                        $("a[href=\'edit-tags.php?taxonomy=' . $taxnow . '&post_type=' . $post_type . '\']").parent().addClass("current");
+                        $("a[href*=\'edit-tags.php?taxonomy=' . $taxnow . '\'][href*=\'post_type=' . $post_type . '\']").parent().addClass("current");
                     });
                 </script>';
             }
