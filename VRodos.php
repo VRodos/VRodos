@@ -36,6 +36,10 @@ new VRodos_Game_CPT_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-scene-cpt-manager.php');
 new VRodos_Scene_CPT_Manager();
 
+// Admin Menu Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-admin-menu-manager.php');
+new VRodos_Admin_Menu_Manager();
+
 //----------------------- USER ROLES -------------------------------------------
 
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
@@ -77,8 +81,6 @@ add_filter( 'wp_get_nav_menu_items','nav_items', 11, 3 );
 // Back-end Menu
 // Main VRodos menu
 add_action('admin_menu', 'vrodos_plugin_menu');
-
-add_action('parent_file', 'keep_taxonomy_menu_open');
 
 function wpb_custom_new_menu() {
     register_nav_menu('3d-menu',__( '3D Menu' ));
