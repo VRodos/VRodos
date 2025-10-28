@@ -44,6 +44,10 @@ new VRodos_Roles_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-menu-manager.php');
 new VRodos_Menu_Manager();
 
+// Asset CPT Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-cpt-manager.php');
+new VRodos_Asset_CPT_Manager();
+
 
 //add_filter( 'wp_nav_menu_items', 'add_loginout_link', 10, 2 );
 //function add_loginout_link( $items, $args ) {
@@ -58,55 +62,7 @@ new VRodos_Menu_Manager();
 
 ////===================================== Assets ============================================
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets.php' );
-
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scenes.php' );
-
-// Register asset metas
-add_action( 'init', 'vrodos_asset3d_metas_description', 1);
-
-// 35
-add_action('save_post','vrodos_create_pathdata_asset',10,3);
-
-// 18
-add_action('init','vrodos_allowAuthorEditing');
-
-// 58
-add_filter( 'wp_dropdown_users_args', 'change_user_dropdown', 10, 2 );
-
-// 36
-add_action( 'save_post', 'vrodos_asset_tax_category_box_content_save');
-
-// 37
-add_action( 'save_post', 'vrodos_assets_taxcategory_ipr_box_content_save' );
-
-// 38
-add_action( 'save_post', 'vrodos_asset_project_box_content_save');
-
-
-// Create Asset Taxonomy Boxes (Category & Scene) @ asset's backend
-// 53
-add_action('add_meta_boxes','vrodos_assets_taxcategory_box');
-
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-types-assets-data.php' );
-
-// Save data from infobox
-// 39
-add_action('save_post', 'vrodos_assets_databox_save');
-
-// 42
-add_action('admin_menu', 'vrodos_assets_databox_add');
-
-// 48
-//add_action('wp_enqueue_scripts', 'vrodos_assets_scripts_and_styles' );
-
-//
-//// 61
-add_filter( 'manage_vrodos_asset3d_posts_columns', 'vrodos_set_custom_vrodos_asset3d_columns' );
-//
-//// Add the data to the custom columns for the book post type:
-//// 62
-add_action( 'manage_vrodos_asset3d_posts_custom_column' , 'vrodos_set_custom_vrodos_asset3d_columns_fill', 10, 2 );
 
 
 
