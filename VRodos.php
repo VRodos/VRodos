@@ -36,29 +36,9 @@ new VRodos_Game_CPT_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-scene-cpt-manager.php');
 new VRodos_Scene_CPT_Manager();
 
-//----------------------- USER ROLES -------------------------------------------
-
-require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-users-roles.php');
-
-// Order : 4 (Right now only admin get full access) - Rework this to allow users of a custom role to access backend
-// add_action( 'init', 'vrodos_add_customroles');
-
-// Order: 5  -> Add extra field (meta for user actually) to view in backend named as 'mvnode_token' & mvnode_url
-add_action( 'show_user_profile', 'extra_user_profile_field_mvnode_token' );
-add_action( 'edit_user_profile', 'extra_user_profile_field_mvnode_token' );
-
-add_action( 'show_user_profile', 'extra_user_profile_field_mvnode_url' );
-add_action( 'edit_user_profile', 'extra_user_profile_field_mvnode_url' );
-
-// Order: 5.5  -> Save mvnode_token & mvnode_url for user in backend
-add_action( 'personal_options_update', 'save_extra_user_profile_field_mvnode_token' );
-add_action( 'edit_user_profile_update', 'save_extra_user_profile_field_mvnode_token' );
-
-add_action( 'personal_options_update', 'save_extra_user_profile_field_mvnode_url' );
-add_action( 'edit_user_profile_update', 'save_extra_user_profile_field_mvnode_url' );
-
-// Order: 6
-add_action( 'init', 'vrodos_add_capabilities_to_admin');
+// Roles Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-roles-manager.php');
+new VRodos_Roles_Manager();
 
 //------------------ Menu functions ------------------------------------
 require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-menu-functions.php');
