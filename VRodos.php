@@ -9,6 +9,9 @@
  * Version: 2.2
  */
 
+if ( ! defined( 'VRODOS_PLUGIN_FILE' ) ) {
+    define( 'VRODOS_PLUGIN_FILE', __FILE__ );
+}
 
 // Only these variables can change with php
 // @ini_set( 'memory_limit', '512M');
@@ -47,6 +50,10 @@ new VRodos_Menu_Manager();
 // Asset CPT Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-cpt-manager.php');
 new VRodos_Asset_CPT_Manager();
+
+// Install Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-install-manager.php');
+new VRodos_Install_Manager();
 
 
 //add_filter( 'wp_nav_menu_items', 'add_loginout_link', 10, 2 );
@@ -121,25 +128,6 @@ add_action( 'plugins_loaded', array( 'vrodosTemplate', 'get_instance' ) );
 // Order 1: Filters inside vrodos-page-templates
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
 
-
-// ---------  Create dedicated pages on plugin activation -------------------------
-// 68
-
-// 1. Project Manager
-// 2. Assets List Page
-// 3. 3D Editor
-// 4. Asset Editor
-register_activation_hook(__FILE__,'vrodos_create_pages');
-
-// Add Project Manager and Assets List pages to menu automatically;
-// Some messages also
-//register_activation_hook( __FILE__, 'vrodos_fx_admin_notice_activation_hook' );
-
-// -------------  Games versions table -------------------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-db-table-creations.php' );
-
-// 69
-register_activation_hook( __FILE__, 'vrodos_db_create_games_versions_table' );
 
 // ------------------- Add helper functions file ------------------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
@@ -585,54 +573,6 @@ function ns_limit_revisions($num, $post){
     return $is_target_type ? $N : $num;
 }
 add_filter('wp_revisions_to_keep', 'ns_limit_revisions', 10, 2);
-
-
-//-------- Uninstall -------------------
-register_uninstall_hook(__FILE__, 'vrodos_remove_db_residues');
-
-
-function vrodos_remove_db_residues(){
-
-    global $wpdb;
-    $del_prefix = $wpdb->prefix;
-
-    // 1. Options
-    delete_option('vrodos_scene_yaml_children');
-    delete_option('vrodos_game_type_children');
-    delete_option('widget_vrodos_3d_widget');
-    delete_option('vrodos_db_version');
-
-    // 2. Postmeta
-    $wpdb->query("DELETE FROM ".$del_prefix."postmeta WHERE meta_value LIKE '%vrodos%'");
-
-    // 2. Posts
-    $wpdb->query("DELETE FROM ".$del_prefix."posts WHERE post_name LIKE '%vrodos%' OR post_name LIKE '%joker%'");
-
-    // 3. Termmeta
-    $wpdb->query("DELETE FROM ".$del_prefix."termmeta WHERE meta_key LIKE '%vrodos%'");
-
-    // 4. Term
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%-yaml%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%-joker%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%_games%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%pois_%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%decoration%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%door%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%video%'");
-    $wpdb->query("DELETE FROM ".$del_prefix."terms WHERE slug LIKE '%chat%'");
-
-    // 5. Term relationships
-    // +++
-
-    // 6. Term taxonomy
-    $wpdb->query("DELETE FROM ".$del_prefix."term_taxonomy WHERE taxonomy LIKE '%vrodos%'");
-
-
-    // 7. wp__games_versions table
-    $wpdb->query("DROP TABLE ".$del_prefix."_games_versions");
-}
-
-
 
 
 // Main backend info page
