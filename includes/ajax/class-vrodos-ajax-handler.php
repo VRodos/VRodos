@@ -31,6 +31,7 @@ class VRodos_AJAX_Handler {
 
         add_action('wp_ajax_vrodos_fetch_list_projects_action', array($this, 'vrodos_fetch_list_projects_callback'));
 
+        add_action('wp_ajax_vrodos_fetch_game_assets_action', array($this, 'vrodos_fetch_game_assets_action_callback'));
     }
 
     //=============================== SEMANTICS ON 3D ============================================================
@@ -737,4 +738,29 @@ class VRodos_AJAX_Handler {
 
     wp_die();
 }
+
+    public function vrodos_fetch_game_assets_action_callback() {
+
+
+        // Output the directory listing as JSON
+        header('Content-type: application/json');
+
+        $response = VRodos_Core_Manager::vrodos_get_assets_by_game($_POST['gameProjectSlug'], $_POST['gameProjectID']);
+
+        for ($i=0; $i<count($response); $i++) {
+            if (isset($response[$i]['assetName'])) {
+                $response[$i]['name'] = $response[$i]['assetName'];
+                $response[$i]['type'] = 'file';
+            }
+        }
+
+        $jsonResp =  json_encode(
+            array(
+                "items" => $response
+            )
+        );
+
+        echo $jsonResp;
+        wp_die();
+    }
 }

@@ -54,7 +54,7 @@ function vrodos_create_archaeology_default_scenes($projectSlug){
 	// First Scene Data
 	$firstSceneData = vrodos_create_default_scene_kernel(
 		'Place',
-		vrodos_getDefaultJSONscene('archaeology'),
+		VRodos_Core_Manager::vrodos_getDefaultJSONscene('archaeology'),
 		$projectSlug . '-first-scene',
 		$projectSlug,
 		'wonderaround-yaml',
@@ -76,7 +76,7 @@ function vrodos_create_archaeology_default_scenes($projectSlug){
 function vrodos_create_vrexpo_default_scenes($projectSlug){
 
 	// Default scene JSON.
-	$default_json = vrodos_getDefaultJSONscene( 'vrexpo' );
+	$default_json = VRodos_Core_Manager::vrodos_getDefaultJSONscene( 'vrexpo' );
 
 	// First Scene
 	// Create Lobby Scene Data
@@ -156,7 +156,7 @@ function vrodos_create_virtualproduction_default_scenes($projectSlug){
 	// Create Lobby Scene Data
 	$firstSceneData = vrodos_create_default_scene_kernel(
 		'Chapter 1',
-		vrodos_getDefaultJSONscene( 'virtualproduction' ),
+		VRodos_Core_Manager::vrodos_getDefaultJSONscene( 'virtualproduction' ),
 		$projectSlug . '-chapter1-scene',
 		$projectSlug,
 		'wonderaround-yaml',

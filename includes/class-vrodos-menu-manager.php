@@ -51,7 +51,7 @@ class VRodos_Menu_Manager {
 				<select name="scene_id[<?php echo $item_id; ?>]" id="scene-id-<?php echo $item_id; ?>" class="widefat">
 					<option value=""></option>
 					<?php
-					$scenes = get_scenes_wonder_around();
+					$scenes = VRodos_Core_Manager::get_scenes_wonder_around();
 					foreach ( $scenes as $scene ) {
 						echo '<option value="' . esc_attr( $scene['sceneid'] ) . '" ' . selected( esc_attr( $scene_id ), $scene['sceneid'], false ) . '>' . esc_html( $scene['sceneName'] ) . ' of ' . esc_html( $scene['scene_parent_project'][0]->name ) . '</option>';
 					}

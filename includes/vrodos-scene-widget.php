@@ -94,7 +94,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
                 <option value="">Select one</option>
 			    <?php
 	    		    // Get all assets
-    			    $scenes = get_scenes_wonder_around();
+			    $scenes = VRodos_Core_Manager::get_scenes_wonder_around();
 
                     // Iterate for the drop down
                     for ($i=0;$i<count($scenes);$i++){

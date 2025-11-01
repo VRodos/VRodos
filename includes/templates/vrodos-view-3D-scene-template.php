@@ -103,7 +103,7 @@ $project_type_str = substr($project_obj->string, strpos($project_obj->string, "_
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
-    vrodos_getDefaultJSONscene(strtolower($project_type_str));
+    VRodos_Core_Manager::vrodos_getDefaultJSONscene(strtolower($project_type_str));
 
 // Load resources 3D
 

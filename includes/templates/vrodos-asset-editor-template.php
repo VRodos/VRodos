@@ -291,7 +291,7 @@ if($asset_id != null) {
     $fonts = $assetpostMeta['vrodos_asset3d_fonts'][0];
     $curr_font = str_replace("+", " ", $fonts);
 
-    $asset_3d_files = get_3D_model_files($assetpostMeta, $asset_id);
+    $asset_3d_files = VRodos_Core_Manager::get_3D_model_files($assetpostMeta, $asset_id);
 
     ?>
 

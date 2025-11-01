@@ -87,8 +87,6 @@ add_filter( 'upload_dir', 'vrodos_upload_dir_forScenesOrAssets' );
 add_filter( 'intermediate_image_sizes', 'vrodos_disable_imgthumbs_assets', 999 );
 add_filter( 'sanitize_file_name', 'vrodos_overwrite_uploads', 10, 1 );
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
-
 //Create Initial Asset Categories
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
 // 22
@@ -451,7 +449,7 @@ new VRodos_AJAX_Handler();
 
 // -------- Ajax for game projects ------
 // Ajax for fetching game's assets within asset browser widget at vr_editor
-add_action( 'wp_ajax_vrodos_fetch_game_assets_action', 'vrodos_fetch_game_assets_action_callback' );
+
 
 // Callback for Ajax for delete game
 add_action('wp_ajax_vrodos_delete_game_action','vrodos_delete_gameproject_frontend_callback');

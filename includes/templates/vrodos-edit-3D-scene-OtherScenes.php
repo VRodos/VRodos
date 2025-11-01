@@ -17,7 +17,7 @@ global $parameter_Scenepass;
     <?php
 
     // Get all scenes that have as parent this project
-    $custom_query = getProjectScenes($parent_project_id_as_term_id);
+    $custom_query = VRodos_Core_Manager::getProjectScenes($parent_project_id_as_term_id);
 
     if ( $custom_query->have_posts() ):
         while ( $custom_query->have_posts() ) :

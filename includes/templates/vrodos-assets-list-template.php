@@ -82,10 +82,10 @@ if(isset($_GET['vrodos_project_id'])) {
     $current_game_project_slug = $current_game_project_post->post_name;
     $user_games_slugs = [$current_game_project_slug];
 } else {
-    $user_games_slugs = vrodos_get_user_game_projects($user_id, $isUserAdmin);
+    $user_games_slugs = VRodos_Core_Manager::vrodos_get_user_game_projects($user_id, $isUserAdmin);
 }
 
-$assets = get_assets($user_games_slugs);
+$assets = VRodos_Core_Manager::get_assets($user_games_slugs);
 
 if (!$isUserloggedIn)
     $link_to_add = wp_login_url();
