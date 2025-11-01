@@ -314,18 +314,6 @@ new VRodos_Widget_Manager();
 
 //----------------------- WIDGET SCENE ---------------------------------------------
 
-//require_once ( plugin_dir_path( __FILE__ ) . 'includes/vrodos-widget-scene.php');
-//
-//// 47
-//add_action('wp_enqueue_scripts', 'vrodos_widget_scene_preamp_scripts'); // Front-end
-//add_action('admin_enqueue_scripts', 'vrodos_widget_scene_preamp_scripts'); // Back-end
-//
-//// Register and load the widget
-//function vrodos_load_widget_scene() {
-//	register_widget( 'vrodos_3d_widget_scene' );
-//}
-//add_action( 'widgets_init', 'vrodos_load_widget_scene');
-
 
 
 // 54
