@@ -189,7 +189,7 @@ class VRodos_AJAX_Handler {
     {
         // Save screenshot
         if (isset($_POST['scene_screenshot']))
-            $attachment_id = vrodos_upload_scene_screenshot(
+            $attachment_id = VRodos_Core_Manager::upload_scene_screenshot(
                 $_POST['scene_screenshot'],
                 'scene_'.$_POST['scene_id'].'_featimg',
                 $_POST['scene_id'],
@@ -242,7 +242,7 @@ class VRodos_AJAX_Handler {
     public function redo_scene_async_action_callback()
     {
         if (isset($_POST['scene_screenshot'])){
-            $attachment_id = vrodos_upload_scene_screenshot(
+            $attachment_id = VRodos_Core_Manager::upload_scene_screenshot(
                 $_POST['scene_screenshot'],
                 'scene_'.$_POST['scene_id'].'_featimg',
                 $_POST['scene_id'],

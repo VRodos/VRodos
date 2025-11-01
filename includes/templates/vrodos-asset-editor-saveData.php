@@ -29,7 +29,7 @@ function vrodos_create_asset_3DFilesExtra_frontend($assetNewId, $projectId, $ass
 
         // GLB upload and add id of uploaded file to postmeta  vrodos_asset3d_glb of asset
         if (strlen($_POST['glbFileInput']) > 0) {
-            $glbFile_id = vrodos_upload_AssetText(null, 'glb_' . $assetNewId . '_' . $assetCatId, $assetNewId,
+            $glbFile_id = VRodos_Core_Manager::upload_asset_text(null, 'glb_' . $assetNewId . '_' . $assetCatId, $assetNewId,
                 $_FILES, 0, $projectId);
 
             update_post_meta($assetNewId, 'vrodos_asset3d_glb', $glbFile_id);
@@ -87,7 +87,7 @@ function vrodos_update_asset_frontend($assetPGameID, $assetCatID, $assetId, $ass
 }
 
 function vrodos_create_asset_addImages_frontend($asset_id, $file){
-    $attachment_id = vrodos_upload_img_vid_aud( $file, $asset_id);
+    $attachment_id = VRodos_Core_Manager::upload_img_vid_aud( $file, $asset_id);
     update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', $attachment_id);
 }
 
@@ -99,7 +99,7 @@ function vrodos_create_asset_addAudio_frontend($asset_newID){
     if ( $asset_audioForm['error'] == 4  )
         return;
 
-    $attachment_audio_id = vrodos_upload_img_vid_aud( $asset_audioForm, $asset_newID);
+    $attachment_audio_id = VRodos_Core_Manager::upload_img_vid_aud( $asset_audioForm, $asset_newID);
     update_post_meta( $asset_newID, 'vrodos_asset3d_audio', $attachment_audio_id );
 }
 
@@ -112,7 +112,7 @@ function vrodos_create_asset_addVideo_frontend($asset_newID) {
     if ( $asset_videoForm['error'] == 4  )
         return;
 
-    $attachment_video_id = vrodos_upload_img_vid_aud( $asset_videoForm, $asset_newID);
+    $attachment_video_id = VRodos_Core_Manager::upload_img_vid_aud( $asset_videoForm, $asset_newID);
     update_post_meta( $asset_newID, 'vrodos_asset3d_video', $attachment_video_id );
 }
 

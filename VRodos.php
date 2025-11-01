@@ -81,11 +81,8 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scen
 
 //===================================== Other ============================================
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-upload-functions.php' );
-
-add_filter( 'upload_dir', 'vrodos_upload_dir_forScenesOrAssets' );
-add_filter( 'intermediate_image_sizes', 'vrodos_disable_imgthumbs_assets', 999 );
-add_filter( 'sanitize_file_name', 'vrodos_overwrite_uploads', 10, 1 );
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-upload-manager.php');
+VRodos_Upload_Manager::register_hooks();
 
 //Create Initial Asset Categories
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
