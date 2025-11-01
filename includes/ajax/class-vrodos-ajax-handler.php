@@ -20,6 +20,165 @@ class VRodos_AJAX_Handler {
         add_action('wp_ajax_vrodos_fetch_assetmeta_action', array($this, 'fetch_asset3d_meta_backend_callback'));
         add_action('wp_ajax_vrodos_compile_action', array($this, 'compile_action_callback'));
         add_action('wp_ajax_image_upload_action', array($this, 'image_upload_action_callback'));
+
+        // Peer conferencing
+        add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', array($this, 'vrodos_notify_confpeers_callback'));
+        add_action( 'wp_ajax_vrodos_notify_confpeers_action', array($this, 'vrodos_notify_confpeers_callback'));
+        add_action( 'wp_ajax_vrodos_update_expert_log_action', array($this, 'vrodos_update_expert_log_callback'));
+
+        // AJAXES for semantics
+        add_action( 'wp_ajax_vrodos_segment_obj_action', array($this, 'vrodos_segment_obj_action_callback') );
+
+        add_action('wp_ajax_vrodos_fetch_list_projects_action', array($this, 'vrodos_fetch_list_projects_callback'));
+
+    }
+
+    //=============================== SEMANTICS ON 3D ============================================================
+
+    // ---- AJAX SEMANTICS 1: run segmentation ----------
+    public function vrodos_segment_obj_action_callback() {
+
+        $DS = DIRECTORY_SEPARATOR;
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+
+            $curr_folder = wp_upload_dir()['basedir'].$DS.$_POST['path'];
+            $curr_folder = str_replace('/','\\',$curr_folder); // full path
+
+            $batfile = wp_upload_dir()['basedir'].$DS.$_POST['path']."segment.bat";
+
+
+            $batfile = str_replace('/','\\',$batfile); // full path
+
+            $fnameobj = basename($_POST['obj']);
+
+            $fnameobj = $curr_folder.$fnameobj;
+
+            // 1 : Generate bat
+            $myfile = fopen($batfile, "w") or die("Unable to open file!");
+
+            $outputpath = wp_upload_dir()['basedir'].$DS.$_POST['path'];
+            $outputpath = str_replace('/','\\',$outputpath); // full path
+
+            $exefile = untrailingslashit(plugin_dir_path(__FILE__)).'\..\semantics\segment3D\pclTesting.exe';
+            $exefile = str_replace("/", "\\", $exefile);
+
+            $iter = $_POST['iter'];
+            $minDist = $_POST['minDist'];
+            $maxDist = $_POST['maxDist'];
+            $minPoints = $_POST['minPoints'];
+            $maxPoints = $_POST['maxPoints'];
+            //$exefile.' '.$fnameobj.' '.$iter.' 0.01 0.2 100 25000 1 '.$outputpath.PHP_EOL.
+
+            $txt = '@echo off'.PHP_EOL.
+                $exefile.' '.$fnameobj.' '.$iter.' '.$minDist.' '.$maxDist.' '.$minPoints.' '.$maxPoints.' 1 '.$outputpath.PHP_EOL.
+                'del "*.pcd"'.PHP_EOL.
+                'del "barycenters.txt"';
+
+            fwrite($myfile, $txt);
+            fclose($myfile);
+
+            shell_exec('del "'.$outputpath.'log.txt"');
+            shell_exec('del "'.$outputpath.'cloud_cluster*.obj"');
+            shell_exec('del "'.$outputpath.'cloud_plane*.obj"');
+
+            // 2: run bat
+            $output = shell_exec($batfile);
+            echo $output;
+
+        } else { // LINUX SERVER // TODO
+
+    //        $game_dirpath = realpath(dirname(__FILE__).'/..').$DS.'test_compiler'.$DS.'game_linux'; //$_GET['game_dirpath'];
+    //
+    //        // 1 : Generate sh
+    //        $myfile = fopen($game_dirpath.$DS."starter_artificial.sh", "w") or print("Unable to open file!");
+    //        $txt = "#/bin/bash"."\n".
+    //            "projectPath=`pwd`"."\n".
+    //            "xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24:32' /opt/Unity/Editor/Unity -batchmode -nographics -logfile stdout.log -force-opengl -quit -projectPath ${projectPath} -buildWindowsPlayer 'builds/myg3.exe'";
+    //        fwrite($myfile, $txt);
+    //        fclose($myfile);
+    //
+    //        // 2: run sh (nohup     '/dev ...' ensures that it is asynchronous called)
+    //        $output = shell_exec('nohup sh starter_artificial.sh'.'> /dev/null 2>/dev/null &');
+        }
+
+        wp_die();
+    }
+
+    //======================= CONTENT INTERLINKING =========================================================================
+
+
+    public function vrodos_notify_confpeers_callback(){
+
+        $ff = fopen("confroom_log.txt","a");
+
+        fwrite($ff,chr(10));
+
+        date_default_timezone_set("Europe/Sofia");
+
+        $strDate = "<tr><td> +1 user</td><td>".$_POST['confroom']."</td><td>".date('d-m-y')."</td><td>".date('h:i:s')."</td></tr>:::".time().":::".$_POST['confroom'];
+        fwrite($ff, $strDate);
+        fclose($ff);
+
+    //    if (document.getElementById("ConfRoomReport"))
+    //        document.getElementById("ConfRoomReport").innerHTML = "1 user in room:".$_POST['confroom'];
+
+        echo $strDate;
+
+
+        wp_die();
+    }
+
+    // Read log content from conferences
+    public function vrodos_update_expert_log_callback()
+    {
+        // reset
+        //unlink("wp-admin/confroom_log.txt");
+        if (!file_exists("confroom_log.txt"))
+            return;
+
+        $file = file("confroom_log.txt");
+
+        $file = str_replace("\n", " ", $file);
+        $file = array_reverse($file);
+
+        $content = '';
+
+        $alerting = [];
+        $rooming = [];
+
+        //    $ff = fopen("output_rooming.txt","w");
+        //    fwrite($ff, chr(10));
+
+        $index_max_recs=0;
+        foreach ($file as $f) {
+
+            if ($index_max_recs < 12) {
+
+                $f = str_replace("\n", " ", $f);
+
+                list($f, $timestamp, $room) = explode(":::", $f);
+
+                //            fwrite($ff, time() . " " . $timestamp . " " . (time() - $timestamp));
+                //            fwrite($ff, chr(10));
+
+
+                if (time() - $timestamp < 20) {
+                    $alerting[] = $timestamp;
+                    $rooming[] = $room;
+                }
+
+                $content = $content . $f;
+
+                $index_max_recs += 1;
+            }
+        }
+        //    fclose($ff);
+
+        $total_content = json_encode([$content, $alerting, $rooming]);
+
+        echo $total_content;
+
+        wp_die();
     }
 
     /**
@@ -370,11 +529,212 @@ class VRodos_AJAX_Handler {
         $parent_id = wp_get_post_terms($sceneId, 'vrodos_scene_pgame');
         $parent_id = reset($parent_id)->term_id;
 
-        $sceneIdList = vrodos_get_all_sceneids_of_game($parent_id);
+        $sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game($parent_id);
 
         $scene_json = vrodos_compile_aframe($projectId, $sceneIdList, $showPawnPositions);
         echo $scene_json;
         wp_die();
 
     }
+
+
+
+    // Fetch list of project through ajax
+    public function vrodos_fetch_list_projects_callback() {
+
+    $f = fopen("output_ajax_delay.txt", "w");
+
+    $user_id = $_POST['current_user_id'];
+    $parameter_Scenepass = $_POST['parameter_Scenepass'];
+
+    // Define custom query parameters
+    $custom_query_args = array(
+        'post_type' => 'vrodos_game',
+        'posts_per_page' => -1,
+    );
+
+//    if (current_user_can('administrator')){
+//
+//    } elseif (current_user_can('adv_project_master')) {
+//        //$custom_query_args['author'] = $user_id;
+//
+//    }elseif (current_user_can('game_master')) {
+//        //$custom_query_args['author'] = $user_id;
+//    }
+
+
+    // Get current page and append to custom query parameters array
+    //$custom_query_args['paged'] = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
+
+    // Instantiate custom query
+    $custom_query = new WP_Query($custom_query_args);
+
+    //$fp = fopen("output_ccq.txt","w");
+
+    // Pagination fix
+    //$temp_query = $wp_query;
+    //$wp_query = NULL;
+    //$wp_query = $custom_query;
+
+    // Output custom query loop
+    if ($custom_query->have_posts()){
+
+        $mt3 = explode(' ', microtime());
+        $t3 = ((int)$mt3[1]) * 1000 + ((int)round($mt3[0] * 1000));
+
+        fwrite($f, "Step 3:".$t3.chr(13));
+
+        echo '<ul class="mdc-list mdc-list--two-line mdc-list--avatar-list" style="max-height: 460px; overflow-y: auto">';
+        while ($custom_query->have_posts()) :
+
+            $mt4 = explode(' ', microtime());
+            $t4 = ((int)$mt4[1]) * 1000 + ((int)round($mt4[0] * 1000));
+
+            fwrite($f, "Step 4:".$t4.chr(13));
+
+            $custom_query->the_post();
+
+            if (current_user_can('administrator')){
+                // ToDo: replace current_user_can with smth like current_user_is
+
+            } elseif (current_user_can('administrator')) {
+
+                $collaborators = get_post_meta(get_the_ID(),'vrodos_project_collaborators_ids')[0];
+
+//               fwrite($fp, 'Author:' . print_r(get_the_author_meta('ID'), true));
+//               fwrite($fp, 'UserId:' . print_r($user_id, true));
+//               fclose($fp);
+
+                if ( get_the_author_meta('ID') != $user_id ) {                    // Not the author of the game
+                    if (strpos($collaborators, $user_id) === false) {  // and not the collaborator then skip
+
+                        continue;
+                    }
+                }
+            }
+
+
+//           elseif (current_user_can('game_master')) {
+//                //$custom_query_args['author'] = $user_id;
+//            }
+
+
+
+            $game_id = get_the_ID();
+            $game_title = get_the_title();
+            $game_date = get_the_date();
+            //$game_link = get_permalink();
+
+
+            // Do not show Joker projects
+            if (strpos($game_title, ' Joker') !== false)
+                continue;
+
+            $game_type_obj = VRodos_Core_Manager::vrodos_return_project_type($game_id);
+
+            $all_game_category = get_the_terms( $game_id, 'vrodos_game_type' );
+            $game_category     = $all_game_category[0]->slug;
+            $scene_data = VRodos_Core_Manager::vrodos_getFirstSceneID_byProjectID($game_id,$game_category);//first 3D scene id
+
+            $editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
+
+            $edit_scene_page_id = $editscenePage[0]->ID;
+
+            $loadMainSceneLink = esc_url( (get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type']));
+
+
+            $assets_list_page =  VRodos_Core_Manager::vrodos_getEditpage('assetslist');
+            $assets_list_page_id = $assets_list_page[0]->ID;
+            $loadProjectAssets = esc_url( get_permalink($assets_list_page_id) . '?vrodos_project_id=' . $game_id );
+
+
+            echo '<li class="mdc-list-item" style="" id="'. $game_id.'">';
+
+            // Href when press on title
+            echo '<span class="mdc-list-item" style="float:left" data-mdc-auto-init="MDCRipple" title="Open '.$game_title.'">';
+            echo '<i class="material-icons mdc-list-item__start-detail" aria-hidden="true" title="'.$game_type_obj->string.'">'.$game_type_obj->icon.'</i>';
+            echo '<span id="'.$game_id.'-title" class="mdc-list-item__text">'.$game_title.'<span id="'.$game_id.'-date" class="mdc-list-item__text__secondary">'.$game_date.'</span>'.
+                '</span>';
+            echo '</span>';
+
+
+
+            // VR button: Go to 3D Editor
+
+            echo '<div style="margin-left:auto; margin-right:0">';
+
+            // ----- Assets button ------------------
+            echo '<a href="'.$loadProjectAssets.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
+                'title="Manage assets of '.$game_title.'">';
+            echo '<span id="'.$game_id.'-assets-button" class="mdc-button" >Assets</span>';
+            echo '</a>';
+
+            // ------- Collaborators -----------
+
+            // Collaborators button
+            echo '<a href="javascript:void(0)" class="mdc-button mdc-list-item__end-detail" '.
+                'data-mdc-auto-init="MDCRipple" title="Add collaborators for '.
+                $game_title . '" onclick="collaborateProject(' . $game_id . ')">';
+
+            $collaborators = get_post_meta($game_id, 'vrodos_project_collaborators_ids');
+
+            // Find number of current collaborators
+            if ( count($collaborators)>0) {
+
+                $collabs_ids_raw = get_post_meta($game_id, 'vrodos_project_collaborators_ids')[0];
+                $collabs_ids = array_values(array_filter(explode(";", $collabs_ids_raw)));
+            } else {
+                $collabs_ids = [];
+            }
+
+            echo '<i class="material-icons" aria-hidden="true" ' . ' title="Add collaborators">group</i>' .
+                '<sup>' . count($collabs_ids) . '</sup>';
+
+            //echo get_user_by('id', $collabs_ids[0])->display_name;
+            echo '</a>';
+
+
+            // --------- 3D editor button -----------
+            echo '<a id="3d-editor-bt-'.$game_id.'" href="'.$loadMainSceneLink.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
+                'title="Open 3D Editor for '.$game_title.'">';
+            echo '<span id="'.$game_id.'-vr-button" class="mdc-button" >3D_Editor</span>';
+            echo '</a>';
+
+            // -------- Delete button ----------------
+            echo '<a href="javascript:void(0)" class="" style="" aria-label="Delete game" title="Delete project" '.
+                'onclick="deleteProject('.$game_id.')">';
+            echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color: crimson" '
+                .'aria-hidden="true" title="Delete project">delete</i>';
+            echo '</a>';
+
+            echo '<div>';
+            echo '</li>';
+        endwhile;
+
+        echo '</ul>';
+
+
+
+        wp_reset_postdata();
+        //$wp_query = NULL;
+        //$wp_query = $temp_query;
+
+
+    } else {
+
+        echo '<hr class="WhiteSpaceSeparator">';
+        echo '<div class="CenterContents">' .
+            '<i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true"' .
+            ' title="No projects available">' .
+            'games' .
+            '</i>'.
+            '<h3 class="mdc-typography--headline"> projects available</h3>' .
+            '<hr class="WhiteSpaceSeparator">'.
+            '<h4 class="mdc-typography--title mdc-theme--text-secondary-on-light">'.
+            'You can try creating a new one</h4>';
+        echo '</div>';
+    }
+
+    wp_die();
+}
 }

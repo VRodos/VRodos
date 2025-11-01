@@ -10,7 +10,7 @@ $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 global $project_scope;
 
-$editgamePage = vrodos_getEditpage('game');
+$editgamePage = VRodos_Core_Manager::vrodos_getEditpage('game');
 $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 $pluginpath = str_replace('\\','/',$pluginpath);
 
@@ -132,7 +132,7 @@ $login_username = $current_user->user_login;
                                 </div>
                                 <label id="gameTypeArchRadio-label" for="gameTypeArchRadio">
                                     <i class="material-icons">
-                                        <?php echo vrodos_project_type_icon('archaeology') ?>
+                                        <?php echo VRodos_Core_Manager::vrodos_project_type_icon('archaeology') ?>
                                     </i>
                                     <span style="vertical-align: super">Default</span>
                                 </label>
@@ -151,7 +151,7 @@ $login_username = $current_user->user_login;
                                 </div>
                                 <label id="gameTypeVRExpoRadio-label" for="gameTypeVRExpoRadio">
                                     <i class="material-icons">
-                                        <?php echo vrodos_project_type_icon('vrexpo') ?>
+                                        <?php echo VRodos_Core_Manager::vrodos_project_type_icon('vrexpo') ?>
                                     </i>
                                     <span style="vertical-align: super">VR Exposition</span>
                                 </label>
@@ -170,7 +170,7 @@ $login_username = $current_user->user_login;
                                 </div>
                                 <label id="gameTypeVirtualProductionRadio-label" for="gameTypeVirtualProductionRadio">
                                     <i class="material-icons">
-                                        <?php echo vrodos_project_type_icon('virtualproduction') ?>
+                                        <?php echo VRodos_Core_Manager::vrodos_project_type_icon('virtualproduction') ?>
                                     </i>
                                     <span style="vertical-align: super">Virtual Production</span>
                                 </label>

@@ -55,6 +55,10 @@ new VRodos_Asset_CPT_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-install-manager.php');
 new VRodos_Install_Manager();
 
+// Core Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-core-manager.php');
+new VRodos_Core_Manager();
+
 
 //add_filter( 'wp_nav_menu_items', 'add_loginout_link', 10, 2 );
 //function add_loginout_link( $items, $args ) {
@@ -83,14 +87,6 @@ add_filter( 'upload_dir', 'vrodos_upload_dir_forScenesOrAssets' );
 add_filter( 'intermediate_image_sizes', 'vrodos_disable_imgthumbs_assets', 999 );
 add_filter( 'sanitize_file_name', 'vrodos_overwrite_uploads', 10, 1 );
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-functions.php' );
-
-// Set to the lowest priority in order to have game taxes available when joker games are created
-add_action( 'init', 'vrodos_create_joker_projects', 100, 2 );
-
-// Remove Admin bar for non admins
-// add_action('after_setup_theme', 'vrodos_remove_admin_bar');
-
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-setget-functions.php' );
 
 //Create Initial Asset Categories
@@ -112,10 +108,6 @@ add_action( 'plugins_loaded', array( 'vrodosTemplate', 'get_instance' ) );
 
 // Order 1: Filters inside vrodos-page-templates
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
-
-
-// ------------------- Add helper functions file ------------------------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
 
 //------------------- For Compile ---------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-compile-aframe.php' );
@@ -484,8 +476,6 @@ add_action('wp_ajax_vrodos_fetch_collaborators_action','vrodos_fetch_collaborato
 
 add_action('wp_ajax_vrodos_create_project_action','vrodos_create_project_frontend_callback');
 
-add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projects_callback');
-
 
 
 // ------ Ajaxes for scenes -----------
@@ -555,7 +545,7 @@ add_filter('wp_revisions_to_keep', 'ns_limit_revisions', 10, 2);
 
 // Main backend info page
 function vrodos_plugin_main_page() {
-    $allProjectsPage = vrodos_getEditpage('allgames');
+    $allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
 
     if ( is_admin() ) {
         if( ! function_exists( 'get_plugin_data' ) ) {

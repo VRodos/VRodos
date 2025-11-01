@@ -113,10 +113,10 @@ $project_id    = isset($_GET['vrodos_game']) ? sanitize_text_field( intval( $_GE
 $project_post  = get_post($project_id);
 $projectSlug   = $project_post->post_name;
 
-$project_type = $project_id ? vrodos_return_project_type($project_id)->string : null;
+$project_type = $project_id ? VRodos_Core_Manager::vrodos_return_project_type($project_id)->string : null;
 
 // Get project type icon
-$project_type_icon = $project_id ? vrodos_return_project_type($project_id)->icon : null;
+$project_type_icon = $project_id ? VRodos_Core_Manager::vrodos_return_project_type($project_id)->icon : null;
 
 // Get Joker project id
 $joker_project_id = $project_type ? get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID : null;
@@ -145,11 +145,11 @@ $sceneTitle = $scene_post->post_name;
 // Front End or Back end
 $isAdmin = is_admin() ? 'back' : 'front';
 
-$allProjectsPage = vrodos_getEditpage('allgames');
-$newAssetPage = vrodos_getEditpage('asset');
-$editscenePage = vrodos_getEditpage('scene');
+$allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
+$newAssetPage = VRodos_Core_Manager::vrodos_getEditpage('asset');
+$editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
 
-$videos = vrodos_getVideoAttachmentsFromMediaLibrary();
+$videos = VRodos_Core_Manager::vrodos_getVideoAttachmentsFromMediaLibrary();
 
 // for vr_editor
 $urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id .
@@ -359,7 +359,7 @@ wp_head();
                 <div class="mdc-toolbar hidable scene_editor_upper_toolbar">
 
                     <!-- Display Breadcrump about projectType>project>scene -->
-                    <?php vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
+                    <?php VRodos_Core_Manager::vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
                         $project_type, $project_type_icon, $project_post); ?>
 
                     <!-- Undo - Save - Redo -->

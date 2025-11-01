@@ -589,7 +589,7 @@
         $sel = true;
         echo "<option value='$def' selected='$sel' disabled='$sel'>$def</option>";
 
-        $sceneIdList = vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id);
+        $sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id);
         foreach ($sceneIdList as $sc) {
             //echo "<option value='$sc'>$sc</option>";
             $scene_title = get_the_title($sc);

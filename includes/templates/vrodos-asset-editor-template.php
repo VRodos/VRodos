@@ -74,7 +74,7 @@ $scene_id = isset($_GET['vrodos_scene']) ? sanitize_text_field( intval( $_GET['v
 // Game project variables
 $game_post = get_post($project_id);
 $gameSlug = $game_post->post_name;
-$game_type_obj = vrodos_return_project_type($project_id);
+$game_type_obj = VRodos_Core_Manager::vrodos_return_project_type($project_id);
 
 // Get 'parent-game' taxonomy with the same slug as Game
 $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
@@ -131,17 +131,17 @@ if ($isUserloggedIn) {
 
 $author_displayname = get_the_author_meta( 'display_name' , $author_id );
 
-$editgamePage = vrodos_getEditpage('game');
-$allGamesPage = vrodos_getEditpage('allgames');
-$editscenePage = vrodos_getEditpage('scene');
-$newAssetPage = vrodos_getEditpage('asset');
+$editgamePage = VRodos_Core_Manager::vrodos_getEditpage('game');
+$allGamesPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
+$editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
+$newAssetPage = VRodos_Core_Manager::vrodos_getEditpage('asset');
 
 
 $all_game_category = get_the_terms( $project_id, 'vrodos_game_type' );
 
 $game_category = $all_game_category ? $all_game_category[0]->slug : null;
 
-$scene_data = vrodos_getFirstSceneID_byProjectID($project_id, $game_category);//first 3D scene id
+$scene_data = VRodos_Core_Manager::vrodos_getFirstSceneID_byProjectID($project_id, $game_category);//first 3D scene id
 
 $edit_scene_page_id = $editscenePage[0]->ID;
 
