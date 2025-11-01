@@ -81,11 +81,8 @@ include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scen
 
 //===================================== Other ============================================
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-upload-functions.php' );
-
-add_filter( 'upload_dir', 'vrodos_upload_dir_forScenesOrAssets' );
-add_filter( 'intermediate_image_sizes', 'vrodos_disable_imgthumbs_assets', 999 );
-add_filter( 'sanitize_file_name', 'vrodos_overwrite_uploads', 10, 1 );
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-upload-manager.php');
+VRodos_Upload_Manager::register_hooks();
 
 //Create Initial Asset Categories
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
@@ -108,9 +105,6 @@ add_action( 'plugins_loaded', array( 'vrodosTemplate', 'get_instance' ) );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
 
 //------------------- For Compile ---------------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-compile-aframe.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-handler.php' );
 
 
 
@@ -451,16 +445,6 @@ new VRodos_AJAX_Handler();
 // Ajax for fetching game's assets within asset browser widget at vr_editor
 
 
-// Callback for Ajax for delete game
-add_action('wp_ajax_vrodos_delete_game_action','vrodos_delete_gameproject_frontend_callback');
-
-// Callback for add collaborators
-add_action('wp_ajax_vrodos_collaborate_project_action','vrodos_collaborate_project_frontend_callback');
-
-// Callback for fetching collaborators from db
-add_action('wp_ajax_vrodos_fetch_collaborators_action','vrodos_fetch_collaborators_frontend_callback');
-
-add_action('wp_ajax_vrodos_create_project_action','vrodos_create_project_frontend_callback');
 
 
 

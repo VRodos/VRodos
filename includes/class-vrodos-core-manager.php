@@ -730,4 +730,6 @@ class VRodos_Core_Manager {
             'texturesFbx'=>$textures_fbx_string_connected,
             'path'=>$path_url);
     }
+
+
 }
