@@ -261,4 +261,44 @@ class VRodos_Core_Manager {
             return false;
         }
     }
+
+    public static function vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
+                                   $project_type, $project_type_icon, $project_post){
+
+
+        $scene_title = $scene_post ? $scene_post->post_title : ' ';
+
+        echo '<div id="sceneInfoBreadcrump" '.
+            ' class="mdc-textfield mdc-theme--text-primary-on-dark mdc-form-field"'.
+            ' data-mdc-auto-init="MDCTextfield">'.
+
+            // Project Scene path at breadcrump
+            ' <div id="projectNameBreadcrump" >'.
+            '<a title="Back" style="margin-left:10px; margin-right:10px"'.
+            ' href="'.$goBackTo_AllProjects_link.'">'.
+            '<i class="material-icons mdc-theme--text-primary-on-dark sceneArrowBack">arrow_back</i>'.
+            '</a>'.
+
+            '<i class="material-icons mdc-theme--text-icon-on-dark sceneProjectTypeLabel"'.
+            ' title="'.$project_type.'">'.$project_type_icon.
+            '</i> '.
+            '<span title="Project Title">'. $project_post->post_title.'</span>'.
+            '<i class="material-icons mdc-theme--text-icon-on-dark chevronRight">chevron_right</i>'.
+            '</div>'.
+
+            // Title Name at breadcrumps
+            '<input id="sceneTitleInput" name="sceneTitleInput"'.
+            ' title="Scene Title" placeholder="Scene Title"'.
+            ' value="'.$scene_title.'" type="text"'.
+            ' class="mdc-textfield__input mdc-theme--text-primary-on-dark"'.
+            ' aria-controls="title-validation-msg" minlength="3" required>'.
+            '<p id="title-validation-msg"'.
+            ' class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg titleLengthSuggest">'.
+            ' Must be at least 3 characters long'.
+            '</p>'.
+
+            // bottom line below title input
+            '<div class="mdc-textfield__bottom-line"></div>'.
+            '</div>';
+    }
 }

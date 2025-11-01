@@ -359,7 +359,7 @@ wp_head();
                 <div class="mdc-toolbar hidable scene_editor_upper_toolbar">
 
                     <!-- Display Breadcrump about projectType>project>scene -->
-                    <?php vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
+                    <?php VRodos_Core_Manager::vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
                         $project_type, $project_type_icon, $project_post); ?>
 
                     <!-- Undo - Save - Redo -->
