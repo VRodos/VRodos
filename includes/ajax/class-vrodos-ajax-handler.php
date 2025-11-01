@@ -320,8 +320,7 @@ class VRodos_AJAX_Handler {
                 $_POST['scene_screenshot'],
                 'scene_'.$_POST['scene_id'].'_featimg',
                 $_POST['scene_id'],
-                'jpg',
-                true);
+                'jpg');
 
         // Set thumbnail of post
         set_post_thumbnail( $_POST['scene_id'], $attachment_id );
@@ -373,8 +372,7 @@ class VRodos_AJAX_Handler {
                 $_POST['scene_screenshot'],
                 'scene_'.$_POST['scene_id'].'_featimg',
                 $_POST['scene_id'],
-                'jpg' ,
-                true);
+                'jpg');
 
             set_post_thumbnail( $_POST['scene_id'], $attachment_id );
         }

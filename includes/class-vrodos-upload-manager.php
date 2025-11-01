@@ -190,35 +190,41 @@ class VRodos_Upload_Manager {
 
     public static function upload_scene_screenshot($imagefile, $imgTitle, $scene_id, $type) {
         self::load_wp_admin_files();
-        $thumbnail_id = get_post_thumbnail_id($scene_id);
-        if ($thumbnail_id) {
-            $thumbnail_path = get_attached_file($thumbnail_id);
-            if ($thumbnail_path && file_exists($thumbnail_path)) {
-                unlink($thumbnail_path);
-            }
-            wp_delete_attachment($thumbnail_id, true);
-        }
+
+        // Set post_id for the upload directory filter. This ensures that both the deletion of the old file
+        // and the upload of the new one happen in the correct scene-specific directory.
         $_REQUEST['post_id'] = $scene_id;
         add_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
+
+        // First, delete the existing thumbnail if it exists.
+        // wp_delete_attachment (with $force_delete = true) handles deleting the file from the filesystem.
+        $thumbnail_id = get_post_thumbnail_id($scene_id);
+        if ($thumbnail_id) {
+            wp_delete_attachment($thumbnail_id, true);
+        }
+
+        // Now, proceed with uploading the new screenshot.
         add_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
         add_filter('big_image_size_threshold', '__return_false');
+
         $filename = 'scene_' . $scene_id . '_sshot.' . $type;
         $decoded_image = base64_decode(substr($imagefile, strpos($imagefile, ",") + 1));
         $file_return = wp_upload_bits($filename, null, $decoded_image);
+
+        // Always remove filters after the operation.
         remove_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
         unset($_REQUEST['post_id']);
+        remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
+        remove_filter('big_image_size_threshold', '__return_false');
+
         if ($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $scene_id);
-            remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
-            remove_filter('big_image_size_threshold', '__return_false');
             if ($attachment_id) {
                 set_post_thumbnail($scene_id, $attachment_id);
                 return $attachment_id;
             }
-        } else {
-            remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
-            remove_filter('big_image_size_threshold', '__return_false');
         }
+
         return false;
     }
 
