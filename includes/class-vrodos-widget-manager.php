@@ -61,13 +61,25 @@ class VRodos_Widget_Manager {
         wp_enqueue_script('vrodos_scripts');
 
         // AJAX script for fetching asset metadata in the widget form.
-        $pluginpath = dirname (plugin_dir_url( __DIR__  ));
-        wp_enqueue_script( 'ajax-script_fetchasset_meta', $pluginpath.'/vrodos/js_libs/ajaxes/fetch_asset.js', array('jquery') );
-        wp_localize_script( 'ajax-script_fetchasset_meta', 'my_ajax_object_fetchasset_meta',
-                array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+        wp_enqueue_script(
+            'vrodos-fetch-asset-ajax',
+            plugins_url('../js_libs/ajaxes/fetch_asset.js', __FILE__),
+            array('jquery')
         );
 
+        // First object for the asset widget.
+        wp_localize_script(
+            'vrodos-fetch-asset-ajax',
+            'my_ajax_object_fetchasset_meta',
+            array('ajax_url' => admin_url('admin-ajax.php'))
+        );
+
+        // Second object for the scene widget, added inline to avoid overwriting the first.
+        $inline_script = 'var my_ajax_object_fetchasset = ' . json_encode(array('ajax_url' => admin_url('admin-ajax.php'))) . ';';
+        wp_add_inline_script('vrodos-fetch-asset-ajax', $inline_script);
+
         // Scripts for the scene widget
+        wp_enqueue_script('vrodos_load_datgui');
         wp_enqueue_script('jquery-ui-draggable');
         wp_enqueue_script('vrodos_load141_CSS2DRenderer');
         wp_enqueue_script('vrodos_load141_CopyShader');
@@ -93,9 +105,5 @@ class VRodos_Widget_Manager {
         wp_enqueue_script('vrodos_3d_editor_buttons');
         wp_enqueue_script('vrodos_vr_editor_analytics');
         wp_enqueue_script('vrodos_fetch_asset_scenes_request');
-        wp_enqueue_script( 'ajax-script_fetchasset', $pluginpath.'/js_libs/ajaxes/fetch_asset.js', array('jquery') );
-        wp_localize_script( 'ajax-script_fetchasset', 'my_ajax_object_fetchasset',
-            array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
-        );
     }
 }
