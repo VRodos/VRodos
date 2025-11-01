@@ -10,7 +10,7 @@ $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
 global $project_scope;
 
-$editgamePage = vrodos_getEditpage('game');
+$editgamePage = VRodos_Core_Manager::vrodos_getEditpage('game');
 $pluginpath = dirname (plugin_dir_url( __DIR__  ));
 $pluginpath = str_replace('\\','/',$pluginpath);
 

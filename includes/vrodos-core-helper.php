@@ -6,43 +6,6 @@
  * Time: 3:40 μμ
  */
 
-function vrodos_project_type_icon($project_category){
-
-    // Set game type icon
-    switch($project_category){
-        case 'vrexpo':
-            $project_type_icon = "public";
-            break;
-        case 'virtualproduction':
-            $project_type_icon = "theaters";
-            break;
-        case 'Archaeology':
-        default:
-            $project_type_icon = "account_balance";
-            break;
-    }
-    return $project_type_icon;
-}
-
-function vrodos_return_project_type($id) {
-
-    if (!$id) {
-        return null;
-    }
-
-    $all_project_category = get_the_terms( $id, 'vrodos_game_type' );
-
-    $project_category = $all_project_category ? $all_project_category[0]->name : null;
-
-    $project_type_icon = vrodos_project_type_icon($project_category);
-
-    $obj = new stdClass();
-    $obj->string = $project_category;
-    $obj->icon = $project_type_icon;
-
-    return $obj;
-}
-
 function vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
                                    $project_type, $project_type_icon, $project_post){
 

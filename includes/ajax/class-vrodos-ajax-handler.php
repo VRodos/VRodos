@@ -28,6 +28,9 @@ class VRodos_AJAX_Handler {
 
         // AJAXES for semantics
         add_action( 'wp_ajax_vrodos_segment_obj_action', array($this, 'vrodos_segment_obj_action_callback') );
+
+        add_action('wp_ajax_vrodos_fetch_list_projects_action', array($this, 'vrodos_fetch_list_projects_callback'));
+
     }
 
     //=============================== SEMANTICS ON 3D ============================================================
@@ -526,11 +529,212 @@ class VRodos_AJAX_Handler {
         $parent_id = wp_get_post_terms($sceneId, 'vrodos_scene_pgame');
         $parent_id = reset($parent_id)->term_id;
 
-        $sceneIdList = vrodos_get_all_sceneids_of_game($parent_id);
+        $sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game($parent_id);
 
         $scene_json = vrodos_compile_aframe($projectId, $sceneIdList, $showPawnPositions);
         echo $scene_json;
         wp_die();
 
     }
+
+
+
+    // Fetch list of project through ajax
+    public function vrodos_fetch_list_projects_callback() {
+
+    $f = fopen("output_ajax_delay.txt", "w");
+
+    $user_id = $_POST['current_user_id'];
+    $parameter_Scenepass = $_POST['parameter_Scenepass'];
+
+    // Define custom query parameters
+    $custom_query_args = array(
+        'post_type' => 'vrodos_game',
+        'posts_per_page' => -1,
+    );
+
+//    if (current_user_can('administrator')){
+//
+//    } elseif (current_user_can('adv_project_master')) {
+//        //$custom_query_args['author'] = $user_id;
+//
+//    }elseif (current_user_can('game_master')) {
+//        //$custom_query_args['author'] = $user_id;
+//    }
+
+
+    // Get current page and append to custom query parameters array
+    //$custom_query_args['paged'] = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
+
+    // Instantiate custom query
+    $custom_query = new WP_Query($custom_query_args);
+
+    //$fp = fopen("output_ccq.txt","w");
+
+    // Pagination fix
+    //$temp_query = $wp_query;
+    //$wp_query = NULL;
+    //$wp_query = $custom_query;
+
+    // Output custom query loop
+    if ($custom_query->have_posts()){
+
+        $mt3 = explode(' ', microtime());
+        $t3 = ((int)$mt3[1]) * 1000 + ((int)round($mt3[0] * 1000));
+
+        fwrite($f, "Step 3:".$t3.chr(13));
+
+        echo '<ul class="mdc-list mdc-list--two-line mdc-list--avatar-list" style="max-height: 460px; overflow-y: auto">';
+        while ($custom_query->have_posts()) :
+
+            $mt4 = explode(' ', microtime());
+            $t4 = ((int)$mt4[1]) * 1000 + ((int)round($mt4[0] * 1000));
+
+            fwrite($f, "Step 4:".$t4.chr(13));
+
+            $custom_query->the_post();
+
+            if (current_user_can('administrator')){
+                // ToDo: replace current_user_can with smth like current_user_is
+
+            } elseif (current_user_can('administrator')) {
+
+                $collaborators = get_post_meta(get_the_ID(),'vrodos_project_collaborators_ids')[0];
+
+//               fwrite($fp, 'Author:' . print_r(get_the_author_meta('ID'), true));
+//               fwrite($fp, 'UserId:' . print_r($user_id, true));
+//               fclose($fp);
+
+                if ( get_the_author_meta('ID') != $user_id ) {                    // Not the author of the game
+                    if (strpos($collaborators, $user_id) === false) {  // and not the collaborator then skip
+
+                        continue;
+                    }
+                }
+            }
+
+
+//           elseif (current_user_can('game_master')) {
+//                //$custom_query_args['author'] = $user_id;
+//            }
+
+
+
+            $game_id = get_the_ID();
+            $game_title = get_the_title();
+            $game_date = get_the_date();
+            //$game_link = get_permalink();
+
+
+            // Do not show Joker projects
+            if (strpos($game_title, ' Joker') !== false)
+                continue;
+
+            $game_type_obj = VRodos_Core_Manager::vrodos_return_project_type($game_id);
+
+            $all_game_category = get_the_terms( $game_id, 'vrodos_game_type' );
+            $game_category     = $all_game_category[0]->slug;
+            $scene_data = VRodos_Core_Manager::vrodos_getFirstSceneID_byProjectID($game_id,$game_category);//first 3D scene id
+
+            $editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
+
+            $edit_scene_page_id = $editscenePage[0]->ID;
+
+            $loadMainSceneLink = esc_url( (get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type']));
+
+
+            $assets_list_page =  VRodos_Core_Manager::vrodos_getEditpage('assetslist');
+            $assets_list_page_id = $assets_list_page[0]->ID;
+            $loadProjectAssets = esc_url( get_permalink($assets_list_page_id) . '?vrodos_project_id=' . $game_id );
+
+
+            echo '<li class="mdc-list-item" style="" id="'. $game_id.'">';
+
+            // Href when press on title
+            echo '<span class="mdc-list-item" style="float:left" data-mdc-auto-init="MDCRipple" title="Open '.$game_title.'">';
+            echo '<i class="material-icons mdc-list-item__start-detail" aria-hidden="true" title="'.$game_type_obj->string.'">'.$game_type_obj->icon.'</i>';
+            echo '<span id="'.$game_id.'-title" class="mdc-list-item__text">'.$game_title.'<span id="'.$game_id.'-date" class="mdc-list-item__text__secondary">'.$game_date.'</span>'.
+                '</span>';
+            echo '</span>';
+
+
+
+            // VR button: Go to 3D Editor
+
+            echo '<div style="margin-left:auto; margin-right:0">';
+
+            // ----- Assets button ------------------
+            echo '<a href="'.$loadProjectAssets.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
+                'title="Manage assets of '.$game_title.'">';
+            echo '<span id="'.$game_id.'-assets-button" class="mdc-button" >Assets</span>';
+            echo '</a>';
+
+            // ------- Collaborators -----------
+
+            // Collaborators button
+            echo '<a href="javascript:void(0)" class="mdc-button mdc-list-item__end-detail" '.
+                'data-mdc-auto-init="MDCRipple" title="Add collaborators for '.
+                $game_title . '" onclick="collaborateProject(' . $game_id . ')">';
+
+            $collaborators = get_post_meta($game_id, 'vrodos_project_collaborators_ids');
+
+            // Find number of current collaborators
+            if ( count($collaborators)>0) {
+
+                $collabs_ids_raw = get_post_meta($game_id, 'vrodos_project_collaborators_ids')[0];
+                $collabs_ids = array_values(array_filter(explode(";", $collabs_ids_raw)));
+            } else {
+                $collabs_ids = [];
+            }
+
+            echo '<i class="material-icons" aria-hidden="true" ' . ' title="Add collaborators">group</i>' .
+                '<sup>' . count($collabs_ids) . '</sup>';
+
+            //echo get_user_by('id', $collabs_ids[0])->display_name;
+            echo '</a>';
+
+
+            // --------- 3D editor button -----------
+            echo '<a id="3d-editor-bt-'.$game_id.'" href="'.$loadMainSceneLink.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
+                'title="Open 3D Editor for '.$game_title.'">';
+            echo '<span id="'.$game_id.'-vr-button" class="mdc-button" >3D_Editor</span>';
+            echo '</a>';
+
+            // -------- Delete button ----------------
+            echo '<a href="javascript:void(0)" class="" style="" aria-label="Delete game" title="Delete project" '.
+                'onclick="deleteProject('.$game_id.')">';
+            echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color: crimson" '
+                .'aria-hidden="true" title="Delete project">delete</i>';
+            echo '</a>';
+
+            echo '<div>';
+            echo '</li>';
+        endwhile;
+
+        echo '</ul>';
+
+
+
+        wp_reset_postdata();
+        //$wp_query = NULL;
+        //$wp_query = $temp_query;
+
+
+    } else {
+
+        echo '<hr class="WhiteSpaceSeparator">';
+        echo '<div class="CenterContents">' .
+            '<i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true"' .
+            ' title="No projects available">' .
+            'games' .
+            '</i>'.
+            '<h3 class="mdc-typography--headline"> projects available</h3>' .
+            '<hr class="WhiteSpaceSeparator">'.
+            '<h4 class="mdc-typography--title mdc-theme--text-secondary-on-light">'.
+            'You can try creating a new one</h4>';
+        echo '</div>';
+    }
+
+    wp_die();
+}
 }

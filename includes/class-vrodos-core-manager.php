@@ -188,4 +188,77 @@ class VRodos_Core_Manager {
 
         return $sceneIds;
     }
+
+    public static function vrodos_project_type_icon($project_category){
+
+        // Set game type icon
+        switch($project_category){
+            case 'vrexpo':
+                $project_type_icon = "public";
+                break;
+            case 'virtualproduction':
+                $project_type_icon = "theaters";
+                break;
+            case 'Archaeology':
+            default:
+                $project_type_icon = "account_balance";
+                break;
+        }
+        return $project_type_icon;
+    }
+
+    public static function vrodos_return_project_type($id) {
+
+        if (!$id) {
+            return null;
+        }
+
+        $all_project_category = get_the_terms( $id, 'vrodos_game_type' );
+
+        $project_category = $all_project_category ? $all_project_category[0]->name : null;
+
+        $project_type_icon = self::vrodos_project_type_icon($project_category);
+
+        $obj = new stdClass();
+        $obj->string = $project_category;
+        $obj->icon = $project_type_icon;
+
+        return $obj;
+    }
+
+    public static function vrodos_getEditpage($type){
+
+        switch ($type) {
+            case 'allgames':
+                $templateURL = '/templates/vrodos-project-manager-template.php';
+                break;
+
+            case 'game':
+            case 'assetslist':
+                $templateURL = '/templates/vrodos-assets-list-template.php';
+                break;
+
+            case 'scene':
+                $templateURL = '/templates/vrodos-edit-3D-scene-template.php';
+                break;
+            case 'asset':
+                $templateURL = '/templates/vrodos-asset-editor-template.php';
+                break;
+
+            default:
+                $templateURL = null;
+
+        }
+
+        if ($templateURL) {
+            return get_pages(array(
+                'hierarchical' => 0,
+                'parent' => -1,
+                'meta_key' => '_wp_page_template',
+                'meta_value' => $templateURL
+            ));
+        } else {
+            return false;
+        }
+    }
 }

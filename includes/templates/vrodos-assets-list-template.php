@@ -63,8 +63,8 @@ wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_
 //    $parent_project_id_as_term_id = $allScenePGame->term_id;
 
 
-$editgamePage = vrodos_getEditpage('game');
-$newAssetPage = vrodos_getEditpage('asset');
+$editgamePage = VRodos_Core_Manager::vrodos_getEditpage('game');
+$newAssetPage = VRodos_Core_Manager::vrodos_getEditpage('asset');
 
 //$urlforAssetEdit = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $project_id . '&vrodos_scene=' .$scene_id . '&vrodos_asset=' ); // . asset_id
 
@@ -102,7 +102,7 @@ $link_to_edit = home_url().'/vrodos-asset-editor-page/?';
 if ($single_project_asset_list)
     $link_to_edit = $link_to_edit. "singleproject=true&";
 
-$allProjectsPage = vrodos_getEditpage('allgames');
+$allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
 $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
 ?>

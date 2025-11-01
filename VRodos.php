@@ -480,8 +480,6 @@ add_action('wp_ajax_vrodos_fetch_collaborators_action','vrodos_fetch_collaborato
 
 add_action('wp_ajax_vrodos_create_project_action','vrodos_create_project_frontend_callback');
 
-add_action('wp_ajax_vrodos_fetch_list_projects_action','vrodos_fetch_list_projects_callback');
-
 
 
 // ------ Ajaxes for scenes -----------
@@ -551,7 +549,7 @@ add_filter('wp_revisions_to_keep', 'ns_limit_revisions', 10, 2);
 
 // Main backend info page
 function vrodos_plugin_main_page() {
-    $allProjectsPage = vrodos_getEditpage('allgames');
+    $allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
 
     if ( is_admin() ) {
         if( ! function_exists( 'get_plugin_data' ) ) {

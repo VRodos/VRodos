@@ -98,7 +98,7 @@ $current_scene_id = sanitize_text_field( intval( $_GET['vrodos_scene'] ));
 $scene_post = get_post($current_scene_id);
 
 // Get project type
-$project_obj = vrodos_return_project_type(intval( $_GET['vrodos_game'] ));
+$project_obj = VRodos_Core_Manager::vrodos_return_project_type(intval( $_GET['vrodos_game'] ));
 $project_type_str = substr($project_obj->string, strpos($project_obj->string, "_") - 1);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
@@ -116,12 +116,12 @@ $sceneTitle = $scene_post->post_name;
 // Front End or Back end
 $isAdmin = is_admin() ? 'back' : 'front';
 
-$allProjectsPage = vrodos_getEditpage('allgames');
-$newAssetPage = vrodos_getEditpage('asset');
-$editscenePage = vrodos_getEditpage('scene');
+$allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
+$newAssetPage = VRodos_Core_Manager::vrodos_getEditpage('asset');
+$editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
 
 
-$videos = vrodos_getVideoAttachmentsFromMediaLibrary();
+$videos = VRodos_Core_Manager::vrodos_getVideoAttachmentsFromMediaLibrary();
 
 // Shift vars to Javascript side
 echo '<script>';
