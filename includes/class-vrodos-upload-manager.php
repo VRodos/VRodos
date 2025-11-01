@@ -214,15 +214,22 @@ class VRodos_Upload_Manager {
         // Always remove filters after the operation.
         remove_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
         unset($_REQUEST['post_id']);
-        remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
-        remove_filter('big_image_size_threshold', '__return_false');
 
         if ($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $scene_id);
+
+            // Filters must be removed *after* the attachment is created.
+            remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
+            remove_filter('big_image_size_threshold', '__return_false');
+
             if ($attachment_id) {
                 set_post_thumbnail($scene_id, $attachment_id);
                 return $attachment_id;
             }
+        } else {
+            // Ensure filters are removed even if the upload fails.
+            remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
+            remove_filter('big_image_size_threshold', '__return_false');
         }
 
         return false;
@@ -252,15 +259,22 @@ class VRodos_Upload_Manager {
         // Always remove filters after the operation.
         remove_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
         unset($_REQUEST['post_id']);
-        remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
-        remove_filter('big_image_size_threshold', '__return_false');
 
         if ($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $parentPostId);
+
+            // Filters must be removed *after* the attachment is created.
+            remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
+            remove_filter('big_image_size_threshold', '__return_false');
+
             if ($attachment_id) {
                 update_post_meta($parentPostId, 'vrodos_asset3d_screenimage', $attachment_id);
                 return $attachment_id;
             }
+        } else {
+            // Ensure filters are removed even if the upload fails.
+            remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
+            remove_filter('big_image_size_threshold', '__return_false');
         }
 
         return false;
