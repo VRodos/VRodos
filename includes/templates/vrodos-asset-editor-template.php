@@ -219,7 +219,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     }
 
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
-        VRodos_Core_Manager::upload_asset_screenshot($_POST['sshotFileInput'], $asset_id, $project_id);
+        VRodos_Upload_Manager::upload_asset_screenshot($_POST['sshotFileInput'], $asset_id, $project_id);
     }
 
     // Save custom parameters according to asset type.
@@ -230,7 +230,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
                 vrodos_create_asset_addVideo_frontend($asset_id);
             }
             if (isset($_POST['videoSshotFileInput'])) {
-                VRodos_Core_Manager::upload_asset_screenshot($_POST['videoSshotFileInput'], $asset_id, $project_id);
+                VRodos_Upload_Manager::upload_asset_screenshot($_POST['videoSshotFileInput'], $asset_id, $project_id);
             }
             update_post_meta($asset_id, 'vrodos_asset3d_video_title', sanitize_text_field($_POST['videoTitle']));
             update_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', isset($_POST['video_autoloop_checkbox']));
