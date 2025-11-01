@@ -109,10 +109,6 @@ add_action( 'plugins_loaded', array( 'vrodosTemplate', 'get_instance' ) );
 // Order 1: Filters inside vrodos-page-templates
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
 
-
-// ------------------- Add helper functions file ------------------------------------------
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-helper.php' );
-
 //------------------- For Compile ---------------------------------
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-compile-aframe.php' );
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-core-project-assemble-replace.php' );
