@@ -91,7 +91,7 @@ class vrodos_3d_widget extends WP_Widget {
 
                 <?php
                 // Get all assets
-                $assets = get_assets([]);
+                $assets = VRodos_Core_Manager::get_assets([]);
 
                 // Iterate for the drop down
                 for ($i=0;$i<count($assets);$i++){
@@ -358,7 +358,7 @@ class vrodos_3d_widget extends WP_Widget {
 
 
 
-        $asset_3d_files = get_3D_model_files($assetpostMeta, $asset_id);
+        $asset_3d_files = VRodos_Core_Manager::get_3D_model_files($assetpostMeta, $asset_id);
 
         // audio file
         $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);

@@ -130,7 +130,7 @@ if ($project_type === 'Archaeology') {
 $scene_post = get_post($current_scene_id);
 
 // If empty load default scenes if no content. Do not put esc_attr, crashes the universe in 3D.
-$scene_json_from_db = $scene_post->post_content ? $scene_post->post_content : vrodos_getDefaultJSONscene(strtolower($project_type));
+$scene_json_from_db = $scene_post->post_content ? $scene_post->post_content : VRodos_Core_Manager::vrodos_getDefaultJSONscene(strtolower($project_type));
 
 // Create a scene model to validate and structure the data.
 $scene_model = new Vrodos_Scene_Model($scene_json_from_db);
@@ -273,7 +273,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         case 'virtualproduction_games':
         case 'vrexpo_games':
             $game_type_chosen_slug = $thegameType[0]->slug;
-            $default_json = vrodos_getDefaultJSONscene(strtolower($project_type));
+            $default_json = VRodos_Core_Manager::vrodos_getDefaultJSONscene(strtolower($project_type));
             break;
 
     }
