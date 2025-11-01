@@ -168,7 +168,54 @@ class VRodos_Compiler_Manager {
         $actionsDiv   = $dom->getElementById( 'actionsDiv' );
         $ascene       = $dom->getElementById( 'aframe-scene-container' );
         $ascenePlayer = $dom->getElementById( 'player' );
-        $project_type = wp_get_post_terms( $project_id, 'vrodos_game_type' );
+
+        // If MediaVerse project, then enable upload to MV Node.
+        $media_panel = $dom->getElementById('mediaPanel');
+        $recording_controls = $dom->getElementById('upload-recording-btn');
+        $project_type = wp_get_post_terms($project_id, 'vrodos_game_type');
+        if ($project_type && $project_type[0]->slug == 'virtualproduction_games') {
+            $media_panel->setAttribute( "style", 'visibility: visible;' );
+            $recording_controls->setAttribute('style', 'visibility: visible;');
+
+
+            // If MediaVerse project, get MV node url, in order to upload video and update project
+            $user_id = get_current_user_id();
+            if ($user_id) {
+                $token = get_the_author_meta( 'mvnode_token', $user_id );
+                $node_token_input = $dom->getElementById('node-token-input');
+                $node_token_input->setAttribute('value', $token);
+
+                $url = get_the_author_meta( 'mvnode_url', $user_id );
+                $node_url_input = $dom->getElementById('node-url-input');
+                $node_url_input->setAttribute('value', $url);
+
+            }
+
+            // If there is a MV project id, then forward it to client
+            $mv_project_id = get_post_meta($project_id, 'mv_project_id');
+            if ($mv_project_id) {
+                $mv_project_id_input = $dom->getElementById('mv-project-id-input');
+                $mv_project_id_input->setAttribute('value', $mv_project_id[0]);
+            }
+
+            $dom->saveHTML();
+        }else {
+
+            $media_panel->setAttribute( "style", 'visibility: hidden;' );
+            $recording_controls->setAttribute('style', 'visibility: hidden;');
+        }
+
+        // Toggle general chat
+        $chat_wrapper = $dom->getElementById('chat-wrapper-el');
+        if (isset($scene_json->metadata->enableGeneralChat)) {
+            if (filter_var($scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN) === true) {
+                $chat_wrapper->setAttribute( "data-visible", 'true' );
+            } else {
+                $chat_wrapper->setAttribute( "data-visible", 'false' );
+            }
+        } else {
+            $chat_wrapper->setAttribute( "data-visible", 'false' );
+        }
 
         $is_base_scene_element = $dom->getElementById( 'is-base-scene-input' );
         if ( min( $scene_id_list ) == $scene_id ) {

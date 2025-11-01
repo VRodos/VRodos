@@ -230,31 +230,39 @@ class VRodos_Upload_Manager {
 
     public static function upload_asset_screenshot($image, $parentPostId, $projectId) {
         self::load_wp_admin_files();
+
+        // Set post_id for the upload directory filter.
+        $_REQUEST['post_id'] = $parentPostId;
+        add_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
+
+        // First, delete the existing screenshot if it exists.
         $asset3d_screenimage_id = get_post_meta($parentPostId, 'vrodos_asset3d_screenimage', true);
         if ($asset3d_screenimage_id) {
             wp_delete_attachment($asset3d_screenimage_id, true);
         }
-        $_REQUEST['post_id'] = $parentPostId;
-        add_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
+
+        // Now, proceed with uploading the new screenshot.
         add_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
         add_filter('big_image_size_threshold', '__return_false');
+
         $filename = $parentPostId .'_'. time() .'_asset_screenshot.png';
         $decoded_image = base64_decode(substr($image, strpos($image, ",") + 1));
         $file_return = wp_upload_bits($filename, null, $decoded_image);
+
+        // Always remove filters after the operation.
         remove_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
         unset($_REQUEST['post_id']);
+        remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
+        remove_filter('big_image_size_threshold', '__return_false');
+
         if ($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $parentPostId);
-            remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
-            remove_filter('big_image_size_threshold', '__return_false');
             if ($attachment_id) {
                 update_post_meta($parentPostId, 'vrodos_asset3d_screenimage', $attachment_id);
                 return $attachment_id;
             }
-        } else {
-            remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
-            remove_filter('big_image_size_threshold', '__return_false');
         }
+
         return false;
     }
 
