@@ -210,12 +210,8 @@ class VRodos_Game_CPT_Manager {
             return;
 
         // Check permissions
-        if ('vrodos_game' == $_POST['post_type']) {
-            if (!current_user_can('edit_page', $post_id))
-                return;
-        } else {
-            if (!current_user_can('edit_post', $post_id))
-                return;
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
         }
 
         $type_ID = intval($_POST['vrodos_game_type'], 10);
