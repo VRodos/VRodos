@@ -315,15 +315,16 @@ class VRodos_AJAX_Handler {
     public function save_scene_async_action_callback()
     {
         // Save screenshot
-        if (isset($_POST['scene_screenshot']))
+        if (isset($_POST['scene_screenshot'])) {
             $attachment_id = VRodos_Upload_Manager::upload_scene_screenshot(
                 $_POST['scene_screenshot'],
                 'scene_'.$_POST['scene_id'].'_featimg',
                 $_POST['scene_id'],
                 'jpg');
 
-        // Set thumbnail of post
-        set_post_thumbnail( $_POST['scene_id'], $attachment_id );
+            // Set thumbnail of post
+            set_post_thumbnail( $_POST['scene_id'], $attachment_id );
+        }
 
         // Create a new scene model and populate it from the posted JSON.
         $scene_model = new Vrodos_Scene_Model(wp_unslash($_POST['scene_json']));

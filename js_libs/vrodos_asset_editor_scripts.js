@@ -180,13 +180,41 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
         asset_viewer_3d_kernel_local.render();
         document.getElementById("sshotPreviewImg").src = canvas.toDataURL("image/png");
 
-        //------------ Resize ---------------------------------------
+        //------------ Resize and Crop ---------------------------------------
+        const targetWidth = 356;
+        const targetHeight = 200;
+        const targetRatio = targetWidth / targetHeight;
+
+        let sourceWidth = canvas.width;
+        let sourceHeight = canvas.height;
+        let sourceRatio = sourceWidth / sourceHeight;
+
+        let sourceX = 0;
+        let sourceY = 0;
+
+        if (sourceRatio > targetRatio) {
+            // Source is wider than target, crop the sides
+            let newSourceWidth = sourceHeight * targetRatio;
+            sourceX = (sourceWidth - newSourceWidth) / 2;
+            sourceWidth = newSourceWidth;
+        } else if (sourceRatio < targetRatio) {
+            // Source is taller than target, crop the top and bottom
+            let newSourceHeight = sourceWidth / targetRatio;
+            sourceY = (sourceHeight - newSourceHeight) / 2;
+            sourceHeight = newSourceHeight;
+        }
+
         let resizedCanvas = document.createElement("canvas");
-        let resizedContext = resizedCanvas.getContext("2d");
-        let context = canvas.getContext("2d");
-        resizedCanvas.height = "150";
-        resizedCanvas.width = "265";
-        resizedContext.drawImage(canvas, 0, 0, resizedCanvas.width, resizedCanvas.height);
+        resizedCanvas.width = targetWidth;
+        resizedCanvas.height = targetHeight;
+
+        resizedCanvas.getContext("2d").drawImage(
+            canvas,
+            sourceX, sourceY,
+            sourceWidth, sourceHeight,
+            0, 0,
+            targetWidth, targetHeight
+        );
 
         document.getElementById("sshotFileInput").value = resizedCanvas.toDataURL();
     });
@@ -229,29 +257,6 @@ function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
 
 function clearList() {
     vrodos_reset_panels(asset_viewer_3d_kernel, "clearList");
-}
-
-
-function generateQRcode(){
-    // Generate QR Code
-    let opts = {
-        errorCorrectionLevel: 'H',
-        type: 'image/png',
-        quality: 1.0,
-        margin: 1,
-        color: {
-            dark:"#010599FF",
-            light:"#FFBF60FF"
-        }
-    };
-    /*let data = window.location.href.replace('#','&qrcode=none#');*/
-    let data = window.location.href;
-
-    QRCode.toDataURL(data, opts, function (err, url) {
-        if (err) throw err
-        let img = document.getElementById('qrcode_img');
-        img.src = url;
-    })
 }
 
 function setScreenshotHandler(){
