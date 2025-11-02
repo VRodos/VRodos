@@ -13,9 +13,6 @@ $isAdmin = is_admin() ? 'back' : 'front';
         let isAdmin="<?php echo $isAdmin; ?>";
     </script>
 
-    <!--Load external library to create QR code-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
-
 <?php
 
 // Load Scripts
@@ -368,9 +365,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             <a href="#" class="animationButton" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();">Animation 1</a>
             <!--Bounds not working...-->
             <!--<a href="#" class="boundingSphereButton" id="boundSphButton" onclick="asset_viewer_3d_kernel.showHideBoundSphere();">Bounds</a>-->
-
-            <!-- QR code -->
-            <?php include 'vrodos-QRCodeGenerator.php'; ?>
 
         </div>
 
@@ -919,7 +913,6 @@ $assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
             generateVideoSshot(videoSshotCanvas, assetVideoTag);
         });
 
-        generateQRcode();
         setScreenshotHandler();
 
         // ------- Class to load 3D model ---------
