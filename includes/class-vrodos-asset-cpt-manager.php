@@ -526,4 +526,118 @@ class VRodos_Asset_CPT_Manager {
 			}
 		}
 	}
+
+
+	// --- Asset saving and updating logic ---
+
+	/**
+	 * Create extra 3D files for the asset.
+	 */
+	public static function create_asset_3dfiles_extra_frontend($asset_new_id, $project_id, $asset_cat_id) {
+		// Clear out all previous attachments
+		$attachments = get_children( array('post_parent' => $asset_new_id, 'post_type' => 'attachment') );
+		foreach ($attachments as $attachment) {
+			if (strpos($attachment->post_title, 'screenshot') === false) {
+				wp_delete_attachment($attachment->ID, true);
+			}
+		}
+
+		// Upload and update DB
+		if (isset($_POST['glbFileInput']) && $_POST['glbFileInput']) {
+			$glb_file_id = VRodos_Upload_Manager::upload_asset_text(
+				null,
+				'glb_' . $asset_new_id . '_' . $asset_cat_id,
+				$asset_new_id,
+				$_FILES,
+				0,
+				$project_id
+			);
+			update_post_meta($asset_new_id, 'vrodos_asset3d_glb', $glb_file_id);
+		}
+	}
+
+	/**
+	 * Create a new asset from the frontend.
+	 */
+	public static function create_asset_frontend($asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description) {
+		$asset_taxonomies = array(
+			'vrodos_asset3d_pgame'    => array($asset_pgame_id),
+			'vrodos_asset3d_cat'      => array($asset_cat_id),
+			'vrodos_asset3d_ipr_cat'  => array($asset_cat_ipr_id),
+		);
+
+		$asset_information = array(
+			'post_title'   => $asset_title,
+			'post_content' => $asset_description,
+			'post_type'    => 'vrodos_asset3d',
+			'post_status'  => 'publish',
+			'tax_input'    => $asset_taxonomies,
+		);
+
+		$asset_id = wp_insert_post($asset_information);
+		update_post_meta($asset_id, 'vrodos_asset3d_pathData', $game_slug);
+		self::update_asset_meta($asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs);
+
+		return $asset_id ? $asset_id : 0;
+	}
+
+	/**
+	 * Update an existing asset from the frontend.
+	 */
+	public static function update_asset_frontend($asset_pgame_id, $asset_cat_id, $asset_id, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description) {
+		$asset_taxonomies = array(
+			'vrodos_asset3d_pgame'    => array($asset_pgame_id),
+			'vrodos_asset3d_cat'      => array($asset_cat_id),
+			'vrodos_asset3d_ipr_cat'  => array($asset_cat_ipr_id),
+		);
+
+		$data = array(
+			'ID'           => $asset_id,
+			'post_title'   => $asset_title,
+			'post_content' => $asset_description,
+			'tax_input'    => $asset_taxonomies,
+		);
+
+		wp_update_post($data);
+		self::update_asset_meta($asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs);
+
+		return 1;
+	}
+
+	/**
+	 * Add images to the asset.
+	 */
+	public static function create_asset_add_images_frontend($asset_id, $file) {
+		$attachment_id = VRodos_Upload_Manager::upload_img_vid_aud($file, $asset_id);
+		update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', $attachment_id);
+	}
+
+	/**
+	 * Add audio to the asset.
+	 */
+	public static function create_asset_add_audio_frontend($asset_new_id) {
+		if (isset($_FILES['audioFileInput']) && $_FILES['audioFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
+			$attachment_audio_id = VRodos_Upload_Manager::upload_img_vid_aud($_FILES['audioFileInput'], $asset_new_id);
+			update_post_meta($asset_new_id, 'vrodos_asset3d_audio', $attachment_audio_id);
+		}
+	}
+
+	/**
+	 * Add video to the asset.
+	 */
+	public static function create_asset_add_video_frontend($asset_new_id) {
+		if (isset($_FILES['videoFileInput']) && $_FILES['videoFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
+			$attachment_video_id = VRodos_Upload_Manager::upload_img_vid_aud($_FILES['videoFileInput'], $asset_new_id);
+			update_post_meta($asset_new_id, 'vrodos_asset3d_video', $attachment_video_id);
+		}
+	}
+
+	/**
+	 * Update the asset's meta data.
+	 */
+	public static function update_asset_meta($asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs) {
+		update_post_meta($asset_id, 'vrodos_asset3d_fonts', $asset_fonts);
+		update_post_meta($asset_id, 'vrodos_asset3d_back3dcolor', $asset_back_3d_color);
+		update_post_meta($asset_id, 'vrodos_asset3d_assettrs', $asset_trs);
+	}
 }

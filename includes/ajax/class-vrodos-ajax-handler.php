@@ -400,23 +400,26 @@ class VRodos_AJAX_Handler {
         //1. Delete screenshot of scene
         $postmeta = get_post_meta($scene_id);
 
-        $thumb_id = $postmeta['_thumbnail_id'][0];
+        if (isset($postmeta['_thumbnail_id'])) {
+            $thumb_id = $postmeta['_thumbnail_id'][0];
+            $attached_file = get_post_meta($thumb_id, '_wp_attached_file', true);
 
-        $attached_file = get_post_meta($thumb_id, '_wp_attached_file',true);
+            if (file_exists($attached_file)) {
+                unlink($attached_file);
+            }
 
-        if (file_exists($attached_file)) {
-            unlink($attached_file);
+            //2. Delete meta
+            delete_post_meta( $thumb_id, '_wp_attached_file' );
+            delete_post_meta( $thumb_id, '_wp_attachment_metadata' );
         }
-
-        //2. Delete meta
-        delete_post_meta( $thumb_id, '_wp_attached_file' );
-        delete_post_meta( $thumb_id, '_wp_attachment_metadata' );
 
         //3. Delete Scene CUSTOM POST
         wp_delete_post( $scene_id, true );
 
         //4. Delete Thumbnail post
-        wp_delete_post( $thumb_id, true );
+        if (isset($postmeta['_thumbnail_id'])) {
+            wp_delete_post($thumb_id, true);
+        }
 
         echo $postTitle;
 

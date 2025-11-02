@@ -192,13 +192,13 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         <div style="position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%);font-size: x-large">Creating asset...</div>
         <?php
         // It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
-        $asset_id = vrodos_create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '');
+        $asset_id = VRodos_Asset_CPT_Manager::create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '');
     }
     else { ?>
         <div class='centerMessageAssetSubmit'>Updating asset...</div>
         <?php
         // Edit an existing asset: Return true if updated, false if failed
-        $asset_updatedConf = vrodos_update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '');
+        $asset_updatedConf = VRodos_Asset_CPT_Manager::update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '');
     }
 
 
@@ -208,7 +208,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
         // NoCloning: Upload files from POST but check first
         // if any 3D files have been selected for upload
         if (count($_FILES['multipleFilesInput']['name']) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ){
-            vrodos_create_asset_3DFilesExtra_frontend($asset_id, $project_id, $assetCatID);
+            VRodos_Asset_CPT_Manager::create_asset_3dfiles_extra_frontend($asset_id, $project_id, $assetCatID);
         }
 
         update_post_meta($asset_id, 'vrodos_asset3d_isCloned', 'false');
@@ -226,7 +226,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
         case 'video':
             if (isset($_FILES['videoFileInput'])) {
-                vrodos_create_asset_addVideo_frontend($asset_id);
+                VRodos_Asset_CPT_Manager::create_asset_add_video_frontend($asset_id);
             }
             if (isset($_POST['videoSshotFileInput'])) {
                 VRodos_Upload_Manager::upload_asset_screenshot($_POST['videoSshotFileInput'], $asset_id, $project_id);
@@ -239,7 +239,7 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
             $existing_img = $_FILES['imageFileInput'];
             if ( $existing_img['error'] != 4  ) {
-                vrodos_create_asset_addImages_frontend($asset_id, $_FILES['imageFileInput']);
+                VRodos_Asset_CPT_Manager::create_asset_add_images_frontend($asset_id, $_FILES['imageFileInput']);
             }
 
             update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', sanitize_text_field($_POST['poiImgTitle']));
