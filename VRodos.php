@@ -62,9 +62,8 @@ new VRodos_Pages_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-core-manager.php');
 new VRodos_Core_Manager();
 
-
-////===================================== Assets ============================================
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scenes.php' );
+// Default Scene Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-scene-manager.php');
 
 
 // Upload Manager Class

@@ -144,7 +144,7 @@ class VRodos_Game_CPT_Manager {
                 wp_set_object_terms($post->ID, intval($project_type_id), 'vrodos_game_type');
 
                 // Create Default Scenes for this "Project"
-                vrodos_create_default_scenes_for_game($projectSlug, $project_type_id);
+                VRodos_Default_Scene_Manager::create_default_scenes_for_game($projectSlug, $project_type_id);
             } else {
                 $projectTitle = $post->post_title;
                 // Create a parent game tax category for the assets
