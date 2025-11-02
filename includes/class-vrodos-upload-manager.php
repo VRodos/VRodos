@@ -243,7 +243,7 @@ class VRodos_Upload_Manager {
         add_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
 
         // Define filename. A consistent filename is important for overwriting.
-        $filename = $parentPostId . '_asset_screenshot.png';
+        $filename = $parentPostId . '_sshot.png';
         $decoded_image = base64_decode(substr($image, strpos($image, ",") + 1));
 
         // If an old screenshot exists, we overwrite it.
