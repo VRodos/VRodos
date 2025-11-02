@@ -285,6 +285,10 @@ class VRodos_LoaderMulti {
                                 if (resources3D[name]['category_slug'] == "video")
                                     glbURL = pluginPath + '/assets/objects/tv_flat_scaled_rotated.glb';
 
+                                if (!glbURL) {
+                                    console.warn("Asset '" + name + "' has no GLB path and will be skipped.");
+                                    return;
+                                }
 
                                     console.log(glbURL);
                                 // Instantiate a loader

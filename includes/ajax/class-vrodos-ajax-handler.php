@@ -468,50 +468,30 @@ class VRodos_AJAX_Handler {
 
         // If it is not cloned then it is safe to delete the meta files.
         if ($isCloned==='false') {
-
-            $containerFolder = wp_upload_dir()['basedir'].'/models/';
-
-            // Get texture attachments of post
+            // This part handles texture attachments.
             $args = array(
-                'posts_per_page' => 100,
-                'order'          => 'DESC',
-                'post_parent'    => $asset_id
+                'post_parent'    => $asset_id,
+                'post_type'      => 'attachment',
+                'posts_per_page' => -1,
             );
-
-            $attachments_array =  get_children( $args,OBJECT );  //returns Array ( [$image_ID].
-
-            // Add texture urls to a string separated by |
-
-            foreach ($attachments_array as $k){
-                $child_post_id = $k->ID;
-
-                // Delete the file from the system
-                wp_delete_file($containerFolder.basename(get_attached_file($child_post_id)));
-
-                // Delete attachment
-                wp_delete_attachment($child_post_id, true); // True : Not go to trash
+            $attachments = get_children($args);
+            if ($attachments) {
+                foreach ($attachments as $attachment) {
+                    wp_delete_attachment($attachment->ID, true);
+                }
             }
 
-
-            // ---------- GLB -------
+            // This part handles the main GLB file.
             $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
+            if ($glbID) {
+                wp_delete_attachment($glbID, true);
+            }
 
-            // Delete the file from the system
-            wp_delete_file($containerFolder.basename(get_attached_file($glbID)));
-
-            // Delete attachment
-            wp_delete_attachment($glbID, true);
-
-
-
-            // ---------- Screenshot ---------------
+            // This part handles the screenshot.
             $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
-
-            // Delete the file from the system
-            wp_delete_file($containerFolder.basename(get_attached_file($screenID)));
-
-            // Delete attachment
-            wp_delete_attachment($screenID, true);
+            if ($screenID) {
+                wp_delete_attachment($screenID, true);
+            }
         }
 
         // Delete all uses of Asset from Scenes (json)
