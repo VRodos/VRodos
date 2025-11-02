@@ -485,9 +485,6 @@ class VRodos_AJAX_Handler {
             foreach ($attachments_array as $k){
                 $child_post_id = $k->ID;
 
-                // Delete the file from the system
-                wp_delete_file($containerFolder.basename(get_attached_file($child_post_id)));
-
                 // Delete attachment
                 wp_delete_attachment($child_post_id, true); // True : Not go to trash
             }
@@ -496,9 +493,6 @@ class VRodos_AJAX_Handler {
             // ---------- GLB -------
             $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
 
-            // Delete the file from the system
-            wp_delete_file($containerFolder.basename(get_attached_file($glbID)));
-
             // Delete attachment
             wp_delete_attachment($glbID, true);
 
@@ -506,9 +500,6 @@ class VRodos_AJAX_Handler {
 
             // ---------- Screenshot ---------------
             $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
-
-            // Delete the file from the system
-            wp_delete_file($containerFolder.basename(get_attached_file($screenID)));
 
             // Delete attachment
             wp_delete_attachment($screenID, true);
