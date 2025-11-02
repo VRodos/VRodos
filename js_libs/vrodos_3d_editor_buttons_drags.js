@@ -1,4 +1,5 @@
 // Local and Global scope functions
+var new_screenshot_data = null;
 
 // Local
 function loadButtonActions() {
@@ -649,8 +650,8 @@ function takeScreenshot() {
     // if no manually selected file for icon, then take a screenshot of the 3D canvas
     //if (document.getElementById("vrodos_scene_sshot").src.includes("noimagemagicword"))
 
-
-    document.getElementById("vrodos_scene_sshot").src = envir.renderer.domElement.toDataURL("image/jpeg");
+    new_screenshot_data = envir.renderer.domElement.toDataURL("image/jpeg");
+    document.getElementById("vrodos_scene_sshot").src = new_screenshot_data;
     envir.renderer.preserveDrawingBuffer = false;
 
     //envir.cameraAvatarHelper.visible = true;
