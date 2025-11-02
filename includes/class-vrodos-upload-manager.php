@@ -252,13 +252,15 @@ class VRodos_Upload_Manager {
             $existing_path = str_replace(get_site_url(), ABSPATH, $existing_url);
             $existing_path = wp_normalize_path($existing_path);
 
-            // Overwrite the file on disk. This will create the file if it doesn't exist.
-            $file_return = file_put_contents($existing_path, $decoded_image);
+            // Overwrite the file on disk, but only if the path is valid.
+            if (!empty($existing_path)) {
+                $file_return = file_put_contents($existing_path, $decoded_image);
 
-            // Only update metadata if the file was written successfully.
-            if ($file_return !== false) {
+                // Only update metadata if the file was written successfully.
+                if ($file_return !== false) {
                 // Update metadata to reflect the change (important for cache busting and correct display).
                 wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
+                }
             }
 
             // We don't need to do anything else, so we can return.
