@@ -477,6 +477,10 @@ class VRodos_AJAX_Handler {
             $attachments = get_children($args);
             if ($attachments) {
                 foreach ($attachments as $attachment) {
+                    $file_path = get_attached_file($attachment->ID);
+                    if ($file_path && file_exists($file_path)) {
+                        wp_delete_file($file_path);
+                    }
                     wp_delete_attachment($attachment->ID, true);
                 }
             }
@@ -484,12 +488,20 @@ class VRodos_AJAX_Handler {
             // This part handles the main GLB file.
             $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
             if ($glbID) {
+                $file_path = get_attached_file($glbID);
+                if ($file_path && file_exists($file_path)) {
+                    wp_delete_file($file_path);
+                }
                 wp_delete_attachment($glbID, true);
             }
 
             // This part handles the screenshot.
             $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
             if ($screenID) {
+                $file_path = get_attached_file($screenID);
+                if ($file_path && file_exists($file_path)) {
+                    wp_delete_file($file_path);
+                }
                 wp_delete_attachment($screenID, true);
             }
         }
