@@ -13,7 +13,6 @@ if ( ! defined( 'VRODOS_PLUGIN_FILE' ) ) {
     define( 'VRODOS_PLUGIN_FILE', __FILE__ );
 }
 
-// Only these variables can change with php
 // @ini_set( 'memory_limit', '512M');
 @ini_set( 'max_execution_time', '2400' );
 
@@ -60,59 +59,29 @@ require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-core-manager.php
 new VRodos_Core_Manager();
 
 
-//add_filter( 'wp_nav_menu_items', 'add_loginout_link', 10, 2 );
-//function add_loginout_link( $items, $args ) {
-//	if (is_user_logged_in() && $args->theme_location == 'top_navigation') {
-//		$items .= wp_nav_menu( array('menu' => 'menu-logged-in', 'container' => '', 'echo' => false, 'items_wrap' => '%3$s') );
-//	}
-//    elseif (!is_user_logged_in() && $args->theme_location == 'top_navigation') {
-//		$items .= wp_nav_menu( array('menu' => 'menu-logged-out', 'container' => '', 'echo' => false, 'items_wrap' => '%3$s') );
-//	}
-//	return $items;
-//}
-
 ////===================================== Assets ============================================
-
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-create-default-scenes.php' );
 
 
-
-
-
-//===================================== Other ============================================
-
+// Upload Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-upload-manager.php');
 VRodos_Upload_Manager::register_hooks();
 
-//Create Initial Asset Categories
+// Create Initial Asset Categories
 include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
-// 22
 add_action( 'init', 'vrodos_create_asset_categories');
 
 // Settings Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-settings-manager.php');
 new VRodos_Settings_Manager();
 
-
-
 include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-templates.php' );
 
-// 27
 // Create class tha manipulates templates
 add_action( 'plugins_loaded', array( 'vrodosTemplate', 'get_instance' ) );
 
 // Order 1: Filters inside vrodos-page-templates
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
-
-//------------------- For Compile ---------------------------------
-
-
-
-// ---- Content interlinking ----------
-//add_action( 'wp_ajax_vrodos_fetch_description_action', 'vrodos_fetch_description_action_callback' );
-
-// Translate
-//add_action( 'wp_ajax_vrodos_translate_action', 'vrodos_translate_action_callback' );
 
 
 // ===================== Mime type to allow Upload ===================================
@@ -136,10 +105,7 @@ function vrodos_mime_types($mime_types){
     $mime_types['glb'] = 'application/octet-stream';
     return $mime_types;
 }
-
-// 70
 add_filter('upload_mimes', 'vrodos_mime_types', 1, 1);
-
 
 
 //---------- Admin site: Scripts about Upload button in Metaboxes ------
@@ -156,8 +122,7 @@ function my_admin_scripts() {
     wp_enqueue_script('thickbox');
 }
 
-//wp_register_script('my-upload', WP_PLUGIN_URL.'/my-script.js', array('jquery','media-upload','thickbox'));
-//  wp_enqueue_script('my-upload');
+
 function my_admin_styles()  {
     wp_enqueue_style('thickbox');
 }
@@ -207,8 +172,6 @@ function vrodos_3D_widget_shortcode( $atts, $content = null ) {
 }
 
 
-
-
 // shortcode to show content inside page with [visitor] Some content for the people just browsing your site. [/visitor]
 add_shortcode( 'visitor', 'vrodos_visitor_check_shortcode' );
 
@@ -217,7 +180,6 @@ function vrodos_visitor_check_shortcode( $atts, $content = null ) {
         return $content;
     return '';
 }
-
 
 
 // ------- lost passwords redirect ---------
@@ -230,9 +192,7 @@ function vrodos_lost_password_redirect() {
         exit;
     }
 }
-// 71
 add_action('login_headerurl', 'vrodos_lost_password_redirect');
-
 
 // Remove <p>  </p> from content to be used for saving json scenes in description
 remove_filter ('the_content', 'wpautop');
@@ -261,66 +221,10 @@ function vrodos_3d_register_block() {
 add_action( 'init', 'vrodos_3d_register_block' );
 
 
-
-
-//add_action('rest_api_init', function() {
-//    register_rest_route('vrodosReactRest/v1', '/project/slug=(?P<slug>[a-zA-Z0-9-]+)',
-//        [
-//        'method' => 'GET',
-//        'callback' => 'getAssetsRest',
-//        'permission_callback' => '__return_true'
-//    ]);
-//});
-
-
-//function getAssetsRest($data) {
-//
-//    $assets = get_assets($data['slug']);
-//    $responseObject = [];
-//
-//    for ($i=0;$i<count($assets);$i++){
-//        $responseObject[$assets[$i]['assetName']] = (Object) [$assets[$i]['assetid'], $assets[$i]['assettrs']];
-//    }
-//
-//    $f = fopen("output_max.txt","a");
-//    fwrite($f, print_r($responseObject,true));
-//    fclose($f);
-//
-//
-//    $response_json = json_encode($responseObject);
-//
-//    $f = fopen("output_max.txt","a");
-//    fwrite($f, print_r($assets['assettrs'],true));
-//    fclose($f);
-//
-//    return rest_ensure_response($response_json);
-//}
-
-
-
-
 // Widget Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-widget-manager.php');
 new VRodos_Widget_Manager();
 
-
-//----------------------- WIDGET SCENE ---------------------------------------------
-
-
-
-// 54
-// For classification
-//add_action('add_meta_boxes','vrodos_assets_create_right_metetaboxes');
-
-// Add the fields to the taxonomy, using our callback function
-// 59
-//add_action( 'vrodos_asset3d_cat_edit_form_fields', 'vrodos_assets_category_yamlFields', 10, 2 );
-
-// Save the changes made on the taxonomy, using our callback function
-// 60
-//add_action( 'edited_ vrodos_asset3d_cat', 'vrodos_assets_category_yamlFields_save', 10, 2 );
-
-/* ------------------------------ API ---------------------------------------- */
 
 //------------ 1. GraphQL
 add_action( 'graphql_register_types', function() {
@@ -334,146 +238,9 @@ add_action( 'graphql_register_types', function() {
     ] );
 } );
 
-
-//--------- 2. REST
-///*
-// * Get scene data by title
-// */
-//function prefix_get_endpoint_phrase($request) { //
-//    // rest_ensure_response() wraps the data we want to return into a WP_REST_Response, and ensures it will be properly returned.
-//
-//    $title = (string) $request['title'];
-//
-//    $args = array (
-//        'title'=>$title,
-//        'post_status' => 'publish',
-//        'post_type' => 'vrodos_scene'
-//    );
-//
-//    $post = get_posts( $args );
-//    $content = json_decode($post[0]->post_content, true);
-//
-//    return rest_ensure_response($content);
-//}
-//
-///**
-// * This function is where we register our routes for our example endpoint.
-// */
-//function prefix_register_example_routes() {
-//
-//    register_rest_route( 'vrodos/v1', '/scene/(?P<title>\S+)',
-//		array(
-//        'methods'  => WP_REST_Server::READABLE,   // By using this constant we ensure that when the WP_REST_Server changes our readable endpoints will work as intended.
-//        'callback' => 'prefix_get_endpoint_phrase',  // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
-//    ) );
-//}
-//
-//add_action( 'rest_api_init', 'prefix_register_example_routes' );
-
-
-//--------------------------------------------------------------------------
-
-//// Back-end restrict by author filtering
-//function vrodos_filter_by_the_author() {
-//
-//	$params = array(
-//		'name' => 'author', // this is the "name" attribute for filter <select>
-//		'show_option_all' => 'All authors' // label for all authors (display posts without filter)
-//	);
-//
-//	if ( isset($_GET['user']) )
-//		$params['selected'] = $_GET['user']; // choose selected user by $_GET variable
-//
-//	wp_dropdown_users( $params ); // print the ready author list
-//}
-//
-//// 72
-//add_action('restrict_manage_posts', 'vrodos_filter_by_the_author');
-
-//---------------------- Content Interlinking ------------------------
-//////SIDEBAR of Asset3D with fetch-segmentation etc...
-////// Probably it should be merged with the above
-//function vrodos_assets_scripts_and_styles() {
-//
-//    // load script from js_libs
-//    wp_enqueue_script( 'vrodos_content_interlinking_request');
-//
-//    // load script from js_libs
-//    wp_enqueue_script( 'vrodos_classification_request');
-//
-//    wp_enqueue_script('vrodos_segmentation_request');
-//
-//    // Some parameters to pass in the content_interlinking.js  ajax
-//    wp_localize_script('vrodos_content_interlinking_request', 'phpvars',
-//        array('lang' => 'en',
-//            'externalSource' => 'Wikipedia',
-//            'titles' => 'Scladina'  //'Albert%20Einstein'
-//        )
-//    );
-//
-//    // Some parameters to pass in the segmentation.js  ajax
-//    //    if( isset($_GET['post']) ){
-//    //        wp_localize_script('vrodos_segmentation_request', 'phpvars',
-//    //            array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
-//    //                'obj'  => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
-//    //            )
-//    //        );
-//    //
-//    //    }
-//
-//    // Some parameters to pass in the classification.js  ajax
-//    //	wp_localize_script('vrodos_classification_request', 'phpvars',
-//    //		array('path' => get_post_meta($_GET['post'], 'vrodos_asset3d_pathData', true).'/',
-//    //		      'obj' => get_post_meta($_GET['post'], 'vrodos_asset3d_obj', true)
-//    //		)
-//    //	);
-//}
-
-
-
-
-
-//
-//                AJAXes   registration
-//
-
 // AJAX Handler Class
 require_once(plugin_dir_path(__FILE__) . 'includes/ajax/class-vrodos-ajax-handler.php');
 new VRodos_AJAX_Handler();
-
-// -------- Ajax for game projects ------
-// Ajax for fetching game's assets within asset browser widget at vr_editor
-
-
-
-
-
-// ------ Ajaxes for scenes -----------
-
-
-// Ajax for deleting scene
-
-
-//------ Ajaxes for Assets----
-// AJAXES for content interlinking
-//add_action( 'wp_ajax_vrodos_translate_action', 'vrodos_translate_action_callback' );
-
-
-// Peer conferencing
-//add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', 'vrodos_notify_confpeers_callback');
-//add_action( 'wp_ajax_vrodos_notify_confpeers_action', 'vrodos_notify_confpeers_callback');
-//add_action( 'wp_ajax_vrodos_update_expert_log_action', 'vrodos_update_expert_log_callback');
-
-
-// AJAXES for semantics
-//add_action( 'wp_ajax_vrodos_segment_obj_action', 'vrodos_segment_obj_action_callback' );
-//add_action( 'wp_ajax_vrodos_monitor_segment_obj_action', 'vrodos_monitor_segment_obj_action_callback' );
-//add_action( 'wp_ajax_vrodos_enlist_splitted_objs_action', 'vrodos_enlist_splitted_objs_action_callback' );
-//add_action( 'wp_ajax_vrodos_classify_obj_action', 'vrodos_classify_obj_action_callback' );
-
-// AJAX for delete asset
-
-// AJAX for fetching assets
 
 
 // Front-end GLB Logged in
@@ -482,18 +249,6 @@ add_action('wp_ajax_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_asset3d_fr
 // Front-end GLB not Logged in
 add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', 'vrodos_fetch_glb_asset3d_frontend_callback');
 
-
-// Backend
-
-// ------- Ajaxes for compiling ---------
-
-// Assemble php from ajax call
-//add_action( 'wp_ajax_vrodos_assemble_action', 'vrodos_assemble_action_callback' );
-// Add the assepile php
-
-
-
-//-------- Remove Gutenberg for Widgets ---------
 
 // deactivate new block editor
 function disable_widgets_block_editor() {
