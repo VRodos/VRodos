@@ -485,6 +485,9 @@ class VRodos_AJAX_Handler {
             foreach ($attachments_array as $k){
                 $child_post_id = $k->ID;
 
+                // Delete the file from the system
+                wp_delete_file($containerFolder.basename(get_attached_file($child_post_id)));
+
                 // Delete attachment
                 wp_delete_attachment($child_post_id, true); // True : Not go to trash
             }
@@ -492,6 +495,9 @@ class VRodos_AJAX_Handler {
 
             // ---------- GLB -------
             $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
+
+            // Delete the file from the system
+            wp_delete_file($containerFolder.basename(get_attached_file($glbID)));
 
             // Delete attachment
             wp_delete_attachment($glbID, true);
@@ -501,12 +507,15 @@ class VRodos_AJAX_Handler {
             // ---------- Screenshot ---------------
             $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
 
+            // Delete the file from the system
+            wp_delete_file($containerFolder.basename(get_attached_file($screenID)));
+
             // Delete attachment
             wp_delete_attachment($screenID, true);
         }
 
         // Delete all uses of Asset from Scenes (json)
-        vrodos_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug);
+        VRodos_Core_Manager::vrodos_delete_asset_3d_from_scenes($asset_id, $gameSlug);
 
         // Delete Asset post from SQL database
         wp_delete_post( $asset_id, true );
