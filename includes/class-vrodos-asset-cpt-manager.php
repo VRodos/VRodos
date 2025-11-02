@@ -543,7 +543,7 @@ class VRodos_Asset_CPT_Manager {
 		}
 
 		// Upload and update DB
-		if (isset($_FILES['glbFileInput']) && $_FILES['glbFileInput']['error'] === UPLOAD_ERR_OK) {
+		if (isset($_POST['glbFileInput']) && $_POST['glbFileInput']) {
 			$glb_file_id = VRodos_Upload_Manager::upload_asset_text(
 				null,
 				'glb_' . $asset_new_id . '_' . $asset_cat_id,
