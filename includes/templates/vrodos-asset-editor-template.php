@@ -219,6 +219,21 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     }
 
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
+        // First, check if a screenshot already exists and delete it robustly.
+        $old_screenshot_id = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
+        if (!empty($old_screenshot_id)) {
+            $file_url = wp_get_attachment_url($old_screenshot_id);
+            if ($file_url) {
+                $site_url = get_site_url();
+                $file_path = str_replace($site_url, ABSPATH, $file_url);
+                $file_path = wp_normalize_path($file_path);
+                if (file_exists($file_path)) {
+                    wp_delete_file($file_path);
+                }
+            }
+            wp_delete_attachment($old_screenshot_id, true);
+        }
+        // Now, upload the new screenshot.
         VRodos_Upload_Manager::upload_asset_screenshot($_POST['sshotFileInput'], $asset_id, $project_id);
     }
 
