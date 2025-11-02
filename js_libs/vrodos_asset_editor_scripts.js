@@ -174,6 +174,12 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
 
     asset_viewer_3d_kernel_local.render();
 
+    // Hide QR code
+    let qrCodeDiv = document.getElementById('qrcode_div');
+    if(qrCodeDiv) {
+        qrCodeDiv.style.display = 'none';
+    }
+
     // I used html2canvas because there is no toDataURL in labelRenderer so there were no labels
     html2canvas(document.querySelector("#wrapper_3d_inner")).then(canvas => {
 
@@ -184,11 +190,16 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
         let resizedCanvas = document.createElement("canvas");
         let resizedContext = resizedCanvas.getContext("2d");
         let context = canvas.getContext("2d");
-        resizedCanvas.height = "150";
+        resizedCanvas.height = "149";
         resizedCanvas.width = "265";
         resizedContext.drawImage(canvas, 0, 0, resizedCanvas.width, resizedCanvas.height);
 
         document.getElementById("sshotFileInput").value = resizedCanvas.toDataURL();
+
+        // Show QR code again
+        if(qrCodeDiv) {
+            qrCodeDiv.style.display = 'block';
+        }
     });
 }
 
