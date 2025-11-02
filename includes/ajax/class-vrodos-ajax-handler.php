@@ -634,7 +634,7 @@ class VRodos_AJAX_Handler {
         //$projectId = $_REQUEST['vrodos_game'];
         $sceneId = $_REQUEST['vrodos_scene'];
         $projectId = $_REQUEST['projectId'];
-        $showPawnPositions = $_REQUEST['showPawnPositions'];
+        $showPawnPositions = isset($_REQUEST['showPawnPositions']) ? $_REQUEST['showPawnPositions'] : 'false';
         //$projectSlug = $_REQUEST['projectSlug'];
 
         //$asset_id_temp = get_the_ID();
