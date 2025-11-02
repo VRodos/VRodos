@@ -248,13 +248,18 @@ class VRodos_Upload_Manager {
 
         // If an old screenshot exists, we overwrite it.
         if ($existing_screenshot_id) {
-            $existing_path = get_attached_file($existing_screenshot_id);
+            $existing_url = wp_get_attachment_url($existing_screenshot_id);
+            $existing_path = str_replace(get_site_url(), ABSPATH, $existing_url);
+            $existing_path = wp_normalize_path($existing_path);
 
-            // Overwrite the file on disk.
+            // Overwrite the file on disk. This will create the file if it doesn't exist.
             $file_return = file_put_contents($existing_path, $decoded_image);
 
-            // Update metadata to reflect the change (important for cache busting and correct display).
-            wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
+            // Only update metadata if the file was written successfully.
+            if ($file_return !== false) {
+                // Update metadata to reflect the change (important for cache busting and correct display).
+                wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
+            }
 
             // We don't need to do anything else, so we can return.
             remove_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
