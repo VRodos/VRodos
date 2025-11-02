@@ -29,7 +29,8 @@ class VRodos_Install_Manager {
 	 */
 	public function activate() {
 		$this->vrodos_db_create_games_versions_table();
-		$this->vrodos_create_pages();
+		VRodos_Pages_Manager::vrodos_create_pages();
+		VRodos_Pages_Manager::vrodos_fx_admin_notice_activation_hook();
 	}
 
 	/**
@@ -96,68 +97,6 @@ class VRodos_Install_Manager {
 		add_option( 'vrodos_db_version', $vrodos_db_version );
 	}
 
-	/**
-	 * Create the necessary pages for the plugin on activation.
-	 */
-	public function vrodos_create_pages() {
-		ob_start();
-
-		// Page definitions
-		$pages = array(
-			'vrodos-project-manager-page' => array(
-				'title'    => 'VROdos - Project Manager',
-				'template' => '/templates/vrodos-project-manager-template.php',
-			),
-			'vrodos-assets-list-page'     => array(
-				'title'    => 'VROdos - Assets List',
-				'template' => '/templates/vrodos-assets-list-template.php',
-			),
-			'vrodos-edit-3d-scene-page'   => array(
-				'title'    => 'VROdos - Scene 3D Editor',
-				'template' => '/templates/vrodos-edit-3D-scene-template.php',
-			),
-			'vrodos-asset-editor-page'    => array(
-				'title'    => 'VROdos - Asset Editor',
-				'template' => '/templates/vrodos-asset-editor-template.php',
-			),
-		);
-
-		foreach ( $pages as $slug => $page ) {
-			if ( ! $this->vrodos_get_page_by_slug( $slug ) ) {
-				$new_page_id = wp_insert_post(
-					array(
-						'post_title'     => $page['title'],
-						'post_type'      => 'page',
-						'post_name'      => $slug,
-						'comment_status' => 'closed',
-						'ping_status'    => 'closed',
-						'post_content'   => '',
-						'post_status'    => 'publish',
-						'post_author'    => 1, // Assumes admin user with ID 1 exists.
-						'menu_order'     => 0,
-					)
-				);
-
-				if ( $new_page_id && ! is_wp_error( $new_page_id ) ) {
-					update_post_meta( $new_page_id, '_wp_page_template', $page['template'] );
-				}
-			}
-		}
-		ob_end_clean();
-	}
-
-	/**
-	 * Helper function to get a page by its slug.
-	 */
-	private function vrodos_get_page_by_slug( $slug ) {
-		$pages = get_pages( array( 'post_status' => 'publish' ) );
-		foreach ( $pages as $page ) {
-			if ( $slug === $page->post_name ) {
-				return $page;
-			}
-		}
-		return false;
-	}
 }
 
 // Keep these functions globally accessible as they are used by other parts of the plugin.
