@@ -270,9 +270,6 @@ function loadButtonActions() {
 
         //console.log(document.getElementById('vrodos_scene_json_input').value);
 
-        if (!is_scene_icon_manually_selected)
-            takeScreenshot();
-
         vrodos_saveSceneAjax();
     });
 
