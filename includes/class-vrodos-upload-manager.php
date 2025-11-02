@@ -235,25 +235,37 @@ class VRodos_Upload_Manager {
         return false;
     }
 
-    public static function upload_asset_screenshot($image, $parentPostId, $projectId) {
+    public static function upload_asset_screenshot($image, $parentPostId, $projectId, $existing_screenshot_id = null) {
         self::load_wp_admin_files();
 
         // Set post_id for the upload directory filter.
         $_REQUEST['post_id'] = $parentPostId;
         add_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
 
-        // First, delete the existing screenshot if it exists.
-        $asset3d_screenimage_id = get_post_meta($parentPostId, 'vrodos_asset3d_screenimage', true);
-        if ($asset3d_screenimage_id) {
-            wp_delete_attachment($asset3d_screenimage_id, true);
+        // Define filename. A consistent filename is important for overwriting.
+        $filename = $parentPostId . '_asset_screenshot.png';
+        $decoded_image = base64_decode(substr($image, strpos($image, ",") + 1));
+
+        // If an old screenshot exists, we overwrite it.
+        if ($existing_screenshot_id) {
+            $existing_path = get_attached_file($existing_screenshot_id);
+
+            // Overwrite the file on disk.
+            $file_return = file_put_contents($existing_path, $decoded_image);
+
+            // Update metadata to reflect the change (important for cache busting and correct display).
+            wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
+
+            // We don't need to do anything else, so we can return.
+            remove_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
+            unset($_REQUEST['post_id']);
+            return $existing_screenshot_id;
         }
 
-        // Now, proceed with uploading the new screenshot.
+        // If no old screenshot exists, we create a new one.
         add_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
         add_filter('big_image_size_threshold', '__return_false');
 
-        $filename = $parentPostId .'_'. time() .'_asset_screenshot.png';
-        $decoded_image = base64_decode(substr($image, strpos($image, ",") + 1));
         $file_return = wp_upload_bits($filename, null, $decoded_image);
 
         // Always remove filters after the operation.
@@ -263,7 +275,6 @@ class VRodos_Upload_Manager {
         if ($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $parentPostId);
 
-            // Filters must be removed *after* the attachment is created.
             remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
             remove_filter('big_image_size_threshold', '__return_false');
 
@@ -272,7 +283,6 @@ class VRodos_Upload_Manager {
                 return $attachment_id;
             }
         } else {
-            // Ensure filters are removed even if the upload fails.
             remove_filter('intermediate_image_sizes_advanced', array(__CLASS__, 'remove_allthumbs_sizes'), 10, 2);
             remove_filter('big_image_size_threshold', '__return_false');
         }
