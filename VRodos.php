@@ -54,6 +54,10 @@ new VRodos_Asset_CPT_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-install-manager.php');
 new VRodos_Install_Manager();
 
+// Pages Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-pages-manager.php');
+new VRodos_Pages_Manager();
+
 // Core Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-core-manager.php');
 new VRodos_Core_Manager();
@@ -75,10 +79,6 @@ add_action( 'init', 'vrodos_create_asset_categories');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-settings-manager.php');
 new VRodos_Settings_Manager();
 
-include_once( plugin_dir_path( __FILE__ ) . 'includes/vrodos-page-templates.php' );
-
-// Create class tha manipulates templates
-add_action( 'plugins_loaded', array( 'vrodosTemplate', 'get_instance' ) );
 
 // Order 1: Filters inside vrodos-page-templates
 include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
