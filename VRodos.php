@@ -79,10 +79,6 @@ require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-settings-manager
 new VRodos_Settings_Manager();
 
 
-// Order 1: Filters inside vrodos-page-templates
-include_once( plugin_dir_path( __FILE__ ) . 'includes/templates/vrodos-asset-editor-saveData.php' );
-
-
 // ===================== Mime type to allow Upload ===================================
 /**
  * Allow various file types to be uploaded.
