@@ -468,54 +468,39 @@ class VRodos_AJAX_Handler {
 
         // If it is not cloned then it is safe to delete the meta files.
         if ($isCloned==='false') {
-
-            $containerFolder = wp_upload_dir()['basedir'].'/models/';
-
-            // Get texture attachments of post
+            // This part handles all attachments: textures, GLB, screenshot.
             $args = array(
-                'posts_per_page' => 100,
-                'order'          => 'DESC',
-                'post_parent'    => $asset_id
+                'post_parent'    => $asset_id,
+                'post_type'      => 'attachment',
+                'posts_per_page' => -1,
             );
+            $attachments = get_children($args);
 
-            $attachments_array =  get_children( $args,OBJECT );  //returns Array ( [$image_ID].
+            if ($attachments) {
+                $site_url = get_site_url();
 
-            // Add texture urls to a string separated by |
+                foreach ($attachments as $attachment) {
+                    $file_url = wp_get_attachment_url($attachment->ID);
 
-            foreach ($attachments_array as $k){
-                $child_post_id = $k->ID;
+                    // The path stored is a URL. We need to convert it to a server path.
+                    // We do this by replacing the site's URL with the site's absolute path.
+                    $file_path = str_replace($site_url, ABSPATH, $file_url);
 
-                // Delete the file from the system
-                wp_delete_file($containerFolder.basename(get_attached_file($child_post_id)));
+                    // Normalize slashes to be safe across operating systems.
+                    $file_path = wp_normalize_path($file_path);
 
-                // Delete attachment
-                wp_delete_attachment($child_post_id, true); // True : Not go to trash
+                    if (file_exists($file_path)) {
+                        wp_delete_file($file_path);
+                    }
+
+                    // This will handle the database entry and any thumbnails.
+                    wp_delete_attachment($attachment->ID, true);
+                }
             }
-
-
-            // ---------- GLB -------
-            $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
-
-            // Delete the file from the system
-            wp_delete_file($containerFolder.basename(get_attached_file($glbID)));
-
-            // Delete attachment
-            wp_delete_attachment($glbID, true);
-
-
-
-            // ---------- Screenshot ---------------
-            $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
-
-            // Delete the file from the system
-            wp_delete_file($containerFolder.basename(get_attached_file($screenID)));
-
-            // Delete attachment
-            wp_delete_attachment($screenID, true);
         }
 
         // Delete all uses of Asset from Scenes (json)
-        vrodos_delete_asset3d_from_games_and_scenes($asset_id, $gameSlug);
+        VRodos_Core_Manager::vrodos_delete_asset_3d_from_scenes($asset_id, $gameSlug);
 
         // Delete Asset post from SQL database
         wp_delete_post( $asset_id, true );

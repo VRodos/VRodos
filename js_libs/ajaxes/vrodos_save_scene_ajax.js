@@ -4,10 +4,14 @@ function vrodos_saveSceneAjax() {
         'action': 'vrodos_save_scene_async_action',
         'scene_id': isAdmin == "back" ? phpmyvarC.scene_id : my_ajax_object_savescene.scene_id,
         'scene_json': document.getElementById("vrodos_scene_json_input").value,
-        'scene_screenshot': document.getElementById("vrodos_scene_sshot").src,
         'scene_title':   document.getElementById("sceneTitleInput").value,
         'scene_caption':   document.getElementById("sceneCaptionInput").value
     };
+
+    if (new_screenshot_data) {
+        postdata['scene_screenshot'] = new_screenshot_data;
+        new_screenshot_data = null;
+    }
 
     jQuery.ajax({
         url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savescene.ajax_url,

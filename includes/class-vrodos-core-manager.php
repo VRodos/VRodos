@@ -732,4 +732,46 @@ class VRodos_Core_Manager {
     }
 
 
+    public static function vrodos_delete_asset_3d_from_scenes($asset_id, $game_slug) {
+        $scenes_query_args = array(
+            'post_type' => 'vrodos_scene',
+            'posts_per_page' => -1,
+            'tax_query' => array(
+                array(
+                    'taxonomy' => 'vrodos_scene_pgame',
+                    'field' => 'slug',
+                    'terms' => $game_slug,
+                ),
+            ),
+        );
+
+        $scenes_query = new WP_Query($scenes_query_args);
+
+        if ($scenes_query->have_posts()) {
+            while ($scenes_query->have_posts()) {
+                $scenes_query->the_post();
+                $scene_id = get_the_ID();
+                $scene_content = get_post_field('post_content', $scene_id);
+                $scene_data = json_decode($scene_content, true);
+
+                $asset_ids_in_scene = wp_list_pluck($scene_data['objects'], 'asset_id');
+
+                if (in_array($asset_id, $asset_ids_in_scene)) {
+                    foreach ($scene_data['objects'] as $key => $scene_object) {
+                        if (isset($scene_object['asset_id']) && $scene_object['asset_id'] == $asset_id) {
+                            unset($scene_data['objects'][$key]);
+                        }
+                    }
+
+                    $scene_data['objects'] = array_values($scene_data['objects']);
+                    $updated_scene_content = json_encode($scene_data);
+                    wp_update_post(array(
+                        'ID' => $scene_id,
+                        'post_content' => $updated_scene_content,
+                    ));
+                }
+            }
+        }
+        wp_reset_postdata();
+    }
 }

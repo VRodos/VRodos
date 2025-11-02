@@ -219,7 +219,9 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
     }
 
     if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
-        VRodos_Upload_Manager::upload_asset_screenshot($_POST['sshotFileInput'], $asset_id, $project_id);
+        // Check if a screenshot already exists to perform an in-place update.
+        $existing_screenshot_id = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
+        VRodos_Upload_Manager::upload_asset_screenshot($_POST['sshotFileInput'], $asset_id, $project_id, $existing_screenshot_id);
     }
 
     // Save custom parameters according to asset type.
