@@ -468,41 +468,34 @@ class VRodos_AJAX_Handler {
 
         // If it is not cloned then it is safe to delete the meta files.
         if ($isCloned==='false') {
-            // This part handles texture attachments.
+            // This part handles all attachments: textures, GLB, screenshot.
             $args = array(
                 'post_parent'    => $asset_id,
                 'post_type'      => 'attachment',
                 'posts_per_page' => -1,
             );
             $attachments = get_children($args);
+
             if ($attachments) {
+                $site_url = get_site_url();
+
                 foreach ($attachments as $attachment) {
-                    $file_path = get_attached_file($attachment->ID);
-                    if ($file_path && file_exists($file_path)) {
+                    $file_url = wp_get_attachment_url($attachment->ID);
+
+                    // The path stored is a URL. We need to convert it to a server path.
+                    // We do this by replacing the site's URL with the site's absolute path.
+                    $file_path = str_replace($site_url, ABSPATH, $file_url);
+
+                    // Normalize slashes to be safe across operating systems.
+                    $file_path = wp_normalize_path($file_path);
+
+                    if (file_exists($file_path)) {
                         wp_delete_file($file_path);
                     }
+
+                    // This will handle the database entry and any thumbnails.
                     wp_delete_attachment($attachment->ID, true);
                 }
-            }
-
-            // This part handles the main GLB file.
-            $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
-            if ($glbID) {
-                $file_path = get_attached_file($glbID);
-                if ($file_path && file_exists($file_path)) {
-                    wp_delete_file($file_path);
-                }
-                wp_delete_attachment($glbID, true);
-            }
-
-            // This part handles the screenshot.
-            $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
-            if ($screenID) {
-                $file_path = get_attached_file($screenID);
-                if ($file_path && file_exists($file_path)) {
-                    wp_delete_file($file_path);
-                }
-                wp_delete_attachment($screenID, true);
             }
         }
 
