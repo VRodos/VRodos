@@ -470,11 +470,7 @@ class VRodos_Compiler_Manager {
                         $a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );
                         $a_light_target->setAttribute("id", $uuid."target");
 
-                        if ($contentObject->castingShadow == "1"){
-                            $is_casting_shadow = "true";
-                        }else{
-                            $is_casting_shadow = "false";
-                        }
+						$is_casting_shadow = isset($contentObject->castingShadow) ? ($contentObject->castingShadow == "1" ? "true" : "false") : "false";
 
                         $ascene->appendChild($a_light_target);
                         $a_light->setAttribute("light", "type:directional;".
@@ -482,14 +478,14 @@ class VRodos_Compiler_Manager {
                             // "intensity:".($contentObject->lightintensity).";".
                             "castShadow:".($is_casting_shadow).";".
 
-                            "shadowMapHeight:".($contentObject->shadowMapHeight).";".
+                            "shadowMapHeight:".(isset($contentObject->shadowMapHeight) ? $contentObject->shadowMapHeight : "512").";".
                             // "shadowCameraFar: 5000;".
-                            "shadowMapWidth:".($contentObject->shadowMapWidth).";".
-                            "shadowCameraTop:".($contentObject->shadowCameraTop).";".
-                            "shadowCameraRight:".($contentObject->shadowCameraRight).";".
-                            "shadowCameraLeft:".($contentObject->shadowCameraLeft).";".
-                            "shadowCameraBottom:".($contentObject->shadowCameraBottom).";".
-                            "shadowBias:".($contentObject->shadowBias).";".
+                            "shadowMapWidth:".(isset($contentObject->shadowMapWidth) ? $contentObject->shadowMapWidth : "512").";".
+                            "shadowCameraTop:".(isset($contentObject->shadowCameraTop) ? $contentObject->shadowCameraTop : "5").";".
+                            "shadowCameraRight:".(isset($contentObject->shadowCameraRight) ? $contentObject->shadowCameraRight : "5").";".
+                            "shadowCameraLeft:".(isset($contentObject->shadowCameraLeft) ? $contentObject->shadowCameraLeft : "-5").";".
+                            "shadowCameraBottom:".(isset($contentObject->shadowCameraBottom) ? $contentObject->shadowCameraBottom : "-5").";".
+                            "shadowBias:".(isset($contentObject->shadowBias) ? $contentObject->shadowBias : "0").";".
                             // "shadow-camera-automatic: '#41132111-4c3f-4741-9c8a-343e71fc4b46';".
                             "shadowCameraVisible: false;"
                         //#41132111-4c3f-4741-9c8a-343e71fc4b46';
@@ -514,7 +510,7 @@ class VRodos_Compiler_Manager {
                         $materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
                         $a_sun_sky->setAttribute("material", $materialSunSky);
 
-                        if ($contentObject->sunSky == "1"){
+                        if (isset($contentObject->sunSky) && $contentObject->sunSky == "1"){
                             $ascene->appendChild( $a_sun_sky );
                         }
 
@@ -1177,7 +1173,6 @@ class VRodos_Compiler_Manager {
                         $ascenePlayer->appendChild($a_panel_entity);
 
                         break;
-
                 }
             }
 
