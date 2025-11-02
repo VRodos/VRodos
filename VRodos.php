@@ -70,9 +70,9 @@ require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-scene-ma
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-upload-manager.php');
 VRodos_Upload_Manager::register_hooks();
 
-// Create Initial Asset Categories
-include_once( plugin_dir_path( __FILE__ ) . 'includes/default_game_project_settings/vrodos-default-settings.php' );
-add_action( 'init', 'vrodos_create_asset_categories');
+// Default Data Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-data-manager.php');
+new VRodos_Default_Data_Manager();
 
 // Settings Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-settings-manager.php');
