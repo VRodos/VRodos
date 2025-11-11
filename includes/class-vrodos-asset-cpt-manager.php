@@ -813,7 +813,7 @@ class VRodos_Asset_CPT_Manager {
 
         // Set default values for new assets
         $data['glb_file_name'] = null;
-        $data['back_3d_color'] = 'rgb(0,0,0)';
+        $data['back_3d_color'] = '#ffffff';
         $data['asset_title_value'] = '';
         $data['asset_description_value'] = '';
         $data['asset_fonts_saved'] = '';
