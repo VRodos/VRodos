@@ -35,8 +35,6 @@ class VRodos_AJAX_Handler {
         add_action('wp_ajax_vrodos_fetch_game_assets_action', array($this, 'vrodos_fetch_game_assets_action_callback'));
 
         add_action('wp_ajax_vrodos_delete_game_action', array($this, 'vrodos_delete_gameproject_frontend_callback'));
-        add_action('wp_ajax_vrodos_collaborate_project_action', array($this, 'vrodos_collaborate_project_frontend_callback'));
-        add_action('wp_ajax_vrodos_fetch_collaborators_action', array($this, 'vrodos_fetch_collaborators_frontend_callback'));
         add_action('wp_ajax_vrodos_create_project_action', array($this, 'vrodos_create_project_frontend_callback'));
         add_action('wp_ajax_vrodos_fetch_glb_asset_action', array($this, 'vrodos_fetch_glb_asset3d_frontend_callback'));
         add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', array($this, 'vrodos_fetch_glb_asset3d_frontend_callback'));
@@ -62,35 +60,6 @@ class VRodos_AJAX_Handler {
         wp_insert_term($post->post_title, 'vrodos_asset3d_pgame', array('description' => '-', 'slug' => $post->post_name));
         VRodos_Default_Scene_Manager::create_default_scenes_for_game($post->post_name, $project_type_id);
         echo $project_id;
-        wp_die();
-    }
-
-    public function vrodos_collaborate_project_frontend_callback() {
-        $project_id = $_POST['project_id'];
-        $collabs_emails = explode(';', $_POST['collabs_emails']);
-        $collabs_ids = '';
-        foreach ($collabs_emails as $collab_email) {
-            $collab_id_data = get_user_by('email', $collab_email)->data;
-            if (!$collab_id_data)
-                echo "ERROR 190520: an email was invalid";
-            else
-                $collabs_ids .= ';' . $collab_id_data->ID;
-        }
-        update_post_meta($project_id, 'vrodos_project_collaborators_ids', $collabs_ids);
-        wp_die();
-    }
-
-    public function vrodos_fetch_collaborators_frontend_callback() {
-        $project_id = $_POST['project_id'];
-        $collabs_ids = get_post_meta($project_id, 'vrodos_project_collaborators_ids', true);
-        $collabs_ids = explode(';', $collabs_ids);
-        $collabs_emails = '';
-        foreach ($collabs_ids as $collab_id) {
-            $collabs_emails = $collabs_emails . ';' . get_user_by('id', $collab_id)->user_email;
-        }
-        $collabs_emails = ltrim($collabs_emails, ";");
-        $collabs_emails = rtrim($collabs_emails, ";");
-        echo $collabs_emails;
         wp_die();
     }
 
@@ -712,24 +681,6 @@ class VRodos_AJAX_Handler {
 
             $custom_query->the_post();
 
-            if (current_user_can('administrator')){
-                // ToDo: replace current_user_can with smth like current_user_is
-
-            } elseif (current_user_can('administrator')) {
-
-                $collaborators = get_post_meta(get_the_ID(),'vrodos_project_collaborators_ids')[0];
-
-//               fwrite($fp, 'Author:' . print_r(get_the_author_meta('ID'), true));
-//               fwrite($fp, 'UserId:' . print_r($user_id, true));
-//               fclose($fp);
-
-                if ( get_the_author_meta('ID') != $user_id ) {                    // Not the author of the game
-                    if (strpos($collaborators, $user_id) === false) {  // and not the collaborator then skip
-
-                        continue;
-                    }
-                }
-            }
 
 
 //           elseif (current_user_can('game_master')) {
@@ -786,31 +737,6 @@ class VRodos_AJAX_Handler {
                 'title="Manage assets of '.$game_title.'">';
             echo '<span id="'.$game_id.'-assets-button" class="mdc-button" >Assets</span>';
             echo '</a>';
-
-            // ------- Collaborators -----------
-
-            // Collaborators button
-            echo '<a href="javascript:void(0)" class="mdc-button mdc-list-item__end-detail" '.
-                'data-mdc-auto-init="MDCRipple" title="Add collaborators for '.
-                $game_title . '" onclick="collaborateProject(' . $game_id . ')">';
-
-            $collaborators = get_post_meta($game_id, 'vrodos_project_collaborators_ids');
-
-            // Find number of current collaborators
-            if ( count($collaborators)>0) {
-
-                $collabs_ids_raw = get_post_meta($game_id, 'vrodos_project_collaborators_ids')[0];
-                $collabs_ids = array_values(array_filter(explode(";", $collabs_ids_raw)));
-            } else {
-                $collabs_ids = [];
-            }
-
-            echo '<i class="material-icons" aria-hidden="true" ' . ' title="Add collaborators">group</i>' .
-                '<sup>' . count($collabs_ids) . '</sup>';
-
-            //echo get_user_by('id', $collabs_ids[0])->display_name;
-            echo '</a>';
-
 
             // --------- 3D editor button -----------
             echo '<a id="3d-editor-bt-'.$game_id.'" href="'.$loadMainSceneLink.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
