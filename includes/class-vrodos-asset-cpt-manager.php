@@ -752,4 +752,77 @@ class VRodos_Asset_CPT_Manager {
 		update_post_meta($asset_id, 'vrodos_asset3d_back3dcolor', $asset_back_3d_color);
 		update_post_meta($asset_id, 'vrodos_asset3d_assettrs', $asset_trs);
 	}
+
+    public static function prepare_asset_editor_template_data(){
+        $data = [];
+
+        $perma_structure = get_option('permalink_structure');
+        $data['parameter_Scenepass'] = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+        $data['parameter_pass'] = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
+
+        $data['project_id'] = isset($_GET['vrodos_game']) ? sanitize_text_field( intval( $_GET['vrodos_game'] )) : null ;
+        $data['asset_id'] = isset($_GET['vrodos_asset']) ? sanitize_text_field( intval( $_GET['vrodos_asset'] )) : null ;
+        $data['scene_id'] = isset($_GET['vrodos_scene']) ? sanitize_text_field( intval( $_GET['vrodos_scene'] )) : null ;
+
+        $data['game_post'] = get_post($data['project_id']);
+        $data['gameSlug'] = $data['game_post']->post_name;
+        $data['game_type_obj'] = VRodos_Core_Manager::vrodos_return_project_type($data['project_id']);
+        $assetPGame = get_term_by('slug', $data['gameSlug'], 'vrodos_asset3d_pgame');
+        $data['assetPGameID'] = $assetPGame ? $assetPGame->term_id : null;
+        $data['assetPGameSlug'] = $assetPGame ? $assetPGame->slug : null;
+        $data['isJoker'] = (strpos($data['assetPGameSlug'], 'joker') !== false) ? "true":"false";
+        $data['isUserloggedIn'] = is_user_logged_in();
+        $data['current_user'] = wp_get_current_user();
+        $data['login_username'] = $data['current_user']->user_login;
+        $data['isUserAdmin'] = current_user_can('administrator');
+        $data['isEditMode'] = null;
+
+        if (isset($_GET['preview'])) {
+            $data['isEditMode'] = !($_GET['preview'] == '1');
+        }
+
+        $data['defaultImage'] = plugins_url( '../images/ic_sshot.png', dirname(__FILE__)  );
+        $data['curr_font'] = "Arial";
+        $data['isOwner'] = $data['current_user']->ID == get_post_field ('post_author', $data['asset_id']);
+
+        if (!$data['asset_id']) {
+            $data['isOwner'] = true;
+        }
+        $data['isEditable'] = false;
+
+        $data['author_id'] = null;
+        if ($data['isUserloggedIn']) {
+            $user_id = get_current_user_id();
+
+            if (!isset($_GET['vrodos_asset'])) {
+                $data['isEditable'] = true;
+                $data['author_id'] = $user_id;
+            } else if ($data['isUserAdmin'] || $data['isOwner']){
+                $data['isEditable'] = true;
+                $data['author_id'] = get_post_field ('post_author', $data['asset_id']);
+            }
+        }
+
+        $data['author_displayname'] = get_the_author_meta( 'display_name' , $data['author_id'] );
+        $editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
+        $all_game_category = get_the_terms( $data['project_id'], 'vrodos_game_type' );
+        $data['game_category'] = $all_game_category ? $all_game_category[0]->slug : null;
+        $edit_scene_page_id = $editscenePage[0]->ID;
+
+        $data['goBackToLink'] = $data['scene_id'] != 0 ?
+            get_permalink($edit_scene_page_id) . $data['parameter_Scenepass'] . $data['scene_id'] . '&vrodos_game=' . $data['project_id'] . '&scene_type=' . $_GET['scene_type']
+            :
+            home_url()."/vrodos-assets-list-page/?". (!isset($_GET['singleproject'])?"vrodos_game=":"vrodos_project_id=").$data['project_id'];
+
+        if($data['asset_id'] != null) {
+            $assetpostMeta = get_post_meta($data['asset_id']);
+            $data['back_3d_color'] = $assetpostMeta['vrodos_asset3d_back3dcolor'] ? $assetpostMeta['vrodos_asset3d_back3dcolor'][0] : '#ffffff';
+            $fonts = $assetpostMeta['vrodos_asset3d_fonts'][0];
+            $data['curr_font'] = str_replace("+", " ", $fonts);
+            $asset_3d_files = VRodos_Core_Manager::get_3D_model_files($assetpostMeta, $data['asset_id']);
+            $data['glb_file_name'] = $asset_3d_files['glb'];
+        }
+
+        return $data;
+    }
 }
