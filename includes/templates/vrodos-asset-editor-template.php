@@ -151,43 +151,16 @@ get_header();
                         <h3 class="mdc-typography--title"><?php echo $dropdownHeading; ?></h3>
                         <div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
                             <em class="material-icons mdc-theme--text-hint-on-light ">label</em>&nbsp;<!--icon-->
-                            <?php
-
-                            // Check if project is of MV type then dont show chat component.
-                            $ids_to_exclude = array();
-                            if ($game_category !== 'vrexpo_games') {
-                                $get_terms_to_exclude =  get_terms(
-                                    array(
-                                        'fields'  => 'ids',
-                                        'slug'    => array(
-                                            'chat' ),
-                                        'taxonomy' => 'vrodos_asset3d_cat',
-                                    )
-                                );
-                                if( !is_wp_error( $get_terms_to_exclude ) && count($get_terms_to_exclude) > 0){
-                                    $ids_to_exclude = $get_terms_to_exclude;
-                                }
-                            }
-
-                            $cat_terms = get_terms(
-                                'vrodos_asset3d_cat',
-                                array(
-                                    'hide_empty' => false,
-                                    'exclude'    => $ids_to_exclude,
-                                )
-                            );
-
-                            $saved_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
-                            if($asset_id == null) { ?>
+                            <?php if (empty($saved_term)) { ?>
                                 <span id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
                                     No category selected
                                 </span>
-                            <?php } else {  ?>
-                                <span data-cat-desc="<?php echo $saved_term[0]->description; ?>"
-                                      data-cat-slug="<?php echo $saved_term[0]->slug; ?>"
-                                      data-cat-id="<?php echo $saved_term[0]->term_id; ?>"
+                            <?php } else { ?>
+                                <span data-cat-desc="<?php echo esc_attr($saved_term[0]->description); ?>"
+                                      data-cat-slug="<?php echo esc_attr($saved_term[0]->slug); ?>"
+                                      data-cat-id="<?php echo esc_attr($saved_term[0]->term_id); ?>"
                                       id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
-                                        <?php echo $saved_term[0]->name; ?>
+                                    <?php echo esc_html($saved_term[0]->name); ?>
                                 </span>
                             <?php } ?>
 
@@ -199,16 +172,14 @@ get_header();
                                         <span class="mdc-list-item__text">No category selected</span>
                                     </li>
 
-                                    <?php foreach ( $cat_terms as $term ) {?>
-
+                                    <?php foreach ($cat_terms as $term) { ?>
                                         <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
-                                            data-cat-desc="<?php echo $term->description; ?>"
-                                            data-value="<?php echo $term->slug; ?>"
-                                            id="<?php echo $term->term_id?>"
+                                            data-cat-desc="<?php echo esc_attr($term->description); ?>"
+                                            data-value="<?php echo esc_attr($term->slug); ?>"
+                                            id="<?php echo esc_attr($term->term_id); ?>"
                                             tabindex="0">
-                                            <span class="mdc-list-item__text"><?php echo $term->name; ?></span>
+                                            <span class="mdc-list-item__text"><?php echo esc_html($term->name); ?></span>
                                         </li>
-
                                     <?php } ?>
 
                                 </ul>
@@ -251,16 +222,11 @@ get_header();
 
                     <div class="assetEditorColumn" id="video_section" style="display: none;">
                         <h3 class="mdc-typography--title">Video</h3>
-
                         <div id="videoFileInputContainer">
-                            <?php
-                            $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
-                            $video_attachment_post = get_post($videoID);
-                            $video_attachment_file = $video_attachment_post->guid; ?>
                             <label for="videoFileInput">Select a video</label>
                             <br />
                             <video width="320" height="240" id="assetVideoTag" style="width:60%" preload="auto" controls>
-                                <source id="assetVideoSource" src="<?php echo $video_attachment_file;?>" type="video/mp4">
+                                <source id="assetVideoSource" src="<?php echo esc_url($video_attachment_file); ?>" type="video/mp4">
                             </video>
                             <input class="FullWidth" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
                             <br />
@@ -269,300 +235,160 @@ get_header();
                     </div>
 
                     <div id="screenshot_section" class="assetEditorColumn" style="float: right; display: <?php echo ($asset_id == null) ? 'none' : 'block' ?>;">
-
                         <h3 class="mdc-typography--title">Screenshot</h3>
-                        <?php
-                        if($asset_id==null) {
-                            $scrnImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
-                        } else {
-                            $scrnImageURL = wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_screenimage",true) );
-
-                            if ($scrnImageURL == false) {
-                                $scrnImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
-                            }
-                        } ?>
                         <div style="float: left; width: 65%">
-                            <img id="sshotPreviewImg" src="<?php echo $scrnImageURL ?>" alt="Asset Screenshot image">
-                            <input type="hidden" name="sshotFileInput" value=""
-                                   id="sshotFileInput" accept="image/png"/>
+                            <img id="sshotPreviewImg" src="<?php echo esc_url($scrnImageURL); ?>" alt="Asset Screenshot image">
+                            <input type="hidden" name="sshotFileInput" value="" id="sshotFileInput" accept="image/png"/>
                         </div>
-
                         <div style="float:right; width: 30%;">
-                            <div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea"
-                                 data-mdc-auto-init="MDCTextfield">
+                            <div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield">
                                 <label for="jscolorpick" style="display:none">Color pick</label>
-                                <input id="jscolorpick" style="width: 80%; float:right;"
-                                       class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
-
+                                <input id="jscolorpick" style="width: 80%; float:right;" class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
                                 <label for="assetback3dcolor" class="mdc-textfield__label" style="padding: 0;text-align: center">BG color</label>
-                                <input type="text" id="assetback3dcolor" class="mdc-textfield__input"
-                                       name="assetback3dcolor" form="3dAssetForm" value="<?php echo trim($asset_back_3d_color_saved); ?>" />
+                                <input type="text" id="assetback3dcolor" class="mdc-textfield__input" name="assetback3dcolor" form="3dAssetForm" value="<?php echo esc_attr(trim($asset_back_3d_color_saved)); ?>" />
                             </div>
                         </div>
-                        <a id="createModelScreenshotBtn" type="button" style="margin-top:16px;"
-                           class="mdc-button mdc-button--primary mdc-theme--primary FullWidth"
-                           data-mdc-auto-init="MDCRipple">
+                        <a id="createModelScreenshotBtn" type="button" style="margin-top:16px;" class="mdc-button mdc-button--primary mdc-theme--primary FullWidth" data-mdc-auto-init="MDCRipple">
                             Create screenshot
                         </a>
                     </div>
 
                     <div id="video_screenshot_section" class="assetEditorColumn" style="display:none; float: right;">
-
                         <h3 class="mdc-typography--title">Video Screenshot</h3>
                         <span style="font-style: italic; line-height: 1rem;" class="mdc-typography--caption mdc-theme--text-secondary-on-light">
-                          Generated automatically during video seek
-                    </span>
+                            Generated automatically during video seek
+                        </span>
                         <div style="float: left; width: 100%">
                             <canvas id="videoSshotPreviewImg" style="overflow:auto"></canvas>
-                            <input type="hidden" name="videoSshotFileInput"
-                                   id="videoSshotFileInput" accept="image/png"/>
+                            <input type="hidden" name="videoSshotFileInput" id="videoSshotFileInput" accept="image/png"/>
                         </div>
-
                     </div>
                 </div>
 
-
                 <div style="display:flex; width: 100%;">
-
                     <div class="assetEditorColumn" id="poi_image_text_section" style="display: none;">
                         <h3 class="mdc-typography--title">POI Details</h3>
-
                         <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-                            <input id="poiImgTitle" type="text"
-                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
-                                   name="poiImgTitle"
-                                   aria-controls="title-validation-msg" minlength="3" maxlength="50"
-                                   value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_imgtxt_title', true);?>">
-
-                            <label for="poiImgTitle" class="mdc-textfield__label">
-                                Title
-                            </label>
-
+                            <input id="poiImgTitle" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="poiImgTitle" aria-controls="title-validation-msg" minlength="3" maxlength="50" value="<?php echo esc_attr($poi_img_title); ?>">
+                            <label for="poiImgTitle" class="mdc-textfield__label">Title</label>
                             <div class="mdc-textfield__bottom-line"></div>
                         </div>
                         <p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-validation-msg">
                             Between 3 - 25 characters
                         </p>
-
-                        <div class="mdc-textfield mdc-textfield--textarea"
-                             data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3); width: 100%;">
-                            <label for="poiImgDescription" class="mdc-textfield__label"
-                                   style="background: none;">Add the text content</label>
-                            <textarea id="poiImgDescription" name="poiImgDescription"
-                                      class="mdc-textfield__input"
-                                      style="box-shadow: none;" rows="10"
-                                      type="text"><?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_imgtxt_content', true);?></textarea>
-
+                        <div class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3); width: 100%;">
+                            <label for="poiImgDescription" class="mdc-textfield__label" style="background: none;">Add the text content</label>
+                            <textarea id="poiImgDescription" name="poiImgDescription" class="mdc-textfield__input" style="box-shadow: none;" rows="10" type="text"><?php echo esc_textarea($poi_img_content); ?></textarea>
                         </div>
                     </div>
 
                     <div id="poi_help_section" class="assetEditorColumn" style="display: none;">
-
                         <h3 class="mdc-typography--title" style="margin-bottom: 5px;">Chat Options</h3>
-
                         <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-                            <input id="poiChatTitle" type="text"
-                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
-                                   name="poiChatTitle"
-                                   aria-controls="title-chat-validation-msg" minlength="3" maxlength="50"
-                                   value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chattxt_title', true);?>">
-
+                            <input id="poiChatTitle" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="poiChatTitle" aria-controls="title-chat-validation-msg" minlength="3" maxlength="50" value="<?php echo esc_attr($poi_chat_title); ?>">
                             <label for="poiChatTitle" class="mdc-textfield__label">
                                 Chat Title (appears on entering chat)
                             </label>
-
                             <div class="mdc-textfield__bottom-line"></div>
                         </div>
                         <p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-chat-validation-msg">
                             Between 3 - 25 characters
                         </p>
-
-
-                        <?php $indicator_enabled = get_post_meta($asset_id,'vrodos_asset3d_poi_chatbut_indicators', true) ? 'checked' : ''; ?>
-
-                        <input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="poiChatIndicators"
-                               name="poiChatIndicators" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $indicator_enabled; ?>/>
+                        <input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="poiChatIndicators" name="poiChatIndicators" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $poi_chat_indicators; ?>/>
                         <label for="poiChatIndicators" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Chat Indicator</label>
-
                         <h3 class="mdc-typography--title" style="margin-bottom: 5px;">Chat max participants</h3>
-
                         <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-                            <label for="poiChatNumPeople" class="mdc-textfield__label">
-                                Max: 8
-                            </label>
-                            <input id="poiChatNumPeople" type="number"
-                                   title="Number of participants"
-                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
-                                   name="poiChatNumPeople"
-                                   min="2"
-                                   max="8"
-                                   value="<?php echo get_post_meta($asset_id,'vrodos_asset3d_poi_chatnum_people', true);?>">
+                            <label for="poiChatNumPeople" class="mdc-textfield__label">Max: 8</label>
+                            <input id="poiChatNumPeople" type="number" title="Number of participants" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="poiChatNumPeople" min="2" max="8" value="<?php echo esc_attr($poi_chat_num_people); ?>">
                             <div class="mdc-textfield__bottom-line"></div>
-
                         </div>
-
-
                     </div>
 
                     <div id="poi_link_section" class="assetEditorColumn" style="display: none;">
                         <h3 class="mdc-typography--title">Link</h3>
-                        <div class="mdc-textfield mdc-textfield--textarea"
-                             data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3); margin-top:0;">
-                                     <textarea id="assetLinkInput" name="assetLinkInput"
-                                               class="mdc-textfield__input"
-                                               style="box-shadow: none;" rows="5"
-                                               type="text"><?php echo get_post_meta($asset_id,'vrodos_asset3d_link', true);?></textarea>
-                            <label for="assetLinkInput" class="mdc-textfield__label"
-                                   style="background: none;">Link to external target</label>
+                        <div class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3); margin-top:0;">
+                            <textarea id="assetLinkInput" name="assetLinkInput" class="mdc-textfield__input" style="box-shadow: none;" rows="5" type="text"><?php echo esc_textarea($asset_link); ?></textarea>
+                            <label for="assetLinkInput" class="mdc-textfield__label" style="background: none;">Link to external target</label>
                         </div>
                     </div>
 
                     <div class="assetEditorColumn" id="video_options_section" style="display: none;">
                         <h3 class="mdc-typography--title">Video options</h3>
-
                         <div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-                            <?php
-                            $video_title = get_post_meta($asset_id,'vrodos_asset3d_video_title', true);
-                            $video_autoloop = get_post_meta($asset_id,'vrodos_asset3d_video_autoloop', true) ? 'checked' : '';
-
-                            ?>
-                            <input id="videoTitle" type="text"
-                                   class="mdc-textfield__input mdc-theme--text-primary-on-light"
-                                   name="videoTitle"
-                                   aria-controls="title-validation-msg" minlength="3" maxlength="25"
-                                   value="<?php echo $video_title; ?>">
-
-                            <label for="videoTitle" class="mdc-textfield__label">
-                                Video title (optional)
-                            </label>
-
+                            <input id="videoTitle" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="videoTitle" aria-controls="title-validation-msg" minlength="3" maxlength="25" value="<?php echo esc_attr($video_title); ?>">
+                            <label for="videoTitle" class="mdc-textfield__label">Video title (optional)</label>
                             <div class="mdc-textfield__bottom-line"></div>
                         </div>
-
                         <p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-validation-msg">
                             Between 3 - 25 characters
                         </p>
-
-                        <input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="video_autoloop_checkbox"
-                               name="video_autoloop_checkbox" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $video_autoloop; ?>/>
+                        <input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="video_autoloop_checkbox" name="video_autoloop_checkbox" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $video_autoloop; ?>/>
                         <label for="video_autoloop_checkbox" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Autoplay</label>
                     </div>
 
                     <div class="assetEditorColumn" id="poi_image_file_section" style="display: none;">
                         <h3 class="mdc-typography--title">Image file</h3>
-
-                        <?php
-                        if($asset_id==null) {
-                            $imagePoiImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
-                        } else {
-                            $imagePoiImageURL = wp_get_attachment_url( get_post_meta($asset_id, "vrodos_asset3d_poi_imgtxt_image",true) );
-
-
-                            if ($imagePoiImageURL == false) {
-                                $imagePoiImageURL = plugins_url( '../images/ic_sshot.png', dirname(__FILE__));
-                            }
-                        }?>
-
-                        <img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo $imagePoiImageURL; ?>" alt="Asset Image Text POI image">
-
-                        <input type="file" name="imageFileInput" value=""
-                               id="imageFileInput" accept="image/png, image/jpg, image/jpeg"/>
-
+                        <img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo esc_url($imagePoiImageURL); ?>" alt="Asset Image Text POI image">
+                        <input type="file" name="imageFileInput" value="" id="imageFileInput" accept="image/png, image/jpg, image/jpeg"/>
                     </div>
-
-
                 </div>
 
-                <!-- CATEGORY IPR -->
-                <!--<div id="ipr_section" class="assetEditorColumn" style="display:<?php /*echo (($isOwner || $isUserAdmin) && $isEditMode)?'block':'none';*/?> padding-bottom: 24px;">-->
                 <div id="ipr_section" class="assetEditorColumn" style="display: none; padding-bottom: 24px;">
-
                     <h3 class="mdc-typography--title">Select an IPR plan</h3>
                     <div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 80%;">
                         <i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
-
-                        <?php
-                        $saved_ipr_term = wp_get_post_terms( $asset_id, 'vrodos_asset3d_ipr_cat');
-
-                        if($asset_id == null || empty($saved_ipr_term) ) { ?>
-                            <!-- Empty IPR -->
-                            <span id="currently-ipr-selected"
-                                  class="mdc-select__selected-text mdc-typography--subheading2">
-                            No IPR category selected
+                        <?php if (empty($saved_ipr_term)) { ?>
+                            <span id="currently-ipr-selected" class="mdc-select__selected-text mdc-typography--subheading2">
+                                No IPR category selected
                             </span>
                         <?php } else { ?>
-                            <!-- Saved IPR -->
-                            <span
-                                    data-cat-ipr-desc="<?php echo $saved_ipr_term[0]->description; ?>"
-                                    data-cat-ipr-slug="<?php echo $saved_ipr_term[0]->slug; ?>"
-                                    data-cat-ipr-id="<?php echo $saved_ipr_term[0]->term_ipr_id; ?>"
-                                    id="currently-ipr-selected"
-                                    class="mdc-select__selected-text mdc-typography--subheading2">
-                                <?php echo $saved_ipr_term[0]->name; ?>
-                             </span>
+                            <span data-cat-ipr-desc="<?php echo esc_attr($saved_ipr_term[0]->description); ?>"
+                                  data-cat-ipr-slug="<?php echo esc_attr($saved_ipr_term[0]->slug); ?>"
+                                  data-cat-ipr-id="<?php echo esc_attr($saved_ipr_term[0]->term_ipr_id); ?>"
+                                  id="currently-ipr-selected"
+                                  class="mdc-select__selected-text mdc-typography--subheading2">
+                                <?php echo esc_html($saved_ipr_term[0]->name); ?>
+                            </span>
                         <?php } ?>
-
 
                         <div class="mdc-simple-menu mdc-select__menu">
                             <ul class="mdc-list mdc-simple-menu__items">
-                                <!-- First option is none -->
-                                <li class="mdc-list-item mdc-theme--text-hint-on-light"
-                                    role="option" aria-disabled="true" tabindex="-1"
-                                    style="pointer-events: none;">
+                                <li class="mdc-list-item mdc-theme--text-hint-on-light" role="option" aria-disabled="true" tabindex="-1" style="pointer-events: none;">
                                     No IPR category selected
                                 </li>
-
-                                <!-- Add other options -->
-                                <?php
-                                $cat_ipr_terms = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
-
-                                foreach ( $cat_ipr_terms as $term_ipr ) { ?>
+                                <?php foreach ($cat_ipr_terms as $term_ipr) { ?>
                                     <li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
-                                        title="<?php echo $term_ipr->description; ?>"
-                                        data-cat-ipr-desc="<?php echo $term_ipr->description; ?>"
-                                        data-cat-ipr-slug="<?php echo $term_ipr->slug; ?>" id="<?php echo $term_ipr->term_id?>" tabindex="0">
-                                        <?php echo $term_ipr->name; ?>
+                                        title="<?php echo esc_attr($term_ipr->description); ?>"
+                                        data-cat-ipr-desc="<?php echo esc_attr($term_ipr->description); ?>"
+                                        data-cat-ipr-slug="<?php echo esc_attr($term_ipr->slug); ?>"
+                                        id="<?php echo esc_attr($term_ipr->term_id); ?>"
+                                        tabindex="0">
+                                        <?php echo esc_html($term_ipr->name); ?>
                                     </li>
                                 <?php } ?>
-
                             </ul>
                         </div>
                     </div>
-
                     <span class="mdc-typography--caption mdc-theme--text-secondary-on-light" id="categoryIPRDescription"></span>
                     <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
                 </div>
-
             </form>
-
         </div>
 
-
-        <!-- Audio -->
         <div id="audioDetailsPanel" style="display: none">
-
             <h4 class="mdc-typography--title">3D audio file</h4>
-            <img alt="Audio Section" src="<?php echo plugins_url( '../images/audio.png', dirname(__FILE__)  );?>">
+            <img alt="Audio Section" src="<?php echo plugins_url('../images/audio.png', dirname(__FILE__)); ?>">
             <div id="audioFileInputContainer">
-                <?php
-                $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
-                $attachment_post = get_post( $audioID );
-                $attachment_file = $attachment_post->guid;
-
-                if(strpos($attachment_file, "mp3" )!==false || strpos($attachment_file, "wav" )!==false){
-                    ?>
-                    <audio controls loop preload="auto" id ='audioFile'>
-                        <source src="<?php echo $attachment_file;?>" type="audio/mp3">
-                        <source src="<?php echo $attachment_file;?>" type="audio/wav">
+                <?php if ($audio_attachment_file) { ?>
+                    <audio controls loop preload="auto" id='audioFile'>
+                        <source src="<?php echo esc_url($audio_attachment_file); ?>" type="audio/<?php echo esc_attr($audio_file_type); ?>">
                         Your browser does not support the audio tag.
                     </audio>
                 <?php } ?>
-
                 <label for="audioFileInput"> Select a new audio</label>
                 <input class="FullWidth" type="file" name="audioFileInput" value="" id="audioFileInput" accept="audio/mp3,audio/wav"/>
                 <br />
-                <span id="audio-description-label"
-                      class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp3 or wav</span>
+                <span id="audio-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp3 or wav</span>
             </div>
         </div>
 

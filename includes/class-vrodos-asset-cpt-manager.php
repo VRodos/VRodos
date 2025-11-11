@@ -805,6 +805,12 @@ class VRodos_Asset_CPT_Manager {
             ? get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $data['project_id'] . '&scene_type=' . (isset($_GET['scene_type']) ? $_GET['scene_type'] : '')
             : home_url("/vrodos-assets-list-page/?") . (!isset($_GET['singleproject']) ? "vrodos_game=" : "vrodos_project_id=") . $data['project_id'];
 
+
+        // Prepare taxonomy and meta data for the template
+        self::prepare_taxonomy_data($data);
+        self::prepare_meta_data($data);
+
+
         // Set default values for new assets
         $data['glb_file_name'] = null;
         $data['back_3d_color'] = 'rgb(0,0,0)';
@@ -829,5 +835,76 @@ class VRodos_Asset_CPT_Manager {
         }
 
         return $data;
+    }
+
+    private static function prepare_taxonomy_data(&$data) {
+        $ids_to_exclude = array();
+        if ($data['game_category'] !== 'vrexpo_games') {
+            $get_terms_to_exclude = get_terms(array(
+                'fields' => 'ids',
+                'slug' => array('chat'),
+                'taxonomy' => 'vrodos_asset3d_cat',
+            ));
+            if (!is_wp_error($get_terms_to_exclude) && count($get_terms_to_exclude) > 0) {
+                $ids_to_exclude = $get_terms_to_exclude;
+            }
+        }
+
+        $data['cat_terms'] = get_terms('vrodos_asset3d_cat', array('hide_empty' => false, 'exclude' => $ids_to_exclude));
+        $data['saved_term'] = wp_get_post_terms($data['asset_id'], 'vrodos_asset3d_cat');
+        $data['saved_ipr_term'] = wp_get_post_terms($data['asset_id'], 'vrodos_asset3d_ipr_cat');
+        $data['cat_ipr_terms'] = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
+    }
+
+    private static function prepare_meta_data(&$data) {
+        $asset_id = $data['asset_id'];
+
+        // Video
+        $videoID = get_post_meta($asset_id, 'vrodos_asset3d_video', true);
+        $video_attachment_post = get_post($videoID);
+        $data['video_attachment_file'] = $video_attachment_post ? $video_attachment_post->guid : null;
+        $data['video_title'] = get_post_meta($asset_id, 'vrodos_asset3d_video_title', true);
+        $data['video_autoloop'] = get_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', true) ? 'checked' : '';
+
+        // Screenshot
+        $data['scrnImageURL'] = plugins_url('../images/ic_sshot.png', dirname(__FILE__));
+        if ($asset_id) {
+            $scrnImageURL = wp_get_attachment_url(get_post_meta($asset_id, "vrodos_asset3d_screenimage", true));
+            if ($scrnImageURL) {
+                $data['scrnImageURL'] = $scrnImageURL;
+            }
+        }
+
+        // POI Image Text
+        $data['poi_img_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', true);
+        $data['poi_img_content'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', true);
+
+        // POI Image File
+        $data['imagePoiImageURL'] = plugins_url('../images/ic_sshot.png', dirname(__FILE__));
+        if ($asset_id) {
+            $imagePoiImageURL = wp_get_attachment_url(get_post_meta($asset_id, "vrodos_asset3d_poi_imgtxt_image", true));
+            if ($imagePoiImageURL) {
+                $data['imagePoiImageURL'] = $imagePoiImageURL;
+            }
+        }
+
+        // POI Chat
+        $data['poi_chat_title'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', true);
+        $data['poi_chat_indicators'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true) ? 'checked' : '';
+        $data['poi_chat_num_people'] = get_post_meta($asset_id, 'vrodos_asset3d_poi_chatnum_people', true);
+
+        // POI Link
+        $data['asset_link'] = get_post_meta($asset_id, 'vrodos_asset3d_link', true);
+
+        // Audio
+        $audioID = get_post_meta($asset_id, 'vrodos_asset3d_audio', true);
+        $attachment_post = get_post($audioID);
+        $data['audio_attachment_file'] = $attachment_post ? $attachment_post->guid : null;
+
+        if ($data['audio_attachment_file']) {
+            $data['audio_file_type'] = (strpos($data['audio_attachment_file'], "mp3") !== false) ? 'mp3' : 'wav';
+        } else {
+            $data['audio_file_type'] = null;
+        }
     }
 }
