@@ -294,9 +294,9 @@ function loadButtonActions() {
             post_revision_no -= 1;
 
             jQuery('#redo-scene-button').html("...").addClass("LinkDisabled");
-            vrodos_undoSceneAjax();
+            vrodos_redoSceneAjax(uploadDir, post_revision_no);
 
-            if (post_revision_no <= 1) {
+            if (post_revision_no < 1) {
                 document.getElementById('redo-scene-button').style.visibility = 'hidden';
             }
         }

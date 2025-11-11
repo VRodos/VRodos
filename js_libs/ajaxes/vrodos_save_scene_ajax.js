@@ -76,5 +76,36 @@ function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
             //alert("Ajax Save Scene: ERROR: 156" + thrownError);
         }
     });
+}
 
+function vrodos_redoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
+
+let postdata = {
+    'action': 'vrodos_redo_scene_async_action',
+    'scene_id': isAdmin == "back" ? phpmyvarC.scene_id : my_ajax_object_savescene.scene_id,
+    'UPLOAD_DIR': UPLOAD_DIR,
+    'post_revision_no': post_revision_no_in
+};
+
+jQuery.ajax({
+    url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savescene.ajax_url,
+    type: 'POST',
+    data: postdata,
+    success: function (scene_json) {
+        jQuery('#undo-scene-button').html("<i class='material-icons'>undo</i>").removeClass("LinkDisabled");
+        jQuery('#redo-scene-button').html("<i class='material-icons'>redo</i>").removeClass("LinkDisabled");
+
+        //console.log(scene_json);
+        parseJSON_LoadScene(scene_json);
+    },
+    error: function (xhr, ajaxOptions, thrownError) {
+
+        console.log("Ajax Undo Scene: ERROR: 158 - " + thrownError);
+
+        jQuery('#undo-scene-button').html("<i class='material-icons'>undo</i>").removeClass("LinkDisabled");
+        jQuery('#redo-scene-button').html("<i class='material-icons'>redo</i>").removeClass("LinkDisabled");
+
+        //alert("Ajax Save Scene: ERROR: 156" + thrownError);
+    }
+});
 }
