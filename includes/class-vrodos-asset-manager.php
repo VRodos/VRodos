@@ -47,11 +47,9 @@ class VRodos_Asset_Manager {
         wp_enqueue_script('vrodos_html2canvas');
 
         // Content Interlinking
-        $pluginpath = dirname (plugin_dir_url( __DIR__  ));
-
         // Content interlinking ajax
         wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
-            $pluginpath.'/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
+            VRODOS_PLUGIN_URL.'/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
 
         // ajax php admin url
         wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
