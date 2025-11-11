@@ -646,6 +646,18 @@ wp_head();
             // Populate the JSON viewer textarea
             document.getElementById('vrodos_scene_json_input').value = JSON.stringify(vrodos_scene_data, null, 2);
 
+            // Set initial background color and UI from scene data
+            if (vrodos_scene_data.backgroundStyleOption === 1 && vrodos_scene_data.ClearColor) {
+                envir.scene.background = new THREE.Color(vrodos_scene_data.ClearColor);
+                document.getElementById('sceneColorRadio').checked = true;
+                document.getElementById('jscolorpick').value = vrodos_scene_data.ClearColor.substring(1);
+            } else {
+                // Default to white if no color is set
+                envir.scene.background = new THREE.Color(0xffffff);
+                document.getElementById('sceneColorRadio').checked = true;
+                document.getElementById('jscolorpick').value = 'ffffff';
+            }
+
 
             // Add 3D gui widgets to gui vr_editor_main_div
             let guiContainer = document.getElementById('numerical_gui-container');

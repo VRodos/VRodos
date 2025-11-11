@@ -94,7 +94,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
+        trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -196,7 +196,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
+        trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
