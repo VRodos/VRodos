@@ -12,6 +12,17 @@ class VRodos_Asset_Manager {
         add_action('wp_enqueue_scripts', array($this, 'register_styles'));
         add_action('admin_enqueue_scripts', array($this, 'register_styles'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_asset_editor_scripts'));
+        add_action('wp_enqueue_scripts', array($this, 'localize_edit_scene_scripts'), 11);
+    }
+
+    public function localize_edit_scene_scripts() {
+        $edit_scene_page = VRodos_Core_Manager::vrodos_getEditpage('scene');
+        if (!$edit_scene_page || !is_page($edit_scene_page[0]->ID)) {
+            return;
+        }
+
+        $scene_data = VRodos_Scene_CPT_Manager::get_scene_dat_for_script();
+        wp_localize_script('vrodos_scripts', 'vrodos_scene_data', $scene_data);
     }
 
     public function enqueue_asset_editor_scripts() {

@@ -321,4 +321,19 @@ class VRodos_Scene_CPT_Manager {
 
         return $scene_data;
     }
+
+    public static function get_scene_dat_for_script() {
+        $upload_url = wp_upload_dir()['baseurl'];
+        $current_scene_id = isset($_GET['vrodos_scene']) ? sanitize_text_field(intval($_GET['vrodos_scene'])) : null;
+        $project_id = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
+        $project_type = $project_id ? VRodos_Core_Manager::vrodos_return_project_type($project_id)->string : null;
+
+        $scene_post = get_post($current_scene_id);
+        $scene_json_from_db = $scene_post->post_content ? $scene_post->post_content : VRodos_Core_Manager::vrodos_getDefaultJSONscene(strtolower($project_type));
+
+        $scene_model = new Vrodos_Scene_Model($scene_json_from_db);
+        $sceneJSON = $scene_model->to_json();
+
+        return self::parse_scene_json_and_prepare_script_data($sceneJSON, $upload_url);
+    }
 }
