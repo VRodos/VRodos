@@ -7,7 +7,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         "scale": [1, 1, 1]
     };
 
-    resources3D[nameModel] = {
+    vrodos_scene_data.objects[nameModel] = {
         "path": path,
         "trs": selected_object_trs,
         "fnPath": path ? path.substring(path.lastIndexOf('/') + 1) : '',
@@ -17,7 +17,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     };
 
     for (let entry in Object.keys(dataDrag)) {
-        resources3D[nameModel][Object.keys(dataDrag)[entry]] = Object.values(dataDrag)[entry];
+        vrodos_scene_data.objects[nameModel][Object.keys(dataDrag)[entry]] = Object.values(dataDrag)[entry];
     }
     
     if (categoryName === 'lightSun') {
@@ -94,7 +94,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = resources3D[nameModel]['trs'];
+        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -196,7 +196,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = resources3D[nameModel]['trs'];
+        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -260,7 +260,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             new THREE.MeshBasicMaterial({ color: 0xffaa00 })
         ));
 
-        let trs_tmp = resources3D[nameModel]['trs'];
+        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
 
         //// Add Lamp Helper
@@ -306,7 +306,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        //let trs_tmp = resources3D[nameModel]['trs'];
+        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -378,7 +378,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = resources3D[nameModel]['trs'];
+        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -466,7 +466,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
                 // Add transform controls
                 let insertedObject = envir.scene.getObjectByName(nameModel);
 
-                let trs_tmp = resources3D[nameModel]['trs'];
+                let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
                 trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -524,7 +524,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         let manager = new THREE.LoadingManager();
         // On progress messages
         manager.onProgress = function (item, loaded, total) {
-            document.getElementById("result_download").innerHTML = resources3D[nameModel]['asset_name'] + " loading part " + loaded + " / " + total;
+            document.getElementById("result_download").innerHTML = vrodos_scene_data.objects[nameModel]['asset_name'] + " loading part " + loaded + " / " + total;
         };
 
 
@@ -534,7 +534,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             let insertedObject = envir.scene.getObjectByName(nameModel);
 
             // Affine transformations
-            let trs_tmp = resources3D[nameModel]['trs'];
+            let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
             insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
             insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
@@ -584,7 +584,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Init downloading only the added model
         let loaderMulti = new VRodos_LoaderMulti();
-        loaderMulti.load(manager, { [nameModel]: resources3D[nameModel] }, pluginPath);
+        loaderMulti.load(manager, { [nameModel]: vrodos_scene_data.objects[nameModel] }, pluginPath);
 
         // envir.composer = [];
         // envir.setComposerAndPasses();
@@ -666,14 +666,14 @@ function lockOnScene(uuid, name) {
  */
 function deleteAssetFromScene(uuid) {
 
-    let resChildren = Object.values(resources3D);
+    let resChildren = Object.values(vrodos_scene_data.objects);
     let envirChildren = Object.values(envir.scene.children);
 
     // 1. Delete object from js array (if it exists. Usually it is saved after reload)
     for (let i in resChildren) {
         if (typeof resChildren[i] === 'object' && resChildren[i] !== null) {
             if (resChildren[i].uuid == uuid) {
-                delete resources3D[resChildren[i].name];
+                delete vrodos_scene_data.objects[resChildren[i].name];
             }
         }
     }

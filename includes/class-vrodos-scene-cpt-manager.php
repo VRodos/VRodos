@@ -274,7 +274,7 @@ class VRodos_Scene_CPT_Manager {
         $scene_data['disableMovement'] = $json_metadata->disableMovement ?? false;
         $scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? null;
         $scene_data['backgroundImagePath'] = $json_metadata->backgroundImagePath ?? null;
-        $scene_data['backgroundStyleOption'] = $json_metadata->backgroundStyleOption ?? null;
+        $scene_data['backgroundStyleOption'] = $json_metadata->backgroundStyleOption ?? 1;
 
         if (property_exists($json_metadata, "fogCategory")) {
             $scene_data["fogCategory"] = $json_metadata->fogCategory;
