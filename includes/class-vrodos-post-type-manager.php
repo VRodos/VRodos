@@ -270,9 +270,6 @@ class VRodos_Post_Type_Manager {
             'taxonomies' => array('vrodos_asset3d_cat', 'vrodos_asset3d_pgame', 'vrodos_asset3d_ipr_cat'),
             'supports' => array('title', 'editor', 'custom-fields', 'thumbnail','revisions','author'),
             'hierarchical' => false,
-            'show_in_graphql' => true,
-            'graphql_single_name' => 'vrodosAsset3d',
-            'graphql_plural_name' => 'vrodosAssets3d',
             'has_archive' => false,
             'capabilities' => array(
                 'publish_posts' => 'publish_vrodos_asset3d',
@@ -319,9 +316,6 @@ class VRodos_Post_Type_Manager {
                 'delete_terms' => 'manage_vrodos_asset3d_cat',
                 'assign_terms' => 'edit_vrodos_asset3d_cat'
             ),
-            'show_in_graphql' => true,
-            'graphql_single_name' => 'VrodosAsset3DCategory',
-            'graphql_plural_name' => 'VrodosAsset3DCategories',
         );
         register_taxonomy('vrodos_asset3d_cat', 'vrodos_asset3d', $args);
     }

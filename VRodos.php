@@ -86,11 +86,6 @@ new VRodos_Shortcode_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-block-manager.php');
 new VRodos_Block_Manager();
 
-// GraphQL Manager Class
-require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-graphql-manager.php');
-new VRodos_GraphQL_Manager();
-
-
 // Widget Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-widget-manager.php');
 new VRodos_Widget_Manager();
