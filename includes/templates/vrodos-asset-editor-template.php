@@ -16,71 +16,16 @@ $isAdmin = is_admin() ? 'back' : 'front';
 <?php
 $data = VRodos_Asset_CPT_Manager::prepare_asset_editor_template_data();
 extract($data);
-
-
 ?>
-
     <script>
         let path_url = null;
-        let glb_file_name = null;
+        let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
         let no_img_path = '<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)); ?>';
+        var asset_title = <?php echo json_encode($asset_title_value); ?>;
     </script>
 
 <?php
-
-// ============================================
-//---------------------------- End of handle Submit  -------------------------
-
-// When asset was created in the past and now we want to edit it. We should get the attachments glb
-if($asset_id != null) {
-
-    // Get post
-    $asset_post = get_post($asset_id);
-
-    // Get post meta
-    $assetpostMeta = get_post_meta($asset_id);
-
-    // Background color in canvas
-    $back_3d_color = $assetpostMeta['vrodos_asset3d_back3dcolor'] ? $assetpostMeta['vrodos_asset3d_back3dcolor'][0] : '#ffffff';
-
-    // Font type for text
-    $fonts = $assetpostMeta['vrodos_asset3d_fonts'][0];
-    $curr_font = str_replace("+", " ", $fonts);
-
-    $asset_3d_files = VRodos_Core_Manager::get_3D_model_files($assetpostMeta, $asset_id);
-
-    ?>
-
-    <script>
-        glb_file_name= "<?php echo $asset_3d_files['glb'];?>";
-    </script>
-
-    <?php
-}
-//--------------------------------------------------------
 get_header();
-
-$dropdownHeading = ($asset_id == null ? "Select a category" : "Category");
-
-$asset_title_value = ($asset_id == null) ? "" : get_the_title( $asset_id );
-$asset_description_value = ($asset_id == null) ? "" : get_post_field('post_content', $asset_id);
-
-echo '<script>';
-echo 'var asset_title="'.$asset_title_value.'";';
-echo '</script>';
-
-
-// Retrieve Fonts saved
-$asset_fonts_saved = ($asset_id == null ? "" : get_post_meta($asset_id,'vrodos_asset3d_fonts', true));
-
-// Retrieve Background Color saved
-$asset_back_3d_color_saved = ($asset_id == null ? "#000000" :
-    get_post_meta($asset_id,'vrodos_asset3d_back3dcolor', true));
-
-$assettrs_saved = ($asset_id == null ? "0,0,0,0,0,0,0,0,-100" :
-    get_post_meta($asset_id,'vrodos_asset3d_assettrs', true));
-
-
 ?>
 
 <?php if ( !is_user_logged_in() || !current_user_can('administrator') ) {
