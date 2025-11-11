@@ -28,6 +28,15 @@ class VRodos_Scene_CPT_Manager {
         add_action('manage_vrodos_scene_posts_custom_column', array($this, 'set_custom_vrodos_scene_columns_fill'), 10, 2);
         add_action('add_meta_boxes', array($this, 'scenes_meta_definitions_add'));
         add_action('save_post', array($this, 'scenes_metas_save'));
+        add_filter('wp_revisions_to_keep', array($this, 'ns_limit_revisions'), 10, 2);
+    }
+
+    public function ns_limit_revisions($num, $post){
+
+        $N = 50; // Keep only the latest N revisions
+        $target_types = array('vrodos_scene');
+        $is_target_type = in_array($post->post_type, $target_types);
+        return $is_target_type ? $N : $num;
     }
 
     // Create Scene's Game Box @ scene's backend

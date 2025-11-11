@@ -4,12 +4,227 @@ class VRodos_Core_Manager {
 
     public function __construct() {
         add_filter('login_redirect', array($this, 'vrodos_default_page'));
-        // The following hook is commented out in VRodos.php, so I will keep it commented here as well to preserve behavior.
-        // add_action('after_setup_theme', array($this, 'vrodos_remove_admin_bar'));
 
-        // This function is not hooked in VRodos.php, but it is a core function that should be available.
-        // I will add it as a public method that can be called from other classes.
-        // add_action('wp_head', array($this, 'vrodos_remove_admin_login_header'));
+        // Custom hooks
+        add_filter('upload_mimes', array($this, 'vrodos_mime_types'), 1, 1);
+        add_action('plugins_loaded', array($this, 'vrodos_admin_hooks'));
+        add_action('login_headerurl', array($this, 'vrodos_lost_password_redirect'));
+        add_action('after_setup_theme', array($this, 'disable_widgets_block_editor'));
+        remove_filter ('the_content', 'wpautop');
+    }
+
+    public function vrodos_admin_hooks(){
+        if($GLOBALS['pagenow']=='post.php') {
+            add_action('admin_print_scripts', array($this, 'my_admin_scripts'));
+            add_action('admin_print_styles',  array($this, 'my_admin_styles'));
+        }
+    }
+
+    public function my_admin_scripts() {
+        wp_enqueue_script('jquery');
+        wp_enqueue_script('media-upload');
+        wp_enqueue_script('thickbox');
+    }
+
+
+    public function my_admin_styles()  {
+        wp_enqueue_style('thickbox');
+    }
+
+    public function vrodos_lost_password_redirect() {
+        // Check if have submitted
+        $confirm = ( isset($_GET['checkemail'] ) ? $_GET['checkemail'] : '' );
+
+        if( $confirm ) {
+            wp_redirect( get_site_url( ));
+            exit;
+        }
+    }
+
+    public function disable_widgets_block_editor() {
+        remove_theme_support( 'widgets-block-editor' );
+    }
+
+    public function vrodos_mime_types($mime_types){
+        $mime_types['json'] = 'text/json';
+        $mime_types['obj'] = 'text/plain';
+        $mime_types['mp4'] = 'video/mp4';
+        $mime_types['ogv'] = 'application/ogg';
+        $mime_types['ogg'] = 'application/ogg';
+        $mime_types['mtl'] = 'text/plain';
+        $mime_types['mat'] = 'text/plain';
+        $mime_types['pdb'] = 'text/plain';
+        $mime_types['fbx'] = 'application/octet-stream';
+        $mime_types['glb'] = 'application/octet-stream';
+        return $mime_types;
+    }
+
+    public static function vrodos_plugin_main_page() {
+        $allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
+
+        if ( is_admin() ) {
+            if( ! function_exists( 'get_plugin_data' ) ) {
+                require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+            }
+            $plugin_data = get_plugin_data( VRODOS_PLUGIN_FILE );
+        }
+        ?>
+
+        <div id="wpbody" role="main">
+            <div id="wpbody-content">
+                <div class="wrap">
+                    <h1>VRodos Dashboard (<?php echo $plugin_data['Version'] ?>)</h1>
+                    <div id="welcome-panel" class="welcome-panel" style="background: #1b4d0d url(images/about-texture.png) center repeat ">
+                        <div class="welcome-panel-content">
+                            <div class="welcome-panel-header">
+                                <img src="<?php echo plugin_dir_url( VRODOS_PLUGIN_FILE )?>images/VRodos_icon_512.png" alt="VRodos Icon" style="width:128px;height:128px;position: absolute;
+    right: 0;
+    margin-right: 20px;">
+                                <h2>Welcome to VRodos!</h2>
+                                <p>
+                                    <a href="https://vrodos.iti.gr">
+                                        Learn more about VRodos </a>
+                                </p>
+                            </div>
+                            <div class="welcome-panel-column-container">
+                                <div class="welcome-panel-column">
+                                    <div class="welcome-panel-icon-pages"></div>
+                                    <div class="welcome-panel-column-content">
+                                        <a href="<?php echo esc_url( get_permalink($allProjectsPage[0]->ID)); ?>" class="mdc-button mdc-button--raised">Access Project Manager</a>
+                                    </div>
+                                </div>
+                                <div class="welcome-panel-column">
+                                    <div class="welcome-panel-icon-layout"></div>
+                                    <div class="welcome-panel-column-content">
+                                    </div>
+                                </div>
+                                <div class="welcome-panel-column">
+                                    <div class="welcome-panel-icon-styles"></div>
+                                    <div class="welcome-panel-column-content">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table_stuff">
+                    <table>
+                        <caption>Overview</caption>
+                        <thead>
+
+                        <tr>
+                            <th><!-- Intentionally Blank --></th>
+                            <th>Total number</th>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Parent Project</th>
+                        <tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <th>Projects</th>
+                            <td><?php
+
+                                $args = array(
+                                    'post_type' => 'vrodos_game',
+                                    'posts_per_page' => -1
+                                );
+
+                                $query = new WP_Query($args);
+
+                                echo $query->found_posts;
+                                ?></td>
+                            <td><?php
+
+                                $args = array(
+                                    'post_type' => 'vrodos_game',
+                                    'posts_per_page' => -1
+                                );
+
+                                $query = new WP_Query($args);
+
+                                //echo $query->found_posts;
+
+                                //echo "<br />";
+                                if ($query->have_posts()) :
+
+                                    while ( $query->have_posts() ) : $query->the_post();
+                                        echo get_the_ID() . " <br />";
+                                    endwhile;
+                                    wp_reset_postdata();
+                                endif;
+                                ?></td>
+                            <td><?php
+
+                                $args = array(
+                                    'post_type' => 'vrodos_game',
+                                    'posts_per_page' => -1
+                                );
+
+                                $query = new WP_Query($args);
+
+                                //echo $query->found_posts;
+
+                                //echo "<br />";
+                                if ($query->have_posts() ) :
+
+                                    while ( $query->have_posts() ) : $query->the_post();
+                                        echo  get_the_title() . " <br />";
+                                    endwhile;
+
+                                    wp_reset_postdata();
+                                endif;
+
+                                ?></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th>Scenes</th>
+                            <td> <?php
+
+                                $args = array(
+                                    'post_type' => 'vrodos_scene',
+                                    'posts_per_page' => -1
+                                );
+
+                                $query = new WP_Query($args);
+
+                                echo $query->found_posts . "</br>";
+
+                                ?></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th>Assets</th>
+                            <td> <?php
+
+                                $args = array(
+                                    'post_type' => 'vrodos_asset3d',
+                                    'posts_per_page' => -1
+                                );
+
+                                $query = new WP_Query($args);
+
+                                echo $query->found_posts;
+                                ?>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <hr class="wp-block-separator"/>
+        <?php
     }
 
     public function vrodos_remove_admin_login_header() {

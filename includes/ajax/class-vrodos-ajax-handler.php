@@ -346,6 +346,10 @@ class VRodos_AJAX_Handler {
     // Undo button for scenes
     public function undo_scene_async_action_callback()
     {
+        if ( ! isset( $_POST['post_revision_no'] ) ) {
+            wp_send_json_error( 'Missing revision number.' );
+        }
+
         $revision_number = $_POST['post_revision_no'];
         $current_scene_id = $_POST['scene_id'];
 
@@ -368,26 +372,24 @@ class VRodos_AJAX_Handler {
     // Redo button for scenes
     public function redo_scene_async_action_callback()
     {
-        if (isset($_POST['scene_screenshot'])){
-            $attachment_id = VRodos_Upload_Manager::upload_scene_screenshot(
-                $_POST['scene_screenshot'],
-                'scene_'.$_POST['scene_id'].'_featimg',
-                $_POST['scene_id'],
-                'jpg');
-
-            set_post_thumbnail( $_POST['scene_id'], $attachment_id );
+        if ( ! isset( $_POST['post_revision_no'] ) ) {
+            wp_send_json_error( 'Missing revision number.' );
         }
 
-        $scene_new_info = array(
-            'ID' => $_POST['scene_id'],
-            'post_title' => $_POST['scene_title'],
-            'post_content' => wp_unslash($_POST['scene_json'])
+        $revision_number = $_POST['post_revision_no'];
+        $current_scene_id = $_POST['scene_id'];
+
+        $rev = wp_get_post_revisions( $current_scene_id,
+            [
+                'offset'           => $revision_number,    // Start from the previous change
+                'posts_per_page'  => 1,    // Only a single revision
+                'post_name__in'   => [ "{$current_scene_id}-revision-v1" ],
+                'check_enabled'   => false,
+            ]
         );
+        $sceneToLoad = reset($rev)->post_content;
 
-        $res = wp_update_post($scene_new_info);
-        update_post_meta($_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption']);
-
-        echo $res!=0 ? 'true' : 'false';
+        echo $sceneToLoad;
         wp_die();
     }
 
