@@ -315,6 +315,26 @@ class VRodos_Scene_CPT_Manager {
                 }
 
                 $object_data['isLight'] = $is_light;
+
+                // Recreate the 'trs' object that the frontend scripts expect.
+                $t_x = $value->position[0] ?? 0;
+                $t_y = $value->position[1] ?? 0;
+                $t_z = $value->position[2] ?? 0;
+
+                $r_x = $value->rotation[0] ?? 0;
+                $r_y = $value->rotation[1] ?? 0;
+                $r_z = $value->rotation[2] ?? 0;
+
+                $s_x = $value->scale[0] ?? 1;
+                $s_y = $value->scale[1] ?? 1;
+                $s_z = $value->scale[2] ?? 1;
+
+                $object_data['trs'] = array(
+                    'translation' => array($t_x, $t_y, $t_z),
+                    'rotation' => array($r_x, $r_y, $r_z),
+                    'scale' => array($s_x, $s_y, $s_z),
+                );
+
                 $scene_data['objects'][$name] = $object_data;
             }
         }
