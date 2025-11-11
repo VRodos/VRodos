@@ -11,6 +11,52 @@ class VRodos_Asset_Manager {
         add_action('admin_enqueue_scripts', array($this, 'register_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'register_styles'));
         add_action('admin_enqueue_scripts', array($this, 'register_styles'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_asset_editor_scripts'));
+    }
+
+    public function enqueue_asset_editor_scripts() {
+
+        $asset_editor_page = VRodos_Core_Manager::vrodos_getEditpage('asset');
+        if (!$asset_editor_page || !is_page($asset_editor_page[0]->ID)) {
+            return;
+        }
+
+        // Stylesheet
+        wp_enqueue_style('vrodos_asseteditor_stylesheet');
+
+        // Three js : for simple rendering
+        wp_enqueue_script('vrodos_scripts');
+
+        // 1. Three js library
+        wp_enqueue_script( 'vrodos_load141_threejs' );
+        wp_enqueue_script( 'vrodos_load141_OrbitControls' );
+        wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
+        wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
+        wp_enqueue_script( 'vrodos_load141_DRACOLoader' );
+
+        // Load single asset: Load existing asset
+        wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
+
+        // Load scripts for asset editor
+        wp_enqueue_script('vrodos_asset_editor_scripts');
+
+        // Select colors
+        wp_enqueue_script('vrodos_jscolorpick');
+
+        // to capture screenshot of the 3D molecule and its tags
+        wp_enqueue_script('vrodos_html2canvas');
+
+        // Content Interlinking
+        $pluginpath = dirname (plugin_dir_url( __DIR__  ));
+
+        // Content interlinking ajax
+        wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
+            $pluginpath.'/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
+
+        // ajax php admin url
+        wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
+            array( 'ajax_url' => admin_url( 'admin-ajax.php' ), null )
+        );
     }
 
     public function register_scripts() {

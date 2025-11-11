@@ -90,7 +90,119 @@ class VRodos_Asset_CPT_Manager {
 		// Admin columns
 		add_filter( 'manage_vrodos_asset3d_posts_columns', array( $this, 'vrodos_set_custom_vrodos_asset3d_columns' ) );
 		add_action( 'manage_vrodos_asset3d_posts_custom_column', array( $this, 'vrodos_set_custom_vrodos_asset3d_columns_fill' ), 10, 2 );
+
+        add_action('init', array($this, 'handle_asset_frontend_submission'));
 	}
+
+    public function handle_asset_frontend_submission(){
+
+        if (!isset($_POST['submitted']) || !isset($_POST['post_nonce_field']) || !wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
+            return;
+        }
+
+        $asset_id = isset($_GET['vrodos_asset']) ? sanitize_text_field(intval($_GET['vrodos_asset'])) : null;
+        $project_id = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
+        $game_post = get_post($project_id);
+        $gameSlug = $game_post ? $game_post->post_name : '';
+        $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
+        $assetPGameID = $assetPGame ? $assetPGame->term_id : null;
+        $assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
+        $isJoker = (strpos($assetPGameSlug, 'joker') !== false) ? "true":"false";
+
+        $assetTitle = isset($_POST['assetTitle']) ? esc_attr(strip_tags($_POST['assetTitle'])) : '';
+        $assetCatID = intval($_POST['term_id']); //ID of Asset Category (hidden input)
+        $assetCatTerm = get_term_by('id', $assetCatID, 'vrodos_asset3d_cat');
+
+        $assetFonts = isset($_POST['assetFonts']) ? esc_attr(strip_tags($_POST['assetFonts'])) : '';
+
+        $assetback3dcolor = esc_attr(strip_tags($_POST['assetback3dcolor']));
+        $assettrs = esc_attr(strip_tags($_POST['assettrs']));
+
+        $assetCatIPRID = intval($_POST['term_id_ipr']); //ID of Asset Category IPR (hidden input)
+        $assetCatIPRTerm = get_term_by('id', $assetCatIPRID, 'vrodos_asset3d_ipr_cat');
+
+        $asset_updatedConf = 0;
+        // NEW Asset: submit info to backend
+
+        if($asset_id == null) {
+            // It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
+            $asset_id = VRodos_Asset_CPT_Manager::create_asset_frontend($assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '');
+        }
+        else {
+            // Edit an existing asset: Return true if updated, false if failed
+            $asset_updatedConf = VRodos_Asset_CPT_Manager::update_asset_frontend($assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '');
+        }
+
+
+        // Upload 3D files
+        if($asset_id != 0 || $asset_updatedConf == 1) {
+
+            // NoCloning: Upload files from POST but check first
+            // if any 3D files have been selected for upload
+            if (count($_FILES['multipleFilesInput']['name']) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ){
+                VRodos_Asset_CPT_Manager::create_asset_3dfiles_extra_frontend($asset_id, $project_id, $assetCatID);
+            }
+
+            update_post_meta($asset_id, 'vrodos_asset3d_isCloned', 'false');
+            update_post_meta($asset_id, 'vrodos_asset3d_isJoker', $isJoker);
+        }
+
+        if (isset($_POST['sshotFileInput']) && !empty($_POST['sshotFileInput']) ) {
+            // Check if a screenshot already exists to perform an in-place update.
+            $existing_screenshot_id = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
+            VRodos_Upload_Manager::upload_asset_screenshot($_POST['sshotFileInput'], $asset_id, $project_id, $existing_screenshot_id);
+        }
+
+        // Save custom parameters according to asset type.
+        switch ($assetCatTerm->slug) {
+
+            case 'video':
+                if (isset($_FILES['videoFileInput'])) {
+                    VRodos_Asset_CPT_Manager::create_asset_add_video_frontend($asset_id);
+                }
+                if (isset($_POST['videoSshotFileInput'])) {
+                    VRodos_Upload_Manager::upload_asset_screenshot($_POST['videoSshotFileInput'], $asset_id, $project_id);
+                }
+                update_post_meta($asset_id, 'vrodos_asset3d_video_title', sanitize_text_field($_POST['videoTitle']));
+                update_post_meta($asset_id, 'vrodos_asset3d_video_autoloop', isset($_POST['video_autoloop_checkbox']));
+                break;
+
+            case 'poi-imagetext':
+
+                $existing_img = $_FILES['imageFileInput'];
+                if ( $existing_img['error'] != 4  ) {
+                    VRodos_Asset_CPT_Manager::create_asset_add_images_frontend($asset_id, $_FILES['imageFileInput']);
+                }
+
+                update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', sanitize_text_field($_POST['poiImgTitle']));
+                update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_content', sanitize_text_field($_POST['poiImgDescription']));
+
+                break;
+
+            case 'poi-link':
+                update_post_meta($asset_id, 'vrodos_asset3d_link', $_POST['assetLinkInput']);
+                break;
+
+            case 'chat':
+                update_post_meta($asset_id, 'vrodos_asset3d_poi_chattxt_title', $_POST['poiChatTitle']);
+                update_post_meta($asset_id, 'vrodos_asset3d_poi_chatnum_people', $_POST['poiChatNumPeople']);
+                update_post_meta($asset_id, 'vrodos_asset3d_poi_chatbut_indicators', isset($_POST['poiChatIndicators']));
+                break;
+
+            default:
+                break;
+        }
+
+        // Audio: To add
+        // vrodos_create_asset_addAudio_frontend($asset_id);
+
+        $redirect_url = $_SERVER['HTTP_REFERER'];
+        if (!isset($_GET['vrodos_asset'])) {
+            $redirect_url = add_query_arg('vrodos_asset', $asset_id, $redirect_url);
+        }
+        wp_redirect($redirect_url);
+        exit;
+    }
 
 	/**
 	 * Create PathData for each asset as custom field.
@@ -640,4 +752,82 @@ class VRodos_Asset_CPT_Manager {
 		update_post_meta($asset_id, 'vrodos_asset3d_back3dcolor', $asset_back_3d_color);
 		update_post_meta($asset_id, 'vrodos_asset3d_assettrs', $asset_trs);
 	}
+
+    public static function prepare_asset_editor_template_data(){
+        $data = [];
+
+        $data['asset_id'] = isset($_GET['vrodos_asset']) ? sanitize_text_field(intval($_GET['vrodos_asset'])) : null;
+        $data['project_id'] = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
+
+        $data['isUserloggedIn'] = is_user_logged_in();
+        $data['current_user'] = wp_get_current_user();
+        $data['isUserAdmin'] = current_user_can('administrator');
+        $data['isOwner'] = $data['current_user']->ID == get_post_field('post_author', $data['asset_id']);
+
+        if (!$data['asset_id']) {
+            $data['isOwner'] = true;
+        }
+
+        $data['isEditable'] = false;
+        $data['author_id'] = null;
+        if ($data['isUserloggedIn']) {
+            if (!isset($_GET['vrodos_asset'])) {
+                $data['isEditable'] = true;
+                $data['author_id'] = $data['current_user']->ID;
+            } else if ($data['isUserAdmin'] || $data['isOwner']) {
+                $data['isEditable'] = true;
+                $data['author_id'] = get_post_field('post_author', $data['asset_id']);
+            }
+        }
+
+        $data['isEditMode'] = !isset($_GET['preview']) || $_GET['preview'] !== '1';
+
+        $game_post = get_post($data['project_id']);
+        $gameSlug = $game_post ? $game_post->post_name : '';
+        $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
+        $data['assetPGameID'] = $assetPGame ? $assetPGame->term_id : null;
+
+        // Fix for PHP 8 deprecation warning
+        $assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
+        $data['isJoker'] = (strpos($assetPGameSlug, 'joker') !== false) ? "true" : "false";
+
+        $all_game_category = get_the_terms($data['project_id'], 'vrodos_game_type');
+        $data['game_category'] = $all_game_category ? $all_game_category[0]->slug : null;
+
+        $scene_id = isset($_GET['vrodos_scene']) ? sanitize_text_field(intval($_GET['vrodos_scene'])) : null;
+        $editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
+        $edit_scene_page_id = $editscenePage ? $editscenePage[0]->ID : null;
+
+        $perma_structure = get_option('permalink_structure');
+        $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+
+        $data['goBackToLink'] = $scene_id && $edit_scene_page_id
+            ? get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $data['project_id'] . '&scene_type=' . (isset($_GET['scene_type']) ? $_GET['scene_type'] : '')
+            : home_url("/vrodos-assets-list-page/?") . (!isset($_GET['singleproject']) ? "vrodos_game=" : "vrodos_project_id=") . $data['project_id'];
+
+        // Set default values for new assets
+        $data['glb_file_name'] = null;
+        $data['back_3d_color'] = 'rgb(0,0,0)';
+        $data['asset_title_value'] = '';
+        $data['asset_description_value'] = '';
+        $data['asset_fonts_saved'] = '';
+        $data['asset_back_3d_color_saved'] = '#000000';
+        $data['assettrs_saved'] = '0,0,0,0,0,0,0,0,-100';
+        $data['dropdownHeading'] = "Select a category";
+
+        if ($data['asset_id'] != null) {
+            $assetpostMeta = get_post_meta($data['asset_id']);
+            $data['back_3d_color'] = isset($assetpostMeta['vrodos_asset3d_back3dcolor']) ? $assetpostMeta['vrodos_asset3d_back3dcolor'][0] : '#ffffff';
+            $asset_3d_files = VRodos_Core_Manager::get_3D_model_files($assetpostMeta, $data['asset_id']);
+            $data['glb_file_name'] = $asset_3d_files['glb'];
+            $data['dropdownHeading'] = "Category";
+            $data['asset_title_value'] = get_the_title($data['asset_id']);
+            $data['asset_description_value'] = get_post_field('post_content', $data['asset_id']);
+            $data['asset_fonts_saved'] = get_post_meta($data['asset_id'], 'vrodos_asset3d_fonts', true);
+            $data['asset_back_3d_color_saved'] = get_post_meta($data['asset_id'], 'vrodos_asset3d_back3dcolor', true) ?: '#000000';
+            $data['assettrs_saved'] = get_post_meta($data['asset_id'], 'vrodos_asset3d_assettrs', true) ?: '0,0,0,0,0,0,0,0,-100';
+        }
+
+        return $data;
+    }
 }
