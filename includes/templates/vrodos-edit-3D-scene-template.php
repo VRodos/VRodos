@@ -83,9 +83,6 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
     // Use lighting or basic materials (basic does not employ light, no shadows)
     window.isAnyLight = true;
 
-    // This holds all the 3D resources to load. Generated in Parse JSON.
-    var resources3D  = [];
-
     // For autosave after each action
     var mapActions = {}; // You could also use an array
 
@@ -94,9 +91,6 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 
 
 <?php
-// resources3D class
-require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
-
 // Define current path of plugin
 $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 
@@ -136,9 +130,10 @@ $scene_json_from_db = $scene_post->post_content ? $scene_post->post_content : VR
 $scene_model = new Vrodos_Scene_Model($scene_json_from_db);
 $sceneJSON = $scene_model->to_json();
 
-// Load resources 3D
-$SceneParserPHP = new ParseJSON($upload_url);
-$SceneParserPHP->init($sceneJSON);
+// Parse the scene JSON and prepare data for the script.
+$scene_data = VRodos_Scene_CPT_Manager::parse_scene_json_and_prepare_script_data($sceneJSON, $upload_url);
+wp_localize_script('vrodos_scripts', 'vrodos_scene_data', $scene_data);
+
 
 $sceneTitle = $scene_post->post_name;
 
@@ -677,7 +672,7 @@ wp_head();
 
             // Add lights on scene
             let lightsPawnLoader = new VRodos_LightsPawn_Loader();
-            lightsPawnLoader.load(resources3D);
+            lightsPawnLoader.load(vrodos_scene_data.objects);
 
             // Add all in hierarchy viewer
             setHierarchyViewer();
@@ -703,8 +698,8 @@ wp_head();
             manager.onLoad = function () {
 
                 // Get the last inserted object
-                let l = Object.keys(resources3D).length;
-                let name = Object.keys(resources3D)[l - 1]; //Object.keys(resources3D).pop();
+                let l = Object.keys(vrodos_scene_data.objects).length;
+                let name = Object.keys(vrodos_scene_data.objects)[l - 1];
 
                 let objItem;
 
@@ -731,13 +726,13 @@ wp_head();
                 setHierarchyViewer();
                
 
-                for (let n in resources3D) {
+                for (let n in vrodos_scene_data.objects) {
                     // (function (name) {
 
                     //     // Set Target light for Spots
-                    //     if (resources3D[name]['category_name'] === 'lightSpot') {
+                    //     if (vrodos_scene_data.objects[name]['category_name'] === 'lightSpot') {
                     //         let lightSpot = envir.scene.getObjectByName(name);
-                    //         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
+                    //         lightSpot.target = envir.scene.getObjectByName(vrodos_scene_data.objects[name]['lighttargetobjectname']);
                     //     }
                     // })(n);
                 }
@@ -769,7 +764,7 @@ wp_head();
 
             // Loader of assets
             let loaderMulti = new VRodos_LoaderMulti();
-            loaderMulti.load(manager, resources3D, pluginPath);
+            loaderMulti.load(manager, vrodos_scene_data.objects, pluginPath);
 
             //--- initiate PointerLockControls ---------------
             initPointerLock();
@@ -789,35 +784,26 @@ wp_head();
 
             let img_thumb = document.getElementById('uploadImgThumb');
 
-            if (resources3D["enableGeneralChat"]) {
-                document.getElementById("enableGeneralChatCheckbox").checked = resources3D["enableGeneralChat"];
-                envir.scene.enableGeneralChat = resources3D["enableGeneralChat"];
+            if (vrodos_scene_data["enableGeneralChat"]) {
+                document.getElementById("enableGeneralChatCheckbox").checked = vrodos_scene_data["enableGeneralChat"];
+                envir.scene.enableGeneralChat = vrodos_scene_data["enableGeneralChat"];
             }
-            if (resources3D["enableAvatar"]) {
-                document.getElementById("enableAvatarCheckbox").checked = resources3D["enableAvatar"];
-                envir.scene.enableAvatar = resources3D["enableAvatar"];
-            }         
-            // if (resources3D["fogtype"]) {
-            //     //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
-            //     envir.scene.fogtype = resources3D["fogtype"];
-            // }
-            if (resources3D["fogCategory"]) {
-                //document.getElementById("enableAvatarCheckbox").checked = JSON.parse(resources3D["enableAvatar"]);
-                envir.scene.fogCategory = resources3D["fogCategory"];
-                // envir.scene.fogcolor = resources3D["fogcolor"];
-                
-                envir.scene.fognear = resources3D["fognear"];
-                envir.scene.fogfar = resources3D["fogfar"];
-                envir.scene.fogdensity = resources3D["fogdensity"];
+            if (vrodos_scene_data["enableAvatar"]) {
+                document.getElementById("enableAvatarCheckbox").checked = vrodos_scene_data["enableAvatar"];
+                envir.scene.enableAvatar = vrodos_scene_data["enableAvatar"];
             }
-            if (resources3D["disableMovement"]) {
-                document.getElementById("moveDisableCheckbox").checked = resources3D["disableMovement"];
-                envir.scene.disableMovement = resources3D["disableMovement"];
+            if (vrodos_scene_data["fogCategory"]) {
+                envir.scene.fogCategory = vrodos_scene_data["fogCategory"];
+                envir.scene.fognear = vrodos_scene_data["fognear"];
+                envir.scene.fogfar = vrodos_scene_data["fogfar"];
+                envir.scene.fogdensity = vrodos_scene_data["fogdensity"];
             }
-            if (resources3D["backgroundStyleOption"]) {
-                let  selOption = resources3D["backgroundStyleOption"];
-
-
+            if (vrodos_scene_data["disableMovement"]) {
+                document.getElementById("moveDisableCheckbox").checked = vrodos_scene_data["disableMovement"];
+                envir.scene.disableMovement = vrodos_scene_data["disableMovement"];
+            }
+            if (vrodos_scene_data["backgroundStyleOption"]) {
+                let  selOption = vrodos_scene_data["backgroundStyleOption"];
 
                 switch (selOption){
                     case 0:
@@ -852,14 +838,11 @@ wp_head();
                         preset_sel.hidden = false;
                         custom_img_sel.hidden = true;
                         img_thumb.hidden = true;
-                        envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                        // envir.scene.backgroundPresetOption = preset_sel.value;
-                        //preset_select.value = resources3D["backgroundPresetOption"];
+                        envir.scene.backgroundPresetOption = vrodos_scene_data["backgroundPresetOption"];
 
                         for(let index = 0; index < preset_sel.options.length;index++){
-                            if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
+                            if(preset_sel.options[index].value == vrodos_scene_data["backgroundPresetOption"] ){
                                 preset_sel.options[index].selected = true;
-                                //envir.scene.backgroundPresetOption = preset_sel.options[index].value;
                             }
                         }
                         break;
@@ -873,18 +856,14 @@ wp_head();
                         preset_sel.hidden = true;
                         custom_img_sel.hidden = false;
 
-                        if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
-                            img_thumb.src = resources3D["backgroundImagePath"];
+                        if (vrodos_scene_data["backgroundImagePath"]  && vrodos_scene_data["backgroundImagePath"] !=0 ){
+                            img_thumb.src = vrodos_scene_data["backgroundImagePath"];
                             img_thumb.hidden = false;
                         }
                         break;
                 }
-                envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-
-
-                envir.scene.backgroundStyleOption = resources3D["backgroundStyleOption"];
-
-                //saveChanges();
+                envir.scene.img_bcg_path = vrodos_scene_data["backgroundImagePath"];
+                envir.scene.backgroundStyleOption = vrodos_scene_data["backgroundStyleOption"];
             }
 
 
@@ -893,7 +872,7 @@ wp_head();
         // Only in Undo redo as javascript not php!
         function parseJSON_LoadScene(scene_json) {
 
-            resources3D = new VrodosSceneImporter().parse(scene_json, uploadDir);
+            let resources3D = new VrodosSceneImporter().parse(scene_json, uploadDir);
 
             // CLEAR SCENE
             let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
@@ -941,7 +920,7 @@ wp_head();
 
         function attachToControls(name, objItem){
 
-            let trs_tmp = resources3D[name]['trs'];
+            let trs_tmp = vrodos_scene_data.objects[name]['trs'];
             transform_controls.attach(objItem);
             console.log("attached");
             console.log(objItem);

@@ -986,17 +986,10 @@ class vrodos_3d_widget_scene extends WP_Widget {
         //                <!-- Load Scene - javascript var resources3D[] -->
         ?>
 
-            <script>
-                var resources3D  = [];// This holds all the resources to load. Generated in Parse JSON
-            </script>
-
         <?php
-        require( plugin_dir_path( __DIR__ ).'includes/templates/vrodos-edit-3D-scene-ParseJSON.php' );
-
-        /* Initial load as php */
-        $SceneParserPHP = new ParseJSON($upload_url);
-        $SceneParserPHP->init($sceneJSON);
-
+        // Parse the scene JSON and prepare data for the script.
+        $scene_data = VRodos_Scene_CPT_Manager::parse_scene_json_and_prepare_script_data($sceneJSON, $upload_url);
+        wp_localize_script('vrodos_scripts', 'vrodos_scene_data', $scene_data);
 
 	    $sceneTitle = $scene_post->post_name;
 
@@ -1052,7 +1045,7 @@ class vrodos_3d_widget_scene extends WP_Widget {
 
             // Add lights on scene
             var lightsLoader = new VRodos_LightsPawn_Loader();
-            lightsLoader.load(resources3D);
+            lightsLoader.load(vrodos_scene_data.objects);
 
             // Load Manager
             // Make progress bar visible
@@ -1077,11 +1070,11 @@ class vrodos_3d_widget_scene extends WP_Widget {
                 envir.updateCameraGivenSceneLimits();
 
                 // Set Target light for Spots
-                for (let n in resources3D) {
+                for (let n in vrodos_scene_data.objects) {
                     // (function (name) {
-                    //     if (resources3D[name]['categoryName'] === 'lightSpot') {
+                    //     if (vrodos_scene_data.objects[name]['categoryName'] === 'lightSpot') {
                     //         let lightSpot = envir.scene.getObjectByName(name);
-                    //         lightSpot.target = envir.scene.getObjectByName(resources3D[name]['lighttargetobjectname']);
+                    //         lightSpot.target = envir.scene.getObjectByName(vrodos_scene_data.objects[name]['lighttargetobjectname']);
                     //     }
                     // })(n);
                 }
@@ -1096,14 +1089,14 @@ class vrodos_3d_widget_scene extends WP_Widget {
 
             loaderMulti = new VRodos_LoaderMulti("1");
 
-            loaderMulti.load(manager, resources3D, pluginPath);
-            //vrodos_fetchAndLoadMultipleAssetsAjax(manager, resources3D, pluginPath);
+            loaderMulti.load(manager, vrodos_scene_data.objects, pluginPath);
+            //vrodos_fetchAndLoadMultipleAssetsAjax(manager, vrodos_scene_data.objects, pluginPath);
 
             // Only in Undo redo as javascript not php!
             function parseJSON_LoadScene(scene_json){
 
                 var sceneImporter = new VrodosSceneImporter();
-                resources3D = sceneImporter.parse(scene_json, uploadDir);
+                let resources3D = sceneImporter.parse(scene_json, uploadDir);
 
                 // CLEAR SCENE
                 let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];

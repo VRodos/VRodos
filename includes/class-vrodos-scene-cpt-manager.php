@@ -254,4 +254,71 @@ class VRodos_Scene_CPT_Manager {
             }
         }
     }
+
+    public static function parse_scene_json_and_prepare_script_data($scene_json, $relative_path) {
+        $scene_data = array();
+        $scene_json = htmlspecialchars_decode($scene_json);
+        $content_json = json_decode($scene_json);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !isset($content_json->metadata)) {
+            return $scene_data;
+        }
+
+        $json_metadata = $content_json->metadata;
+
+        // Metadata
+        $scene_data['ClearColor'] = $json_metadata->ClearColor ?? '0x000000';
+        $scene_data['toneMappingExposure'] = $json_metadata->toneMappingExposure ?? 1.0;
+        $scene_data['enableGeneralChat'] = $json_metadata->enableGeneralChat ?? false;
+        $scene_data['enableAvatar'] = $json_metadata->enableAvatar ?? false;
+        $scene_data['disableMovement'] = $json_metadata->disableMovement ?? false;
+        $scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? null;
+        $scene_data['backgroundImagePath'] = $json_metadata->backgroundImagePath ?? null;
+        $scene_data['backgroundStyleOption'] = $json_metadata->backgroundStyleOption ?? null;
+
+        if (property_exists($json_metadata, "fogCategory")) {
+            $scene_data["fogCategory"] = $json_metadata->fogCategory;
+            $scene_data["fogcolor"] = $json_metadata->fogcolor;
+            $scene_data["fognear"] = $json_metadata->fognear;
+            $scene_data["fogfar"] = $json_metadata->fogfar;
+            $scene_data["fogdensity"] = $json_metadata->fogdensity;
+        }
+
+        // Objects
+        $scene_data['objects'] = array();
+        if (isset($content_json->objects)) {
+            foreach ($content_json->objects as $key => $value) {
+                $name = $key;
+                $object_data = (array)$value;
+
+                $is_light = false;
+
+                if ($name === 'avatarCamera') {
+                    $object_data['category_name'] = 'avatarYawObject';
+                    $object_data['path'] = "";
+                } elseif (strpos($name, 'lightSun') !== false) {
+                    $is_light = true;
+                } elseif (strpos($name, 'lightLamp') !== false) {
+                    $is_light = true;
+                } elseif (strpos($name, 'lightSpot') !== false) {
+                    $is_light = true;
+                } elseif (strpos($name, 'lightAmbient') !== false) {
+                    $is_light = true;
+                } elseif (strpos($name, 'Pawn') !== false) {
+                    $object_data['asset_name'] = $name;
+                    $object_data['path'] = "";
+                } else {
+                    // Standard Object
+                    $object_data['path'] = $relative_path . ($value->fnPath ?? '');
+                    $object_data['overrideMaterial'] = $value->overrideMaterial ?? 'false';
+                    $object_data['is_joker'] = $value->is_joker ?? 'false';
+                }
+
+                $object_data['isLight'] = $is_light;
+                $scene_data['objects'][$name] = $object_data;
+            }
+        }
+
+        return $scene_data;
+    }
 }
