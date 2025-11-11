@@ -211,6 +211,40 @@ class VRodos_Game_CPT_Manager {
 
     public function games_compilerbox_show() {
         global $post;
+        $DS = DIRECTORY_SEPARATOR;
+
+        wp_enqueue_script('vrodos_request_compile');
+        $slug = $post->post_name;
+
+        $isAdmin = is_admin() ? 'back' : 'front';
+        echo '<script>let isAdmin="'.$isAdmin.'";</script>';
+
+        wp_localize_script('vrodos_request_compile', 'my_ajax_object_compile',
+            array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'projectId' => $post->ID,
+                'slug' => $slug,
+                'sceneId' => vrodos_get_project_scene_id($post->ID)
+            )
+        );
+
+        wp_localize_script('vrodos_request_compile', 'phpvarsA',
+            array('pluginsUrl' => plugins_url(),
+                'PHP_OS' => PHP_OS,
+                'game_dirpath' => realpath(dirname(__FILE__) . '/..') . $DS . 'games_assemble' . $DS . $slug,
+                'game_urlpath' => plugins_url('vrodos') . '/games_assemble/' . $slug
+            ));
+
+        wp_enqueue_script('vrodos_assemble_request');
+        wp_localize_script('vrodos_assemble_request', 'phpvarsB',
+            array('pluginsUrl' => plugins_url(),
+                'PHP_OS' => PHP_OS,
+                'source' => realpath(dirname(__FILE__) . '/../../..') . $DS . 'uploads' . $DS . $slug,
+                'target' => realpath(dirname(__FILE__) . '/..') . $DS . 'games_assemble' . $DS . $slug,
+                'game_libraries_path' => realpath(dirname(__FILE__) . '/..') . $DS . 'unity_game_libraries',
+                'game_id' => $post->ID
+            ));
+
         $project_type_terms = wp_get_object_terms($post->ID, 'vrodos_game_type');
         $project_type_slug = !empty($project_type_terms) ? $project_type_terms[0]->slug : '';
         ?>
