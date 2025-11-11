@@ -20,7 +20,7 @@ extract($data);
     <script>
         let path_url = null;
         let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
-        let no_img_path = '<?php echo plugins_url( '../images/ic_sshot.png', dirname(__FILE__)); ?>';
+        let no_img_path = '<?php echo esc_url($no_img_path_url); ?>';
         var asset_title = <?php echo json_encode($asset_title_value); ?>;
     </script>
 
@@ -28,13 +28,11 @@ extract($data);
 get_header();
 ?>
 
-<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) {
-    $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
-    ?>
+<?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
     <div class="DisplayBlock CenterContents">
 
-        <img style="margin-top:10px;" src="<?php echo $pluginpath;?>/images/screenshots/authtoolimage.jpg"
+        <img style="margin-top:10px;" src="<?php echo esc_url($login_promo_url); ?>"
              width="960px;" alt="editor screenshot" />
         <br />
         <i style="font-size: 64px; padding-top: 10px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
@@ -204,7 +202,7 @@ get_header();
                         <!--TODO Create a different 3d type handler-->
 
                         <img alt="3D model section" style="height: 64px;"
-                             src="<?php echo plugins_url( '../images/cube.png', dirname(__FILE__)  );?>">
+                             src="<?php echo esc_url($glb_icon_url); ?>">
                         <label id="fileUploadInputLabel" for="multipleFilesInput"> File selection </label>
 
                         <input id="fileUploadInput"
@@ -377,7 +375,7 @@ get_header();
 
         <div id="audioDetailsPanel" style="display: none">
             <h4 class="mdc-typography--title">3D audio file</h4>
-            <img alt="Audio Section" src="<?php echo plugins_url('../images/audio.png', dirname(__FILE__)); ?>">
+            <img alt="Audio Section" src="<?php echo esc_url($audio_icon_url); ?>">
             <div id="audioFileInputContainer">
                 <?php if ($audio_attachment_file) { ?>
                     <audio controls loop preload="auto" id='audioFile'>
