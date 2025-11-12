@@ -54,11 +54,6 @@ class VRodos_AJAX_Handler {
             'tax_input' => $project_taxonomies,
         );
         $project_id = wp_insert_post($project_information);
-        $post = get_post($project_id);
-        wp_set_object_terms($post->ID, $project_type_slug, 'vrodos_game_type');
-        wp_insert_term($post->post_title, 'vrodos_scene_pgame', array('description' => '-', 'slug' => $post->post_name));
-        wp_insert_term($post->post_title, 'vrodos_asset3d_pgame', array('description' => '-', 'slug' => $post->post_name));
-        VRodos_Default_Scene_Manager::create_default_scenes_for_game($post->post_name, $project_type_id);
         echo $project_id;
         wp_die();
     }

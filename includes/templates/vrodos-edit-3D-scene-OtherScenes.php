@@ -51,7 +51,7 @@ global $parameter_Scenepass;
             // Create redirect javascript
             if ($default_scene) {
                 echo '<script>';
-                echo 'let url_scene_redirect="' . $url_redirect_delete_scene . '";';
+                echo 'var url_scene_redirect="' . $url_redirect_delete_scene . '";';
                 echo '</script>';
             }
 

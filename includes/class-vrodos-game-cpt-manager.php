@@ -79,22 +79,28 @@ class VRodos_Game_CPT_Manager {
     // Generate Taxonomy (for scenes & assets) with Project's slug/name
     // Create Default Scenes for this "Project"
     public function on_create_project($new_status, $old_status, $post) {
-        // Dont run this if from front-end
-        if (!isset($_POST['vrodos_game_type'])) {
-            return;
-        }
-
         $post_type = get_post_type($post);
 
         if ($post_type == 'vrodos_game' && $new_status == 'publish' && $old_status != 'publish') {
             $projectSlug = $post->post_name;
             $projectTitle = empty($post->post_title) ? 'project-' . $projectSlug : $post->post_title;
 
-            $project_type_id = $_POST['vrodos_game_type'];
-            $project_type = get_term($project_type_id, 'vrodos_game_type');
+            // Robustly get the project type ID. It will be in $_POST if created from the backend,
+            // otherwise it will be attached as a term from the AJAX call.
+            if (isset($_POST['vrodos_game_type'])) {
+                $project_type_id = intval($_POST['vrodos_game_type']);
+            } else {
+                $terms = wp_get_object_terms($post->ID, 'vrodos_game_type');
+                if (!empty($terms) && !is_wp_error($terms)) {
+                    $project_type_id = $terms[0]->term_id;
+                } else {
+                    // If no project type is found, we cannot proceed.
+                    return;
+                }
+            }
 
             // If project is not a joker one
-            if (!str_contains($projectSlug, '-joker')) {
+            if (strpos($projectSlug, '-joker') === false) {
                 // Create a parent game tax category for the scenes
                 wp_insert_term($projectTitle, 'vrodos_scene_pgame', array(
                     'description' => '-',
@@ -106,9 +112,6 @@ class VRodos_Game_CPT_Manager {
                     'description' => '-',
                     'slug' => $projectSlug,
                 ));
-
-                // Link project to game type
-                wp_set_object_terms($post->ID, intval($project_type_id), 'vrodos_game_type');
 
                 // Create Default Scenes for this "Project"
                 VRodos_Default_Scene_Manager::create_default_scenes_for_game($projectSlug, $project_type_id);
