@@ -13,7 +13,20 @@ class VRodos_Asset_Manager {
         add_action('admin_enqueue_scripts', array($this, 'register_styles'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_asset_editor_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scene_editor_scripts'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_project_manager_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'localize_edit_scene_scripts'), 11);
+    }
+
+    public function enqueue_project_manager_scripts() {
+        $project_manager_page = VRodos_Core_Manager::vrodos_getEditpage('game');
+        if (!$project_manager_page || !is_page($project_manager_page[0]->ID)) {
+            return;
+        }
+
+        wp_enqueue_script('ajax-script_delete_game');
+        wp_enqueue_script('ajax-script_collaborate_project');
+        wp_enqueue_script('ajax-script_create_game');
+        wp_enqueue_script('vrodos_project_manager');
     }
 
     public function enqueue_scene_editor_scripts() {
@@ -152,6 +165,7 @@ class VRodos_Asset_Manager {
             array('vrodos_addRemoveOne', $plugin_url_js . 'vrodos_addRemoveOne.js'),
             array('vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'),
             array('vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'),
+            array('vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js'),
 
             // Three.js r141
             array('vrodos_load141_threejs', $plugin_url_js . 'threejs141/three.js'),

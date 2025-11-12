@@ -1,68 +1,34 @@
 <?php
 
+<?php
+// Prepare data for the template
+$data = VRodos_Game_CPT_Manager::prepare_project_manager_data();
+extract($data);
+
 wp_enqueue_style('vrodos_frontend_stylesheet');
 wp_enqueue_style('vrodos_material_stylesheet');
 
-$perma_structure = (bool)get_option('permalink_structure');
-$parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
-$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
-$parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
-global $project_scope;
-
-$editgamePage = VRodos_Core_Manager::vrodos_getEditpage('game');
-$pluginpath = dirname (plugin_dir_url( __DIR__  ));
-$pluginpath = str_replace('\\','/',$pluginpath);
-
-// Define Ajax for the delete Game functionality
-$thepath = $pluginpath . '/js_libs/ajaxes/delete_game_scene_asset.js';
-wp_enqueue_script( 'ajax-script_delete_game', $thepath, array('jquery') );
-wp_localize_script( 'ajax-script_delete_game', 'my_ajax_object_deletegame',
-    array( 'ajax_url' => admin_url( 'admin-ajax.php'))
-);
-
-// Define Ajax for the delete Game functionality
-$thepath = $pluginpath . '/js_libs/ajaxes/collaborate_project.js';
-wp_enqueue_script( 'ajax-script_collaborate_project', $thepath, array('jquery') );
-wp_localize_script( 'ajax-script_collaborate_project', 'my_ajax_object_collaborate_project',
-    array( 'ajax_url' => admin_url( 'admin-ajax.php'))
-);
-
-// Define Ajax for the create Game functionality
-$thepath2 = $pluginpath . '/js_libs/ajaxes/create_project.js';
-wp_enqueue_script( 'ajax-script_create_game', $thepath2, array('jquery') );
-wp_localize_script( 'ajax-script_create_game', 'my_ajax_object_creategame',
-    array( 'ajax_url' => admin_url( 'admin-ajax.php'))
-);
-
-$isAdmin = is_admin() ? 'back' : 'front';
-
-$current_user_id = get_current_user_id();
-
+// Pass data to JavaScript
 echo '<script>';
-echo 'isAdmin="'.$isAdmin.'";'; // This variable is used in the request_game_assemble.js
-echo 'let current_user_id="'.$current_user_id.'";';
-echo 'let parameter_Scenepass="'.$parameter_Scenepass.'";';
+echo 'var isAdmin="' . esc_js($isAdmin) . '";';
+echo 'var current_user_id="' . esc_js($current_user_id) . '";';
+echo 'var parameter_Scenepass="' . esc_js($parameter_Scenepass) . '";';
 echo '</script>';
-
-$full_title = "Projects";
-$full_title_lowercase = "projects";
-$single = "project";
-$multiple = "projects";
 
 get_header();
 ?>
 
-<span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-left:10px;margin-top:20px"><?php echo $full_title; ?> Manager</span>
+<span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-left:10px;margin-top:20px"><?php echo esc_html($full_title); ?> Manager</span>
 
 <!-- if user not logged in then show a hint to login -->
 <?php if ( !is_user_logged_in() || !current_user_can('administrator') ) {
-    $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
+    $pluginpath_var = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
     ?>
 
     <div class="DisplayBlock CenterContents">
 
-        <img style="margin-top:10px;" src="<?php echo $pluginpath;?>/images/screenshots/authtoolimage.jpg"
+        <img style="margin-top:10px;" src="<?php echo esc_url($pluginpath_var);?>/images/screenshots/authtoolimage.jpg"
              width="960px;" alt="editor screenshot" />
         <br />
         <i style="font-size: 64px; padding-top: 10px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
@@ -72,23 +38,19 @@ get_header();
 
     <hr class="WhiteSpaceSeparator">
 
-<?php } else {
-
-$current_user = wp_get_current_user();
-$login_username = $current_user->user_login;
-?>
+<?php } else { ?>
 
 <!-- HELP button -->
 <br/>
-    <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light"> <i>Create a new <?php echo $single; ?> or edit an existing one</i></span>
+    <span class="mdc-typography--subheading2 mdc-theme--text-primary-on-light"> <i>Create a new <?php echo esc_html($single); ?> or edit an existing one</i></span>
 
 <div class="mdc-layout-grid FrontPageStyle">
     <div class="mdc-layout-grid__inner">
         <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-7">
             <span>
-            <span class="mdc-typography--title mdc-theme--text-primary-on-background">Existing <?php echo $multiple; ?></span>
+            <span class="mdc-typography--title mdc-theme--text-primary-on-background">Existing <?php echo esc_html($multiple); ?></span>
             <?php
-            echo '<a href="'.get_site_url().'/vrodos-assets-list-page/" class="" style="float:right" data-mdc-auto-init="MDCRipple" title="View or add shared assets">';
+            echo '<a href="'.esc_url(get_site_url()).'/vrodos-assets-list-page/" class="" style="float:right" data-mdc-auto-init="MDCRipple" title="View or add shared assets">';
             echo '<span id="shared-assets-button" class="mdc-button" >All Assets</span>';
             echo '</a>';
             ?>
@@ -99,7 +61,7 @@ $login_username = $current_user->user_login;
 
         <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-1"></div>
         <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
-            <span class="mdc-typography--title mdc-theme--text-primary-on-background">Create new <?php echo $single; ?></span>
+            <span class="mdc-typography--title mdc-theme--text-primary-on-background">Create new <?php echo esc_html($single); ?></span>
             <hr class="mdc-list-divider">
             <div class="mdc-layout-grid">
                 <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12 ">
@@ -107,7 +69,7 @@ $login_username = $current_user->user_login;
                         <div class="mdc-textfield FullWidth mdc-form-field" data-mdc-auto-init="MDCTextfield">
                             <input id="title" name="title" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" aria-controls="title-validation-msg"
                                    required minlength="3" style="border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.3); box-shadow: none; border-radius: 0;">
-                            <label for="title" class="mdc-textfield__label">Enter a title for your <?php echo $single; ?></label>
+                            <label for="title" class="mdc-textfield__label">Enter a title for your <?php echo esc_html($single); ?></label>
                             <div class="mdc-textfield__bottom-line"></div>
                         </div>
                         <p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg"
@@ -116,7 +78,7 @@ $login_username = $current_user->user_login;
                         </p>
 
                         <!-- Radio buttons for Selecting Project type -->
-                        <label class="mdc-typography--title mdc-theme--text-primary-on-light NewGameLabel">Choose <?php echo $single;?> type</label>
+                        <label class="mdc-typography--title mdc-theme--text-primary-on-light NewGameLabel">Choose <?php echo esc_html($single);?> type</label>
 
                         <ul class="RadioButtonList" onclick="loadProjectTypeDescription();">
 
@@ -298,113 +260,4 @@ $login_username = $current_user->user_login;
     </div>
 </div>
 
-
-<script type="text/javascript">
-    window.mdc.autoInit();
-
-    fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass);
-
-    // Delete Dialogue
-    let dialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
-    dialog.focusTrap_.deactivate();
-
-    // Collaborators Dialogue
-    let dialogCollaborators = new mdc.dialog.MDCDialog(document.querySelector('#collaborate-dialog'));
-    dialogCollaborators.focusTrap_.deactivate();
-
-    // Descriptions for each Project
-    function loadProjectTypeDescription() {
-        let checked = document.querySelector('input[name="projectTypeRadio"]:checked').value;
-        let content = '';
-        if (checked === 'archaeology_games') {
-            content = "Design a virtual tour of your own";
-        } else if (checked === 'vrexpo_games'){
-            content = "Create a VR expo space";
-        } else if (checked === 'virtualproduction_games'){
-            content = "Create a Multiuser Virtual Production project";
-        }
-        document.getElementById('project-description-label').innerHTML = content;
-    }
-    loadProjectTypeDescription();
-
-    jQuery('#createNewProjectBtn').click( function (e) {
-        // Title of game project
-        let title_vrodos_project = document.getElementById('title').value;
-        if (title_vrodos_project.length > 2) {
-            let project_type = document.querySelector('input[name="projectTypeRadio"]:checked').value;
-
-            // CREATE THE PROJECT !
-            vrodos_createProjectAjax(title_vrodos_project, project_type, current_user_id, parameter_Scenepass);
-            document.getElementById('createNewProjectBtn').style.display = 'none';
-            document.getElementById('create-game-progress-bar').style.display = '';
-        }
-    });
-
-    function deleteProject(id) {
-        let dialogTitle = document.getElementById("delete-dialog-title");
-        let dialogDescription = document.getElementById("delete-dialog-description");
-        let projectTitle = document.getElementById(id+"-title").innerHTML;
-        projectTitle = projectTitle.substring(0, projectTitle.indexOf('<'));
-        projectTitle = projectTitle.trim();
-
-        dialogTitle.innerHTML = "<b>Delete " + projectTitle+"?</b>";
-        dialogDescription.innerHTML = "Are you sure you want to delete your project '" +projectTitle + "'? There is no Undo functionality once you delete it.";
-        dialog.id = id;
-        dialog.show();
-    }
-
-    jQuery('#deleteProjectBtn').click( function (e) {
-        jQuery('#delete-dialog-progress-bar').show();
-        vrodos_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
-    });
-
-    jQuery('#canceldeleteProjectBtn').click( function (e) {
-        jQuery('#delete-dialog-progress-bar').hide();
-        dialog.close();
-    });
-
-
-    // ------- Collaborators -------------------
-    function collaborateProject(project_id) {
-        let dialogTitle = document.getElementById("collaborate-dialog-title");
-        let dialogDescription = document.getElementById("collaborate-dialog-description");
-        let projectTitle = document.getElementById(project_id+"-title").innerHTML;
-        projectTitle = projectTitle.substring(0, projectTitle.indexOf('<'));
-        projectTitle = projectTitle.trim();
-
-        dialogTitle.innerHTML = "<b>Collaborators on " + projectTitle+"?</b>";
-
-        dialogDescription.innerHTML = "Make your selection for  '" +projectTitle + "'. For example 'mail1@gmail.com'";
-
-        dialogCollaborators.project_id = project_id;
-
-        //jQuery('.chips-initial').material_chip({data: [], placeholder: 'Your collaborator email'});
-
-        // Fetch collaborators and insert to "textarea-collaborators"
-        vrodos_fetchCollabsAjax(project_id);
-    }
-
-    jQuery('#updateCollabsBtn').click( function (e) {
-
-        var allChipsContainers = document.querySelectorAll('.chips');
-        var singleChipContainer = M.Chips.getInstance(allChipsContainers[0]);
-
-        // Get collabs emails
-        var currCollabsEmails = singleChipContainer.getData();
-
-        console.log("currCollabsEmails1", currCollabsEmails);
-
-        currCollabsEmails = currCollabsEmails.map(function(elem){return elem.tag}).join(";");
-
-        console.log("currCollabsEmails2", currCollabsEmails);
-
-        // 2. Update ids of collaborators ;15;5;4;
-        vrodos_updateCollabsAjax(dialogCollaborators.project_id, dialogCollaborators, currCollabsEmails);
-    });
-
-    jQuery('#cancelCollabsBtn').click( function (e) {
-        dialogCollaborators.close();
-    });
-
-</script>
 <?php get_footer();?>

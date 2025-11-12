@@ -332,6 +332,20 @@ class VRodos_Game_CPT_Manager {
             'single_lowercase'  => $single_lowercase,
         );
     }
+
+    public static function prepare_project_manager_data() {
+        $perma_structure = (bool)get_option('permalink_structure');
+
+        return array(
+            'parameter_Scenepass' => $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=',
+            'current_user_id' => get_current_user_id(),
+            'isAdmin' => is_admin() ? 'back' : 'front',
+            'full_title' => "Projects",
+            'full_title_lowercase' => "projects",
+            'single' => "project",
+            'multiple' => "projects",
+        );
+    }
 }
 
 function vrodos_get_project_scene_id($project_id) {
