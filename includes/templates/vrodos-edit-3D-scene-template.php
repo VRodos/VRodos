@@ -65,7 +65,7 @@ $sceneTitle = $scene_post->post_name;
 // Front End or Back end
 $isAdmin = is_admin() ? 'back' : 'front';
 
-$allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
+$allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('game');
 $newAssetPage = VRodos_Core_Manager::vrodos_getEditpage('asset');
 $editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
 
