@@ -12,7 +12,56 @@ class VRodos_Asset_Manager {
         add_action('wp_enqueue_scripts', array($this, 'register_styles'));
         add_action('admin_enqueue_scripts', array($this, 'register_styles'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_asset_editor_scripts'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_scene_editor_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'localize_edit_scene_scripts'), 11);
+    }
+
+    public function enqueue_scene_editor_scripts() {
+        $edit_scene_page = VRodos_Core_Manager::vrodos_getEditpage('scene');
+        if (!$edit_scene_page || !is_page($edit_scene_page[0]->ID)) {
+            return;
+        }
+
+        wp_enqueue_script('jquery-ui-draggable');
+        wp_enqueue_script('vrodos_scripts');
+        wp_enqueue_script('vrodos_load141_threejs');
+        wp_enqueue_script('vrodos_load141_FontLoader');
+        wp_enqueue_script('vrodos_load141_TextGeometry');
+        wp_enqueue_script('vrodos_load141_CSS2DRenderer');
+        wp_enqueue_script('vrodos_load141_CopyShader');
+        wp_enqueue_script('vrodos_load141_FXAAShader');
+        wp_enqueue_script('vrodos_load141_EffectComposer');
+        wp_enqueue_script('vrodos_load141_RenderPass');
+        wp_enqueue_script('vrodos_load141_OutlinePass');
+        wp_enqueue_script('vrodos_load141_ShaderPass');
+        wp_enqueue_script('vrodos_load141_RGBELoader');
+        wp_enqueue_script('vrodos_load141_GLTFLoader');
+        wp_enqueue_script('vrodos_inflate');
+        wp_enqueue_script('vrodos_HierarchyViewer');
+        wp_enqueue_script('vrodos_load_datgui');
+        wp_enqueue_script('vrodos_load141_OrbitControls');
+        wp_enqueue_script('vrodos_load141_TransformControls');
+        wp_enqueue_script('vrodos_load141_PointerLockControls');
+        wp_enqueue_script('vrodos_ScenePersistence');
+        wp_enqueue_script('vrodos_jscolorpick');
+        wp_enqueue_style('vrodos_datgui');
+        wp_enqueue_style('vrodos_3D_editor');
+        wp_enqueue_style('vrodos_3D_editor_browser');
+        wp_enqueue_script('vrodos_html2canvas');
+        wp_enqueue_script('vrodos_3d_editor_environmentals');
+        wp_enqueue_script('vrodos_jscolorpick');
+        wp_enqueue_script('vrodos_keyButtons');
+        wp_enqueue_script('vrodos_rayCasters');
+        wp_enqueue_script('vrodos_auxControlers');
+        wp_enqueue_script('vrodos_BordersFinder');
+        wp_enqueue_script('vrodos_LightsPawn_Loader');
+        wp_enqueue_script('vrodos_LoaderMulti');
+        wp_enqueue_script('vrodos_movePointerLocker');
+        wp_enqueue_script('vrodos_addRemoveOne');
+        wp_enqueue_script('vrodos_3d_editor_buttons_drags');
+        wp_enqueue_script('vrodos_vr_editor_analytics');
+        wp_enqueue_script('vrodos_fetch_asset_scenes_request');
+        wp_enqueue_script('vrodos_compile_dialogue');
     }
 
     public function localize_edit_scene_scripts() {
@@ -102,6 +151,7 @@ class VRodos_Asset_Manager {
             array('vrodos_movePointerLocker', $plugin_url_js . 'vrodos_movePointerLocker.js'),
             array('vrodos_addRemoveOne', $plugin_url_js . 'vrodos_addRemoveOne.js'),
             array('vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'),
+            array('vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'),
 
             // Three.js r141
             array('vrodos_load141_threejs', $plugin_url_js . 'threejs141/three.js'),

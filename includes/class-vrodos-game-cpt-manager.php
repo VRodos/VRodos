@@ -291,6 +291,44 @@ class VRodos_Game_CPT_Manager {
         <?php
     }
 
+    public static function prepare_compile_dialogue_data() {
+        // This function prepares data needed by the vrodos-edit-3D-scene-CompileDialogue.php template.
+
+        $project_id = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
+
+        if (!$project_id) { return array(); }
+
+        $project_post = get_post($project_id);
+        if (!$project_post) { return array(); }
+
+        $projectSlug = $project_post->post_name;
+
+        // Get project type slug
+        $project_type_slug = '';
+        $project_type_terms = wp_get_object_terms($project_id, 'vrodos_game_type');
+        if ($project_type_terms && !is_wp_error($project_type_terms)) {
+            $project_type_slug = $project_type_terms[0]->slug;
+        }
+
+        // Get project type string name (e.g., "Archaeology")
+        $project_type_obj = VRodos_Core_Manager::vrodos_return_project_type($project_id);
+        $project_type_string = $project_type_obj ? $project_type_obj->string : null;
+
+        // Determine the 'singular' name for the project type for UI text (e.g., "tour" or "project")
+        if ($project_type_string === 'Archaeology') {
+            $single_lowercase = "tour";
+        } else {
+            $single_lowercase = "project";
+        }
+
+        return array(
+            'project_id'       => $project_id,
+            'projectSlug'      => $projectSlug,
+            'project_type'     => $project_type_string, // Keep original variable name for the string
+            'project_type_slug'=> $project_type_slug,
+            'single_lowercase' => $single_lowercase,
+        );
+    }
 }
 
 function vrodos_get_project_scene_id($project_id) {

@@ -8,69 +8,6 @@ $parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
 $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 $parameter_assetpass = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
 
-// Load VR_Editor Scripts
-function vrodos_load_vreditor_scripts()
-{
-    wp_enqueue_script('jquery-ui-draggable');
-    wp_enqueue_script( 'vrodos_scripts' );
-
-    wp_enqueue_script( 'vrodos_load141_threejs' );
-    wp_enqueue_script( 'vrodos_load141_FontLoader' );
-    wp_enqueue_script( 'vrodos_load141_TextGeometry' );
-
-    wp_enqueue_script( 'vrodos_load141_CSS2DRenderer' );
-    wp_enqueue_script( 'vrodos_load141_CopyShader' );
-    wp_enqueue_script( 'vrodos_load141_FXAAShader' );
-    wp_enqueue_script( 'vrodos_load141_EffectComposer' );
-    wp_enqueue_script( 'vrodos_load141_RenderPass' );
-    wp_enqueue_script( 'vrodos_load141_OutlinePass' );
-    wp_enqueue_script( 'vrodos_load141_ShaderPass' );
-
-    wp_enqueue_script( 'vrodos_load141_RGBELoader' );
-    wp_enqueue_script( 'vrodos_load141_GLTFLoader' );
-    wp_enqueue_script( 'vrodos_inflate' );
-
-    // Timestamp script
-    wp_enqueue_script( 'vrodos_scripts' );
-
-    // Hierarchy Viewer
-    wp_enqueue_script( 'vrodos_HierarchyViewer' );
-
-    wp_enqueue_script( 'vrodos_load_datgui' );
-    wp_enqueue_script( 'vrodos_load141_OrbitControls' );
-    wp_enqueue_script( 'vrodos_load141_TransformControls' );
-    wp_enqueue_script( 'vrodos_load141_PointerLockControls' );
-
-    wp_enqueue_script( 'vrodos_ScenePersistence' );
-
-    // Colorpicker for the lights
-    wp_enqueue_script('vrodos_jscolorpick');
-
-    wp_enqueue_style('vrodos_datgui');
-    wp_enqueue_style('vrodos_3D_editor');
-    wp_enqueue_style('vrodos_3D_editor_browser');
-
-    wp_enqueue_script('vrodos_html2canvas');
-}
-add_action('wp_enqueue_scripts', 'vrodos_load_vreditor_scripts' );
-
-
-function vrodos_load_custom_functions_vreditor(){
-    wp_enqueue_script('vrodos_3d_editor_environmentals');
-    wp_enqueue_script('vrodos_jscolorpick');
-    wp_enqueue_script('vrodos_keyButtons');
-    wp_enqueue_script('vrodos_rayCasters');
-    wp_enqueue_script('vrodos_auxControlers');
-    wp_enqueue_script('vrodos_BordersFinder');
-    wp_enqueue_script('vrodos_LightsPawn_Loader');
-    wp_enqueue_script('vrodos_LoaderMulti');
-    wp_enqueue_script('vrodos_movePointerLocker');
-    wp_enqueue_script('vrodos_addRemoveOne');
-    wp_enqueue_script('vrodos_3d_editor_buttons_drags');
-    wp_enqueue_script('vrodos_vr_editor_analytics');
-    wp_enqueue_script('vrodos_fetch_asset_scenes_request');
-}
-add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
 ?>
 
 <script type="text/javascript">
@@ -102,21 +39,21 @@ $upload_dir = str_replace('\\','/',wp_upload_dir()['basedir']);
 // Scene
 $current_scene_id = isset($_GET['vrodos_scene']) ? sanitize_text_field( intval( $_GET['vrodos_scene'] )) : null;
 
-// Project
-$project_id    = isset($_GET['vrodos_game']) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
-$project_post  = get_post($project_id);
-$projectSlug   = $project_post->post_name;
+// Prepare data for the template
+$template_data = VRodos_Game_CPT_Manager::prepare_compile_dialogue_data();
+if (!empty($template_data)) {
+    extract($template_data);
+} else {
+    // Handle case where data could not be fetched, e.g., set default values
+    $project_id = null;
+    $projectSlug = '';
+    $project_type = '';
+    $project_type_slug = '';
+    $single_lowercase = 'project';
+}
 
-$project_type = $project_id ? VRodos_Core_Manager::vrodos_return_project_type($project_id)->string : null;
-
-// Get project type icon
-$project_type_icon = $project_id ? VRodos_Core_Manager::vrodos_return_project_type($project_id)->icon : null;
-
-// Get Joker project id
-$joker_project_id = $project_type ? get_page_by_path( strtolower($project_type).'-joker', OBJECT, 'vrodos_game' )->ID : null;
-
-// Archaeology only
-if ($project_type === 'Archaeology') {
+// Archaeology only (This is a legacy function and should be refactored into a manager class in the future)
+if (isset($project_type) && $project_type === 'Archaeology' && function_exists('vrodos_get_all_doors_of_project_fastversion')) {
     $doorsAllInfo = vrodos_get_all_doors_of_project_fastversion($project_id);
 }
 
@@ -229,14 +166,12 @@ require_once(ABSPATH . "wp-admin" . '/includes/media.php');
 
 //==========================================
 
-if ($project_type === 'Archaeology') {
-    $single_lowercase = "tour";
+if(isset($project_type) && $project_type === 'Archaeology') {
     $single_first = "Tour";
-}
-else {
-    $single_lowercase = "project";
+} else {
     $single_first = "Project";
 }
+
 
 // ADD NEW SCENE
 if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {

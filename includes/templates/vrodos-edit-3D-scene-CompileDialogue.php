@@ -3,8 +3,8 @@
      class="mdc-dialog"
      role="alertdialog"
      style="z-index: 1000;"
-     data-game-slug="<?php echo $projectSlug; ?>"
-     data-project-id="<?php echo $project_id; ?>"
+     data-game-slug="<?php echo esc_attr($projectSlug); ?>"
+     data-project-id="<?php echo esc_attr($project_id); ?>"
      aria-labelledby="my-mdc-dialog-label"
      aria-describedby="my-mdc-dialog-description" data-mdc-auto-init="MDCDialog">
 
@@ -12,7 +12,7 @@
 
         <header class="mdc-dialog__header">
             <h2 class="mdc-dialog__header__title">
-                Build <?php echo $single_lowercase; ?>
+                Build <?php echo esc_html($single_lowercase); ?>
             </h2>
         </header>
 
@@ -20,7 +20,7 @@
 
             <!--Values are important. Dont delete these hidden inputs (yet)-->
             <input id="platformInput" type="hidden" value="platform-Aframe">
-            <input id="project-type" type="hidden" value="<?php echo $project_type ?>">
+            <input id="project-type" type="hidden" value="<?php echo esc_attr($project_type_slug); ?>">
 
             <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background">
                 <i title="Instructions" class="material-icons AlignIconToBottom">help</i>
@@ -72,13 +72,4 @@
     <div class="mdc-dialog__backdrop"></div>
 
 </div>
-
-<script>
-    function copyURLToClipboard() {
-        let linkElement = document.getElementById("openWebLinkhref");
-        navigator.clipboard.writeText(linkElement.href);
-        alert("Copied url: " + linkElement.href);
-    }
-    document.getElementById("buttonCopyWebLink").addEventListener("click", copyURLToClipboard);
-</script>
 
