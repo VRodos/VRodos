@@ -65,6 +65,13 @@ document.addEventListener('DOMContentLoaded', function() {
         dialog.close();
     });
 
+    // Delegated event listener for project deletion
+    jQuery('#ExistingProjectsDivDOM').on('click', '.vrodos-delete-project-btn', function() {
+        let gameId = jQuery(this).data('game-id');
+        if (gameId) {
+            deleteProject(gameId);
+        }
+    });
 
     // ------- Collaborators -------------------
     function collaborateProject(project_id) {

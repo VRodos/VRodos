@@ -742,8 +742,8 @@ class VRodos_AJAX_Handler {
             echo '</a>';
 
             // -------- Delete button ----------------
-            echo '<a href="javascript:void(0)" class="" style="" aria-label="Delete game" title="Delete project" '.
-                'onclick="deleteProject('.$game_id.')">';
+            echo '<a href="javascript:void(0)" class="vrodos-delete-project-btn" style="" aria-label="Delete game" title="Delete project" '.
+                'data-game-id="'.$game_id.'">';
             echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color: crimson" '
                 .'aria-hidden="true" title="Delete project">delete</i>';
             echo '</a>';
