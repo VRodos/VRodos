@@ -118,7 +118,7 @@ $login_username = $current_user->user_login;
                         <!-- Radio buttons for Selecting Project type -->
                         <label class="mdc-typography--title mdc-theme--text-primary-on-light NewGameLabel">Choose <?php echo $single;?> type</label>
 
-                        <ul class="RadioButtonList" onclick="loadProjectTypeDescription();">
+                        <ul id="project-type-radio-list" class="RadioButtonList">
 
                             <!-- Virtual Tour -->
                             <li class="mdc-form-field">

@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     loadProjectTypeDescription();
 
+    // Add event listener for the project type radio buttons
+    document.getElementById('project-type-radio-list').addEventListener('click', loadProjectTypeDescription);
+
     jQuery('#createNewProjectBtn').click( function (e) {
         // Title of game project
         let title_vrodos_project = document.getElementById('title').value;
