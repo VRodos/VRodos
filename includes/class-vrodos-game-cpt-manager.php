@@ -313,6 +313,7 @@ class VRodos_Game_CPT_Manager {
         // Get project type string name (e.g., "Archaeology")
         $project_type_obj = VRodos_Core_Manager::vrodos_return_project_type($project_id);
         $project_type_string = $project_type_obj ? $project_type_obj->string : null;
+        $project_type_icon = $project_type_obj ? $project_type_obj->icon : null;
 
         // Determine the 'singular' name for the project type for UI text (e.g., "tour" or "project")
         if ($project_type_string === 'Archaeology') {
@@ -322,11 +323,13 @@ class VRodos_Game_CPT_Manager {
         }
 
         return array(
-            'project_id'       => $project_id,
-            'projectSlug'      => $projectSlug,
-            'project_type'     => $project_type_string, // Keep original variable name for the string
-            'project_type_slug'=> $project_type_slug,
-            'single_lowercase' => $single_lowercase,
+            'project_id'        => $project_id,
+            'project_post'      => $project_post,
+            'projectSlug'       => $projectSlug,
+            'project_type'      => $project_type_string,
+            'project_type_slug' => $project_type_slug,
+            'project_type_icon' => $project_type_icon,
+            'single_lowercase'  => $single_lowercase,
         );
     }
 }
