@@ -1,4 +1,5 @@
 function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath) {
+    let trs_tmp;
 
     // Add javascript variables for viewing the object correctly
     let selected_object_trs = {
@@ -260,7 +261,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             new THREE.MeshBasicMaterial({ color: 0xffaa00 })
         ));
 
-        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
+        trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
 
         //// Add Lamp Helper
@@ -306,7 +307,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
+        trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -378,7 +379,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Add transform controls
         let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
+        trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
         trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -466,7 +467,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
                 // Add transform controls
                 let insertedObject = envir.scene.getObjectByName(nameModel);
 
-                let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
+                trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
                 trs_tmp['translation'][1] += 3; // Sun should be a little higher than objects;
 
@@ -534,7 +535,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             let insertedObject = envir.scene.getObjectByName(nameModel);
 
             // Affine transformations
-            let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
+            trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
 
             insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
             insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
@@ -734,4 +735,3 @@ function deleteAssetFromScene(uuid) {
     triggerAutoSave();
 
 }
-

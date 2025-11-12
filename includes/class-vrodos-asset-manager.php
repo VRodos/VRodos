@@ -91,7 +91,7 @@ class VRodos_Asset_Manager {
 
             // 3D Editor & Viewer Scripts
             array('vrodos_AssetViewer_3D_kernel', $plugin_url_js . 'vrodos_AssetViewer_3D_kernel.js'),
-            array('vrodos_3d_editor_buttons_drags', $plugin_url_js . 'vrodos_3d_editor_buttons_drags.js', array('vrodos_addRemoveOne')),
+            array('vrodos_3d_editor_buttons_drags', $plugin_url_js . 'vrodos_3d_editor_buttons_drags.js', array('jquery','vrodos_addRemoveOne')),
             array('vrodos_3d_editor_environmentals', $plugin_url_js . 'vrodos_3d_editor_environmentals.js'),
             array('vrodos_keyButtons', $plugin_url_js . 'vrodos_keyButtons.js'),
             array('vrodos_rayCasters', $plugin_url_js . 'vrodos_rayCasters.js'),
