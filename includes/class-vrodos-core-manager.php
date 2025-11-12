@@ -444,6 +444,7 @@ class VRodos_Core_Manager {
     public static function vrodos_getEditpage($type){
 
         switch ($type) {
+            case 'allgames':
             case 'game':
                 $templateURL = '/templates/vrodos-project-manager-template.php';
                 break;

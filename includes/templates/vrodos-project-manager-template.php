@@ -241,8 +241,8 @@ $login_username = $current_user->user_login;
                 </section>
 
                 <footer class="mdc-dialog__footer">
-                    <a class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" id="canceldeleteProjectBtn">Cancel</a>
-                    <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" id="deleteProjectBtn">Delete</a>
+                    <button class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" id="canceldeleteProjectBtn">Cancel</button>
+                    <button class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" id="deleteProjectBtn">Delete</button>
                 </footer>
             </div>
             <div class="mdc-dialog__backdrop"></div>
@@ -288,8 +288,8 @@ $login_username = $current_user->user_login;
                 <!--                </section>-->
 
                 <footer class="mdc-dialog__footer">
-                    <a class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" id="cancelCollabsBtn">Cancel</a>
-                    <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" id="updateCollabsBtn">Update</a>
+                    <button class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" id="cancelCollabsBtn">Cancel</button>
+                    <button class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" id="updateCollabsBtn">Update</button>
                 </footer>
             </div>
             <div class="mdc-dialog__backdrop"></div>

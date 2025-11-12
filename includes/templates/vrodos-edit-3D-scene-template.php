@@ -531,8 +531,8 @@ wp_head();
             </section>
 
             <footer class="mdc-dialog__footer">
-                <a class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button mdc-theme--text-hint-on-light">Cancel</a>
-                <a id="delete-asset-btn-confirmation" class="mdc-button--raised mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept">DELETE</a>
+                <button class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button mdc-theme--text-hint-on-light">Cancel</button>
+                <button id="delete-asset-btn-confirmation" class="mdc-button--raised mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept">DELETE</button>
             </footer>
         </div>
         <div class="mdc-dialog__backdrop"></div>

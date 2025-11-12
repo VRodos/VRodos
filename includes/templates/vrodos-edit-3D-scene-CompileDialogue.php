@@ -65,7 +65,7 @@
         </section>
 
         <footer class="mdc-dialog__footer">
-            <a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Close</a>
+            <button id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Close</button>
 
         </footer>
     </div>
