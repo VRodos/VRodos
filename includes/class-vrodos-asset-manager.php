@@ -18,11 +18,6 @@ class VRodos_Asset_Manager {
     }
 
     public function enqueue_project_manager_scripts() {
-        $project_manager_page = VRodos_Core_Manager::vrodos_getEditpage('game');
-        if (!$project_manager_page || !is_page($project_manager_page[0]->ID)) {
-            return;
-        }
-
         wp_enqueue_script('ajax-script_delete_game');
         wp_localize_script('ajax-script_delete_game', 'my_ajax_object_deletegame',
             array('ajax_url' => admin_url('admin-ajax.php'))
@@ -42,9 +37,11 @@ class VRodos_Asset_Manager {
 
         $user = wp_get_current_user();
         $parameter_Scenepass = get_option('vrodos_scene_url_pat');
+        $isAdmin = is_admin() ? 'back' : 'front';
         wp_localize_script('vrodos_project_manager', 'vrodos_project_manager_data', array(
             'current_user_id' => $user->ID,
             'parameter_Scenepass' => $parameter_Scenepass,
+            'isAdmin' => $isAdmin,
         ));
     }
 
@@ -187,7 +184,7 @@ class VRodos_Asset_Manager {
             array('vrodos_addRemoveOne', $plugin_url_js . 'vrodos_addRemoveOne.js'),
             array('vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'),
             array('vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'),
-            array('vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js'),
+            array('vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', array('ajax-script_create_game')),
 
             // Three.js r141
             array('vrodos_load141_threejs', $plugin_url_js . 'threejs141/three.js'),

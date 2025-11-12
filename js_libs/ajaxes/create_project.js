@@ -8,7 +8,7 @@
 function vrodos_createProjectAjax(project_title, project_type_slug, current_user_id, parameter_Scenepass) {
 
     jQuery.ajax({
-        url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
+        url: vrodos_project_manager_data.isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
         type: 'POST',
         data: {
             'action': 'vrodos_create_project_action',
@@ -45,7 +45,7 @@ function vrodos_createProjectAjax(project_title, project_type_slug, current_user
 function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_project_id=-1){
 
     jQuery.ajax({
-        url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
+        url: vrodos_project_manager_data.isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url,
         type: 'POST',
         data: {
             'action': 'vrodos_fetch_list_projects_action',
