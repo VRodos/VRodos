@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     window.mdc.autoInit();
 
-    fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass);
+    fetchAllProjectsAndAddToDOM(vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
 
     // Delete Dialogue
     let dialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let project_type = document.querySelector('input[name="projectTypeRadio"]:checked').value;
 
             // CREATE THE PROJECT !
-            vrodos_createProjectAjax(title_vrodos_project, project_type, current_user_id, parameter_Scenepass);
+            vrodos_createProjectAjax(title_vrodos_project, project_type, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
             document.getElementById('createNewProjectBtn').style.display = 'none';
             document.getElementById('create-game-progress-bar').style.display = '';
         }
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     jQuery('#deleteProjectBtn').click( function (e) {
         jQuery('#delete-dialog-progress-bar').show();
-        vrodos_deleteGameAjax(dialog.id, dialog, current_user_id, parameter_Scenepass);
+        vrodos_deleteGameAjax(dialog.id, dialog, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
     });
 
     jQuery('#canceldeleteProjectBtn').click( function (e) {

@@ -39,6 +39,13 @@ class VRodos_Asset_Manager {
         );
 
         wp_enqueue_script('vrodos_project_manager');
+
+        $user = wp_get_current_user();
+        $parameter_Scenepass = get_option('vrodos_scene_url_pat');
+        wp_localize_script('vrodos_project_manager', 'vrodos_project_manager_data', array(
+            'current_user_id' => $user->ID,
+            'parameter_Scenepass' => $parameter_Scenepass,
+        ));
     }
 
     public function enqueue_scene_editor_scripts() {
