@@ -71,18 +71,12 @@ add_action('wp_enqueue_scripts', 'vrodos_load_custom_functions_vreditor' );
     // Use lighting or basic materials (basic does not employ light, no shadows)
     window.isAnyLight = true;
 
-    // This holds all the 3D resources to load. Generated in Parse JSON.
-    var resources3D  = [];
-
     // For autosave after each action
     var mapActions = {}; // You could also use an array
 </script>
 
 
 <?php
-// resources3D class
-require( plugin_dir_path( __DIR__ ).'/templates/vrodos-edit-3D-scene-ParseJSON.php' );
-
 // Define current path of plugin
 $pluginpath = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
 
@@ -105,11 +99,9 @@ $project_type_str = substr($project_obj->string, strpos($project_obj->string, "_
 $sceneJSON = $scene_post->post_content ? $scene_post->post_content :
     VRodos_Core_Manager::vrodos_getDefaultJSONscene(strtolower($project_type_str));
 
-// Load resources 3D
-
-$SceneParserPHP = new ParseJSON($upload_url);
-
-$SceneParserPHP->init($sceneJSON);
+// Parse the scene JSON and prepare data for the script.
+$scene_data = VRodos_Scene_CPT_Manager::parse_scene_json_and_prepare_script_data($sceneJSON, $upload_url);
+wp_localize_script('vrodos_scripts', 'vrodos_scene_data', $scene_data);
 
 $sceneTitle = $scene_post->post_name;
 
@@ -272,7 +264,7 @@ if(is_user_logged_in() ) {
 
         // Add lights on scene
         var lightsLoader = new VRodos_LightsPawn_Loader();
-        lightsLoader.load(resources3D);
+        lightsLoader.load(vrodos_scene_data.objects);
 
         // ================== Text ============
         const loader = new THREE.FontLoader();
@@ -353,8 +345,8 @@ if(is_user_logged_in() ) {
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
 
             // Get the last inserted object
-            let l = Object.keys(resources3D).length;
-            let name = Object.keys(resources3D)[l - 1]; //Object.keys(resources3D).pop();
+            let l = Object.keys(vrodos_scene_data.objects).length;
+            let name = Object.keys(vrodos_scene_data.objects)[l - 1];
 
             let objItem = envir.scene.getObjectByName(name);
 
@@ -380,7 +372,7 @@ if(is_user_logged_in() ) {
         // Loader of assets
         var loaderMulti = new VRodos_LoaderMulti();
 
-        loaderMulti.load(manager, resources3D, pluginPath);
+        loaderMulti.load(manager, vrodos_scene_data.objects, pluginPath);
 
         //--- initiate PointerLockControls ---------------
         initPointerLock();

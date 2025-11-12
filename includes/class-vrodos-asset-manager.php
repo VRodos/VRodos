@@ -12,6 +12,17 @@ class VRodos_Asset_Manager {
         add_action('wp_enqueue_scripts', array($this, 'register_styles'));
         add_action('admin_enqueue_scripts', array($this, 'register_styles'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_asset_editor_scripts'));
+        add_action('wp_enqueue_scripts', array($this, 'localize_edit_scene_scripts'), 11);
+    }
+
+    public function localize_edit_scene_scripts() {
+        $edit_scene_page = VRodos_Core_Manager::vrodos_getEditpage('scene');
+        if (!$edit_scene_page || !is_page($edit_scene_page[0]->ID)) {
+            return;
+        }
+
+        $scene_data = VRodos_Scene_CPT_Manager::get_scene_dat_for_script();
+        wp_localize_script('vrodos_scripts', 'vrodos_scene_data', $scene_data);
     }
 
     public function enqueue_asset_editor_scripts() {
@@ -80,7 +91,7 @@ class VRodos_Asset_Manager {
 
             // 3D Editor & Viewer Scripts
             array('vrodos_AssetViewer_3D_kernel', $plugin_url_js . 'vrodos_AssetViewer_3D_kernel.js'),
-            array('vrodos_3d_editor_buttons_drags', $plugin_url_js . 'vrodos_3d_editor_buttons_drags.js'),
+            array('vrodos_3d_editor_buttons_drags', $plugin_url_js . 'vrodos_3d_editor_buttons_drags.js', array('jquery','vrodos_addRemoveOne')),
             array('vrodos_3d_editor_environmentals', $plugin_url_js . 'vrodos_3d_editor_environmentals.js'),
             array('vrodos_keyButtons', $plugin_url_js . 'vrodos_keyButtons.js'),
             array('vrodos_rayCasters', $plugin_url_js . 'vrodos_rayCasters.js'),
@@ -123,7 +134,8 @@ class VRodos_Asset_Manager {
         );
 
         foreach ($scripts as $script) {
-            wp_register_script($script[0], $script[1], null, null, false);
+            $dependencies = isset($script[2]) ? $script[2] : array();
+            wp_register_script($script[0], $script[1], $dependencies, null, false);
         }
     }
 
