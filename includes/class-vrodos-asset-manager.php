@@ -18,6 +18,10 @@ class VRodos_Asset_Manager {
     }
 
     public function enqueue_project_manager_scripts() {
+        $project_manager_page = VRodos_Core_Manager::vrodos_getEditpage('game');
+        if (!$project_manager_page || !is_page($project_manager_page[0]->ID)) {
+            return;
+        }
         wp_enqueue_script('ajax-script_delete_game');
         wp_localize_script('ajax-script_delete_game', 'my_ajax_object_deletegame',
             array('ajax_url' => admin_url('admin-ajax.php'))
