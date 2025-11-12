@@ -24,8 +24,20 @@ class VRodos_Asset_Manager {
         }
 
         wp_enqueue_script('ajax-script_delete_game');
+        wp_localize_script('ajax-script_delete_game', 'my_ajax_object_deletegame',
+            array('ajax_url' => admin_url('admin-ajax.php'))
+        );
+
         wp_enqueue_script('ajax-script_collaborate_project');
+        wp_localize_script('ajax-script_collaborate_project', 'my_ajax_object_collaborate_project',
+            array('ajax_url' => admin_url('admin-ajax.php'))
+        );
+
         wp_enqueue_script('ajax-script_create_game');
+        wp_localize_script('ajax-script_create_game', 'my_ajax_object_creategame',
+            array('ajax_url' => admin_url('admin-ajax.php'))
+        );
+
         wp_enqueue_script('vrodos_project_manager');
     }
 
@@ -145,6 +157,9 @@ class VRodos_Asset_Manager {
             // AJAX Scripts
             array('vrodos_request_compile', $plugin_url_js . 'ajaxes/vrodos_request_compile.js'),
             array('vrodos_savescene_request', $plugin_url_js . 'ajaxes/vrodos_save_scene_ajax.js'),
+            array('ajax-script_delete_game', $plugin_url_js . 'ajaxes/delete_game_scene_asset.js', array('jquery')),
+            array('ajax-script_collaborate_project', $plugin_url_js . 'ajaxes/collaborate_project.js', array('jquery')),
+            array('ajax-script_create_game', $plugin_url_js . 'ajaxes/create_project.js', array('jquery')),
 
             // Command Scripts
             array('vrodos_content_interlinking_request', $plugin_url_js . 'content_interlinking_commands/content_interlinking.js'),

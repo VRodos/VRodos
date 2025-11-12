@@ -1,6 +1,4 @@
 <?php
-
-<?php
 // Prepare data for the template
 $data = VRodos_Game_CPT_Manager::prepare_project_manager_data();
 extract($data);
