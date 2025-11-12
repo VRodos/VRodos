@@ -20,7 +20,7 @@
 
             <!--Values are important. Dont delete these hidden inputs (yet)-->
             <input id="platformInput" type="hidden" value="platform-Aframe">
-            <input id="project-type" type="hidden" value="<?php echo esc_attr($project_type_slug); ?>">
+            <input id="project-type" type="hidden" value="<?php echo esc_attr(strtolower($project_type)); ?>">
 
             <div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background">
                 <i title="Instructions" class="material-icons AlignIconToBottom">help</i>
