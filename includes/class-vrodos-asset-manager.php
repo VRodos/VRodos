@@ -36,7 +36,8 @@ class VRodos_Asset_Manager {
         wp_enqueue_script('vrodos_project_manager');
 
         $user = wp_get_current_user();
-        $parameter_Scenepass = get_option('vrodos_scene_url_pat');
+        $perma_structure = (bool)get_option('permalink_structure');
+        $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
         $isAdmin = is_admin() ? 'back' : 'front';
         wp_localize_script('vrodos_project_manager', 'vrodos_project_manager_data', array(
             'current_user_id' => $user->ID,

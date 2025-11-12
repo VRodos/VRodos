@@ -632,7 +632,9 @@ class VRodos_AJAX_Handler {
     $f = fopen("output_ajax_delay.txt", "w");
 
     $user_id = $_POST['current_user_id'];
-    $parameter_Scenepass = $_POST['parameter_Scenepass'];
+
+    $perma_structure = (bool)get_option('permalink_structure');
+    $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
     // Define custom query parameters
     $custom_query_args = array(
