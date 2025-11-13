@@ -445,10 +445,10 @@ class VRodos_Core_Manager {
 
         switch ($type) {
             case 'allgames':
+            case 'game':
                 $templateURL = '/templates/vrodos-project-manager-template.php';
                 break;
 
-            case 'game':
             case 'assetslist':
                 $templateURL = '/templates/vrodos-assets-list-template.php';
                 break;

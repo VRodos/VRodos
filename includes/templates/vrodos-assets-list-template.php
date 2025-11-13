@@ -103,7 +103,7 @@ if ($single_project_asset_list)
     $link_to_edit = $link_to_edit. "singleproject=true&";
 
 $allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
-$goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
+$goBackTo_AllProjects_link = !empty($allProjectsPage) ? esc_url( get_permalink($allProjectsPage[0]->ID)) : home_url();
 
 ?>
 

@@ -54,11 +54,6 @@ class VRodos_AJAX_Handler {
             'tax_input' => $project_taxonomies,
         );
         $project_id = wp_insert_post($project_information);
-        $post = get_post($project_id);
-        wp_set_object_terms($post->ID, $project_type_slug, 'vrodos_game_type');
-        wp_insert_term($post->post_title, 'vrodos_scene_pgame', array('description' => '-', 'slug' => $post->post_name));
-        wp_insert_term($post->post_title, 'vrodos_asset3d_pgame', array('description' => '-', 'slug' => $post->post_name));
-        VRodos_Default_Scene_Manager::create_default_scenes_for_game($post->post_name, $project_type_id);
         echo $project_id;
         wp_die();
     }
@@ -632,7 +627,9 @@ class VRodos_AJAX_Handler {
     $f = fopen("output_ajax_delay.txt", "w");
 
     $user_id = $_POST['current_user_id'];
-    $parameter_Scenepass = $_POST['parameter_Scenepass'];
+
+    $perma_structure = (bool)get_option('permalink_structure');
+    $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
     // Define custom query parameters
     $custom_query_args = array(
@@ -745,8 +742,8 @@ class VRodos_AJAX_Handler {
             echo '</a>';
 
             // -------- Delete button ----------------
-            echo '<a href="javascript:void(0)" class="" style="" aria-label="Delete game" title="Delete project" '.
-                'onclick="deleteProject('.$game_id.')">';
+            echo '<a href="javascript:void(0)" class="vrodos-delete-project-btn" style="" aria-label="Delete game" title="Delete project" '.
+                'data-game-id="'.$game_id.'">';
             echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color: crimson" '
                 .'aria-hidden="true" title="Delete project">delete</i>';
             echo '</a>';

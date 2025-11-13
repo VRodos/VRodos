@@ -79,22 +79,28 @@ class VRodos_Game_CPT_Manager {
     // Generate Taxonomy (for scenes & assets) with Project's slug/name
     // Create Default Scenes for this "Project"
     public function on_create_project($new_status, $old_status, $post) {
-        // Dont run this if from front-end
-        if (!isset($_POST['vrodos_game_type'])) {
-            return;
-        }
-
         $post_type = get_post_type($post);
 
         if ($post_type == 'vrodos_game' && $new_status == 'publish' && $old_status != 'publish') {
             $projectSlug = $post->post_name;
             $projectTitle = empty($post->post_title) ? 'project-' . $projectSlug : $post->post_title;
 
-            $project_type_id = $_POST['vrodos_game_type'];
-            $project_type = get_term($project_type_id, 'vrodos_game_type');
+            // Robustly get the project type ID. It will be in $_POST if created from the backend,
+            // otherwise it will be attached as a term from the AJAX call.
+            if (isset($_POST['vrodos_game_type'])) {
+                $project_type_id = intval($_POST['vrodos_game_type']);
+            } else {
+                $terms = wp_get_object_terms($post->ID, 'vrodos_game_type');
+                if (!empty($terms) && !is_wp_error($terms)) {
+                    $project_type_id = $terms[0]->term_id;
+                } else {
+                    // If no project type is found, we cannot proceed.
+                    return;
+                }
+            }
 
             // If project is not a joker one
-            if (!str_contains($projectSlug, '-joker')) {
+            if (strpos($projectSlug, '-joker') === false) {
                 // Create a parent game tax category for the scenes
                 wp_insert_term($projectTitle, 'vrodos_scene_pgame', array(
                     'description' => '-',
@@ -106,9 +112,6 @@ class VRodos_Game_CPT_Manager {
                     'description' => '-',
                     'slug' => $projectSlug,
                 ));
-
-                // Link project to game type
-                wp_set_object_terms($post->ID, intval($project_type_id), 'vrodos_game_type');
 
                 // Create Default Scenes for this "Project"
                 VRodos_Default_Scene_Manager::create_default_scenes_for_game($projectSlug, $project_type_id);
@@ -291,6 +294,61 @@ class VRodos_Game_CPT_Manager {
         <?php
     }
 
+    public static function prepare_compile_dialogue_data() {
+        // This function prepares data needed by the vrodos-edit-3D-scene-CompileDialogue.php template.
+
+        $project_id = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
+
+        if (!$project_id) { return array(); }
+
+        $project_post = get_post($project_id);
+        if (!$project_post) { return array(); }
+
+        $projectSlug = $project_post->post_name;
+
+        // Get project type slug
+        $project_type_slug = '';
+        $project_type_terms = wp_get_object_terms($project_id, 'vrodos_game_type');
+        if ($project_type_terms && !is_wp_error($project_type_terms)) {
+            $project_type_slug = $project_type_terms[0]->slug;
+        }
+
+        // Get project type string name (e.g., "Archaeology")
+        $project_type_obj = VRodos_Core_Manager::vrodos_return_project_type($project_id);
+        $project_type_string = $project_type_obj ? $project_type_obj->string : null;
+        $project_type_icon = $project_type_obj ? $project_type_obj->icon : null;
+
+        // Determine the 'singular' name for the project type for UI text (e.g., "tour" or "project")
+        if ($project_type_string === 'Archaeology') {
+            $single_lowercase = "tour";
+        } else {
+            $single_lowercase = "project";
+        }
+
+        return array(
+            'project_id'        => $project_id,
+            'project_post'      => $project_post,
+            'projectSlug'       => $projectSlug,
+            'project_type'      => $project_type_string,
+            'project_type_slug' => $project_type_slug,
+            'project_type_icon' => $project_type_icon,
+            'single_lowercase'  => $single_lowercase,
+        );
+    }
+
+    public static function prepare_project_manager_data() {
+        $perma_structure = (bool)get_option('permalink_structure');
+
+        return array(
+            'parameter_Scenepass' => $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=',
+            'current_user_id' => get_current_user_id(),
+            'isAdmin' => is_admin() ? 'back' : 'front',
+            'full_title' => "Projects",
+            'full_title_lowercase' => "projects",
+            'single' => "project",
+            'multiple' => "projects",
+        );
+    }
 }
 
 function vrodos_get_project_scene_id($project_id) {

@@ -51,7 +51,7 @@ global $parameter_Scenepass;
             // Create redirect javascript
             if ($default_scene) {
                 echo '<script>';
-                echo 'let url_scene_redirect="' . $url_redirect_delete_scene . '";';
+                echo 'var url_scene_redirect="' . $url_redirect_delete_scene . '";';
                 echo '</script>';
             }
 
@@ -173,10 +173,10 @@ global $parameter_Scenepass;
             </section>
 
             <footer class="mdc-dialog__footer">
-                <a class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button"
-                   id="deleteSceneDialogCancelBtn">Cancel</a>
-                <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised"
-                   id="deleteSceneDialogDeleteBtn">Delete</a>
+                <button class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button"
+                   id="deleteSceneDialogCancelBtn">Cancel</button>
+                <button class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised"
+                   id="deleteSceneDialogDeleteBtn">Delete</button>
             </footer>
         </div>
         <div class="mdc-dialog__backdrop"></div>
