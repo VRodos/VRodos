@@ -169,4 +169,74 @@ class VRodos_Pages_Manager {
                 if ($slug === $page->post_name) return $page;
         return false;
     }
+
+    public static function prepare_assets_list_page_data() {
+        $perma_structure = (bool)get_option('permalink_structure');
+        $parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
+        $joker_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'vrodos_game' )->ID;
+
+        $joker_project_post = get_post($joker_project_id);
+        $joker_project_slug = $joker_project_post->post_name;
+
+        $isUserloggedIn = is_user_logged_in();
+        $isUserAdmin = $isUserloggedIn && current_user_can('administrator');
+        $user_id = get_current_user_id();
+
+        $single_project_asset_list = false;
+        $current_game_project_id = null;
+        $current_game_project_post = null;
+
+        if(isset($_GET['vrodos_project_id'])) {
+            $single_project_asset_list = true;
+            $current_game_project_id = $_GET['vrodos_project_id'];
+            $current_game_project_post = get_post($current_game_project_id);
+            $current_game_project_slug = $current_game_project_post->post_name;
+            $user_games_slugs = [$current_game_project_slug];
+        } else {
+            $user_games_slugs = VRodos_Core_Manager::vrodos_get_user_game_projects($user_id, $isUserAdmin);
+        }
+
+        $assets = VRodos_Core_Manager::get_assets($user_games_slugs);
+        $newAssetPage = VRodos_Core_Manager::vrodos_getEditpage('asset');
+
+        if (!$isUserloggedIn)
+            $link_to_add = wp_login_url();
+        else if ($isUserloggedIn && $single_project_asset_list)
+            $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $current_game_project_id .'&singleproject=true&preview=0');
+        else if ($isUserAdmin && !$single_project_asset_list)
+            $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0');
+        else if ($isUserloggedIn)
+            $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0');
+
+        $link_to_edit = home_url().'/vrodos-asset-editor-page/?';
+        if ($single_project_asset_list)
+            $link_to_edit = $link_to_edit. "singleproject=true&";
+
+        $allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
+        $goBackTo_AllProjects_link = !empty($allProjectsPage) ? esc_url( get_permalink($allProjectsPage[0]->ID)) : home_url();
+
+        if ($isUserloggedIn) {
+            if( $single_project_asset_list){
+                $helpMessage = 'A list of your private Assets belonging to the project <b>'.$current_game_project_post->post_title.'</b>.';
+            } else {
+                $helpMessage = 'Add a Shared Asset here. It will be accessible by all projects. If you want it to be private, make a project and add the asset there.';
+            }
+        } else {
+            $helpMessage = 'Login to a) add a Shared Asset or b) to create a Project and add your private Assets there';
+        }
+
+        return array(
+            'assets' => $assets,
+            'is_user_logged_in' => $isUserloggedIn,
+            'is_user_admin' => $isUserAdmin,
+            'user_id' => $user_id,
+            'link_to_add' => $link_to_add,
+            'link_to_edit' => $link_to_edit,
+            'go_back_to_all_projects_link' => $goBackTo_AllProjects_link,
+            'help_message' => $helpMessage,
+            'joker_project_slug' => $joker_project_slug,
+            'single_project_asset_list' => $single_project_asset_list,
+            'current_game_project_post' => $current_game_project_post,
+        );
+    }
 }

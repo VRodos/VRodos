@@ -14,7 +14,36 @@ class VRodos_Asset_Manager {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_asset_editor_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scene_editor_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_project_manager_scripts'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_assets_list_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'localize_edit_scene_scripts'), 11);
+    }
+
+    public function enqueue_assets_list_scripts() {
+        $assets_list_page = VRodos_Core_Manager::vrodos_getEditpage('assetslist');
+        if (!$assets_list_page || !is_page($assets_list_page[0]->ID)) {
+            return;
+        }
+
+        wp_enqueue_style('vrodos_frontend_stylesheet');
+        wp_enqueue_style('vrodos_material_stylesheet');
+
+        $pluginpath = dirname(plugin_dir_url(__DIR__));
+        $pluginpath = str_replace('\\', '/', $pluginpath);
+
+        $isAdmin = is_admin() ? 'back' : 'front';
+        wp_add_inline_script('vrodos_scripts', 'var isAdmin="' . $isAdmin . '";');
+
+        wp_enqueue_script('ajax-script_deleteasset', $pluginpath . '/js_libs/ajaxes/delete_asset.js', array('jquery'));
+        wp_localize_script('ajax-script_deleteasset', 'my_ajax_object_deleteasset',
+            array('ajax_url' => admin_url('admin-ajax.php'))
+        );
+
+        wp_enqueue_script('ajax-vrodos_content_interlinking_request',
+            $pluginpath . '/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery'));
+
+        wp_localize_script('ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
+            array('ajax_url' => admin_url('admin-ajax.php'), null)
+        );
     }
 
     public function enqueue_project_manager_scripts() {
