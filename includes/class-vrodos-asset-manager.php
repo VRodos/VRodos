@@ -27,22 +27,17 @@ class VRodos_Asset_Manager {
         wp_enqueue_style('vrodos_frontend_stylesheet');
         wp_enqueue_style('vrodos_material_stylesheet');
 
-        $pluginpath = dirname(plugin_dir_url(__DIR__));
-        $pluginpath = str_replace('\\', '/', $pluginpath);
-
         $isAdmin = is_admin() ? 'back' : 'front';
         wp_add_inline_script('vrodos_scripts', 'var isAdmin="' . $isAdmin . '";');
 
-        wp_enqueue_script('ajax-script_deleteasset', $pluginpath . '/js_libs/ajaxes/delete_asset.js', array('jquery'));
+        wp_enqueue_script('ajax-script_deleteasset');
         wp_localize_script('ajax-script_deleteasset', 'my_ajax_object_deleteasset',
             array('ajax_url' => admin_url('admin-ajax.php'))
         );
 
-        wp_enqueue_script('ajax-vrodos_content_interlinking_request',
-            $pluginpath . '/js_libs/content_interlinking_commands/content_interlinking.js', array('jquery'));
-
-        wp_localize_script('ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
-            array('ajax_url' => admin_url('admin-ajax.php'), null)
+        wp_enqueue_script('vrodos_content_interlinking_request');
+        wp_localize_script('vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
+            array('ajax_url' => admin_url('admin-ajax.php'))
         );
     }
 
@@ -196,11 +191,12 @@ class VRodos_Asset_Manager {
             array('vrodos_request_compile', $plugin_url_js . 'ajaxes/vrodos_request_compile.js'),
             array('vrodos_savescene_request', $plugin_url_js . 'ajaxes/vrodos_save_scene_ajax.js'),
             array('ajax-script_delete_game', $plugin_url_js . 'ajaxes/delete_game_scene_asset.js', array('jquery')),
+            array('ajax-script_deleteasset', $plugin_url_js . 'ajaxes/delete_asset.js', array('jquery')),
             array('ajax-script_collaborate_project', $plugin_url_js . 'ajaxes/collaborate_project.js', array('jquery')),
             array('ajax-script_create_game', $plugin_url_js . 'ajaxes/create_project.js', array('jquery')),
 
             // Command Scripts
-            array('vrodos_content_interlinking_request', $plugin_url_js . 'content_interlinking_commands/content_interlinking.js'),
+            array('vrodos_content_interlinking_request', $plugin_url_js . 'content_interlinking_commands/content_interlinking.js', array('jquery')),
             array('vrodos_segmentation_request', $plugin_url_js . 'semantics_commands/segmentation.js'),
             array('vrodos_classification_request', $plugin_url_js . 'semantics_commands/classification.js'),
 
