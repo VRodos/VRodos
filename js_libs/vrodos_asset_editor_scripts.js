@@ -9,6 +9,7 @@
 // Initial slide to show (carousel top)
 var slideIndex = 0;
 var sshotPreviewDefaultImg;
+var asset_viewer_3d_kernel = null;
 
 
 function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
@@ -318,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setScreenshotHandler();
 
     // ------- Class to load 3D model ---------
-    let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById('previewCanvas'),
+    asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById('previewCanvas'),
         document.getElementById('previewCanvasLabels'),
         document.getElementById('animButton1'),
         document.getElementById('previewProgressLabel'),
