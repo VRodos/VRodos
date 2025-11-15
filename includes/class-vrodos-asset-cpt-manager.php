@@ -862,6 +862,33 @@ class VRodos_Asset_CPT_Manager {
         $data['cat_ipr_terms'] = get_terms('vrodos_asset3d_ipr_cat', array('get' => 'all'));
     }
 
+    public static function prepare_script_data_for_asset_editor() {
+        $data = [];
+        $data['isAdmin'] = is_admin() ? 'back' : 'front';
+
+        $asset_id = isset($_GET['vrodos_asset']) ? sanitize_text_field(intval($_GET['vrodos_asset'])) : null;
+        $assetpostMeta = get_post_meta($asset_id);
+        $asset_3d_files = VRodos_Core_Manager::get_3D_model_files($assetpostMeta, $asset_id);
+
+        $data['glb_file_name'] = $asset_3d_files['glb'];
+        $data['no_img_path'] = plugin_dir_url(VRODOS_PLUGIN_FILE) . 'images/ic_sshot.png';
+        $data['asset_title'] = get_the_title($asset_id);
+        $data['back_3d_color'] = isset($assetpostMeta['vrodos_asset3d_back3dcolor']) ? $assetpostMeta['vrodos_asset3d_back3dcolor'][0] : '#ffffff';
+        $data['isLoggedIn'] = is_user_logged_in() ? 1 : 0;
+        $data['assettrs_saved'] = get_post_meta($asset_id, 'vrodos_asset3d_assettrs', true) ?: '0,0,0,0,0,0,0,0,-100';
+
+        $scrnImageURL = plugin_dir_url(VRODOS_PLUGIN_FILE) . 'images/ic_sshot.png';
+        if ($asset_id) {
+            $scrnImageURL_local = wp_get_attachment_url(get_post_meta($asset_id, "vrodos_asset3d_screenimage", true));
+            if ($scrnImageURL_local) {
+                $scrnImageURL = $scrnImageURL_local;
+            }
+        }
+        $data['sshotPreviewDefaultImg_local'] = $scrnImageURL;
+
+        return $data;
+    }
+
     private static function prepare_meta_data(&$data) {
         $asset_id = $data['asset_id'];
 

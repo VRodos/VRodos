@@ -158,6 +158,10 @@ class VRodos_Asset_Manager {
         // Load scripts for asset editor
         wp_enqueue_script('vrodos_asset_editor_scripts');
 
+        // DATA FOR THE SCRIPT
+        $script_data = VRodos_Asset_CPT_Manager::prepare_script_data_for_asset_editor();
+        wp_localize_script('vrodos_asset_editor_scripts', 'vrodos_asset_editor_data', $script_data);
+
         // Select colors
         wp_enqueue_script('vrodos_jscolorpick');
 
