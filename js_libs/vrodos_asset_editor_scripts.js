@@ -8,6 +8,7 @@
 
 // Initial slide to show (carousel top)
 var slideIndex = 0;
+var sshotPreviewDefaultImg;
 
 
 function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
@@ -343,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Select category handler
     if (isEditMode === 1) {
 
-        var sshotPreviewDefaultImg = sshotPreviewDefaultImg_local;
+        sshotPreviewDefaultImg = sshotPreviewDefaultImg_local;
 
         (function () {
             let MDCSelect = mdc.select.MDCSelect;
