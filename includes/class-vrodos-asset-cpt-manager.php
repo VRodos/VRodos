@@ -870,7 +870,7 @@ class VRodos_Asset_CPT_Manager {
         $assetpostMeta = get_post_meta($asset_id);
         $asset_3d_files = VRodos_Core_Manager::get_3D_model_files($assetpostMeta, $asset_id);
 
-        $data['glb_file_name'] = $asset_3d_files['glb'];
+        $data['glb_file_name'] = $asset_3d_files['glb'] ?? null;
         $data['no_img_path'] = plugin_dir_url(VRODOS_PLUGIN_FILE) . 'images/ic_sshot.png';
         $data['asset_title'] = get_the_title($asset_id);
         $data['back_3d_color'] = isset($assetpostMeta['vrodos_asset3d_back3dcolor']) ? $assetpostMeta['vrodos_asset3d_back3dcolor'][0] : '#ffffff';

@@ -183,7 +183,7 @@ class VRodos_Asset_Manager {
 
         $scripts = array(
             // General Scripts
-            array('vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js'),
+            array('vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js', array('jquery', 'vrodos_material_scripts')),
             array('vrodos_scripts', $plugin_url_js . 'vrodos_scripts.js'),
             array('vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'),
             array('vrodos_html2canvas', $plugin_url_js . 'external_js_libraries/html2canvas.min.js'),
