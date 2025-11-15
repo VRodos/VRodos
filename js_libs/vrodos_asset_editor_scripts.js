@@ -295,6 +295,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const videoSshotFileInput = document.getElementById("videoSshotFileInput");
     const multipleFilesInputElem = document.getElementById('fileUploadInput');
 
+    // Initialize global variable for screenshot default image
+    sshotPreviewDefaultImg = sshotPreviewDefaultImg_local;
+
     if (document.getElementById("jscolorpick")) {
         document.getElementById("jscolorpick").value = back_3d_color;
     }
@@ -306,17 +309,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let mdc = window.mdc;
     mdc.autoInit();
-
-    if (assetVideoTag) {
-        assetVideoTag.addEventListener('loadeddata', function () {
-            generateVideoSshot(videoSshotCanvas, assetVideoTag);
-        }, false);
-        assetVideoTag.addEventListener('seeked', function () {
-            generateVideoSshot(videoSshotCanvas, assetVideoTag);
-        });
-    }
-
-    setScreenshotHandler();
 
     // ------- Class to load 3D model ---------
     asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById('previewCanvas'),
@@ -340,12 +332,22 @@ document.addEventListener('DOMContentLoaded', function () {
         assettrs,
         document.getElementById('boundSphButton'));
 
+    // SET HANDLERS AFTER KERNEL INITIALIZATION
+    if (assetVideoTag) {
+        assetVideoTag.addEventListener('loadeddata', function () {
+            generateVideoSshot(videoSshotCanvas, assetVideoTag);
+        }, false);
+        assetVideoTag.addEventListener('seeked', function () {
+            generateVideoSshot(videoSshotCanvas, assetVideoTag);
+        });
+    }
+
+    setScreenshotHandler();
     addHandlerFor3Dfiles(asset_viewer_3d_kernel, multipleFilesInputElem);
+
 
     // Select category handler
     if (isEditMode === 1) {
-
-        sshotPreviewDefaultImg = sshotPreviewDefaultImg_local;
 
         (function () {
             let MDCSelect = mdc.select.MDCSelect;
