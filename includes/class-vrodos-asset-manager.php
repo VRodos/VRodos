@@ -183,7 +183,7 @@ class VRodos_Asset_Manager {
 
         $scripts = array(
             // General Scripts
-            array('vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js', array('jquery', 'vrodos_material_scripts')),
+            array('vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js', array('jquery', 'vrodos_material_scripts'), null, true),
             array('vrodos_scripts', $plugin_url_js . 'vrodos_scripts.js'),
             array('vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'),
             array('vrodos_html2canvas', $plugin_url_js . 'external_js_libraries/html2canvas.min.js'),
@@ -252,7 +252,9 @@ class VRodos_Asset_Manager {
 
         foreach ($scripts as $script) {
             $dependencies = isset($script[2]) ? $script[2] : array();
-            wp_register_script($script[0], $script[1], $dependencies, null, false);
+            $version      = isset($script[3]) ? $script[3] : null;
+            $in_footer    = isset($script[4]) ? $script[4] : false;
+            wp_register_script($script[0], $script[1], $dependencies, $version, $in_footer);
         }
     }
 
