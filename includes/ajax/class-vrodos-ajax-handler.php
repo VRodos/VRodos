@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once(plugin_dir_path(__FILE__) . '../vrodos-scene-model.php');
+require_once(plugin_dir_path(__FILE__) . '../class-vrodos-scene-model.php');
 require_once(plugin_dir_path(__FILE__) . '../class-vrodos-compiler-manager.php');
 
 class VRodos_AJAX_Handler {
