@@ -1024,6 +1024,7 @@ class VRodos_AssetViewer_3D_kernel {
 
         this.updateCamera();
 
+        this.render();
     }
 
     // Recalculate canvas aspect ratio
