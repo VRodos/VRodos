@@ -55,10 +55,9 @@ get_header();
             <?php foreach ($assets as $asset) {  ?>
                 <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3" style="position:relative">
                     <div class="asset-shared-thumbnail mdc-card mdc-theme--background" id="<?php echo $asset['asset_id']; ?>">
-                        <?php $pGameId = get_page_by_path($asset['asset_parent_game_slug'], OBJECT, 'vrodos_game')->ID; ?>
 
                         <!-- Edit url -->
-                        <a class="editasseturl" href="<?php echo $link_to_edit.'vrodos_game='.$pGameId.'&vrodos_asset='.$asset['asset_id'].'&preview='.(!$is_user_admin && ($user_id != $asset['author_id'])).'#English'; ?>">
+                        <a class="editasseturl" href="<?php echo $asset['edit_url']; ?>">
                             <?php if ($asset['screenshot_path']){ ?>
                                 <img src="<?php echo $asset['screenshot_path']; ?>" class="asset-shared-thumbnail">
                             <?php } else { ?>
@@ -71,15 +70,13 @@ get_header();
                         <!-- Title -->
                         <h1 class="assetsListCardTitle mdc-card__title mdc-typography--title" style="">
                             <a class="mdc-theme--secondary"
-                               href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.
-                                   '&vrodos_asset='.$asset['asset_id'].'#English';
-                               ?>"><?php echo $asset['asset_name'];?></a>
+                               href="<?php echo $asset['title_url']; ?>"><?php echo $asset['asset_name'];?></a>
                         </h1>
 
                         <!-- Author -->
                         <p class="sharedAssetsUsername mdc-typography--caption">
                             <img style="width:20px;height:20px;border-radius: 50%;vertical-align:middle" src="<?php echo get_avatar_url($asset['author_id']);?>">
-                            <a href="<?php echo home_url().'/user/'.$asset['author_username']; ?>"
+                            <a href="<?php echo $asset['author_url']; ?>"
                                style="color:white; mix-blend-mode: difference;">
                                 <?php echo $asset['author_displayname']; ?>
                             </a>
@@ -105,7 +102,7 @@ get_header();
                         <div class="phonering-alo-phone phonering-alo-green phonering-alo-show" style="display:none" id="phonering-<?php echo $asset['asset_name'] ?>">
                             <div class="phonering-alo-ph-circle"></div>
                             <div class="phonering-alo-ph-circle-fill"></div>
-                            <a href="<?php echo home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['asset_id'].'&preview=1&directcall=1&#English';?>"
+                            <a href="<?php echo $asset['direct_call_url']; ?>"
                                class="pps-btn-img" title="teleconference_ring">
                                 <div class="phonering-alo-ph-img-circle"></div>
                             </a>
@@ -131,27 +128,5 @@ get_header();
     </div>
 
 <?php } ?>
-
-<script type="text/javascript">
-    var deleteDialog;
-    jQuery(document).ready(function() {
-        var mdc = window.mdc;
-        mdc.autoInit();
-
-        var helpDialog = document.querySelector('#help-dialog');
-        if (helpDialog) {
-            helpDialog = new mdc.dialog.MDCDialog(helpDialog);
-            jQuery("#helpButton").click(function() {
-                helpDialog.show();
-            });
-        }
-
-        deleteDialog = document.querySelector('#delete-dialog');
-        if (deleteDialog) {
-            deleteDialog = new mdc.dialog.MDCDialog(deleteDialog);
-            deleteDialog.focusTrap_.deactivate();
-        }
-    });
-</script>
 
 <?php get_footer(); ?>

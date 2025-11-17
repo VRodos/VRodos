@@ -39,6 +39,8 @@ class VRodos_Asset_Manager {
         wp_localize_script('vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
             array('ajax_url' => admin_url('admin-ajax.php'))
         );
+
+        wp_enqueue_script('vrodos_assets_list_scripts');
     }
 
     public function enqueue_project_manager_scripts() {
@@ -179,6 +181,7 @@ class VRodos_Asset_Manager {
 
         $scripts = array(
             // General Scripts
+            array('vrodos_assets_list_scripts', $plugin_url_js . 'vrodos_assets_list_scripts.js'),
             array('vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js'),
             array('vrodos_scripts', $plugin_url_js . 'vrodos_scripts.js'),
             array('vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'),
