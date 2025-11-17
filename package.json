@@ -10,7 +10,7 @@
     "three": "^0.128.0"
   },
   "devDependencies": {
-    "@wordpress/scripts": "14.1.1"
+    "@wordpress/scripts": "31.0.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
