@@ -1,7 +1,4 @@
 <?php
-// Remove the admin bar
-//add_action('get_header', 'vrodos_remove_admin_login_header');
-
 wp_enqueue_style('vrodos_frontend_stylesheet');
 wp_enqueue_style('vrodos_material_stylesheet');
 
@@ -635,4 +632,6 @@ get_header();
 
     </script>
 
-<?php } ?>
+<?php }
+get_footer();
+?>
