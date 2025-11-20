@@ -248,7 +248,6 @@ class VRodos_Pages_Manager {
             'is_user_admin' => $isUserAdmin,
             'user_id' => $user_id,
             'link_to_add' => $link_to_add,
-            'link_to_edit' => $link_to_edit,
             'go_back_to_all_projects_link' => $goBackTo_AllProjects_link,
             'help_message' => $helpMessage,
             'joker_project_slug' => $joker_project_slug,
