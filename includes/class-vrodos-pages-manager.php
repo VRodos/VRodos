@@ -199,27 +199,6 @@ class VRodos_Pages_Manager {
         $assets = VRodos_Core_Manager::get_assets($user_games_slugs);
         $newAssetPage = VRodos_Core_Manager::vrodos_getEditpage('asset');
 
-        foreach ($assets as $i => $asset) {
-	        $pGameId = get_page_by_path($asset['asset_parent_game_slug'], OBJECT, 'vrodos_game')->ID;
-	        $assets[$i]['parent_game_id'] = $pGameId;
-
-	        $edit_url = home_url().'/vrodos-asset-editor-page/?';
-	        if ($single_project_asset_list) {
-		        $edit_url .= "singleproject=true&";
-	        }
-	        $edit_url .= 'vrodos_game='.$pGameId.'&vrodos_asset='.$asset['asset_id'].'&preview='.(!$isUserAdmin && ($user_id != $asset['author_id'])).'#English';
-	        $assets[$i]['edit_url'] = $edit_url;
-
-	        $title_url = home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.'&vrodos_asset='.$asset['asset_id'].'#English';
-	        $assets[$i]['title_url'] = $title_url;
-
-	        $author_url = home_url().'/user/'.$asset['author_username'];
-	        $assets[$i]['author_url'] = $author_url;
-
-	        $direct_call_url = home_url().'/vrodos-asset-editor-page/?vrodos_game='.$pGameId.'&vrodos_scene=&vrodos_asset='.$asset['asset_id'].'&preview=1&directcall=1&#English';
-	        $assets[$i]['direct_call_url'] = $direct_call_url;
-        }
-
         if (!$isUserloggedIn)
             $link_to_add = wp_login_url();
         else if ($isUserloggedIn && $single_project_asset_list)
@@ -228,6 +207,10 @@ class VRodos_Pages_Manager {
             $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0');
         else if ($isUserloggedIn)
             $link_to_add = esc_url( get_permalink($newAssetPage[0]->ID) . $parameter_pass . $joker_project_id .'&preview=0');
+
+        $link_to_edit = home_url().'/vrodos-asset-editor-page/?';
+        if ($single_project_asset_list)
+            $link_to_edit = $link_to_edit. "singleproject=true&";
 
         $allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
         $goBackTo_AllProjects_link = !empty($allProjectsPage) ? esc_url( get_permalink($allProjectsPage[0]->ID)) : home_url();
@@ -248,6 +231,7 @@ class VRodos_Pages_Manager {
             'is_user_admin' => $isUserAdmin,
             'user_id' => $user_id,
             'link_to_add' => $link_to_add,
+            'link_to_edit' => $link_to_edit,
             'go_back_to_all_projects_link' => $goBackTo_AllProjects_link,
             'help_message' => $helpMessage,
             'joker_project_slug' => $joker_project_slug,

@@ -1445,3 +1445,7 @@ input[type=radio].mdc-radio__native-control {
     height: 100%;
     width: 100%;
 }
+
+body.admin-bar .asset_editor_style {
+    top: 32px;
+}
