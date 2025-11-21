@@ -140,7 +140,7 @@ class VRodos_Asset_CPT_Manager {
             // NoCloning: Upload files from POST but check first
             // if any 3D files have been selected for upload
             if (count($_FILES['multipleFilesInput']['name']) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ){
-                VRodos_Asset_CPT_Manager::create_asset_3dfiles_extra_frontend($asset_id, $project_id, $assetCatID);
+                VRodos_Upload_Manager::create_asset_3dfiles_extra_frontend($asset_id, $project_id, $assetCatID);
             }
 
             update_post_meta($asset_id, 'vrodos_asset3d_isCloned', 'false');
@@ -158,7 +158,7 @@ class VRodos_Asset_CPT_Manager {
 
             case 'video':
                 if (isset($_FILES['videoFileInput'])) {
-                    VRodos_Asset_CPT_Manager::create_asset_add_video_frontend($asset_id);
+                    VRodos_Upload_Manager::create_asset_add_video_frontend($asset_id);
                 }
                 if (isset($_POST['videoSshotFileInput'])) {
                     VRodos_Upload_Manager::upload_asset_screenshot($_POST['videoSshotFileInput'], $asset_id, $project_id);
@@ -171,7 +171,7 @@ class VRodos_Asset_CPT_Manager {
 
                 $existing_img = $_FILES['imageFileInput'];
                 if ( $existing_img['error'] != 4  ) {
-                    VRodos_Asset_CPT_Manager::create_asset_add_images_frontend($asset_id, $_FILES['imageFileInput']);
+                    VRodos_Upload_Manager::create_asset_add_images_frontend($asset_id, $_FILES['imageFileInput']);
                 }
 
                 update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_title', sanitize_text_field($_POST['poiImgTitle']));
@@ -194,7 +194,7 @@ class VRodos_Asset_CPT_Manager {
         }
 
         // Audio: To add
-        // vrodos_create_asset_addAudio_frontend($asset_id);
+        // VRodos_Upload_Manager::create_asset_add_audio_frontend($asset_id);
 
         $redirect_url = $_SERVER['HTTP_REFERER'];
         if (!isset($_GET['vrodos_asset'])) {
@@ -643,32 +643,6 @@ class VRodos_Asset_CPT_Manager {
 	// --- Asset saving and updating logic ---
 
 	/**
-	 * Create extra 3D files for the asset.
-	 */
-	public static function create_asset_3dfiles_extra_frontend($asset_new_id, $project_id, $asset_cat_id) {
-		// Clear out all previous attachments
-		$attachments = get_children( array('post_parent' => $asset_new_id, 'post_type' => 'attachment') );
-		foreach ($attachments as $attachment) {
-			if (strpos($attachment->post_title, 'screenshot') === false) {
-				wp_delete_attachment($attachment->ID, true);
-			}
-		}
-
-		// Upload and update DB
-		if (isset($_POST['glbFileInput']) && $_POST['glbFileInput']) {
-			$glb_file_id = VRodos_Upload_Manager::upload_asset_text(
-				null,
-				'glb_' . $asset_new_id . '_' . $asset_cat_id,
-				$asset_new_id,
-				$_FILES,
-				0,
-				$project_id
-			);
-			update_post_meta($asset_new_id, 'vrodos_asset3d_glb', $glb_file_id);
-		}
-	}
-
-	/**
 	 * Create a new asset from the frontend.
 	 */
 	public static function create_asset_frontend($asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description) {
@@ -714,34 +688,6 @@ class VRodos_Asset_CPT_Manager {
 		self::update_asset_meta($asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs);
 
 		return 1;
-	}
-
-	/**
-	 * Add images to the asset.
-	 */
-	public static function create_asset_add_images_frontend($asset_id, $file) {
-		$attachment_id = VRodos_Upload_Manager::upload_img_vid_aud($file, $asset_id);
-		update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', $attachment_id);
-	}
-
-	/**
-	 * Add audio to the asset.
-	 */
-	public static function create_asset_add_audio_frontend($asset_new_id) {
-		if (isset($_FILES['audioFileInput']) && $_FILES['audioFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
-			$attachment_audio_id = VRodos_Upload_Manager::upload_img_vid_aud($_FILES['audioFileInput'], $asset_new_id);
-			update_post_meta($asset_new_id, 'vrodos_asset3d_audio', $attachment_audio_id);
-		}
-	}
-
-	/**
-	 * Add video to the asset.
-	 */
-	public static function create_asset_add_video_frontend($asset_new_id) {
-		if (isset($_FILES['videoFileInput']) && $_FILES['videoFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
-			$attachment_video_id = VRodos_Upload_Manager::upload_img_vid_aud($_FILES['videoFileInput'], $asset_new_id);
-			update_post_meta($asset_new_id, 'vrodos_asset3d_video', $attachment_video_id);
-		}
 	}
 
 	/**

@@ -5,6 +5,59 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class VRodos_Upload_Manager {
+	/**
+	 * Create extra 3D files for the asset.
+	 */
+	public static function create_asset_3dfiles_extra_frontend($asset_new_id, $project_id, $asset_cat_id) {
+		// Clear out all previous attachments
+		$attachments = get_children( array('post_parent' => $asset_new_id, 'post_type' => 'attachment') );
+		foreach ($attachments as $attachment) {
+			if (strpos($attachment->post_title, 'screenshot') === false) {
+				wp_delete_attachment($attachment->ID, true);
+			}
+		}
+
+		// Upload and update DB
+		if (isset($_POST['glbFileInput']) && $_POST['glbFileInput']) {
+			$glb_file_id = self::upload_asset_text(
+				null,
+				'glb_' . $asset_new_id . '_' . $asset_cat_id,
+				$asset_new_id,
+				$_FILES,
+				0,
+				$project_id
+			);
+			update_post_meta($asset_new_id, 'vrodos_asset3d_glb', $glb_file_id);
+		}
+	}
+
+	/**
+	 * Add images to the asset.
+	 */
+	public static function create_asset_add_images_frontend($asset_id, $file) {
+		$attachment_id = self::upload_img_vid_aud($file, $asset_id);
+		update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', $attachment_id);
+	}
+
+	/**
+	 * Add audio to the asset.
+	 */
+	public static function create_asset_add_audio_frontend($asset_new_id) {
+		if (isset($_FILES['audioFileInput']) && $_FILES['audioFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
+			$attachment_audio_id = self::upload_img_vid_aud($_FILES['audioFileInput'], $asset_new_id);
+			update_post_meta($asset_new_id, 'vrodos_asset3d_audio', $attachment_audio_id);
+		}
+	}
+
+	/**
+	 * Add video to the asset.
+	 */
+	public static function create_asset_add_video_frontend($asset_new_id) {
+		if (isset($_FILES['videoFileInput']) && $_FILES['videoFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
+			$attachment_video_id = self::upload_img_vid_aud($_FILES['videoFileInput'], $asset_new_id);
+			update_post_meta($asset_new_id, 'vrodos_asset3d_video', $attachment_video_id);
+		}
+	}
     public static function register_hooks() {
         // All hooks related to file uploads
         add_filter( 'upload_dir', array( __CLASS__, 'upload_dir_for_scenes_or_assets' ) );
