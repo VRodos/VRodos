@@ -1023,3 +1023,7 @@ button#compileGameBtn:disabled,
     color: #666666;
     opacity: 0.2;
 }
+
+body.admin-bar #vr_editor_main_div {
+    top: 32px;
+}

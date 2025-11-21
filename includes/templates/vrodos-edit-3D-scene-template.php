@@ -241,8 +241,8 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
 // Make the header of the page
-wp_head();
-//get_header();
+//wp_head();
+get_header();
 
 ?>
 
@@ -966,4 +966,5 @@ if ($sceneType) {
         echo '</script>';
     }
 }
+get_footer();
 ?>

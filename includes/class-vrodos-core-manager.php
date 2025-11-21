@@ -227,10 +227,6 @@ class VRodos_Core_Manager {
         <?php
     }
 
-    public function vrodos_remove_admin_login_header() {
-        remove_action('wp_head', '_admin_bar_bump_cb');
-    }
-
     public static function vrodos_getVideoAttachmentsFromMediaLibrary(){
 
         $query_images_args = array(
@@ -296,12 +292,6 @@ class VRodos_Core_Manager {
             return true;
         } else {
             return false;
-        }
-    }
-
-    public function vrodos_remove_admin_bar() {
-        if (!current_user_can('administrator') && !is_admin()) {
-            show_admin_bar(false);
         }
     }
 
