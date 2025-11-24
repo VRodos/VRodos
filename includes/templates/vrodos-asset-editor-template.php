@@ -20,11 +20,14 @@ extract($data);
         let no_img_path = '<?php echo esc_url($no_img_path_url); ?>';
         var asset_title = <?php echo json_encode($asset_title_value); ?>;
     </script>
-
-<?php
-get_header();
-?>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VRodos</title>
+    <?php wp_head(); ?>
+</head>
+<body>
 <?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
     <div class="DisplayBlock CenterContents">
@@ -631,7 +634,8 @@ get_header();
         };
 
     </script>
-
+<?php wp_footer(); ?>
+</body>
+</html>
 <?php }
-get_footer();
 ?>

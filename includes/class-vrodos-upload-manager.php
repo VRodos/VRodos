@@ -311,15 +311,15 @@ class VRodos_Upload_Manager {
 
                 // Only update metadata if the file was written successfully.
                 if ($file_return !== false) {
-                // Update metadata to reflect the change (important for cache busting and correct display).
-                wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
+                    // Update metadata to reflect the change (important for cache busting and correct display).
+                    wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
+
+                    // The in-place update was successful, so we can return.
+                    remove_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
+                    unset($_REQUEST['post_id']);
+                    return $existing_screenshot_id;
                 }
             }
-
-            // We don't need to do anything else, so we can return.
-            remove_filter('upload_dir', array(__CLASS__, 'upload_dir_for_scenes_or_assets'));
-            unset($_REQUEST['post_id']);
-            return $existing_screenshot_id;
         }
 
         // If no old screenshot exists, we create a new one.
