@@ -240,12 +240,16 @@ if(isset($_POST['submitted']) && isset($_POST['post_nonce_field']) && wp_verify_
 
 $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
 
-// Make the header of the page
-//wp_head();
-get_header();
 
 ?>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VRodos</title>
+    <?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
 <?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
     <!-- if user not logged in, then prompt to log in -->
@@ -966,5 +970,7 @@ if ($sceneType) {
         echo '</script>';
     }
 }
-get_footer();
 ?>
+<?php wp_footer(); ?>
+</body>
+</html>
