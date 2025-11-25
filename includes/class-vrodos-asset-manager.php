@@ -185,6 +185,10 @@ class VRodos_Asset_Manager {
 
         wp_localize_script('vrodos_scripts', 'vrodos_data', $localized_data);
 
+        // Inline script to map localized data to global vars for backward compatibility
+        $inline_script = "var pluginPath = vrodos_data.pluginPath; var uploadDir = vrodos_data.uploadDir; var urlforAssetEdit = vrodos_data.urlforAssetEdit; var isAdmin = vrodos_data.isAdmin; var projectSlug = vrodos_data.projectSlug; var projectId = vrodos_data.projectId; var vrodos_scene_data = vrodos_data.scene_data;";
+        wp_add_inline_script('vrodos_scripts', $inline_script, 'before');
+
         // Media
         if ($template_data['current_scene_id']) {
             wp_enqueue_media(array('post' => $template_data['current_scene_id']));

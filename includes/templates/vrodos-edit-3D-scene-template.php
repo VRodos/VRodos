@@ -338,15 +338,6 @@ extract($data);
         var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
         envir.is2d = true;
 
-        // Make the localised data available to scripts that expect global variables
-        var pluginPath = vrodos_data.pluginPath;
-        var uploadDir = vrodos_data.uploadDir;
-        var urlforAssetEdit = vrodos_data.urlforAssetEdit;
-        var isAdmin = vrodos_data.isAdmin;
-        var projectSlug = vrodos_data.projectSlug;
-        var projectId = vrodos_data.projectId;
-        var vrodos_scene_data = vrodos_data.scene_data;
-
         var transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
         transform_controls.name = 'myTransformControls';
 
