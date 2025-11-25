@@ -1,201 +1,330 @@
-# VRodos Plugin Refactoring: Handover Document
+# VRodos Plugin: Technical Architecture & Refactoring Guide
 
-This document provides a comprehensive summary of the refactoring work performed on the VRodos WordPress plugin and outlines the recommended next steps for continuing the project.
+This document provides a comprehensive overview of the VRodos WordPress plugin's current architecture and serves as a guide for future refactoring and development efforts.
+
+---
 
 ## 1. Project Overview
 
-**VRodos** is a powerful WordPress plugin that transforms a standard website into a 3D/VR content creation platform. It provides a 3D editor, built with **Three.js** and **A-Frame**, allowing users to create and manage 3D scenes and assets directly within the WordPress environment.
+**VRodos** is a WordPress plugin that transforms a standard website into a 3D/VR content creation platform. It provides a WebGL-based 3D editor, built with **Three.js r147** and **A-Frame**, allowing users to create and manage 3D scenes and assets directly within WordPress.
 
-### Core Functionality:
-- **3D Editor:** A WebGL-based editor for creating and manipulating 3D scenes.
-- **Asset Management:** Users can upload, view, and manage 3D assets (GLB, OBJ, etc.) and other media (images, videos, audio).
-- **Scene Creation:** Users can arrange assets within a scene, configure lighting and environments, and save the scene state.
-- **WordPress Integration:** The plugin is deeply integrated with WordPress, using custom post types for "Games" (projects), "Scenes," and "Assets." It also leverages WordPress for user authentication, data storage (including AJAX-based scene saving), and media management.
-- **A-Frame Export:** The ultimate goal is to export these scenes into a format that can be viewed in VR using the A-Frame framework.
+### Core Functionality
 
-### Initial Codebase Challenges:
-The project was identified as having a significant amount of technical debt, including:
-- **Spaghetti Code:** Highly intertwined and difficult-to-follow logic, especially in the integration between the frontend JavaScript and the backend PHP.
-- **Inconsistent Practices:** Use of outdated methods and manual file operations where standard, more robust WordPress APIs would be appropriate.
-- **Multiple Library Versions:** The project loads several different versions of the Three.js library (r87, r119, r124, r125, r141), which is a major source of complexity and potential conflicts.
-
-The primary goal of this refactoring effort is to address these issues in a careful, step-by-step manner to improve code quality, maintainability, and performance without breaking critical functionality.
+- **3D Scene Editor**: WebGL-based editor for creating and manipulating 3D scenes with real-time preview
+- **Asset Management**: Upload, view, and manage 3D models (GLB, OBJ, FBX), images, videos, and audio
+- **Scene Composition**: Arrange assets within scenes, configure lighting, environments, and save scene state
+- **WordPress Integration**: Custom post types (Games/Projects, Scenes, Assets), AJAX-based persistence, and media management
+- **A-Frame Export**: Export scenes to VR-ready A-Frame format
+- **Collaborative Editing**: Real-time multi-user editing via networked-aframe and WebRTC
 
 ---
 
-## 2. Completed Work: Task 1 - Refactor Asset Upload System
+## 2. Current Architecture
 
-The first phase of the refactoring focused on the asset upload and media handling system, which was identified as a key area of "spaghetti code." The result is a much cleaner, more secure, and more maintainable asset upload system that aligns with WordPress best practices.
+### Plugin Structure
 
----
+```
+VRodos/
+├── VRodos.php                 # Main plugin file - clean manager instantiation
+├── includes/                  # Manager classes (business logic)
+│   ├── class-vrodos-*.php    # 18 manager classes
+│   ├── ajax/                  # AJAX handler
+│   └── templates/             # PHP templates for editor UI
+├── js_libs/                   # JavaScript libraries and custom modules
+│   ├── threejs147/           # Three.js r147 (consolidated)
+│   ├── aframe_libs/          # A-Frame prototypes
+│   ├── vrodos_*.js           # Custom VRodos modules
+│   └── ajaxes/               # AJAX endpoint handlers
+├── css/                       # Stylesheets
+├── assets/                    # Static assets
+├── networked-aframe/         # Collaborative editing server
+└── images/                    # Plugin images
 
-## 3. Completed Work: Task 2 - Refactor Scene Data Handling
+```
 
-With the upload system stabilized, the second phase of the refactoring focused on the handling of the scene data itself, replacing the unstructured JSON blob for scene data with a formal PHP data model. The result is a more robust and maintainable scene data system.
+### Manager Class Architecture
 
----
+VRodos follows a clean **Manager Class Pattern** where each manager class encapsulates a specific domain of functionality. All managers are instantiated in [`VRodos.php`](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/VRodos.php), which serves as a simple bootstrap file.
 
-## 4. Completed Work: Task 3 - Modernize Three.js (Phase 1: Remove r87)
+#### Core Manager Classes
 
-This was the first and most critical phase of the Three.js consolidation effort, focused on removing the ancient `threejs87` library.
-
-### Summary of Changes:
-
-1.  **Replaced Deprecated Scene Exporter/Importer:**
-    - **Problem:** The `threejs87` library provided the core `THREE.SceneExporter`, which was used for saving scene data. This class was removed in modern Three.js versions, and a simple replacement with `scene.toJSON()` was not possible because the application relied on custom logic within the old exporter for data formatting.
-    - **Solution:** A new, self-contained module, `js_libs/vrodos_ScenePersistence.js`, was created. This file contains two new classes:
-        - `VrodosSceneExporter`: A modern implementation that replicates the custom serialization logic of the old exporter, ensuring the output JSON format is compatible with the application's backend.
-        - `VrodosSceneImporter`: A corresponding importer to correctly parse the scene JSON on load.
-    - This new module uses robust, modern methods (`JSON.stringify`) and is the new standard for scene persistence in the application.
-
-2.  **Fixed Multiple Critical Bugs:**
-    - **Problem:** The new exporter initially caused several bugs, including `Unexpected end of JSON input` errors.
-    - **Solution:** A series of fixes were implemented:
-        - **Object Creation:** The `addAssetToCanvas` function was updated to ensure that newly added 3D objects are created with all the necessary properties (e.g., `fnPath`, `category_name`) that the new exporter expects.
-        - **Metadata Serialization:** The exporter was made more robust to handle `undefined` or `false` values for scene-level settings (like `enableGeneralChat`), preventing the creation of malformed JSON.
-        - **Data Type Mismatches:** The entire data flow for scene settings was corrected. The PHP parser (`vrodos-edit-3D-scene-ParseJSON.php`) was updated to use `json_encode` to preserve data types, and incorrect `JSON.parse()` calls were removed from all JavaScript loaders (`vrodos_LoaderMulti.js`, `vrodos-edit-3D-scene-template.php`).
-        - **Property Name Inconsistencies:** A bug where the "background style" was not saving was traced to inconsistent property names (`backgroundStyleOption` vs. `bcg_selection`). This was resolved by standardizing the property names across the entire data flow (UI, exporter, and loaders).
-
-3.  **Migrated Controls and Removed Obsolete Library:**
-    - The editor controls (`OrbitControls`, `TransformControls`) were successfully migrated from the r87 version to the r141 version.
-    - All `wp_register_script` and `wp_enqueue_script` calls for the old `threejs87` library were removed.
-    - The entire `js_libs/threejs87` directory was deleted, completely removing the old library from the codebase.
-
-This phase was a major success. It not only removed a significant piece of technical debt but also fixed a cascade of related bugs, resulting in a much more stable and reliable scene persistence system.
-
----
-
-## 5. Completed Work: Task 4 - Consolidate Three.js (Phase 2: Remove r119)
-
-This phase continued the Three.js consolidation by successfully removing the `threejs119` library.
-
-### Summary of Changes:
-
-1.  **Identified and Migrated All Dependencies:**
-    - A codebase-wide search identified all files that enqueued `threejs119` scripts, including various loaders and post-processing effects.
-    - All dependencies were successfully migrated to their `r141` equivalents.
-
-2.  **Acquired and Integrated Missing Loaders:**
-    - The audit revealed that `FBXLoader.js`, `DDSLoader.js`, and `KTXLoader.js` were missing from the `threejs141` directory.
-    - The correct `r141` versions of these files were sourced from the official Three.js repository and added to the project, ensuring a complete and functional migration.
-
-3.  **Updated and Cleaned Up Script Registrations:**
-    - All `wp_register_script` and `wp_enqueue_script` calls were updated to point to the new `r141` script paths.
-    - The script handles were renamed from `vrodos_load119_` to `vrodos_load141_` for consistency.
-
-4.  **Removed Obsolete Library:**
-    - The `js_libs/threejs119` directory and all its contents were deleted from the codebase, further reducing technical debt.
-
-This second phase has moved the project significantly closer to its goal of using a single, modern version of Three.js.
+| Manager Class | Responsibility |
+|--------------|----------------|
+| **VRodos_Asset_Manager** | Script and style registration/enqueuing for all pages |
+| **VRodos_Post_Type_Manager** | Registration of custom post types (Game, Scene, Asset) and taxonomies |
+| **VRodos_Game_CPT_Manager** | Meta boxes, save hooks, and admin columns for Game CPT |
+| **VRodos_Scene_CPT_Manager** | Meta boxes, save hooks, and admin columns for Scene CPT |
+| **VRodos_Asset_CPT_Manager** | Meta boxes, save hooks, and admin columns for Asset CPT |
+| **VRodos_AJAX_Handler** | All AJAX endpoints (scene save, asset operations, etc.) |
+| **VRodos_Upload_Manager** | Asset upload handling following WordPress best practices |
+| **VRodos_Roles_Manager** | User roles, capabilities, and custom profile fields |
+| **VRodos_Menu_Manager** | Admin menu structure and custom menu item fields |
+| **VRodos_Install_Manager** | Plugin activation/deactivation and database setup |
+| **VRodos_Pages_Manager** | Creation of required WordPress pages (editor, asset list, etc.) |
+| **VRodos_Core_Manager** | Core utilities and helper functions |
+| **VRodos_Settings_Manager** | Plugin settings and configuration |
+| **VRodos_Shortcode_Manager** | WordPress shortcode handlers |
+| **VRodos_Widget_Manager** | WordPress widgets |
+| **VRodos_Default_Scene_Manager** | Default scene templates |
+| **VRodos_Default_Data_Manager** | Default data initialization |
+| **VRodos_Compiler_Manager** | Scene compilation and A-Frame export |
 
 ---
 
-## 6. Completed Work: Task 5 - Consolidate Three.js (Phase 3: Remove r124)
+## 3. Key Components
 
-This phase continued the Three.js consolidation by successfully removing the `threejs124` library.
+### Data Model
 
-### Summary of Changes:
+**Custom Post Types**:
+- `vrodos_game` (Projects)
+- `vrodos_scene` (3D Scenes)
+- `vrodos_asset3d` (3D Assets)
 
-1.  **Identified and Migrated All Dependencies:**
-    - A codebase-wide search identified all files that enqueued `threejs124` scripts, which were `stats.js` and `TrackballControls.js`.
-    - All dependencies were successfully migrated to their `r141` equivalents.
+**Scene Data Structure**: Scenes are stored as structured JSON in post meta. The [`vrodos-scene-model.php`](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/includes/vrodos-scene-model.php) provides a formal data model for scene serialization.
 
-2.  **Acquired and Integrated Missing Dependencies:**
-    - The audit revealed that `stats.js` was missing from the `threejs141` directory.
-    - The correct `r141` version of `stats.js` was sourced from the official Three.js repository and added to the project.
+**Scene Persistence**: Custom serialization handled by [`vrodos_ScenePersistence.js`](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/js_libs/vrodos_ScenePersistence.js) with `VrodosSceneExporter` and `VrodosSceneImporter` classes.
 
-3.  **Updated and Cleaned Up Script Registrations:**
-    - All `wp_register_script` and `wp_enqueue_script` calls were updated to point to the new `r141` script paths.
-    - The script handles were renamed from `vrodos_load124_` to `vrodos_load141_` for consistency.
+### 3D Editor Architecture
 
-4.  **Removed Obsolete Library:**
-    - The `js_libs/threejs124` directory and all its contents were deleted from the codebase, further reducing technical debt.
+**Core JavaScript Modules**:
+- **vrodos_LoaderMulti.js**: Asset loading system with support for GLB, OBJ, FBX
+- **vrodos_ScenePersistence.js**: Scene save/load serialization
+- **vrodos_AssetViewer_3D_kernel.js**: 3D viewer initialization and rendering
+- **vrodos_3d_editor_buttons_drags.js**: UI controls and drag-and-drop
+- **vrodos_rayCasters.js**: Mouse/pointer interactions with 3D objects
+- **vrodos_LightsPawn_Loader.js**: Lighting and camera management
+- **vrodos_addRemoveOne.js**: Adding/removing objects from scene
+- **vrodos_3d_editor_environmentals.js**: Environment settings (skybox, fog, etc.)
 
----
+**Three.js r147**: The plugin uses a fully consolidated version of Three.js r147, with all loaders, controls, and post-processing effects.
 
-## 7. Completed Work: Task 6 - Consolidate Three.js (Phase 4: Remove r125)
+**A-Frame Integration**: Scenes export to A-Frame format for VR viewing. Prototypes in [`js_libs/aframe_libs/`](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/js_libs/aframe_libs/).
 
-This phase continued the Three.js consolidation by successfully removing the `threejs125` library.
+### Upload System
 
-### Summary of Changes:
+The asset upload system ([`class-vrodos-upload-manager.php`](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/includes/class-vrodos-upload-manager.php)) follows WordPress best practices:
+- Uses WordPress media library APIs
+- Proper MIME type validation
+- Secure file handling
+- Integration with custom post types
 
-1.  **Conducted an Audit:**
-    - A codebase-wide search for `threejs125` confirmed that while the scripts were registered in `VRodos.php`, they were not actually being enqueued or used anywhere in the project.
+### AJAX System
 
-2.  **Cleaned Up Script Registrations:**
-    - All obsolete `wp_register_script` calls for the `threejs125` library were removed from `VRodos.php`, eliminating the unnecessary code.
-
-3.  **Removed Obsolete Library:**
-    - With the registrations removed, the `js_libs/threejs125` directory and all its contents were deleted from the codebase.
-
-This phase marks a significant milestone. All legacy, standalone Three.js libraries (`r87`, `r119`, `r124`, `r125`) have now been removed. The project now relies solely on the `threejs141` version.
-
----
-
-## 8. Completed Work: Task 8 - Major PHP Refactoring (The Great Manager Class Migration)
-
-This was a significant and highly successful refactoring effort that targeted the core of the plugin's "spaghetti code." The goal was to move away from procedural, hook-based code scattered across multiple files and adopt a modern, object-oriented structure. This was accomplished by creating a series of "Manager" classes, each responsible for a distinct piece of functionality.
-
-### Architectural Pattern:
-The established pattern involves:
-1.  Creating a dedicated class for a specific domain (e.g., `VRodos_AJAX_Handler`).
-2.  Moving all related functions from their various locations into this new class as public methods.
-3.  Registering all the necessary WordPress hooks (`add_action`, `add_filter`) within the class's `__construct()` method, pointing them to the class's own methods.
-4.  Replacing all the old procedural code in `VRodos.php` and other files with a single `require_once` for the new class file and its instantiation (`new VRodos_AJAX_Handler();`).
-
-### Summary of Changes (Phase 1):
-
-1.  **AJAX Logic Centralized:**
-    - All AJAX-related functions, previously scattered and with some in a deprecated `vrodos-ajax-hooks.php` file, were moved into the `VRodos_AJAX_Handler` class.
-    - This provides a single, clear location for all AJAX endpoints.
-
-2.  **Asset Management Centralized:**
-    - The large and complex `vrodos_register_scripts()` and `vrodos_register_styles()` functions were moved from `VRodos.php` into the new `VRodos_Asset_Manager` class.
-    - All script and style registration and enqueuing is now handled by this class, cleaning up the main plugin file significantly.
-
-3.  **Post Type and Taxonomy Registration Centralized:**
-    - All `register_post_type` and `register_taxonomy` calls, which were previously located in `includes/vrodos-types-*.php` files, were moved into the new `VRodos_Post_Type_Manager` class.
-    - This ensures that the core data models of the plugin are defined in a single, logical place.
-
-### Summary of Changes (Phase 2):
-This phase continued the "Manager Class Migration" by tackling several more key areas of procedural code.
-
-1.  **User Roles and Capabilities Centralized:**
-    - All logic from `vrodos-users-roles.php` was moved into a new `VRodos_Roles_Manager` class.
-    - This class now handles adding custom capabilities to roles and managing custom user profile fields.
-
-2.  **Menu Management Centralized:**
-    - All frontend and backend menu functions from `vrodos-menu-functions.php` were encapsulated within a new `VRodos_Menu_Manager` class.
-    - This class manages the main "VRodos" admin menu, submenu items, and custom fields for menu items.
-
-3.  **Asset CPT Behavior Centralized:**
-    - Logic for the `vrodos_asset3d` Custom Post Type, previously split across `vrodos-types-assets.php` and `vrodos-types-assets-data.php`, was consolidated into a new `VRodos_Asset_CPT_Manager` class.
-    - This follows the established pattern of having a dedicated manager for each CPT's behavior (meta boxes, save hooks, admin columns), separate from its registration.
-
-4.  **Installation and Uninstallation Logic Centralized:**
-    - All plugin lifecycle functions (database table creation, page creation on activation, and database cleanup on uninstall) were moved into a new `VRodos_Install_Manager` class.
-    - This provides a single, clear location for all setup and teardown logic.
-
-5.  **Code Cleanup:**
-    - In each case, the main `VRodos.php` file was cleaned up by removing the old procedural includes and hook registrations, which are now handled by the constructors of the new manager classes.
-    - All of the old, now-redundant procedural files were deleted from the codebase, significantly reducing clutter and the risk of confusion.
+All AJAX endpoints are centralized in [`class-vrodos-ajax-handler.php`](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/includes/ajax/class-vrodos-ajax-handler.php):
+- Scene saving (`savescene_ajax`)
+- Asset deletion (`deleteasset_ajax`)
+- Project operations (create, delete, collaborate)
+- Proper nonce verification
+- Capability checks
 
 ---
 
-## 9. Proposed Next Steps: Continue PHP Refactoring
+## 4. Technology Stack
 
-The "Great Manager Class Migration" has been highly effective. The proposed next step is to continue this process until all remaining procedural code in the `includes/` directory has been encapsulated into logical, single-responsibility classes.
-A methodical approach should be taken, analyzing each file (or group of related files) and creating a new, logically-named manager class for its functionality (e.g., `VRodos_Compiler_Manager`, `VRodos_Widget_Manager`, `VRodos_Upload_Manager`, etc.).
+- **Backend**: PHP 7+, WordPress 6+
+- **Database**: MySQL 5+
+- **Frontend**: Vanilla JavaScript (ES5/ES6)
+- **3D Rendering**: Three.js r147
+- **VR Framework**: A-Frame 1.4.2
+- **Collaborative Server**: Node.js with easyRTC
+- **WebRTC**: Metered TURN server for peer connections
+- **UI Components**: Material Design Components (MDC)
 
 ---
 
-## 10. Proposed Next Steps: Finalize Three.js Consolidation (r141 to r147)
+## 5. Refactoring History Summary
 
-With all legacy libraries removed, the final step is to consolidate the project onto a single, modern version of Three.js that aligns with its dependencies.
+The VRodos codebase has undergone significant refactoring to address technical debt:
 
-- **Problem:** The project currently uses `threejs141`, but the version of A-Frame in use (`1.4.2`) has a dependency on Three.js `r147`. To ensure maximum compatibility and stability, the project should be upgraded to `r147`.
-- **Proposed Plan:**
-    1.  **Upgrade the Library:** Replace the contents of the `js_libs/threejs141` directory with the `r147` versions of the core library and all its dependencies (controls, loaders, shaders, etc.).
-    2.  **Update Script Handles:** Rename all `vrodos_load141_` script handles in `VRodos.php` to `vrodos_load147_` for consistency.
-    3.  **Rename Directory:** Rename the `js_libs/threejs141` directory to `js_libs/threejs147`.
-    4.  **Test and Verify:** Thoroughly test the 3D editor to ensure that all functionality remains intact after the upgrade.
+### Completed Major Refactoring
+
+1. **Asset Upload System**: Migrated to WordPress APIs, eliminating manual file operations
+2. **Scene Data Handling**: Replaced unstructured JSON with formal PHP data model
+3. **Three.js Consolidation**: Removed legacy versions (r87, r119, r124, r125) and consolidated to r147
+4. **Scene Persistence**: Created custom `VrodosSceneExporter/Importer` to replace deprecated Three.js scene serialization
+5. **Manager Class Migration**: Transformed procedural hook-based code into 18 specialized manager classes
+6. **AJAX Centralization**: Moved all AJAX handlers into a single, organized class
+
+### Architectural Improvements
+
+- **Eliminated Spaghetti Code**: Moved from scattered procedural code to organized OOP structure
+- **Single Responsibility**: Each manager class has a clear, focused purpose
+- **WordPress Best Practices**: Proper use of hooks, filters, and WordPress APIs
+- **Cleaner Dependencies**: Removed multiple Three.js versions, reducing conflicts and complexity
+
+---
+
+## 6. Areas for Future Refactoring
+
+### Code Quality & Modernization
+
+1. **JavaScript Modernization**
+   - Current state: Mix of ES5 and ES6, some legacy patterns
+   - Opportunity: Refactor to modern ES6+ with modules
+   - Benefits: Better maintainability, clearer dependencies, easier testing
+
+2. **Template Separation**
+   - Current state: Some HTML embedded in PHP classes
+   - Opportunity: Extract all templates to `includes/templates/`
+   - Benefits: Cleaner separation of concerns, easier theme customization
+
+3. **CSS Organization**
+   - Current state: 20+ CSS files in `css/` directory
+   - Opportunity: Consolidate and organize using CSS modules or preprocessor
+   - Benefits: Reduced file count, better maintainability
+
+### Testing Infrastructure
+
+1. **Unit Tests**: No automated testing currently exists
+   - PHP: Implement PHPUnit tests for manager classes
+   - JavaScript: Add Jest or Mocha tests for core modules
+
+2. **Integration Tests**: Test WordPress integration points
+   - CPT registration and behavior
+   - AJAX endpoints
+   - Upload system
+
+3. **End-to-End Tests**: Test critical user workflows
+   - Scene creation and editing
+   - Asset upload and management
+   - Collaborative editing
+
+### Performance Optimization
+
+1. **Asset Loading**: Implement lazy loading for 3D models
+2. **Script Optimization**: Minify and bundle JavaScript modules
+3. **Database Queries**: Review and optimize custom queries in manager classes
+4. **Caching**: Implement caching for frequently accessed scene data
+
+### Documentation
+
+1. **Code Documentation**
+   - Add PHPDoc blocks to all manager classes
+   - Document JavaScript module APIs
+   - Create inline comments for complex logic
+
+2. **Developer Documentation**
+   - API reference for extending VRodos
+   - Theme integration guide
+   - Custom post type extension guide
+
+3. **User Documentation**
+   - Scene editor tutorial
+   - Asset management guide
+   - Collaborative editing setup
+
+### Security Hardening
+
+1. **Input Validation**: Review all user input handling
+2. **Capability Checks**: Ensure all actions check user capabilities
+3. **Nonce Verification**: Verify all AJAX endpoints use nonces correctly
+4. **SQL Injection Prevention**: Use prepared statements consistently
+
+---
+
+## 7. Development Workflow
+
+### Local Development Setup
+
+1. Install WordPress locally (XAMPP, Local, or Docker)
+2. Clone VRodos to `wp-content/plugins/`
+3. Run `npm install` in plugin root
+4. Set up networked-aframe server (see README.md)
+5. Configure permalinks and create required pages
+
+### Making Changes
+
+1. **PHP Changes**: Edit manager classes in `includes/`
+2. **JavaScript Changes**: Edit modules in `js_libs/`
+3. **Styles**: Edit CSS files in `css/`
+4. **Templates**: Edit templates in `includes/templates/`
+
+### Testing Changes
+
+1. Test in WordPress admin and frontend
+2. Test 3D editor functionality
+3. Test asset upload and management
+4. Test collaborative editing (if applicable)
+5. Check browser console for errors
+
+---
+
+## 8. Key Patterns & Conventions
+
+### Manager Class Pattern
+
+```php
+class VRodos_Example_Manager {
+    public function __construct() {
+        // Register hooks in constructor
+        add_action('init', array($this, 'init'));
+        add_filter('some_filter', array($this, 'filter_callback'));
+    }
+    
+    public function init() {
+        // Implementation
+    }
+    
+    public function filter_callback($value) {
+        // Implementation
+        return $value;
+    }
+}
+```
+
+### JavaScript Module Pattern
+
+Most JavaScript modules follow a revealing module pattern or simple object-literal pattern. Consider migrating to ES6 modules for better organization.
+
+### Scene Data Flow
+
+1. **User edits scene** → UI updates Three.js scene
+2. **Save triggered** → `VrodosSceneExporter` serializes scene to JSON
+3. **AJAX call** → JSON sent to `savescene_ajax` endpoint
+4. **Server saves** → JSON stored in post meta
+5. **Load scene** → JSON retrieved, `VrodosSceneImporter` reconstructs Three.js scene
+
+---
+
+## 9. Common Issues & Solutions
+
+### Editor Not Loading
+
+- Check that all scripts are enqueued correctly in `VRodos_Asset_Manager`
+- Verify Three.js r147 files exist in `js_libs/threejs147/`
+- Check browser console for JavaScript errors
+
+### Assets Not Uploading
+
+- Verify upload directory permissions
+- Check PHP upload limits in `.htaccess`
+- Review `VRodos_Upload_Manager` for errors
+
+### Collaborative Editing Not Working
+
+- Ensure networked-aframe server is running
+- Verify `keys.json` is configured correctly
+- Check CORS headers in `.htaccess`
+
+### Scene Not Saving
+
+- Check AJAX endpoint in browser network tab
+- Verify user has correct capabilities
+- Review `VRodos_AJAX_Handler::savescene_ajax()` for errors
+
+---
+
+## 10. Resources
+
+- **Main Demo**: https://vrodos.iti.gr
+- **Three.js Documentation**: https://threejs.org/docs/
+- **A-Frame Documentation**: https://aframe.io/docs/
+- **WordPress Plugin Handbook**: https://developer.wordpress.org/plugins/
+
+---
+
+## Summary
+
+VRodos has been successfully refactored from a challenging "spaghetti code" codebase into a well-organized, maintainable plugin following WordPress and OOP best practices. The manager class architecture provides a solid foundation for future development. Focus areas for continued improvement include JavaScript modernization, testing infrastructure, and comprehensive documentation.
+
+The codebase is now in a much healthier state and ready for the next phase of development and feature enhancement.

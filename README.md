@@ -1,142 +1,171 @@
-VRodos
+# VRodos
 
-A plugin for WordPress to transform your website into a multipurpose 3D media management tool
+A WordPress plugin that transforms your website into a comprehensive 3D/VR content creation and management platform.
 
-- 3D assets repository
-- 3D assets visualizer for WordPress pages, e.g. commercial pages with 3D content
-- Database and API point of 3D media for your mobile applications
-- Digital Signage management tool capable for visualizing 3D media
-- VR applications authoring tool with a 3D scene editor
+## Features
 
-Features
+VRodos provides a complete ecosystem for 3D content management:
 
-- Formats support:  GLB.
-- Support sound
+- **3D Asset Repository**: Organize and manage 3D models, textures, audio, and video files
+- **WebGL-Based 3D Editor**: Built with Three.js r147 and A-Frame for creating immersive 3D scenes
+- **Asset Visualizer**: Display 3D content on WordPress pages for commercial or educational purposes
+- **API for Mobile Apps**: Use WordPress as a backend database for your mobile 3D applications
+- **VR Scene Authoring**: Create VR experiences with the integrated scene editor
+- **Collaborative Editing**: Real-time multi-user scene editing via WebRTC
+- **Digital Signage**: Manage and display 3D media for digital signage applications
 
-Interface Pages
+### Supported Formats
+- **3D Models**: GLB, OBJ, FBX
+- **Media**: Audio, Video, Images
+- **HDR Environments**: RGBE format for realistic lighting
 
-- Asset List
-- Project Manager
-- Scene 3D Editor
-- Asset Editor
+## Architecture
 
+VRodos follows a modern, object-oriented architecture:
 
-### Do you have a demo?
+- **Manager Class Pattern**: 18 specialized manager classes handle different aspects of the plugin
+- **WordPress Integration**: Leverages custom post types (Games/Projects, Scenes, Assets) and WordPress APIs
+- **Three.js r147**: Modern WebGL rendering with comprehensive loader support
+- **A-Frame Integration**: VR-ready scene export capabilities
+- **Scene Persistence**: Custom serialization system for saving complex 3D scene states
 
-* https://vrodos.iti.gr
+## Prerequisites
 
-* (Use Chrome or Firefox)
+- **Apache 2**
+- **MySQL 5+**
+- **WordPress 6+**
+- **PHP 7+**
+- **Node.js 16+**
 
+## Installation
 
-### Installation instructions ###
+### WordPress Plugin Installation
 
-**Prerequisites:**
-* Apache 2,
-* MySQL 5,
-* WordPress 6,
-* Php 7,
-* Node.js 16
+1. Download the plugin as a ZIP file
+2. Rename `VRodos-master.zip` to `VRodos.zip`
+3. Rename the folder inside the ZIP from `VRodos-master` to `VRodos`
+4. Install via WordPress dashboard: **Plugins → Add New → Upload Plugin**
+5. Activate the plugin
 
+### Install Dependencies
 
-**Instructions for installation in WordPress**
+In the plugin root directory (`wp-content/plugins/VRodos`):
 
-- Download as zip
-- Rename VRodos-master.zip to VRodos.zip
-- Also rename the folder VRodos-master inside the zip file to VRodos.
+```bash
+npm install
+```
 
-- Install VRodos.zip from WordPress dashboard with "ADD from file" button in install new plugins.
+### WordPress Configuration
 
-- Download mdc and other node modules
+1. **Set Permalinks**: Go to **Settings → Permalinks** and select **Day and name** (2nd option)
+2. **Add Pages to Menu**: Add the following pages to your WordPress menu:
+   - Assets List Page
+   - Project Manager Page
 
-  -- In root folder `VRodos` run `npm install`.
+## Networked-Aframe Server Setup
 
-- Set permalinks to Day / Name (2nd option)
-- Add to menu
-  -- Assets List Page
-  -- Project Manager page
+VRodos includes collaborative editing functionality via a Node.js server.
 
-  
+### 1. Install Server Dependencies
 
-### Servers install and run
+Navigate to the networked-aframe server directory:
 
-Two types of servers are needed:
+```bash
+cd networked-aframe/server
+npm install --force
+```
 
-- Apache server, e.g. on windows locally using Xampp / Wamp etc.
-    - Server is used for the content of the scenes.
-    - Server contains also mysql server which is needed for WordPress to work (and somewhere to save the data).
-- Node.js server for Networked-Aframe. To start Node.js server
-    1) Go to networked-aframe/server and type:
-       > npm install --force
+*Note: `--force` is required due to some legacy package dependencies*
 
-        - Force is needed because some packages are obsolete
+### 2. Configure WebRTC TURN Server
 
-    2) A WebRTC TURN server is used for the collaborative functionality of VROdos. Create a free account for OpenRelay, and save server keys in a json file. 
-        - Go to: https://dashboard.metered.ca/signup?tool=turnserver
-        - Create a free account.
-        - On your dashboard create an App.
-        - Add Credential, then on the created entry click on Instructions.
-        - Create a `keys.json` file inside folder `networked-aframe/server` and add all objects from array into the json file like this:
+Create a free account on [Metered TURN Server](https://dashboard.metered.ca/signup?tool=turnserver):
 
-       ```
+1. Sign up and create an App in your dashboard
+2. Add a credential and click **Instructions**
+3. Create a `keys.json` file in `networked-aframe/server/` with the following format:
+
+```json
+{
+    "iceServers": [
         {
-            "iceServers": [
-            {
-                "urls": "stun:stun.relay.metered.ca:80"
-            },
-            {
-                "urls": "turn:a.relay.metered.ca:80",
-                "username": "*********",
-                "credential": "******"
-            },
-            {
-                "urls": "turn:a.relay.metered.ca:80?transport=tcp",
-                "username": "******",
-                "credential": "******"
-            },
-            ...
-            ]
+            "urls": "stun:stun.relay.metered.ca:80"
+        },
+        {
+            "urls": "turn:a.relay.metered.ca:80",
+            "username": "your_username",
+            "credential": "your_credential"
+        },
+        {
+            "urls": "turn:a.relay.metered.ca:80?transport=tcp",
+            "username": "your_username",
+            "credential": "your_credential"
         }
-        ```
+    ]
+}
+```
 
-    3) Run server using a port number you want, or leave it blank for default port (5832):
-       > node .\easyrtc-server.js port_number
-        
-       Examples:
-       
-       `node .\easyrtc-server.js`
-       
-        Runs in default port 5832.
-    
-       `node .\easyrtc-server.js 5840`
-       
-        Runs in port passed as argument 5840
-    
-    Now after building a scene in the 3D editor, the collaborative functionality between users is enabled. 
-        
+### 3. Start the Server
 
-### Troubleshooting
+Run the server with a custom port or use the default (5832):
 
-* Wordpress API is not working :  Settings -> Permalinks -> Post name (as Structure)
+```bash
+node ./easyrtc-server.js
+```
 
+Or specify a custom port:
 
-* CORS
-  You need wordpress at port 80 (apache2 standard) to allow to give content to aframe at node.js server at port 5832, or whichever port you have used when running easyRTC service.
+```bash
+node ./easyrtc-server.js 5840
+```
 
-####Add this to .htaccess
+Once the server is running, the collaborative editing feature will be enabled in the 3D scene editor.
 
-`<IfModule mod_headers.c>`
+## Troubleshooting
 
-	Header set Access-Control-Allow-Origin "*"
+### WordPress API Not Working
 
-`</IfModule>`
+**Issue**: REST API endpoints not accessible
 
-#### Big 3D models
+**Solution**: Go to **Settings → Permalinks** and select **Post name** structure
 
-  Add these to .htaccess to allow big files to be uploaded to wordpress
+### CORS Issues
 
-    - php_value upload_max_filesize 512M
-    - php_value post_max_size 512M
-    - php_value memory_limit 1024M
-    - php_value max_execution_time 1800
-    - php_value max_input_time 1800
-    - php_value max_input_vars 4000
+**Issue**: Content from WordPress (port 80) not accessible by the networked-aframe server (port 5832)
+
+**Solution**: Add the following to your `.htaccess` file in the WordPress root:
+
+```apache
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+```
+
+### Large 3D Model Upload Limits
+
+**Issue**: Cannot upload large 3D model files
+
+**Solution**: Add the following to your `.htaccess` file:
+
+```apache
+php_value upload_max_filesize 512M
+php_value post_max_size 512M
+php_value memory_limit 1024M
+php_value max_execution_time 1800
+php_value max_input_time 1800
+php_value max_input_vars 4000
+```
+
+## Demo
+
+Visit [https://vrodos.iti.gr](https://vrodos.iti.gr) (Use Chrome or Firefox)
+
+## Credits
+
+**Authors**: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
+
+**Website**: [https://vrodos.iti.gr](https://vrodos.iti.gr)
+
+## License
+
+See `LICENSE` file for details.
