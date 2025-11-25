@@ -249,7 +249,7 @@ $goBackTo_AllProjects_link = esc_url( get_permalink($allProjectsPage[0]->ID));
     <title>VRodos</title>
     <?php wp_head(); ?>
 </head>
-<body>
+<body <?php body_class(); ?>>
 <?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
     <!-- if user not logged in, then prompt to log in -->

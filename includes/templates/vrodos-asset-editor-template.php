@@ -27,7 +27,7 @@ extract($data);
     <title>VRodos</title>
     <?php wp_head(); ?>
 </head>
-<body>
+<body <?php body_class(); ?>>
 <?php if ( !is_user_logged_in() || !current_user_can('administrator') ) { ?>
 
     <div class="DisplayBlock CenterContents">
