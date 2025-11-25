@@ -186,8 +186,8 @@ class VRodos_Asset_Manager {
         wp_localize_script('vrodos_scripts', 'vrodos_data', $localized_data);
 
         // Media
-        if ($scene_id) {
-            wp_enqueue_media(array('post' => $scene_id));
+        if ($template_data['current_scene_id']) {
+            wp_enqueue_media(array('post' => $template_data['current_scene_id']));
         }
     }
 
