@@ -308,7 +308,7 @@ class vrodos_3d_editor_environmentals {
         // var pathn = window.location.pathname.replace(/[^/]*$/, '');
         // pathn = pathn.split('/').slice(0,-2).join('/');
 
-        loader.load(pluginPath + '/js_libs/threejs141/fonts/helvetiker_bold.typeface.json', this.loadtexts);
+        loader.load(pluginPath + '/js_libs/threejs147/fonts/helvetiker_bold.typeface.json', this.loadtexts);
     }
 
     loadtexts(font) {
@@ -378,3 +378,4 @@ class vrodos_3d_editor_environmentals {
         //this.orbitControls.object.updateProjectionMatrix();
     }
 }
+

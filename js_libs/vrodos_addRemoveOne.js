@@ -47,7 +47,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         //// Add Sun Helper
         let sunSphere = new THREE.Mesh(
-            new THREE.SphereBufferGeometry(1, 16, 8),
+            new THREE.SphereGeometry(1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
         sunSphere.isSelectableMesh = true;
@@ -66,7 +66,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         let lightTargetSpot = new THREE.Object3D();
 
         lightTargetSpot.add(new THREE.Mesh(
-            new THREE.SphereBufferGeometry(0.5, 16, 8),
+            new THREE.SphereGeometry(0.5, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffaa00 })
         ));
 
@@ -175,7 +175,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         let hexcol = "0xffff00";
         //// Add Lamp Helper
         let lampSphere = new THREE.Mesh(
-            new THREE.SphereBufferGeometry(0.5, 16, 8),
+            new THREE.SphereGeometry(0.5, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
         lampSphere.isSelectableMesh = true;
@@ -257,7 +257,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         let lightTargetSpot = new THREE.Object3D();
 
         lightTargetSpot.add(new THREE.Mesh(
-            new THREE.SphereBufferGeometry(0.5, 16, 8),
+            new THREE.SphereGeometry(0.5, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffaa00 })
         ));
 
@@ -266,7 +266,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         //// Add Lamp Helper
         let lampSphere = new THREE.Mesh(
-            new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
+            new THREE.SphereGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffff00 })
         );
         lampSphere.rotation.set(Math.PI / 2, 0, 0);
@@ -365,7 +365,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         //// Add Lamp Helper
         let lampSphere = new THREE.Mesh(
-            new THREE.SphereBufferGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
+            new THREE.SphereGeometry(1, 16, 8), //new THREE.ConeBufferGeometry(0.5, 1, 16, 8),
             new THREE.MeshBasicMaterial({ color: 0xffffff })
         );
         lampSphere.rotation.set(Math.PI / 2, 0, 0);

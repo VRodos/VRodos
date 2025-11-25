@@ -255,7 +255,7 @@ class VRodos_LightsPawn_Loader {
 
                     //// Add Sun Helper
                     var sunSphere = new THREE.Mesh(
-                        new THREE.SphereBufferGeometry(1, 16, 8),
+                        new THREE.SphereGeometry(1, 16, 8),
                         new THREE.MeshBasicMaterial({ color: colora })
                     );
                     sunSphere.isSelectableMesh = true;
@@ -283,7 +283,7 @@ class VRodos_LightsPawn_Loader {
                     var lightTargetSpot = new THREE.Object3D();
 
                     lightTargetSpot.add(new THREE.Mesh(
-                        new THREE.SphereBufferGeometry(0.5, 16, 8),
+                        new THREE.SphereGeometry(0.5, 16, 8),
                         new THREE.MeshBasicMaterial({ color: colora })
                     ));
 
@@ -375,7 +375,7 @@ class VRodos_LightsPawn_Loader {
 
                     // Add Lamp Sphere
                     var lampSphere = new THREE.Mesh(
-                        new THREE.SphereBufferGeometry(0.5, 16, 8),
+                        new THREE.SphereGeometry(0.5, 16, 8),
                         new THREE.MeshBasicMaterial({ color: colora })
                     );
                     lampSphere.isSelectableMesh = false;
@@ -470,7 +470,7 @@ class VRodos_LightsPawn_Loader {
 
                     //// Add Spot Sphere
                     var spotSphere = new THREE.Mesh(
-                        new THREE.SphereBufferGeometry(1, 16, 8),
+                        new THREE.SphereGeometry(1, 16, 8),
                         new THREE.MeshBasicMaterial({ color: colora })
                     );
                     spotSphere.isSelectableMesh = true;
@@ -481,7 +481,7 @@ class VRodos_LightsPawn_Loader {
                     var lightTargetSpot = new THREE.Object3D();
 
                     lightTargetSpot.add(new THREE.Mesh(
-                        new THREE.SphereBufferGeometry(0.5, 16, 8),
+                        new THREE.SphereGeometry(0.5, 16, 8),
                         new THREE.MeshBasicMaterial({ color: colora })
                     ));
 
@@ -577,7 +577,7 @@ class VRodos_LightsPawn_Loader {
 
                     //// Add Sun Helper
                     var ambientSphere = new THREE.Mesh(
-                        new THREE.SphereBufferGeometry(1, 16, 8),
+                        new THREE.SphereGeometry(1, 16, 8),
                         new THREE.MeshBasicMaterial({ color: colora })
                     );
                     ambientSphere.isSelectableMesh = true;

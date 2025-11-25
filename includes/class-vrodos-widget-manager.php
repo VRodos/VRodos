@@ -38,19 +38,19 @@ class VRodos_Widget_Manager {
         wp_enqueue_style('vrodos_widgets_stylesheet');
 
         // Core Three.js and loaders
-        wp_enqueue_script('vrodos_load141_threejs');
-        wp_enqueue_script('vrodos_load141_statjs');
-        wp_enqueue_script('vrodos_load141_OBJLoader');
-        wp_enqueue_script('vrodos_load141_MTLLoader');
-        wp_enqueue_script('vrodos_load141_FBXloader');
-        wp_enqueue_script('vrodos_load141_GLTFLoader');
-        wp_enqueue_script('vrodos_load141_DRACOLoader');
-        wp_enqueue_script('vrodos_load141_DDSLoader');
-        wp_enqueue_script('vrodos_load141_KTXLoader');
+        wp_enqueue_script('vrodos_load147_threejs');
+        wp_enqueue_script('vrodos_load147_statjs');
+        wp_enqueue_script('vrodos_load147_OBJLoader');
+        wp_enqueue_script('vrodos_load147_MTLLoader');
+        wp_enqueue_script('vrodos_load147_FBXloader');
+        wp_enqueue_script('vrodos_load147_GLTFLoader');
+        wp_enqueue_script('vrodos_load147_DRACOLoader');
+        wp_enqueue_script('vrodos_load147_DDSLoader');
+        wp_enqueue_script('vrodos_load147_KTXLoader');
 
         // Controls
-        wp_enqueue_script('vrodos_load141_TrackballControls');
-        wp_enqueue_script('vrodos_load141_OrbitControls');
+        wp_enqueue_script('vrodos_load147_TrackballControls');
+        wp_enqueue_script('vrodos_load147_OrbitControls');
 
         // Supporting scripts
         wp_enqueue_script('vrodos_inflate'); // For binary FBX
@@ -78,16 +78,16 @@ class VRodos_Widget_Manager {
         // Scripts for the scene widget
         wp_enqueue_script('vrodos_load_datgui');
         wp_enqueue_script('jquery-ui-draggable');
-        wp_enqueue_script('vrodos_load141_CSS2DRenderer');
-        wp_enqueue_script('vrodos_load141_CopyShader');
-        wp_enqueue_script('vrodos_load141_FXAAShader');
-        wp_enqueue_script('vrodos_load141_EffectComposer');
-        wp_enqueue_script('vrodos_load141_RenderPass');
-        wp_enqueue_script('vrodos_load141_OutlinePass');
-        wp_enqueue_script('vrodos_load141_ShaderPass');
-        wp_enqueue_script('vrodos_load141_RGBELoader');
-        wp_enqueue_script('vrodos_load141_TransformControls');
-        wp_enqueue_script('vrodos_load141_PointerLockControls');
+        wp_enqueue_script('vrodos_load147_CSS2DRenderer');
+        wp_enqueue_script('vrodos_load147_CopyShader');
+        wp_enqueue_script('vrodos_load147_FXAAShader');
+        wp_enqueue_script('vrodos_load147_EffectComposer');
+        wp_enqueue_script('vrodos_load147_RenderPass');
+        wp_enqueue_script('vrodos_load147_OutlinePass');
+        wp_enqueue_script('vrodos_load147_ShaderPass');
+        wp_enqueue_script('vrodos_load147_RGBELoader');
+        wp_enqueue_script('vrodos_load147_TransformControls');
+        wp_enqueue_script('vrodos_load147_PointerLockControls');
         wp_enqueue_script('vrodos_ScenePersistence');
         wp_enqueue_script('vrodos_jscolorpick');
         wp_enqueue_script('vrodos_3d_editor_environmentals');
@@ -1223,3 +1223,4 @@ class vrodos_3d_widget_scene extends WP_Widget {
         return $instance;
     }
 }
+
