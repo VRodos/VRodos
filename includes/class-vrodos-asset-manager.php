@@ -15,7 +15,6 @@ class VRodos_Asset_Manager {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scene_editor_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_project_manager_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets_list_scripts'));
-        add_action('wp_enqueue_scripts', array($this, 'localize_edit_scene_scripts'), 11);
     }
 
     public function enqueue_assets_list_scripts() {
@@ -76,10 +75,18 @@ class VRodos_Asset_Manager {
 
     public function enqueue_scene_editor_scripts() {
         $edit_scene_page = VRodos_Core_Manager::vrodos_getEditpage('scene');
-        if (!$edit_scene_page || !is_page($edit_scene_page[0]->ID)) {
+        if (!$edit_scene_page || ! is_page($edit_scene_page[0]->ID)) {
             return;
         }
 
+        // Styles
+        wp_enqueue_style('vrodos_frontend_stylesheet');
+        wp_enqueue_style('vrodos_material_stylesheet');
+        wp_enqueue_style('vrodos_datgui');
+        wp_enqueue_style('vrodos_3D_editor');
+        wp_enqueue_style('vrodos_3D_editor_browser');
+
+        // Scripts from original enqueue_scene_editor_scripts
         wp_enqueue_script('jquery-ui-draggable');
         wp_enqueue_script('vrodos_scripts');
         wp_enqueue_script('vrodos_load141_threejs');
@@ -102,12 +109,8 @@ class VRodos_Asset_Manager {
         wp_enqueue_script('vrodos_load141_PointerLockControls');
         wp_enqueue_script('vrodos_ScenePersistence');
         wp_enqueue_script('vrodos_jscolorpick');
-        wp_enqueue_style('vrodos_datgui');
-        wp_enqueue_style('vrodos_3D_editor');
-        wp_enqueue_style('vrodos_3D_editor_browser');
         wp_enqueue_script('vrodos_html2canvas');
         wp_enqueue_script('vrodos_3d_editor_environmentals');
-        wp_enqueue_script('vrodos_jscolorpick');
         wp_enqueue_script('vrodos_keyButtons');
         wp_enqueue_script('vrodos_rayCasters');
         wp_enqueue_script('vrodos_auxControlers');
@@ -120,16 +123,76 @@ class VRodos_Asset_Manager {
         wp_enqueue_script('vrodos_vr_editor_analytics');
         wp_enqueue_script('vrodos_fetch_asset_scenes_request');
         wp_enqueue_script('vrodos_compile_dialogue');
-    }
 
-    public function localize_edit_scene_scripts() {
-        $edit_scene_page = VRodos_Core_Manager::vrodos_getEditpage('scene');
-        if (!$edit_scene_page || !is_page($edit_scene_page[0]->ID)) {
-            return;
-        }
-
+        // Prepare all data for localization
+        $template_data = VRodos_Scene_CPT_Manager::prepare_scene_editor_data();
         $scene_data = VRodos_Scene_CPT_Manager::get_scene_dat_for_script();
-        wp_localize_script('vrodos_scripts', 'vrodos_scene_data', $scene_data);
+
+        // Scripts & Localization from template
+        wp_enqueue_script('ajax-script_compile');
+        wp_localize_script('ajax-script_compile', 'my_ajax_object_compile',
+            array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'projectId' => $template_data['project_id'],
+                'slug' => $template_data['projectSlug'],
+                'sceneId' => $template_data['current_scene_id']
+            )
+        );
+
+        wp_enqueue_script('ajax-script_deletescene');
+        wp_localize_script('ajax-script_deletescene', 'my_ajax_object_deletescene',
+            array('ajax_url' => admin_url('admin-ajax.php'))
+        );
+
+        wp_enqueue_script('ajax-script_filebrowse');
+        wp_localize_script('ajax-script_filebrowse', 'my_ajax_object_fbrowse', array('ajax_url' => admin_url('admin-ajax.php')));
+
+        wp_enqueue_script('ajax-script_savescene');
+        wp_localize_script('ajax-script_savescene', 'my_ajax_object_savescene',
+            array('ajax_url' => admin_url('admin-ajax.php'), 'scene_id' => $template_data['current_scene_id'])
+        );
+
+        wp_enqueue_script('ajax-script_uploadimage');
+        wp_localize_script('ajax-script_uploadimage', 'my_ajax_object_uploadimage',
+            array('ajax_url' => admin_url('admin-ajax.php'), 'scene_id' => $template_data['current_scene_id'])
+        );
+
+        wp_enqueue_script('ajax-script_deleteasset');
+        wp_localize_script('ajax-script_deleteasset', 'my_ajax_object_deleteasset',
+            array('ajax_url' => admin_url('admin-ajax.php'))
+        );
+
+        wp_enqueue_script('ajax-script_fetchasset');
+        wp_localize_script('ajax-script_fetchasset', 'my_ajax_object_fetchasset',
+            array('ajax_url' => admin_url('admin-ajax.php'))
+        );
+
+        $localized_data = array(
+            'scene_data' => $scene_data,
+            'pluginPath' => $template_data['pluginpath'],
+            'uploadDir' => $template_data['upload_url'],
+            'projectId' => $template_data['project_id'],
+            'projectSlug' => $template_data['projectSlug'],
+            'isAdmin' => $template_data['isAdmin'],
+            'isUserAdmin' => $template_data['is_user_admin'],
+            'urlforAssetEdit' => $template_data['urlforAssetEdit'],
+            'scene_id' => $template_data['current_scene_id'],
+            'game_type' => strtolower($template_data['project_type']),
+            'user_email' => $template_data['user_email'],
+            'current_user_id' => $template_data['current_user_id'],
+            'siteurl' => site_url(),
+        );
+
+        wp_localize_script('vrodos_scripts', 'vrodos_data', $localized_data);
+
+        // Inline script to map localized data to global vars for backward compatibility
+        $inline_script = "var pluginPath = vrodos_data.pluginPath; var uploadDir = vrodos_data.uploadDir; var urlforAssetEdit = vrodos_data.urlforAssetEdit; var isAdmin = vrodos_data.isAdmin; var projectSlug = vrodos_data.projectSlug; var projectId = vrodos_data.projectId; var vrodos_scene_data = vrodos_data.scene_data;";
+        wp_add_inline_script('vrodos_scripts', $inline_script, 'before');
+
+        // Media
+        if ($template_data['current_scene_id']) {
+            wp_enqueue_media(array('post' => $template_data['current_scene_id']));
+        }
     }
 
     public function enqueue_asset_editor_scripts() {
@@ -188,8 +251,13 @@ class VRodos_Asset_Manager {
             array('vrodos_vr_editor_analytics', $plugin_url_js . 'vrodos_3d_editor_analytics.js'),
 
             // AJAX Scripts
-            array('vrodos_request_compile', $plugin_url_js . 'ajaxes/vrodos_request_compile.js'),
-            array('vrodos_savescene_request', $plugin_url_js . 'ajaxes/vrodos_save_scene_ajax.js'),
+            array('ajax-script_compile', $plugin_url_js . 'ajaxes/vrodos_request_compile.js', array('jquery')),
+            array('ajax-script_deletescene', $plugin_url_js . 'ajaxes/delete_scene.js', array('jquery')),
+            array('ajax-script_filebrowse', $plugin_url_js . 'vrodos_assetBrowserToolbar.js', array('jquery')),
+            array('ajax-script_savescene', $plugin_url_js . 'ajaxes/vrodos_save_scene_ajax.js', array('jquery')),
+            array('ajax-script_uploadimage', $plugin_url_js . 'ajaxes/uploadimage.js', array('jquery')),
+            array('ajax-script_fetchasset', $plugin_url_js . 'ajaxes/fetch_asset.js', array('jquery')),
+
             array('ajax-script_delete_game', $plugin_url_js . 'ajaxes/delete_game_scene_asset.js', array('jquery')),
             array('ajax-script_deleteasset', $plugin_url_js . 'ajaxes/delete_asset.js', array('jquery')),
             array('ajax-script_collaborate_project', $plugin_url_js . 'ajaxes/collaborate_project.js', array('jquery')),
