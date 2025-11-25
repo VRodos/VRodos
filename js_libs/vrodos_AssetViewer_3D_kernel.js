@@ -578,7 +578,7 @@ class VRodos_AssetViewer_3D_kernel {
         let glbLoader = new THREE.GLTFLoader( manager );
 
         const dracoLoader = new THREE.DRACOLoader();
-        dracoLoader.setDecoderPath( '/wp-content/plugins/vrodos/js_libs/threejs141/draco/' );
+        dracoLoader.setDecoderPath( '/wp-content/plugins/vrodos/js_libs/threejs147/draco/' );
         glbLoader.setDRACOLoader( dracoLoader );
 
 
@@ -1051,6 +1051,7 @@ class VRodos_AssetViewer_3D_kernel {
         console.log('Progress: ' + text);
     }
 }
+
 
 
 
