@@ -116,6 +116,7 @@ global $parameter_Scenepass;
             <?php wp_nonce_field('post_nonce', 'post_nonce_field'); ?>
 
             <input type="hidden" name="submitted" id="submitted" value="true" />
+            <input type="hidden" name="project_id" value="<?php echo esc_attr($project_id); ?>">
 
             <div class="mdc-card mdc-theme--secondary-light-bg">
 

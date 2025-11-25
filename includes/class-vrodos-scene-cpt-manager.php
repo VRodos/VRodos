@@ -5,6 +5,8 @@ class VRodos_Scene_CPT_Manager {
     private $vrodos_scenes_metas_definition;
 
     public function __construct() {
+        add_action('init', array($this, 'handle_new_scene_submission'));
+
         $this->vrodos_scenes_metas_definition = array(
             'id' => 'vrodos-scenes-databox',
             'page' => 'vrodos_scene',
@@ -355,5 +357,168 @@ class VRodos_Scene_CPT_Manager {
         $sceneJSON = $scene_model->to_json();
 
         return self::parse_scene_json_and_prepare_script_data($sceneJSON, $upload_url);
+    }
+
+
+    public static function prepare_scene_editor_data() {
+        $data = [];
+
+        // Permalink structure
+        $perma_structure = (bool)get_option('permalink_structure');
+        $data['parameter_pass'] = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
+        $data['parameter_Scenepass'] = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+        $data['parameter_assetpass'] = $perma_structure ? '?vrodos_asset=' : '&vrodos_asset=';
+
+        // Scene & Project IDs
+        $data['current_scene_id'] = isset($_GET['vrodos_scene']) ? sanitize_text_field(intval($_GET['vrodos_scene'])) : null;
+        $data['project_id'] = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
+
+        // From VRodos_Game_CPT_Manager::prepare_compile_dialogue_data()
+        $compile_data = VRodos_Game_CPT_Manager::prepare_compile_dialogue_data();
+        if (!empty($compile_data)) {
+            $data = array_merge($data, $compile_data);
+        } else {
+            // Ensure project_id is consistent even if compile data fails
+            $data['project_id'] = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
+            $data['projectSlug'] = '';
+            $data['project_type'] = '';
+            $data['project_type_slug'] = '';
+            $data['single_lowercase'] = 'project';
+        }
+
+        // Project Post (used in breadcrumb)
+        $data['project_post'] = $data['project_id'] ? get_post($data['project_id']) : null;
+
+        // Legacy Archaeology data
+        $data['doorsAllInfo'] = null;
+        if (isset($data['project_type']) && $data['project_type'] === 'Archaeology' && function_exists('vrodos_get_all_doors_of_project_fastversion')) {
+            $data['doorsAllInfo'] = vrodos_get_all_doors_of_project_fastversion($data['project_id']);
+        }
+
+        // Scene Post
+        $data['scene_post'] = $data['current_scene_id'] ? get_post($data['current_scene_id']) : null;
+        $data['sceneTitle'] = $data['scene_post'] ? $data['scene_post']->post_name : '';
+
+        // Environment
+        $data['isAdmin'] = is_admin() ? 'back' : 'front';
+
+        // Page URLs
+        $allProjectsPage_res = VRodos_Core_Manager::vrodos_getEditpage('game');
+        $data['allProjectsPage'] = $allProjectsPage_res ? $allProjectsPage_res : null;
+
+        $newAssetPage_res = VRodos_Core_Manager::vrodos_getEditpage('asset');
+        $data['newAssetPage'] = $newAssetPage_res ? $newAssetPage_res : null;
+
+        $editscenePage_res = VRodos_Core_Manager::vrodos_getEditpage('scene');
+        $data['editscenePage'] = $editscenePage_res ? $editscenePage_res : null;
+
+        // Media
+        $data['videos'] = VRodos_Core_Manager::vrodos_getVideoAttachmentsFromMediaLibrary();
+
+        // Asset Edit URL
+        $data['urlforAssetEdit'] = '';
+        if ($data['newAssetPage'] && isset($data['newAssetPage'][0]->ID) && $data['project_id'] && $data['current_scene_id']) {
+            $data['urlforAssetEdit'] = esc_url(get_permalink($data['newAssetPage'][0]->ID) . $data['parameter_pass'] . $data['project_id'] .
+                '&vrodos_scene=' . $data['current_scene_id'] . '&vrodos_asset=');
+        }
+
+        // User Data
+        $current_user = wp_get_current_user();
+        $data['user_email'] = '';
+        if ($current_user->exists()) {
+            $user_data = get_userdata(get_current_user_id());
+            $data['user_email'] = $user_data->user_email;
+        }
+        $data['current_user_id'] = get_current_user_id();
+        $data['is_user_admin'] = current_user_can('administrator');
+
+        // Parent Project Term ID
+        $allScenePGame = isset($data['projectSlug']) && !empty($data['projectSlug']) ? get_term_by('slug', $data['projectSlug'], 'vrodos_scene_pgame') : null;
+        $data['parent_project_id_as_term_id'] = $allScenePGame ? $allScenePGame->term_id : null;
+
+        // Project Type Icon (used in breadcrumb)
+        $project_type_obj = $data['project_id'] ? VRodos_Core_Manager::vrodos_return_project_type($data['project_id']) : null;
+        $data['project_type_icon'] = $project_type_obj ? $project_type_obj->icon : '';
+
+        // Back link for breadcrumb
+        $data['goBackTo_AllProjects_link'] = ($data['allProjectsPage'] && isset($data['allProjectsPage'][0]->ID)) ? esc_url( get_permalink($data['allProjectsPage'][0]->ID)) : '';
+
+        // Text for buttons based on project type
+        if(isset($data['project_type']) && $data['project_type'] === 'Archaeology') {
+            $data['single_first'] = "Tour";
+        } else {
+            $data['single_first'] = "Project";
+        }
+
+        // Paths and URLs
+        $data['pluginpath'] = str_replace('\\','/', dirname(plugin_dir_url( __DIR__  )) );
+        $data['upload_dir'] = str_replace('\\','/',wp_upload_dir()['basedir']);
+        $data['upload_url'] = wp_upload_dir()['baseurl'];
+
+        return $data;
+    }
+
+    public function handle_new_scene_submission() {
+        if (!isset($_POST['submitted']) || !isset($_POST['post_nonce_field']) || !wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
+            return;
+        }
+
+        $project_id = isset($_POST['project_id']) ? intval($_POST['project_id']) : 0;
+        if (!$project_id) {
+            return;
+        }
+
+        $sceneMetaType = 'scene'; // default 'scene' MetaType (3js)
+        $thegameType_terms = wp_get_post_terms($project_id, 'vrodos_game_type');
+
+        if (is_wp_error($thegameType_terms) || empty($thegameType_terms)) {
+            wp_die('Error: Project type not found.');
+            return;
+        }
+
+        $thegameType = $thegameType_terms[0];
+        $project_type = VRodos_Core_Manager::vrodos_return_project_type($project_id)->string;
+        $default_json = VRodos_Core_Manager::vrodos_getDefaultJSONscene(strtolower($project_type));
+
+        $newscene_yaml_tax = get_term_by('slug', 'wonderaround-yaml', 'vrodos_scene_yaml');
+
+        $project_post = get_post($project_id);
+        $project_slug = $project_post->post_name;
+        $parent_project_term = get_term_by('slug', $project_slug, 'vrodos_scene_pgame');
+
+        $scene_taxonomies = array(
+            'vrodos_scene_pgame' => array($parent_project_term->term_id),
+            'vrodos_scene_yaml' => array($newscene_yaml_tax->term_id)
+        );
+
+        $scene_metas = array(
+            'vrodos_scene_default' => 0,
+            'vrodos_scene_caption' => esc_attr(strip_tags($_POST['scene-caption'] ?? '')),
+            'vrodos_scene_metatype' => $sceneMetaType
+        );
+
+        $scene_information = array(
+            'post_title' => esc_attr(strip_tags($_POST['scene-title'])),
+            'post_content' => $default_json,
+            'post_type' => 'vrodos_scene',
+            'post_status' => 'publish',
+            'tax_input' => $scene_taxonomies,
+            'meta_input' => $scene_metas,
+        );
+
+        $scene_id = wp_insert_post($scene_information);
+
+        if ($scene_id) {
+            $editscenePage_res = VRodos_Core_Manager::vrodos_getEditpage('scene');
+            $edit_scene_page_id = $editscenePage_res[0]->ID;
+
+            $perma_structure = (bool)get_option('permalink_structure');
+            $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+
+            $loadMainSceneLink = get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $sceneMetaType;
+
+            wp_redirect($loadMainSceneLink);
+            exit;
+        }
     }
 }
