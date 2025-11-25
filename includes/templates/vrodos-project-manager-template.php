@@ -49,9 +49,15 @@ $full_title = "Projects";
 $full_title_lowercase = "projects";
 $single = "project";
 $multiple = "projects";
-
-get_header();
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VRodos Project Manager</title>
+    <?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
 
 <span class="mdc-typography--display1 mdc-theme--text-primary-on-background" style="display:inline-table;margin-left:10px;margin-top:20px"><?php echo $full_title; ?> Manager</span>
 
@@ -299,4 +305,6 @@ $login_username = $current_user->user_login;
 </div>
 
 
-<?php get_footer();?>
+<?php wp_footer();?>
+</body>
+</html>

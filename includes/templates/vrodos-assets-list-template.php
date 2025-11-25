@@ -8,9 +8,15 @@
 // Prepare data for the template.
 $data = VRodos_Pages_Manager::prepare_assets_list_page_data();
 extract($data);
-
-get_header();
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VRodos Assets List</title>
+    <?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
 
 <?php if ( !$is_user_logged_in || !current_user_can('administrator') ) { ?>
 
@@ -154,4 +160,6 @@ get_header();
     });
 </script>
 
-<?php get_footer(); ?>
+<?php wp_footer(); ?>
+</body>
+</html>
