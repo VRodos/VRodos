@@ -18,21 +18,21 @@ class VRodos_Menu_Manager {
 	 */
 	public function __construct() {
 		// Frontend Menu Hooks
-		add_filter( 'wp_nav_menu_items', array( $this, 'vrodos_loginout_menu_link' ), 5, 2 );
-		add_action( 'wp_nav_menu_item_custom_fields', array( $this, 'vrodos_add_scene_id_to_scene_as_menu_item' ), 100, 2 );
-		add_action( 'wp_update_nav_menu_item', array( $this, 'save_menu_item_desc' ), 10, 2 );
-		add_filter( 'wp_get_nav_menu_items', array( $this, 'nav_items' ), 11, 3 );
-        add_action( 'init', array( $this, 'wpb_custom_new_menu' ) );
+		add_filter( 'wp_nav_menu_items', [$this, 'vrodos_loginout_menu_link'], 5, 2 );
+		add_action( 'wp_nav_menu_item_custom_fields', [$this, 'vrodos_add_scene_id_to_scene_as_menu_item'], 100, 2 );
+		add_action( 'wp_update_nav_menu_item', [$this, 'save_menu_item_desc'], 10, 2 );
+		add_filter( 'wp_get_nav_menu_items', [$this, 'nav_items'], 11, 3 );
+        add_action( 'init', [$this, 'wpb_custom_new_menu'] );
 
 		// Backend Menu Hooks
-		add_action( 'admin_menu', array( $this, 'vrodos_plugin_menu' ) );
-		add_filter( 'parent_file', array( $this, 'vrodos_correct_admin_menu_highlight' ) );
+		add_action( 'admin_menu', [$this, 'vrodos_plugin_menu'] );
+		add_filter( 'parent_file', [$this, 'vrodos_correct_admin_menu_highlight'] );
 	}
 
 	/**
 	 * Display Login/Logout in menu.
 	 */
-	public function vrodos_loginout_menu_link( $menu, $args ) {
+	public function vrodos_loginout_menu_link( $menu, $args ): string {
 		$menu .= '<li class="nav-menu" class="menu-item">' . wp_loginout( $_SERVER['REQUEST_URI'], false ) . '</li>';
 		return $menu;
 	}
@@ -40,7 +40,7 @@ class VRodos_Menu_Manager {
 	/**
 	 * Add Scene-3d-view with parameters to nav menu.
 	 */
-	public function vrodos_add_scene_id_to_scene_as_menu_item( $item_id ) {
+	public function vrodos_add_scene_id_to_scene_as_menu_item( $item_id ): void {
 		$scene_id = get_post_meta( $item_id, '_scene_id', true );
 		?>
 		<div style="clear: both;">
@@ -65,7 +65,7 @@ class VRodos_Menu_Manager {
 	/**
 	 * Save the custom scene ID field for a menu item.
 	 */
-	public function save_menu_item_desc( $menu_id, $menu_item_db_id ) {
+	public function save_menu_item_desc( $menu_id, $menu_item_db_id ): void {
 		if ( isset( $_POST['scene_id'][ $menu_item_db_id ] ) ) {
 			$sanitized_data = sanitize_text_field( $_POST['scene_id'][ $menu_item_db_id ] );
 			update_post_meta( $menu_item_db_id, '_scene_id', $sanitized_data );
@@ -77,7 +77,7 @@ class VRodos_Menu_Manager {
 	/**
 	 * Append the scene ID to the URL of the menu item.
 	 */
-	public function nav_items( $items, $menu, $args ) {
+	public function nav_items( $items, $menu, $args ): array {
 		if ( is_admin() ) {
 			return $items;
 		}
@@ -94,20 +94,20 @@ class VRodos_Menu_Manager {
     /**
 	 * Register a custom 3D menu location.
 	 */
-    public function wpb_custom_new_menu() {
+    public function wpb_custom_new_menu(): void {
         register_nav_menu('3d-menu',__( '3D Menu' ));
     }
 
 	/**
 	 * Create the main VRodos admin menu and submenus.
 	 */
-	public function vrodos_plugin_menu() {
+	public function vrodos_plugin_menu(): void {
 		add_menu_page(
 			'VRodos Plugin Page',
 			'VRodos',
 			'manage_options',
 			'vrodos-plugin',
-			array( 'VRodos_Core_Manager', 'vrodos_plugin_main_page' ),
+			['VRodos_Core_Manager', 'vrodos_plugin_main_page'],
 			plugin_dir_url( __FILE__ ) . '../images/vrodos_icon_20_w.png',
 			25
 		);
@@ -126,7 +126,7 @@ class VRodos_Menu_Manager {
 	/**
 	 * Correct the admin menu highlighting for VRodos custom post types.
 	 */
-	public function vrodos_correct_admin_menu_highlight( $parent_file ) {
+	public function vrodos_correct_admin_menu_highlight( $parent_file ): string {
 		global $pagenow, $current_screen, $submenu_file;
 
 		$vrodos_post_types = [ 'vrodos_game', 'vrodos_scene', 'vrodos_asset3d' ];

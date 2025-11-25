@@ -18,8 +18,8 @@ class VRodos_Install_Manager {
 	 * Registers the activation and uninstall hooks.
 	 */
 	public function __construct() {
-		register_activation_hook( VRODOS_PLUGIN_FILE, array( $this, 'activate' ) );
-		register_uninstall_hook( VRODOS_PLUGIN_FILE, array( __CLASS__, 'uninstall' ) );
+		register_activation_hook( VRODOS_PLUGIN_FILE, [$this, 'activate'] );
+		register_uninstall_hook( VRODOS_PLUGIN_FILE, [__CLASS__, 'uninstall'] );
 	}
 
 	/**
@@ -27,7 +27,7 @@ class VRodos_Install_Manager {
 	 *
 	 * Creates database tables and necessary pages.
 	 */
-	public function activate() {
+	public function activate(): void {
 		$this->vrodos_db_create_games_versions_table();
 		VRodos_Pages_Manager::vrodos_create_pages();
 		VRodos_Pages_Manager::vrodos_fx_admin_notice_activation_hook();
@@ -38,7 +38,7 @@ class VRodos_Install_Manager {
 	 *
 	 * Removes all plugin data from the database.
 	 */
-	public static function uninstall() {
+	public static function uninstall(): void {
 		global $wpdb;
 		$del_prefix = $wpdb->prefix;
 
@@ -49,13 +49,13 @@ class VRodos_Install_Manager {
 		delete_option( 'vrodos_db_version' );
 
 		// 2. Postmeta
-		$wpdb->query( "DELETE FROM {$del_prefix}postmeta WHERE meta_value LIKE '%vrodos%'" );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$del_prefix}postmeta WHERE meta_value LIKE %s", '%vrodos%' ) );
 
 		// 3. Posts
-		$wpdb->query( "DELETE FROM {$del_prefix}posts WHERE post_name LIKE '%vrodos%' OR post_name LIKE '%joker%'" );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$del_prefix}posts WHERE post_name LIKE %s OR post_name LIKE %s", '%vrodos%', '%joker%' ) );
 
 		// 4. Termmeta
-		$wpdb->query( "DELETE FROM {$del_prefix}termmeta WHERE meta_key LIKE '%vrodos%'" );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$del_prefix}termmeta WHERE meta_key LIKE %s", '%vrodos%' ) );
 
 		// 5. Terms
 		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%-yaml%'" );
@@ -77,7 +77,7 @@ class VRodos_Install_Manager {
 	/**
 	 * Create the table for games versions.
 	 */
-	public function vrodos_db_create_games_versions_table() {
+	public function vrodos_db_create_games_versions_table(): void {
 		global $wpdb;
 		$vrodos_db_version = '1.0';
 		$table_name        = $wpdb->prefix . '_games_versions';

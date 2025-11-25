@@ -3,20 +3,20 @@
 class VRodos_Post_Type_Manager {
 
     public function __construct() {
-        add_action('init', array($this, 'vrodos_project_cpt_construct'), 1);
-        add_action('init', array($this, 'vrodos_project_taxtype_create'), 2);
-        add_action('init', array($this, 'vrodos_projects_taxtypes_define'), 3);
-        add_action('init', array($this, 'vrodos_scenes_construct'));
-        add_action('init', array($this, 'vrodos_scenes_parent_project_tax_define'));
-        add_action('init', array($this, 'vrodos_scenes_taxyaml'));
-        add_action('init', array($this, 'vrodos_assets_construct'));
-        add_action('init', array($this, 'vrodos_assets_taxcategory'));
-        add_action('init', array($this, 'vrodos_assets_taxpgame'));
-        add_action('init', array($this, 'vrodos_assets_taxcategory_ipr'));
+        add_action('init', [$this, 'vrodos_project_cpt_construct'], 1);
+        add_action('init', [$this, 'vrodos_project_taxtype_create'], 2);
+        add_action('init', [$this, 'vrodos_projects_taxtypes_define'], 3);
+        add_action('init', [$this, 'vrodos_scenes_construct']);
+        add_action('init', [$this, 'vrodos_scenes_parent_project_tax_define']);
+        add_action('init', [$this, 'vrodos_scenes_taxyaml']);
+        add_action('init', [$this, 'vrodos_assets_construct']);
+        add_action('init', [$this, 'vrodos_assets_taxcategory']);
+        add_action('init', [$this, 'vrodos_assets_taxpgame']);
+        add_action('init', [$this, 'vrodos_assets_taxcategory_ipr']);
     }
 
     // Create custom post type 'vrodos_game'
-    public function vrodos_project_cpt_construct(){
+    public function vrodos_project_cpt_construct(): void {
 
         $labels = array(
             'name'               => _x( 'Projects', 'post type general name'),
@@ -72,7 +72,7 @@ class VRodos_Post_Type_Manager {
 
 
     // Create Project Type as custom taxonomy 'vrodos_game_type'
-    public function vrodos_project_taxtype_create(){
+    public function vrodos_project_taxtype_create(): void {
 
         $labels = array(
             'name'              => _x( 'Project Type', 'taxonomy general name'),
@@ -106,14 +106,14 @@ class VRodos_Post_Type_Manager {
         register_taxonomy('vrodos_game_type', 'vrodos_game', $args);
     }
 
-    public function vrodos_projects_taxtypes_define(){
+    public function vrodos_projects_taxtypes_define(): void {
         wp_insert_term('archaeology','vrodos_game_type',       array('description'=> 'Default Projects', 'slug' => 'archaeology_games'));
         wp_insert_term('vrexpo',     'vrodos_game_type',       array('description'=> 'Exhibition Projects', 'slug' => 'vrexpo_games'));
         wp_insert_term('virtualproduction','vrodos_game_type', array('description'=> 'Virtual Production Projects', 'slug' => 'virtualproduction_games'));
     }
 
     // Create Scene - Scene as custom type 'vrodos_scene'
-    public function vrodos_scenes_construct() {
+    public function vrodos_scenes_construct(): void {
 
         $labels = array(
             'name' => _x('Scenes', 'post type general name'),
@@ -165,7 +165,7 @@ class VRodos_Post_Type_Manager {
     }
 
     // Create Scene Taxonomy, namely the game that the scene belongs
-    public function vrodos_scenes_parent_project_tax_define() {
+    public function vrodos_scenes_parent_project_tax_define(): void {
         $labels = array(
             'name' => _x('Scene Parent Taxonomy', 'taxonomy general name'),
             'singular_name' => _x('Parent Taxonomy', 'taxonomy singular name'),
@@ -200,7 +200,7 @@ class VRodos_Post_Type_Manager {
     }
 
     // Create Scene YAML Template - YAML Template that the Scene belongs as custom taxonomy 'vrodos_scene_yaml'
-    public function vrodos_scenes_taxyaml() {
+    public function vrodos_scenes_taxyaml(): void {
         $labels = array(
             'name' => _x('Scene Type', 'taxonomy general name'),
             'singular_name' => _x('Scene Type', 'taxonomy singular name'),
@@ -234,7 +234,7 @@ class VRodos_Post_Type_Manager {
 
 
     // Create Asset3D as custom type 'vrodos_asset3d'
-    public function vrodos_assets_construct(){
+    public function vrodos_assets_construct(): void {
 
         $labels = array(
             'name' => _x('Assets 3D', 'post type general name'),
@@ -287,7 +287,7 @@ class VRodos_Post_Type_Manager {
     }
 
     // Create custom taxonomy "Asset Type"
-    public function vrodos_assets_taxcategory(){
+    public function vrodos_assets_taxcategory(): void {
 
         $labels = array(
             'name' => _x('Asset Type', 'taxonomy general name'),
@@ -321,7 +321,7 @@ class VRodos_Post_Type_Manager {
     }
 
     // Create Asset Project as custom taxonomy
-    public function vrodos_assets_taxpgame(){
+    public function vrodos_assets_taxpgame(): void {
 
         $labels = array(
             'name' => _x('Asset Parent Taxonomy', 'taxonomy general name'),
@@ -355,7 +355,7 @@ class VRodos_Post_Type_Manager {
     }
 
     // Create Asset Category as custom taxonomy
-    public function vrodos_assets_taxcategory_ipr(){
+    public function vrodos_assets_taxcategory_ipr(): void {
         $labels = array(
             'name' => _x('Asset IPR', 'taxonomy general name'),
             'singular_name' => _x('Asset IPR', 'taxonomy singular name'),

@@ -7,10 +7,10 @@ if (!defined('ABSPATH')) {
 class VRodos_Default_Data_Manager {
 
     public function __construct() {
-        add_action('init', array($this, 'create_asset_categories'));
+        add_action('init', [$this, 'create_asset_categories']);
     }
 
-    public function create_asset_categories() {
+    public function create_asset_categories(): void {
         $categories = [
             'decoration' => [
                 'name' => 'Decoration',
@@ -55,10 +55,10 @@ class VRodos_Default_Data_Manager {
                 $inserted_cat = wp_insert_term(
                     $cat['name'],
                     'vrodos_asset3d_cat',
-                    array(
+                    [
                         'description'=> $cat['description'],
                         'slug' => $cat['slug'],
-                    )
+                    ]
                 );
 
                 if (!is_wp_error($inserted_cat)) {

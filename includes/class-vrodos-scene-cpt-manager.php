@@ -2,58 +2,58 @@
 
 class VRodos_Scene_CPT_Manager {
 
-    private $vrodos_scenes_metas_definition;
+    private array $vrodos_scenes_metas_definition;
 
     public function __construct() {
-        add_action('init', array($this, 'handle_new_scene_submission'));
+        add_action('init', [$this, 'handle_new_scene_submission']);
 
-        $this->vrodos_scenes_metas_definition = array(
+        $this->vrodos_scenes_metas_definition = [
             'id' => 'vrodos-scenes-databox',
             'page' => 'vrodos_scene',
             'context' => 'normal',
             'priority' => 'high',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'name' => 'Scene caption',
                     'desc' => 'Scene caption',
                     'id' => 'vrodos_scene_caption',
                     'type' => 'textarea',
                     'std' => ''
-                )
-            )
-        );
+                ]
+            ]
+        ];
 
-        add_action('add_meta_boxes', array($this, 'scenes_taxgame_box'));
-        add_action('save_post', array($this, 'scenes_taxgame_box_content_save'));
-        add_action('save_post', array($this, 'scenes_taxyaml_box_content_save'));
-        add_filter('manage_vrodos_scene_posts_columns', array($this, 'set_custom_vrodos_scene_columns'));
-        add_action('manage_vrodos_scene_posts_custom_column', array($this, 'set_custom_vrodos_scene_columns_fill'), 10, 2);
-        add_action('add_meta_boxes', array($this, 'scenes_meta_definitions_add'));
-        add_action('save_post', array($this, 'scenes_metas_save'));
-        add_filter('wp_revisions_to_keep', array($this, 'ns_limit_revisions'), 10, 2);
+        add_action('add_meta_boxes', [$this, 'scenes_taxgame_box']);
+        add_action('save_post', [$this, 'scenes_taxgame_box_content_save']);
+        add_action('save_post', [$this, 'scenes_taxyaml_box_content_save']);
+        add_filter('manage_vrodos_scene_posts_columns', [$this, 'set_custom_vrodos_scene_columns']);
+        add_action('manage_vrodos_scene_posts_custom_column', [$this, 'set_custom_vrodos_scene_columns_fill'], 10, 2);
+        add_action('add_meta_boxes', [$this, 'scenes_meta_definitions_add']);
+        add_action('save_post', [$this, 'scenes_metas_save']);
+        add_filter('wp_revisions_to_keep', [$this, 'ns_limit_revisions'], 10, 2);
     }
 
-    public function ns_limit_revisions($num, $post){
+    public function ns_limit_revisions($num, $post): int {
 
         $N = 50; // Keep only the latest N revisions
-        $target_types = array('vrodos_scene');
+        $target_types = ['vrodos_scene'];
         $is_target_type = in_array($post->post_type, $target_types);
         return $is_target_type ? $N : $num;
     }
 
     // Create Scene's Game Box @ scene's backend
-    public function scenes_taxgame_box() {
+    public function scenes_taxgame_box(): void {
         // Removes default side metaboxes
         remove_meta_box('vrodos_scene_pgamediv', 'vrodos_scene', 'side');
         remove_meta_box('vrodos_scene_yamldiv', 'vrodos_scene', 'side');
 
         // Adds a Project selection custom metabox
-        add_meta_box('tagsdiv-vrodos_scene_pgame', 'Parent Project', array($this, 'scenes_taxgame_box_content'), 'vrodos_scene', 'side', 'high');
+        add_meta_box('tagsdiv-vrodos_scene_pgame', 'Parent Project', [$this, 'scenes_taxgame_box_content'], 'vrodos_scene', 'side', 'high');
         // Adds a YAML selection custom metabox
-        add_meta_box('tagsdiv-vrodos_scene_yamldiv', 'Scene YAML', array($this, 'scenes_taxyaml_box_content'), 'vrodos_scene', 'side', 'high');
+        add_meta_box('tagsdiv-vrodos_scene_yamldiv', 'Scene YAML', [$this, 'scenes_taxyaml_box_content'], 'vrodos_scene', 'side', 'high');
     }
 
-    public function scenes_taxgame_box_content($post) {
+    public function scenes_taxgame_box_content($post): void {
         $tax_name = 'vrodos_scene_pgame';
         ?>
         <div class="tagsdiv" id="<?php echo $tax_name; ?>">
@@ -61,9 +61,9 @@ class VRodos_Scene_CPT_Manager {
             <?php
             // Use nonce for verification
             wp_nonce_field(plugin_basename(__FILE__), 'vrodos_scene_pgame_noncename');
-            $type_ids = wp_get_object_terms($post->ID, 'vrodos_scene_pgame', array('fields' => 'ids'));
+            $type_ids = wp_get_object_terms($post->ID, 'vrodos_scene_pgame', ['fields' => 'ids']);
             $selected_type = empty($type_ids) ? '' : $type_ids[0];
-            $args = array(
+            $args = [
                 'show_option_none' => 'Select Project',
                 'orderby' => 'name',
                 'hide_empty' => 0,
@@ -73,7 +73,7 @@ class VRodos_Scene_CPT_Manager {
                 'echo' => 0,
                 'option_none_value' => '-1',
                 'id' => 'vrodos-select-pgame-dropdown'
-            );
+            ];
             $select = wp_dropdown_categories($args);
             $replace = "<select$1 required>";
             $select = preg_replace('#<select([^>]*)>#', $replace, $select);
@@ -86,7 +86,7 @@ class VRodos_Scene_CPT_Manager {
         <?php
     }
 
-    public function scenes_taxyaml_box_content($post) {
+    public function scenes_taxyaml_box_content($post): void {
         $tax_name = 'vrodos_scene_yaml';
         ?>
         <div class="tagsdiv" id="<?php echo $tax_name; ?>">
@@ -94,9 +94,9 @@ class VRodos_Scene_CPT_Manager {
             <?php
             // Use nonce for verification
             wp_nonce_field(plugin_basename(__FILE__), 'vrodos_scene_yaml_noncename');
-            $type_ids = wp_get_object_terms($post->ID, 'vrodos_scene_yaml', array('fields' => 'ids'));
+            $type_ids = wp_get_object_terms($post->ID, 'vrodos_scene_yaml', ['fields' => 'ids']);
             $selected_type = empty($type_ids) ? '' : $type_ids[0];
-            $args = array(
+            $args = [
                 'show_option_none' => 'Select YAML',
                 'orderby' => 'name',
                 'hide_empty' => 0,
@@ -106,7 +106,7 @@ class VRodos_Scene_CPT_Manager {
                 'echo' => 0,
                 'option_none_value' => '-1',
                 'id' => 'vrodos-select-yaml-dropdown'
-            );
+            ];
             $select = wp_dropdown_categories($args);
             $replace = "<select$1 required>";
             $select = preg_replace('#<select([^>]*)>#', $replace, $select);
@@ -119,7 +119,7 @@ class VRodos_Scene_CPT_Manager {
         <?php
     }
 
-    public function scenes_taxgame_box_content_save($post_id) {
+    public function scenes_taxgame_box_content_save($post_id): void {
         if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id))
             return;
 
@@ -142,7 +142,7 @@ class VRodos_Scene_CPT_Manager {
         wp_set_object_terms($post_id, $type, 'vrodos_scene_pgame');
     }
 
-    public function scenes_taxyaml_box_content_save($post_id) {
+    public function scenes_taxyaml_box_content_save($post_id): void {
         if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id))
             return;
 
@@ -165,12 +165,12 @@ class VRodos_Scene_CPT_Manager {
         wp_set_object_terms($post_id, $type, 'vrodos_scene_yaml');
     }
 
-    public function set_custom_vrodos_scene_columns($columns) {
+    public function set_custom_vrodos_scene_columns($columns): array {
         $columns['scene_slug'] = 'Scene Slug';
         return $columns;
     }
 
-    public function set_custom_vrodos_scene_columns_fill($column, $post_id) {
+    public function set_custom_vrodos_scene_columns_fill($column, $post_id): void {
         switch ($column) {
             case 'scene_slug' :
                 $mypost = get_post($post_id);
@@ -183,16 +183,16 @@ class VRodos_Scene_CPT_Manager {
         }
     }
 
-    public function scenes_meta_definitions_add() {
+    public function scenes_meta_definitions_add(): void {
         add_meta_box($this->vrodos_scenes_metas_definition['id'],
             'Scene Data',
-            array($this, 'scenes_metas_adminside_show'),
+            [$this, 'scenes_metas_adminside_show'],
             $this->vrodos_scenes_metas_definition['page'],
             $this->vrodos_scenes_metas_definition['context'],
             $this->vrodos_scenes_metas_definition['priority']);
     }
 
-    public function scenes_metas_adminside_show() {
+    public function scenes_metas_adminside_show(): void {
         global $post;
         echo '<input type="hidden" name="vrodos_scenes_databox_nonce" value="', wp_create_nonce(basename(__FILE__)), '" />';
         echo '<table class="form-table" id="vrodos-custom-fields-table">';
@@ -255,10 +255,11 @@ class VRodos_Scene_CPT_Manager {
                 delete_post_meta($post_id, $field['id'], $old);
             }
         }
+        return $post_id;
     }
 
-    public static function parse_scene_json_and_prepare_script_data($scene_json, $relative_path) {
-        $scene_data = array();
+    public static function parse_scene_json_and_prepare_script_data($scene_json, $relative_path): array {
+        $scene_data = [];
         $scene_json = htmlspecialchars_decode($scene_json);
         $content_json = json_decode($scene_json);
 
@@ -287,7 +288,7 @@ class VRodos_Scene_CPT_Manager {
         }
 
         // Objects
-        $scene_data['objects'] = array();
+        $scene_data['objects'] = [];
         if (isset($content_json->objects)) {
             foreach ($content_json->objects as $key => $value) {
                 $name = $key;
@@ -331,11 +332,11 @@ class VRodos_Scene_CPT_Manager {
                 $s_y = $value->scale[1] ?? 1;
                 $s_z = $value->scale[2] ?? 1;
 
-                $object_data['trs'] = array(
-                    'translation' => array($t_x, $t_y, $t_z),
-                    'rotation' => array($r_x, $r_y, $r_z),
-                    'scale' => array($s_x, $s_y, $s_z),
-                );
+                $object_data['trs'] = [
+                    'translation' => [$t_x, $t_y, $t_z],
+                    'rotation' => [$r_x, $r_y, $r_z],
+                    'scale' => [$s_x, $s_y, $s_z],
+                ];
 
                 $scene_data['objects'][$name] = $object_data;
             }
@@ -344,7 +345,7 @@ class VRodos_Scene_CPT_Manager {
         return $scene_data;
     }
 
-    public static function get_scene_dat_for_script() {
+    public static function get_scene_dat_for_script(): array {
         $upload_url = wp_upload_dir()['baseurl'];
         $current_scene_id = isset($_GET['vrodos_scene']) ? sanitize_text_field(intval($_GET['vrodos_scene'])) : null;
         $project_id = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
@@ -360,7 +361,7 @@ class VRodos_Scene_CPT_Manager {
     }
 
 
-    public static function prepare_scene_editor_data() {
+    public static function prepare_scene_editor_data(): array {
         $data = [];
 
         // Permalink structure
@@ -458,7 +459,7 @@ class VRodos_Scene_CPT_Manager {
         return $data;
     }
 
-    public function handle_new_scene_submission() {
+    public function handle_new_scene_submission(): void {
         if (!isset($_POST['submitted']) || !isset($_POST['post_nonce_field']) || !wp_verify_nonce($_POST['post_nonce_field'], 'post_nonce')) {
             return;
         }
@@ -473,7 +474,6 @@ class VRodos_Scene_CPT_Manager {
 
         if (is_wp_error($thegameType_terms) || empty($thegameType_terms)) {
             wp_die('Error: Project type not found.');
-            return;
         }
 
         $thegameType = $thegameType_terms[0];
@@ -486,25 +486,25 @@ class VRodos_Scene_CPT_Manager {
         $project_slug = $project_post->post_name;
         $parent_project_term = get_term_by('slug', $project_slug, 'vrodos_scene_pgame');
 
-        $scene_taxonomies = array(
-            'vrodos_scene_pgame' => array($parent_project_term->term_id),
-            'vrodos_scene_yaml' => array($newscene_yaml_tax->term_id)
-        );
+        $scene_taxonomies = [
+            'vrodos_scene_pgame' => [$parent_project_term->term_id],
+            'vrodos_scene_yaml' => [$newscene_yaml_tax->term_id]
+        ];
 
-        $scene_metas = array(
+        $scene_metas = [
             'vrodos_scene_default' => 0,
             'vrodos_scene_caption' => esc_attr(strip_tags($_POST['scene-caption'] ?? '')),
             'vrodos_scene_metatype' => $sceneMetaType
-        );
+        ];
 
-        $scene_information = array(
+        $scene_information = [
             'post_title' => esc_attr(strip_tags($_POST['scene-title'])),
             'post_content' => $default_json,
             'post_type' => 'vrodos_scene',
             'post_status' => 'publish',
             'tax_input' => $scene_taxonomies,
             'meta_input' => $scene_metas,
-        );
+        ];
 
         $scene_id = wp_insert_post($scene_information);
 

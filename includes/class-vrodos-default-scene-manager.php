@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 
 class VRodos_Default_Scene_Manager {
 
-    public static function create_default_scenes_for_game($projectSlug, $gameTypeId) {
+    public static function create_default_scenes_for_game($projectSlug, $gameTypeId): void {
         if ($gameTypeId) {
             $project_type = get_term($gameTypeId, 'vrodos_game_type');
             $project_type_slug  = $project_type->slug;
@@ -26,7 +26,7 @@ class VRodos_Default_Scene_Manager {
         }
     }
 
-    private static function vrodos_create_vrexpo_default_scenes($projectSlug) {
+    private static function vrodos_create_vrexpo_default_scenes($projectSlug): void {
         $default_json = VRodos_Core_Manager::vrodos_getDefaultJSONscene('vrexpo');
 
         $firstSceneData = self::vrodos_create_default_scene_kernel(
@@ -99,7 +99,7 @@ class VRodos_Default_Scene_Manager {
         wp_insert_post($fourthSceneData);
     }
 
-    private static function vrodos_create_virtualproduction_default_scenes($projectSlug) {
+    private static function vrodos_create_virtualproduction_default_scenes($projectSlug): void {
         $firstSceneData = self::vrodos_create_default_scene_kernel(
             'Chapter 1',
             VRodos_Core_Manager::vrodos_getDefaultJSONscene('virtualproduction'),
@@ -119,7 +119,7 @@ class VRodos_Default_Scene_Manager {
         wp_insert_post($firstSceneData);
     }
 
-    private static function vrodos_create_archaeology_default_scenes($projectSlug) {
+    private static function vrodos_create_archaeology_default_scenes($projectSlug): void {
         $firstSceneData = self::vrodos_create_default_scene_kernel(
             'Place',
             VRodos_Core_Manager::vrodos_getDefaultJSONscene('archaeology'),
@@ -153,24 +153,24 @@ class VRodos_Default_Scene_Manager {
         $caption,
         $isRegional,
         $sceneEnvironment
-    ) {
+    ): array {
         $tax_parent_project = get_term_by('slug', $projectSlug, 'vrodos_scene_pgame');
         $taxParentProjectId = $tax_parent_project->term_id;
 
         $sceneYAML = get_term_by('slug', $sceneYAMLslug, 'vrodos_scene_yaml');
         $sceneYAMLID = $sceneYAML->term_id;
 
-        $sceneData = array(
+        $sceneData = [
             'post_title'    => $title,
             'post_content' => $content,
             'post_name' => $sceneSlug,
             'post_type' => 'vrodos_scene',
             'post_status'   => 'publish',
-            'tax_input'    => array(
-                'vrodos_scene_pgame' => array($taxParentProjectId),
-                'vrodos_scene_yaml' => array($sceneYAMLID),
-            ),
-            'meta_input'   => array(
+            'tax_input'    => [
+                'vrodos_scene_pgame' => [$taxParentProjectId],
+                'vrodos_scene_yaml' => [$sceneYAMLID],
+            ],
+            'meta_input'   => [
                 'vrodos_scene_default' => $isUndeletable,
                 'vrodos_scene_metatype' => $metaType,
                 'vrodos_menu_has_help' => $hasHelp,
@@ -179,8 +179,8 @@ class VRodos_Default_Scene_Manager {
                 'vrodos_scene_caption' => $caption,
                 'vrodos_scene_isRegional' => $isRegional,
                 'vrodos_scene_environment' => $sceneEnvironment,
-            ),
-        );
+            ],
+        ];
 
         return $sceneData;
     }

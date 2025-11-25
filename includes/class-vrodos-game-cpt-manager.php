@@ -3,18 +3,18 @@
 class VRodos_Game_CPT_Manager {
 
     public function __construct() {
-        add_action('transition_post_status', array($this, 'on_create_project'), 10, 3);
-        add_action('add_meta_boxes', array($this, 'games_taxcategory_box'));
-        add_action('save_post', array($this, 'games_taxtype_box_content_save'));
-        add_filter('manage_vrodos_game_posts_columns', array($this, 'set_custom_vrodos_game_columns'));
-        add_action('manage_vrodos_game_posts_custom_column', array($this, 'set_custom_vrodos_game_columns_fill'), 10, 2);
-        add_action('add_meta_boxes', array($this, 'games_databox_add'));
+        add_action('transition_post_status', [$this, 'on_create_project'], 10, 3);
+        add_action('add_meta_boxes', [$this, 'games_taxcategory_box']);
+        add_action('save_post', [$this, 'games_taxtype_box_content_save']);
+        add_filter('manage_vrodos_game_posts_columns', [$this, 'set_custom_vrodos_game_columns']);
+        add_action('manage_vrodos_game_posts_custom_column', [$this, 'set_custom_vrodos_game_columns_fill'], 10, 2);
+        add_action('add_meta_boxes', [$this, 'games_databox_add']);
 
         // Set to the lowest priority in order to have game taxes available when joker games are created
-        add_action( 'init', array($this, 'vrodos_create_joker_projects'), 100, 2 );
+        add_action( 'init', [$this, 'vrodos_create_joker_projects'], 100, 2 );
     }
 
-    public function vrodos_create_joker_projects() {
+    public function vrodos_create_joker_projects(): void {
 
         $userID = get_current_user_id();
 
@@ -46,17 +46,17 @@ class VRodos_Game_CPT_Manager {
         }
     }
 
-    public function create_post_project_joker($tax_slug, $post_title, $post_name, $userID){
+    public function create_post_project_joker($tax_slug, $post_title, $post_name, $userID): void {
 
         $tax = get_term_by('slug', $tax_slug, 'vrodos_game_type');
         $tax_id = $tax->term_id;
-        $project_taxonomies_arch = array(
-            'vrodos_game_type' => array(
+        $project_taxonomies_arch = [
+            'vrodos_game_type' => [
                 $tax_id,
-            )
-        );
+            ]
+        ];
 
-        $project_information_arch = array(
+        $project_information_arch = [
             'post_title' => $post_title,
             'post_name' => $post_name,
             'post_content' => '',
@@ -64,21 +64,23 @@ class VRodos_Game_CPT_Manager {
             'post_status' => 'publish',
             'tax_input' => $project_taxonomies_arch,
             'post_author'   => $userID,
-        );
+        ];
 
         $post_id = wp_insert_post($project_information_arch);
         $post = get_post($post_id);
 
-        wp_insert_term($post->post_title,'vrodos_asset3d_pgame',array(
+        wp_insert_term($post->post_title,'vrodos_asset3d_pgame',[
                 'description'=> '-',
                 'slug' => $post->post_name,
-            )
+            ]
         );
     }
 
     // Generate Taxonomy (for scenes & assets) with Project's slug/name
     // Create Default Scenes for this "Project"
-    public function on_create_project($new_status, $old_status, $post) {
+    // Generate Taxonomy (for scenes & assets) with Project's slug/name
+    // Create Default Scenes for this "Project"
+    public function on_create_project($new_status, $old_status, $post): void {
         $post_type = get_post_type($post);
 
         if ($post_type == 'vrodos_game' && $new_status == 'publish' && $old_status != 'publish') {
@@ -102,49 +104,49 @@ class VRodos_Game_CPT_Manager {
             // If project is not a joker one
             if (strpos($projectSlug, '-joker') === false) {
                 // Create a parent game tax category for the scenes
-                wp_insert_term($projectTitle, 'vrodos_scene_pgame', array(
+                wp_insert_term($projectTitle, 'vrodos_scene_pgame', [
                     'description' => '-',
                     'slug' => $projectSlug,
-                ));
+                ]);
 
                 // Create a parent game tax category for the assets
-                wp_insert_term($projectTitle, 'vrodos_asset3d_pgame', array(
+                wp_insert_term($projectTitle, 'vrodos_asset3d_pgame', [
                     'description' => '-',
                     'slug' => $projectSlug,
-                ));
+                ]);
 
                 // Create Default Scenes for this "Project"
                 VRodos_Default_Scene_Manager::create_default_scenes_for_game($projectSlug, $project_type_id);
             } else {
                 $projectTitle = $post->post_title;
                 // Create a parent game tax category for the assets
-                wp_insert_term($projectTitle, 'vrodos_asset3d_pgame', array(
+                wp_insert_term($projectTitle, 'vrodos_asset3d_pgame', [
                     'description' => '-',
                     'slug' => $projectSlug
-                ));
+                ]);
             }
         }
     }
 
     //Create Game Category Box @ Game's backend
-    public function games_taxcategory_box() {
+    public function games_taxcategory_box(): void {
         // Removes the default metabox at side
         remove_meta_box('vrodos_game_typediv', 'vrodos_game', 'side');
         // Adds the custom metabox with select box
-        add_meta_box('tagsdiv-vrodos_game_type', 'Project Type', array($this, 'projects_taxtype_box_content'), 'vrodos_game', 'side', 'high');
+        add_meta_box('tagsdiv-vrodos_game_type', 'Project Type', [$this, 'projects_taxtype_box_content'], 'vrodos_game', 'side', 'high');
     }
 
 
-    public function projects_taxtype_box_content($post) {
+    public function projects_taxtype_box_content($post): void {
         $tax_name = 'vrodos_game_type'; ?>
         <div class="tagsdiv" id="<?php echo $tax_name; ?>">
             <p class="howto"><?php echo 'Select type for current project' ?></p>
             <?php
             // Use nonce for verification
             wp_nonce_field(plugin_basename(__FILE__), 'vrodos_game_type_noncename');
-            $type_ids = wp_get_object_terms($post->ID, 'vrodos_game_type', array('fields' => 'ids'));
+            $type_ids = wp_get_object_terms($post->ID, 'vrodos_game_type', ['fields' => 'ids']);
             $selected_type = empty($type_ids) ? '' : $type_ids[0];
-            $args = array(
+            $args = [
                 'show_option_none' => 'Select Type',
                 'orderby' => 'name',
                 'hide_empty' => 0,
@@ -154,7 +156,7 @@ class VRodos_Game_CPT_Manager {
                 'echo' => 0,
                 'option_none_value' => '-1',
                 'id' => 'vrodos-select-type-dropdown'
-            );
+            ];
             $select = wp_dropdown_categories($args);
             $replace = "<select$1 required>";
             $select = preg_replace('#<select([^>]*)>#', $replace, $select);
@@ -167,7 +169,7 @@ class VRodos_Game_CPT_Manager {
         <?php
     }
 
-    public function games_taxtype_box_content_save($post_id) {
+    public function games_taxtype_box_content_save($post_id): void {
         // Verify if this is an auto save routine.
         if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id))
             return;
@@ -189,12 +191,12 @@ class VRodos_Game_CPT_Manager {
         wp_set_object_terms($post_id, $type, 'vrodos_game_type');
     }
 
-    public function set_custom_vrodos_game_columns($columns) {
+    public function set_custom_vrodos_game_columns($columns): array {
         $columns['game_slug'] = 'Project Slug';
         return $columns;
     }
 
-    public function set_custom_vrodos_game_columns_fill($column, $post_id) {
+    public function set_custom_vrodos_game_columns_fill($column, $post_id): void {
         switch ($column) {
             case 'game_slug' :
                 $mypost = get_post($post_id);
@@ -208,45 +210,45 @@ class VRodos_Game_CPT_Manager {
     }
 
     //Add and Show the metabox with Custom Field for Game and the Compiler Box
-    public function games_databox_add() {
-        add_meta_box('vrodos-games-compiler-box', 'Game Compiler', array($this, 'games_compilerbox_show'), 'vrodos_game', 'side', 'low');
+    public function games_databox_add(): void {
+        add_meta_box('vrodos-games-compiler-box', 'Game Compiler', [$this, 'games_compilerbox_show'], 'vrodos_game', 'side', 'low');
     }
 
-    public function games_compilerbox_show() {
+    public function games_compilerbox_show(): void {
         global $post;
         $DS = DIRECTORY_SEPARATOR;
 
-        wp_enqueue_script('vrodos_request_compile');
+        wp_enqueue_script('ajax-script_compile');
         $slug = $post->post_name;
 
         $isAdmin = is_admin() ? 'back' : 'front';
         echo '<script>let isAdmin="'.$isAdmin.'";</script>';
 
-        wp_localize_script('vrodos_request_compile', 'my_ajax_object_compile',
-            array(
+        wp_localize_script('ajax-script_compile', 'my_ajax_object_compile',
+            [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'projectId' => $post->ID,
                 'slug' => $slug,
                 'sceneId' => vrodos_get_project_scene_id($post->ID)
-            )
+            ]
         );
 
-        wp_localize_script('vrodos_request_compile', 'phpvarsA',
-            array('pluginsUrl' => plugins_url(),
+        wp_localize_script('ajax-script_compile', 'phpvarsA',
+            ['pluginsUrl' => plugins_url(),
                 'PHP_OS' => PHP_OS,
                 'game_dirpath' => realpath(dirname(__FILE__) . '/..') . $DS . 'games_assemble' . $DS . $slug,
                 'game_urlpath' => plugins_url('vrodos') . '/games_assemble/' . $slug
-            ));
+            ]);
 
         wp_enqueue_script('vrodos_assemble_request');
         wp_localize_script('vrodos_assemble_request', 'phpvarsB',
-            array('pluginsUrl' => plugins_url(),
+            ['pluginsUrl' => plugins_url(),
                 'PHP_OS' => PHP_OS,
                 'source' => realpath(dirname(__FILE__) . '/../../..') . $DS . 'uploads' . $DS . $slug,
                 'target' => realpath(dirname(__FILE__) . '/..') . $DS . 'games_assemble' . $DS . $slug,
                 'game_libraries_path' => realpath(dirname(__FILE__) . '/..') . $DS . 'unity_game_libraries',
                 'game_id' => $post->ID
-            ));
+            ]);
 
         $project_type_terms = wp_get_object_terms($post->ID, 'vrodos_game_type');
         $project_type_slug = !empty($project_type_terms) ? $project_type_terms[0]->slug : '';
@@ -294,15 +296,15 @@ class VRodos_Game_CPT_Manager {
         <?php
     }
 
-    public static function prepare_compile_dialogue_data() {
+    public static function prepare_compile_dialogue_data(): array {
         // This function prepares data needed by the vrodos-edit-3D-scene-CompileDialogue.php template.
 
         $project_id = isset($_GET['vrodos_game']) ? sanitize_text_field(intval($_GET['vrodos_game'])) : null;
 
-        if (!$project_id) { return array(); }
+        if (!$project_id) { return []; }
 
         $project_post = get_post($project_id);
-        if (!$project_post) { return array(); }
+        if (!$project_post) { return []; }
 
         $projectSlug = $project_post->post_name;
 
@@ -325,7 +327,7 @@ class VRodos_Game_CPT_Manager {
             $single_lowercase = "project";
         }
 
-        return array(
+        return [
             'project_id'        => $project_id,
             'project_post'      => $project_post,
             'projectSlug'       => $projectSlug,
@@ -333,13 +335,13 @@ class VRodos_Game_CPT_Manager {
             'project_type_slug' => $project_type_slug,
             'project_type_icon' => $project_type_icon,
             'single_lowercase'  => $single_lowercase,
-        );
+        ];
     }
 
-    public static function prepare_project_manager_data() {
+    public static function prepare_project_manager_data(): array {
         $perma_structure = (bool)get_option('permalink_structure');
 
-        return array(
+        return [
             'parameter_Scenepass' => $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=',
             'current_user_id' => get_current_user_id(),
             'isAdmin' => is_admin() ? 'back' : 'front',
@@ -347,22 +349,22 @@ class VRodos_Game_CPT_Manager {
             'full_title_lowercase' => "projects",
             'single' => "project",
             'multiple' => "projects",
-        );
+        ];
     }
 }
 
-function vrodos_get_project_scene_id($project_id) {
-    $scenes = get_posts(array(
+function vrodos_get_project_scene_id($project_id): ?int {
+    $scenes = get_posts([
         'post_type' => 'vrodos_scene',
         'posts_per_page' => 1,
-        'tax_query' => array(
-            array(
+        'tax_query' => [
+            [
                 'taxonomy' => 'vrodos_scene_pgame',
                 'field' => 'slug',
                 'terms' => get_post($project_id)->post_name,
-            ),
-        ),
-    ));
+            ],
+        ],
+    ]);
 
     if (!empty($scenes)) {
         return $scenes[0]->ID;

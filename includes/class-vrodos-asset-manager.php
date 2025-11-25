@@ -7,14 +7,14 @@ if (!defined('ABSPATH')) {
 class VRodos_Asset_Manager {
 
     public function __construct() {
-        add_action('wp_enqueue_scripts', array($this, 'register_scripts'));
-        add_action('admin_enqueue_scripts', array($this, 'register_scripts'));
-        add_action('wp_enqueue_scripts', array($this, 'register_styles'));
-        add_action('admin_enqueue_scripts', array($this, 'register_styles'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_asset_editor_scripts'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_scene_editor_scripts'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_project_manager_scripts'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_assets_list_scripts'));
+        add_action('wp_enqueue_scripts', [$this, 'register_scripts']);
+        add_action('admin_enqueue_scripts', [$this, 'register_scripts']);
+        add_action('wp_enqueue_scripts', [$this, 'register_styles']);
+        add_action('admin_enqueue_scripts', [$this, 'register_styles']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_asset_editor_scripts']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_scene_editor_scripts']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_project_manager_scripts']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_assets_list_scripts']);
     }
 
     public function enqueue_assets_list_scripts() {

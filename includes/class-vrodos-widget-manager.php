@@ -7,19 +7,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 class VRodos_Widget_Manager {
 
 	public function __construct() {
-		add_action( 'widgets_init', array( $this, 'vrodos_register_widgets' ) );
+		add_action( 'widgets_init', [$this, 'vrodos_register_widgets'] );
 
         // Enqueue scripts for the widget, both on the front-end and in the admin area.
-        add_action('wp_enqueue_scripts', array($this, 'vrodos_widget_preamp_scripts'), 10);
-		add_action('admin_enqueue_scripts', array($this, 'vrodos_widget_preamp_scripts'), 10);
+        add_action('wp_enqueue_scripts', [$this, 'vrodos_widget_preamp_scripts'], 10);
+		add_action('admin_enqueue_scripts', [$this, 'vrodos_widget_preamp_scripts'], 10);
 	}
 
-	public function vrodos_register_widgets() {
+	public function vrodos_register_widgets(): void {
 		register_widget( 'vrodos_3d_widget' );
 		register_widget( 'vrodos_3d_widget_scene' );
 	}
 
-    public function vrodos_widget_preamp_scripts() {
+    public function vrodos_widget_preamp_scripts(): void {
 
         // Only enqueue scripts if one of the widgets is active to avoid unnecessary loading.
         if (!is_active_widget(false, false, 'vrodos_3d_widget', true) &&

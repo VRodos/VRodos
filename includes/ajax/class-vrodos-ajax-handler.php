@@ -10,66 +10,66 @@ require_once(plugin_dir_path(__FILE__) . '../class-vrodos-compiler-manager.php')
 class VRodos_AJAX_Handler {
 
     public function __construct() {
-        add_action('wp_ajax_vrodos_save_scene_async_action', array($this, 'save_scene_async_action_callback'));
-        add_action('wp_ajax_vrodos_undo_scene_async_action', array($this, 'undo_scene_async_action_callback'));
-        add_action('wp_ajax_vrodos_redo_scene_async_action', array($this, 'redo_scene_async_action_callback'));
-        add_action('wp_ajax_vrodos_delete_scene_action', array($this, 'delete_scene_frontend_callback'));
-        add_action('wp_ajax_vrodos_fetch_description_action', array($this, 'fetch_description_action_callback'));
-        add_action('wp_ajax_vrodos_fetch_image_action', array($this, 'fetch_image_action_callback'));
-        add_action('wp_ajax_vrodos_fetch_video_action', array($this, 'fetch_video_action_callback'));
-        add_action('wp_ajax_vrodos_delete_asset_action', array($this, 'delete_asset3d_frontend_callback'));
-        add_action('wp_ajax_vrodos_fetch_assetmeta_action', array($this, 'fetch_asset3d_meta_backend_callback'));
-        add_action('wp_ajax_vrodos_compile_action', array($this, 'compile_action_callback'));
-        add_action('wp_ajax_image_upload_action', array($this, 'image_upload_action_callback'));
+        add_action('wp_ajax_vrodos_save_scene_async_action', [$this, 'save_scene_async_action_callback']);
+        add_action('wp_ajax_vrodos_undo_scene_async_action', [$this, 'undo_scene_async_action_callback']);
+        add_action('wp_ajax_vrodos_redo_scene_async_action', [$this, 'redo_scene_async_action_callback']);
+        add_action('wp_ajax_vrodos_delete_scene_action', [$this, 'delete_scene_frontend_callback']);
+        add_action('wp_ajax_vrodos_fetch_description_action', [$this, 'fetch_description_action_callback']);
+        add_action('wp_ajax_vrodos_fetch_image_action', [$this, 'fetch_image_action_callback']);
+        add_action('wp_ajax_vrodos_fetch_video_action', [$this, 'fetch_video_action_callback']);
+        add_action('wp_ajax_vrodos_delete_asset_action', [$this, 'delete_asset3d_frontend_callback']);
+        add_action('wp_ajax_vrodos_fetch_assetmeta_action', [$this, 'fetch_asset3d_meta_backend_callback']);
+        add_action('wp_ajax_vrodos_compile_action', [$this, 'compile_action_callback']);
+        add_action('wp_ajax_image_upload_action', [$this, 'image_upload_action_callback']);
 
         // Peer conferencing
-        add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', array($this, 'vrodos_notify_confpeers_callback'));
-        add_action( 'wp_ajax_vrodos_notify_confpeers_action', array($this, 'vrodos_notify_confpeers_callback'));
-        add_action( 'wp_ajax_vrodos_update_expert_log_action', array($this, 'vrodos_update_expert_log_callback'));
+        add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', [$this, 'vrodos_notify_confpeers_callback']);
+        add_action( 'wp_ajax_vrodos_notify_confpeers_action', [$this, 'vrodos_notify_confpeers_callback']);
+        add_action( 'wp_ajax_vrodos_update_expert_log_action', [$this, 'vrodos_update_expert_log_callback']);
 
         // AJAXES for semantics
-        add_action( 'wp_ajax_vrodos_segment_obj_action', array($this, 'vrodos_segment_obj_action_callback') );
+        add_action( 'wp_ajax_vrodos_segment_obj_action', [$this, 'vrodos_segment_obj_action_callback'] );
 
-        add_action('wp_ajax_vrodos_fetch_list_projects_action', array($this, 'vrodos_fetch_list_projects_callback'));
+        add_action('wp_ajax_vrodos_fetch_list_projects_action', [$this, 'vrodos_fetch_list_projects_callback']);
 
-        add_action('wp_ajax_vrodos_fetch_game_assets_action', array($this, 'vrodos_fetch_game_assets_action_callback'));
+        add_action('wp_ajax_vrodos_fetch_game_assets_action', [$this, 'vrodos_fetch_game_assets_action_callback']);
 
-        add_action('wp_ajax_vrodos_delete_game_action', array($this, 'vrodos_delete_gameproject_frontend_callback'));
-        add_action('wp_ajax_vrodos_create_project_action', array($this, 'vrodos_create_project_frontend_callback'));
-        add_action('wp_ajax_vrodos_fetch_glb_asset_action', array($this, 'vrodos_fetch_glb_asset3d_frontend_callback'));
-        add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', array($this, 'vrodos_fetch_glb_asset3d_frontend_callback'));
+        add_action('wp_ajax_vrodos_delete_game_action', [$this, 'vrodos_delete_gameproject_frontend_callback']);
+        add_action('wp_ajax_vrodos_create_project_action', [$this, 'vrodos_create_project_frontend_callback']);
+        add_action('wp_ajax_vrodos_fetch_glb_asset_action', [$this, 'vrodos_fetch_glb_asset3d_frontend_callback']);
+        add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', [$this, 'vrodos_fetch_glb_asset3d_frontend_callback']);
     }
 
-    public function vrodos_create_project_frontend_callback() {
+    public function vrodos_create_project_frontend_callback(): void {
         $project_title = strip_tags($_POST['project_title']);
         $project_type_slug = $_POST['project_type_slug'];
         $taxonomy = get_term_by('slug', $project_type_slug, 'vrodos_game_type');
         $project_type_id = $taxonomy->term_id;
-        $project_taxonomies = array('vrodos_game_type' => array($project_type_id));
-        $project_information = array(
+        $project_taxonomies = ['vrodos_game_type' => [$project_type_id]];
+        $project_information = [
             'post_title' => esc_attr($project_title),
             'post_content' => '',
             'post_type' => 'vrodos_game',
             'post_status' => 'publish',
             'tax_input' => $project_taxonomies,
-        );
+        ];
         $project_id = wp_insert_post($project_information);
         echo $project_id;
         wp_die();
     }
 
-    public function vrodos_delete_gameproject_frontend_callback() {
+    public function vrodos_delete_gameproject_frontend_callback(): void {
         $game_id = $_POST['game_id'];
         $game_post = get_post($game_id);
         $gameSlug = $game_post->post_name;
         $gameTitle = get_the_title($game_id);
         $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
         $assetPGameID = $assetPGame->term_id;
-        $custom_query_args1 = array(
+        $custom_query_args1 = [
             'post_type' => 'vrodos_asset3d',
             'posts_per_page' => -1,
-            'tax_query' => array(array('taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'term_id', 'terms' => $assetPGameID)),
-        );
+            'tax_query' => [['taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'term_id', 'terms' => $assetPGameID]],
+        ];
         $custom_query = new WP_Query($custom_query_args1);
         if ($custom_query->have_posts()) :
             while ($custom_query->have_posts()) :
@@ -81,11 +81,11 @@ class VRodos_AJAX_Handler {
         wp_reset_postdata();
         $scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
         $scenePGameID = $scenePGame->term_id;
-        $custom_query_args2 = array(
+        $custom_query_args2 = [
             'post_type' => 'vrodos_scene',
             'posts_per_page' => -1,
-            'tax_query' => array(array('taxonomy' => 'vrodos_scene_pgame', 'field' => 'term_id', 'terms' => $scenePGameID)),
-        );
+            'tax_query' => [['taxonomy' => 'vrodos_scene_pgame', 'field' => 'term_id', 'terms' => $scenePGameID]],
+        ];
         $custom_query2 = new WP_Query($custom_query_args2);
         if ($custom_query2->have_posts()) :
             while ($custom_query2->have_posts()) :
@@ -101,7 +101,7 @@ class VRodos_AJAX_Handler {
         wp_die();
     }
 
-    public function vrodos_fetch_glb_asset3d_frontend_callback() {
+    public function vrodos_fetch_glb_asset3d_frontend_callback(): void {
         wp_reset_postdata();
         $asset_id = $_POST['asset_id'];
         $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
@@ -113,7 +113,7 @@ class VRodos_AJAX_Handler {
         wp_die();
     }
 
-    private function vrodos_delete_asset3d_noscenes_frontend($asset_id) {
+    private function vrodos_delete_asset3d_noscenes_frontend($asset_id): void {
         $mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true);
         wp_delete_attachment($mtlID, true);
         $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true);

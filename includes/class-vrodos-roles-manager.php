@@ -18,19 +18,19 @@ class VRodos_Roles_Manager {
 	 */
 	public function __construct() {
 		// Actions to add custom fields to user profile page
-		add_action( 'show_user_profile', array( $this, 'extra_user_profile_field_mvnode_token' ) );
-		add_action( 'edit_user_profile', array( $this, 'extra_user_profile_field_mvnode_token' ) );
-		add_action( 'show_user_profile', array( $this, 'extra_user_profile_field_mvnode_url' ) );
-		add_action( 'edit_user_profile', array( $this, 'extra_user_profile_field_mvnode_url' ) );
+		add_action( 'show_user_profile', [$this, 'extra_user_profile_field_mvnode_token'] );
+		add_action( 'edit_user_profile', [$this, 'extra_user_profile_field_mvnode_token'] );
+		add_action( 'show_user_profile', [$this, 'extra_user_profile_field_mvnode_url'] );
+		add_action( 'edit_user_profile', [$this, 'extra_user_profile_field_mvnode_url'] );
 
 		// Actions to save the custom fields
-		add_action( 'personal_options_update', array( $this, 'save_extra_user_profile_field_mvnode_token' ) );
-		add_action( 'edit_user_profile_update', array( $this, 'save_extra_user_profile_field_mvnode_token' ) );
-		add_action( 'personal_options_update', array( $this, 'save_extra_user_profile_field_mvnode_url' ) );
-		add_action( 'edit_user_profile_update', array( $this, 'save_extra_user_profile_field_mvnode_url' ) );
+		add_action( 'personal_options_update', [$this, 'save_extra_user_profile_field_mvnode_token'] );
+		add_action( 'edit_user_profile_update', [$this, 'save_extra_user_profile_field_mvnode_token'] );
+		add_action( 'personal_options_update', [$this, 'save_extra_user_profile_field_mvnode_url'] );
+		add_action( 'edit_user_profile_update', [$this, 'save_extra_user_profile_field_mvnode_url'] );
 
         // Action to add capabilities to admin
-        add_action( 'admin_init', array( $this, 'vrodos_add_capabilities_to_admin' ) );
+        add_action( 'admin_init', [$this, 'vrodos_add_capabilities_to_admin'] );
 	}
 
     /*
@@ -85,7 +85,7 @@ class VRodos_Roles_Manager {
     }
     */
 
-	public function vrodos_add_capabilities_to_admin() {
+	public function vrodos_add_capabilities_to_admin(): void {
 		$role = get_role( 'administrator' );
 
 		// Caps about Games
@@ -135,7 +135,7 @@ class VRodos_Roles_Manager {
 		unset( $role );
 	}
 
-	public function extra_user_profile_field_mvnode_token( $user ) { ?>
+	public function extra_user_profile_field_mvnode_token( $user ): void { ?>
 		<h3><?php _e("MediaVerse extra information", "blank"); ?></h3>
 
 		<table class="form-table">
@@ -152,7 +152,7 @@ class VRodos_Roles_Manager {
 		</table>
 	<?php }
 
-	public function save_extra_user_profile_field_mvnode_token( $user_id ) {
+	public function save_extra_user_profile_field_mvnode_token( $user_id ): bool {
 		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-user_' . $user_id ) ) {
 			return false;
 		}
@@ -165,7 +165,7 @@ class VRodos_Roles_Manager {
 		return true;
 	}
 
-	public function extra_user_profile_field_mvnode_url( $user ) { ?>
+	public function extra_user_profile_field_mvnode_url( $user ): void { ?>
 
 		<table class="form-table">
 			<tr>
@@ -181,7 +181,7 @@ class VRodos_Roles_Manager {
 		</table>
 	<?php }
 
-	public function save_extra_user_profile_field_mvnode_url( $user_id ) {
+	public function save_extra_user_profile_field_mvnode_url( $user_id ): bool {
 		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-user_' . $user_id ) ) {
 			return false;
 		}

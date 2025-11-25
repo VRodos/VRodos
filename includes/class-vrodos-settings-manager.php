@@ -6,22 +6,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VRodos_Settings_Manager {
 
-    private $general_settings_key = 'vrodos_general_settings';
-    private $options_key = 'vrodos_options';
-    private $settings_tabs = array();
+    private array $settings_tabs = [];
+    private array $general_settings = [];
 
-	public function __construct() {
+	public function __construct(
+        private string $general_settings_key = 'vrodos_general_settings',
+        private string $options_key = 'vrodos_options',
+    ) {
 		if( is_admin() ){
-			add_action( 'init', array( $this, 'load_settings' ) );
-			add_action( 'admin_init', array( $this, 'register_general_settings' ) );
-			//add_action( 'admin_menu', array( $this, 'render_setting') );
+			add_action( 'init', [$this, 'load_settings'] );
+			add_action( 'admin_init', [$this, 'register_general_settings'] );
+			//add_action( 'admin_menu', [$this, 'render_setting'] );
 		}
 	}
 
-    public function load_settings() {
+    public function load_settings(): void {
         $this->general_settings = (array) get_option( $this->general_settings_key );
 
-        $this->general_settings = array_merge( array(
+        $this->general_settings = array_merge( [
             'vrodos_unity_local_or_remote' => 'remote',
             'vrodos_unity_exe_folder' => 'C:\Program Files\Unity',
             'vrodos_remote_api_folder' => 'http://myurl/',
@@ -30,11 +32,11 @@ class VRodos_Settings_Manager {
             'vrodos_ftp_pass' => '',
             'vrodos_server_path' => 'C:/xampp/htdocs/COMPILE_UNITY3D_GAMES/',
             'vrodos_google_application_credentials' => ''
-        ), $this->general_settings );
+        ], $this->general_settings );
 
     }
 
-    public function register_general_settings() {
+    public function register_general_settings(): void {
         $this->settings_tabs[$this->general_settings_key] = __('General');
 
         register_setting( $this->general_settings_key, $this->general_settings_key );

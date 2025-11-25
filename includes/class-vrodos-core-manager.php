@@ -3,37 +3,37 @@
 class VRodos_Core_Manager {
 
     public function __construct() {
-        add_filter('login_redirect', array($this, 'vrodos_default_page'));
+        add_filter('login_redirect', [$this, 'vrodos_default_page']);
 
         // Custom hooks
-        add_filter('upload_mimes', array($this, 'vrodos_mime_types'), 1, 1);
-        add_action('plugins_loaded', array($this, 'vrodos_admin_hooks'));
-        add_action('login_headerurl', array($this, 'vrodos_lost_password_redirect'));
-        add_action('after_setup_theme', array($this, 'disable_widgets_block_editor'));
+        add_filter('upload_mimes', [$this, 'vrodos_mime_types'], 1, 1);
+        add_action('plugins_loaded', [$this, 'vrodos_admin_hooks']);
+        add_action('login_headerurl', [$this, 'vrodos_lost_password_redirect']);
+        add_action('after_setup_theme', [$this, 'disable_widgets_block_editor']);
         remove_filter ('the_content', 'wpautop');
     }
 
-    public function vrodos_admin_hooks(){
+    public function vrodos_admin_hooks(): void {
         if($GLOBALS['pagenow']=='post.php') {
-            add_action('admin_print_scripts', array($this, 'my_admin_scripts'));
-            add_action('admin_print_styles',  array($this, 'my_admin_styles'));
+            add_action('admin_print_scripts', [$this, 'my_admin_scripts']);
+            add_action('admin_print_styles',  [$this, 'my_admin_styles']);
         }
     }
 
-    public function my_admin_scripts() {
+    public function my_admin_scripts(): void {
         wp_enqueue_script('jquery');
         wp_enqueue_script('media-upload');
         wp_enqueue_script('thickbox');
     }
 
 
-    public function my_admin_styles()  {
+    public function my_admin_styles(): void {
         wp_enqueue_style('thickbox');
     }
 
-    public function vrodos_lost_password_redirect() {
+    public function vrodos_lost_password_redirect(): void {
         // Check if have submitted
-        $confirm = ( isset($_GET['checkemail'] ) ? $_GET['checkemail'] : '' );
+        $confirm = $_GET['checkemail'] ?? '';
 
         if( $confirm ) {
             wp_redirect( get_site_url( ));
@@ -41,11 +41,11 @@ class VRodos_Core_Manager {
         }
     }
 
-    public function disable_widgets_block_editor() {
+    public function disable_widgets_block_editor(): void {
         remove_theme_support( 'widgets-block-editor' );
     }
 
-    public function vrodos_mime_types($mime_types){
+    public function vrodos_mime_types($mime_types): array {
         $mime_types['json'] = 'text/json';
         $mime_types['obj'] = 'text/plain';
         $mime_types['mp4'] = 'video/mp4';
@@ -59,7 +59,7 @@ class VRodos_Core_Manager {
         return $mime_types;
     }
 
-    public static function vrodos_plugin_main_page() {
+    public static function vrodos_plugin_main_page(): void {
         $allProjectsPage = VRodos_Core_Manager::vrodos_getEditpage('allgames');
 
         if ( is_admin() ) {
@@ -126,10 +126,10 @@ class VRodos_Core_Manager {
                             <th>Projects</th>
                             <td><?php
 
-                                $args = array(
+                                $args = [
                                     'post_type' => 'vrodos_game',
                                     'posts_per_page' => -1
-                                );
+                                ];
 
                                 $query = new WP_Query($args);
 
@@ -137,10 +137,10 @@ class VRodos_Core_Manager {
                                 ?></td>
                             <td><?php
 
-                                $args = array(
+                                $args = [
                                     'post_type' => 'vrodos_game',
                                     'posts_per_page' => -1
-                                );
+                                ];
 
                                 $query = new WP_Query($args);
 
@@ -157,10 +157,10 @@ class VRodos_Core_Manager {
                                 ?></td>
                             <td><?php
 
-                                $args = array(
+                                $args = [
                                     'post_type' => 'vrodos_game',
                                     'posts_per_page' => -1
-                                );
+                                ];
 
                                 $query = new WP_Query($args);
 
@@ -183,10 +183,10 @@ class VRodos_Core_Manager {
                             <th>Scenes</th>
                             <td> <?php
 
-                                $args = array(
+                                $args = [
                                     'post_type' => 'vrodos_scene',
                                     'posts_per_page' => -1
-                                );
+                                ];
 
                                 $query = new WP_Query($args);
 
@@ -201,10 +201,10 @@ class VRodos_Core_Manager {
                             <th>Assets</th>
                             <td> <?php
 
-                                $args = array(
+                                $args = [
                                     'post_type' => 'vrodos_asset3d',
                                     'posts_per_page' => -1
-                                );
+                                ];
 
                                 $query = new WP_Query($args);
 
@@ -227,18 +227,18 @@ class VRodos_Core_Manager {
         <?php
     }
 
-    public static function vrodos_getVideoAttachmentsFromMediaLibrary(){
+    public static function vrodos_getVideoAttachmentsFromMediaLibrary(): array {
 
-        $query_images_args = array(
+        $query_images_args = [
             'post_type'      => 'attachment',
             'post_mime_type' => 'video',
             'post_status'    => 'inherit',
             'posts_per_page' => - 1,
-        );
+        ];
 
         $query_images = new WP_Query( $query_images_args );
 
-        $videos = array();
+        $videos = [];
         foreach ( $query_images->posts as $image ) {
             $videos[] = wp_get_attachment_url( $image->ID );
         }
@@ -246,32 +246,32 @@ class VRodos_Core_Manager {
         return $videos;
     }
 
-    public static function vrodos_getFirstSceneID_byProjectID($project_id,$project_type){
+    public static function vrodos_getFirstSceneID_byProjectID($project_id, $project_type): array {
         $gamePost = get_post($project_id);
         $gameSlug = $gamePost->post_name;
 
         $scene_type_slug = 'wonderaround-yaml';
 
-        $custom_query_args = array(
+        $custom_query_args = [
             'post_type' => 'vrodos_scene',
             'posts_per_page' => -1,
-            'tax_query' => array(
+            'tax_query' => [
                 'relation' => 'AND',
-                array(
+                [
                     'taxonomy' => 'vrodos_scene_pgame',
                     'field'    => 'slug',
                     'terms'    => $gameSlug
-                ),
-                array(
+                ],
+                [
                     'taxonomy' => 'vrodos_scene_yaml',
                     'field'    => 'slug',
                     'terms'    => $scene_type_slug,
-                ),
-            ),
+                ],
+            ],
             'orderby' => 'ID',
             'order' => 'DESC',
-        );
-        $scene_data = array();
+        ];
+        $scene_data = [];
         $custom_query = new WP_Query( $custom_query_args );
 
         if ( $custom_query->have_posts() ) {
@@ -286,7 +286,7 @@ class VRodos_Core_Manager {
         return $scene_data;
     }
 
-    public static function vrodos_the_slug_exists($post_name) {
+    public static function vrodos_the_slug_exists($post_name): bool {
         global $wpdb;
         if($wpdb->get_row("SELECT post_name FROM wp_posts WHERE post_name = '" . $post_name . "'", 'ARRAY_A')) {
             return true;
@@ -295,28 +295,28 @@ class VRodos_Core_Manager {
         }
     }
 
-    public function vrodos_default_page() {
+    public function vrodos_default_page(): string {
         return home_url();
     }
 
-    public static function vrodos_get_all_doors_of_project_fastversion($parent_project_id_as_term_id){
+    public static function vrodos_get_all_doors_of_project_fastversion($parent_project_id_as_term_id): array {
 
         $sceneIds = [];
 
         // Define custom query parameters
-        $custom_query_args = array(
+        $custom_query_args = [
             'post_type' => 'vrodos_scene',
             'posts_per_page' => -1,
-            'tax_query' => array(
-                array(
+            'tax_query' => [
+                [
                     'taxonomy' => 'vrodos_scene_pgame',
                     'field'    => 'term_id',
                     'terms'    => $parent_project_id_as_term_id,
-                ),
-            ),
+                ],
+            ],
             'orderby' => 'ID',
             'order' => 'DESC',
-        );
+        ];
 
         $custom_query = new WP_Query( $custom_query_args );
 
@@ -362,24 +362,24 @@ class VRodos_Core_Manager {
     }
 
 
-    public static function vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id){
+    public static function vrodos_get_all_sceneids_of_game($parent_project_id_as_term_id): array {
 
         $sceneIds = [];
 
         // Define custom query parameters
-        $custom_query_args = array(
+        $custom_query_args = [
             'post_type' => 'vrodos_scene',
             'posts_per_page' => -1,
-            'tax_query' => array(
-                array(
+            'tax_query' => [
+                [
                     'taxonomy' => 'vrodos_scene_pgame',
                     'field'    => 'term_id',
                     'terms'    => $parent_project_id_as_term_id,
-                ),
-            ),
+                ],
+            ],
             'orderby' => 'ID',
             'order' => 'DESC',
-        );
+        ];
 
         $custom_query = new WP_Query( $custom_query_args );
 
@@ -394,7 +394,7 @@ class VRodos_Core_Manager {
         return $sceneIds;
     }
 
-    public static function vrodos_project_type_icon($project_category){
+    public static function vrodos_project_type_icon($project_category): string {
 
         // Set game type icon
         switch($project_category){
@@ -412,7 +412,7 @@ class VRodos_Core_Manager {
         return $project_type_icon;
     }
 
-    public static function vrodos_return_project_type($id) {
+    public static function vrodos_return_project_type($id): ?stdClass {
 
         if (!$id) {
             return null;
@@ -431,7 +431,7 @@ class VRodos_Core_Manager {
         return $obj;
     }
 
-    public static function vrodos_getEditpage($type){
+    public static function vrodos_getEditpage($type) {
 
         switch ($type) {
             case 'allgames':
@@ -456,19 +456,19 @@ class VRodos_Core_Manager {
         }
 
         if ($templateURL) {
-            return get_pages(array(
+            return get_pages([
                 'hierarchical' => 0,
                 'parent' => -1,
                 'meta_key' => '_wp_page_template',
                 'meta_value' => $templateURL
-            ));
+            ]);
         } else {
             return false;
         }
     }
 
     public static function vrEditorBreadcrumpDisplay($scene_post, $goBackTo_AllProjects_link,
-                                   $project_type, $project_type_icon, $project_post){
+                                   $project_type, $project_type_icon, $project_post): void {
 
 
         $scene_title = $scene_post ? $scene_post->post_title : ' ';
@@ -514,7 +514,7 @@ class VRodos_Core_Manager {
      * @param $gameProjectID
      * @return array
      */
-    public static function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID){
+    public static function vrodos_get_assets_by_game($gameProjectSlug, $gameProjectID): array {
 
         $allAssets = [];
 //	// find the joker game slug e.g. "Archaeology-joker"
@@ -523,17 +523,17 @@ class VRodos_Core_Manager {
 //	// Slugs are low case "Archaeology-joker" -> "archaeology-joker"
 //	$joker_game_slug = strtolower($joker_game_slug);
 
-        $queryargs = array(
+        $queryargs = [
             'post_type' => 'vrodos_asset3d',
             'posts_per_page' => -1,
-            'tax_query' => array(
-                array(
+            'tax_query' => [
+                [
                     'taxonomy' => 'vrodos_asset3d_pgame',
                     'field' => 'slug',
-                    'terms' => array($gameProjectSlug, 'vrexpo-joker', 'archaeology-joker', 'virtualproduction-joker')
-                )
-            )
-        );
+                    'terms' => [$gameProjectSlug, 'vrexpo-joker', 'archaeology-joker', 'virtualproduction-joker']
+                ]
+            ]
+        ];
 
         $custom_query = new WP_Query( $queryargs );
 
@@ -606,7 +606,7 @@ class VRodos_Core_Manager {
         return $allAssets;
     }
 
-    public static function vrodos_getDefaultJSONscene($mygameType){
+    public static function vrodos_getDefaultJSONscene($mygameType): string {
 
         $p = plugin_dir_path( __DIR__ );
 
@@ -622,7 +622,7 @@ class VRodos_Core_Manager {
     }
 
     /* Get all game projects of the user */
-    public static function vrodos_get_user_game_projects($user_id, $isUserAdmin){
+    public static function vrodos_get_user_game_projects($user_id, $isUserAdmin): array {
 
         $games_slugs = ['archaeology-joker'];
 
@@ -630,11 +630,11 @@ class VRodos_Core_Manager {
         if($user_id==0)
             return $games_slugs;
 
-        $custom_query_args = array(
+        $custom_query_args = [
     //        'author' => $user_id,
             'post_type' => 'vrodos_game',
             'posts_per_page' => -1,
-        );
+        ];
 
         // if user is not admin then add as filter the author (else the admin can see all authors)
         if (!$isUserAdmin)
@@ -656,28 +656,28 @@ class VRodos_Core_Manager {
         return array_unique ($games_slugs);
     }
 
-    public static function get_scenes_wonder_around() {
-        $allScenes = [];
+    public static function get_scenes_wonder_around(): array {
+        $allAssets = [];
 
-        $custom_query_args = array(
+        $custom_query_args = [
             'post_type'      => 'vrodos_scene',
             'posts_per_page' => - 1,
-            'tax_query'      => array(
-                array(
+            'tax_query'      => [
+                [
                     'taxonomy' => 'vrodos_scene_yaml',
                     'field'    => 'slug',
                     'terms'    => 'wonderaround-yaml',
-                ),
-            ),
+                ],
+            ],
             'orderby'        => 'ID',
             'order'          => 'DESC',
             /*'paged' => $paged,*/
-        );
+        ];
 
         $custom_query = new WP_Query( $custom_query_args );
 
-        if ( $custom_query->have_posts() ) :
-            while ( $custom_query->have_posts() ) :
+        if ( $custom_query->have_posts() ) {
+            while ( $custom_query->have_posts() ) {
 
                 $custom_query->the_post();
                 $scene_id = get_the_ID();
@@ -692,26 +692,26 @@ class VRodos_Core_Manager {
                     'scene_parent_project'=>$scenePGame
                 ];
 
-            endwhile;
-        endif;
+            }
+        }
 
         return $allAssets;
     }
 
-    public static function get_assets($games_slugs){
+    public static function get_assets($games_slugs): array {
         $allAssets = [];
-        $queryargs = array(
+        $queryargs = [
             'post_type' => 'vrodos_asset3d',
             'posts_per_page' => -1
-        );
+        ];
 
         if ($games_slugs){
-            $queryargs['tax_query'] = array(
-                array(
+            $queryargs['tax_query'] = [
+                [
                     'taxonomy' => 'vrodos_asset3d_pgame',
                     'field' => 'slug',
                     'terms' => $games_slugs
-                ));
+                ]];
         }
 
         $custom_query = new WP_Query( $queryargs );
@@ -803,7 +803,7 @@ class VRodos_Core_Manager {
      * @param $gameType
      * @return array
      */
-    public static function vrodos_get_assetids_joker($gameType){
+    public static function vrodos_get_assetids_joker($gameType): array {
 
         $assetIds = [];
 
@@ -813,17 +813,17 @@ class VRodos_Core_Manager {
         // Slugs are low case "Archaeology-joker" -> "archaeology-joker"
         $joker_game_slug = strtolower($joker_game_slug);
 
-        $queryargs = array(
+        $queryargs = [
             'post_type' => 'vrodos_asset3d',
             'posts_per_page' => -1,
-            'tax_query' => array(
-                array(
+            'tax_query' => [
+                [
                     'taxonomy' => 'vrodos_asset3d_pgame',
                     'field' => 'slug',
                     'terms' => $joker_game_slug
-                )
-            )
-        );
+                ]
+            ]
+        ];
 
         $custom_query = new WP_Query( $queryargs );
 
@@ -840,29 +840,29 @@ class VRodos_Core_Manager {
         return $assetIds;
     }
 
-    public static function getProjectScenes($parent_project_id_as_term_id){
+    public static function getProjectScenes($parent_project_id_as_term_id): WP_Query {
 
-        $custom_query_args = array(
+        $custom_query_args = [
             'post_type' => 'vrodos_scene',
             'posts_per_page' => -1,
-            'tax_query' => array(
-                array(
+            'tax_query' => [
+                [
                     'taxonomy' => 'vrodos_scene_pgame',
                     'field'    => 'term_id',
                     'terms'    => $parent_project_id_as_term_id,
-                ),
-            ),
+                ],
+            ],
             'orderby' => 'ID',
             'order' => 'DESC',
             /*'paged' => $paged,*/
-        );
+        ];
 
         $custom_query = new WP_Query( $custom_query_args );
 
         return $custom_query;
     }
 
-    public static function get_3D_model_files($assetpostMeta, $asset_id){
+    public static function get_3D_model_files($assetpostMeta, $asset_id): array {
 
         $mtl_file_name = $obj_file_name = $pdb_file_name = $glb_file_name = $fbx_file_name =
         $textures_fbx_string_connected = $path_url = null;
@@ -890,13 +890,13 @@ class VRodos_Core_Manager {
         } else if (array_key_exists('vrodos_asset3d_fbx', $assetpostMeta)) {
 
             // Get texture attachments of post
-            $args = array(
+            $args = [
                 'posts_per_page' => 100,
                 'order'          => 'DESC',
                 'post_mime_type' => 'image',
                 'post_parent'    => $asset_id,
                 'post_type'      => 'attachment'
-            );
+            ];
 
             $attachments_array =  get_children( $args,OBJECT );  //returns Array ( [$image_ID].
 
@@ -927,28 +927,28 @@ class VRodos_Core_Manager {
 
 
 
-        return array('mtl'=>$mtl_file_name,
+        return ['mtl'=>$mtl_file_name,
             'obj'=>$obj_file_name,
             'pdb'=>$pdb_file_name,
             'glb'=>$glb_file_name,
             'fbx'=>$fbx_file_name,
             'texturesFbx'=>$textures_fbx_string_connected,
-            'path'=>$path_url);
+            'path'=>$path_url];
     }
 
 
-    public static function vrodos_delete_asset_3d_from_scenes($asset_id, $game_slug) {
-        $scenes_query_args = array(
+    public static function vrodos_delete_asset_3d_from_scenes($asset_id, $game_slug): void {
+        $scenes_query_args = [
             'post_type' => 'vrodos_scene',
             'posts_per_page' => -1,
-            'tax_query' => array(
-                array(
+            'tax_query' => [
+                [
                     'taxonomy' => 'vrodos_scene_pgame',
                     'field' => 'slug',
                     'terms' => $game_slug,
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
 
         $scenes_query = new WP_Query($scenes_query_args);
 
@@ -970,10 +970,10 @@ class VRodos_Core_Manager {
 
                     $scene_data['objects'] = array_values($scene_data['objects']);
                     $updated_scene_content = json_encode($scene_data);
-                    wp_update_post(array(
+                    wp_update_post([
                         'ID' => $scene_id,
                         'post_content' => $updated_scene_content,
-                    ));
+                    ]);
                 }
             }
         }

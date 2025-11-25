@@ -9,34 +9,34 @@ class VRodos_Pages_Manager {
     protected $templates;
 
     public function __construct() {
-        $this->templates = array();
+        $this->templates = [];
 
         // Add a filter to the attributes metabox to inject template into the cache.
         if (version_compare(floatval(get_bloginfo('version')), '4.7', '<')) {
             // 4.6 and older
-            add_filter('page_attributes_dropdown_pages_args', array($this, 'register_project_templates'));
+            add_filter('page_attributes_dropdown_pages_args', [$this, 'register_project_templates']);
         } else {
             // Add a filter to the wp 4.7 version attributes metabox
-            add_filter('theme_page_templates', array($this, 'add_new_template'));
+            add_filter('theme_page_templates', [$this, 'add_new_template']);
         }
 
         // Add a filter to the save post to inject out template into the page cache
-        add_filter('wp_insert_post_data', array($this, 'register_project_templates'));
+        add_filter('wp_insert_post_data', [$this, 'register_project_templates']);
 
         // Add a filter to the template include to determine if the page has our
         // template assigned and return it's path
-        add_filter('template_include', array($this, 'view_project_template'));
+        add_filter('template_include', [$this, 'view_project_template']);
 
         // Add your templates to this array.
-        $this->templates = array(
+        $this->templates = [
             '/templates/vrodos-project-manager-template.php' => 'Project Manager Template',
             '/templates/vrodos-assets-list-template.php'   => 'Assets List Template',
             '/templates/vrodos-edit-3D-scene-template.php'   => 'Scene 3D Editor Template',
             '/templates/vrodos-view-3D-scene-template.php'   => 'Scene 3D Viewer Template',
             '/templates/vrodos-asset-editor-template.php'    => 'Asset Editor Template',
-        );
+        ];
 
-        add_action( 'admin_notices', array($this, 'vrodos_fx_admin_notice_notice') );
+        add_action( 'admin_notices', [$this, 'vrodos_fx_admin_notice_notice'] );
     }
 
     public function add_new_template($posts_templates) {
