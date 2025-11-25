@@ -7,7 +7,22 @@
  * Author: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
  * Author URI: https://vrodos.iti.gr
  * Version: 2.2
+ * Requires at least: 6.8
+ * Requires PHP: 8.1
  */
+
+// Exit if accessed directly
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Check PHP version before proceeding
+if (version_compare(PHP_VERSION, '8.1.0', '<')) {
+    add_action('admin_notices', function() {
+        echo '<div class="error"><p><strong>VRodos Error:</strong> This plugin requires PHP 8.1 or higher. You are running PHP ' . PHP_VERSION . '. Please upgrade your PHP version.</p></div>';
+    });
+    return;
+}
 
 if ( ! defined( 'VRODOS_PLUGIN_FILE' ) ) {
     define( 'VRODOS_PLUGIN_FILE', __FILE__ );

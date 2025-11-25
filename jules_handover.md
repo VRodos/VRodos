@@ -121,8 +121,8 @@ All AJAX endpoints are centralized in [`class-vrodos-ajax-handler.php`](file:///
 
 ## 4. Technology Stack
 
-- **Backend**: PHP 7+, WordPress 6+
-- **Database**: MySQL 5+
+- **Backend**: PHP 8.1+, WordPress 6.8+
+- **Database**: MySQL 8.0+ or MariaDB 10.6+
 - **Frontend**: Vanilla JavaScript (ES5/ES6)
 - **3D Rendering**: Three.js r147
 - **VR Framework**: A-Frame 1.4.2
