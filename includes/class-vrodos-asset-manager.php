@@ -243,7 +243,7 @@ class VRodos_Asset_Manager {
 
             // Other Libraries
             array('vrodos_load_datgui', $plugin_url_js . 'datgui/0.7.9/dat.gui.min.js'),
-            array('vrodos_material_scripts', plugin_dir_url(VRODOS_PLUGIN_FILE) . 'node_modules/material-components-web/dist/material-components-web.js'),
+            array('vrodos_material_scripts', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.js'),
         );
 
         foreach ($scripts as $script) {
@@ -260,7 +260,7 @@ class VRodos_Asset_Manager {
         wp_register_style( 'vrodos_datgui', $plugin_url . 'js_libs/datgui/0.7.9/dat.gui.css' );
         wp_register_style( 'vrodos_dashboard_table', $plugin_url . 'css/vrodos_dashboard_table_style.css' );
         wp_register_style( 'vrodos_3D_editor_browser', $plugin_url . 'css/vrodos_3D_editor_browser.css' );
-        wp_register_style( 'vrodos_material_stylesheet', $plugin_url . 'node_modules/material-components-web/dist/material-components-web.css' );
+        wp_register_style( 'vrodos_material_stylesheet', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.css' );
         wp_register_style( 'vrodos_frontend_stylesheet', $plugin_url . 'css/vrodos_frontend.css' );
         wp_register_style( 'vrodos_asseteditor_stylesheet', $plugin_url . 'css/vrodos_asseteditor.css' );
         wp_register_style( 'vrodos_widgets_stylesheet', $plugin_url . 'css/vrodos_widgets.css' );
