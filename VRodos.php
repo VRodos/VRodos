@@ -82,10 +82,6 @@ new VRodos_Settings_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-shortcode-manager.php');
 new VRodos_Shortcode_Manager();
 
-// Block Manager Class
-require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-block-manager.php');
-new VRodos_Block_Manager();
-
 // Widget Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-widget-manager.php');
 new VRodos_Widget_Manager();
