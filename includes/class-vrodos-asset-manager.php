@@ -203,6 +203,8 @@ class VRodos_Asset_Manager {
         }
 
         // Stylesheet
+        wp_enqueue_style('vrodos_frontend_stylesheet');
+        wp_enqueue_style('vrodos_material_stylesheet');
         wp_enqueue_style('vrodos_asseteditor_stylesheet');
 
         // Three js : for simple rendering
@@ -227,6 +229,23 @@ class VRodos_Asset_Manager {
         // to capture screenshot of the 3D molecule and its tags
         wp_enqueue_script('vrodos_html2canvas');
 
+        wp_enqueue_script('vrodos_asset_editor_page');
+
+        $data = VRodos_Asset_CPT_Manager::prepare_asset_editor_template_data();
+        $localized_data = array(
+            'isAdmin' => is_admin() ? 'back' : 'front',
+            'glb_file_name' => $data['glb_file_name'],
+            'no_img_path_url' => $data['no_img_path_url'],
+            'asset_title_value' => $data['asset_title_value'],
+            'back_3d_color' => $data['back_3d_color'],
+            'isUserloggedIn' => $data['isUserloggedIn'],
+            'assettrs_saved' => $data['assettrs_saved'],
+            'sshotPreviewDefaultImg' => $data['scrnImageURL'],
+
+        );
+        wp_localize_script('vrodos_asset_editor_page', 'vrodos_asset_editor_data', $localized_data);
+
+
         // Content Interlinking
         wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
             plugin_dir_url(VRODOS_PLUGIN_FILE).'js_libs/content_interlinking_commands/content_interlinking.js', array('jquery') );
@@ -242,6 +261,7 @@ class VRodos_Asset_Manager {
 
         $scripts = array(
             // General Scripts
+            array('vrodos_asset_editor_page', $plugin_url_js . 'vrodos_asset_editor_page.js', array('jquery', 'vrodos_asset_editor_scripts')),
             array('vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js'),
             array('vrodos_scripts', $plugin_url_js . 'vrodos_scripts.js'),
             array('vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'),
