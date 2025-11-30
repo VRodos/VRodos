@@ -5,71 +5,71 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class VRodos_Upload_Manager {
-	/**
-	 * Create extra 3D files for the asset.
-	 */
-	/**
-	 * Create extra 3D files for the asset.
-	 */
-	public static function create_asset_3dfiles_extra_frontend($asset_new_id, $project_id, $asset_cat_id): void {
-		// Clear out all previous attachments
-		$attachments = get_children( ['post_parent' => $asset_new_id, 'post_type' => 'attachment'] );
-		foreach ($attachments as $attachment) {
-			if (strpos($attachment->post_title, 'screenshot') === false) {
-				wp_delete_attachment($attachment->ID, true);
-			}
-		}
+    /**
+     * Create extra 3D files for the asset.
+     */
+    /**
+     * Create extra 3D files for the asset.
+     */
+    public static function create_asset_3dfiles_extra_frontend($asset_new_id, $project_id, $asset_cat_id): void {
+        // Clear out all previous attachments
+        $attachments = get_children( ['post_parent' => $asset_new_id, 'post_type' => 'attachment'] );
+        foreach ($attachments as $attachment) {
+            if (strpos($attachment->post_title, 'screenshot') === false) {
+                wp_delete_attachment($attachment->ID, true);
+            }
+        }
 
-		// Upload and update DB
-		if (isset($_POST['glbFileInput']) && $_POST['glbFileInput']) {
-			$glb_file_id = self::upload_asset_text(
-				null,
-				'glb_' . $asset_new_id . '_' . $asset_cat_id,
-				$asset_new_id,
-				$_FILES,
-				0,
-				$project_id
-			);
-			update_post_meta($asset_new_id, 'vrodos_asset3d_glb', $glb_file_id);
-		}
-	}
+        // Upload and update DB
+        if (isset($_POST['glbFileInput']) && $_POST['glbFileInput']) {
+            $glb_file_id = self::upload_asset_text(
+                null,
+                'glb_' . $asset_new_id . '_' . $asset_cat_id,
+                $asset_new_id,
+                $_FILES,
+                0,
+                $project_id
+            );
+            update_post_meta($asset_new_id, 'vrodos_asset3d_glb', $glb_file_id);
+        }
+    }
 
-	/**
-	 * Add images to the asset.
-	 */
-	/**
-	 * Add images to the asset.
-	 */
-	public static function create_asset_add_images_frontend($asset_id, $file): void {
-		$attachment_id = self::upload_img_vid_aud($file, $asset_id);
-		update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', $attachment_id);
-	}
+    /**
+     * Add images to the asset.
+     */
+    /**
+     * Add images to the asset.
+     */
+    public static function create_asset_add_images_frontend($asset_id, $file): void {
+        $attachment_id = self::upload_img_vid_aud($file, $asset_id);
+        update_post_meta($asset_id, 'vrodos_asset3d_poi_imgtxt_image', $attachment_id);
+    }
 
-	/**
-	 * Add audio to the asset.
-	 */
-	/**
-	 * Add audio to the asset.
-	 */
-	public static function create_asset_add_audio_frontend($asset_new_id): void {
-		if (isset($_FILES['audioFileInput']) && $_FILES['audioFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
-			$attachment_audio_id = self::upload_img_vid_aud($_FILES['audioFileInput'], $asset_new_id);
-			update_post_meta($asset_new_id, 'vrodos_asset3d_audio', $attachment_audio_id);
-		}
-	}
+    /**
+     * Add audio to the asset.
+     */
+    /**
+     * Add audio to the asset.
+     */
+    public static function create_asset_add_audio_frontend($asset_new_id): void {
+        if (isset($_FILES['audioFileInput']) && $_FILES['audioFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $attachment_audio_id = self::upload_img_vid_aud($_FILES['audioFileInput'], $asset_new_id);
+            update_post_meta($asset_new_id, 'vrodos_asset3d_audio', $attachment_audio_id);
+        }
+    }
 
-	/**
-	 * Add video to the asset.
-	 */
-	/**
-	 * Add video to the asset.
-	 */
-	public static function create_asset_add_video_frontend($asset_new_id): void {
-		if (isset($_FILES['videoFileInput']) && $_FILES['videoFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
-			$attachment_video_id = self::upload_img_vid_aud($_FILES['videoFileInput'], $asset_new_id);
-			update_post_meta($asset_new_id, 'vrodos_asset3d_video', $attachment_video_id);
-		}
-	}
+    /**
+     * Add video to the asset.
+     */
+    /**
+     * Add video to the asset.
+     */
+    public static function create_asset_add_video_frontend($asset_new_id): void {
+        if (isset($_FILES['videoFileInput']) && $_FILES['videoFileInput']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $attachment_video_id = self::upload_img_vid_aud($_FILES['videoFileInput'], $asset_new_id);
+            update_post_meta($asset_new_id, 'vrodos_asset3d_video', $attachment_video_id);
+        }
+    }
     public static function register_hooks(): void {
         // All hooks related to file uploads
         add_filter( 'upload_dir', [ __CLASS__, 'upload_dir_for_scenes_or_assets' ] );
@@ -315,27 +315,34 @@ class VRodos_Upload_Manager {
         $filename = $parentPostId . '_sshot.png';
         $decoded_image = base64_decode(substr($image, strpos($image, ",") + 1));
 
-        // If an old screenshot exists, we overwrite it.
+        // If an old screenshot exists, try to overwrite it to preserve the attachment ID.
         if ($existing_screenshot_id) {
             $existing_url = wp_get_attachment_url($existing_screenshot_id);
-            $existing_path = str_replace(get_site_url(), ABSPATH, $existing_url);
-            $existing_path = wp_normalize_path($existing_path);
+            // This project has a legacy issue where get_attached_file() can be unreliable.
+            // The correct procedure is to convert the URL to an absolute path.
+            if ($existing_url) {
+                $existing_path = str_replace(get_site_url(), ABSPATH, $existing_url);
+                $existing_path = wp_normalize_path($existing_path);
 
-            // Overwrite the file on disk, but only if the path is valid.
-            if (!empty($existing_path)) {
-                $file_return = file_put_contents($existing_path, $decoded_image);
+                // Check if the path is valid and the file is writable before attempting to overwrite.
+                if (!empty($existing_path) && is_writable($existing_path)) {
+                    $file_put_contents_return = file_put_contents($existing_path, $decoded_image);
 
-                // Only update metadata if the file was written successfully.
-                if ($file_return !== false) {
-                    // Update metadata to reflect the change (important for cache busting and correct display).
-                    wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
+                    // If the overwrite was successful, update metadata and return.
+                    if ($file_put_contents_return !== false) {
+                        wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
 
-                    // The in-place update was successful, so we can return.
-                    remove_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
-                    unset($_REQUEST['post_id']);
-                    return $existing_screenshot_id;
+                        // The in-place update was successful. Clean up and return.
+                        remove_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
+                        unset($_REQUEST['post_id']);
+                        return $existing_screenshot_id;
+                    }
                 }
             }
+
+            // If we reached here, it means the URL was invalid or the overwrite failed.
+            // Delete the old attachment so we can create a new one, preventing orphaned media.
+            wp_delete_attachment($existing_screenshot_id, true);
         }
 
         // If no old screenshot exists, we create a new one.
