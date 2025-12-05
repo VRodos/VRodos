@@ -244,7 +244,7 @@ class VRodos_Compiler_Manager {
         $content        = $this->reader( $filenameSource );
         $content        = str_replace( "Client.html", "Client_" . $scene_id . ".html", $content );
         $content        = str_replace( "project_sceneId", $project_title . " - " . $scene_title[0], $content );
-        return $this->writer( $this->plugin_path_dir . "/networked-aframe/out/" . "index_" . $scene_id . ".html", $content );
+        return $this->writer( $this->plugin_path_dir . "/runtime/build/" . "index_" . $scene_id . ".html", $content );
     }
 
     private function createMasterClient($project_title, $scene_id, $scene_title, $scene_json, $showPawnPositions, $index, $project_id, $scene_id_list){
@@ -1180,7 +1180,7 @@ class VRodos_Compiler_Manager {
         $contentNew = $dom->saveHTML();
 
         // Write back to root
-        return $this->writer($this->plugin_path_dir.'/networked-aframe/out/Master_Client_'.$scene_id.".html", $contentNew);
+        return $this->writer($this->plugin_path_dir.'/runtime/build/Master_Client_'.$scene_id.".html", $contentNew);
     }
 
     private function includeDoorFunctionality($a_entity, $door_link) {
@@ -1249,7 +1249,7 @@ class VRodos_Compiler_Manager {
         $contentNew = $dom->saveHTML($dom->documentElement);
 
         // Write back to root
-        return $this->writer($this->plugin_path_dir.'/networked-aframe/out/Simple_Client_'.$scene_id.".html", $contentNew);
+        return $this->writer($this->plugin_path_dir.'/runtime/build/Simple_Client_'.$scene_id.".html", $contentNew);
     }
 
     private function replace_sprite_meta( $sprite_meta_yaml, $sprite_meta_guid ) {

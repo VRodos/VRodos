@@ -131,6 +131,7 @@ test_compiler/
 /semantics/
 /peer-calls/
 /includes/translate/
-/networked-aframe/out/*.html
+/build/
 /networked-aframe/server/keys.json
 
+/runtime/build/
