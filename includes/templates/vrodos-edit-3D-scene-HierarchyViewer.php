@@ -108,7 +108,7 @@
                         <div class="mdc-radio__inner-circle"></div>
                     </div>
                 </div>
-                <label id="sceneSkyRadio-label" for="sceneNone" style="margin-bottom: 0;">None</label>
+                <label id="sceneSkyRadio-label" for="sceneNone" style="margin-bottom: 0;">Background: Horizon</label>
             </li>
             </label>
             <label for="sceneColorRadio">

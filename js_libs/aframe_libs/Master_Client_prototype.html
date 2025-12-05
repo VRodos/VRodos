@@ -456,13 +456,23 @@
 
                 switch (this.data.selChoice) {
                     case "0":
-                        backgroundEl.setAttribute("background", "color", "#ffffff");
-
+                        // Background: Horizon
+                        backgroundEl.removeAttribute("background");
+                        if (!document.querySelector('a-sun-sky')) {
+                            let sunSky = document.createElement('a-sun-sky');
+                            backgroundEl.appendChild(sunSky);
+                        }
                         break;
                     case "1":
+                        // Background: Color
+                        let sunSky = document.querySelector('a-sun-sky');
+                        if (sunSky) {
+                            sunSky.parentNode.removeChild(sunSky);
+                        }
                         backgroundEl.setAttribute("background", "color", this.data.color);
                         break;
                     case "2":
+                        // Presets
                         if (this.data.presChoice == "ocean") {
                             let sky = document.createElement('a-sky');
                             sky.setAttribute("color", "#a4bede");
