@@ -323,6 +323,7 @@ class VRodos_Compiler_Manager {
                 $a_asset_sky = $dom->createElement( "img" );
                 $a_asset_sky->setAttribute("id", "custom_sky");
                 $a_asset_sky->setAttribute("src", $image_path );
+                $a_asset_sky->setAttribute("crossorigin", "anonymous");
                 $a_asset->appendChild($a_asset_sky);
                 $ascene->appendChild($a_asset);
             }else{
@@ -704,6 +705,7 @@ class VRodos_Compiler_Manager {
                         $a_asset_fs->setAttribute("id", "video_fullScreen_$uuid");
                         //$a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/fullscreen.png");
                         $a_asset_fs->setAttribute("src",  plugins_url( '../VRodos/assets/images/fullscreen.png', dirname(__FILE__)));
+                        $a_asset_fs->setAttribute("crossorigin", "anonymous");
 
 
                         $a_asset_ex = $dom->createElement( "img" );
@@ -711,18 +713,21 @@ class VRodos_Compiler_Manager {
                         $a_asset_ex->setAttribute("id", "video_exit_$uuid");
                         //$a_asset_ex->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/exit.png");
                         $a_asset_ex->setAttribute("src",  plugins_url( '../VRodos/assets/images/exit.png', dirname(__FILE__)));
+                        $a_asset_ex->setAttribute("crossorigin", "anonymous");
 
                         $a_asset_pl = $dom->createElement( "img" );
                         $a_asset_pl->setAttribute("mixin", "vid_panel");
                         $a_asset_pl->setAttribute("id", "video_pl_$uuid");
                         //$a_asset_pl->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/play.png");
                         $a_asset_pl->setAttribute("src",  plugins_url( '../VRodos/assets/images/play.png', dirname(__FILE__)));
+                        $a_asset_pl->setAttribute("crossorigin", "anonymous");
 
                         $a_asset_pas = $dom->createElement( "img" );
                         $a_asset_pas->setAttribute("mixin", "vid_panel");
                         $a_asset_pas->setAttribute("id", "video_pas_$uuid");
                         //$a_asset_pas->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/pause.png");
                         $a_asset_pas->setAttribute("src",  plugins_url( '../VRodos/assets/images/pause.png', dirname(__FILE__)));
+                        $a_asset_pas->setAttribute("crossorigin", "anonymous");
 
 
                         $a_video_asset = $dom->createElement( "video" );
