@@ -62,6 +62,11 @@ function warnOnInvalidNetworkUpdate() {
   NAF.log.warn(`Received invalid network update.`);
 }
 
+function clearObject(obj) {
+  for (const key in obj) { delete obj[key]; }
+  return obj;
+}
+
 AFRAME.registerSystem("networked", {
   init() {
     // An array of "networked" component instances.
@@ -82,13 +87,15 @@ AFRAME.registerSystem("networked", {
   },
 
   tick: (function() {
+    // "d" is an array of entity datas per entity in this.components.
+    const data = { d: [] };
 
     return function() {
       if (!NAF.connection.adapter) return;
       if (this.el.clock.elapsedTime < this.nextSyncTime) return;
 
-      // "d" is an array of entity datas per entity in this.components.
-      const data = { d: [] };
+      // Reset the "d" array
+      data.d.length = 0;
 
       for (let i = 0, l = this.components.length; i < l; i++) {
         const c = this.components[i];
@@ -151,11 +158,12 @@ AFRAME.registerComponent('networked', {
     this.bufferQuaternion = new THREE.Quaternion();
     this.bufferScale = new THREE.Vector3();
 
-    var wasCreatedByNetwork = this.wasCreatedByNetwork();
+    var wasCreatedByNetwork = !!this.el.firstUpdateData;
 
     this.onConnected = this.onConnected.bind(this);
 
     this.syncData = {};
+    this.componentsData = {};
     this.componentSchemas =  NAF.schemas.getComponents(this.data.template);
     this.cachedElements = new Array(this.componentSchemas.length);
     this.networkUpdatePredicates = this.componentSchemas.map(x => (x.requiresNetworkUpdate && x.requiresNetworkUpdate()) || defaultRequiresUpdate());
@@ -238,10 +246,6 @@ AFRAME.registerComponent('networked', {
     return false;
   },
 
-  wasCreatedByNetwork: function() {
-    return !!this.el.firstUpdateData;
-  },
-
   initNetworkParent: function() {
     var parentEl = this.el.parentElement;
     if (parentEl['components'] && parentEl.components['networked']) {
@@ -267,6 +271,7 @@ AFRAME.registerComponent('networked', {
   firstUpdate: function() {
     var entityData = this.el.firstUpdateData;
     this.networkUpdate(entityData);
+    this.el.firstUpdateData = undefined;
   },
 
   onConnected: function() {
@@ -393,7 +398,7 @@ AFRAME.registerComponent('networked', {
 
       if (!componentElement) {
         if (fullSync) {
-          componentsData = componentsData || {};
+          componentsData = componentsData || clearObject(this.componentsData);
           componentsData[i] = null;
         }
         continue;
@@ -404,7 +409,7 @@ AFRAME.registerComponent('networked', {
 
       if (componentData === null) {
         if (fullSync) {
-          componentsData = componentsData || {};
+          componentsData = componentsData || clearObject(this.componentsData);
           componentsData[i] = null;
         }
         continue;
@@ -415,7 +420,7 @@ AFRAME.registerComponent('networked', {
       // Use networkUpdatePredicate to check if the component needs to be updated.
       // Call networkUpdatePredicate first so that it can update any cached values in the event of a fullSync.
       if (this.networkUpdatePredicates[i](syncedComponentData) || fullSync) {
-        componentsData = componentsData || {};
+        componentsData = componentsData || clearObject(this.componentsData);
         componentsData[i] = syncedComponentData;
       }
     }
@@ -470,14 +475,20 @@ AFRAME.registerComponent('networked', {
   /* Receiving updates */
 
   networkUpdate: function(entityData) {
-    // Avoid updating components if the entity data received did not come from the current owner.
-    if (entityData.lastOwnerTime < this.lastOwnerTime ||
-          (this.lastOwnerTime === entityData.lastOwnerTime && this.data.owner > entityData.owner)) {
+    // We received a network update but the component is not initialized yet,
+    // merge this.el.firstUpdateData with latest received entityData and return.
+    // The component initialization will call this.firstUpdate() that will call networkUpdate(this.el.firstUpdateData)
+    // https://github.com/networked-aframe/networked-aframe/issues/476
+    if (this.componentSchemas === undefined) {
+      if (this.el.firstUpdateData && this.el.firstUpdateData !== entityData) {
+        this.el.firstUpdateData.components = {...this.el.firstUpdateData.components, ...entityData.components};
+      }
       return;
     }
 
-    // Hack to solve this bug: https://github.com/networked-aframe/networked-aframe/issues/200
-    if (this.data === undefined) {
+    // Avoid updating components if the entity data received did not come from the current owner.
+    if (entityData.lastOwnerTime < this.lastOwnerTime ||
+          (this.lastOwnerTime === entityData.lastOwnerTime && this.data.owner > entityData.owner)) {
       return;
     }
 
@@ -580,6 +591,7 @@ AFRAME.registerComponent('networked', {
   },
 
   remove: function () {
+    document.body.removeEventListener('connected', this.onConnected, false);
     if (this.isMine() && NAF.connection.isConnected()) {
       var syncData = { networkId: this.data.networkId };
       if (NAF.entities.hasEntity(this.data.networkId)) {
