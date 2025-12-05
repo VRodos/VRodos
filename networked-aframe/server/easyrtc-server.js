@@ -18,7 +18,7 @@ let rawdata = fs.readFileSync(path.resolve(__dirname) + '/keys.json');
 let myIceServers = JSON.parse(rawdata);
 
 // Set process name
-process.title = "networked-aframe-server-" +port;
+process.title = "networked-aframe-server-" + port;
 
 // Setup and configure Express http server.
 const app = express();
@@ -36,9 +36,13 @@ if (process.env.NODE_ENV === "development") {
     );
 }
 
+// Serve HTML files from build directory
+app.use(express.static(path.resolve(__dirname, "..", "..", "build")));
+
+// Serve assets (js, css, dist, etc.) from networked-aframe/out
 app.use(express.static(path.resolve(__dirname, "..", "out")));
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
@@ -63,7 +67,7 @@ const webServer = http.createServer(app);
 
 const socketServer = require("socket.io")(webServer, {
     origins: [
-        'http://localhost:'+port,
+        'http://localhost:' + port,
         'https://vrodos-multiplaying.iti.gr/',
         'https://vrexpo-multi.iti.gr/',
         '*:*'
@@ -83,9 +87,9 @@ easyrtc.events.on("easyrtcAuth", (socket, easyrtcid, msg, socketCallback, callba
             return;
         }
 
-        connectionObj.setField("credential", msg.msgData.credential, {"isShared":false});
+        connectionObj.setField("credential", msg.msgData.credential, { "isShared": false });
 
-        console.log("["+easyrtcid+"] Credential saved!", connectionObj.getFieldValueSync("credential"));
+        console.log("[" + easyrtcid + "] Credential saved!", connectionObj.getFieldValueSync("credential"));
 
         callback(err, connectionObj);
     });
@@ -93,7 +97,7 @@ easyrtc.events.on("easyrtcAuth", (socket, easyrtcid, msg, socketCallback, callba
 
 // To test, lets print the credential to the console for every room join!
 easyrtc.events.on("roomJoin", (connectionObj, roomName, roomParameter, callback) => {
-    console.log("["+connectionObj.getEasyrtcid()+"] Credential retrieved!", connectionObj.getFieldValueSync("credential"));
+    console.log("[" + connectionObj.getEasyrtcid() + "] Credential retrieved!", connectionObj.getFieldValueSync("credential"));
     easyrtc.events.defaultListeners.roomJoin(connectionObj, roomName, roomParameter, callback);
 });
 
