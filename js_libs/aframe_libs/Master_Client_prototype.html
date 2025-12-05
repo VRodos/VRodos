@@ -21,10 +21,8 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <script src="js/aframe/1.7.1/aframe-v1.7.1.min.js"></script>
-    <!--<script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-master.min.js"></script>-->
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
-    <!--<script src="js/aframe/1.5.0/aframe-v1.5.0.min.js"></script>-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
     <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
 
@@ -32,7 +30,7 @@
     <script src="../dist/networked-aframe.js"></script>
 
     <!--<script src="js/a-water_alphamask_master.js"></script>-->
-    <!--<script src="js/sunsky/simple-sun-sky-1.2.3.js"></script>-->
+    <script src="https://unpkg.com/aframe-sun-sky@3.0.4/dist/aframe-sun-sky.min.js"></script>
 
     <script src="js/highlight_img.js"></script>
 
@@ -1245,7 +1243,7 @@
 
     <a-scene oculus-go-controls-enabled start-animation id="aframe-scene-container"
         fog="type: linear; color: #AAB; far: 230; near: 0" renderer="antialias: true;
-            sortObjects: true;
+            sortTransparentObjects: true;
             toneMapping: ACESFilmic;
             precision: high;
             alpha: true;" shadow="type: pcfsoft;" vr-mode-ui="enabled: true"
