@@ -21,508 +21,41 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <!-- A-Frame Core: Must be in the head and not deferred -->
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-
+    <!-- CSS -->
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
 
-    <style>
-        .button-tab {
-            background-color: #fff;
-            border: none;
-            border-radius: 1.5rem;
-            box-sizing: border-box;
-            color: #0d172a;
-            cursor: pointer;
-            display: inline-block;
-            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
-                Droid Sans, Helvetica Neue, sans-serif;
-            font-size: 0.8em;
-            font-weight: 600;
-            padding: 0;
-            text-align: center;
-            text-decoration: none #0d172a solid;
-            transition: all .1s cubic-bezier(.4, 0, .2, 1);
-            box-shadow: 0 1px 2px rgba(166, 175, 195, 0.25);
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-        }
-
-        .mdc-tab {
-            background-color: rgba(255, 255, 255, .54);
-            color: rgba(0, 0, 0, .23);
-        }
-
-        .mdc-tab--active {
-            background-color: white;
-            color: black;
-        }
-
-        .ChatWrapperStyle {
-            position: absolute;
-            bottom: 0;
-            height: auto;
-        }
-
-        .ChatWrapperStyleExpanded {
-            position: absolute;
-            height: auto;
-        }
-
-        .ChatMessagesStyle {
-            width: 450px;
-            background-color: rgba(0, 0, 0, .7);
-            overflow: auto;
-            z-index: 100;
-            bottom: 0;
-            left: 0;
-            display: flex;
-            flex-direction: column-reverse;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 14px;
-            color: #ccc;
-            text-shadow: 1px 1px 2px black;
-        }
-
-        .ChatMessagesStyleNormal {
-            height: 200px;
-            position: relative;
-        }
-
-        .ChatMessagesStyleExpanded {
-            height: 100%;
-            position: fixed;
-        }
-
-        .ChatMessagesStyleMinimized {
-            height: 0;
-            position: relative;
-        }
-
-        .IconButtonStyle {
-            background-color: transparent;
-            cursor: pointer;
-            border: none;
-            height: 24px;
-            width: 24px;
-            margin: 0 auto;
-            padding: 0 2px 0 2px;
-        }
-
-        .IconButtonStyle i {
-            text-shadow: 0 0 3px #fff;
-        }
-
-        .AvatarTypeSelection img {
-            display: block;
-        }
-
-        .AvatarTypeSelection label {
-            /*width: 20vw;
-            height: 20vw;*/
-            padding: 1vw;
-        }
-
-        .AvatarTypeSelection input[type=radio] {
-            display: none;
-        }
-
-        .AvatarTypeSelection label:hover {
-            opacity: 0.6;
-            cursor: pointer;
-        }
-
-        .AvatarTypeSelection label:active {
-            opacity: 0.4;
-            cursor: pointer;
-        }
-
-        .AvatarTypeSelection input[type=radio]:checked+label {
-            border: 10px solid rgb(228, 207, 94);
-        }
-
-        .RpmIframeStyle {
-            width: 1080px;
-            height: 800px;
-            margin: 0 auto;
-            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
-                Droid Sans, Helvetica Neue, sans-serif;
-            padding: 20px;
-            font-size: 14px;
-            border: none;
-            position: relative;
-            z-index: 9999;
-        }
-    </style>
-
-</head>
-
-<body id="master-client-body">
-
-    <div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
-
-        <div class="mdc-tab-bar" role="tablist"
-            style="position: relative; top: 0; right:30px; z-index:101; height: 30px;">
-            <div class="mdc-tab-scroller">
-
-                <button id="public-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="0"
-                    style="visibility: hidden">
-                    <span class="mdc-tab__content">
-                        <span class="mdc-tab__text-label">Public</span>
-                    </span>
-
-                </button>
-
-                <button id="private-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="1"
-                    style="visibility: hidden">
-                    <span class="mdc-tab__content">
-                        <span id="private-chat-button-label" class="mdc-tab__text-label">Private</span>
-                    </span>
-
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div id="chatControlsOverlay" style="position: relative; top: 0; left:0; z-index:101; height: 30px;">
-            <button id="color-changer" onclick="
-            let newColor = window.ntExample.randomColor();
-             document.getElementById('cameraA').setAttribute('player-info', 'color', newColor);
-             document.getElementById('color-changer').style.backgroundColor = newColor;
-             document.getElementById('color-changer').style.color = newColor;
-             gtag('event', 'player_color_change');
-        ">■</button>
-            <input id="username-overlay" maxlength="24" size="15"
-                oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)"
-                placeholder="Username" />
-            <input type="text" id="chatInput" placeholder="Message">
-            <button id="send-msg-chat-btn" style="right: 0; cursor: pointer">SEND</button>
-            <button id="expand-chat-btn" class="IconButtonStyle" title="Chat Size"><i
-                    class="material-icons">unfold_more</i></button>
-            <button id="minimize-chat-btn" class="IconButtonStyle" title="Minimize"><i
-                    class="material-icons">expand_more</i></button>
-            <button id="exit-help-btn" class="IconButtonStyle" title="Exit Private Chat" style="display: none"><i
-                    class="material-icons">close</i></button>
-        </div>
-        <div class="ChatMessagesStyle ChatMessagesStyleNormal" id="chat-messages-wrapper">
-            <div id="chat-messages"></div>
-        </div>
-    </div>
-
-    <div id="mediaPanel">
-        <div class="wrapperVideoElement" style="visibility: hidden">
-            <video id="video-preview" width="300" height="200" autoplay muted></video>
-            <video id="recording" hidden></video>
-        </div>
-
-        <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-            <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
-            <div id="directorline" style=""></div>
-
-
-            <div class="wrapperControlElement">
-                <label for="roomNameShow" title="Name of Room">&#127917;</label>
-                <span id="roomNameShow">roomname</span>
-            </div>
-
-            <div class="wrapperControlElement">
-                <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
-                <span id="occupantsNumberShow"></span>
-            </div>
-
-            <div class="wrapperControlElement">
-                <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying"
-                    title="Obtain status and control green screens">
-                    &#128260; &#9989;
-                </button>
-            </div>
-
-            <div class="wrapperControlElement">
-                <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
-                    &#127909; &#9654; &#128101;
-                </button>
-            </div>
-
-            <div class="wrapperControlLineElement">
-                <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
-                    ⚪️
-                </button>
-
-                <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video"
-                    style="visibility: hidden">
-                    💾️️
-                </a>
-
-                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden;"
-                    title="Upload Recording to MediaVerse" disabled>
-                    ⬆️️️
-                </button>
-            </div>
-            <div class="wrapperControlElement">
-                <span id="captured-video-label"></span>
-            </div>
-            <div class="wrapperControlElement">
-                <label for="positionShow" title="Camera Position">&#127909;</label>
-                <span id="positionShow"></span>
-            </div>
-
-            <div id="panelsSizeControlsDiv"></div>
-            <input id="node-url-input" hidden disabled />
-            <input id="node-token-input" hidden disabled />
-            <input id="is-base-scene-input" hidden disabled />
-        </div>
-    </div>
-
-
-    <!-- Avatar selection -->
-    <aside id="avatar-selection-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
-        aria-labelledby="Avatar selection popup" aria-describedby="You can select an avatar"
-        data-mdc-auto-init="MDCDialog">
-        <div class="mdc-dialog__surface">
-            <header class="mdc-dialog__header">
-                <h2 class="mdc-dialog__header__title">Welcome to our virtual exposition</h2>
-            </header>
-
-            <section class="mdc-dialog__body">
-                <div class="mdc-layout-grid">
-                    <div class="mdc-layout-grid__inner">
-                        <div class="mdc-layout-grid__cell--span-12">
-                            <div style="text-align: center">
-                                <h3 class="mdc-typography--headline">Please select an avatar type:</h3>
-                                <form name="avatarRadiosForm">
-                                    <div class="mdc-form-field AvatarTypeSelection">
-                                        <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio"
-                                            name="avatar-radios" value="no-avatar" checked>
-                                        <label for="no-avatar-radio">
-                                            <img src="media/img/no-avatar.png" width="128" height="128"
-                                                style="opacity:.6" />
-                                            <span>No avatar</span>
-                                        </label>
-
-                                        <input class="mdc-radio__native-control" type="radio" id="blob-radio"
-                                            value="blob" name="avatar-radios">
-                                        <label for="blob-radio">
-                                            <img src="media/img/blob-avatar.png" width="128" height="128" />
-                                            <span>A Blob</span>
-                                            <br>
-                                            <span>(Default)</span>
-                                        </label>
-
-                                        <input class="mdc-radio__native-control" type="radio" id="rpm-radio" value="rpm"
-                                            name="avatar-radios">
-                                        <label for="rpm-radio">
-                                            <img src="media/img/rpm-avatar.png" width="128" height="128" />
-                                            <span>Your personalized</span>
-                                            <br>
-                                            <span>3D avatar</span>
-                                        </label>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <footer class="mdc-dialog__footer">
-                <a id="selectAvatarBtn" onclick="selectAvatarType()"
-                    class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
-            </footer>
-        </div>
-        <div class="mdc-dialog__backdrop"></div>
-    </aside>
-
-
-    <!-- IMG POI Dialog component -->
-    <aside id="poi-img-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
-        aria-labelledby="Image POI popup" aria-describedby="Show Image POI details" data-mdc-auto-init="MDCDialog">
-        <div class="mdc-dialog__surface">
-            <header class="mdc-dialog__header">
-                <h2 id="poi-img-dialog-title" class="mdc-dialog__header__title"></h2>
-            </header>
-
-            <section class="mdc-dialog__body">
-                <div class="mdc-layout-grid">
-                    <div class="mdc-layout-grid__inner">
-                        <div class="mdc-layout-grid__cell--span-12">
-                            <div style="text-align: center">
-                                <img src="" alt="Image POI Image" id="poi-img-dialog-image"
-                                    style="width: auto; max-width: 100%;max-height: 260px;" />
-                            </div>
-                            <div style="text-align: left; overflow-y: auto;  max-height: 300px;">
-                                <span class="mdc-typography--body1" id="poi-img-dialog-description"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <footer class="mdc-dialog__footer">
-                <a
-                    class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
-            </footer>
-        </div>
-        <div class="mdc-dialog__backdrop"></div>
-    </aside>
-
-    <aside id="video-controls-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
-        aria-labelledby="Video controls popup" aria-describedby="Show Video controls">
-        <div class="mdc-dialog__surface">
-
-            <video controls controlsList="nodownload" id="video-panel-video" height="100%" width="100%">
-                Your browser does not support video.
-            </video>
-
-            <footer class="mdc-dialog__footer">
-                <a
-                    class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--cancel mdc-button--raised">Close</a>
-                <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised"
-                    style="display: none;" tabIndex="0">OK</a>
-            </footer>
-        </div>
-        <div class="mdc-dialog__backdrop"></div>
-    </aside>
-
-    <!--Ready Player Me iframe-->
-    <div style="text-align: center;">
-        <iframe id="rpm-iframe" class="RpmIframeStyle" allow="camera *; microphone *; clipboard-write" hidden></iframe>
-    </div>
-
-    <a-scene oculus-go-controls-enabled start-animation id="aframe-scene-container"
-        fog="type: linear; color: #AAB; far: 230; near: 0" renderer="antialias: true;
-            sortTransparentObjects: true;
-            toneMapping: ACESFilmic;
-            precision: high;
-            alpha: true;" shadow="type: pcfsoft;" vr-mode-ui="enabled: true"
-        loading-screen="dotsColor: gray; backgroundColor: black;">
-        <!--environment="ground:none"-->
-
-        <a-assets id="scene-assets">
-
-            <!-- Avatar Template -->
-            <template id="avatar-template-expo">
-                <a-entity class="avatar hideable" player-info avatar-movement-info>
-
-
-                    <!-- ReadyPlayerMe Avatar-->
-                    <a-entity gltf-model animation-embed="glb_id:ready-player-me-avatar" id="ready-player-me-avatar"
-                        class="rpm_avatar" position="0 0 -0.5" rotation="0 180 0" animation-mixer="clip: test;"
-                        visible="true" shadow="cast:true; receive:true;">
-                    </a-entity>
-
-                    <!-- Sphere Avatar-->
-                    <a-sphere class="head" scale="0.2 0.18 0.2" visible="false"
-                        shadow="cast:true; receive:true;"></a-sphere>
-                    <a-entity class="face" position="0 0.05 0" visible="false">
-                        <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04">
-                            <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
-                        </a-sphere>
-                        <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
-                            <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
-                        </a-sphere>
-                    </a-entity>
-
-
-                    <!-- Text component for a nametag; the value will be updated by the player-info component -->
-                    <a-text class="nametag" value="?" rotation="0 180 0" position="0.25 -0.35 0" side="double"
-                        scale=".5 .5 .5" visible="false"></a-text>
-                </a-entity>
-            </template>
-
-            <!-- Avatar template for MediaVerse projects-->
-            <template id="avatar-template">
-                <a-entity class="avatar hideable" networked-audio-source>
-
-                    <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="2" height="1.5"
-                        position="0 0.6 -0.15" material="side: double"
-                        networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
-                        render-order-change="2000">
-                    </a-plane>
-
-                    <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
-                        material="side: double" networked-video-source="streamName:screen">
-                    </a-plane>
-                </a-entity>
-            </template>
-
-            <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: black; shader: flat"></a-mixin>
-            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: white; shader: flat"
-                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
-                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
-            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
-                material="color: white; shader: flat" position="0 0 0.005"></a-mixin>
-            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.4; height: 0.8"
-                material="shader: flat;  transparent: true" position="0 0.455 0.002"></a-mixin>
-            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.4; height: 1.4"
-                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
-            <a-mixin id="poiEsc" geometry="primitive: plane; width: 1; height: 1" position="1 0.73 0.002"
-                material="shader: flat; transparent: true"></a-mixin>
-            <a-mixin id="poiImgNext" geometry="primitive: plane; width: 1; height: 1"
-                material="shader: flat; transparent: true" position="1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 1; height: 1"
-                material="shader: flat; transparent: true" position="-1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiEscFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position="1 0.73 0.002"></a-mixin>
-            <a-mixin id="poiImgPrevFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position="-1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiImgNextFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position=" 1 -0.5 0.002"></a-mixin>
-            <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.4; height: 0.14"
-                material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
-            <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; "
-                position="0.15 0.15 0.000001"></a-mixin>
-
-
-        </a-assets>
-
-        <a-entity id="player"></a-entity>
-        <a-entity id="actor"></a-entity>
-
-        <!-- oculus hands -->
-        <a-entity id="leftHand" oculus-touch-controls="hand: left" visible="false"></a-entity>
-        <a-entity id="rightHand" oculus-touch-controls="hand: right" visible="false" blink-controls></a-entity>
-
-
-    </a-scene>
-
-    <!-- Deferred scripts for improved performance -->
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
-    <script defer src="js/datgui/0.7.9/dat.gui.min.js"></script>
-    <script defer src="../easyrtc/easyrtc.js"></script>
-    <script defer src="../dist/networked-aframe.js"></script>
-    <script defer src="https://unpkg.com/aframe-sun-sky@3.0.4/dist/aframe-sun-sky.min.js"></script>
-    <script defer src="js/highlight_img.js"></script>
-    <script defer src="js/components/poi-image_component.js"></script>
-    <script defer src="js/components/poi-help_component.js"></script>
-    <script defer src="js/components/indicator_component.js"></script>
-    <script defer src="js/components/poi-link_component.js"></script>
-    <script defer src="js/components/door_component.js"></script>
-    <script defer src="js/components/video_component.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
-    <script defer
-        src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js"></script>
-    <script defer src="js/indicators_aframe.js"></script>
-    <script defer src="dist/material-components-web.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
-    <script defer src="js/components/chat_component.js"></script>
-
+    <!-- SCRIPTS - Loaded synchronously in the head to ensure everything is ready before the body is parsed -->
+    <!-- A-Frame Core -->
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+    <!-- External Libraries & Components -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
+    <script src="../easyrtc/easyrtc.js"></script>
+    <script src="../dist/networked-aframe.js"></script>
+    <script src="https://unpkg.com/aframe-sun-sky@3.0.4/dist/aframe-sun-sky.min.js"></script>
+    <script src="js/highlight_img.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js"></script>
+    <script src="js/indicators_aframe.js"></script>
+    <script src="dist/material-components-web.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
+
+    <!-- Custom Component Scripts -->
+    <script src="js/components/poi-image_component.js"></script>
+    <script src="js/components/poi-help_component.js"></script>
+    <script src="js/components/indicator_component.js"></script>
+    <script src="js/components/poi-link_component.js"></script>
+    <script src="js/components/door_component.js"></script>
+    <script src="js/components/video_component.js"></script>
+    <script src="js/components/chat_component.js"></script>
+
+    <!-- Inline Application Logic -->
     <script>
-    // Global variable to switch between interfaces for interaction modes.
-    let browsingModeVR;
-
-    document.addEventListener('DOMContentLoaded', function () {
-        browsingModeVR = false;
+        // Global variable to switch between interfaces for interaction modes.
+        let browsingModeVR = false;
 
         const vectorRequiresUpdateRotation = epsilon => {
             return () => {
@@ -1344,6 +877,477 @@
             }
         });
 
+    </script>
+    <style>
+        .button-tab {
+            background-color: #fff;
+            border: none;
+            border-radius: 1.5rem;
+            box-sizing: border-box;
+            color: #0d172a;
+            cursor: pointer;
+            display: inline-block;
+            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
+                Droid Sans, Helvetica Neue, sans-serif;
+            font-size: 0.8em;
+            font-weight: 600;
+            padding: 0;
+            text-align: center;
+            text-decoration: none #0d172a solid;
+            transition: all .1s cubic-bezier(.4, 0, .2, 1);
+            box-shadow: 0 1px 2px rgba(166, 175, 195, 0.25);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .mdc-tab {
+            background-color: rgba(255, 255, 255, .54);
+            color: rgba(0, 0, 0, .23);
+        }
+
+        .mdc-tab--active {
+            background-color: white;
+            color: black;
+        }
+
+        .ChatWrapperStyle {
+            position: absolute;
+            bottom: 0;
+            height: auto;
+        }
+
+        .ChatWrapperStyleExpanded {
+            position: absolute;
+            height: auto;
+        }
+
+        .ChatMessagesStyle {
+            width: 450px;
+            background-color: rgba(0, 0, 0, .7);
+            overflow: auto;
+            z-index: 100;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column-reverse;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            color: #ccc;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .ChatMessagesStyleNormal {
+            height: 200px;
+            position: relative;
+        }
+
+        .ChatMessagesStyleExpanded {
+            height: 100%;
+            position: fixed;
+        }
+
+        .ChatMessagesStyleMinimized {
+            height: 0;
+            position: relative;
+        }
+
+        .IconButtonStyle {
+            background-color: transparent;
+            cursor: pointer;
+            border: none;
+            height: 24px;
+            width: 24px;
+            margin: 0 auto;
+            padding: 0 2px 0 2px;
+        }
+
+        .IconButtonStyle i {
+            text-shadow: 0 0 3px #fff;
+        }
+
+        .AvatarTypeSelection img {
+            display: block;
+        }
+
+        .AvatarTypeSelection label {
+            /*width: 20vw;
+            height: 20vw;*/
+            padding: 1vw;
+        }
+
+        .AvatarTypeSelection input[type=radio] {
+            display: none;
+        }
+
+        .AvatarTypeSelection label:hover {
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        .AvatarTypeSelection label:active {
+            opacity: 0.4;
+            cursor: pointer;
+        }
+
+        .AvatarTypeSelection input[type=radio]:checked+label {
+            border: 10px solid rgb(228, 207, 94);
+        }
+
+        .RpmIframeStyle {
+            width: 1080px;
+            height: 800px;
+            margin: 0 auto;
+            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
+                Droid Sans, Helvetica Neue, sans-serif;
+            padding: 20px;
+            font-size: 14px;
+            border: none;
+            position: relative;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body id="master-client-body">
+
+    <div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
+
+        <div class="mdc-tab-bar" role="tablist"
+            style="position: relative; top: 0; right:30px; z-index:101; height: 30px;">
+            <div class="mdc-tab-scroller">
+
+                <button id="public-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="0"
+                    style="visibility: hidden">
+                    <span class="mdc-tab__content">
+                        <span class="mdc-tab__text-label">Public</span>
+                    </span>
+
+                </button>
+
+                <button id="private-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="1"
+                    style="visibility: hidden">
+                    <span class="mdc-tab__content">
+                        <span id="private-chat-button-label" class="mdc-tab__text-label">Private</span>
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div id="chatControlsOverlay" style="position: relative; top: 0; left:0; z-index:101; height: 30px;">
+            <button id="color-changer" onclick="
+            let newColor = window.ntExample.randomColor();
+             document.getElementById('cameraA').setAttribute('player-info', 'color', newColor);
+             document.getElementById('color-changer').style.backgroundColor = newColor;
+             document.getElementById('color-changer').style.color = newColor;
+             gtag('event', 'player_color_change');
+        ">■</button>
+            <input id="username-overlay" maxlength="24" size="15"
+                oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)"
+                placeholder="Username" />
+            <input type="text" id="chatInput" placeholder="Message">
+            <button id="send-msg-chat-btn" style="right: 0; cursor: pointer">SEND</button>
+            <button id="expand-chat-btn" class="IconButtonStyle" title="Chat Size"><i
+                    class="material-icons">unfold_more</i></button>
+            <button id="minimize-chat-btn" class="IconButtonStyle" title="Minimize"><i
+                    class="material-icons">expand_more</i></button>
+            <button id="exit-help-btn" class="IconButtonStyle" title="Exit Private Chat" style="display: none"><i
+                    class="material-icons">close</i></button>
+        </div>
+        <div class="ChatMessagesStyle ChatMessagesStyleNormal" id="chat-messages-wrapper">
+            <div id="chat-messages"></div>
+        </div>
+    </div>
+
+    <div id="mediaPanel">
+        <div class="wrapperVideoElement" style="visibility: hidden">
+            <video id="video-preview" width="300" height="200" autoplay muted></video>
+            <video id="recording" hidden></video>
+        </div>
+
+        <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
+            <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
+            <div id="directorline" style=""></div>
+
+
+            <div class="wrapperControlElement">
+                <label for="roomNameShow" title="Name of Room">&#127917;</label>
+                <span id="roomNameShow">roomname</span>
+            </div>
+
+            <div class="wrapperControlElement">
+                <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
+                <span id="occupantsNumberShow"></span>
+            </div>
+
+            <div class="wrapperControlElement">
+                <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying"
+                    title="Obtain status and control green screens">
+                    &#128260; &#9989;
+                </button>
+            </div>
+
+            <div class="wrapperControlElement">
+                <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
+                    &#127909; &#9654; &#128101;
+                </button>
+            </div>
+
+            <div class="wrapperControlLineElement">
+                <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
+                    ⚪️
+                </button>
+
+                <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video"
+                    style="visibility: hidden">
+                    💾️️
+                </a>
+
+                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden;"
+                    title="Upload Recording to MediaVerse" disabled>
+                    ⬆️️️
+                </button>
+            </div>
+            <div class="wrapperControlElement">
+                <span id="captured-video-label"></span>
+            </div>
+            <div class="wrapperControlElement">
+                <label for="positionShow" title="Camera Position">&#127909;</label>
+                <span id="positionShow"></span>
+            </div>
+
+            <div id="panelsSizeControlsDiv"></div>
+            <input id="node-url-input" hidden disabled />
+            <input id="node-token-input" hidden disabled />
+            <input id="is-base-scene-input" hidden disabled />
+        </div>
+    </div>
+
+
+    <!-- Avatar selection -->
+    <aside id="avatar-selection-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+        aria-labelledby="Avatar selection popup" aria-describedby="You can select an avatar"
+        data-mdc-auto-init="MDCDialog">
+        <div class="mdc-dialog__surface">
+            <header class="mdc-dialog__header">
+                <h2 class="mdc-dialog__header__title">Welcome to our virtual exposition</h2>
+            </header>
+
+            <section class="mdc-dialog__body">
+                <div class="mdc-layout-grid">
+                    <div class="mdc-layout-grid__inner">
+                        <div class="mdc-layout-grid__cell--span-12">
+                            <div style="text-align: center">
+                                <h3 class="mdc-typography--headline">Please select an avatar type:</h3>
+                                <form name="avatarRadiosForm">
+                                    <div class="mdc-form-field AvatarTypeSelection">
+                                        <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio"
+                                            name="avatar-radios" value="no-avatar" checked>
+                                        <label for="no-avatar-radio">
+                                            <img src="media/img/no-avatar.png" width="128" height="128"
+                                                style="opacity:.6" />
+                                            <span>No avatar</span>
+                                        </label>
+
+                                        <input class="mdc-radio__native-control" type="radio" id="blob-radio"
+                                            value="blob" name="avatar-radios">
+                                        <label for="blob-radio">
+                                            <img src="media/img/blob-avatar.png" width="128" height="128" />
+                                            <span>A Blob</span>
+                                            <br>
+                                            <span>(Default)</span>
+                                        </label>
+
+                                        <input class="mdc-radio__native-control" type="radio" id="rpm-radio" value="rpm"
+                                            name="avatar-radios">
+                                        <label for="rpm-radio">
+                                            <img src="media/img/rpm-avatar.png" width="128" height="128" />
+                                            <span>Your personalized</span>
+                                            <br>
+                                            <span>3D avatar</span>
+                                        </label>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="mdc-dialog__footer">
+                <a id="selectAvatarBtn" onclick="selectAvatarType()"
+                    class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
+            </footer>
+        </div>
+        <div class="mdc-dialog__backdrop"></div>
+    </aside>
+
+
+    <!-- IMG POI Dialog component -->
+    <aside id="poi-img-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+        aria-labelledby="Image POI popup" aria-describedby="Show Image POI details" data-mdc-auto-init="MDCDialog">
+        <div class="mdc-dialog__surface">
+            <header class="mdc-dialog__header">
+                <h2 id="poi-img-dialog-title" class="mdc-dialog__header__title"></h2>
+            </header>
+
+            <section class="mdc-dialog__body">
+                <div class="mdc-layout-grid">
+                    <div class="mdc-layout-grid__inner">
+                        <div class="mdc-layout-grid__cell--span-12">
+                            <div style="text-align: center">
+                                <img src="" alt="Image POI Image" id="poi-img-dialog-image"
+                                    style="width: auto; max-width: 100%;max-height: 260px;" />
+                            </div>
+                            <div style="text-align: left; overflow-y: auto;  max-height: 300px;">
+                                <span class="mdc-typography--body1" id="poi-img-dialog-description"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="mdc-dialog__footer">
+                <a
+                    class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
+            </footer>
+        </div>
+        <div class="mdc-dialog__backdrop"></div>
+    </aside>
+
+    <aside id="video-controls-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+        aria-labelledby="Video controls popup" aria-describedby="Show Video controls">
+        <div class="mdc-dialog__surface">
+
+            <video controls controlsList="nodownload" id="video-panel-video" height="100%" width="100%">
+                Your browser does not support video.
+            </video>
+
+            <footer class="mdc-dialog__footer">
+                <a
+                    class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--cancel mdc-button--raised">Close</a>
+                <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised"
+                    style="display: none;" tabIndex="0">OK</a>
+            </footer>
+        </div>
+        <div class="mdc-dialog__backdrop"></div>
+    </aside>
+
+    <!--Ready Player Me iframe-->
+    <div style="text-align: center;">
+        <iframe id="rpm-iframe" class="RpmIframeStyle" allow="camera *; microphone *; clipboard-write" hidden></iframe>
+    </div>
+
+    <a-scene oculus-go-controls-enabled start-animation id="aframe-scene-container"
+        fog="type: linear; color: #AAB; far: 230; near: 0" renderer="antialias: true;
+            sortTransparentObjects: true;
+            toneMapping: ACESFilmic;
+            precision: high;
+            alpha: true;" shadow="type: pcfsoft;" vr-mode-ui="enabled: true"
+        loading-screen="dotsColor: gray; backgroundColor: black;">
+        <!--environment="ground:none"-->
+
+        <a-assets id="scene-assets">
+
+            <!-- Avatar Template -->
+            <template id="avatar-template-expo">
+                <a-entity class="avatar hideable" player-info avatar-movement-info>
+
+
+                    <!-- ReadyPlayerMe Avatar-->
+                    <a-entity gltf-model animation-embed="glb_id:ready-player-me-avatar" id="ready-player-me-avatar"
+                        class="rpm_avatar" position="0 0 -0.5" rotation="0 180 0" animation-mixer="clip: test;"
+                        visible="true" shadow="cast:true; receive:true;">
+                    </a-entity>
+
+                    <!-- Sphere Avatar-->
+                    <a-sphere class="head" scale="0.2 0.18 0.2" visible="false"
+                        shadow="cast:true; receive:true;"></a-sphere>
+                    <a-entity class="face" position="0 0.05 0" visible="false">
+                        <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04">
+                            <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                        </a-sphere>
+                        <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
+                            <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                        </a-sphere>
+                    </a-entity>
+
+
+                    <!-- Text component for a nametag; the value will be updated by the player-info component -->
+                    <a-text class="nametag" value="?" rotation="0 180 0" position="0.25 -0.35 0" side="double"
+                        scale=".5 .5 .5" visible="false"></a-text>
+                </a-entity>
+            </template>
+
+            <!-- Avatar template for MediaVerse projects-->
+            <template id="avatar-template">
+                <a-entity class="avatar hideable" networked-audio-source>
+
+                    <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="2" height="1.5"
+                        position="0 0.6 -0.15" material="side: double"
+                        networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                        render-order-change="2000">
+                    </a-plane>
+
+                    <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
+                        material="side: double" networked-video-source="streamName:screen">
+                    </a-plane>
+                </a-entity>
+            </template>
+
+            <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                material="color: black; shader: flat"></a-mixin>
+            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                material="color: white; shader: flat"
+                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
+                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
+            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
+                material="color: white; shader: flat" position="0 0 0.005"></a-mixin>
+            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.4; height: 0.8"
+                material="shader: flat;  transparent: true" position="0 0.455 0.002"></a-mixin>
+            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.4; height: 1.4"
+                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
+            <a-mixin id="poiEsc" geometry="primitive: plane; width: 1; height: 1" position="1 0.73 0.002"
+                material="shader: flat; transparent: true"></a-mixin>
+            <a-mixin id="poiImgNext" geometry="primitive: plane; width: 1; height: 1"
+                material="shader: flat; transparent: true" position="1 -0.5 0.002"></a-mixin>
+            <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 1; height: 1"
+                material="shader: flat; transparent: true" position="-1 -0.5 0.002"></a-mixin>
+            <a-mixin id="poiEscFrame" geometry="primitive: circle; radius: 0.15"
+                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                position="1 0.73 0.002"></a-mixin>
+            <a-mixin id="poiImgPrevFrame" geometry="primitive: circle; radius: 0.15"
+                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                position="-1 -0.5 0.002"></a-mixin>
+            <a-mixin id="poiImgNextFrame" geometry="primitive: circle; radius: 0.15"
+                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                position=" 1 -0.5 0.002"></a-mixin>
+            <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.4; height: 0.14"
+                material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
+            <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
+                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; "
+                position="0.15 0.15 0.000001"></a-mixin>
+
+
+        </a-assets>
+
+        <a-entity id="player"></a-entity>
+        <a-entity id="actor"></a-entity>
+
+        <!-- oculus hands -->
+        <a-entity id="leftHand" oculus-touch-controls="hand: left" visible="false"></a-entity>
+        <a-entity id="rightHand" oculus-touch-controls="hand: right" visible="false" blink-controls></a-entity>
+
+
+    </a-scene>
+
+
+    <script>
+
         // All asets have loaded
         document.querySelector('#scene-assets').addEventListener('loaded', function () {
 
@@ -1827,11 +1831,17 @@
                 return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
             }
         };
-    });
     </script>
+    <style>
+        /* ... existing styles ... */
+    </style>
 
-    <!-- This will change the glb materials -->
-    <!-- <script src="js/glb_material_changer.js"></script> -->
+</head>
+
+<body id="master-client-body">
+
+    <!-- ... existing body content ... -->
+
 </body>
 
 </html>
