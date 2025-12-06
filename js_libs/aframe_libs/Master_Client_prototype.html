@@ -21,6 +21,9 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
+    <!-- A-Frame Core: Must be in the head and not deferred -->
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
     <link rel="stylesheet" type="text/css" href="dist/material-components-web.min.css" />
     <link rel="stylesheet" type="text/css" href="css/material-icons/material-icons.css" />
@@ -493,7 +496,7 @@
 
     </a-scene>
 
-    <script defer src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <!-- Deferred scripts for improved performance -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
     <script defer src="js/datgui/0.7.9/dat.gui.min.js"></script>
     <script defer src="../easyrtc/easyrtc.js"></script>
@@ -515,7 +518,12 @@
     <script defer src="js/components/chat_component.js"></script>
 
     <script>
+    // Global variable to switch between interfaces for interaction modes.
+    let browsingModeVR;
+
     document.addEventListener('DOMContentLoaded', function () {
+        browsingModeVR = false;
+
         const vectorRequiresUpdateRotation = epsilon => {
             return () => {
                 let prev = null;
@@ -535,8 +543,6 @@
                 };
             };
         };
-        // Global variable to switch between interfaces for interaction modes.
-        let browsingModeVR = false;
 
         /* PLAYER AVATARS (COLOR AND NAME) */
         // Temporary workaround for template declaration; see issue 167
