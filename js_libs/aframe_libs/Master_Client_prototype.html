@@ -507,7 +507,13 @@
                             animation.setAttribute("delay", "25000");
                             animation.setAttribute("to", "true");
 
-                            ocean_top.appendChild(animation);
+                            ocean_top.setAttribute('animation', {
+                                property: 'visible',
+                                to: true,
+                                delay: 25000,
+                                dur: 1
+                            });
+
                             entity.appendChild(ocean_top);
                             backgroundEl.appendChild(entity);
 
