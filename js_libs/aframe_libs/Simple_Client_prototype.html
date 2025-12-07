@@ -10,16 +10,14 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <script src="js/aframe/1.4.2/aframe-v1.4.2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
     <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
-
 
     <script src="../easyrtc/easyrtc.js"></script>
     <script src="../dist/networked-aframe.js"></script>
     <script src="../js/NoSleep.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
-    <!--    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
 </head>
 
 <body style="background: gray" id="simple-client-body">
@@ -29,6 +27,12 @@
 <div class="actionsActor" name="actionsDiv" id="actionsDiv">
     <div id="reporting"></div>
 </div>
+
+<!--
+    FIX 2: Changed audio and video to 'false'.
+    This prevents the "Device not found" error if this client
+    is just a viewer and doesn't need to broadcast camera/mic.
+-->
 <a-scene
         id="aframe-scene-container"
         background="color: black"
@@ -38,8 +42,8 @@
         room: roomname;
         debug: true;
         adapter: easyrtc;
-        audio: true;
-        video: true;
+        audio: false;
+        video: false;
         connectOnLoad: true;
         serverURL: /;
     ">
@@ -92,57 +96,6 @@
             position="5 5 5">
     </a-entity>
 
-
-    <!-- VR STUFF -->
-    <!-- <script type="module">
-
-     / XR globals. Several additional reference spaces are required because of
-       // how the teleportation mechanic in onSelect works.
-       let xrButton = null;
-       let xrImmersiveRefSpaceBase = null;
-       let xrImmersiveRefSpaceOffset = null;
-       let xrInlineRefSpaceBase = null;
-       let xrInlineRefSpaceOffset = null;
-       let xrViewerSpaces = {};
-
-       let trackingSpaceOriginInWorldSpace = vec3.create();
-       let trackingSpaceHeadingDegrees = 0;  // around +Y axis, positive angles rotate left
-       let floorSize = 10;
-       let floorPosition = [0, -floorSize / 2 + 0.01, 0];
-       let floorNode = null;
-
-       // WebGL scene globals.
-       let gl = null;
-       let renderer = null;
-       let scene = new Scene();
-       if (hideStats) {
-         scene.enableStats(false);
-       }
-
-
-
-
-       let boxes = [];
-
-       function initXR() {
-         xrButton = new WebXRButton({
-           onRequestSession: onRequestSession,
-           onEndSession: onEndSession
-         });
-         document.querySelector('header').appendChild(xrButton.domElement);
-
-         if (navigator.xr) {
-           navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
-             xrButton.enabled = supported;
-           });
-
-           navigator.xr.requestSession('inline').then(onSessionStarted);
-         }
-       }
-       initXR();
-     </script>-->
-
-
 </a-scene>
 <script>
 
@@ -155,19 +108,23 @@
         ]
     });
 
-    //NAF.connection.adapter.on   onaddtrack = function(){console.log("Track was added");};
+    // Listen for the connection event to run logic
+    document.body.addEventListener('connected', onConnect);
 
     /* Called by Networked-Aframe when connected to server */
     function onConnect () {
+        console.log("Connected to NAF Server");
 
+        let userName = "User";
+        // Check if entities exist before accessing
+        if(window.NAF.entities && window.NAF.entities.entities) {
+            userName = Object.keys(window.NAF.entities.entities)[0] || "User";
+        }
 
-        let userName = Object.keys(window.NAF.entities.entities)[0];
         let room = window.NAF.room;
 
         function selectString(room, userName, lang, key, position){
-
             let str = "Error unknown string";
-
             switch (key) {
                 case "_connected":
                     str = "You are now connected to server at room: " + room;
@@ -179,7 +136,6 @@
                     str = "Position: " + position;
                     break;
             }
-
             return userName + ", " + str;
         }
 
@@ -187,73 +143,49 @@
         let userLang = navigator.language.substring(0,2);
 
         /* Show some initial messages */
-        document.getElementById("reporting").innerText = selectString(room, userName, userLang, "_connected");
+        let reportingEl = document.getElementById("reporting");
+        if(reportingEl) {
+            reportingEl.innerText = selectString(room, userName, userLang, "_connected");
 
-        setTimeout(function (){
-            document.getElementById("reporting").innerText = selectString(room, userName, userLang, "_selectPosition");
-        }, 5000);
-
-
-        /* Clicking any button for changing position */
-        let buttonsArray = document.getElementsByClassName("positionalButtons");
-
-        for (let i=0; i < buttonsArray.length; i++){
-
-            let button = buttonsArray[i];
-            button.userLang = userLang;
-            button.userName = userName;
-            button.room = room;
-
-            let changeReporter = function(evt) {
-
-                let rotation = JSON.parse(this.dataset.rotation);
-                let position = JSON.parse(this.dataset.position);
-
-                document.getElementById("reporting").innerText = selectString(evt.currentTarget.room,
-                    evt.currentTarget.userName,
-                    evt.currentTarget.userLang,
-                    "_position", i+1);
-                let el = document.getElementById('player');
-                el.removeAttribute('look-controls');
-                el.setAttribute('rotation', rotation.x * 180 /3.14 + " " + rotation.y * 180 /3.14 + " " + rotation.z * 180 /3.14);
-                el.setAttribute('position', position.x + " " + position.y + " " + position.z);
-            };
-
-            /* bind the external function */
-            changeReporter.bind(selectString);
-
-            button.addEventListener('click', changeReporter);
+            setTimeout(function (){
+                reportingEl.innerText = selectString(room, userName, userLang, "_selectPosition");
+            }, 5000);
         }
 
-
-        // Hide 3D scene canvas
-        document.getElementsByTagName('a-scene')[0].style.display='none'
-
-
-
-
+        // Hide 3D scene canvas (Visual preference from your original code)
+        let scene = document.getElementsByTagName('a-scene')[0];
+        if(scene) scene.style.display='none';
     }
 
 
     // Add to a div the input stream of the rendered screen
     function scanForStreamsAndShowInFullScreen(){
+        if(!window.NAF || !window.NAF.entities) return;
 
         for (let e in window.NAF.entities.entities) {
-            for (let i=0; i < window.NAF.entities.entities[e].children.length; i++) {
-                let nvs = window.NAF.entities.entities[e].children[i].components['networked-video-source'];
+            let entity = window.NAF.entities.entities[e];
+            // Ensure children exist
+            if(!entity.children) continue;
 
-                if(nvs!==undefined){
-                    if(nvs.videoTexture!==undefined && nvs.videoTexture!==null) {
-                        if (nvs.el.id === 'screenPlane'){
-                            // If it has only the text element
-                            if(document.getElementById("renderFeedback").children.length === 1) {
-                                document.getElementById("renderFeedback").appendChild(nvs.videoTexture.image);
-                                document.getElementById("renderFeedback").children[1].style.position="absolute";
-                                document.getElementById("renderFeedback").children[1].style.left="0";
-                                document.getElementById("renderFeedback").children[1].style.width = "100%";
-                                //document.getElementById("renderFeedback").children[1].style.height = "100%";
+            for (let i=0; i < entity.children.length; i++) {
+                let child = entity.children[i];
+                if(child.components && child.components['networked-video-source']){
+                    let nvs = child.components['networked-video-source'];
 
-                                document.getElementById("renderFeedbackText").style.visibility = "hidden";
+                    if(nvs !== undefined){
+                        if(nvs.videoTexture !== undefined && nvs.videoTexture !== null) {
+                            if (nvs.el.id === 'screenPlane'){
+                                let feedbackDiv = document.getElementById("renderFeedback");
+                                // If it has only the text element
+                                if(feedbackDiv && feedbackDiv.children.length === 1) {
+                                    feedbackDiv.appendChild(nvs.videoTexture.image);
+                                    let img = feedbackDiv.children[1];
+                                    img.style.position="absolute";
+                                    img.style.left="0";
+                                    img.style.width = "100%";
+
+                                    document.getElementById("renderFeedbackText").style.visibility = "hidden";
+                                }
                             }
                         }
                     }
@@ -265,7 +197,15 @@
     // Check every 3 secs if the rendered screen has arrived.
     let timerForScreenFeedback = setInterval(scanForStreamsAndShowInFullScreen, 3000);
 
+    // Initialize NoSleep
+    let noSleep = new NoSleep();
+
     function go_full_screen(){
+
+        // FIX 1: Enable NoSleep here (inside a user interaction event)
+        // This fixes the NotAllowedError
+        noSleep.enable();
+
         var elem = document.documentElement;
         if (elem.requestFullscreen) {
             elem.requestFullscreen();
@@ -279,8 +219,6 @@
         document.getElementById("view-fullscreen").style.display = "none";
     }
 
-    let noSleep = new NoSleep();
-    noSleep.enable(); // keep the screen on!
 </script>
 
 <button id="view-fullscreen" style="z-index:10000000;position:absolute;right:0;top:0"
