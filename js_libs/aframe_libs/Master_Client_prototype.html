@@ -21,7 +21,7 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
     <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
@@ -30,7 +30,6 @@
     <script src="../dist/networked-aframe.js"></script>
 
     <!--<script src="js/a-water_alphamask_master.js"></script>-->
-    <script src="https://unpkg.com/aframe-sun-sky@3.0.4/dist/aframe-sun-sky.min.js"></script>
 
     <script src="js/highlight_img.js"></script>
 
@@ -456,24 +455,69 @@
 
                 switch (this.data.selChoice) {
                     case "0":
-                        // Background: Horizon
+                        // Background: Horizon (Using Environment Component)
+
+                        // 1. Remove standard background attribute
                         backgroundEl.removeAttribute("background");
-                        if (!document.querySelector('a-sun-sky')) {
-                            let sunSky = document.createElement('a-sun-sky');
-                            backgroundEl.appendChild(sunSky);
-                        }
+
+                        // 2. Remove old incompatible sun-sky tag
+                        let oldSun = document.querySelector('a-sun-sky');
+                        if (oldSun) oldSun.parentNode.removeChild(oldSun);
+
+                        // 3. Remove manual sky/sun if they exist (from previous tests)
+                        let manSky = document.getElementById('default-sky');
+                        if (manSky) manSky.parentNode.removeChild(manSky);
+                        let manSun = document.getElementById('default-sun');
+                        if (manSun) manSun.parentNode.removeChild(manSun);
+
+                        // 4. Activate Environment: Default Preset (Sun + Atmosphere + Flat Ground)
+                        backgroundEl.setAttribute("environment", {
+                            preset: 'default',
+                            skyType: 'atmosphere', // Generates sun and horizon
+                            lighting: 'distant',   // Sun light
+                            ground: 'none',        // Simple ground to see the horizon
+                            playArea: 1,
+                            shadow: true
+                        });
+
                         break;
                     case "1":
+
                         // Background: Color
-                        let sunSky = document.querySelector('a-sun-sky');
-                        if (sunSky) {
-                            sunSky.parentNode.removeChild(sunSky);
-                        }
+                        // 1. Turn off Environment (Removes Sun/Horizon)
+                        backgroundEl.removeAttribute("environment");
+
+                        // 2. Remove manual sky/sun if they exist
+                        let manSky1 = document.getElementById('default-sky');
+                        if (manSky1) manSky1.parentNode.removeChild(manSky1);
+                        let manSun1 = document.getElementById('default-sun');
+                        if (manSun1) manSun1.parentNode.removeChild(manSun1);
+
+                        // 3. Remove old incompatible sun-sky
+                        let oldSun1 = document.querySelector('a-sun-sky');
+                        if (oldSun1) oldSun1.parentNode.removeChild(oldSun1);
+
+                        // 4. Set Color
                         backgroundEl.setAttribute("background", "color", this.data.color);
                         break;
                     case "2":
+
+                        // 1. Remove manual sky/sun
+                        let manSky2 = document.getElementById('default-sky');
+                        if (manSky2) manSky2.parentNode.removeChild(manSky2);
+                        let manSun2 = document.getElementById('default-sun');
+                        if (manSun2) manSun2.parentNode.removeChild(manSun2);
+
+                        // 2. Remove old sun-sky
+                        let oldSun2 = document.querySelector('a-sun-sky');
+                        if (oldSun2) oldSun2.parentNode.removeChild(oldSun2);
+
                         // Presets
                         if (this.data.presChoice == "ocean") {
+
+                            // Disable environment for ocean mode (uses custom primitives)
+                            backgroundEl.removeAttribute("environment");
+
                             let sky = document.createElement('a-sky');
                             sky.setAttribute("color", "#a4bede");
                             backgroundEl.appendChild(sky);
@@ -589,8 +633,11 @@
                             backgroundEl.setAttribute("environment", "playArea", "1.4");
                             backgroundEl.setAttribute("environment", "shadow", "true");
 
+                            // 4. Update ground shadow
                             let groundEl = document.getElementsByClassName('environmentGround')[0];
-                            groundEl.setAttribute("shadow", "cast: true; receive: true");
+                            if (groundEl) {
+                                groundEl.setAttribute("shadow", "cast: true; receive: true");
+                            }
                         }
 
 
