@@ -29,9 +29,9 @@
 </div>
 
 <!--
-    FIX 2: Changed audio and video to 'false'.
-    This prevents the "Device not found" error if this client
-    is just a viewer and doesn't need to broadcast camera/mic.
+    ENABLED CAMERA & MIC
+    video: true; audio: true;
+    Make sure your browser allows permissions!
 -->
 <a-scene
         id="aframe-scene-container"
@@ -42,8 +42,8 @@
         room: roomname;
         debug: true;
         adapter: easyrtc;
-        audio: false;
-        video: false;
+        audio: true;
+        video: true;
         connectOnLoad: true;
         serverURL: /;
     ">
@@ -54,6 +54,7 @@
             <a-entity class="avatar"
                       networked-audio-source>
 
+                <!-- This plane shows the video stream -->
                 <a-plane id="videoPlane"
                          color="#FFF"
                          width="1"
@@ -75,7 +76,8 @@
     </a-assets>
 
 
-    <!-- Pawn -->
+    <!-- Local Player -->
+    <!-- attachTemplateToLocal:false means you won't see your own face on screen, which is normal -->
     <a-entity id="player"
               networked="template:#avatar-template;attachTemplateToLocal:false;"
               position="0 0 0"
@@ -97,8 +99,8 @@
     </a-entity>
 
 </a-scene>
-<script>
 
+<script>
     /* Syncing avatar */
     NAF.schemas.add({
         template: '#avatar-template',
@@ -108,19 +110,17 @@
         ]
     });
 
-    // Listen for the connection event to run logic
     document.body.addEventListener('connected', onConnect);
 
     /* Called by Networked-Aframe when connected to server */
     function onConnect () {
         console.log("Connected to NAF Server");
 
+        // Attempt to get user name
         let userName = "User";
-        // Check if entities exist before accessing
         if(window.NAF.entities && window.NAF.entities.entities) {
             userName = Object.keys(window.NAF.entities.entities)[0] || "User";
         }
-
         let room = window.NAF.room;
 
         function selectString(room, userName, lang, key, position){
@@ -139,24 +139,20 @@
             return userName + ", " + str;
         }
 
-        /* Get system language */
         let userLang = navigator.language.substring(0,2);
-
-        /* Show some initial messages */
         let reportingEl = document.getElementById("reporting");
+
         if(reportingEl) {
             reportingEl.innerText = selectString(room, userName, userLang, "_connected");
-
             setTimeout(function (){
                 reportingEl.innerText = selectString(room, userName, userLang, "_selectPosition");
             }, 5000);
         }
 
-        // Hide 3D scene canvas (Visual preference from your original code)
+        // Hide 3D scene canvas
         let scene = document.getElementsByTagName('a-scene')[0];
         if(scene) scene.style.display='none';
     }
-
 
     // Add to a div the input stream of the rendered screen
     function scanForStreamsAndShowInFullScreen(){
@@ -164,7 +160,6 @@
 
         for (let e in window.NAF.entities.entities) {
             let entity = window.NAF.entities.entities[e];
-            // Ensure children exist
             if(!entity.children) continue;
 
             for (let i=0; i < entity.children.length; i++) {
@@ -176,14 +171,12 @@
                         if(nvs.videoTexture !== undefined && nvs.videoTexture !== null) {
                             if (nvs.el.id === 'screenPlane'){
                                 let feedbackDiv = document.getElementById("renderFeedback");
-                                // If it has only the text element
                                 if(feedbackDiv && feedbackDiv.children.length === 1) {
                                     feedbackDiv.appendChild(nvs.videoTexture.image);
                                     let img = feedbackDiv.children[1];
                                     img.style.position="absolute";
                                     img.style.left="0";
                                     img.style.width = "100%";
-
                                     document.getElementById("renderFeedbackText").style.visibility = "hidden";
                                 }
                             }
@@ -194,16 +187,13 @@
         }
     }
 
-    // Check every 3 secs if the rendered screen has arrived.
     let timerForScreenFeedback = setInterval(scanForStreamsAndShowInFullScreen, 3000);
 
     // Initialize NoSleep
     let noSleep = new NoSleep();
 
     function go_full_screen(){
-
-        // FIX 1: Enable NoSleep here (inside a user interaction event)
-        // This fixes the NotAllowedError
+        // Enable NoSleep on user click
         noSleep.enable();
 
         var elem = document.documentElement;
