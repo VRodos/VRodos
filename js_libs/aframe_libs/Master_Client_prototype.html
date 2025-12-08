@@ -42,7 +42,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
     <script
-        src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js"></script>
+            src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js"></script>
 
     <!-- ReadyPlayerMe avatars work natively with A-Frame's gltf-model component -->
     <!-- No additional library needed for GLB avatar loading -->
@@ -949,7 +949,7 @@
             cursor: pointer;
             display: inline-block;
             font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
-                Droid Sans, Helvetica Neue, sans-serif;
+            Droid Sans, Helvetica Neue, sans-serif;
             font-size: 0.8em;
             font-weight: 600;
             padding: 0;
@@ -1060,7 +1060,7 @@
             height: 800px;
             margin: 0 auto;
             font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
-                Droid Sans, Helvetica Neue, sans-serif;
+            Droid Sans, Helvetica Neue, sans-serif;
             padding: 20px;
             font-size: 14px;
             border: none;
@@ -1073,833 +1073,835 @@
 
 <body id="master-client-body">
 
-    <div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
+<div class="ChatWrapperStyle" id="chat-wrapper-el" style="visibility: hidden">
 
-        <div class="mdc-tab-bar" role="tablist"
-            style="position: relative; top: 0; right:30px; z-index:101; height: 30px;">
-            <div class="mdc-tab-scroller">
+    <div class="mdc-tab-bar" role="tablist"
+         style="position: relative; top: 0; right:30px; z-index:101; height: 30px;">
+        <div class="mdc-tab-scroller">
 
-                <button id="public-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="0"
+            <button id="public-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="0"
                     style="visibility: hidden">
                     <span class="mdc-tab__content">
                         <span class="mdc-tab__text-label">Public</span>
                     </span>
 
-                </button>
+            </button>
 
-                <button id="private-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="1"
+            <button id="private-chat-button" class="mdc-tab button-tab" role="tab" aria-selected="true" tabindex="1"
                     style="visibility: hidden">
                     <span class="mdc-tab__content">
                         <span id="private-chat-button-label" class="mdc-tab__text-label">Private</span>
                     </span>
 
-                </button>
-
-            </div>
+            </button>
 
         </div>
 
+    </div>
 
-        <div id="chatControlsOverlay" style="position: relative; top: 0; left:0; z-index:101; height: 30px;">
-            <button id="color-changer" onclick="
+
+    <div id="chatControlsOverlay" style="position: relative; top: 0; left:0; z-index:101; height: 30px;">
+        <button id="color-changer" onclick="
             let newColor = window.ntExample.randomColor();
              document.getElementById('cameraA').setAttribute('player-info', 'color', newColor);
              document.getElementById('color-changer').style.backgroundColor = newColor;
              document.getElementById('color-changer').style.color = newColor;
              gtag('event', 'player_color_change');
         ">■</button>
-            <input id="username-overlay" maxlength="24" size="15"
-                oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)"
-                placeholder="Username" />
-            <input type="text" id="chatInput" placeholder="Message">
-            <button id="send-msg-chat-btn" style="right: 0; cursor: pointer">SEND</button>
-            <button id="expand-chat-btn" class="IconButtonStyle" title="Chat Size"><i
-                    class="material-icons">unfold_more</i></button>
-            <button id="minimize-chat-btn" class="IconButtonStyle" title="Minimize"><i
-                    class="material-icons">expand_more</i></button>
-            <button id="exit-help-btn" class="IconButtonStyle" title="Exit Private Chat" style="display: none"><i
-                    class="material-icons">close</i></button>
-        </div>
-        <div class="ChatMessagesStyle ChatMessagesStyleNormal" id="chat-messages-wrapper">
-            <div id="chat-messages"></div>
-        </div>
+        <input id="username-overlay" maxlength="24" size="15"
+               oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)"
+               placeholder="Username" />
+        <input type="text" id="chatInput" placeholder="Message">
+        <button id="send-msg-chat-btn" style="right: 0; cursor: pointer">SEND</button>
+        <button id="expand-chat-btn" class="IconButtonStyle" title="Chat Size"><i
+                class="material-icons">unfold_more</i></button>
+        <button id="minimize-chat-btn" class="IconButtonStyle" title="Minimize"><i
+                class="material-icons">expand_more</i></button>
+        <button id="exit-help-btn" class="IconButtonStyle" title="Exit Private Chat" style="display: none"><i
+                class="material-icons">close</i></button>
+    </div>
+    <div class="ChatMessagesStyle ChatMessagesStyleNormal" id="chat-messages-wrapper">
+        <div id="chat-messages"></div>
+    </div>
+</div>
+
+<div id="mediaPanel">
+    <div class="wrapperVideoElement" style="visibility: hidden">
+        <video id="video-preview" width="300" height="200" autoplay muted></video>
+        <video id="recording" hidden></video>
     </div>
 
-    <div id="mediaPanel">
-        <div class="wrapperVideoElement" style="visibility: hidden">
-            <video id="video-preview" width="300" height="200" autoplay muted></video>
-            <video id="recording" hidden></video>
+    <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
+        <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
+        <div id="directorline" style=""></div>
+
+
+        <div class="wrapperControlElement">
+            <label for="roomNameShow" title="Name of Room">&#127917;</label>
+            <span id="roomNameShow">roomname</span>
         </div>
 
-        <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-            <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
-            <div id="directorline" style=""></div>
+        <div class="wrapperControlElement">
+            <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
+            <span id="occupantsNumberShow"></span>
+        </div>
 
-
-            <div class="wrapperControlElement">
-                <label for="roomNameShow" title="Name of Room">&#127917;</label>
-                <span id="roomNameShow">roomname</span>
-            </div>
-
-            <div class="wrapperControlElement">
-                <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
-                <span id="occupantsNumberShow"></span>
-            </div>
-
-            <div class="wrapperControlElement">
-                <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying"
+        <div class="wrapperControlElement">
+            <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying"
                     title="Obtain status and control green screens">
-                    &#128260; &#9989;
-                </button>
-            </div>
+                &#128260; &#9989;
+            </button>
+        </div>
 
-            <div class="wrapperControlElement">
-                <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
-                    &#127909; &#9654; &#128101;
-                </button>
-            </div>
+        <div class="wrapperControlElement">
+            <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
+                &#127909; &#9654; &#128101;
+            </button>
+        </div>
 
-            <div class="wrapperControlLineElement">
-                <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
-                    ⚪️
-                </button>
+        <div class="wrapperControlLineElement">
+            <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
+                ⚪️
+            </button>
 
-                <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video"
-                    style="visibility: hidden">
-                    💾️️
-                </a>
+            <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video"
+               style="visibility: hidden">
+                💾️️
+            </a>
 
-                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden;"
+            <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden;"
                     title="Upload Recording to MediaVerse" disabled>
-                    ⬆️️️
-                </button>
-            </div>
-            <div class="wrapperControlElement">
-                <span id="captured-video-label"></span>
-            </div>
-            <div class="wrapperControlElement">
-                <label for="positionShow" title="Camera Position">&#127909;</label>
-                <span id="positionShow"></span>
-            </div>
-
-            <div id="panelsSizeControlsDiv"></div>
-            <input id="node-url-input" hidden disabled />
-            <input id="node-token-input" hidden disabled />
-            <input id="is-base-scene-input" hidden disabled />
+                ⬆️️️
+            </button>
         </div>
+        <div class="wrapperControlElement">
+            <span id="captured-video-label"></span>
+        </div>
+        <div class="wrapperControlElement">
+            <label for="positionShow" title="Camera Position">&#127909;</label>
+            <span id="positionShow"></span>
+        </div>
+
+        <div id="panelsSizeControlsDiv"></div>
+        <input id="node-url-input" hidden disabled />
+        <input id="node-token-input" hidden disabled />
+        <input id="is-base-scene-input" hidden disabled />
     </div>
+</div>
 
 
-    <!-- Avatar selection -->
-    <aside id="avatar-selection-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
-        aria-labelledby="Avatar selection popup" aria-describedby="You can select an avatar"
-        data-mdc-auto-init="MDCDialog">
-        <div class="mdc-dialog__surface">
-            <header class="mdc-dialog__header">
-                <h2 class="mdc-dialog__header__title">Welcome to our virtual exposition</h2>
-            </header>
+<!-- Avatar selection -->
+<aside id="avatar-selection-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+       aria-labelledby="Avatar selection popup" aria-describedby="You can select an avatar"
+       data-mdc-auto-init="MDCDialog">
+    <div class="mdc-dialog__surface">
+        <header class="mdc-dialog__header">
+            <h2 class="mdc-dialog__header__title">Welcome to our virtual exposition</h2>
+        </header>
 
-            <section class="mdc-dialog__body">
-                <div class="mdc-layout-grid">
-                    <div class="mdc-layout-grid__inner">
-                        <div class="mdc-layout-grid__cell--span-12">
-                            <div style="text-align: center">
-                                <h3 class="mdc-typography--headline">Please select an avatar type:</h3>
-                                <form name="avatarRadiosForm">
-                                    <div class="mdc-form-field AvatarTypeSelection">
-                                        <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio"
-                                            name="avatar-radios" value="no-avatar" checked>
-                                        <label for="no-avatar-radio">
-                                            <img src="media/img/no-avatar.png" width="128" height="128"
-                                                style="opacity:.6" />
-                                            <span>No avatar</span>
-                                        </label>
+        <section class="mdc-dialog__body">
+            <div class="mdc-layout-grid">
+                <div class="mdc-layout-grid__inner">
+                    <div class="mdc-layout-grid__cell--span-12">
+                        <div style="text-align: center">
+                            <h3 class="mdc-typography--headline">Please select an avatar type:</h3>
+                            <form name="avatarRadiosForm">
+                                <div class="mdc-form-field AvatarTypeSelection">
+                                    <input class="mdc-radio__native-control" type="radio" id="no-avatar-radio"
+                                           name="avatar-radios" value="no-avatar" checked>
+                                    <label for="no-avatar-radio">
+                                        <img src="media/img/no-avatar.png" width="128" height="128"
+                                             style="opacity:.6" />
+                                        <span>No avatar</span>
+                                    </label>
 
-                                        <input class="mdc-radio__native-control" type="radio" id="blob-radio"
-                                            value="blob" name="avatar-radios">
-                                        <label for="blob-radio">
-                                            <img src="media/img/blob-avatar.png" width="128" height="128" />
-                                            <span>A Blob</span>
-                                            <br>
-                                            <span>(Default)</span>
-                                        </label>
+                                    <input class="mdc-radio__native-control" type="radio" id="blob-radio"
+                                           value="blob" name="avatar-radios">
+                                    <label for="blob-radio">
+                                        <img src="media/img/blob-avatar.png" width="128" height="128" />
+                                        <span>A Blob</span>
+                                        <br>
+                                        <span>(Default)</span>
+                                    </label>
 
-                                        <input class="mdc-radio__native-control" type="radio" id="rpm-radio" value="rpm"
-                                            name="avatar-radios">
-                                        <label for="rpm-radio">
-                                            <img src="media/img/rpm-avatar.png" width="128" height="128" />
-                                            <span>Your personalized</span>
-                                            <br>
-                                            <span>3D avatar</span>
-                                        </label>
-                                    </div>
-                                </form>
-                            </div>
+                                    <input class="mdc-radio__native-control" type="radio" id="rpm-radio" value="rpm"
+                                           name="avatar-radios">
+                                    <label for="rpm-radio">
+                                        <img src="media/img/rpm-avatar.png" width="128" height="128" />
+                                        <span>Your personalized</span>
+                                        <br>
+                                        <span>3D avatar</span>
+                                    </label>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <footer class="mdc-dialog__footer">
-                <a id="selectAvatarBtn" onclick="selectAvatarType()"
-                    class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
-            </footer>
-        </div>
-        <div class="mdc-dialog__backdrop"></div>
-    </aside>
+        <footer class="mdc-dialog__footer">
+            <a id="selectAvatarBtn" onclick="selectAvatarType()"
+               class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
+        </footer>
+    </div>
+    <div class="mdc-dialog__backdrop"></div>
+</aside>
 
 
-    <!-- IMG POI Dialog component -->
-    <aside id="poi-img-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
-        aria-labelledby="Image POI popup" aria-describedby="Show Image POI details" data-mdc-auto-init="MDCDialog">
-        <div class="mdc-dialog__surface">
-            <header class="mdc-dialog__header">
-                <h2 id="poi-img-dialog-title" class="mdc-dialog__header__title"></h2>
-            </header>
+<!-- IMG POI Dialog component -->
+<aside id="poi-img-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+       aria-labelledby="Image POI popup" aria-describedby="Show Image POI details" data-mdc-auto-init="MDCDialog">
+    <div class="mdc-dialog__surface">
+        <header class="mdc-dialog__header">
+            <h2 id="poi-img-dialog-title" class="mdc-dialog__header__title"></h2>
+        </header>
 
-            <section class="mdc-dialog__body">
-                <div class="mdc-layout-grid">
-                    <div class="mdc-layout-grid__inner">
-                        <div class="mdc-layout-grid__cell--span-12">
-                            <div style="text-align: center">
-                                <img src="" alt="Image POI Image" id="poi-img-dialog-image"
-                                    style="width: auto; max-width: 100%;max-height: 260px;" />
-                            </div>
-                            <div style="text-align: left; overflow-y: auto;  max-height: 300px;">
-                                <span class="mdc-typography--body1" id="poi-img-dialog-description"></span>
-                            </div>
+        <section class="mdc-dialog__body">
+            <div class="mdc-layout-grid">
+                <div class="mdc-layout-grid__inner">
+                    <div class="mdc-layout-grid__cell--span-12">
+                        <div style="text-align: center">
+                            <img src="" alt="Image POI Image" id="poi-img-dialog-image"
+                                 style="width: auto; max-width: 100%;max-height: 260px;" />
+                        </div>
+                        <div style="text-align: left; overflow-y: auto;  max-height: 300px;">
+                            <span class="mdc-typography--body1" id="poi-img-dialog-description"></span>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <footer class="mdc-dialog__footer">
-                <a
+        <footer class="mdc-dialog__footer">
+            <a
                     class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised">OK</a>
-            </footer>
-        </div>
-        <div class="mdc-dialog__backdrop"></div>
-    </aside>
+        </footer>
+    </div>
+    <div class="mdc-dialog__backdrop"></div>
+</aside>
 
-    <aside id="video-controls-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
-        aria-labelledby="Video controls popup" aria-describedby="Show Video controls">
-        <div class="mdc-dialog__surface">
+<aside id="video-controls-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
+       aria-labelledby="Video controls popup" aria-describedby="Show Video controls">
+    <div class="mdc-dialog__surface">
 
-            <video controls controlsList="nodownload" id="video-panel-video" height="100%" width="100%">
-                Your browser does not support video.
-            </video>
+        <video controls controlsList="nodownload" id="video-panel-video" height="100%" width="100%">
+            Your browser does not support video.
+        </video>
 
-            <footer class="mdc-dialog__footer">
-                <a
+        <footer class="mdc-dialog__footer">
+            <a
                     class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--cancel mdc-button--raised">Close</a>
-                <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised"
-                    style="display: none;" tabIndex="0">OK</a>
-            </footer>
-        </div>
-        <div class="mdc-dialog__backdrop"></div>
-    </aside>
-
-    <!--Ready Player Me iframe-->
-    <div style="text-align: center;">
-        <iframe id="rpm-iframe" class="RpmIframeStyle" allow="camera *; microphone *; clipboard-write" hidden></iframe>
+            <a class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept mdc-button--raised"
+               style="display: none;" tabIndex="0">OK</a>
+        </footer>
     </div>
+    <div class="mdc-dialog__backdrop"></div>
+</aside>
 
-    <a-scene oculus-go-controls-enabled start-animation id="aframe-scene-container"
-        fog="type: linear; color: #AAB; far: 230; near: 0" renderer="antialias: true;
+<!--Ready Player Me iframe-->
+<div style="text-align: center;">
+    <iframe id="rpm-iframe" class="RpmIframeStyle" allow="camera *; microphone *; clipboard-write" hidden></iframe>
+</div>
+
+<a-scene oculus-go-controls-enabled start-animation id="aframe-scene-container"
+         fog="type: linear; color: #AAB; far: 230; near: 0"
+         renderer="antialias: true;
             sortTransparentObjects: true;
             toneMapping: ACESFilmic;
             precision: high;
-            alpha: true;" shadow="type: pcfsoft;" vr-mode-ui="enabled: true"
-        loading-screen="dotsColor: gray; backgroundColor: black;">
-        <!--environment="ground:none"-->
+            alpha: true;"
+         shadow="type: pcfsoft;"
+         vr-mode-ui="enabled: true"
+         loading-screen="dotsColor: gray; backgroundColor: black;">
 
-        <a-assets id="scene-assets">
+    <a-assets id="scene-assets">
 
-            <!-- Avatar Template -->
-            <template id="avatar-template-expo">
-                <a-entity class="avatar hideable" player-info avatar-movement-info>
-
-
-                    <!-- ReadyPlayerMe Avatar-->
-                    <a-entity gltf-model animation-embed="glb_id:ready-player-me-avatar" id="ready-player-me-avatar"
-                        class="rpm_avatar" position="0 0 -0.5" rotation="0 180 0" animation-mixer="clip: test;"
-                        visible="true" shadow="cast:true; receive:true;">
-                    </a-entity>
-
-                    <!-- Sphere Avatar-->
-                    <a-sphere class="head" scale="0.2 0.18 0.2" visible="false"
-                        shadow="cast:true; receive:true;"></a-sphere>
-                    <a-entity class="face" position="0 0.05 0" visible="false">
-                        <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04">
-                            <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
-                        </a-sphere>
-                        <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
-                            <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
-                        </a-sphere>
-                    </a-entity>
+        <!-- Avatar Template -->
+        <template id="avatar-template-expo">
+            <a-entity class="avatar hideable" player-info avatar-movement-info>
 
 
-                    <!-- Text component for a nametag; the value will be updated by the player-info component -->
-                    <a-text class="nametag" value="?" rotation="0 180 0" position="0.25 -0.35 0" side="double"
+                <!-- ReadyPlayerMe Avatar-->
+                <a-entity gltf-model animation-embed="glb_id:ready-player-me-avatar" id="ready-player-me-avatar"
+                          class="rpm_avatar" position="0 0 -0.5" rotation="0 180 0" animation-mixer="clip: test;"
+                          visible="true" shadow="cast:true; receive:true;">
+                </a-entity>
+
+                <!-- Sphere Avatar-->
+                <a-sphere class="head" scale="0.2 0.18 0.2" visible="false"
+                          shadow="cast:true; receive:true;"></a-sphere>
+                <a-entity class="face" position="0 0.05 0" visible="false">
+                    <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04">
+                        <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                    </a-sphere>
+                    <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
+                        <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                    </a-sphere>
+                </a-entity>
+
+
+                <!-- Text component for a nametag; the value will be updated by the player-info component -->
+                <a-text class="nametag" value="?" rotation="0 180 0" position="0.25 -0.35 0" side="double"
                         scale=".5 .5 .5" visible="false"></a-text>
-                </a-entity>
-            </template>
+            </a-entity>
+        </template>
 
-            <!-- Avatar template for MediaVerse projects-->
-            <template id="avatar-template">
-                <a-entity class="avatar hideable" networked-audio-source>
+        <!-- Avatar template for MediaVerse projects-->
+        <template id="avatar-template">
+            <a-entity class="avatar hideable" networked-audio-source>
 
-                    <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="2" height="1.5"
-                        position="0 0.6 -0.15" material="side: double"
-                        networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
-                        render-order-change="2000">
-                    </a-plane>
+                <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="2" height="1.5"
+                         position="0 0.6 -0.15" material="side: double"
+                         networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                         render-order-change="2000">
+                </a-plane>
 
-                    <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
-                        material="side: double" networked-video-source="streamName:screen">
-                    </a-plane>
-                </a-entity>
-            </template>
+                <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
+                         material="side: double" networked-video-source="streamName:screen">
+                </a-plane>
+            </a-entity>
+        </template>
 
-            <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: black; shader: flat"></a-mixin>
-            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: white; shader: flat"
-                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
-                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
-            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
-                material="color: white; shader: flat" position="0 0 0.005"></a-mixin>
-            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.4; height: 0.8"
-                material="shader: flat;  transparent: true" position="0 0.455 0.002"></a-mixin>
-            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.4; height: 1.4"
-                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
-            <a-mixin id="poiEsc" geometry="primitive: plane; width: 1; height: 1" position="1 0.73 0.002"
-                material="shader: flat; transparent: true"></a-mixin>
-            <a-mixin id="poiImgNext" geometry="primitive: plane; width: 1; height: 1"
-                material="shader: flat; transparent: true" position="1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 1; height: 1"
-                material="shader: flat; transparent: true" position="-1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiEscFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position="1 0.73 0.002"></a-mixin>
-            <a-mixin id="poiImgPrevFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position="-1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiImgNextFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position=" 1 -0.5 0.002"></a-mixin>
-            <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.4; height: 0.14"
-                material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
-            <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; "
-                position="0.15 0.15 0.000001"></a-mixin>
-            <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 2; height: 0.3" material="color: black; opacity: 0.7; shader: flat"></a-mixin>
+        <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                 material="color: black; shader: flat"></a-mixin>
+        <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                 material="color: white; shader: flat"
+                 animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
+                 animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
+        <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
+                 material="color: white; shader: flat" position="0 0 0.005"></a-mixin>
+        <a-mixin id="poiImage" geometry="primitive: plane; width: 1.4; height: 0.8"
+                 material="shader: flat;  transparent: true" position="0 0.455 0.002"></a-mixin>
+        <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.4; height: 1.4"
+                 material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
+        <a-mixin id="poiEsc" geometry="primitive: plane; width: 1; height: 1" position="1 0.73 0.002"
+                 material="shader: flat; transparent: true"></a-mixin>
+        <a-mixin id="poiImgNext" geometry="primitive: plane; width: 1; height: 1"
+                 material="shader: flat; transparent: true" position="1 -0.5 0.002"></a-mixin>
+        <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 1; height: 1"
+                 material="shader: flat; transparent: true" position="-1 -0.5 0.002"></a-mixin>
+        <a-mixin id="poiEscFrame" geometry="primitive: circle; radius: 0.15"
+                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                 position="1 0.73 0.002"></a-mixin>
+        <a-mixin id="poiImgPrevFrame" geometry="primitive: circle; radius: 0.15"
+                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                 position="-1 -0.5 0.002"></a-mixin>
+        <a-mixin id="poiImgNextFrame" geometry="primitive: circle; radius: 0.15"
+                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                 position=" 1 -0.5 0.002"></a-mixin>
+        <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.4; height: 0.14"
+                 material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
+        <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
+                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; "
+                 position="0.15 0.15 0.000001"></a-mixin>
+        <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 2; height: 0.3" material="color: black; opacity: 0.7; shader: flat"></a-mixin>
 
-        </a-assets>
+    </a-assets>
 
-        <a-entity id="player"></a-entity>
-        <a-entity id="actor"></a-entity>
+    <a-entity id="player"></a-entity>
+    <a-entity id="actor"></a-entity>
 
-        <!-- oculus hands -->
-        <a-entity id="leftHand" oculus-touch-controls="hand: left" visible="false"></a-entity>
-        <a-entity id="rightHand" oculus-touch-controls="hand: right" visible="false" blink-controls></a-entity>
-
-
-    </a-scene>
+    <!-- oculus hands -->
+    <a-entity id="leftHand" oculus-touch-controls="hand: left" visible="false"></a-entity>
+    <a-entity id="rightHand" oculus-touch-controls="hand: right" visible="false" blink-controls></a-entity>
 
 
-    <script>
+</a-scene>
 
-        // All asets have loaded
-        document.querySelector('#scene-assets').addEventListener('loaded', function () {
 
-            // Don't show HTML component (chat) while loader is active
-            if (document.getElementById("chat-wrapper-el").getAttribute('data-visible') === 'true') {
-                document.getElementById("chat-wrapper-el").style.visibility = 'visible';
-            }
+<script>
 
-        });
+    // All asets have loaded
+    document.querySelector('#scene-assets').addEventListener('loaded', function () {
 
-        let selectAvatarType = (val) => {
-
-            let radioVal = val ? val : document.querySelector('input[name="avatar-radios"]:checked').value;
-
-            document.getElementById('cameraA').setAttribute('player-info', 'avatarType', radioVal);
-            if (radioVal === 'rpm') {
-                document.getElementById('rpm-iframe').hidden = false;
-            }
+        // Don't show HTML component (chat) while loader is active
+        if (document.getElementById("chat-wrapper-el").getAttribute('data-visible') === 'true') {
+            document.getElementById("chat-wrapper-el").style.visibility = 'visible';
         }
 
-        // Ready player me iframe code
-        const subdomain = 'vrodos'; // Replace with your custom subdomain
-        const rpm_iframe = document.getElementById('rpm-iframe');
-        rpm_iframe.src = `https://${subdomain}.readyplayer.me/avatar?frameApi`;
+    });
 
-        window.addEventListener('message', subscribe);
-        document.addEventListener('message', subscribe);
+    let selectAvatarType = (val) => {
 
-        function subscribe(event) {
-            const json = parseRPMEvent(event);
+        let radioVal = val ? val : document.querySelector('input[name="avatar-radios"]:checked').value;
 
-            if (json?.source !== 'readyplayerme') {
-                return;
-            }
+        document.getElementById('cameraA').setAttribute('player-info', 'avatarType', radioVal);
+        if (radioVal === 'rpm') {
+            document.getElementById('rpm-iframe').hidden = false;
+        }
+    }
 
-            // Susbribe to all events sent from Ready Player Me once frame is ready
-            if (json.eventName === 'v1.frame.ready') {
-                rpm_iframe.contentWindow.postMessage(
-                    JSON.stringify({
-                        target: 'readyplayerme',
-                        type: 'subscribe',
-                        eventName: 'v1.**'
-                    }),
-                    '*'
-                );
-            }
+    // Ready player me iframe code
+    const subdomain = 'vrodos'; // Replace with your custom subdomain
+    const rpm_iframe = document.getElementById('rpm-iframe');
+    rpm_iframe.src = `https://${subdomain}.readyplayer.me/avatar?frameApi`;
 
-            // Get avatar GLB URL
-            // Now add it in Aframe canvas
-            if (json.eventName === 'v1.avatar.exported') {
-                document.getElementById('rpm-iframe').hidden = true;
+    window.addEventListener('message', subscribe);
+    document.addEventListener('message', subscribe);
 
-                // Update remote
-                document.getElementById('cameraA').setAttribute('player-info', 'gltf', json.data.url);
+    function subscribe(event) {
+        const json = parseRPMEvent(event);
 
-            }
-
-            // Get user id
-            if (json.eventName === 'v1.user.set') {
-                console.log(`User with id ${json.data.id} set: ${JSON.stringify(json)}`);
-            }
+        if (json?.source !== 'readyplayerme') {
+            return;
         }
 
-        function parseRPMEvent(event) {
-            try {
-                return JSON.parse(event.data);
-            } catch (error) {
-                return null;
-            }
+        // Susbribe to all events sent from Ready Player Me once frame is ready
+        if (json.eventName === 'v1.frame.ready') {
+            rpm_iframe.contentWindow.postMessage(
+                JSON.stringify({
+                    target: 'readyplayerme',
+                    type: 'subscribe',
+                    eventName: 'v1.**'
+                }),
+                '*'
+            );
         }
 
+        // Get avatar GLB URL
+        // Now add it in Aframe canvas
+        if (json.eventName === 'v1.avatar.exported') {
+            document.getElementById('rpm-iframe').hidden = true;
 
-        const api_pattern_single = {
-            ThresholdMin: 0.106,
-            ThresholdMax: 0.13,
-            red: 48, green: 146, blue: 89,
-            w: 1, h: 0.75,
-            x: 0, y: 0, z: 0,
-            rx: 0, ry: 0, rz: 0
-        };
+            // Update remote
+            document.getElementById('cameraA').setAttribute('player-info', 'gltf', json.data.url);
 
-        const api_pattern_singleMin = {
-            ThresholdMinLow: 0,
-            ThresholdMaxLow: 0,
-            redLow: 0,
-            greenLow: 0,
-            blueLow: 0,
-            wLow: 0.1,
-            hLow: 0.1,
-            xLow: -100000,
-            yLow: -100000,
-            zLow: -100000,
-            rxLow: -100,
-            ryLow: -100,
-            rzLow: -100
-        };
-        const api_pattern_singleMax = {
-            ThresholdMinHigh: 0.4,
-            ThresholdMaxHigh: 0.4,
-            redHigh: 255,
-            greenHigh: 255,
-            blueHigh: 255,
-            wHigh: 5,
-            hHigh: 5,
-            xHigh: 100000,
-            yHigh: 100000,
-            zHigh: 100000,
-            rxHigh: 100,
-            ryHigh: 100,
-            rzHigh: 100
-        };
-        const api_pattern_singleStep = {
-            ThresholdMinStep: 0.001,
-            ThresholdMaxStep: 0.001,
-            redStep: 1,
-            greenStep: 1,
-            blueStep: 1,
-            wStep: 0.05,
-            hStep: 0.05,
-            xStep: 10,
-            yStep: 10,
-            zStep: 10,
-            rxStep: 0.1,
-            ryStep: 0.1,
-            rzStep: 0.1
-        };
+        }
 
-        let btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
-        btStatusControls.addEventListener('click', function () {
+        // Get user id
+        if (json.eventName === 'v1.user.set') {
+            console.log(`User with id ${json.data.id} set: ${JSON.stringify(json)}`);
+        }
+    }
 
-            let entities = window.NAF.connection.entities.entities;
-            let panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
+    function parseRPMEvent(event) {
+        try {
+            return JSON.parse(event.data);
+        } catch (error) {
+            return null;
+        }
+    }
 
-            /* Clear Panels Size  Controls */
-            panelsSizeControlsDiv.replaceChildren([]);
 
-            /* DestroyGui */
-            try {
-                console.log("destroying");
-                if (btStatusControls.gui) {
-                    btStatusControls.gui.destroy();
-                }
+    const api_pattern_single = {
+        ThresholdMin: 0.106,
+        ThresholdMax: 0.13,
+        red: 48, green: 146, blue: 89,
+        w: 1, h: 0.75,
+        x: 0, y: 0, z: 0,
+        rx: 0, ry: 0, rz: 0
+    };
+
+    const api_pattern_singleMin = {
+        ThresholdMinLow: 0,
+        ThresholdMaxLow: 0,
+        redLow: 0,
+        greenLow: 0,
+        blueLow: 0,
+        wLow: 0.1,
+        hLow: 0.1,
+        xLow: -100000,
+        yLow: -100000,
+        zLow: -100000,
+        rxLow: -100,
+        ryLow: -100,
+        rzLow: -100
+    };
+    const api_pattern_singleMax = {
+        ThresholdMinHigh: 0.4,
+        ThresholdMaxHigh: 0.4,
+        redHigh: 255,
+        greenHigh: 255,
+        blueHigh: 255,
+        wHigh: 5,
+        hHigh: 5,
+        xHigh: 100000,
+        yHigh: 100000,
+        zHigh: 100000,
+        rxHigh: 100,
+        ryHigh: 100,
+        rzHigh: 100
+    };
+    const api_pattern_singleStep = {
+        ThresholdMinStep: 0.001,
+        ThresholdMaxStep: 0.001,
+        redStep: 1,
+        greenStep: 1,
+        blueStep: 1,
+        wStep: 0.05,
+        hStep: 0.05,
+        xStep: 10,
+        yStep: 10,
+        zStep: 10,
+        rxStep: 0.1,
+        ryStep: 0.1,
+        rzStep: 0.1
+    };
+
+    let btStatusControls = document.getElementById('obtainStatusAndSetSizeControls');
+    btStatusControls.addEventListener('click', function () {
+
+        let entities = window.NAF.connection.entities.entities;
+        let panelsSizeControlsDiv = document.getElementById('panelsSizeControlsDiv');
+
+        /* Clear Panels Size  Controls */
+        panelsSizeControlsDiv.replaceChildren([]);
+
+        /* DestroyGui */
+        try {
+            console.log("destroying");
+            if (btStatusControls.gui) {
+                btStatusControls.gui.destroy();
             }
-            catch (e) {
-                console.log(e);
-            }
+        }
+        catch (e) {
+            console.log(e);
+        }
 
-            btStatusControls.gui = new dat.GUI({ width: 200 });
+        btStatusControls.gui = new dat.GUI({ width: 200 });
 
-            let elementsDatGui = [];
-            let videoUserGui = [];
+        let elementsDatGui = [];
+        let videoUserGui = [];
 
-            let nActor = 0;
+        let nActor = 0;
 
-            if (entities) {
+        if (entities) {
 
-                /* Canvas Size Controls */
-                let panel = {};
-                for (let e in entities) {
+            /* Canvas Size Controls */
+            let panel = {};
+            for (let e in entities) {
 
-                    let h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
-                    if (h) {
-                        nActor++;
+                let h = window.NAF.connection.entities.entities[e].childNodes[1].getAttribute('height');
+                if (h) {
+                    nActor++;
 
-                        /*  Thresholds Green */
-                        videoUserGui[e] = btStatusControls.gui.addFolder(e);
+                    /*  Thresholds Green */
+                    videoUserGui[e] = btStatusControls.gui.addFolder(e);
 
-                        /*  Panels  */
-                        panel[e] = window.NAF.connection.entities.entities[e].childNodes[0].id === "videoPlaneGreen" ?
-                            window.NAF.connection.entities.entities[e].childNodes[0] :
-                            window.NAF.connection.entities.entities[e].childNodes[1];
+                    /*  Panels  */
+                    panel[e] = window.NAF.connection.entities.entities[e].childNodes[0].id === "videoPlaneGreen" ?
+                        window.NAF.connection.entities.entities[e].childNodes[0] :
+                        window.NAF.connection.entities.entities[e].childNodes[1];
 
-                        elementsDatGui[e] = [];
-                        for (let a in api_pattern_single) {
+                    elementsDatGui[e] = [];
+                    for (let a in api_pattern_single) {
 
-                            let L = a + "Low";
-                            let H = a + "High";
-                            let S = a + "Step";
+                        let L = a + "Low";
+                        let H = a + "High";
+                        let S = a + "Step";
 
-                            elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L], api_pattern_singleMax[H], api_pattern_singleStep[S]);
+                        elementsDatGui[e][a] = videoUserGui[e].add(api_pattern_single, a, api_pattern_singleMin[L], api_pattern_singleMax[H], api_pattern_singleStep[S]);
 
-                            if (a[0] === 'w'
-                                || a[0] === 'h'
-                                || a[0] === 'x'
-                                || a[0] === 'y'
-                                || a[0] === 'z'
-                                || a.substring(0, 2) === 'rx'
-                                || a.substring(0, 2) === 'ry'
-                                || a.substring(0, 2) === 'rz') {
+                        if (a[0] === 'w'
+                            || a[0] === 'h'
+                            || a[0] === 'x'
+                            || a[0] === 'y'
+                            || a[0] === 'z'
+                            || a.substring(0, 2) === 'rx'
+                            || a.substring(0, 2) === 'ry'
+                            || a.substring(0, 2) === 'rz') {
 
-                                elementsDatGui[e][a].panelaki = panel[e];
-                                elementsDatGui[e][a].domElement.pName = e;
+                            elementsDatGui[e][a].panelaki = panel[e];
+                            elementsDatGui[e][a].domElement.pName = e;
 
-                                switch (a[0]) {
-                                    case 'w':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[5].panelaki;
-                                            p.setAttribute('width', api_pattern_single[this.property]);
-                                        });
-                                        break;
-                                    case 'h':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[6].panelaki;
-                                            p.setAttribute('height', api_pattern_single[this.property]);
-                                        });
-                                        break;
-                                    case 'x':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[7].panelaki;
-                                            p.getAttribute('position').x = api_pattern_single[this.property] / 10000;
-                                        });
-                                        break;
-                                    case 'y':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[8].panelaki;
-                                            p.getAttribute('position').y = api_pattern_single[this.property] / 10000;
-                                        });
-                                        break;
-                                    case 'z':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[9].panelaki;
-                                            p.getAttribute('position').z = api_pattern_single[this.property] / 10000;
-                                        });
-                                        break;
+                            switch (a[0]) {
+                                case 'w':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[5].panelaki;
+                                        p.setAttribute('width', api_pattern_single[this.property]);
+                                    });
+                                    break;
+                                case 'h':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[6].panelaki;
+                                        p.setAttribute('height', api_pattern_single[this.property]);
+                                    });
+                                    break;
+                                case 'x':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[7].panelaki;
+                                        p.getAttribute('position').x = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
+                                case 'y':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[8].panelaki;
+                                        p.getAttribute('position').y = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
+                                case 'z':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[9].panelaki;
+                                        p.getAttribute('position').z = api_pattern_single[this.property] / 10000;
+                                    });
+                                    break;
 
 
-                                }
-
-                                switch (a.substring(0, 2)) {
-
-                                    case 'rx':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[10].panelaki;
-                                            let xStr = api_pattern_single[this.property];
-                                            let yStr = p.getAttribute('rotation').y;
-                                            let zStr = p.getAttribute('rotation').z;
-                                            p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                                        });
-                                        break;
-
-                                    case 'ry':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[11].panelaki;
-                                            let xStr = p.getAttribute('rotation').x;
-                                            let yStr = api_pattern_single[this.property];
-                                            let zStr = p.getAttribute('rotation').z;
-                                            p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                                        });
-                                        break;
-
-                                    case 'rz':
-                                        elementsDatGui[e][a].onChange(function () {
-                                            let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[12].panelaki;
-                                            let xStr = p.getAttribute('rotation').x;
-                                            let yStr = p.getAttribute('rotation').y;
-                                            let zStr = api_pattern_single[this.property];
-                                            p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
-                                        });
-                                        break;
-                                }
-
-                            } else {
-                                elementsDatGui[e][a].onChange(function () {
-                                    let domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
-                                    domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
-                                });
                             }
-                            elementsDatGui[e][a].nActor = nActor - 1;
+
+                            switch (a.substring(0, 2)) {
+
+                                case 'rx':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[10].panelaki;
+                                        let xStr = api_pattern_single[this.property];
+                                        let yStr = p.getAttribute('rotation').y;
+                                        let zStr = p.getAttribute('rotation').z;
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+
+                                case 'ry':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[11].panelaki;
+                                        let xStr = p.getAttribute('rotation').x;
+                                        let yStr = api_pattern_single[this.property];
+                                        let zStr = p.getAttribute('rotation').z;
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+
+                                case 'rz':
+                                    elementsDatGui[e][a].onChange(function () {
+                                        let p = this.panelaki !== undefined ? this.panelaki : btStatusControls.gui.__folders[this.domElement.parentElement.pName].__controllers[12].panelaki;
+                                        let xStr = p.getAttribute('rotation').x;
+                                        let yStr = p.getAttribute('rotation').y;
+                                        let zStr = api_pattern_single[this.property];
+                                        p.setAttribute('rotation', xStr + " " + yStr + " " + zStr);
+                                    });
+                                    break;
+                            }
+
+                        } else {
+                            elementsDatGui[e][a].onChange(function () {
+                                let domAffected = document.getElementsByClassName("videoPlaneGreenClass")[elementsDatGui[e][a].nActor];
+                                domAffected.setAttribute("networked-video-source", this.property, api_pattern_single[this.property]);
+                            });
                         }
+                        elementsDatGui[e][a].nActor = nActor - 1;
                     }
                 }
             }
-        });
-
-        /* Called by Networked-Aframe when connected to server */
-        function onConnect() {
-
-            let OnConnectDate = new Date();
-
-            const screenBtnEle = document.getElementById('screen-btn-sendscreen');
-            screenBtnEle.addEventListener('click', function () {
-                navigator.mediaDevices.getDisplayMedia({
-                    preferCurrentTab: true,
-                    selfBrowserSurface: 'include',
-                    audio: true
-                }).then((stream) => {
-                    NAF.connection.adapter.addLocalMediaStream(stream, "screen");
-                });
-            });
         }
+    });
 
-        let record_button = document.getElementById('start-recording-btn');
-        let video_preview = document.getElementById('video-preview');
+    /* Called by Networked-Aframe when connected to server */
+    function onConnect() {
 
-        let download_button = document.getElementById('download-recording-btn');
-        download_button.style.visibility = 'hidden';
-        let upload_button = document.getElementById('upload-recording-btn');
-        let capture_label = document.getElementById('captured-video-label');
-        let recording = document.getElementById('recording');
+        let OnConnectDate = new Date();
 
-        function startRecording(stream) {
-
-            let recorder = new MediaRecorder(stream);
-            let data = [];
-
-            recorder.ondataavailable = event => data.push(event.data);
-            recorder.start();
-
-            let stopped = new Promise((resolve, reject) => {
-                recorder.onstop = resolve;
-                recorder.onerror = event => reject(event.name);
-            });
-
-            return Promise.all([
-                stopped
-            ]).then(() => data);
-        }
-
-        function stopRecording(stream) {
-            stream.getTracks().forEach(track => track.stop());
-            record_button.disabled = false;
-            download_button.style.visibility = 'visible';
-            upload_button.disabled = false;
-        }
-
-        let recordedBlob;
-
-        record_button.addEventListener("click", function () {
-
-            capture_label.innerHTML = '';
-
+        const screenBtnEle = document.getElementById('screen-btn-sendscreen');
+        screenBtnEle.addEventListener('click', function () {
             navigator.mediaDevices.getDisplayMedia({
                 preferCurrentTab: true,
                 selfBrowserSurface: 'include',
-                systemAudio: 'include',
-                video: {
-                    cursor: 'never'
-                },
                 audio: true
-            }).then(stream => {
-
-                record_button.disabled = true;
-                download_button.style.visibility = 'hidden';
-
-                video_preview.style.display = 'block';
-                video_preview.srcObject = stream;
-                download_button.href = stream;
-                video_preview.captureStream = video_preview.captureStream || video_preview.mozCaptureStream;
-
-                stream.getVideoTracks()[0].onended = function () {
-                    video_preview.style.display = 'none';
-                    stopRecording(video_preview.srcObject);
-                };
-
-                return new Promise(resolve => video_preview.onplaying = resolve);
-            }).then(() => startRecording(video_preview.captureStream()))
-                .then(recordedChunks => {
-
-                    recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
-                    recording.src = URL.createObjectURL(recordedBlob);
-                    download_button.style.visibility = 'visible';
-                    download_button.href = recording.src;
-                    download_button.download = "RecordedVideo.webm";
-
-                    upload_button.href = recording.src;
-                    capture_label.innerHTML = "Recorded " + formatBytes(recordedBlob.size) + " of " +
-                        recordedBlob.type + " media.";
-
-                });
-        }, false);
-
-        upload_button.addEventListener("click", function () {
-
-            upload_button.disabled = true;
-
-            const mv_url = document.getElementById('node-url-input').value;
-            const mv_token = document.getElementById('node-token-input').value;
-            const mv_project_id = document.getElementById('mv-project-id-input').value;
-
-            const video_file = new File([recordedBlob], 'vrodos-' + recordedBlob.size + '.webm', {
-                type: recordedBlob.type,
+            }).then((stream) => {
+                NAF.connection.adapter.addLocalMediaStream(stream, "screen");
             });
+        });
+    }
 
-            let formData = new FormData();
-            formData.append('file', video_file);
+    let record_button = document.getElementById('start-recording-btn');
+    let video_preview = document.getElementById('video-preview');
 
-            fetch(mv_url + '/dam/assets?description=' + 'Recorded video from VROdos' + '&externalTool=VRodos', {
-                method: 'POST',
+    let download_button = document.getElementById('download-recording-btn');
+    download_button.style.visibility = 'hidden';
+    let upload_button = document.getElementById('upload-recording-btn');
+    let capture_label = document.getElementById('captured-video-label');
+    let recording = document.getElementById('recording');
+
+    function startRecording(stream) {
+
+        let recorder = new MediaRecorder(stream);
+        let data = [];
+
+        recorder.ondataavailable = event => data.push(event.data);
+        recorder.start();
+
+        let stopped = new Promise((resolve, reject) => {
+            recorder.onstop = resolve;
+            recorder.onerror = event => reject(event.name);
+        });
+
+        return Promise.all([
+            stopped
+        ]).then(() => data);
+    }
+
+    function stopRecording(stream) {
+        stream.getTracks().forEach(track => track.stop());
+        record_button.disabled = false;
+        download_button.style.visibility = 'visible';
+        upload_button.disabled = false;
+    }
+
+    let recordedBlob;
+
+    record_button.addEventListener("click", function () {
+
+        capture_label.innerHTML = '';
+
+        navigator.mediaDevices.getDisplayMedia({
+            preferCurrentTab: true,
+            selfBrowserSurface: 'include',
+            systemAudio: 'include',
+            video: {
+                cursor: 'never'
+            },
+            audio: true
+        }).then(stream => {
+
+            record_button.disabled = true;
+            download_button.style.visibility = 'hidden';
+
+            video_preview.style.display = 'block';
+            video_preview.srcObject = stream;
+            download_button.href = stream;
+            video_preview.captureStream = video_preview.captureStream || video_preview.mozCaptureStream;
+
+            stream.getVideoTracks()[0].onended = function () {
+                video_preview.style.display = 'none';
+                stopRecording(video_preview.srcObject);
+            };
+
+            return new Promise(resolve => video_preview.onplaying = resolve);
+        }).then(() => startRecording(video_preview.captureStream()))
+            .then(recordedChunks => {
+
+                recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
+                recording.src = URL.createObjectURL(recordedBlob);
+                download_button.style.visibility = 'visible';
+                download_button.href = recording.src;
+                download_button.download = "RecordedVideo.webm";
+
+                upload_button.href = recording.src;
+                capture_label.innerHTML = "Recorded " + formatBytes(recordedBlob.size) + " of " +
+                    recordedBlob.type + " media.";
+
+            });
+    }, false);
+
+    upload_button.addEventListener("click", function () {
+
+        upload_button.disabled = true;
+
+        const mv_url = document.getElementById('node-url-input').value;
+        const mv_token = document.getElementById('node-token-input').value;
+        const mv_project_id = document.getElementById('mv-project-id-input').value;
+
+        const video_file = new File([recordedBlob], 'vrodos-' + recordedBlob.size + '.webm', {
+            type: recordedBlob.type,
+        });
+
+        let formData = new FormData();
+        formData.append('file', video_file);
+
+        fetch(mv_url + '/dam/assets?description=' + 'Recorded video from VROdos' + '&externalTool=VRodos', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${mv_token}`
+            },
+            body: formData
+        }).then(function (response) {
+            if (response.ok) {
+                return response.json();
+            } else {
+                upload_button.disabled = false;
+                alert("There has been a problem uploading your video to MediaVerse platform");
+            }
+        }).then(function (data) {
+
+            fetch(mv_url + '/dam/project/' + mv_project_id + '/projectOutput', {
+                method: 'PUT',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${mv_token}`
                 },
-                body: formData
-            }).then(function (response) {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    upload_button.disabled = false;
-                    alert("There has been a problem uploading your video to MediaVerse platform");
-                }
-            }).then(function (data) {
-
-                fetch(mv_url + '/dam/project/' + mv_project_id + '/projectOutput', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${mv_token}`
-                    },
-                    body: JSON.stringify({
-                        "projectOutput": [data.key]
-                    })
-                }).then(function (response) {
-                    upload_button.disabled = false;
-                    if (response.ok) {
-                        alert('The video has been successfully uploaded to MediaVerse!');
-                    } else {
-                        alert("There has been a problem uploading your video to MediaVerse platform");
-                        console.log(response.json());
-                    }
+                body: JSON.stringify({
+                    "projectOutput": [data.key]
                 })
-            });
-        });
-
-        /* x button show clacket. key code 88 */
-        document.addEventListener('keydown', function (e) {
-            if (e.keyCode === 88) {
-                document.getElementById('actionsDiv').style.display = 'block';
-
-                if (document.getElementsByClassName('dg ac')[0]) {
-                    document.getElementsByClassName('dg ac')[0].style.display = 'block';
+            }).then(function (response) {
+                upload_button.disabled = false;
+                if (response.ok) {
+                    alert('The video has been successfully uploaded to MediaVerse!');
+                } else {
+                    alert("There has been a problem uploading your video to MediaVerse platform");
+                    console.log(response.json());
                 }
-
-                if (document.cancelFullScreen) {
-                    document.cancelFullScreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitCancelFullScreen) {
-                    document.webkitCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
+            })
         });
+    });
 
-        /* Make full screen and hide controls */
-        let director_controls = document.getElementById("toggle_controls");
-        director_controls.onclick = function () {
-
-            document.getElementById('actionsDiv').style.display = 'none';
+    /* x button show clacket. key code 88 */
+    document.addEventListener('keydown', function (e) {
+        if (e.keyCode === 88) {
+            document.getElementById('actionsDiv').style.display = 'block';
 
             if (document.getElementsByClassName('dg ac')[0]) {
-                document.getElementsByClassName('dg ac')[0].style.display = 'none';
+                document.getElementsByClassName('dg ac')[0].style.display = 'block';
             }
 
-            let elem = document.body;
-
-            if (elem.requestFullScreen) {
-                elem.requestFullScreen();
-            } else if (elem.mozRequestFullScreen) {
-                elem.mozRequestFullScreen();
-            } else if (elem.webkitRequestFullScreen) {
-                elem.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
+            if (document.cancelFullScreen) {
+                document.cancelFullScreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitCancelFullScreen) {
+                document.webkitCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
             }
-        };
+        }
+    });
 
-        let formatBytes = (bytes, decimals = 2) => {
-            if (!+bytes) return '0 Bytes'
+    /* Make full screen and hide controls */
+    let director_controls = document.getElementById("toggle_controls");
+    director_controls.onclick = function () {
 
-            const k = 1024
-            const dm = decimals < 0 ? 0 : decimals
-            const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+        document.getElementById('actionsDiv').style.display = 'none';
 
-            const i = Math.floor(Math.log(bytes) / Math.log(k))
+        if (document.getElementsByClassName('dg ac')[0]) {
+            document.getElementsByClassName('dg ac')[0].style.display = 'none';
+        }
 
-            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
-        };
+        let elem = document.body;
 
-        window.ntExample = {
-            randomColor: () => {
-                return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
-            }
-        };
+        if (elem.requestFullScreen) {
+            elem.requestFullScreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullScreen) {
+            elem.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    };
 
-    </script>
+    let formatBytes = (bytes, decimals = 2) => {
+        if (!+bytes) return '0 Bytes'
 
-    <!-- This will change the glb materials -->
-    <!-- <script src="js/glb_material_changer.js"></script> -->
+        const k = 1024
+        const dm = decimals < 0 ? 0 : decimals
+        const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
 
-    <script src="js/components/chat_component.js"></script>
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+    };
+
+    window.ntExample = {
+        randomColor: () => {
+            return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
+        }
+    };
+
+</script>
+
+<!-- This will change the glb materials -->
+<!-- <script src="js/glb_material_changer.js"></script> -->
+
+<script src="js/components/chat_component.js"></script>
 </body>
 
 </html>
