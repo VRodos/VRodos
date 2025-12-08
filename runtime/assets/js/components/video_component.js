@@ -2,13 +2,23 @@ AFRAME.registerComponent('video-controls', {
     schema: {
         id: { default: "default value" },
         orig_pos: {
-            'parse': function (val) {
-                return val.split(',');
+            default: ['0', '0', '0'],
+            parse: function (val) {
+                // validation: ensure val is a string before splitting
+                if (typeof val === 'string') {
+                    return val.split(',');
+                }
+                // if it's already an array or undefined, return it as-is (or default)
+                return val || ['0', '0', '0'];
             }
         },
         orig_rot: {
-            'parse': function (val) {
-                return val.split(',');
+            default: ['0', '0', '0'],
+            parse: function (val) {
+                if (typeof val === 'string') {
+                    return val.split(',');
+                }
+                return val || ['0', '0', '0'];
             }
         }
     },
@@ -16,6 +26,17 @@ AFRAME.registerComponent('video-controls', {
 
         this.video_id = "#video_" + this.data.id;
         this.video = document.querySelector(this.video_id);
+
+        if (this.video) {
+            // Ensure the video loads data immediately so it isn't "empty" for WebGL
+            this.video.preload = "auto";
+
+            // Fix Cross-origin warnings
+            if (!this.video.getAttribute('crossorigin')) {
+                this.video.setAttribute('crossorigin', 'anonymous');
+            }
+        }
+
         this.video_display_id = "#video-display_" + this.data.id;
         this.vid_panel_id = "#vid-panel_" + this.data.id;
         this.videoDisplay = document.querySelector(this.video_display_id);
@@ -56,11 +77,20 @@ AFRAME.registerComponent('video-controls', {
          function pausing_no_vr(e) {
             gtag('event', 'poivideo_video_pause');
         }
-        
+
         if(this.video.getAttribute("autoplay-manual") == "true"){
-            this.video.play();
-        }else{
-            this.videoDisplay.classList.add("raycastable");                    
+            // Try to play, but catch error if browser blocks it (no user interaction yet)
+            var playPromise = this.video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn("Autoplay prevented by browser. Waiting for user interaction.", error);
+                    // Optional: You could mute it here to try forcing playback:
+                    // this.video.muted = true;
+                    // this.video.play();
+                });
+            }
+        } else {
+            this.videoDisplay.classList.add("raycastable");
         }
              
         this.visibleHeightAtZDepth = ( depth ) => {
