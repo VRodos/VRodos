@@ -31,10 +31,10 @@ if ( ! defined( 'VRODOS_PLUGIN_FILE' ) ) {
 // @ini_set( 'memory_limit', '512M');
 @ini_set( 'max_execution_time', '2400' );
 
-// Set scope for the 3D editor (under construction feature):
-// Default    : 1
-// Virtual Exhibition (VRExpo)    : 2
-// VirtualProduction (MediaVerse) : 3
+// Set scope for the 3D editor
+// Archaeology                     : 1 - probably should delete this case.
+// Virtual Exhibition (VRExpo)     : 2
+// VirtualProduction (MediaVerse)  : 3
 $project_scope = 2;
 
 // Asset Manager Class
@@ -80,7 +80,6 @@ new VRodos_Core_Manager();
 // Default Scene Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-scene-manager.php');
 
-
 // Upload Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-upload-manager.php');
 VRodos_Upload_Manager::register_hooks();
@@ -101,10 +100,6 @@ new VRodos_Shortcode_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-widget-manager.php');
 new VRodos_Widget_Manager();
 
-
-
 // AJAX Handler Class
 require_once(plugin_dir_path(__FILE__) . 'includes/ajax/class-vrodos-ajax-handler.php');
 new VRodos_AJAX_Handler();
-
-
