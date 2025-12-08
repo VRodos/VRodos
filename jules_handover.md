@@ -117,14 +117,14 @@ VRodos follows a clean **Manager Class Pattern** where each manager class encaps
 
 ### Local Development Setup
 
-1.  Install WordPress locally (XAMPP, Local, or Docker).
-2.  Clone the VRodos repository into your `wp-content/plugins/` directory.
-3.  **For collaborative editing:**
-    - Navigate to `runtime/networked-aframe/`.
-    - Run `npm install`.
-    - Configure `server/keys.json` as described in the `README.md`.
-4.  Activate the plugin in WordPress.
-5.  Configure permalinks and create the required pages as prompted.
+1.  **Install WordPress:** Set up a local WordPress environment (e.g., XAMPP, Local, Docker).
+2.  **Clone Plugin:** Clone the VRodos repository into your `wp-content/plugins/` directory.
+3.  **Install & Run Server:** The Node.js server is required for development.
+    - Navigate to `runtime/networked-aframe/` and run `npm install`.
+    - Configure `server/keys.json` for WebRTC (see `README.md`).
+    - Navigate to `runtime/networked-aframe/server/` and start the server with `node easyrtc-server.js`.
+4.  **Activate Plugin:** Activate VRodos in the WordPress admin dashboard.
+5.  **Configure WordPress:** Set permalinks and create the necessary pages as prompted.
 
 ---
 

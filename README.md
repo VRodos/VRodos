@@ -43,9 +43,9 @@ After activation, ensure your WordPress environment is configured correctly:
 1.  **Set Permalinks**: Go to **Settings → Permalinks** and select a structure other than "Plain." **Post name** is recommended.
 2.  **Create Required Pages**: The plugin will automatically create the necessary pages for the editor and asset management. Add these pages to your desired menu in **Appearance → Menus**.
 
-## Collaborative Server Setup (Optional)
+## Node.js Server Setup
 
-VRodos includes a server component for real-time collaborative editing. If you wish to use this feature, follow these steps.
+The VRodos plugin requires a Node.js server component to serve the compiled 3D/VR scenes and to enable its real-time collaborative editing features. You must install and run this server for the plugin to function correctly.
 
 ### 1. Install Server Dependencies
 
@@ -87,10 +87,11 @@ For collaborative editing to work reliably across different networks, a TURN ser
 
 ### 3. Start the Server
 
-From the `runtime/networked-aframe/` directory, start the server:
+Navigate to the server directory and start the server:
 
 ```bash
-node server/easyrtc-server.js
+cd wp-content/plugins/VRodos/runtime/networked-aframe/server/
+node easyrtc-server.js
 ```
 
 The server will start, by default, on port `5832`. The collaborative editing feature in the 3D scene editor will now be enabled.
