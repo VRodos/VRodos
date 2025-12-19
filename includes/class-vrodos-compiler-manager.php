@@ -115,10 +115,12 @@ class VRodos_Compiler_Manager {
 
     private function setMaterial( &$material, $contentObject ) {
         if ( isset( $contentObject->color ) ) {
-            $material .= "color:#" . $contentObject->color . ";";
+            $color = ltrim($contentObject->color, '#');
+            $material .= "color:#" . $color . ";";
         }
         if ( isset( $contentObject->emissive ) ) {
-            $material .= "emissive:#" . $contentObject->emissive . ";";
+            $emissive = ltrim($contentObject->emissive, '#');
+            $material .= "emissive:#" . $emissive . ";";
         }
         if ( isset( $contentObject->emissiveIntensity ) ) {
             $material .= "emissiveIntensity:" . $contentObject->emissiveIntensity . ";";
@@ -664,6 +666,7 @@ class VRodos_Compiler_Manager {
                         $asset_item->setAttribute( "id", $uuid );
                         $asset_item->setAttribute( "src", "" . $contentObject->glb_path . "" );
                         $asset_item->setAttribute( "response-type", "arraybuffer" );
+                        $asset_item->setAttribute( "crossorigin", "anonymous" );
 
                         $assets->appendChild( $asset_item );
 
@@ -733,6 +736,7 @@ class VRodos_Compiler_Manager {
 
                         $a_video_asset = $dom->createElement( "video" );
                         $a_video_asset->setAttribute("id", "video_$uuid");
+                        $a_video_asset->setAttribute("crossorigin", "anonymous");
 
                         $contentObject->video_loop == 1 ? $a_video_asset->setAttribute( "loop", "true") : $a_video_asset->setAttribute( "loop", "false");
                         if ( $contentObject->video_loop == 1){
@@ -898,6 +902,7 @@ class VRodos_Compiler_Manager {
                         $asset_item->setAttribute( "id", "entity_$uuid" );
                         $asset_item->setAttribute( "src", "" . $contentObject->glb_path . "" );
                         $asset_item->setAttribute( "response-type", "arraybuffer" );
+                        $asset_item->setAttribute( "crossorigin", "anonymous" );
                         $assets->appendChild( $asset_item );
 
                         $sc_x = $contentObject->scale[0];
@@ -930,6 +935,7 @@ class VRodos_Compiler_Manager {
                         $asset_item->setAttribute( "id", $uuid );
                         $asset_item->setAttribute( "src", "" . $contentObject->glb_path . "" );
                         $asset_item->setAttribute( "response-type", "arraybuffer" );
+                        $asset_item->setAttribute( "crossorigin", "anonymous" );
 
                         $assets->appendChild( $asset_item );
 
@@ -937,6 +943,7 @@ class VRodos_Compiler_Manager {
                         $asset_indicator_item->setAttribute( "id", "check_indicator_id" );
                         $asset_indicator_item->setAttribute( "src", "" . $this->plugin_path_url .  "/assets/checkmark.glb" . "");
                         $asset_indicator_item->setAttribute( "response-type", "arraybuffer" );
+                        $asset_indicator_item->setAttribute( "crossorigin", "anonymous" );
 
                         $assets->appendChild( $asset_indicator_item );
 
@@ -944,6 +951,7 @@ class VRodos_Compiler_Manager {
                         $asset_indicator_item->setAttribute( "id", "x_indicator_id" );
                         $asset_indicator_item->setAttribute( "src", "" . $this->plugin_path_url .  "/assets/xmark.glb" . "");
                         $asset_indicator_item->setAttribute( "response-type", "arraybuffer" );
+                        $asset_indicator_item->setAttribute( "crossorigin", "anonymous" );
 
                         $assets->appendChild( $asset_indicator_item );
 
@@ -981,30 +989,31 @@ class VRodos_Compiler_Manager {
 
                         $assets = $dom->getElementById('scene-assets');
                         $a_image_asset_exp = $dom->createElement( "img" );
+                        $a_image_asset_exp->setAttribute("crossorigin", "anonymous");
                         $a_image_asset_main = $dom->createElement( "img" );
+                        $a_image_asset_main->setAttribute("crossorigin", "anonymous");
                         $a_image_asset_esc = $dom->createElement( "img" );
+                        $a_image_asset_esc->setAttribute("crossorigin", "anonymous");
                         $a_image_asset_left = $dom->createElement( "img" );
+                        $a_image_asset_left->setAttribute("crossorigin", "anonymous");
                         $a_image_asset_right = $dom->createElement( "img" );
+                        $a_image_asset_right->setAttribute("crossorigin", "anonymous");
 
 
                         $a_image_asset_main->setAttribute("id", "main_img_$uuid");
                         if ($contentObject->poi_img_path != "false") {
                             $a_image_asset_main->setAttribute("src",$contentObject->poi_img_path);
-                            $a_image_asset_main->setAttribute("crossorigin", "anonymous");
                         }
 
                         $a_image_asset_esc->setAttribute("id", "esc_img_$uuid");
                         $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x_2f3542.png', dirname(__FILE__)));
-                        $a_image_asset_esc->setAttribute("crossorigin", "anonymous");
 
 
                         $a_image_asset_left->setAttribute("id", "left_img_$uuid");
                         $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left_2f3542.png', dirname(__FILE__)));
-                        $a_image_asset_left->setAttribute("crossorigin", "anonymous");
 
                         $a_image_asset_right->setAttribute("id", "right_img_$uuid");
                         $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right_2f3542.png', dirname(__FILE__)));
-                        $a_image_asset_right->setAttribute("crossorigin", "anonymous");
 
 
                         $assets->appendChild($a_image_asset_exp);

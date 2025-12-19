@@ -118,6 +118,8 @@
                     mesh.traverse(function (node) {
                         if (node.isMesh) {
                             node.frustumCulled = false;
+                            node.castShadow = true;
+                            node.receiveShadow = true;
                         }
                     });
                 });
@@ -353,7 +355,7 @@
                                 } else if (this.data.avatarType === 'blob') {
 
                                     if (this.head) {
-                                        this.head.setAttribute('material', 'color', this.data.color);
+                                        this.head.setAttribute('material', {color: this.data.color});
                                         this.head.setAttribute('visible', 'true');
                                         this.face.setAttribute('visible', 'true');
                                     }

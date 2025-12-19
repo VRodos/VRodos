@@ -63,11 +63,11 @@ AFRAME.registerComponent('toggle-ownership', {
 
   updateColor() {
     const headColor = document.querySelector('#player .head').getAttribute('material').color;
-    this.el.setAttribute('material', 'color', headColor);
+    this.el.setAttribute('material', {color: headColor});
   },
 
   updateOpacity(opacity) {
-    this.el.setAttribute('material', 'opacity', opacity);
+    this.el.setAttribute('material', {opacity: opacity});
   },
 
   tick() {
