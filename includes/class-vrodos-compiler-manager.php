@@ -640,7 +640,7 @@ class VRodos_Compiler_Manager {
                         $gltf_model->appendChild( $dom->createTextNode( '' ) );
                         $material = "";
                         $this->setAffineTransformations( $gltf_model, $contentObject );
-                        //$this->setMaterial( $material, $contentObject );
+                        $this->setMaterial( $material, $contentObject );
                         $gltf_model->setAttribute( "class", "override-materials hideable" );
                         $gltf_model->setAttribute( "material", $material );
                         $gltf_model->setAttribute( "clear-frustum-culling", "" );
@@ -973,6 +973,7 @@ class VRodos_Compiler_Manager {
                         $material = "";
 
                         $this->setAffineTransformations( $gltf_model, $contentObject );
+                        $this->setMaterial( $material, $contentObject );
                         $gltf_model->setAttribute( "class", "override-materials raycastable hideable non-vr" );
                         $gltf_model->setAttribute( "material", $material );
                         $gltf_model->setAttribute( "help-chat", "scene_id: $scene_id; num_participants: $num_participants" );
@@ -1050,9 +1051,10 @@ class VRodos_Compiler_Manager {
                         $a_button_entity->setAttribute("class", "raycastable menu-button hideable");
                         $a_button_entity->setAttribute('original-scale', "1 1 1");
 
-
+                        $material = "";
+                        $this->setMaterial( $material, $contentObject );
                         $a_button_entity->setAttribute( "gltf-model", "url(" . $contentObject->glb_path . ")" );
-                        $a_button_entity->setAttribute( "material", $material ?? '' );
+                        $a_button_entity->setAttribute( "material", $material );
                         $a_button_entity->setAttribute( "shadow", "cast: true; receive: true" );
 
                         $a_menu_entity->appendChild($a_button_entity);
