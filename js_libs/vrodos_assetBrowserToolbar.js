@@ -190,8 +190,8 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     draggable_string +'>' + img +
 
                     '<span class="FileListItemName mdc-list-item__text" title="Drag the card into the plane">' + name +
-                    '<i class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption material-icons">' + f['category_icon']
-                    + '</i></span>' +
+                    '<span class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption"><i class="material-icons">' + f['category_icon']
+                    + '</i></span></span>' +
                     '<span class="FileListItemFooter">' +
 
                     (f['is_joker'] === 'false' ?
