@@ -471,7 +471,7 @@ class VRodos_Compiler_Manager {
                         $a_light_target->setAttribute("position", implode( " ", $contentObject->targetposition ) );
                         $a_light_target->setAttribute("id", $uuid."target");
 
-						$is_casting_shadow = isset($contentObject->castingShadow) ? ($contentObject->castingShadow == "1" ? "true" : "false") : "false";
+                        $is_casting_shadow = isset($contentObject->castingShadow) ? ($contentObject->castingShadow == "1" ? "true" : "false") : "false";
 
                         $ascene->appendChild($a_light_target);
                         $a_light->setAttribute("light", "type:directional;".
@@ -623,6 +623,7 @@ class VRodos_Compiler_Manager {
                         $asset_item->setAttribute( "id", $uuid );
                         $asset_item->setAttribute( "src", "" . $contentObject->glb_path . "" );
                         $asset_item->setAttribute( "response-type", "arraybuffer" );
+                        $asset_item->setAttribute( "crossorigin", "anonymous" );
 
                         $assets->appendChild( $asset_item );
 
@@ -987,20 +988,23 @@ class VRodos_Compiler_Manager {
 
 
                         $a_image_asset_main->setAttribute("id", "main_img_$uuid");
-                        if ($contentObject->poi_img_path != "false")
+                        if ($contentObject->poi_img_path != "false") {
                             $a_image_asset_main->setAttribute("src",$contentObject->poi_img_path);
+                            $a_image_asset_main->setAttribute("crossorigin", "anonymous");
+                        }
 
                         $a_image_asset_esc->setAttribute("id", "esc_img_$uuid");
                         $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x_2f3542.png', dirname(__FILE__)));
-
+                        $a_image_asset_esc->setAttribute("crossorigin", "anonymous");
 
 
                         $a_image_asset_left->setAttribute("id", "left_img_$uuid");
                         $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left_2f3542.png', dirname(__FILE__)));
-
+                        $a_image_asset_left->setAttribute("crossorigin", "anonymous");
 
                         $a_image_asset_right->setAttribute("id", "right_img_$uuid");
                         $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right_2f3542.png', dirname(__FILE__)));
+                        $a_image_asset_right->setAttribute("crossorigin", "anonymous");
 
 
                         $assets->appendChild($a_image_asset_exp);

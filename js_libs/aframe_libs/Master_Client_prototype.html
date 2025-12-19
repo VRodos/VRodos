@@ -149,23 +149,18 @@
                 connectionPromise.then(() => {
                     // now you can access NAF.connection.getConnectedClients() safely here
                     // do stuff
-
-                    console.log("PROMISE");
-                    console.log(NAF.connection.getConnectedClients());
                 })
                 if (this.data.movement_disabled == "1")
                     if (this.data.pr_type == "vrexpo_games")
                         document.getElementById('cameraA').removeAttribute('wasd-controls');
                     else
                         document.getElementById('player').removeAttribute('wasd-controls');
-                // console.log(wasd_controls);
 
 
                 // Event - When scene is loaded
                 this.el.addEventListener("loaded", () => {
 
                     if (this.data.pr_type === "vrexpo_games") {
-                        console.log(this.data.cam_rotation_y);
                         document.getElementById("cameraA").setAttribute("position", this.data.cam_position);
                         //document.getElementById("player").setAttribute("rotation", "0 90 0");
 
@@ -305,7 +300,6 @@
                             if (elem.querySelector('.rpm_avatar')) {
                                 elem.querySelector('.rpm_avatar').addEventListener('stateadded', function (evt) {
                                     if (evt.detail == 'loadedanimations') {
-                                        console.log("Animations loaded");
                                         this.anims_loaded = true;
                                         elem.addState('anims_loaded');
 
@@ -331,10 +325,6 @@
 
                         // here as an example, not used in current demo. Could build a user list, expanding on this.
                         listUsers: function () {
-                            console.log(
-                                'userlist',
-                                [...document.querySelectorAll('[player-info]')].map((el) => el.components['player-info'].data.name)
-                            );
                         },
 
                         newRandomColor: function () {
@@ -403,9 +393,6 @@
 
                     // If base scene, launch avatar selector
                     /*if (document.getElementById("is-base-scene-input").value === 'true' ) {*/
-
-                    console.log(document.getElementById("aframe-scene-container").getAttribute("scene-settings").avatar_enabled);
-
 
                     let avatar_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#avatar-selection-dialog'))
 
@@ -721,9 +708,7 @@
                 var bind = AFRAME.utils.bind;
                 this.el.addEventListener('componentchanged', function (evt) {
                     if (evt.detail.name === 'rotation') {
-                        console.log('Entity has rotated');
                     }
-                    //console.log(evt.detail);
                 });
             }
         });
@@ -1391,9 +1376,9 @@
                  material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
                  position=" 1 -0.5 0.002"></a-mixin>
         <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.4; height: 0.14"
-                 material="shader: flat; color: #dfe4ea; " position=" 0 0 0.000001"></a-mixin>
+                 material="shader: flat; color: #dfe4ea;" position=" 0 0 0.000001"></a-mixin>
         <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
-                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true; "
+                 material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true;"
                  position="0.15 0.15 0.000001"></a-mixin>
         <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 2; height: 0.3" material="color: black; opacity: 0.7; shader: flat"></a-mixin>
 
@@ -1471,7 +1456,6 @@
 
         // Get user id
         if (json.eventName === 'v1.user.set') {
-            console.log(`User with id ${json.data.id} set: ${JSON.stringify(json)}`);
         }
     }
 
@@ -1550,13 +1534,11 @@
 
         /* DestroyGui */
         try {
-            console.log("destroying");
             if (btStatusControls.gui) {
                 btStatusControls.gui.destroy();
             }
         }
         catch (e) {
-            console.log(e);
         }
 
         btStatusControls.gui = new dat.GUI({ width: 200 });
