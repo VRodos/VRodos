@@ -473,13 +473,9 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             const icon = btn.querySelector('i');
 
             // Programmatically click the other toggle buttons to ensure their state is in sync
-            const hierarchyToggle = document.getElementById('hierarchy-toggle-btn');
-            const fileToolbarToggle = document.getElementById('bt_close_file_toolbar');
-            const scenesListToggle = document.getElementById('scenesList-toggle-btn');
-
-            if (hierarchyToggle) hierarchyToggle.click();
-            if (fileToolbarToggle) fileToolbarToggle.click();
-            if (scenesListToggle) scenesListToggle.click();
+            document.getElementById('hierarchy-toggle-btn')?.click();
+            document.getElementById('bt_close_file_toolbar')?.click();
+            document.getElementById('scenesList-toggle-btn')?.click();
 
             if (btn.dataset.toggle === 'on') {
                 // --- HIDE UI ---
@@ -488,7 +484,12 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                 if (icon) icon.textContent = 'visibility_off';
                 btn.dataset.toggle = 'off';
 
-                document.querySelectorAll('.hidable').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.hidable').forEach(el => {
+                    // Store the original display style before hiding
+                    const computedDisplay = window.getComputedStyle(el).display;
+                    el.dataset.originalDisplay = computedDisplay;
+                    el.style.display = 'none';
+                });
 
                 envir.isComposerOn = true;
                 transform_controls.visible = false;
@@ -512,13 +513,10 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                 if (icon) icon.textContent = 'visibility';
                 btn.dataset.toggle = 'on';
 
-                document.querySelectorAll('.hidable').forEach(el => el.style.display = '');
-
-                // Specifically set the header to display:flex to ensure it becomes visible
-                const headerToolbar = document.querySelector('.scene_editor_upper_toolbar');
-                if (headerToolbar) {
-                    headerToolbar.style.display = 'flex';
-                }
+                document.querySelectorAll('.hidable').forEach(el => {
+                    // Restore the original display style, or default to '' (which reverts to stylesheet)
+                    el.style.display = el.dataset.originalDisplay || '';
+                });
 
                 envir.isComposerOn = true;
                 transform_controls.visible = true;
@@ -535,8 +533,6 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                     if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = true;
                 }
             }
-
-            // Ensure the renderer is resized to fit the new layout
             if (envir.turboResize) envir.turboResize();
         });
     }
