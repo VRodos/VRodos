@@ -465,73 +465,81 @@ transform_controls.addEventListener('dragging-changed', function (event) {
     jQuery("#popUpAmbientPropertiesDiv").bind('contextmenu', function (e) { return false; });
 
 
-    // Toggle UIs to clear out vision
-    jQuery('#toggleUIBtn').click(function () {
+    // Toggle UIs to clear out vision - REFACTORED TO NATIVE JS
+    const toggleUIBtn = document.getElementById('toggleUIBtn');
+    if (toggleUIBtn) {
+        toggleUIBtn.addEventListener('click', function () {
+            const btn = this;
+            const icon = btn.querySelector('i');
 
-        var btn = jQuery('#toggleUIBtn');
-        var icon = jQuery('#toggleUIBtn i');
+            // Programmatically click the other toggle buttons to ensure their state is in sync
+            const hierarchyToggle = document.getElementById('hierarchy-toggle-btn');
+            const fileToolbarToggle = document.getElementById('bt_close_file_toolbar');
+            const scenesListToggle = document.getElementById('scenesList-toggle-btn');
 
-        jQuery("#hierarchy-toggle-btn").click();
-        jQuery("#bt_close_file_toolbar").click();
-        jQuery("#scenesList-toggle-btn").click();
+            if (hierarchyToggle) hierarchyToggle.click();
+            if (fileToolbarToggle) fileToolbarToggle.click();
+            if (scenesListToggle) scenesListToggle.click();
 
-        if (btn.data('toggle') === 'on') {
+            if (btn.dataset.toggle === 'on') {
+                // --- HIDE UI ---
+                btn.classList.add('mdc-theme--text-hint-on-light');
+                btn.classList.remove('mdc-theme--secondary');
+                if (icon) icon.textContent = 'visibility_off';
+                btn.dataset.toggle = 'off';
 
-            // Hide
-            btn.addClass('mdc-theme--text-hint-on-light');
-            btn.removeClass('mdc-theme--secondary');
-            icon.html('<i class="material-icons">visibility_off</i>');
-            btn.data('toggle', 'off');
+                document.querySelectorAll('.hidable').forEach(el => el.style.display = 'none');
 
-            jQuery(".hidable").hide();  // Lights bar
+                envir.isComposerOn = true;
+                transform_controls.visible = false;
+                if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = false;
+                if (envir.gridHelper) envir.gridHelper.visible = false;
+                if (envir.axesHelper) envir.axesHelper.visible = false;
+                if (envir.outlinePass) envir.outlinePass.enabled = false;
 
-            envir.isComposerOn = true;
-            transform_controls.visible = false;
-            envir.getSteveFrustum().visible = false;
-            envir.gridHelper.visible = false;
-            envir.axesHelper.visible = false;
-            envir.outlinePass.enabled = false;
+                setVisiblityLightHelpingElements(false);
 
-            setVisiblityLightHelpingElements(false);
+                const vrEditorMainDiv = document.getElementById('vr_editor_main_div');
+                if (vrEditorMainDiv) vrEditorMainDiv.style.top = '0';
 
-            // footer that is high up below admin bar
-            //jQuery("#colophon").hide();
+                const cookieLawInfo = document.getElementById('cookie-law-info-again');
+                if (cookieLawInfo) cookieLawInfo.style.display = 'none';
 
-            jQuery("#vr_editor_main_div")[0].style.top = 0;
+            } else {
+                // --- SHOW UI ---
+                btn.classList.remove('mdc-theme--text-hint-on-light');
+                btn.classList.add('mdc-theme--secondary');
+                if (icon) icon.textContent = 'visibility';
+                btn.dataset.toggle = 'on';
 
-            jQuery('#cookie-law-info-again').hide();
-        } else {
-            // Show
-            btn.removeClass('mdc-theme--text-hint-on-light');
-            btn.addClass('mdc-theme--secondary');
-            icon.html('<i class="material-icons">visibility</i>');
-            btn.data('toggle', 'on');
+                document.querySelectorAll('.hidable').forEach(el => el.style.display = '');
 
-            jQuery(".hidable").show(); // Lights bar
-            envir.isComposerOn = true;
-            transform_controls.visible = true;
+                // Specifically set the header to display:flex to ensure it becomes visible
+                const headerToolbar = document.querySelector('.scene_editor_upper_toolbar');
+                if (headerToolbar) {
+                    headerToolbar.style.display = 'flex';
+                }
 
-            envir.gridHelper.visible = true;
-            envir.axesHelper.visible = true;
-            envir.outlinePass.enabled = true;
+                envir.isComposerOn = true;
+                transform_controls.visible = true;
 
-            setVisiblityLightHelpingElements(true);
+                if (envir.gridHelper) envir.gridHelper.visible = true;
+                if (envir.axesHelper) envir.axesHelper.visible = true;
+                if (envir.outlinePass) envir.outlinePass.enabled = true;
 
-            // footer that is high up below admin bar
-            //jQuery("#colophon").show();
+                setVisiblityLightHelpingElements(true);
 
-            //jQuery("#vr_editor_main_div")[0].style.top = "60px";
-            // if in 3rd person view then show the cameraobject
-            //envir.getSteveFrustum().visible = true;
+                if (envir.thirdPersonView || avatarControlsEnabled) {
+                    if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = false;
+                } else {
+                    if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = true;
+                }
+            }
 
-            if (envir.thirdPersonView || avatarControlsEnabled)
-                envir.getSteveFrustum().visible = false;
-            else
-                envir.getSteveFrustum().visible = true; // envir.thirdPersonView && avatarControlsEnabled;
-
-        }
-        envir.turboResize();
-    });
+            // Ensure the renderer is resized to fit the new layout
+            if (envir.turboResize) envir.turboResize();
+        });
+    }
 
 
     // Drag light or Pawn: Add event listeners
