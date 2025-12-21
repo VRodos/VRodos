@@ -465,46 +465,45 @@ transform_controls.addEventListener('dragging-changed', function (event) {
     jQuery("#popUpAmbientPropertiesDiv").bind('contextmenu', function (e) { return false; });
 
 
-    // Toggle UIs to clear out vision - REFACTORED TO NATIVE JS
+    // Toggle UIs to clear out vision
     const toggleUIBtn = document.getElementById('toggleUIBtn');
     if (toggleUIBtn) {
+
+        const uiElementsToToggle = [
+            document.querySelector('.scene_editor_upper_toolbar'),
+            document.querySelector('.assetBrowserToolbar'),
+            document.querySelector('.right-elements-panel-style'),
+            document.querySelector('.environmentBar'),
+            document.getElementById('scenesInsideVREditor')
+        ].filter(Boolean); // Filter out nulls if an element doesn't exist
+
+        const elementDisplayStates = new Map();
+
+        // Store the initial, computed display state of each element.
+        uiElementsToToggle.forEach(el => {
+            elementDisplayStates.set(el, window.getComputedStyle(el).display);
+        });
+
         toggleUIBtn.addEventListener('click', function () {
             const btn = this;
             const icon = btn.querySelector('i');
+            const isHiding = btn.dataset.toggle === 'on';
 
-            // Programmatically click the other toggle buttons to ensure their state is in sync
-            document.getElementById('hierarchy-toggle-btn')?.click();
-            document.getElementById('bt_close_file_toolbar')?.click();
-            document.getElementById('scenesList-toggle-btn')?.click();
-
-            if (btn.dataset.toggle === 'on') {
+            if (isHiding) {
                 // --- HIDE UI ---
                 btn.classList.add('mdc-theme--text-hint-on-light');
                 btn.classList.remove('mdc-theme--secondary');
                 if (icon) icon.textContent = 'visibility_off';
                 btn.dataset.toggle = 'off';
 
-                document.querySelectorAll('.hidable').forEach(el => {
-                    // Store the original display style before hiding
-                    const computedDisplay = window.getComputedStyle(el).display;
-                    el.dataset.originalDisplay = computedDisplay;
-                    el.style.display = 'none';
-                });
+                uiElementsToToggle.forEach(el => el.style.display = 'none');
 
-                envir.isComposerOn = true;
                 transform_controls.visible = false;
                 if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = false;
                 if (envir.gridHelper) envir.gridHelper.visible = false;
                 if (envir.axesHelper) envir.axesHelper.visible = false;
                 if (envir.outlinePass) envir.outlinePass.enabled = false;
-
                 setVisiblityLightHelpingElements(false);
-
-                const vrEditorMainDiv = document.getElementById('vr_editor_main_div');
-                if (vrEditorMainDiv) vrEditorMainDiv.style.top = '0';
-
-                const cookieLawInfo = document.getElementById('cookie-law-info-again');
-                if (cookieLawInfo) cookieLawInfo.style.display = 'none';
 
             } else {
                 // --- SHOW UI ---
@@ -513,18 +512,15 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                 if (icon) icon.textContent = 'visibility';
                 btn.dataset.toggle = 'on';
 
-                document.querySelectorAll('.hidable').forEach(el => {
-                    // Restore the original display style, or default to '' (which reverts to stylesheet)
-                    el.style.display = el.dataset.originalDisplay || '';
+                uiElementsToToggle.forEach(el => {
+                    // Restore the original display style
+                    el.style.display = elementDisplayStates.get(el) || '';
                 });
 
-                envir.isComposerOn = true;
                 transform_controls.visible = true;
-
                 if (envir.gridHelper) envir.gridHelper.visible = true;
                 if (envir.axesHelper) envir.axesHelper.visible = true;
                 if (envir.outlinePass) envir.outlinePass.enabled = true;
-
                 setVisiblityLightHelpingElements(true);
 
                 if (envir.thirdPersonView || avatarControlsEnabled) {
