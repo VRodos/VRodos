@@ -474,7 +474,11 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             document.querySelector('.assetBrowserToolbar'),
             document.querySelector('.right-elements-panel-style'),
             document.querySelector('.environmentBar'),
-            document.getElementById('scenesInsideVREditor')
+            document.getElementById('scenesInsideVREditor'),
+            document.querySelector('.filemanager'),
+            document.getElementById('bt_close_file_toolbar'),
+            document.querySelector('.HierarchyToggleStyle'),
+            document.getElementById('scenesList-toggle-btn')
         ].filter(Boolean); // Filter out nulls if an element doesn't exist
 
         const elementDisplayStates = new Map();
