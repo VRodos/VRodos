@@ -56,11 +56,7 @@ class VRodos_Compiler_Manager {
         }
 
         return json_encode(
-            array(
-                "index"        => $this->nodeJSpath() . "index_" . end( $scene_id_list ) . ".html",
-                "MasterClient" => $this->nodeJSpath() . "Master_Client_" . end( $scene_id_list ) . ".html",
-                "SimpleClient" => $this->nodeJSpath() . "Simple_Client_" . end( $scene_id_list ) . ".html",
-            )
+            ["index"        => $this->nodeJSpath() . "index_" . end( $scene_id_list ) . ".html", "MasterClient" => $this->nodeJSpath() . "Master_Client_" . end( $scene_id_list ) . ".html", "SimpleClient" => $this->nodeJSpath() . "Simple_Client_" . end( $scene_id_list ) . ".html"]
         );
     }
 
@@ -150,15 +146,7 @@ class VRodos_Compiler_Manager {
         $metadata   = $scene_json->metadata;
         $objects    = $scene_json->objects;
 
-        return array(
-            "dom"        => $dom,
-            "html"       => $html,
-            "body"       => $body,
-            "ascene"     => $ascene,
-            "metadata"   => $metadata,
-            "objects"    => $objects,
-            "actionsDiv" => $actionsDiv
-        );
+        return ["dom"        => $dom, "html"       => $html, "body"       => $body, "ascene"     => $ascene, "metadata"   => $metadata, "objects"    => $objects, "actionsDiv" => $actionsDiv];
     }
 
     private function createBasicDomStructureAframeDirector( $content, $scene_json, $project_id, $scene_id, $scene_id_list ) {
@@ -229,16 +217,7 @@ class VRodos_Compiler_Manager {
         $metadata = $scene_json->metadata;
         $objects  = $scene_json->objects;
 
-        return array(
-            "dom"          => $dom,
-            "html"         => $html,
-            "body"         => $body,
-            "ascene"       => $ascene,
-            "ascenePlayer" => $ascenePlayer,
-            "metadata"     => $metadata,
-            "objects"      => $objects,
-            "actionsDiv"   => $actionsDiv
-        );
+        return ["dom"          => $dom, "html"         => $html, "body"         => $body, "ascene"       => $ascene, "ascenePlayer" => $ascenePlayer, "metadata"     => $metadata, "objects"      => $objects, "actionsDiv"   => $actionsDiv];
     }
 
     private function createIndexFile( $project_title, $scene_id, $scene_title ) {
@@ -481,14 +460,14 @@ class VRodos_Compiler_Manager {
                             // "intensity:".($contentObject->lightintensity).";".
                             "castShadow:".($is_casting_shadow).";".
 
-                            "shadowMapHeight:".(isset($contentObject->shadowMapHeight) ? $contentObject->shadowMapHeight : "512").";".
+                            "shadowMapHeight:".($contentObject->shadowMapHeight ?? "512").";".
                             // "shadowCameraFar: 5000;".
-                            "shadowMapWidth:".(isset($contentObject->shadowMapWidth) ? $contentObject->shadowMapWidth : "512").";".
-                            "shadowCameraTop:".(isset($contentObject->shadowCameraTop) ? $contentObject->shadowCameraTop : "5").";".
-                            "shadowCameraRight:".(isset($contentObject->shadowCameraRight) ? $contentObject->shadowCameraRight : "5").";".
-                            "shadowCameraLeft:".(isset($contentObject->shadowCameraLeft) ? $contentObject->shadowCameraLeft : "-5").";".
-                            "shadowCameraBottom:".(isset($contentObject->shadowCameraBottom) ? $contentObject->shadowCameraBottom : "-5").";".
-                            "shadowBias:".(isset($contentObject->shadowBias) ? $contentObject->shadowBias : "0").";".
+                            "shadowMapWidth:".($contentObject->shadowMapWidth ?? "512").";".
+                            "shadowCameraTop:".($contentObject->shadowCameraTop ?? "5").";".
+                            "shadowCameraRight:".($contentObject->shadowCameraRight ?? "5").";".
+                            "shadowCameraLeft:".($contentObject->shadowCameraLeft ?? "-5").";".
+                            "shadowCameraBottom:".($contentObject->shadowCameraBottom ?? "-5").";".
+                            "shadowBias:".($contentObject->shadowBias ?? "0").";".
                             // "shadow-camera-automatic: '#41132111-4c3f-4741-9c8a-343e71fc4b46';".
                             "shadowCameraVisible: false;"
                         //#41132111-4c3f-4741-9c8a-343e71fc4b46';
@@ -506,8 +485,7 @@ class VRodos_Compiler_Manager {
                         $SunPosVec = $contentObject->position;
                         $TargetVec = $contentObject->targetposition;
 
-                        $SkySun = array( $SunPosVec[0] - $TargetVec[0], $SunPosVec[1] - $TargetVec[1],
-                            $SunPosVec[2] - $TargetVec[2]);
+                        $SkySun = [$SunPosVec[0] - $TargetVec[0], $SunPosVec[1] - $TargetVec[1], $SunPosVec[2] - $TargetVec[2]];
 
                         $materialSunSky = 'side:back; sunPosition: ';
                         $materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
@@ -708,7 +686,7 @@ class VRodos_Compiler_Manager {
                         $a_asset_fs->setAttribute("mixin", "vid_panel");
                         $a_asset_fs->setAttribute("id", "video_fullScreen_$uuid");
                         //$a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/fullscreen.png");
-                        $a_asset_fs->setAttribute("src",  plugins_url( '../VRodos/assets/images/fullscreen.png', dirname(__FILE__)));
+                        $a_asset_fs->setAttribute("src",  plugins_url( '../VRodos/assets/images/fullscreen.png', __DIR__));
                         $a_asset_fs->setAttribute("crossorigin", "anonymous");
 
 
@@ -716,21 +694,21 @@ class VRodos_Compiler_Manager {
                         $a_asset_ex->setAttribute("mixin", "vid_panel");
                         $a_asset_ex->setAttribute("id", "video_exit_$uuid");
                         //$a_asset_ex->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/exit.png");
-                        $a_asset_ex->setAttribute("src",  plugins_url( '../VRodos/assets/images/exit.png', dirname(__FILE__)));
+                        $a_asset_ex->setAttribute("src",  plugins_url( '../VRodos/assets/images/exit.png', __DIR__));
                         $a_asset_ex->setAttribute("crossorigin", "anonymous");
 
                         $a_asset_pl = $dom->createElement( "img" );
                         $a_asset_pl->setAttribute("mixin", "vid_panel");
                         $a_asset_pl->setAttribute("id", "video_pl_$uuid");
                         //$a_asset_pl->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/play.png");
-                        $a_asset_pl->setAttribute("src",  plugins_url( '../VRodos/assets/images/play.png', dirname(__FILE__)));
+                        $a_asset_pl->setAttribute("src",  plugins_url( '../VRodos/assets/images/play.png', __DIR__));
                         $a_asset_pl->setAttribute("crossorigin", "anonymous");
 
                         $a_asset_pas = $dom->createElement( "img" );
                         $a_asset_pas->setAttribute("mixin", "vid_panel");
                         $a_asset_pas->setAttribute("id", "video_pas_$uuid");
                         //$a_asset_pas->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/pause.png");
-                        $a_asset_pas->setAttribute("src",  plugins_url( '../VRodos/assets/images/pause.png', dirname(__FILE__)));
+                        $a_asset_pas->setAttribute("src",  plugins_url( '../VRodos/assets/images/pause.png', __DIR__));
                         $a_asset_pas->setAttribute("crossorigin", "anonymous");
 
 
@@ -841,7 +819,7 @@ class VRodos_Compiler_Manager {
                         // $a_title_vid_entity->setAttribute("position", "-0.18 0.2 0.000001");
                         $a_title_vid_entity->setAttribute("position", "-0.18 0.05 0.000001");
 
-                        $vid_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
+                        $vid_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', __DIR__);
                         $a_title_vid_entity->setAttribute("text", "depthTest:false; negate:false;shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: #2f3542; value: $contentObject->video_title");
                         $a_title_vid_entity->setAttribute( "class", "clickable raycastable" );
 
@@ -1007,14 +985,14 @@ class VRodos_Compiler_Manager {
                         }
 
                         $a_image_asset_esc->setAttribute("id", "esc_img_$uuid");
-                        $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x_2f3542.png', dirname(__FILE__)));
+                        $a_image_asset_esc->setAttribute("src",plugins_url( '../VRodos/assets/images/x_2f3542.png', __DIR__));
 
 
                         $a_image_asset_left->setAttribute("id", "left_img_$uuid");
-                        $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left_2f3542.png', dirname(__FILE__)));
+                        $a_image_asset_left->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_left_2f3542.png', __DIR__));
 
                         $a_image_asset_right->setAttribute("id", "right_img_$uuid");
-                        $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right_2f3542.png', dirname(__FILE__)));
+                        $a_image_asset_right->setAttribute("src",plugins_url( '../VRodos/assets/images/arrow_right_2f3542.png', __DIR__));
 
 
                         $assets->appendChild($a_image_asset_exp);
@@ -1085,7 +1063,7 @@ class VRodos_Compiler_Manager {
                         $a_title_img_entity = $dom->createElement("a-entity");
                         $a_title_img_entity->setAttribute("id", "title_$uuid");
 
-                        $tit_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', dirname(__FILE__));
+                        $tit_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', __DIR__);
                         $a_title_img_entity->setAttribute("text", "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: #2f3542;");
                         $a_title_img_entity->setAttribute("title_to_add", "$contentObject->poi_img_title");
                         $a_title_img_entity->setAttribute( "class", "hideable" );
@@ -1120,7 +1098,7 @@ class VRodos_Compiler_Manager {
                             $a_desc_img_entity = $dom->createElement("a-entity");
                             $a_desc_img_entity->setAttribute("id", "desc_$uuid");
                             $a_desc_img_entity->setAttribute("position", "-0.68 -0.3 0");
-                            $desc_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Regular-msdf.json', dirname(__FILE__));
+                            $desc_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Regular-msdf.json', __DIR__);
                             $content_length = 90;
 
                             if (strlen($contentObject->poi_img_content) > $content_length){

@@ -102,7 +102,7 @@ class VRodos_Game_CPT_Manager {
             }
 
             // If project is not a joker one
-            if (strpos($projectSlug, '-joker') === false) {
+            if (!str_contains($projectSlug, '-joker')) {
                 // Create a parent game tax category for the scenes
                 wp_insert_term($projectTitle, 'vrodos_scene_pgame', [
                     'description' => '-',
@@ -236,7 +236,7 @@ class VRodos_Game_CPT_Manager {
         wp_localize_script('ajax-script_compile', 'phpvarsA',
             ['pluginsUrl' => plugins_url(),
                 'PHP_OS' => PHP_OS,
-                'game_dirpath' => realpath(dirname(__FILE__) . '/..') . $DS . 'games_assemble' . $DS . $slug,
+                'game_dirpath' => realpath(__DIR__ . '/..') . $DS . 'games_assemble' . $DS . $slug,
                 'game_urlpath' => plugins_url('vrodos') . '/games_assemble/' . $slug
             ]);
 
@@ -244,9 +244,9 @@ class VRodos_Game_CPT_Manager {
         wp_localize_script('vrodos_assemble_request', 'phpvarsB',
             ['pluginsUrl' => plugins_url(),
                 'PHP_OS' => PHP_OS,
-                'source' => realpath(dirname(__FILE__) . '/../../..') . $DS . 'uploads' . $DS . $slug,
-                'target' => realpath(dirname(__FILE__) . '/..') . $DS . 'games_assemble' . $DS . $slug,
-                'game_libraries_path' => realpath(dirname(__FILE__) . '/..') . $DS . 'unity_game_libraries',
+                'source' => realpath(__DIR__ . '/../../..') . $DS . 'uploads' . $DS . $slug,
+                'target' => realpath(__DIR__ . '/..') . $DS . 'games_assemble' . $DS . $slug,
+                'game_libraries_path' => realpath(__DIR__ . '/..') . $DS . 'unity_game_libraries',
                 'game_id' => $post->ID
             ]);
 

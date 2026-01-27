@@ -40,25 +40,25 @@ class VRodos_Settings_Manager {
         $this->settings_tabs[$this->general_settings_key] = __('General');
 
         register_setting( $this->general_settings_key, $this->general_settings_key );
-        add_settings_section( 'section_general', __('General Settings'), array( $this, 'section_general_desc' ), $this->general_settings_key );
+        add_settings_section( 'section_general', __('General Settings'), [$this, 'section_general_desc'], $this->general_settings_key );
     
     
         add_settings_field( 'vrodos_unity_local_or_remote', __('Compile in this server or remote server?'),
-            array( $this, 'field_vrodos_unity_local_or_remote' ), $this->general_settings_key, 'section_general' );
+            [$this, 'field_vrodos_unity_local_or_remote'], $this->general_settings_key, 'section_general' );
         
-        add_settings_field( 'vrodos_unity_exe_folder', __('Path of Unity exe file'), array( $this, 'field_vrodos_unity_exe_folder' ), $this->general_settings_key, 'section_general' );
+        add_settings_field( 'vrodos_unity_exe_folder', __('Path of Unity exe file'), [$this, 'field_vrodos_unity_exe_folder'], $this->general_settings_key, 'section_general' );
 
-        add_settings_field( 'vrodos_remote_api_folder', __('Remote Game server API'), array( $this, 'field_vrodos_remote_api_folder' ), $this->general_settings_key, 'section_general' );
+        add_settings_field( 'vrodos_remote_api_folder', __('Remote Game server API'), [$this, 'field_vrodos_remote_api_folder'], $this->general_settings_key, 'section_general' );
 
-        add_settings_field( 'vrodos_ftp_address', __('FTP Address'), array( $this, 'field_vrodos_ftp_address' ), $this->general_settings_key, 'section_general' );
+        add_settings_field( 'vrodos_ftp_address', __('FTP Address'), [$this, 'field_vrodos_ftp_address'], $this->general_settings_key, 'section_general' );
 
-        add_settings_field( 'vrodos_ftp_username', __('FTP Username'), array( $this, 'field_vrodos_ftp_username' ), $this->general_settings_key, 'section_general' );
+        add_settings_field( 'vrodos_ftp_username', __('FTP Username'), [$this, 'field_vrodos_ftp_username'], $this->general_settings_key, 'section_general' );
 
-        add_settings_field( 'vrodos_ftp_pass', __('FTP Password'), array( $this, 'field_vrodos_ftp_pass' ), $this->general_settings_key, 'section_general' );
+        add_settings_field( 'vrodos_ftp_pass', __('FTP Password'), [$this, 'field_vrodos_ftp_pass'], $this->general_settings_key, 'section_general' );
 
-        add_settings_field( 'vrodos_server_path', __('Remote Server path'), array( $this, 'field_vrodos_server_path' ), $this->general_settings_key, 'section_general' );
+        add_settings_field( 'vrodos_server_path', __('Remote Server path'), [$this, 'field_vrodos_server_path'], $this->general_settings_key, 'section_general' );
     
-        add_settings_field( 'vrodos_google_application_credentials', __('Google application credentials for auto translate '), array( $this, 'field_vrodos_google_application_credentials' ), $this->general_settings_key, 'section_general' );
+        add_settings_field( 'vrodos_google_application_credentials', __('Google application credentials for auto translate '), [$this, 'field_vrodos_google_application_credentials'], $this->general_settings_key, 'section_general' );
         
     }
 
@@ -114,11 +114,11 @@ class VRodos_Settings_Manager {
     }
     
     public function render_setting() {
-        add_options_page( __('vrodos Plugin Settings'), __('vrodos Settings'), 'manage_options', $this->options_key, array( $this, 'render_options' ) );
+        add_options_page( __('vrodos Plugin Settings'), __('vrodos Settings'), 'manage_options', $this->options_key, [$this, 'render_options'] );
     }
 
     public function render_options() {
-        $tab = isset( $_GET['tab'] ) ? $_GET['tab'] : $this->general_settings_key;
+        $tab = $_GET['tab'] ?? $this->general_settings_key;
         ?>
             <div class="wrap">
                 <?php $this->render_tabs(); ?>
@@ -145,7 +145,7 @@ class VRodos_Settings_Manager {
         echo '<tr style="background: #ffffff"><td></td><td>tag</td><td>Priority</td><td>function</td></tr>';
         
         foreach( $hooks as $tag => $hook )
-            if ( false === $filter || false !== strpos( $tag, $filter ) ){
+            if ( false === $filter || str_contains( $tag, $filter ) ){
                 foreach( $hook as $priority => $functions ) {
                     foreach( $functions as $function )
                         if( $function['function'] != 'list_hook_details' ) {
@@ -157,11 +157,11 @@ class VRodos_Settings_Manager {
                                 }
                             }elseif ($function['function'] instanceof Closure){
                             }elseif (is_object($function['function'][0])) {
-                                if (stripos(get_class($function['function'][0]), 'vrodos') !== false) {
+                                if (stripos($function['function'][0]::class, 'vrodos') !== false) {
                                     $i++;
                                     echo "<tr style='background: #ffffff'><td>".$i."</td><td>".$tag."</td><td>".$priority.
                                         "</td><td>"."(object) " .
-                                        get_class($function['function'][0]) . ' -> ' . $function['function'][1].
+                                        $function['function'][0]::class . ' -> ' . $function['function'][1].
                                         "</td></tr>";
                         
                                 }
@@ -179,7 +179,7 @@ class VRodos_Settings_Manager {
     }
     
     public function render_tabs() {
-        $current_tab = isset( $_GET['tab'] ) ? $_GET['tab'] : $this->general_settings_key;
+        $current_tab = $_GET['tab'] ?? $this->general_settings_key;
         echo '<h2 class="nav-tab-wrapper">';
         foreach ($this->settings_tabs as $tab_key => $tab_caption ) {
             $active = $current_tab == $tab_key ? 'nav-tab-active' : '';

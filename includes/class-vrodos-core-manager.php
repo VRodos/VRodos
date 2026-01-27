@@ -397,18 +397,11 @@ class VRodos_Core_Manager {
     public static function vrodos_project_type_icon($project_category): string {
 
         // Set game type icon
-        switch($project_category){
-            case 'vrexpo':
-                $project_type_icon = "public";
-                break;
-            case 'virtualproduction':
-                $project_type_icon = "theaters";
-                break;
-            case 'Archaeology':
-            default:
-                $project_type_icon = "account_balance";
-                break;
-        }
+        $project_type_icon = match ($project_category) {
+            'vrexpo' => "public",
+            'virtualproduction' => "theaters",
+            default => "account_balance",
+        };
         return $project_type_icon;
     }
 
@@ -433,27 +426,13 @@ class VRodos_Core_Manager {
 
     public static function vrodos_getEditpage($type) {
 
-        switch ($type) {
-            case 'allgames':
-            case 'game':
-                $templateURL = '/templates/vrodos-project-manager-template.php';
-                break;
-
-            case 'assetslist':
-                $templateURL = '/templates/vrodos-assets-list-template.php';
-                break;
-
-            case 'scene':
-                $templateURL = '/templates/vrodos-edit-3D-scene-template.php';
-                break;
-            case 'asset':
-                $templateURL = '/templates/vrodos-asset-editor-template.php';
-                break;
-
-            default:
-                $templateURL = null;
-
-        }
+        $templateURL = match ($type) {
+            'allgames', 'game' => '/templates/vrodos-project-manager-template.php',
+            'assetslist' => '/templates/vrodos-assets-list-template.php',
+            'scene' => '/templates/vrodos-edit-3D-scene-template.php',
+            'asset' => '/templates/vrodos-asset-editor-template.php',
+            default => null,
+        };
 
         if ($templateURL) {
             return get_pages([
@@ -610,14 +589,9 @@ class VRodos_Core_Manager {
 
         $p = plugin_dir_path( __DIR__ );
 
-        switch ($mygameType) {
-            case 'archaeology':
-            case 'virtualproduction':
-            case 'vrexpo':
-            default:
-                $def_json = file_get_contents($p . "/assets/standard_scene.json");
-                break;
-        }
+        $def_json = match ($mygameType) {
+            default => file_get_contents($p . "/assets/standard_scene.json"),
+        };
         return $def_json;
     }
 
@@ -907,7 +881,7 @@ class VRodos_Core_Manager {
                 $url = $k->guid;
 
                 // ignore screenshot attachment
-                if (strpos($url, 'texture') === false) {
+                if (!str_contains($url, 'texture')) {
                     continue;
                 }
 

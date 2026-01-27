@@ -248,7 +248,7 @@ class VRodos_AJAX_Handler {
 
                 $f = str_replace("\n", " ", $f);
 
-                list($f, $timestamp, $room) = explode(":::", $f);
+                [$f, $timestamp, $room] = explode(":::", $f);
 
                 //            fwrite($ff, time() . " " . $timestamp . " " . (time() - $timestamp));
                 //            fwrite($ff, chr(10));
@@ -294,11 +294,7 @@ class VRodos_AJAX_Handler {
         $scene_model = new Vrodos_Scene_Model(wp_unslash($_POST['scene_json']));
 
         // Save json of scene
-        $scene_new_info = array(
-            'ID' => $_POST['scene_id'],
-            'post_title' => $_POST['scene_title'],
-            'post_content' => $scene_model->to_json()
-        );
+        $scene_new_info = ['ID' => $_POST['scene_id'], 'post_title' => $_POST['scene_title'], 'post_content' => $scene_model->to_json()];
 
         $res = wp_update_post($scene_new_info);
         update_post_meta($_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption']);
@@ -439,11 +435,7 @@ class VRodos_AJAX_Handler {
         // If it is not cloned then it is safe to delete the meta files.
         if ($isCloned==='false') {
             // This part handles all attachments: textures, GLB, screenshot.
-            $args = array(
-                'post_parent'    => $asset_id,
-                'post_type'      => 'attachment',
-                'posts_per_page' => -1,
-            );
+            $args = ['post_parent'    => $asset_id, 'post_type'      => 'attachment', 'posts_per_page' => -1];
             $attachments = get_children($args);
 
             if ($attachments) {
@@ -544,7 +536,7 @@ class VRodos_AJAX_Handler {
             $scene_bg_id = $scene_background_ids[0];
 
             // Update the post title into the database
-            wp_update_post( array('ID' => $scene_bg_id, 'post_title' => $new_filename));
+            wp_update_post( ['ID' => $scene_bg_id, 'post_title' => $new_filename]);
 
             // Update meta _wp_attached_file
             update_post_meta($scene_bg_id, '_wp_attached_file', $new_filename);
@@ -560,13 +552,7 @@ class VRodos_AJAX_Handler {
 
         } else { // If post does not exist
 
-            $attachment = array(
-                'post_mime_type' => 'image/' .$ext,
-                'post_title' => preg_replace('/\.[^.]+$/', '', basename($new_filename)),
-                'post_content' => '',
-                'post_status' => 'inherit',
-                'guid' => $upload_path.$hashed_filename
-            );
+            $attachment = ['post_mime_type' => 'image/' .$ext, 'post_title' => preg_replace('/\.[^.]+$/', '', basename($new_filename)), 'post_content' => '', 'post_status' => 'inherit', 'guid' => $upload_path.$hashed_filename];
 
             // Attach to
             $attachment_id = wp_insert_attachment($attachment, $new_filename, $scene_id);
@@ -590,7 +576,7 @@ class VRodos_AJAX_Handler {
 
         $final_path = $attachment_id ? wp_get_attachment_url( $attachment_id ) : wp_get_attachment_url( $scene_bg_id );
 
-        $content = json_encode(array( 'url' => $final_path ));
+        $content = json_encode(['url' => $final_path]);
 
         echo $content;
 
@@ -603,7 +589,7 @@ class VRodos_AJAX_Handler {
         //$projectId = $_REQUEST['vrodos_game'];
         $sceneId = $_REQUEST['vrodos_scene'];
         $projectId = $_REQUEST['projectId'];
-        $showPawnPositions = isset($_REQUEST['showPawnPositions']) ? $_REQUEST['showPawnPositions'] : 'false';
+        $showPawnPositions = $_REQUEST['showPawnPositions'] ?? 'false';
         //$projectSlug = $_REQUEST['projectSlug'];
 
         //$asset_id_temp = get_the_ID();
@@ -632,10 +618,7 @@ class VRodos_AJAX_Handler {
     $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
     // Define custom query parameters
-    $custom_query_args = array(
-        'post_type' => 'vrodos_game',
-        'posts_per_page' => -1,
-    );
+    $custom_query_args = ['post_type' => 'vrodos_game', 'posts_per_page' => -1];
 
 //    if (current_user_can('administrator')){
 //
@@ -693,7 +676,7 @@ class VRodos_AJAX_Handler {
 
 
             // Do not show Joker projects
-            if (strpos($game_title, ' Joker') !== false)
+            if (str_contains($game_title, ' Joker'))
                 continue;
 
             $game_type_obj = VRodos_Core_Manager::vrodos_return_project_type($game_id);
@@ -795,9 +778,7 @@ class VRodos_AJAX_Handler {
         }
 
         $jsonResp =  json_encode(
-            array(
-                "items" => $response
-            )
+            ["items" => $response]
         );
 
         echo $jsonResp;

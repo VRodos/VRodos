@@ -15,7 +15,7 @@ class VRodos_Upload_Manager {
         // Clear out all previous attachments
         $attachments = get_children( ['post_parent' => $asset_new_id, 'post_type' => 'attachment'] );
         foreach ($attachments as $attachment) {
-            if (strpos($attachment->post_title, 'screenshot') === false) {
+            if (!str_contains($attachment->post_title, 'screenshot')) {
                 wp_delete_attachment($attachment->ID, true);
             }
         }
@@ -72,9 +72,9 @@ class VRodos_Upload_Manager {
     }
     public static function register_hooks(): void {
         // All hooks related to file uploads
-        add_filter( 'upload_dir', [ __CLASS__, 'upload_dir_for_scenes_or_assets' ] );
-        add_filter( 'intermediate_image_sizes', [ __CLASS__, 'disable_imgthumbs_assets' ], 999 );
-        add_filter( 'sanitize_file_name', [ __CLASS__, 'overwrite_uploads' ], 10, 1 );
+        add_filter( 'upload_dir', [ self::class, 'upload_dir_for_scenes_or_assets' ] );
+        add_filter( 'intermediate_image_sizes', [ self::class, 'disable_imgthumbs_assets' ], 999 );
+        add_filter( 'sanitize_file_name', [ self::class, 'overwrite_uploads' ], 10, 1 );
     }
 
     // Get the directory for media uploading of a scene or an asset
@@ -200,7 +200,7 @@ class VRodos_Upload_Manager {
         self::load_wp_admin_files();
         // For Images (Sprites in Unity)
         if($file['type'] === 'image/jpeg' || $file['type'] === 'image/png') {
-            if (strpos($file['name'], 'sprite') == false) {
+            if (!str_contains($file['name'], 'sprite')) {
                 $hashed_prefix = md5($parent_post_id . microtime());
                 $file['name'] = str_replace(".jpg", $hashed_prefix."_sprite.jpg", $file['name']);
                 $file['name'] = str_replace(".png", $hashed_prefix."_sprite.png", $file['name']);
@@ -208,21 +208,21 @@ class VRodos_Upload_Manager {
         }
         // Set post_id for the upload directory filter.
         $_REQUEST['post_id'] = $parent_post_id;
-        add_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
-        add_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+        add_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
+        add_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
         $file_return = self::handle_asset_upload($file, $parent_post_id);
-        remove_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
+        remove_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
         unset($_REQUEST['post_id']);
         // if file has been uploaded successfully
         if($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $parent_post_id);
-            remove_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+            remove_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
             if ($attachment_id) {
                 return $attachment_id;
             }
         } else {
             // If the upload failed, we should still remove the filter to not affect other uploads.
-            remove_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+            remove_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
         }
         return false;
     }
@@ -263,7 +263,7 @@ class VRodos_Upload_Manager {
         // Set post_id for the upload directory filter. This ensures that both the deletion of the old file
         // and the upload of the new one happen in the correct scene-specific directory.
         $_REQUEST['post_id'] = $scene_id;
-        add_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
+        add_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
 
         // First, delete the existing thumbnail if it exists.
         // wp_delete_attachment (with $force_delete = true) handles deleting the file from the filesystem.
@@ -273,7 +273,7 @@ class VRodos_Upload_Manager {
         }
 
         // Now, proceed with uploading the new screenshot.
-        add_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+        add_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
         add_filter('big_image_size_threshold', '__return_false');
 
         $filename = 'scene_' . $scene_id . '_sshot.' . $type;
@@ -281,14 +281,14 @@ class VRodos_Upload_Manager {
         $file_return = wp_upload_bits($filename, null, $decoded_image);
 
         // Always remove filters after the operation.
-        remove_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
+        remove_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
         unset($_REQUEST['post_id']);
 
         if ($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $scene_id);
 
             // Filters must be removed *after* the attachment is created.
-            remove_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+            remove_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
             remove_filter('big_image_size_threshold', '__return_false');
 
             if ($attachment_id) {
@@ -297,7 +297,7 @@ class VRodos_Upload_Manager {
             }
         } else {
             // Ensure filters are removed even if the upload fails.
-            remove_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+            remove_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
             remove_filter('big_image_size_threshold', '__return_false');
         }
 
@@ -309,7 +309,7 @@ class VRodos_Upload_Manager {
 
         // Set post_id for the upload directory filter.
         $_REQUEST['post_id'] = $parentPostId;
-        add_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
+        add_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
 
         // Define filename. A consistent filename is important for overwriting.
         $filename = $parentPostId . '_sshot.png';
@@ -333,7 +333,7 @@ class VRodos_Upload_Manager {
                         wp_update_attachment_metadata($existing_screenshot_id, wp_generate_attachment_metadata($existing_screenshot_id, $existing_path));
 
                         // The in-place update was successful. Clean up and return.
-                        remove_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
+                        remove_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
                         unset($_REQUEST['post_id']);
                         return $existing_screenshot_id;
                     }
@@ -346,19 +346,19 @@ class VRodos_Upload_Manager {
         }
 
         // If no old screenshot exists, we create a new one.
-        add_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+        add_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
         add_filter('big_image_size_threshold', '__return_false');
 
         $file_return = wp_upload_bits($filename, null, $decoded_image);
 
         // Always remove filters after the operation.
-        remove_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
+        remove_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
         unset($_REQUEST['post_id']);
 
         if ($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $parentPostId);
 
-            remove_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+            remove_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
             remove_filter('big_image_size_threshold', '__return_false');
 
             if ($attachment_id) {
@@ -366,7 +366,7 @@ class VRodos_Upload_Manager {
                 return $attachment_id;
             }
         } else {
-            remove_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+            remove_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
             remove_filter('big_image_size_threshold', '__return_false');
         }
 
@@ -376,8 +376,8 @@ class VRodos_Upload_Manager {
     public static function upload_asset_text($textContent, $textTitle, $parent_post_id, $TheFiles, $index_file, $project_id) {
         self::load_wp_admin_files();
         $_REQUEST['post_id'] = $parent_post_id;
-        add_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
-        add_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+        add_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
+        add_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
         $file_return = false;
         if ($textContent) {
             $filename = sanitize_file_name($textTitle);
@@ -395,8 +395,8 @@ class VRodos_Upload_Manager {
             ];
             $file_return = self::handle_asset_upload($file_array, $parent_post_id);
         }
-        remove_filter('upload_dir', [__CLASS__, 'upload_dir_for_scenes_or_assets']);
-        remove_filter('intermediate_image_sizes_advanced', [__CLASS__, 'remove_allthumbs_sizes'], 10, 2);
+        remove_filter('upload_dir', [self::class, 'upload_dir_for_scenes_or_assets']);
+        remove_filter('intermediate_image_sizes_advanced', [self::class, 'remove_allthumbs_sizes'], 10, 2);
         unset($_REQUEST['post_id']);
         if ($file_return && empty($file_return['error'])) {
             $attachment_id = self::insert_attachment_post($file_return, $parent_post_id);

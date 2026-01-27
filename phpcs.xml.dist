@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<ruleset name="VRodos Project Rules">
+    <description>Custom ruleset for VRodos plugin.</description>
+
+    <!-- Check all files in the plugin root and includes/ -->
+    <file>.</file>
+    <file>includes</file>
+
+    <!-- Exclude 3rd party libs and build folders -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/build_dist/*</exclude-pattern>
+    <exclude-pattern>*/js_libs/*</exclude-pattern>
+
+    <!-- Use WordPress Coding Standards -->
+    <!-- You might need to install these if not present, but for now we default to PSR-12 as a fallback if WP specific rules aren't installed globally -->
+    <rule ref="PSR12"/>
+
+    <!-- Allow short array syntax -->
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+</ruleset>

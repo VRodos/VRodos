@@ -113,7 +113,7 @@ class VRodos_Asset_CPT_Manager {
         $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
         $assetPGameID = $assetPGame ? $assetPGame->term_id : null;
         $assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
-        $isJoker = (strpos($assetPGameSlug, 'joker') !== false) ? "true":"false";
+        $isJoker = (str_contains($assetPGameSlug, 'joker')) ? "true":"false";
 
         $assetTitle = isset($_POST['assetTitle']) ? esc_attr(strip_tags($_POST['assetTitle'])) : '';
         $assetCatID = intval($_POST['term_id']); //ID of Asset Category (hidden input)
@@ -566,7 +566,7 @@ class VRodos_Asset_CPT_Manager {
 								?>
 								<input type="text" name="<?php echo esc_attr( $field['id'] ); ?>" readonly
 									   id="<?php echo esc_attr( $field['id'] ); ?>"
-									   value="<?php echo esc_attr( $post_meta_id ? $post_meta_id : $field['std'] ); ?>"
+									   value="<?php echo esc_attr( $post_meta_id ?: $field['std'] ); ?>"
 									   size="30" style="width:65%"/>
 								<input id="<?php echo esc_attr( $field['id'] ); ?>_btn" type="button"
 									   value="Upload <?php echo esc_html( $field['name'] ); ?>"/>
@@ -581,7 +581,7 @@ class VRodos_Asset_CPT_Manager {
 								?>
 								<input type="text" name="<?php echo esc_attr( $field['id'] ); ?>" readonly
 									   id="<?php echo esc_attr( $field['id'] ); ?>"
-									   value="<?php echo esc_attr( $post_meta_id ? $post_meta_id : $field['std'] ); ?>"
+									   value="<?php echo esc_attr( $post_meta_id ?: $field['std'] ); ?>"
 									   size="30" style="width:65%"/>
 								<input id="<?php echo esc_attr( $field['id'] ); ?>_btn" type="button"
 									   value="Upload <?php echo esc_html( $field['name'] ); ?>"/>
@@ -597,7 +597,7 @@ class VRodos_Asset_CPT_Manager {
 								?>
 								<input type="text" name="<?php echo esc_attr( $field['id'] ); ?>" readonly
 									   id="<?php echo esc_attr( $field['id'] ); ?>"
-									   value="<?php echo esc_attr( $post_meta_id ? $post_meta_id : $field['std'] ); ?>"
+									   value="<?php echo esc_attr( $post_meta_id ?: $field['std'] ); ?>"
 									   size="30" style="width:65%"/>
 								<?php
 								break;
@@ -724,7 +724,7 @@ class VRodos_Asset_CPT_Manager {
 		update_post_meta($asset_id, 'vrodos_asset3d_pathData', $game_slug);
 		self::update_asset_meta($asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs);
 
-		return $asset_id ? $asset_id : 0;
+		return $asset_id ?: 0;
 	}
 
 	/**
@@ -801,7 +801,7 @@ class VRodos_Asset_CPT_Manager {
 
         // Fix for PHP 8 deprecation warning
         $assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
-        $data['isJoker'] = (strpos($assetPGameSlug, 'joker') !== false) ? "true" : "false";
+        $data['isJoker'] = (str_contains($assetPGameSlug, 'joker')) ? "true" : "false";
 
         $all_game_category = get_the_terms($data['project_id'], 'vrodos_game_type');
         $data['game_category'] = $all_game_category ? $all_game_category[0]->slug : null;
@@ -814,7 +814,7 @@ class VRodos_Asset_CPT_Manager {
         $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
         $data['goBackToLink'] = $scene_id && $edit_scene_page_id
-            ? get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $data['project_id'] . '&scene_type=' . (isset($_GET['scene_type']) ? $_GET['scene_type'] : '')
+            ? get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $data['project_id'] . '&scene_type=' . ($_GET['scene_type'] ?? '')
             : home_url("/vrodos-assets-list-page/?") . (!isset($_GET['singleproject']) ? "vrodos_game=" : "vrodos_project_id=") . $data['project_id'];
 
 
@@ -920,7 +920,7 @@ class VRodos_Asset_CPT_Manager {
         $data['audio_attachment_file'] = $attachment_post ? $attachment_post->guid : null;
 
         if ($data['audio_attachment_file']) {
-            $data['audio_file_type'] = (strpos($data['audio_attachment_file'], "mp3") !== false) ? 'mp3' : 'wav';
+            $data['audio_file_type'] = (str_contains($data['audio_attachment_file'], "mp3")) ? 'mp3' : 'wav';
         } else {
             $data['audio_file_type'] = null;
         }

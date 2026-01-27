@@ -11,18 +11,11 @@ class VRodos_Default_Scene_Manager {
             $project_type = get_term($gameTypeId, 'vrodos_game_type');
             $project_type_slug  = $project_type->slug;
 
-            switch ($project_type_slug) {
-                case 'vrexpo_games':
-                    self::vrodos_create_vrexpo_default_scenes($projectSlug);
-                    break;
-                case 'virtualproduction_games':
-                    self::vrodos_create_virtualproduction_default_scenes($projectSlug);
-                    break;
-                case 'archaeology_games':
-                default:
-                    self::vrodos_create_archaeology_default_scenes($projectSlug);
-                    break;
-            }
+            match ($project_type_slug) {
+                'vrexpo_games' => self::vrodos_create_vrexpo_default_scenes($projectSlug),
+                'virtualproduction_games' => self::vrodos_create_virtualproduction_default_scenes($projectSlug),
+                default => self::vrodos_create_archaeology_default_scenes($projectSlug),
+            };
         }
     }
 

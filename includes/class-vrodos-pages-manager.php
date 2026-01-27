@@ -48,7 +48,7 @@ class VRodos_Pages_Manager {
         $cache_key = 'page_templates-' . md5(get_theme_root() . '/' . get_stylesheet());
         $templates = wp_get_theme()->get_page_templates();
         if (empty($templates)) {
-            $templates = array();
+            $templates = [];
         }
         wp_cache_delete($cache_key, 'themes');
         $templates = array_merge($templates, $this->templates);
@@ -76,39 +76,12 @@ class VRodos_Pages_Manager {
 	public static function vrodos_create_pages() {
 		ob_start();
 
-		$pages = array(
-			'vrodos-project-manager-page' => array(
-				'title'    => 'VROdos - Project Manager',
-				'template' => '/templates/vrodos-project-manager-template.php',
-			),
-			'vrodos-assets-list-page'     => array(
-				'title'    => 'VROdos - Assets List',
-				'template' => '/templates/vrodos-assets-list-template.php',
-			),
-			'vrodos-edit-3d-scene-page'   => array(
-				'title'    => 'VROdos - Scene 3D Editor',
-				'template' => '/templates/vrodos-edit-3D-scene-template.php',
-			),
-			'vrodos-asset-editor-page'    => array(
-				'title'    => 'VROdos - Asset Editor',
-				'template' => '/templates/vrodos-asset-editor-template.php',
-			),
-		);
+		$pages = ['vrodos-project-manager-page' => ['title'    => 'VROdos - Project Manager', 'template' => '/templates/vrodos-project-manager-template.php'], 'vrodos-assets-list-page'     => ['title'    => 'VROdos - Assets List', 'template' => '/templates/vrodos-assets-list-template.php'], 'vrodos-edit-3d-scene-page'   => ['title'    => 'VROdos - Scene 3D Editor', 'template' => '/templates/vrodos-edit-3D-scene-template.php'], 'vrodos-asset-editor-page'    => ['title'    => 'VROdos - Asset Editor', 'template' => '/templates/vrodos-asset-editor-template.php']];
 
 		foreach ( $pages as $slug => $page ) {
 			if ( ! self::vrodos_get_page_by_slug( $slug ) ) {
 				$new_page_id = wp_insert_post(
-					array(
-						'post_title'     => $page['title'],
-						'post_type'      => 'page',
-						'post_name'      => $slug,
-						'comment_status' => 'closed',
-						'ping_status'    => 'closed',
-						'post_content'   => '',
-						'post_status'    => 'publish',
-						'post_author'    => 1,
-						'menu_order'     => 0,
-					)
+					['post_title'     => $page['title'], 'post_type'      => 'page', 'post_name'      => $slug, 'comment_status' => 'closed', 'ping_status'    => 'closed', 'post_content'   => '', 'post_status'    => 'publish', 'post_author'    => 1, 'menu_order'     => 0]
 				);
 
 				if ( $new_page_id && ! is_wp_error( $new_page_id ) ) {
@@ -132,7 +105,7 @@ class VRodos_Pages_Manager {
             $assetsList_Page = VRodos_Core_Manager::vrodos_getEditpage('assetslist')[0];
             $projectManager_Page = VRodos_Core_Manager::vrodos_getEditpage('allgames')[0];
             for ($i = 0; $i < count($menus); $i++) {
-                $menu_items = wp_get_nav_menu_items($menus[$i]->term_id, array('post_status' => 'publish'));
+                $menu_items = wp_get_nav_menu_items($menus[$i]->term_id, ['post_status' => 'publish']);
                 $assetsList_itemExistsInMenu = false;
                 $projectManager_itemExistsInMenu = false;
                 foreach ($menu_items as $menu_item) {
@@ -140,22 +113,10 @@ class VRodos_Pages_Manager {
                     $projectManager_itemExistsInMenu = $menu_item->object_id == $projectManager_Page->ID;
                 }
                 if (!$assetsList_itemExistsInMenu) {
-                    wp_update_nav_menu_item($menus[$i]->term_id, 0, array(
-                        'menu-item-title' => 'Assets List',
-                        'menu-item-object-id' => $assetsList_Page->ID,
-                        'menu-item-status' => 'publish',
-                        'menu-item-object' => 'page',
-                        'menu-item-type' => 'post_type',
-                    ));
+                    wp_update_nav_menu_item($menus[$i]->term_id, 0, ['menu-item-title' => 'Assets List', 'menu-item-object-id' => $assetsList_Page->ID, 'menu-item-status' => 'publish', 'menu-item-object' => 'page', 'menu-item-type' => 'post_type']);
                 }
                 if (!$projectManager_itemExistsInMenu) {
-                    wp_update_nav_menu_item($menus[$i]->term_id, 0, array(
-                        'menu-item-title' => 'Project Manager',
-                        'menu-item-object-id' => $projectManager_Page->ID,
-                        'menu-item-status' => 'publish',
-                        'menu-item-object' => 'page',
-                        'menu-item-type' => 'post_type',
-                    ));
+                    wp_update_nav_menu_item($menus[$i]->term_id, 0, ['menu-item-title' => 'Project Manager', 'menu-item-object-id' => $projectManager_Page->ID, 'menu-item-status' => 'publish', 'menu-item-object' => 'page', 'menu-item-type' => 'post_type']);
                 }
             }
             echo '<div class="updated notice is-dismissible"><p>Thank you for using VRodos! <strong>Two pages have been added to menu</strong>.</p></div>';
@@ -225,18 +186,6 @@ class VRodos_Pages_Manager {
             $helpMessage = 'Login to a) add a Shared Asset or b) to create a Project and add your private Assets there';
         }
 
-        return array(
-            'assets' => $assets,
-            'is_user_logged_in' => $isUserloggedIn,
-            'is_user_admin' => $isUserAdmin,
-            'user_id' => $user_id,
-            'link_to_add' => $link_to_add,
-            'link_to_edit' => $link_to_edit,
-            'go_back_to_all_projects_link' => $goBackTo_AllProjects_link,
-            'help_message' => $helpMessage,
-            'joker_project_slug' => $joker_project_slug,
-            'single_project_asset_list' => $single_project_asset_list,
-            'current_game_project_post' => $current_game_project_post,
-        );
+        return ['assets' => $assets, 'is_user_logged_in' => $isUserloggedIn, 'is_user_admin' => $isUserAdmin, 'user_id' => $user_id, 'link_to_add' => $link_to_add, 'link_to_edit' => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message' => $helpMessage, 'joker_project_slug' => $joker_project_slug, 'single_project_asset_list' => $single_project_asset_list, 'current_game_project_post' => $current_game_project_post];
     }
 }

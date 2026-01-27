@@ -204,13 +204,13 @@ class VRodos_Scene_CPT_Manager {
 
             switch ($field['type']) {
                 case 'text':
-                    echo '<input type="text" name="', esc_attr($field['id']), '" id="', esc_attr($field['id']), '" value="', esc_attr($meta ? $meta : $field['std']), '" size="30" style="width:97%" />', '<br />', esc_html($field['desc']);
+                    echo '<input type="text" name="', esc_attr($field['id']), '" id="', esc_attr($field['id']), '" value="', esc_attr($meta ?: $field['std']), '" size="30" style="width:97%" />', '<br />', esc_html($field['desc']);
                     break;
                 case 'numeric':
-                    echo '<input type="number" name="', esc_attr($field['id']), '" id="', esc_attr($field['id']), '" value="', esc_attr($meta ? $meta : $field['std']), '" size="30" style="width:97%" />', '<br />', esc_html($field['desc']);
+                    echo '<input type="number" name="', esc_attr($field['id']), '" id="', esc_attr($field['id']), '" value="', esc_attr($meta ?: $field['std']), '" size="30" style="width:97%" />', '<br />', esc_html($field['desc']);
                     break;
                 case 'textarea':
-                    echo '<textarea name="', esc_attr($field['id']), '" id="', esc_attr($field['id']), '" cols="60" rows="4" style="width:97%">', esc_attr($meta ? $meta : $field['std']), '</textarea>', '<br />', esc_html($field['desc']);
+                    echo '<textarea name="', esc_attr($field['id']), '" id="', esc_attr($field['id']), '" cols="60" rows="4" style="width:97%">', esc_attr($meta ?: $field['std']), '</textarea>', '<br />', esc_html($field['desc']);
                     break;
                 case 'select':
                     echo '<select name="', esc_attr($field['id']), '" id="', esc_attr($field['id']), '">';
@@ -299,15 +299,15 @@ class VRodos_Scene_CPT_Manager {
                 if ($name === 'avatarCamera') {
                     $object_data['category_name'] = 'avatarYawObject';
                     $object_data['path'] = "";
-                } elseif (strpos($name, 'lightSun') !== false) {
+                } elseif (str_contains($name, 'lightSun')) {
                     $is_light = true;
-                } elseif (strpos($name, 'lightLamp') !== false) {
+                } elseif (str_contains($name, 'lightLamp')) {
                     $is_light = true;
-                } elseif (strpos($name, 'lightSpot') !== false) {
+                } elseif (str_contains($name, 'lightSpot')) {
                     $is_light = true;
-                } elseif (strpos($name, 'lightAmbient') !== false) {
+                } elseif (str_contains($name, 'lightAmbient')) {
                     $is_light = true;
-                } elseif (strpos($name, 'Pawn') !== false) {
+                } elseif (str_contains($name, 'Pawn')) {
                     $object_data['asset_name'] = $name;
                     $object_data['path'] = "";
                 } else {
@@ -352,7 +352,7 @@ class VRodos_Scene_CPT_Manager {
         $project_type = $project_id ? VRodos_Core_Manager::vrodos_return_project_type($project_id)->string : null;
 
         $scene_post = get_post($current_scene_id);
-        $scene_json_from_db = $scene_post->post_content ? $scene_post->post_content : VRodos_Core_Manager::vrodos_getDefaultJSONscene(strtolower($project_type));
+        $scene_json_from_db = $scene_post->post_content ?: VRodos_Core_Manager::vrodos_getDefaultJSONscene(strtolower($project_type));
 
         $scene_model = new Vrodos_Scene_Model($scene_json_from_db);
         $sceneJSON = $scene_model->to_json();
@@ -405,13 +405,13 @@ class VRodos_Scene_CPT_Manager {
 
         // Page URLs
         $allProjectsPage_res = VRodos_Core_Manager::vrodos_getEditpage('game');
-        $data['allProjectsPage'] = $allProjectsPage_res ? $allProjectsPage_res : null;
+        $data['allProjectsPage'] = $allProjectsPage_res ?: null;
 
         $newAssetPage_res = VRodos_Core_Manager::vrodos_getEditpage('asset');
-        $data['newAssetPage'] = $newAssetPage_res ? $newAssetPage_res : null;
+        $data['newAssetPage'] = $newAssetPage_res ?: null;
 
         $editscenePage_res = VRodos_Core_Manager::vrodos_getEditpage('scene');
-        $data['editscenePage'] = $editscenePage_res ? $editscenePage_res : null;
+        $data['editscenePage'] = $editscenePage_res ?: null;
 
         // Media
         $data['videos'] = VRodos_Core_Manager::vrodos_getVideoAttachmentsFromMediaLibrary();

@@ -19,7 +19,7 @@ class VRodos_Install_Manager {
 	 */
 	public function __construct() {
 		register_activation_hook( VRODOS_PLUGIN_FILE, [$this, 'activate'] );
-		register_uninstall_hook( VRODOS_PLUGIN_FILE, [__CLASS__, 'uninstall'] );
+		register_uninstall_hook( VRODOS_PLUGIN_FILE, [self::class, 'uninstall'] );
 	}
 
 	/**
@@ -105,10 +105,7 @@ function vrodos_append_version_game($game_project_id, $new_version_number) {
 	$table_name = $wpdb->prefix . "_games_versions";
 	return $wpdb->insert(
 		$table_name,
-		array(
-			'game_project_id' => $game_project_id,
-			'version_number' => $new_version_number
-		)
+		['game_project_id' => $game_project_id, 'version_number' => $new_version_number]
 	);
 }
 
