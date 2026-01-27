@@ -25,8 +25,31 @@ The VRodos plugin is built upon a modern, object-oriented architecture designed 
 - **Apache 2** or equivalent web server
 - **MySQL 5+** or **MariaDB 10+**
 - **WordPress 6.0+**
-- **PHP 8.1+**
+- **PHP 8.1+** (The plugin is modernized for PHP 8.1+)
 - **Node.js 16+** (for the collaborative editing server)
+
+## Modernization & Automation
+
+The VRodos plugin has been modernized for **PHP 8.1+** and includes several automation tools for developers:
+
+- **Rector**: Automatically upgrades code for PHP 8.1 compatibility.
+- **PHP CodeSniffer (PHPCS)**: Enforces coding standards (PSR-12/WordPress).
+- **Automated Testing**: Integrated **PHPUnit** for unit testing.
+
+### Running Automated Tests
+
+To run the automated tests, ensure you have installed the dev dependencies via the setup script, then run:
+
+```powershell
+vendor/bin/phpunit
+```
+
+Or via composer:
+
+```powershell
+composer test
+```
+
 
 ## Installation
 
