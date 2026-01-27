@@ -139,4 +139,13 @@ test_compiler/
 
 # Modernization Tooling
 vendor/
+node_modules/
 build/
+build_dist/
+composer.phar
+rector_preview.txt
+.idea/
+.vscode/
+.phpunit.result.cache
+rector.php.bak
+
