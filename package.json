@@ -1,0 +1,17 @@
+{
+    "name": "vrodos-plugin",
+    "version": "2.5.0",
+    "description": "VRodos WordPress Plugin",
+    "scripts": {
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write \"**/*.{js,css,md,json}\""
+    },
+    "devDependencies": {
+        "eslint": "^8.56.0",
+        "prettier": "^3.2.4"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    }
+}
