@@ -1,8 +1,8 @@
 ( function () {
 
 	/**
- * Full-screen textured quad shader
- */
+	 * Full-screen textured quad shader
+	 */
 
 	const CopyShader = {
 		uniforms: {
@@ -19,7 +19,7 @@
 
 		void main() {
 
-			vUv = uv;
+			vUv         = uv;
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
@@ -33,9 +33,8 @@
 
 		void main() {
 
-			gl_FragColor = texture2D( tDiffuse, vUv );
+			gl_FragColor    = texture2D( tDiffuse, vUv );
 			gl_FragColor.a *= opacity;
-
 
 		}`
 	};

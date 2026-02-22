@@ -1,24 +1,24 @@
 ( function () {
 
-	const _euler = new THREE.Euler( 0, 0, 0, 'YXZ' );
-	const _vector = new THREE.Vector3();
+	const _euler       = new THREE.Euler( 0, 0, 0, 'YXZ' );
+	const _vector      = new THREE.Vector3();
 	const _changeEvent = {
 		type: 'change'
 	};
-	const _lockEvent = {
+	const _lockEvent   = {
 		type: 'lock'
 	};
 	const _unlockEvent = {
 		type: 'unlock'
 	};
-	const _PI_2 = Math.PI / 2;
+	const _PI_2        = Math.PI / 2;
 	class PointerLockControls extends THREE.EventDispatcher {
 
 		constructor( camera, domElement ) {
 
 			super();
 			this.domElement = domElement;
-			this.isLocked = false;
+			this.isLocked   = false;
 
 			// Set to constrain the pitch of the camera
 			// Range is 0 to Math.PI radians
@@ -26,16 +26,18 @@
 			this.maxPolarAngle = Math.PI; // radians
 
 			this.pointerSpeed = 1.0;
-			const scope = this;
+			const scope       = this;
 			function onMouseMove( event ) {
 
-				if ( scope.isLocked === false ) return;
+				if ( scope.isLocked === false ) {
+					return;
+				}
 				const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
 				const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 				_euler.setFromQuaternion( camera.quaternion );
 				_euler.y -= movementX * 0.002 * scope.pointerSpeed;
 				_euler.x -= movementY * 0.002 * scope.pointerSpeed;
-				_euler.x = Math.max( _PI_2 - scope.maxPolarAngle, Math.min( _PI_2 - scope.minPolarAngle, _euler.x ) );
+				_euler.x  = Math.max( _PI_2 - scope.maxPolarAngle, Math.min( _PI_2 - scope.minPolarAngle, _euler.x ) );
 				camera.quaternion.setFromEuler( _euler );
 				scope.dispatchEvent( _changeEvent );
 
@@ -103,7 +105,7 @@
 				};
 
 			}();
-			this.moveForward = function ( distance ) {
+			this.moveForward  = function ( distance ) {
 
 				// move forward parallel to the xz-plane
 				// assumes camera.up is y-up

@@ -14,12 +14,14 @@
 			} else if ( shader ) {
 
 				this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
-				this.material = new THREE.ShaderMaterial( {
-					defines: Object.assign( {}, shader.defines ),
-					uniforms: this.uniforms,
-					vertexShader: shader.vertexShader,
-					fragmentShader: shader.fragmentShader
-				} );
+				this.material = new THREE.ShaderMaterial(
+					{
+						defines: Object.assign( {}, shader.defines ),
+						uniforms: this.uniforms,
+						vertexShader: shader.vertexShader,
+						fragmentShader: shader.fragmentShader
+					}
+				);
 
 			}
 
@@ -44,7 +46,9 @@
 
 				renderer.setRenderTarget( writeBuffer );
 				// TODO: Avoid using autoClear properties, see https://github.com/mrdoob/three.js/pull/15571#issuecomment-465669600
-				if ( this.clear ) renderer.clear( renderer.autoClearColor, renderer.autoClearDepth, renderer.autoClearStencil );
+				if ( this.clear ) {
+					renderer.clear( renderer.autoClearColor, renderer.autoClearDepth, renderer.autoClearStencil );
+				}
 				this.fsQuad.render( renderer );
 
 			}

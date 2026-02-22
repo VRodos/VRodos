@@ -1,314 +1,344 @@
 <?php
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 class VRodos_Asset_Manager {
 
-    public function __construct() {
-        add_action('wp_enqueue_scripts', [$this, 'register_scripts']);
-        add_action('admin_enqueue_scripts', [$this, 'register_scripts']);
-        add_action('wp_enqueue_scripts', [$this, 'register_styles']);
-        add_action('admin_enqueue_scripts', [$this, 'register_styles']);
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_asset_editor_scripts']);
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_scene_editor_scripts']);
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_project_manager_scripts']);
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_assets_list_scripts']);
-    }
+	public function __construct() {
+		add_action( 'wp_enqueue_scripts', $this->register_scripts(...) );
+		add_action( 'admin_enqueue_scripts', $this->register_scripts(...) );
+		add_action( 'wp_enqueue_scripts', $this->register_styles(...) );
+		add_action( 'admin_enqueue_scripts', $this->register_styles(...) );
+		add_action( 'wp_enqueue_scripts', $this->enqueue_asset_editor_scripts(...) );
+		add_action( 'wp_enqueue_scripts', $this->enqueue_scene_editor_scripts(...) );
+		add_action( 'wp_enqueue_scripts', $this->enqueue_project_manager_scripts(...) );
+		add_action( 'wp_enqueue_scripts', $this->enqueue_assets_list_scripts(...) );
+	}
 
-    public function enqueue_assets_list_scripts() {
-        $assets_list_page = VRodos_Core_Manager::vrodos_getEditpage('assetslist');
-        if (!$assets_list_page || !is_page($assets_list_page[0]->ID)) {
-            return;
-        }
+	public function enqueue_assets_list_scripts() {
+		$assets_list_page = VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' );
+		if ( ! $assets_list_page || ! is_page( $assets_list_page[0]->ID ) ) {
+			return;
+		}
 
-        wp_enqueue_style('vrodos_frontend_stylesheet');
-        wp_enqueue_style('vrodos_material_stylesheet');
+		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
+		wp_enqueue_style( 'vrodos_material_stylesheet' );
 
-        $isAdmin = is_admin() ? 'back' : 'front';
-        wp_add_inline_script('vrodos_scripts', 'var isAdmin="' . $isAdmin . '";');
+		$isAdmin = is_admin() ? 'back' : 'front';
+		wp_add_inline_script( 'vrodos_scripts', 'var isAdmin="' . $isAdmin . '";' );
 
-        wp_enqueue_script('ajax-script_deleteasset');
-        wp_localize_script('ajax-script_deleteasset', 'my_ajax_object_deleteasset',
-            ['ajax_url' => admin_url('admin-ajax.php')]
-        );
+		wp_enqueue_script( 'ajax-script_deleteasset' );
+		wp_localize_script(
+			'ajax-script_deleteasset',
+			'my_ajax_object_deleteasset',
+			['ajax_url' => admin_url( 'admin-ajax.php' )]
+		);
 
-        wp_enqueue_script('vrodos_content_interlinking_request');
-        wp_localize_script('vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
-            ['ajax_url' => admin_url('admin-ajax.php')]
-        );
-    }
+		wp_enqueue_script( 'vrodos_content_interlinking_request' );
+		wp_localize_script(
+			'vrodos_content_interlinking_request',
+			'my_ajax_object_fetch_content',
+			['ajax_url' => admin_url( 'admin-ajax.php' )]
+		);
+	}
 
-    public function enqueue_project_manager_scripts() {
-        $project_manager_page = VRodos_Core_Manager::vrodos_getEditpage('game');
-        if (!$project_manager_page || !is_page($project_manager_page[0]->ID)) {
-            return;
-        }
-        wp_enqueue_script('ajax-script_delete_game');
-        wp_localize_script('ajax-script_delete_game', 'my_ajax_object_deletegame',
-            ['ajax_url' => admin_url('admin-ajax.php')]
-        );
+	public function enqueue_project_manager_scripts() {
+		$project_manager_page = VRodos_Core_Manager::vrodos_getEditpage( 'game' );
+		if ( ! $project_manager_page || ! is_page( $project_manager_page[0]->ID ) ) {
+			return;
+		}
+		wp_enqueue_script( 'ajax-script_delete_game' );
+		wp_localize_script(
+			'ajax-script_delete_game',
+			'my_ajax_object_deletegame',
+			['ajax_url' => admin_url( 'admin-ajax.php' )]
+		);
 
-        wp_enqueue_script('ajax-script_collaborate_project');
-        wp_localize_script('ajax-script_collaborate_project', 'my_ajax_object_collaborate_project',
-            ['ajax_url' => admin_url('admin-ajax.php')]
-        );
+		wp_enqueue_script( 'ajax-script_collaborate_project' );
+		wp_localize_script(
+			'ajax-script_collaborate_project',
+			'my_ajax_object_collaborate_project',
+			['ajax_url' => admin_url( 'admin-ajax.php' )]
+		);
 
-        wp_enqueue_script('ajax-script_create_game');
-        wp_localize_script('ajax-script_create_game', 'my_ajax_object_creategame',
-            ['ajax_url' => admin_url('admin-ajax.php')]
-        );
+		wp_enqueue_script( 'ajax-script_create_game' );
+		wp_localize_script(
+			'ajax-script_create_game',
+			'my_ajax_object_creategame',
+			['ajax_url' => admin_url( 'admin-ajax.php' )]
+		);
 
-        wp_enqueue_script('vrodos_project_manager');
+		wp_enqueue_script( 'vrodos_project_manager' );
 
-        $user = wp_get_current_user();
-        $perma_structure = (bool)get_option('permalink_structure');
-        $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
-        $isAdmin = is_admin() ? 'back' : 'front';
-        wp_localize_script('vrodos_project_manager', 'vrodos_project_manager_data', ['current_user_id' => $user->ID, 'parameter_Scenepass' => $parameter_Scenepass, 'isAdmin' => $isAdmin]);
-    }
+		$user                = wp_get_current_user();
+		$perma_structure     = (bool) get_option( 'permalink_structure' );
+		$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+		$isAdmin             = is_admin() ? 'back' : 'front';
+		wp_localize_script(
+			'vrodos_project_manager',
+			'vrodos_project_manager_data',
+			['current_user_id'     => $user->ID, 'parameter_Scenepass' => $parameter_Scenepass, 'isAdmin'             => $isAdmin]
+		);
+	}
 
-    public function enqueue_scene_editor_scripts() {
-        $edit_scene_page = VRodos_Core_Manager::vrodos_getEditpage('scene');
-        if (!$edit_scene_page || ! is_page($edit_scene_page[0]->ID)) {
-            return;
-        }
+	public function enqueue_scene_editor_scripts() {
+		$edit_scene_page = VRodos_Core_Manager::vrodos_getEditpage( 'scene' );
+		if ( ! $edit_scene_page || ! is_page( $edit_scene_page[0]->ID ) ) {
+			return;
+		}
 
-        // Styles
-        wp_enqueue_style('vrodos_frontend_stylesheet');
-        wp_enqueue_style('vrodos_material_stylesheet');
-        wp_enqueue_style('vrodos_datgui');
-        wp_enqueue_style('vrodos_3D_editor');
-        wp_enqueue_style('vrodos_3D_editor_browser');
+		// Styles
+		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
+		wp_enqueue_style( 'vrodos_material_stylesheet' );
+		wp_enqueue_style( 'vrodos_datgui' );
+		wp_enqueue_style( 'vrodos_3D_editor' );
+		wp_enqueue_style( 'vrodos_3D_editor_browser' );
 
-        // Scripts from original enqueue_scene_editor_scripts
-        wp_enqueue_script('jquery-ui-draggable');
-        wp_enqueue_script('vrodos_scripts');
-        wp_enqueue_script('vrodos_load147_threejs');
-        wp_enqueue_script('vrodos_load147_FontLoader');
-        wp_enqueue_script('vrodos_load147_TextGeometry');
-        wp_enqueue_script('vrodos_load147_CSS2DRenderer');
-        wp_enqueue_script('vrodos_load147_CopyShader');
-        wp_enqueue_script('vrodos_load147_FXAAShader');
-        wp_enqueue_script('vrodos_load147_EffectComposer');
-        wp_enqueue_script('vrodos_load147_RenderPass');
-        wp_enqueue_script('vrodos_load147_OutlinePass');
-        wp_enqueue_script('vrodos_load147_ShaderPass');
-        wp_enqueue_script('vrodos_load147_RGBELoader');
-        wp_enqueue_script('vrodos_load147_GLTFLoader');
-        wp_enqueue_script('vrodos_inflate');
-        wp_enqueue_script('vrodos_HierarchyViewer');
-        wp_enqueue_script('vrodos_load_datgui');
-        wp_enqueue_script('vrodos_load147_OrbitControls');
-        wp_enqueue_script('vrodos_load147_TransformControls');
-        wp_enqueue_script('vrodos_load147_PointerLockControls');
-        wp_enqueue_script('vrodos_ScenePersistence');
-        wp_enqueue_script('vrodos_jscolorpick');
-        wp_enqueue_script('vrodos_html2canvas');
-        wp_enqueue_script('vrodos_3d_editor_environmentals');
-        wp_enqueue_script('vrodos_keyButtons');
-        wp_enqueue_script('vrodos_rayCasters');
-        wp_enqueue_script('vrodos_auxControlers');
-        wp_enqueue_script('vrodos_BordersFinder');
-        wp_enqueue_script('vrodos_LightsPawn_Loader');
-        wp_enqueue_script('vrodos_LoaderMulti');
-        wp_enqueue_script('vrodos_movePointerLocker');
-        wp_enqueue_script('vrodos_addRemoveOne');
-        wp_enqueue_script('vrodos_3d_editor_buttons_drags');
-        wp_enqueue_script('vrodos_vr_editor_analytics');
-        wp_enqueue_script('vrodos_fetch_asset_scenes_request');
-        wp_enqueue_script('vrodos_compile_dialogue');
+		// Scripts from original enqueue_scene_editor_scripts
+		wp_enqueue_script( 'jquery-ui-draggable' );
+		wp_enqueue_script( 'vrodos_scripts' );
+		wp_enqueue_script( 'vrodos_load147_threejs' );
+		wp_enqueue_script( 'vrodos_load147_FontLoader' );
+		wp_enqueue_script( 'vrodos_load147_TextGeometry' );
+		wp_enqueue_script( 'vrodos_load147_CSS2DRenderer' );
+		wp_enqueue_script( 'vrodos_load147_CopyShader' );
+		wp_enqueue_script( 'vrodos_load147_FXAAShader' );
+		wp_enqueue_script( 'vrodos_load147_EffectComposer' );
+		wp_enqueue_script( 'vrodos_load147_RenderPass' );
+		wp_enqueue_script( 'vrodos_load147_OutlinePass' );
+		wp_enqueue_script( 'vrodos_load147_ShaderPass' );
+		wp_enqueue_script( 'vrodos_load147_RGBELoader' );
+		wp_enqueue_script( 'vrodos_load147_GLTFLoader' );
+		wp_enqueue_script( 'vrodos_inflate' );
+		wp_enqueue_script( 'vrodos_HierarchyViewer' );
+		wp_enqueue_script( 'vrodos_load_datgui' );
+		wp_enqueue_script( 'vrodos_load147_OrbitControls' );
+		wp_enqueue_script( 'vrodos_load147_TransformControls' );
+		wp_enqueue_script( 'vrodos_load147_PointerLockControls' );
+		wp_enqueue_script( 'vrodos_ScenePersistence' );
+		wp_enqueue_script( 'vrodos_jscolorpick' );
+		wp_enqueue_script( 'vrodos_html2canvas' );
+		wp_enqueue_script( 'vrodos_3d_editor_environmentals' );
+		wp_enqueue_script( 'vrodos_keyButtons' );
+		wp_enqueue_script( 'vrodos_rayCasters' );
+		wp_enqueue_script( 'vrodos_auxControlers' );
+		wp_enqueue_script( 'vrodos_BordersFinder' );
+		wp_enqueue_script( 'vrodos_LightsPawn_Loader' );
+		wp_enqueue_script( 'vrodos_LoaderMulti' );
+		wp_enqueue_script( 'vrodos_movePointerLocker' );
+		wp_enqueue_script( 'vrodos_addRemoveOne' );
+		wp_enqueue_script( 'vrodos_3d_editor_buttons_drags' );
+		wp_enqueue_script( 'vrodos_vr_editor_analytics' );
+		wp_enqueue_script( 'vrodos_fetch_asset_scenes_request' );
+		wp_enqueue_script( 'vrodos_compile_dialogue' );
 
-        // Prepare all data for localization
-        $template_data = VRodos_Scene_CPT_Manager::prepare_scene_editor_data();
-        $scene_data = VRodos_Scene_CPT_Manager::get_scene_dat_for_script();
+		// Prepare all data for localization
+		$template_data = VRodos_Scene_CPT_Manager::prepare_scene_editor_data();
+		$scene_data    = VRodos_Scene_CPT_Manager::get_scene_dat_for_script();
 
-        // Scripts & Localization from template
-        wp_enqueue_script('ajax-script_compile');
-        wp_localize_script('ajax-script_compile', 'my_ajax_object_compile',
-            ['ajax_url' => admin_url('admin-ajax.php'), 'projectId' => $template_data['project_id'], 'slug' => $template_data['projectSlug'], 'sceneId' => $template_data['current_scene_id']]
-        );
+		// Scripts & Localization from template
+		wp_enqueue_script( 'ajax-script_compile' );
+		wp_localize_script(
+			'ajax-script_compile',
+			'my_ajax_object_compile',
+			['ajax_url'  => admin_url( 'admin-ajax.php' ), 'projectId' => $template_data['project_id'], 'slug'      => $template_data['projectSlug'], 'sceneId'   => $template_data['current_scene_id']]
+		);
 
-        wp_enqueue_script('ajax-script_deletescene');
-        wp_localize_script('ajax-script_deletescene', 'my_ajax_object_deletescene',
-            ['ajax_url' => admin_url('admin-ajax.php')]
-        );
+		wp_enqueue_script( 'ajax-script_deletescene' );
+		wp_localize_script(
+			'ajax-script_deletescene',
+			'my_ajax_object_deletescene',
+			['ajax_url' => admin_url( 'admin-ajax.php' )]
+		);
 
-        wp_enqueue_script('ajax-script_filebrowse');
-        wp_localize_script('ajax-script_filebrowse', 'my_ajax_object_fbrowse', ['ajax_url' => admin_url('admin-ajax.php')]);
+		wp_enqueue_script( 'ajax-script_filebrowse' );
+		wp_localize_script( 'ajax-script_filebrowse', 'my_ajax_object_fbrowse', ['ajax_url' => admin_url( 'admin-ajax.php' )] );
 
-        wp_enqueue_script('ajax-script_savescene');
-        wp_localize_script('ajax-script_savescene', 'my_ajax_object_savescene',
-            ['ajax_url' => admin_url('admin-ajax.php'), 'scene_id' => $template_data['current_scene_id']]
-        );
+		wp_enqueue_script( 'ajax-script_savescene' );
+		wp_localize_script(
+			'ajax-script_savescene',
+			'my_ajax_object_savescene',
+			['ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $template_data['current_scene_id']]
+		);
 
-        wp_enqueue_script('ajax-script_uploadimage');
-        wp_localize_script('ajax-script_uploadimage', 'my_ajax_object_uploadimage',
-            ['ajax_url' => admin_url('admin-ajax.php'), 'scene_id' => $template_data['current_scene_id']]
-        );
+		wp_enqueue_script( 'ajax-script_uploadimage' );
+		wp_localize_script(
+			'ajax-script_uploadimage',
+			'my_ajax_object_uploadimage',
+			['ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $template_data['current_scene_id']]
+		);
 
-        wp_enqueue_script('ajax-script_deleteasset');
-        wp_localize_script('ajax-script_deleteasset', 'my_ajax_object_deleteasset',
-            ['ajax_url' => admin_url('admin-ajax.php')]
-        );
+		wp_enqueue_script( 'ajax-script_deleteasset' );
+		wp_localize_script(
+			'ajax-script_deleteasset',
+			'my_ajax_object_deleteasset',
+			['ajax_url' => admin_url( 'admin-ajax.php' )]
+		);
 
-        wp_enqueue_script('ajax-script_fetchasset');
-        wp_localize_script('ajax-script_fetchasset', 'my_ajax_object_fetchasset',
-            ['ajax_url' => admin_url('admin-ajax.php')]
-        );
+		wp_enqueue_script( 'ajax-script_fetchasset' );
+		wp_localize_script(
+			'ajax-script_fetchasset',
+			'my_ajax_object_fetchasset',
+			['ajax_url' => admin_url( 'admin-ajax.php' )]
+		);
 
-        $localized_data = ['scene_data' => $scene_data, 'pluginPath' => $template_data['pluginpath'], 'uploadDir' => $template_data['upload_url'], 'projectId' => $template_data['project_id'], 'projectSlug' => $template_data['projectSlug'], 'isAdmin' => $template_data['isAdmin'], 'isUserAdmin' => $template_data['is_user_admin'], 'urlforAssetEdit' => $template_data['urlforAssetEdit'], 'scene_id' => $template_data['current_scene_id'], 'game_type' => strtolower($template_data['project_type']), 'user_email' => $template_data['user_email'], 'current_user_id' => $template_data['current_user_id'], 'siteurl' => site_url()];
+		$localized_data = ['scene_data'      => $scene_data, 'pluginPath'      => $template_data['pluginpath'], 'uploadDir'       => $template_data['upload_url'], 'projectId'       => $template_data['project_id'], 'projectSlug'     => $template_data['projectSlug'], 'isAdmin'         => $template_data['isAdmin'], 'isUserAdmin'     => $template_data['is_user_admin'], 'urlforAssetEdit' => $template_data['urlforAssetEdit'], 'scene_id'        => $template_data['current_scene_id'], 'game_type'       => strtolower( (string) $template_data['project_type'] ), 'user_email'      => $template_data['user_email'], 'current_user_id' => $template_data['current_user_id'], 'siteurl'         => site_url()];
 
-        wp_localize_script('vrodos_scripts', 'vrodos_data', $localized_data);
+		wp_localize_script( 'vrodos_scripts', 'vrodos_data', $localized_data );
 
-        // Inline script to map localized data to global vars for backward compatibility
-        $inline_script = "var pluginPath = vrodos_data.pluginPath; var uploadDir = vrodos_data.uploadDir; var urlforAssetEdit = vrodos_data.urlforAssetEdit; var isAdmin = vrodos_data.isAdmin; var projectSlug = vrodos_data.projectSlug; var projectId = vrodos_data.projectId; var vrodos_scene_data = vrodos_data.scene_data;";
-        wp_add_inline_script('vrodos_scripts', $inline_script, 'before');
+		// Inline script to map localized data to global vars for backward compatibility
+		$inline_script = 'var pluginPath = vrodos_data.pluginPath; var uploadDir = vrodos_data.uploadDir; var urlforAssetEdit = vrodos_data.urlforAssetEdit; var isAdmin = vrodos_data.isAdmin; var projectSlug = vrodos_data.projectSlug; var projectId = vrodos_data.projectId; var vrodos_scene_data = vrodos_data.scene_data;';
+		wp_add_inline_script( 'vrodos_scripts', $inline_script, 'before' );
 
-        // Media
-        if ($template_data['current_scene_id']) {
-            wp_enqueue_media(['post' => $template_data['current_scene_id']]);
-        }
-    }
+		// Media
+		if ( $template_data['current_scene_id'] ) {
+			wp_enqueue_media( ['post' => $template_data['current_scene_id']] );
+		}
+	}
 
-    public function enqueue_asset_editor_scripts() {
+	public function enqueue_asset_editor_scripts() {
 
-        $asset_editor_page = VRodos_Core_Manager::vrodos_getEditpage('asset');
-        if (!$asset_editor_page || !is_page($asset_editor_page[0]->ID)) {
-            return;
-        }
+		$asset_editor_page = VRodos_Core_Manager::vrodos_getEditpage( 'asset' );
+		if ( ! $asset_editor_page || ! is_page( $asset_editor_page[0]->ID ) ) {
+			return;
+		}
 
-        // Stylesheet
-        wp_enqueue_style('vrodos_asseteditor_stylesheet');
+		// Stylesheet
+		wp_enqueue_style( 'vrodos_asseteditor_stylesheet' );
 
-        // Three js : for simple rendering
-        wp_enqueue_script('vrodos_scripts');
+		// Three js : for simple rendering
+		wp_enqueue_script( 'vrodos_scripts' );
 
-        // 1. Three js library
-        wp_enqueue_script( 'vrodos_load147_threejs' );
-        wp_enqueue_script( 'vrodos_load147_OrbitControls' );
-        wp_enqueue_script( 'vrodos_load147_GLTFLoader' );
-        wp_enqueue_script( 'vrodos_load147_CSS2DRenderer' );
-        wp_enqueue_script( 'vrodos_load147_DRACOLoader' );
+		// 1. Three js library
+		wp_enqueue_script( 'vrodos_load147_threejs' );
+		wp_enqueue_script( 'vrodos_load147_OrbitControls' );
+		wp_enqueue_script( 'vrodos_load147_GLTFLoader' );
+		wp_enqueue_script( 'vrodos_load147_CSS2DRenderer' );
+		wp_enqueue_script( 'vrodos_load147_DRACOLoader' );
 
-        // Load single asset: Load existing asset
-        wp_enqueue_script('vrodos_AssetViewer_3D_kernel');
+		// Load single asset: Load existing asset
+		wp_enqueue_script( 'vrodos_AssetViewer_3D_kernel' );
 
-        // Load scripts for asset editor
-        wp_enqueue_script('vrodos_asset_editor_scripts');
+		// Load scripts for asset editor
+		wp_enqueue_script( 'vrodos_asset_editor_scripts' );
 
-        // Select colors
-        wp_enqueue_script('vrodos_jscolorpick');
+		// Select colors
+		wp_enqueue_script( 'vrodos_jscolorpick' );
 
-        // to capture screenshot of the 3D molecule and its tags
-        wp_enqueue_script('vrodos_html2canvas');
+		// to capture screenshot of the 3D molecule and its tags
+		wp_enqueue_script( 'vrodos_html2canvas' );
 
-        // Content Interlinking
-        wp_enqueue_script( 'ajax-vrodos_content_interlinking_request',
-            plugin_dir_url(VRODOS_PLUGIN_FILE).'js_libs/content_interlinking_commands/content_interlinking.js', ['jquery'] );
+		// Content Interlinking
+		wp_enqueue_script(
+			'ajax-vrodos_content_interlinking_request',
+			plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'js_libs/content_interlinking_commands/content_interlinking.js',
+			['jquery']
+		);
 
-        // ajax php admin url
-        wp_localize_script( 'ajax-vrodos_content_interlinking_request', 'my_ajax_object_fetch_content',
-            ['ajax_url' => admin_url( 'admin-ajax.php' ), null]
-        );
-    }
+		// ajax php admin url
+		wp_localize_script(
+			'ajax-vrodos_content_interlinking_request',
+			'my_ajax_object_fetch_content',
+			['ajax_url' => admin_url( 'admin-ajax.php' ), null]
+		);
+	}
 
-    public function register_scripts() {
-        $plugin_url_js = plugin_dir_url(VRODOS_PLUGIN_FILE) . 'js_libs/';
+	public function register_scripts() {
+		$plugin_url_js = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'js_libs/';
 
-        $scripts = [
-            // General Scripts
-            ['vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js'],
-            ['vrodos_scripts', $plugin_url_js . 'vrodos_scripts.js'],
-            ['vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'],
-            ['vrodos_html2canvas', $plugin_url_js . 'external_js_libraries/html2canvas.min.js'],
-            ['vrodos_inflate', $plugin_url_js . 'external_js_libraries/inflate.min.js'],
-            ['vrodos_ScenePersistence', $plugin_url_js . 'vrodos_ScenePersistence.js'],
-            ['vrodos_vr_editor_analytics', $plugin_url_js . 'vrodos_3d_editor_analytics.js'],
-            // AJAX Scripts
-            ['ajax-script_compile', $plugin_url_js . 'ajaxes/vrodos_request_compile.js', ['jquery']],
-            ['ajax-script_deletescene', $plugin_url_js . 'ajaxes/delete_scene.js', ['jquery']],
-            ['ajax-script_filebrowse', $plugin_url_js . 'vrodos_assetBrowserToolbar.js', ['jquery']],
-            ['ajax-script_savescene', $plugin_url_js . 'ajaxes/vrodos_save_scene_ajax.js', ['jquery']],
-            ['ajax-script_uploadimage', $plugin_url_js . 'ajaxes/uploadimage.js', ['jquery']],
-            ['ajax-script_fetchasset', $plugin_url_js . 'ajaxes/fetch_asset.js', ['jquery']],
-            ['ajax-script_delete_game', $plugin_url_js . 'ajaxes/delete_game_scene_asset.js', ['jquery']],
-            ['ajax-script_deleteasset', $plugin_url_js . 'ajaxes/delete_asset.js', ['jquery']],
-            ['ajax-script_collaborate_project', $plugin_url_js . 'ajaxes/collaborate_project.js', ['jquery']],
-            ['ajax-script_create_game', $plugin_url_js . 'ajaxes/create_project.js', ['jquery']],
-            // Command Scripts
-            ['vrodos_content_interlinking_request', $plugin_url_js . 'content_interlinking_commands/content_interlinking.js', ['jquery']],
-            ['vrodos_segmentation_request', $plugin_url_js . 'semantics_commands/segmentation.js'],
-            ['vrodos_classification_request', $plugin_url_js . 'semantics_commands/classification.js'],
-            // 3D Editor & Viewer Scripts
-            ['vrodos_AssetViewer_3D_kernel', $plugin_url_js . 'vrodos_AssetViewer_3D_kernel.js'],
-            ['vrodos_3d_editor_buttons_drags', $plugin_url_js . 'vrodos_3d_editor_buttons_drags.js', ['jquery', 'vrodos_addRemoveOne']],
-            ['vrodos_3d_editor_environmentals', $plugin_url_js . 'vrodos_3d_editor_environmentals.js'],
-            ['vrodos_keyButtons', $plugin_url_js . 'vrodos_keyButtons.js'],
-            ['vrodos_rayCasters', $plugin_url_js . 'vrodos_rayCasters.js'],
-            ['vrodos_auxControlers', $plugin_url_js . 'vrodos_auxControlers.js'],
-            ['vrodos_BordersFinder', $plugin_url_js . 'vrodos_BordersFinder.js'],
-            ['vrodos_LoaderMulti', $plugin_url_js . 'vrodos_LoaderMulti.js'],
-            ['vrodos_LightsPawn_Loader', $plugin_url_js . 'vrodos_LightsPawn_Loader.js'],
-            ['vrodos_movePointerLocker', $plugin_url_js . 'vrodos_movePointerLocker.js'],
-            ['vrodos_addRemoveOne', $plugin_url_js . 'vrodos_addRemoveOne.js'],
-            ['vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'],
-            ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'],
-            ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game']],
-            // Three.js r141
-            ['vrodos_load147_threejs', $plugin_url_js . 'threejs147/three.js'],
-            ['vrodos_load147_FontLoader', $plugin_url_js . 'threejs147/FontLoader.js'],
-            ['vrodos_load147_TextGeometry', $plugin_url_js . 'threejs147/TextGeometry.js'],
-            ['vrodos_load147_statjs', $plugin_url_js . 'threejs147/stats.js'],
-            ['vrodos_load147_FBXloader', $plugin_url_js . 'threejs147/FBXLoader.js'],
-            ['vrodos_load147_GLTFLoader', $plugin_url_js . 'threejs147/GLTFLoader.js'],
-            ['vrodos_load147_DRACOLoader', $plugin_url_js . 'threejs147/DRACOLoader.js'],
-            ['vrodos_load147_DDSLoader', $plugin_url_js . 'threejs147/DDSLoader.js'],
-            ['vrodos_load147_KTXLoader', $plugin_url_js . 'threejs147/KTXLoader.js'],
-            ['vrodos_load147_OrbitControls', $plugin_url_js . 'threejs147/OrbitControls.js'],
-            ['vrodos_load147_TransformControls', $plugin_url_js . 'threejs147/TransformControls.js'],
-            ['vrodos_load147_TrackballControls', $plugin_url_js . 'threejs147/TrackballControls.js'],
-            ['vrodos_load147_PointerLockControls', $plugin_url_js . 'threejs147/PointerLockControls.js'],
-            ['vrodos_load147_CSS2DRenderer', $plugin_url_js . 'threejs147/CSS2DRenderer.js'],
-            ['vrodos_load147_CopyShader', $plugin_url_js . 'threejs147/CopyShader.js'],
-            ['vrodos_load147_FXAAShader', $plugin_url_js . 'threejs147/FXAAShader.js'],
-            ['vrodos_load147_EffectComposer', $plugin_url_js . 'threejs147/EffectComposer.js'],
-            ['vrodos_load147_RenderPass', $plugin_url_js . 'threejs147/RenderPass.js'],
-            ['vrodos_load147_OutlinePass', $plugin_url_js . 'threejs147/OutlinePass.js'],
-            ['vrodos_load147_ShaderPass', $plugin_url_js . 'threejs147/ShaderPass.js'],
-            ['vrodos_load147_RGBELoader', $plugin_url_js . 'threejs147/RGBELoader.js'],
-            ['vrodos_load147_OBJLoader', $plugin_url_js . 'threejs147/OBJLoader.js'],
-            ['vrodos_load147_MTLLoader', $plugin_url_js . 'threejs147/MTLLoader.js'],
-            // Other Libraries
-            ['vrodos_load_datgui', $plugin_url_js . 'datgui/0.7.9/dat.gui.min.js'],
-            ['vrodos_material_scripts', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.js'],
-        ];
+		$scripts = [
+      // General Scripts
+      ['vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js'],
+      ['vrodos_scripts', $plugin_url_js . 'vrodos_scripts.js'],
+      ['vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'],
+      ['vrodos_html2canvas', $plugin_url_js . 'external_js_libraries/html2canvas.min.js'],
+      ['vrodos_inflate', $plugin_url_js . 'external_js_libraries/inflate.min.js'],
+      ['vrodos_ScenePersistence', $plugin_url_js . 'vrodos_ScenePersistence.js'],
+      ['vrodos_vr_editor_analytics', $plugin_url_js . 'vrodos_3d_editor_analytics.js'],
+      // AJAX Scripts
+      ['ajax-script_compile', $plugin_url_js . 'ajaxes/vrodos_request_compile.js', ['jquery']],
+      ['ajax-script_deletescene', $plugin_url_js . 'ajaxes/delete_scene.js', ['jquery']],
+      ['ajax-script_filebrowse', $plugin_url_js . 'vrodos_assetBrowserToolbar.js', ['jquery']],
+      ['ajax-script_savescene', $plugin_url_js . 'ajaxes/vrodos_save_scene_ajax.js', ['jquery']],
+      ['ajax-script_uploadimage', $plugin_url_js . 'ajaxes/uploadimage.js', ['jquery']],
+      ['ajax-script_fetchasset', $plugin_url_js . 'ajaxes/fetch_asset.js', ['jquery']],
+      ['ajax-script_delete_game', $plugin_url_js . 'ajaxes/delete_game_scene_asset.js', ['jquery']],
+      ['ajax-script_deleteasset', $plugin_url_js . 'ajaxes/delete_asset.js', ['jquery']],
+      ['ajax-script_collaborate_project', $plugin_url_js . 'ajaxes/collaborate_project.js', ['jquery']],
+      ['ajax-script_create_game', $plugin_url_js . 'ajaxes/create_project.js', ['jquery']],
+      // Command Scripts
+      ['vrodos_content_interlinking_request', $plugin_url_js . 'content_interlinking_commands/content_interlinking.js', ['jquery']],
+      ['vrodos_segmentation_request', $plugin_url_js . 'semantics_commands/segmentation.js'],
+      ['vrodos_classification_request', $plugin_url_js . 'semantics_commands/classification.js'],
+      // 3D Editor & Viewer Scripts
+      ['vrodos_AssetViewer_3D_kernel', $plugin_url_js . 'vrodos_AssetViewer_3D_kernel.js'],
+      ['vrodos_3d_editor_buttons_drags', $plugin_url_js . 'vrodos_3d_editor_buttons_drags.js', ['jquery', 'vrodos_addRemoveOne']],
+      ['vrodos_3d_editor_environmentals', $plugin_url_js . 'vrodos_3d_editor_environmentals.js'],
+      ['vrodos_keyButtons', $plugin_url_js . 'vrodos_keyButtons.js'],
+      ['vrodos_rayCasters', $plugin_url_js . 'vrodos_rayCasters.js'],
+      ['vrodos_auxControlers', $plugin_url_js . 'vrodos_auxControlers.js'],
+      ['vrodos_BordersFinder', $plugin_url_js . 'vrodos_BordersFinder.js'],
+      ['vrodos_LoaderMulti', $plugin_url_js . 'vrodos_LoaderMulti.js'],
+      ['vrodos_LightsPawn_Loader', $plugin_url_js . 'vrodos_LightsPawn_Loader.js'],
+      ['vrodos_movePointerLocker', $plugin_url_js . 'vrodos_movePointerLocker.js'],
+      ['vrodos_addRemoveOne', $plugin_url_js . 'vrodos_addRemoveOne.js'],
+      ['vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'],
+      ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'],
+      ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game']],
+      // Three.js r141
+      ['vrodos_load147_threejs', $plugin_url_js . 'threejs147/three.js'],
+      ['vrodos_load147_FontLoader', $plugin_url_js . 'threejs147/FontLoader.js'],
+      ['vrodos_load147_TextGeometry', $plugin_url_js . 'threejs147/TextGeometry.js'],
+      ['vrodos_load147_statjs', $plugin_url_js . 'threejs147/stats.js'],
+      ['vrodos_load147_FBXloader', $plugin_url_js . 'threejs147/FBXLoader.js'],
+      ['vrodos_load147_GLTFLoader', $plugin_url_js . 'threejs147/GLTFLoader.js'],
+      ['vrodos_load147_DRACOLoader', $plugin_url_js . 'threejs147/DRACOLoader.js'],
+      ['vrodos_load147_DDSLoader', $plugin_url_js . 'threejs147/DDSLoader.js'],
+      ['vrodos_load147_KTXLoader', $plugin_url_js . 'threejs147/KTXLoader.js'],
+      ['vrodos_load147_OrbitControls', $plugin_url_js . 'threejs147/OrbitControls.js'],
+      ['vrodos_load147_TransformControls', $plugin_url_js . 'threejs147/TransformControls.js'],
+      ['vrodos_load147_TrackballControls', $plugin_url_js . 'threejs147/TrackballControls.js'],
+      ['vrodos_load147_PointerLockControls', $plugin_url_js . 'threejs147/PointerLockControls.js'],
+      ['vrodos_load147_CSS2DRenderer', $plugin_url_js . 'threejs147/CSS2DRenderer.js'],
+      ['vrodos_load147_CopyShader', $plugin_url_js . 'threejs147/CopyShader.js'],
+      ['vrodos_load147_FXAAShader', $plugin_url_js . 'threejs147/FXAAShader.js'],
+      ['vrodos_load147_EffectComposer', $plugin_url_js . 'threejs147/EffectComposer.js'],
+      ['vrodos_load147_RenderPass', $plugin_url_js . 'threejs147/RenderPass.js'],
+      ['vrodos_load147_OutlinePass', $plugin_url_js . 'threejs147/OutlinePass.js'],
+      ['vrodos_load147_ShaderPass', $plugin_url_js . 'threejs147/ShaderPass.js'],
+      ['vrodos_load147_RGBELoader', $plugin_url_js . 'threejs147/RGBELoader.js'],
+      ['vrodos_load147_OBJLoader', $plugin_url_js . 'threejs147/OBJLoader.js'],
+      ['vrodos_load147_MTLLoader', $plugin_url_js . 'threejs147/MTLLoader.js'],
+      // Other Libraries
+      ['vrodos_load_datgui', $plugin_url_js . 'datgui/0.7.9/dat.gui.min.js'],
+      ['vrodos_material_scripts', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.js'],
+  ];
 
-        foreach ($scripts as $script) {
-            $dependencies = $script[2] ?? [];
-            wp_register_script($script[0], $script[1], $dependencies, null, false);
-        }
-    }
+		foreach ( $scripts as $script ) {
+			$dependencies = $script[2] ?? [];
+			wp_register_script( $script[0], $script[1], $dependencies, null, false );
+		}
+	}
 
-    public function register_styles() {
-        $plugin_url = plugin_dir_url(VRODOS_PLUGIN_FILE);
+	public function register_styles() {
+		$plugin_url = plugin_dir_url( VRODOS_PLUGIN_FILE );
 
-        wp_register_style( 'vrodos_backend', $plugin_url . 'css/vrodos_backend.css' );
-        wp_register_style( 'vrodos_3D_editor', $plugin_url . 'css/vrodos_3D_editor.css' );
-        wp_register_style( 'vrodos_datgui', $plugin_url . 'js_libs/datgui/0.7.9/dat.gui.css' );
-        wp_register_style( 'vrodos_dashboard_table', $plugin_url . 'css/vrodos_dashboard_table_style.css' );
-        wp_register_style( 'vrodos_3D_editor_browser', $plugin_url . 'css/vrodos_3D_editor_browser.css' );
-        wp_register_style( 'vrodos_material_stylesheet', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.css' );
-        wp_register_style( 'vrodos_frontend_stylesheet', $plugin_url . 'css/vrodos_frontend.css' );
-        wp_register_style( 'vrodos_asseteditor_stylesheet', $plugin_url . 'css/vrodos_asseteditor.css' );
-        wp_register_style( 'vrodos_widgets_stylesheet', $plugin_url . 'css/vrodos_widgets.css' );
-        wp_register_style( 'vrodos_material_icons', $plugin_url . 'css/material-icons/material-icons.css' );
+		wp_register_style( 'vrodos_backend', $plugin_url . 'css/vrodos_backend.css' );
+		wp_register_style( 'vrodos_3D_editor', $plugin_url . 'css/vrodos_3D_editor.css' );
+		wp_register_style( 'vrodos_datgui', $plugin_url . 'js_libs/datgui/0.7.9/dat.gui.css' );
+		wp_register_style( 'vrodos_dashboard_table', $plugin_url . 'css/vrodos_dashboard_table_style.css' );
+		wp_register_style( 'vrodos_3D_editor_browser', $plugin_url . 'css/vrodos_3D_editor_browser.css' );
+		wp_register_style( 'vrodos_material_stylesheet', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.css' );
+		wp_register_style( 'vrodos_frontend_stylesheet', $plugin_url . 'css/vrodos_frontend.css' );
+		wp_register_style( 'vrodos_asseteditor_stylesheet', $plugin_url . 'css/vrodos_asseteditor.css' );
+		wp_register_style( 'vrodos_widgets_stylesheet', $plugin_url . 'css/vrodos_widgets.css' );
+		wp_register_style( 'vrodos_material_icons', $plugin_url . 'css/material-icons/material-icons.css' );
 
-        wp_enqueue_script('vrodos_material_scripts');
-        wp_enqueue_style('vrodos_material_icons');
-        wp_enqueue_style('vrodos_backend');
-        wp_enqueue_style('vrodos_dashboard_table');
-    }
+		wp_enqueue_script( 'vrodos_material_scripts' );
+		wp_enqueue_style( 'vrodos_material_icons' );
+		wp_enqueue_style( 'vrodos_backend' );
+		wp_enqueue_style( 'vrodos_dashboard_table' );
+	}
 }
-

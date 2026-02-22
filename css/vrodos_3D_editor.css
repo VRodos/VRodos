@@ -1,132 +1,131 @@
-
 .panel {
-    display: none;
+	display: none;
 }
 
 .panel.active {
-    display: block;
+	display: block;
 }
 
 /* Three js */
 #vr_editor_main_div {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #eee;
-    z-index: 999;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #eee;
+	z-index: 999;
 }
 
 /* Php info top right */
 .VrInfoPhpStyle {
-    /*font-size: 0.6vw;*/
-    max-font-size: 20pt;
-    background: rgba(255, 255, 255, .54);
-    color: #000;
-    position: absolute;
-    text-align: center;
-    top: 50%;
-    left: 50%;
-    width: 20%;
-    padding: 2px;
+	/*font-size: 0.6vw;*/
+	max-font-size: 20pt;
+	background: rgba(255, 255, 255, .54);
+	color: #000;
+	position: absolute;
+	text-align: center;
+	top: 50%;
+	left: 50%;
+	width: 20%;
+	padding: 2px;
 }
 
 /* Progress bar */
 .ProgressContainerStyle {
-    top: 7em;
-    width: auto;
-    font-variant: small-caps;
-    z-index: 100;
-    text-align: center;
-    display: none;
+	top: 7em;
+	width: auto;
+	font-variant: small-caps;
+	z-index: 100;
+	text-align: center;
+	display: none;
 }
 
 #progressbar {
-    text-align: center;
-    background: white;
-    width: auto;
-    height: 5px;
+	text-align: center;
+	background: white;
+	width: auto;
+	height: 5px;
 }
 
 #scene_loading_bar {
-    background: #64dee3;
-    width: auto;
-    height: 5px;
+	background: #64dee3;
+	width: auto;
+	height: 5px;
 }
 
 /*-------------------------- */
 
 .VrGuiContainerStyle {
-    /*position: absolute;*/
-    /*text-align: left;*/
-    /*top: 12%;*/
-    /*right: 0;*/
-    width: 100%;
-    /*padding: 0;*/
+	/*position: absolute;*/
+	/*text-align: left;*/
+	/*top: 12%;*/
+	/*right: 0;*/
+	width: 100%;
+	/*padding: 0;*/
 }
 
 /* rightPanelToggleOnOff*/
 .scenesListToggleStyle {
-    position: absolute;
-    bottom: 0;
-    width: 40px;
-    left: 0;
-    z-index: 1001;
-    min-width: 30px;
-    height: 120px;
-    padding: 0;
-    display: flex;
+	position: absolute;
+	bottom: 0;
+	width: 40px;
+	left: 0;
+	z-index: 1001;
+	min-width: 30px;
+	height: 120px;
+	padding: 0;
+	display: flex;
 }
 
 .scenesListToggleStyle i {
-    display: block;
-    cursor: pointer;
+	display: block;
+	cursor: pointer;
 }
 
 .scenesListToggleOn {
-    height: 120px;
+	height: 120px;
 }
 
 .scenesListToggleOff {
-    height: 4%;
+	height: 4%;
 }
 
 
 #compileGameBtn {
-    position: absolute;
-    top: 5px;
-    right: 0;
-    height: 20px;
-    line-height: 1.4em;
+	position: absolute;
+	top: 5px;
+	right: 0;
+	height: 20px;
+	line-height: 1.4em;
 }
 
 
 .HeaderButtonStyle {
-    float: right;
-    margin-top: 5px;
+	float: right;
+	margin-top: 5px;
 }
 
 
 #formdiv {
-    font-size: 1vw;
-    overflow-y: scroll;
-    max-height: 40%;
-    width: 50%;
-    position: absolute;
-    bottom: 0;
-    opacity: 0.5;
+	font-size: 1vw;
+	overflow-y: scroll;
+	max-height: 40%;
+	width: 50%;
+	position: absolute;
+	bottom: 0;
+	opacity: 0.5;
 }
 
 #paramsform {
-    font-size: 0.6vw;
-    background: #eee;
-    color: #000;
-    padding: 10px;
+	font-size: 0.6vw;
+	background: #eee;
+	color: #000;
+	padding: 10px;
 }
 
 #paramsform input {
-    font-size: 0.6vw;
+	font-size: 0.6vw;
 }
 
 
@@ -136,268 +135,268 @@ canvas { pointer-events:none; z-index:10; }
 
 /* Result */
 .result {
-    margin: 1px;
-    font-size: smaller;
+	margin: 1px;
+	font-size: smaller;
 }
 
 .EditorObjOverlapSelectStyle {
-    z-index: 1000;
-    position: absolute;
-    display: none;
-    padding: 12px;
+	z-index: 1000;
+	position: absolute;
+	display: none;
+	padding: 12px;
 }
 
 .EditorObjOverlapSelectStyle select {
-    background-color: rgba(255, 255, 255, .87);
-    border: 1px solid rgba(0, 0, 0, .12);
+	background-color: rgba(255, 255, 255, .87);
+	border: 1px solid rgba(0, 0, 0, .12);
 }
 
 .EditorObjOverlapSelectStyle a {
-    width: 48px;
-    min-width: 0;
-    padding: 0;
-    margin: 0;
+	width: 48px;
+	min-width: 0;
+	padding: 0;
+	margin: 0;
 }
 
 /*Assets Left Toolbar*/
 
 /* leftPanelToggleOnOff*/
 .AssetsToggleStyle {
-    position: absolute;
-    top: 1px;
-    width: 20%;
-    left: 0;
-    top: 30px;
-    z-index: 999;
-    cursor: pointer;
-    padding-top: 5px;
+	position: absolute;
+	top: 1px;
+	width: 20%;
+	left: 0;
+	top: 30px;
+	z-index: 999;
+	cursor: pointer;
+	padding-top: 5px;
 }
 
 .AssetsToggleStyle i {
-    display: block;
-    cursor: pointer;
+	display: block;
+	cursor: pointer;
 }
 
 .AssetsToggleOn {
-    width: 20%;
+	width: 20%;
 }
 
 .AssetsToggleOff {
-    width: 4%;
+	width: 4%;
 }
 
 .AssetCategoryTabStyle {
-    margin-top: 60px;
-    background-color: rgba(255,255,255,0.12);
-    padding: 0;
+	margin-top: 60px;
+	background-color: rgba(255,255,255,0.12);
+	padding: 0;
 }
 
 
 .affineSwitch {
-    width: 33% !important;
-    margin-bottom: 0;
+	width: 33% !important;
+	margin-bottom: 0;
 }
 
 
 /* rightPanelToggleOnOff*/
 .HierarchyToggleStyle {
-    position: absolute;
-    top: 1px;
-    width: 300px;
-    right: 0;
-    top: 30px;
-    z-index: 999;
+	position: absolute;
+	top: 1px;
+	width: 300px;
+	right: 0;
+	top: 30px;
+	z-index: 999;
 }
 
 .HierarchyToggleStyle i {
-    display: block;
-    cursor: pointer;
+	display: block;
+	cursor: pointer;
 }
 
 .HierarchyToggleOn {
-    width: 300px;
+	width: 300px;
 }
 
 .HierarchyToggleOff {
-    width: 4%;
+	width: 4%;
 }
 
 .right-elements-panel-style {
-    position: absolute;
-    right: 0;
-    top: 60px;
-    width: 300px;
-    height: 100%;
-    background-color: darkgray;
-    display: block;
-    z-index: 2;
+	position: absolute;
+	right: 0;
+	top: 60px;
+	width: 300px;
+	height: 100%;
+	background-color: darkgray;
+	display: block;
+	z-index: 2;
 }
 
 .row-right-panel {
-    /*width:100%;*/
-    display: flex;
-    margin-bottom: 1px;
+	/*width:100%;*/
+	display: flex;
+	margin-bottom: 1px;
 }
 
 /*Right Panel*/
 
 
 .EditorToolbarBtnStyle {
-    width:45px;
-    height:35px;
-    min-width:20px;
+	width:45px;
+	height:35px;
+	min-width:20px;
 }
 
 .EditorToolbarBtnStyle i {
-    padding-top: 5px;
-    margin-left: -5px;
+	padding-top: 5px;
+	margin-left: -5px;
 }
 
 .ThirdPersonVrWalkInButtonStyle {
-    width: 25%;
-    min-width: 20px;
-    padding-top: 4px;
+	width: 25%;
+	min-width: 20px;
+	padding-top: 4px;
 }
 
 /*row3*/
 .ObjectManipulationToggle {
-    /*overflow: hidden;*/
-    background: transparent;
-    display: inline-flex;
-    /*position: absolute;*/
-    /*top: 8%;*/
-    /*right:0;*/
-    /*width:100%;*/
+	/*overflow: hidden;*/
+	background: transparent;
+	display: inline-flex;
+	/*position: absolute;*/
+	/*top: 8%;*/
+	/*right:0;*/
+	/*width:100%;*/
 }
 
 .ObjectManipulationToggle input {
-    position: absolute !important;
-    clip: rect(0, 0, 0, 0);
-    height: 1px;
-    width: 1px;
-    border: 0;
-    overflow: hidden;
+	position: absolute !important;
+	clip: rect(0, 0, 0, 0);
+	height: 1px;
+	width: 1px;
+	border: 0;
+	overflow: hidden;
 }
 
 
 
 .ObjectManipulationToggle label {
-    /*display: inline-block;*/
-    width: 80px;
-    background-color: #e4e4e4;
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 12px;
-    font-weight: normal;
-    text-align: center;
-    text-shadow: none;
-    padding: 3px 8px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
-    -webkit-transition: all 0.1s ease-in-out;
-    -moz-transition: all 0.1s ease-in-out;
-    -ms-transition: all 0.1s ease-in-out;
-    -o-transition: all 0.1s ease-in-out;
-    transition: all 0.1s ease-in-out;
+	/*display: inline-block;*/
+	width: 80px;
+	background-color: #e4e4e4;
+	color: rgba(0, 0, 0, 0.6);
+	font-size: 12px;
+	font-weight: normal;
+	text-align: center;
+	text-shadow: none;
+	padding: 3px 8px;
+	border: 1px solid rgba(0, 0, 0, 0.2);
+	-webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
+	-webkit-transition: all 0.1s ease-in-out;
+	-moz-transition: all 0.1s ease-in-out;
+	-ms-transition: all 0.1s ease-in-out;
+	-o-transition: all 0.1s ease-in-out;
+	transition: all 0.1s ease-in-out;
 }
 
 .ObjectManipulationToggle label:hover {
-    cursor: pointer;
+	cursor: pointer;
 }
 
 .ObjectManipulationToggle input:checked+label {
-    background-color: #3f51b5;
-    color: #ffffff;
-    -webkit-box-shadow: none;
-    box-shadow: none;
+	background-color: #3f51b5;
+	color: #ffffff;
+	-webkit-box-shadow: none;
+	box-shadow: none;
 }
 
 .ObjectManipulationToggle label:first-of-type {
-    border-radius: 0px 0 0 0px;
+	border-radius: 0px 0 0 0px;
 }
 
 .ObjectManipulationToggle label:last-of-type {
-    border-radius: 0px 0 0 0px;
+	border-radius: 0px 0 0 0px;
 }
 
 /*row5 Axis size*/
 .AxisManipulationBtns {
-    /*display:flex;*/
-    margin-left: 10px;
-    margin-top: 3px;
+	/*display:flex;*/
+	margin-left: 10px;
+	margin-top: 3px;
 }
 
 /*row6 Hierarchy viewer*/
 #hierarchyViewerTitle {
-    padding: 3px;
-    font-size: 14px;
+	padding: 3px;
+	font-size: 14px;
 }
 
 
 .HierarchyViewerStyle {
-    display: flex;
-    width: 100%;
-    background-color: #dfdfdf;
+	display: flex;
+	width: 100%;
+	background-color: #dfdfdf;
 }
 
 .HierarchyViewerTitle {
-    padding-left: 14px;
-    font-weight: 500;
+	padding-left: 14px;
+	font-weight: 500;
 }
 
 .hierarchyItem {
-    width: 100%
+	width: 100%
 }
 
 .hierarchyItemName {
-    font-size: 9pt;
-    line-height: 12pt;
-    width: 80%
+	font-size: 9pt;
+	line-height: 12pt;
+	width: 80%
 }
 
 .hierarchyItemDelete {
-    width: 20%
+	width: 20%
 }
 
 .ToggleUIButtonStyle {
-    position: absolute;
-    top: 50px;
-    left: 25%;
-    z-index: 1000;
-    background: transparent;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+	position: absolute;
+	top: 50px;
+	left: 25%;
+	z-index: 1000;
+	background: transparent;
+	-webkit-appearance: none;
+	-moz-appearance: none;
 }
 
 .ToggleUIButtonStyle i {
-    font-size: 30px;
-    cursor: pointer;
+	font-size: 30px;
+	cursor: pointer;
 }
 
 .RemoveAssetFromSceneBtnStyle {
-    position: absolute;
-    left: 372px;
-    top: 40px;
-    width: 48px;
-    min-width: 0;
-    padding: 0;
-    margin: 0;
+	position: absolute;
+	left: 372px;
+	top: 40px;
+	width: 48px;
+	min-width: 0;
+	padding: 0;
+	margin: 0;
 }
 
 .SaveSceneBtnStyle {
-    position: absolute;
-    right: 1px;
-    top: 2px;
-    padding: 0;
-    margin: 0;
-    /*width: 130px;*/
+	position: absolute;
+	right: 1px;
+	top: 2px;
+	padding: 0;
+	margin: 0;
+	/*width: 130px;*/
 }
 
 .SaveBtnContainerStyle {
-    position: absolute;
-    text-align: center;
-    top: 7px;
-    right: 1px;
+	position: absolute;
+	text-align: center;
+	top: 7px;
+	right: 1px;
 }
 
 
@@ -406,37 +405,37 @@ canvas { pointer-events:none; z-index:10; }
 .HierarchyToggleStyle i,
 .EditorTourToggleBtn a i,
 .ThirdPersonVrWalkInButtonStyle a i {
-    padding-top: 4px;
+	padding-top: 4px;
 }
 
 
 .pauseRenderingDivStyle {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 40px;
-    padding: 0;
-    margin: 0;
-    z-index: 999;
-    display: none;
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: 40px;
+	padding: 0;
+	margin: 0;
+	z-index: 999;
+	display: none;
 }
 
 #pauseRendering {
-    width: 40px;
-    min-width: 30px;
-    padding: 4px 0 0 0;
-    margin: 0;
-    background: gray;
+	width: 40px;
+	min-width: 30px;
+	padding: 4px 0 0 0;
+	margin: 0;
+	background: gray;
 }
 
 
 
 .AxisManipulationBtns a {
-    min-width: 0;
-    margin: 0 0 0 0;
-    height: 18px;
-    vertical-align: top;
-    line-height: 1.5em;
+	min-width: 0;
+	margin: 0 0 0 0;
+	height: 18px;
+	vertical-align: top;
+	line-height: 1.5em;
 }
 
 
@@ -446,8 +445,8 @@ button,
 html [type="button"],
 [type="reset"],
 [type="submit"] {
-    -moz-appearance: none;
-    -webkit-appearance: none;
+	-moz-appearance: none;
+	-webkit-appearance: none;
 }
 
 
@@ -455,60 +454,60 @@ html [type="button"],
 
 /*CARD STYLING*/
 #scenesInsideVREditor {
-    position: absolute;
-    display: inline-flex;
-    height: 120px;
-    width: auto;
-    left: 0;
-    bottom: 0;
-    z-index: 500;
-    background: rgba(0, 0, 0, 0.12);
-    padding-left: 60px !important;
-    padding-top: 5px;
-    padding-right: 20px;
+	position: absolute;
+	display: inline-flex;
+	height: 120px;
+	width: auto;
+	left: 0;
+	bottom: 0;
+	z-index: 500;
+	background: rgba(0, 0, 0, 0.12);
+	padding-left: 60px !important;
+	padding-top: 5px;
+	padding-right: 20px;
 }
 
 .SceneCardContainer {
-    width: 150px;
-    padding-left: 20px;
+	width: 150px;
+	padding-left: 20px;
 }
 
 .sceneTab {
-    /*height:100px;*/
-    display: block;
-    background: transparent;
+	/*height:100px;*/
+	display: block;
+	background: transparent;
 }
 
 .SceneThumbnail {
-    position: relative;
-    width: 100%;
-    height: 80px;
-    max-height: 80px;
-    min-height: 50px;
-    text-align: center;
-    overflow: hidden;
+	position: relative;
+	width: 100%;
+	height: 80px;
+	max-height: 80px;
+	min-height: 50px;
+	text-align: center;
+	overflow: hidden;
 }
 
 .sceneDisplayBlock {
-    display: block;
-    width: 100%;
-    height: 100%;
+	display: block;
+	width: 100%;
+	height: 100%;
 }
 
 .sceneDisplayBlock a {
-    width: 100%;
-    height: 100%;
+	width: 100%;
+	height: 100%;
 }
 
 .sceneDisplayBlock a img {
-    width: 100%;
-    height: 100%;
+	width: 100%;
+	height: 100%;
 }
 
 
 .landscapeIcon {
-    font-size: 34px;
-    padding-top: 20px;
+	font-size: 34px;
+	padding-top: 20px;
 }
 
 /*.SceneThumbnail a {*/
@@ -530,29 +529,29 @@ html [type="button"],
 /*}*/
 
 .cardTitleDeleteWrapper {
-    width: 100%;
-    max-height: 30px;
-    background: white;
+	width: 100%;
+	max-height: 30px;
+	background: white;
 }
 
 .cardTitle {
-    width: 70%;
-    margin: 0;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding-left: 5px;
+	width: 70%;
+	margin: 0;
+	font-size: 14px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding-left: 5px;
 }
 
 .cardDeleteIcon {
-    float: right;
-    right: 0;
-    min-width: 30px;
-    margin: 0 !important;
-    max-height: 25px;
-    padding: 0;
-    margin-top: 3px;
+	float: right;
+	right: 0;
+	min-width: 30px;
+	margin: 0 !important;
+	max-height: 25px;
+	padding: 0;
+	margin-top: 3px;
 }
 
 /*.cardDescription{*/
@@ -562,165 +561,165 @@ html [type="button"],
 /*}*/
 
 .deleteIconMaterial {
-    font-size: 18px;
+	font-size: 18px;
 }
 
 .thumbnailImg img {
-    border: 1px solid #ddd;
-    width:30px;
-    border-radius: 4px;  
-    transform: scale(1);
-  }
-  
+	border: 1px solid #ddd;
+	width:30px;
+	border-radius: 4px;
+	transform: scale(1);
+	}
+
 .thumbnailImg img:hover {
-    box-shadow: 0 0 2px 1px rgba(10, 54, 248, 0.5);  /* TODO Match with VROdos blue theme*/
-    transform: scale(3);
+	box-shadow: 0 0 2px 1px rgba(10, 54, 248, 0.5);  /* TODO Match with VROdos blue theme*/
+	transform: scale(3);
 }
 
 
 .ImageContainer {
-    /*width:100%;*/
-    /*height:80px;*/
-    /*max-height:80px;*/
-    /*min-height:50px;*/
-    position: relative;
-    text-align: center;
-    overflow: hidden;
+	/*width:100%;*/
+	/*height:80px;*/
+	/*max-height:80px;*/
+	/*min-height:50px;*/
+	position: relative;
+	text-align: center;
+	overflow: hidden;
 }
 
 
 .ImageContainer img {
-    /*position: absolute;*/
-    /*height: 100%;*/
-    /*overflow: hidden;*/
-    /*-webkit-transform: translate(-50%,-50%);*/
-    /*-ms-transform: translate(-50%,-50%);*/
-    /*transform: translate(-50%,-50%);*/
-    /*display: block;*/
-    /*text-align: center;*/
-    /*vertical-align: middle;*/
-    /*height: 100%;*/
+	/*position: absolute;*/
+	/*height: 100%;*/
+	/*overflow: hidden;*/
+	/*-webkit-transform: translate(-50%,-50%);*/
+	/*-ms-transform: translate(-50%,-50%);*/
+	/*transform: translate(-50%,-50%);*/
+	/*display: block;*/
+	/*text-align: center;*/
+	/*vertical-align: middle;*/
+	/*height: 100%;*/
 }
 
 #save-scene-elements {
-    position: absolute;
-    right: 20%;
-    width: 300px;
-    top: -3px;
+	position: absolute;
+	right: 20%;
+	width: 300px;
+	top: -3px;
 }
 
 #save-scene-button {
-    color: hotpink;
-    position: relative;
-    font-size: medium;
-    cursor: pointer;
+	color: hotpink;
+	position: relative;
+	font-size: medium;
+	cursor: pointer;
 }
 
 #undo-scene-button {
-    color: hotpink;
-    position: relative;
-    left: 0;
-    cursor: pointer;
-    top: 5px;
+	color: hotpink;
+	position: relative;
+	left: 0;
+	cursor: pointer;
+	top: 5px;
 }
 
 #redo-scene-button {
-    color: hotpink;
-    position: relative;
-    right: 0;
-    cursor: pointer;
-    top: 5px;
+	color: hotpink;
+	position: relative;
+	right: 0;
+	cursor: pointer;
+	top: 5px;
 }
 
 /* Lights Drag and Drop bar*/
 /* Prevent the text contents of draggable elements from being selectable. */
 [draggable] {
-    -moz-user-select: none;
-    -khtml-user-select: none;
-    -webkit-user-select: none;
-    user-select: none;
-    /* Required to make elements draggable in old WebKit */
-    -khtml-user-drag: element;
-    -webkit-user-drag: element;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+	user-select: none;
+	/* Required to make elements draggable in old WebKit */
+	-khtml-user-drag: element;
+	-webkit-user-drag: element;
 }
 
 .environmentBar {
-    position: absolute !important;
-    /* Do not put relative because it breaks the raycaster of canvas */
-    top: 30px;
-    left: 35%;
-    width: auto;
-    z-index: 501;
-    background-color: rgba(0,0,0,.34);
-    display: inline-block;
-    padding: 5px;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
+	position: absolute !important;
+	/* Do not put relative because it breaks the raycaster of canvas */
+	top: 30px;
+	left: 35%;
+	width: auto;
+	z-index: 501;
+	background-color: rgba(0,0,0,.34);
+	display: inline-block;
+	padding: 5px;
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
 }
 
 .environmentButton {
-    float: left;
-    width: 45px;
-    min-width: 20px;
-    margin-left: 2px;
+	float: left;
+	width: 45px;
+	min-width: 20px;
+	margin-left: 2px;
 }
 
 .lightpawnbutton {
-    height: 42px;
-    width: 40px;
-    float: left;
-    /*border: 1px solid #333;*/
-    background-color: #ccc;
+	height: 42px;
+	width: 40px;
+	float: left;
+	/*border: 1px solid #333;*/
+	background-color: #ccc;
 
-    -webkit-border-radius: 10px;
-    -ms-border-radius: 10px;
-    -moz-border-radius: 10px;
-    border-radius: 10px;
-    /*-webkit-box-shadow: inset 0 0 3px #000;*/
-    /*-ms-box-shadow: inset 0 0 3px #000;*/
-    /*box-shadow: inset 0 0 3px #000;*/
-    text-align: center;
-    cursor: move;
-    vertical-align: center;
+	-webkit-border-radius: 10px;
+	-ms-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	/*-webkit-box-shadow: inset 0 0 3px #000;*/
+	/*-ms-box-shadow: inset 0 0 3px #000;*/
+	/*box-shadow: inset 0 0 3px #000;*/
+	text-align: center;
+	cursor: move;
+	vertical-align: center;
 }
 
 .lightpawnbutton:not(:last-child) {
-    margin-right: 2px;
+	margin-right: 2px;
 }
 
 .lightpawnbutton header {
-    color: #fff;
-    text-shadow: #000 0 1px;
-    padding: 1px;
-    background: black;
-    font-size: 8pt;
-    /*-moz-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*!*/
-    /*background: -webkit-gradient(linear, left top, right top,*/
-    /*color-stop(0, rgb(0,0,0)),*/
-    /*color-stop(0.50, rgb(79,79,79)),*/
-    /*color-stop(1, rgb(21,21,21)));*/
-    /*background: -webkit-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*/
-    /*background: -ms-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*/
-    /*border-bottom: 1px solid #ddd;*/
-    -webkit-border-top-left-radius: 10px;
-    -moz-border-radius-topleft: 10px;
-    -ms-border-radius-topleft: 10px;
-    border-top-left-radius: 10px;
-    -webkit-border-top-right-radius: 10px;
-    -ms-border-top-right-radius: 10px;
-    -moz-border-radius-topright: 10px;
-    border-top-right-radius: 10px;
+	color: #fff;
+	text-shadow: #000 0 1px;
+	padding: 1px;
+	background: black;
+	font-size: 8pt;
+	/*-moz-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*!*/
+	/*background: -webkit-gradient(linear, left top, right top,*/
+	/*color-stop(0, rgb(0,0,0)),*/
+	/*color-stop(0.50, rgb(79,79,79)),*/
+	/*color-stop(1, rgb(21,21,21)));*/
+	/*background: -webkit-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*/
+	/*background: -ms-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));*/
+	/*border-bottom: 1px solid #ddd;*/
+	-webkit-border-top-left-radius: 10px;
+	-moz-border-radius-topleft: 10px;
+	-ms-border-radius-topleft: 10px;
+	border-top-left-radius: 10px;
+	-webkit-border-top-right-radius: 10px;
+	-ms-border-top-right-radius: 10px;
+	-moz-border-radius-topright: 10px;
+	border-top-right-radius: 10px;
 }
 
 
 .lightpawnbutton.over {
-    border: 2px dashed #000;
+	border: 2px dashed #000;
 }
 
 .lighticon {
-    width: 20px;
-    margin-top: 3px;
-    margin-bottom: 2px;
+	width: 20px;
+	margin-top: 3px;
+	margin-bottom: 2px;
 }
 
 
@@ -729,194 +728,194 @@ html [type="button"],
 
 
 .mdc-tab {
-    min-width: 0;
+	min-width: 0;
 }
 
 .custom-header {
-    display: none;
+	display: none;
 }
 
 .main-navigation a {
-    padding: 0.2em 1em;
-    font-size: 9pt !important;
+	padding: 0.2em 1em;
+	font-size: 9pt !important;
 }
 
 .site-branding {
-    display: none;
+	display: none;
 }
 
 #content {
-    padding: 0px;
+	padding: 0px;
 }
 
 
 #vr_editor_right_panel_title {
-    height: 65px;
-    vertical-align: bottom;
-    bottom: 0;
-    display: table-cell;
-    padding-left: 5px;
+	height: 65px;
+	vertical-align: bottom;
+	bottom: 0;
+	display: table-cell;
+	padding-left: 5px;
 }
 
 .cardNewSceneInput {
-    border: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
-    box-shadow: none;
-    border-radius: 0;
+	border: none;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+	box-shadow: none;
+	border-radius: 0;
 }
 
 .scene_editor_upper_toolbar {
-    /*display:block;*/
-    border-bottom: 1px solid darkviolet;
-    position: fixed;
-    z-index: 1000;
+	/*display:block;*/
+	border-bottom: 1px solid darkviolet;
+	position: fixed;
+	z-index: 1000;
 }
 
 #sceneInfoBreadcrump {
-    height: 30px;
-    margin: 0;
-    font-size: 14px;
-    vertical-align: middle;
-    display: block;
-    line-height: 2.2em !important;
-    border-bottom: solid 1px black;
+	height: 30px;
+	margin: 0;
+	font-size: 14px;
+	vertical-align: middle;
+	display: block;
+	line-height: 2.2em !important;
+	border-bottom: solid 1px black;
 }
 
 #projectNameBreadcrump {
-    float: left;
-    max-width: 50%;
+	float: left;
+	max-width: 50%;
 
 }
 
 .sceneArrowBack {
-    font-size: 20px;
-    vertical-align: middle;
+	font-size: 20px;
+	vertical-align: middle;
 }
 
 .sceneProjectTypeLabel {
-    font-size: 16px;
-    vertical-align: middle;
-    margin-bottom: 3px;
-    padding-right: 5px;
+	font-size: 16px;
+	vertical-align: middle;
+	margin-bottom: 3px;
+	padding-right: 5px;
 }
 
 .chevronRight {
-    font-size: 20px;
-    vertical-align: middle;
-    padding-right: 5px;
+	font-size: 20px;
+	vertical-align: middle;
+	padding-right: 5px;
 }
 
 #sceneTitleInput {
-    display: block;
-    padding: 0;
-    padding-left: 5px;
-    margin-top: 2px;
-    float: left;
-    width: 15%;
-    margin-left: 0;
-    font-size: 14px;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: none;
-    border-radius: 4px;
-    height: 25px !important;
-    min-height: 10px;
+	display: block;
+	padding: 0;
+	padding-left: 5px;
+	margin-top: 2px;
+	float: left;
+	width: 15%;
+	margin-left: 0;
+	font-size: 14px;
+	border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+	box-shadow: none;
+	border-radius: 4px;
+	height: 25px !important;
+	min-height: 10px;
 }
 
 .titleLengthSuggest {
-    height: 25px;
-    max-width: 10%;
-    display: block;
-    float: left;
-    left: 300px !important;
-    position: absolute;
+	height: 25px;
+	max-width: 10%;
+	display: block;
+	float: left;
+	left: 300px !important;
+	position: absolute;
 }
 
 #sceneJsonContent {
-    z-index: 100000;
-    position: absolute;
-    top: 15px;
-    left: calc(30%);
-    display: none
+	z-index: 100000;
+	position: absolute;
+	top: 15px;
+	left: calc(30%);
+	display: none
 }
 
 #vrodos_scene_json_input {
-    z-index: 100000;
-    width: 800px;
-    height: 50em;
-    font-size: 10pt;
-    position: absolute;
-    top: 50px;
+	z-index: 100000;
+	width: 800px;
+	height: 50em;
+	font-size: 10pt;
+	position: absolute;
+	top: 50px;
 
-    background: white;
-    resize: both;
+	background: white;
+	resize: both;
 }
 
 #analyticsIframeContainer {
-    position: relative;
-    overflow: hidden;
-    padding-top: 150%;
-    display: none;
+	position: relative;
+	overflow: hidden;
+	padding-top: 150%;
+	display: none;
 }
 
 #analyticsIframeContent {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
 }
 
 .notdraggable {
-    user-drag: none;
-    -webkit-user-drag: none;
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
+	user-drag: none;
+	-webkit-user-drag: none;
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
 }
 
 .captioniframe {
-    display: inline-block;
-    position: absolute;
-    color: white;
-    text-shadow: 0px 0px 5px black;
-    margin-left: 15px;
+	display: inline-block;
+	position: absolute;
+	color: white;
+	text-shadow: 0px 0px 5px black;
+	margin-left: 15px;
 }
 
 
 .dg {
-    max-font-size: 12pt;
-    min-font-size: 10pt;
-    font-size: 0.7vw;
-    color: #000;
-    text-shadow: none !important;
+	max-font-size: 12pt;
+	min-font-size: 10pt;
+	font-size: 0.7vw;
+	color: #000;
+	text-shadow: none !important;
 }
 
 .dg.main {
-    padding: 0;
-    width:100% !important;
+	padding: 0;
+	width:100% !important;
 }
 
 .dg.main.taller-than-window .close-button {
-    border-top: 1px solid #ddd;
+	border-top: 1px solid #ddd;
 }
 
 .dg.main .close-button {
-    background-color: #ccc;
+	background-color: #ccc;
 }
 
 .dg.main .close-button:hover {
-    background-color: #ddd;
+	background-color: #ddd;
 }
 
 
 .dg li:not(.folder) {
-    background: #fafafa;
-    border-bottom: 1px solid #ddd;
-    cursor: auto;
-    overflow: hidden;
-    padding: 0 4px 0 5px;
+	background: #fafafa;
+	border-bottom: 1px solid #ddd;
+	cursor: auto;
+	overflow: hidden;
+	padding: 0 4px 0 5px;
 }
 
 /*.dg li:not(.folder) {*/
@@ -929,105 +928,105 @@ html [type="button"],
 
 
 .dg li.save-row .button {
-    text-shadow: none !important;
+	text-shadow: none !important;
 }
 
 .dg li.title {
-    background: #e8e8e8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+	background: #e8e8e8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP//Pz8//yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
 }
 
 .dg .cr.function:hover,.dg .cr.boolean:hover {
-    background: #fff;
+	background: #fff;
 }
 
 .dg .c input[type=text] {
-    background: #e9e9e9;
+	background: #e9e9e9;
 }
 
 .dg .c input[type=text]:hover {
-    background: #eee;
+	background: #eee;
 }
 
 .dg .c input[type=text]:focus {
-    background: #eee;
-    color: #555;
+	background: #eee;
+	color: #555;
 }
 
 .dg .c .slider {
-    background: #e9e9e9;
-    height: 0.6vw;
+	background: #e9e9e9;
+	height: 0.6vw;
 }
 
 
 .dg .c .slider:hover {
-    background: #eee;
+	background: #eee;
 }
 
 .dg .slider {
-    float: left;
-    width: 66%;
-    margin-left: -5px;
-    margin-right: 0;
-    height: 19px;
-    margin-top: 0.5vw;
+	float: left;
+	width: 66%;
+	margin-left: -5px;
+	margin-right: 0;
+	height: 19px;
+	margin-top: 0.5vw;
 }
 
 .dg li {
-    margin-bottom:0;
+	margin-bottom:0;
 }
 
 .dg .c .button {
-    height:0;
-    visibility: hidden;
+	height:0;
+	visibility: hidden;
 }
 
 .dg .c .checkbox {
-    height:0.6vw;
+	height:0.6vw;
 }
 
 .dg .c input[type=checkbox] {
-    margin-top:0;
-    height:1vw;
+	margin-top:0;
+	height:1vw;
 
 }
 
 .dg .cr.number {
-    border-left: none;
+	border-left: none;
 }
 
 .dg .c .slider-fg, .dg .c .slider:hover .slider-fg {
-    background: #3f51b5;
+	background: #3f51b5;
 }
 
 .dg .cr.number input[type=text] {
-    color: #3f51b5;
-    font-size: 0.6vw;
-    text-align: center;
-    height: 20px;
+	color: #3f51b5;
+	font-size: 0.6vw;
+	text-align: center;
+	height: 20px;
 
 }
 
 /*Hide close button*/
 .dg.main .close-button.close-bottom {
-    display: none;
+	display: none;
 }
 
 
 a.disabled {
-    pointer-events: none;
+	pointer-events: none;
 }
 
 button#compileGameBtn:disabled,
 .mdc-button:disabled {
-    background-color: #cccccc;
-    color: #666666;
-    opacity: 0.2;
+	background-color: #cccccc;
+	color: #666666;
+	opacity: 0.2;
 }
 
 body.admin-bar #vr_editor_main_div {
-    top: 32px;
+	top: 32px;
 }
 
 body.admin-bar .scene_editor_upper_toolbar {
-    top: 32px;
+	top: 32px;
 }

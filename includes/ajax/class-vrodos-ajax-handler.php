@@ -1,787 +1,766 @@
 <?php
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-require_once(plugin_dir_path(__FILE__) . '../vrodos-scene-model.php');
-require_once(plugin_dir_path(__FILE__) . '../class-vrodos-compiler-manager.php');
+require_once plugin_dir_path( __FILE__ ) . '../vrodos-scene-model.php';
+require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-manager.php';
 
 class VRodos_AJAX_Handler {
 
-    public function __construct() {
-        add_action('wp_ajax_vrodos_save_scene_async_action', [$this, 'save_scene_async_action_callback']);
-        add_action('wp_ajax_vrodos_undo_scene_async_action', [$this, 'undo_scene_async_action_callback']);
-        add_action('wp_ajax_vrodos_redo_scene_async_action', [$this, 'redo_scene_async_action_callback']);
-        add_action('wp_ajax_vrodos_delete_scene_action', [$this, 'delete_scene_frontend_callback']);
-        add_action('wp_ajax_vrodos_fetch_description_action', [$this, 'fetch_description_action_callback']);
-        add_action('wp_ajax_vrodos_fetch_image_action', [$this, 'fetch_image_action_callback']);
-        add_action('wp_ajax_vrodos_fetch_video_action', [$this, 'fetch_video_action_callback']);
-        add_action('wp_ajax_vrodos_delete_asset_action', [$this, 'delete_asset3d_frontend_callback']);
-        add_action('wp_ajax_vrodos_fetch_assetmeta_action', [$this, 'fetch_asset3d_meta_backend_callback']);
-        add_action('wp_ajax_vrodos_compile_action', [$this, 'compile_action_callback']);
-        add_action('wp_ajax_image_upload_action', [$this, 'image_upload_action_callback']);
-
-        // Peer conferencing
-        add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', [$this, 'vrodos_notify_confpeers_callback']);
-        add_action( 'wp_ajax_vrodos_notify_confpeers_action', [$this, 'vrodos_notify_confpeers_callback']);
-        add_action( 'wp_ajax_vrodos_update_expert_log_action', [$this, 'vrodos_update_expert_log_callback']);
-
-        // AJAXES for semantics
-        add_action( 'wp_ajax_vrodos_segment_obj_action', [$this, 'vrodos_segment_obj_action_callback'] );
-
-        add_action('wp_ajax_vrodos_fetch_list_projects_action', [$this, 'vrodos_fetch_list_projects_callback']);
-
-        add_action('wp_ajax_vrodos_fetch_game_assets_action', [$this, 'vrodos_fetch_game_assets_action_callback']);
-
-        add_action('wp_ajax_vrodos_delete_game_action', [$this, 'vrodos_delete_gameproject_frontend_callback']);
-        add_action('wp_ajax_vrodos_create_project_action', [$this, 'vrodos_create_project_frontend_callback']);
-        add_action('wp_ajax_vrodos_fetch_glb_asset_action', [$this, 'vrodos_fetch_glb_asset3d_frontend_callback']);
-        add_action('wp_ajax_nopriv_vrodos_fetch_glb_asset_action', [$this, 'vrodos_fetch_glb_asset3d_frontend_callback']);
-    }
-
-    public function vrodos_create_project_frontend_callback(): void {
-        $project_title = strip_tags($_POST['project_title']);
-        $project_type_slug = $_POST['project_type_slug'];
-        $taxonomy = get_term_by('slug', $project_type_slug, 'vrodos_game_type');
-        $project_type_id = $taxonomy->term_id;
-        $project_taxonomies = ['vrodos_game_type' => [$project_type_id]];
-        $project_information = [
-            'post_title' => esc_attr($project_title),
-            'post_content' => '',
-            'post_type' => 'vrodos_game',
-            'post_status' => 'publish',
-            'tax_input' => $project_taxonomies,
-        ];
-        $project_id = wp_insert_post($project_information);
-        echo $project_id;
-        wp_die();
-    }
-
-    public function vrodos_delete_gameproject_frontend_callback(): void {
-        $game_id = $_POST['game_id'];
-        $game_post = get_post($game_id);
-        $gameSlug = $game_post->post_name;
-        $gameTitle = get_the_title($game_id);
-        $assetPGame = get_term_by('slug', $gameSlug, 'vrodos_asset3d_pgame');
-        $assetPGameID = $assetPGame->term_id;
-        $custom_query_args1 = [
-            'post_type' => 'vrodos_asset3d',
-            'posts_per_page' => -1,
-            'tax_query' => [['taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'term_id', 'terms' => $assetPGameID]],
-        ];
-        $custom_query = new WP_Query($custom_query_args1);
-        if ($custom_query->have_posts()) :
-            while ($custom_query->have_posts()) :
-                $custom_query->the_post();
-                $asset_id = get_the_ID();
-                $this->vrodos_delete_asset3d_noscenes_frontend($asset_id);
-            endwhile;
-        endif;
-        wp_reset_postdata();
-        $scenePGame = get_term_by('slug', $gameSlug, 'vrodos_scene_pgame');
-        $scenePGameID = $scenePGame->term_id;
-        $custom_query_args2 = [
-            'post_type' => 'vrodos_scene',
-            'posts_per_page' => -1,
-            'tax_query' => [['taxonomy' => 'vrodos_scene_pgame', 'field' => 'term_id', 'terms' => $scenePGameID]],
-        ];
-        $custom_query2 = new WP_Query($custom_query_args2);
-        if ($custom_query2->have_posts()) :
-            while ($custom_query2->have_posts()) :
-                $custom_query2->the_post();
-                wp_delete_post(get_the_ID(), true);
-            endwhile;
-        endif;
-        wp_reset_postdata();
-        wp_delete_term($assetPGameID, 'vrodos_asset3d_pgame');
-        wp_delete_term($scenePGameID, 'vrodos_scene_pgame');
-        wp_delete_post($game_id, false);
-        echo $gameTitle;
-        wp_die();
-    }
-
-    public function vrodos_fetch_glb_asset3d_frontend_callback(): void {
-        wp_reset_postdata();
-        $asset_id = $_POST['asset_id'];
-        $glbID = get_post_meta($asset_id, 'vrodos_asset3d_glb', true);
-        $glbURL = wp_get_attachment_url($glbID);
-        $output = new StdClass();
-        $output->glbIDs = $glbID;
-        $output->glbURL = $glbURL;
-        print_r(json_encode($output, JSON_UNESCAPED_SLASHES));
-        wp_die();
-    }
+	public function __construct() {
+		add_action( 'wp_ajax_vrodos_save_scene_async_action', $this->save_scene_async_action_callback(...) );
+		add_action( 'wp_ajax_vrodos_undo_scene_async_action', $this->undo_scene_async_action_callback(...) );
+		add_action( 'wp_ajax_vrodos_redo_scene_async_action', $this->redo_scene_async_action_callback(...) );
+		add_action( 'wp_ajax_vrodos_delete_scene_action', $this->delete_scene_frontend_callback(...) );
+		add_action( 'wp_ajax_vrodos_fetch_description_action', $this->fetch_description_action_callback(...) );
+		add_action( 'wp_ajax_vrodos_fetch_image_action', $this->fetch_image_action_callback(...) );
+		add_action( 'wp_ajax_vrodos_fetch_video_action', $this->fetch_video_action_callback(...) );
+		add_action( 'wp_ajax_vrodos_delete_asset_action', $this->delete_asset3d_frontend_callback(...) );
+		add_action( 'wp_ajax_vrodos_fetch_assetmeta_action', $this->fetch_asset3d_meta_backend_callback(...) );
+		add_action( 'wp_ajax_vrodos_compile_action', $this->compile_action_callback(...) );
+		add_action( 'wp_ajax_image_upload_action', $this->image_upload_action_callback(...) );
+
+		// Peer conferencing
+		add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', $this->vrodos_notify_confpeers_callback(...) );
+		add_action( 'wp_ajax_vrodos_notify_confpeers_action', $this->vrodos_notify_confpeers_callback(...) );
+		add_action( 'wp_ajax_vrodos_update_expert_log_action', $this->vrodos_update_expert_log_callback(...) );
+
+		// AJAXES for semantics
+		add_action( 'wp_ajax_vrodos_segment_obj_action', $this->vrodos_segment_obj_action_callback(...) );
+
+		add_action( 'wp_ajax_vrodos_fetch_list_projects_action', $this->vrodos_fetch_list_projects_callback(...) );
+
+		add_action( 'wp_ajax_vrodos_fetch_game_assets_action', $this->vrodos_fetch_game_assets_action_callback(...) );
+
+		add_action( 'wp_ajax_vrodos_delete_game_action', $this->vrodos_delete_gameproject_frontend_callback(...) );
+		add_action( 'wp_ajax_vrodos_create_project_action', $this->vrodos_create_project_frontend_callback(...) );
+		add_action( 'wp_ajax_vrodos_fetch_glb_asset_action', $this->vrodos_fetch_glb_asset3d_frontend_callback(...) );
+		add_action( 'wp_ajax_nopriv_vrodos_fetch_glb_asset_action', $this->vrodos_fetch_glb_asset3d_frontend_callback(...) );
+	}
+
+	public function vrodos_create_project_frontend_callback(): void {
+		$project_title       = strip_tags( (string) $_POST['project_title'] );
+		$project_type_slug   = $_POST['project_type_slug'];
+		$taxonomy            = get_term_by( 'slug', $project_type_slug, 'vrodos_game_type' );
+		$project_type_id     = $taxonomy->term_id;
+		$project_taxonomies  = ['vrodos_game_type' => [$project_type_id]];
+		$project_information = ['post_title'   => esc_attr( $project_title ), 'post_content' => '', 'post_type'    => 'vrodos_game', 'post_status'  => 'publish', 'tax_input'    => $project_taxonomies];
+		$project_id          = wp_insert_post( $project_information );
+		echo $project_id;
+		wp_die();
+	}
+
+	public function vrodos_delete_gameproject_frontend_callback(): void {
+		$game_id            = $_POST['game_id'];
+		$game_post          = get_post( $game_id );
+		$gameSlug           = $game_post->post_name;
+		$gameTitle          = get_the_title( $game_id );
+		$assetPGame         = get_term_by( 'slug', $gameSlug, 'vrodos_asset3d_pgame' );
+		$assetPGameID       = $assetPGame->term_id;
+		$custom_query_args1 = ['post_type'      => 'vrodos_asset3d', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_asset3d_pgame', 'field'    => 'term_id', 'terms'    => $assetPGameID]]];
+		$custom_query       = new WP_Query( $custom_query_args1 );
+		if ( $custom_query->have_posts() ) :
+			while ( $custom_query->have_posts() ) :
+				$custom_query->the_post();
+				$asset_id = get_the_ID();
+				$this->vrodos_delete_asset3d_noscenes_frontend( $asset_id );
+			endwhile;
+		endif;
+		wp_reset_postdata();
+		$scenePGame         = get_term_by( 'slug', $gameSlug, 'vrodos_scene_pgame' );
+		$scenePGameID       = $scenePGame->term_id;
+		$custom_query_args2 = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'term_id', 'terms'    => $scenePGameID]]];
+		$custom_query2      = new WP_Query( $custom_query_args2 );
+		if ( $custom_query2->have_posts() ) :
+			while ( $custom_query2->have_posts() ) :
+				$custom_query2->the_post();
+				wp_delete_post( get_the_ID(), true );
+			endwhile;
+		endif;
+		wp_reset_postdata();
+		wp_delete_term( $assetPGameID, 'vrodos_asset3d_pgame' );
+		wp_delete_term( $scenePGameID, 'vrodos_scene_pgame' );
+		wp_delete_post( $game_id, false );
+		echo $gameTitle;
+		wp_die();
+	}
+
+	public function vrodos_fetch_glb_asset3d_frontend_callback(): void {
+		wp_reset_postdata();
+		$asset_id       = $_POST['asset_id'];
+		$glbID          = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
+		$glbURL         = wp_get_attachment_url( $glbID );
+		$output         = new StdClass();
+		$output->glbIDs = $glbID;
+		$output->glbURL = $glbURL;
+		print_r( json_encode( $output, JSON_UNESCAPED_SLASHES ) );
+		wp_die();
+	}
+
+	private function vrodos_delete_asset3d_noscenes_frontend( $asset_id ): void {
+		$mtlID = get_post_meta( $asset_id, 'vrodos_asset3d_mtl', true );
+		wp_delete_attachment( $mtlID, true );
+		$objID = get_post_meta( $asset_id, 'vrodos_asset3d_obj', true );
+		wp_delete_attachment( $objID, true );
+		$difID = get_post_meta( $asset_id, 'vrodos_asset3d_diffimage', true );
+		wp_delete_attachment( $difID, true );
+		$screenID = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
+		wp_delete_attachment( $screenID, true );
+		wp_delete_post( $asset_id, true );
+	}
 
-    private function vrodos_delete_asset3d_noscenes_frontend($asset_id): void {
-        $mtlID = get_post_meta($asset_id, 'vrodos_asset3d_mtl', true);
-        wp_delete_attachment($mtlID, true);
-        $objID = get_post_meta($asset_id, 'vrodos_asset3d_obj', true);
-        wp_delete_attachment($objID, true);
-        $difID = get_post_meta($asset_id, 'vrodos_asset3d_diffimage', true);
-        wp_delete_attachment($difID, true);
-        $screenID = get_post_meta($asset_id, 'vrodos_asset3d_screenimage', true);
-        wp_delete_attachment($screenID, true);
-        wp_delete_post($asset_id, true);
-    }
+	// =============================== SEMANTICS ON 3D ============================================================
 
-    //=============================== SEMANTICS ON 3D ============================================================
+	// ---- AJAX SEMANTICS 1: run segmentation ----------
+	public function vrodos_segment_obj_action_callback() {
 
-    // ---- AJAX SEMANTICS 1: run segmentation ----------
-    public function vrodos_segment_obj_action_callback() {
+		$DS = DIRECTORY_SEPARATOR;
+		if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
 
-        $DS = DIRECTORY_SEPARATOR;
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+			$curr_folder = wp_upload_dir()['basedir'] . $DS . $_POST['path'];
+			$curr_folder = str_replace( '/', '\\', $curr_folder ); // full path
 
-            $curr_folder = wp_upload_dir()['basedir'].$DS.$_POST['path'];
-            $curr_folder = str_replace('/','\\',$curr_folder); // full path
+			$batfile = wp_upload_dir()['basedir'] . $DS . $_POST['path'] . 'segment.bat';
 
-            $batfile = wp_upload_dir()['basedir'].$DS.$_POST['path']."segment.bat";
+			$batfile = str_replace( '/', '\\', $batfile ); // full path
 
+			$fnameobj = basename( (string) $_POST['obj'] );
 
-            $batfile = str_replace('/','\\',$batfile); // full path
+			$fnameobj = $curr_folder . $fnameobj;
 
-            $fnameobj = basename($_POST['obj']);
+			// 1 : Generate bat
+			$myfile = fopen( $batfile, 'w' ) or die( 'Unable to open file!' );
 
-            $fnameobj = $curr_folder.$fnameobj;
+			$outputpath = wp_upload_dir()['basedir'] . $DS . $_POST['path'];
+			$outputpath = str_replace( '/', '\\', $outputpath ); // full path
 
-            // 1 : Generate bat
-            $myfile = fopen($batfile, "w") or die("Unable to open file!");
+			$exefile = untrailingslashit( plugin_dir_path( __FILE__ ) ) . '\..\semantics\segment3D\pclTesting.exe';
+			$exefile = str_replace( '/', '\\', $exefile );
 
-            $outputpath = wp_upload_dir()['basedir'].$DS.$_POST['path'];
-            $outputpath = str_replace('/','\\',$outputpath); // full path
+			$iter      = $_POST['iter'];
+			$minDist   = $_POST['minDist'];
+			$maxDist   = $_POST['maxDist'];
+			$minPoints = $_POST['minPoints'];
+			$maxPoints = $_POST['maxPoints'];
+			// $exefile.' '.$fnameobj.' '.$iter.' 0.01 0.2 100 25000 1 '.$outputpath.PHP_EOL.
 
-            $exefile = untrailingslashit(plugin_dir_path(__FILE__)).'\..\semantics\segment3D\pclTesting.exe';
-            $exefile = str_replace("/", "\\", $exefile);
+			$txt = '@echo off' . PHP_EOL .
+				$exefile . ' ' . $fnameobj . ' ' . $iter . ' ' . $minDist . ' ' . $maxDist . ' ' . $minPoints . ' ' . $maxPoints . ' 1 ' . $outputpath . PHP_EOL .
+				'del "*.pcd"' . PHP_EOL .
+				'del "barycenters.txt"';
 
-            $iter = $_POST['iter'];
-            $minDist = $_POST['minDist'];
-            $maxDist = $_POST['maxDist'];
-            $minPoints = $_POST['minPoints'];
-            $maxPoints = $_POST['maxPoints'];
-            //$exefile.' '.$fnameobj.' '.$iter.' 0.01 0.2 100 25000 1 '.$outputpath.PHP_EOL.
+			fwrite( $myfile, $txt );
+			fclose( $myfile );
 
-            $txt = '@echo off'.PHP_EOL.
-                $exefile.' '.$fnameobj.' '.$iter.' '.$minDist.' '.$maxDist.' '.$minPoints.' '.$maxPoints.' 1 '.$outputpath.PHP_EOL.
-                'del "*.pcd"'.PHP_EOL.
-                'del "barycenters.txt"';
+			shell_exec( 'del "' . $outputpath . 'log.txt"' );
+			shell_exec( 'del "' . $outputpath . 'cloud_cluster*.obj"' );
+			shell_exec( 'del "' . $outputpath . 'cloud_plane*.obj"' );
 
-            fwrite($myfile, $txt);
-            fclose($myfile);
+			// 2: run bat
+			$output = shell_exec( $batfile );
+			echo $output;
 
-            shell_exec('del "'.$outputpath.'log.txt"');
-            shell_exec('del "'.$outputpath.'cloud_cluster*.obj"');
-            shell_exec('del "'.$outputpath.'cloud_plane*.obj"');
+		} else { // LINUX SERVER // TODO
 
-            // 2: run bat
-            $output = shell_exec($batfile);
-            echo $output;
+			// $game_dirpath = realpath(dirname(__FILE__).'/..').$DS.'test_compiler'.$DS.'game_linux'; //$_GET['game_dirpath'];
+			//
+			// 1 : Generate sh
+			// $myfile = fopen($game_dirpath.$DS."starter_artificial.sh", "w") or print("Unable to open file!");
+			// $txt = "#/bin/bash"."\n".
+			// "projectPath=`pwd`"."\n".
+			// "xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24:32' /opt/Unity/Editor/Unity -batchmode -nographics -logfile stdout.log -force-opengl -quit -projectPath ${projectPath} -buildWindowsPlayer 'builds/myg3.exe'";
+			// fwrite($myfile, $txt);
+			// fclose($myfile);
+			//
+			// 2: run sh (nohup     '/dev ...' ensures that it is asynchronous called)
+			// $output = shell_exec('nohup sh starter_artificial.sh'.'> /dev/null 2>/dev/null &');
+		}
 
-        } else { // LINUX SERVER // TODO
+		wp_die();
+	}
 
-    //        $game_dirpath = realpath(dirname(__FILE__).'/..').$DS.'test_compiler'.$DS.'game_linux'; //$_GET['game_dirpath'];
-    //
-    //        // 1 : Generate sh
-    //        $myfile = fopen($game_dirpath.$DS."starter_artificial.sh", "w") or print("Unable to open file!");
-    //        $txt = "#/bin/bash"."\n".
-    //            "projectPath=`pwd`"."\n".
-    //            "xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24:32' /opt/Unity/Editor/Unity -batchmode -nographics -logfile stdout.log -force-opengl -quit -projectPath ${projectPath} -buildWindowsPlayer 'builds/myg3.exe'";
-    //        fwrite($myfile, $txt);
-    //        fclose($myfile);
-    //
-    //        // 2: run sh (nohup     '/dev ...' ensures that it is asynchronous called)
-    //        $output = shell_exec('nohup sh starter_artificial.sh'.'> /dev/null 2>/dev/null &');
-        }
+	// ======================= CONTENT INTERLINKING =========================================================================
 
-        wp_die();
-    }
 
-    //======================= CONTENT INTERLINKING =========================================================================
+	public function vrodos_notify_confpeers_callback() {
 
+		$ff = fopen( 'confroom_log.txt', 'a' );
 
-    public function vrodos_notify_confpeers_callback(){
+		fwrite( $ff, chr( 10 ) );
 
-        $ff = fopen("confroom_log.txt","a");
+		date_default_timezone_set( 'Europe/Sofia' );
 
-        fwrite($ff,chr(10));
+		$strDate = '<tr><td> +1 user</td><td>' . $_POST['confroom'] . '</td><td>' . date( 'd-m-y' ) . '</td><td>' . date( 'h:i:s' ) . '</td></tr>:::' . time() . ':::' . $_POST['confroom'];
+		fwrite( $ff, $strDate );
+		fclose( $ff );
 
-        date_default_timezone_set("Europe/Sofia");
+		// if (document.getElementById("ConfRoomReport"))
+		// document.getElementById("ConfRoomReport").innerHTML = "1 user in room:".$_POST['confroom'];
 
-        $strDate = "<tr><td> +1 user</td><td>".$_POST['confroom']."</td><td>".date('d-m-y')."</td><td>".date('h:i:s')."</td></tr>:::".time().":::".$_POST['confroom'];
-        fwrite($ff, $strDate);
-        fclose($ff);
+		echo $strDate;
 
-    //    if (document.getElementById("ConfRoomReport"))
-    //        document.getElementById("ConfRoomReport").innerHTML = "1 user in room:".$_POST['confroom'];
+		wp_die();
+	}
 
-        echo $strDate;
+	// Read log content from conferences
+	public function vrodos_update_expert_log_callback() {
+		// reset
+		// unlink("wp-admin/confroom_log.txt");
+		if ( ! file_exists( 'confroom_log.txt' ) ) {
+			return;
+		}
 
+		$file = file( 'confroom_log.txt' );
 
-        wp_die();
-    }
+		$file = str_replace( "\n", ' ', $file );
+		$file = array_reverse( $file );
 
-    // Read log content from conferences
-    public function vrodos_update_expert_log_callback()
-    {
-        // reset
-        //unlink("wp-admin/confroom_log.txt");
-        if (!file_exists("confroom_log.txt"))
-            return;
+		$content = '';
 
-        $file = file("confroom_log.txt");
+		$alerting = [];
+		$rooming  = [];
 
-        $file = str_replace("\n", " ", $file);
-        $file = array_reverse($file);
+		// $ff = fopen("output_rooming.txt","w");
+		// fwrite($ff, chr(10));
 
-        $content = '';
+		$index_max_recs = 0;
+		foreach ( $file as $f ) {
 
-        $alerting = [];
-        $rooming = [];
+			if ( $index_max_recs < 12 ) {
 
-        //    $ff = fopen("output_rooming.txt","w");
-        //    fwrite($ff, chr(10));
+				$f = str_replace( "\n", ' ', $f );
 
-        $index_max_recs=0;
-        foreach ($file as $f) {
+				[$f, $timestamp, $room] = explode( ':::', $f );
 
-            if ($index_max_recs < 12) {
+				// fwrite($ff, time() . " " . $timestamp . " " . (time() - $timestamp));
+				// fwrite($ff, chr(10));
 
-                $f = str_replace("\n", " ", $f);
+				if ( time() - $timestamp < 20 ) {
+					$alerting[] = $timestamp;
+					$rooming[]  = $room;
+				}
 
-                [$f, $timestamp, $room] = explode(":::", $f);
+				$content = $content . $f;
 
-                //            fwrite($ff, time() . " " . $timestamp . " " . (time() - $timestamp));
-                //            fwrite($ff, chr(10));
+				$index_max_recs += 1;
+			}
+		}
+		// fclose($ff);
 
+		$total_content = json_encode( [$content, $alerting, $rooming] );
 
-                if (time() - $timestamp < 20) {
-                    $alerting[] = $timestamp;
-                    $rooming[] = $room;
-                }
+		echo $total_content;
 
-                $content = $content . $f;
+		wp_die();
+	}
 
-                $index_max_recs += 1;
-            }
-        }
-        //    fclose($ff);
+	/**
+	 * Saves the scene via AJAX.
+	 */
+	public function save_scene_async_action_callback() {
+		// Save screenshot
+		if ( isset( $_POST['scene_screenshot'] ) ) {
+			$attachment_id = VRodos_Upload_Manager::upload_scene_screenshot(
+				$_POST['scene_screenshot'],
+				'scene_' . $_POST['scene_id'] . '_featimg',
+				$_POST['scene_id'],
+				'jpg'
+			);
 
-        $total_content = json_encode([$content, $alerting, $rooming]);
+			// Set thumbnail of post
+			set_post_thumbnail( $_POST['scene_id'], $attachment_id );
+		}
 
-        echo $total_content;
+		// Create a new scene model and populate it from the posted JSON.
+		$scene_model = new Vrodos_Scene_Model( wp_unslash( $_POST['scene_json'] ) );
 
-        wp_die();
-    }
+		// Save json of scene
+		$scene_new_info = ['ID'           => $_POST['scene_id'], 'post_title'   => $_POST['scene_title'], 'post_content' => $scene_model->to_json()];
 
-    /**
-     * Saves the scene via AJAX.
-     */
-    public function save_scene_async_action_callback()
-    {
-        // Save screenshot
-        if (isset($_POST['scene_screenshot'])) {
-            $attachment_id = VRodos_Upload_Manager::upload_scene_screenshot(
-                $_POST['scene_screenshot'],
-                'scene_'.$_POST['scene_id'].'_featimg',
-                $_POST['scene_id'],
-                'jpg');
+		$res = wp_update_post( $scene_new_info );
+		update_post_meta( $_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption'] );
 
-            // Set thumbnail of post
-            set_post_thumbnail( $_POST['scene_id'], $attachment_id );
-        }
+		echo $res != 0 ? 'true' : 'false';
+		wp_die();
+	}
 
-        // Create a new scene model and populate it from the posted JSON.
-        $scene_model = new Vrodos_Scene_Model(wp_unslash($_POST['scene_json']));
+	// Undo button for scenes
+	public function undo_scene_async_action_callback() {
+		if ( ! isset( $_POST['post_revision_no'] ) ) {
+			wp_send_json_error( 'Missing revision number.' );
+		}
 
-        // Save json of scene
-        $scene_new_info = ['ID' => $_POST['scene_id'], 'post_title' => $_POST['scene_title'], 'post_content' => $scene_model->to_json()];
+		$revision_number  = $_POST['post_revision_no'];
+		$current_scene_id = $_POST['scene_id'];
 
-        $res = wp_update_post($scene_new_info);
-        update_post_meta($_POST['scene_id'], 'vrodos_scene_caption', $_POST['scene_caption']);
+		$rev         = wp_get_post_revisions(
+			$current_scene_id,
+			[
+       'offset'         => $revision_number,
+       // Start from the previous change
+       'posts_per_page' => 1,
+       // Only a single revision
+       'post_name__in'  => ["{$current_scene_id}-revision-v1"],
+       'check_enabled'  => false,
+   ]
+		);
+		$sceneToLoad = reset( $rev )->post_content;
 
-        echo $res!=0 ? 'true' : 'false';
-        wp_die();
-    }
+		echo $sceneToLoad;
+		wp_die();
+	}
 
-    // Undo button for scenes
-    public function undo_scene_async_action_callback()
-    {
-        if ( ! isset( $_POST['post_revision_no'] ) ) {
-            wp_send_json_error( 'Missing revision number.' );
-        }
 
-        $revision_number = $_POST['post_revision_no'];
-        $current_scene_id = $_POST['scene_id'];
 
-        $rev = wp_get_post_revisions( $current_scene_id,
-            [
-                'offset'           => $revision_number,    // Start from the previous change
-                'posts_per_page'  => 1,    // Only a single revision
-                'post_name__in'   => [ "{$current_scene_id}-revision-v1" ],
-                'check_enabled'   => false,
-            ]
-        );
-        $sceneToLoad = reset($rev)->post_content;
+	// Redo button for scenes
+	public function redo_scene_async_action_callback() {
+		if ( ! isset( $_POST['post_revision_no'] ) ) {
+			wp_send_json_error( 'Missing revision number.' );
+		}
 
-        echo $sceneToLoad;
-        wp_die();
-    }
+		$revision_number  = $_POST['post_revision_no'];
+		$current_scene_id = $_POST['scene_id'];
 
+		$rev         = wp_get_post_revisions(
+			$current_scene_id,
+			[
+       'offset'         => $revision_number,
+       // Start from the previous change
+       'posts_per_page' => 1,
+       // Only a single revision
+       'post_name__in'  => ["{$current_scene_id}-revision-v1"],
+       'check_enabled'  => false,
+   ]
+		);
+		$sceneToLoad = reset( $rev )->post_content;
 
+		echo $sceneToLoad;
+		wp_die();
+	}
 
-    // Redo button for scenes
-    public function redo_scene_async_action_callback()
-    {
-        if ( ! isset( $_POST['post_revision_no'] ) ) {
-            wp_send_json_error( 'Missing revision number.' );
-        }
+	// DELETE specific SCENE
+	public function delete_scene_frontend_callback() {
 
-        $revision_number = $_POST['post_revision_no'];
-        $current_scene_id = $_POST['scene_id'];
+		$scene_id  = $_POST['scene_id'];
+		$postTitle = get_the_title( $scene_id );
 
-        $rev = wp_get_post_revisions( $current_scene_id,
-            [
-                'offset'           => $revision_number,    // Start from the previous change
-                'posts_per_page'  => 1,    // Only a single revision
-                'post_name__in'   => [ "{$current_scene_id}-revision-v1" ],
-                'check_enabled'   => false,
-            ]
-        );
-        $sceneToLoad = reset($rev)->post_content;
+		// 1. Delete screenshot of scene
+		$postmeta = get_post_meta( $scene_id );
 
-        echo $sceneToLoad;
-        wp_die();
-    }
+		if ( isset( $postmeta['_thumbnail_id'] ) ) {
+			$thumb_id      = $postmeta['_thumbnail_id'][0];
+			$attached_file = get_post_meta( $thumb_id, '_wp_attached_file', true );
 
-    // DELETE specific SCENE
-    public function delete_scene_frontend_callback(){
+			if ( file_exists( $attached_file ) ) {
+				unlink( $attached_file );
+			}
 
-        $scene_id = $_POST['scene_id'];
-        $postTitle = get_the_title($scene_id);
+			// 2. Delete meta
+			delete_post_meta( $thumb_id, '_wp_attached_file' );
+			delete_post_meta( $thumb_id, '_wp_attachment_metadata' );
+		}
 
-        //1. Delete screenshot of scene
-        $postmeta = get_post_meta($scene_id);
+		// 3. Delete Scene CUSTOM POST
+		wp_delete_post( $scene_id, true );
 
-        if (isset($postmeta['_thumbnail_id'])) {
-            $thumb_id = $postmeta['_thumbnail_id'][0];
-            $attached_file = get_post_meta($thumb_id, '_wp_attached_file', true);
+		// 4. Delete Thumbnail post
+		if ( isset( $postmeta['_thumbnail_id'] ) ) {
+			wp_delete_post( $thumb_id, true );
+		}
 
-            if (file_exists($attached_file)) {
-                unlink($attached_file);
-            }
+		echo $postTitle;
 
-            //2. Delete meta
-            delete_post_meta( $thumb_id, '_wp_attached_file' );
-            delete_post_meta( $thumb_id, '_wp_attachment_metadata' );
-        }
+		wp_die();
+	}
 
-        //3. Delete Scene CUSTOM POST
-        wp_delete_post( $scene_id, true );
+	public function fetch_description_action_callback() {
 
-        //4. Delete Thumbnail post
-        if (isset($postmeta['_thumbnail_id'])) {
-            wp_delete_post($thumb_id, true);
-        }
+		if ( $_POST['externalSource'] == 'Wikipedia' ) {
+			$url = 'https://' . $_POST['lang'] . '.wikipedia.org/w/api.php?action=query&format=json&exlimit=3&prop=extracts&' . $_POST['fulltext'] . 'titles=' . $_POST['titles'];
+		} else {
+			$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query=' . $_POST['titles'];// .'&qf=LANGUAGE:'.$_POST['lang'];
+		}
 
-        echo $postTitle;
+		echo strip_tags( file_get_contents( $url ) );
 
-        wp_die();
-    }
+		wp_die();
+	}
 
-    public function fetch_description_action_callback(){
+	public function fetch_image_action_callback() {
 
-        if ($_POST['externalSource']=='Wikipedia')
-            $url = 'https://'.$_POST['lang'].'.wikipedia.org/w/api.php?action=query&format=json&exlimit=3&prop=extracts&'.$_POST['fulltext'].'titles='.$_POST['titles'];
-        else
-            $url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query='.$_POST['titles'];//.'&qf=LANGUAGE:'.$_POST['lang'];
+		if ( $_POST['externalSource_image'] == 'Wikipedia' ) {
+			$url = 'https://' . $_POST['lang_image'] . '.wikipedia.org/w/api.php?action=query&prop=imageinfo&format=json&iiprop=url&generator=images&titles=' . $_POST['titles_image'];
+		} else {
+			$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query=' . $_POST['titles_image'];// .'&qf=LANGUAGE:'.$_POST['lang_image'];
+		}
 
-        echo  strip_tags(file_get_contents($url));
+		echo file_get_contents( $url );
 
-        wp_die();
-    }
+		wp_die();
+	}
 
-    public function fetch_image_action_callback(){
+	public function fetch_video_action_callback() {
 
-        if ($_POST['externalSource_image']=='Wikipedia')
-            $url = 'https://'.$_POST['lang_image'].'.wikipedia.org/w/api.php?action=query&prop=imageinfo&format=json&iiprop=url&generator=images&titles='.$_POST['titles_image'];
-        else
-            $url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query='.$_POST['titles_image'];//.'&qf=LANGUAGE:'.$_POST['lang_image'];
+		if ( $_POST['externalSource_video'] == 'Wikipedia' ) {
+			$url = 'https://' . $_POST['lang_video'] . '.wikipedia.org/w/api.php?action=query&format=json&prop=videoinfo&viprop=derivatives&titles=File:' . $_POST['titles_video'] . '.ogv';
+		} else {
+			$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query=' . $_POST['titles_image'];// .'&qf=LANGUAGE:'.$_POST['lang_image'];
+		}
 
-        echo file_get_contents($url);
+		$content = file_get_contents( $url );
+		echo $content;
 
-        wp_die();
-    }
+		wp_die();
+	}
 
-    public function fetch_video_action_callback(){
+	public function delete_asset3d_frontend_callback() {
 
-        if ($_POST['externalSource_video']=='Wikipedia'){
-            $url = 'https://'.$_POST['lang_video'].'.wikipedia.org/w/api.php?action=query&format=json&prop=videoinfo&viprop=derivatives&titles=File:'.$_POST['titles_video'].'.ogv';
-        } else {
-            $url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query='.$_POST['titles_image'];//.'&qf=LANGUAGE:'.$_POST['lang_image'];
-        }
+		$asset_id = $_POST['asset_id'];
+		$gameSlug = $_POST['game_slug'];
+		$isCloned = $_POST['isCloned'];
 
-        $content = file_get_contents($url);
-        echo $content;
+		// If it is not cloned then it is safe to delete the meta files.
+		if ( $isCloned === 'false' ) {
+			// This part handles all attachments: textures, GLB, screenshot.
+			$args        = ['post_parent'    => $asset_id, 'post_type'      => 'attachment', 'posts_per_page' => -1];
+			$attachments = get_children( $args );
 
-        wp_die();
-    }
+			if ( $attachments ) {
+				$site_url = get_site_url();
 
-    public function delete_asset3d_frontend_callback(){
+				foreach ( $attachments as $attachment ) {
+					$file_url = wp_get_attachment_url( $attachment->ID );
 
-        $asset_id = $_POST['asset_id'];
-        $gameSlug = $_POST['game_slug'];
-        $isCloned = $_POST['isCloned'];
+					// The path stored is a URL. We need to convert it to a server path.
+					// We do this by replacing the site's URL with the site's absolute path.
+					$file_path = str_replace( $site_url, ABSPATH, $file_url );
 
-        // If it is not cloned then it is safe to delete the meta files.
-        if ($isCloned==='false') {
-            // This part handles all attachments: textures, GLB, screenshot.
-            $args = ['post_parent'    => $asset_id, 'post_type'      => 'attachment', 'posts_per_page' => -1];
-            $attachments = get_children($args);
+					// Normalize slashes to be safe across operating systems.
+					$file_path = wp_normalize_path( $file_path );
 
-            if ($attachments) {
-                $site_url = get_site_url();
+					if ( file_exists( $file_path ) ) {
+						wp_delete_file( $file_path );
+					}
 
-                foreach ($attachments as $attachment) {
-                    $file_url = wp_get_attachment_url($attachment->ID);
+					// This will handle the database entry and any thumbnails.
+					wp_delete_attachment( $attachment->ID, true );
+				}
+			}
+		}
 
-                    // The path stored is a URL. We need to convert it to a server path.
-                    // We do this by replacing the site's URL with the site's absolute path.
-                    $file_path = str_replace($site_url, ABSPATH, $file_url);
+		// Delete all uses of Asset from Scenes (json)
+		VRodos_Core_Manager::vrodos_delete_asset_3d_from_scenes( $asset_id, $gameSlug );
 
-                    // Normalize slashes to be safe across operating systems.
-                    $file_path = wp_normalize_path($file_path);
+		// Delete Asset post from SQL database
+		wp_delete_post( $asset_id, true );
 
-                    if (file_exists($file_path)) {
-                        wp_delete_file($file_path);
-                    }
+		echo $asset_id;
 
-                    // This will handle the database entry and any thumbnails.
-                    wp_delete_attachment($attachment->ID, true);
-                }
-            }
-        }
+		wp_die();
+	}
 
-        // Delete all uses of Asset from Scenes (json)
-        VRodos_Core_Manager::vrodos_delete_asset_3d_from_scenes($asset_id, $gameSlug);
+	public function fetch_asset3d_meta_backend_callback() {
 
-        // Delete Asset post from SQL database
-        wp_delete_post( $asset_id, true );
+		$asset_id = $_POST['asset_id'];
 
-        echo $asset_id;
+		$output                 = new StdClass();
+		$output->assettrs_saved = get_post_meta( $asset_id, 'vrodos_asset3d_assettrs', true );
 
-        wp_die();
-    }
+		print_r( json_encode( $output, JSON_UNESCAPED_SLASHES ) );
+		wp_die();
+	}
 
-    public function fetch_asset3d_meta_backend_callback(){
+	public function image_upload_action_callback() {
 
-        $asset_id = $_POST['asset_id'];
+		$DS = DIRECTORY_SEPARATOR;
 
-        $output = new StdClass();
-        $output -> assettrs_saved = get_post_meta($asset_id,'vrodos_asset3d_assettrs', true);
+		$project_id = $_POST['projectid'];
+		$scene_id   = $_POST['sceneid'];
 
-        print_r(json_encode($output, JSON_UNESCAPED_SLASHES));
-        wp_die();
-    }
+		add_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
+		require_once ABSPATH . 'wp-admin/includes/admin.php';
 
-    public function image_upload_action_callback(){
+		// DELETE EXISTING FILE: See if has already a thumbnail and delete the file in the filesystem
+		$scene_background_ids = get_post_meta( $scene_id, 'vrodos_scene_bg_image' );
+		if ( ! empty( $scene_background_ids ) && ! empty( $scene_background_ids[0] ) ) {
+			// Remove previous file from file system
 
-        $DS = DIRECTORY_SEPARATOR;
+			$prevMeta = get_post_meta( $scene_background_ids[0], '_wp_attachment_metadata', false );
 
-        $project_id = $_POST["projectid"];
-        $scene_id = $_POST["sceneid"];
+			if ( count( $prevMeta ) > 0 ) {
+				if ( file_exists( $prevMeta[0]['file'] ) ) {
+					unlink( $prevMeta[0]['file'] );
+				}
+			}
+		}
 
-        add_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
-        require_once( ABSPATH . 'wp-admin/includes/admin.php' );
+		$upload_dir  = wp_upload_dir();
+		$upload_path = str_replace( '/', $DS, $upload_dir['basedir'] ) . $DS . 'scenes' . $DS . $scene_id . $DS;
 
-        // DELETE EXISTING FILE: See if has already a thumbnail and delete the file in the filesystem
-        $scene_background_ids = get_post_meta($scene_id,'vrodos_scene_bg_image');
-        if (!empty($scene_background_ids) && !empty($scene_background_ids[0])) {
-            // Remove previous file from file system
+		// Make Scene folder
+		if ( ! is_dir( $upload_path ) ) {
+			mkdir( $upload_path, 0777, true );
+		}
 
-            $prevMeta = get_post_meta($scene_background_ids[0], '_wp_attachment_metadata', false);
+		$image = $_POST['image'];
+		$fn    = $_POST['filename'];
+		$ext   = $_POST['imagetype'];
 
-            if (count($prevMeta)>0) {
-                if (file_exists($prevMeta[0]['file'])) {
-                    unlink($prevMeta[0]['file']);
-                }
-            }
-        }
+		$hashed_filename = $project_id . '_' . time() . '_' . $scene_id . '_bg.' . $ext;
 
-        $upload_dir = wp_upload_dir();
-        $upload_path = str_replace('/',$DS,$upload_dir['basedir']) . $DS . 'scenes' . $DS . $scene_id . $DS;
+		// Write file string to a file in server
+		file_put_contents(
+			$upload_path . $hashed_filename,
+			base64_decode( substr( (string) $image, strpos( (string) $image, ',' ) + 1 ) )
+		);
 
-        // Make Scene folder
-        if (!is_dir($upload_path)) {
-            mkdir( $upload_path, 0777, true );
-        }
+		$new_filename = str_replace( '\\', '/', $upload_path . $hashed_filename );
 
-        $image = $_POST["image"];
-        $fn = $_POST["filename"];
-        $ext = $_POST["imagetype"];
+		// --- End of upload ---
 
-        $hashed_filename = $project_id .'_'. time() . '_' . $scene_id.'_bg.'. $ext;
+		// DATABASE UPDATE
+		// If post meta already exists
+		if ( ! empty( $scene_background_ids ) && ! empty( $scene_background_ids[0] ) ) {
 
-        // Write file string to a file in server
-        file_put_contents($upload_path . $hashed_filename,
-            base64_decode(substr($image, strpos($image, ",") + 1)));
+			$scene_bg_id = $scene_background_ids[0];
 
-        $new_filename = str_replace("\\","/", $upload_path .$hashed_filename);
+			// Update the post title into the database
+			wp_update_post(
+				['ID'         => $scene_bg_id, 'post_title' => $new_filename]
+			);
 
-        //--- End of upload ---
+			// Update meta _wp_attached_file
+			update_post_meta( $scene_bg_id, '_wp_attached_file', $new_filename );
 
-        // DATABASE UPDATE
-        // If post meta already exists
-        if (!empty($scene_background_ids) && !empty($scene_background_ids[0])) {
+			// update also _attachment_meta
+			$data = wp_get_attachment_metadata( $scene_bg_id );
 
-            $scene_bg_id = $scene_background_ids[0];
+			$data['file'] = $new_filename;
 
-            // Update the post title into the database
-            wp_update_post( ['ID' => $scene_bg_id, 'post_title' => $new_filename]);
+			wp_update_attachment_metadata( $scene_bg_id, $data );
 
-            // Update meta _wp_attached_file
-            update_post_meta($scene_bg_id, '_wp_attached_file', $new_filename);
+			update_post_meta( $scene_id, 'vrodos_scene_bg_image', $scene_bg_id );
 
-            // update also _attachment_meta
-            $data = wp_get_attachment_metadata( $scene_bg_id);
+		} else { // If post does not exist
 
-            $data['file'] = $new_filename;
+			$attachment = ['post_mime_type' => 'image/' . $ext, 'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $new_filename ) ), 'post_content'   => '', 'post_status'    => 'inherit', 'guid'           => $upload_path . $hashed_filename];
 
-            wp_update_attachment_metadata( $scene_bg_id, $data );
+			// Attach to
+			$attachment_id = wp_insert_attachment( $attachment, $new_filename, $scene_id );
 
-            update_post_meta($scene_id, 'vrodos_scene_bg_image', $scene_bg_id);
+			require_once ABSPATH . 'wp-admin/includes/image.php';
 
-        } else { // If post does not exist
+			$attachment_data = wp_generate_attachment_metadata( $attachment_id, $new_filename );
 
-            $attachment = ['post_mime_type' => 'image/' .$ext, 'post_title' => preg_replace('/\.[^.]+$/', '', basename($new_filename)), 'post_content' => '', 'post_status' => 'inherit', 'guid' => $upload_path.$hashed_filename];
+			wp_update_attachment_metadata( $attachment_id, $attachment_data );
 
-            // Attach to
-            $attachment_id = wp_insert_attachment($attachment, $new_filename, $scene_id);
+			update_post_meta( $scene_id, 'vrodos_scene_bg_image', $attachment_id );
 
-            require_once(ABSPATH . 'wp-admin/includes/image.php');
+			remove_filter(
+				'intermediate_image_sizes_advanced',
+				'vrodos_remove_allthumbs_sizes',
+				10
+			);
 
-            $attachment_data = wp_generate_attachment_metadata($attachment_id, $new_filename);
+			// if (0 < intval($attachment_id, 10)) {
+			// return $attachment_id;
+			// }
 
-            wp_update_attachment_metadata($attachment_id, $attachment_data);
+		}
 
-            update_post_meta($scene_id, 'vrodos_scene_bg_image', $attachment_id);
+		$final_path = $attachment_id ? wp_get_attachment_url( $attachment_id ) : wp_get_attachment_url( $scene_bg_id );
 
-            remove_filter('intermediate_image_sizes_advanced',
-                'vrodos_remove_allthumbs_sizes', 10);
+		$content = json_encode( ['url' => $final_path] );
 
-            // if (0 < intval($attachment_id, 10)) {
-            // 	return $attachment_id;
-            // }
+		echo $content;
 
-        }
+		wp_die();
+	}
 
-        $final_path = $attachment_id ? wp_get_attachment_url( $attachment_id ) : wp_get_attachment_url( $scene_bg_id );
+	public function compile_action_callback() {
 
-        $content = json_encode(['url' => $final_path]);
+		// $projectId = $_REQUEST['vrodos_game'];
+		$sceneId           = $_REQUEST['vrodos_scene'];
+		$projectId         = $_REQUEST['projectId'];
+		$showPawnPositions = $_REQUEST['showPawnPositions'] ?? 'false';
+		// $projectSlug = $_REQUEST['projectSlug'];
 
-        echo $content;
+		// $asset_id_temp = get_the_ID();
+		$parent_id = wp_get_post_terms( $sceneId, 'vrodos_scene_pgame' );
+		$parent_id = reset( $parent_id )->term_id;
 
-        wp_die();
+		$sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $parent_id );
 
-    }
+		$compiler   = new VRodos_Compiler_Manager();
+		$scene_json = $compiler->compile_aframe( $projectId, $sceneIdList, $showPawnPositions );
+		echo $scene_json;
+		wp_die();
+	}
 
-    public function compile_action_callback(){
 
-        //$projectId = $_REQUEST['vrodos_game'];
-        $sceneId = $_REQUEST['vrodos_scene'];
-        $projectId = $_REQUEST['projectId'];
-        $showPawnPositions = $_REQUEST['showPawnPositions'] ?? 'false';
-        //$projectSlug = $_REQUEST['projectSlug'];
 
-        //$asset_id_temp = get_the_ID();
-        $parent_id = wp_get_post_terms($sceneId, 'vrodos_scene_pgame');
-        $parent_id = reset($parent_id)->term_id;
+	// Fetch list of project through ajax
+	public function vrodos_fetch_list_projects_callback() {
 
-        $sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game($parent_id);
+		$f = fopen( 'output_ajax_delay.txt', 'w' );
 
-        $compiler = new VRodos_Compiler_Manager();
-        $scene_json = $compiler->compile_aframe($projectId, $sceneIdList, $showPawnPositions);
-        echo $scene_json;
-        wp_die();
+		$perma_structure     = (bool) get_option( 'permalink_structure' );
+		$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
-    }
+		// Define custom query parameters
+		$custom_query_args = ['post_type'      => 'vrodos_game', 'posts_per_page' => -1];
 
+		// if (current_user_can('administrator')){
+		//
+		// } elseif (current_user_can('adv_project_master')) {
+		// $custom_query_args['author'] = $user_id;
+		//
+		// }elseif (current_user_can('game_master')) {
+		// $custom_query_args['author'] = $user_id;
+		// }
 
+		// Get current page and append to custom query parameters array
+		// $custom_query_args['paged'] = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
 
-    // Fetch list of project through ajax
-    public function vrodos_fetch_list_projects_callback() {
+		// Instantiate custom query
+		$custom_query = new WP_Query( $custom_query_args );
 
-    $f = fopen("output_ajax_delay.txt", "w");
+		// $fp = fopen("output_ccq.txt","w");
 
-    $user_id = $_POST['current_user_id'];
+		// Pagination fix
+		// $temp_query = $wp_query;
+		// $wp_query = NULL;
+		// $wp_query = $custom_query;
 
-    $perma_structure = (bool)get_option('permalink_structure');
-    $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
+		// Output custom query loop
+		if ( $custom_query->have_posts() ) {
 
-    // Define custom query parameters
-    $custom_query_args = ['post_type' => 'vrodos_game', 'posts_per_page' => -1];
+			$mt3 = explode( ' ', microtime() );
+			$t3  = ( (int) $mt3[1] ) * 1000 + ( (int) round( $mt3[0] * 1000 ) );
 
-//    if (current_user_can('administrator')){
-//
-//    } elseif (current_user_can('adv_project_master')) {
-//        //$custom_query_args['author'] = $user_id;
-//
-//    }elseif (current_user_can('game_master')) {
-//        //$custom_query_args['author'] = $user_id;
-//    }
+			fwrite( $f, 'Step 3:' . $t3 . chr( 13 ) );
 
+			echo '<ul class="mdc-list mdc-list--two-line mdc-list--avatar-list" style="max-height: 460px; overflow-y: auto">';
+			while ( $custom_query->have_posts() ) :
 
-    // Get current page and append to custom query parameters array
-    //$custom_query_args['paged'] = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
+				$mt4 = explode( ' ', microtime() );
+				$t4  = ( (int) $mt4[1] ) * 1000 + ( (int) round( $mt4[0] * 1000 ) );
 
-    // Instantiate custom query
-    $custom_query = new WP_Query($custom_query_args);
+				fwrite( $f, 'Step 4:' . $t4 . chr( 13 ) );
 
-    //$fp = fopen("output_ccq.txt","w");
+				$custom_query->the_post();
 
-    // Pagination fix
-    //$temp_query = $wp_query;
-    //$wp_query = NULL;
-    //$wp_query = $custom_query;
+				// elseif (current_user_can('game_master')) {
+				// $custom_query_args['author'] = $user_id;
+				// }
 
-    // Output custom query loop
-    if ($custom_query->have_posts()){
+				$game_id    = get_the_ID();
+				$game_title = get_the_title();
+				$game_date  = get_the_date();
+				// $game_link = get_permalink();
 
-        $mt3 = explode(' ', microtime());
-        $t3 = ((int)$mt3[1]) * 1000 + ((int)round($mt3[0] * 1000));
+				// Do not show Joker projects
+				if ( str_contains( $game_title, ' Joker' ) ) {
+					continue;
+				}
 
-        fwrite($f, "Step 3:".$t3.chr(13));
+				$game_type_obj = VRodos_Core_Manager::vrodos_return_project_type( $game_id );
 
-        echo '<ul class="mdc-list mdc-list--two-line mdc-list--avatar-list" style="max-height: 460px; overflow-y: auto">';
-        while ($custom_query->have_posts()) :
+				$all_game_category = get_the_terms( $game_id, 'vrodos_game_type' );
+				$game_category     = $all_game_category[0]->slug;
+				$scene_data        = VRodos_Core_Manager::vrodos_getFirstSceneID_byProjectID( $game_id, $game_category );// first 3D scene id
 
-            $mt4 = explode(' ', microtime());
-            $t4 = ((int)$mt4[1]) * 1000 + ((int)round($mt4[0] * 1000));
+				$editscenePage = VRodos_Core_Manager::vrodos_getEditpage( 'scene' );
 
-            fwrite($f, "Step 4:".$t4.chr(13));
+				$edit_scene_page_id = $editscenePage[0]->ID;
 
-            $custom_query->the_post();
+				$loadMainSceneLink = esc_url( ( get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type'] ) );
 
+				$assets_list_page    = VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' );
+				$assets_list_page_id = $assets_list_page[0]->ID;
+				$loadProjectAssets   = esc_url( get_permalink( $assets_list_page_id ) . '?vrodos_project_id=' . $game_id );
 
+				echo '<li class="mdc-list-item" style="" id="' . $game_id . '">';
 
-//           elseif (current_user_can('game_master')) {
-//                //$custom_query_args['author'] = $user_id;
-//            }
+				// Href when press on title
+				echo '<span class="mdc-list-item" style="float:left" data-mdc-auto-init="MDCRipple" title="Open ' . $game_title . '">';
+				echo '<i class="material-icons mdc-list-item__start-detail" aria-hidden="true" title="' . $game_type_obj->string . '">' . $game_type_obj->icon . '</i>';
+				echo '<span id="' . $game_id . '-title" class="mdc-list-item__text">' . $game_title . '<span id="' . $game_id . '-date" class="mdc-list-item__text__secondary">' . $game_date . '</span>' .
+				'</span>';
+				echo '</span>';
 
+				// VR button: Go to 3D Editor
 
+				echo '<div style="margin-left:auto; margin-right:0">';
 
-            $game_id = get_the_ID();
-            $game_title = get_the_title();
-            $game_date = get_the_date();
-            //$game_link = get_permalink();
+				// ----- Assets button ------------------
+				echo '<a href="' . $loadProjectAssets . '" class="" style="" data-mdc-auto-init="MDCRipple" ' .
+				'title="Manage assets of ' . $game_title . '">';
+				echo '<span id="' . $game_id . '-assets-button" class="mdc-button" >Assets</span>';
+				echo '</a>';
 
+				// --------- 3D editor button -----------
+				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="" style="" data-mdc-auto-init="MDCRipple" ' .
+				'title="Open 3D Editor for ' . $game_title . '">';
+				echo '<span id="' . $game_id . '-vr-button" class="mdc-button" >3D_Editor</span>';
+				echo '</a>';
 
-            // Do not show Joker projects
-            if (str_contains($game_title, ' Joker'))
-                continue;
+				// -------- Delete button ----------------
+				echo '<a href="javascript:void(0)" class="vrodos-delete-project-btn" style="" aria-label="Delete game" title="Delete project" ' .
+				'data-game-id="' . $game_id . '">';
+				echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color: crimson" '
+				. 'aria-hidden="true" title="Delete project">delete</i>';
+				echo '</a>';
 
-            $game_type_obj = VRodos_Core_Manager::vrodos_return_project_type($game_id);
+				echo '<div>';
+				echo '</li>';
+			endwhile;
 
-            $all_game_category = get_the_terms( $game_id, 'vrodos_game_type' );
-            $game_category     = $all_game_category[0]->slug;
-            $scene_data = VRodos_Core_Manager::vrodos_getFirstSceneID_byProjectID($game_id,$game_category);//first 3D scene id
+			echo '</ul>';
 
-            $editscenePage = VRodos_Core_Manager::vrodos_getEditpage('scene');
+			wp_reset_postdata();
+			// $wp_query = NULL;
+			// $wp_query = $temp_query;
 
-            $edit_scene_page_id = $editscenePage[0]->ID;
+		} else {
 
-            $loadMainSceneLink = esc_url( (get_permalink($edit_scene_page_id) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type']));
+			echo '<hr class="WhiteSpaceSeparator">';
+			echo '<div class="CenterContents">' .
+			'<i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true"' .
+			' title="No projects available">' .
+			'games' .
+			'</i>' .
+			'<h3 class="mdc-typography--headline"> projects available</h3>' .
+			'<hr class="WhiteSpaceSeparator">' .
+			'<h4 class="mdc-typography--title mdc-theme--text-secondary-on-light">' .
+			'You can try creating a new one</h4>';
+			echo '</div>';
+		}
 
+		wp_die();
+	}
 
-            $assets_list_page =  VRodos_Core_Manager::vrodos_getEditpage('assetslist');
-            $assets_list_page_id = $assets_list_page[0]->ID;
-            $loadProjectAssets = esc_url( get_permalink($assets_list_page_id) . '?vrodos_project_id=' . $game_id );
+	public function vrodos_fetch_game_assets_action_callback() {
 
+		// Output the directory listing as JSON
+		header( 'Content-type: application/json' );
 
-            echo '<li class="mdc-list-item" style="" id="'. $game_id.'">';
+		$response = VRodos_Core_Manager::vrodos_get_assets_by_game( $_POST['gameProjectSlug'], $_POST['gameProjectID'] );
 
-            // Href when press on title
-            echo '<span class="mdc-list-item" style="float:left" data-mdc-auto-init="MDCRipple" title="Open '.$game_title.'">';
-            echo '<i class="material-icons mdc-list-item__start-detail" aria-hidden="true" title="'.$game_type_obj->string.'">'.$game_type_obj->icon.'</i>';
-            echo '<span id="'.$game_id.'-title" class="mdc-list-item__text">'.$game_title.'<span id="'.$game_id.'-date" class="mdc-list-item__text__secondary">'.$game_date.'</span>'.
-                '</span>';
-            echo '</span>';
+		for ( $i = 0; $i < count( $response ); $i++ ) {
+			if ( isset( $response[ $i ]['assetName'] ) ) {
+				$response[ $i ]['name'] = $response[ $i ]['assetName'];
+				$response[ $i ]['type'] = 'file';
+			}
+		}
 
+		$jsonResp = json_encode(
+			['items' => $response]
+		);
 
-
-            // VR button: Go to 3D Editor
-
-            echo '<div style="margin-left:auto; margin-right:0">';
-
-            // ----- Assets button ------------------
-            echo '<a href="'.$loadProjectAssets.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
-                'title="Manage assets of '.$game_title.'">';
-            echo '<span id="'.$game_id.'-assets-button" class="mdc-button" >Assets</span>';
-            echo '</a>';
-
-            // --------- 3D editor button -----------
-            echo '<a id="3d-editor-bt-'.$game_id.'" href="'.$loadMainSceneLink.'" class="" style="" data-mdc-auto-init="MDCRipple" '.
-                'title="Open 3D Editor for '.$game_title.'">';
-            echo '<span id="'.$game_id.'-vr-button" class="mdc-button" >3D_Editor</span>';
-            echo '</a>';
-
-            // -------- Delete button ----------------
-            echo '<a href="javascript:void(0)" class="vrodos-delete-project-btn" style="" aria-label="Delete game" title="Delete project" '.
-                'data-game-id="'.$game_id.'">';
-            echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color: crimson" '
-                .'aria-hidden="true" title="Delete project">delete</i>';
-            echo '</a>';
-
-            echo '<div>';
-            echo '</li>';
-        endwhile;
-
-        echo '</ul>';
-
-
-
-        wp_reset_postdata();
-        //$wp_query = NULL;
-        //$wp_query = $temp_query;
-
-
-    } else {
-
-        echo '<hr class="WhiteSpaceSeparator">';
-        echo '<div class="CenterContents">' .
-            '<i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true"' .
-            ' title="No projects available">' .
-            'games' .
-            '</i>'.
-            '<h3 class="mdc-typography--headline"> projects available</h3>' .
-            '<hr class="WhiteSpaceSeparator">'.
-            '<h4 class="mdc-typography--title mdc-theme--text-secondary-on-light">'.
-            'You can try creating a new one</h4>';
-        echo '</div>';
-    }
-
-    wp_die();
-}
-
-    public function vrodos_fetch_game_assets_action_callback() {
-
-
-        // Output the directory listing as JSON
-        header('Content-type: application/json');
-
-        $response = VRodos_Core_Manager::vrodos_get_assets_by_game($_POST['gameProjectSlug'], $_POST['gameProjectID']);
-
-        for ($i=0; $i<count($response); $i++) {
-            if (isset($response[$i]['assetName'])) {
-                $response[$i]['name'] = $response[$i]['assetName'];
-                $response[$i]['type'] = 'file';
-            }
-        }
-
-        $jsonResp =  json_encode(
-            ["items" => $response]
-        );
-
-        echo $jsonResp;
-        wp_die();
-    }
+		echo $jsonResp;
+		wp_die();
+	}
 }

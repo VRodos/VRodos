@@ -1,10 +1,10 @@
 ( function () {
 
-	const _plane = new THREE.Plane();
-	const _raycaster = new THREE.Raycaster();
-	const _pointer = new THREE.Vector2();
-	const _offset = new THREE.Vector3();
-	const _intersection = new THREE.Vector3();
+	const _plane         = new THREE.Plane();
+	const _raycaster     = new THREE.Raycaster();
+	const _pointer       = new THREE.Vector2();
+	const _offset        = new THREE.Vector3();
+	const _intersection  = new THREE.Vector3();
 	const _worldPosition = new THREE.Vector3();
 	const _inverseMatrix = new THREE.Matrix4();
 	class DragControls extends THREE.EventDispatcher {
@@ -14,11 +14,9 @@
 			super();
 			_domElement.style.touchAction = 'none'; // disable touch scroll
 
-			let _selected = null,
-				_hovered = null;
+			let _selected        = null,
+				_hovered         = null;
 			const _intersections = [];
-
-			//
 
 			const scope = this;
 			function activate() {
@@ -60,7 +58,9 @@
 
 			function onPointerMove( event ) {
 
-				if ( scope.enabled === false ) return;
+				if ( scope.enabled === false ) {
+					return;
+				}
 				updatePointer( event );
 				_raycaster.setFromCamera( _pointer, _camera );
 				if ( _selected ) {
@@ -71,10 +71,12 @@
 
 					}
 
-					scope.dispatchEvent( {
-						type: 'drag',
-						object: _selected
-					} );
+					scope.dispatchEvent(
+						{
+							type: 'drag',
+							object: _selected
+						}
+					);
 					return;
 
 				}
@@ -92,23 +94,27 @@
 						_plane.setFromNormalAndCoplanarPoint( _camera.getWorldDirection( _plane.normal ), _worldPosition.setFromMatrixPosition( object.matrixWorld ) );
 						if ( _hovered !== object && _hovered !== null ) {
 
-							scope.dispatchEvent( {
-								type: 'hoveroff',
-								object: _hovered
-							} );
+							scope.dispatchEvent(
+								{
+									type: 'hoveroff',
+									object: _hovered
+								}
+							);
 							_domElement.style.cursor = 'auto';
-							_hovered = null;
+							_hovered                 = null;
 
 						}
 
 						if ( _hovered !== object ) {
 
-							scope.dispatchEvent( {
-								type: 'hoveron',
-								object: object
-							} );
+							scope.dispatchEvent(
+								{
+									type: 'hoveron',
+									object: object
+								}
+							);
 							_domElement.style.cursor = 'pointer';
-							_hovered = object;
+							_hovered                 = object;
 
 						}
 
@@ -116,12 +122,14 @@
 
 						if ( _hovered !== null ) {
 
-							scope.dispatchEvent( {
-								type: 'hoveroff',
-								object: _hovered
-							} );
+							scope.dispatchEvent(
+								{
+									type: 'hoveroff',
+									object: _hovered
+								}
+							);
 							_domElement.style.cursor = 'auto';
-							_hovered = null;
+							_hovered                 = null;
 
 						}
 
@@ -133,7 +141,9 @@
 
 			function onPointerDown( event ) {
 
-				if ( scope.enabled === false ) return;
+				if ( scope.enabled === false ) {
+					return;
+				}
 				updatePointer( event );
 				_intersections.length = 0;
 				_raycaster.setFromCamera( _pointer, _camera );
@@ -150,10 +160,12 @@
 					}
 
 					_domElement.style.cursor = 'move';
-					scope.dispatchEvent( {
-						type: 'dragstart',
-						object: _selected
-					} );
+					scope.dispatchEvent(
+						{
+							type: 'dragstart',
+							object: _selected
+						}
+					);
 
 				}
 
@@ -161,13 +173,17 @@
 
 			function onPointerCancel() {
 
-				if ( scope.enabled === false ) return;
+				if ( scope.enabled === false ) {
+					return;
+				}
 				if ( _selected ) {
 
-					scope.dispatchEvent( {
-						type: 'dragend',
-						object: _selected
-					} );
+					scope.dispatchEvent(
+						{
+							type: 'dragend',
+							object: _selected
+						}
+					);
 					_selected = null;
 
 				}
@@ -188,13 +204,13 @@
 
 			// API
 
-			this.enabled = true;
+			this.enabled        = true;
 			this.transformGroup = false;
-			this.activate = activate;
-			this.deactivate = deactivate;
-			this.dispose = dispose;
-			this.getObjects = getObjects;
-			this.getRaycaster = getRaycaster;
+			this.activate       = activate;
+			this.deactivate     = deactivate;
+			this.dispose        = dispose;
+			this.getObjects     = getObjects;
+			this.getRaycaster   = getRaycaster;
 
 		}
 

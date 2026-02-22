@@ -12,9 +12,9 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__ . '/VRodos.php',
     ]);
 
-    // Use specific rules for PHP 8.1 modernization
+    // Use specific rules for PHP 8.3 modernization
     $rectorConfig->sets([
-        LevelSetList::UP_TO_PHP_81,
+        LevelSetList::UP_TO_PHP_83,
         // SetList::CODE_QUALITY,
         SetList::DEAD_CODE,
         // SetList::TYPE_DECLARATION, 

@@ -1,8 +1,8 @@
 ( function () {
 
 	/**
- * Loads a Wavefront .mtl file specifying materials
- */
+	 * Loads a Wavefront .mtl file specifying materials
+	 */
 
 	class MTLLoader extends THREE.Loader {
 
@@ -13,49 +13,54 @@
 		}
 
 		/**
-   * Loads and parses a MTL asset from a URL.
-   *
-   * @param {String} url - URL to the MTL file.
-   * @param {Function} [onLoad] - Callback invoked with the loaded object.
-   * @param {Function} [onProgress] - Callback for download progress.
-   * @param {Function} [onError] - Callback for download errors.
-   *
-   * @see setPath setResourcePath
-   *
-   * @note In order for relative texture references to resolve correctly
-   * you must call setResourcePath() explicitly prior to load.
-   */
+		 * Loads and parses a MTL asset from a URL.
+		 *
+		 * @param {String} url - URL to the MTL file.
+		 * @param {Function} [onLoad] - Callback invoked with the loaded object.
+		 * @param {Function} [onProgress] - Callback for download progress.
+		 * @param {Function} [onError] - Callback for download errors.
+		 *
+		 * @see setPath setResourcePath
+		 *
+		 * @note In order for relative texture references to resolve correctly
+		 * you must call setResourcePath() explicitly prior to load.
+		 */
 		load( url, onLoad, onProgress, onError ) {
 
-			const scope = this;
-			const path = this.path === '' ? THREE.LoaderUtils.extractUrlBase( url ) : this.path;
+			const scope  = this;
+			const path   = this.path === '' ? THREE.LoaderUtils.extractUrlBase( url ) : this.path;
 			const loader = new THREE.FileLoader( this.manager );
 			loader.setPath( this.path );
 			loader.setRequestHeader( this.requestHeader );
 			loader.setWithCredentials( this.withCredentials );
-			loader.load( url, function ( text ) {
+			loader.load(
+				url,
+				function ( text ) {
 
-				try {
+					try {
 
-					onLoad( scope.parse( text, path ) );
+						onLoad( scope.parse( text, path ) );
 
-				} catch ( e ) {
+					} catch ( e ) {
 
-					if ( onError ) {
+						if ( onError ) {
 
-						onError( e );
+							onError( e );
 
-					} else {
+						} else {
 
-						console.error( e );
+							console.error( e );
+
+						}
+
+						scope.manager.itemError( url );
 
 					}
 
-					scope.manager.itemError( url );
-
-				}
-
-			}, onProgress, onError );
+				},
+				onProgress,
+				onError
+			);
 
 		}
 		setMaterialOptions( value ) {
@@ -66,26 +71,26 @@
 		}
 
 		/**
-   * Parses a MTL file.
-   *
-   * @param {String} text - Content of MTL file
-   * @return {MaterialCreator}
-   *
-   * @see setPath setResourcePath
-   *
-   * @note In order for relative texture references to resolve correctly
-   * you must call setResourcePath() explicitly prior to parse.
-   */
+		 * Parses a MTL file.
+		 *
+		 * @param {String} text - Content of MTL file
+		 * @return {MaterialCreator}
+		 *
+		 * @see setPath setResourcePath
+		 *
+		 * @note In order for relative texture references to resolve correctly
+		 * you must call setResourcePath() explicitly prior to parse.
+		 */
 		parse( text, path ) {
 
-			const lines = text.split( '\n' );
-			let info = {};
+			const lines             = text.split( '\n' );
+			let info                = {};
 			const delimiter_pattern = /\s+/;
-			const materialsInfo = {};
-			for ( let i = 0; i < lines.length; i ++ ) {
+			const materialsInfo     = {};
+			for ( let i = 0; i < lines.length; i++ ) {
 
 				let line = lines[ i ];
-				line = line.trim();
+				line     = line.trim();
 				if ( line.length === 0 || line.charAt( 0 ) === '#' ) {
 
 					// Blank line or comment ignore
@@ -94,15 +99,15 @@
 				}
 
 				const pos = line.indexOf( ' ' );
-				let key = pos >= 0 ? line.substring( 0, pos ) : line;
-				key = key.toLowerCase();
+				let key   = pos >= 0 ? line.substring( 0, pos ) : line;
+				key       = key.toLowerCase();
 				let value = pos >= 0 ? line.substring( pos + 1 ) : '';
-				value = value.trim();
+				value     = value.trim();
 				if ( key === 'newmtl' ) {
 
 					// New material
 
-					info = {
+					info                   = {
 						name: value
 					};
 					materialsInfo[ value ] = info;
@@ -111,7 +116,7 @@
 
 					if ( key === 'ka' || key === 'kd' || key === 'ks' || key === 'ke' ) {
 
-						const ss = value.split( delimiter_pattern, 3 );
+						const ss    = value.split( delimiter_pattern, 3 );
 						info[ key ] = [ parseFloat( ss[ 0 ] ), parseFloat( ss[ 1 ] ), parseFloat( ss[ 2 ] ) ];
 
 					} else {
@@ -135,33 +140,34 @@
 	}
 
 	/**
- * Create a new MTLLoader.MaterialCreator
- * @param baseUrl - Url relative to which textures are loaded
- * @param options - Set of options on how to construct the materials
- *                  side: Which side to apply the material
- *                        THREE.FrontSide (default), THREE.BackSide, THREE.DoubleSide
- *                  wrap: What type of wrapping to apply for textures
- *                        THREE.RepeatWrapping (default), THREE.ClampToEdgeWrapping, THREE.MirroredRepeatWrapping
- *                  normalizeRGB: RGBs need to be normalized to 0-1 from 0-255
- *                                Default: false, assumed to be already normalized
- *                  ignoreZeroRGBs: Ignore values of RGBs (Ka,Kd,Ks) that are all 0's
- *                                  Default: false
- * @constructor
- */
+	 * Create a new MTLLoader.MaterialCreator
+	 *
+	 * @param baseUrl - Url relative to which textures are loaded
+	 * @param options - Set of options on how to construct the materials
+	 *                  side: Which side to apply the material
+	 *                        THREE.FrontSide (default), THREE.BackSide, THREE.DoubleSide
+	 *                  wrap: What type of wrapping to apply for textures
+	 *                        THREE.RepeatWrapping (default), THREE.ClampToEdgeWrapping, THREE.MirroredRepeatWrapping
+	 *                  normalizeRGB: RGBs need to be normalized to 0-1 from 0-255
+	 *                                Default: false, assumed to be already normalized
+	 *                  ignoreZeroRGBs: Ignore values of RGBs (Ka,Kd,Ks) that are all 0's
+	 *                                  Default: false
+	 * @constructor
+	 */
 
 	class MaterialCreator {
 
 		constructor( baseUrl = '', options = {} ) {
 
-			this.baseUrl = baseUrl;
-			this.options = options;
-			this.materialsInfo = {};
-			this.materials = {};
+			this.baseUrl        = baseUrl;
+			this.options        = options;
+			this.materialsInfo  = {};
+			this.materials      = {};
 			this.materialsArray = [];
-			this.nameLookup = {};
-			this.crossOrigin = 'anonymous';
-			this.side = this.options.side !== undefined ? this.options.side : THREE.FrontSide;
-			this.wrap = this.options.wrap !== undefined ? this.options.wrap : THREE.RepeatWrapping;
+			this.nameLookup     = {};
+			this.crossOrigin    = 'anonymous';
+			this.side           = this.options.side !== undefined ? this.options.side : THREE.FrontSide;
+			this.wrap           = this.options.wrap !== undefined ? this.options.wrap : THREE.RepeatWrapping;
 
 		}
 		setCrossOrigin( value ) {
@@ -177,27 +183,29 @@
 		}
 		setMaterials( materialsInfo ) {
 
-			this.materialsInfo = this.convert( materialsInfo );
-			this.materials = {};
+			this.materialsInfo  = this.convert( materialsInfo );
+			this.materials      = {};
 			this.materialsArray = [];
-			this.nameLookup = {};
+			this.nameLookup     = {};
 
 		}
 		convert( materialsInfo ) {
 
-			if ( ! this.options ) return materialsInfo;
+			if ( ! this.options ) {
+				return materialsInfo;
+			}
 			const converted = {};
 			for ( const mn in materialsInfo ) {
 
 				// Convert materials info into normalized form based on options
 
-				const mat = materialsInfo[ mn ];
-				const covmat = {};
+				const mat       = materialsInfo[ mn ];
+				const covmat    = {};
 				converted[ mn ] = covmat;
 				for ( const prop in mat ) {
 
-					let save = true;
-					let value = mat[ prop ];
+					let save    = true;
+					let value   = mat[ prop ];
 					const lprop = prop.toLowerCase();
 					switch ( lprop ) {
 
@@ -263,8 +271,8 @@
 			for ( const mn in this.materialsInfo ) {
 
 				this.materialsArray[ index ] = this.create( mn );
-				this.nameLookup[ mn ] = index;
-				index ++;
+				this.nameLookup[ mn ]        = index;
+				index++;
 
 			}
 
@@ -286,28 +294,34 @@
 
 			// Create material
 
-			const scope = this;
-			const mat = this.materialsInfo[ materialName ];
+			const scope  = this;
+			const mat    = this.materialsInfo[ materialName ];
 			const params = {
 				name: materialName,
 				side: this.side
 			};
 			function resolveURL( baseUrl, url ) {
 
-				if ( typeof url !== 'string' || url === '' ) return '';
+				if ( typeof url !== 'string' || url === '' ) {
+					return '';
+				}
 
 				// Absolute URL
-				if ( /^https?:\/\//i.test( url ) ) return url;
+				if ( /^https?:\/\//i.test( url ) ) {
+					return url;
+				}
 				return baseUrl + url;
 
 			}
 
 			function setMapForType( mapType, value ) {
 
-				if ( params[ mapType ] ) return; // Keep the first encountered texture
+				if ( params[ mapType ] ) {
+					return; // Keep the first encountered texture
+				}
 
 				const texParams = scope.getTextureParams( value, params );
-				const map = scope.loadTexture( resolveURL( scope.baseUrl, texParams.url ) );
+				const map       = scope.loadTexture( resolveURL( scope.baseUrl, texParams.url ) );
 				map.repeat.copy( texParams.scale );
 				map.offset.copy( texParams.offset );
 				map.wrapS = scope.wrap;
@@ -326,7 +340,9 @@
 
 				const value = mat[ prop ];
 				let n;
-				if ( value === '' ) continue;
+				if ( value === '' ) {
+					continue;
+				}
 				switch ( prop.toLowerCase() ) {
 
 					// Ns is material specular exponent
@@ -384,7 +400,7 @@
 						n = parseFloat( value );
 						if ( n < 1 ) {
 
-							params.opacity = n;
+							params.opacity     = n;
 							params.transparent = true;
 
 						}
@@ -392,10 +408,12 @@
 						break;
 					case 'tr':
 						n = parseFloat( value );
-						if ( this.options && this.options.invertTrProperty ) n = 1 - n;
+						if ( this.options && this.options.invertTrProperty ) {
+							n = 1 - n;
+						}
 						if ( n > 0 ) {
 
-							params.opacity = 1 - n;
+							params.opacity     = 1 - n;
 							params.transparent = true;
 
 						}
@@ -418,7 +436,7 @@
 				scale: new THREE.Vector2( 1, 1 ),
 				offset: new THREE.Vector2( 0, 0 )
 			};
-			const items = value.split( /\s+/ );
+			const items     = value.split( /\s+/ );
 			let pos;
 			pos = items.indexOf( '-bm' );
 			if ( pos >= 0 ) {
@@ -451,16 +469,20 @@
 		loadTexture( url, mapping, onLoad, onProgress, onError ) {
 
 			const manager = this.manager !== undefined ? this.manager : THREE.DefaultLoadingManager;
-			let loader = manager.getHandler( url );
+			let loader    = manager.getHandler( url );
 			if ( loader === null ) {
 
 				loader = new THREE.TextureLoader( manager );
 
 			}
 
-			if ( loader.setCrossOrigin ) loader.setCrossOrigin( this.crossOrigin );
+			if ( loader.setCrossOrigin ) {
+				loader.setCrossOrigin( this.crossOrigin );
+			}
 			const texture = loader.load( url, onLoad, onProgress, onError );
-			if ( mapping !== undefined ) texture.mapping = mapping;
+			if ( mapping !== undefined ) {
+				texture.mapping = mapping;
+			}
 			return texture;
 
 		}

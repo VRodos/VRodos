@@ -18,23 +18,22 @@ class VRodos_Menu_Manager {
 	 */
 	public function __construct() {
 		// Frontend Menu Hooks
-		add_filter( 'wp_nav_menu_items', [$this, 'vrodos_loginout_menu_link'], 5, 2 );
-		add_action( 'wp_nav_menu_item_custom_fields', [$this, 'vrodos_add_scene_id_to_scene_as_menu_item'], 100, 2 );
-		add_action( 'wp_update_nav_menu_item', [$this, 'save_menu_item_desc'], 10, 2 );
-		add_filter( 'wp_get_nav_menu_items', [$this, 'nav_items'], 11, 3 );
-        add_action( 'init', [$this, 'wpb_custom_new_menu'] );
+		add_filter( 'wp_nav_menu_items', $this->vrodos_loginout_menu_link(...), 5, 2 );
+		add_action( 'wp_nav_menu_item_custom_fields', $this->vrodos_add_scene_id_to_scene_as_menu_item(...), 100, 2 );
+		add_action( 'wp_update_nav_menu_item', $this->save_menu_item_desc(...), 10, 2 );
+		add_filter( 'wp_get_nav_menu_items', $this->nav_items(...), 11, 3 );
+		add_action( 'init', $this->wpb_custom_new_menu(...) );
 
 		// Backend Menu Hooks
-		add_action( 'admin_menu', [$this, 'vrodos_plugin_menu'] );
-		add_filter( 'parent_file', [$this, 'vrodos_correct_admin_menu_highlight'] );
+		add_action( 'admin_menu', $this->vrodos_plugin_menu(...) );
+		add_filter( 'parent_file', $this->vrodos_correct_admin_menu_highlight(...) );
 	}
 
 	/**
 	 * Display Login/Logout in menu.
 	 */
 	public function vrodos_loginout_menu_link( $menu, $args ): string {
-		$menu .= '<li class="nav-menu" class="menu-item">' . wp_loginout( $_SERVER['REQUEST_URI'], false ) . '</li>';
-		return $menu;
+		return $menu . ( '<li class="nav-menu" class="menu-item">' . wp_loginout( $_SERVER['REQUEST_URI'], false ) . '</li>' );
 	}
 
 	/**
@@ -91,12 +90,12 @@ class VRodos_Menu_Manager {
 		return $items;
 	}
 
-    /**
+	/**
 	 * Register a custom 3D menu location.
 	 */
-    public function wpb_custom_new_menu(): void {
-        register_nav_menu('3d-menu',__( '3D Menu' ));
-    }
+	public function wpb_custom_new_menu(): void {
+		register_nav_menu( '3d-menu', __( '3D Menu' ) );
+	}
 
 	/**
 	 * Create the main VRodos admin menu and submenus.
@@ -129,7 +128,7 @@ class VRodos_Menu_Manager {
 	public function vrodos_correct_admin_menu_highlight( $parent_file ): string {
 		global $pagenow, $current_screen, $submenu_file;
 
-		$vrodos_post_types = [ 'vrodos_game', 'vrodos_scene', 'vrodos_asset3d' ];
+		$vrodos_post_types = ['vrodos_game', 'vrodos_scene', 'vrodos_asset3d'];
 
 		if ( in_array( $current_screen->post_type, $vrodos_post_types ) ) {
 			$parent_file = 'vrodos-plugin'; // Set the main menu slug

@@ -18,72 +18,72 @@ class VRodos_Roles_Manager {
 	 */
 	public function __construct() {
 		// Actions to add custom fields to user profile page
-		add_action( 'show_user_profile', [$this, 'extra_user_profile_field_mvnode_token'] );
-		add_action( 'edit_user_profile', [$this, 'extra_user_profile_field_mvnode_token'] );
-		add_action( 'show_user_profile', [$this, 'extra_user_profile_field_mvnode_url'] );
-		add_action( 'edit_user_profile', [$this, 'extra_user_profile_field_mvnode_url'] );
+		add_action( 'show_user_profile', $this->extra_user_profile_field_mvnode_token(...) );
+		add_action( 'edit_user_profile', $this->extra_user_profile_field_mvnode_token(...) );
+		add_action( 'show_user_profile', $this->extra_user_profile_field_mvnode_url(...) );
+		add_action( 'edit_user_profile', $this->extra_user_profile_field_mvnode_url(...) );
 
 		// Actions to save the custom fields
-		add_action( 'personal_options_update', [$this, 'save_extra_user_profile_field_mvnode_token'] );
-		add_action( 'edit_user_profile_update', [$this, 'save_extra_user_profile_field_mvnode_token'] );
-		add_action( 'personal_options_update', [$this, 'save_extra_user_profile_field_mvnode_url'] );
-		add_action( 'edit_user_profile_update', [$this, 'save_extra_user_profile_field_mvnode_url'] );
+		add_action( 'personal_options_update', $this->save_extra_user_profile_field_mvnode_token(...) );
+		add_action( 'edit_user_profile_update', $this->save_extra_user_profile_field_mvnode_token(...) );
+		add_action( 'personal_options_update', $this->save_extra_user_profile_field_mvnode_url(...) );
+		add_action( 'edit_user_profile_update', $this->save_extra_user_profile_field_mvnode_url(...) );
 
-        // Action to add capabilities to admin
-        add_action( 'admin_init', [$this, 'vrodos_add_capabilities_to_admin'] );
+		// Action to add capabilities to admin
+		add_action( 'admin_init', $this->vrodos_add_capabilities_to_admin(...) );
 	}
 
-    /*
-    public function vrodos_add_customroles() {
+	/*
+	public function vrodos_add_customroles() {
 
-        // Remove old version roles if they exist
-        remove_role( 'adv_game_master');
-        remove_role( 'teacher');
-        remove_role( 'project_master');
+		// Remove old version roles if they exist
+		remove_role( 'adv_game_master');
+		remove_role( 'teacher');
+		remove_role( 'project_master');
 
-        $role = get_role( 'administrator' );
+		$role = get_role( 'administrator' );
 
-        // Caps about Games
-        $role->add_cap( 'publish_vrodos_project' );
-        $role->add_cap( 'read_vrodos_project' );
-        $role->add_cap( 'edit_vrodos_project' );
-        $role->add_cap( 'delete_vrodos_project' );
+		// Caps about Games
+		$role->add_cap( 'publish_vrodos_project' );
+		$role->add_cap( 'read_vrodos_project' );
+		$role->add_cap( 'edit_vrodos_project' );
+		$role->add_cap( 'delete_vrodos_project' );
 
-        // Caps about Scenes (along with exported ones)
-        $role->add_cap( 'publish_vrodos_scene' );
-        $role->add_cap( 'publish_vrodos_scene_exported' );
-        $role->add_cap( 'edit_vrodos_scene' );
-        $role->add_cap( 'edit_vrodos_scene_exported' );
-        $role->add_cap( 'delete_vrodos_scene' );
-        $role->add_cap( 'delete_vrodos_scene_exported' );
-        $role->add_cap( 'read_vrodos_scene' );
-        $role->add_cap( 'read_vrodos_scene_exported' );
+		// Caps about Scenes (along with exported ones)
+		$role->add_cap( 'publish_vrodos_scene' );
+		$role->add_cap( 'publish_vrodos_scene_exported' );
+		$role->add_cap( 'edit_vrodos_scene' );
+		$role->add_cap( 'edit_vrodos_scene_exported' );
+		$role->add_cap( 'delete_vrodos_scene' );
+		$role->add_cap( 'delete_vrodos_scene_exported' );
+		$role->add_cap( 'read_vrodos_scene' );
+		$role->add_cap( 'read_vrodos_scene_exported' );
 
-        // Caps about Assets
-        $role->add_cap( 'publish_vrodos_asset3d' );
-        $role->add_cap( 'edit_vrodos_asset3d' );
-        $role->add_cap( 'delete_vrodos_asset3d' );
-        $role->add_cap( 'read_vrodos_asset3d' );
+		// Caps about Assets
+		$role->add_cap( 'publish_vrodos_asset3d' );
+		$role->add_cap( 'edit_vrodos_asset3d' );
+		$role->add_cap( 'delete_vrodos_asset3d' );
+		$role->add_cap( 'read_vrodos_asset3d' );
 
-        // Caps about Taxonomies
-        $role->add_cap( 'manage_vrodos_project_type' );
-        $role->add_cap( 'edit_vrodos_project_type' );
-        $role->add_cap( 'manage_vrodos_taxpgame' );
-        $role->add_cap( 'edit_vrodos_taxpgame' );
-        $role->add_cap( 'manage_vrodos_scene_yaml' );
-        $role->add_cap( 'edit_vrodos_scene_yaml' );
+		// Caps about Taxonomies
+		$role->add_cap( 'manage_vrodos_project_type' );
+		$role->add_cap( 'edit_vrodos_project_type' );
+		$role->add_cap( 'manage_vrodos_taxpgame' );
+		$role->add_cap( 'edit_vrodos_taxpgame' );
+		$role->add_cap( 'manage_vrodos_scene_yaml' );
+		$role->add_cap( 'edit_vrodos_scene_yaml' );
 
-        $role->add_cap( 'manage_vrodos_asset3d_cat' );
-        $role->add_cap( 'manage_vrodos_asset3d_iprcat' );
-        $role->add_cap( 'manage_vrodos_asset3d_pgame' );
+		$role->add_cap( 'manage_vrodos_asset3d_cat' );
+		$role->add_cap( 'manage_vrodos_asset3d_iprcat' );
+		$role->add_cap( 'manage_vrodos_asset3d_pgame' );
 
-        $role->add_cap( 'edit_vrodos_asset3d_cat' );
-        $role->add_cap( 'edit_vrodos_asset3d_iprcat' );
-        $role->add_cap( 'edit_vrodos_asset3d_pgame' );
+		$role->add_cap( 'edit_vrodos_asset3d_cat' );
+		$role->add_cap( 'edit_vrodos_asset3d_iprcat' );
+		$role->add_cap( 'edit_vrodos_asset3d_pgame' );
 
-        unset( $role );
-    }
-    */
+		unset( $role );
+	}
+	*/
 
 	public function vrodos_add_capabilities_to_admin(): void {
 		$role = get_role( 'administrator' );
@@ -135,29 +135,33 @@ class VRodos_Roles_Manager {
 		unset( $role );
 	}
 
-	public function extra_user_profile_field_mvnode_token( $user ): void { ?>
-		<h3><?php _e("MediaVerse extra information", "blank"); ?></h3>
+	public function extra_user_profile_field_mvnode_token( $user ): void {
+		?>
+		<h3><?php _e( 'MediaVerse extra information', 'blank' ); ?></h3>
 
 		<table class="form-table">
 			<tr>
-				<th><label for="mvnode_token"><?php _e("MediaVerse Node Token"); ?></label></th>
+				<th><label for="mvnode_token"><?php _e( 'MediaVerse Node Token' ); ?></label></th>
 				<td>
-					<input type="text" name="mvnode_token" id="mvnode_token" value="<?php
-						  echo esc_attr( get_the_author_meta( 'mvnode_token', $user->ID ) );
-						  ?>" class="regular-text" /><br />
-					<span class="description"><?php _e("The registered MV node token."); ?></span>
+					<input type="text" name="mvnode_token" id="mvnode_token" value="
+					<?php
+							echo esc_attr( get_the_author_meta( 'mvnode_token', $user->ID ) );
+					?>
+					" class="regular-text" /><br />
+					<span class="description"><?php _e( 'The registered MV node token.' ); ?></span>
 				</td>
 			</tr>
 
 		</table>
-	<?php }
+		<?php
+	}
 
 	public function save_extra_user_profile_field_mvnode_token( $user_id ): bool {
 		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-user_' . $user_id ) ) {
 			return false;
 		}
 
-		if ( !current_user_can( 'edit_user', $user_id ) ) {
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
 			return false;
 		}
 
@@ -165,33 +169,36 @@ class VRodos_Roles_Manager {
 		return true;
 	}
 
-	public function extra_user_profile_field_mvnode_url( $user ): void { ?>
+	public function extra_user_profile_field_mvnode_url( $user ): void {
+		?>
 
 		<table class="form-table">
 			<tr>
-				<th><label for="mvnode_url"><?php _e("MediaVerse Node URL"); ?></label></th>
+				<th><label for="mvnode_url"><?php _e( 'MediaVerse Node URL' ); ?></label></th>
 				<td>
-					<input type="text" name="mvnode_url" id="mvnode_url" value="<?php
+					<input type="text" name="mvnode_url" id="mvnode_url" value="
+					<?php
 					echo esc_attr( get_the_author_meta( 'mvnode_url', $user->ID ) );
-					?>" class="regular-text" /><br />
-					<span class="description"><?php _e("The registered MV node url."); ?></span>
+					?>
+					" class="regular-text" /><br />
+					<span class="description"><?php _e( 'The registered MV node url.' ); ?></span>
 				</td>
 			</tr>
 
 		</table>
-	<?php }
+		<?php
+	}
 
 	public function save_extra_user_profile_field_mvnode_url( $user_id ): bool {
 		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-user_' . $user_id ) ) {
 			return false;
 		}
 
-		if ( !current_user_can( 'edit_user', $user_id ) ) {
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
 			return false;
 		}
 
 		update_user_meta( $user_id, 'mvnode_url', $_POST['mvnode_url'] );
 		return true;
 	}
-
 }

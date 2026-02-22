@@ -8,35 +8,37 @@
  */
 function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scenepass) {
 
-    jQuery.ajax({
-        url: my_ajax_object_deletegame.ajax_url,
-        type: 'POST',
-        data: {
-            'action': 'vrodos_delete_game_action',
-            'game_id': game_id
-        },
-        success: function (res) {
+	jQuery.ajax(
+		{
+			url: my_ajax_object_deletegame.ajax_url,
+			type: 'POST',
+			data: {
+				'action': 'vrodos_delete_game_action',
+				'game_id': game_id
+			},
+			success: function (res) {
 
-            jQuery('#delete-dialog-progress-bar').hide();
-            jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );
-            jQuery( "#cancelDeleteGameBtn" ).removeClass( "LinkDisabled" );
+				jQuery( '#delete-dialog-progress-bar' ).hide();
+				jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );
+				jQuery( "#cancelDeleteGameBtn" ).removeClass( "LinkDisabled" );
 
-            fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass);
+				fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass );
 
-            dialog.close();
+				dialog.close();
 
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
+			},
+			error: function (xhr, ajaxOptions, thrownError) {
 
-            jQuery('#delete-dialog-progress-bar').hide();
+				jQuery( '#delete-dialog-progress-bar' ).hide();
 
-            jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );
-            jQuery( "#cancelDeleteGameBtn" ).removeClass( "LinkDisabled" );
+				jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );
+				jQuery( "#cancelDeleteGameBtn" ).removeClass( "LinkDisabled" );
 
-            alert("Could not delete game. Try deleting it from the administration panel");
+				alert( "Could not delete game. Try deleting it from the administration panel" );
 
-            console.log("Ajax Delete Game: ERROR: 166" + thrownError);
-        }
-    });
+				console.log( "Ajax Delete Game: ERROR: 166" + thrownError );
+			}
+		}
+	);
 
 }

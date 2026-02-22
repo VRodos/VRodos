@@ -96,30 +96,30 @@ class VRodos_Install_Manager {
 
 		add_option( 'vrodos_db_version', $vrodos_db_version );
 	}
-
 }
 
 // Keep these functions globally accessible as they are used by other parts of the plugin.
-function vrodos_append_version_game($game_project_id, $new_version_number) {
+function vrodos_append_version_game( $game_project_id, $new_version_number ) {
 	global $wpdb;
-	$table_name = $wpdb->prefix . "_games_versions";
+	$table_name = $wpdb->prefix . '_games_versions';
 	return $wpdb->insert(
 		$table_name,
-		['game_project_id' => $game_project_id, 'version_number' => $new_version_number]
+		['game_project_id' => $game_project_id, 'version_number'  => $new_version_number]
 	);
 }
 
-function vrodos_get_last_version_of_game($game_project_id){
+function vrodos_get_last_version_of_game( $game_project_id ) {
 	global $wpdb;
-	$table_name = $wpdb->prefix . "_games_versions";
+	$table_name = $wpdb->prefix . '_games_versions';
 	$lastverion = $wpdb->get_results(
-		'SELECT max(version_number) FROM '.$table_name.' WHERE game_project_id='.$game_project_id,
-		ARRAY_N );
+		'SELECT max(version_number) FROM ' . $table_name . ' WHERE game_project_id=' . $game_project_id,
+		ARRAY_N
+	);
 	return $lastverion[0][0];
 }
 
-function vrodos_get_all_versions_of_game($game_project_id){
-    global $wpdb;
-    $table_name = $wpdb->prefix . "_games_versions";
-    return $wpdb->get_results( 'SELECT * FROM '.$table_name.' WHERE game_project_id='.$game_project_id, OBJECT );
+function vrodos_get_all_versions_of_game( $game_project_id ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . '_games_versions';
+	return $wpdb->get_results( 'SELECT * FROM ' . $table_name . ' WHERE game_project_id=' . $game_project_id, OBJECT );
 }

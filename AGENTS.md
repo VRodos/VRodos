@@ -102,7 +102,7 @@ VRodos follows a clean **Manager Class Pattern** where each manager class encaps
 
 ## 4. Technology Stack
 
-- **Backend**: PHP 8.1+, WordPress 6.8+
+- **Backend**: PHP 8.3+, WordPress 6.8+
 - **Database**: MySQL 8.0+ or MariaDB 10.6+
 - **Frontend**: Vanilla JavaScript (ES5/ES6)
 - **3D Rendering**: Three.js r147
