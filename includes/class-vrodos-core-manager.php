@@ -465,7 +465,15 @@ class VRodos_Core_Manager {
 				$glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
 
 				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ); // Screenshot Image ID
-				$sshotPath = $sshotID ? wp_get_attachment_url( $sshotID ) : '';           // Screenshot Image PATH
+				$sshotPath = '';
+				if ( $sshotID ) {
+					$sshotUrl = wp_get_attachment_url( $sshotID );
+					if ( $sshotUrl ) {
+						$file_path = get_attached_file( $sshotID );
+						$cache     = file_exists( $file_path ) ? filemtime( $file_path ) : time();
+						$sshotPath = add_query_arg( 't', $cache, $sshotUrl );
+					}
+				}
 
 				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_cloned'       => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ), 'is_joker'        => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true )];
 
@@ -599,7 +607,15 @@ class VRodos_Core_Manager {
 				$glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
 
 				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ); // Screenshot Image ID
-				$sshotPath = $sshotID ? wp_get_attachment_url( $sshotID ) : '';           // Screenshot Image PATH
+				$sshotPath = '';
+				if ( $sshotID ) {
+					$sshotUrl = wp_get_attachment_url( $sshotID );
+					if ( $sshotUrl ) {
+						$file_path = get_attached_file( $sshotID );
+						$cache     = file_exists( $file_path ) ? filemtime( $file_path ) : time();
+						$sshotPath = add_query_arg( 't', $cache, $sshotUrl );
+					}
+				}
 
 				$author_id          = get_post_field( 'post_author', $asset_id );
 				$author_displayname = get_the_author_meta( 'display_name', $author_id );

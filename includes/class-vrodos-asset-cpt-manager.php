@@ -812,9 +812,12 @@ class VRodos_Asset_CPT_Manager {
 		// Screenshot
 		$data['scrnImageURL'] = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/ic_sshot.png';
 		if ( $asset_id ) {
-			$scrnImageURL = wp_get_attachment_url( get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ) );
+			$screenshot_id = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
+			$scrnImageURL  = wp_get_attachment_url( $screenshot_id );
 			if ( $scrnImageURL ) {
-				$data['scrnImageURL'] = $scrnImageURL;
+				$file_path            = get_attached_file( $screenshot_id );
+				$cache_buster         = file_exists( $file_path ) ? filemtime( $file_path ) : time();
+				$data['scrnImageURL'] = add_query_arg( 't', $cache_buster, $scrnImageURL );
 			}
 		}
 
