@@ -1,6 +1,8 @@
+// Load required modules
 const http = require("http");                 // http server core module
 const path = require("path");
 const express = require("express");           // web framework external module
+const socketIo = require("socket.io");        // web socket external module
 const easyrtc = require("open-easyrtc");      // EasyRTC external module
 const fs = require('fs');
 
@@ -22,15 +24,15 @@ const app = express();
 
 // Serve the bundle in-memory in development (needs to be before the express.static)
 if (process.env.NODE_ENV === "development") {
-    const webpackMiddleware = require("webpack-dev-middleware");
-    const webpack = require("webpack");
-    const config = require("../webpack.config");
+  const webpackMiddleware = require("webpack-dev-middleware");
+  const webpack = require("webpack");
+  const config = require("../webpack.config");
 
-    app.use(
-        webpackMiddleware(webpack(config), {
-            publicPath: "/dist/"
-        })
-    );
+  app.use(
+    webpackMiddleware(webpack(config), {
+      publicPath: "/dist/"
+    })
+  );
 }
 
 // Serve HTML files from runtime/build directory
@@ -90,7 +92,7 @@ easyrtc.events.on("easyrtcAuth", (socket, easyrtcid, msg, socketCallback, callba
 
         callback(err, connectionObj);
     });
-})
+});
 
 // To test, lets print the credential to the console for every room join!
 easyrtc.events.on("roomJoin", (connectionObj, roomName, roomParameter, callback) => {

@@ -9,7 +9,7 @@ class EasyRtcAdapter extends NoOpAdapter {
     this.easyrtc = easyrtc || window.easyrtc;
     this.app = "default";
     this.room = "default";
-    this.destination = {targetRoom: this.room};
+    this.destination = { targetRoom: this.room };
 
     this.mediaStreams = {};
     this.remoteClients = {};
@@ -30,7 +30,7 @@ class EasyRtcAdapter extends NoOpAdapter {
       if (pendingMediaRequests) {
         const msg = "The user disconnected before the media stream was resolved.";
         Object.keys(pendingMediaRequests).forEach((streamName) => {
-         pendingMediaRequests[streamName].reject(msg);
+          pendingMediaRequests[streamName].reject(msg);
         });
         this.pendingMediaRequests.delete(clientId);
       }
@@ -48,7 +48,6 @@ class EasyRtcAdapter extends NoOpAdapter {
   setRoom(roomName) {
     this.room = roomName;
     this.destination.targetRoom = this.room;
-    this.easyrtc.joinRoom(roomName, null);
   }
 
   // options: { datachannel: bool, audio: bool, video: bool }
@@ -70,7 +69,7 @@ class EasyRtcAdapter extends NoOpAdapter {
   }
 
   setRoomOccupantListener(occupantListener) {
-    this.easyrtc.setRoomOccupantListener(function(
+    this.easyrtc.setRoomOccupantListener(function (
       roomName,
       occupants,
       primary
@@ -121,27 +120,35 @@ class EasyRtcAdapter extends NoOpAdapter {
         this._connect(resolve, reject);
       })
     ]).then(([_, clientId]) => {
-      this._myRoomJoinTime = this._getRoomJoinTime(clientId);
-      this.connectSuccess(clientId);
+      this.easyrtc.joinRoom(this.room, null,
+        () => {
+          this._myRoomJoinTime = this._getRoomJoinTime(clientId);
+          this.connectSuccess(clientId);
+        },
+        (errorCode, errorText) => { this.connectFailure(errorCode, errorText); }
+      );
     }).catch(this.connectFailure);
   }
 
   shouldStartConnectionTo(client) {
+    if (this._myRoomJoinTime === client.roomJoinTime && client.easyrtcid) {
+      return this.easyrtc.myEasyrtcid < client.easyrtcid;
+    }
     return this._myRoomJoinTime <= client.roomJoinTime;
   }
 
   startStreamConnection(clientId) {
     this.easyrtc.call(
       clientId,
-      function(caller, media) {
+      function (caller, media) {
         if (media === "datachannel") {
           NAF.log.write("Successfully started datachannel to ", caller);
         }
       },
-      function(errorCode, errorText) {
+      function (errorCode, errorText) {
         NAF.log.error(errorCode, errorText);
       },
-      function(wasAccepted) {
+      function (wasAccepted) {
         // console.log("was accepted=" + wasAccepted);
       }
     );
@@ -244,7 +251,7 @@ class EasyRtcAdapter extends NoOpAdapter {
         try {
           audioTracks.forEach(track => audioStream.addTrack(track));
           clientMediaStreams.audio = audioStream;
-        } catch(e) {
+        } catch (e) {
           NAF.log.warn(`${clientId} setMediaStream "audio" alias Error`, e);
         }
 
@@ -259,7 +266,7 @@ class EasyRtcAdapter extends NoOpAdapter {
         try {
           videoTracks.forEach(track => videoStream.addTrack(track));
           clientMediaStreams.video = videoStream;
-        } catch(e) {
+        } catch (e) {
           NAF.log.warn(`${clientId} setMediaStream "video" alias Error`, e);
         }
 
@@ -317,7 +324,7 @@ class EasyRtcAdapter extends NoOpAdapter {
 
     this.easyrtc.setStreamAcceptor(this.setMediaStream.bind(this));
 
-    this.easyrtc.setOnStreamClosed(function(clientId, stream, streamName) {
+    this.easyrtc.setOnStreamClosed(function (clientId, stream, streamName) {
       if (streamName === "default") {
         delete that.mediaStreams[clientId].audio;
         delete that.mediaStreams[clientId].video;
@@ -335,11 +342,11 @@ class EasyRtcAdapter extends NoOpAdapter {
         video: that.easyrtc.videoEnabled,
         audio: that.easyrtc.audioEnabled
       }).then(
-        function(stream) {
+        function (stream) {
           that.addLocalMediaStream(stream, "default");
           that.easyrtc.connect(that.app, connectSuccess, connectFailure);
         },
-        function(errorCode, errmesg) {
+        function (errorCode, errmesg) {
           NAF.log.error(errorCode, errmesg);
         }
       );
@@ -349,9 +356,9 @@ class EasyRtcAdapter extends NoOpAdapter {
   }
 
   _getRoomJoinTime(clientId) {
-    var myRoomId = NAF.room;
-    var joinTime = this.easyrtc.getRoomOccupantsAsMap(myRoomId)[clientId]
-      .roomJoinTime;
+    var myRoomId = this.room;
+    var occupants = this.easyrtc.getRoomOccupantsAsMap(myRoomId) || {};
+    var joinTime = occupants[clientId] ? occupants[clientId].roomJoinTime : Date.now();
     return joinTime;
   }
 

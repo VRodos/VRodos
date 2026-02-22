@@ -1,6 +1,6 @@
 {
   "name": "networked-aframe",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "description": "A web framework for building multi-user virtual reality experiences.",
   "homepage": "",
   "main": "src/index.js",
@@ -27,7 +27,7 @@
   "dependencies": {
     "buffered-interpolation": "Infinitelee/buffered-interpolation#5bb18421ebf2bf11664645cdc7a15bd77ee2156b",
     "express": "^4.17.3",
-    "open-easyrtc": "^2.1.0",
+    "open-easyrtc": "^2.1.7",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
