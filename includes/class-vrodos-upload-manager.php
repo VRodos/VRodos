@@ -286,44 +286,21 @@ class VRodos_Upload_Manager {
 		$_REQUEST['post_id'] = $parentPostId;
 		add_filter( 'upload_dir', self::upload_dir_for_scenes_or_assets(...) );
 
-		// Define filename. A consistent filename is important for overwriting.
-		$filename      = $parentPostId . '_sshot.png';
-		$decoded_image = base64_decode( substr( (string) $image, strpos( (string) $image, ',' ) + 1 ) );
-
-		// If an old screenshot exists, try to overwrite it to preserve the attachment ID.
+		// If an old screenshot exists, delete it completely from the database and disk.
 		if ( $existing_screenshot_id ) {
-			$existing_url = wp_get_attachment_url( $existing_screenshot_id );
-			// This project has a legacy issue where get_attached_file() can be unreliable.
-			// The correct procedure is to convert the URL to an absolute path.
-			if ( $existing_url ) {
-				$existing_path = str_replace( get_site_url(), ABSPATH, $existing_url );
-				$existing_path = wp_normalize_path( $existing_path );
-
-				// Check if the path is valid and the file is writable before attempting to overwrite.
-				if ( ! empty( $existing_path ) && is_writable( $existing_path ) ) {
-					$file_put_contents_return = file_put_contents( $existing_path, $decoded_image );
-
-					// If the overwrite was successful, update metadata and return.
-					if ( $file_put_contents_return !== false ) {
-						wp_update_attachment_metadata( $existing_screenshot_id, wp_generate_attachment_metadata( $existing_screenshot_id, $existing_path ) );
-
-						// The in-place update was successful. Clean up and return.
-						remove_filter( 'upload_dir', self::upload_dir_for_scenes_or_assets(...) );
-						unset( $_REQUEST['post_id'] );
-						return $existing_screenshot_id;
-					}
-				}
-			}
-
-			// If we reached here, it means the URL was invalid or the overwrite failed.
-			// Delete the old attachment so we can create a new one, preventing orphaned media.
 			wp_delete_attachment( $existing_screenshot_id, true );
 		}
 
-		// If no old screenshot exists, we create a new one.
+		// Define a unique filename using a timestamp to prevent orphaned files 
+		// with identical names and naturally bust browser caching.
+		$filename      = $parentPostId . '_sshot_' . time() . '.png';
+		$decoded_image = base64_decode( substr( (string) $image, strpos( (string) $image, ',' ) + 1 ) );
+
+		// Prevent thumbnails from being generated for the new screenshot.
 		add_filter( 'intermediate_image_sizes_advanced', self::remove_allthumbs_sizes(...), 10, 2 );
 		add_filter( 'big_image_size_threshold', '__return_false' );
 
+		// Upload the new screenshot file.
 		$file_return = wp_upload_bits( $filename, null, $decoded_image );
 
 		// Always remove filters after the operation.
