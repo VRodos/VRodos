@@ -370,9 +370,7 @@ class VRodos_Compiler_Manager {
 			// 180 / pi() * $scene_json->objects->avatarCamera->rotation[2]
 			// ]));
 
-			// $avatarTemplateRpm= $dom->getElementById('ready-player-me-avatar');
 
-			// $avatarTemplateRpm->setAttribute("position", "-10, 0, 0");
 			$ascenePlayer->setAttribute( 'custom-movement', '' );
 			$ascenePlayer->setAttribute( 'show-position', '' );
 			// $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
