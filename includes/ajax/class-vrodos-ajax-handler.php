@@ -92,6 +92,10 @@ class VRodos_AJAX_Handler {
 		$asset_id       = $_POST['asset_id'];
 		$glbID          = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 		$glbURL         = wp_get_attachment_url( $glbID );
+
+		$compiler = new VRodos_Compiler_Manager();
+		$glbURL = $compiler->normalize_url( $glbURL );
+
 		$output         = new StdClass();
 		$output->glbIDs = $glbID;
 		$output->glbURL = $glbURL;
@@ -572,6 +576,9 @@ class VRodos_AJAX_Handler {
 
 		$final_path = $attachment_id ? wp_get_attachment_url( $attachment_id ) : wp_get_attachment_url( $scene_bg_id );
 
+		$compiler = new VRodos_Compiler_Manager();
+		$final_path = $compiler->normalize_url( $final_path );
+
 		$content = json_encode( ['url' => $final_path] );
 
 		echo $content;
@@ -749,15 +756,23 @@ class VRodos_AJAX_Handler {
 
 		$response = VRodos_Core_Manager::vrodos_get_assets_by_game( $_POST['gameProjectSlug'], $_POST['gameProjectID'] );
 
+		$compiler = new VRodos_Compiler_Manager();
 		for ( $i = 0; $i < count( $response ); $i++ ) {
 			if ( isset( $response[ $i ]['assetName'] ) ) {
 				$response[ $i ]['name'] = $response[ $i ]['assetName'];
 				$response[ $i ]['type'] = 'file';
 			}
+			// Normalize all paths in the asset data
+			foreach ( ['glb_path', 'path', 'screenshot_path', 'video_path', 'poi_img_path'] as $key ) {
+				if ( isset( $response[ $i ][ $key ] ) ) {
+					$response[ $i ][ $key ] = $compiler->normalize_url( $response[ $i ][ $key ] );
+				}
+			}
 		}
 
 		$jsonResp = json_encode(
-			['items' => $response]
+			['items' => $response],
+			JSON_UNESCAPED_SLASHES
 		);
 
 		echo $jsonResp;

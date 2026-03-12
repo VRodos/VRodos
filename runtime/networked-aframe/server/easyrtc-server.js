@@ -41,6 +41,22 @@ app.use(express.static(path.resolve(__dirname, "..", "..", "build")));
 // Serve VRodos A-Frame assets (js, css, dist, etc.)
 app.use(express.static(path.resolve(__dirname, "..", "..", "assets")));
 
+// Map any request containing /wp-content/ to the actual local wp-content folder
+app.use((req, res, next) => {
+    const cleanReq = req.path;
+    const relPathMatch = cleanReq.match(/.*?\/wp-content\/(.*)/);
+    if (relPathMatch) {
+        // wp-content is 5 levels up from server folder
+        const wpContentDir = path.resolve(__dirname, "..", "..", "..", "..", "..");
+        const relPath = decodeURI(relPathMatch[1]);
+        res.sendFile(relPath, { root: wpContentDir }, (err) => {
+            if (err) next();
+        });
+        return;
+    }
+    next();
+});
+
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");

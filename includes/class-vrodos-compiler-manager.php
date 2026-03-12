@@ -6,18 +6,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VRodos_Compiler_Manager {
 
-	private readonly string $server_protocol;
+	private string $server_protocol;
 	private string $portNodeJs;
-	private readonly string $plugin_path_url;
-	private readonly string $plugin_path_dir;
-	private readonly string $website_root_url;
+	private string $plugin_path_url;
+	private string $plugin_path_dir;
+	private string $website_root_url;
 
 	public function __construct() {
 		$this->server_protocol  = is_ssl() ? 'https' : 'http';
-		$this->plugin_path_url  = plugin_dir_url( __DIR__ );
-		$this->plugin_path_dir  = plugin_dir_path( __DIR__ );
-		$this->website_root_url = parse_url( get_site_url(), PHP_URL_HOST );
-		$this->portNodeJs       = '5832';
+		$this->plugin_path_url  = plugin_dir_url( dirname( __FILE__, 2 ) . '/VRodos.php' );
+		$this->plugin_path_dir  = plugin_dir_path( dirname( __FILE__, 2 ) . '/VRodos.php' );
+
+		// Use the current request host if available (e.g. when accessing via IP)
+		// otherwise fallback to the site's configured URL.
+		if ( isset( $_SERVER['HTTP_HOST'] ) ) {
+			$this->website_root_url = $_SERVER['HTTP_HOST'];
+		} else {
+			$this->website_root_url = parse_url( get_site_url(), PHP_URL_HOST );
+		}
+
+		// Fallback for terminal/cron etc if everything else fails
+		if ( ! $this->website_root_url ) {
+			$this->website_root_url = 'localhost';
+		}
+
+		$this->plugin_path_url = $this->normalize_url( $this->plugin_path_url );
+
+		$this->portNodeJs = '5832';
 		if ( $this->website_root_url == 'vrexpo.iti.gr' ) {
 			$this->portNodeJs = '5840';
 		}
@@ -93,6 +108,28 @@ class VRodos_Compiler_Manager {
 		return $res;
 	}
 
+	/**
+	 * Normalize URLs by stripping the 'localhost' domain and converting to relative paths.
+	 * This fixes CORS and PNA issues when accessed via IP, because Node.js serves them as relative to itself.
+	 */
+	public function normalize_url( $url ) {
+		if ( ! $url || $url === 'false' ) {
+			return $url;
+		}
+
+		$parsed = parse_url($url);
+		$host = isset($parsed['host']) ? $parsed['host'] : '';
+
+		// If it's a local URL, make it relative (path absolute)
+		if ( $host === 'localhost' || $host === '127.0.0.1' || $host === $this->website_root_url || empty($host) ) {
+			$path = isset($parsed['path']) ? $parsed['path'] : '';
+			$query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
+			return $path . $query;
+		}
+
+		return $url;
+	}
+
 	private function setAffineTransformations( $entity, $contentObject ) {
 		$entity->setAttribute( 'position', implode( ' ', $contentObject->position ) );
 		$entity->setAttribute(
@@ -128,7 +165,7 @@ class VRodos_Compiler_Manager {
 			$material .= 'metalness:' . $contentObject->metalness . ';';
 		}
 		if ( isset( $contentObject->videoTextureSrc ) ) {
-			$material .= 'src:url(' . $contentObject->videoTextureSrc . ');';
+			$material .= 'src:url(' . $this->normalize_url( $contentObject->videoTextureSrc ) . ');';
 		}
 		if ( isset( $contentObject->videoTextureRepeatX ) ) {
 			$material .= 'repeat:' . $contentObject->videoTextureRepeatX . ' ' . $contentObject->videoTextureRepeatY . ';';
@@ -297,7 +334,7 @@ class VRodos_Compiler_Manager {
 			if ( $image_path ) {
 				$a_asset_sky = $dom->createElement( 'img' );
 				$a_asset_sky->setAttribute( 'id', 'custom_sky' );
-				$a_asset_sky->setAttribute( 'src', $image_path );
+				$a_asset_sky->setAttribute( 'src', $this->normalize_url( $image_path ) );
 				$a_asset_sky->setAttribute( 'crossorigin', 'anonymous' );
 				$a_asset->appendChild( $a_asset_sky );
 				$ascene->appendChild( $a_asset );
@@ -582,7 +619,7 @@ class VRodos_Compiler_Manager {
 							$this->setAffineTransformations( $a_entity, $contentObject );
 							$a_entity->setAttribute(
 								'gltf-model',
-								'url(' . $this->plugin_path_url . '/assets/pawn.glb)'
+								'url(' . $this->plugin_path_url . 'assets/pawn.glb)'
 							);
 
 							$ascene->appendChild( $a_entity );
@@ -595,7 +632,7 @@ class VRodos_Compiler_Manager {
 
 						$asset_item = $dom->createElement( 'a-asset-item' );
 						$asset_item->setAttribute( 'id', $uuid );
-						$asset_item->setAttribute( 'src', '' . $contentObject->glb_path . '' );
+						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
 						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
 						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 
@@ -633,7 +670,7 @@ class VRodos_Compiler_Manager {
 
 						$asset_item = $dom->createElement( 'a-asset-item' );
 						$asset_item->setAttribute( 'id', $uuid );
-						$asset_item->setAttribute( 'src', '' . $contentObject->glb_path . '' );
+						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
 						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
 						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 
@@ -677,28 +714,28 @@ class VRodos_Compiler_Manager {
 						$a_asset_fs->setAttribute( 'mixin', 'vid_panel' );
 						$a_asset_fs->setAttribute( 'id', "video_fullScreen_$uuid" );
 						// $a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/fullscreen.png");
-						$a_asset_fs->setAttribute( 'src', plugins_url( '../VRodos/assets/images/fullscreen.png', __DIR__ ) );
+						$a_asset_fs->setAttribute( 'src', $this->plugin_path_url . 'assets/images/fullscreen.png' );
 						$a_asset_fs->setAttribute( 'crossorigin', 'anonymous' );
 
 						$a_asset_ex = $dom->createElement( 'img' );
 						$a_asset_ex->setAttribute( 'mixin', 'vid_panel' );
 						$a_asset_ex->setAttribute( 'id', "video_exit_$uuid" );
 						// $a_asset_ex->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/exit.png");
-						$a_asset_ex->setAttribute( 'src', plugins_url( '../VRodos/assets/images/exit.png', __DIR__ ) );
+						$a_asset_ex->setAttribute( 'src', $this->plugin_path_url . 'assets/images/exit.png' );
 						$a_asset_ex->setAttribute( 'crossorigin', 'anonymous' );
 
 						$a_asset_pl = $dom->createElement( 'img' );
 						$a_asset_pl->setAttribute( 'mixin', 'vid_panel' );
 						$a_asset_pl->setAttribute( 'id', "video_pl_$uuid" );
 						// $a_asset_pl->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/play.png");
-						$a_asset_pl->setAttribute( 'src', plugins_url( '../VRodos/assets/images/play.png', __DIR__ ) );
+						$a_asset_pl->setAttribute( 'src', $this->plugin_path_url . 'assets/images/play.png' );
 						$a_asset_pl->setAttribute( 'crossorigin', 'anonymous' );
 
 						$a_asset_pas = $dom->createElement( 'img' );
 						$a_asset_pas->setAttribute( 'mixin', 'vid_panel' );
 						$a_asset_pas->setAttribute( 'id', "video_pas_$uuid" );
 						// $a_asset_pas->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/pause.png");
-						$a_asset_pas->setAttribute( 'src', plugins_url( '../VRodos/assets/images/pause.png', __DIR__ ) );
+						$a_asset_pas->setAttribute( 'src', $this->plugin_path_url . 'assets/images/pause.png' );
 						$a_asset_pas->setAttribute( 'crossorigin', 'anonymous' );
 
 						$a_video_asset = $dom->createElement( 'video' );
@@ -714,7 +751,7 @@ class VRodos_Compiler_Manager {
 
 						// $contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
 						if ( $contentObject->video_path != 'false' ) {
-							$a_video_asset->setAttribute( 'src', $contentObject->video_path );
+							$a_video_asset->setAttribute( 'src', $this->normalize_url( $contentObject->video_path ) );
 						}
 
 						// $a_video_asset->setAttribute("src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
@@ -801,7 +838,7 @@ class VRodos_Compiler_Manager {
 						// $a_title_vid_entity->setAttribute("position", "-0.18 0.2 0.000001");
 						$a_title_vid_entity->setAttribute( 'position', '-0.18 0.05 0.000001' );
 
-						$vid_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', __DIR__ );
+						$vid_font_path = $this->plugin_path_url . 'assets/fonts/Roboto-Black-msdf.json';
 						$a_title_vid_entity->setAttribute( 'text', "depthTest:false; negate:false;shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: #2f3542; value: $contentObject->video_title" );
 						$a_title_vid_entity->setAttribute( 'class', 'clickable raycastable' );
 
@@ -858,7 +895,7 @@ class VRodos_Compiler_Manager {
 
 						$asset_item = $dom->createElement( 'a-asset-item' );
 						$asset_item->setAttribute( 'id', "entity_$uuid" );
-						$asset_item->setAttribute( 'src', '' . $contentObject->glb_path . '' );
+						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
 						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
 						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 						$assets->appendChild( $asset_item );
@@ -889,7 +926,7 @@ class VRodos_Compiler_Manager {
 
 						$asset_item = $dom->createElement( 'a-asset-item' );
 						$asset_item->setAttribute( 'id', $uuid );
-						$asset_item->setAttribute( 'src', '' . $contentObject->glb_path . '' );
+						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
 						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
 						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 
@@ -897,7 +934,7 @@ class VRodos_Compiler_Manager {
 
 						$asset_indicator_item = $dom->createElement( 'a-asset-item' );
 						$asset_indicator_item->setAttribute( 'id', 'check_indicator_id' );
-						$asset_indicator_item->setAttribute( 'src', '' . $this->plugin_path_url . '/assets/checkmark.glb' . '' );
+						$asset_indicator_item->setAttribute( 'src', '' . $this->plugin_path_url . 'assets/checkmark.glb' . '' );
 						$asset_indicator_item->setAttribute( 'response-type', 'arraybuffer' );
 						$asset_indicator_item->setAttribute( 'crossorigin', 'anonymous' );
 
@@ -905,7 +942,7 @@ class VRodos_Compiler_Manager {
 
 						$asset_indicator_item = $dom->createElement( 'a-asset-item' );
 						$asset_indicator_item->setAttribute( 'id', 'x_indicator_id' );
-						$asset_indicator_item->setAttribute( 'src', '' . $this->plugin_path_url . '/assets/xmark.glb' . '' );
+						$asset_indicator_item->setAttribute( 'src', '' . $this->plugin_path_url . 'assets/xmark.glb' . '' );
 						$asset_indicator_item->setAttribute( 'response-type', 'arraybuffer' );
 						$asset_indicator_item->setAttribute( 'crossorigin', 'anonymous' );
 
@@ -956,17 +993,17 @@ class VRodos_Compiler_Manager {
 
 						$a_image_asset_main->setAttribute( 'id', "main_img_$uuid" );
 						if ( $contentObject->poi_img_path != 'false' ) {
-							$a_image_asset_main->setAttribute( 'src', $contentObject->poi_img_path );
+							$a_image_asset_main->setAttribute( 'src', $this->normalize_url( $contentObject->poi_img_path ) );
 						}
 
 						$a_image_asset_esc->setAttribute( 'id', "esc_img_$uuid" );
-						$a_image_asset_esc->setAttribute( 'src', plugins_url( '../VRodos/assets/images/x_2f3542.png', __DIR__ ) );
+						$a_image_asset_esc->setAttribute( 'src', $this->plugin_path_url . 'assets/images/x_2f3542.png' );
 
 						$a_image_asset_left->setAttribute( 'id', "left_img_$uuid" );
-						$a_image_asset_left->setAttribute( 'src', plugins_url( '../VRodos/assets/images/arrow_left_2f3542.png', __DIR__ ) );
+						$a_image_asset_left->setAttribute( 'src', $this->plugin_path_url . 'assets/images/arrow_left_2f3542.png' );
 
 						$a_image_asset_right->setAttribute( 'id', "right_img_$uuid" );
-						$a_image_asset_right->setAttribute( 'src', plugins_url( '../VRodos/assets/images/arrow_right_2f3542.png', __DIR__ ) );
+						$a_image_asset_right->setAttribute( 'src', $this->plugin_path_url . 'assets/images/arrow_right_2f3542.png' );
 
 						$assets->appendChild( $a_image_asset_exp );
 						$assets->appendChild( $a_image_asset_main );
@@ -1001,7 +1038,7 @@ class VRodos_Compiler_Manager {
 
 						$material = '';
 						$this->setMaterial( $material, $contentObject );
-						$a_button_entity->setAttribute( 'gltf-model', 'url(' . $contentObject->glb_path . ')' );
+						$a_button_entity->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( $contentObject->glb_path ) . ')' );
 						$a_button_entity->setAttribute( 'material', $material );
 						$a_button_entity->setAttribute( 'shadow', 'cast: true; receive: true' );
 
@@ -1031,7 +1068,7 @@ class VRodos_Compiler_Manager {
 						$a_title_img_entity = $dom->createElement( 'a-entity' );
 						$a_title_img_entity->setAttribute( 'id', "title_$uuid" );
 
-						$tit_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Black-msdf.json', __DIR__ );
+						$tit_font_path = $this->plugin_path_url . 'assets/fonts/Roboto-Black-msdf.json';
 						$a_title_img_entity->setAttribute( 'text', "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: #2f3542;" );
 						$a_title_img_entity->setAttribute( 'title_to_add', "$contentObject->poi_img_title" );
 						$a_title_img_entity->setAttribute( 'class', 'hideable' );
@@ -1064,7 +1101,7 @@ class VRodos_Compiler_Manager {
 							$a_desc_img_entity = $dom->createElement( 'a-entity' );
 							$a_desc_img_entity->setAttribute( 'id', "desc_$uuid" );
 							$a_desc_img_entity->setAttribute( 'position', '-0.68 -0.3 0' );
-							$desc_font_path = plugins_url( '../VRodos/assets/fonts/Roboto-Regular-msdf.json', __DIR__ );
+							$desc_font_path = $this->plugin_path_url . 'assets/fonts/Roboto-Regular-msdf.json';
 							$content_length = 90;
 
 							if ( strlen( $contentObject->poi_img_content ) > $content_length ) {
@@ -1134,13 +1171,15 @@ class VRodos_Compiler_Manager {
 			}
 		}
 		$contentNew = $dom->saveHTML();
+		$contentNew = "<!-- Detected Hostname: {$this->website_root_url} -->\n" . $contentNew;
 
 		// Write back to root
 		return $this->writer( $this->plugin_path_dir . '/runtime/build/Master_Client_' . $scene_id . '.html', $contentNew );
 	}
 
 	private function includeDoorFunctionality( $a_entity, $door_link ) {
-		$a_entity->setAttribute( 'door-listener', $this->nodeJSpath() . "Master_Client_{$door_link}.html" );
+		// Use a relative path for the baked HTML door link so it works across IPs/localhost without CORS.
+		$a_entity->setAttribute( 'door-listener', "Master_Client_{$door_link}.html" );
 	}
 
 	private function createSimpleClient( $scene_id, $scene_json, $project_id ) {
