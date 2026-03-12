@@ -99,10 +99,16 @@ class NetworkConnection {
   // Some adapters will handle this internally
   checkForConnectingClients(occupantList) {
     for (var id in occupantList) {
-      var startConnection = this.isNewClient(id) && this.adapter.shouldStartConnectionTo(occupantList[id]);
-      if (startConnection) {
-        NAF.log.write('Opening datachannel to', id);
-        this.adapter.startStreamConnection(id);
+      if (this.isNewClient(id)) {
+        var startConnection = this.adapter.shouldStartConnectionTo(occupantList[id], id);
+        if (startConnection) {
+          NAF.log.write('Opening datachannel to', id);
+          this.adapter.startStreamConnection(id);
+        }
+        
+        // Sync state via WS immediately so newcomers see us even if P2P lags/fails
+        NAF.log.write('Forcing early sync to new client via WS', id);
+        this.entities.completeSync(id, true);
       }
     }
   }
@@ -124,7 +130,8 @@ class NetworkConnection {
   }
 
   isConnectedTo(clientId) {
-    return this.adapter.getConnectStatus(clientId) === NAF.adapters.IS_CONNECTED;
+    var status = this.adapter.getConnectStatus(clientId);
+    return status === NAF.adapters.IS_CONNECTED || status === NAF.adapters.CONNECTING;
   }
 
   dataChannelOpen(clientId) {
@@ -158,14 +165,10 @@ class NetworkConnection {
   }
 
   sendData(toClientId, dataType, data, guaranteed) {
-    if (this.hasActiveDataChannel(toClientId)) {
-      if (guaranteed) {
-        this.adapter.sendDataGuaranteed(toClientId, dataType, data);
-      } else {
-        this.adapter.sendData(toClientId, dataType, data);
-      }
+    if (guaranteed) {
+      this.adapter.sendDataGuaranteed(toClientId, dataType, data);
     } else {
-      // console.error("NOT-CONNECTED", "not connected to " + toClient);
+      this.adapter.sendData(toClientId, dataType, data);
     }
   }
 

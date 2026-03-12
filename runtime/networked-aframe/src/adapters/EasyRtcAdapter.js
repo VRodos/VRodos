@@ -130,9 +130,10 @@ class EasyRtcAdapter extends NoOpAdapter {
     }).catch(this.connectFailure);
   }
 
-  shouldStartConnectionTo(client) {
-    if (this._myRoomJoinTime === client.roomJoinTime && client.easyrtcid) {
-      return this.easyrtc.myEasyrtcid < client.easyrtcid;
+  shouldStartConnectionTo(client, clientId) {
+    const remoteId = client.id || clientId;
+    if (this._myRoomJoinTime === client.roomJoinTime && remoteId) {
+      return this.easyrtc.myEasyrtcid < remoteId;
     }
     return this._myRoomJoinTime <= client.roomJoinTime;
   }
@@ -146,7 +147,13 @@ class EasyRtcAdapter extends NoOpAdapter {
         }
       },
       function (errorCode, errorText) {
-        NAF.log.error(errorCode, errorText);
+        if (errorCode === "ALREADY_CONNECTED") {
+           // This is a harmless race condition when both clients try to connect simultaneously.
+           // EasyRTC will drop the duplicate connection attempt gracefully.
+           NAF.log.write("Ignoring ALREADY_CONNECTED glare from " + clientId);
+        } else {
+           NAF.log.error(errorCode, errorText);
+        }
       },
       function (wasAccepted) {
         // console.log("was accepted=" + wasAccepted);
@@ -160,7 +167,9 @@ class EasyRtcAdapter extends NoOpAdapter {
 
   sendData(clientId, dataType, data) {
     // send via webrtc otherwise fallback to websockets
-    this.easyrtc.sendData(clientId, dataType, data);
+    // Clone data to avoid closure races if tick modifies it before async send finishes
+    const msgData = (typeof data === 'object' && data !== null) ? JSON.parse(JSON.stringify(data)) : data;
+    this.easyrtc.sendData(clientId, dataType, msgData);
   }
 
   sendDataGuaranteed(clientId, dataType, data) {
@@ -169,6 +178,9 @@ class EasyRtcAdapter extends NoOpAdapter {
 
   broadcastData(dataType, data) {
     var roomOccupants = this.easyrtc.getRoomOccupantsAsMap(this.room);
+    
+    // Clone data once per broadcast to avoid closure races
+    const msgData = (typeof data === 'object' && data !== null) ? JSON.parse(JSON.stringify(data)) : data;
 
     // Iterate over the keys of the easyrtc room occupants map.
     // getRoomOccupantsAsArray uses Object.keys which allocates memory.
@@ -178,7 +190,7 @@ class EasyRtcAdapter extends NoOpAdapter {
         roomOccupant !== this.easyrtc.myEasyrtcid
       ) {
         // send via webrtc otherwise fallback to websockets
-        this.easyrtc.sendData(roomOccupant, dataType, data);
+        this.easyrtc.sendData(roomOccupant, dataType, msgData);
       }
     }
   }

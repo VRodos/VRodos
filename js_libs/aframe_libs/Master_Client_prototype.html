@@ -83,31 +83,43 @@
         // Global variable to switch between interfaces for interaction modes.
         let browsingModeVR = false;
 
+        // Utility for random color generation (fallback if NAF examples not loaded)
+        window.ntExample = {
+            randomColor: () => {
+                return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            }
+        };
+
         /* PLAYER AVATARS (COLOR AND NAME) */
-        // Temporary workaround for template declaration; see issue 167
-        NAF.schemas.getComponentsOriginal = NAF.schemas.getComponents;
-        NAF.schemas.getComponents = (template) => {
-            if (!NAF.schemas.hasTemplate('#avatar-template-expo')) {
+        // Define NAF schemas for all templates
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof NAF !== 'undefined') {
                 NAF.schemas.add({
                     template: '#avatar-template-expo',
                     components: [
                         'position',
                         'player-info',
                         'avatar-movement-info',
-                        {
-                            selector: '.rpm_avatar', // the model entity has a .model class
-                            component: 'gltf-model', // we want the gltf-model component to sync between clients
-                        },
+                        'avatar-rotation-info',
                         {
                             component: 'rotation',
                             requiresNetworkUpdate: vectorRequiresUpdateRotation(0.5)
                         }
-
+                    ]
+                });
+                NAF.schemas.add({
+                    template: '#avatar-template',
+                    components: [
+                        'position',
+                        'player-info',
+                        {
+                            component: 'rotation',
+                            requiresNetworkUpdate: vectorRequiresUpdateRotation(0.5)
+                        }
                     ]
                 });
             }
-            return NAF.schemas.getComponentsOriginal(template);
-        };
+        });
 
         AFRAME.registerComponent('clear-frustum-culling', {
             init: function () {
@@ -123,6 +135,172 @@
                         }
                     });
                 });
+            }
+        });
+
+        AFRAME.registerComponent('avatar-movement-info', {
+            schema: {
+                movementState: { type: 'string', default: 'idle' }
+            },
+            init: function () {
+                this.rpm_model = this.el.querySelector('.rpm_avatar');
+            },
+            update: function () {
+                if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
+                    if (this.data.movementState != "stop") {
+                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
+                    } else {
+                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
+                    }
+                }
+            }
+        });
+
+        AFRAME.registerComponent('avatar-rotation-info', {
+            schema: {
+                rotationState: { type: 'string', default: 'idle' }
+            },
+            init: function () {
+                this.rpm_model = this.el.querySelector('.rpm_avatar');
+            },
+            update: function () {
+                if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
+                    if (this.data.rotationState != "stop") {
+                        // For rotation, we might want different logic, but if it's mirroring movement animations:
+                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.rotationState + "; crossFadeDuration:0.3;");
+                    } else {
+                        this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
+                    }
+                }
+            }
+        });
+
+        AFRAME.registerComponent('player-info', {
+            schema: {
+                name: { type: 'string', default: 'user-' + Math.round(Math.random() * 10000) },
+                color: { type: 'color', default: window.ntExample.randomColor() },
+                gltf: { default: '', type: 'string' },
+                avatarType: { default: 'blob', type: 'string' },
+                animationsLoaded: { default: '', type: 'string' },
+                currentPrivateChat: { default: '', type: 'string' },
+                fullChatTable: { default: [], type: 'array' },
+                connectedUsers: { default: 0, type: 'number' }
+            },
+            init: function () {
+                this.anims_loaded = false;
+                this.ownedByLocalUser = this.el.id === 'cameraA';
+                
+                if (this.ownedByLocalUser) {
+                    this.nametagInput = document.getElementById('username-overlay');
+                    if (this.nametagInput) {
+                        this.nametagInput.value = this.data.name;
+                    }
+                    const colorChanger = document.getElementById('color-changer');
+                    if (colorChanger) {
+                        colorChanger.style.backgroundColor = this.data.color;
+                        colorChanger.style.color = this.data.color;
+                    }
+                }
+
+                // Listen for template instantiation
+                this.el.addEventListener('instantiated', (evt) => {
+                    this.applyAvatar();
+                });
+
+                // Always try to apply avatar on init.
+                // For remote entities, this will start the retry loop until children are appended.
+                this.applyAvatar();
+            },
+            applyAvatar: function () {
+                const elem = this.el;
+                const isRemote = !this.ownedByLocalUser;
+
+                this.head = this.el.querySelector('.head');
+                this.face = this.el.querySelector('.face');
+                this.nametag = this.el.querySelector('.nametag');
+                this.rpm_model = this.el.querySelector('.rpm_avatar');
+
+                if (isRemote) {
+                    if (!this.head && !this.rpm_model) {
+                         // Missing visuals handled by retry loop below
+                    }
+                }
+
+                if (!this.head && !this.rpm_model && !this.ownedByLocalUser) {
+                    // Only retry if we are using the expo template which is SUPPOSED to have these
+                    const networked = this.el.getAttribute('networked');
+                    if (networked && networked.template === '#avatar-template-expo') {
+                        if (!this.avatarRetryTimeout && (!this.retryCount || this.retryCount < 10)) {
+                            this.retryCount = (this.retryCount || 0) + 1;
+                            this.avatarRetryTimeout = setTimeout(() => {
+                                this.avatarRetryTimeout = null;
+                                if (this.el) this.applyAvatar();
+                            }, 200);
+                        }
+                    }
+                    return;
+                }
+
+                if (this.rpm_model && !elem.is('anims_loaded_listener_added')) {
+                    elem.addState('anims_loaded_listener_added');
+                    this.rpm_model.addEventListener('stateadded', (evt) => {
+                        if (evt.detail == 'loadedanimations') {
+                            this.anims_loaded = true;
+                            elem.addState('anims_loaded');
+                        }
+                    });
+                }
+
+                if (this.data.avatarType) {
+                    if (this.data.avatarType === 'no-avatar') {
+                        if (this.head) this.head.setAttribute("visible", "false");
+                        if (this.face) this.face.setAttribute("visible", "false");
+                        if (this.rpm_model) this.rpm_model.setAttribute("visible", "false");
+                    } else if (this.data.avatarType === 'blob') {
+                        if (this.rpm_model) this.rpm_model.setAttribute("visible", "false");
+                        if (this.head) {
+                            this.head.setAttribute('material', {color: this.data.color});
+                            this.head.setAttribute('visible', 'true');
+                        }
+                        if (this.face) this.face.setAttribute('visible', 'true');
+                        if (this.nametag) {
+                            this.nametag.setAttribute('value', this.data.name);
+                            this.nametag.setAttribute('visible', 'true');
+                        }
+                    } else if (this.data.avatarType === 'rpm') {
+                        if (this.head) this.head.setAttribute("visible", "false");
+                        if (this.face) this.face.setAttribute("visible", "false");
+                        if (this.rpm_model) {
+                            this.rpm_model.setAttribute("visible", "true");
+                            if (this.rpm_model.getAttribute('gltf-model') !== this.data.gltf) {
+                                this.rpm_model.removeAttribute('gltf-model');
+                                this.rpm_model.setAttribute('gltf-model', this.data.gltf);
+                                this.rpm_model.addEventListener('model-loaded', () => {
+                                    if (this.rpm_model.object3DMap.mesh) {
+                                        let avatarType = this.rpm_model.object3DMap.mesh.children[0].userData.name;
+                                        let avatarPosition = avatarType === 'Armature' ? "0 -1.68 0" : '0 -.4 0';
+                                        this.rpm_model.setAttribute('position', avatarPosition);
+                                    }
+                                }, { once: true });
+                            }
+                        }
+                        if (this.nametag) {
+                            this.nametag.setAttribute('value', this.data.name);
+                            this.nametag.setAttribute('position', '0.25 0.6 0');
+                            this.nametag.setAttribute('visible', 'true');
+                        }
+                    }
+                }
+            },
+            update: function (oldData) {
+                // Always try to apply avatar on update if data is available.
+                // The applyAvatar function handles the logic of whether visibility/models need to change.
+                this.applyAvatar();
+            },
+            remove: function () {
+                if (this.avatarRetryTimeout) {
+                    clearTimeout(this.avatarRetryTimeout);
+                }
             }
         });
 
@@ -191,208 +369,6 @@
                         document.getElementById("public-chat-button").disabled = true;
                     }
 
-
-
-                    AFRAME.registerComponent('avatar-movement-info', {
-                        // notice that color and name are both listed in the schema; NAF will only keep
-                        // properties declared in the schema in sync.
-                        schema: {
-                            movementState: {
-                                type: 'string',
-                                default: ''
-                            }
-
-                        },
-
-                        init: function () {
-                            this.rpm_model = this.el.querySelector('.rpm_avatar');
-                        },
-
-                        update: function () {
-
-                            if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
-                                //elem.setAttribute("animation-player", evt.detail);
-                                if (this.data.movementState != "stop") {
-                                    this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
-                                } else {
-                                    this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
-                                }
-
-                            }
-                        }
-                    });
-
-                    AFRAME.registerComponent('avatar-rotation-info', {
-                        // notice that color and name are both listed in the schema; NAF will only keep
-                        // properties declared in the schema in sync.
-                        schema: {
-                            rotationState: {
-                                type: 'string',
-                                default: ''
-                            }
-
-                        },
-
-                        init: function () {
-                            this.rpm_model = this.el.querySelector('.rpm_avatar');
-                        },
-
-                        update: function () {
-
-                            if (this.el.querySelector('.rpm_avatar') && this.el.is('anims_loaded')) {
-                                //elem.setAttribute("animation-player", evt.detail);
-                                if (this.data.movementState != "stop") {
-                                    this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip:" + this.data.movementState + "; crossFadeDuration:0.3;");
-                                } else {
-                                    this.el.querySelector('.rpm_avatar').setAttribute("animation-mixer", "clip: idle; crossFadeDuration:1;");
-                                }
-
-                            }
-                        }
-                    });
-
-
-                    AFRAME.registerComponent('player-info', {
-                        // notice that color and name are both listed in the schema; NAF will only keep
-                        // properties declared in the schema in sync.
-                        schema: {
-                            name: {
-                                type: 'string',
-                                default: 'user-' + Math.round(Math.random() * 10000)
-                            },
-                            color: {
-                                type: 'color', // btw: color is just a string under the hood in A-Frame
-                                default: window.ntExample.randomColor()
-                            },
-                            gltf: {
-                                default: '',
-                                type: 'string'
-                            },
-                            avatarType: {
-                                default: '',
-                                type: 'string'
-                            },
-                            animationsLoaded: {
-                                default: '',
-                                type: 'string'
-                            },
-                            currentPrivateChat: {
-                                default: '',
-                                type: 'string'
-                            },
-                            fullChatTable: {
-                                default: [],
-                                type: 'array'
-                            },
-                            connectedUsers: {
-                                default: 0,
-                                type: 'number'
-                            }
-
-                        },
-
-                        init: function () {
-                            this.head = this.el.querySelector('.head');
-                            this.face = this.el.querySelector('.face');
-                            this.nametag = this.el.querySelector('.nametag');
-                            this.rpm_model = this.el.querySelector('.rpm_avatar');
-                            this.anims_loaded = false;
-
-                            var elem = this.el;
-                            if (elem.querySelector('.rpm_avatar')) {
-                                elem.querySelector('.rpm_avatar').addEventListener('stateadded', function (evt) {
-                                    if (evt.detail == 'loadedanimations') {
-                                        this.anims_loaded = true;
-                                        elem.addState('anims_loaded');
-
-                                    }
-                                });
-
-
-                            }
-
-                            this.avatar_type = this.el.querySelector('.avatar_type');
-
-                            this.ownedByLocalUser = this.el.id === 'cameraA';
-                            if (this.ownedByLocalUser) {
-                                // populate the html overlay with the correct name on init
-                                this.nametagInput = document.getElementById('username-overlay');
-                                this.nametagInput.value = this.data.name;
-
-                                // add the initial color to the html overlay color picker button
-                                document.getElementById('color-changer').style.backgroundColor = this.data.color;
-                                document.getElementById('color-changer').style.color = this.data.color;
-                            }
-                        },
-
-                        // here as an example, not used in current demo. Could build a user list, expanding on this.
-                        listUsers: function () {
-                        },
-
-                        newRandomColor: function () {
-                            this.el.setAttribute('player-info', 'color', window.ntExample.randomColor());
-                        },
-
-                        update: function () {
-
-                            var elem = this.el;
-
-                            if (this.data.avatarType) {
-
-                                if (this.data.avatarType === 'no-avatar') {
-
-                                    if (!this.ownedByLocalUser) {
-                                        this.head.setAttribute("visible", "false");
-                                        this.face.setAttribute("visible", "false");
-                                    }
-
-                                    const parent_avatar = document.getElementById('cameraA');
-                                    let my_head = parent_avatar.querySelector('.head');
-                                    let my_face = parent_avatar.querySelector('.face');
-                                    if (my_face) my_face.setAttribute("visible", "false");
-                                    if (my_head) my_head.setAttribute("visible", "false");
-
-                                } else if (this.data.avatarType === 'blob') {
-
-                                    if (this.head) {
-                                        this.head.setAttribute('material', {color: this.data.color});
-                                        this.head.setAttribute('visible', 'true');
-                                        this.face.setAttribute('visible', 'true');
-                                    }
-                                    if (this.nametag) {
-                                        this.nametag.setAttribute('value', this.data.name);
-                                        this.nametag.setAttribute('visible', 'true');
-                                    }
-
-                                } else if (this.data.avatarType === 'rpm') {
-
-                                    if (this.rpm_model) {
-                                        // Set GLTF path to entity
-                                        this.rpm_model.removeAttribute('gltf-model');
-                                        this.rpm_model.setAttribute('gltf-model', this.data.gltf);
-
-
-                                        // Event listener when the 3D model has actually loaded
-                                        this.rpm_model.addEventListener('model-loaded', () => {
-
-                                            let avatarType = this.rpm_model.object3DMap.mesh.children[0].userData.name;
-                                            // Change Y position of model based on type
-
-                                            let avatarPosition = avatarType === 'Armature' ? "0 -1.68  0" : '0 -.4 0';
-                                            this.rpm_model.setAttribute('position', avatarPosition);
-                                        }, { once: true });
-                                    }
-
-                                    if (this.nametag) {
-                                        this.nametag.setAttribute('value', this.data.name);
-                                        this.nametag.setAttribute('position', '0.25 0.6 0');
-                                        this.nametag.setAttribute('visible', 'true');
-                                    }
-                                }
-                            }
-                        }
-                    });
-
                     // If base scene, launch avatar selector
                     /*if (document.getElementById("is-base-scene-input").value === 'true' ) {*/
 
@@ -402,7 +378,9 @@
                         avatar_dialog_element.unlisten("MDCDialog:cancel", closeAvatarDialogListener);
                         selectAvatarType('no-avatar');
                     };
-                    if (document.getElementById("aframe-scene-container").getAttribute("scene-settings").avatar_enabled == 1 && document.getElementById("aframe-scene-container").getAttribute("scene-settings").pr_type == "vrexpo_games") {
+                    
+                    // Allow avatars in ALL project types for the Master/Director client if enabled in scene settings
+                    if (document.getElementById("aframe-scene-container").getAttribute("scene-settings").avatar_enabled == 1) {
                         avatar_dialog_element.show();
                         avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
                     } else {
@@ -1462,6 +1440,22 @@
         }
     }
 
+    // Force sync for late joiners
+    document.body.addEventListener('clientConnected', function (evt) {
+        // When a new client connects, explicitly broadcast our current avatar state
+        let myCam = document.getElementById('cameraA');
+        if (myCam && myCam.components['player-info'] && myCam.components.networked) {
+             let currentInfo = myCam.getAttribute('player-info');
+             
+             // A-Frame optimizations prevent setAttribute from firing if the object is identical.
+             // We briefly change a non-visual property (like animationsLoaded) then change it back
+             // or simply call the networked component's sync method directly.
+             
+             // Trigger NAF broadcast explicitly
+             myCam.components.networked.syncAll(evt.detail.clientId, true);
+        }
+    });
+
     function parseRPMEvent(event) {
         try {
             return JSON.parse(event.data);
@@ -1873,12 +1867,6 @@
         const i = Math.floor(Math.log(bytes) / Math.log(k))
 
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
-    };
-
-    window.ntExample = {
-        randomColor: () => {
-            return '#' + new THREE.Color(Math.random(), Math.random(), Math.random()).getHexString();
-        }
     };
 
 </script>

@@ -382,6 +382,9 @@ class VRodos_Compiler_Manager {
 			$a_camera->setAttribute( 'camera', '' );
 			$a_camera->setAttribute( 'id', 'cameraA' );
 			$a_camera->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
+			$a_camera->setAttribute( 'player-info', '' );
+			$a_camera->setAttribute( 'avatar-movement-info', '' );
+			$a_camera->setAttribute( 'avatar-rotation-info', '' );
 			$a_camera->setAttribute( 'look-controls', '' );
 			// if($movement_disabled != "1")
 			// print_r($scene_json->metadata->disableMovement);
@@ -446,6 +449,10 @@ class VRodos_Compiler_Manager {
 			$a_entity->setAttribute( 'active', 'true' );
 			$a_entity->setAttribute( 'camera', 'near: 0.1; far: 7000.0;' );
 			$a_entity->setAttribute( 'position', '0 0.6 0' );
+			$a_entity->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
+			$a_entity->setAttribute( 'player-info', '' );
+			$a_entity->setAttribute( 'avatar-movement-info', '' );
+			$a_entity->setAttribute( 'avatar-rotation-info', '' );
 
 			$a_entity->appendChild( $a_cursor );
 			$ascenePlayer->appendChild( $a_entity );
