@@ -1,76 +1,104 @@
+document.addEventListener('DOMContentLoaded', () => {
+    let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
+    let chatInput = document.getElementById('chatInput');
+    let chatLog = document.getElementById('chat-messages');
 
-let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
-let chatInput = document.getElementById('chatInput');
-let chatLog = document.getElementById('chat-messages');
+    let publicChatIsActive = true;
+    let chatLogPublicHistory = [];
 
-let publicChatIsActive = true;
+    function sendPublicMessage() {
+        let player_info = document.getElementById('cameraA').getAttribute('player-info');
+        let player_name = player_info ? player_info.name : 'Unknown';
 
-let chatLogPublicHistory = [];
-
-
-function sendPublicMessage() {
-    let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
-
-    let dateString = getChatCurrentTimeString();
-    chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
-    chatLogPublicHistory.push(dateString + ' Me: ' + chatInput.value);
-    NAF.connection.broadcastData("chat", {txt: chatInput.value, player: player_object })
-    gtag('event', 'chat_public_msg_dispatched');
-}
-
-NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
-    let dateString = getChatCurrentTimeString();
-    if (publicChatIsActive)
-        chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + data.player.name + ": " + data.txt + '</span><br>';
-    chatLogPublicHistory.push(dateString + ' ' + data.player.name + ": " + data.txt);
-} )
-
-sendMsgChatBtn.addEventListener("click",sendPublicMessage);
-
-let chatExpanded = false;
-let chatMinimized = false;
-
-document.getElementById('expand-chat-btn').addEventListener("click", function() {
-    let chatWrapper = document.getElementById("chat-wrapper-el");
-    let messagesWrapper = document.getElementById("chat-messages-wrapper");
-
-    if (chatMinimized) {
-        chatExpanded = false;
-    }
-    else {
-        if (chatExpanded) {
-            chatWrapper.classList.add("ChatWrapperStyle");
-            chatWrapper.classList.remove("ChatWrapperStyleExpanded");
-            messagesWrapper.classList.add("ChatMessagesStyleNormal");
-            messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
-            chatExpanded = false;
-        } else {
-            chatWrapper.classList.add("ChatWrapperStyleExpanded");
-            chatWrapper.classList.remove("ChatWrapperStyle");
-            messagesWrapper.classList.add("ChatMessagesStyleExpanded");
-            messagesWrapper.classList.remove("ChatMessagesStyleNormal");
-            chatExpanded = true;
+        let dateString = getChatCurrentTimeString();
+        chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
+        chatLogPublicHistory.push(dateString + ' Me: ' + chatInput.value);
+        if (NAF.connection) {
+            NAF.connection.broadcastData("chat", { txt: chatInput.value, player: player_info });
+        }
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'chat_public_msg_dispatched');
         }
     }
-});
 
-document.getElementById('minimize-chat-btn').addEventListener("click", function() {
-    let chatWrapper = document.getElementById("chat-wrapper-el");
-    let messagesWrapper = document.getElementById("chat-messages-wrapper");
+    if (sendMsgChatBtn) {
+        sendMsgChatBtn.addEventListener("click", sendPublicMessage);
+    }
 
-    chatWrapper.classList.add("ChatWrapperStyle");
-    chatWrapper.classList.remove("ChatWrapperStyleExpanded");
-    messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
+    // Wait for NAF connection before subscribing
+    const subscribeWhenReady = () => {
+        if (NAF.connection) {
+            NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
+                let dateString = getChatCurrentTimeString();
+                if (publicChatIsActive && chatLog) {
+                    let playerColor = data.player ? data.player.color : '#80c9d4';
+                    let playerName = data.player ? data.player.name : 'Stranger';
+                    chatLog.innerHTML += '<span style=" color: ' + playerColor + '">•</span> <span style="color: #80c9d4">' + dateString + ' ' + playerName + ": " + data.txt + '</span><br>';
+                }
+                chatLogPublicHistory.push(dateString + ' ' + (data.player ? data.player.name : 'Stranger') + ": " + data.txt);
+            });
+        } else {
+            setTimeout(subscribeWhenReady, 100);
+        }
+    };
+    subscribeWhenReady();
 
-    if (chatMinimized) {
-        messagesWrapper.classList.add("ChatMessagesStyleNormal");
-        messagesWrapper.classList.remove("ChatMessagesStyleMinimized");
-        chatMinimized = false;
-    } else {
-        messagesWrapper.classList.add("ChatMessagesStyleMinimized");
-        messagesWrapper.classList.remove("ChatMessagesStyleNormal");
-        chatExpanded = false;
-        chatMinimized = true;
+    /**
+     * Chat Controls
+     */
+    let chatExpanded = false;
+    let chatMinimized = false;
+
+    let expandBtn = document.getElementById('expand-chat-btn');
+    if (expandBtn) {
+        expandBtn.addEventListener("click", function () {
+            let chatWrapper = document.getElementById("chat-wrapper-el");
+            let messagesWrapper = document.getElementById("chat-messages-wrapper");
+
+            if (chatMinimized) {
+                chatExpanded = false;
+            }
+            else {
+                if (chatExpanded) {
+                    chatWrapper.classList.add("ChatWrapperStyle");
+                    chatWrapper.classList.remove("ChatWrapperStyleExpanded");
+                    messagesWrapper.classList.add("ChatMessagesStyleNormal");
+                    messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
+                    chatExpanded = false;
+                } else {
+                    chatWrapper.classList.add("ChatWrapperStyleExpanded");
+                    chatWrapper.classList.remove("ChatWrapperStyle");
+                    messagesWrapper.classList.add("ChatMessagesStyleExpanded");
+                    messagesWrapper.classList.remove("ChatMessagesStyleNormal");
+                    chatExpanded = true;
+                }
+            }
+        });
+    }
+
+    let minimizeBtn = document.getElementById('minimize-chat-btn');
+    if (minimizeBtn) {
+        minimizeBtn.addEventListener("click", function () {
+            let chatWrapper = document.getElementById("chat-wrapper-el");
+            let messagesWrapper = document.getElementById("chat-messages-wrapper");
+
+            if (chatWrapper && messagesWrapper) {
+                chatWrapper.classList.add("ChatWrapperStyle");
+                chatWrapper.classList.remove("ChatWrapperStyleExpanded");
+                messagesWrapper.classList.remove("ChatMessagesStyleExpanded");
+
+                if (chatMinimized) {
+                    messagesWrapper.classList.add("ChatMessagesStyleNormal");
+                    messagesWrapper.classList.remove("ChatMessagesStyleMinimized");
+                    chatMinimized = false;
+                } else {
+                    messagesWrapper.classList.add("ChatMessagesStyleMinimized");
+                    messagesWrapper.classList.remove("ChatMessagesStyleNormal");
+                    chatExpanded = false;
+                    chatMinimized = true;
+                }
+            }
+        });
     }
 });
 
