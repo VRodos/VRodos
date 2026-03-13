@@ -26,14 +26,14 @@ class VRodos_Asset_Manager {
 	}
 
 	public function enqueue_assets_list_scripts() {
-		$assets_list_page = VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' );
-		if ( ! $assets_list_page || ! is_page( $assets_list_page[0]->ID ) ) {
+		if ( ! is_page_template( '/templates/vrodos-assets-list-template.php' ) && 
+             ! is_page_template( 'templates/vrodos-assets-list-template.php' ) &&
+             ! is_page( VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' )[0]->ID ?? -1 ) ) {
 			return;
 		}
 
-		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
-		wp_enqueue_style( 'vrodos_material_stylesheet' );
 		wp_enqueue_style( 'vrodos_modern_compiled' );
+        wp_enqueue_script( 'lucide-icons' );
 		wp_enqueue_style( 'shoelace_css' );
 		wp_enqueue_script( 'shoelace_js' );
 
@@ -56,8 +56,9 @@ class VRodos_Asset_Manager {
 	}
 
 	public function enqueue_project_manager_scripts() {
-		$project_manager_page = VRodos_Core_Manager::vrodos_getEditpage( 'game' );
-		if ( ! $project_manager_page || ! is_page( $project_manager_page[0]->ID ) ) {
+		if ( ! is_page_template( '/templates/vrodos-project-manager-template.php' ) && 
+             ! is_page_template( 'templates/vrodos-project-manager-template.php' ) &&
+             ! is_page( VRodos_Core_Manager::vrodos_getEditpage( 'game' )[0]->ID ?? -1 ) ) {
 			return;
 		}
 		wp_enqueue_script( 'ajax-script_delete_game' );

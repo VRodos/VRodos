@@ -585,29 +585,44 @@ class VRodos_Core_Manager {
 	}
 
 	public static function get_assets( $games_slugs ): array {
+		// Create a cache key based on the games slugs to ensure per-context caching
+		$cache_key = 'vrodos_assets_' . md5( json_encode( $games_slugs ) . get_current_user_id() );
+		$cached_assets = get_transient( $cache_key );
+
+		if ( false !== $cached_assets ) {
+			return $cached_assets;
+		}
+
 		$allAssets = [];
-		$queryargs = ['post_type'      => 'vrodos_asset3d', 'posts_per_page' => -1];
+		$queryargs = [
+			'post_type'      => 'vrodos_asset3d',
+			'posts_per_page' => -1,
+			'fields'         => 'ids', // Get only IDs first for performance
+		];
 
 		if ( $games_slugs ) {
 			$queryargs['tax_query'] = [['taxonomy' => 'vrodos_asset3d_pgame', 'field'    => 'slug', 'terms'    => $games_slugs]];
 		}
 
-		$custom_query = new WP_Query( $queryargs );
+		$asset_ids = get_posts( $queryargs );
 
-		if ( $custom_query->have_posts() ) :
-			while ( $custom_query->have_posts() ) :
+		if ( ! empty( $asset_ids ) ) {
+			// Warm up caches for all selected posts (meta and terms) in one go
+			_prime_post_caches( $asset_ids, true, true );
 
-				$custom_query->the_post();
-
-				$asset_id      = get_the_ID();
-				$asset_name    = get_the_title();
+			foreach ( $asset_ids as $asset_id ) {
+				$asset_name    = get_the_title( $asset_id );
 				$asset_pgame   = wp_get_post_terms( $asset_id, 'vrodos_asset3d_pgame' );
 				$asset_cat_arr = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
 
-				$glbID   = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ); // GLB ID
-				$glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
+				if ( empty( $asset_cat_arr ) ) {
+					continue;
+				}
 
-				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ); // Screenshot Image ID
+				$glbID   = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
+				$glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';
+
+				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
 				$sshotPath = '';
 				if ( $sshotID ) {
 					$sshotUrl = wp_get_attachment_url( $sshotID );
@@ -621,10 +636,30 @@ class VRodos_Core_Manager {
 				$author_id          = get_post_field( 'post_author', $asset_id );
 				$author_displayname = get_the_author_meta( 'display_name', $author_id );
 				$author_username    = get_the_author_meta( 'nickname', $author_id );
+				$assettrs           = get_post_meta( $asset_id, 'vrodos_asset3d_assettrs', true );
 
-				$assettrs = get_post_meta( $asset_id, 'vrodos_asset3d_assettrs', true );
-
-				$data_arr = ['asset_name'             => get_the_title(), 'asset_slug'             => get_post()->post_name, 'asset_id'               => $asset_id, 'category_name'          => $asset_cat_arr[0]->name, 'category_slug'          => $asset_cat_arr[0]->slug, 'category_id'            => $asset_cat_arr[0]->term_id, 'category_icon'          => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'                 => $glbID, 'glb_path'               => $glbPath, 'path'                   => $glbPath, 'screenshot_id'          => $sshotID, 'screenshot_path'        => $sshotPath, 'is_cloned'              => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ), 'is_joker'               => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ), 'assettrs'               => $assettrs, 'asset_parent_game'      => $asset_pgame[0]->name, 'asset_parent_game_slug' => $asset_pgame[0]->slug, 'author_id'              => $author_id, 'author_displayname'     => $author_displayname, 'author_username'        => $author_username];
+				$data_arr = [
+					'asset_name'             => $asset_name,
+					'asset_slug'             => get_post( $asset_id )->post_name,
+					'asset_id'               => $asset_id,
+					'category_name'          => $asset_cat_arr[0]->name,
+					'category_slug'          => $asset_cat_arr[0]->slug,
+					'category_id'            => $asset_cat_arr[0]->term_id,
+					'category_icon'          => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ),
+					'glb_id'                 => $glbID,
+					'glb_path'               => $glbPath,
+					'path'                   => $glbPath,
+					'screenshot_id'          => $sshotID,
+					'screenshot_path'        => $sshotPath,
+					'is_cloned'              => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ),
+					'is_joker'               => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ),
+					'assettrs'               => $assettrs,
+					'asset_parent_game'      => ! empty( $asset_pgame ) ? $asset_pgame[0]->name : '',
+					'asset_parent_game_slug' => ! empty( $asset_pgame ) ? $asset_pgame[0]->slug : '',
+					'author_id'              => $author_id,
+					'author_displayname'     => $author_displayname,
+					'author_username'        => $author_username
+				];
 
 				switch ( $asset_cat_arr[0]->slug ) {
 					case 'video':
@@ -639,10 +674,6 @@ class VRodos_Core_Manager {
 						$data_arr['poi_img_title']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_title', true );
 						$data_arr['poi_img_content'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', true );
 						break;
-					/*
-					case 'chat':
-					$data_arr['chat_type'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
-					break;*/
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
 						break;
@@ -652,13 +683,11 @@ class VRodos_Core_Manager {
 						$data_arr['poi_chat_indicators']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true );
 						break;
 				}
-				array_push( $allAssets, $data_arr );
+				$allAssets[] = $data_arr;
+			}
+		}
 
-				endwhile;
-			endif;
-
-		// Reset postdata
-		wp_reset_postdata();
+		set_transient( $cache_key, $allAssets, HOUR_IN_SECONDS );
 
 		return $allAssets;
 	}

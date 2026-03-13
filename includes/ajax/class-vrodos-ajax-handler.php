@@ -644,6 +644,7 @@ class VRodos_AJAX_Handler {
 		if ( $custom_query->have_posts() ) {
 
 			echo '<div id="vrodos-list-projects-container" class="tw-flex tw-flex-col tw-gap-6 tw-mt-4" data-project-count="' . $custom_query->found_posts . '">';
+			$i = 1;
 			while ( $custom_query->have_posts() ) :
 
 				$custom_query->the_post();
@@ -651,6 +652,10 @@ class VRodos_AJAX_Handler {
 				$game_id    = get_the_ID();
 				$game_title = get_the_title();
 				$game_date  = get_the_date();
+
+				// Stagger limit to 4
+				$stagger = ( $i % 4 ) == 0 ? 4 : ( $i % 4 );
+				$i++;
 
 				// Do not show Joker projects
 				if ( str_contains( $game_title, ' Joker' ) ) {
@@ -674,7 +679,10 @@ class VRodos_AJAX_Handler {
 				$assets_list_page_id = $assets_list_page[0]->ID;
 				$loadProjectAssets   = esc_url( get_permalink( $assets_list_page_id ) . '?vrodos_project_id=' . $game_id );
 
-				echo '<div class="tw-bg-base-100 tw-border tw-border-base-300 tw-rounded-md tw-p-3 hover:tw-border-primary/30 transition-all tw-mb-1.5">';
+				$is_initial_load = isset($_POST['is_initial_load']) && $_POST['is_initial_load'] === 'true';
+				$stagger_classes = $is_initial_load ? '' : 'tw-animate-fade-in-up tw-stagger-' . $stagger;
+
+				echo '<div class="tw-bg-base-100 tw-border tw-border-base-300 tw-rounded-md tw-p-3 hover:tw-border-primary/30 transition-all tw-mb-1.5 ' . $stagger_classes . '">';
 				echo '<div class="tw-grid tw-grid-cols-[auto_1fr_auto_auto_auto] tw-items-center tw-gap-6">';
 
 				// 1. Icon

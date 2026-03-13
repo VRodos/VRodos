@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   prefix: 'tw-',
-  important: '#vrodos-project-manager',
+  important: '.vrodos-manager-wrapper',
   content: [
     "./includes/**/*.php",
     "./js_libs/**/*.js",

@@ -44,7 +44,7 @@ function vrodos_createProjectAjax(project_title, project_type_slug, current_user
 }
 
 
-function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_project_id=-1){
+function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_project_id=-1, is_initial_load = false){
 
 	jQuery.ajax(
 		{
@@ -53,7 +53,8 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_p
 			data: {
 				'action': 'vrodos_fetch_list_projects_action',
 				'current_user_id': current_user_id,
-				'parameter_Scenepass': parameter_Scenepass
+				'parameter_Scenepass': parameter_Scenepass,
+                'is_initial_load': is_initial_load
 			},
 			success: function (domhtml) {
 

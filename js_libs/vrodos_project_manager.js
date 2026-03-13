@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.mdc.autoInit();
     lucide.createIcons();
-    fetchAllProjectsAndAddToDOM(vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
+    fetchAllProjectsAndAddToDOM(vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass, -1, true);
 
     // Modals (DaisyUI)
     let dialog = document.getElementById('delete-dialog');
