@@ -634,39 +634,23 @@ class VRodos_AJAX_Handler {
 		// Instantiate custom query
 		$custom_query = new WP_Query( $custom_query_args );
 
-		// $fp = fopen("output_ccq.txt","w");
-
-		// Pagination fix
-		// $temp_query = $wp_query;
-		// $wp_query = NULL;
-		// $wp_query = $custom_query;
+		$parameter_Scenepass = $_POST['parameter_Scenepass'];
+		
+		// Pre-instantiate managers for performance
+		$compiler = new VRodos_Compiler_Manager();
+		$nodeJSpath = $compiler->nodeJSpath();
 
 		// Output custom query loop
 		if ( $custom_query->have_posts() ) {
 
-			$mt3 = explode( ' ', microtime() );
-			$t3  = ( (int) $mt3[1] ) * 1000 + ( (int) round( $mt3[0] * 1000 ) );
-
-			fwrite( $f, 'Step 3:' . $t3 . chr( 13 ) );
-
-			echo '<ul class="mdc-list mdc-list--two-line mdc-list--avatar-list" style="max-height: 460px; overflow-y: auto">';
+			echo '<div id="vrodos-list-projects-container" class="tw-flex tw-flex-col tw-gap-6 tw-mt-4" data-project-count="' . $custom_query->found_posts . '">';
 			while ( $custom_query->have_posts() ) :
 
-				$mt4 = explode( ' ', microtime() );
-				$t4  = ( (int) $mt4[1] ) * 1000 + ( (int) round( $mt4[0] * 1000 ) );
-
-				fwrite( $f, 'Step 4:' . $t4 . chr( 13 ) );
-
 				$custom_query->the_post();
-
-				// elseif (current_user_can('game_master')) {
-				// $custom_query_args['author'] = $user_id;
-				// }
 
 				$game_id    = get_the_ID();
 				$game_title = get_the_title();
 				$game_date  = get_the_date();
-				// $game_link = get_permalink();
 
 				// Do not show Joker projects
 				if ( str_contains( $game_title, ' Joker' ) ) {
@@ -684,48 +668,55 @@ class VRodos_AJAX_Handler {
 				$edit_scene_page_id = $editscenePage[0]->ID;
 
 				$loadMainSceneLink = esc_url( ( get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type'] ) );
+				$loadMasterClientLink = $nodeJSpath . 'Master_Client_' . $scene_data['id'] . '.html';
 
 				$assets_list_page    = VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' );
 				$assets_list_page_id = $assets_list_page[0]->ID;
 				$loadProjectAssets   = esc_url( get_permalink( $assets_list_page_id ) . '?vrodos_project_id=' . $game_id );
 
-				echo '<li class="mdc-list-item" style="" id="' . $game_id . '">';
+				echo '<div class="tw-bg-base-100 tw-border tw-border-base-300 tw-rounded-md tw-p-3 hover:tw-border-primary/30 transition-all tw-mb-1.5">';
+				echo '<div class="tw-grid tw-grid-cols-[auto_1fr_auto_auto_auto] tw-items-center tw-gap-6">';
 
-				// Href when press on title
-				echo '<span class="mdc-list-item" style="float:left" data-mdc-auto-init="MDCRipple" title="Open ' . $game_title . '">';
-				echo '<i class="material-icons mdc-list-item__start-detail" aria-hidden="true" title="' . $game_type_obj->string . '">' . $game_type_obj->icon . '</i>';
-				echo '<span id="' . $game_id . '-title" class="mdc-list-item__text">' . $game_title . '<span id="' . $game_id . '-date" class="mdc-list-item__text__secondary">' . $game_date . '</span>' .
-				'</span>';
-				echo '</span>';
+				// 1. Icon
+				echo '<div class="tw-w-10 tw-h-10 tw-rounded-md tw-bg-base-200 tw-text-base-content/50 tw-flex tw-items-center tw-justify-center tw-border tw-border-base-300">';
+				$is_expo = str_contains(strtolower($game_type_obj->slug ?? ''), 'vrexpo') || str_contains(strtolower($game_type_obj->string ?? ''), 'expo');
+				echo '<i data-lucide="' . ($is_expo ? 'globe' : 'clapperboard') . '" class="tw-w-5 tw-h-5" title="' . ($game_type_obj->string ?? '') . '"></i>';
+				echo '</div>';
+                
+				// 2. Info
+				echo '<div class="tw-min-w-0 tw-flex tw-flex-col tw-gap-0.5">';
+                echo '<div id="' . $game_id . '-title" class="tw-text-base tw-font-bold tw-text-base-content tw-truncate">';
+				echo '<a href="' . $loadMasterClientLink . '" target="_blank" class="hover:tw-text-primary transition-colors" title="Open Master Client">' . $game_title . '</a>';
+				echo '</div>';
+                echo '<div class="tw-flex tw-items-center tw-gap-2">';
+                echo '<span class="tw-text-xs tw-font-medium tw-text-base-content/40 uppercase tw-tracking-wider">' . $game_date . '</span>';
+                echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . $game_type_obj->string . '</span>';
+                echo '</div>';
+				echo '</div>';
 
-				// VR button: Go to 3D Editor
-
-				echo '<div style="margin-left:auto; margin-right:0">';
-
-				// ----- Assets button ------------------
-				echo '<a href="' . $loadProjectAssets . '" class="" style="" data-mdc-auto-init="MDCRipple" ' .
-				'title="Manage assets of ' . $game_title . '">';
-				echo '<span id="' . $game_id . '-assets-button" class="mdc-button" >Assets</span>';
+				// 3. Assets
+				echo '<a href="' . $loadProjectAssets . '" class="d-btn d-btn-outline d-btn-sm tw-text-[10px] tw-font-bold tw-rounded-md" title="Manage assets">';
+                echo 'ASSETS';
 				echo '</a>';
 
-				// --------- 3D editor button -----------
-				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="" style="" data-mdc-auto-init="MDCRipple" ' .
-				'title="Open 3D Editor for ' . $game_title . '">';
-				echo '<span id="' . $game_id . '-vr-button" class="mdc-button" >3D_Editor</span>';
+				// 4. Editor
+				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="d-btn d-btn-primary d-btn-sm tw-text-white tw-px-4 tw-rounded-md tw-text-[10px] tw-font-bold" title="Open 3D Editor">';
+				echo '3D EDITOR';
 				echo '</a>';
 
-				// -------- Delete button ----------------
-				echo '<a href="javascript:void(0)" class="vrodos-delete-project-btn" style="" aria-label="Delete game" title="Delete project" ' .
-				'data-game-id="' . $game_id . '">';
-				echo '<i class="material-icons mdc-button mdc-list-item__end-detail" style="color: crimson" '
-				. 'aria-hidden="true" title="Delete project">delete</i>';
-				echo '</a>';
+				// 5. Delete
+				echo '<button type="button" class="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-text-base-content/20 hover:tw-text-error hover:tw-bg-error/10 tw-rounded transition-all vrodos-delete-project-btn" 
+                              data-game-id="' . $game_id . '" 
+                              data-game-title="' . esc_attr($game_title) . '" 
+                              title="Delete project">';
+				echo '<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>';
+				echo '</button>';
 
-				echo '<div>';
-				echo '</li>';
+				echo '</div>';
+				echo '</div>';
 			endwhile;
 
-			echo '</ul>';
+			echo '</div>';
 
 			wp_reset_postdata();
 			// $wp_query = NULL;

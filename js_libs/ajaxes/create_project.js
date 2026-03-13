@@ -59,6 +59,17 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_p
 
 				// Add list to div
 				document.getElementById( 'ExistingProjectsDivDOM' ).innerHTML = domhtml;
+                
+                // Update projects count
+                let listContainer = document.getElementById('vrodos-list-projects-container');
+                if (listContainer) {
+                    let count = listContainer.getAttribute('data-project-count');
+                    let indicator = document.getElementById('projects-count-indicator');
+                    if (indicator) indicator.innerHTML = count;
+                }
+
+                // Initialize Lucide icons
+                lucide.createIcons();
 
 				// Open the project automatically
 				if (new_project_id > -1) {

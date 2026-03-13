@@ -21,7 +21,7 @@ function vrodos_updateCollabsAjax(project_id, dialogCollab, collabs_emails) {
 					alert( res );
 				}
 
-				dialogCollab.close();
+				dialogCollaborators.close();
 
 			},
 			error: function (xhr, ajaxOptions, thrownError) {
@@ -53,25 +53,12 @@ function vrodos_fetchCollabsAjax(project_id) {
 				console.log( collabs_emails );
 
 				if (collabs_emails == '') {
-					jQuery( '.chips' ).chips( {data: [], placeholder: 'Your collaborator email'} );
+					jQuery( '#textarea-collaborators' ).val('');
 				} else {
-					collabs_emails = collabs_emails.split( ";" );
-
-					var collabsEmailArray = [];
-					for (i = 0; i < collabs_emails.length; i++) {
-						collabsEmailArray.push( {tag: collabs_emails[i]} );
-					}
-
-					jQuery( '.chips' ).chips(
-						{
-							data: collabsEmailArray,
-							placeholder: 'Your collaborator email',
-							secondaryPlaceholder : 'Your collaborator email'
-						}
-					);
+					jQuery( '#textarea-collaborators' ).val(collabs_emails);
 				}
 
-				dialogCollaborators.show();
+				dialogCollaborators.showModal();
 
 			},
 			error: function (xhr, ajaxOptions, thrownError) {

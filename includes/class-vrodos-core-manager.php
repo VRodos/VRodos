@@ -365,6 +365,7 @@ class VRodos_Core_Manager {
 		$project_type_icon = self::vrodos_project_type_icon( $project_category );
 
 		$obj         = new stdClass();
+		$obj->slug   = $all_project_category ? $all_project_category[0]->slug : null;
 		$obj->string = $project_category;
 		$obj->icon   = $project_type_icon;
 

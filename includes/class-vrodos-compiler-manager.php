@@ -84,7 +84,7 @@ class VRodos_Compiler_Manager {
 		return $exists;
 	}
 
-	private function nodeJSpath() {
+	public function nodeJSpath() {
 		if ( PHP_OS == 'WINNT' ) {
 			return $this->server_protocol . '://' . $this->website_root_url . ':' . $this->portNodeJs . '/';
 		} elseif ( $this->website_root_url == 'vrexpo.iti.gr' ) {
