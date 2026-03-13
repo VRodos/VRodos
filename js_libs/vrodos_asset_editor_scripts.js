@@ -53,7 +53,6 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local){
         case 'glb':
             asset_viewer_3d_kernel_local.nGlb = 1;
             reader.readAsArrayBuffer(file);
-            document.getElementById('glbFileInput').value = file;
             break;
         case 'jpg': reader.readAsDataURL(file);     break;
         case 'png': reader.readAsDataURL(file);     break;

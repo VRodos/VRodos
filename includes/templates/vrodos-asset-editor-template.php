@@ -8,6 +8,7 @@ $isAdmin = is_admin() ? 'back' : 'front';
 
 	<script>
 		let isAdmin="<?php echo $isAdmin; ?>";
+		console.log("VRodos: Asset Editor Template Loaded");
 	</script>
 
 <?php
@@ -17,7 +18,7 @@ extract( $data );
 	<script>
 		let path_url = null;
 		let glb_file_name = <?php echo json_encode( $glb_file_name ); ?>;
-		let no_img_path = '<?php echo esc_url( $no_img_path_url ); ?>';
+		let no_img_path = '<?php echo esc_url( $no_img_path_url ?? '' ); ?>';
 		var asset_title = <?php echo json_encode( $asset_title_value ); ?>;
 	</script>
 <!DOCTYPE html>
@@ -122,11 +123,11 @@ extract( $data );
 				<!-- EDIT MODE -->
 				<?php if ( ( $isOwner || $isUserAdmin ) ) { ?>
 
-				<div style="display:flex; width: 100%;">
+				<div class="tw-flex tw-flex-wrap tw-gap-6 tw-w-full">
 					<!-- Title -->
-					<div class="assetEditorColumn">
+					<div class="tw-flex-1 tw-min-w-[280px]">
 						<h3 class="mdc-typography--title" style="margin-bottom: 5px;">Title</h3>
-						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0;">
+						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
 							<input id="assetTitle" type="text"
 									class="mdc-textfield__input mdc-theme--text-primary-on-light"
 									name="assetTitle"
@@ -147,7 +148,7 @@ extract( $data );
 					<!-- End of Title -->
 
 					<!-- CATEGORY -->
-					<div class="assetEditorColumn">
+					<div class="tw-flex-1 tw-min-w-[280px]">
 
 						<h3 class="mdc-typography--title"><?php echo $dropdownHeading; ?></h3>
 						<div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
@@ -195,9 +196,9 @@ extract( $data );
 
 				</div>
 
-				<div style="display:flex; width: 100%;">
+				<div class="tw-flex tw-flex-wrap tw-gap-6 tw-w-full tw-mt-6">
 
-					<div id="glb_file_section" class="assetEditorColumn" style="display: <?php echo ( $asset_id == null ) ? 'none' : 'block'; ?>">
+					<div id="glb_file_section" class="tw-flex-1 tw-min-w-[280px]" style="display: block;">
 
 						<h3 class="mdc-typography--title">3D Model</h3>
 
@@ -227,7 +228,7 @@ extract( $data );
 							<label for="videoFileInput">Select a video</label>
 							<br />
 							<video width="320" height="240" id="assetVideoTag" style="width:60%" preload="auto" controls>
-								<source id="assetVideoSource" src="<?php echo esc_url( $video_attachment_file ); ?>" type="video/mp4">
+								<source id="assetVideoSource" src="<?php echo esc_url( $video_attachment_file ?? '' ); ?>" type="video/mp4">
 							</video>
 							<input class="FullWidth" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
 							<br />
@@ -235,21 +236,23 @@ extract( $data );
 						</div>
 					</div>
 
-					<div id="screenshot_section" class="assetEditorColumn" style="float: right; display: <?php echo ( $asset_id == null ) ? 'none' : 'block'; ?>;">
+					<div id="screenshot_section" class="tw-flex-1 tw-min-w-[280px]" style="display: block;">
 						<h3 class="mdc-typography--title">Screenshot</h3>
-						<div style="float: left; width: 65%">
-							<img id="sshotPreviewImg" src="<?php echo esc_url( $scrnImageURL ); ?>" alt="Asset Screenshot image">
-							<input type="hidden" name="sshotFileInput" value="" id="sshotFileInput" accept="image/png"/>
-						</div>
-						<div style="float:right; width: 30%;">
-							<div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield">
-								<label for="jscolorpick" style="display:none">Color pick</label>
-								<input id="jscolorpick" style="width: 80%; float:right;" class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
-								<label for="assetback3dcolor" class="mdc-textfield__label" style="padding: 0;text-align: center">BG color</label>
-								<input type="text" id="assetback3dcolor" class="mdc-textfield__input" name="assetback3dcolor" form="3dAssetForm" value="<?php echo esc_attr( trim( $asset_back_3d_color_saved ) ); ?>" />
+						<div class="tw-flex tw-gap-4">
+							<div class="tw-w-2/3">
+								<img id="sshotPreviewImg" src="<?php echo esc_url( $scrnImageURL ?? '' ); ?>" alt="Asset Screenshot image" class="tw-w-full tw-rounded-lg tw-border tw-border-slate-200">
+								<input type="hidden" name="sshotFileInput" value="" id="sshotFileInput" accept="image/png"/>
+							</div>
+							<div class="tw-w-1/3">
+								<div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield" style="width: 100%;">
+									<label for="jscolorpick" style="display:none">Color pick</label>
+									<input id="jscolorpick" style="width: 100%;" class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
+									<label for="assetback3dcolor" class="mdc-textfield__label" style="padding: 0;text-align: center">BG color</label>
+									<input type="text" id="assetback3dcolor" class="mdc-textfield__input" name="assetback3dcolor" form="3dAssetForm" value="<?php echo esc_attr( trim( $asset_back_3d_color_saved ) ); ?>" />
+								</div>
 							</div>
 						</div>
-						<a id="createModelScreenshotBtn" type="button" style="margin-top:16px;" class="mdc-button mdc-button--primary mdc-theme--primary FullWidth" data-mdc-auto-init="MDCRipple">
+						<a id="createModelScreenshotBtn" type="button" style="margin-top:16px;" class="mdc-button mdc-button--raised mdc-button--primary FullWidth" data-mdc-auto-init="MDCRipple">
 							Create screenshot
 						</a>
 					</div>
@@ -329,7 +332,7 @@ extract( $data );
 
 					<div class="assetEditorColumn" id="poi_image_file_section" style="display: none;">
 						<h3 class="mdc-typography--title">Image file</h3>
-						<img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo esc_url( $imagePoiImageURL ); ?>" alt="Asset Image Text POI image">
+						<img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo esc_url( $imagePoiImageURL ?? '' ); ?>" alt="Asset Image Text POI image">
 						<input type="file" name="imageFileInput" value="" id="imageFileInput" accept="image/png, image/jpg, image/jpeg"/>
 					</div>
 				</div>
@@ -382,7 +385,7 @@ extract( $data );
 			<div id="audioFileInputContainer">
 					<?php if ( $audio_attachment_file ) { ?>
 					<audio controls loop preload="auto" id='audioFile'>
-						<source src="<?php echo esc_url( $audio_attachment_file ); ?>" type="audio/<?php echo esc_attr( $audio_file_type ); ?>">
+						<source src="<?php echo esc_url( $audio_attachment_file ?? '' ); ?>" type="audio/<?php echo esc_attr( $audio_file_type ); ?>">
 						Your browser does not support the audio tag.
 					</audio>
 				<?php } ?>
@@ -429,6 +432,9 @@ extract( $data );
 		let isLoggedIn = <?php echo $isUserloggedIn ? 1 : 0; ?>;
 		let isEditMode = (isLoggedIn === 1) ? 1 : 0 ;
 		console.log("isEditModeA:", isEditMode);
+
+		// Define this globally so it's accessible to vrodos_asset_editor_scripts.js
+		var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg") ? document.getElementById("sshotPreviewImg").src : "";
 
 		let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
 
@@ -477,7 +483,8 @@ extract( $data );
 		if( isEditMode === 1) {
 			// clear canvas and divs for fields
 			// vrodos_reset_panels(asset_viewer_3d_kernel, "initial script");
-			var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg").src; // Leave this as var, so it can get accessed by external js file. (TODO: REWORK)
+			// Define missing references that might crash the script if accessed before they appear
+			// (already defined as const at the top of the script if they exist)
 
 			(function() {
 
@@ -584,14 +591,19 @@ extract( $data );
 					let slug = '';
 
 					if(hasValue) {
-						document.getElementById('termIdInput').setAttribute('value', categoryDropdown.value);
-						descText.innerHTML = document.getElementById(categoryDropdown.value).getAttribute("data-cat-desc");
-						slug = document.getElementById(categoryDropdown.value).getAttribute("data-value");
-
+						let selectedItem = document.getElementById(categoryDropdown.value);
+						if (selectedItem) {
+							document.getElementById('termIdInput').setAttribute('value', categoryDropdown.value);
+							descText.innerHTML = selectedItem.getAttribute("data-cat-desc");
+							slug = selectedItem.getAttribute("data-value");
+						}
 					} else {
-						document.getElementById('termIdInput').setAttribute('value', preSelectedCatId);
-						descText.innerHTML = document.getElementById('currently-selected-category').getAttribute("data-cat-desc");
-						slug = document.getElementById('currently-selected-category').getAttribute("data-cat-slug");
+						let currentlySelected = document.getElementById('currently-selected-category');
+						if (currentlySelected) {
+							document.getElementById('termIdInput').setAttribute('value', currentlySelected.getAttribute("data-cat-id"));
+							descText.innerHTML = currentlySelected.getAttribute("data-cat-desc");
+							slug = currentlySelected.getAttribute("data-cat-slug");
+						}
 					}
 					return slug;
 				}

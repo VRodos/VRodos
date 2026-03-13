@@ -700,62 +700,69 @@ class VRodos_AssetViewer_3D_kernel {
             // Instantiate a loader
             const loader = new THREE.GLTFLoader();
 
-            //loader.setDRACOLoader( new THREE.DRACOLoader() );
+            // Set up DRACOLoader with dynamic path
+            const dracoLoader = new THREE.DRACOLoader();
 
-            // const dracoLoader = new THREE.DRACOLoader();
-            // dracoLoader.setDecoderPath( '/wordpress/wp-content/plugins/vrodos/js_libs/threejs119/draco/' );
-            // loader.setDRACOLoader( dracoLoader );
+            // Try to get plugin path from localized data, fallback to relative
+            let dracoPath = (typeof vrodos_data !== 'undefined' && vrodos_data.pluginPath) ?
+                vrodos_data.pluginPath + 'js_libs/threejs147/draco/' :
+                '../wp-content/plugins/VRodos/js_libs/threejs147/draco/';
+
+            dracoLoader.setDecoderPath(dracoPath);
+            loader.setDRACOLoader(dracoLoader);
 
             let scope = this;
 
-            // Load a glTF resource
-            loader.load(
-                // resource URL
-                glbFilename,
-                // called when the resource is loaded
-                function ( gltf ) {
+            if (glbFilename) {
+                // Load a glTF resource
+                loader.load(
+                    // resource URL
+                    glbFilename,
+                    // called when the resource is loaded
+                    function ( gltf ) {
 
-                    if (gltf.animations.length>0) {
+                        if (gltf.animations.length>0) {
 
-                        let glbmixer = new THREE.AnimationMixer(gltf.scene);
-                        scope.mixers.push(glbmixer);
-                        scope.action = glbmixer.clipAction(gltf.animations[0]);
+                            let glbmixer = new THREE.AnimationMixer(gltf.scene);
+                            scope.mixers.push(glbmixer);
+                            scope.action = glbmixer.clipAction(gltf.animations[0]);
 
-                        // Display button to start animation inside the Asset 3D previewer
-                        scope.animationButton.style.display = "inline-block";
+                            // Display button to start animation inside the Asset 3D previewer
+                            scope.animationButton.style.display = "inline-block";
 
-                    } else {
+                        } else {
 
-                        // Display button to start animation inside the Asset 3D previewer
-                        scope.animationButton.style.display = "none";
+                            // Display button to start animation inside the Asset 3D previewer
+                            scope.animationButton.style.display = "none";
+                        }
+
+                        if (scope.boundingSphereButton) {
+                            scope.boundingSphereButton.style.display = "inline-block";
+                        }
+
+                        // Add to root
+                        scope.scene.getObjectByName('root').add(gltf.scene);
+                        scope.zoomer(scope.scene.getObjectByName('root'));
+                        scope.kickRendererOnDemand();
+
+                        //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";
+
+                    },
+                    // called while loading is progressing
+                    function ( xhr ) {
+
+                        scope.previewProgressLabel.innerHTML =
+                            Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
+
+                    },
+                    // called when loading has errors
+                    function ( error ) {
+
+                        console.log( 'An error happened', error );
+
                     }
-
-                    if (scope.boundingSphereButton) {
-                        scope.boundingSphereButton.style.display = "inline-block";
-                    }
-
-                    // Add to root
-                    scope.scene.getObjectByName('root').add(gltf.scene);
-                    scope.zoomer(scope.scene.getObjectByName('root'));
-                    scope.kickRendererOnDemand();
-
-                    //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";
-
-                },
-                // called while loading is progressing
-                function ( xhr ) {
-
-                    scope.previewProgressLabel.innerHTML =
-                        Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
-
-                },
-                // called when loading has errors
-                function ( error ) {
-
-                    console.log( 'An error happened', error );
-
-                }
-            );
+                );
+            }
 
             // OBJ load
         } else if (pathUrl) {
@@ -951,7 +958,7 @@ class VRodos_AssetViewer_3D_kernel {
                         scope.FbxBuffer =  fileContent;
                         break;
                     case 'glb':
-                        document.getElementById('glbFileInput').value = dec.decode(fileContent);
+                        // document.getElementById('glbFileInput').value = dec.decode(fileContent);
                         scope.GlbBuffer =  fileContent;
                         break;
                     case 'pdb': document.getElementById('pdbFileInput').value = fileContent; break;

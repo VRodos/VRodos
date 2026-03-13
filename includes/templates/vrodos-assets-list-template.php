@@ -136,7 +136,7 @@ function vrodos_get_asset_category_icon($category_slug) {
             foreach ( $assets as $asset ) : 
                 $pGameId = get_page_by_path( $asset['asset_parent_game_slug'], OBJECT, 'vrodos_game' )->ID; ?>
                 
-                <div class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
+                <div id="<?php echo $asset['asset_id']; ?>" class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
                      data-category="<?php echo esc_attr(sanitize_title($asset['category_name'])); ?>"
                      data-visibility="<?php echo ($asset['is_joker'] == 'true') ? 'shared' : 'private'; ?>">
                     

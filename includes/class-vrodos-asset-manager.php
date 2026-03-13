@@ -223,6 +223,7 @@ class VRodos_Asset_Manager {
 
 		// Stylesheet
 		wp_enqueue_style( 'vrodos_asseteditor_stylesheet' );
+		wp_enqueue_style( 'vrodos_modern_compiled' );
 
 		// Three js : for simple rendering
 		wp_enqueue_script( 'vrodos_scripts' );

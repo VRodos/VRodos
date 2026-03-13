@@ -12,27 +12,31 @@ class VRodos_Upload_Manager {
 	 * Create extra 3D files for the asset.
 	 */
 	public static function create_asset_3dfiles_extra_frontend( $asset_new_id, $project_id, $asset_cat_id ): void {
-		// Clear out all previous attachments
-		$attachments = get_children(
-			['post_parent' => $asset_new_id, 'post_type'   => 'attachment']
-		);
-		foreach ( $attachments as $attachment ) {
-			if ( ! str_contains( $attachment->post_title, 'screenshot' ) ) {
-				wp_delete_attachment( $attachment->ID, true );
-			}
-		}
-
 		// Upload and update DB
-		if ( isset( $_POST['glbFileInput'] ) && $_POST['glbFileInput'] ) {
+		if ( ( isset( $_POST['glbFileInput'] ) && $_POST['glbFileInput'] ) || ( isset( $_FILES['multipleFilesInput'] ) && $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE ) ) {
+
+			// Clear out all previous attachments only if we have a new upload
+			$attachments = get_children(
+				['post_parent' => $asset_new_id, 'post_type'   => 'attachment']
+			);
+			foreach ( $attachments as $attachment ) {
+				if ( ! str_contains( $attachment->post_title, 'screenshot' ) ) {
+					wp_delete_attachment( $attachment->ID, true );
+				}
+			}
+
 			$glb_file_id = self::upload_asset_text(
-				null,
-				'glb_' . $asset_new_id . '_' . $asset_cat_id,
+				$_POST['glbFileInput'] ?? null,
+				'glb_' . $asset_new_id . '_' . $asset_cat_id . '.glb',
 				$asset_new_id,
 				$_FILES,
 				0,
 				$project_id
 			);
-			update_post_meta( $asset_new_id, 'vrodos_asset3d_glb', $glb_file_id );
+
+			if ( $glb_file_id ) {
+				update_post_meta( $asset_new_id, 'vrodos_asset3d_glb', $glb_file_id );
+			}
 		}
 	}
 
@@ -220,7 +224,11 @@ class VRodos_Upload_Manager {
 	private static function handle_asset_upload( $file_array ) {
 		self::load_wp_admin_files();
 		$upload_overrides = ['test_form' => false];
-		return wp_handle_upload( $file_array, $upload_overrides );
+		$result = wp_handle_upload( $file_array, $upload_overrides );
+		if ( isset( $result['error'] ) ) {
+			error_log( "VRodos Upload Error (handle_asset_upload): " . $result['error'] );
+		}
+		return $result;
 	}
 
 	public static function insert_attachment_post( $file_return, $parent_post_id ) {
@@ -331,11 +339,13 @@ class VRodos_Upload_Manager {
 		add_filter( 'upload_dir', self::upload_dir_for_scenes_or_assets(...) );
 		add_filter( 'intermediate_image_sizes_advanced', self::remove_allthumbs_sizes(...), 10, 2 );
 		$file_return = false;
-		if ( $textContent ) {
+		if ( $textContent && $textContent !== '[object File]' ) {
 			$filename    = sanitize_file_name( $textTitle );
 			$file_return = wp_upload_bits( $filename, null, $textContent );
 			if ( $file_return && ! isset( $file_return['error'] ) ) {
 				$file_return['type'] = 'text/plain';
+			} elseif ( isset( $file_return['error'] ) ) {
+				error_log( "VRodos Upload Error (wp_upload_bits): " . $file_return['error'] );
 			}
 		} elseif ( isset( $TheFiles['multipleFilesInput']['tmp_name'][ $index_file ] ) ) {
 			$file_array  = ['name'     => $TheFiles['multipleFilesInput']['name'][ $index_file ], 'type'     => $TheFiles['multipleFilesInput']['type'][ $index_file ], 'tmp_name' => $TheFiles['multipleFilesInput']['tmp_name'][ $index_file ], 'error'    => $TheFiles['multipleFilesInput']['error'][ $index_file ], 'size'     => $TheFiles['multipleFilesInput']['size'][ $index_file ]];

@@ -126,13 +126,19 @@ class VRodos_Asset_CPT_Manager {
 		if ( $asset_id != 0 || $asset_updatedConf == 1 ) {
 
 			// NoCloning: Upload files from POST but check first
-			// if any 3D files have been selected for upload
-			if ( count( $_FILES['multipleFilesInput']['name'] ) > 0 && $_FILES['multipleFilesInput']['error'][0] != 4 ) {
+			// if any 3D files have been selected for upload or glb blob is present
+			if ( ( isset( $_FILES['multipleFilesInput'] ) && $_FILES['multipleFilesInput']['error'][0] != 4 ) ||
+				( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) ) ) {
 				VRodos_Upload_Manager::create_asset_3dfiles_extra_frontend( $asset_id, $project_id, $assetCatID );
 			}
 
 			update_post_meta( $asset_id, 'vrodos_asset3d_isCloned', 'false' );
 			update_post_meta( $asset_id, 'vrodos_asset3d_isJoker', $isJoker );
+
+			// Invalidate all Assets List transients
+			global $wpdb;
+			$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_vrodos_assets_%'" );
+			$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_timeout_vrodos_assets_%'" );
 		}
 
 		if ( isset( $_POST['sshotFileInput'] ) && ! empty( $_POST['sshotFileInput'] ) ) {
@@ -142,7 +148,8 @@ class VRodos_Asset_CPT_Manager {
 		}
 
 		// Save custom parameters according to asset type.
-		switch ( $assetCatTerm->slug ) {
+		if ( $assetCatTerm ) {
+			switch ( $assetCatTerm->slug ) {
 
 			case 'video':
 				if ( isset( $_FILES['videoFileInput'] ) ) {
@@ -178,6 +185,7 @@ class VRodos_Asset_CPT_Manager {
 
 			default:
 				break;
+			}
 		}
 
 		// Audio: To add
@@ -805,7 +813,7 @@ class VRodos_Asset_CPT_Manager {
 		// Video
 		$videoID                       = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
 		$video_attachment_post         = get_post( $videoID );
-		$data['video_attachment_file'] = $video_attachment_post ? $video_attachment_post->guid : null;
+		$data['video_attachment_file'] = $videoID ? wp_get_attachment_url( $videoID ) : null;
 		$data['video_title']           = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
 		$data['video_autoloop']        = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true ) ? 'checked' : '';
 
@@ -845,7 +853,7 @@ class VRodos_Asset_CPT_Manager {
 		// Audio
 		$audioID                       = get_post_meta( $asset_id, 'vrodos_asset3d_audio', true );
 		$attachment_post               = get_post( $audioID );
-		$data['audio_attachment_file'] = $attachment_post ? $attachment_post->guid : null;
+		$data['audio_attachment_file'] = $audioID ? wp_get_attachment_url( $audioID ) : null;
 
 		if ( $data['audio_attachment_file'] ) {
 			$data['audio_file_type'] = ( str_contains( (string) $data['audio_attachment_file'], 'mp3' ) ) ? 'mp3' : 'wav';

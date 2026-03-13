@@ -6,7 +6,8 @@ class VRodos_Core_Manager {
 		add_filter( 'login_redirect', $this->vrodos_default_page(...) );
 
 		// Custom hooks
-		add_filter( 'upload_mimes', $this->vrodos_mime_types(...), 1, 1 );
+		add_filter( 'upload_mimes', $this->vrodos_mime_types(...) );
+		add_filter( 'wp_check_filetype_and_ext', $this->vrodos_bypass_upload_restriction(...), 10, 5 );
 		add_action( 'plugins_loaded', $this->vrodos_admin_hooks(...) );
 		add_action( 'login_headerurl', $this->vrodos_lost_password_redirect(...) );
 		add_action( 'after_setup_theme', $this->disable_widgets_block_editor(...) );
@@ -55,8 +56,19 @@ class VRodos_Core_Manager {
 		$mime_types['mat']  = 'text/plain';
 		$mime_types['pdb']  = 'text/plain';
 		$mime_types['fbx']  = 'application/octet-stream';
-		$mime_types['glb']  = 'application/octet-stream';
+		$mime_types['glb']  = 'model/gltf-binary';
 		return $mime_types;
+	}
+
+	public function vrodos_bypass_upload_restriction( $data, $file, $filename, $mimes, $real_mime = '' ) {
+		if ( empty( $data['ext'] ) || empty( $data['type'] ) ) {
+			$ext = pathinfo( $filename, PATHINFO_EXTENSION );
+			if ( 'glb' === strtolower( $ext ) ) {
+				$data['ext']  = 'glb';
+				$data['type'] = 'model/gltf-binary';
+			}
+		}
+		return $data;
 	}
 
 	public static function vrodos_plugin_main_page(): void {
@@ -739,20 +751,21 @@ class VRodos_Core_Manager {
 		// OBJ
 		if ( array_key_exists( 'vrodos_asset3d_obj', $assetpostMeta ) ) {
 
-			$mtlpost = get_post( $assetpostMeta['vrodos_asset3d_mtl'][0] );
+			$mtl_url = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_mtl'][0] );
+			$obj_url = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_obj'][0] );
 
-			$mtl_file_name = basename( $mtlpost->guid );
-			$obj_file_name = basename( get_post( $assetpostMeta['vrodos_asset3d_obj'][0] )->guid );
-			$path_url      = pathinfo( $mtlpost->guid )['dirname'];
+			$mtl_file_name = basename( $mtl_url );
+			$obj_file_name = basename( $obj_url );
+			$path_url      = pathinfo( $mtl_url )['dirname'];
 
 			// PDB
 		} elseif ( array_key_exists( 'vrodos_asset3d_pdb', $assetpostMeta ) ) {
-			$pdb_file_name = get_post( $assetpostMeta['vrodos_asset3d_pdb'][0] )->guid;
+			$pdb_file_name = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_pdb'][0] );
 
 			// GLB
 		} elseif ( array_key_exists( 'vrodos_asset3d_glb', $assetpostMeta ) ) {
 
-			$glb_file_name = get_post( $assetpostMeta['vrodos_asset3d_glb'][0] ) ? get_post( $assetpostMeta['vrodos_asset3d_glb'][0] )->guid : null;
+			$glb_file_name = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_glb'][0] );
 
 			// FBX
 		} elseif ( array_key_exists( 'vrodos_asset3d_fbx', $assetpostMeta ) ) {
@@ -766,7 +779,7 @@ class VRodos_Core_Manager {
 			$textures_fbx_string_connected = '';
 
 			foreach ( $attachments_array as $k ) {
-				$url = $k->guid;
+				$url = wp_get_attachment_url( $k->ID );
 
 				// ignore screenshot attachment
 				if ( ! str_contains( $url, 'texture' ) ) {
@@ -779,11 +792,11 @@ class VRodos_Core_Manager {
 			// remove the last separator
 			$textures_fbx_string_connected = trim( $textures_fbx_string_connected, '|' );
 
-			$fbxpost = get_post( $assetpostMeta['vrodos_asset3d_fbx'][0] );
+			$fbx_url = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_fbx'][0] );
 
-			if ( $fbxpost ) {
-				$fbx_file_name = basename( $fbxpost->guid );
-				$path_url      = pathinfo( $fbxpost->guid )['dirname'];
+			if ( $fbx_url ) {
+				$fbx_file_name = basename( $fbx_url );
+				$path_url      = pathinfo( $fbx_url )['dirname'];
 			}
 		}
 
