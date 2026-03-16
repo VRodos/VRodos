@@ -180,8 +180,8 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
         document.getElementById("sshotPreviewImg").src = canvas.toDataURL("image/png");
 
         //------------ Resize and Crop ---------------------------------------
-        const targetWidth = 356;
-        const targetHeight = 200;
+        const targetWidth = 1068; // 3x higher resolution than before (was 356)
+        const targetHeight = 600; // 3x higher resolution than before (was 200)
         const targetRatio = targetWidth / targetHeight;
 
         let sourceWidth = canvas.width;

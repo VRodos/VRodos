@@ -1,6 +1,6 @@
 <?php
-wp_enqueue_style( 'vrodos_frontend_stylesheet' );
-wp_enqueue_style( 'vrodos_material_stylesheet' );
+wp_enqueue_style('vrodos_frontend_stylesheet');
+wp_enqueue_style('vrodos_material_stylesheet');
 
 // Is on back or front end ?
 $isAdmin = is_admin() ? 'back' : 'front';
@@ -13,441 +13,454 @@ $isAdmin = is_admin() ? 'back' : 'front';
 
 <?php
 $data = VRodos_Asset_CPT_Manager::prepare_asset_editor_template_data();
-extract( $data );
+extract($data);
 ?>
 	<script>
 		let path_url = null;
-		let glb_file_name = <?php echo json_encode( $glb_file_name ); ?>;
-		let no_img_path = '<?php echo esc_url( $no_img_path_url ?? '' ); ?>';
-		var asset_title = <?php echo json_encode( $asset_title_value ); ?>;
+		let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
+		let no_img_path = '<?php echo esc_url($no_img_path_url ?? ''); ?>';
+		var asset_title = <?php echo json_encode($asset_title_value); ?>;
 	</script>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="emerald">
 <head>
-	<meta charset="UTF-8">
-	<title>VRodos</title>
-	<?php wp_head(); ?>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Editor | VRodos</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <?php wp_head(); ?>
 </head>
-<body <?php body_class('vrodos-manager-wrapper'); ?>>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-    });
-</script>
-<?php if ( ! is_user_logged_in() || ! current_user_can( 'administrator' ) ) { ?>
-
-	<div class="DisplayBlock CenterContents">
-
-		<img style="margin-top:10px;" src="<?php echo esc_url( $login_promo_url ); ?>"
-			width="960px;" alt="editor screenshot" />
-		<br />
-		<i style="font-size: 64px; padding-top: 10px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
-		<p class="mdc-typography--title"> Please <a class="mdc-theme--secondary" href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform
-			Or <a class="mdc-theme--secondary" href="<?php echo wp_registration_url(); ?>">register</a> if you don't have an account</p>
-	</div>
-
-
-<?php } else { ?>
-
-	<div class="asset_editor_style">
-
-		<div id="wrapper_3d_inner" class="asset_editor_3dpanel">
-
-			<!--   Progress bar -->
-			<div id="previewProgressSlider" class="CenterContents">
-				<h6 id="previewProgressLabel" class="mdc-theme--text-primary-on-light mdc-typography--subheading1">
-					Preview of 3D Model</h6>
-				<div class="progressSlider">
-					<div id="previewProgressSliderLine" class="progressSliderSubLine" style="width: 0;">...</div>
-				</div>
-			</div>
-
-			<!-- LabelRenderer of Canvas -->
-			<div id="previewCanvasLabels"></div>
-
-			<!-- 3D Canvas -->
-			<canvas id="previewCanvas">3D canvas</canvas>
-
-			<a href="#" class="animationButton" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();">Animation 1</a>
-			<!--Bounds not working...-->
-			<!--<a href="#" class="boundingSphereButton" id="boundSphButton" onclick="asset_viewer_3d_kernel.showHideBoundSphere();">Bounds</a>-->
-
-		</div>
-
-
-		<div id="text-asset-sidebar" class="asset_editor_textpanel">
-
-			<div style="display: inline-block; width: 100%;">
-
-			</div>
-
-			<div style="text-align: left; width: 100%;">
-
-
-				<a title="Back" class="vrodos-back-button hideAtLocked mdc-button" style="float:left; min-width: 0;" href="<?php echo $goBackToLink; ?>">
-					<em style="font-size:32px;" class="material-icons arrowback">arrow_back</em></a>
-				<?php
-
-
-				// UPPER BUTTONS
-				if ( $asset_id != null ) {
-				}
-				?>
-				<h2 style="display: inline-block; margin: 0  " class="mdc-typography--headline mdc-theme--text-primary-on-light" >Asset editor</h2>
-				<!-- Author -->
-				<!--<div class="mdc-typography--caption" style="display: inline-block; float: right;" >
-				<img alt="Author image" class="AssetEditorAuthorImageStyle"
-					src="<?php /*echo get_avatar_url($author_id);*/ ?>">
-				<a href="#" style="color:black; line-height: 48px; vertical-align: text-bottom">
-					<?php /*echo $author_displayname;*/ ?>
-				</a>
-			</div>-->
-
-			</div>
-
-			<hr/>
-
-			<!-- Form to submit data -->
-			<form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data">
-
-				<!-- Submit Button -->
-				<?php
-				if ( ( $isOwner || $isUserAdmin ) && $isEditMode ) {
-					wp_nonce_field( 'post_nonce', 'post_nonce_field' );
-					?>
-					<input type="hidden" name="submitted" id="submitted" value="true"/>
-					<button id="formSubmitBtn" style="float: right;" disabled
-							class="mdc-button mdc-elevation--z2 mdc-button--raised mdc-button--primary"
-							data-mdc-auto-init="MDCRipple" type="submit" <?php echo $isEditable ? '' : ' disabled'; ?> >
-						<?php echo $asset_id == null ? 'Create asset' : 'Update asset'; ?>
-					</button>
-				<?php } ?>
-
-				<br>
-
-				<!-- EDIT MODE -->
-				<?php if ( ( $isOwner || $isUserAdmin ) ) { ?>
-
-				<div class="tw-flex tw-flex-wrap tw-gap-6 tw-w-full">
-					<!-- Title -->
-					<div class="tw-flex-1 tw-min-w-[280px]">
-						<h3 class="mdc-typography--title" style="margin-bottom: 5px;">Title</h3>
-						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-							<input id="assetTitle" type="text"
-									class="mdc-textfield__input mdc-theme--text-primary-on-light"
-									name="assetTitle"
-									aria-controls="title-validation-msg" required minlength="3" maxlength="25"
-									value="<?php echo $asset_title_value; ?>">
-
-							<label for="assetTitle" class="mdc-textfield__label">
-								Title of the asset
-							</label>
-
-							<div class="mdc-textfield__bottom-line"></div>
-						</div>
-
-						<p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-validation-msg">
-							Between 3 - 25 characters
-						</p>
-					</div>
-					<!-- End of Title -->
-
-					<!-- CATEGORY -->
-					<div class="tw-flex-1 tw-min-w-[280px]">
-
-						<h3 class="mdc-typography--title"><?php echo $dropdownHeading; ?></h3>
-						<div id="category-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 100%;">
-							<em class="material-icons mdc-theme--text-hint-on-light ">label</em>&nbsp;<!--icon-->
-							<?php if ( empty( $saved_term ) ) { ?>
-								<span id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
-									No category selected
-								</span>
-							<?php } else { ?>
-								<span data-cat-desc="<?php echo esc_attr( $saved_term[0]->description ); ?>"
-										data-cat-slug="<?php echo esc_attr( $saved_term[0]->slug ); ?>"
-										data-cat-id="<?php echo esc_attr( $saved_term[0]->term_id ); ?>"
-										id="currently-selected-category" class="mdc-select__selected-text mdc-typography--subheading2">
-									<?php echo esc_html( $saved_term[0]->name ); ?>
-								</span>
-							<?php } ?>
-
-							<div class="mdc-simple-menu mdc-select__menu">
-								<ul class="mdc-list mdc-simple-menu__items">
-
-									<li class="mdc-list-item mdc-theme--text-hint-on-light" role="option" aria-disabled="true"
-										tabindex="-1" style="pointer-events: none;">
-										<span class="mdc-list-item__text">No category selected</span>
-									</li>
-
-									<?php foreach ( $cat_terms as $term ) { ?>
-										<li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
-											data-cat-desc="<?php echo esc_attr( $term->description ); ?>"
-											data-value="<?php echo esc_attr( $term->slug ); ?>"
-											id="<?php echo esc_attr( $term->term_id ); ?>"
-											tabindex="0">
-											<span class="mdc-list-item__text"><?php echo esc_html( $term->name ); ?></span>
-										</li>
-									<?php } ?>
-
-								</ul>
-							</div>
-						</div>
-
-						<span style="font-style: italic; min-width: 100%; line-height: 1rem;"
-								class="mdc-typography--caption mdc-theme--text-secondary-on-light"
-								id="categoryDescription"></span>
-						<input id="termIdInput" type="hidden" name="term_id" value="">
-					</div>
-
-				</div>
-
-				<div class="tw-flex tw-flex-wrap tw-gap-6 tw-w-full tw-mt-6">
-
-					<div id="glb_file_section" class="tw-flex-1 tw-min-w-[280px]" style="display: block;">
-
-						<h3 class="mdc-typography--title">3D Model</h3>
-
-						<!-- Select type of 3D format files -->
-						<!--TODO Create a different 3d type handler-->
-
-						<img alt="3D model section" style="height: 64px;"
-							src="<?php echo esc_url( $glb_icon_url ); ?>">
-						<label id="fileUploadInputLabel" for="multipleFilesInput"> File selection </label>
-
-						<input id="fileUploadInput"
-								class="FullWidth" type="file"
-								name="multipleFilesInput[]"
-								value="" accept=".glb"
-								onclick="clearList()"/>
-
-						<!-- For already stored files -->
-						<?php print_r( $_FILES, true ); ?>
-						<input type="hidden" name="glbFileInput" value="" id="glbFileInput" />
-						<input type="hidden" id="assettrs" class="mdc-textfield__input"
-								name="assettrs" form="3dAssetForm" value="<?php echo trim( $assettrs_saved ); ?>" />
-					</div>
-
-					<div class="tw-w-full" id="video_section" style="display: none;">
-						<h3 class="mdc-typography--title">Video</h3>
-						<div id="videoFileInputContainer">
-							<label for="videoFileInput">Select a video</label>
-							<br />
-							<video width="320" height="240" id="assetVideoTag" style="width:60%" preload="auto" controls>
-								<source id="assetVideoSource" src="<?php echo esc_url( $video_attachment_file ?? '' ); ?>" type="video/mp4">
-							</video>
-							<input class="FullWidth" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
-							<br />
-							<span id="video-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp4 &amp; webm files are supported.</span>
-						</div>
-					</div>
-
-					<div id="screenshot_section" class="tw-flex-1 tw-min-w-[280px]" style="display: block;">
-						<h3 class="mdc-typography--title">Screenshot</h3>
-						<div class="tw-flex tw-gap-4">
-							<div class="tw-w-2/3">
-								<img id="sshotPreviewImg" src="<?php echo esc_url( $scrnImageURL ?? '' ); ?>" alt="Asset Screenshot image" class="tw-w-full tw-rounded-lg tw-border tw-border-slate-200">
-								<input type="hidden" name="sshotFileInput" value="" id="sshotFileInput" accept="image/png"/>
-							</div>
-							<div class="tw-w-1/3">
-								<div id="assetback3dcolordiv" class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield" style="width: 100%;">
-									<label for="jscolorpick" style="display:none">Color pick</label>
-									<input id="jscolorpick" style="width: 100%;" class="jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
-									<label for="assetback3dcolor" class="mdc-textfield__label" style="padding: 0;text-align: center">BG color</label>
-									<input type="text" id="assetback3dcolor" class="mdc-textfield__input" name="assetback3dcolor" form="3dAssetForm" value="<?php echo esc_attr( trim( $asset_back_3d_color_saved ) ); ?>" />
-								</div>
-							</div>
-						</div>
-						<a id="createModelScreenshotBtn" type="button" style="margin-top:16px;" class="mdc-button mdc-button--raised mdc-button--primary FullWidth" data-mdc-auto-init="MDCRipple">
-							Create screenshot
-						</a>
-					</div>
-
-					<div id="video_screenshot_section" class="tw-w-full" style="display:none;">
-						<h3 class="mdc-typography--title">Video Screenshot</h3>
-						<span style="font-style: italic; line-height: 1rem;" class="mdc-typography--caption mdc-theme--text-secondary-on-light">
-							Generated automatically during video seek
-						</span>
-						<div style="float: left; width: 100%">
-							<canvas id="videoSshotPreviewImg" style="overflow:auto"></canvas>
-							<input type="hidden" name="videoSshotFileInput" id="videoSshotFileInput" accept="image/png"/>
-						</div>
-					</div>
-				</div>
-
-				<div style="display:flex; width: 100%;">
-					<div class="tw-w-full" id="poi_image_text_section" style="display: none;">
-						<h3 class="mdc-typography--title">POI Details</h3>
-						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-							<input id="poiImgTitle" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="poiImgTitle" aria-controls="title-validation-msg" minlength="3" maxlength="50" value="<?php echo esc_attr( $poi_img_title ); ?>">
-							<label for="poiImgTitle" class="mdc-textfield__label">Title</label>
-							<div class="mdc-textfield__bottom-line"></div>
-						</div>
-						<p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-validation-msg">
-							Between 3 - 25 characters
-						</p>
-						<div class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3); width: 100%;">
-							<label for="poiImgDescription" class="mdc-textfield__label" style="background: none;">Add the text content</label>
-							<textarea id="poiImgDescription" name="poiImgDescription" class="mdc-textfield__input" style="box-shadow: none;" rows="10" type="text"><?php echo esc_textarea( $poi_img_content ); ?></textarea>
-						</div>
-					</div>
-
-					<div id="poi_help_section" class="tw-w-full tw-bg-white tw-p-6 tw-rounded-2xl tw-border tw-border-slate-200 tw-shadow-sm tw-mt-6" style="display: none;">
-						<h3 class="tw-text-slate-900 tw-font-extrabold tw-text-lg tw-mb-4 tw-flex tw-items-center tw-gap-2">
-							<i data-lucide="message-square" class="tw-w-5 tw-h-5 tw-text-primary"></i>
-							Chat Options
-						</h3>
-
-						<div class="tw-space-y-6">
-							<!-- Chat Title -->
-							<div>
-								<label for="poiChatTitle" class="tw-block tw-text-xs tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-wider tw-mb-2">
-									Chat Title (appears on entering chat)
-								</label>
-								<div class="tw-relative">
-									<input id="poiChatTitle" type="text"
-										   class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-xl tw-px-4 tw-py-3 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all"
-										   name="poiChatTitle"
-										   minlength="3" maxlength="50"
-										   value="<?php echo esc_attr( $poi_chat_title ); ?>">
-								</div>
-								<p class="tw-text-[10px] tw-text-slate-400 tw-mt-1.5 tw-font-medium">Between 3 - 50 characters</p>
-							</div>
-
-							<!-- Chat Indicator -->
-							<div class="tw-flex tw-items-center tw-gap-3 tw-p-4 tw-bg-slate-50 tw-rounded-xl tw-border tw-border-slate-100">
-								<div class="tw-flex tw-items-center">
-									<input type="checkbox" id="poiChatIndicators" name="poiChatIndicators"
-										   class="tw-w-5 tw-h-5 tw-rounded tw-border-slate-300 tw-text-primary focus:tw-ring-primary/20"
-										   <?php echo $poi_chat_indicators; ?>/>
-								</div>
-								<label for="poiChatIndicators" class="tw-text-sm tw-font-bold tw-text-slate-700 tw-cursor-pointer">
-									Show Chat Indicator
-									<span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-medium tw-mt-0.5">Displays a floating 3D icon above the chat point in the scene</span>
-								</label>
-							</div>
-
-							<!-- Max Participants -->
-							<div>
-								<label for="poiChatNumPeople" class="tw-block tw-text-xs tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-wider tw-mb-2">
-									Max Participants (2 - 8)
-								</label>
-								<div class="tw-relative">
-									<input id="poiChatNumPeople" type="number"
-										   class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-xl tw-px-4 tw-py-3 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all"
-										   name="poiChatNumPeople"
-										   min="2" max="8"
-										   value="<?php echo esc_attr( $poi_chat_num_people ); ?>">
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div id="poi_link_section" class="tw-w-full" style="display: none;">
-						<h3 class="mdc-typography--title">Link</h3>
-						<div class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3); margin-top:0;">
-							<textarea id="assetLinkInput" name="assetLinkInput" class="mdc-textfield__input" style="box-shadow: none;" rows="5" type="text"><?php echo esc_textarea( $asset_link ); ?></textarea>
-							<label for="assetLinkInput" class="mdc-textfield__label" style="background: none;">Link to external target</label>
-						</div>
-					</div>
-
-					<div class="tw-w-full" id="video_options_section" style="display: none;">
-						<h3 class="mdc-typography--title">Video options</h3>
-						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-							<input id="videoTitle" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="videoTitle" aria-controls="title-validation-msg" minlength="3" maxlength="25" value="<?php echo esc_attr( $video_title ); ?>">
-							<label for="videoTitle" class="mdc-textfield__label">Video title (optional)</label>
-							<div class="mdc-textfield__bottom-line"></div>
-						</div>
-						<p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-validation-msg">
-							Between 3 - 25 characters
-						</p>
-						<input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="video_autoloop_checkbox" name="video_autoloop_checkbox" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $video_autoloop; ?>/>
-						<label for="video_autoloop_checkbox" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Autoplay</label>
-					</div>
-
-					<div class="tw-w-full" id="poi_image_file_section" style="display: none;">
-						<h3 class="mdc-typography--title">Image file</h3>
-						<img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo esc_url( $imagePoiImageURL ?? '' ); ?>" alt="Asset Image Text POI image">
-						<input type="file" name="imageFileInput" value="" id="imageFileInput" accept="image/png, image/jpg, image/jpeg"/>
-					</div>
-				</div>
-
-				<div id="ipr_section" class="tw-w-full" style="display: none; padding-bottom: 24px;">
-					<h3 class="mdc-typography--title">Select an IPR plan</h3>
-					<div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 80%;">
-						<i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;
-						<?php if ( empty( $saved_ipr_term ) ) { ?>
-							<span id="currently-ipr-selected" class="mdc-select__selected-text mdc-typography--subheading2">
-								No IPR category selected
-							</span>
-						<?php } else { ?>
-							<span data-cat-ipr-desc="<?php echo esc_attr( $saved_ipr_term[0]->description ); ?>"
-									data-cat-ipr-slug="<?php echo esc_attr( $saved_ipr_term[0]->slug ); ?>"
-									data-cat-ipr-id="<?php echo esc_attr( $saved_ipr_term[0]->term_ipr_id ); ?>"
-									id="currently-ipr-selected"
-									class="mdc-select__selected-text mdc-typography--subheading2">
-								<?php echo esc_html( $saved_ipr_term[0]->name ); ?>
-							</span>
-						<?php } ?>
-
-						<div class="mdc-simple-menu mdc-select__menu">
-							<ul class="mdc-list mdc-simple-menu__items">
-								<li class="mdc-list-item mdc-theme--text-hint-on-light" role="option" aria-disabled="true" tabindex="-1" style="pointer-events: none;">
-									No IPR category selected
-								</li>
-								<?php foreach ( $cat_ipr_terms as $term_ipr ) { ?>
-									<li class="mdc-list-item mdc-theme--text-primary-on-background" role="option"
-										title="<?php echo esc_attr( $term_ipr->description ); ?>"
-										data-cat-ipr-desc="<?php echo esc_attr( $term_ipr->description ); ?>"
-										data-cat-ipr-slug="<?php echo esc_attr( $term_ipr->slug ); ?>"
-										id="<?php echo esc_attr( $term_ipr->term_id ); ?>"
-										tabindex="0">
-										<?php echo esc_html( $term_ipr->name ); ?>
-									</li>
-								<?php } ?>
-							</ul>
-						</div>
-					</div>
-					<span class="mdc-typography--caption mdc-theme--text-secondary-on-light" id="categoryIPRDescription"></span>
-					<input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
-				</div>
-			</form>
-		</div>
-
-		<div id="audioDetailsPanel" style="display: none">
-			<h4 class="mdc-typography--title">3D audio file</h4>
-			<img alt="Audio Section" src="<?php echo esc_url( $audio_icon_url ); ?>">
-			<div id="audioFileInputContainer">
-					<?php if ( $audio_attachment_file ) { ?>
-					<audio controls loop preload="auto" id='audioFile'>
-						<source src="<?php echo esc_url( $audio_attachment_file ?? '' ); ?>" type="audio/<?php echo esc_attr( $audio_file_type ); ?>">
-						Your browser does not support the audio tag.
-					</audio>
-				<?php } ?>
-				<label for="audioFileInput"> Select a new audio</label>
-				<input class="FullWidth" type="file" name="audioFileInput" value="" id="audioFileInput" accept="audio/mp3,audio/wav"/>
-				<br />
-				<span id="audio-description-label" class="mdc-typography--subheading1 mdc-theme--text-secondary-on-background">mp3 or wav</span>
-			</div>
-		</div>
-
-
-		<!--  Select font for text -->
-		<!--<div id="assetFontsDiv">
-					<h3 id="assetFontsLabel" for="assetFonts" class="mdc-typography--title">Fonts</h3>
-					<input id="assetFonts" class="mdc-textfield__input"
-							name="assetFonts" form="3dAssetForm" value="<?php /*echo trim($asset_fonts_saved); */ ?>">
-					<script>
-						jQuery('#assetFonts').fontselect().on('change', function() { applyFont(this.value); });
-					</script>
-				</div>-->
-
-
-		<?php } ?>
-
-
-	</div>
+<body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased vrodos-main-h tw-overflow-hidden'); ?>>
+
+<div id="vrodos-asset-editor" class="vrodos-main-h tw-flex tw-flex-col">
+
+    <!-- Header (Unified Light Header) -->
+    <header class="tw-h-16 tw-flex-none tw-bg-white tw-border-b tw-border-slate-200 tw-px-8 tw-z-[60] tw-shadow-sm tw-flex tw-items-center">
+        <div class="tw-w-full tw-flex tw-items-center tw-justify-between">
+            <div class="tw-flex tw-items-center tw-gap-4">
+                <span class="tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
+            </div>
+
+            <div class="tw-flex tw-items-center tw-gap-6">
+                <div class="tw-flex tw-items-center tw-gap-3">
+                    <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">Asset Editor</h1>
+                </div>
+                <div class="tw-h-4 tw-w-px tw-bg-slate-200"></div>
+                <a href="<?php echo $goBackToLink; ?>" class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-black tw-text-slate-400 hover:tw-text-primary tw-uppercase tw-tracking-wider tw-transition-all">
+                    <i data-lucide="arrow-left" class="tw-w-4 tw-h-4"></i>
+                    Back to List
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <?php if (!is_user_logged_in() || !current_user_can('administrator')) { ?>
+        <main class="tw-flex-1 tw-flex tw-items-center tw-justify-center tw-p-8">
+            <div class="tw-max-w-md tw-w-full tw-bg-white tw-rounded-3xl tw-p-10 tw-border tw-border-slate-200 tw-shadow-xl tw-text-center">
+                <div class="tw-w-20 tw-h-20 tw-bg-slate-50 tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-6">
+                    <i data-lucide="lock" class="tw-w-10 tw-h-10 tw-text-slate-300"></i>
+                </div>
+                <h2 class="tw-text-2xl tw-font-black tw-text-slate-800 tw-mb-4">Authentication Required</h2>
+                <p class="tw-text-slate-500 tw-font-medium tw-mb-8">Please login to access the asset editor and manage your 3D repository.</p>
+                <div class="tw-flex tw-flex-col tw-gap-3">
+                    <a href="<?php echo wp_login_url(get_permalink()); ?>" class="d-btn d-btn-primary tw-text-white tw-font-bold tw-rounded-xl">Log In</a>
+                    <a href="<?php echo wp_registration_url(); ?>" class="d-btn d-btn-ghost tw-text-slate-400 tw-font-bold">Create Account</a>
+                </div>
+            </div>
+        </main>
+    <?php
+}
+else { ?>
+        <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col">
+            <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-hidden">
+            
+            <!-- Left Column: 3D Preview & Files -->
+            <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-y-auto lg:tw-h-full">
+                <div class="tw-p-6 lg:tw-p-8 tw-space-y-6">
+                    <!-- 3D Preview Card -->
+                    <div class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]">
+                        <!-- Preview Overlay -->
+                        <div id="previewProgressSlider" class="tw-absolute tw-inset-0 tw-z-10 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-slate-900/50 tw-backdrop-blur-sm tw-transition-opacity">
+                            <div class="tw-bg-white tw-p-6 tw-rounded-2xl tw-shadow-2xl tw-text-center tw-min-w-[200px]">
+                                <h6 id="previewProgressLabel" class="tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">Loading</h6>
+                                <div class="tw-w-full tw-h-1.5 tw-bg-slate-100 tw-rounded-full tw-overflow-hidden">
+                                    <div id="previewProgressSliderLine" class="tw-h-full tw-bg-primary tw-transition-all tw-duration-300" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3D Canvas -->
+                        <div id="wrapper_3d_inner" class="tw-w-full tw-h-full">
+                            <div id="previewCanvasLabels" class="tw-absolute tw-inset-0 tw-pointer-events-none tw-z-20"></div>
+                            <canvas id="previewCanvas" class="tw-w-full tw-h-full">3D canvas</canvas>
+                        </div>
+                        
+                        <!-- Mini Controls Overlay -->
+                        <div class="tw-absolute tw-bottom-4 tw-left-4 tw-z-30 tw-pointer-events-auto tw-flex tw-items-center tw-gap-2">
+                            <button type="button" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();" 
+                                    class="d-btn d-btn-xs tw-bg-white/90 tw-backdrop-blur-sm tw-border-none hover:tw-bg-white tw-shadow-md tw-rounded-lg tw-px-3 tw-gap-1.5 tw-h-8">
+                                <i data-lucide="play" class="tw-w-3.5 tw-h-3.5"></i>
+                                <span class="tw-text-[10px] tw-font-bold tw-uppercase">Anim</span>
+                            </button>
+                        </div>
+
+                        <!-- Theme Control Overlay (BG Color) -->
+                        <div class="tw-absolute tw-bottom-4 tw-right-4 tw-z-30 tw-pointer-events-auto tw-flex tw-items-center tw-gap-2 tw-bg-white/90 tw-backdrop-blur-sm tw-px-3 tw-rounded-lg tw-shadow-md tw-border tw-border-slate-100 tw-h-8">
+                             <i data-lucide="palette" class="tw-w-3.5 tw-h-3.5 tw-text-slate-400"></i>
+                             <input id="jscolorpick" class="tw-w-20 tw-h-5 tw-rounded-md tw-cursor-pointer tw-border-none jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
+                             <input id="assetback3dcolor" type="hidden" name="assetback3dcolor" value="<?php echo esc_attr(trim($asset_back_3d_color_saved)); ?>" />
+                        </div>
+                    </div>
+
+                    <!-- GLB Upload Card (Moved from sidebar) -->
+                    <?php if (($isOwner || $isUserAdmin)) { ?>
+                    <div id="glb_file_section" class="tw-bg-white tw-p-6 tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-space-y-4">
+                        <div class="tw-flex tw-items-center tw-justify-between">
+                            <label class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                                3D Content (GLB)
+                            </label>
+                            <i data-lucide="box" class="tw-w-4 tw-h-4 tw-text-primary"></i>
+                        </div>
+                        
+                        <div class="tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-4 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
+                            <input id="fileUploadInput" class="tw-hidden" type="file" name="multipleFilesInput[]" accept=".glb" onclick="clearList()"/>
+                            <label for="fileUploadInput" class="tw-cursor-pointer tw-flex tw-flex-col tw-items-center tw-gap-2">
+                                <div class="tw-w-8 tw-h-8 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">
+                                    <i data-lucide="upload-cloud" class="tw-w-4 tw-h-4 tw-text-primary"></i>
+                                </div>
+                                <div>
+                                    <p id="fileUploadInputLabel" class="tw-text-xs tw-font-bold tw-text-slate-800">Model Upload</p>
+                                    <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">GLB MAX 50MB</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <input type="hidden" name="glbFileInput" value="" id="glbFileInput" />
+                        <input type="hidden" id="assettrs" name="assettrs" value="<?php echo trim($assettrs_saved); ?>" />
+                    </div>
+                    <?php
+	}?>
+
+                    <!-- Context Tip Card -->
+                    <div class="tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-p-5 tw-rounded-2xl">
+                        <div class="tw-flex tw-items-center tw-gap-2 tw-mb-2">
+                             <i data-lucide="sparkles" class="tw-w-4 tw-h-4 tw-text-emerald-500"></i>
+                             <span class="tw-text-[10px] tw-font-black tw-text-emerald-700 tw-uppercase tw-tracking-widest">Editor Tip</span>
+                        </div>
+                        <p class="tw-text-[11px] tw-text-emerald-800 tw-font-medium tw-leading-relaxed">
+                            Upload your GLB model here to preview it in real-time. Use the screenshot tool in the right panel to capture the preview.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Center: Main Form Area -->
+            <div class="tw-flex-1 tw-bg-white lg:tw-border-l tw-border-slate-200 tw-overflow-y-auto">
+                
+                    
+                    <!-- Primary Action Sticky Header -->
+                    <div class="tw-sticky tw-top-0 tw-z-30 tw-bg-white/80 tw-backdrop-blur-md tw-border-b tw-border-slate-100 tw-px-10 tw-py-5 tw-flex tw-items-center tw-justify-between">
+                        <div class="tw-flex tw-items-center tw-gap-3">
+                            <i data-lucide="file-edit" class="tw-w-4 tw-h-4 tw-text-slate-300"></i>
+                            <span class="tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest"><?php echo $asset_id ? 'Editing Asset' : 'New Asset'; ?></span>
+                        </div>
+                        <?php if (($isOwner || $isUserAdmin)) { ?>
+                            <button id="formSubmitBtn" type="submit" class="d-btn d-btn-primary tw-text-white tw-font-black tw-px-10 tw-rounded-xl tw-shadow-lg tw-shadow-emerald-500/20 tw-transition-all active:tw-scale-95 tw-gap-2">
+                                <i data-lucide="<?php echo $asset_id ? 'save' : 'plus-circle'; ?>" class="tw-w-4 tw-h-4"></i>
+                                <?php echo $asset_id ? 'UPDATE ASSET' : 'CREATE ASSET'; ?>
+                            </button>
+                        <?php } ?>
+                    </div>
+
+                    <!-- Metadata Form -->
+                    <div class="tw-px-10 tw-py-6 tw-space-y-8">
+
+                <?php if (($isOwner || $isUserAdmin) && $isEditMode) {
+		wp_nonce_field('post_nonce', 'post_nonce_field');
+?>
+                        <input type="hidden" name="submitted" id="submitted" value="true"/>
+                    <?php
+	}?>
+
+                <div class="tw-grid tw-grid-cols-2 tw-gap-6">
+                    
+                    <!-- Asset Title -->
+                    <div class="tw-space-y-4">
+                        <label for="assetTitle" class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                            Asset Name
+                        </label>
+                        <div class="tw-relative">
+                            <input id="assetTitle" type="text"
+                                   class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-4 tw-py-3 tw-text-sm tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-placeholder-slate-300"
+                                   name="assetTitle"
+                                   placeholder="e.g. Ancient Temple"
+                                   required minlength="3" maxlength="25"
+                                   value="<?php echo $asset_title_value; ?>">
+                        </div>
+                    </div>
+
+                    <!-- Category Selection -->
+                    <div class="tw-space-y-4">
+                        <label for="category-select-native" class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                            Asset Category
+                        </label>
+                        <div class="tw-relative">
+                            <select id="category-select-native" name="term_id_native" class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-4 tw-py-3 tw-text-sm tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-appearance-none d-select d-select-ghost d-select-sm tw-cursor-pointer">
+                                <option disabled <?php echo empty($saved_term) ? 'selected' : ''; ?>>Select a category</option>
+                                <?php foreach ($cat_terms as $term):
+		$isSelected = !empty($saved_term) && $saved_term[0]->term_id == $term->term_id;
+?>
+                                    <option value="<?php echo esc_attr($term->slug); ?>" 
+                                            data-cat-desc="<?php echo esc_attr($term->description); ?>"
+                                            data-cat-id="<?php echo esc_attr($term->term_id); ?>"
+                                            <?php echo $isSelected ? 'selected' : ''; ?>>
+                                        <?php echo esc_html($term->name); ?>
+                                    </option>
+                                <?php
+	endforeach; ?>
+                            </select>
+                            <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-pr-4 tw-flex tw-items-center tw-pointer-events-none text-slate-400">
+                                <i data-lucide="chevron-down" class="tw-w-5 tw-h-5"></i>
+                            </div>
+                        </div>
+                        <p id="categoryDescription" class="tw-text-[11px] tw-text-emerald-600 tw-font-bold tw-leading-relaxed"></p>
+                    </div>
+
+                </div>
+
+                <!-- Hidden inputs for legacy JS compatibility (moved outside grid) -->
+                <div id="category-select" style="display:none;"></div>
+                <input id="termIdInput" type="hidden" name="term_id" value="">
+                <div id="currently-selected-category" 
+                     data-cat-id="<?php echo !empty($saved_term) ? esc_attr($saved_term[0]->term_id) : ''; ?>"
+                     data-cat-slug="<?php echo !empty($saved_term) ? esc_attr($saved_term[0]->slug) : ''; ?>"
+                     data-cat-desc="<?php echo !empty($saved_term) ? esc_attr($saved_term[0]->description) : ''; ?>">
+                </div>
+
+
+                <div id="video_section" class="tw-space-y-6" style="display: none;">
+                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                        Video Source
+                    </label>
+                    
+                    <div class="tw-bg-slate-900 tw-rounded-2xl tw-overflow-hidden tw-shadow-xl">
+                        <video id="assetVideoTag" class="tw-w-full tw-aspect-video" preload="auto" controls>
+                            <source id="assetVideoSource" src="<?php echo esc_url($video_attachment_file ?? ''); ?>" type="video/mp4">
+                        </video>
+                    </div>
+
+                    <div class="tw-flex tw-gap-3">
+                        <input class="d-file-input d-file-input-bordered tw-w-full tw-rounded-xl" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
+                    </div>
+                    <p class="tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase">Supported formats: MP4, WebM</p>
+                </div>
+
+                <div id="screenshot_section" class="tw-space-y-6" style="display: block;">
+                    <div class="tw-flex tw-items-center tw-justify-between">
+                        <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                            Screenshot
+                        </label>
+                        <i data-lucide="image" class="tw-w-5 tw-h-5 tw-text-primary"></i>
+                    </div>
+
+                    <div class="tw-w-1/2">
+                        <!-- Screenshot Preview (Full width of the 50% container) -->
+                        <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border tw-border-slate-200 tw-group">
+                            <?php if ($scrnImageURL) : ?>
+                                <img id="sshotPreviewImg" src="<?php echo esc_url($scrnImageURL); ?>" alt="Asset Screenshot" 
+                                     class="tw-w-full tw-h-full tw-object-cover tw-transition-transform group-hover:tw-scale-110 !tw-max-h-none !tw-w-full !tw-h-full">
+                            <?php else : ?>
+                                <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-slate-300">
+                                    <i data-lucide="camera" class="tw-w-16 tw-h-16"></i>
+                                </div>
+                                <img id="sshotPreviewImg" src="" class="tw-hidden !tw-max-h-none !tw-w-full !tw-h-full">
+                            <?php endif; ?>
+                            
+                            <input type="hidden" name="sshotFileInput" value="" id="sshotFileInput" accept="image/png"/>
+                            
+                            <!-- Capture Button Overlay -->
+                            <div class="tw-absolute tw-bottom-4 tw-right-4">
+                                <button id="createModelScreenshotBtn" type="button" class="d-btn d-btn-md tw-bg-white/90 tw-backdrop-blur tw-border-none hover:tw-bg-white tw-text-slate-900 tw-font-bold tw-rounded-xl tw-shadow-xl tw-gap-2">
+                                    <i data-lucide="camera" class="tw-w-4 tw-h-4"></i>
+                                    Capture Screenshot
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="video_screenshot_section" class="tw-space-y-4" style="display:none;">
+                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                        Video Poster
+                    </label>
+                    <div class="tw-aspect-video tw-bg-slate-100 tw-rounded-2xl tw-overflow-hidden tw-border tw-border-slate-200">
+                        <canvas id="videoSshotPreviewImg" class="tw-w-full tw-h-full tw-object-cover"></canvas>
+                        <input type="hidden" name="videoSshotFileInput" id="videoSshotFileInput" accept="image/png"/>
+                    </div>
+                    <p class="tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-2">Auto-generated from video seek</p>
+                </div>
+
+                <!-- POI Details (Image/Text) -->
+                <div id="poi_image_text_section" class="tw-space-y-6" style="display: none;">
+                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                        Information Overlay
+                    </label>
+                    <div class="tw-space-y-4">
+                        <input id="poiImgTitle" type="text" 
+                               class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-placeholder-slate-300" 
+                               name="poiImgTitle" 
+                               placeholder="Title of information popup"
+                               minlength="3" maxlength="50" 
+                               value="<?php echo esc_attr($poi_img_title); ?>">
+                        
+                        <textarea id="poiImgDescription" name="poiImgDescription" 
+                                  class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-medium tw-placeholder-slate-300 min-h-[160px]" 
+                                  placeholder="Write the content here..."><?php echo esc_textarea($poi_img_content); ?></textarea>
+                    </div>
+                </div>
+
+                <!-- Chat Options -->
+                <div id="poi_help_section" class="tw-bg-slate-50 tw-p-8 tw-rounded-3xl tw-border tw-border-slate-200 tw-mt-4" style="display: none;">
+                    <h3 class="tw-text-slate-900 tw-font-black tw-text-lg tw-mb-6 tw-flex tw-items-center tw-gap-3">
+                        <i data-lucide="message-square" class="tw-w-6 tw-h-6 tw-text-primary"></i>
+                        Collaboration Settings
+                    </h3>
+
+                    <div class="tw-space-y-8">
+                        <div>
+                            <label for="poiChatTitle" class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">
+                                Display Name
+                            </label>
+                            <input id="poiChatTitle" type="text"
+                                   class="tw-w-full tw-bg-white tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold"
+                                   name="poiChatTitle"
+                                   minlength="3" maxlength="50"
+                                   value="<?php echo esc_attr($poi_chat_title); ?>">
+                        </div>
+
+                        <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-white tw-rounded-2xl tw-border tw-border-slate-100">
+                            <input type="checkbox" id="poiChatIndicators" name="poiChatIndicators"
+                                   class="d-checkbox d-checkbox-primary tw-rounded-lg"
+                                   <?php echo $poi_chat_indicators; ?>/>
+                            <label for="poiChatIndicators" class="tw-cursor-pointer">
+                                <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Show 3D Indicator</span>
+                                <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Visible floating icon in the scene</span>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label for="poiChatNumPeople" class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">
+                                Capacity (2-8 learners)
+                            </label>
+                            <input id="poiChatNumPeople" type="number"
+                                   class="tw-w-full tw-bg-white tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold"
+                                   name="poiChatNumPeople"
+                                   min="2" max="8"
+                                   value="<?php echo esc_attr($poi_chat_num_people); ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- External Link -->
+                <div id="poi_link_section" class="tw-space-y-4" style="display: none;">
+                    <label for="assetLinkInput" class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                        Destination URL
+                    </label>
+                    <div class="tw-relative">
+                        <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-pl-4 tw-flex tw-items-center tw-pointer-events-none">
+                            <i data-lucide="link" class="tw-w-5 tw-h-5 tw-text-slate-300"></i>
+                        </div>
+                        <input id="assetLinkInput" name="assetLinkInput" 
+                               class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-pl-12 tw-pr-4 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold" 
+                               value="<?php echo esc_textarea($asset_link); ?>">
+                    </div>
+                </div>
+
+                <!-- Video Options -->
+                <div id="video_options_section" class="tw-space-y-6" style="display: none;">
+                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                        Playback Settings
+                    </label>
+                    <div class="tw-space-y-4">
+                        <input id="videoTitle" type="text" 
+                               class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-placeholder-slate-300" 
+                               name="videoTitle" 
+                               placeholder="Video title (optional)"
+                               minlength="3" maxlength="25" 
+                               value="<?php echo esc_attr($video_title); ?>">
+                        
+                        <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-slate-50 tw-rounded-2xl tw-border tw-border-slate-100">
+                            <input type="checkbox" id="video_autoloop_checkbox" name="video_autoloop_checkbox" 
+                                   class="d-checkbox d-checkbox-primary tw-rounded-lg" <?php echo $video_autoloop; ?>/>
+                            <label for="video_autoloop_checkbox" class="tw-cursor-pointer">
+                                <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Autoplay & Loop</span>
+                                <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Start instantly and repeat</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image POI Upload -->
+                <div id="poi_image_file_section" class="tw-space-y-6" style="display: none;">
+                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                        Infobox Image
+                    </label>
+                    <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border-2 tw-border-dashed tw-border-slate-200 hover:tw-border-primary tw-transition-all group">
+                        <img id="imagePoiPreviewImg" src="<?php echo esc_url($imagePoiImageURL ?? ''); ?>" alt="POI Image" class="tw-w-full tw-h-full tw-object-cover">
+                        <div class="tw-absolute tw-inset-0 tw-bg-slate-900/40 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity tw-flex tw-items-center tw-justify-center">
+                            <label for="imageFileInput" class="d-btn d-btn-sm tw-bg-white tw-border-none hover:tw-bg-slate-100 tw-text-slate-900 tw-font-bold tw-rounded-xl tw-gap-2 tw-cursor-pointer">
+                                <i data-lucide="upload" class="tw-w-4 tw-h-4"></i>
+                                Replace
+                            </label>
+                        </div>
+                        <input type="file" id="imageFileInput" name="imageFileInput" class="tw-hidden" accept="image/png, image/jpg, image/jpeg"/>
+                    </div>
+                </div>
+
+                <!-- IPR Selection -->
+                <div id="ipr_section" class="tw-space-y-4" style="display: none;">
+                    <label for="category-ipr-select-native" class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                        Intellectual Property
+                    </label>
+                    <div class="tw-relative">
+                        <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-pl-4 tw-flex tw-items-center tw-pointer-events-none">
+                            <i data-lucide="shield-check" class="tw-w-5 tw-h-5 tw-text-slate-300"></i>
+                        </div>
+                        <select id="category-ipr-select-native" name="term_id_ipr_native" class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-pl-12 tw-pr-4 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-appearance-none d-select d-select-ghost tw-cursor-pointer">
+                            <option disabled <?php echo empty($saved_ipr_term) ? 'selected' : ''; ?>>Select IPR Plan</option>
+                            <?php foreach ($cat_ipr_terms as $term_ipr):
+		$isSelected = !empty($saved_ipr_term) && $saved_ipr_term[0]->term_id == $term_ipr->term_id;
+?>
+                                <option value="<?php echo esc_attr($term_ipr->slug); ?>" 
+                                        data-cat-ipr-desc="<?php echo esc_attr($term_ipr->description); ?>"
+                                        id="<?php echo esc_attr($term_ipr->term_id); ?>"
+                                        <?php echo $isSelected ? 'selected' : ''; ?>>
+                                    <?php echo esc_html($term_ipr->name); ?>
+                                </option>
+                            <?php
+	endforeach; ?>
+                        </select>
+                    </div>
+                    <p id="categoryIPRDescription" class="tw-text-[11px] tw-text-slate-400 tw-font-bold tw-leading-relaxed"></p>
+                    
+                    <!-- Legacy JS Compatibility -->
+                    <div id="category-ipr-select" style="display:none;"></div>
+                    <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
+                    <div id="currently-ipr-selected"
+                         data-cat-ipr-id="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->term_id) : ''; ?>"
+                         data-cat-ipr-slug="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->slug) : ''; ?>"
+                         data-cat-ipr-desc="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->description) : ''; ?>">
+                    </div>
+                </div>
+            </div>
+
+    <!-- Audio Hidden Panel -->
+    <div id="audioDetailsPanel" class="tw-hidden">
+        <input class="FullWidth" type="file" name="audioFileInput" value="" id="audioFileInput" accept="audio/mp3,audio/wav"/>
+        <audio id='audioFile' controls loop preload="auto">
+            <source src="<?php echo esc_url($audio_attachment_file ?? ''); ?>" type="audio/<?php echo esc_attr($audio_file_type); ?>">
+        </audio>
+    </div>
 
 
 	<script type="text/javascript">
@@ -474,8 +487,14 @@ extract( $data );
 
 		let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
 
-		let mdc = window.mdc;
-		mdc.autoInit();
+		// Initialize Lucide icons
+		const initIcons = () => {
+			if (typeof lucide !== 'undefined') {
+				lucide.createIcons();
+			}
+		};
+
+		document.addEventListener('DOMContentLoaded', initIcons);
 
 		assetVideoTag.addEventListener('loadeddata', function() {
 			generateVideoSshot(videoSshotCanvas, assetVideoTag);
@@ -490,7 +509,7 @@ extract( $data );
 		let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById( 'previewCanvas' ),
 			document.getElementById( 'previewCanvasLabels' ),
 			document.getElementById('animButton1'),
-			document.getElementById('previewProgressLabel'),
+			document.getElementById('previewProgressSlider'), // Hide entire slider when ready
 			document.getElementById('previewProgressSliderLine'),
 			back_3d_color,
 			null,
@@ -506,38 +525,35 @@ extract( $data );
 			false,
 			true,
 			assettrs,
-			document.getElementById('boundSphButton'));
+			null); // boundSphButton removed
 
 		addHandlerFor3Dfiles(asset_viewer_3d_kernel, multipleFilesInputElem);
 
-		// Load existing 3D models
-		// asset_viewer_3d_kernel.loader_asset_exists( path_url, mtl_file_name, obj_file_name, pdb_file_name, fbx_file_name,
-		//                                                      glb_file_name, textures_fbx_string_connected);
-
-
 		// Select category handler
 		if( isEditMode === 1) {
-			// clear canvas and divs for fields
-			// vrodos_reset_panels(asset_viewer_3d_kernel, "initial script");
-			// Define missing references that might crash the script if accessed before they appear
-			// (already defined as const at the top of the script if they exist)
 
 			(function() {
+				const categoryDropdownNative = document.getElementById('category-select-native');
+				const iprDropdownNative = document.getElementById('category-ipr-select-native');
 
-				let MDCSelect = mdc.select.MDCSelect;
-				const categoryDropdown = new MDCSelect(document.getElementById('category-select'));
-				const IPRDropdown = new MDCSelect(document.getElementById('category-ipr-select'));
+				if (categoryDropdownNative) {
+					categoryDropdownNative.addEventListener('change', () => {
+						let currentSlug = updateSelectComponent();
+						resetCategory();
+						loadLayout(currentSlug);
+						initIcons(); // Re-initialize icons for new sections
+					});
+				}
 
-				let preSelectedCatId = document.getElementById('currently-selected-category').getAttribute("data-cat-id");
-
-				categoryDropdown.listen('MDCSelect:change', () => {
-					let currentSlug = updateSelectComponent(true);
-					resetCategory();
-					loadLayout(currentSlug);
-				});
+				if (iprDropdownNative) {
+					iprDropdownNative.addEventListener('change', () => {
+						const selectedOption = iprDropdownNative.options[iprDropdownNative.selectedIndex];
+						document.getElementById("categoryIPRDescription").innerHTML = selectedOption.getAttribute("data-cat-ipr-desc");
+						document.getElementById("termIdInputIPR").value = selectedOption.getAttribute("id");
+					});
+				}
 
 				let resetCategory = () => {
-					// Clear file list
 					clearList();
 					document.getElementById('glb_file_section').style.display = "block";
 					document.getElementById('screenshot_section').style.display = "block";
@@ -549,21 +565,17 @@ extract( $data );
 					document.getElementById('video_screenshot_section').style.display = "none";
 					document.getElementById('poi_image_text_section').style.display = "none";
 					document.getElementById('poi_image_file_section').style.display = "none";
-
 				};
 
 				let loadLayout = (slug) => {
 					switch (slug) {
-
 						case "chat":
 							document.getElementById('ipr_section').style.display = "none";
 							document.getElementById('poi_help_section').style.display = "block";
 							break;
-
 						case "poi-imagetext":
 							document.getElementById('poi_image_text_section').style.display = "block";
 							document.getElementById('poi_image_file_section').style.display = "block";
-
 							break;
 						case "poi-link":
 							document.getElementById('poi_link_section').style.display = "block";
@@ -574,95 +586,61 @@ extract( $data );
 							document.getElementById('video_section').style.display = "block";
 							document.getElementById('video_options_section').style.display = "block";
 							document.getElementById('video_screenshot_section').style.display = "block";
-
 							break;
-						default:
-							break;
-
 					}
+					asset_viewer_3d_kernel.resizeDisplayGL();
 				};
 
-				let selectedCatIPRId = jQuery('#currently-ipr-selected').attr("data-cat-ipr-id");
-				IPRDropdown.listen('MDCSelect:change', () => {
-					// Change the description of the popup
-					jQuery("#categoryIPRDescription")[0].innerHTML =  IPRDropdown.selectedOptions[0].getAttribute("data-cat-ipr-desc");
-
-					// Change the value of termIdInputIPR
-					jQuery("#termIdInputIPR").attr( "value", IPRDropdown.selectedOptions[0].getAttribute("id") );
-				});
-
-				// This fires on start to clear layout if no category is selected
 				jQuery( document ).ready(function() {
-
 					// Load preselected asset cat
-					if (preSelectedCatId) {
-						document.getElementById(preSelectedCatId).setAttribute("aria-selected", true);
-						let catSlug = updateSelectComponent(false);
+					const currentlySelected = document.getElementById('currently-selected-category');
+					if (currentlySelected && currentlySelected.getAttribute("data-cat-id")) {
+						let catSlug = updateSelectComponent();
 						loadLayout(catSlug);
 					}
 
-					// Load preselected ipr cat cat
-					if (jQuery('#currently-ipr-selected').attr("data-cat-ipr-id")) {
-						jQuery('#'+ selectedCatIPRId).attr("aria-selected", true);
-						jQuery('#category-ipr-select').addClass('mdc-select--disabled').attr( "aria-disabled", true);
+					// Load preselected ipr cat
+					const iprSelected = document.getElementById('currently-ipr-selected');
+					if (iprSelected && iprSelected.getAttribute("data-cat-ipr-id")) {
+						if (iprDropdownNative) {
+							iprDropdownNative.disabled = true;
+							iprDropdownNative.classList.add('d-select-disabled');
+						}
 					}
 
-					// Create listener for video tag
-					videoInputTag.addEventListener('change',  readVideo);
-
+					videoInputTag.addEventListener('change', readVideo);
 				});
 
-				// Function to initialize layout
-				// parameter denotes if new asset or edit asset
-				function updateSelectComponent(hasValue) {
-
-					//vrodos_reset_panels(asset_viewer_3d_kernel, "loadlayout");
-					asset_viewer_3d_kernel.resizeDisplayGL();
+				function updateSelectComponent() {
 					if (document.getElementById('formSubmitBtn')) {
 						document.getElementById('formSubmitBtn').disabled = false;
 					}
 
-					let descText = document.getElementById('categoryDescription');
+					const selectedOption = categoryDropdownNative.options[categoryDropdownNative.selectedIndex];
+					const slug = selectedOption.value;
+					const catId = selectedOption.getAttribute('data-cat-id');
+					const catDesc = selectedOption.getAttribute('data-cat-desc');
 
-					let slug = '';
-
-					if(hasValue) {
-						let selectedItem = document.getElementById(categoryDropdown.value);
-						if (selectedItem) {
-							document.getElementById('termIdInput').setAttribute('value', categoryDropdown.value);
-							descText.innerHTML = selectedItem.getAttribute("data-cat-desc");
-							slug = selectedItem.getAttribute("data-value");
-						}
-					} else {
-						let currentlySelected = document.getElementById('currently-selected-category');
-						if (currentlySelected) {
-							document.getElementById('termIdInput').setAttribute('value', currentlySelected.getAttribute("data-cat-id"));
-							descText.innerHTML = currentlySelected.getAttribute("data-cat-desc");
-							slug = currentlySelected.getAttribute("data-cat-slug");
-						}
-					}
+					document.getElementById('termIdInput').value = catId;
+					document.getElementById('categoryDescription').innerHTML = catDesc;
+					
 					return slug;
 				}
 
-
 				document.getElementById('imageFileInput').onchange = function (evt) {
-
 					let tgt = evt.target || window.event.srcElement,
 						files = tgt.files;
 
-					// FileReader support
 					if (FileReader && files && files.length) {
 						let fr = new FileReader();
 						fr.onload = function () {
 							document.getElementById('imagePoiPreviewImg').src = fr.result;
 						}
 						fr.readAsDataURL(files[0]);
-					}
-					else {
+					} else {
 						document.getElementById('imagePoiPreviewImg').src = no_img_path;
 					}
 				}
-
 			})();
 		}
 
@@ -678,15 +656,12 @@ extract( $data );
 			}
 		};
 
-		let generateVideoSshot = (canvas, video) => {
-			let ctx = canvas.getContext('2d');
-			ctx.drawImage( video, 0, 0, 320, 240);
-			videoSshotFileInput.value = canvas.toDataURL('image/png');
-		};
-
 	</script>
+    </div>
+    </main>
+    </form>
+    </div>
 	<?php wp_footer(); ?>
 </body>
 </html>
-<?php }
-?>
+<?php } ?>

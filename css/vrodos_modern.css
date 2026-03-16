@@ -42,6 +42,22 @@
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --vr-glow-primary: rgba(102, 204, 138, 0.4);
   --vr-mesh-gradient: linear-gradient(-45deg, #f8fafc, #f1f5f9, #eef2f6, #f8fafc);
+  --wp-admin-bar-height: 0px;
+}
+
+.admin-bar {
+  --wp-admin-bar-height: 32px;
+}
+
+@media screen and (max-width: 782px) {
+  .admin-bar {
+    --wp-admin-bar-height: 46px;
+  }
+}
+
+.vrodos-main-h {
+  height: 100vh !important;
+  height: calc(100vh - var(--wp-admin-bar-height, 0px)) !important;
 }
 
 /* Custom modern styles for VRodos */
@@ -65,8 +81,24 @@
 
 /* Surgical protect for DaisyUI components from host theme poisons */
 #vrodos-project-manager .d-btn,
-#vrodos-assets-manager .d-btn {
+#vrodos-assets-manager .d-btn,
+#vrodos-asset-editor .d-btn,
+#vrodos-project-manager .d-select,
+#vrodos-assets-manager .d-select,
+#vrodos-asset-editor .d-select,
+#vrodos-project-manager .d-checkbox,
+#vrodos-assets-manager .d-checkbox,
+#vrodos-asset-editor .d-checkbox,
+#vrodos-project-manager .d-radio,
+#vrodos-assets-manager .d-radio,
+#vrodos-asset-editor .d-radio {
   display: inline-flex !important;
+  cursor: pointer !important;
+}
+
+#vrodos-project-manager .d-btn,
+#vrodos-assets-manager .d-btn,
+#vrodos-asset-editor .d-btn {
   height: 2.25rem !important;
   min-height: 2.25rem !important;
   padding-left: 1rem !important;
@@ -85,7 +117,8 @@
 
 /* Emerald Primary: #66cc8a */
 #vrodos-project-manager .d-btn-primary,
-#vrodos-assets-manager .d-btn-primary {
+#vrodos-assets-manager .d-btn-primary,
+#vrodos-asset-editor .d-btn-primary {
   background-color: #66cc8a !important;
   border: 1px solid #66cc8a !important;
   color: #ffffff !important;
@@ -93,7 +126,8 @@
 }
 
 #vrodos-project-manager .d-btn-primary:hover,
-#vrodos-assets-manager .d-btn-primary:hover {
+#vrodos-assets-manager .d-btn-primary:hover,
+#vrodos-asset-editor .d-btn-primary:hover {
   background-color: #4da670 !important;
   border-color: #4da670 !important;
   transform: translateY(-1px) !important;
@@ -101,12 +135,14 @@
 }
 
 #vrodos-project-manager .d-btn-primary:active,
-#vrodos-assets-manager .d-btn-primary:active {
+#vrodos-assets-manager .d-btn-primary:active,
+#vrodos-asset-editor .d-btn-primary:active {
   transform: translateY(1px) !important;
 }
 
 #vrodos-project-manager .d-btn-outline,
-#vrodos-assets-manager .d-btn-outline {
+#vrodos-assets-manager .d-btn-outline,
+#vrodos-asset-editor .d-btn-outline {
   background-color: transparent !important;
   border: 1px solid #e2e8f0 !important;
   color: #475569 !important;
@@ -118,7 +154,8 @@
 }
 
 #vrodos-project-manager .d-input,
-#vrodos-assets-manager .d-input {
+#vrodos-assets-manager .d-input,
+#vrodos-asset-editor .d-input {
   display: block !important;
   width: 100% !important;
   height: 2.5rem !important;
@@ -132,7 +169,8 @@
 }
 
 #vrodos-project-manager .d-input:focus,
-#vrodos-assets-manager .d-input:focus {
+#vrodos-assets-manager .d-input:focus,
+#vrodos-asset-editor .d-input:focus {
   border-color: #66cc8a !important;
   outline: 2px solid #66cc8a22 !important;
   box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
@@ -381,21 +419,12 @@
 
 #vrodos-project-manager *, #vrodos-project-manager *:before, #vrodos-project-manager *:after,
 #vrodos-assets-manager *, #vrodos-assets-manager *:before, #vrodos-assets-manager *:after,
+#vrodos-asset-editor *, #vrodos-asset-editor *:before, #vrodos-asset-editor *:after,
 #vrodos-modal-wrapper *, #vrodos-modal-wrapper *:before, #vrodos-modal-wrapper *:after {
   box-sizing: border-box !important;
 }
 
-.admin-bar #vrodos-project-manager,
-.admin-bar #vrodos-assets-manager {
-  --wp-admin-bar-height: 32px;
-}
-
-@media screen and (max-width: 782px) {
-  .admin-bar #vrodos-project-manager,
-  .admin-bar #vrodos-assets-manager {
-    --wp-admin-bar-height: 46px;
-  }
-}
+/* Admin bar height is handled globally above */
 
 /* Assets Manager Specific Styles */
 #vrodos-assets-manager .asset-card-shadow {

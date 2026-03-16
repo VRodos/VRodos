@@ -64,7 +64,7 @@ $multiple = 'projects';
     <script src="https://unpkg.com/lucide@latest"></script>
 	<?php wp_head(); ?>
 </head>
-<body <?php body_class('vrodos-manager-wrapper'); ?>>
+<body <?php body_class('vrodos-manager-wrapper vrodos-main-h tw-overflow-hidden'); ?>>
 
 <!-- if user not logged in then show a hint to login -->
 <?php
@@ -94,7 +94,7 @@ else {
 ?>
 
 <!-- Core Manager Scope -->
-<div id="vrodos-project-manager-wrapper" data-theme="emerald" class="tw-min-h-screen tw-bg-base-100">
+<div id="vrodos-project-manager-wrapper" data-theme="emerald" class="vrodos-main-h tw-bg-base-100">
     
     <div id="vrodos-project-manager" 
          class="tw-flex tw-flex-col tw-overflow-hidden" 
