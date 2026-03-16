@@ -28,7 +28,14 @@ extract( $data );
 	<title>VRodos</title>
 	<?php wp_head(); ?>
 </head>
-<body <?php body_class(); ?>>
+<body <?php body_class('vrodos-manager-wrapper'); ?>>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
 <?php if ( ! is_user_logged_in() || ! current_user_can( 'administrator' ) ) { ?>
 
 	<div class="DisplayBlock CenterContents">
@@ -222,7 +229,7 @@ extract( $data );
 								name="assettrs" form="3dAssetForm" value="<?php echo trim( $assettrs_saved ); ?>" />
 					</div>
 
-					<div class="assetEditorColumn" id="video_section" style="display: none;">
+					<div class="tw-w-full" id="video_section" style="display: none;">
 						<h3 class="mdc-typography--title">Video</h3>
 						<div id="videoFileInputContainer">
 							<label for="videoFileInput">Select a video</label>
@@ -257,7 +264,7 @@ extract( $data );
 						</a>
 					</div>
 
-					<div id="video_screenshot_section" class="assetEditorColumn" style="display:none; float: right;">
+					<div id="video_screenshot_section" class="tw-w-full" style="display:none;">
 						<h3 class="mdc-typography--title">Video Screenshot</h3>
 						<span style="font-style: italic; line-height: 1rem;" class="mdc-typography--caption mdc-theme--text-secondary-on-light">
 							Generated automatically during video seek
@@ -270,7 +277,7 @@ extract( $data );
 				</div>
 
 				<div style="display:flex; width: 100%;">
-					<div class="assetEditorColumn" id="poi_image_text_section" style="display: none;">
+					<div class="tw-w-full" id="poi_image_text_section" style="display: none;">
 						<h3 class="mdc-typography--title">POI Details</h3>
 						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
 							<input id="poiImgTitle" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="poiImgTitle" aria-controls="title-validation-msg" minlength="3" maxlength="50" value="<?php echo esc_attr( $poi_img_title ); ?>">
@@ -286,29 +293,58 @@ extract( $data );
 						</div>
 					</div>
 
-					<div id="poi_help_section" class="assetEditorColumn" style="display: none;">
-						<h3 class="mdc-typography--title" style="margin-bottom: 5px;">Chat Options</h3>
-						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-							<input id="poiChatTitle" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="poiChatTitle" aria-controls="title-chat-validation-msg" minlength="3" maxlength="50" value="<?php echo esc_attr( $poi_chat_title ); ?>">
-							<label for="poiChatTitle" class="mdc-textfield__label">
-								Chat Title (appears on entering chat)
-							</label>
-							<div class="mdc-textfield__bottom-line"></div>
-						</div>
-						<p class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg" id="title-chat-validation-msg">
-							Between 3 - 25 characters
-						</p>
-						<input type="checkbox" title="Select if you want the video to automatically play. It will also autoloop" id="poiChatIndicators" name="poiChatIndicators" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" <?php echo $poi_chat_indicators; ?>/>
-						<label for="poiChatIndicators" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Chat Indicator</label>
-						<h3 class="mdc-typography--title" style="margin-bottom: 5px;">Chat max participants</h3>
-						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
-							<label for="poiChatNumPeople" class="mdc-textfield__label">Max: 8</label>
-							<input id="poiChatNumPeople" type="number" title="Number of participants" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="poiChatNumPeople" min="2" max="8" value="<?php echo esc_attr( $poi_chat_num_people ); ?>">
-							<div class="mdc-textfield__bottom-line"></div>
+					<div id="poi_help_section" class="tw-w-full tw-bg-white tw-p-6 tw-rounded-2xl tw-border tw-border-slate-200 tw-shadow-sm tw-mt-6" style="display: none;">
+						<h3 class="tw-text-slate-900 tw-font-extrabold tw-text-lg tw-mb-4 tw-flex tw-items-center tw-gap-2">
+							<i data-lucide="message-square" class="tw-w-5 tw-h-5 tw-text-primary"></i>
+							Chat Options
+						</h3>
+
+						<div class="tw-space-y-6">
+							<!-- Chat Title -->
+							<div>
+								<label for="poiChatTitle" class="tw-block tw-text-xs tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-wider tw-mb-2">
+									Chat Title (appears on entering chat)
+								</label>
+								<div class="tw-relative">
+									<input id="poiChatTitle" type="text"
+										   class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-xl tw-px-4 tw-py-3 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all"
+										   name="poiChatTitle"
+										   minlength="3" maxlength="50"
+										   value="<?php echo esc_attr( $poi_chat_title ); ?>">
+								</div>
+								<p class="tw-text-[10px] tw-text-slate-400 tw-mt-1.5 tw-font-medium">Between 3 - 50 characters</p>
+							</div>
+
+							<!-- Chat Indicator -->
+							<div class="tw-flex tw-items-center tw-gap-3 tw-p-4 tw-bg-slate-50 tw-rounded-xl tw-border tw-border-slate-100">
+								<div class="tw-flex tw-items-center">
+									<input type="checkbox" id="poiChatIndicators" name="poiChatIndicators"
+										   class="tw-w-5 tw-h-5 tw-rounded tw-border-slate-300 tw-text-primary focus:tw-ring-primary/20"
+										   <?php echo $poi_chat_indicators; ?>/>
+								</div>
+								<label for="poiChatIndicators" class="tw-text-sm tw-font-bold tw-text-slate-700 tw-cursor-pointer">
+									Show Chat Indicator
+									<span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-medium tw-mt-0.5">Displays a floating 3D icon above the chat point in the scene</span>
+								</label>
+							</div>
+
+							<!-- Max Participants -->
+							<div>
+								<label for="poiChatNumPeople" class="tw-block tw-text-xs tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-wider tw-mb-2">
+									Max Participants (2 - 8)
+								</label>
+								<div class="tw-relative">
+									<input id="poiChatNumPeople" type="number"
+										   class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-xl tw-px-4 tw-py-3 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all"
+										   name="poiChatNumPeople"
+										   min="2" max="8"
+										   value="<?php echo esc_attr( $poi_chat_num_people ); ?>">
+								</div>
+							</div>
 						</div>
 					</div>
 
-					<div id="poi_link_section" class="assetEditorColumn" style="display: none;">
+					<div id="poi_link_section" class="tw-w-full" style="display: none;">
 						<h3 class="mdc-typography--title">Link</h3>
 						<div class="mdc-textfield mdc-textfield--textarea" data-mdc-auto-init="MDCTextfield" style="border: 1px solid rgba(0, 0, 0, 0.3); margin-top:0;">
 							<textarea id="assetLinkInput" name="assetLinkInput" class="mdc-textfield__input" style="box-shadow: none;" rows="5" type="text"><?php echo esc_textarea( $asset_link ); ?></textarea>
@@ -316,7 +352,7 @@ extract( $data );
 						</div>
 					</div>
 
-					<div class="assetEditorColumn" id="video_options_section" style="display: none;">
+					<div class="tw-w-full" id="video_options_section" style="display: none;">
 						<h3 class="mdc-typography--title">Video options</h3>
 						<div class="mdc-textfield mdc-form-field" data-mdc-auto-init="MDCTextfield" style="margin-top: 0; width: 100%;">
 							<input id="videoTitle" type="text" class="mdc-textfield__input mdc-theme--text-primary-on-light" name="videoTitle" aria-controls="title-validation-msg" minlength="3" maxlength="25" value="<?php echo esc_attr( $video_title ); ?>">
@@ -330,14 +366,14 @@ extract( $data );
 						<label for="video_autoloop_checkbox" class="mdc-typography--subheading2 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Autoplay</label>
 					</div>
 
-					<div class="assetEditorColumn" id="poi_image_file_section" style="display: none;">
+					<div class="tw-w-full" id="poi_image_file_section" style="display: none;">
 						<h3 class="mdc-typography--title">Image file</h3>
 						<img style=" width: auto; height: 100px; " id="imagePoiPreviewImg" src="<?php echo esc_url( $imagePoiImageURL ?? '' ); ?>" alt="Asset Image Text POI image">
 						<input type="file" name="imageFileInput" value="" id="imageFileInput" accept="image/png, image/jpg, image/jpeg"/>
 					</div>
 				</div>
 
-				<div id="ipr_section" class="assetEditorColumn" style="display: none; padding-bottom: 24px;">
+				<div id="ipr_section" class="tw-w-full" style="display: none; padding-bottom: 24px;">
 					<h3 class="mdc-typography--title">Select an IPR plan</h3>
 					<div id="category-ipr-select" class="mdc-select" role="listbox" tabindex="0" style="min-width: 80%;">
 						<i class="material-icons mdc-theme--text-hint-on-light">label</i>&nbsp;

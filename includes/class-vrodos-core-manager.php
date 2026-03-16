@@ -666,7 +666,7 @@ class VRodos_Core_Manager {
 					'is_cloned'              => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ),
 					'is_joker'               => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ),
 					'assettrs'               => $assettrs,
-					'asset_parent_game'      => ! empty( $asset_pgame ) ? $asset_pgame[0]->name : '',
+					'asset_parent_game'      => ( get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ) === 'true' ) ? 'Public Assets' : ( ! empty( $asset_pgame ) ? $asset_pgame[0]->name : '' ),
 					'asset_parent_game_slug' => ! empty( $asset_pgame ) ? $asset_pgame[0]->slug : '',
 					'author_id'              => $author_id,
 					'author_displayname'     => $author_displayname,

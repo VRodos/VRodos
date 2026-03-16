@@ -789,7 +789,7 @@ class VRodos_Asset_CPT_Manager {
 
 	private static function prepare_taxonomy_data( &$data ): void {
 		$ids_to_exclude = [];
-		if ( $data['game_category'] !== 'vrexpo_games' ) {
+		if ( $data['game_category'] === 'virtualproduction_games' ) {
 			$get_terms_to_exclude = get_terms(
 				['fields'   => 'ids', 'slug'     => ['chat'], 'taxonomy' => 'vrodos_asset3d_cat']
 			);

@@ -189,7 +189,7 @@ function vrodos_get_asset_category_icon($category_slug) {
                             <a href="<?php echo $link_to_edit . 'vrodos_asset=' . $asset['asset_id'] . '&vrodos_game=' . $pGameId . '&preview=0'; ?>" 
                                class="tw-block hover:tw-text-primary tw-transition-colors tw-min-w-0">
                                 <h3 class="tw-font-bold tw-text-slate-800 tw-leading-tight tw-mb-1 tw-truncate"><?php echo $asset['asset_name']; ?></h3>
-                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo $asset['asset_parent_game_slug']; ?></p>
+                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_joker'] === 'true') ? 'public' : $asset['asset_parent_game_slug']; ?></p>
                             </a>
                             
                             <!-- Trash Button -->
