@@ -1159,10 +1159,6 @@ body {
   height: 1.25rem;
 }
 
-.vrodos-manager-wrapper .tw-h-6 {
-  height: 1.5rem;
-}
-
 .vrodos-manager-wrapper .tw-h-7 {
   height: 1.75rem;
 }
@@ -1189,10 +1185,6 @@ body {
 
 .vrodos-manager-wrapper .\!tw-w-full {
   width: 100% !important;
-}
-
-.vrodos-manager-wrapper .tw-w-1\/2 {
-  width: 50%;
 }
 
 .vrodos-manager-wrapper .tw-w-10 {
@@ -1245,10 +1237,6 @@ body {
 
 .vrodos-manager-wrapper .tw-w-5 {
   width: 1.25rem;
-}
-
-.vrodos-manager-wrapper .tw-w-6 {
-  width: 1.5rem;
 }
 
 .vrodos-manager-wrapper .tw-w-64 {
@@ -2862,6 +2850,10 @@ body {
 
   .vrodos-manager-wrapper .lg\:tw-w-\[420px\] {
     width: 420px;
+  }
+
+  .vrodos-manager-wrapper .lg\:tw-grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .vrodos-manager-wrapper .lg\:tw-grid-cols-3 {

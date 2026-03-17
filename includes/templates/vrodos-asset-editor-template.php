@@ -255,16 +255,17 @@ else { ?>
                     <p class="tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase">Supported formats: MP4, WebM</p>
                 </div>
 
-                <div id="screenshot_section" class="tw-space-y-6" style="display: block;">
-                    <div class="tw-flex tw-items-center tw-justify-between">
-                        <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                            Screenshot
-                        </label>
-                        <i data-lucide="image" class="tw-w-5 tw-h-5 tw-text-primary"></i>
-                    </div>
+                <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-10">
+                    <!-- Screenshot Section -->
+                    <div id="screenshot_section" class="tw-space-y-6" style="display: block;">
+                        <div class="tw-flex tw-items-center tw-justify-between">
+                            <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                                Screenshot
+                            </label>
+                            <i data-lucide="image" class="tw-w-5 tw-h-5 tw-text-primary"></i>
+                        </div>
 
-                    <div class="tw-w-1/2">
-                        <!-- Screenshot Preview (Full width of the 50% container) -->
+                        <!-- Screenshot Preview -->
                         <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border tw-border-slate-200 tw-group">
                             <?php if ($scrnImageURL) : ?>
                                 <img id="sshotPreviewImg" src="<?php echo esc_url($scrnImageURL); ?>" alt="Asset Screenshot" 
@@ -284,6 +285,56 @@ else { ?>
                                     <i data-lucide="camera" class="tw-w-4 tw-h-4"></i>
                                     Capture Screenshot
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Settings (formerly Collaboration Settings) -->
+                    <div id="poi_help_section" class="tw-space-y-6" style="display: none;">
+                        <div class="tw-flex tw-items-center tw-justify-between">
+                            <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                                Chat Settings
+                            </label>
+                            <i data-lucide="message-square" class="tw-w-5 tw-h-5 tw-text-primary"></i>
+                        </div>
+
+                        <div class="tw-bg-slate-50 tw-p-6 tw-rounded-3xl tw-border tw-border-slate-200 tw-space-y-6">
+                            <div>
+                                <label for="poiChatTitle" class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">
+                                    Display Name
+                                </label>
+                                <input id="poiChatTitle" type="text"
+                                       class="tw-w-full tw-bg-white tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold"
+                                       name="poiChatTitle"
+                                       placeholder="Chat Room Name"
+                                       minlength="3" maxlength="50"
+                                       value="<?php echo esc_attr($poi_chat_title); ?>">
+                            </div>
+
+                            <div class="tw-flex tw-items-center tw-gap-4 tw-p-4 tw-bg-white tw-rounded-2xl tw-border tw-border-slate-100">
+                                <input type="checkbox" id="poiChatIndicators" name="poiChatIndicators"
+                                       class="d-checkbox d-checkbox-primary tw-rounded-lg"
+                                       <?php echo $poi_chat_indicators; ?>/>
+                                <label for="poiChatIndicators" class="tw-cursor-pointer">
+                                    <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Show 3D Indicator</span>
+                                    <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Visible floating icon in scene</span>
+                                </label>
+                            </div>
+
+                            <div>
+                                <label for="poiChatNumPeople" class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">
+                                    Capacity (2-8 people)
+                                </label>
+                                <div class="tw-flex tw-items-center tw-gap-4">
+                                    <input id="poiChatNumPeople" type="range" min="2" max="8" step="1"
+                                           class="d-range d-range-primary d-range-sm tw-flex-1"
+                                           name="poiChatNumPeople"
+                                           value="<?php echo esc_attr($poi_chat_num_people); ?>"
+                                           oninput="this.nextElementSibling.innerText = this.value">
+                                    <span class="tw-w-8 tw-h-8 tw-bg-primary tw-text-white tw-rounded-lg tw-flex tw-items-center tw-justify-center tw-text-xs tw-font-bold">
+                                        <?php echo esc_attr($poi_chat_num_people); ?>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -319,47 +370,7 @@ else { ?>
                     </div>
                 </div>
 
-                <!-- Chat Options -->
-                <div id="poi_help_section" class="tw-bg-slate-50 tw-p-8 tw-rounded-3xl tw-border tw-border-slate-200 tw-mt-4" style="display: none;">
-                    <h3 class="tw-text-slate-900 tw-font-black tw-text-lg tw-mb-6 tw-flex tw-items-center tw-gap-3">
-                        <i data-lucide="message-square" class="tw-w-6 tw-h-6 tw-text-primary"></i>
-                        Collaboration Settings
-                    </h3>
 
-                    <div class="tw-space-y-8">
-                        <div>
-                            <label for="poiChatTitle" class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">
-                                Display Name
-                            </label>
-                            <input id="poiChatTitle" type="text"
-                                   class="tw-w-full tw-bg-white tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold"
-                                   name="poiChatTitle"
-                                   minlength="3" maxlength="50"
-                                   value="<?php echo esc_attr($poi_chat_title); ?>">
-                        </div>
-
-                        <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-white tw-rounded-2xl tw-border tw-border-slate-100">
-                            <input type="checkbox" id="poiChatIndicators" name="poiChatIndicators"
-                                   class="d-checkbox d-checkbox-primary tw-rounded-lg"
-                                   <?php echo $poi_chat_indicators; ?>/>
-                            <label for="poiChatIndicators" class="tw-cursor-pointer">
-                                <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Show 3D Indicator</span>
-                                <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Visible floating icon in the scene</span>
-                            </label>
-                        </div>
-
-                        <div>
-                            <label for="poiChatNumPeople" class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">
-                                Capacity (2-8 learners)
-                            </label>
-                            <input id="poiChatNumPeople" type="number"
-                                   class="tw-w-full tw-bg-white tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold"
-                                   name="poiChatNumPeople"
-                                   min="2" max="8"
-                                   value="<?php echo esc_attr($poi_chat_num_people); ?>">
-                        </div>
-                    </div>
-                </div>
 
                 <!-- External Link -->
                 <div id="poi_link_section" class="tw-space-y-4" style="display: none;">
