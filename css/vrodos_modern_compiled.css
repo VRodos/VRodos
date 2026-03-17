@@ -1015,6 +1015,10 @@ body {
   margin-right: auto;
 }
 
+.vrodos-manager-wrapper .\!tw-mb-0 {
+  margin-bottom: 0px !important;
+}
+
 .vrodos-manager-wrapper .tw-mb-1 {
   margin-bottom: 0.25rem;
 }
@@ -1103,6 +1107,10 @@ body {
   aspect-ratio: 16 / 9;
 }
 
+.vrodos-manager-wrapper .\!tw-h-auto {
+  height: auto !important;
+}
+
 .vrodos-manager-wrapper .\!tw-h-full {
   height: 100% !important;
 }
@@ -1177,6 +1185,10 @@ body {
 
 .vrodos-manager-wrapper .\!tw-max-h-none {
   max-height: none !important;
+}
+
+.vrodos-manager-wrapper .tw-min-h-\[160px\] {
+  min-height: 160px;
 }
 
 .vrodos-manager-wrapper .tw-min-h-\[280px\] {
@@ -1432,6 +1444,12 @@ body {
   --tw-space-y-reverse: 0;
   margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
+}
+
+.vrodos-manager-wrapper :is(.tw-space-y-10 > :not([hidden]) ~ :not([hidden])) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(2.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(2.5rem * var(--tw-space-y-reverse));
 }
 
 .vrodos-manager-wrapper .tw-overflow-hidden {
@@ -1759,11 +1777,6 @@ body {
   padding-bottom: 5rem;
 }
 
-.vrodos-manager-wrapper .tw-py-3 {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-}
-
 .vrodos-manager-wrapper .tw-py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
@@ -1779,16 +1792,16 @@ body {
   padding-bottom: 1.5rem;
 }
 
+.vrodos-manager-wrapper .\!tw-pl-12 {
+  padding-left: 3rem !important;
+}
+
 .vrodos-manager-wrapper .tw-pb-4 {
   padding-bottom: 1rem;
 }
 
 .vrodos-manager-wrapper .tw-pb-8 {
   padding-bottom: 2rem;
-}
-
-.vrodos-manager-wrapper .tw-pl-12 {
-  padding-left: 3rem;
 }
 
 .vrodos-manager-wrapper .tw-pl-4 {
@@ -1869,6 +1882,10 @@ body {
 .vrodos-manager-wrapper .tw-text-xs {
   font-size: 0.75rem;
   line-height: 1rem;
+}
+
+.vrodos-manager-wrapper .\!tw-font-medium {
+  font-weight: 500 !important;
 }
 
 .vrodos-manager-wrapper .tw-font-black {
@@ -2022,16 +2039,6 @@ body {
 .vrodos-manager-wrapper .tw-antialiased {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.vrodos-manager-wrapper .tw-placeholder-slate-300::-moz-placeholder {
-  --tw-placeholder-opacity: 1;
-  color: rgb(203 213 225 / var(--tw-placeholder-opacity, 1));
-}
-
-.vrodos-manager-wrapper .tw-placeholder-slate-300::placeholder {
-  --tw-placeholder-opacity: 1;
-  color: rgb(203 213 225 / var(--tw-placeholder-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-opacity-0 {
@@ -2289,6 +2296,10 @@ body {
   transform: translateY(1px) !important;
 }
 
+#vrodos-asset-editor .d-range {
+  cursor: pointer !important;
+}
+
 #vrodos-project-manager .d-btn-outline,
 #vrodos-assets-manager .d-btn-outline,
 #vrodos-asset-editor .d-btn-outline {
@@ -2319,10 +2330,81 @@ body {
 
 #vrodos-project-manager .d-input:focus,
 #vrodos-assets-manager .d-input:focus,
-#vrodos-asset-editor .d-input:focus {
+#vrodos-asset-editor .d-input:focus,
+#vrodos-asset-editor .d-select:focus {
   border-color: #66cc8a !important;
-  outline: 2px solid #66cc8a22 !important;
+  outline: 2PX solid #66cc8a22 !important;
   box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
+}
+
+/* Global VRodos Component Classes */
+
+.vrodos-label {
+  display: block !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.vrodos-input {
+  width: 100% !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.vrodos-input:focus {
+  background-color: #ffffff !important;
+  border-color: #66cc8a !important;
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
+}
+
+.vrodos-input::-moz-placeholder {
+  color: #cbd5e1 !important;
+}
+
+.vrodos-input::placeholder {
+  color: #cbd5e1 !important;
+}
+
+.vrodos-select {
+  width: 100% !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  padding: 0.75rem 2.5rem 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  -webkit-appearance: none !important;
+     -moz-appearance: none !important;
+          appearance: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.vrodos-select:focus {
+  background-color: #ffffff !important;
+  border-color: #66cc8a !important;
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
+}
+
+.vrodos-card {
+  background-color: #f8fafc !important;
+  border: 1px solid #f1f5f9 !important;
+  border-radius: 1.5rem !important;
+  padding: 1.5rem !important;
+  transition: all 0.2s ease !important;
 }
 
 /* Modal styling overrides for WP stability - Surgically focused */
@@ -2772,24 +2854,9 @@ body {
   --tw-shadow: var(--tw-shadow-colored);
 }
 
-.vrodos-manager-wrapper .focus\:tw-border-primary:focus {
-  --tw-border-opacity: 1;
-  border-color: var(--fallback-p,oklch(var(--p)/var(--tw-border-opacity, 1)));
-}
-
 .vrodos-manager-wrapper .focus\:tw-bg-white:focus {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
-}
-
-.vrodos-manager-wrapper .focus\:tw-ring-2:focus {
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-}
-
-.vrodos-manager-wrapper .focus\:tw-ring-primary\/20:focus {
-  --tw-ring-color: var(--fallback-p,oklch(var(--p)/0.2));
 }
 
 .vrodos-manager-wrapper .active\:tw-scale-95:active {

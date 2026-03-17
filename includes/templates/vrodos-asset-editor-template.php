@@ -78,7 +78,7 @@ else { ?>
             <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-y-auto lg:tw-h-full">
                 <div class="tw-p-6 lg:tw-p-8 tw-space-y-6">
                     <!-- 3D Preview Card -->
-                    <div class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]">
+                    <div id="vrodos_3d_preview_card" class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]">
                         <!-- Preview Overlay -->
                         <div id="previewProgressSlider" class="tw-absolute tw-inset-0 tw-z-10 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-slate-900/50 tw-backdrop-blur-sm tw-transition-opacity">
                             <div class="tw-bg-white tw-p-6 tw-rounded-2xl tw-shadow-2xl tw-text-center tw-min-w-[200px]">
@@ -139,10 +139,10 @@ else { ?>
                         <input type="hidden" id="assettrs" name="assettrs" value="<?php echo trim($assettrs_saved); ?>" />
                     </div>
                     <?php
-	}?>
+    }?>
 
                     <!-- Context Tip Card -->
-                    <div class="tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-p-5 tw-rounded-2xl">
+                    <div id="vrodos_editor_tip_card" class="tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-p-5 tw-rounded-2xl">
                         <div class="tw-flex tw-items-center tw-gap-2 tw-mb-2">
                              <i data-lucide="sparkles" class="tw-w-4 tw-h-4 tw-text-emerald-500"></i>
                              <span class="tw-text-[10px] tw-font-black tw-text-emerald-700 tw-uppercase tw-tracking-widest">Editor Tip</span>
@@ -150,6 +150,18 @@ else { ?>
                         <p class="tw-text-[11px] tw-text-emerald-800 tw-font-medium tw-leading-relaxed">
                             Upload your GLB model here to preview it in real-time. Use the screenshot tool in the right panel to capture the preview.
                         </p>
+                    </div>
+
+                    <!-- Video Thumbnail Section (formerly Video Poster) - moved here for video assets -->
+                    <div id="video_screenshot_section" class="tw-space-y-4" style="display:none;">
+                        <label class="vrodos-label">
+                            Video Thumbnail
+                        </label>
+                        <div class="tw-aspect-video tw-bg-slate-100 tw-rounded-2xl tw-overflow-hidden tw-border tw-border-slate-200">
+                            <canvas id="videoSshotPreviewImg" class="tw-w-full tw-h-full tw-object-cover"></canvas>
+                            <input type="hidden" name="videoSshotFileInput" id="videoSshotFileInput" accept="image/png"/>
+                        </div>
+                        <p class="tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-2">Auto-generated from video seek</p>
                     </div>
                 </div>
             </div>
@@ -169,29 +181,30 @@ else { ?>
                                 <i data-lucide="<?php echo $asset_id ? 'save' : 'plus-circle'; ?>" class="tw-w-4 tw-h-4"></i>
                                 <?php echo $asset_id ? 'UPDATE ASSET' : 'CREATE ASSET'; ?>
                             </button>
-                        <?php } ?>
+                        <?php
+    }?>
                     </div>
 
                     <!-- Metadata Form -->
                     <div class="tw-px-10 tw-py-6 tw-space-y-8">
 
                 <?php if (($isOwner || $isUserAdmin) && $isEditMode) {
-		wp_nonce_field('post_nonce', 'post_nonce_field');
+        wp_nonce_field('post_nonce', 'post_nonce_field');
 ?>
                         <input type="hidden" name="submitted" id="submitted" value="true"/>
                     <?php
-	}?>
+    }?>
 
                 <div class="tw-grid tw-grid-cols-2 tw-gap-6">
                     
                     <!-- Asset Title -->
-                    <div class="tw-space-y-4">
-                        <label for="assetTitle" class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                    <div class="tw-space-y-2">
+                        <label for="assetTitle" class="vrodos-label">
                             Asset Name
                         </label>
                         <div class="tw-relative">
                             <input id="assetTitle" type="text"
-                                   class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-4 tw-py-3 tw-text-sm tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-placeholder-slate-300"
+                                   class="vrodos-input"
                                    name="assetTitle"
                                    placeholder="e.g. Ancient Temple"
                                    required minlength="3" maxlength="25"
@@ -200,15 +213,15 @@ else { ?>
                     </div>
 
                     <!-- Category Selection -->
-                    <div class="tw-space-y-4">
-                        <label for="category-select-native" class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                    <div class="tw-space-y-2">
+                        <label for="category-select-native" class="vrodos-label">
                             Asset Category
                         </label>
                         <div class="tw-relative">
-                            <select id="category-select-native" name="term_id_native" class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-4 tw-py-3 tw-text-sm tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-appearance-none d-select d-select-ghost d-select-sm tw-cursor-pointer">
+                            <select id="category-select-native" name="term_id_native" class="vrodos-select d-select d-select-ghost d-select-sm">
                                 <option disabled <?php echo empty($saved_term) ? 'selected' : ''; ?>>Select a category</option>
                                 <?php foreach ($cat_terms as $term):
-		$isSelected = !empty($saved_term) && $saved_term[0]->term_id == $term->term_id;
+        $isSelected = !empty($saved_term) && $saved_term[0]->term_id == $term->term_id;
 ?>
                                     <option value="<?php echo esc_attr($term->slug); ?>" 
                                             data-cat-desc="<?php echo esc_attr($term->description); ?>"
@@ -217,9 +230,9 @@ else { ?>
                                         <?php echo esc_html($term->name); ?>
                                     </option>
                                 <?php
-	endforeach; ?>
+    endforeach; ?>
                             </select>
-                            <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-pr-4 tw-flex tw-items-center tw-pointer-events-none text-slate-400">
+                            <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-pr-4 tw-flex tw-items-center tw-pointer-events-none tw-text-slate-400">
                                 <i data-lucide="chevron-down" class="tw-w-5 tw-h-5"></i>
                             </div>
                         </div>
@@ -238,229 +251,226 @@ else { ?>
                 </div>
 
 
-                <div id="video_section" class="tw-space-y-6" style="display: none;">
-                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                        Video Source
-                    </label>
-                    
-                    <div class="tw-bg-slate-900 tw-rounded-2xl tw-overflow-hidden tw-shadow-xl">
-                        <video id="assetVideoTag" class="tw-w-full tw-aspect-video" preload="auto" controls>
-                            <source id="assetVideoSource" src="<?php echo esc_url($video_attachment_file ?? ''); ?>" type="video/mp4">
-                        </video>
-                    </div>
-
-                    <div class="tw-flex tw-gap-3">
-                        <input class="d-file-input d-file-input-bordered tw-w-full tw-rounded-xl" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
-                    </div>
-                    <p class="tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase">Supported formats: MP4, WebM</p>
-                </div>
-
                 <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-10">
-                    <!-- Screenshot Section -->
-                    <div id="screenshot_section" class="tw-space-y-6" style="display: block;">
-                        <div class="tw-flex tw-items-center tw-justify-between">
-                            <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                                Screenshot
-                            </label>
-                            <i data-lucide="image" class="tw-w-5 tw-h-5 tw-text-primary"></i>
-                        </div>
-
-                        <!-- Screenshot Preview -->
-                        <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border tw-border-slate-200 tw-group">
-                            <?php if ($scrnImageURL) : ?>
-                                <img id="sshotPreviewImg" src="<?php echo esc_url($scrnImageURL); ?>" alt="Asset Screenshot" 
-                                     class="tw-w-full tw-h-full tw-object-cover tw-transition-transform group-hover:tw-scale-110 !tw-max-h-none !tw-w-full !tw-h-full">
-                            <?php else : ?>
-                                <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-slate-300">
-                                    <i data-lucide="camera" class="tw-w-16 tw-h-16"></i>
-                                </div>
-                                <img id="sshotPreviewImg" src="" class="tw-hidden !tw-max-h-none !tw-w-full !tw-h-full">
-                            <?php endif; ?>
-                            
-                            <input type="hidden" name="sshotFileInput" value="" id="sshotFileInput" accept="image/png"/>
-                            
-                            <!-- Capture Button Overlay -->
-                            <div class="tw-absolute tw-bottom-4 tw-right-4">
-                                <button id="createModelScreenshotBtn" type="button" class="d-btn d-btn-md tw-bg-white/90 tw-backdrop-blur tw-border-none hover:tw-bg-white tw-text-slate-900 tw-font-bold tw-rounded-xl tw-shadow-xl tw-gap-2">
-                                    <i data-lucide="camera" class="tw-w-4 tw-h-4"></i>
-                                    Capture Screenshot
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Chat Settings (formerly Collaboration Settings) -->
-                    <div id="poi_help_section" class="tw-space-y-6" style="display: none;">
-                        <div class="tw-flex tw-items-center tw-justify-between">
-                            <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                                Chat Settings
-                            </label>
-                            <i data-lucide="message-square" class="tw-w-5 tw-h-5 tw-text-primary"></i>
-                        </div>
-
-                        <div class="tw-bg-slate-50 tw-p-6 tw-rounded-3xl tw-border tw-border-slate-200 tw-space-y-6">
-                            <div>
-                                <label for="poiChatTitle" class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">
-                                    Display Name
+                    <!-- Left Column: Primary Preview -->
+                    <div class="tw-space-y-10">
+                        <!-- Screenshot Section (Always Visible) -->
+                        <div id="screenshot_section" class="tw-space-y-6" style="display: block;">
+                            <div class="tw-flex tw-items-center tw-justify-between">
+                                <label class="vrodos-label !tw-mb-0">
+                                    Screenshot
                                 </label>
-                                <input id="poiChatTitle" type="text"
-                                       class="tw-w-full tw-bg-white tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold"
-                                       name="poiChatTitle"
-                                       placeholder="Chat Room Name"
-                                       minlength="3" maxlength="50"
-                                       value="<?php echo esc_attr($poi_chat_title); ?>">
+                                <i data-lucide="image" class="tw-w-5 tw-h-5 tw-text-primary"></i>
                             </div>
 
-                            <div class="tw-flex tw-items-center tw-gap-4 tw-p-4 tw-bg-white tw-rounded-2xl tw-border tw-border-slate-100">
-                                <input type="checkbox" id="poiChatIndicators" name="poiChatIndicators"
-                                       class="d-checkbox d-checkbox-primary tw-rounded-lg"
-                                       <?php echo $poi_chat_indicators; ?>/>
-                                <label for="poiChatIndicators" class="tw-cursor-pointer">
-                                    <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Show 3D Indicator</span>
-                                    <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Visible floating icon in scene</span>
-                                </label>
-                            </div>
-
-                            <div>
-                                <label for="poiChatNumPeople" class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">
-                                    Capacity (2-8 people)
-                                </label>
-                                <div class="tw-flex tw-items-center tw-gap-4">
-                                    <input id="poiChatNumPeople" type="range" min="2" max="8" step="1"
-                                           class="d-range d-range-primary d-range-sm tw-flex-1"
-                                           name="poiChatNumPeople"
-                                           value="<?php echo esc_attr($poi_chat_num_people); ?>"
-                                           oninput="this.nextElementSibling.innerText = this.value">
-                                    <span class="tw-w-8 tw-h-8 tw-bg-primary tw-text-white tw-rounded-lg tw-flex tw-items-center tw-justify-center tw-text-xs tw-font-bold">
-                                        <?php echo esc_attr($poi_chat_num_people); ?>
-                                    </span>
+                            <!-- Screenshot Preview -->
+                            <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border tw-border-slate-200 tw-group">
+                                <?php if ($scrnImageURL): ?>
+                                    <img id="sshotPreviewImg" src="<?php echo esc_url($scrnImageURL); ?>" alt="Asset Screenshot" 
+                                         class="tw-w-full tw-h-full tw-object-cover tw-transition-transform group-hover:tw-scale-110 !tw-max-h-none !tw-w-full !tw-h-full">
+                                <?php
+        else: ?>
+                                    <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-slate-300">
+                                        <i data-lucide="camera" class="tw-w-16 tw-h-16"></i>
+                                    </div>
+                                    <img id="sshotPreviewImg" src="" class="tw-hidden !tw-max-h-none !tw-w-full !tw-h-full">
+                                <?php
+        endif; ?>
+                                
+                                <input type="hidden" name="sshotFileInput" value="" id="sshotFileInput" accept="image/png"/>
+                                
+                                <!-- Capture Button Overlay -->
+                                <div class="tw-absolute tw-bottom-4 tw-right-4">
+                                    <button id="createModelScreenshotBtn" type="button" class="d-btn d-btn-md tw-bg-white/90 tw-backdrop-blur tw-border-none hover:tw-bg-white tw-text-slate-900 tw-font-bold tw-rounded-xl tw-shadow-xl tw-gap-2">
+                                        <i data-lucide="camera" class="tw-w-4 tw-h-4"></i>
+                                        Capture Screenshot
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div id="video_screenshot_section" class="tw-space-y-4" style="display:none;">
-                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                        Video Poster
-                    </label>
-                    <div class="tw-aspect-video tw-bg-slate-100 tw-rounded-2xl tw-overflow-hidden tw-border tw-border-slate-200">
-                        <canvas id="videoSshotPreviewImg" class="tw-w-full tw-h-full tw-object-cover"></canvas>
-                        <input type="hidden" name="videoSshotFileInput" id="videoSshotFileInput" accept="image/png"/>
-                    </div>
-                    <p class="tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-2">Auto-generated from video seek</p>
-                </div>
-
-                <!-- POI Details (Image/Text) -->
-                <div id="poi_image_text_section" class="tw-space-y-6" style="display: none;">
-                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                        Information Overlay
-                    </label>
-                    <div class="tw-space-y-4">
-                        <input id="poiImgTitle" type="text" 
-                               class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-placeholder-slate-300" 
-                               name="poiImgTitle" 
-                               placeholder="Title of information popup"
-                               minlength="3" maxlength="50" 
-                               value="<?php echo esc_attr($poi_img_title); ?>">
-                        
-                        <textarea id="poiImgDescription" name="poiImgDescription" 
-                                  class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-medium tw-placeholder-slate-300 min-h-[160px]" 
-                                  placeholder="Write the content here..."><?php echo esc_textarea($poi_img_content); ?></textarea>
-                    </div>
-                </div>
-
-
-
-                <!-- External Link -->
-                <div id="poi_link_section" class="tw-space-y-4" style="display: none;">
-                    <label for="assetLinkInput" class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                        Destination URL
-                    </label>
-                    <div class="tw-relative">
-                        <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-pl-4 tw-flex tw-items-center tw-pointer-events-none">
-                            <i data-lucide="link" class="tw-w-5 tw-h-5 tw-text-slate-300"></i>
-                        </div>
-                        <input id="assetLinkInput" name="assetLinkInput" 
-                               class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-pl-12 tw-pr-4 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold" 
-                               value="<?php echo esc_textarea($asset_link); ?>">
-                    </div>
-                </div>
-
-                <!-- Video Options -->
-                <div id="video_options_section" class="tw-space-y-6" style="display: none;">
-                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                        Playback Settings
-                    </label>
-                    <div class="tw-space-y-4">
-                        <input id="videoTitle" type="text" 
-                               class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-placeholder-slate-300" 
-                               name="videoTitle" 
-                               placeholder="Video title (optional)"
-                               minlength="3" maxlength="25" 
-                               value="<?php echo esc_attr($video_title); ?>">
-                        
-                        <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-slate-50 tw-rounded-2xl tw-border tw-border-slate-100">
-                            <input type="checkbox" id="video_autoloop_checkbox" name="video_autoloop_checkbox" 
-                                   class="d-checkbox d-checkbox-primary tw-rounded-lg" <?php echo $video_autoloop; ?>/>
-                            <label for="video_autoloop_checkbox" class="tw-cursor-pointer">
-                                <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Autoplay & Loop</span>
-                                <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Start instantly and repeat</span>
+                        <!-- Video Source Section -->
+                        <div id="video_section" class="tw-space-y-6" style="display: none;">
+                            <label class="vrodos-label">
+                                Video Source
                             </label>
+                            
+                            <div class="tw-bg-slate-900 tw-rounded-2xl tw-overflow-hidden tw-shadow-xl">
+                                <video id="assetVideoTag" class="tw-w-full tw-aspect-video" preload="auto" controls>
+                                    <source id="assetVideoSource" src="<?php echo esc_url($video_attachment_file ?? ''); ?>" type="video/mp4">
+                                </video>
+                            </div>
+
+                            <div class="tw-flex tw-gap-3">
+                                <input class="d-file-input d-file-input-bordered tw-w-full tw-rounded-xl" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
+                            </div>
+                            <p class="tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase">Supported formats: MP4, WebM</p>
                         </div>
                     </div>
-                </div>
 
-                <!-- Image POI Upload -->
-                <div id="poi_image_file_section" class="tw-space-y-6" style="display: none;">
-                    <label class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                        Infobox Image
-                    </label>
-                    <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border-2 tw-border-dashed tw-border-slate-200 hover:tw-border-primary tw-transition-all group">
-                        <img id="imagePoiPreviewImg" src="<?php echo esc_url($imagePoiImageURL ?? ''); ?>" alt="POI Image" class="tw-w-full tw-h-full tw-object-cover">
-                        <div class="tw-absolute tw-inset-0 tw-bg-slate-900/40 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity tw-flex tw-items-center tw-justify-center">
-                            <label for="imageFileInput" class="d-btn d-btn-sm tw-bg-white tw-border-none hover:tw-bg-slate-100 tw-text-slate-900 tw-font-bold tw-rounded-xl tw-gap-2 tw-cursor-pointer">
-                                <i data-lucide="upload" class="tw-w-4 tw-h-4"></i>
-                                Replace
+                    <!-- Right Column: Dynamic Category Settings -->
+                    <div class="tw-space-y-10">
+
+                        <!-- Chat Settings -->
+                        <div id="poi_help_section" class="tw-space-y-6" style="display: none;">
+                            <div class="tw-flex tw-items-center tw-justify-between">
+                                <label class="vrodos-label !tw-mb-0">
+                                    Chat Settings
+                                </label>
+                                <i data-lucide="message-square" class="tw-w-5 tw-h-5 tw-text-primary"></i>
+                            </div>
+
+                            <div class="vrodos-card tw-space-y-6">
+                                <div>
+                                    <label for="poiChatTitle" class="vrodos-label">
+                                        Display Name
+                                    </label>
+                                    <input id="poiChatTitle" type="text"
+                                           class="vrodos-input"
+                                           name="poiChatTitle"
+                                           placeholder="Chat Room Name"
+                                           minlength="3" maxlength="50"
+                                           value="<?php echo esc_attr($poi_chat_title); ?>">
+                                </div>
+
+                                <div class="tw-flex tw-items-center tw-gap-4 tw-p-4 tw-bg-white tw-rounded-2xl tw-border tw-border-slate-100">
+                                    <input type="checkbox" id="poiChatIndicators" name="poiChatIndicators"
+                                           class="d-checkbox d-checkbox-primary tw-rounded-lg"
+                                           <?php echo $poi_chat_indicators; ?>/>
+                                    <label for="poiChatIndicators" class="tw-cursor-pointer">
+                                        <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Show 3D Indicator</span>
+                                        <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Visible floating icon in scene</span>
+                                    </label>
+                                </div>
+
+                                <div>
+                                    <label for="poiChatNumPeople" class="vrodos-label">
+                                        Capacity (2-8 people)
+                                    </label>
+                                    <div class="tw-flex tw-items-center tw-gap-4">
+                                        <input id="poiChatNumPeople" type="range" min="2" max="8" step="1"
+                                               class="d-range d-range-primary d-range-sm tw-flex-1"
+                                               name="poiChatNumPeople"
+                                               value="<?php echo esc_attr($poi_chat_num_people ?: 8); ?>"
+                                               oninput="this.nextElementSibling.innerText = this.value">
+                                        <span class="tw-w-8 tw-h-8 tw-bg-primary tw-text-white tw-rounded-lg tw-flex tw-items-center tw-justify-center tw-text-xs tw-font-bold">
+                                            <?php echo esc_attr($poi_chat_num_people ?: 8); ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- POI Details (Image/Text) -->
+                        <div id="poi_image_text_section" class="tw-space-y-6" style="display: none;">
+                            <label class="vrodos-label">
+                                Information Overlay
                             </label>
+                            <div class="tw-space-y-4">
+                                <input id="poiImgTitle" type="text" 
+                                       class="vrodos-input" 
+                                       name="poiImgTitle" 
+                                       placeholder="Title of information popup"
+                                       minlength="3" maxlength="50" 
+                                       value="<?php echo esc_attr($poi_img_title); ?>">
+                                
+                                <textarea id="poiImgDescription" name="poiImgDescription" 
+                                          class="vrodos-input !tw-h-auto tw-min-h-[160px] !tw-font-medium" 
+                                          placeholder="Write the content here..."><?php echo esc_textarea($poi_img_content); ?></textarea>
+                            </div>
                         </div>
-                        <input type="file" id="imageFileInput" name="imageFileInput" class="tw-hidden" accept="image/png, image/jpg, image/jpeg"/>
-                    </div>
-                </div>
 
-                <!-- IPR Selection -->
-                <div id="ipr_section" class="tw-space-y-4" style="display: none;">
-                    <label for="category-ipr-select-native" class="tw-block tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                        Intellectual Property
-                    </label>
-                    <div class="tw-relative">
-                        <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-pl-4 tw-flex tw-items-center tw-pointer-events-none">
-                            <i data-lucide="shield-check" class="tw-w-5 tw-h-5 tw-text-slate-300"></i>
+                        <!-- External Link -->
+                        <div id="poi_link_section" class="tw-space-y-4" style="display: none;">
+                            <label for="assetLinkInput" class="vrodos-label">
+                                Destination URL
+                            </label>
+                            <div class="tw-relative">
+                                <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-pl-4 tw-flex tw-items-center tw-pointer-events-none">
+                                    <i data-lucide="link" class="tw-w-5 tw-h-5 tw-text-slate-300"></i>
+                                </div>
+                                <input id="assetLinkInput" name="assetLinkInput" 
+                                       class="vrodos-input !tw-pl-12" 
+                                       value="<?php echo esc_textarea($asset_link); ?>">
+                            </div>
                         </div>
-                        <select id="category-ipr-select-native" name="term_id_ipr_native" class="tw-w-full tw-bg-slate-50 tw-border-slate-200 tw-rounded-2xl tw-pl-12 tw-pr-4 tw-py-4 tw-text-slate-900 focus:tw-ring-2 focus:tw-ring-primary/20 focus:tw-border-primary tw-transition-all tw-font-bold tw-appearance-none d-select d-select-ghost tw-cursor-pointer">
-                            <option disabled <?php echo empty($saved_ipr_term) ? 'selected' : ''; ?>>Select IPR Plan</option>
-                            <?php foreach ($cat_ipr_terms as $term_ipr):
-		$isSelected = !empty($saved_ipr_term) && $saved_ipr_term[0]->term_id == $term_ipr->term_id;
-?>
-                                <option value="<?php echo esc_attr($term_ipr->slug); ?>" 
-                                        data-cat-ipr-desc="<?php echo esc_attr($term_ipr->description); ?>"
-                                        id="<?php echo esc_attr($term_ipr->term_id); ?>"
-                                        <?php echo $isSelected ? 'selected' : ''; ?>>
-                                    <?php echo esc_html($term_ipr->name); ?>
-                                </option>
-                            <?php
-	endforeach; ?>
-                        </select>
-                    </div>
-                    <p id="categoryIPRDescription" class="tw-text-[11px] tw-text-slate-400 tw-font-bold tw-leading-relaxed"></p>
-                    
-                    <!-- Legacy JS Compatibility -->
-                    <div id="category-ipr-select" style="display:none;"></div>
-                    <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
-                    <div id="currently-ipr-selected"
-                         data-cat-ipr-id="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->term_id) : ''; ?>"
-                         data-cat-ipr-slug="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->slug) : ''; ?>"
-                         data-cat-ipr-desc="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->description) : ''; ?>">
+
+                        <!-- Video Playback Options -->
+                        <div id="video_options_section" class="tw-space-y-6" style="display: none;">
+                            <label class="vrodos-label">
+                                Playback Settings
+                            </label>
+                            <div class="tw-space-y-4">
+                                <input id="videoTitle" type="text" 
+                                       class="vrodos-input" 
+                                       name="videoTitle" 
+                                       placeholder="Video title (optional)"
+                                       minlength="3" maxlength="25" 
+                                       value="<?php echo esc_attr($video_title); ?>">
+                                
+                                <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-slate-50 tw-rounded-2xl tw-border tw-border-slate-100">
+                                    <input type="checkbox" id="video_autoloop_checkbox" name="video_autoloop_checkbox" 
+                                           class="d-checkbox d-checkbox-primary tw-rounded-lg" <?php echo $video_autoloop; ?>/>
+                                    <label for="video_autoloop_checkbox" class="tw-cursor-pointer">
+                                        <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Autoplay & Loop</span>
+                                        <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Start instantly and repeat</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image POI Upload -->
+                        <div id="poi_image_file_section" class="tw-space-y-6" style="display: none;">
+                            <label class="vrodos-label">
+                                Infobox Image
+                            </label>
+                            <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border-2 tw-border-dashed tw-border-slate-200 hover:tw-border-primary tw-transition-all group">
+                                <img id="imagePoiPreviewImg" src="<?php echo esc_url($imagePoiImageURL ?? ''); ?>" alt="POI Image" class="tw-w-full tw-h-full tw-object-cover">
+                                <div class="tw-absolute tw-inset-0 tw-bg-slate-900/40 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity tw-flex tw-items-center tw-justify-center">
+                                    <label for="imageFileInput" class="d-btn d-btn-sm tw-bg-white tw-border-none hover:tw-bg-slate-100 tw-text-slate-900 tw-font-bold tw-rounded-xl tw-gap-2 tw-cursor-pointer">
+                                        <i data-lucide="upload" class="tw-w-4 tw-h-4"></i>
+                                        Replace
+                                    </label>
+                                </div>
+                                <input type="file" id="imageFileInput" name="imageFileInput" class="tw-hidden" accept="image/png, image/jpg, image/jpeg"/>
+                            </div>
+                        </div>
+
+                        <!-- IPR Selection Section -->
+                        <div id="ipr_section" class="tw-space-y-4" style="display: none;">
+                            <label for="category-ipr-select-native" class="vrodos-label">
+                                Intellectual Property
+                            </label>
+                            <div class="tw-relative">
+                                <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-pl-4 tw-flex tw-items-center tw-pointer-events-none">
+                                    <i data-lucide="shield-check" class="tw-w-5 tw-h-5 tw-text-slate-300"></i>
+                                </div>
+                                <select id="category-ipr-select-native" name="term_id_ipr_native" class="vrodos-select d-select d-select-ghost !tw-pl-12">
+                                    <option disabled <?php echo empty($saved_ipr_term) ? 'selected' : ''; ?>>Select IPR Plan</option>
+                                    <?php foreach ($cat_ipr_terms as $term_ipr):
+                                        $isSelected = !empty($saved_ipr_term) && $saved_ipr_term[0]->term_id == $term_ipr->term_id;
+                                ?>
+                                        <option value="<?php echo esc_attr($term_ipr->slug); ?>" 
+                                                data-cat-ipr-desc="<?php echo esc_attr($term_ipr->description); ?>"
+                                                id="<?php echo esc_attr($term_ipr->term_id); ?>"
+                                                <?php echo $isSelected ? 'selected' : ''; ?>>
+                                            <?php echo esc_html($term_ipr->name); ?>
+                                        </option>
+                                    <?php
+                                    endforeach; ?>
+                                </select>
+                            </div>
+                            <p id="categoryIPRDescription" class="tw-text-[11px] tw-text-slate-400 tw-font-bold tw-leading-relaxed"></p>
+                            
+                            <!-- Legacy JS Compatibility -->
+                            <div id="category-ipr-select" style="display:none;"></div>
+                            <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
+                            <div id="currently-ipr-selected"
+                                 data-cat-ipr-id="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->term_id) : ''; ?>"
+                                 data-cat-ipr-slug="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->slug) : ''; ?>"
+                                 data-cat-ipr-desc="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->description) : ''; ?>">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -507,12 +517,26 @@ else { ?>
 
 		document.addEventListener('DOMContentLoaded', initIcons);
 
-		assetVideoTag.addEventListener('loadeddata', function() {
-			generateVideoSshot(videoSshotCanvas, assetVideoTag);
-		}, false);
-		assetVideoTag.addEventListener('seeked', function(){
-			generateVideoSshot(videoSshotCanvas, assetVideoTag);
-		});
+		let generateVideoSshot = (canvas, video) => {
+			let ctx = canvas.getContext('2d');
+			// High-resolution capture: set canvas size to match video's natural dimensions
+			canvas.width = video.videoWidth || 640;
+			canvas.height = video.videoHeight || 360;
+			ctx.drawImage( video, 0, 0, canvas.width, canvas.height);
+			videoSshotFileInput.value = canvas.toDataURL('image/png');
+		};
+
+		// Debounce helper to prevent excessive processing
+		let debounceTimer;
+		let debouncedGenerateSshot = () => {
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(() => {
+				generateVideoSshot(videoSshotCanvas, assetVideoTag);
+			}, 300);
+		};
+
+		assetVideoTag.addEventListener('loadeddata', debouncedGenerateSshot, false);
+		assetVideoTag.addEventListener('seeked', debouncedGenerateSshot);
 
 		setScreenshotHandler();
 
@@ -567,7 +591,10 @@ else { ?>
 				let resetCategory = () => {
 					clearList();
 					document.getElementById('glb_file_section').style.display = "block";
+					document.getElementById('vrodos_3d_preview_card').style.display = "block";
+					document.getElementById('vrodos_editor_tip_card').style.display = "block";
 					document.getElementById('screenshot_section').style.display = "block";
+					
 					document.getElementById('ipr_section').style.display = "none";
 					document.getElementById('poi_help_section').style.display = "none";
 					document.getElementById('poi_link_section').style.display = "none";
@@ -593,7 +620,10 @@ else { ?>
 							break;
 						case "video":
 							document.getElementById('glb_file_section').style.display = "none";
+							document.getElementById('vrodos_3d_preview_card').style.display = "none";
+							document.getElementById('vrodos_editor_tip_card').style.display = "none";
 							document.getElementById('screenshot_section').style.display = "none";
+
 							document.getElementById('video_section').style.display = "block";
 							document.getElementById('video_options_section').style.display = "block";
 							document.getElementById('video_screenshot_section').style.display = "block";
@@ -657,13 +687,15 @@ else { ?>
 
 		let readVideo = (event) => {
 			if (event.target.files && event.target.files[0]) {
-				let reader = new FileReader();
-
-				reader.onload = function(e) {
-					assetVideoSrc.src = e.target.result
-					assetVideoTag.load();
-				}.bind(this)
-				reader.readAsDataURL(event.target.files[0]);
+				// Memory Optimization: Use ObjectURL instead of DataURL (Base64)
+				// This avoids loading the entire file into memory as a string.
+				let file = event.target.files[0];
+				let blobURL = URL.createObjectURL(file);
+				
+				assetVideoSrc.src = blobURL;
+				assetVideoTag.load();
+				
+				// Optional: Revoke the URL when done if needed, but for the editor session we keep it active
 			}
 		};
 
@@ -675,4 +707,5 @@ else { ?>
 	<?php wp_footer(); ?>
 </body>
 </html>
-<?php } ?>
+<?php
+}?>

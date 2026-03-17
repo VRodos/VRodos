@@ -140,6 +140,10 @@
   transform: translateY(1px) !important;
 }
 
+#vrodos-asset-editor .d-range {
+  cursor: pointer !important;
+}
+
 #vrodos-project-manager .d-btn-outline,
 #vrodos-assets-manager .d-btn-outline,
 #vrodos-asset-editor .d-btn-outline {
@@ -170,10 +174,74 @@
 
 #vrodos-project-manager .d-input:focus,
 #vrodos-assets-manager .d-input:focus,
-#vrodos-asset-editor .d-input:focus {
+#vrodos-asset-editor .d-input:focus,
+#vrodos-asset-editor .d-select:focus {
   border-color: #66cc8a !important;
-  outline: 2px solid #66cc8a22 !important;
+  outline: 2PX solid #66cc8a22 !important;
   box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
+}
+
+/* Global VRodos Component Classes */
+.vrodos-label {
+  display: block !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.vrodos-input {
+  width: 100% !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.vrodos-input:focus {
+  background-color: #ffffff !important;
+  border-color: #66cc8a !important;
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
+}
+
+.vrodos-input::placeholder {
+  color: #cbd5e1 !important;
+}
+
+.vrodos-select {
+  width: 100% !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  padding: 0.75rem 2.5rem 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  appearance: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.vrodos-select:focus {
+  background-color: #ffffff !important;
+  border-color: #66cc8a !important;
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
+}
+
+.vrodos-card {
+  background-color: #f8fafc !important;
+  border: 1px solid #f1f5f9 !important;
+  border-radius: 1.5rem !important;
+  padding: 1.5rem !important;
+  transition: all 0.2s ease !important;
 }
 
 /* Modal styling overrides for WP stability - Surgically focused */
