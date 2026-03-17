@@ -76,7 +76,7 @@ else { ?>
             
             <!-- Left Column: 3D Preview & Files -->
             <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-y-auto lg:tw-h-full">
-                <div class="tw-p-6 lg:tw-p-8 tw-space-y-6">
+                <div class="tw-p-5 lg:tw-p-6 tw-space-y-4">
                     <!-- 3D Preview Card -->
                     <div id="vrodos_3d_preview_card" class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]">
                         <!-- Preview Overlay -->
@@ -104,17 +104,21 @@ else { ?>
                             </button>
                         </div>
 
-                        <!-- Theme Control Overlay (BG Color) -->
-                        <div class="tw-absolute tw-bottom-4 tw-right-4 tw-z-30 tw-pointer-events-auto tw-flex tw-items-center tw-gap-2 tw-bg-white/90 tw-backdrop-blur-sm tw-px-3 tw-rounded-lg tw-shadow-md tw-border tw-border-slate-100 tw-h-8">
-                             <i data-lucide="palette" class="tw-w-3.5 tw-h-3.5 tw-text-slate-400"></i>
-                             <input id="jscolorpick" class="tw-w-20 tw-h-5 tw-rounded-md tw-cursor-pointer tw-border-none jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" value="000000">
+                        <!-- Theme Control Overlay (BG Color Picker refined) -->
+                        <div class="tw-absolute tw-bottom-4 tw-right-4 tw-z-30 tw-pointer-events-auto tw-flex tw-items-center tw-bg-white/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-xl tw-border tw-border-slate-100 tw-h-9 tw-overflow-hidden">
+                             <div class="tw-pl-3 tw-pr-2 tw-flex tw-items-center tw-pointer-events-none tw-z-10">
+                                <i data-lucide="palette" class="tw-w-3.5 tw-h-3.5 tw-text-slate-400"></i>
+                             </div>
+                             <input id="jscolorpick" 
+                                    class="tw-w-[72px] tw-h-full tw-cursor-pointer tw-border-none tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest tw-pl-0 tw-pr-3 jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" 
+                                    value="000000">
                              <input id="assetback3dcolor" type="hidden" name="assetback3dcolor" value="<?php echo esc_attr(trim($asset_back_3d_color_saved)); ?>" />
                         </div>
                     </div>
 
                     <!-- GLB Upload Card (Moved from sidebar) -->
                     <?php if (($isOwner || $isUserAdmin)) { ?>
-                    <div id="glb_file_section" class="tw-bg-white tw-p-6 tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-space-y-4">
+                    <div id="glb_file_section" class="tw-bg-white tw-p-5 tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-space-y-3">
                         <div class="tw-flex tw-items-center tw-justify-between">
                             <label class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">
                                 3D Content (GLB)
@@ -122,11 +126,11 @@ else { ?>
                             <i data-lucide="box" class="tw-w-4 tw-h-4 tw-text-primary"></i>
                         </div>
                         
-                        <div class="tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-4 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
+                        <div class="tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-3 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
                             <input id="fileUploadInput" class="tw-hidden" type="file" name="multipleFilesInput[]" accept=".glb" onclick="clearList()"/>
                             <label for="fileUploadInput" class="tw-cursor-pointer tw-flex tw-flex-col tw-items-center tw-gap-2">
-                                <div class="tw-w-8 tw-h-8 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">
-                                    <i data-lucide="upload-cloud" class="tw-w-4 tw-h-4 tw-text-primary"></i>
+                                <div class="tw-w-7 tw-h-7 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">
+                                    <i data-lucide="upload-cloud" class="tw-w-3.5 tw-h-3.5 tw-text-primary"></i>
                                 </div>
                                 <div>
                                     <p id="fileUploadInputLabel" class="tw-text-xs tw-font-bold tw-text-slate-800">Model Upload</p>
@@ -171,7 +175,7 @@ else { ?>
                 
                     
                     <!-- Primary Action Sticky Header -->
-                    <div class="tw-sticky tw-top-0 tw-z-30 tw-bg-white/80 tw-backdrop-blur-md tw-border-b tw-border-slate-100 tw-px-10 tw-py-5 tw-flex tw-items-center tw-justify-between">
+                    <div class="tw-sticky tw-top-0 tw-z-30 tw-bg-white/80 tw-backdrop-blur-md tw-border-b tw-border-slate-100 tw-px-10 tw-py-3.5 tw-flex tw-items-center tw-justify-between">
                         <div class="tw-flex tw-items-center tw-gap-3">
                             <i data-lucide="file-edit" class="tw-w-4 tw-h-4 tw-text-slate-300"></i>
                             <span class="tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest"><?php echo $asset_id ? 'Editing Asset' : 'New Asset'; ?></span>
@@ -186,7 +190,7 @@ else { ?>
                     </div>
 
                     <!-- Metadata Form -->
-                    <div class="tw-px-10 tw-py-6 tw-space-y-8">
+                    <div class="tw-px-10 tw-py-0 tw-space-y-6">
 
                 <?php if (($isOwner || $isUserAdmin) && $isEditMode) {
         wp_nonce_field('post_nonce', 'post_nonce_field');
@@ -251,9 +255,9 @@ else { ?>
                 </div>
 
 
-                <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-10">
+                <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-6">
                     <!-- Left Column: Primary Preview -->
-                    <div class="tw-space-y-10">
+                    <div class="tw-space-y-6">
                         <!-- Screenshot Section (Always Visible) -->
                         <div id="screenshot_section" class="tw-space-y-6" style="display: block;">
                             <div class="tw-flex tw-items-center tw-justify-between">
@@ -295,16 +299,24 @@ else { ?>
                                 Video Source
                             </label>
                             
-                            <div class="tw-bg-slate-900 tw-rounded-2xl tw-overflow-hidden tw-shadow-xl">
-                                <video id="assetVideoTag" class="tw-w-full tw-aspect-video" preload="auto" controls>
+                            <div class="tw-bg-slate-900 tw-rounded-2xl tw-overflow-hidden tw-shadow-xl tw-max-h-[320px] tw-flex tw-items-center tw-justify-center">
+                                <video id="assetVideoTag" class="tw-w-full tw-h-full tw-max-h-[320px]" preload="auto" controls>
                                     <source id="assetVideoSource" src="<?php echo esc_url($video_attachment_file ?? ''); ?>" type="video/mp4">
                                 </video>
                             </div>
 
-                            <div class="tw-flex tw-gap-3">
-                                <input class="d-file-input d-file-input-bordered tw-w-full tw-rounded-xl" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
+                            <div class="tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-3 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
+                                <input class="tw-hidden" type="file" name="videoFileInput" id="videoFileInput" accept="video/mp4,video/webm"/>
+                                <label for="videoFileInput" class="tw-cursor-pointer tw-flex tw-flex-col tw-items-center tw-gap-2">
+                                    <div class="tw-w-7 tw-h-7 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">
+                                        <i data-lucide="video" class="tw-w-3.5 tw-h-3.5 tw-text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <p id="videoUploadInputLabel" class="tw-text-xs tw-font-bold tw-text-slate-800">Choose Video</p>
+                                        <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">MP4, WEBM MAX 50MB</p>
+                                    </div>
+                                </label>
                             </div>
-                            <p class="tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase">Supported formats: MP4, WebM</p>
                         </div>
                     </div>
 
@@ -687,15 +699,18 @@ else { ?>
 
 		let readVideo = (event) => {
 			if (event.target.files && event.target.files[0]) {
-				// Memory Optimization: Use ObjectURL instead of DataURL (Base64)
-				// This avoids loading the entire file into memory as a string.
 				let file = event.target.files[0];
+				
+				// Show filename in UI
+				if (document.getElementById('videoUploadInputLabel')) {
+					document.getElementById('videoUploadInputLabel').textContent = file.name;
+				}
+
+				// Memory Optimization: Use ObjectURL instead of DataURL (Base64)
 				let blobURL = URL.createObjectURL(file);
 				
 				assetVideoSrc.src = blobURL;
 				assetVideoTag.load();
-				
-				// Optional: Revoke the URL when done if needed, but for the editor session we keep it active
 			}
 		};
 

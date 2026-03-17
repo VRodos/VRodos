@@ -1175,6 +1175,10 @@ body {
   height: 2rem;
 }
 
+.vrodos-manager-wrapper .tw-h-9 {
+  height: 2.25rem;
+}
+
 .vrodos-manager-wrapper .tw-h-full {
   height: 100%;
 }
@@ -1185,6 +1189,10 @@ body {
 
 .vrodos-manager-wrapper .\!tw-max-h-none {
   max-height: none !important;
+}
+
+.vrodos-manager-wrapper .tw-max-h-\[320px\] {
+  max-height: 320px;
 }
 
 .vrodos-manager-wrapper .tw-min-h-\[160px\] {
@@ -1280,12 +1288,20 @@ body {
   width: 1px;
 }
 
+.vrodos-manager-wrapper .tw-w-\[72px\] {
+  width: 72px;
+}
+
 .vrodos-manager-wrapper .tw-min-w-0 {
   min-width: 0px;
 }
 
 .vrodos-manager-wrapper .tw-min-w-\[200px\] {
   min-width: 200px;
+}
+
+.vrodos-manager-wrapper .tw-min-w-\[100px\] {
+  min-width: 100px;
 }
 
 .vrodos-manager-wrapper .tw-max-w-4xl {
@@ -1416,6 +1432,12 @@ body {
   gap: 2rem;
 }
 
+.vrodos-manager-wrapper :is(.tw-space-y-10 > :not([hidden]) ~ :not([hidden])) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(2.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(2.5rem * var(--tw-space-y-reverse));
+}
+
 .vrodos-manager-wrapper :is(.tw-space-y-2 > :not([hidden]) ~ :not([hidden])) {
   --tw-space-y-reverse: 0;
   margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
@@ -1444,12 +1466,6 @@ body {
   --tw-space-y-reverse: 0;
   margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
-}
-
-.vrodos-manager-wrapper :is(.tw-space-y-10 > :not([hidden]) ~ :not([hidden])) {
-  --tw-space-y-reverse: 0;
-  margin-top: calc(2.5rem * calc(1 - var(--tw-space-y-reverse)));
-  margin-bottom: calc(2.5rem * var(--tw-space-y-reverse));
 }
 
 .vrodos-manager-wrapper .tw-overflow-hidden {
@@ -1648,6 +1664,10 @@ body {
   background-color: rgb(15 23 42 / 0.5);
 }
 
+.vrodos-manager-wrapper .tw-bg-transparent {
+  background-color: transparent;
+}
+
 .vrodos-manager-wrapper .tw-bg-white {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
@@ -1752,6 +1772,11 @@ body {
   padding-right: 2rem;
 }
 
+.vrodos-manager-wrapper .tw-py-0 {
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
 .vrodos-manager-wrapper .tw-py-0\.5 {
   padding-top: 0.125rem;
   padding-bottom: 0.125rem;
@@ -1777,19 +1802,14 @@ body {
   padding-bottom: 5rem;
 }
 
+.vrodos-manager-wrapper .tw-py-3\.5 {
+  padding-top: 0.875rem;
+  padding-bottom: 0.875rem;
+}
+
 .vrodos-manager-wrapper .tw-py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
-}
-
-.vrodos-manager-wrapper .tw-py-5 {
-  padding-top: 1.25rem;
-  padding-bottom: 1.25rem;
-}
-
-.vrodos-manager-wrapper .tw-py-6 {
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
 }
 
 .vrodos-manager-wrapper .\!tw-pl-12 {
@@ -1804,8 +1824,16 @@ body {
   padding-bottom: 2rem;
 }
 
+.vrodos-manager-wrapper .tw-pl-3 {
+  padding-left: 0.75rem;
+}
+
 .vrodos-manager-wrapper .tw-pl-4 {
   padding-left: 1rem;
+}
+
+.vrodos-manager-wrapper .tw-pr-1 {
+  padding-right: 0.25rem;
 }
 
 .vrodos-manager-wrapper .tw-pr-4 {
@@ -1822,6 +1850,18 @@ body {
 
 .vrodos-manager-wrapper .tw-pt-4 {
   padding-top: 1rem;
+}
+
+.vrodos-manager-wrapper .tw-pl-0 {
+  padding-left: 0px;
+}
+
+.vrodos-manager-wrapper .tw-pr-2 {
+  padding-right: 0.5rem;
+}
+
+.vrodos-manager-wrapper .tw-pr-3 {
+  padding-right: 0.75rem;
 }
 
 .vrodos-manager-wrapper .tw-text-left {
@@ -2407,6 +2447,22 @@ body {
   transition: all 0.2s ease !important;
 }
 
+/* Surgical Reset for jscolor to prevent "Box-in-a-Box" */
+
+.jscolor {
+  background-image: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  /* Font metrics should match vrodos standard */
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
 /* Modal styling overrides for WP stability - Surgically focused */
 
 #vrodos-modal-wrapper .d-modal {
@@ -2943,8 +2999,8 @@ body {
     border-right-width: 1px;
   }
 
-  .vrodos-manager-wrapper .lg\:tw-p-8 {
-    padding: 2rem;
+  .vrodos-manager-wrapper .lg\:tw-p-6 {
+    padding: 1.5rem;
   }
 }
 

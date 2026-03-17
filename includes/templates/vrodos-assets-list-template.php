@@ -164,18 +164,18 @@ function vrodos_get_asset_category_icon($category_slug) {
                         <!-- Absolute Badges (Refined) -->
                         <div class="tw-absolute tw-top-3 tw-left-3 tw-flex tw-flex-col tw-gap-1.5 tw-items-start">
                             <!-- Category Badge -->
-                            <span class="tw-w-fit tw-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-bg-white tw-text-slate-900 tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-sm tw-border tw-border-slate-100">
+                            <span class="tw-w-fit tw-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-bg-white tw-text-slate-900 tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-sm tw-border tw-border-slate-100">
                                 <i data-lucide="<?php echo vrodos_get_asset_category_icon($asset['category_slug']); ?>" class="tw-w-3 tw-h-3"></i>
                                 <?php echo $asset['category_name']; ?>
                             </span>
                             
                             <!-- Visibility Badge -->
                             <?php if ( $asset['is_joker'] == 'true' ) : ?>
-                                <span class="tw-w-fit tw-px-2.5 tw-py-1 tw-bg-emerald-500 tw-text-white tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-md">
+                                <span class="tw-w-fit tw-px-2.5 tw-py-1 tw-bg-emerald-500 tw-text-white tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-md">
                                     Public
                                 </span>
                             <?php else : ?>
-                                <span class="tw-w-fit tw-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-bg-slate-800 tw-text-white tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-md">
+                                <span class="tw-w-fit tw-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-bg-slate-800 tw-text-white tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-md">
                                     <i data-lucide="lock" class="tw-w-2.5 tw-h-2.5"></i>
                                     <?php echo $asset['asset_parent_game'] ? $asset['asset_parent_game'] : 'Private'; ?>
                                 </span>

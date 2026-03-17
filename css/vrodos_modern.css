@@ -244,6 +244,21 @@
   transition: all 0.2s ease !important;
 }
 
+/* Surgical Reset for jscolor to prevent "Box-in-a-Box" */
+.jscolor {
+  background-image: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  /* Font metrics should match vrodos standard */
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
 /* Modal styling overrides for WP stability - Surgically focused */
 #vrodos-modal-wrapper .d-modal {
   z-index: 2147483647 !important;
