@@ -77,7 +77,7 @@ function vrodos_get_asset_category_icon($category_slug) {
         </div>
     </header>
 
-    <main class="tw-flex-1 tw-max-w-screen-2xl tw-w-full tw-mx-auto tw-px-8 tw-py-10">
+    <main class="tw-flex-1 tw-min-h-0 tw-overflow-y-auto tw-max-w-screen-2xl tw-w-full tw-mx-auto tw-px-8 tw-py-10">
 
         <!-- Filter Toolbar -->
         <?php 

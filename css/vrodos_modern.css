@@ -60,6 +60,16 @@
   height: calc(100vh - var(--wp-admin-bar-height, 0px)) !important;
 }
 
+body.vrodos-manager-wrapper {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+#vrodos-asset-editor form {
+  margin: 0 !important;
+}
+
 /* Custom modern styles for VRodos */
 #vrodos-project-manager {
   display: flex !important;

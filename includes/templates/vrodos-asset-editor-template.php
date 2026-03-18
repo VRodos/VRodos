@@ -32,7 +32,7 @@ extract($data);
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased tw-overflow-hidden'); ?>>
 
-<div id="vrodos-asset-editor" class="vrodos-main-h tw-flex tw-flex-col tw-bg-slate-50">
+<div id="vrodos-asset-editor" class="vrodos-main-h tw-flex tw-flex-col tw-bg-slate-50 tw-overflow-hidden">
 
     <!-- Header (Unified Light Header) -->
     <header class="tw-h-16 tw-flex-none tw-bg-white tw-border-b tw-border-slate-200 tw-px-8 tw-z-[60] tw-shadow-sm tw-flex tw-items-center">
@@ -71,8 +71,8 @@ extract($data);
     <?php
 }
 else { ?>
-        <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col tw-bg-slate-50 tw-h-full">
-            <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-hidden tw-bg-slate-50 tw-h-full">
+        <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col tw-min-h-0 tw-m-0 tw-bg-slate-50">
+            <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-hidden tw-min-h-0 tw-bg-slate-50">
             
             <!-- Left Column: 3D Preview & Files -->
             <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-y-auto lg:tw-h-full">
