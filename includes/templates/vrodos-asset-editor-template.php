@@ -79,7 +79,7 @@ else { ?>
                     <!-- 3D Preview Card -->
                     <div id="vrodos_3d_preview_card" class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]">
                         <!-- Preview Overlay -->
-                        <div id="previewProgressSlider" class="tw-absolute tw-inset-0 tw-z-10 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-slate-900/50 tw-backdrop-blur-sm tw-transition-opacity">
+                        <div id="previewProgressSlider" class="tw-absolute tw-inset-0 tw-z-10 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-slate-900/50 tw-backdrop-blur-sm tw-transition-opacity" style="visibility:hidden">
                             <div class="tw-bg-white tw-p-6 tw-rounded-2xl tw-shadow-2xl tw-text-center tw-min-w-[200px]">
                                 <h6 id="previewProgressLabel" class="tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest tw-mb-3">Loading</h6>
                                 <div class="tw-w-full tw-h-1.5 tw-bg-slate-100 tw-rounded-full tw-overflow-hidden">
@@ -462,16 +462,20 @@ else { ?>
                             <label class="vrodos-label">
                                 Infobox Image
                             </label>
-                            <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border-2 tw-border-dashed tw-border-slate-200 hover:tw-border-primary tw-transition-all group">
-                                <img id="imagePoiPreviewImg" src="<?php echo esc_url($imagePoiImageURL ?? ''); ?>" alt="POI Image" class="tw-w-full tw-h-full tw-object-cover">
-                                <div class="tw-absolute tw-inset-0 tw-bg-slate-900/40 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity tw-flex tw-items-center tw-justify-center">
-                                    <label for="imageFileInput" class="d-btn d-btn-sm tw-bg-white tw-border-none hover:tw-bg-slate-100 tw-text-slate-900 tw-font-bold tw-rounded-xl tw-gap-2 tw-cursor-pointer">
+                            <label for="imageFileInput" class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border-2 tw-border-dashed tw-border-slate-200 hover:tw-border-primary tw-transition-all group tw-cursor-pointer tw-block">
+                                <img id="imagePoiPreviewImg" src="<?php echo esc_url($imagePoiImageURL ?? ''); ?>" alt="POI Image" class="tw-w-full tw-h-full tw-object-cover <?php echo empty($imagePoiImageURL) ? 'tw-hidden' : ''; ?>">
+                                <div id="imagePoiPlaceholder" class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-2 tw-text-slate-400 <?php echo !empty($imagePoiImageURL) ? 'tw-hidden' : ''; ?>">
+                                    <i data-lucide="upload" class="tw-w-8 tw-h-8"></i>
+                                    <span class="tw-text-sm tw-font-medium">Click to upload image</span>
+                                </div>
+                                <div class="tw-absolute tw-inset-0 tw-bg-slate-900/40 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity tw-flex tw-items-center tw-justify-center tw-pointer-events-none">
+                                    <span class="d-btn d-btn-sm tw-bg-white tw-border-none tw-text-slate-900 tw-font-bold tw-rounded-xl tw-gap-2">
                                         <i data-lucide="upload" class="tw-w-4 tw-h-4"></i>
-                                        Replace
-                                    </label>
+                                        <?php echo empty($imagePoiImageURL) ? 'Upload' : 'Replace'; ?>
+                                    </span>
                                 </div>
                                 <input type="file" id="imageFileInput" name="imageFileInput" class="tw-hidden" accept="image/png, image/jpg, image/jpeg"/>
-                            </div>
+                            </label>
                         </div>
 
                         <!-- IPR Selection Section -->
@@ -633,7 +637,8 @@ else { ?>
 				}
 
 				let resetCategory = () => {
-					clearList();
+					// Only reset UI layout sections, don't clear 3D preview & screenshot
+					// (the asset's GLB and screenshot are still valid after a category change)
 					document.getElementById('glb_file_section').style.display = "block";
 					document.getElementById('vrodos_3d_preview_card').style.display = "block";
 					document.getElementById('vrodos_editor_tip_card').style.display = "block";
@@ -719,7 +724,11 @@ else { ?>
 					if (FileReader && files && files.length) {
 						let fr = new FileReader();
 						fr.onload = function () {
-							document.getElementById('imagePoiPreviewImg').src = fr.result;
+							let img = document.getElementById('imagePoiPreviewImg');
+							img.src = fr.result;
+							img.classList.remove('tw-hidden');
+							let placeholder = document.getElementById('imagePoiPlaceholder');
+							if (placeholder) placeholder.classList.add('tw-hidden');
 						}
 						fr.readAsDataURL(files[0]);
 					} else {

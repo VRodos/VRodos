@@ -701,6 +701,10 @@ class VRodos_AssetViewer_3D_kernel {
             //console.log("Loading from existing resource","GLB");
             //console.log("glbFilename", glbFilename);
 
+            // Show progress slider now that we are actually loading
+            if (this.previewProgressLabel)
+                this.previewProgressLabel.style.visibility = "visible";
+
             // Instantiate a loader
             const loader = new THREE.GLTFLoader();
 
