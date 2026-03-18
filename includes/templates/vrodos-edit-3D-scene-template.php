@@ -75,37 +75,43 @@ extract( $data );
 							<a id="undo-scene-button" title="Undo last change" class="tw-p-1 hover:tw-bg-white/10 tw-rounded tw-transition-colors">
 								<i data-lucide="undo-2" class="tw-w-4 tw-h-4"></i>
 							</a>
-							<a id="save-scene-button" title="Save changes" class="tw-px-3 tw-py-1 tw-text-xs tw-font-bold tw-uppercase tw-tracking-wider hover:tw-bg-white/10 tw-rounded tw-transition-colors">
-								Save Scene
-							</a>
+
 							<a id="redo-scene-button" title="Redo last change" class="tw-p-1 hover:tw-bg-white/10 tw-rounded tw-transition-colors">
 								<i data-lucide="redo-2" class="tw-w-4 tw-h-4"></i>
 							</a>
 						</div>
 
-						<!-- View Json code UI -->
-						<a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
-							class="tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-text-xs tw-font-bold tw-opacity-40 hover:tw-opacity-100 tw-transition-all tw-cursor-pointer"
-							title="View JSON">
-							<i data-lucide="eye-off" class="tw-w-3.5 tw-h-3.5"></i> JSON
-						</a>
+
+
+
 					</div>
 
-					<!-- Compile Button -->
+
 					<div class="tw-ml-auto tw-flex tw-items-center tw-gap-2">
+
+                        <a id="toggleUIBtn" data-toggle='on' type="button"
+                           class="tw-p-1.5 hover:tw-bg-white/10 tw-rounded tw-transition-colors tw-cursor-pointer tw-text-white"
+                           title="Toggle interface">
+                            <i data-lucide="eye" class="tw-w-4 tw-h-4"></i>
+                        </a>
+
+                        <!-- View Json code UI -->
+                        <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
+                           class="tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-text-xs tw-font-bold tw-opacity-40 hover:tw-opacity-100 tw-transition-all tw-cursor-pointer"
+                           title="View JSON">
+                            <i data-lucide="eye-off" class="tw-w-3.5 tw-h-3.5"></i> JSON
+                        </a>
+
+                        <a id="save-scene-button" title="Save changes" class="tw-px-3 tw-py-1 tw-text-xs tw-font-bold tw-uppercase tw-tracking-wider hover:tw-bg-white/10 tw-rounded tw-transition-colors">
+                            Save Scene
+                        </a>
+
 						<button id="compileGameBtn"
 							class="d-btn d-btn-primary tw-text-white tw-font-bold"
 							title="Build Project">
 							<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
 							Build Project
 						</button>
-
-						<!-- Toggle UI visibility -->
-						<a id="toggleUIBtn" data-toggle='on' type="button"
-							class="tw-p-1.5 hover:tw-bg-white/10 tw-rounded tw-transition-colors tw-cursor-pointer tw-text-white"
-							title="Toggle interface">
-							<i data-lucide="eye" class="tw-w-4 tw-h-4"></i>
-						</a>
 					</div>
 
 				</div>
@@ -249,17 +255,17 @@ extract( $data );
 
 				<!--  Asset browse Left panel  -->
 				
-				<!-- Open/Close button (Positioned via CSS as overlay) -->
-				<a id="bt_close_file_toolbar" data-toggle="on" type="button"
-					class="AssetsToggleStyle AssetsToggleOn hidable d-btn d-btn-xs d-btn-primary tw-z-[1001]"
-					title="Toggle asset viewer">
-					<div class="tw-flex tw-items-center tw-justify-center">
-						<i data-lucide="panel-left-close" class="tw-w-4 tw-h-4"></i>
-					</div>
-				</a>
-
 				<!-- The panel -->
 				<div class="filemanager" id="assetBrowserToolbar">
+
+					<!-- Open/Close button (Nested for seamless extension) -->
+					<a id="bt_close_file_toolbar" data-toggle="on" type="button"
+					   class="AssetsToggleStyle AssetsToggleOn hidable"
+					   title="Toggle asset viewer">
+						<div class="tw-flex tw-items-center tw-justify-center">
+							<i data-lucide="chevron-left" class="tw-w-3 tw-h-3"></i>
+						</div>
+					</a>
 
 					<!-- Categories of assets -->
 					<div id="assetCategTab" class="AssetCategoryTabStyle">
@@ -276,17 +282,11 @@ extract( $data );
 
 					<!-- ADD NEW ASSET FROM ASSETS LIST -->
 					<a id="addNewAssetBtnAssetsList"
-						style="" class="addNewAsset3DEditor"
-						title="Add new private asset"
-						href="
-						<?php
-						echo esc_url(
-							get_permalink( $newAssetPage[0]->ID ) .
-							$parameter_pass . $project_id . '&vrodos_scene=' . $current_scene_id . '&scene_type=scene&preview=false'
-						);
-						?>
-							">
-						<i data-lucide="plus-circle" style="width:24px; height:24px;"></i>
+					   class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-bg-emerald-500 tw-text-white tw-rounded-full tw-shadow-lg hover:tw-bg-emerald-600 tw-transition-all tw-absolute tw-bottom-4 tw-right-4 tw-z-[1001]"
+					   title="Add new private asset"
+					   href="<?php echo esc_url( get_permalink( $newAssetPage[0]->ID ) . 							$parameter_pass . $project_id . '&vrodos_scene=' . $current_scene_id . '&scene_type=scene&preview=0&singleproject=true'
+ ); ?>">
+						<i data-lucide="plus" class="tw-w-5 tw-h-5"></i>
 					</a>
 
 				</div>

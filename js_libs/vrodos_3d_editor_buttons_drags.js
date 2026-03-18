@@ -4,7 +4,9 @@ function swapLucideIcon(container, iconName) {
     if (icon) {
         let newIcon = document.createElement('i');
         newIcon.setAttribute('data-lucide', iconName);
-        newIcon.style.cssText = icon.style ? icon.style.cssText : 'width:18px; height:18px;';
+        // Preserve original sizing classes (tw-w-*, tw-h-*, etc.)
+        let origClasses = (icon.getAttribute('class') || '').replace(/lucide[^\s]*/g, '').trim();
+        if (origClasses) newIcon.setAttribute('class', origClasses);
         icon.replaceWith(newIcon);
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
@@ -97,21 +99,24 @@ function loadButtonActions() {
         jQuery("#right-elements-panel").toggle("slow");
     });
 
-    // File Browser Toolbar close button
-    jQuery("#bt_close_file_toolbar").click(function () {
+    // File Browser Toolbar close button (Event delegation for maximum robustness)
+    jQuery(document).on('click', '#bt_close_file_toolbar', function (e) {
+        e.preventDefault();
         let btn = jQuery(this);
+        let toolbar = jQuery("#assetBrowserToolbar");
+        
         if (btn.hasClass("AssetsToggleOn")) {
             btn.addClass("AssetsToggleOff").removeClass("AssetsToggleOn");
             btn.data('toggle', 'off');
-            swapLucideIcon(this, 'panel-left-open');
+            swapLucideIcon(this, 'chevron-right');
+            toolbar.addClass("closed");
         } else {
             btn.addClass("AssetsToggleOn").removeClass("AssetsToggleOff");
             btn.data('toggle', 'on');
-            swapLucideIcon(this, 'panel-left-close');
+            swapLucideIcon(this, 'chevron-left');
+            toolbar.removeClass("closed");
         }
-        jQuery("#assetBrowserToolbar").toggle("slow");
-        jQuery("#filemanager").toggle("slow");
-        jQuery(".environmentBar").toggleClass("sidebar-closed"); // Sync toolbar position
+        
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 

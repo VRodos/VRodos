@@ -154,41 +154,44 @@ canvas { pointer-events:none; z-index:10; }
 	margin: 0;
 }
 
-/*Assets Left Toolbar*/
-
 /* leftPanelToggleOnOff*/
 .AssetsToggleStyle {
 	position: absolute;
-	width: 28px !important;
-	height: 28px !important;
-	left: 300px; /* Fixed position relative to 320px sidebar */
-	top: 48px;
+	width: 18px !important;
+	height: 48px !important;
+	right: -18px !important;
+	left: auto !important;
+	top: 50% !important;
+	bottom: auto !important;
+	transform: translateY(-50%);
 	z-index: 1001;
 	cursor: pointer;
 	padding: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 6px !important;
-	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	background-color: #10b981 !important; /* emerald-500 */
-	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	background-color: rgba(15, 23, 42, 0.25) !important;
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border: 1px solid rgba(255, 255, 255, 0.07);
+	border-left: none;
+	border-radius: 0 8px 8px 0 !important;
+	transition: background-color 0.2s ease;
 }
 
 .AssetsToggleStyle:hover {
-	transform: scale(1.05);
-	background-color: #059669 !important; /* emerald-600 */
-}
-
-.AssetsToggleOff {
-	left: 8px !important;
+	background-color: rgba(15, 23, 42, 0.2) !important;
+	transform: translateY(-50%) !important;
 }
 
 .AssetsToggleStyle i {
-	display: block;
-	cursor: pointer;
+	color: rgba(255, 255, 255, 0.4);
 }
+
+.AssetsToggleStyle:hover i {
+	color: rgba(255, 255, 255, 0.7);
+}
+
 
 .AssetCategoryTabStyle {
 	background-color: rgba(255,255,255,0.12);

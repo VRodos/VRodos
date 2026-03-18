@@ -3292,6 +3292,11 @@ body.vrodos-manager-wrapper {
   background-color: rgb(99 102 241 / var(--tw-bg-opacity, 1));
 }
 
+.vrodos-manager-wrapper .hover\:tw-bg-emerald-600:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(5 150 105 / var(--tw-bg-opacity, 1));
+}
+
 .vrodos-manager-wrapper .hover\:tw-text-error:hover {
   --tw-text-opacity: 1;
   color: var(--fallback-er,oklch(var(--er)/var(--tw-text-opacity, 1)));

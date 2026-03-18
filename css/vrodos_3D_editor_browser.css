@@ -10,30 +10,50 @@
 	height: 75vh !important;
 	left: 0;
 	top: 44px;
-	background-color: rgba(15, 23, 42, 0.45); /* More transparent slate-900 */
+	background-color: rgba(15, 23, 42, 0.25) !important;
 	backdrop-filter: blur(8px);
 	-webkit-backdrop-filter: blur(8px);
 	border-right: 1px solid rgba(255, 255, 255, 0.1);
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 	border-bottom-right-radius: 12px;
 	box-shadow: 10px 10px 20px -5px rgba(0, 0, 0, 0.2);
-	display: flex;
+	display: flex !important; /* Ensure visibility for nested toggle */
 	flex-direction: column;
-	z-index: 998;
-	overflow: hidden;
+	z-index: 1000;
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* overflow: hidden removed to allow nested toggle tab to stick out */
 }
+
+.filemanager.closed {
+    left: -320px !important;
+    display: flex !important; /* Drawer handle must stay visible */
+}
+
+
 
 
 /*-------------------------
 	Search box
 -------------------------*/
 .filemanager .search {
-	margin: 8px 12px; /* Increased side margins */
+	margin: 4px 8px;
 	flex-shrink: 0;
 }
 
 .filemanager .search input[type=search] {
 	outline: none;
+	height: 24px !important;
+	/* padding removed to allow Tailwind tw-pl-8 to work */
+	font-size: 11px !important;
+	box-sizing: border-box;
+}
+
+.filemanager .search input[type=search]::placeholder {
+	color: rgba(255, 255, 255, 0.4);
+}
+
+.filemanager .search input[type=search]:focus {
+	height: 24px !important;
 }
 
 /*-------------------------
@@ -78,178 +98,37 @@
 	background-color: rgba(63,81,181,0.1);
 }
 
-/*@media all and (max-width:250px) {*/
 
-/*.filemanager .data li {*/
-/*width: 100%;*/
-/*margin: 5px 0;*/
-/*}*/
-
-/*}*/
-
-
-/*-------------------------
-		Icons
--------------------------*/
-
-.icon.file.f-1{
-	box-shadow: 1.74em -2.1em 0 0 #7e70ee inset;
-}
-
-.icon.file.f-2{
-	box-shadow: 1.74em -2.1em 0 0 #0070ee inset;
-}
-
-.icon.file.f-3{
-	box-shadow: 1.74em -2.1em 0 0 #007000 inset;
-}
-
-.icon.file.f-4{
-	box-shadow: 1.74em -2.1em 0 0 #0000ee inset;
-}
-
-
-.icon.file.f-avi,
-.icon.file.f-flv,
-.icon.file.f-mkv,
-.icon.file.f-mov,
-.icon.file.f-mpeg,
-.icon.file.f-mpg,
-.icon.file.f-mp4,
-.icon.file.f-m4v,
-.icon.file.f-wmv {
-	box-shadow: 1.74em -2.1em 0 0 #7e70ee inset;
-}
-.icon.file.f-avi:after,
-.icon.file.f-flv:after,
-.icon.file.f-mkv:after,
-.icon.file.f-mov:after,
-.icon.file.f-mpeg:after,
-.icon.file.f-mpg:after,
-.icon.file.f-mp4:after,
-.icon.file.f-m4v:after,
-.icon.file.f-wmv:after {
-	border-bottom-color: #5649c1;
-}
-
-.icon.file.f-mp2,
-.icon.file.f-mp3,
-.icon.file.f-m3u,
-.icon.file.f-wma,
-.icon.file.f-xls,
-.icon.file.f-xlsx {
-	box-shadow: 1.74em -2.1em 0 0 #5bab6e inset;
-}
-.icon.file.f-mp2:after,
-.icon.file.f-mp3:after,
-.icon.file.f-m3u:after,
-.icon.file.f-wma:after,
-.icon.file.f-xls:after,
-.icon.file.f-xlsx:after {
-	border-bottom-color: #448353;
-}
-
-.icon.file.f-doc,
-.icon.file.f-docx,
-.icon.file.f-psd{
-	box-shadow: 1.74em -2.1em 0 0 #03689b inset;
-}
-
-.icon.file.f-doc:after,
-.icon.file.f-docx:after,
-.icon.file.f-psd:after {
-	border-bottom-color: #2980b9;
-}
-
-.icon.file.f-gif,
-.icon.file.f-jpg,
-.icon.file.f-jpeg,
-.icon.file.f-pdf,
-.icon.file.f-png {
-	box-shadow: 1.74em -2.1em 0 0 #e15955 inset;
-}
-.icon.file.f-gif:after,
-.icon.file.f-jpg:after,
-.icon.file.f-jpeg:after,
-.icon.file.f-pdf:after,
-.icon.file.f-png:after {
-	border-bottom-color: #c6393f;
-}
-
-.icon.file.f-deb,
-.icon.file.f-dmg,
-.icon.file.f-gz,
-.icon.file.f-rar,
-.icon.file.f-zip,
-.icon.file.f-7z {
-	box-shadow: 1.74em -2.1em 0 0 #867c75 inset;
-}
-.icon.file.f-deb:after,
-.icon.file.f-dmg:after,
-.icon.file.f-gz:after,
-.icon.file.f-rar:after,
-.icon.file.f-zip:after,
-.icon.file.f-7z:after {
-	border-bottom-color: #685f58;
-}
-
-.icon.file.f-html,
-.icon.file.f-rtf,
-.icon.file.f-xml,
-.icon.file.f-xhtml {
-	box-shadow: 1.74em -2.1em 0 0 #a94bb7 inset;
-}
-.icon.file.f-html:after,
-.icon.file.f-rtf:after,
-.icon.file.f-xml:after,
-.icon.file.f-xhtml:after {
-	border-bottom-color: #d65de8;
-}
-
-.icon.file.f-js {
-	box-shadow: 1.74em -2.1em 0 0 #d0c54d inset;
-}
-.icon.file.f-js:after {
-	border-bottom-color: #a69f4e;
-}
-
-.icon.file.f-css,
-.icon.file.f-saas,
-.icon.file.f-scss {
-	box-shadow: 1.74em -2.1em 0 0 #44afa6 inset;
-}
-.icon.file.f-css:after,
-.icon.file.f-saas:after,
-.icon.file.f-scss:after {
-	border-bottom-color: #30837c;
-}
 
 /*Tabs for filebrowser*/
 /* Style the tab */
 .AssetCategoryTabStyle {
 	height: auto;
-	width: 100%; /* Revert to full width */
+	width: 100%;
 	background-color: rgba(255, 255, 255, 0.03);
 	display: flex;
-	flex-wrap: wrap; /* Fit always */
-	gap: 4px;
-	padding: 6px 10px; /* Reduced from 8x12 */
+	flex-wrap: nowrap; /* Force single line */
+	gap: 2px;
+	padding: 4px 6px;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	overflow-x: auto;
 }
 
 .AssetCategoryTabStyle button {
-	flex: 1;
+	flex: 0 1 auto;
+	min-width: 0;
 	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(255, 255, 255, 0.03);
+	background: rgba(0, 0, 0, 0.3);
 	border: 1px solid rgba(255, 255, 255, 0.05);
-	padding: 2px; /* Reduced further from 4px */
-	border-radius: 3px; /* Slightly smaller radius */
+	padding: 2px 4px;
+	border-radius: 4px;
 	transition: all 0.2s;
 	color: rgba(255, 255, 255, 0.4);
-	font-size: 9px !important; /* Smaller text tag */
+	font-size: 8px !important;
+	white-space: nowrap;
 }
 
 .AssetCategoryTabStyle button:hover {
@@ -261,26 +140,4 @@
 	background-color: #10b981; /* Emerald-500 */
 	color: #fff;
 	border-color: #059669;
-}
-
-.addNewAsset3DEditor{
-	position: sticky;
-	float: right;
-	bottom: 0;
-	display: block;
-	background: transparent;
-	z-index: 500;
-}
-
-.addNewAsset3DEditor i {
-	cursor: pointer;
-	font-size: 54px;
-	color: rgba(255,64,129,.78);
-	text-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-	transition: all 0.3s cubic-bezier(.25,.8,.25,1);
-}
-
-.addNewAsset3DEditor i:hover {
-	color: rgba(255,64,129,1);
-	text-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
