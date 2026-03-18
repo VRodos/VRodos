@@ -96,11 +96,13 @@ else { ?>
                         
                         <!-- Mini Controls Overlay -->
                         <div class="tw-absolute tw-bottom-4 tw-left-4 tw-z-30 tw-pointer-events-auto tw-flex tw-items-center tw-gap-2">
-                            <button type="button" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();" 
-                                    class="d-btn d-btn-xs tw-bg-white/90 tw-backdrop-blur-sm tw-border-none hover:tw-bg-white tw-shadow-md tw-rounded-lg tw-px-3 tw-gap-1.5 tw-h-8">
-                                <i data-lucide="play" class="tw-w-3.5 tw-h-3.5"></i>
-                                <span class="tw-text-[10px] tw-font-bold tw-uppercase">Anim</span>
-                            </button>
+                            <span id="animButtonWrapper" style="display:none">
+                                <button type="button" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();"
+                                        class="d-btn d-btn-xs tw-bg-white/90 tw-backdrop-blur-sm tw-border-none hover:tw-bg-white tw-shadow-md tw-rounded-lg tw-px-3 tw-gap-1.5 tw-h-8">
+                                    <i data-lucide="play" class="tw-w-3.5 tw-h-3.5"></i>
+                                    <span class="tw-text-[10px] tw-font-bold tw-uppercase">Anim</span>
+                                </button>
+                            </span>
                         </div>
 
                         <?php

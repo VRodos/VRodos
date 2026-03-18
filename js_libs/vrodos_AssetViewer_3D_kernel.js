@@ -51,6 +51,7 @@ class VRodos_AssetViewer_3D_kernel {
 
         this.canvasToBindTo = canvasToBindTo;
         this.animationButton = animationButton;
+        this.animationButtonWrapper = animationButton ? animationButton.parentElement : null;
         this.boundingSphereButton = boundingSphereButton;
         this.canvasLabelsToBindTo = canvasLabelsToBindTo;
         this.previewProgressLabel = previewProgressLabel;
@@ -245,6 +246,12 @@ class VRodos_AssetViewer_3D_kernel {
         this.controls.removeEventListener('change', this.boundRender);
 
         //window.removeEventListener('resize', this.boundRender);
+    }
+
+    // Check if animations array contains playable clips (some exporters embed empty/single-frame clips)
+    hasPlayableAnimations(animations) {
+        if (!animations || animations.length === 0) return false;
+        return animations.some(clip => clip.duration > 0 && clip.tracks && clip.tracks.length > 0);
     }
 
     // Play or Stop animation
@@ -500,8 +507,8 @@ class VRodos_AssetViewer_3D_kernel {
 
         this.setZeroVars();
 
-        // Hide animation button
-        this.animationButton.style.display = "none";
+        // Hide animation button wrapper
+        if (this.animationButtonWrapper) this.animationButtonWrapper.style.display = "none";
 
         // Clear animations
         this.mixers = [];
@@ -540,7 +547,7 @@ class VRodos_AssetViewer_3D_kernel {
         let fbxObject = fbxLoader.parseStream(fbxBuffer, texturesStreams);
 
         // With animation
-        if (fbxObject.animations.length > 0) {
+        if (this.hasPlayableAnimations(fbxObject.animations)) {
 
             fbxObject.mixer = new THREE.AnimationMixer(fbxObject);
 
@@ -549,11 +556,11 @@ class VRodos_AssetViewer_3D_kernel {
             this.action = fbxObject.mixer.clipAction(fbxObject.animations[0]);
 
             // Display button to start animation inside the Asset 3D previewer
-            this.animationButton.style.display = "inline-block";
+            this.animationButtonWrapper.style.display = "";
 
             // No-animation
         } else {
-            this.animationButton.style.display = "none";
+            this.animationButtonWrapper.style.display = "none";
         }
 
         // FBX is added to root
@@ -590,19 +597,19 @@ class VRodos_AssetViewer_3D_kernel {
             // called when the resource is loaded
             function (gltf) {
 
-                if (gltf.animations.length > 0) {
+                if (scope.hasPlayableAnimations(gltf.animations)) {
 
                     let glbMixer = new THREE.AnimationMixer(gltf.scene);
                     scope.mixers.push(glbMixer);
                     scope.action = glbMixer.clipAction(gltf.animations[0]);
 
                     // Display button to start animation inside the Asset 3D previewer
-                    scope.animationButton.style.display = "inline-block";
+                    scope.animationButtonWrapper.style.display = "";
 
                 } else {
 
                     // Display button to start animation inside the Asset 3D previewer
-                    scope.animationButton.style.display = "none";
+                    scope.animationButtonWrapper.style.display = "none";
 
                 }
 
@@ -718,19 +725,19 @@ class VRodos_AssetViewer_3D_kernel {
                     // called when the resource is loaded
                     function (gltf) {
 
-                        if (gltf.animations.length > 0) {
+                        if (scope.hasPlayableAnimations(gltf.animations)) {
 
                             let glbmixer = new THREE.AnimationMixer(gltf.scene);
                             scope.mixers.push(glbmixer);
                             scope.action = glbmixer.clipAction(gltf.animations[0]);
 
                             // Display button to start animation inside the Asset 3D previewer
-                            scope.animationButton.style.display = "inline-block";
+                            scope.animationButtonWrapper.style.display = "";
 
                         } else {
 
                             // Display button to start animation inside the Asset 3D previewer
-                            scope.animationButton.style.display = "none";
+                            scope.animationButtonWrapper.style.display = "none";
                         }
 
                         if (scope.boundingSphereButton) {
