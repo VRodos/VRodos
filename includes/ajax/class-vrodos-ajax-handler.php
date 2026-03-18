@@ -41,48 +41,85 @@ class VRodos_AJAX_Handler {
 	}
 
 	public function vrodos_create_project_frontend_callback(): void {
-		$project_title       = strip_tags( (string) $_POST['project_title'] );
-		$project_type_slug   = $_POST['project_type_slug'];
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+
+		$project_title       = sanitize_text_field( (string) $_POST['project_title'] );
+		$project_type_slug   = sanitize_key( $_POST['project_type_slug'] );
 		$taxonomy            = get_term_by( 'slug', $project_type_slug, 'vrodos_game_type' );
+
+		if ( ! $taxonomy ) {
+			wp_send_json_error( 'Invalid project type.' );
+		}
+
 		$project_type_id     = $taxonomy->term_id;
 		$project_taxonomies  = ['vrodos_game_type' => [$project_type_id]];
-		$project_information = ['post_title'   => esc_attr( $project_title ), 'post_content' => '', 'post_type'    => 'vrodos_game', 'post_status'  => 'publish', 'tax_input'    => $project_taxonomies];
+		$project_information = ['post_title'   => $project_title, 'post_content' => '', 'post_type'    => 'vrodos_game', 'post_status'  => 'publish', 'tax_input'    => $project_taxonomies];
 		$project_id          = wp_insert_post( $project_information );
 		echo $project_id;
 		wp_die();
 	}
 
 	public function vrodos_delete_gameproject_frontend_callback(): void {
-		$game_id            = $_POST['game_id'];
-		$game_post          = get_post( $game_id );
-		$gameSlug           = $game_post->post_name;
-		$gameTitle          = get_the_title( $game_id );
-		$assetPGame         = get_term_by( 'slug', $gameSlug, 'vrodos_asset3d_pgame' );
-		$assetPGameID       = $assetPGame->term_id;
-		$custom_query_args1 = ['post_type'      => 'vrodos_asset3d', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_asset3d_pgame', 'field'    => 'term_id', 'terms'    => $assetPGameID]]];
-		$custom_query       = new WP_Query( $custom_query_args1 );
-		if ( $custom_query->have_posts() ) :
-			while ( $custom_query->have_posts() ) :
-				$custom_query->the_post();
-				$asset_id = get_the_ID();
-				$this->vrodos_delete_asset3d_noscenes_frontend( $asset_id );
-			endwhile;
-		endif;
-		wp_reset_postdata();
-		$scenePGame         = get_term_by( 'slug', $gameSlug, 'vrodos_scene_pgame' );
-		$scenePGameID       = $scenePGame->term_id;
-		$custom_query_args2 = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'term_id', 'terms'    => $scenePGameID]]];
-		$custom_query2      = new WP_Query( $custom_query_args2 );
-		if ( $custom_query2->have_posts() ) :
-			while ( $custom_query2->have_posts() ) :
-				$custom_query2->the_post();
-				wp_delete_post( get_the_ID(), true );
-			endwhile;
-		endif;
-		wp_reset_postdata();
-		wp_delete_term( $assetPGameID, 'vrodos_asset3d_pgame' );
-		wp_delete_term( $scenePGameID, 'vrodos_scene_pgame' );
+		if ( ! current_user_can( 'administrator' ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+
+		$game_id   = absint( $_POST['game_id'] );
+		$game_post = get_post( $game_id );
+
+		if ( ! $game_post || $game_post->post_type !== 'vrodos_game' ) {
+			wp_send_json_error( 'Invalid project.' );
+		}
+
+		$gameSlug  = $game_post->post_name;
+		$gameTitle = get_the_title( $game_id );
+
+		// Delete all assets (batch: get IDs first, warm meta cache, then loop)
+		$assetPGame = get_term_by( 'slug', $gameSlug, 'vrodos_asset3d_pgame' );
+		if ( $assetPGame ) {
+			$asset_ids = get_posts( [
+				'post_type'      => 'vrodos_asset3d',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'tax_query'      => [ [ 'taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'term_id', 'terms' => $assetPGame->term_id ] ],
+			] );
+
+			if ( ! empty( $asset_ids ) ) {
+				update_meta_cache( 'post', $asset_ids );
+				foreach ( $asset_ids as $asset_id ) {
+					$this->vrodos_delete_asset3d_noscenes_frontend( $asset_id );
+				}
+			}
+
+			wp_delete_term( $assetPGame->term_id, 'vrodos_asset3d_pgame' );
+		}
+
+		// Delete all scenes (batch: get IDs first, then loop)
+		$scenePGame = get_term_by( 'slug', $gameSlug, 'vrodos_scene_pgame' );
+		if ( $scenePGame ) {
+			$scene_ids = get_posts( [
+				'post_type'      => 'vrodos_scene',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'tax_query'      => [ [ 'taxonomy' => 'vrodos_scene_pgame', 'field' => 'term_id', 'terms' => $scenePGame->term_id ] ],
+			] );
+
+			foreach ( $scene_ids as $scene_id ) {
+				wp_delete_post( $scene_id, true );
+			}
+
+			wp_delete_term( $scenePGame->term_id, 'vrodos_scene_pgame' );
+		}
+
 		wp_delete_post( $game_id, false );
+
+		// Clear asset list transients
+		global $wpdb;
+		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_vrodos_assets_%'" );
+		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_timeout_vrodos_assets_%'" );
+
 		echo $gameTitle;
 		wp_die();
 	}
@@ -264,6 +301,10 @@ class VRodos_AJAX_Handler {
 	 * Saves the scene via AJAX.
 	 */
 	public function save_scene_async_action_callback() {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+
 		// Save screenshot
 		if ( isset( $_POST['scene_screenshot'] ) ) {
 			$attachment_id = VRodos_Upload_Manager::upload_scene_screenshot(
@@ -420,10 +461,13 @@ class VRodos_AJAX_Handler {
 	}
 
 	public function delete_asset3d_frontend_callback() {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
 
-		$asset_id = $_POST['asset_id'];
-		$gameSlug = $_POST['game_slug'];
-		$isCloned = $_POST['isCloned'];
+		$asset_id = absint( $_POST['asset_id'] );
+		$gameSlug = sanitize_key( $_POST['game_slug'] );
+		$isCloned = sanitize_text_field( $_POST['isCloned'] );
 
 		// If it is not cloned then it is safe to delete the meta files.
 		if ( $isCloned === 'false' ) {
@@ -693,17 +737,17 @@ class VRodos_AJAX_Handler {
 				// 1. Icon
 				echo '<div class="tw-w-10 tw-h-10 tw-rounded-md tw-bg-base-200 tw-text-base-content/50 tw-flex tw-items-center tw-justify-center tw-border tw-border-base-300">';
 				$is_expo = str_contains(strtolower($game_type_obj->slug ?? ''), 'vrexpo') || str_contains(strtolower($game_type_obj->string ?? ''), 'expo');
-				echo '<i data-lucide="' . ($is_expo ? 'globe' : 'clapperboard') . '" class="tw-w-5 tw-h-5" title="' . ($game_type_obj->string ?? '') . '"></i>';
+				echo '<i data-lucide="' . ($is_expo ? 'globe' : 'clapperboard') . '" class="tw-w-5 tw-h-5" title="' . esc_attr($game_type_obj->string ?? '') . '"></i>';
 				echo '</div>';
-                
+
 				// 2. Info
 				echo '<div class="tw-min-w-0 tw-flex tw-flex-col tw-gap-0.5">';
                 echo '<div id="' . $game_id . '-title" class="tw-text-base tw-font-bold tw-text-base-content tw-truncate">';
-				echo '<a href="' . $loadMasterClientLink . '" target="_blank" class="hover:tw-text-primary transition-colors" title="Open Master Client">' . $game_title . '</a>';
+				echo '<a href="' . $loadMasterClientLink . '" target="_blank" class="hover:tw-text-primary transition-colors" title="Open Master Client">' . esc_html($game_title) . '</a>';
 				echo '</div>';
                 echo '<div class="tw-flex tw-items-center tw-gap-2">';
-                echo '<span class="tw-text-xs tw-font-medium tw-text-base-content/40 uppercase tw-tracking-wider">' . $game_date . '</span>';
-                echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . $game_type_obj->string . '</span>';
+                echo '<span class="tw-text-xs tw-font-medium tw-text-base-content/40 uppercase tw-tracking-wider">' . esc_html($game_date) . '</span>';
+                echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . esc_html($game_type_obj->string) . '</span>';
                 echo '</div>';
 				echo '</div>';
 

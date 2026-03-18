@@ -30,7 +30,7 @@ function vrodos_get_asset_category_icon($category_slug) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assets Manager | VRodos</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
     <?php wp_head(); ?>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased tw-overflow-hidden'); ?>>

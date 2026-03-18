@@ -154,7 +154,7 @@ class VRodos_Pages_Manager {
 
 		if ( isset( $_GET['vrodos_project_id'] ) ) {
 			$single_project_asset_list = true;
-			$current_game_project_id   = $_GET['vrodos_project_id'];
+			$current_game_project_id   = absint( $_GET['vrodos_project_id'] );
 			$current_game_project_post = get_post( $current_game_project_id );
 			$current_game_project_slug = $current_game_project_post->post_name;
 			$user_games_slugs          = [$current_game_project_slug];

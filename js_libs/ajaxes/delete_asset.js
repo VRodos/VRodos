@@ -5,7 +5,10 @@
  * scene_id : the scene to delete
  * vrodos_deleteSceneAjax()
  */
+let _deleteAssetPending = false;
 function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
+	if (_deleteAssetPending) return;
+	_deleteAssetPending = true;
 
 	if (typeof envir != "undefined") {
 		jQuery( "#deleteAssetProgressBar-" + asset_id ).show();
@@ -24,6 +27,7 @@ function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
 			},
 			success: function (res) {
 
+				_deleteAssetPending = false;
 				res = JSON.parse( res );
 
 				if (deleteDialog) {
@@ -70,6 +74,7 @@ function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
 			},
 			error: function (xhr, ajaxOptions, thrownError) {
 
+				_deleteAssetPending = false;
 				jQuery( "#deleteAssetProgressBar-" + asset_id ).hide();
 
 				jQuery( "#asset-" + asset_id ).removeClass( "LinkDisabled" );

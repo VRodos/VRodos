@@ -1,6 +1,5 @@
 <?php
 wp_enqueue_style('vrodos_frontend_stylesheet');
-wp_enqueue_style('vrodos_material_stylesheet');
 
 // Is on back or front end ?
 $isAdmin = is_admin() ? 'back' : 'front';
@@ -27,7 +26,7 @@ extract($data);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asset Editor | VRodos</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
     <?php wp_head(); ?>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased tw-overflow-hidden'); ?>>

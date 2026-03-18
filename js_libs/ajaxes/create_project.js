@@ -5,7 +5,10 @@
  *
  *  All the above are encompassed in     vrodos_create_gameproject_frontend($game_id)
  */
+let _createPending = false;
 function vrodos_createProjectAjax(project_title, project_type_slug, current_user_id, parameter_Scenepass) {
+	if (_createPending) return;
+	_createPending = true;
 
 	jQuery.ajax(
 		{
@@ -18,6 +21,7 @@ function vrodos_createProjectAjax(project_title, project_type_slug, current_user
 			},
 			success: function (new_project_id) {
 
+				_createPending = false;
 				console.log( "Game project has been successfully created" );
 
 				jQuery( '#createNewProjectBtn' ).show();
@@ -28,12 +32,9 @@ function vrodos_createProjectAjax(project_title, project_type_slug, current_user
 			},
 			error: function (xhr, ajaxOptions, thrownError) {
 
-				// jQuery('#delete-dialog-progress-bar').hide();
-				//
-				// jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );
-				// jQuery( "#cancelDeleteGameBtn" ).removeClass( "LinkDisabled" );
-
-				// alert("Could not create game");
+				_createPending = false;
+				jQuery( '#createNewProjectBtn' ).show();
+				jQuery( '#create-game-progress-bar' ).hide();
 
 				console.log( "Ajax Create Game: ERROR: 169" + thrownError );
 				console.log( thrownError )
@@ -66,7 +67,7 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_p
                 if (listContainer) {
                     let count = listContainer.getAttribute('data-project-count');
                     let indicator = document.getElementById('projects-count-indicator');
-                    if (indicator) indicator.innerHTML = count;
+                    if (indicator) indicator.textContent = count;
                 }
 
                 // Initialize Lucide icons

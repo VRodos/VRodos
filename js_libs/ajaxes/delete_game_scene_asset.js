@@ -6,7 +6,10 @@
  *
  *  All the above are encompassed in     vrodos_delete_gameproject_frontend($game_id)
  */
+let _deleteGamePending = false;
 function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scenepass) {
+	if (_deleteGamePending) return;
+	_deleteGamePending = true;
 
 	jQuery.ajax(
 		{
@@ -18,6 +21,7 @@ function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scene
 			},
 			success: function (res) {
 
+				_deleteGamePending = false;
 				jQuery( '#delete-dialog-progress-bar' ).hide();
 				jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );
 				jQuery( "#cancelDeleteGameBtn" ).removeClass( "LinkDisabled" );
@@ -29,6 +33,7 @@ function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scene
 			},
 			error: function (xhr, ajaxOptions, thrownError) {
 
+				_deleteGamePending = false;
 				jQuery( '#delete-dialog-progress-bar' ).hide();
 
 				jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );

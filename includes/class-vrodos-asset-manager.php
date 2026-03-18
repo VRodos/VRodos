@@ -68,13 +68,6 @@ class VRodos_Asset_Manager {
 			['ajax_url' => admin_url( 'admin-ajax.php' )]
 		);
 
-		wp_enqueue_script( 'ajax-script_collaborate_project' );
-		wp_localize_script(
-			'ajax-script_collaborate_project',
-			'my_ajax_object_collaborate_project',
-			['ajax_url' => admin_url( 'admin-ajax.php' )]
-		);
-
 		wp_enqueue_script( 'ajax-script_create_game' );
 		wp_localize_script(
 			'ajax-script_create_game',
@@ -108,6 +101,8 @@ class VRodos_Asset_Manager {
 		// Styles
 		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
 		wp_enqueue_style( 'vrodos_material_stylesheet' );
+		wp_enqueue_script( 'vrodos_material_scripts' );
+		wp_enqueue_style( 'vrodos_material_icons' );
 		wp_enqueue_style( 'vrodos_datgui' );
 		wp_enqueue_style( 'vrodos_3D_editor' );
 		wp_enqueue_style( 'vrodos_3D_editor_browser' );
@@ -284,7 +279,6 @@ class VRodos_Asset_Manager {
       ['ajax-script_fetchasset', $plugin_url_js . 'ajaxes/fetch_asset.js', ['jquery']],
       ['ajax-script_delete_game', $plugin_url_js . 'ajaxes/delete_game_scene_asset.js', ['jquery']],
       ['ajax-script_deleteasset', $plugin_url_js . 'ajaxes/delete_asset.js', ['jquery']],
-      ['ajax-script_collaborate_project', $plugin_url_js . 'ajaxes/collaborate_project.js', ['jquery']],
       ['ajax-script_create_game', $plugin_url_js . 'ajaxes/create_project.js', ['jquery']],
       // Command Scripts
       ['vrodos_content_interlinking_request', $plugin_url_js . 'content_interlinking_commands/content_interlinking.js', ['jquery']],
@@ -333,7 +327,7 @@ class VRodos_Asset_Manager {
       ['vrodos_load_datgui', $plugin_url_js . 'datgui/0.7.9/dat.gui.min.js'],
       ['vrodos_material_scripts', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.js'],
       ['shoelace_js', 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/dist/shoelace-autoloader.js'],
-      ['lucide-icons', 'https://unpkg.com/lucide@latest'],
+      ['lucide-icons', 'https://unpkg.com/lucide@0.469.0'],
   ];
 
 		foreach ( $scripts as $script ) {
@@ -358,8 +352,6 @@ class VRodos_Asset_Manager {
 		wp_register_style( 'vrodos_modern_compiled', $plugin_url . 'css/vrodos_modern_compiled.css' );
 		wp_register_style( 'shoelace_css', 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/dist/themes/light.css' );
 
-		wp_enqueue_script( 'vrodos_material_scripts' );
-		wp_enqueue_style( 'vrodos_material_icons' );
 		wp_enqueue_style( 'vrodos_backend' );
 		wp_enqueue_style( 'vrodos_dashboard_table' );
 	}

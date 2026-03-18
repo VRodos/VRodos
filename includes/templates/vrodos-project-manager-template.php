@@ -1,7 +1,6 @@
 <?php
 
 wp_enqueue_style('vrodos_frontend_stylesheet');
-wp_enqueue_style('vrodos_material_stylesheet');
 
 $perma_structure = (bool)get_option('permalink_structure');
 $parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
@@ -14,42 +13,7 @@ $editgamePage = VRodos_Core_Manager::vrodos_getEditpage('game');
 $pluginpath = dirname(plugin_dir_url(__DIR__));
 $pluginpath = str_replace('\\', '/', $pluginpath);
 
-// Define Ajax for the delete Game functionality
-$thepath = $pluginpath . '/js_libs/ajaxes/delete_game_scene_asset.js';
-wp_enqueue_script('ajax-script_delete_game', $thepath, array('jquery'));
-wp_localize_script(
-	'ajax-script_delete_game',
-	'my_ajax_object_deletegame',
-	array('ajax_url' => admin_url('admin-ajax.php'))
-);
-
-// Define Ajax for the delete Game functionality
-$thepath = $pluginpath . '/js_libs/ajaxes/collaborate_project.js';
-wp_enqueue_script('ajax-script_collaborate_project', $thepath, array('jquery'));
-wp_localize_script(
-	'ajax-script_collaborate_project',
-	'my_ajax_object_collaborate_project',
-	array('ajax_url' => admin_url('admin-ajax.php'))
-);
-
-// Define Ajax for the create Game functionality
-$thepath2 = $pluginpath . '/js_libs/ajaxes/create_project.js';
-wp_enqueue_script('ajax-script_create_game', $thepath2, array('jquery'));
-wp_localize_script(
-	'ajax-script_create_game',
-	'my_ajax_object_creategame',
-	array('ajax_url' => admin_url('admin-ajax.php'))
-);
-
-$isAdmin = is_admin() ? 'back' : 'front';
-
-$current_user_id = get_current_user_id();
-
-echo '<script>';
-echo 'isAdmin="' . $isAdmin . '";'; // This variable is used in the request_game_assemble.js
-echo 'let current_user_id="' . $current_user_id . '";';
-echo 'let parameter_Scenepass="' . $parameter_Scenepass . '";';
-echo '</script>';
+// Scripts are enqueued by VRodos_Asset_Manager::enqueue_project_manager_scripts()
 
 $full_title = 'Projects';
 $full_title_lowercase = 'projects';
@@ -61,7 +25,7 @@ $multiple = 'projects';
 <head>
 	<meta charset="UTF-8">
 	<title>VRodos Project Manager</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
 	<?php wp_head(); ?>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
@@ -208,38 +172,6 @@ else {
             include 'vrodos-delete-dialog.php'; 
         ?>
 
-        <!-- Project Collaborators Dialog -->
-        <dialog id="collaborate-dialog" class="d-modal">
-            <div class="d-modal-box tw-max-w-xl">
-                <div class="modal-header">
-                    <div class="modal-icon-container">
-                        <i data-lucide="users-2" class="tw-w-7 tw-h-7"></i>
-                    </div>
-                    <h3 id="collaborate-dialog-title" class="tw-text-xl tw-font-black tw-text-slate-800">Collaborators</h3>
-                </div>
-                
-                <div class="modal-body tw-text-left">
-                    <div id="collaborate-dialog-description" class="tw-mb-6 tw-text-slate-500 tw-text-sm">
-                        Manage who has access to this project.
-                    </div>
-                    
-                    <div class="tw-mb-2">
-                        <label class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest tw-text-slate-400 tw-mb-2">Emails (separated by semicolon)</label>
-                        <textarea id="textarea-collaborators" 
-                                class="d-textarea d-textarea-bordered tw-w-full tw-bg-slate-50 tw-h-32 focus:tw-bg-white tw-rounded-xl tw-text-slate-700 tw-p-4 tw-border-slate-200"
-                                placeholder="collab1@email.com; collab2@email.com"></textarea>
-                    </div>
-                </div>
-
-                <div class="d-modal-action">
-                    <button class="d-btn d-btn-ghost tw-font-bold tw-text-slate-400 hover:tw-text-slate-600" id="cancelCollabsBtn">CANCEL</button>
-                    <button class="d-btn d-btn-primary tw-text-white tw-font-black tw-shadow-lg tw-px-8" id="updateCollabsBtn">UPDATE COLLABORATORS</button>
-                </div>
-            </div>
-            <form method="dialog" class="d-modal-backdrop">
-                <button class="tw-cursor-default tw-outline-none">close</button>
-            </form>
-        </dialog>
     </div>
 
     <?php wp_footer(); ?>

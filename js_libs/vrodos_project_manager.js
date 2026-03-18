@@ -5,13 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(modalWrapper);
     }
 
-    window.mdc.autoInit();
     lucide.createIcons();
     fetchAllProjectsAndAddToDOM(vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass, -1, true);
 
     // Modals (DaisyUI)
     let dialog = document.getElementById('delete-dialog');
-    let dialogCollaborators = document.getElementById('collaborate-dialog');
 
     // Descriptions for each Project
     function loadProjectTypeDescription() {
@@ -68,8 +66,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let dialogTitle = document.getElementById("delete-dialog-title");
         let dialogDescription = document.getElementById("delete-dialog-description");
 
-        dialogTitle.innerHTML = "Delete " + projectTitle + "?";
-        dialogDescription.innerHTML = "Are you sure you want to delete this project? There is no Undo functionality once you delete it.";
+        dialogTitle.textContent = "Delete " + projectTitle + "?";
+        dialogDescription.textContent = "Are you sure you want to delete this project? There is no Undo functionality once you delete it.";
         dialog.dataset.projectId = id;
         dialog.showModal();
     }
@@ -84,45 +82,4 @@ document.addEventListener('DOMContentLoaded', function() {
         dialog.close();
     });
 
-    // ------- Collaborators -------------------
-    function collaborateProject(project_id) {
-        let dialogTitle = document.getElementById("collaborate-dialog-title");
-        let dialogDescription = document.getElementById("collaborate-dialog-description");
-        
-        let projectTitleElement = document.getElementById(project_id+"-title");
-        let projectTitle = projectTitleElement ? projectTitleElement.innerText.trim() : "this project";
-
-        dialogTitle.innerHTML = "Collaborators on " + projectTitle;
-
-        dialogDescription.innerHTML = "Manage who has access to <span class=\"tw-font-bold tw-text-slate-700\">" + projectTitle + "</span>. For example 'mail1@gmail.com'";
-
-        dialogCollaborators.project_id = project_id;
-
-        //jQuery('.chips-initial').material_chip({data: [], placeholder: 'Your collaborator email'});
-
-        // Fetch collaborators and insert to "textarea-collaborators"
-        vrodos_fetchCollabsAjax(project_id);
-    }
-
-    jQuery('#updateCollabsBtn').click( function (e) {
-
-        var allChipsContainers = document.querySelectorAll('.chips');
-        var singleChipContainer = M.Chips.getInstance(allChipsContainers[0]);
-
-        // Get collabs emails
-        var currCollabsEmails = singleChipContainer.getData();
-
-        console.log("currCollabsEmails1", currCollabsEmails);
-
-        currCollabsEmails = currCollabsEmails.map(function(elem){return elem.tag}).join(";");
-
-        console.log("currCollabsEmails2", currCollabsEmails);
-
-        // 2. Update ids of collaborators ;15;5;4;
-        vrodos_updateCollabsAjax(dialogCollaborators.project_id, dialogCollaborators, currCollabsEmails);
-    });
-
-    jQuery('#cancelCollabsBtn').click( function (e) {
-        dialogCollaborators.close();
-    });
 });
