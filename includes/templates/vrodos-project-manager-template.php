@@ -64,7 +64,7 @@ $multiple = 'projects';
     <script src="https://unpkg.com/lucide@latest"></script>
 	<?php wp_head(); ?>
 </head>
-<body <?php body_class('vrodos-manager-wrapper vrodos-main-h tw-overflow-hidden'); ?>>
+<body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
 
 <!-- if user not logged in then show a hint to login -->
 <?php

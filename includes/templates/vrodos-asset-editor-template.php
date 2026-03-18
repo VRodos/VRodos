@@ -30,9 +30,9 @@ extract($data);
     <script src="https://unpkg.com/lucide@latest"></script>
     <?php wp_head(); ?>
 </head>
-<body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased vrodos-main-h tw-overflow-hidden'); ?>>
+<body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased tw-overflow-hidden'); ?>>
 
-<div id="vrodos-asset-editor" class="vrodos-main-h tw-flex tw-flex-col">
+<div id="vrodos-asset-editor" class="vrodos-main-h tw-flex tw-flex-col tw-bg-slate-50">
 
     <!-- Header (Unified Light Header) -->
     <header class="tw-h-16 tw-flex-none tw-bg-white tw-border-b tw-border-slate-200 tw-px-8 tw-z-[60] tw-shadow-sm tw-flex tw-items-center">
@@ -71,8 +71,8 @@ extract($data);
     <?php
 }
 else { ?>
-        <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col">
-            <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-hidden">
+        <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col tw-bg-slate-50 tw-h-full">
+            <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-hidden tw-bg-slate-50 tw-h-full">
             
             <!-- Left Column: 3D Preview & Files -->
             <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-y-auto lg:tw-h-full">
@@ -104,15 +104,40 @@ else { ?>
                             </button>
                         </div>
 
-                        <!-- Theme Control Overlay (BG Color Picker refined) -->
-                        <div class="tw-absolute tw-bottom-4 tw-right-4 tw-z-30 tw-pointer-events-auto tw-flex tw-items-center tw-bg-white/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-xl tw-border tw-border-slate-100 tw-h-9 tw-overflow-hidden">
-                             <div class="tw-pl-3 tw-pr-2 tw-flex tw-items-center tw-pointer-events-none tw-z-10">
+                        <?php
+                            // --- COLOR NORMALIZATION FOR NATIVE PICKER ---
+                            $raw_color = trim($asset_back_3d_color_saved);
+                            $normalized_hex = '#000000'; // Default
+                            
+                            if ($raw_color) {
+                                // If it's already a hex (with or without #)
+                                if (preg_match('/^#?([a-f0-9]{3}){1,2}$/i', $raw_color)) {
+                                    $normalized_hex = '#' . ltrim($raw_color, '#');
+                                } 
+                                // If it's in rgb(r, g, b) format (legacy jscolor format)
+                                elseif (strpos($raw_color, 'rgb') !== false) {
+                                     preg_match_all('!\d+!', $raw_color, $matches);
+                                     if (count($matches[0]) >= 3) {
+                                         $normalized_hex = sprintf("#%02x%02x%02x", $matches[0][0], $matches[0][1], $matches[0][2]);
+                                     }
+                                }
+                            }
+                        ?>
+                        <!-- Theme Control Overlay (Native Color Picker) -->
+                        <div class="tw-absolute tw-bottom-4 tw-right-4 tw-z-30 tw-pointer-events-auto tw-flex tw-items-center tw-bg-white/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-xl tw-border tw-border-slate-100 tw-h-9 tw-overflow-hidden tw-px-2 tw-gap-2">
+                             <div class="tw-flex tw-items-center tw-pointer-events-none">
                                 <i data-lucide="palette" class="tw-w-3.5 tw-h-3.5 tw-text-slate-400"></i>
                              </div>
-                             <input id="jscolorpick" 
-                                    class="tw-w-[72px] tw-h-full tw-cursor-pointer tw-border-none tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest tw-pl-0 tw-pr-3 jscolor {onFineChange:'updateColorPicker(this, asset_viewer_3d_kernel)'}" 
-                                    value="000000">
-                             <input id="assetback3dcolor" type="hidden" name="assetback3dcolor" value="<?php echo esc_attr(trim($asset_back_3d_color_saved)); ?>" />
+                             <div class="tw-flex tw-items-center tw-gap-2">
+                                 <input id="nativeColorPicker" type="color" 
+                                        class="tw-w-5 tw-h-5 tw-p-0 tw-border-none tw-bg-transparent tw-cursor-pointer tw-appearance-none [&::-webkit-color-swatch-wrapper]:tw-p-0 [&::-webkit-color-swatch]:tw-rounded-md [&::-webkit-color-swatch]:tw-border-none" 
+                                        value="<?php echo esc_attr($normalized_hex); ?>"
+                                        oninput="updateNativeColorPicker(this, asset_viewer_3d_kernel)">
+                                 <span id="colorHexLabel" class="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">
+                                     <?php echo esc_html($normalized_hex); ?>
+                                 </span>
+                             </div>
+                             <input id="assetback3dcolor" type="hidden" name="assetback3dcolor" value="<?php echo esc_attr(ltrim($normalized_hex, '#')); ?>" />
                         </div>
                     </div>
 
@@ -508,8 +533,10 @@ else { ?>
 
 		const multipleFilesInputElem = document.getElementById( 'fileUploadInput' );
 
-		let back_3d_color = "<?php echo $back_3d_color; ?>";
-		document.getElementById("jscolorpick").value = back_3d_color;
+		let back_3d_color = "<?php echo $normalized_hex; ?>";
+		if (document.getElementById("nativeColorPicker")) {
+		    document.getElementById("nativeColorPicker").value = back_3d_color;
+		}
 
 		let isLoggedIn = <?php echo $isUserloggedIn ? 1 : 0; ?>;
 		let isEditMode = (isLoggedIn === 1) ? 1 : 0 ;
@@ -595,8 +622,12 @@ else { ?>
 				if (iprDropdownNative) {
 					iprDropdownNative.addEventListener('change', () => {
 						const selectedOption = iprDropdownNative.options[iprDropdownNative.selectedIndex];
-						document.getElementById("categoryIPRDescription").innerHTML = selectedOption.getAttribute("data-cat-ipr-desc");
-						document.getElementById("termIdInputIPR").value = selectedOption.getAttribute("id");
+						if (document.getElementById("categoryIPRDescription")) {
+						    document.getElementById("categoryIPRDescription").innerHTML = selectedOption.getAttribute("data-cat-ipr-desc");
+						}
+						if (document.getElementById("termIdInputIPR")) {
+						    document.getElementById("termIdInputIPR").value = selectedOption.getAttribute("id");
+						}
 					});
 				}
 

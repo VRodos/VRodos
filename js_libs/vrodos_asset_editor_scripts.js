@@ -152,11 +152,33 @@ function updateColorPicker(picker, asset_viewer_3d_kernel_local){
     asset_viewer_3d_kernel_local.scene.background.g = picker.rgb[1]/255;
     asset_viewer_3d_kernel_local.scene.background.b = picker.rgb[2]/255;
 
-    // Change top border line color for portrait mode
-    /*document.getElementById('text-asset-sidebar').style.borderTop="5px solid " +
-        rgbToHex(picker.rgb[0]-40, picker.rgb[1]-40, picker.rgb[2]-40) ;*/
-
     asset_viewer_3d_kernel_local.render();
+}
+
+/**
+ * Modern Native Color Picker Handler
+ */
+function updateNativeColorPicker(input, asset_viewer_3d_kernel_local) {
+    const hex = input.value; // Format: #RRGGBB
+    
+    // Update the visual hex label
+    const label = document.getElementById('colorHexLabel');
+    if (label) label.innerText = hex.toUpperCase();
+    
+    // Update the hidden field for WordPress saving (strip #)
+    const hiddenInput = document.getElementById('assetback3dcolor');
+    if (hiddenInput) hiddenInput.value = hex.replace('#', '');
+    
+    // Update Three.js background
+    if (asset_viewer_3d_kernel_local && asset_viewer_3d_kernel_local.scene) {
+        // Convert hex to normalized RGB
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+        
+        asset_viewer_3d_kernel_local.scene.background.setRGB(r, g, b);
+        asset_viewer_3d_kernel_local.render();
+    }
 }
 
 function rgbToHex(r, g, b) {

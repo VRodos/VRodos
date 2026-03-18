@@ -24,32 +24,32 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     constructor(canvasToBindTo,
-                canvasLabelsToBindTo,
-                animationButton,
-                previewProgressLabel,
-                previewProgressLine,
-                back_3d_color,
-                audioElement,
-                pathUrl = null,
-                mtlFilename = null,
-                objFilename= null,
-                pdbFileContent = null,
-                fbxFilename = null,
-                glbFilename = null,
-                textures_fbx_string_connected = null,
-                statsSwitch = true,
-                isBackGroundNull = false,
-                lockTranslation = false,
-                enableZoom = true,
-                assettrs = '0,0,0,0,0,0,0,0,-100',
-                boundingSphereButton = null
+        canvasLabelsToBindTo,
+        animationButton,
+        previewProgressLabel,
+        previewProgressLine,
+        back_3d_color,
+        audioElement,
+        pathUrl = null,
+        mtlFilename = null,
+        objFilename = null,
+        pdbFileContent = null,
+        fbxFilename = null,
+        glbFilename = null,
+        textures_fbx_string_connected = null,
+        statsSwitch = true,
+        isBackGroundNull = false,
+        lockTranslation = false,
+        enableZoom = true,
+        assettrs = '0,0,0,0,0,0,0,0,-100',
+        boundingSphereButton = null
     ) {
 
         //console.log(pathUrl, fbxFilename + " t:" + textures_fbx_string_connected );
 
         this.statsSwitch = statsSwitch;
 
-        this.canvasToBindTo= canvasToBindTo;
+        this.canvasToBindTo = canvasToBindTo;
         this.animationButton = animationButton;
         this.boundingSphereButton = boundingSphereButton;
         this.canvasLabelsToBindTo = canvasLabelsToBindTo;
@@ -84,7 +84,7 @@ class VRodos_AssetViewer_3D_kernel {
         });
 
         //this.renderer.setClearAlpha(1);
-        this.renderer.setClearColor(0x000000,0);
+        this.renderer.setClearColor(0x000000, 0);
 
 
         this.renderer.domElement.addEventListener("click", onclick, true);
@@ -95,10 +95,10 @@ class VRodos_AssetViewer_3D_kernel {
         function onclick(event) {
             let mouse = new THREE.Vector2();
 
-            mouse.x =   ( (event.clientX - scope.canvasToBindTo.getBoundingClientRect().left) /
-                scope.canvasToBindTo.clientWidth ) * 2 - 1;
-            mouse.y = - ( (event.clientY - scope.canvasToBindTo.getBoundingClientRect().top ) /
-                scope.canvasToBindTo.clientHeight ) * 2 + 1;
+            mouse.x = ((event.clientX - scope.canvasToBindTo.getBoundingClientRect().left) /
+                scope.canvasToBindTo.clientWidth) * 2 - 1;
+            mouse.y = - ((event.clientY - scope.canvasToBindTo.getBoundingClientRect().top) /
+                scope.canvasToBindTo.clientHeight) * 2 + 1;
 
             let raycaster = new THREE.Raycaster();
 
@@ -110,7 +110,7 @@ class VRodos_AssetViewer_3D_kernel {
 
             if (intersects.length > 0) {
                 selectedObject = intersects[0];
-                if ( scope.mixers.length > 0 ) {
+                if (scope.mixers.length > 0) {
                     scope.playStopAnimation();
                 }
             }
@@ -168,7 +168,7 @@ class VRodos_AssetViewer_3D_kernel {
         // Scene.children[0] is root: Here all chemistry 3D and 2D labels items are stored
         let root = new THREE.Group();
         root.name = "root";
-        this.scene.add( root );
+        this.scene.add(root);
 
         // const size = 10;
         // const divisions = 10;
@@ -177,38 +177,38 @@ class VRodos_AssetViewer_3D_kernel {
         // this.scene.add( gridHelper );
 
 
-        this.boundRender = this.render.bind( this );
+        this.boundRender = this.render.bind(this);
         this.initGL();
 
 
-        this.loader_asset_exists( pathUrl, mtlFilename,
+        this.loader_asset_exists(pathUrl, mtlFilename,
             objFilename, pdbFileContent,
             fbxFilename, glbFilename,
             textures_fbx_string_connected);
 
         // Resize Canvas
         this.canvasResizeBounded = this.onCanvasResize.bind(this);
-        window.addEventListener( 'resize', this.canvasResizeBounded, true );
+        window.addEventListener('resize', this.canvasResizeBounded, true);
     }
 
-    onCanvasResize(){
+    onCanvasResize() {
         this.resizeDisplayGL();
     }
 
-    raylineShow(raycasterPick){
+    raylineShow(raycasterPick) {
 
         let points = [];
 
         let c = 1000;
         points.push(raycasterPick.ray.origin);
-        points.push(new THREE.Vector3((raycasterPick.ray.origin.x + c*raycasterPick.ray.direction.x),
-            (raycasterPick.ray.origin.y + c*raycasterPick.ray.direction.y),
-            (raycasterPick.ray.origin.z + c*raycasterPick.ray.direction.z))
+        points.push(new THREE.Vector3((raycasterPick.ray.origin.x + c * raycasterPick.ray.direction.x),
+            (raycasterPick.ray.origin.y + c * raycasterPick.ray.direction.y),
+            (raycasterPick.ray.origin.z + c * raycasterPick.ray.direction.z))
         );
 
-        let geolinecast = new THREE.BufferGeometry().setFromPoints( points );
+        let geolinecast = new THREE.BufferGeometry().setFromPoints(points);
 
-        let myBulletLine = new THREE.Line( geolinecast, new THREE.LineBasicMaterial({color: 0x0000ff}));
+        let myBulletLine = new THREE.Line(geolinecast, new THREE.LineBasicMaterial({ color: 0x0000ff }));
         myBulletLine.name = 'rayLine';
 
         this.scene.add(myBulletLine);
@@ -231,7 +231,7 @@ class VRodos_AssetViewer_3D_kernel {
 
 
     // Add OrbitControl listeners to render on demand
-    addControlEventListeners(){
+    addControlEventListeners() {
 
         this.controls.addEventListener('change', this.boundRender);
 
@@ -240,7 +240,7 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     // Remove OrbitControl listeners to render on demand. (this is useful for continuous animation)
-    removeControlEventListeners(){
+    removeControlEventListeners() {
 
         this.controls.removeEventListener('change', this.boundRender);
 
@@ -248,8 +248,9 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     // Play or Stop animation
-    playStopAnimation(){
+    playStopAnimation() {
 
+        if (!this.action) return;
         if (!this.action.isRunning()) {
 
             this.removeControlEventListeners();
@@ -290,23 +291,23 @@ class VRodos_AssetViewer_3D_kernel {
         this.labelRenderer.render(this.scene, this.camera);
 
         // Animation
-        if ( this.mixers.length > 0 ) {
-            this.mixers[ 0 ].update( this.clock.getDelta() );
+        if (this.mixers.length > 0) {
+            this.mixers[0].update(this.clock.getDelta());
         }
 
 
         let assettrsDOM = document.getElementById('assettrs');
 
-        if(assettrsDOM){
-            assettrsDOM.value = Math.round(this.controls.object.position.x*1000)/1000 +','+
-                Math.round(this.controls.object.position.y*1000)/1000 +','+
-                Math.round(this.controls.object.position.z*1000)/1000 + ','+
-                Math.round(this.controls.object.rotation.x*1000)/1000 + ','+
-                Math.round(this.controls.object.rotation.y*1000)/1000 + ','+
-                Math.round(this.controls.object.rotation.z*1000)/1000 + ','+
-                Math.round(this.camera.position.x*1000)/1000 + ','+
-                Math.round(this.camera.position.y*1000)/1000 + ','+
-                Math.round(this.camera.position.z*1000)/1000
+        if (assettrsDOM) {
+            assettrsDOM.value = Math.round(this.controls.object.position.x * 1000) / 1000 + ',' +
+                Math.round(this.controls.object.position.y * 1000) / 1000 + ',' +
+                Math.round(this.controls.object.position.z * 1000) / 1000 + ',' +
+                Math.round(this.controls.object.rotation.x * 1000) / 1000 + ',' +
+                Math.round(this.controls.object.rotation.y * 1000) / 1000 + ',' +
+                Math.round(this.controls.object.rotation.z * 1000) / 1000 + ',' +
+                Math.round(this.camera.position.x * 1000) / 1000 + ',' +
+                Math.round(this.camera.position.y * 1000) / 1000 + ',' +
+                Math.round(this.camera.position.z * 1000) / 1000
         }
 
     }
@@ -322,11 +323,11 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     // Start auto loop (when animation)
-    startAutoLoopRendering(){
+    startAutoLoopRendering() {
         // continuous rendering
         let scope = this;
 
-        let looprender = function(){
+        let looprender = function () {
             scope.idRequestFrame = requestAnimationFrame(looprender);
             scope.boundRender();
         }
@@ -335,23 +336,23 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     // Stop auto loop rendering (when animation)
-    stopAutoLoopRendering(){
+    stopAutoLoopRendering() {
         cancelAnimationFrame(this.idRequestFrame);
     }
 
     /**
      * Reading from  files on client side for OBJ, FBX, and GLB
      */
-    checkerCompleteReading( whocalls ){
+    checkerCompleteReading(whocalls) {
 
         if ((this.nObj === 1 && this.objFileContent !== '') ||
-            (this.nFbx === 1 && this.FbxBuffer !== '') || (this.nGlb === 1 && this.GlbBuffer !== '') ){
+            (this.nFbx === 1 && this.FbxBuffer !== '') || (this.nGlb === 1 && this.GlbBuffer !== '')) {
 
             // Show progress slider
             //jQuery('#previewProgressSlider').show();
 
             // Make the definition with the obj
-            if (this.nObj === 1){
+            if (this.nObj === 1) {
 
                 let objFileContent = document.getElementById('objFileInput').value;
                 let mtlFileContent = document.getElementById('mtlFileInput').value;
@@ -361,7 +362,7 @@ class VRodos_AssetViewer_3D_kernel {
                 let uint8Array = encoder.encode(objFileContent);
 
                 let objectDefinition = {
-                    name: this.nObj === 1 ? 'userObj':'userFbx',
+                    name: this.nObj === 1 ? 'userObj' : 'userFbx',
                     objAsArrayBuffer: uint8Array,
                     pathTexture: "",
                     mtlAsString: null
@@ -372,11 +373,11 @@ class VRodos_AssetViewer_3D_kernel {
                     this.loadObjStream(objectDefinition);
 
                 } else {
-                    if (mtlFileContent!==''){
+                    if (mtlFileContent !== '') {
 
                         objectDefinition.mtlAsString = mtlFileContent;
 
-                        if (this.nJpg===0 && this.nPng===0 ){
+                        if (this.nJpg === 0 && this.nPng === 0) {
                             // Start without Textures
                             this.loadObjStream(objectDefinition);
 
@@ -384,8 +385,8 @@ class VRodos_AssetViewer_3D_kernel {
                             // Else check if textures have been loaded
                             let nTexturesLength = jQuery("input[id='textureFileInput']").length;
 
-                            if ((this.nPng>0 && this.nPng === nTexturesLength)
-                                || ( this.nJpg>0 && this.nJpg === nTexturesLength) ) {
+                            if ((this.nPng > 0 && this.nPng === nTexturesLength)
+                                || (this.nJpg > 0 && this.nJpg === nTexturesLength)) {
 
                                 // Get textureFileInput array with jQuery
                                 let textFil = jQuery("input[id='textureFileInput']");
@@ -393,12 +394,12 @@ class VRodos_AssetViewer_3D_kernel {
                                 // Store here the raw image textures
                                 objectDefinition.pathTexture = [];
 
-                                for (let k = 0; k < textFil.length; k++){
+                                for (let k = 0; k < textFil.length; k++) {
                                     let myname = textFil[k].name;
 
                                     // do some text processing on the names to remove textureFileInput[ and ] from name
-                                    myname = myname.replace('textureFileInput[','');
-                                    myname = myname.replace(']','');
+                                    myname = myname.replace('textureFileInput[', '');
+                                    myname = myname.replace(']', '');
 
                                     objectDefinition.pathTexture[myname] = textFil[k].value;
                                 }
@@ -410,25 +411,25 @@ class VRodos_AssetViewer_3D_kernel {
                         }
                     }
                 }
-            } else if (this.nFbx === 1){
+            } else if (this.nFbx === 1) {
 
                 // Get all fields
                 let texturesStreams = jQuery("input[id='textureFileInput']");
                 let nTexturesLoaded = texturesStreams.length;
 
-                if ( nTexturesLoaded < this.nJpg || nTexturesLoaded < this.nPng || nTexturesLoaded < this.nGif){
+                if (nTexturesLoaded < this.nJpg || nTexturesLoaded < this.nPng || nTexturesLoaded < this.nGif) {
                     console.log("Not all textures loaded yet");
                     return;
                 }
 
-                if ( nTexturesLoaded === 0 )
+                if (nTexturesLoaded === 0)
                     texturesStreams = '';
 
                 // console.log("Ignite reading fbx");
 
                 this.loadFbxStream(this.FbxBuffer, texturesStreams);
 
-            } else if (this.nGlb === 1){
+            } else if (this.nGlb === 1) {
                 console.log("Ignite reading glb");
 
                 this.loadGlbStream(this.GlbBuffer);
@@ -439,7 +440,7 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     // Initialize Scene
-    initGL(){
+    initGL() {
 
         this.scene.background = this.isBackGroundNull ? null : new THREE.Color(this.back_3d_color);
 
@@ -457,7 +458,7 @@ class VRodos_AssetViewer_3D_kernel {
 
 
         // Add audio listener to the camera
-        if (this.audioElement!=null) {
+        if (this.audioElement != null) {
             this.listener = new THREE.AudioListener();
             this.camera.add(this.listener);
             this.positionalAudio = new THREE.PositionalAudio(this.listener);
@@ -474,14 +475,14 @@ class VRodos_AssetViewer_3D_kernel {
         this.resetCamera();
 
         // Light
-        let ambientLight = new THREE.AmbientLight(0x404040,2);
+        let ambientLight = new THREE.AmbientLight(0x404040, 2);
         let directionalLight1 = new THREE.DirectionalLight(0xA0A050);
         let directionalLight2 = new THREE.DirectionalLight(0x909050);
         let directionalLight3 = new THREE.DirectionalLight(0xA0A050);
 
-        directionalLight1.position.set(-1000,  -550,  1000);
-        directionalLight2.position.set( 1000,   550, -1000);
-        directionalLight3.position.set(    0,   550,     0);
+        directionalLight1.position.set(-1000, -550, 1000);
+        directionalLight2.position.set(1000, 550, -1000);
+        directionalLight3.position.set(0, 550, 0);
 
         // Scene.children[1],[2],[3],[4] are lights
         this.scene.add(directionalLight1);
@@ -495,7 +496,7 @@ class VRodos_AssetViewer_3D_kernel {
     // Clear Previous model
     clearAllAssets(whocalls) {
 
-//        console.log("CLEARING", whocalls);
+        //        console.log("CLEARING", whocalls);
 
         this.setZeroVars();
 
@@ -504,6 +505,7 @@ class VRodos_AssetViewer_3D_kernel {
 
         // Clear animations
         this.mixers = [];
+        this.action = null;
 
         // Clear any GLB, FBX, PDB or OBJ
         if (this.scene.getObjectByName('root').clear)
@@ -538,13 +540,13 @@ class VRodos_AssetViewer_3D_kernel {
         let fbxObject = fbxLoader.parseStream(fbxBuffer, texturesStreams);
 
         // With animation
-        if ( fbxObject.animations.length > 0 ) {
+        if (fbxObject.animations.length > 0) {
 
-            fbxObject.mixer = new THREE.AnimationMixer( fbxObject );
+            fbxObject.mixer = new THREE.AnimationMixer(fbxObject);
 
-            this.mixers.push( fbxObject.mixer );
+            this.mixers.push(fbxObject.mixer);
 
-            this.action = fbxObject.mixer.clipAction( fbxObject.animations[0] );
+            this.action = fbxObject.mixer.clipAction(fbxObject.animations[0]);
 
             // Display button to start animation inside the Asset 3D previewer
             this.animationButton.style.display = "inline-block";
@@ -562,7 +564,7 @@ class VRodos_AssetViewer_3D_kernel {
 
         // Kick renderer
         let scope = this;
-        setTimeout(function(){scope.kickRendererOnDemand();} , 500);
+        setTimeout(function () { scope.kickRendererOnDemand(); }, 500);
     }
 
     /* GLB GLTF loader */
@@ -573,26 +575,26 @@ class VRodos_AssetViewer_3D_kernel {
         this.clearAllAssets("loadGlbStream");
 
         let manager = new THREE.LoadingManager();
-        manager.onProgress = function( item, loaded, total ) {};
+        manager.onProgress = function (item, loaded, total) { };
 
-        let glbLoader = new THREE.GLTFLoader( manager );
+        let glbLoader = new THREE.GLTFLoader(manager);
 
         const dracoLoader = new THREE.DRACOLoader();
-        dracoLoader.setDecoderPath( '/wp-content/plugins/vrodos/js_libs/threejs147/draco/' );
-        glbLoader.setDRACOLoader( dracoLoader );
+        dracoLoader.setDecoderPath('/wp-content/plugins/vrodos/js_libs/threejs147/draco/');
+        glbLoader.setDRACOLoader(dracoLoader);
 
 
         // Load a glTF resource
         glbLoader.parse(
             GlbBuffer, '',
             // called when the resource is loaded
-            function ( gltf ) {
+            function (gltf) {
 
-                if ( gltf.animations.length > 0) {
+                if (gltf.animations.length > 0) {
 
-                    let glbMixer = new THREE.AnimationMixer( gltf.scene );
-                    scope.mixers.push( glbMixer );
-                    scope.action = glbMixer.clipAction( gltf.animations[0] );
+                    let glbMixer = new THREE.AnimationMixer(gltf.scene);
+                    scope.mixers.push(glbMixer);
+                    scope.action = glbMixer.clipAction(gltf.animations[0]);
 
                     // Display button to start animation inside the Asset 3D previewer
                     scope.animationButton.style.display = "inline-block";
@@ -604,7 +606,7 @@ class VRodos_AssetViewer_3D_kernel {
 
                 }
 
-                scope.scene.getObjectByName('root').add( gltf.scene );
+                scope.scene.getObjectByName('root').add(gltf.scene);
                 scope.zoomer(scope.scene.getObjectByName('root'));
                 scope.kickRendererOnDemand();
                 //setTimeout(function(){scope.kickRendererOnDemand();} , 1);
@@ -612,9 +614,9 @@ class VRodos_AssetViewer_3D_kernel {
             },
             '',
             // called when loading has errors
-            function ( error ) {
+            function (error) {
 
-                console.log( 'An error happened' );
+                console.log('An error happened');
 
             }
         );
@@ -622,46 +624,41 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     /*  Auto zoom on obj with multiple meshes */
-    computeSceneBoundingSphereAll(myGroupObj)
-    {
-        let sceneBSCenter = new THREE.Vector3(0,0,0);
+    computeSceneBoundingSphereAll(myGroupObj) {
+        let sceneBSCenter = new THREE.Vector3(0, 0, 0);
         let sceneBSRadius = 0;
         let nObjects = 0;
 
-        myGroupObj.traverse( function (object)
-        {
-            if (object instanceof THREE.Mesh)
-            {
+        myGroupObj.traverse(function (object) {
+            if (object instanceof THREE.Mesh) {
 
                 //console.log(object.position);
-                sceneBSCenter.add( object.position );
-                nObjects ++;
+                sceneBSCenter.add(object.position);
+                nObjects++;
             }
-        } );
+        });
 
         // console.log(nObjects, sceneBSCenter);
         sceneBSCenter.divideScalar(nObjects);
 
-        myGroupObj.traverse( function (object)
-        {
-            if (object instanceof THREE.Mesh)
-            {
+        myGroupObj.traverse(function (object) {
+            if (object instanceof THREE.Mesh) {
                 object.geometry.computeBoundingSphere();
 
                 // Object radius
                 let radius = object.geometry.boundingSphere.radius;
 
-//                console.log(object.name + " " + radius, object.position);
+                //                console.log(object.name + " " + radius, object.position);
 
 
                 if (radius) {
                     sceneBSRadius = Math.max(sceneBSRadius, radius + object.position.length());
                 }
             }
-        } );
+        });
 
         let sphereGeometry = new THREE.SphereGeometry(sceneBSRadius, 32, 32);
-        let sphereMaterial = new THREE.MeshBasicMaterial({color:0x00ff00, wireframe:true})
+        let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
         let sphereObject = new THREE.Mesh(sphereGeometry, sphereMaterial);
         sphereObject.visible = false;
         sphereObject.name = "myBoundingSphere";
@@ -670,7 +667,7 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
 
-    showHideBoundSphere(){
+    showHideBoundSphere() {
         let sphObj = this.scene.getObjectByName('myBoundingSphere');
         let isVisible = sphObj.visible;
         sphObj.visible = !isVisible;
@@ -679,10 +676,10 @@ class VRodos_AssetViewer_3D_kernel {
 
 
     //-------------------- loading from saved data --------------------------------------
-    loader_asset_exists( pathUrl = null, mtlFilename = null,
-                         objFilename= null, pdbFileContent = null,
-                         fbxFilename = null, glbFilename = null,
-                         textures_fbx_string_connected = null) {
+    loader_asset_exists(pathUrl = null, mtlFilename = null,
+        objFilename = null, pdbFileContent = null,
+        fbxFilename = null, glbFilename = null,
+        textures_fbx_string_connected = null) {
 
         if (this.scene != null) {
             if (this.renderer)
@@ -693,7 +690,7 @@ class VRodos_AssetViewer_3D_kernel {
 
 
         // GLB
-        if (glbFilename){
+        if (glbFilename) {
             //console.log("Loading from existing resource","GLB");
             //console.log("glbFilename", glbFilename);
 
@@ -719,9 +716,9 @@ class VRodos_AssetViewer_3D_kernel {
                     // resource URL
                     glbFilename,
                     // called when the resource is loaded
-                    function ( gltf ) {
+                    function (gltf) {
 
-                        if (gltf.animations.length>0) {
+                        if (gltf.animations.length > 0) {
 
                             let glbmixer = new THREE.AnimationMixer(gltf.scene);
                             scope.mixers.push(glbmixer);
@@ -749,16 +746,16 @@ class VRodos_AssetViewer_3D_kernel {
 
                     },
                     // called while loading is progressing
-                    function ( xhr ) {
+                    function (xhr) {
 
                         scope.previewProgressLabel.innerHTML =
                             Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
 
                     },
                     // called when loading has errors
-                    function ( error ) {
+                    function (error) {
 
-                        console.log( 'An error happened', error );
+                        console.log('An error happened', error);
 
                     }
                 );
@@ -831,7 +828,7 @@ class VRodos_AssetViewer_3D_kernel {
                 });
 
 
-            } else if (fbxFilename){
+            } else if (fbxFilename) {
 
 
                 //console.log("Loading from existing resource","FBX");
@@ -841,11 +838,11 @@ class VRodos_AssetViewer_3D_kernel {
 
 
 
-                if (url_files[0].includes('.jpg')){
+                if (url_files[0].includes('.jpg')) {
                     this.nJpg = url_files.length;
-                } else if (url_files[0].includes('.png')){
+                } else if (url_files[0].includes('.png')) {
                     this.nJpg = url_files.length;
-                } else if (url_files[0].includes('.gif')){
+                } else if (url_files[0].includes('.gif')) {
                     this.nJpg = url_files.length;
                 }
 
@@ -855,7 +852,7 @@ class VRodos_AssetViewer_3D_kernel {
                 // Add the fbx also
                 url_files.push(pathUrl + fbxFilename);
 
-                for (let i=0; i < url_files.length; i++) {
+                for (let i = 0; i < url_files.length; i++) {
 
                     let xhr = new XMLHttpRequest();
                     let basename = '';
@@ -863,7 +860,7 @@ class VRodos_AssetViewer_3D_kernel {
                     let url = url_files[i];//.replace('http:', 'https:');
 
 
-                    if( url.includes(".txt") ) {
+                    if (url.includes(".txt")) {
 
                         // We want the basename and the extension for naming the file object
                         basename = url.replace('.txt', '.fbx');
@@ -874,7 +871,7 @@ class VRodos_AssetViewer_3D_kernel {
                         //xhr.responseType = 'text';
                         xhr.responseType = 'arraybuffer';
 
-                    } else if (url.includes("texture") ) {
+                    } else if (url.includes("texture")) {
 
                         basename = new String(url).substring(url.lastIndexOf('/') + 1);
 
@@ -882,10 +879,10 @@ class VRodos_AssetViewer_3D_kernel {
 
                         let i_first_underscore = basename.indexOf('_');
                         let i_last_underscore = basename.lastIndexOf('_');
-                        basename = basename.substring(i_first_underscore+1, i_last_underscore);
-                        basename = basename.replace('texture_','');
+                        basename = basename.substring(i_first_underscore + 1, i_last_underscore);
+                        basename = basename.replace('texture_', '');
 
-                        basename = basename  + "." + file_extension;
+                        basename = basename + "." + file_extension;
                         xhr.open('GET', url, true);
                         xhr.responseType = 'blob';
                     }
@@ -912,7 +909,7 @@ class VRodos_AssetViewer_3D_kernel {
 
 
     // File reader cortex
-    file_reader_cortex2(file){
+    file_reader_cortex2(file) {
 
         let scope = this;
 
@@ -923,19 +920,19 @@ class VRodos_AssetViewer_3D_kernel {
         let reader = new FileReader();
 
         switch (type) {
-            case 'pdb': this.nPdb = 1; reader.readAsText(file);        break;
-            case 'mtl': this.nMtl = 1; reader.readAsText(file);        break;
+            case 'pdb': this.nPdb = 1; reader.readAsText(file); break;
+            case 'mtl': this.nMtl = 1; reader.readAsText(file); break;
             case 'obj': this.nObj = 1; reader.readAsArrayBuffer(file); break;
             case 'fbx': this.nFbx = 1; reader.readAsArrayBuffer(file); break;
             case 'glb': this.nGlb = 1; reader.readAsArrayBuffer(file); break;
-            case 'jpg': reader.readAsDataURL(file);     break;
-            case 'png': reader.readAsDataURL(file);     break;
-            case 'gif': reader.readAsDataURL(file);     break;
+            case 'jpg': reader.readAsDataURL(file); break;
+            case 'png': reader.readAsDataURL(file); break;
+            case 'gif': reader.readAsDataURL(file); break;
         }
 
         // --- Read it ------------------------
-        reader.onload = (function(reader) {
-            return function() {
+        reader.onload = (function (reader) {
+            return function () {
 
                 let fileContent = reader.result ? reader.result : '';
 
@@ -955,11 +952,11 @@ class VRodos_AssetViewer_3D_kernel {
                         document.body.appendChild(x);
 
                         document.getElementById('fbxFileInput').value = dec.decode(fileContent);
-                        scope.FbxBuffer =  fileContent;
+                        scope.FbxBuffer = fileContent;
                         break;
                     case 'glb':
                         // document.getElementById('glbFileInput').value = dec.decode(fileContent);
-                        scope.GlbBuffer =  fileContent;
+                        scope.GlbBuffer = fileContent;
                         break;
                     case 'pdb': document.getElementById('pdbFileInput').value = fileContent; break;
                     case 'jpg':
@@ -969,7 +966,7 @@ class VRodos_AssetViewer_3D_kernel {
                         y.setAttribute("type", "hidden");
                         y.setAttribute("id", "textureFileInput");
                         y.setAttribute("value", fileContent);
-                        y.setAttribute("name", "textureFileInput["+ file.name + "]");
+                        y.setAttribute("name", "textureFileInput[" + file.name + "]");
                         document.body.appendChild(y);
 
                         // jQuery('#3dAssetForm').append(
@@ -979,7 +976,7 @@ class VRodos_AssetViewer_3D_kernel {
                 }
 
                 // console.log("TYPE", type + " " + file);
-                scope.checkerCompleteReading( type );
+                scope.checkerCompleteReading(type);
             };
         })(reader);
     }
@@ -989,7 +986,7 @@ class VRodos_AssetViewer_3D_kernel {
     // ----------------- Auxiliary ---------------------------
 
     /* Zoom to object */
-    zoomer(towhatObj){ // FBX or OBJ
+    zoomer(towhatObj) { // FBX or OBJ
 
 
         if (this.controls.enableZoom) {
@@ -1007,13 +1004,13 @@ class VRodos_AssetViewer_3D_kernel {
 
 
 
-        this.controls.object.position.x =  parseFloat(this.assettrs[0]);
-        this.controls.object.position.y =  parseFloat(this.assettrs[1]);
-        this.controls.object.position.z =  parseFloat(this.assettrs[2]);
+        this.controls.object.position.x = parseFloat(this.assettrs[0]);
+        this.controls.object.position.y = parseFloat(this.assettrs[1]);
+        this.controls.object.position.z = parseFloat(this.assettrs[2]);
 
-        this.controls.object.rotation.x =  parseFloat(this.assettrs[3]);
-        this.controls.object.rotation.y =  parseFloat(this.assettrs[4]);
-        this.controls.object.rotation.z =  parseFloat(this.assettrs[5]);
+        this.controls.object.rotation.x = parseFloat(this.assettrs[3]);
+        this.controls.object.rotation.y = parseFloat(this.assettrs[4]);
+        this.controls.object.rotation.z = parseFloat(this.assettrs[5]);
 
         this.resetCamera();
     }
@@ -1036,7 +1033,7 @@ class VRodos_AssetViewer_3D_kernel {
 
     // Recalculate canvas aspect ratio
     recalcAspectRatio() {
-        this.aspectRatio = ( this.canvasToBindTo.offsetHeight === 0 ) ? 1 : this.canvasToBindTo.offsetWidth / this.canvasToBindTo.offsetHeight;
+        this.aspectRatio = (this.canvasToBindTo.offsetHeight === 0) ? 1 : this.canvasToBindTo.offsetWidth / this.canvasToBindTo.offsetHeight;
     }
 
     // Reset Camera

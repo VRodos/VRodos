@@ -33,7 +33,7 @@ function vrodos_get_asset_category_icon($category_slug) {
     <script src="https://unpkg.com/lucide@latest"></script>
     <?php wp_head(); ?>
 </head>
-<body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased vrodos-main-h tw-overflow-hidden'); ?>>
+<body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased tw-overflow-hidden'); ?>>
 
 <div id="vrodos-assets-manager" class="vrodos-main-h tw-flex tw-flex-col tw-bg-slate-50">
 
