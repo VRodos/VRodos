@@ -600,12 +600,8 @@ function deleteFomScene(uuid, name) {
         document.getElementById("confirm-asset-deletion-description").innerHTML = 'Do you really want to delete the asset named <b>' + name + '</b>?';
     }
 
-    let delete_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#confirm-deletion-dialog'));
-    let closeDialogListener = function(event) {
-        delete_dialog_element.unlisten("MDCDialog:cancel", closeDialogListener);
-    };
-    delete_dialog_element.show();
-    delete_dialog_element.listen("MDCDialog:cancel", closeDialogListener);
+    let delete_dialog_element = document.getElementById('confirm-deletion-dialog');
+    delete_dialog_element.showModal();
 
     let delUuid = uuid;
     let selUuid;
@@ -616,6 +612,7 @@ function deleteFomScene(uuid, name) {
     // var selUuid = (typeof checkUuid != "undefined") ? checkUuid : "unassigned";
     let delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
     delete_btn_element.addEventListener('click', function() {
+        delete_dialog_element.close();
         transform_controls.detach();
         deleteAssetFromScene(uuid);
         if(selUuid != "unassigned"){

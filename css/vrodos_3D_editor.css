@@ -19,8 +19,7 @@
 
 /* Php info top right */
 .VrInfoPhpStyle {
-	/*font-size: 0.6vw;*/
-	max-font-size: 20pt;
+	font-size: 14pt;
 	background: rgba(255, 255, 255, .54);
 	color: #000;
 	position: absolute;
@@ -93,9 +92,6 @@
 
 
 #compileGameBtn {
-	position: absolute;
-	top: 5px;
-	right: 0;
 	height: 20px;
 	line-height: 1.4em;
 }
@@ -163,13 +159,30 @@ canvas { pointer-events:none; z-index:10; }
 /* leftPanelToggleOnOff*/
 .AssetsToggleStyle {
 	position: absolute;
-	top: 1px;
-	width: 20%;
-	left: 0;
-	top: 30px;
-	z-index: 999;
+	width: 28px !important;
+	height: 28px !important;
+	left: 300px; /* Fixed position relative to 320px sidebar */
+	top: 48px;
+	z-index: 1001;
 	cursor: pointer;
-	padding-top: 5px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px !important;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background-color: #10b981 !important; /* emerald-500 */
+	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.AssetsToggleStyle:hover {
+	transform: scale(1.05);
+	background-color: #059669 !important; /* emerald-600 */
+}
+
+.AssetsToggleOff {
+	left: 8px !important;
 }
 
 .AssetsToggleStyle i {
@@ -177,16 +190,7 @@ canvas { pointer-events:none; z-index:10; }
 	cursor: pointer;
 }
 
-.AssetsToggleOn {
-	width: 20%;
-}
-
-.AssetsToggleOff {
-	width: 4%;
-}
-
 .AssetCategoryTabStyle {
-	margin-top: 60px;
 	background-color: rgba(255,255,255,0.12);
 	padding: 0;
 }
@@ -201,10 +205,9 @@ canvas { pointer-events:none; z-index:10; }
 /* rightPanelToggleOnOff*/
 .HierarchyToggleStyle {
 	position: absolute;
-	top: 1px;
 	width: 300px;
 	right: 0;
-	top: 30px;
+	top: 44px;
 	z-index: 999;
 }
 
@@ -224,7 +227,7 @@ canvas { pointer-events:none; z-index:10; }
 .right-elements-panel-style {
 	position: absolute;
 	right: 0;
-	top: 60px;
+	top: 74px;
 	width: 300px;
 	height: 100%;
 	background-color: darkgray;
@@ -242,15 +245,9 @@ canvas { pointer-events:none; z-index:10; }
 
 
 .EditorToolbarBtnStyle {
-	width:45px;
-	height:35px;
-	min-width:20px;
+
 }
 
-.EditorToolbarBtnStyle i {
-	padding-top: 5px;
-	margin-left: -5px;
-}
 
 .ThirdPersonVrWalkInButtonStyle {
 	width: 25%;
@@ -360,12 +357,13 @@ canvas { pointer-events:none; z-index:10; }
 
 .ToggleUIButtonStyle {
 	position: absolute;
-	top: 50px;
+	top: 64px;
 	left: 25%;
 	z-index: 1000;
 	background: transparent;
 	-webkit-appearance: none;
 	-moz-appearance: none;
+	appearance: none;
 }
 
 .ToggleUIButtonStyle i {
@@ -392,11 +390,25 @@ canvas { pointer-events:none; z-index:10; }
 	/*width: 130px;*/
 }
 
-.SaveBtnContainerStyle {
+.environmentBar {
 	position: absolute;
+	left: 330px; /* Offset from fixed sidebar */
+	top: 48px;
+	height: auto;
+	min-height: 40px;
+	width: auto;
+	align-items: center;
+	padding: 4px 12px;
+	background-color: rgba(15, 23, 42, 0.3);
+	backdrop-filter: blur(4px);
+	border-radius: 12px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	z-index: 997;
+}
+
+
+.SaveBtnContainerStyle {
 	text-align: center;
-	top: 7px;
-	right: 1px;
 }
 
 
@@ -447,6 +459,7 @@ html [type="button"],
 [type="submit"] {
 	-moz-appearance: none;
 	-webkit-appearance: none;
+	appearance: none;
 }
 
 
@@ -578,57 +591,46 @@ html [type="button"],
 
 
 .ImageContainer {
-	/*width:100%;*/
-	/*height:80px;*/
-	/*max-height:80px;*/
-	/*min-height:50px;*/
 	position: relative;
 	text-align: center;
 	overflow: hidden;
 }
 
 
-.ImageContainer img {
-	/*position: absolute;*/
-	/*height: 100%;*/
-	/*overflow: hidden;*/
-	/*-webkit-transform: translate(-50%,-50%);*/
-	/*-ms-transform: translate(-50%,-50%);*/
-	/*transform: translate(-50%,-50%);*/
-	/*display: block;*/
-	/*text-align: center;*/
-	/*vertical-align: middle;*/
-	/*height: 100%;*/
-}
 
 #save-scene-elements {
-	position: absolute;
-	right: 20%;
-	width: 300px;
-	top: -3px;
+	width: auto;
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
 }
 
 #save-scene-button {
-	color: hotpink;
+	color: #ffffff;
+	opacity: 0.9;
 	position: relative;
-	font-size: medium;
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-transform: uppercase;
 	cursor: pointer;
 }
 
 #undo-scene-button {
-	color: hotpink;
-	position: relative;
-	left: 0;
+	color: #ffffff;
+	opacity: 0.6;
 	cursor: pointer;
-	top: 5px;
+	transition: opacity 0.2s;
+}
+
+#undo-scene-button:hover, #redo-scene-button:hover, #save-scene-button:hover {
+	opacity: 1;
 }
 
 #redo-scene-button {
-	color: hotpink;
-	position: relative;
-	right: 0;
+	color: #ffffff;
+	opacity: 0.6;
 	cursor: pointer;
-	top: 5px;
+	transition: opacity 0.2s;
 }
 
 /* Lights Drag and Drop bar*/
@@ -643,19 +645,6 @@ html [type="button"],
 	-webkit-user-drag: element;
 }
 
-.environmentBar {
-	position: absolute !important;
-	/* Do not put relative because it breaks the raycaster of canvas */
-	top: 30px;
-	left: 35%;
-	width: auto;
-	z-index: 501;
-	background-color: rgba(0,0,0,.34);
-	display: inline-block;
-	padding: 5px;
-	border-bottom-left-radius: 4px;
-	border-bottom-right-radius: 4px;
-}
 
 .environmentButton {
 	float: left;
@@ -772,13 +761,8 @@ html [type="button"],
 }
 
 #sceneInfoBreadcrump {
-	height: 30px;
+	height: auto;
 	margin: 0;
-	font-size: 14px;
-	vertical-align: middle;
-	display: block;
-	line-height: 2.2em !important;
-	border-bottom: solid 1px black;
 }
 
 #projectNameBreadcrump {
@@ -803,22 +787,6 @@ html [type="button"],
 	font-size: 20px;
 	vertical-align: middle;
 	padding-right: 5px;
-}
-
-#sceneTitleInput {
-	display: block;
-	padding: 0;
-	padding-left: 5px;
-	margin-top: 2px;
-	float: left;
-	width: 15%;
-	margin-left: 0;
-	font-size: 14px;
-	border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-	box-shadow: none;
-	border-radius: 4px;
-	height: 25px !important;
-	min-height: 10px;
 }
 
 .titleLengthSuggest {
@@ -867,7 +835,6 @@ html [type="button"],
 }
 
 .notdraggable {
-	user-drag: none;
 	-webkit-user-drag: none;
 	user-select: none;
 	-moz-user-select: none;
@@ -885,9 +852,7 @@ html [type="button"],
 
 
 .dg {
-	max-font-size: 12pt;
-	min-font-size: 10pt;
-	font-size: 0.7vw;
+	font-size: 10pt;
 	color: #000;
 	text-shadow: none !important;
 }

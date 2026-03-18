@@ -253,4 +253,4 @@
                 <input type="text" id="FogDensity" class="mdc-textfield__input exponentialElement" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
             </span>
     </div>
-</div>
+</div>

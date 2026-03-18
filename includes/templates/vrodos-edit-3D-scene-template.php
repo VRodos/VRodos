@@ -21,26 +21,26 @@ extract( $data );
 </script>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="emerald">
 <head>
 	<meta charset="UTF-8">
-	<title>VRodos</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Scene Editor | VRodos</title>
+	<script src="https://unpkg.com/lucide@0.469.0"></script>
 	<?php wp_head(); ?>
 </head>
-<body <?php body_class(); ?>>
+<body id="vrodos-scene-editor" <?php body_class( 'vrodos-manager-wrapper' ); ?>>
 <?php if ( ! is_user_logged_in() || ! current_user_can( 'administrator' ) ) { ?>
 
 	<!-- if user not logged in, then prompt to log in -->
-	<div class="DisplayBlock CenterContents">
-		<i style="font-size: 64px; padding-top: 80px;" class="material-icons mdc-theme--text-icon-on-background">account_circle</i>
-		<p class="mdc-typography--title"> Please <a class="mdc-theme--secondary"
+	<div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-min-h-screen tw-bg-slate-50">
+		<i data-lucide="user-circle" class="tw-w-16 tw-h-16 tw-text-slate-400 tw-mb-4"></i>
+		<p class="tw-text-lg tw-text-slate-700"> Please <a class="tw-text-primary tw-font-bold hover:tw-underline"
 													href="<?php echo wp_login_url( get_permalink() ); ?>">login</a> to use platform</p>
-		<p class="mdc-typography--title"> Or
-			<a class="mdc-theme--secondary" href="<?php echo wp_registration_url(); ?>">register</a>
+		<p class="tw-text-lg tw-text-slate-700"> Or
+			<a class="tw-text-primary tw-font-bold hover:tw-underline" href="<?php echo wp_registration_url(); ?>">register</a>
 			if you don't have an account</p>
 	</div>
-
-	<hr class="WhiteSpaceSeparator">
 
 
 
@@ -56,7 +56,7 @@ extract( $data );
 			<div id="vr_editor_main_div">
 
 				<!-- Upper Toolbar -->
-				<div class="mdc-toolbar hidable scene_editor_upper_toolbar">
+				<div class="scene_editor_upper_toolbar tw-flex tw-items-center tw-gap-4 tw-px-4 tw-bg-slate-800 tw-text-white tw-w-full tw-left-0 tw-h-11">
 
 					<!-- Display Breadcrump about projectType>project>scene -->
 					<?php
@@ -70,27 +70,43 @@ extract( $data );
 					?>
 
 					<!-- Undo - Save - Redo -->
-					<div id="save-scene-elements">
-						<a id="undo-scene-button" title="Undo last change - You must save to keep the reverted version"><i class="material-icons">undo</i></a>
-						<a id="save-scene-button" title="Save all changes you made to the current scene">Save Scene</a>
-						<a id="redo-scene-button" title="Redo last change - You must save to keep the newer version"><i class="material-icons">redo</i></a>
+					<div id="save-scene-elements" class="tw-flex tw-items-center tw-gap-4">
+						<div class="tw-flex tw-items-center tw-gap-2">
+							<a id="undo-scene-button" title="Undo last change" class="tw-p-1 hover:tw-bg-white/10 tw-rounded tw-transition-colors">
+								<i data-lucide="undo-2" class="tw-w-4 tw-h-4"></i>
+							</a>
+							<a id="save-scene-button" title="Save changes" class="tw-px-3 tw-py-1 tw-text-xs tw-font-bold tw-uppercase tw-tracking-wider hover:tw-bg-white/10 tw-rounded tw-transition-colors">
+								Save Scene
+							</a>
+							<a id="redo-scene-button" title="Redo last change" class="tw-p-1 hover:tw-bg-white/10 tw-rounded tw-transition-colors">
+								<i data-lucide="redo-2" class="tw-w-4 tw-h-4"></i>
+							</a>
+						</div>
 
 						<!-- View Json code UI -->
 						<a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
-							class="mdc-theme--secondary mdc-theme--text-hint-on-light"
-							title="View json of scene"
-							style="width:70px; left: calc(60% + 112px); position:absolute; bottom: 0; cursor: pointer; text-decoration: none;">
-							<i class="material-icons" style="font-size: 11pt">visibility_off</i> JSON
+							class="tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-text-xs tw-font-bold tw-opacity-40 hover:tw-opacity-100 tw-transition-all tw-cursor-pointer"
+							title="View JSON">
+							<i data-lucide="eye-off" class="tw-w-3.5 tw-h-3.5"></i> JSON
 						</a>
 					</div>
 
 					<!-- Compile Button -->
-					<button id="compileGameBtn"
-						class="mdc-button mdc-button--raised mdc-theme--text-primary-on-dark mdc-theme--secondary-bg"
-						data-mdc-auto-init="MDCRipple"
-						title="When you are finished compile the <?php echo $single_lowercase; ?> into a standalone binary">
-						Build Project
-					</button>
+					<div class="tw-ml-auto tw-flex tw-items-center tw-gap-2">
+						<button id="compileGameBtn"
+							class="d-btn d-btn-primary tw-text-white tw-font-bold"
+							title="Build Project">
+							<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
+							Build Project
+						</button>
+
+						<!-- Toggle UI visibility -->
+						<a id="toggleUIBtn" data-toggle='on' type="button"
+							class="tw-p-1.5 hover:tw-bg-white/10 tw-rounded tw-transition-colors tw-cursor-pointer tw-text-white"
+							title="Toggle interface">
+							<i data-lucide="eye" class="tw-w-4 tw-h-4"></i>
+						</a>
+					</div>
 
 				</div>
 				<!--Compile Dialogue html-->
@@ -107,7 +123,7 @@ extract( $data );
 
 
 				<!-- Lights -->
-				<div class="environmentBar hidable">
+				<div class="environmentBar hidable tw-flex tw-items-center tw-gap-1">
 
 					<div title="An entry point for Actors, they can choose one of multiple points when logging in" class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
 						<header draggable="false" class="notdraggable">Actor</header>
@@ -115,8 +131,7 @@ extract( $data );
 							src="<?php echo $pluginpath; ?>/images/lights/pawn.png"/>
 					</div>
 
-					<div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;padding:0;margin: 0 2px;">
-					</div>
+					<div class="tw-w-px tw-h-[45px] tw-bg-white/30 tw-mx-0.5"></div>
 
 					<div class="lightpawnbutton" data-lightPawn="Sun" draggable="true" title="When adding a Sun, an automatic horizon is added to the scene, negating any Background color you have selected.">
 						<header draggable="false" class="notdraggable">Sun</header>
@@ -144,48 +159,43 @@ extract( $data );
 
 					<!-- Set RendererToneMapping  -->
 					<div id="rendererToneMappingDiv"
-						class="mdc-textfield mdc-textfield--textarea mdc-textfield--upgraded"
-						style="width:60px; margin:0; padding:0; height:42px; background: rgba(255,255,255,0.5);float:left;display:block">
+						class="tw-flex tw-flex-col tw-justify-center tw-bg-white/50 tw-rounded tw-px-1.5 tw-h-[42px] tw-float-left">
 
 						<label for="rendererToneMapping"
-								class=""
-								style="font-size: 9pt;padding-left: 5px;margin:0;">Tone</label>
+								class="tw-text-[9pt] tw-leading-none tw-m-0">Tone</label>
 
 						<input type="number" id="rendererToneMapping" name="rendererToneMapping"
 								min="0" max="2" step="0.01"
-								style="width:45px;font-size:10px;min-height: 10px;margin-left:5px;height:20px;margin-bottom:4px;padding:0;"
+								class="tw-w-[45px] tw-text-[10px] tw-h-5 tw-p-0 tw-border-none tw-bg-transparent"
 								onchange="changeRendererToneMapping(this.value);">
 					</div>
 
-					<div style="width:1px;height:45px;background-color:white;display:inline-block;float:left;padding:0;margin: 0 2px;">
-					</div>
-
+					<div class="tw-w-px tw-h-[45px] tw-bg-white/30 tw-mx-0.5"></div>
 
 					<div class="environmentButton">
 						<!--  Dimensionality 2D 3D toggle -->
-						<a id="dim-change-btn" data-mdc-auto-init="MDCRipple"
+						<a id="dim-change-btn"
 							title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-							class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">2D</a>
+							class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary">2D</a>
 					</div>
 
 					<!-- The button to start walking in the 3d environment -->
 					<div class="environmentButton">
 						<div id="firstPersonBlocker">
 							<a type="button" id="firstPersonBlockerBtn" data-toggle='on'
-								class="EditorToolbarBtnStyle mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
-								title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys"
-								data-mdc-auto-init="MDCRipple">
-								<i class="material-icons">person</i>
+								class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary"
+								title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys">
+								<i data-lucide="user" class="tw-w-5 tw-h-5"></i>
 							</a>
 						</div>
 					</div>
 
 					<!--  Toggle Around Tour -->
 					<div class="environmentButton">
-						<a type="button" id="toggle-tour-around-btn" data-toggle='off' data-mdc-auto-init="MDCRipple"
+						<a type="button" id="toggle-tour-around-btn" data-toggle='off'
 							title="Auto-rotate 3D tour"
-							class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">
-							<i class="material-icons">rotate_90_degrees_ccw</i>
+							class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary">
+							<i data-lucide="rotate-ccw" class="tw-w-5 tw-h-5"></i>
 						</a>
 					</div>
 
@@ -194,31 +204,25 @@ extract( $data );
 					<div class="environmentButton">
 						<div id="row_cogwheel" class="row-right-panel">
 							<a type="button" id="optionsPopupBtn"
-								class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--primary mdc-button--dense"
-								title="Edit scene options" data-mdc-auto-init="MDCRipple">
-								<i class="material-icons">settings</i>
+								class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary"
+								title="Edit scene options">
+								<i data-lucide="settings" class="tw-w-5 tw-h-5"></i>
 							</a>
 						</div>
 					</div>
 
 					<div class="environmentButton">
 						<input style="display: none" type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
-						<a id="env_texture-change-btn" data-mdc-auto-init="MDCRipple"
+						<a id="env_texture-change-btn"
 							title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
-							class="EditorToolbarBtnStyle mdc-button mdc-button--raised mdc-button--dense mdc-button--primary mdc-theme--secondary-bg">
-							<i class="material-icons">texture</i>
+							class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary tw-bg-primary">
+							<i data-lucide="layers" class="tw-w-5 tw-h-5"></i>
 						</a>
 					</div>
 
 				</div>
 
-				<!-- Close all 2D UIs-->
-				<div class="environmentButton">
-					<a id="toggleUIBtn" data-toggle='on' type="button"
-						class="ToggleUIButtonStyle mdc-theme--secondary" title="Toggle interface">
-						<i class="material-icons" style="opacity:0.4; z-index: 100000">visibility</i>
-					</a>
-				</div>
+				<!-- toggleUIBtn moved into upper toolbar -->
 
 				<!-- Hierachy Viewer -->
 				<?php
@@ -227,16 +231,16 @@ extract( $data );
 
 				<!-- Pause rendering-->
 				<div id="divPauseRendering" class="pauseRenderingDivStyle">
-					<a id="pauseRendering" class="mdc-button mdc-button--dense mdc-button--raised mdc-button--primary"
-						title="Pause rendering" data-mdc-auto-init="MDCRipple">
-						<i class="material-icons">play_arrow</i>
+					<a id="pauseRendering" class="d-btn d-btn-sm d-btn-primary"
+						title="Pause rendering">
+						<i data-lucide="play" style="width:18px; height:18px;"></i>
 					</a>
 				</div>
 
 
 				<!--  Make form to submit user changes -->
 				<div id="progressWrapper" class="VrInfoPhpStyle" style="visibility: visible">
-					<div id="progress" class="ProgressContainerStyle mdc-theme--text-primary-on-light mdc-typography--subheading1">
+					<div id="progress" class="ProgressContainerStyle tw-text-slate-700 tw-text-base">
 					</div>
 
 					<div id="result_download" class="result"></div>
@@ -244,12 +248,14 @@ extract( $data );
 
 
 				<!--  Asset browse Left panel  -->
-
-				<!-- Open/Close button-->
-				<a id="bt_close_file_toolbar" data-toggle='on' type="button"
-					class="AssetsToggleStyle AssetsToggleOn hidable mdc-button mdc-button--raised mdc-button--primary mdc-button--dense mdc-ripple-upgraded"
-					title="Toggle asset viewer" data-mdc-auto-init="MDCRipple">
-					<i class="material-icons">menu</i>
+				
+				<!-- Open/Close button (Positioned via CSS as overlay) -->
+				<a id="bt_close_file_toolbar" data-toggle="on" type="button"
+					class="AssetsToggleStyle AssetsToggleOn hidable d-btn d-btn-xs d-btn-primary tw-z-[1001]"
+					title="Toggle asset viewer">
+					<div class="tw-flex tw-items-center tw-justify-center">
+						<i data-lucide="panel-left-close" class="tw-w-4 tw-h-4"></i>
+					</div>
 				</a>
 
 				<!-- The panel -->
@@ -257,21 +263,20 @@ extract( $data );
 
 					<!-- Categories of assets -->
 					<div id="assetCategTab" class="AssetCategoryTabStyle">
-						<button id="allAssetsViewBt" class="tablinks mdc-button active">All</button>
+						<button id="allAssetsViewBt" class="tablinks d-btn d-btn-xs d-btn-ghost active">All</button>
 					</div>
 
 					<!-- Search bar -->
-					<div class="mdc-textfield search" data-mdc-auto-init="MDCTextfield" style="margin-top:0; height:40px; margin-left:10px;">
-						<input type="search" class="mdc-textfield__input mdc-typography--subheading2" placeholder="Find...">
-						<i class="material-icons mdc-theme--text-primary-on-background">search</i>
-						<div class="mdc-textfield__bottom-line"></div>
+					<div class="search tw-relative tw-p-2 tw-bg-slate-900/40 tw-mx-2 tw-mb-2 tw-rounded-lg tw-border tw-border-white/5">
+						<i data-lucide="search" class="tw-absolute tw-left-4 tw-top-1/2 tw-transform tw--translate-y-1/2 tw-w-3.5 tw-h-3.5 tw-opacity-40"></i>
+						<input type="search" placeholder="Find assets..." class="tw-w-full tw-bg-transparent tw-border-none tw-pl-8 tw-pr-4 tw-py-1 tw-text-[11px] tw-text-slate-200 focus:tw-ring-0 placeholder:tw-text-slate-500" />
 					</div>
 
-					<ul id="filesList" class="data mdc-list mdc-list--two-line mdc-list--avatar-list"></ul>
+					<ul id="filesList" class="data"></ul>
 
 					<!-- ADD NEW ASSET FROM ASSETS LIST -->
 					<a id="addNewAssetBtnAssetsList"
-						style="" class="addNewAsset3DEditor" data-mdc-auto-init="MDCRipple"
+						style="" class="addNewAsset3DEditor"
 						title="Add new private asset"
 						href="
 						<?php
@@ -281,7 +286,7 @@ extract( $data );
 						);
 						?>
 							">
-						<i class="material-icons">add_circle</i>
+						<i data-lucide="plus-circle" style="width:24px; height:24px;"></i>
 					</a>
 
 				</div>
@@ -290,8 +295,8 @@ extract( $data );
 				<?php require plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-Popups.php'; ?>
 
 				<!--  Open/Close Scene list panel-->
-				<a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable mdc-button mdc-button--raised mdc-button--primary mdc-button--dense" title="Toggle scenes list" data-mdc-auto-init="MDCRipple">
-					<i class="material-icons" style="margin:auto">menu</i>
+				<a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable d-btn d-btn-sm d-btn-primary" title="Toggle scenes list">
+					<i data-lucide="panel-bottom" style="width:18px; height:18px; margin:auto"></i>
 				</a>
 
 				<!-- Scenes Credits and Main menu List -->
@@ -306,32 +311,18 @@ extract( $data );
 
 	</div>
 
-	<aside id="confirm-deletion-dialog" class="mdc-dialog" role="alertdialog" style="z-index: 1000;"
-			aria-labelledby="Confirm asset delete dialog" aria-describedby="Confirm that you want to delete selected asset">
-		<div class="mdc-dialog__surface">
-			<header class="mdc-dialog__header">
-				<h2 id="confirm-asset-deletion-title" class="mdc-dialog__header__title">Delete Asset</h2>
-			</header>
-
-			<section class="mdc-dialog__body">
-				<div class="mdc-layout-grid">
-					<div class="mdc-layout-grid__inner">
-						<div class="mdc-layout-grid__cell--span-12">
-							<span class="mdc-typography--title" id="confirm-asset-deletion-description">Do you really want to delete the selected asset?</span>
-							<br>
-							<span class="mdc-typography--subheading2">WARNING: This action cannot be undone!</span>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<footer class="mdc-dialog__footer">
-				<button class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button mdc-theme--text-hint-on-light">Cancel</button>
-				<button id="delete-asset-btn-confirmation" class="mdc-button--raised mdc-button mdc-button--primary mdc-dialog__footer__button mdc-dialog__footer__button--accept">DELETE</button>
-			</footer>
+	<dialog id="confirm-deletion-dialog" class="d-modal" style="z-index: 1000;">
+		<div class="d-modal-box">
+			<h3 id="confirm-asset-deletion-title" class="tw-font-bold tw-text-lg">Delete Asset</h3>
+			<p id="confirm-asset-deletion-description" class="tw-py-4">Do you really want to delete the selected asset?</p>
+			<p class="tw-text-sm tw-text-warning tw-font-semibold">WARNING: This action cannot be undone!</p>
+			<div class="d-modal-action">
+				<button class="d-btn" onclick="document.getElementById('confirm-deletion-dialog').close()">Cancel</button>
+				<button id="delete-asset-btn-confirmation" class="d-btn d-btn-error">DELETE</button>
+			</div>
 		</div>
-		<div class="mdc-dialog__backdrop"></div>
-	</aside>
+		<form method="dialog" class="d-modal-backdrop"><button>close</button></form>
+	</dialog>
 
 	<!-- Scripts part 1: The GUIs -->
 	<script type="text/javascript">
@@ -743,7 +734,7 @@ extract( $data );
 		}
 
 		let toggleEnvTexture = (el) => {
-			jQuery("#env_texture-change-btn").toggleClass('mdc-theme--secondary-bg');
+			jQuery("#env_texture-change-btn").toggleClass('tw-bg-primary');
 			el.checked = !el.checked;
 			envir.scene.environment = !el.checked ? null : envir.maintexture;
 		}
@@ -763,6 +754,7 @@ if ( $sceneType ) {
 	}
 }
 ?>
+<script>lucide.createIcons();</script>
 <?php wp_footer(); ?>
 </body>
 </html>

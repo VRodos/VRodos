@@ -158,14 +158,16 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
                 name = escapeHTML(f['asset_name']);
 
+                let lucideIconName = vrodos_getLucideIconName(f['category_icon']);
+
                 // Add the category in tabs if not yet added
                 if (jQuery("#assetCategTab").find("[id='" + f.category_slug + "']").length == 0) {
                     //Create an input type dynamically.
                     let element = document.createElement("button");
                     //Assign different attributes to the element.
-                    element.className = "tablinks mdc-button";
+                    element.className = "tablinks d-btn d-btn-xs d-btn-ghost";
                     element.id = f['category_slug'];
-                    element.innerHTML = "<i class='material-icons' title='" + f['category_name'] + "' style='font-size:18px;'>" + f['category_icon'] + "</i>";
+                    element.innerHTML = "<i data-lucide='" + lucideIconName + "' title='" + f['category_name'] + "' style='width:18px; height:18px;'></i>";
                     element.addEventListener("click", function (event) { openCategoryTab(event, this); });
 
                     document.getElementById("assetCategTab").appendChild(element);
@@ -173,58 +175,49 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
                 f['screenshot_path'] = f['screenshot_path'] ? f['screenshot_path'] : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
 
-                let img = '<span class="mdc-list-item__start-detail CenterContents">' +
-                    '<img class="assetImg" draggable="false" style="-webkit-user-drag: none" src=' + encodeURI(f['screenshot_path']) + '>' +
-                    // '<span class="megabytesAsset mdc-typography--caption mdc-theme--text-secondary-on-light">'+ fileSize + '</span>'+
-                    '</span>';
-
                 let draggable_string = '';
                 for (let entry in Object.keys(f)) {
                     draggable_string = draggable_string.concat('data-'+Object.keys(f)[entry] + '="' + Object.values(f)[entry]) + '" ';
                 }
 
+                let file = jQuery('<li draggable="true" id="asset-' + f['asset_id'] + '" ' +
+                    'class="vrodos-asset-card tw-relative tw-bg-slate-800 tw-rounded-lg tw-overflow-hidden tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-group tw-cursor-move"' +
+                    ' title="Drag into scene" ' + draggable_string + '>' +
+                    
+                    // Full Image
+                    '<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" src="' + encodeURI(f['screenshot_path']) + '">' +
+                    
+                    // Overlays
+                    '<div class="tw-absolute tw-inset-0 tw-bg-gradient-to-t tw-from-slate-900/80 tw-via-transparent tw-to-transparent tw-opacity-60 group-hover:tw-opacity-90 tw-transition-opacity"></div>' +
 
-
-                let file = jQuery('<li draggable="true" id="asset-' + f['asset_id'] + '"  class="mdc-list-item mdc-elevation--z2 mdc-list-item"' +
-                    ' title="Drag the card into the plane"' +
-                    draggable_string +'>' + img +
-
-                    '<span class="FileListItemName mdc-list-item__text" title="Drag the card into the plane">' + name +
-                    '<span class="assetCategoryNameInList mdc-list-item__text__secondary mdc-typography--caption"><i class="material-icons">' + f['category_icon']
-                    + '</i></span>' +
-                    '<span class="FileListItemFooter">' +
-
-                    (f['is_joker'] === 'false' ?
-                            ('<a draggable="false" ondragstart="return false;" title="Edit asset" id="editAssetBtn-' + f['asset_id'] +
-                                '" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=0&editable=true' +
-                                '\'" class="editAssetbutton mdc-button mdc-button--dense">Edit</a>')
-                            :
-                            ('<a draggable="false" ondragstart="return false;" title="View asset" id="editAssetBtn-' + f['asset_id'] +
-                                '" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=1&editable=false' +
-                                '\'" class="deleteAssetbutton mdc-button mdc-button--dense">View</a>')
-                    ) +
-
-                    // (f['is_joker'] === 'false' ?
-                    //         ('<a draggable="false" ondragstart="return false;" title="Delete asset" href="#" id="deleteAssetBtn-' + f['asset_id']
-                    //             + '" onclick="vrodos_deleteAssetAjax(' +
-                    //             f['asset_id'] + ', \'' + gameProjectSlug + '\',' + f['is_cloned'] + ')" class="deleteAssetbutton mdc-button mdc-button--dense">Del</a>') :
-                    //         ''
-                    // )
-                    // +
-
-                    '</span>' +
-                    '<div id="deleteAssetProgressBar-' + f['asset_id'] + '" class="progressSlider" style="position: absolute;bottom: 0;display: none;">\n' +
-                    '<div class="progressSliderLine"></div>\n' +
-                    '<div class="progressSliderSubLine progressIncrease"></div>\n' +
-                    '<div class="progressSliderSubLine progressDecrease"></div>\n' +
+                    // Small Name Tag (Top Left)
+                    '<div class="tw-absolute tw-top-1.5 tw-left-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-px-1.5 tw-py-0.5 tw-rounded-md tw-border tw-border-white/10 tw-z-10 tw-max-w-[70%]">' +
+                         '<span class="tw-text-[9px] tw-font-bold tw-text-slate-200 tw-truncate tw-block">' + name + '</span>' +
                     '</div>' +
-                    '</li>');
+
+                    // Category Icon (Top Right)
+                    '<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-p-1 tw-rounded-md tw-border tw-border-white/10 tw-z-10">' +
+                        '<i data-lucide="' + lucideIconName + '" class="tw-w-3 tw-h-3 tw-text-slate-200"></i>' +
+                    '</div>' +
+
+                    // Actions (Bottom Overlay)
+                    '<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">' +
+                        (f['is_joker'] === 'false' ?
+                            '<button class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=0&editable=true\'">EDIT</button>' :
+                            '<button class="tw-w-full tw-bg-emerald-500/80 hover:tw-bg-emerald-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=1&editable=false\'">VIEW</button>'
+                        ) +
+                    '</div>' +
+
+                    '<div id="deleteAssetProgressBar-' + f['asset_id'] + '" class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-h-0.5 tw-bg-slate-700 tw-hidden tw-z-20">' +
+                        '<div class="tw-h-full tw-bg-indigo-500 tw-animate-pulse"></div>' +
+                    '</div>' +
+                '</li>');
 
 
                 file.appendTo(fileList);
             }
-            // Don't delete. Needed to auto init the mdc components after they have loaded.
-            mdc.autoInit(document, () => { });
+            // Re-initialize Lucide icons after dynamic DOM insertion
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         // Remove animation
@@ -236,6 +229,27 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
         // Perform click to open (bug appeared from migrating jquery-1.11 to 3.1.1
         //closeButton.click();
+    }
+
+    /**
+     * Map Material icons to Lucide icons
+     * @param iconName
+     * @returns {string}
+     */
+    function vrodos_getLucideIconName(iconName) {
+        const mapping = {
+            'grid_on': 'layout-grid',
+            'exit_to_app': 'door-open',
+            'movie': 'clapperboard',
+            'image': 'image',
+            'chat': 'message-square',
+            'open_in_new': 'external-link',
+            'public': 'globe',
+            'theaters': 'clapperboard',
+            'account_balance': 'landmark'
+        };
+
+        return mapping[iconName] || iconName;
     }
 
     // This function escapes special html characters in names
@@ -277,7 +291,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         // Get all elements with class="tablinks" and remove the class "active"
         tablinks = document.getElementsByClassName("tablinks");
         for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
+            tablinks[i].classList.remove("active");
         }
 
         // Show the current tab, and add an "active" class to the button that opened the tab
@@ -292,6 +306,6 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     items[i].style.display = 'none';
             }
         }
-        evt.currentTarget.className += " active";
+        evt.currentTarget.classList.add("active");
     }
 }

@@ -6,74 +6,34 @@
 
 .filemanager {
 	position: absolute;
-	width: 20%;
-	height: auto;
-	max-height: 70%;
+	width: 320px; /* Fixed width for stability on resize */
+	height: 75vh !important;
 	left: 0;
-	top: 0;
-	background-color: rgba(0, 0, 0, 0.12);
-	box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-	overflow-y: scroll;
-	overflow-x: hidden;
+	top: 44px;
+	background-color: rgba(15, 23, 42, 0.45); /* More transparent slate-900 */
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border-right: 1px solid rgba(255, 255, 255, 0.1);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	border-bottom-right-radius: 12px;
+	box-shadow: 10px 10px 20px -5px rgba(0, 0, 0, 0.2);
+	display: flex;
+	flex-direction: column;
+	z-index: 998;
+	overflow: hidden;
 }
-
-
-
-/*-------------------------
-	Breadcrumbs
--------------------------*/
-
-/*.filemanager .breadcrumbs {*/
-/*	color: #262626;*/
-/*	padding-left: 4%;*/
-/*	font-size: 0.8vw;*/
-/*	max-font-size:14pt;*/
-/*	font-weight: 400;*/
-/*	line-height: 1.6vw;*/
-/*}*/
-
-/*.filemanager .breadcrumbs a:link, .breadcrumbs a:visited {*/
-/*	color: #272729;*/
-/*	text-decoration: none;*/
-/*}*/
-
-/*.filemanager .breadcrumbs a:hover {*/
-/*	text-decoration: underline;*/
-/*}*/
-
-/*.filemanager .breadcrumbs .arrow {*/
-/*	color: #7fb1cf;*/
-/*	font-size: 0.8vw;*/
-/*	!*max-font-size:14pt;*!*/
-/*	!*font-weight: 700;*!*/
-/*	!*line-height: 2.2vw;*!*/
-/*}*/
 
 
 /*-------------------------
 	Search box
 -------------------------*/
 .filemanager .search {
-	position: relative;
-	cursor: pointer;
-	font-size: 1.5vw;
-	/*background-color:transparent;*/
-	display: block;
-	width: 100%;
-	height: 2.2vw;
+	margin: 8px 12px; /* Increased side margins */
+	flex-shrink: 0;
 }
 
-/* Search input */
 .filemanager .search input[type=search] {
-	width: 80%;
-	height: 30px;
-	font-weight: 400;
-	line-height: 30px;
-	padding:5px;
-	/*display: none;
 	outline: none;
-	border: none;
-	-webkit-appearance: none;*/
 }
 
 /*-------------------------
@@ -82,130 +42,33 @@
 
 /* The container of the folders */
 .filemanager .data {
-	z-index: -3;
+	flex: 1;
 	overflow-y: auto;
-	overflow-x: hidden;
 	margin: 0;
-	padding: 10px 0 0 10px;
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: flex-start;
+	padding: 10px;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr); /* 2 columns requested */
+	gap: 10px;
 	align-content: flex-start;
-	height:76%;
 }
 
 .filemanager .data li {
-	position: relative;
-	min-height: 100px;
-	border-radius: 2px;
-	background-color: #fff;
-	overflow: hidden;
-	z-index: 1;
-	transition: 0.3s background-color;
-	margin: 0 10px 10px 0;
-	flex-basis: calc(33.333% - 10px);
-	min-width: 120px;
-	flex-grow: 1;
+	list-style: none;
+	height: 125px; /* Increased for better 2-column presence */
 }
 
-.megabytesAsset {
-	position: absolute;
-	bottom: 40%;
-	left: 5px;
+.vrodos-asset-card-title {
+	word-break: break-all;
 }
-
-
-.FileListItemName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	position: absolute;
-	left: 5px;
-	top: 0;
-	font-size: 14px;
-	text-shadow: 1px 1px 1px #fff;
-}
-
-.FileListItemImg {
-	border-radius: 0;
-	top:0;
-}
-
-.FileListItemFooter {
-	width:100%;
-	position: absolute;
-	bottom: 0;
-	left:0;
-}
-
-
-.assetCategoryNameInList{
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	width: 60%;
-}
-
-
-
-
-.filebrowserahref {
-	align-items: baseline;
-	left: 0;
-	padding: 0;
-	height: 100% !important;
-	width: 100%;
-}
-
 
 .assetImg {
 	width: 100%;
 	height: 100%;
-	position: absolute;
-	margin-left: 0;
-	left: 0;
-	z-index: -5;
-	top: 0;
-	bottom: 0;
-	padding: 0;
 	object-fit: cover;
 }
 
-
-
-
-
-.editAssetbutton{
-	height: 30px;
-	font-size: 12px;
-	width: 36px;
-	line-height: 35px;
-	min-width: 30px;
-	padding: 0px;
-}
-
-.deleteAssetbutton {
-	height: 30px;
-	font-size: 8px;
-	width: 30px;
-	line-height: 35px;
-	min-width: 50px;
-	padding: 0px;
-	float:right;
-	right:0;
-	bottom:0;
-}
-
-.viewAssetbutton {
-	height: 30px;
-	font-size: 12px;
-	width: 40px;
-	line-height: 35px;
-	min-width: 50px;
-	padding: 0px;
-	float:right;
-	right:0;
-	bottom:0;
+.editAssetbutton, .viewAssetbutton, .deleteAssetbutton {
+	display: none !important; /* Managed by new internal card buttons */
 }
 
 
@@ -364,51 +227,40 @@
 /*Tabs for filebrowser*/
 /* Style the tab */
 .AssetCategoryTabStyle {
-	height: 36px;
-	width: 100%;
-	overflow: hidden;
-	white-space: nowrap;
-	background-color: rgba(255,255,255,0.12);
+	height: auto;
+	width: 100%; /* Revert to full width */
+	background-color: rgba(255, 255, 255, 0.03);
+	display: flex;
+	flex-wrap: wrap; /* Fit always */
+	gap: 4px;
+	padding: 6px 10px; /* Reduced from 8x12 */
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.AssetCategoryTabStyle button {
+	flex: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	padding: 2px; /* Reduced further from 4px */
+	border-radius: 3px; /* Slightly smaller radius */
+	transition: all 0.2s;
+	color: rgba(255, 255, 255, 0.4);
+	font-size: 9px !important; /* Smaller text tag */
+}
+
+.AssetCategoryTabStyle button:hover {
+	background-color: rgba(255, 255, 255, 0.1);
 	color: #fff;
 }
 
-button.tablinks {
-	min-width: 24px;
-}
-
-/*!* Style the buttons that are used to open the tab content *!*/
-.AssetCategoryTabStyle button {
-	cursor: pointer;
-	display: inline-block;
-	text-align: center;
-	text-decoration: none;
-	background-color: inherit;
-	font-size: 12pt !important;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	max-width:70px;
-	max-height:45px;
-	padding-right:10px;
-	padding-left:10px;
-	transition: 0.3s;
-	color: white;
-	font-weight: 500;
-}
-
-/*!* Change background color of buttons on hover *!*/
-.AssetCategoryTabStyle button:hover {
-	background-color: #ddd;
-}
-
-/*!* Create an active/current tablink class *!*/
 .AssetCategoryTabStyle button.active {
-	background-color: #3F51B5;
-	color: white;
-}
-
-.AssetCategoryTabStyle button.inactive {
-	color: white;
+	background-color: #10b981; /* Emerald-500 */
+	color: #fff;
+	border-color: #059669;
 }
 
 .addNewAsset3DEditor{
@@ -431,16 +283,4 @@ button.tablinks {
 .addNewAsset3DEditor i:hover {
 	color: rgba(255,64,129,1);
 	text-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
-}
-
-@media screen and (max-width: 1024px) {
-	.filemanager {
-		width: 40%;
-	}
-}
-
-@media screen and (max-width: 768px) {
-	.filemanager {
-		width: 80%;
-	}
 }

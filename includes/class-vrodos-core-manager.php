@@ -357,9 +357,9 @@ class VRodos_Core_Manager {
 
 		// Set game type icon
 		$project_type_icon = match ( $project_category ) {
-			'vrexpo' => 'public',
-			'virtualproduction' => 'theaters',
-			default => 'account_balance',
+			'vrexpo' => 'globe',
+			'virtualproduction' => 'clapperboard',
+			default => 'landmark',
 		};
 		return $project_type_icon;
 	}
@@ -413,37 +413,29 @@ class VRodos_Core_Manager {
 
 		$scene_title = $scene_post ? $scene_post->post_title : ' ';
 
-		echo '<div id="sceneInfoBreadcrump" ' .
-			' class="mdc-textfield mdc-theme--text-primary-on-dark mdc-form-field"' .
-			' data-mdc-auto-init="MDCTextfield">' .
-
+		echo '<div class="vrodos-scene-breadcrumb tw-flex tw-items-center tw-gap-1 tw-text-white tw-h-full">' .
 			// Project Scene path at breadcrump
-			' <div id="projectNameBreadcrump" >' .
-			'<a title="Back" style="margin-left:10px; margin-right:10px"' .
+			' <div class="projectNameBreadcrump tw-flex tw-items-center">' .
+			'<a title="Back" class="tw-ml-2 tw-mr-3 hover:tw-opacity-80 tw-transition-opacity"' .
 			' href="' . $goBackTo_AllProjects_link . '">' .
-			'<i class="material-icons mdc-theme--text-primary-on-dark sceneArrowBack">arrow_back</i>' .
+			'<i data-lucide="arrow-left" class="tw-text-white" style="width:18px; height:18px;"></i>' .
 			'</a>' .
-
-			'<i class="material-icons mdc-theme--text-icon-on-dark sceneProjectTypeLabel"' .
-			' title="' . $project_type . '">' . $project_type_icon .
+			'<i data-lucide="' . $project_type_icon . '" class="tw-text-white/60 tw-mr-2"' .
+			' title="' . $project_type . '" style="width:18px; height:18px;">' .
 			'</i> ' .
-			'<span title="Project Title">' . $project_post->post_title . '</span>' .
-			'<i class="material-icons mdc-theme--text-icon-on-dark chevronRight">chevron_right</i>' .
+			'<span title="Project Title" class="tw-font-medium tw-text-sm">' . $project_post->post_title . '</span>' .
+			'<i data-lucide="chevron-right" class="tw-text-white/40 tw-mx-1" style="width:16px; height:16px;"></i>' .
 			'</div>' .
-
 			// Title Name at breadcrumps
 			'<input id="sceneTitleInput" name="sceneTitleInput"' .
 			' title="Scene Title" placeholder="Scene Title"' .
 			' value="' . $scene_title . '" type="text"' .
-			' class="mdc-textfield__input mdc-theme--text-primary-on-dark"' .
+			' class="tw-text-white tw-bg-slate-700 tw-font-bold tw-text-sm tw-w-48 focus:tw-bg-white/10 tw-px-2 tw-rounded tw-transition-colors"' .
 			' aria-controls="title-validation-msg" minlength="3" required>' .
 			'<p id="title-validation-msg"' .
-			' class="mdc-textfield-helptext mdc-textfield-helptext--validation-msg titleLengthSuggest">' .
+			' class="tw-text-xs tw-text-warning tw-hidden titleLengthSuggest">' .
 			' Must be at least 3 characters long' .
 			'</p>' .
-
-			// bottom line below title input
-			'<div class="mdc-textfield__bottom-line"></div>' .
 			'</div>';
 	}
 

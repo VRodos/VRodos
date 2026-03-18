@@ -92,22 +92,27 @@ body.vrodos-manager-wrapper {
 #vrodos-project-manager .d-btn,
 #vrodos-assets-manager .d-btn,
 #vrodos-asset-editor .d-btn,
+#vrodos-scene-editor .d-btn,
 #vrodos-project-manager .d-select,
 #vrodos-assets-manager .d-select,
 #vrodos-asset-editor .d-select,
+#vrodos-scene-editor .d-select,
 #vrodos-project-manager .d-checkbox,
 #vrodos-assets-manager .d-checkbox,
 #vrodos-asset-editor .d-checkbox,
+#vrodos-scene-editor .d-checkbox,
 #vrodos-project-manager .d-radio,
 #vrodos-assets-manager .d-radio,
-#vrodos-asset-editor .d-radio {
+#vrodos-asset-editor .d-radio,
+#vrodos-scene-editor .d-radio {
   display: inline-flex !important;
   cursor: pointer !important;
 }
 
 #vrodos-project-manager .d-btn,
 #vrodos-assets-manager .d-btn,
-#vrodos-asset-editor .d-btn {
+#vrodos-asset-editor .d-btn,
+#vrodos-scene-editor .d-btn {
   height: 2.25rem !important;
   min-height: 2.25rem !important;
   padding-left: 1rem !important;
@@ -124,10 +129,20 @@ body.vrodos-manager-wrapper {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+/* Compact buttons for scene editor toolbar */
+#vrodos-scene-editor .scene_editor_upper_toolbar .d-btn {
+  height: 1.5rem !important;
+  min-height: 1.5rem !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  font-size: 0.7rem !important;
+}
+
 /* Emerald Primary: #66cc8a */
 #vrodos-project-manager .d-btn-primary,
 #vrodos-assets-manager .d-btn-primary,
-#vrodos-asset-editor .d-btn-primary {
+#vrodos-asset-editor .d-btn-primary,
+#vrodos-scene-editor .d-btn-primary {
   background-color: #66cc8a !important;
   border: 1px solid #66cc8a !important;
   color: #ffffff !important;
@@ -136,7 +151,8 @@ body.vrodos-manager-wrapper {
 
 #vrodos-project-manager .d-btn-primary:hover,
 #vrodos-assets-manager .d-btn-primary:hover,
-#vrodos-asset-editor .d-btn-primary:hover {
+#vrodos-asset-editor .d-btn-primary:hover,
+#vrodos-scene-editor .d-btn-primary:hover {
   background-color: #4da670 !important;
   border-color: #4da670 !important;
   transform: translateY(-1px) !important;
@@ -145,30 +161,35 @@ body.vrodos-manager-wrapper {
 
 #vrodos-project-manager .d-btn-primary:active,
 #vrodos-assets-manager .d-btn-primary:active,
-#vrodos-asset-editor .d-btn-primary:active {
+#vrodos-asset-editor .d-btn-primary:active,
+#vrodos-scene-editor .d-btn-primary:active {
   transform: translateY(1px) !important;
 }
 
-#vrodos-asset-editor .d-range {
+#vrodos-asset-editor .d-range,
+#vrodos-scene-editor .d-range {
   cursor: pointer !important;
 }
 
 #vrodos-project-manager .d-btn-outline,
 #vrodos-assets-manager .d-btn-outline,
-#vrodos-asset-editor .d-btn-outline {
+#vrodos-asset-editor .d-btn-outline,
+#vrodos-scene-editor .d-btn-outline {
   background-color: transparent !important;
   border: 1px solid #e2e8f0 !important;
   color: #475569 !important;
 }
 
-#vrodos-project-manager .d-btn-outline:hover {
+#vrodos-project-manager .d-btn-outline:hover,
+#vrodos-scene-editor .d-btn-outline:hover {
   background-color: #f8fafc !important;
   border-color: #cbd5e1 !important;
 }
 
 #vrodos-project-manager .d-input,
 #vrodos-assets-manager .d-input,
-#vrodos-asset-editor .d-input {
+#vrodos-asset-editor .d-input,
+#vrodos-scene-editor .d-input {
   display: block !important;
   width: 100% !important;
   height: 2.5rem !important;
@@ -184,7 +205,9 @@ body.vrodos-manager-wrapper {
 #vrodos-project-manager .d-input:focus,
 #vrodos-assets-manager .d-input:focus,
 #vrodos-asset-editor .d-input:focus,
-#vrodos-asset-editor .d-select:focus {
+#vrodos-scene-editor .d-input:focus,
+#vrodos-asset-editor .d-select:focus,
+#vrodos-scene-editor .d-select:focus {
   border-color: #66cc8a !important;
   outline: 2PX solid #66cc8a22 !important;
   box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
@@ -498,8 +521,78 @@ body.vrodos-manager-wrapper {
 #vrodos-project-manager *, #vrodos-project-manager *:before, #vrodos-project-manager *:after,
 #vrodos-assets-manager *, #vrodos-assets-manager *:before, #vrodos-assets-manager *:after,
 #vrodos-asset-editor *, #vrodos-asset-editor *:before, #vrodos-asset-editor *:after,
+#vrodos-scene-editor *, #vrodos-scene-editor *:before, #vrodos-scene-editor *:after,
 #vrodos-modal-wrapper *, #vrodos-modal-wrapper *:before, #vrodos-modal-wrapper *:after {
   box-sizing: border-box !important;
+}
+
+/* Scene editor modal overrides */
+#vrodos-scene-editor .d-modal {
+  z-index: 2147483647 !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+#vrodos-scene-editor .d-modal[open] {
+  display: grid !important;
+  place-items: center !important;
+}
+
+#vrodos-scene-editor .d-modal::backdrop {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+#vrodos-scene-editor .d-modal-box {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  padding: 2rem !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
+  width: min(90vw, 440px) !important;
+}
+
+#vrodos-scene-editor .d-modal-action {
+  display: flex !important;
+  gap: 1rem !important;
+  justify-content: flex-end !important;
+  margin-top: 1.5rem !important;
+}
+
+#vrodos-scene-editor .d-btn-error {
+  background-color: #ff5861 !important;
+  border-color: #ff5861 !important;
+  color: #ffffff !important;
+}
+
+#vrodos-scene-editor .d-btn-error:hover {
+  background-color: #e54d56 !important;
+  border-color: #e54d56 !important;
+}
+
+#vrodos-scene-editor .d-modal-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: -1 !important;
+  background: transparent !important;
+}
+
+#vrodos-scene-editor .d-modal-backdrop button {
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: transparent !important;
 }
 
 /* Admin bar height is handled globally above */

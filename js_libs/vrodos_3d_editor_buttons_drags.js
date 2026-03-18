@@ -1,3 +1,15 @@
+// Swap a Lucide icon inside a container element
+function swapLucideIcon(container, iconName) {
+    let icon = container.querySelector('[data-lucide], svg');
+    if (icon) {
+        let newIcon = document.createElement('i');
+        newIcon.setAttribute('data-lucide', iconName);
+        newIcon.style.cssText = icon.style ? icon.style.cssText : 'width:18px; height:18px;';
+        icon.replaceWith(newIcon);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
 // Local and Global scope functions
 var new_screenshot_data = null;
 
@@ -10,7 +22,7 @@ function loadButtonActions() {
 
         // Pause Rendering
         isPaused = true;
-        jQuery("#pauseRendering").get(0).childNodes[1].innerText = "play_arrow";
+        swapLucideIcon(jQuery("#pauseRendering").get(0), "play");
         saveChanges();
     });
 
@@ -57,7 +69,7 @@ function loadButtonActions() {
 
         //Start Rendering
         isPaused = false;
-        jQuery("#pauseRendering").get(0).childNodes[1].innerText = "pause";
+        swapLucideIcon(jQuery("#pauseRendering").get(0), "pause");
         animate();
 
         // Get Pid of compile process
@@ -87,13 +99,20 @@ function loadButtonActions() {
 
     // File Browser Toolbar close button
     jQuery("#bt_close_file_toolbar").click(function () {
-        if (jQuery("#bt_close_file_toolbar").hasClass("AssetsToggleOn")) {
-            jQuery("#bt_close_file_toolbar").addClass("AssetsToggleOff").removeClass("AssetsToggleOn");
+        let btn = jQuery(this);
+        if (btn.hasClass("AssetsToggleOn")) {
+            btn.addClass("AssetsToggleOff").removeClass("AssetsToggleOn");
+            btn.data('toggle', 'off');
+            swapLucideIcon(this, 'panel-left-open');
         } else {
-            jQuery("#bt_close_file_toolbar").addClass("AssetsToggleOn").removeClass("AssetsToggleOff");
+            btn.addClass("AssetsToggleOn").removeClass("AssetsToggleOff");
+            btn.data('toggle', 'on');
+            swapLucideIcon(this, 'panel-left-close');
         }
         jQuery("#assetBrowserToolbar").toggle("slow");
         jQuery("#filemanager").toggle("slow");
+        jQuery(".environmentBar").toggleClass("sidebar-closed"); // Sync toolbar position
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
     // Scenes List Toolbar close button
@@ -176,18 +195,20 @@ function loadButtonActions() {
         if (btn.data('toggle') === 'on') {
 
             // Hide
-            btn.addClass('mdc-theme--text-hint-on-light');
-            btn.removeClass('mdc-theme--secondary');
-            icon.html('<i class="material-icons" style="background: none; opacity:1; font-size:11pt">visibility_off</i>');
+            btn.addClass('tw-opacity-40');
+            btn.removeClass('tw-text-primary');
+            icon.html('<i data-lucide="eye-off" style="background: none; opacity:1; width:14px; height:14px;"></i>');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             btn.data('toggle', 'off');
 
             jQuery("#sceneJsonContent").hide();  // Lights bar
 
         } else {
             // Show
-            btn.removeClass('mdc-theme--text-hint-on-light');
-            btn.addClass('mdc-theme--secondary');
-            icon.html('<i class="material-icons" style="background: none; opacity:1; font-size:11pt">visibility</i>');
+            btn.removeClass('tw-opacity-40');
+            btn.addClass('tw-text-primary');
+            icon.html('<i data-lucide="eye" style="background: none; opacity:1; width:14px; height:14px;"></i>');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             btn.data('toggle', 'on');
 
             jQuery("#sceneJsonContent").show(); // Lights bar
@@ -323,14 +344,14 @@ function loadButtonActions() {
             btn.data('toggle', 'off');
         }
 
-        btn.toggleClass('mdc-theme--secondary-bg');
+        btn.toggleClass('tw-bg-primary');
     });
 
     if (firstPersonBlockerBtn) {
         firstPersonBlockerBtn.addEventListener('click', function (event) {
 
             firstPersonViewWithoutLock();
-            jQuery("#firstPersonBlockerBtn").toggleClass('mdc-theme--secondary-bg');
+            jQuery("#firstPersonBlockerBtn").toggleClass('tw-bg-primary');
 
         }, false);
     }
@@ -421,7 +442,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
         envir.updateCameraGivenSceneLimits();
 
         envir.orbitControls.object.updateProjectionMatrix();
-        jQuery("#dim-change-btn").toggleClass('mdc-theme--secondary-bg');
+        jQuery("#dim-change-btn").toggleClass('tw-bg-primary');
     });
 
 
@@ -470,7 +491,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
     if (toggleUIBtn) {
 
         const uiElementsToToggle = [
-            document.querySelector('.scene_editor_upper_toolbar'),
+            // upper toolbar kept visible (toggle button lives there)
             document.querySelector('.assetBrowserToolbar'),
             document.querySelector('.right-elements-panel-style'),
             document.querySelector('.environmentBar'),
@@ -495,9 +516,8 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 
             if (isHiding) {
                 // --- HIDE UI ---
-                btn.classList.add('mdc-theme--text-hint-on-light');
-                btn.classList.remove('mdc-theme--secondary');
-                if (icon) icon.textContent = 'visibility_off';
+                btn.classList.add('tw-opacity-40');
+                swapLucideIcon(btn, 'eye-off');
                 btn.dataset.toggle = 'off';
 
                 uiElementsToToggle.forEach(el => el.style.display = 'none');
@@ -511,9 +531,8 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 
             } else {
                 // --- SHOW UI ---
-                btn.classList.remove('mdc-theme--text-hint-on-light');
-                btn.classList.add('mdc-theme--secondary');
-                if (icon) icon.textContent = 'visibility';
+                btn.classList.remove('tw-opacity-40');
+                swapLucideIcon(btn, 'eye');
                 btn.dataset.toggle = 'on';
 
                 uiElementsToToggle.forEach(el => {
@@ -601,7 +620,7 @@ function setVisiblityLightHelpingElements(statusVisibility) {
 
 function pauseClickFun() {
     isPaused = !isPaused;
-    jQuery("#pauseRendering").get(0).childNodes[1].innerText = isPaused ? "pause" : "play_arrow";
+    swapLucideIcon(jQuery("#pauseRendering").get(0), isPaused ? "pause" : "play");
 
     if (!isPaused) {
         animate();
