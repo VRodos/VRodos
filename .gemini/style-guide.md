@@ -70,11 +70,24 @@ Single source of truth: `js_libs/vrodos_icons.js`
 
 ---
 
+## Template & CSS Loading
+
+ALL 4 templates follow this normalized structure:
+- `data-theme="emerald"` on `<html>` ONLY — never on inner elements
+- `vrodos-manager-wrapper tw-overflow-hidden` on `<body>` — ALL templates
+- ALL `wp_enqueue_style/script` calls in `class-vrodos-asset-manager.php` — NEVER in templates
+- NO inline `<script src="CDN">` — register and enqueue via WP
+- NO `<script>` before `<!DOCTYPE html>` — inline scripts go inside `<head>` after `wp_head()`
+- Common CSS load order: `vrodos_frontend.css` → `vrodos_modern_compiled.css` → Lucide JS
+
+---
+
 ## Key Files
 
 | File | Purpose |
 |------|---------|
 | `CLAUDE.md` | Full AI agent rules (canonical) |
+| `includes/class-vrodos-asset-manager.php` | ALL script/style registration & enqueuing |
 | `js_libs/vrodos_icons.js` | Category icon map |
 | `css/vrodos_modern.css` | Source CSS (hand-written overrides) |
 | `css/vrodos_modern_compiled.css` | Auto-generated — DO NOT edit |
@@ -86,6 +99,8 @@ Single source of truth: `js_libs/vrodos_icons.js`
 
 - DO NOT commit code — provide commit text to the user
 - DO NOT manually run CSS builds
+- DO NOT add `wp_enqueue_style/script` in template files — use the asset manager
+- DO NOT add inline `<script src="CDN">` tags — register and enqueue via WP
 - DO call `lucide.createIcons()` after dynamic DOM insertion with `data-lucide`
 - DO use `absint()` for WP ID sanitization
 - Templates output full HTML pages, NOT WP shortcodes

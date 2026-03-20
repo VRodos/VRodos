@@ -15,27 +15,18 @@ class VRodos_Asset_Manager {
 		add_action( 'wp_enqueue_scripts', $this->enqueue_scene_editor_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_project_manager_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_assets_list_scripts(...) );
-		add_filter( 'script_loader_tag', $this->add_module_type_to_scripts(...), 10, 3 );
-	}
-
-	public function add_module_type_to_scripts( $tag, $handle, $src ) {
-		if ( 'shoelace_js' === $handle ) {
-			return str_replace( '<script ', '<script type="module" ', $tag );
-		}
-		return $tag;
 	}
 
 	public function enqueue_assets_list_scripts() {
-		if ( ! is_page_template( '/templates/vrodos-assets-list-template.php' ) && 
+		if ( ! is_page_template( '/templates/vrodos-assets-list-template.php' ) &&
              ! is_page_template( 'templates/vrodos-assets-list-template.php' ) &&
              ! is_page( VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' )[0]->ID ?? -1 ) ) {
 			return;
 		}
 
+		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
 		wp_enqueue_style( 'vrodos_modern_compiled' );
         wp_enqueue_script( 'lucide-icons' );
-		wp_enqueue_style( 'shoelace_css' );
-		wp_enqueue_script( 'shoelace_js' );
 
 		$isAdmin = is_admin() ? 'back' : 'front';
 		wp_add_inline_script( 'vrodos_scripts', 'var isAdmin="' . $isAdmin . '";' );
@@ -76,10 +67,10 @@ class VRodos_Asset_Manager {
 		);
 
 		wp_enqueue_script( 'vrodos_project_manager' );
-        wp_enqueue_script( 'lucide-icons' );
+
+		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
 		wp_enqueue_style( 'vrodos_modern_compiled' );
-		wp_enqueue_style( 'shoelace_css' );
-		wp_enqueue_script( 'shoelace_js' );
+        wp_enqueue_script( 'lucide-icons' );
 
 		$user                = wp_get_current_user();
 		$perma_structure     = (bool) get_option( 'permalink_structure' );
@@ -219,7 +210,8 @@ class VRodos_Asset_Manager {
 			return;
 		}
 
-		// Stylesheet
+		// Styles
+		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
 		wp_enqueue_style( 'vrodos_asseteditor_stylesheet' );
 		wp_enqueue_style( 'vrodos_modern_compiled' );
 		wp_enqueue_script( 'lucide-icons' );
@@ -330,7 +322,6 @@ class VRodos_Asset_Manager {
       // Other Libraries
       ['vrodos_load_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js'],
       ['vrodos_material_scripts', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.js'],
-      ['shoelace_js', 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/dist/shoelace-autoloader.js'],
       ['lucide-icons', 'https://unpkg.com/lucide@0.469.0'],
   ];
 
@@ -354,9 +345,5 @@ class VRodos_Asset_Manager {
 		wp_register_style( 'vrodos_widgets_stylesheet', $plugin_url . 'css/vrodos_widgets.css' );
 		wp_register_style( 'vrodos_material_icons', $plugin_url . 'css/material-icons/material-icons.css' );
 		wp_register_style( 'vrodos_modern_compiled', $plugin_url . 'css/vrodos_modern_compiled.css' );
-		wp_register_style( 'shoelace_css', 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/dist/themes/light.css' );
-
-		wp_enqueue_style( 'vrodos_backend' );
-		wp_enqueue_style( 'vrodos_dashboard_table' );
 	}
 }

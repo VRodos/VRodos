@@ -1,35 +1,28 @@
 <?php
-wp_enqueue_style('vrodos_frontend_stylesheet');
+// Scripts & styles are enqueued by VRodos_Asset_Manager::enqueue_asset_editor_scripts()
 
 // Is on back or front end ?
 $isAdmin = is_admin() ? 'back' : 'front';
-?>
 
-	<script>
-		let isAdmin="<?php echo $isAdmin; ?>";
-		console.log("VRodos: Asset Editor Template Loaded");
-	</script>
-
-<?php
 $data = VRodos_Asset_CPT_Manager::prepare_asset_editor_template_data();
 extract($data);
 ?>
-	<script>
-		let path_url = null;
-		let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
-		let no_img_path = '<?php echo esc_url($no_img_path_url ?? ''); ?>';
-		var asset_title = <?php echo json_encode($asset_title_value); ?>;
-	</script>
 <!DOCTYPE html>
 <html lang="en" data-theme="emerald">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asset Editor | VRodos</title>
-    <script src="https://unpkg.com/lucide@0.469.0"></script>
     <?php wp_head(); ?>
+    <script>
+        let isAdmin="<?php echo $isAdmin; ?>";
+        let path_url = null;
+        let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
+        let no_img_path = '<?php echo esc_url($no_img_path_url ?? ''); ?>';
+        var asset_title = <?php echo json_encode($asset_title_value); ?>;
+    </script>
 </head>
-<body <?php body_class('vrodos-manager-wrapper tw-bg-slate-50 tw-text-slate-900 tw-antialiased tw-overflow-hidden'); ?>>
+<body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
 
 <div id="vrodos-asset-editor" class="vrodos-main-h tw-flex tw-flex-col tw-bg-slate-50 tw-overflow-hidden">
 

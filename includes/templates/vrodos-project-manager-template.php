@@ -1,7 +1,4 @@
 <?php
-
-wp_enqueue_style('vrodos_frontend_stylesheet');
-
 $perma_structure = (bool)get_option('permalink_structure');
 $parameter_pass = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
 $parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
@@ -13,7 +10,7 @@ $editgamePage = VRodos_Core_Manager::vrodos_getEditpage('game');
 $pluginpath = dirname(plugin_dir_url(__DIR__));
 $pluginpath = str_replace('\\', '/', $pluginpath);
 
-// Scripts are enqueued by VRodos_Asset_Manager::enqueue_project_manager_scripts()
+// Scripts & styles are enqueued by VRodos_Asset_Manager::enqueue_project_manager_scripts()
 
 $full_title = 'Projects';
 $full_title_lowercase = 'projects';
@@ -21,11 +18,11 @@ $single = 'project';
 $multiple = 'projects';
 ?>
 <!DOCTYPE html>
-<html lang="en" class="sl-theme-light" data-theme="emerald">
+<html lang="en" data-theme="emerald">
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>VRodos Project Manager</title>
-    <script src="https://unpkg.com/lucide@0.469.0"></script>
 	<?php wp_head(); ?>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
@@ -58,7 +55,7 @@ else {
 ?>
 
 <!-- Core Manager Scope -->
-<div id="vrodos-project-manager-wrapper" data-theme="emerald" class="vrodos-main-h tw-bg-base-100">
+<div id="vrodos-project-manager-wrapper" class="vrodos-main-h tw-bg-base-100">
     
     <div id="vrodos-project-manager" 
          class="tw-flex tw-flex-col tw-overflow-hidden" 
@@ -164,7 +161,7 @@ else {
 }?>
 
     <!-- Modals Wrapper (Direct child of body to break out of any parent clipping) -->
-    <div id="vrodos-modal-wrapper" data-theme="emerald">
+    <div id="vrodos-modal-wrapper">
         
         <!-- Reusable Delete Project Dialog -->
         <?php 

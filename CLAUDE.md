@@ -137,11 +137,73 @@ ALL category-to-icon mappings live in `js_libs/vrodos_icons.js`:
 
 ---
 
-## 5. File Structure & Conventions
+## 5. Template & CSS Loading Architecture
+
+### Normalized Template Structure (ALL 4 templates follow this)
+
+Every template outputs a full HTML page. The structure MUST be:
+
+```php
+<?php
+// PHP data preparation (NO wp_enqueue_style/script calls here!)
+$data = SomeClass::prepare_data();
+extract($data);
+?>
+<!DOCTYPE html>
+<html lang="en" data-theme="emerald">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Title | VRodos</title>
+    <?php wp_head(); ?>
+    <!-- Template-specific inline <script> OK here, AFTER wp_head() -->
+</head>
+<body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
+    ...
+    <?php wp_footer(); ?>
+</body>
+</html>
+```
+
+### Rules
+
+- `data-theme="emerald"` goes on `<html>` ONLY — never on inner elements
+- `vrodos-manager-wrapper` on `<body>` is REQUIRED (Tailwind `important` selector needs it)
+- `tw-overflow-hidden` on `<body>` on ALL templates
+- **NO** `wp_enqueue_style()` or `wp_enqueue_script()` at template PHP top — all enqueuing in `class-vrodos-asset-manager.php`
+- **NO** inline `<script src="...">` for libraries — use `wp_enqueue_script()` via the asset manager
+- **NO** `<script>` blocks before `<!DOCTYPE html>` — they go inside `<head>` after `wp_head()`
+- Shoelace is NOT used — removed. Do not re-add.
+
+### CSS Load Order (Controlled by Asset Manager)
+
+Every VRodos page loads this common base (in order):
+1. `vrodos_frontend_stylesheet` — base VRodos styles
+2. `vrodos_modern_compiled` — Tailwind utilities + DaisyUI manual overrides
+3. Lucide icons JS (via `wp_enqueue_script`)
+
+Scene editor additionally loads: MDC CSS, Material Icons, lil-gui, `vrodos_3D_editor.css`, `vrodos_3D_editor_browser.css`
+Asset editor additionally loads: `vrodos_asseteditor.css`
+
+### Where Enqueuing Happens
+
+| Page | Enqueue function |
+|------|-----------------|
+| Project Manager | `VRodos_Asset_Manager::enqueue_project_manager_scripts()` |
+| Assets List | `VRodos_Asset_Manager::enqueue_assets_list_scripts()` |
+| Asset Editor | `VRodos_Asset_Manager::enqueue_asset_editor_scripts()` |
+| Scene Editor | `VRodos_Asset_Manager::enqueue_scene_editor_scripts()` |
+
+**DO NOT** add `wp_enqueue_style/script` calls inside templates. Always add to the appropriate function above.
+
+---
+
+## 6. File Structure & Conventions
 
 ### Key Files
 | File | Purpose |
 |------|---------|
+| `includes/class-vrodos-asset-manager.php` | ALL script/style registration & enqueuing |
 | `includes/templates/vrodos-edit-3D-scene-template.php` | Main scene editor template |
 | `includes/templates/vrodos-edit-3D-scene-HierarchyViewer.php` | Right panel (hierarchy + options) |
 | `includes/templates/vrodos-edit-3D-scene-Popups.php` | Property popups (lights, door, POI) |
@@ -163,11 +225,13 @@ ALL category-to-icon mappings live in `js_libs/vrodos_icons.js`:
 
 ---
 
-## 6. General Rules
+## 7. General Rules
 
 - **DO NOT** commit code — provide commit text to the user
 - **DO NOT** manually run CSS builds — `npm run watch:css` is automatic
 - **DO NOT** use Material Design Icons — migrating to Lucide (except scene-editor MDC still loaded)
+- **DO NOT** add `wp_enqueue_style/script` in template files — use the asset manager
+- **DO NOT** add inline `<script src="CDN">` tags — register and enqueue via WP
 - **DO** add null guards when accessing `transform_controls.object` — it can be undefined
 - **DO** call `lucide.createIcons()` after any dynamic DOM insertion containing `data-lucide` attributes
 - **DO** use `absint()` for WordPress ID sanitization, `sanitize_text_field()` for strings

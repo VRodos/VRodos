@@ -1,35 +1,33 @@
 <?php
 // Prepare data for the template
+// Scripts & styles are enqueued by VRodos_Asset_Manager::enqueue_scene_editor_scripts()
 $data = VRodos_Scene_CPT_Manager::prepare_scene_editor_data();
 extract( $data );
 ?>
-
-<script type="text/javascript">
-	// Keep track for the undo-redo function
-	var post_revision_no = 1;
-
-	// is rendering paused
-	isPaused = false;
-
-	// Use lighting or basic materials (basic does not employ light, no shadows)
-	window.isAnyLight = true;
-
-	// For autosave after each action
-	var mapActions = {}; // You could also use an array
-
-	var showPawnPositions = "false";
-</script>
-
 <!DOCTYPE html>
 <html lang="en" data-theme="emerald">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Scene Editor | VRodos</title>
-	<script src="https://unpkg.com/lucide@0.469.0"></script>
 	<?php wp_head(); ?>
+	<script type="text/javascript">
+		// Keep track for the undo-redo function
+		var post_revision_no = 1;
+
+		// is rendering paused
+		isPaused = false;
+
+		// Use lighting or basic materials (basic does not employ light, no shadows)
+		window.isAnyLight = true;
+
+		// For autosave after each action
+		var mapActions = {}; // You could also use an array
+
+		var showPawnPositions = "false";
+	</script>
 </head>
-<body id="vrodos-scene-editor" <?php body_class( 'vrodos-manager-wrapper' ); ?>>
+<body id="vrodos-scene-editor" <?php body_class( 'vrodos-manager-wrapper tw-overflow-hidden' ); ?>>
 <?php if ( ! is_user_logged_in() || ! current_user_can( 'administrator' ) ) { ?>
 
 	<!-- if user not logged in, then prompt to log in -->

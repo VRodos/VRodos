@@ -22,4 +22,12 @@ Working (hand-styled only): d-btn, d-checkbox, d-radio, d-modal, d-input, d-sele
 - CSS auto-builds via npm run watch:css — DO NOT manually rebuild
 - Templates output full HTML pages (DOCTYPE), not WP shortcodes
 
+## Template & CSS Rules
+
+- ALL enqueuing in class-vrodos-asset-manager.php — NEVER wp_enqueue in templates
+- NO inline <script src="CDN"> — register and enqueue via WP
+- data-theme="emerald" on <html> ONLY — never on inner divs
+- <body> always has: vrodos-manager-wrapper tw-overflow-hidden
+- Common CSS: vrodos_frontend.css → vrodos_modern_compiled.css → Lucide JS
+
 See CLAUDE.md for complete rules.
