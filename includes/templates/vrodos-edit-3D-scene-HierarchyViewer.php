@@ -11,11 +11,24 @@
     </a>
 
     <!-- Hierarchy viewer -->
-    <div id="row6" class="row-right-panel" style="max-height:30%;">
+    <div id="row6" class="row-right-panel">
         <div class="tw-flex tw-flex-col tw-w-full tw-bg-slate-200" id="hierarchy-viewer-container">
             <span class="tw-font-semibold tw-text-sm tw-text-slate-700 tw-px-3 tw-py-1.5">Hierarchy Viewer</span>
             <hr class="tw-border-slate-300">
-            <ul id="hierarchy-viewer" class="tw-list-none tw-m-0 tw-pl-3 tw-pr-1" style="max-height: 200px; overflow-y: auto;"></ul>
+            <ul id="hierarchy-viewer" class="tw-list-none tw-m-0 tw-pl-3 tw-pr-1" style="max-height: 50vh; overflow-y: auto;">
+                <!-- Skeleton placeholders (removed when all assets finish loading) -->
+                <li id="hierarchy-skeleton" style="padding: 8px; display: flex; flex-direction: column; gap: 10px;">
+                    <style>
+                        @keyframes skeleton-pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.7; } }
+                        .skel-bar { background: #94a3b8; border-radius: 4px; animation: skeleton-pulse 1.5s ease-in-out infinite; }
+                    </style>
+                    <div style="display:flex; align-items:center; gap:8px;"><div class="skel-bar" style="width:16px; height:16px; flex-shrink:0;"></div><div class="skel-bar" style="height:12px; flex:1;"></div><div class="skel-bar" style="width:32px; height:12px;"></div></div>
+                    <div style="display:flex; align-items:center; gap:8px;"><div class="skel-bar" style="width:16px; height:16px; flex-shrink:0;"></div><div class="skel-bar" style="height:12px; width:75%;"></div><div class="skel-bar" style="width:32px; height:12px;"></div></div>
+                    <div style="display:flex; align-items:center; gap:8px;"><div class="skel-bar" style="width:16px; height:16px; flex-shrink:0;"></div><div class="skel-bar" style="height:12px; width:60%;"></div><div class="skel-bar" style="width:32px; height:12px;"></div></div>
+                    <div style="display:flex; align-items:center; gap:8px;"><div class="skel-bar" style="width:16px; height:16px; flex-shrink:0;"></div><div class="skel-bar" style="height:12px; width:80%;"></div><div class="skel-bar" style="width:32px; height:12px;"></div></div>
+                    <div style="display:flex; align-items:center; gap:8px;"><div class="skel-bar" style="width:16px; height:16px; flex-shrink:0;"></div><div class="skel-bar" style="height:12px; width:50%;"></div><div class="skel-bar" style="width:32px; height:12px;"></div></div>
+                </li>
+            </ul>
         </div>
     </div>
 
