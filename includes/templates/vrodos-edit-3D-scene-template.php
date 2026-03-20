@@ -222,7 +222,7 @@ extract( $data );
 				?>
 
 				<!-- Floating Object Controls Panel -->
-				<div id="object-controls-panel" class="tw-absolute tw-z-[1100] tw-hidden tw-flex tw-flex-col tw-w-[280px] tw-bg-slate-800/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-2xl tw-border tw-border-white/10 tw-text-white tw-overflow-hidden" style="top: 100px; right: 320px;">
+				<div id="object-controls-panel" class="tw-fixed tw-z-[9999] tw-hidden tw-flex tw-flex-col tw-w-[280px] tw-bg-slate-800/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-2xl tw-border tw-border-white/10 tw-text-white tw-overflow-hidden" style="top: 140px; right: 340px;">
 
 					<!-- Draggable header -->
 					<div id="object-controls-header" class="tw-flex tw-items-center tw-justify-between tw-px-3 tw-py-1.5 tw-bg-slate-700/80 tw-cursor-move tw-select-none tw-border-b tw-border-white/10">

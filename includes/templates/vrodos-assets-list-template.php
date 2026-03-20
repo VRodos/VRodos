@@ -10,16 +10,17 @@ $data = VRodos_Pages_Manager::prepare_assets_list_page_data();
 extract( $data );
 
 /**
- * Helper to get Lucide icon for asset category
+ * Helper to get Lucide icon for asset category.
+ * Must stay in sync with js_libs/vrodos_icons.js (single source of truth).
  */
 function vrodos_get_asset_category_icon($category_slug) {
     $map = [
-        'decoration' => 'leaf',
-        'poi-link' => 'external-link',
-        'chat' => 'message-square',
-        'poi-imagetext' => 'file-text',
-        'door' => 'door-open',
-        'video' => 'video'
+        'decoration'    => 'leaf',
+        'door'          => 'door-open',
+        'video'         => 'clapperboard',
+        'poi-imagetext' => 'image',
+        'chat'          => 'message-square',
+        'poi-link'      => 'external-link',
     ];
     return $map[$category_slug] ?? 'package';
 }

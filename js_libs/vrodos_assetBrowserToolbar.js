@@ -158,7 +158,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
                 name = escapeHTML(f['asset_name']);
 
-                let lucideIconName = vrodos_getLucideIconName(f['category_icon']);
+                let lucideIconName = vrodos_getCategoryIcon(f['category_slug'] || f['category_icon']);
 
                 // Add the category in tabs if not yet added
                 if (jQuery("#assetCategTab").find("[id='" + f.category_slug + "']").length == 0) {
@@ -231,26 +231,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         //closeButton.click();
     }
 
-    /**
-     * Map Material icons to Lucide icons
-     * @param iconName
-     * @returns {string}
-     */
-    function vrodos_getLucideIconName(iconName) {
-        const mapping = {
-            'grid_on': 'layout-grid',
-            'exit_to_app': 'door-open',
-            'movie': 'clapperboard',
-            'image': 'image',
-            'chat': 'message-square',
-            'open_in_new': 'external-link',
-            'public': 'globe',
-            'theaters': 'clapperboard',
-            'account_balance': 'landmark'
-        };
-
-        return mapping[iconName] || iconName;
-    }
+    // Icon mapping now handled by vrodos_icons.js (single source of truth)
 
     // This function escapes special html characters in names
     function escapeHTML(text) {

@@ -125,6 +125,7 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_load147_RGBELoader' );
 		wp_enqueue_script( 'vrodos_load147_GLTFLoader' );
 		wp_enqueue_script( 'vrodos_inflate' );
+		wp_enqueue_script( 'vrodos_icons' );
 		wp_enqueue_script( 'vrodos_HierarchyViewer' );
 		wp_enqueue_script( 'vrodos_load_lilgui' );
 		wp_enqueue_script( 'vrodos_load147_OrbitControls' );
@@ -298,6 +299,7 @@ class VRodos_Asset_Manager {
       ['vrodos_LightsPawn_Loader', $plugin_url_js . 'vrodos_LightsPawn_Loader.js'],
       ['vrodos_movePointerLocker', $plugin_url_js . 'vrodos_movePointerLocker.js'],
       ['vrodos_addRemoveOne', $plugin_url_js . 'vrodos_addRemoveOne.js'],
+      ['vrodos_icons', $plugin_url_js . 'vrodos_icons.js'],
       ['vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'],
       ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'],
       ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game']],

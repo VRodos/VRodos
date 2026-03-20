@@ -15,20 +15,87 @@ function resetInScene(name){
     }
 }
 
+/**
+ * Get the Lucide icon for a scene object.
+ * Tries category_slug first (taxonomy assets), then category_name (lights/pawn),
+ * using the shared VRODOS_CATEGORY_ICONS map from vrodos_icons.js.
+ */
+function _hierarchyIconForObject(obj) {
+    if (obj.name === 'avatarCamera') return vrodos_getCategoryIcon('director');
+    // Prefer category_slug (taxonomy), fall back to category_name (runtime lights/pawn)
+    return vrodos_getCategoryIcon(obj.category_slug) !== VRODOS_CATEGORY_ICON_DEFAULT
+        ? vrodos_getCategoryIcon(obj.category_slug)
+        : vrodos_getCategoryIcon(obj.category_name);
+}
+
+/**
+ * Friendly label map for light category_name values
+ */
+const _lightLabelMap = {
+    'lightSun':     'Sun',
+    'lightLamp':    'Lamp',
+    'lightSpot':    'Spot',
+    'lightAmbient': 'Ambient',
+};
+
+/**
+ * Create a friendly display name for hierarchy items.
+ * Lights: "Sun 1", "Lamp 2", etc.   Target spots: "Sun 1 — Target"
+ * Director stays "Director".  Others keep their asset_name.
+ */
+function _hierarchyDisplayName(obj) {
+    if (obj.name === 'avatarCamera') return 'Director';
+
+    const cat = obj.category_name || '';
+
+    // For lights, count how many of the same type appear *before* this one in traversal order
+    if (_lightLabelMap[cat]) {
+        let index = 0;
+        let found = false;
+        envir.scene.traverse(function (child) {
+            if (found) return;
+            if (child.category_name === cat && child.isSelectableMesh) {
+                index++;
+                if (child === obj) found = true;
+            }
+        });
+        return _lightLabelMap[cat] + ' ' + index;
+    }
+
+    if (cat === 'lightTargetSpot') {
+        // Derive from the parent light's display name
+        const parentName = obj.name.replace('lightTargetSpot_', '');
+        let parentObj = envir.scene.getObjectByName(parentName);
+        if (parentObj) {
+            return _hierarchyDisplayName(parentObj) + ' — Target';
+        }
+        return 'Light Target';
+    }
+
+    return obj.asset_name || obj.name;
+}
+
 function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML){
 
+    let iconName = _hierarchyIconForObject(obj);
+    let categoryName = obj.category_name || '';
+    let isLight = categoryName.startsWith('light');
+    let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-slate-400';
+    if (obj.name === 'avatarCamera') iconColor = 'tw-text-blue-400';
+
     jQuery('#hierarchy-viewer').append(
-        '<li class="hierarchyItem tw-flex tw-items-center tw-py-1 tw-px-1 tw-border-b tw-border-slate-300 hover:tw-bg-slate-300/50 tw-cursor-pointer" id="' + obj.uuid + '" data-name="' +obj.name+'">' +
-        '<a href="javascript:void(0);" class="tw-flex-1 tw-min-w-0 tw-text-[9pt] tw-leading-[12pt] tw-text-slate-700 tw-no-underline" ' +
-        'title="'+ obj.title +'" onclick="onMouseDoubleClickFocus(event,\'' + obj.uuid + '\')">' +
-        '<span>' +
-        object_name + '<br />' +
-        '<span class="tw-text-[7pt] tw-text-slate-400">' + created + '</span>' +
-        '</span>' +
+        '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-slate-200/60 hover:tw-bg-blue-50/70 tw-cursor-pointer tw-transition-colors" id="' + obj.uuid + '" data-name="' + obj.name + '">' +
+        '<i data-lucide="' + iconName + '" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ' + iconColor + '"></i>' +
+        '<a href="javascript:void(0);" class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-[9pt] tw-leading-tight tw-text-slate-700 tw-no-underline" ' +
+        'title="' + (obj.title || object_name) + '" onclick="onMouseDoubleClickFocus(event,\'' + obj.uuid + '\')">' +
+        '<span class="tw-font-medium">' + object_name + '</span>' +
+        (created ? '<br/><span class="tw-text-[7pt] tw-text-slate-400 tw-font-normal">' + created + '</span>' : '') +
         '</a>' +
+        '<span class="tw-flex tw-items-center tw-gap-0.5 tw-flex-shrink-0">' +
         deleteButtonHTML +
         resetButtonHTML +
         lockButtonHTML +
+        '</span>' +
         '</li>');
 }
 
@@ -90,7 +157,7 @@ function setHierarchyViewer() {
 
         if (obj.isSelectableMesh || obj.name === "avatarCamera") {
 
-            let asset_name = obj.name === 'avatarCamera' ? "Director" : obj.asset_name;
+            let asset_name = _hierarchyDisplayName(obj);
 
             let created = obj.name === 'avatarCamera' ? "" : unixTimestamp_to_time(
                 obj.name.substring(obj.name.length - 10, obj.name.length));
@@ -115,14 +182,16 @@ function setHierarchyViewer() {
 // Single object add in Hierarchy
 function addInHierarchyViewer(obj) {
 
-    let asset_name = obj['category_name'] !== 'lightTargetSpot' ? obj['asset_name'] : obj.name.substring(0, obj.name.length - 11);
+    let asset_name = _hierarchyDisplayName(obj);
 
     let created = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
 
     let deleteButton = obj['category_name'] === "lightTargetSpot" ? "" : CreateDeleteButton(obj);
 
+    let lockButton = obj['category_name'] === "lightTargetSpot" ? "" : CreateLockButton(obj);
+
     // Add as a list item
-    AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj), CreateLockButton(obj));
+    AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj), lockButton);
 
     // Render Lucide icons in dynamically added items
     if (typeof lucide !== 'undefined') lucide.createIcons();

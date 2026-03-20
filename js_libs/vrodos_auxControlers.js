@@ -173,34 +173,36 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Draggable via header
-    let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+    // Draggable via header — use delta from initial pointer position
+    // Panel is position:fixed, so coordinates are viewport-relative
+    let isDragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
     header.addEventListener('pointerdown', function (e) {
         if (e.target.closest('button')) return; // don't drag on close button
         isDragging = true;
 
-        // Always resolve position relative to offset parent using getBoundingClientRect
+        // For fixed positioning, getBoundingClientRect gives viewport coords directly
         var rect = panel.getBoundingClientRect();
-        var parentRect = panel.offsetParent ? panel.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
-        var currentLeft = rect.left - parentRect.left;
-        var currentTop = rect.top - parentRect.top;
+        startLeft = rect.left;
+        startTop = rect.top;
 
-        // Convert to left/top positioning immediately (before any move)
-        panel.style.left = currentLeft + 'px';
-        panel.style.top = currentTop + 'px';
+        // Convert to left/top positioning (from right)
+        panel.style.left = startLeft + 'px';
+        panel.style.top = startTop + 'px';
         panel.style.right = 'auto';
 
-        dragOffsetX = e.clientX - currentLeft;
-        dragOffsetY = e.clientY - currentTop;
+        // Remember the starting pointer position
+        startX = e.clientX;
+        startY = e.clientY;
+
         header.setPointerCapture(e.pointerId);
         e.preventDefault();
     });
 
     header.addEventListener('pointermove', function (e) {
         if (!isDragging) return;
-        panel.style.left = (e.clientX - dragOffsetX) + 'px';
-        panel.style.top = (e.clientY - dragOffsetY) + 'px';
+        panel.style.left = (startLeft + e.clientX - startX) + 'px';
+        panel.style.top  = (startTop  + e.clientY - startY) + 'px';
     });
 
     header.addEventListener('pointerup', function (e) {
