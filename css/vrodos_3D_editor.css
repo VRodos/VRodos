@@ -465,6 +465,27 @@ html [type="button"],
 	appearance: none;
 }
 
+/* lil-gui inside floating panel: no title, always open, transparent background */
+#numerical_gui-container .lil-gui {
+	--background-color: transparent;
+	--widget-color: rgba(255,255,255,0.12);
+	--number-color: #4fc3f7;
+	--string-color: #4fc3f7;
+	--text-color: #e2e8f0;
+	--title-background-color: transparent;
+	--title-text-color: #94a3b8;
+	border: none !important;
+}
+
+#numerical_gui-container .lil-gui.autoHeight {
+	max-height: none !important;
+	overflow: visible !important;
+}
+
+#numerical_gui-container .lil-gui .children {
+	display: block !important;
+}
+
 
 
 

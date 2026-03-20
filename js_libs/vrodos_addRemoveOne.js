@@ -108,7 +108,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.attach(insertedObject);
 
         // highlight
-        envir.outlinePass.selectedObjects = [insertedObject];
+        removeAllCelOutlines(); addCelOutline(insertedObject);
         //envir.renderer.setClearColor(0xeeeeee, 1);
         //envir.scene.add(transform_controls);
 
@@ -210,7 +210,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.attach(insertedObject);
 
         // highlight
-        envir.outlinePass.selectedObjects = [insertedObject];
+        removeAllCelOutlines(); addCelOutline(insertedObject);
         //envir.renderer.setClearColor(0xeeeeee, 1);
         //envir.scene.add(transform_controls);
         transform_controls.object.color.setHex(hexcol);
@@ -320,7 +320,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.attach(insertedObject);
 
         // highlight
-        envir.outlinePass.selectedObjects = [insertedObject];
+        removeAllCelOutlines(); addCelOutline(insertedObject);
         //envir.renderer.setClearColor(0xeeeeee, 1);
         //envir.scene.add(transform_controls);
 
@@ -392,7 +392,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         transform_controls.attach(insertedObject);
 
         // highlight
-        envir.outlinePass.selectedObjects = [insertedObject];
+        removeAllCelOutlines(); addCelOutline(insertedObject);
         //envir.renderer.setClearColor(0xeeeeee, 1);
         //envir.scene.add(transform_controls);
 
@@ -480,7 +480,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
                 transform_controls.attach(insertedObject);
 
                 // highlight
-                envir.outlinePass.selectedObjects = [insertedObject];
+                removeAllCelOutlines(); addCelOutline(insertedObject);
                 //envir.renderer.setClearColor(0xeeeeee, 1);
                 //envir.scene.add(transform_controls);
 
@@ -562,7 +562,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             // highlight
             envir.composer = [];
             envir.setComposerAndPasses();
-            envir.outlinePass.selectedObjects = [insertedObject];
+            removeAllCelOutlines(); addCelOutline(insertedObject);
 
             selected_object_name = nameModel;
 

@@ -539,7 +539,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                 if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = false;
                 if (envir.gridHelper) envir.gridHelper.visible = false;
                 if (envir.axesHelper) envir.axesHelper.visible = false;
-                if (envir.outlinePass) envir.outlinePass.enabled = false;
+                removeAllCelOutlines();
                 setVisiblityLightHelpingElements(false);
 
             } else {
@@ -556,7 +556,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                 transform_controls.visible = true;
                 if (envir.gridHelper) envir.gridHelper.visible = true;
                 if (envir.axesHelper) envir.axesHelper.visible = true;
-                if (envir.outlinePass) envir.outlinePass.enabled = true;
+                if (transform_controls.object) addCelOutline(transform_controls.object);
                 setVisiblityLightHelpingElements(true);
 
                 if (envir.thirdPersonView || avatarControlsEnabled) {

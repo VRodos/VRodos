@@ -113,8 +113,17 @@ function onLeftMouseDown(event) {
 
     let intersects = findIntersected(event);
 
-    if (intersects.length === 0)
+    if (intersects.length === 0) {
+        // Clicked empty canvas — deselect current object
+        if (event.button === 0) {
+            transform_controls.detach();
+            removeAllCelOutlines();
+            hideObjectControlsPanel();
+            jQuery('#object-manipulation-toggle').hide();
+            jQuery('#axis-manipulation-buttons').hide();
+        }
         return;
+    }
 
     if (intersects.length > 0) {
 
@@ -124,8 +133,9 @@ function onLeftMouseDown(event) {
 
             setBackgroundColorHierarchyViewer("avatarCamera");
 
-            // highlight
-            envir.outlinePass.selectedObjects = intersects[0];
+            // highlight — cel outline on avatar
+            removeAllCelOutlines();
+            addCelOutline(envir.scene.getObjectByName("avatarCamera"));
 
             transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
@@ -283,8 +293,9 @@ function selectorMajor(event, objectSel, whocalls) {
             jQuery("#" + transform_controls.getMode() + "-switch").click();
         }
 
-        // highlight
-        envir.outlinePass.selectedObjects = [objectSel];
+        // highlight — cel-shaded outline
+        removeAllCelOutlines();
+        addCelOutline(objectSel);
 
         setDatGuiInitialVales(objectSel);
     }

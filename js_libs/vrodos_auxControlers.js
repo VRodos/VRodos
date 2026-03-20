@@ -7,6 +7,65 @@ var dg_s1_prev;
 var dg_s2_prev;
 var dg_s3_prev;
 
+// ─── Cel-shaded selection outline (back-face hull) ───
+
+const CEL_OUTLINE_TAG = '__cel_outline__';
+const CEL_OUTLINE_MATERIAL = new THREE.MeshBasicMaterial({
+    color: 0xff6600,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: false
+});
+
+/**
+ * Add a cel-shaded outline to the selected object.
+ * Works by cloning each mesh with BackSide rendering, slightly scaled up.
+ */
+function addCelOutline(object) {
+    if (!object) return;
+    removeCelOutline(object);
+
+    object.traverse(function (child) {
+        if (child.isMesh && child.name !== CEL_OUTLINE_TAG) {
+            const outline = new THREE.Mesh(child.geometry, CEL_OUTLINE_MATERIAL);
+            outline.name = CEL_OUTLINE_TAG;
+            outline.scale.setScalar(1.04);
+            outline.raycast = function () {}; // invisible to raycasting
+            outline.frustumCulled = false;
+            child.add(outline);
+        }
+    });
+}
+
+/**
+ * Remove cel-shaded outline from an object.
+ */
+function removeCelOutline(object) {
+    if (!object) return;
+    const toRemove = [];
+    object.traverse(function (child) {
+        if (child.name === CEL_OUTLINE_TAG) toRemove.push(child);
+    });
+    toRemove.forEach(function (mesh) {
+        if (mesh.parent) mesh.parent.remove(mesh);
+    });
+}
+
+/**
+ * Remove all cel outlines from the entire scene.
+ */
+function removeAllCelOutlines() {
+    if (typeof envir === 'undefined' || !envir.scene) return;
+    const toRemove = [];
+    envir.scene.traverse(function (child) {
+        if (child.name === CEL_OUTLINE_TAG) toRemove.push(child);
+    });
+    toRemove.forEach(function (mesh) {
+        if (mesh.parent) mesh.parent.remove(mesh);
+    });
+}
+
 // ─── Floating Object Controls Panel helpers ───
 
 function showObjectControlsPanel(objectName) {
@@ -73,6 +132,11 @@ document.addEventListener('DOMContentLoaded', function () {
 // GUI controls — lil-gui (successor to dat.gui)
 var controlInterface = new lil.GUI({ autoPlace: false });
 controlInterface.domElement.style.width = '100%';
+
+// Remove the lil-gui title bar (our floating panel has its own header)
+// and prevent collapsing — controls should always be visible
+controlInterface.$title.style.display = 'none';
+controlInterface.domElement.classList.add('autoHeight');
 
 let coordLabel = ['<span style="color:red">X</span>', '<span style="color:green">Y</span>', '<span style="color:blue">Z</span>'];
 let actionLabel = ['translate', 'translate', 'translate', 'rotate', 'rotate', 'rotate', 'scale', 'scale', 'scale'];

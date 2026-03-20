@@ -142,14 +142,9 @@ class vrodos_3d_editor_environmentals {
         this.outlinePass = [];
         this.outlinePass = new THREE.OutlinePass(
             new THREE.Vector2(this.SCREEN_WIDTH, this.SCREEN_HEIGHT), this.scene, camera);
-        this.outlinePass.visibleEdgeColor = new THREE.Color(0x00aa00);
-        // this.outlinePass.depthMaterial.morphTargets = true;
-        // this.outlinePass.prepareMaskMaterial.morphTargets = true;
-        // this.outlinePass.depthMaterial.skinning = true;
-        // this.outlinePass.prepareMaskMaterial.skinning = true;
-        this.outlinePass.edgeGlow = 5;
-        this.outlinePass.edgeStrength = 5;
-        this.outlinePass.edgeThickness = 2;
+        // OutlinePass disabled — replaced by cel-shaded back-face hull outline
+        // (see addCelOutline/removeCelOutline in vrodos_auxControlers.js)
+        this.outlinePass.enabled = false;
 
         // FX Pass
         this.effectFXAA = [];
