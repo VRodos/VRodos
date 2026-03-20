@@ -107,23 +107,21 @@
 
         <span class="tw-font-semibold tw-text-sm tw-text-slate-700">Fog</span>
 
-        <ul class="tw-list-none tw-p-0 tw-m-0 tw-mb-12" id="FogTypeRadioButtonList" onclick="loadFogType()">
-
-            <li class="tw-flex tw-items-center tw-gap-2 tw-py-0.5">
-                <input type="radio" id="RadioNoFog" checked="" name="projectTypeRadio" value="1" class="d-radio d-radio-sm d-radio-primary">
-                <label for="RadioNoFog" class="tw-text-[9pt] tw-text-slate-700 tw-cursor-pointer tw-mb-0">No Fog</label>
-            </li>
-
-            <li class="tw-flex tw-items-center tw-gap-2 tw-py-0.5">
-                <input type="radio" id="RadioLinearFog" name="projectTypeRadio" value="2" class="d-radio d-radio-sm d-radio-primary">
-                <label for="RadioLinearFog" class="tw-text-[9pt] tw-text-slate-700 tw-cursor-pointer tw-mb-0">Linear Fog</label>
-            </li>
-
-            <li class="tw-flex tw-items-center tw-gap-2 tw-py-0.5">
-                <input type="radio" id="RadioExponentialFog" name="projectTypeRadio" value="3" class="d-radio d-radio-sm d-radio-primary">
-                <label for="RadioExponentialFog" class="tw-text-[9pt] tw-text-slate-700 tw-cursor-pointer tw-mb-0">Exponential</label>
-            </li>
-        </ul>
+        <style>
+            .fog-toggle { display: inline-flex; background: #e2e8f0; border-radius: 8px; padding: 2px; margin-top: 4px; margin-bottom: 12px; gap: 2px; }
+            .fog-toggle input { display: none; }
+            .fog-toggle label { padding: 4px 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; user-select: none; text-align: center; }
+            .fog-toggle label:hover { color: #334155; }
+            .fog-toggle input:checked + label { background: #fff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        </style>
+        <div id="FogTypeRadioButtonList" class="fog-toggle" onclick="loadFogType()">
+            <input type="radio" id="RadioNoFog" name="projectTypeRadio" checked value="1" />
+            <label for="RadioNoFog">None</label>
+            <input type="radio" id="RadioLinearFog" name="projectTypeRadio" value="2" />
+            <label for="RadioLinearFog">Linear</label>
+            <input type="radio" id="RadioExponentialFog" name="projectTypeRadio" value="3" />
+            <label for="RadioExponentialFog">Exponential</label>
+        </div>
 
         <input type="text" id="FogType" name="FogType"
                form="3dAssetForm" value="none" style="visibility:hidden;display:none"/>

@@ -1,0 +1,25 @@
+# VRodos Plugin — AI Agent Rules (Cursor / Copilot)
+
+> Full rules are in `CLAUDE.md` at the project root. Read it BEFORE writing code.
+
+## Critical CSS Rule
+
+DaisyUI component classes DO NOT WORK due to a double-prefix bug in tailwind.config.js.
+Only Tailwind utilities (tw-* prefix), inline <style> blocks, and manual CSS work reliably.
+
+Broken: d-tabs, d-skeleton, d-join, d-collapse, d-tooltip, d-badge, d-card, d-alert, d-menu, d-dropdown
+Working (hand-styled only): d-btn, d-checkbox, d-radio, d-modal, d-input, d-select, d-range
+
+## Quick Reference
+
+- Tailwind prefix: tw-
+- DaisyUI prefix: d- (only with manual CSS backing)
+- Icons: Lucide (<i data-lucide="name">) — call lucide.createIcons() after dynamic DOM changes
+- Category icons: single source of truth in js_libs/vrodos_icons.js
+- Camera: envir.orbitControls.object (NOT envir.camera)
+- Selection: mouseup with 5px drag threshold
+- Always null-guard transform_controls.object
+- CSS auto-builds via npm run watch:css — DO NOT manually rebuild
+- Templates output full HTML pages (DOCTYPE), not WP shortcodes
+
+See CLAUDE.md for complete rules.

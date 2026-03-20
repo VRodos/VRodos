@@ -921,6 +921,18 @@ body {
   }
 }
 
+.vrodos-manager-wrapper .tw-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .vrodos-manager-wrapper .tw-pointer-events-none {
   pointer-events: none;
 }
@@ -1032,10 +1044,6 @@ body {
 
 .vrodos-manager-wrapper .tw-z-\[100\] {
   z-index: 100;
-}
-
-.vrodos-manager-wrapper .tw-z-\[1100\] {
-  z-index: 1100;
 }
 
 .vrodos-manager-wrapper .tw-z-\[60\] {
@@ -1416,18 +1424,6 @@ body {
   width: 1px;
 }
 
-.vrodos-manager-wrapper .tw-w-2\/3 {
-  width: 66.666667%;
-}
-
-.vrodos-manager-wrapper .tw-w-3\/4 {
-  width: 75%;
-}
-
-.vrodos-manager-wrapper .tw-w-4\/5 {
-  width: 80%;
-}
-
 .vrodos-manager-wrapper .tw-min-w-0 {
   min-width: 0px;
 }
@@ -1626,10 +1622,6 @@ body {
   gap: 2rem;
 }
 
-.vrodos-manager-wrapper .tw-gap-2\.5 {
-  gap: 0.625rem;
-}
-
 .vrodos-manager-wrapper :is(.tw-space-y-10 > :not([hidden]) ~ :not([hidden])) {
   --tw-space-y-reverse: 0;
   margin-top: calc(2.5rem * calc(1 - var(--tw-space-y-reverse)));
@@ -1769,6 +1761,10 @@ body {
   border-color: rgb(226 232 240 / var(--tw-border-opacity, 1));
 }
 
+.vrodos-manager-wrapper .tw-border-slate-200\/60 {
+  border-color: rgb(226 232 240 / 0.6);
+}
+
 .vrodos-manager-wrapper .tw-border-slate-300 {
   --tw-border-opacity: 1;
   border-color: rgb(203 213 225 / var(--tw-border-opacity, 1));
@@ -1798,10 +1794,6 @@ body {
 
 .vrodos-manager-wrapper .tw-border-white\/50 {
   border-color: rgb(255 255 255 / 0.5);
-}
-
-.vrodos-manager-wrapper .tw-border-slate-200\/60 {
-  border-color: rgb(226 232 240 / 0.6);
 }
 
 .vrodos-manager-wrapper .tw-border-b-slate-900 {
@@ -1948,6 +1940,10 @@ body {
   background-color: rgb(255 255 255 / 0.9);
 }
 
+.vrodos-manager-wrapper .tw-bg-slate-200\/60 {
+  background-color: rgb(226 232 240 / 0.6);
+}
+
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
   background-image: linear-gradient(to top, var(--tw-gradient-stops));
 }
@@ -2018,11 +2014,6 @@ body {
 
 .vrodos-manager-wrapper .tw-p-8 {
   padding: 2rem;
-}
-
-.vrodos-manager-wrapper .tw-px-1 {
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
 }
 
 .vrodos-manager-wrapper .tw-px-1\.5 {
@@ -2252,12 +2243,12 @@ body {
   font-weight: 500;
 }
 
-.vrodos-manager-wrapper .tw-font-semibold {
-  font-weight: 600;
-}
-
 .vrodos-manager-wrapper .tw-font-normal {
   font-weight: 400;
+}
+
+.vrodos-manager-wrapper .tw-font-semibold {
+  font-weight: 600;
 }
 
 .vrodos-manager-wrapper .tw-uppercase {
@@ -2266,10 +2257,6 @@ body {
 
 .vrodos-manager-wrapper .tw-italic {
   font-style: italic;
-}
-
-.vrodos-manager-wrapper .tw-leading-\[12pt\] {
-  line-height: 12pt;
 }
 
 .vrodos-manager-wrapper .tw-leading-relaxed {
@@ -2290,6 +2277,11 @@ body {
 
 .vrodos-manager-wrapper .tw-tracking-widest {
   letter-spacing: 0.1em;
+}
+
+.vrodos-manager-wrapper .tw-text-amber-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-text-base-content {
@@ -2315,6 +2307,11 @@ body {
 
 .vrodos-manager-wrapper .tw-text-base-content\/70 {
   color: var(--fallback-bc,oklch(var(--bc)/0.7));
+}
+
+.vrodos-manager-wrapper .tw-text-blue-400 {
+  --tw-text-opacity: 1;
+  color: rgb(96 165 250 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-text-emerald-500 {
@@ -2412,16 +2409,6 @@ body {
 
 .vrodos-manager-wrapper .tw-text-white\/60 {
   color: rgb(255 255 255 / 0.6);
-}
-
-.vrodos-manager-wrapper .tw-text-amber-400 {
-  --tw-text-opacity: 1;
-  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
-}
-
-.vrodos-manager-wrapper .tw-text-blue-400 {
-  --tw-text-opacity: 1;
-  color: rgb(96 165 250 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-no-underline {
@@ -3533,6 +3520,10 @@ body.vrodos-manager-wrapper {
   border-color: var(--fallback-p,oklch(var(--p)/0.5));
 }
 
+.vrodos-manager-wrapper .hover\:tw-bg-blue-50\/70:hover {
+  background-color: rgb(239 246 255 / 0.7);
+}
+
 .vrodos-manager-wrapper .hover\:tw-bg-emerald-500:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
@@ -3551,10 +3542,6 @@ body.vrodos-manager-wrapper {
   background-color: var(--fallback-p,oklch(var(--p)/0.05));
 }
 
-.vrodos-manager-wrapper .hover\:tw-bg-slate-300\/50:hover {
-  background-color: rgb(203 213 225 / 0.5);
-}
-
 .vrodos-manager-wrapper .hover\:tw-bg-slate-50:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(248 250 252 / var(--tw-bg-opacity, 1));
@@ -3567,10 +3554,6 @@ body.vrodos-manager-wrapper {
 
 .vrodos-manager-wrapper .hover\:tw-bg-white\/10:hover {
   background-color: rgb(255 255 255 / 0.1);
-}
-
-.vrodos-manager-wrapper .hover\:tw-bg-blue-50\/70:hover {
-  background-color: rgb(239 246 255 / 0.7);
 }
 
 .vrodos-manager-wrapper .hover\:tw-text-blue-500:hover {
@@ -3695,6 +3678,22 @@ body.vrodos-manager-wrapper {
 
 .vrodos-manager-wrapper :is(.tw-group:hover .group-hover\:tw-opacity-90) {
   opacity: 0.9;
+}
+
+.vrodos-manager-wrapper :is(.tw-peer:checked ~ .peer-checked\:tw-bg-white) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+
+.vrodos-manager-wrapper :is(.tw-peer:checked ~ .peer-checked\:tw-text-slate-900) {
+  --tw-text-opacity: 1;
+  color: rgb(15 23 42 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper :is(.tw-peer:checked ~ .peer-checked\:tw-shadow-sm) {
+  --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 .vrodos-manager-wrapper .has-\[\:checked\]\:tw-border-primary:has(:checked) {

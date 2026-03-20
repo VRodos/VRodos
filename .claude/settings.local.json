@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \":*)",
+      "Read(//tmp/**)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(TAILWIND_DISABLE_TOUCH=1 npx tailwindcss -i ./css/vrodos_modern.css -o /tmp/test-real3.css --content \"./includes/templates/vrodos-edit-3D-scene-template.php\")"
+    ]
+  }
+}

@@ -266,6 +266,16 @@ canvas { pointer-events:none; z-index:10; }
 	margin-bottom: 0;
 }
 
+/* Fog toggle buttons — same pattern as affineSwitch */
+.fogSwitch {
+	margin-bottom: 0;
+}
+
+.tw-peer:checked + .fogSwitch {
+	background-color: #10b981 !important;
+	border-color: #10b981 !important;
+	color: #ffffff !important;
+}
 
 /* rightPanelToggleOnOff*/
 .HierarchyToggleStyle {
