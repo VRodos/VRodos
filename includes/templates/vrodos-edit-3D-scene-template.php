@@ -163,19 +163,6 @@ extract( $data );
 							src="<?php echo $pluginpath; ?>/images/lights/ambient_light.png"/>
 					</div>
 
-					<!-- Set RendererToneMapping  -->
-					<div id="rendererToneMappingDiv"
-						class="tw-flex tw-flex-col tw-justify-center tw-bg-white/50 tw-rounded tw-px-1.5 tw-h-[42px] tw-float-left">
-
-						<label for="rendererToneMapping"
-								class="tw-text-[9pt] tw-leading-none tw-m-0">Tone</label>
-
-						<input type="number" id="rendererToneMapping" name="rendererToneMapping"
-								min="0" max="2" step="0.01"
-								class="tw-w-[45px] tw-text-[10px] tw-h-5 tw-p-0 tw-border-none tw-bg-transparent"
-								onchange="changeRendererToneMapping(this.value);">
-					</div>
-
 					<div class="tw-w-px tw-h-[45px] tw-bg-white/30 tw-mx-0.5"></div>
 
 					<div class="environmentButton">
@@ -284,8 +271,7 @@ extract( $data );
 					<a id="addNewAssetBtnAssetsList"
 					   class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-bg-emerald-500 tw-text-white tw-rounded-full tw-shadow-lg hover:tw-bg-emerald-600 tw-transition-all tw-absolute tw-bottom-4 tw-right-4 tw-z-[1001]"
 					   title="Add new private asset"
-					   href="<?php echo esc_url( get_permalink( $newAssetPage[0]->ID ) . 							$parameter_pass . $project_id . '&vrodos_scene=' . $current_scene_id . '&scene_type=scene&preview=0&singleproject=true'
- ); ?>">
+					   href="<?php echo esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $project_id . '&vrodos_scene=' . $current_scene_id . '&scene_type=scene&preview=0&singleproject=true' ); ?>">
 						<i data-lucide="plus" class="tw-w-5 tw-h-5"></i>
 					</a>
 

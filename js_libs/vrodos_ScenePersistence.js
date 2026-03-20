@@ -11,7 +11,6 @@ class VrodosSceneExporter {
                 generatedBy: 'VrodosSceneExporter.js',
                 timestamp: Date.now(),
                 ClearColor: scene.background ? '#' + scene.background.getHexString() : '#000000',
-                toneMappingExposure: envir.renderer.toneMappingExposure !== undefined ? envir.renderer.toneMappingExposure : 1.0,
                 enableGeneralChat: envir.scene.enableGeneralChat === true,
                 fogCategory: envir.scene.fogCategory || 0,
                 fogcolor: envir.scene.fogcolor || '#FFFFFF',

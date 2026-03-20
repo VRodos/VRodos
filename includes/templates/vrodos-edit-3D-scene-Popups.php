@@ -45,10 +45,6 @@
 		saveChanges();
 	}
 
-	function changeRendererToneMapping(value) {
-		envir.renderer.toneMappingExposure = value;
-	}
-
 	function updateObjectColorPicker(picker) {
 		transform_controls.object.children[0].material.color.setHex("0x" + document.getElementById("ObjectColor").value);
 	}
@@ -91,9 +87,6 @@
 			if(theEvent.preventDefault) theEvent.preventDefault();
 		}
 	}
-
-	
-
 
 
 	/// Sun Color Selector

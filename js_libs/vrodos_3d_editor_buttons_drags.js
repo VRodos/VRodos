@@ -497,11 +497,10 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 
         const uiElementsToToggle = [
             // upper toolbar kept visible (toggle button lives there)
-            document.querySelector('.assetBrowserToolbar'),
-            document.querySelector('.right-elements-panel-style'),
+            document.getElementById('right-elements-panel'),
             document.querySelector('.environmentBar'),
             document.getElementById('scenesInsideVREditor'),
-            document.querySelector('.filemanager'),
+            document.getElementById('assetBrowserToolbar'),
             document.getElementById('bt_close_file_toolbar'),
             document.querySelector('.HierarchyToggleStyle'),
             document.getElementById('scenesList-toggle-btn')
@@ -525,7 +524,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                 swapLucideIcon(btn, 'eye-off');
                 btn.dataset.toggle = 'off';
 
-                uiElementsToToggle.forEach(el => el.style.display = 'none');
+                uiElementsToToggle.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
                 transform_controls.visible = false;
                 if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = false;
@@ -542,7 +541,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 
                 uiElementsToToggle.forEach(el => {
                     // Restore the original display style
-                    el.style.display = elementDisplayStates.get(el) || '';
+                    el.style.removeProperty('display');
                 });
 
                 transform_controls.visible = true;

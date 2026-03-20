@@ -247,7 +247,6 @@ class VRodos_Scene_CPT_Manager {
 
 		// Metadata
 		$scene_data['ClearColor']             = $json_metadata->ClearColor ?? '#ffffff';
-		$scene_data['toneMappingExposure']    = $json_metadata->toneMappingExposure ?? 1.0;
 		$scene_data['enableGeneralChat']      = $json_metadata->enableGeneralChat ?? false;
 		$scene_data['enableAvatar']           = $json_metadata->enableAvatar ?? false;
 		$scene_data['disableMovement']        = $json_metadata->disableMovement ?? false;

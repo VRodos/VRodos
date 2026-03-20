@@ -104,7 +104,7 @@ class VRodos_LoaderMulti {
                     envir.scene.backgroundStyleOption = resources3D["backgroundStyleOption"];
                 }
                    
-                if (name === 'ClearColor' || name === 'toneMappingExposure' | name === 'enableEnvironmentTexture')
+                if (name === 'ClearColor' | name === 'enableEnvironmentTexture')
                     return;
 
                 // Fog is not parsed here but in LightsPawn_Loader

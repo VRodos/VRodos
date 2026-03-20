@@ -179,18 +179,6 @@ class VRodos_LightsPawn_Loader {
                     return;
                 }
 
-                if (name === 'toneMappingExposure') {
-
-                    let toneMappingExposure = parseFloat(resources3D['toneMappingExposure']);
-                    envir.renderer.toneMappingExposure = toneMappingExposure;
-
-                    if (document.getElementById('rendererToneMapping')) {
-                        document.getElementById('rendererToneMapping').value = toneMappingExposure;
-                    }
-
-                    return;
-                }
-
                 let clearToParse = null;
                 if (resources3D[name]['category_name']) {
 
