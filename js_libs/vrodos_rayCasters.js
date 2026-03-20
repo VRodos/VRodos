@@ -80,7 +80,7 @@ function onMouseDoubleClickFocus(event, id) {
     }
 
     // This makes the camera (in 3D mode) to go on top of the selected item
-    if (!envir.is2d) {
+    if (!envir.is2d && transform_controls.object) {
         envir.orbitControls.target.x = transform_controls.object.position.x;
         envir.orbitControls.target.y = transform_controls.object.position.y;
         envir.orbitControls.target.z = transform_controls.object.position.z;
@@ -92,14 +92,39 @@ function onMouseDoubleClickFocus(event, id) {
 }
 
 
+// ─── Click vs drag detection ───────────────────────────────
+// We record the mousedown position and only trigger selection on mouseup
+// if the mouse hasn't moved more than a few pixels (i.e. it was a click).
+var _mouseDownPos = { x: 0, y: 0 };
+var _mouseDownTime = 0;
+var _CLICK_THRESHOLD = 5; // pixels
+
+function _onCanvasMouseDown(event) {
+    _mouseDownPos.x = event.clientX;
+    _mouseDownPos.y = event.clientY;
+    _mouseDownTime = performance.now();
+}
+
+function _onCanvasMouseUp(event) {
+    var dx = event.clientX - _mouseDownPos.x;
+    var dy = event.clientY - _mouseDownPos.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Always trigger auto-save on mouseup (was previously bound to 'mouseup')
+    saveScene(event);
+
+    // Only trigger selection if it was a click, not a drag
+    if (dist > _CLICK_THRESHOLD) return;
+
+    onLeftMouseClick(event);
+}
+
 /**
- * Detect mouse events
+ * Detect mouse click (fires on mouseup if pointer didn't move)
  *
  * @param event
  */
-function onLeftMouseDown(event) {
-    // console.log("onLeftMouseDown");
-    // console.log("transform_controls.dragging", transform_controls.dragging);
+function onLeftMouseClick(event) {
     // If doing affine transformations with transform controls, then ignore select
     if (transform_controls.dragging)
         return;
@@ -315,7 +340,7 @@ function contextMenuClick(event) {
 
        
     // Check if right-clicked is the one selected already with left-click
-    if (intersected[0].name === transform_controls.object.name) {
+    if (transform_controls.object && intersected[0].name === transform_controls.object.name) {
         showProperties(event, intersected[0]);
     }
 

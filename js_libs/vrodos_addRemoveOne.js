@@ -633,25 +633,31 @@ function deleteFomScene(uuid, name) {
 function lockOnScene(uuid, name) {
 
     let selectedObject = envir.scene.getObjectByProperty( 'uuid' , uuid);
-    let editorObject = transform_controls.object;
-    let hierarchy_icon = document.getElementById(uuid).querySelector('.hierarchyItemLock').querySelector('.material-icons');
-   
+    let hierarchyItem = document.getElementById(uuid);
+
     if (selectedObject.locked){
         selectedObject.locked = false;
-        
-        hierarchy_icon.textContent = "lock_open";
         transform_controls.attach(envir.scene.getObjectByProperty( 'uuid' , uuid));
         setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , uuid));
         showObjectControlsPanel();
     }else{
         selectedObject.locked = true;
         transform_controls.detach();
-        hierarchy_icon.textContent = "lock_outline";
         hideObjectControlsPanel();
     }
 
+    // Update the lock icon in the hierarchy viewer (Lucide)
+    if (hierarchyItem) {
+        let lockAnchor = hierarchyItem.querySelector('a[aria-label="Lock asset"]');
+        if (lockAnchor) {
+            let newIcon = selectedObject.locked ? 'lock' : 'lock-open';
+            lockAnchor.innerHTML = '<i data-lucide="' + newIcon + '" class="tw-w-4 tw-h-4"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [lockAnchor] });
+        }
+    }
+
     setBackgroundColorHierarchyViewer(uuid);
-    
+
     saveChanges();
 
 }

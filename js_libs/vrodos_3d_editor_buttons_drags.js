@@ -468,14 +468,12 @@ transform_controls.addEventListener('dragging-changed', function (event) {
         updatePositionsAndControls();
     });
 
-    // Left click
-    canvas3D.addEventListener('mousedown', onLeftMouseDown, false);
+    // Left click — track mousedown position, select on mouseup (so dragging doesn't trigger selection)
+    canvas3D.addEventListener('mousedown', _onCanvasMouseDown, false);
+    canvas3D.addEventListener('mouseup', _onCanvasMouseUp, false);
 
     // Left double click
     canvas3D.addEventListener('dblclick', onMouseDoubleClickFocus, false);
-
-    // Left Up
-    canvas3D.addEventListener('mouseup', saveScene, false);
 
     // Right Click
     canvas3D.addEventListener('contextmenu', contextMenuClick, false);
