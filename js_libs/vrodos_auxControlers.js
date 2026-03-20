@@ -179,9 +179,19 @@ document.addEventListener('DOMContentLoaded', function () {
     header.addEventListener('pointerdown', function (e) {
         if (e.target.closest('button')) return; // don't drag on close button
         isDragging = true;
-        const rect = panel.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
+        // Use the panel's current CSS left/top (relative to offset parent),
+        // not getBoundingClientRect (relative to viewport) — avoids jump on first click
+        var computedLeft = parseInt(panel.style.left, 10);
+        var computedTop = parseInt(panel.style.top, 10);
+        // If panel was positioned with right instead of left, resolve to left
+        if (isNaN(computedLeft)) {
+            var rect = panel.getBoundingClientRect();
+            var parentRect = panel.offsetParent ? panel.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+            computedLeft = rect.left - parentRect.left;
+            computedTop = rect.top - parentRect.top;
+        }
+        offsetX = e.clientX - computedLeft;
+        offsetY = e.clientY - computedTop;
         header.setPointerCapture(e.pointerId);
         e.preventDefault();
     });

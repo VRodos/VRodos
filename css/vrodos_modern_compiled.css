@@ -1038,6 +1038,10 @@ body {
   z-index: 998;
 }
 
+.vrodos-manager-wrapper .tw-z-\[1002\] {
+  z-index: 1002;
+}
+
 .vrodos-manager-wrapper .tw-m-0 {
   margin: 0px;
 }

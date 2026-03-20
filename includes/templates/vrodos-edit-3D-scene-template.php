@@ -223,7 +223,7 @@ extract( $data );
 				?>
 
 				<!-- Floating Object Controls Panel -->
-				<div id="object-controls-panel" class="tw-absolute tw-z-[998] tw-hidden tw-flex tw-flex-col tw-w-[280px] tw-bg-slate-800/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-2xl tw-border tw-border-white/10 tw-text-white tw-overflow-hidden" style="top: 100px; right: 320px;">
+				<div id="object-controls-panel" class="tw-absolute tw-z-[1002] tw-hidden tw-flex tw-flex-col tw-w-[280px] tw-bg-slate-800/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-2xl tw-border tw-border-white/10 tw-text-white tw-overflow-hidden" style="top: 100px; right: 320px;">
 
 					<!-- Draggable header -->
 					<div id="object-controls-header" class="tw-flex tw-items-center tw-justify-between tw-px-3 tw-py-1.5 tw-bg-slate-700/80 tw-cursor-move tw-select-none tw-border-b tw-border-white/10">
@@ -232,9 +232,6 @@ extract( $data );
 							<i data-lucide="x" class="tw-w-3.5 tw-h-3.5"></i>
 						</button>
 					</div>
-
-					<!-- lil-gui container -->
-					<div id="numerical_gui-container" class="VrGuiContainerStyle"></div>
 
 					<!-- Axes controls row -->
 					<div class="tw-flex tw-flex-nowrap tw-items-center tw-gap-1 tw-px-3 tw-py-1.5 tw-bg-slate-700/40">
@@ -255,6 +252,9 @@ extract( $data );
 							<a id="axis-size-decrease-btn" title="Decrease axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">-</a>
 						</div>
 					</div>
+
+					<!-- lil-gui container -->
+					<div id="numerical_gui-container" class="VrGuiContainerStyle"></div>
 
 					<!-- Constrain scale -->
 					<div class="tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1.5 tw-border-t tw-border-white/5">
