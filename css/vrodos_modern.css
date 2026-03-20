@@ -129,6 +129,78 @@ body.vrodos-manager-wrapper {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+/* Modern Sidebar Handles */
+.AssetsToggleStyle, .HierarchyToggleStyle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: absolute !important;
+    width: 18px !important;
+    height: 48px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 1001 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    background-color: rgba(15, 23, 42, 0.25) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    transition: background-color 0.2s ease, transform 0.2s ease !important;
+}
+
+.AssetsToggleStyle {
+    right: -18px !important;
+    left: auto !important;
+    border-left: none !important;
+    border-radius: 0 8px 8px 0 !important;
+}
+
+.HierarchyToggleStyle {
+    left: -18px !important;
+    right: auto !important;
+    border-right: none !important;
+    border-radius: 8px 0 0 8px !important;
+}
+
+.AssetsToggleStyle:hover, .HierarchyToggleStyle:hover {
+    background-color: rgba(15, 23, 42, 0.4) !important;
+}
+
+.AssetsToggleStyle i, .HierarchyToggleStyle i {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.AssetsToggleStyle:hover i, .HierarchyToggleStyle:hover i {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Right elements panel modern transition */
+.right-elements-panel-style {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.right-elements-panel-style.closed {
+    transform: translateX(100%) !important;
+}
+
+/* Axes controls single row optimization */
+#vrodos-scene-editor .affineSwitch {
+    width: auto !important;
+    min-width: 45px !important;
+    padding: 0 8px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#vrodos-scene-editor .ObjectManipulationToggle label {
+    width: auto !important;
+    min-width: 45px !important;
+    border-radius: 0 !important;
+}
+
 /* Compact buttons for scene editor toolbar */
 #vrodos-scene-editor .scene_editor_upper_toolbar .d-btn {
   height: 1.5rem !important;
@@ -163,6 +235,34 @@ body.vrodos-manager-wrapper {
 #vrodos-assets-manager .d-btn-primary:active,
 #vrodos-asset-editor .d-btn-primary:active,
 #vrodos-scene-editor .d-btn-primary:active {
+  transform: translateY(1px) !important;
+}
+
+/* Emerald Secondary: #377cfb */
+#vrodos-project-manager .d-btn-secondary,
+#vrodos-assets-manager .d-btn-secondary,
+#vrodos-asset-editor .d-btn-secondary,
+#vrodos-scene-editor .d-btn-secondary {
+  background-color: #377cfb !important;
+  border: 1px solid #377cfb !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(55, 124, 251, 0.2) !important;
+}
+
+#vrodos-project-manager .d-btn-secondary:hover,
+#vrodos-assets-manager .d-btn-secondary:hover,
+#vrodos-asset-editor .d-btn-secondary:hover,
+#vrodos-scene-editor .d-btn-secondary:hover {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 10px 15px -3px rgba(55, 124, 251, 0.4) !important;
+}
+
+#vrodos-project-manager .d-btn-secondary:active,
+#vrodos-assets-manager .d-btn-secondary:active,
+#vrodos-asset-editor .d-btn-secondary:active,
+#vrodos-scene-editor .d-btn-secondary:active {
   transform: translateY(1px) !important;
 }
 

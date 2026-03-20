@@ -18,13 +18,12 @@ function resetInScene(name){
 function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML){
 
     jQuery('#hierarchy-viewer').append(
-        '<li class="hierarchyItem mdc-list-item" id="' + obj.uuid + '" data-name="' +obj.name+'">' +
-        '<a href="javascript:void(0);" class="hierarchyItem mdc-list-item" ' +
-        'style="font-size: 9pt; line-height:12pt" ' +
-        'data-mdc-auto-init="MDCRipple" title="'+ obj.title +'" onclick="onMouseDoubleClickFocus(event,\'' + obj.uuid + '\')">' +
-        '<span id="" class="mdc-list-item__text">' +
+        '<li class="hierarchyItem tw-flex tw-items-center tw-py-1 tw-px-1 tw-border-b tw-border-slate-300 hover:tw-bg-slate-300/50 tw-cursor-pointer" id="' + obj.uuid + '" data-name="' +obj.name+'">' +
+        '<a href="javascript:void(0);" class="tw-flex-1 tw-min-w-0 tw-text-[9pt] tw-leading-[12pt] tw-text-slate-700 tw-no-underline" ' +
+        'title="'+ obj.title +'" onclick="onMouseDoubleClickFocus(event,\'' + obj.uuid + '\')">' +
+        '<span>' +
         object_name + '<br />' +
-        '<span style="font-size:7pt; color:grey">' + created + '</span>' +
+        '<span class="tw-text-[7pt] tw-text-slate-400">' + created + '</span>' +
         '</span>' +
         '</a>' +
         deleteButtonHTML +
@@ -35,28 +34,26 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
 
 
 function CreateDeleteButton(obj) {
-    return '<a href="javascript:void(0);" class="hierarchyItemDelete mdc-list-item" aria-label="Delete asset"' +
+    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-slate-500 hover:tw-text-red-500 tw-transition-colors" aria-label="Delete asset"' +
         ' title="Delete asset object" onclick="' + 'deleteFomScene(\'' + obj.uuid + '\', \'' + obj.asset_name + '\');' + '">' +
-        '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Delete">delete </i>' + '</a>';
+        '<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>' + '</a>';
 }
 
 
 function CreateLockButton(obj) {
-    let lock_ic;
-    lock_ic = (obj.locked) ? 'lock_outline' : 'lock_open';
-    return '<a href="javascript:void(0);" class="hierarchyItemLock mdc-list-item" aria-label="Lock asset"' +
+    let lock_ic = (obj.locked) ? 'lock' : 'lock-open';
+    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-slate-500 hover:tw-text-slate-700 tw-transition-colors" aria-label="Lock asset"' +
         ' title="Lock asset object" onclick="' + 'lockOnScene(\'' + obj.uuid + '\', \'' + obj.asset_name + '\');' + '">' +
-        '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Lock">' + lock_ic + ' </i>' + '</a>';
+        '<i data-lucide="' + lock_ic + '" class="tw-w-4 tw-h-4"></i>' + '</a>';
 }
 
 function CreateResetButton(obj){
 
-    return '<a href="javascript:void(0);" class="mdc-list-item" aria-label="Reset asset"' +
+    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-slate-500 hover:tw-text-blue-500 tw-transition-colors" aria-label="Reset asset"' +
         ' title="Reset asset object" onclick="' +
-        // Reset 0,0,0 rot 0,0,0
         'resetInScene(\'' + obj.name + '\');'
         + '">' +
-        '<i class="material-icons mdc-list-item__end-detail" aria-hidden="true" title="Reset">cached</i>' +
+        '<i data-lucide="refresh-cw" class="tw-w-4 tw-h-4"></i>' +
         '</a>';
 
 }
@@ -66,11 +63,11 @@ function setBackgroundColorHierarchyViewer(id) {
 
     jQuery('#hierarchy-viewer li').each(
         function (idx, li) {
-            jQuery(li)[0].style.background = 'rgb(223, 223, 223)';
+            jQuery(li)[0].style.background = '';
         }
     );
 
-    document.getElementById(id).style.background = '#a4addf';
+    document.getElementById(id).style.background = 'rgb(191, 219, 254)';
 }
 
 // Traverse the entire scene to insert scene children in Hierarchy Viewer
@@ -108,6 +105,9 @@ function setHierarchyViewer() {
             AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj),  lockButton);
         }
     });
+
+    // Render Lucide icons in dynamically added items
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 
@@ -123,6 +123,9 @@ function addInHierarchyViewer(obj) {
 
     // Add as a list item
     AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj), CreateLockButton(obj));
+
+    // Render Lucide icons in dynamically added items
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     setBackgroundColorHierarchyViewer(obj.uuid);
 }

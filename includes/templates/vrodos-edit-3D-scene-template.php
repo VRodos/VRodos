@@ -269,7 +269,7 @@ extract( $data );
 
 					<!-- ADD NEW ASSET FROM ASSETS LIST -->
 					<a id="addNewAssetBtnAssetsList"
-					   class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-bg-emerald-500 tw-text-white tw-rounded-full tw-shadow-lg hover:tw-bg-emerald-600 tw-transition-all tw-absolute tw-bottom-4 tw-right-4 tw-z-[1001]"
+					   class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 d-btn-secondary tw-bg-secondary tw-text-white tw-rounded-full tw-shadow-lg hover:tw-bg-secondary-focus tw-transition-all tw-absolute tw-bottom-4 tw-right-4 tw-z-[1001]"
 					   title="Add new private asset"
 					   href="<?php echo esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $project_id . '&vrodos_scene=' . $current_scene_id . '&scene_type=scene&preview=0&singleproject=true' ); ?>">
 						<i data-lucide="plus" class="tw-w-5 tw-h-5"></i>

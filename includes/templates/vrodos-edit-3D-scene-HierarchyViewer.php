@@ -1,34 +1,30 @@
-<!--  Open/Close Right Hierarchy panel-->
-<a id="hierarchy-toggle-btn" data-toggle='on' type="button"
-   class="HierarchyToggleStyle HierarchyToggleOn hidable mdc-button mdc-button--raised mdc-button--primary mdc-button--dense"
-   title="Toggle hierarchy viewer" data-mdc-auto-init="MDCRipple">
-    <i class="material-icons">menu</i>
-</a>
-
 <!-- Right Panel -->
-<div id="right-elements-panel" class="right-elements-panel-style">
+<div id="right-elements-panel" class="right-elements-panel-style tw-flex tw-flex-col tw-bg-slate-100 tw-text-slate-800">
+
+    <!-- Open/Close Sidebar Handle (Nested for seamless extension) -->
+    <a id="bt_close_hierarchy_toolbar" data-toggle="on" type="button"
+       class="HierarchyToggleStyle HierarchyToggleOn hidable"
+       title="Toggle hierarchy viewer">
+        <div class="tw-flex tw-items-center tw-justify-center">
+            <i data-lucide="chevron-right" class="tw-w-3 tw-h-3"></i>
+        </div>
+    </a>
 
     <!-- 4 Buttons in a row -->
     <div id="row2" class="row-right-panel"></div>
 
-    <!--  Object Controls T,R,S -->
-    <div id="row3" class="row-right-panel" style="display:block">
-        <div class="mdc-typography--subheading2 mdc-theme--text-secondary-on-light" style="padding-left:10px; background: whitesmoke"> Object controls</div>
-    </div>
-
     <!-- Numerical input for Move rotate scale -->
     <div id="row4" class="row-right-panel" style="max-height:25%; overflow-y: auto">
-        <div id="numerical_gui-container" class="VrGuiContainerStyle mdc-typography mdc-elevation--z1"></div>
+        <div id="numerical_gui-container" class="VrGuiContainerStyle tw-shadow-sm"></div>
     </div>
 
     <!--  Axes resize -->
-    <div id="row5" class="row-right-panel" style="padding-top:6px; padding-left:5px; padding-bottom:6px; background:whitesmoke">
-		<span class="mdc-typography--subheading2 mdc-theme--text-secondary-on-light"
-              style="max-width:50px; font-size:8pt !important; line-height: 1em; letter-spacing: 0">Axes controls:</span>
+    <div id="row5" class="row-right-panel tw-flex-nowrap tw-items-center tw-gap-1 tw-px-2 tw-py-1.5 tw-bg-slate-200/70">
+		<span class="tw-text-[8pt] tw-font-semibold tw-text-slate-500 tw-leading-tight tw-shrink-0">Axes:</span>
 
         <!-- Translate, Rotate, Scale Buttons -->
         <div id="object-manipulation-toggle"
-             class="ObjectManipulationToggle mdc-typography" style="display: none;">
+             class="ObjectManipulationToggle tw-flex tw-items-center tw-gap-0" style="display: none;">
             <!-- Translate -->
             <input type="radio" id="translate-switch" name="object-manipulation-switch" value="translate" checked/>
             <label for="translate-switch" id="translate-switch-label" class="affineSwitch">Move</label>
@@ -40,106 +36,76 @@
             <label for="scale-switch" id="scale-switch-label" class="affineSwitch">Scale</label>
         </div>
 
-        <div id="axis-manipulation-buttons" class="AxisManipulationBtns mdc-typography" style="display: none;">
-            <a id="axis-size-increase-btn" data-mdc-auto-init="MDCRipple" title="Increase axes size" class="mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">+</a>
-            <a id="axis-size-decrease-btn" data-mdc-auto-init="MDCRipple" title="Decrease axes size" class="mdc-button mdc-button--raised mdc-button--dense mdc-button--primary">-</a>
+        <div id="axis-manipulation-buttons" class="AxisManipulationBtns tw-flex tw-items-center tw-gap-0.5 tw-ml-auto" style="display: none;">
+            <a id="axis-size-increase-btn" title="Increase axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">+</a>
+            <a id="axis-size-decrease-btn" title="Decrease axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">-</a>
         </div>
 
     </div>
 
     <div id="scale-lock-div"
-         style="display: block; width:100%; margin:0; padding:0; height:30px; background: rgba(255,255,255,0.5)">
+         class="tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1 tw-bg-white/50">
 
         <input type="checkbox"
                title="Constrain Scale dims to one value"
                id="scaleLockCheckbox"
                name="scaleLockCheckbox"
                form="3dAssetForm"
-               class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light"
+               class="d-checkbox d-checkbox-sm d-checkbox-primary"
                onchange="keepScaleAspectRatio(this.checked)">
-        <label for="scaleLockCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Constrain Scale dims to single value</label>
+        <label for="scaleLockCheckbox" class="tw-text-sm tw-text-slate-700 tw-cursor-pointer">Constrain Scale dims to single value</label>
 
     </div>
 
     <!-- Hierarchy viewer -->
     <div id="row6" class="row-right-panel" style="max-height:30%;">
-        <div class="HierarchyViewerStyle mdc-card" id="hierarchy-viewer-container">
-            <span class="HierarchyViewerTitle mdc-typography--subheading1 mdc-theme--text-primary-on-background">Hierarchy Viewer</span>
-            <hr class="mdc-list-divider">
-            <ul class="mdc-list" id="hierarchy-viewer" style="max-height: 200px; overflow-y: auto; padding-left: 14px;"></ul>
+        <div class="tw-flex tw-flex-col tw-w-full tw-bg-slate-200" id="hierarchy-viewer-container">
+            <span class="tw-font-semibold tw-text-sm tw-text-slate-700 tw-px-3 tw-py-1.5">Hierarchy Viewer</span>
+            <hr class="tw-border-slate-300">
+            <ul id="hierarchy-viewer" class="tw-list-none tw-m-0 tw-pl-3 tw-pr-1" style="max-height: 200px; overflow-y: auto;"></ul>
         </div>
     </div>
 
     <!-- Extra options -->
-    <div style="width:100%; margin:0; height: 28%; overflow-y: scroll; background: rgba(255,255,255,0.5)">
+    <div class="tw-w-full tw-m-0 tw-overflow-y-auto tw-bg-white/50 tw-px-3 tw-py-2 tw-flex-1 tw-min-h-0">
 
-        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Scene options</span>
+        <span class="tw-font-semibold tw-text-sm tw-text-slate-700">Scene options</span>
 
         <!-- Set Broadcast chat -->
-        <div style="display: block">
-            <input type="checkbox" title="Enable global chat" id="enableGeneralChatCheckbox" name="enableGeneralChatCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleBroadcastChat(this.checked)">
-            <label for="enableGeneralChatCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Enable general chat</label>
+        <div class="tw-flex tw-items-center tw-gap-2 tw-mt-1">
+            <input type="checkbox" title="Enable global chat" id="enableGeneralChatCheckbox" name="enableGeneralChatCheckbox" form="3dAssetForm" class="d-checkbox d-checkbox-sm d-checkbox-primary" onchange="toggleBroadcastChat(this.checked)">
+            <label for="enableGeneralChatCheckbox" class="tw-text-sm tw-text-slate-700 tw-cursor-pointer">Enable general chat</label>
         </div>
 
-        <div style="display: block">
-            <input type="checkbox" title="Enable avatar selection" id="enableAvatarCheckbox" name="enableAvatarCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleEnableAvatar(this.checked)">
-            <label for="enableAvatarCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Enable avatar selection</label>
+        <div class="tw-flex tw-items-center tw-gap-2 tw-mt-1">
+            <input type="checkbox" title="Enable avatar selection" id="enableAvatarCheckbox" name="enableAvatarCheckbox" form="3dAssetForm" class="d-checkbox d-checkbox-sm d-checkbox-primary" onchange="toggleEnableAvatar(this.checked)">
+            <label for="enableAvatarCheckbox" class="tw-text-sm tw-text-slate-700 tw-cursor-pointer">Enable avatar selection</label>
         </div>
 
-        
-        <div style="display: block">
-            <input type="checkbox" title="Disable movement" id="moveDisableCheckbox" name="moveDisableCheckbox" form="3dAssetForm" class="mdc-checkbox mdc-form-field mdc-theme--text-primary-on-light" onchange="toggleDisableMovement(this.checked)">
-            <label for="moveDisableCheckbox" class="mdc-typography--body1 mdc-theme--text-primary-on-light" style="vertical-align: middle; cursor: pointer;">Disable movement</label>
+        <div class="tw-flex tw-items-center tw-gap-2 tw-mt-1">
+            <input type="checkbox" title="Disable movement" id="moveDisableCheckbox" name="moveDisableCheckbox" form="3dAssetForm" class="d-checkbox d-checkbox-sm d-checkbox-primary" onchange="toggleDisableMovement(this.checked)">
+            <label for="moveDisableCheckbox" class="tw-text-sm tw-text-slate-700 tw-cursor-pointer">Disable movement</label>
         </div>
 
+        <hr class="tw-my-2 tw-border-slate-300">
 
-        <hr>
+        <span class="tw-font-semibold tw-text-sm tw-text-slate-700">Background style</span>
 
-        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Background style</span>
-
-        <ul class="RadioButtonList" style="padding: 0;">
-            <label for="sceneNone">
-            <li class="mdc-form-field" for="sceneNone" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0"  style="height:30px; margin:0; font-size:xx-small">
-                <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="sceneNone"
-                           name="sceneColorTypeRadio" value="None">
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
-                </div>
-                <label id="sceneSkyRadio-label" for="sceneNone" style="margin-bottom: 0;">Background: Horizon</label>
+        <ul class="tw-list-none tw-p-0 tw-m-0">
+            <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0">
+                <input type="radio" id="sceneNone" name="sceneColorTypeRadio" value="None" class="d-radio d-radio-sm d-radio-primary">
+                <label for="sceneNone" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Background: Horizon</label>
             </li>
-            </label>
-            <label for="sceneColorRadio">
-            <li class="mdc-form-field"  id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1" style="height:30px; margin:0; font-size:xx-small">
-                <div class="mdc-radio" >
-                    <input class="mdc-radio__native-control" type="radio" id="sceneColorRadio"
-                           name="sceneColorTypeRadio" value="color">
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
-
-                </div>
-                <label for="sceneColorRadio" style="vertical-align: middle; cursor: pointer; font-size:xx-small">Background Color</label>
-                <input id="jscolorpick" hidden class="mdc-textfield__input jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 30px;padding: 0;font-size: 10px;width: 50px;" >
-                <input type="text" id="sceneClearColor" class="mdc-textfield__input" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
-
+            <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1">
+                <input type="radio" id="sceneColorRadio" name="sceneColorTypeRadio" value="color" class="d-radio d-radio-sm d-radio-primary">
+                <label for="sceneColorRadio" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Background Color</label>
+                <input id="jscolorpick" hidden class="jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 10px; padding: 0; font-size: 10px; width: 50px;">
+                <input type="text" id="sceneClearColor" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
             </li>
-            </label>
-            <label for="sceneSky">
-            <li class="mdc-form-field"  id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2" style="height:30px; margin:0; font-size:xx-small">
-                <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="sceneSky"
-                           name="sceneColorTypeRadio" value="sky">
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
-                </div>
-                <label id="sceneSkyRadio-label" for="sceneSky" style="margin-bottom: 0;">Presets</label>
-                <select name="presetsBcg" hidden id="presetsBcg" disabled style=" font-size: 10px;">
+            <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2">
+                <input type="radio" id="sceneSky" name="sceneColorTypeRadio" value="sky" class="d-radio d-radio-sm d-radio-primary">
+                <label for="sceneSky" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Presets</label>
+                <select name="presetsBcg" hidden id="presetsBcg" disabled class="d-select d-select-xs tw-ml-2" style="font-size: 10px;">
                     <option value="default">Default</option>
                     <option value="egypt">Egypt</option>
                     <option value="forest">Forest</option>
@@ -161,96 +127,58 @@
                     <option value="ocean">Ocean</option>
                 </select>
             </li>
-            </label>
-            <label for="sceneCustomImage">
-            <li class="mdc-form-field"  id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3" style="height:30px; margin:0; font-size:xx-small">
-                <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="sceneCustomImage"
-                           name="sceneColorTypeRadio" value="Custom_img">
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
-                </div>
-                <label id="sceneCustomImageRadio-label" for="sceneCustomImage" style="margin-bottom: 0;">Custom Image</label>
+            <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3">
+                <input type="radio" id="sceneCustomImage" name="sceneColorTypeRadio" value="Custom_img" class="d-radio d-radio-sm d-radio-primary">
+                <label for="sceneCustomImage" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Custom Image</label>
                 <div class="thumbnailImg">
-                <img id="uploadImgThumb" hidden>
+                    <img id="uploadImgThumb" hidden>
                 </div>
-                <input id="img_upload_bcg" hidden class="mdc-theme--primary" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()" style="margin-left: 50px; font-size: 10px;" />
-            </li>
-            </label>
-        </ul>
-
-        <hr>
-
-        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background">Fog</span>
-
-        <ul class="RadioButtonList" id="FogTypeRadioButtonList" onclick="loadFogType()" style="margin-bottom:50px;display:block">
-
-            <li class="mdc-form-field">
-                <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="RadioNoFog"
-                           checked="" name="projectTypeRadio" value="1">
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
-                </div>
-                <label for="RadioNoFog" style="font-size: 9pt !important;">
-                    No Fog
-                </label>
-            </li>
-
-            <li class="mdc-form-field">
-                <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="RadioLinearFog"
-                           name="projectTypeRadio" value="2">
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
-                </div>
-                <label for="RadioLinearFog" style="font-size: 9pt !important;">
-                    Linear Fog
-                </label>
-            </li>
-
-            <li class="mdc-form-field">
-                <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="RadioExponentialFog"
-                           name="projectTypeRadio" value="3">
-                    <div class="mdc-radio__background">
-                        <div class="mdc-radio__outer-circle"></div>
-                        <div class="mdc-radio__inner-circle"></div>
-                    </div>
-                </div>
-                <label for="RadioExponentialFog" style="font-size: 9pt !important;">Exponential</label>
+                <input id="img_upload_bcg" hidden type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()" style="margin-left: 20px; font-size: 10px;">
             </li>
         </ul>
 
-        <input type="text" id="FogType" name="FogType" class="mdc-textfield__input"
+        <hr class="tw-my-2 tw-border-slate-300">
+
+        <span class="tw-font-semibold tw-text-sm tw-text-slate-700">Fog</span>
+
+        <ul class="tw-list-none tw-p-0 tw-m-0 tw-mb-12" id="FogTypeRadioButtonList" onclick="loadFogType()">
+
+            <li class="tw-flex tw-items-center tw-gap-2 tw-py-0.5">
+                <input type="radio" id="RadioNoFog" checked="" name="projectTypeRadio" value="1" class="d-radio d-radio-sm d-radio-primary">
+                <label for="RadioNoFog" class="tw-text-[9pt] tw-text-slate-700 tw-cursor-pointer tw-mb-0">No Fog</label>
+            </li>
+
+            <li class="tw-flex tw-items-center tw-gap-2 tw-py-0.5">
+                <input type="radio" id="RadioLinearFog" name="projectTypeRadio" value="2" class="d-radio d-radio-sm d-radio-primary">
+                <label for="RadioLinearFog" class="tw-text-[9pt] tw-text-slate-700 tw-cursor-pointer tw-mb-0">Linear Fog</label>
+            </li>
+
+            <li class="tw-flex tw-items-center tw-gap-2 tw-py-0.5">
+                <input type="radio" id="RadioExponentialFog" name="projectTypeRadio" value="3" class="d-radio d-radio-sm d-radio-primary">
+                <label for="RadioExponentialFog" class="tw-text-[9pt] tw-text-slate-700 tw-cursor-pointer tw-mb-0">Exponential</label>
+            </li>
+        </ul>
+
+        <input type="text" id="FogType" name="FogType"
                form="3dAssetForm" value="none" style="visibility:hidden;display:none"/>
 
+        <span class="tw-font-semibold tw-text-sm tw-text-slate-700" id="FogValues" style="display:none">Fog values</span>
 
-        <span class="mdc-typography--subheading1 mdc-theme--text-primary-on-background" id="FogValues" style="display:none">Fog values</span>
-
-        <span style="display:none; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px " class="colorElement">Color:
-
-                <input id="jscolorpickFog" class=" mdc-textfield__input jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid;display:inline-block; width:80px; margin-left:5px" >
-
-                <input type="text" id="FogColor" name="FogColor" class="mdc-textfield__input colorElement" form="3dAssetForm" value="" style="visibility: hidden; height: 20px; width:20px;">
+        <span style="display:none; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px" class="colorElement">Color:
+                <input id="jscolorpickFog" class="jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid; display:inline-block; width:80px; margin-left:5px">
+                <input type="text" id="FogColor" name="FogColor" class="colorElement" form="3dAssetForm" value="" style="visibility: hidden; height: 20px; width:20px;">
             </span>
 
         <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Near limit (linear only):
-                <input type="text" id="FogNear" class="mdc-textfield__input linearElement" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="000000" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
+                <input type="text" id="FogNear" class="tw-h-5 tw-border tw-border-black tw-inline-block tw-w-10 tw-ml-1 linearElement" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="000000">
             </span>
 
         <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Far limit (linear only):
-                <input type="text" id="FogFar" class="mdc-textfield__input linearElement" name="FogFar" form="3dAssetForm" value="230"  onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
+                <input type="text" id="FogFar" class="tw-h-5 tw-border tw-border-black tw-inline-block tw-w-10 tw-ml-1 linearElement" name="FogFar" form="3dAssetForm" value="230" onchange="updateFog()">
             </span>
 
         <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="exponentialElement">Density (exponential only):
-                <input type="text" id="FogDensity" class="mdc-textfield__input exponentialElement" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()" style="height: 20px; border: 1px black solid;display:inline-block; width:40px; margin-left:5px">
+                <input type="text" id="FogDensity" class="tw-h-5 tw-border tw-border-black tw-inline-block tw-w-10 tw-ml-1 exponentialElement" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()">
             </span>
     </div>
-</div>
+</div>

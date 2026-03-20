@@ -87,16 +87,25 @@ function loadButtonActions() {
         jQuery("#compileCancelBtn").click();
     });
 
-    // Hierarchy close button
-    jQuery("#hierarchy-toggle-btn").click(function () {
+    // Hierarchy Toolbar close button (Event delegation for maximum robustness)
+    jQuery(document).on('click', '#bt_close_hierarchy_toolbar', function (e) {
+        e.preventDefault();
+        let btn = jQuery(this);
+        let panel = jQuery("#right-elements-panel");
 
-        if (jQuery("#hierarchy-toggle-btn").hasClass("HierarchyToggleOn")) {
-            jQuery("#hierarchy-toggle-btn").addClass("HierarchyToggleOff").removeClass("HierarchyToggleOn");
+        if (btn.hasClass("HierarchyToggleOn")) {
+            btn.addClass("HierarchyToggleOff").removeClass("HierarchyToggleOn");
+            btn.data('toggle', 'off');
+            swapLucideIcon(this, 'chevron-left');
+            panel.addClass("closed");
         } else {
-            jQuery("#hierarchy-toggle-btn").addClass("HierarchyToggleOn").removeClass("HierarchyToggleOff");
+            btn.addClass("HierarchyToggleOn").removeClass("HierarchyToggleOff");
+            btn.data('toggle', 'on');
+            swapLucideIcon(this, 'chevron-right');
+            panel.removeClass("closed");
         }
 
-        jQuery("#right-elements-panel").toggle("slow");
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
     // File Browser Toolbar close button (Event delegation for maximum robustness)
