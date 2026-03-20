@@ -1383,6 +1383,10 @@ body {
   width: 2rem;
 }
 
+.vrodos-manager-wrapper .tw-w-\[280px\] {
+  width: 280px;
+}
+
 .vrodos-manager-wrapper .tw-w-\[400px\] {
   width: 400px;
 }
@@ -1398,10 +1402,6 @@ body {
 
 .vrodos-manager-wrapper .tw-w-px {
   width: 1px;
-}
-
-.vrodos-manager-wrapper .tw-w-\[280px\] {
-  width: 280px;
 }
 
 .vrodos-manager-wrapper .tw-min-w-0 {
@@ -1831,10 +1831,6 @@ body {
   background-color: rgb(226 232 240 / var(--tw-bg-opacity, 1));
 }
 
-.vrodos-manager-wrapper .tw-bg-slate-200\/70 {
-  background-color: rgb(226 232 240 / 0.7);
-}
-
 .vrodos-manager-wrapper .tw-bg-slate-50 {
   --tw-bg-opacity: 1;
   background-color: rgb(248 250 252 / var(--tw-bg-opacity, 1));
@@ -1849,9 +1845,21 @@ body {
   background-color: rgb(51 65 85 / var(--tw-bg-opacity, 1));
 }
 
+.vrodos-manager-wrapper .tw-bg-slate-700\/40 {
+  background-color: rgb(51 65 85 / 0.4);
+}
+
+.vrodos-manager-wrapper .tw-bg-slate-700\/80 {
+  background-color: rgb(51 65 85 / 0.8);
+}
+
 .vrodos-manager-wrapper .tw-bg-slate-800 {
   --tw-bg-opacity: 1;
   background-color: rgb(30 41 59 / var(--tw-bg-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-bg-slate-800\/90 {
+  background-color: rgb(30 41 59 / 0.9);
 }
 
 .vrodos-manager-wrapper .tw-bg-slate-900 {
@@ -1896,18 +1904,6 @@ body {
   background-color: rgb(255 255 255 / 0.9);
 }
 
-.vrodos-manager-wrapper .tw-bg-slate-700\/40 {
-  background-color: rgb(51 65 85 / 0.4);
-}
-
-.vrodos-manager-wrapper .tw-bg-slate-700\/80 {
-  background-color: rgb(51 65 85 / 0.8);
-}
-
-.vrodos-manager-wrapper .tw-bg-slate-800\/90 {
-  background-color: rgb(30 41 59 / 0.9);
-}
-
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
   background-image: linear-gradient(to top, var(--tw-gradient-stops));
 }
@@ -1934,6 +1930,10 @@ body {
 
 .vrodos-manager-wrapper .tw-p-0 {
   padding: 0px;
+}
+
+.vrodos-manager-wrapper .tw-p-0\.5 {
+  padding: 0.125rem;
 }
 
 .vrodos-manager-wrapper .tw-p-1 {
@@ -1974,10 +1974,6 @@ body {
 
 .vrodos-manager-wrapper .tw-p-8 {
   padding: 2rem;
-}
-
-.vrodos-manager-wrapper .tw-p-0\.5 {
-  padding: 0.125rem;
 }
 
 .vrodos-manager-wrapper .tw-px-1 {
@@ -2691,22 +2687,58 @@ body.vrodos-manager-wrapper {
   transform: translateX(100%) !important;
 }
 
-/* Axes controls single row optimization */
+/* Axes controls single row optimization (Floating Panel) */
 
-#vrodos-scene-editor .affineSwitch {
+#object-controls-panel .affineSwitch {
   width: auto !important;
-  min-width: 45px !important;
+  min-width: 54px !important;
   padding: 0 8px !important;
   height: 24px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  font-size: 10px !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-#vrodos-scene-editor .ObjectManipulationToggle label {
-  width: auto !important;
-  min-width: 45px !important;
+#object-controls-panel .ObjectManipulationToggle label {
   border-radius: 0 !important;
+}
+
+#object-controls-panel .ObjectManipulationToggle .tw-peer:checked + .affineSwitch {
+  background-color: #10b981 !important;
+  /* Emerald primary */
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+#object-controls-panel .d-btn-xs {
+  height: 1.5rem !important;
+  min-height: 1.5rem !important;
+}
+
+/* lil-gui inside floating panel: no title, always open, transparent background */
+
+#numerical_gui-container .lil-gui {
+  --background-color: transparent !important;
+  --widget-color: rgba(255,255,255,0.12) !important;
+  --number-color: #4fc3f7 !important;
+  --string-color: #4fc3f7 !important;
+  --text-color: #e2e8f0 !important;
+  --title-background-color: transparent !important;
+  --title-text-color: #94a3b8 !important;
+  border: none !important;
+}
+
+#numerical_gui-container .lil-gui.autoHeight {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+#numerical_gui-container .lil-gui .children {
+  display: block !important;
 }
 
 /* Compact buttons for scene editor toolbar */

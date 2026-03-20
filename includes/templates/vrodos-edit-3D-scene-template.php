@@ -241,13 +241,13 @@ extract( $data );
 						<span class="tw-text-[8pt] tw-font-semibold tw-text-slate-400 tw-leading-tight tw-shrink-0">Axes:</span>
 
 						<div id="object-manipulation-toggle"
-							 class="ObjectManipulationToggle tw-flex tw-items-center tw-gap-0" style="display: none;">
-							<input type="radio" id="translate-switch" name="object-manipulation-switch" value="translate" checked/>
-							<label for="translate-switch" id="translate-switch-label" class="affineSwitch">Move</label>
-							<input type="radio" id="rotate-switch" name="object-manipulation-switch" value="rotate" />
-							<label for="rotate-switch" id="rotate-switch-label" class="affineSwitch">Rotate</label>
-							<input type="radio" id="scale-switch" name="object-manipulation-switch" value="scale" />
-							<label for="scale-switch" id="scale-switch-label" class="affineSwitch">Scale</label>
+							 class="ObjectManipulationToggle d-join tw-flex tw-items-center tw-gap-0" style="display: none;">
+							<input type="radio" id="translate-switch" name="object-manipulation-switch" value="translate" class="tw-peer tw-hidden" checked/>
+							<label for="translate-switch" id="translate-switch-label" class="d-join-item d-btn d-btn-xs affineSwitch">Move</label>
+							<input type="radio" id="rotate-switch" name="object-manipulation-switch" value="rotate" class="tw-peer tw-hidden" />
+							<label for="rotate-switch" id="rotate-switch-label" class="d-join-item d-btn d-btn-xs affineSwitch">Rotate</label>
+							<input type="radio" id="scale-switch" name="object-manipulation-switch" value="scale" class="tw-peer tw-hidden" />
+							<label for="scale-switch" id="scale-switch-label" class="d-join-item d-btn d-btn-xs affineSwitch">Scale</label>
 						</div>
 
 						<div id="axis-manipulation-buttons" class="tw-flex tw-items-center tw-gap-0.5 tw-ml-auto" style="display: none;">

@@ -184,21 +184,55 @@ body.vrodos-manager-wrapper {
     transform: translateX(100%) !important;
 }
 
-/* Axes controls single row optimization */
-#vrodos-scene-editor .affineSwitch {
+/* Axes controls single row optimization (Floating Panel) */
+#object-controls-panel .affineSwitch {
     width: auto !important;
-    min-width: 45px !important;
+    min-width: 54px !important;
     padding: 0 8px !important;
     height: 24px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    font-size: 10px !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #94a3b8 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-#vrodos-scene-editor .ObjectManipulationToggle label {
-    width: auto !important;
-    min-width: 45px !important;
+#object-controls-panel .ObjectManipulationToggle label {
     border-radius: 0 !important;
+}
+
+#object-controls-panel .ObjectManipulationToggle .tw-peer:checked + .affineSwitch {
+    background-color: #10b981 !important; /* Emerald primary */
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+#object-controls-panel .d-btn-xs {
+    height: 1.5rem !important;
+    min-height: 1.5rem !important;
+}
+
+/* lil-gui inside floating panel: no title, always open, transparent background */
+#numerical_gui-container .lil-gui {
+	--background-color: transparent !important;
+	--widget-color: rgba(255,255,255,0.12) !important;
+	--number-color: #4fc3f7 !important;
+	--string-color: #4fc3f7 !important;
+	--text-color: #e2e8f0 !important;
+	--title-background-color: transparent !important;
+	--title-text-color: #94a3b8 !important;
+	border: none !important;
+}
+
+#numerical_gui-container .lil-gui.autoHeight {
+	max-height: none !important;
+	overflow: visible !important;
+}
+
+#numerical_gui-container .lil-gui .children {
+	display: block !important;
 }
 
 /* Compact buttons for scene editor toolbar */
