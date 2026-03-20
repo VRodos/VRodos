@@ -68,18 +68,51 @@ function removeAllCelOutlines() {
 
 // ─── Floating Object Controls Panel helpers ───
 
+/**
+ * Show the floating Object Controls panel.
+ * Positioned 100px to the right of the last mouse click,
+ * clamped so it stays within the viewport.
+ *
+ * @param {string} [objectName] - Title shown in the panel header
+ */
 function showObjectControlsPanel(objectName) {
     const panel = document.getElementById('object-controls-panel');
-    if (panel) {
-        panel.classList.remove('tw-hidden');
-        jQuery('#object-manipulation-toggle').show();
-        jQuery('#axis-manipulation-buttons').show();
-        if (objectName) {
-            const title = document.getElementById('object-controls-title');
-            if (title) title.textContent = objectName;
-        }
+    if (!panel) return;
+
+    panel.classList.remove('tw-hidden');
+    jQuery('#object-manipulation-toggle').show();
+    jQuery('#axis-manipulation-buttons').show();
+
+    if (objectName) {
+        const title = document.getElementById('object-controls-title');
+        if (title) title.textContent = objectName;
     }
+
+    // Position 100px to the right of last click, clamped to viewport
+    var panelW = panel.offsetWidth  || 280;
+    var panelH = panel.offsetHeight || 300;
+    var mx = _lastClickX || (window.innerWidth / 2);
+    var my = _lastClickY || (window.innerHeight / 2);
+
+    var left = mx + 100;
+    var top  = my - panelH / 2;
+
+    // If it would go off the right edge, place it to the left of the cursor instead
+    if (left + panelW > window.innerWidth - 8) {
+        left = mx - 100 - panelW;
+    }
+    // Final clamp
+    left = Math.max(8, Math.min(left, window.innerWidth  - panelW - 8));
+    top  = Math.max(40, Math.min(top,  window.innerHeight - panelH - 8));
+
+    panel.style.left  = Math.round(left) + 'px';
+    panel.style.top   = Math.round(top)  + 'px';
+    panel.style.right = 'auto';
 }
+
+// Track last click position (updated by the canvas mousedown handler)
+var _lastClickX = 0;
+var _lastClickY = 0;
 
 function hideObjectControlsPanel() {
     const panel = document.getElementById('object-controls-panel');

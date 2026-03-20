@@ -1416,6 +1416,18 @@ body {
   width: 1px;
 }
 
+.vrodos-manager-wrapper .tw-w-2\/3 {
+  width: 66.666667%;
+}
+
+.vrodos-manager-wrapper .tw-w-3\/4 {
+  width: 75%;
+}
+
+.vrodos-manager-wrapper .tw-w-4\/5 {
+  width: 80%;
+}
+
 .vrodos-manager-wrapper .tw-min-w-0 {
   min-width: 0px;
 }
@@ -1612,6 +1624,10 @@ body {
 
 .vrodos-manager-wrapper .tw-gap-8 {
   gap: 2rem;
+}
+
+.vrodos-manager-wrapper .tw-gap-2\.5 {
+  gap: 0.625rem;
 }
 
 .vrodos-manager-wrapper :is(.tw-space-y-10 > :not([hidden]) ~ :not([hidden])) {

@@ -168,7 +168,7 @@ extract( $data );
 						<!--  Dimensionality 2D 3D toggle -->
 						<a id="dim-change-btn"
 							title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-							class="EditorToolbarBtnStyle d-btn d-btn-sm toggle-btn">2D</a>
+							class="EditorToolbarBtnStyle d-btn d-btn-sm toggle-btn toggle-active">3D</a>
 					</div>
 
 					<!-- The button to start walking in the 3d environment -->
@@ -373,7 +373,7 @@ extract( $data );
 
 		let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 		var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
-		envir.is2d = true;
+		envir.is2d = false;
 
 		var transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
 		transform_controls.name = 'myTransformControls';
@@ -453,34 +453,17 @@ extract( $data );
 			// When all are finished loading place them in the correct position
 			manager.onLoad = function () {
 
-				// Get the last inserted object
-				let l = Object.keys(vrodos_scene_data.objects).length;
-				let name = Object.keys(vrodos_scene_data.objects)[l - 1];
-
-				let objItem;
-
-				if (envir.scene.getObjectByName(name)) {
-					objItem = envir.scene.getObjectByName(name);
-					
-					if (objItem.locked){
-						hideObjectControlsPanel();
-					}
-					else{
-						attachToControls(name, objItem);
-						setDatGuiInitialVales(objItem);
-					}
-						
-				} else {
-					return;
-				}
-
+				// Don't auto-select any object on load — user clicks to select
+				transform_controls.detach();
+				removeAllCelOutlines();
+				hideObjectControlsPanel();
 
 				// Find scene dimension in order to configure camera in 2D view (Y axis distance)
 				findSceneDimensions();
 				envir.updateCameraGivenSceneLimits();
 
 				setHierarchyViewer();
-				
+				removeHierarchySkeleton();
 
 				for (let n in vrodos_scene_data.objects) {
 					// (function (name) {
@@ -697,8 +680,9 @@ extract( $data );
 				document.getElementById('scale-switch-label').style = "inherit";
 			}
 
-			// highlight
-			envir.outlinePass.selectedObjects = [objItem];
+			// highlight — cel outline (no panel on load)
+			removeAllCelOutlines();
+			addCelOutline(objItem);
 
 			transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
 				trs_tmp['translation'][2]);
@@ -709,8 +693,8 @@ extract( $data );
 
 			console.log(objItem);
 
-			
-			showObjectControlsPanel();
+			// Don't show the floating panel on initial scene load — only on user interaction
+			// showObjectControlsPanel();
 			jQuery('#double-sided-switch').show();
 
 			showObjectPropertiesPanel(transform_controls.getMode());

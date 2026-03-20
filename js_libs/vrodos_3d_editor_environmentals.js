@@ -12,7 +12,7 @@ class vrodos_3d_editor_environmentals {
 
         // Composer is for the green outline effect when selecting objects
         this.isComposerOn = true;
-        this.is2d = true;
+        this.is2d = false;
         this.thirdPersonView = false;
 
         this.ctx = this;
@@ -97,14 +97,14 @@ class vrodos_3d_editor_environmentals {
         this.gridHelper = new THREE.GridHelper(2000, 40);
         this.gridHelper.name = "myGridHelper";
         this.scene.add(this.gridHelper);
-        this.gridHelper.visible = false;
+        this.gridHelper.visible = true;
 
         // -- Add Axes helper
         this.axesHelper = new THREE.AxesHelper(100);
         this.axesHelper.name = "myAxisHelper";
         this.scene.add(this.axesHelper);
         this.setAxisText();
-        this.axesHelper.visible = false;
+        this.axesHelper.visible = true;
 
 
 
@@ -218,7 +218,7 @@ class vrodos_3d_editor_environmentals {
         this.orbitControls.object.zoom = 1;
         this.orbitControls.object.updateProjectionMatrix();
         this.orbitControls.name = "orbitControls";
-        this.orbitControls.enableRotate = false;
+        this.orbitControls.enableRotate = true;
 
         // Add a helper for debug purpose
         // this.cameraOrbitHelper = new THREE.CameraHelper( this.cameraOrbit );

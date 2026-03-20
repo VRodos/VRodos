@@ -83,8 +83,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
     let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-slate-400';
     if (obj.name === 'avatarCamera') iconColor = 'tw-text-blue-400';
 
-    jQuery('#hierarchy-viewer').append(
-        '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-slate-200/60 hover:tw-bg-blue-50/70 tw-cursor-pointer tw-transition-colors" id="' + obj.uuid + '" data-name="' + obj.name + '">' +
+    var itemHTML = '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-slate-200/60 hover:tw-bg-blue-50/70 tw-cursor-pointer tw-transition-colors" id="' + obj.uuid + '" data-name="' + obj.name + '">' +
         '<i data-lucide="' + iconName + '" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ' + iconColor + '"></i>' +
         '<a href="javascript:void(0);" class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-[9pt] tw-leading-tight tw-text-slate-700 tw-no-underline" ' +
         'title="' + (obj.title || object_name) + '" onclick="onMouseDoubleClickFocus(event,\'' + obj.uuid + '\')">' +
@@ -96,7 +95,15 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
         resetButtonHTML +
         lockButtonHTML +
         '</span>' +
-        '</li>');
+        '</li>';
+
+    // Insert before the skeleton if it exists, otherwise append
+    var skeleton = document.getElementById('hierarchy-skeleton');
+    if (skeleton) {
+        jQuery(itemHTML).insertBefore(skeleton);
+    } else {
+        jQuery('#hierarchy-viewer').append(itemHTML);
+    }
 }
 
 
@@ -140,14 +147,8 @@ function setBackgroundColorHierarchyViewer(id) {
 // Traverse the entire scene to insert scene children in Hierarchy Viewer
 function setHierarchyViewer() {
 
-    jQuery('#hierarchy-viewer').empty();
-    let editorObject = transform_controls.object;
-
-   
-    // if (editorObject.locked){
-    //     transform_controls.detach();
-    // }
-
+    // Remove only real items, keep the skeleton placeholder if present
+    jQuery('#hierarchy-viewer .hierarchyItem').remove();
 
     envir.scene.traverse(function (obj) {
 
@@ -175,6 +176,15 @@ function setHierarchyViewer() {
 
     // Render Lucide icons in dynamically added items
     if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/**
+ * Remove the skeleton loading placeholder.
+ * Call this once ALL assets (lights + GLBs) have finished loading.
+ */
+function removeHierarchySkeleton() {
+    var skeleton = document.getElementById('hierarchy-skeleton');
+    if (skeleton) skeleton.remove();
 }
 
 
