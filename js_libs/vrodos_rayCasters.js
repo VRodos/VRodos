@@ -183,8 +183,7 @@ function selectorMajor(event, objectSel, whocalls) {
 
     if (event.button === 0) {
 
-        // document.getElementById('numerical_gui-container').style.visibility = 'visible';
-        document.getElementById('numerical_gui-container').style.display="block";
+        showObjectControlsPanel(objectSel.asset_name || objectSel.name || 'Object Controls');
 
         document.getElementById('translate-switch').checked = true;
         document.getElementById('rotate-switch').disabled = false;

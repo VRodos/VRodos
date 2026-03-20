@@ -7,6 +7,69 @@ var dg_s1_prev;
 var dg_s2_prev;
 var dg_s3_prev;
 
+// ─── Floating Object Controls Panel helpers ───
+
+function showObjectControlsPanel(objectName) {
+    const panel = document.getElementById('object-controls-panel');
+    if (panel) {
+        panel.classList.remove('tw-hidden');
+        jQuery('#object-manipulation-toggle').show();
+        jQuery('#axis-manipulation-buttons').show();
+        if (objectName) {
+            const title = document.getElementById('object-controls-title');
+            if (title) title.textContent = objectName;
+        }
+    }
+}
+
+function hideObjectControlsPanel() {
+    const panel = document.getElementById('object-controls-panel');
+    if (panel) panel.classList.add('tw-hidden');
+}
+
+// Set up drag + close once DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
+    const panel = document.getElementById('object-controls-panel');
+    const header = document.getElementById('object-controls-header');
+    const closeBtn = document.getElementById('object-controls-close');
+
+    if (!panel || !header) return;
+
+    // Close button hides the panel
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+            hideObjectControlsPanel();
+        });
+    }
+
+    // Draggable via header
+    let isDragging = false, offsetX = 0, offsetY = 0;
+
+    header.addEventListener('pointerdown', function (e) {
+        if (e.target.closest('button')) return; // don't drag on close button
+        isDragging = true;
+        const rect = panel.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        header.setPointerCapture(e.pointerId);
+        e.preventDefault();
+    });
+
+    header.addEventListener('pointermove', function (e) {
+        if (!isDragging) return;
+        const x = e.clientX - offsetX;
+        const y = e.clientY - offsetY;
+        panel.style.left = x + 'px';
+        panel.style.top = y + 'px';
+        panel.style.right = 'auto';
+    });
+
+    header.addEventListener('pointerup', function (e) {
+        isDragging = false;
+        header.releasePointerCapture(e.pointerId);
+    });
+});
+
 // GUI controls — lil-gui (successor to dat.gui)
 var controlInterface = new lil.GUI({ autoPlace: false });
 controlInterface.domElement.style.width = '100%';

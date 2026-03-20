@@ -1034,6 +1034,10 @@ body {
   z-index: 60;
 }
 
+.vrodos-manager-wrapper .tw-z-\[998\] {
+  z-index: 998;
+}
+
 .vrodos-manager-wrapper .tw-m-0 {
   margin: 0px;
 }
@@ -1396,6 +1400,10 @@ body {
   width: 1px;
 }
 
+.vrodos-manager-wrapper .tw-w-\[280px\] {
+  width: 280px;
+}
+
 .vrodos-manager-wrapper .tw-min-w-0 {
   min-width: 0px;
 }
@@ -1484,6 +1492,12 @@ body {
 
 .vrodos-manager-wrapper .tw-cursor-pointer {
   cursor: pointer;
+}
+
+.vrodos-manager-wrapper .tw-select-none {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 
 .vrodos-manager-wrapper .tw-list-none {
@@ -1882,6 +1896,18 @@ body {
   background-color: rgb(255 255 255 / 0.9);
 }
 
+.vrodos-manager-wrapper .tw-bg-slate-700\/40 {
+  background-color: rgb(51 65 85 / 0.4);
+}
+
+.vrodos-manager-wrapper .tw-bg-slate-700\/80 {
+  background-color: rgb(51 65 85 / 0.8);
+}
+
+.vrodos-manager-wrapper .tw-bg-slate-800\/90 {
+  background-color: rgb(30 41 59 / 0.9);
+}
+
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
   background-image: linear-gradient(to top, var(--tw-gradient-stops));
 }
@@ -1948,6 +1974,10 @@ body {
 
 .vrodos-manager-wrapper .tw-p-8 {
   padding: 2rem;
+}
+
+.vrodos-manager-wrapper .tw-p-0\.5 {
+  padding: 0.125rem;
 }
 
 .vrodos-manager-wrapper .tw-px-1 {
@@ -3407,6 +3437,11 @@ body.vrodos-manager-wrapper {
 .vrodos-manager-wrapper .hover\:tw-text-slate-700:hover {
   --tw-text-opacity: 1;
   color: rgb(51 65 85 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .hover\:tw-text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .hover\:tw-underline:hover {

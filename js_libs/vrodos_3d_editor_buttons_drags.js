@@ -260,9 +260,8 @@ function loadButtonActions() {
             // Asset add to canvas
             addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath);
 
-            // Show options
-            jQuery('#object-manipulation-toggle').show();
-            jQuery('#axis-manipulation-buttons').show();
+            // Show floating controls panel
+            showObjectControlsPanel();
 
             showObjectPropertiesPanel(transform_controls.getMode());
 
@@ -507,6 +506,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
         const uiElementsToToggle = [
             // upper toolbar kept visible (toggle button lives there)
             document.getElementById('right-elements-panel'),
+            document.getElementById('object-controls-panel'),
             document.querySelector('.environmentBar'),
             document.getElementById('scenesInsideVREditor'),
             document.getElementById('assetBrowserToolbar'),

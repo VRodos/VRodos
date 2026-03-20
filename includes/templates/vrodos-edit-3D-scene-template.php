@@ -222,6 +222,50 @@ extract( $data );
 				require plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-HierarchyViewer.php';
 				?>
 
+				<!-- Floating Object Controls Panel -->
+				<div id="object-controls-panel" class="tw-absolute tw-z-[998] tw-hidden tw-flex tw-flex-col tw-w-[280px] tw-bg-slate-800/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-2xl tw-border tw-border-white/10 tw-text-white tw-overflow-hidden" style="top: 100px; right: 320px;">
+
+					<!-- Draggable header -->
+					<div id="object-controls-header" class="tw-flex tw-items-center tw-justify-between tw-px-3 tw-py-1.5 tw-bg-slate-700/80 tw-cursor-move tw-select-none tw-border-b tw-border-white/10">
+						<span id="object-controls-title" class="tw-text-xs tw-font-semibold tw-text-slate-300 tw-uppercase tw-tracking-wider">Object Controls</span>
+						<button id="object-controls-close" class="tw-p-0.5 tw-text-slate-400 hover:tw-text-white tw-transition-colors" title="Close panel">
+							<i data-lucide="x" class="tw-w-3.5 tw-h-3.5"></i>
+						</button>
+					</div>
+
+					<!-- lil-gui container -->
+					<div id="numerical_gui-container" class="VrGuiContainerStyle"></div>
+
+					<!-- Axes controls row -->
+					<div class="tw-flex tw-flex-nowrap tw-items-center tw-gap-1 tw-px-3 tw-py-1.5 tw-bg-slate-700/40">
+						<span class="tw-text-[8pt] tw-font-semibold tw-text-slate-400 tw-leading-tight tw-shrink-0">Axes:</span>
+
+						<div id="object-manipulation-toggle"
+							 class="ObjectManipulationToggle tw-flex tw-items-center tw-gap-0" style="display: none;">
+							<input type="radio" id="translate-switch" name="object-manipulation-switch" value="translate" checked/>
+							<label for="translate-switch" id="translate-switch-label" class="affineSwitch">Move</label>
+							<input type="radio" id="rotate-switch" name="object-manipulation-switch" value="rotate" />
+							<label for="rotate-switch" id="rotate-switch-label" class="affineSwitch">Rotate</label>
+							<input type="radio" id="scale-switch" name="object-manipulation-switch" value="scale" />
+							<label for="scale-switch" id="scale-switch-label" class="affineSwitch">Scale</label>
+						</div>
+
+						<div id="axis-manipulation-buttons" class="tw-flex tw-items-center tw-gap-0.5 tw-ml-auto" style="display: none;">
+							<a id="axis-size-increase-btn" title="Increase axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">+</a>
+							<a id="axis-size-decrease-btn" title="Decrease axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">-</a>
+						</div>
+					</div>
+
+					<!-- Constrain scale -->
+					<div class="tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1.5 tw-border-t tw-border-white/5">
+						<input type="checkbox" title="Constrain Scale dims to one value"
+							   id="scaleLockCheckbox" name="scaleLockCheckbox" form="3dAssetForm"
+							   class="d-checkbox d-checkbox-sm d-checkbox-primary"
+							   onchange="keepScaleAspectRatio(this.checked)">
+						<label for="scaleLockCheckbox" class="tw-text-xs tw-text-slate-300 tw-cursor-pointer">Constrain Scale</label>
+					</div>
+				</div>
+
 				<!-- Pause rendering-->
 				<div id="divPauseRendering" class="pauseRenderingDivStyle">
 					<a id="pauseRendering" class="d-btn d-btn-sm d-btn-primary"
@@ -416,7 +460,7 @@ extract( $data );
 					objItem = envir.scene.getObjectByName(name);
 					
 					if (objItem.locked){
-						document.getElementById('numerical_gui-container').style.display="none";
+						hideObjectControlsPanel();
 					}
 					else{
 						attachToControls(name, objItem);
@@ -663,8 +707,7 @@ extract( $data );
 			console.log(objItem);
 
 			
-			jQuery('#object-manipulation-toggle').show();
-			jQuery('#axis-manipulation-buttons').show();
+			showObjectControlsPanel();
 			jQuery('#double-sided-switch').show();
 
 			showObjectPropertiesPanel(transform_controls.getMode());

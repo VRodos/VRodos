@@ -122,7 +122,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         setTransformControlsSize();
 
-        document.getElementById('numerical_gui-container').style.display="block";
+        showObjectControlsPanel();
         setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
@@ -230,7 +230,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // var sizeT = Math.max(...dims);
         // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
 
-        document.getElementById('numerical_gui-container').style.display="block";
+        showObjectControlsPanel();
         setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
 
 
@@ -334,7 +334,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // Dimensions
         setTransformControlsSize();
 
-        document.getElementById('numerical_gui-container').style.display="block";
+        showObjectControlsPanel();
         setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
         // var dims = findDimensions(transform_controls.object);
         // var sizeT = Math.max(...dims);
@@ -576,7 +576,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             triggerAutoSave();
 
             //document.getElementById('numerical_gui-container').style.visibility = 'visible';
-            document.getElementById('numerical_gui-container').style.display="block";
+            showObjectControlsPanel();
             setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
             // Hide progress dialogue
             jQuery("#progressWrapper").get(0).style.visibility = "hidden";
@@ -621,10 +621,10 @@ function deleteFomScene(uuid, name) {
             setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , selUuid));
             }
             else{
-                document.getElementById('numerical_gui-container').style.display="none";
+                hideObjectControlsPanel();
             }
         }else{
-            document.getElementById('numerical_gui-container').style.display="none";
+            hideObjectControlsPanel();
         }
        
     }, { once: true });
@@ -642,12 +642,12 @@ function lockOnScene(uuid, name) {
         hierarchy_icon.textContent = "lock_open";
         transform_controls.attach(envir.scene.getObjectByProperty( 'uuid' , uuid));
         setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , uuid));
-        document.getElementById('numerical_gui-container').style.display="block";
+        showObjectControlsPanel();
     }else{
         selectedObject.locked = true;
         transform_controls.detach();
         hierarchy_icon.textContent = "lock_outline";
-        document.getElementById('numerical_gui-container').style.display="none";
+        hideObjectControlsPanel();
     }
 
     setBackgroundColorHierarchyViewer(uuid);

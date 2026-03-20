@@ -10,53 +10,6 @@
         </div>
     </a>
 
-    <!-- 4 Buttons in a row -->
-    <div id="row2" class="row-right-panel"></div>
-
-    <!-- Numerical input for Move rotate scale -->
-    <div id="row4" class="row-right-panel" style="max-height:25%; overflow-y: auto">
-        <div id="numerical_gui-container" class="VrGuiContainerStyle tw-shadow-sm"></div>
-    </div>
-
-    <!--  Axes resize -->
-    <div id="row5" class="row-right-panel tw-flex-nowrap tw-items-center tw-gap-1 tw-px-2 tw-py-1.5 tw-bg-slate-200/70">
-		<span class="tw-text-[8pt] tw-font-semibold tw-text-slate-500 tw-leading-tight tw-shrink-0">Axes:</span>
-
-        <!-- Translate, Rotate, Scale Buttons -->
-        <div id="object-manipulation-toggle"
-             class="ObjectManipulationToggle tw-flex tw-items-center tw-gap-0" style="display: none;">
-            <!-- Translate -->
-            <input type="radio" id="translate-switch" name="object-manipulation-switch" value="translate" checked/>
-            <label for="translate-switch" id="translate-switch-label" class="affineSwitch">Move</label>
-            <!-- Rotate -->
-            <input type="radio" id="rotate-switch" name="object-manipulation-switch" value="rotate" />
-            <label for="rotate-switch" id="rotate-switch-label" class="affineSwitch">Rotate</label>
-            <!-- Scale -->
-            <input type="radio" id="scale-switch" name="object-manipulation-switch" value="scale" />
-            <label for="scale-switch" id="scale-switch-label" class="affineSwitch">Scale</label>
-        </div>
-
-        <div id="axis-manipulation-buttons" class="AxisManipulationBtns tw-flex tw-items-center tw-gap-0.5 tw-ml-auto" style="display: none;">
-            <a id="axis-size-increase-btn" title="Increase axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">+</a>
-            <a id="axis-size-decrease-btn" title="Decrease axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">-</a>
-        </div>
-
-    </div>
-
-    <div id="scale-lock-div"
-         class="tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1 tw-bg-white/50">
-
-        <input type="checkbox"
-               title="Constrain Scale dims to one value"
-               id="scaleLockCheckbox"
-               name="scaleLockCheckbox"
-               form="3dAssetForm"
-               class="d-checkbox d-checkbox-sm d-checkbox-primary"
-               onchange="keepScaleAspectRatio(this.checked)">
-        <label for="scaleLockCheckbox" class="tw-text-sm tw-text-slate-700 tw-cursor-pointer">Constrain Scale dims to single value</label>
-
-    </div>
-
     <!-- Hierarchy viewer -->
     <div id="row6" class="row-right-panel" style="max-height:30%;">
         <div class="tw-flex tw-flex-col tw-w-full tw-bg-slate-200" id="hierarchy-viewer-container">
