@@ -611,13 +611,13 @@ extract( $data );
 			// envir.orbitControls.update();
 			// updatePointerLockControls();
 
-			// Now update the translation and rotation input texts at datgui from transform controls
+			// Now update the translation and rotation input texts from transform controls
 			if (transform_controls.object) {
 				const affines = ['position', 'rotation', 'scale'];
 				for (let j=0; j<3; j++ ) {
 					for (let i = 0; i < 3; i++) {
-						if (controlInterface.__controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
-							controlInterface.__controllers[j*3+i].updateDisplay();
+						if (controlInterface.controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
+							controlInterface.controllers[j*3+i].updateDisplay();
 						}
 					}
 				}

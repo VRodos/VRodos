@@ -105,7 +105,7 @@ class VRodos_Asset_Manager {
 		wp_enqueue_style( 'vrodos_material_stylesheet' );
 		wp_enqueue_script( 'vrodos_material_scripts' );
 		wp_enqueue_style( 'vrodos_material_icons' );
-		wp_enqueue_style( 'vrodos_datgui' );
+		wp_enqueue_style( 'vrodos_lilgui' );
 		wp_enqueue_style( 'vrodos_3D_editor' );
 		wp_enqueue_style( 'vrodos_3D_editor_browser' );
 
@@ -126,7 +126,7 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_load147_GLTFLoader' );
 		wp_enqueue_script( 'vrodos_inflate' );
 		wp_enqueue_script( 'vrodos_HierarchyViewer' );
-		wp_enqueue_script( 'vrodos_load_datgui' );
+		wp_enqueue_script( 'vrodos_load_lilgui' );
 		wp_enqueue_script( 'vrodos_load147_OrbitControls' );
 		wp_enqueue_script( 'vrodos_load147_TransformControls' );
 		wp_enqueue_script( 'vrodos_load147_PointerLockControls' );
@@ -326,7 +326,7 @@ class VRodos_Asset_Manager {
       ['vrodos_load147_OBJLoader', $plugin_url_js . 'threejs147/OBJLoader.js'],
       ['vrodos_load147_MTLLoader', $plugin_url_js . 'threejs147/MTLLoader.js'],
       // Other Libraries
-      ['vrodos_load_datgui', $plugin_url_js . 'datgui/0.7.9/dat.gui.min.js'],
+      ['vrodos_load_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js'],
       ['vrodos_material_scripts', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.js'],
       ['shoelace_js', 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/dist/shoelace-autoloader.js'],
       ['lucide-icons', 'https://unpkg.com/lucide@0.469.0'],
@@ -343,7 +343,7 @@ class VRodos_Asset_Manager {
 
 		wp_register_style( 'vrodos_backend', $plugin_url . 'css/vrodos_backend.css' );
 		wp_register_style( 'vrodos_3D_editor', $plugin_url . 'css/vrodos_3D_editor.css' );
-		wp_register_style( 'vrodos_datgui', $plugin_url . 'js_libs/datgui/0.7.9/dat.gui.css' );
+		wp_register_style( 'vrodos_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.esm.css' );
 		wp_register_style( 'vrodos_dashboard_table', $plugin_url . 'css/vrodos_dashboard_table_style.css' );
 		wp_register_style( 'vrodos_3D_editor_browser', $plugin_url . 'css/vrodos_3D_editor_browser.css' );
 		wp_register_style( 'vrodos_material_stylesheet', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.css' );

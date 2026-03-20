@@ -1,5 +1,5 @@
 /**
- * Dat-gui controls variables initialize
+ * lil-gui controls variables initialize (migrated from dat.gui)
  *
  * @type {gui_controls_funs}
  */
@@ -7,12 +7,9 @@ var dg_s1_prev;
 var dg_s2_prev;
 var dg_s3_prev;
 
-// GUI controls
-/*var gui = new dat.GUI( {autoPlace: false} );*/
-
-var controlInterface = [];
-controlInterface = new dat.GUI({ autoPlace: false });
-controlInterface.domElement.style = 'width:100%';
+// GUI controls — lil-gui (successor to dat.gui)
+var controlInterface = new lil.GUI({ autoPlace: false });
+controlInterface.domElement.style.width = '100%';
 
 let coordLabel = ['<span style="color:red">X</span>', '<span style="color:green">Y</span>', '<span style="color:blue">Z</span>'];
 let actionLabel = ['translate', 'translate', 'translate', 'rotate', 'rotate', 'rotate', 'scale', 'scale', 'scale'];
@@ -39,13 +36,66 @@ for (let key in gui_controls_funs) {
 
     let label = actionLabel[i] + " " + coordLabel[i % 3];
 
-    // Controller          // Interface        // UI_Vars      // var
-    dg_controller[i++] = controlInterface.add(gui_controls_funs, key).step(0.001).name(label);
+    // lil-gui: .add() returns a Controller, .step() and .name() chain the same way
+    // .decimals(2) handles display formatting (replaces manual toFixed hacks)
+    dg_controller[i] = controlInterface.add(gui_controls_funs, key).step(0.001).decimals(2).name(key);
+
+    // lil-gui escapes HTML in .name(), so set innerHTML directly for colored axis labels
+    dg_controller[i].$name.innerHTML = label;
+
+    // Add drag-to-scrub on the input: click+drag horizontally to change value
+    _addDragScrub(dg_controller[i]);
+
+    i++;
+}
+
+/**
+ * Adds mouse-drag scrubbing to a lil-gui number controller input.
+ * Click and drag horizontally on the input to adjust the value.
+ * Sensitivity adapts: translation/rotation use 0.01 per pixel, scale uses 0.005.
+ */
+function _addDragScrub(controller) {
+    const input = controller.$input;
+    let dragging = false;
+    let startX = 0;
+    let startValue = 0;
+
+    // Determine sensitivity from the controller property name
+    const isScale = controller.property.startsWith('dg_s');
+    const sensitivity = isScale ? 0.005 : 0.01;
+
+    input.style.cursor = 'ew-resize';
+
+    input.addEventListener('pointerdown', function (e) {
+        // Only scrub on left button; skip if user clicked to type
+        if (e.button !== 0) return;
+        dragging = true;
+        startX = e.clientX;
+        startValue = controller.getValue();
+        input.setPointerCapture(e.pointerId);
+        e.preventDefault();
+        cancelAnimationFrame(id_animation_frame);
+    });
+
+    input.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const newValue = startValue + dx * sensitivity;
+        controller.setValue(parseFloat(newValue.toFixed(3)));
+    });
+
+    input.addEventListener('pointerup', function (e) {
+        if (!dragging) return;
+        dragging = false;
+        input.releasePointerCapture(e.pointerId);
+        animate();
+        triggerAutoSave();
+    });
 }
 
 
 /**
- *  Add listeners: Update php, javascript and transform_controls when dat.gui changes
+ *  Add listeners: Update php, javascript and transform_controls when GUI changes
  *  Triggered once initially
  */
 function controllerDatGuiOnChange() {
@@ -55,8 +105,6 @@ function controllerDatGuiOnChange() {
     dg_controller[0].onChange(function(value) {
             cancelAnimationFrame( id_animation_frame );
             transform_controls.object.position.x = gui_controls_funs.dg_t1;
-            // dg_controller[0].updateDisplay();
-            // dg_controller[0].isModified();
             animate();
         }
     );
@@ -80,7 +128,7 @@ function controllerDatGuiOnChange() {
             if (transform_controls.object.category_name == "camera"){
                 transform_controls.object.rotation.x = 0;
                 gui_controls_funs.dg_r1 = 0;
-            }            
+            }
             else
                 transform_controls.object.rotation.x = gui_controls_funs.dg_r1 / 180 * Math.PI;
             animate();
@@ -92,7 +140,7 @@ function controllerDatGuiOnChange() {
             if (transform_controls.object.category_name == "camera"){
                 transform_controls.object.rotation.y = 0;
                 gui_controls_funs.dg_r2 = 0;
-            }            
+            }
             else
                 transform_controls.object.rotation.y = gui_controls_funs.dg_r2 / 180 * Math.PI;
             animate();
@@ -104,34 +152,34 @@ function controllerDatGuiOnChange() {
             if (transform_controls.object.category_name == "camera"){
                 transform_controls.object.rotation.z = 0;
                 gui_controls_funs.dg_r3 = 0;
-            }            
+            }
             else
                 transform_controls.object.rotation.z = gui_controls_funs.dg_r3 / 180 * Math.PI;
             animate();
         }
     );
 
-    // When x length changes from dat gui then change also scale, y and z lengths, and scale the object with transform controls also
+    // When x length changes from gui then change also scale, y and z lengths
     dg_controller[6].onChange(function (value) {
 
             cancelAnimationFrame(id_animation_frame);
 
-            // if (dg_s1_prev) {
             if (transform_controls.object.category_name == "camera"){
                 transform_controls.object.scale.x = 1;
                 gui_controls_funs.dg_s1 = 1;
             }
-            else{     
+            else{
                 if (envir.scene.keepScaleAspectRatio) {
                     transform_controls.object.scale.set(value, value, value);
-                    dg_controller[7].domElement.children[0].value = value;
-                    dg_controller[8].domElement.children[0].value = value;
+                    gui_controls_funs.dg_s2 = value;
+                    gui_controls_funs.dg_s3 = value;
+                    dg_controller[7].updateDisplay();
+                    dg_controller[8].updateDisplay();
                 } else {
                     transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
 
                 }
                 envir.scene.dispatchEvent({ type: "modificationPendingSave" });
-                // }
 
                 dg_s1_prev = value;
                 animate();
@@ -143,7 +191,6 @@ function controllerDatGuiOnChange() {
 
             cancelAnimationFrame( id_animation_frame );
 
-            // if (dg_s2_prev) {
             if (transform_controls.object.category_name == "camera"){
                 transform_controls.object.scale.y = 1;
                 gui_controls_funs.dg_s2 = 1;
@@ -151,13 +198,14 @@ function controllerDatGuiOnChange() {
             else{
                 if (envir.scene.keepScaleAspectRatio) {
                     transform_controls.object.scale.set(value, value, value);
-                    dg_controller[6].domElement.children[0].value = value;
-                    dg_controller[8].domElement.children[0].value = value;
+                    gui_controls_funs.dg_s1 = value;
+                    gui_controls_funs.dg_s3 = value;
+                    dg_controller[6].updateDisplay();
+                    dg_controller[8].updateDisplay();
                 } else {
                     transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
                 }
                 envir.scene.dispatchEvent({type:"modificationPendingSave"});
-                // }
 
                 dg_s2_prev = value;
                 animate();
@@ -170,7 +218,6 @@ function controllerDatGuiOnChange() {
 
             cancelAnimationFrame( id_animation_frame );
 
-            // if (dg_s3_prev) {
             if (transform_controls.object.category_name == "camera"){
                 transform_controls.object.scale.z = 1;
                 gui_controls_funs.dg_s3 = 1;
@@ -178,14 +225,15 @@ function controllerDatGuiOnChange() {
             else{
                 if (envir.scene.keepScaleAspectRatio) {
                     transform_controls.object.scale.set(value, value, value);
-                    dg_controller[6].domElement.children[0].value = value;
-                    dg_controller[7].domElement.children[0].value = value;
+                    gui_controls_funs.dg_s1 = value;
+                    gui_controls_funs.dg_s2 = value;
+                    dg_controller[6].updateDisplay();
+                    dg_controller[7].updateDisplay();
                 } else {
                     transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
                 }
 
                 envir.scene.dispatchEvent({type:"modificationPendingSave"});
-                // }
 
                 dg_s3_prev = value;
                 animate();
@@ -194,40 +242,21 @@ function controllerDatGuiOnChange() {
     );
 
     // Make slider-text controllers more interactive
-    dg_controller[0].domElement.event3DOperation = 'Tx';
-    setEventListenerKeyPressControllerConstrained(dg_controller[0].domElement.childNodes[0]);
-
-    dg_controller[1].domElement.event3DOperation = 'Ty';
-    setEventListenerKeyPressControllerConstrained(dg_controller[1].domElement.childNodes[0]);
-
-    dg_controller[2].domElement.event3DOperation = 'Tz';
-    setEventListenerKeyPressControllerConstrained(dg_controller[2].domElement.childNodes[0]);
-
-    dg_controller[3].domElement.event3DOperation = 'Rx';
-    setEventListenerKeyPressControllerConstrained(dg_controller[3].domElement.childNodes[0]);
-
-    dg_controller[4].domElement.event3DOperation = 'Ry';
-    setEventListenerKeyPressControllerConstrained(dg_controller[4].domElement.childNodes[0]);
-
-    dg_controller[5].domElement.event3DOperation = 'Rz';
-    setEventListenerKeyPressControllerConstrained(dg_controller[5].domElement.childNodes[0]);
-
-    dg_controller[6].domElement.event3DOperation = 'Sx';
-    setEventListenerKeyPressControllerConstrained(dg_controller[6].domElement.children[0]);
-
-    dg_controller[7].domElement.event3DOperation = 'Sy';
-    setEventListenerKeyPressControllerConstrained(dg_controller[7].domElement.childNodes[0]);
-
-    dg_controller[8].domElement.event3DOperation = 'Sz';
-    setEventListenerKeyPressControllerConstrained(dg_controller[8].domElement.childNodes[0]);
+    // lil-gui exposes .$input for the input element
+    let opCodes = ['Tx','Ty','Tz','Rx','Ry','Rz','Sx','Sy','Sz'];
+    for (let idx = 0; idx < 9; idx++) {
+        dg_controller[idx]._opCode = opCodes[idx];
+        setEventListenerKeyPressControllerConstrained(dg_controller[idx].$input, dg_controller[idx]);
+    }
 }
 
 
 /**
- * This function allows the dat gui text element of the slider to be clickable and interactive
- * @param element
+ * This function allows the gui text element of the slider to be clickable and interactive
+ * @param element - the input element
+ * @param controller - the lil-gui controller (has _opCode custom property)
  */
-function setEventListenerKeyPressControllerConstrained(element) {
+function setEventListenerKeyPressControllerConstrained(element, controller) {
 
     element.addEventListener("focusout", function (event) {
         animate();
@@ -242,9 +271,8 @@ function setEventListenerKeyPressControllerConstrained(element) {
 
     // While on Input Field on Focus and pressing enter for value
     element.addEventListener('keydown', function (e) {
-        
-        // updatePositionsPhpAndJavsFromControlsAxes();
-        switch (element.parentElement.parentElement.event3DOperation) {
+
+        switch (controller._opCode) {
             case 'Tx':
                 gui_controls_funs.dg_t1 = element.value;
                 transform_controls.object.position.x = element.value;
@@ -259,7 +287,7 @@ function setEventListenerKeyPressControllerConstrained(element) {
                 break;
             case 'Rx':
                 gui_controls_funs.dg_r1 = element.value;
-                
+
                 transform_controls.object.rotation.x = element.value;
                 break;
             case 'Ry':
@@ -302,18 +330,15 @@ function setEventListenerKeyPressControllerConstrained(element) {
                 break;
         }
 
-        // 13 is enter
-        // if (e.keyCode === 13) {
-            animate();
-            triggerAutoSave();
-        // }
+        animate();
+        triggerAutoSave();
     }, true);
 }
 
 
 
 /**
- *  When you change trs from axes controls then automatically the dat.gui and the php form are updated
+ *  When you change trs from axes controls then automatically the GUI and the php form are updated
  *
  *  OnTickLevel
  */
@@ -407,30 +432,10 @@ function setDatGuiInitialVales(object){
     gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
     gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
 
-    // dg_controller[0].domElement.children[0].value = transform_controls.object.position.x;
-    // dg_controller[1].domElement.children[0].value = transform_controls.object.position.y;
-    // dg_controller[2].domElement.children[0].value = transform_controls.object.position.z;
-
-    dg_controller[0].domElement.children[0].value = (Math.round(transform_controls.object.position.x * 100) / 100).toFixed(2);
-    dg_controller[1].domElement.children[0].value = (Math.round(transform_controls.object.position.y * 100) / 100).toFixed(2);
-    dg_controller[2].domElement.children[0].value = (Math.round(transform_controls.object.position.z * 100) / 100).toFixed(2);
-
-
-    // dg_controller[3].domElement.children[0].value = transform_controls.object.rotation.x;
-    // dg_controller[4].domElement.children[0].value = transform_controls.object.rotation.y;
-    // dg_controller[5].domElement.children[0].value = transform_controls.object.rotation.z;
-
-    dg_controller[3].domElement.children[0].value = (Math.round(transform_controls.object.rotation.x * 100) / 100).toFixed(2);
-    dg_controller[4].domElement.children[0].value = (Math.round(transform_controls.object.rotation.y * 100) / 100).toFixed(2);
-    dg_controller[5].domElement.children[0].value = (Math.round(transform_controls.object.rotation.z * 100) / 100).toFixed(2);
-
-    // dg_controller[6].domElement.children[0].value = transform_controls.object.scale.x;
-    // dg_controller[7].domElement.children[0].value = transform_controls.object.scale.y;
-    // dg_controller[8].domElement.children[0].value = transform_controls.object.scale.z;
-
-    dg_controller[6].domElement.children[0].value = (Math.round(transform_controls.object.scale.x * 100) / 100).toFixed(2);
-    dg_controller[7].domElement.children[0].value = (Math.round(transform_controls.object.scale.y * 100) / 100).toFixed(2);
-    dg_controller[8].domElement.children[0].value = (Math.round(transform_controls.object.scale.z * 100) / 100).toFixed(2);
+    // lil-gui: updateDisplay() reads from the bound object and formats with .decimals(2)
+    for (let c = 0; c < 9; c++) {
+        dg_controller[c].updateDisplay();
+    }
 
     updatePositionsPhpAndJavsFromControlsAxes();
 }
