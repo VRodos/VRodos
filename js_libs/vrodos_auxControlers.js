@@ -84,6 +84,78 @@ function showObjectControlsPanel(objectName) {
 function hideObjectControlsPanel() {
     const panel = document.getElementById('object-controls-panel');
     if (panel) panel.classList.add('tw-hidden');
+    hideAllPropertyPanels();
+}
+
+/**
+ * Hide all object property sections inside the floating panel.
+ */
+function hideAllPropertyPanels() {
+    var container = document.getElementById('object-properties-container');
+    if (!container) return;
+    container.style.display = 'none';
+    var sections = container.querySelectorAll('.object-property-section');
+    for (var i = 0; i < sections.length; i++) {
+        sections[i].style.display = 'none';
+    }
+}
+
+/**
+ * Show properties for the selected object inside the floating panel,
+ * based on its category_slug / category_name.
+ */
+function showPropertiesInPanel(object) {
+    if (!object) return;
+    hideAllPropertyPanels();
+
+    var name = object.name;
+    var hasProperties = false;
+
+    // Dispatch by category_slug first
+    switch (object.category_slug) {
+        case 'poi-imagetext':
+            displayPoiImageTextProperties(null, name);
+            hasProperties = true;
+            break;
+        case 'video':
+            displayPoiVideoProperties(null, name);
+            hasProperties = true;
+            break;
+        case 'door':
+            displayDoorProperties(null, name);
+            hasProperties = true;
+            break;
+        case 'poi-link':
+            displayLinkProperties(null, name);
+            hasProperties = true;
+            break;
+    }
+
+    // Dispatch by category_name (lights)
+    switch (object.category_name) {
+        case 'lightSun':
+            displaySunProperties(null, name);
+            hasProperties = true;
+            break;
+        case 'lightLamp':
+            displayLampProperties(null, name);
+            hasProperties = true;
+            break;
+        case 'lightSpot':
+            displaySpotProperties(null, name);
+            hasProperties = true;
+            break;
+        case 'lightAmbient':
+            displayAmbientProperties(null, name);
+            hasProperties = true;
+            break;
+    }
+
+    // Show the container only if a property section is active
+    if (hasProperties) {
+        var container = document.getElementById('object-properties-container');
+        if (container) container.style.display = 'block';
+    }
 }
 
 // Set up drag + close once DOM is ready

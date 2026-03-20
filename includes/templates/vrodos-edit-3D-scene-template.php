@@ -264,6 +264,11 @@ extract( $data );
 							   onchange="keepScaleAspectRatio(this.checked)">
 						<label for="scaleLockCheckbox" class="tw-text-xs tw-text-slate-300 tw-cursor-pointer">Constrain Scale</label>
 					</div>
+
+					<!-- Object Properties (auto-shown on selection based on category) -->
+					<div id="object-properties-container" class="tw-border-t tw-border-white/10 tw-overflow-y-auto tw-max-h-[300px]" style="display:none;">
+						<?php require plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-Popups.php'; ?>
+					</div>
 				</div>
 
 				<!-- Pause rendering-->
@@ -321,8 +326,7 @@ extract( $data );
 
 				</div>
 
-				<!-- Popups -->
-				<?php require plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-Popups.php'; ?>
+				<!-- Popups are now inside the floating Object Controls panel -->
 
 				<!--  Open/Close Scene list panel-->
 				<a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable d-btn d-btn-sm d-btn-primary" title="Toggle scenes list">

@@ -298,6 +298,9 @@ function selectorMajor(event, objectSel, whocalls) {
         addCelOutline(objectSel);
 
         setDatGuiInitialVales(objectSel);
+
+        // Auto-show object-specific properties in the floating panel
+        showPropertiesInPanel(objectSel);
     }
 }
 
@@ -447,14 +450,8 @@ function displaySunProperties(event, name) {
     //jQuery("#sunColor")
   
 
-    // Show Selection
-    ppPropertiesDiv.show(); 
-    var popDiv = document.getElementById('popUpSunPropertiesDiv');
-    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    if (window.innerHeight - event.clientY > popDiv.offsetHeight || window.innerHeight < popDiv.offsetHeight)
-        ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-    else
-        ppPropertiesDiv[0].style.top = event.clientY -(popDiv.offsetHeight - (window.innerHeight - event.clientY)) - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+    // Show Selection (inside floating panel or at mouse position)
+    ppPropertiesDiv.show();
 
     jQuery("#sunColor").change(function (e) {
         //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
@@ -616,15 +613,8 @@ function displayLampProperties(event, name) {
         saveChanges();
     });
 
-    // Show Selection
+    // Show Selection (inside floating panel)
     ppPropertiesDiv.show();
-    var popDiv = document.getElementById('popUpLampPropertiesDiv');
-    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    if (window.innerHeight - event.clientY > popDiv.offsetHeight || window.innerHeight < popDiv.offsetHeight)
-        ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-    else
-        ppPropertiesDiv[0].style.top = event.clientY -(popDiv.offsetHeight - (window.innerHeight - event.clientY)) - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-       
 }
 
 
@@ -657,10 +647,8 @@ function displaySpotProperties(event, name) {
     document.getElementById("spotColor").value = transform_controls.object.children[0].material.color.getHexString();
     jQuery("#spotColor")[0].style.background = "#" + jQuery("#spotColor")[0].value;
 
-    // Show Selection
+    // Show Selection (inside floating panel)
     ppPropertiesDiv.show();
-    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 }
 
 
@@ -686,10 +674,8 @@ function displayAmbientProperties(event, name) {
     document.getElementById("ambientColor").value = transform_controls.object.children[0].material.color.getHexString();
     jQuery("#ambientColor")[0].style.background = "#" + jQuery("#ambientColor")[0].value;
 
-    // Show Selection
+    // Show Selection (inside floating panel)
     ppPropertiesDiv.show();
-    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 }
 
 
@@ -759,10 +745,8 @@ function displayDoorProperties(event, name) {
             envir.scene.getObjectByName(name).sceneName_target);
 
 
-    // Show Selection
+    // Show Selection (inside floating panel)
     popUpDoorPropertiesDiv.show();
-    popUpDoorPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    popUpDoorPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
     //window.mdc.textfield.MDCTextfield.attachTo(document.getElementById('doorInputTextfield'));
 
@@ -820,10 +804,8 @@ function displayLinkProperties(event, name) {
     if (envir.scene.getObjectByName(name).poi_link_url)
         popupLinkSelect.val(envir.scene.getObjectByName(name).poi_link_url);
 
-    // Show Selection
+    // Show Selection (inside floating panel)
     popUpLinkPropertiesDiv.show();
-    popUpLinkPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    popUpLinkPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
 
     popupLinkSelect.change(function (e) {
    
@@ -1018,13 +1000,8 @@ function displayPoiImageTextProperties(event, name) {
     setTitle.value = envir.scene.getObjectByName(name).poi_img_title;
 
 
-    // Show Selection
+    // Show Selection (inside floating panel)
     ppPropertiesDiv.show();
-    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-
-    // Add change listener
-    //chbox.change(function (e) { envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0; });
 
     chboxImg.change(function (e) {
 
@@ -1155,12 +1132,8 @@ function displayPoiVideoProperties(event, name) {
     sliderFocusX.prop('disabled', envir.scene.getObjectByName(name).follow_camera == 0);
     sliderFocusZ.prop('disabled', envir.scene.getObjectByName(name).follow_camera == 0);
 
-    // Show Selection
+    // Show Selection (inside floating panel)
     ppPropertiesDiv.show();
-    ppPropertiesDiv[0].style.left = event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
-    ppPropertiesDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
-
-
 
     // Add change listener
     chbox.change(function (e) {

@@ -154,6 +154,68 @@ canvas { pointer-events:none; z-index:10; }
 	margin: 0;
 }
 
+/* ─── In-panel object property sections ─── */
+.object-property-section {
+	padding: 8px 12px;
+}
+
+.prop-section-title {
+	font-size: 9px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: rgba(148, 163, 184, 0.8); /* slate-400 */
+	padding-bottom: 4px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.prop-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 3px 0;
+}
+
+.prop-label {
+	font-size: 10px;
+	color: rgba(203, 213, 225, 0.9); /* slate-300 */
+	min-width: 80px;
+	flex-shrink: 0;
+}
+
+.prop-input {
+	background: rgba(15, 23, 42, 0.6); /* slate-900 */
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 4px;
+	color: #e2e8f0; /* slate-200 */
+	font-size: 11px;
+	padding: 2px 6px;
+	width: 70px;
+	text-align: right;
+}
+
+.prop-input:focus {
+	outline: none;
+	border-color: rgba(52, 211, 153, 0.5); /* emerald */
+}
+
+.prop-select {
+	background: rgba(15, 23, 42, 0.6);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 4px;
+	color: #e2e8f0;
+	font-size: 11px;
+	padding: 2px 4px;
+	flex: 1;
+	min-width: 0;
+}
+
+.prop-select:focus {
+	outline: none;
+	border-color: rgba(52, 211, 153, 0.5);
+}
+
 /* leftPanelToggleOnOff*/
 .AssetsToggleStyle {
 	position: absolute;

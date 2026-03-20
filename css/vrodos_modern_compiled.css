@@ -1295,6 +1295,10 @@ body {
   max-height: 320px;
 }
 
+.vrodos-manager-wrapper .tw-max-h-\[300px\] {
+  max-height: 300px;
+}
+
 .vrodos-manager-wrapper .tw-min-h-0 {
   min-height: 0px;
 }
@@ -1522,6 +1526,10 @@ body {
   grid-template-columns: auto 1fr auto auto auto;
 }
 
+.vrodos-manager-wrapper .tw-grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .vrodos-manager-wrapper .tw-flex-col {
   flex-direction: column;
 }
@@ -1540,6 +1548,10 @@ body {
 
 .vrodos-manager-wrapper .tw-items-center {
   align-items: center;
+}
+
+.vrodos-manager-wrapper .tw-items-stretch {
+  align-items: stretch;
 }
 
 .vrodos-manager-wrapper .tw-justify-center {
