@@ -174,35 +174,33 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Draggable via header
-    let isDragging = false, offsetX = 0, offsetY = 0;
+    let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
 
     header.addEventListener('pointerdown', function (e) {
         if (e.target.closest('button')) return; // don't drag on close button
         isDragging = true;
-        // Use the panel's current CSS left/top (relative to offset parent),
-        // not getBoundingClientRect (relative to viewport) — avoids jump on first click
-        var computedLeft = parseInt(panel.style.left, 10);
-        var computedTop = parseInt(panel.style.top, 10);
-        // If panel was positioned with right instead of left, resolve to left
-        if (isNaN(computedLeft)) {
-            var rect = panel.getBoundingClientRect();
-            var parentRect = panel.offsetParent ? panel.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
-            computedLeft = rect.left - parentRect.left;
-            computedTop = rect.top - parentRect.top;
-        }
-        offsetX = e.clientX - computedLeft;
-        offsetY = e.clientY - computedTop;
+
+        // Always resolve position relative to offset parent using getBoundingClientRect
+        var rect = panel.getBoundingClientRect();
+        var parentRect = panel.offsetParent ? panel.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+        var currentLeft = rect.left - parentRect.left;
+        var currentTop = rect.top - parentRect.top;
+
+        // Convert to left/top positioning immediately (before any move)
+        panel.style.left = currentLeft + 'px';
+        panel.style.top = currentTop + 'px';
+        panel.style.right = 'auto';
+
+        dragOffsetX = e.clientX - currentLeft;
+        dragOffsetY = e.clientY - currentTop;
         header.setPointerCapture(e.pointerId);
         e.preventDefault();
     });
 
     header.addEventListener('pointermove', function (e) {
         if (!isDragging) return;
-        const x = e.clientX - offsetX;
-        const y = e.clientY - offsetY;
-        panel.style.left = x + 'px';
-        panel.style.top = y + 'px';
-        panel.style.right = 'auto';
+        panel.style.left = (e.clientX - dragOffsetX) + 'px';
+        panel.style.top = (e.clientY - dragOffsetY) + 'px';
     });
 
     header.addEventListener('pointerup', function (e) {

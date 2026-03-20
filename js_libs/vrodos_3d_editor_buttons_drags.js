@@ -357,14 +357,14 @@ function loadButtonActions() {
             btn.data('toggle', 'off');
         }
 
-        btn.toggleClass('tw-bg-primary');
+        btn.toggleClass('toggle-active');
     });
 
     if (firstPersonBlockerBtn) {
         firstPersonBlockerBtn.addEventListener('click', function (event) {
 
             firstPersonViewWithoutLock();
-            jQuery("#firstPersonBlockerBtn").toggleClass('tw-bg-primary');
+            jQuery("#firstPersonBlockerBtn").toggleClass('toggle-active');
 
         }, false);
     }
@@ -455,7 +455,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
         envir.updateCameraGivenSceneLimits();
 
         envir.orbitControls.object.updateProjectionMatrix();
-        jQuery("#dim-change-btn").toggleClass('tw-bg-primary');
+        jQuery("#dim-change-btn").toggleClass('toggle-active');
     });
 
 

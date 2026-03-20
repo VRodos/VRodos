@@ -711,7 +711,6 @@ html [type="button"],
 
 .environmentButton {
 	float: left;
-	width: 45px;
 	min-width: 20px;
 	margin-left: 2px;
 }

@@ -1030,16 +1030,12 @@ body {
   z-index: 100;
 }
 
+.vrodos-manager-wrapper .tw-z-\[1100\] {
+  z-index: 1100;
+}
+
 .vrodos-manager-wrapper .tw-z-\[60\] {
   z-index: 60;
-}
-
-.vrodos-manager-wrapper .tw-z-\[998\] {
-  z-index: 998;
-}
-
-.vrodos-manager-wrapper .tw-z-\[1002\] {
-  z-index: 1002;
 }
 
 .vrodos-manager-wrapper .tw-m-0 {
@@ -1295,12 +1291,12 @@ body {
   max-height: none !important;
 }
 
-.vrodos-manager-wrapper .tw-max-h-\[320px\] {
-  max-height: 320px;
-}
-
 .vrodos-manager-wrapper .tw-max-h-\[300px\] {
   max-height: 300px;
+}
+
+.vrodos-manager-wrapper .tw-max-h-\[320px\] {
+  max-height: 320px;
 }
 
 .vrodos-manager-wrapper .tw-min-h-0 {
@@ -1526,12 +1522,12 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.vrodos-manager-wrapper .tw-grid-cols-\[auto_1fr_auto_auto_auto\] {
-  grid-template-columns: auto 1fr auto auto auto;
-}
-
 .vrodos-manager-wrapper .tw-grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vrodos-manager-wrapper .tw-grid-cols-\[auto_1fr_auto_auto_auto\] {
+  grid-template-columns: auto 1fr auto auto auto;
 }
 
 .vrodos-manager-wrapper .tw-flex-col {
@@ -2760,11 +2756,86 @@ body.vrodos-manager-wrapper {
 /* Compact buttons for scene editor toolbar */
 
 #vrodos-scene-editor .scene_editor_upper_toolbar .d-btn {
-  height: 1.5rem !important;
-  min-height: 1.5rem !important;
-  padding-left: 0.5rem !important;
-  padding-right: 0.5rem !important;
-  font-size: 0.7rem !important;
+  padding-left: 0.15rem !important;
+  padding-right: 0.15rem !important;
+  font-size: 0.6rem !important;
+  height: 1.25rem !important;
+  /* Base height for all toolbar buttons */
+  min-height: 1.25rem !important;
+}
+
+#vrodos-scene-editor .scene_editor_upper_toolbar .EditorToolbarBtnStyle,
+#vrodos-scene-editor #optionsPopupBtn {
+  width: 1rem !important;
+  /* Compact 1rem width as requested */
+  height: 1rem !important;
+  padding: 0 !important;
+}
+
+#vrodos-scene-editor #optionsPopupBtn {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: none !important;
+  /* Remove glow */
+  transform: none !important;
+}
+
+#vrodos-scene-editor #optionsPopupBtn:hover {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background-color: transparent !important;
+  /* No background on hover */
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* ─── Floating Toolbar (EnvironmentBar) refinements ─── */
+
+.environmentBar {
+  display: inline-flex !important;
+  width: auto !important;
+  background-color: rgba(15, 23, 42, 0.45) !important;
+  /* Slightly darker */
+  backdrop-filter: blur(10px) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+#vrodos-scene-editor #save-scene-button,
+#vrodos-scene-editor #compileGameBtn {
+  width: auto !important;
+  padding: 0 0.75rem !important;
+}
+
+/* ─── Toggle buttons (Toolbar) ─── */
+
+.toggle-btn {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(15, 23, 42, 0.5) !important;
+  /* Darker inactive BG */
+  transition: all 0.2s ease !important;
+}
+
+.toggle-btn:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+}
+
+.toggle-btn.toggle-active {
+  background-color: rgba(15, 23, 42, 0.7) !important;
+  /* Match hover state */
+  border-color: rgba(102, 204, 138, 0.8) !important;
+  color: #66cc8a !important;
+  /* Vibrant Emerald green icon */
+  box-shadow: inset 0 0 6px rgba(102, 204, 138, 0.1) !important;
+}
+
+.toggle-btn.toggle-active i,
+.toggle-btn.toggle-active svg,
+.toggle-btn.toggle-active path {
+  color: #66cc8a !important;
+  stroke: #66cc8a !important;
 }
 
 /* Emerald Primary: #66cc8a */

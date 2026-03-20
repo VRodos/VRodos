@@ -109,8 +109,7 @@ extract( $data );
 						<button id="compileGameBtn"
 							class="d-btn d-btn-primary tw-text-white tw-font-bold"
 							title="Build Project">
-							<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
-							Build Project
+							<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>&nbsp;Build Project
 						</button>
 					</div>
 
@@ -129,7 +128,7 @@ extract( $data );
 
 
 				<!-- Lights -->
-				<div class="environmentBar hidable tw-flex tw-items-center tw-gap-1">
+				<div class="environmentBar hidable tw-flex tw-items-center tw-gap-2">
 
 					<div title="An entry point for Actors, they can choose one of multiple points when logging in" class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
 						<header draggable="false" class="notdraggable">Actor</header>
@@ -169,16 +168,16 @@ extract( $data );
 						<!--  Dimensionality 2D 3D toggle -->
 						<a id="dim-change-btn"
 							title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-							class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary">2D</a>
+							class="EditorToolbarBtnStyle d-btn d-btn-sm toggle-btn">2D</a>
 					</div>
 
 					<!-- The button to start walking in the 3d environment -->
 					<div class="environmentButton">
 						<div id="firstPersonBlocker">
 							<a type="button" id="firstPersonBlockerBtn" data-toggle='on'
-								class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary"
+								class="EditorToolbarBtnStyle d-btn d-btn-xs toggle-btn"
 								title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys">
-								<i data-lucide="user" class="tw-w-5 tw-h-5"></i>
+								<i data-lucide="user" class="tw-w-4 tw-h-4"></i>
 							</a>
 						</div>
 					</div>
@@ -187,11 +186,20 @@ extract( $data );
 					<div class="environmentButton">
 						<a type="button" id="toggle-tour-around-btn" data-toggle='off'
 							title="Auto-rotate 3D tour"
-							class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary">
-							<i data-lucide="rotate-ccw" class="tw-w-5 tw-h-5"></i>
+							class="EditorToolbarBtnStyle d-btn d-btn-xs toggle-btn">
+							<i data-lucide="rotate-ccw" class="tw-w-4 tw-h-4"></i>
 						</a>
 					</div>
 
+
+					<div class="environmentButton">
+						<input style="display: none" type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
+						<a id="env_texture-change-btn"
+							title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
+							class="EditorToolbarBtnStyle d-btn d-btn-xs toggle-btn toggle-active">
+							<i data-lucide="layers" class="tw-w-4 tw-h-4"></i>
+						</a>
+					</div>
 
 					<!-- Cogwheel options -->
 					<div class="environmentButton">
@@ -199,18 +207,9 @@ extract( $data );
 							<a type="button" id="optionsPopupBtn"
 								class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary"
 								title="Edit scene options">
-								<i data-lucide="settings" class="tw-w-5 tw-h-5"></i>
+								<i data-lucide="settings" ></i>
 							</a>
 						</div>
-					</div>
-
-					<div class="environmentButton">
-						<input style="display: none" type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
-						<a id="env_texture-change-btn"
-							title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
-							class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary tw-bg-primary">
-							<i data-lucide="layers" class="tw-w-5 tw-h-5"></i>
-						</a>
 					</div>
 
 				</div>
@@ -223,7 +222,7 @@ extract( $data );
 				?>
 
 				<!-- Floating Object Controls Panel -->
-				<div id="object-controls-panel" class="tw-absolute tw-z-[1002] tw-hidden tw-flex tw-flex-col tw-w-[280px] tw-bg-slate-800/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-2xl tw-border tw-border-white/10 tw-text-white tw-overflow-hidden" style="top: 100px; right: 320px;">
+				<div id="object-controls-panel" class="tw-absolute tw-z-[1100] tw-hidden tw-flex tw-flex-col tw-w-[280px] tw-bg-slate-800/90 tw-backdrop-blur-sm tw-rounded-xl tw-shadow-2xl tw-border tw-border-white/10 tw-text-white tw-overflow-hidden" style="top: 100px; right: 320px;">
 
 					<!-- Draggable header -->
 					<div id="object-controls-header" class="tw-flex tw-items-center tw-justify-between tw-px-3 tw-py-1.5 tw-bg-slate-700/80 tw-cursor-move tw-select-none tw-border-b tw-border-white/10">
@@ -767,7 +766,7 @@ extract( $data );
 		}
 
 		let toggleEnvTexture = (el) => {
-			jQuery("#env_texture-change-btn").toggleClass('tw-bg-primary');
+			jQuery("#env_texture-change-btn").toggleClass('toggle-active');
 			el.checked = !el.checked;
 			envir.scene.environment = !el.checked ? null : envir.maintexture;
 		}
