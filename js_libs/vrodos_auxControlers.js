@@ -259,17 +259,21 @@ let actionLabel = ['translate', 'translate', 'translate', 'rotate', 'rotate', 'r
 
 var dg_controller = Array();
 
-var gui_controls_funs = new function () {
-    this.dg_t1 = 0;
-    this.dg_t2 = 0;
-    this.dg_t3 = 0;
-    this.dg_r1 = 0;
-    this.dg_r2 = 0;
-    this.dg_r3 = 0;
-    this.dg_s1 = 0;
-    this.dg_s2 = 0;
-    this.dg_s3 = 0;
-};
+var gui_controls_funs = (function () {
+    // Internal storage — always numeric
+    var _vals = { dg_t1: 0, dg_t2: 0, dg_t3: 0, dg_r1: 0, dg_r2: 0, dg_r3: 0, dg_s1: 0, dg_s2: 0, dg_s3: 0 };
+    var obj = {};
+    // Define getter/setter for each property so lil-gui never stores a string
+    Object.keys(_vals).forEach(function (key) {
+        Object.defineProperty(obj, key, {
+            get: function () { return _vals[key]; },
+            set: function (v) { _vals[key] = parseFloat(v) || 0; },
+            enumerable: true,
+            configurable: true
+        });
+    });
+    return obj;
+})();
 
 
 // Add variables to GUI
@@ -282,6 +286,16 @@ for (let key in gui_controls_funs) {
     // .decimals(2) handles display formatting (replaces manual toFixed hacks)
     dg_controller[i] = controlInterface.add(gui_controls_funs, key).step(0.001).decimals(2).name(key);
 
+    // Patch getValue to ALWAYS return a number — lil-gui's updateDisplay calls .toFixed()
+    // which crashes on strings/NaN. This is the definitive guard.
+    (function(ctrl) {
+        var _origGetValue = ctrl.getValue.bind(ctrl);
+        ctrl.getValue = function() {
+            var v = _origGetValue();
+            return (typeof v === 'number' && !isNaN(v)) ? v : 0;
+        };
+    })(dg_controller[i]);
+
     // lil-gui escapes HTML in .name(), so set innerHTML directly for colored axis labels
     dg_controller[i].$name.innerHTML = label;
 
@@ -290,6 +304,10 @@ for (let key in gui_controls_funs) {
 
     i++;
 }
+
+// Global flag: true while a drag-scrub is active on any lil-gui input.
+// Used by onChange handlers to distinguish drag (apply live) vs keyboard (skip until commit).
+var _isDragScrubbing = false;
 
 /**
  * Adds mouse-drag scrubbing to a lil-gui number controller input.
@@ -304,6 +322,7 @@ function _addDragScrub(controller) {
     let dragging = false;
     let startX = 0;
     let startValue = 0;
+    let isKeyboardEditing = false; // true when user clicked to type
 
     // Determine sensitivity from the controller property name
     const isScale = controller.property.startsWith('dg_s');
@@ -311,10 +330,19 @@ function _addDragScrub(controller) {
 
     input.style.cursor = 'ew-resize';
 
+    // Block lil-gui's internal input handler during keyboard typing.
+    // lil-gui listens on 'input' event and calls setValue() on every keystroke,
+    // which moves the 3D object in real time. We stop that during keyboard mode.
+    input.addEventListener('input', function (e) {
+        if (isKeyboardEditing) {
+            e.stopImmediatePropagation();
+        }
+    }, true); // capture phase — fires before lil-gui's handler
+
     input.addEventListener('pointerdown', function (e) {
         if (e.button !== 0) return;
         // If input is already focused (user is typing), don't interfere
-        if (document.activeElement === input) return;
+        if (isKeyboardEditing) return;
         pointerDown = true;
         dragging = false;
         startX = e.clientX;
@@ -330,6 +358,7 @@ function _addDragScrub(controller) {
         // Start dragging only after threshold
         if (!dragging && Math.abs(dx) >= DRAG_THRESHOLD) {
             dragging = true;
+            _isDragScrubbing = true;
             input.style.cursor = 'ew-resize';
         }
         if (dragging) {
@@ -347,28 +376,27 @@ function _addDragScrub(controller) {
 
         if (wasDragging) {
             // Finished a drag — resume animation and save
+            _isDragScrubbing = false;
             animate();
             triggerAutoSave();
         } else {
-            // Was a click (no drag) — focus the input for keyboard editing
+            // Was a click (no drag) — enter keyboard editing mode
+            isKeyboardEditing = true;
             input.focus();
             input.select();
             input.style.cursor = 'text';
         }
     });
 
-    // Restore drag cursor when input loses focus (user clicked away)
+    // Exit keyboard editing mode on blur
     input.addEventListener('blur', function () {
+        isKeyboardEditing = false;
         input.style.cursor = 'ew-resize';
     });
 
-    // On Enter or Escape, blur the input (commit/cancel keyboard edit)
+    // On Enter or Escape, blur the input — onFinishChange handles the actual update
     input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-            input.blur();
-            animate();
-            triggerAutoSave();
-        } else if (e.key === 'Escape') {
+        if (e.key === 'Enter' || e.key === 'Escape') {
             input.blur();
         }
     });
@@ -382,74 +410,173 @@ function _addDragScrub(controller) {
 function controllerDatGuiOnChange() {
 
 
-    // When gui values changes then stop animating else won't be able to type with keyboard
+    // onChange fires on every value change (drag scrub + keyboard typing).
+    // We only apply to the 3D object during drag (_isDragScrubbing = true).
+    // Keyboard typing is committed via onFinishChange (Enter/blur).
+
+    // --- Translation ---
     dg_controller[0].onChange(function(value) {
-            cancelAnimationFrame( id_animation_frame );
-            transform_controls.object.position.x = gui_controls_funs.dg_t1;
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (transform_controls.object) transform_controls.object.position.x = value;
             animate();
         }
     );
-
-    dg_controller[1].onChange(function (value) {
-            cancelAnimationFrame(id_animation_frame);
-            transform_controls.object.position.y = gui_controls_funs.dg_t2;
+    dg_controller[0].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_t1 = value;
+            if (transform_controls.object) transform_controls.object.position.x = value;
             animate();
+            triggerAutoSave();
         }
     );
 
-    dg_controller[2].onChange(function (value) {
-            cancelAnimationFrame(id_animation_frame);
-            transform_controls.object.position.z = gui_controls_funs.dg_t3;
+    dg_controller[1].onChange(function(value) {
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (transform_controls.object) transform_controls.object.position.y = value;
             animate();
         }
     );
+    dg_controller[1].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_t2 = value;
+            if (transform_controls.object) transform_controls.object.position.y = value;
+            animate();
+            triggerAutoSave();
+        }
+    );
 
-    dg_controller[3].onChange(function (value) {
-            cancelAnimationFrame(id_animation_frame);
-            if (transform_controls.object.category_name == "camera"){
-                transform_controls.object.rotation.x = 0;
-                gui_controls_funs.dg_r1 = 0;
+    dg_controller[2].onChange(function(value) {
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (transform_controls.object) transform_controls.object.position.z = value;
+            animate();
+        }
+    );
+    dg_controller[2].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_t3 = value;
+            if (transform_controls.object) transform_controls.object.position.z = value;
+            animate();
+            triggerAutoSave();
+        }
+    );
+
+    // --- Rotation ---
+    dg_controller[3].onChange(function(value) {
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (transform_controls.object) {
+                if (transform_controls.object.category_name == "camera") {
+                    transform_controls.object.rotation.x = 0;
+                } else {
+                    transform_controls.object.rotation.x = value / 180 * Math.PI;
+                }
             }
-            else
-                transform_controls.object.rotation.x = gui_controls_funs.dg_r1 / 180 * Math.PI;
             animate();
         }
     );
-
-    dg_controller[4].onChange(function (value) {
-            cancelAnimationFrame(id_animation_frame);
-            if (transform_controls.object.category_name == "camera"){
-                transform_controls.object.rotation.y = 0;
-                gui_controls_funs.dg_r2 = 0;
+    dg_controller[3].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_r1 = value;
+            if (transform_controls.object) {
+                if (transform_controls.object.category_name == "camera") {
+                    transform_controls.object.rotation.x = 0;
+                    gui_controls_funs.dg_r1 = 0;
+                } else {
+                    transform_controls.object.rotation.x = value / 180 * Math.PI;
+                }
             }
-            else
-                transform_controls.object.rotation.y = gui_controls_funs.dg_r2 / 180 * Math.PI;
             animate();
+            triggerAutoSave();
         }
     );
 
-    dg_controller[5].onChange(function (value) {
-            cancelAnimationFrame(id_animation_frame);
-            if (transform_controls.object.category_name == "camera"){
-                transform_controls.object.rotation.z = 0;
-                gui_controls_funs.dg_r3 = 0;
+    dg_controller[4].onChange(function(value) {
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (transform_controls.object) {
+                if (transform_controls.object.category_name == "camera") {
+                    transform_controls.object.rotation.y = 0;
+                } else {
+                    transform_controls.object.rotation.y = value / 180 * Math.PI;
+                }
             }
-            else
-                transform_controls.object.rotation.z = gui_controls_funs.dg_r3 / 180 * Math.PI;
             animate();
         }
     );
+    dg_controller[4].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_r2 = value;
+            if (transform_controls.object) {
+                if (transform_controls.object.category_name == "camera") {
+                    transform_controls.object.rotation.y = 0;
+                    gui_controls_funs.dg_r2 = 0;
+                } else {
+                    transform_controls.object.rotation.y = value / 180 * Math.PI;
+                }
+            }
+            animate();
+            triggerAutoSave();
+        }
+    );
 
-    // When x length changes from gui then change also scale, y and z lengths
-    dg_controller[6].onChange(function (value) {
+    dg_controller[5].onChange(function(value) {
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (transform_controls.object) {
+                if (transform_controls.object.category_name == "camera") {
+                    transform_controls.object.rotation.z = 0;
+                } else {
+                    transform_controls.object.rotation.z = value / 180 * Math.PI;
+                }
+            }
+            animate();
+        }
+    );
+    dg_controller[5].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_r3 = value;
+            if (transform_controls.object) {
+                if (transform_controls.object.category_name == "camera") {
+                    transform_controls.object.rotation.z = 0;
+                    gui_controls_funs.dg_r3 = 0;
+                } else {
+                    transform_controls.object.rotation.z = value / 180 * Math.PI;
+                }
+            }
+            animate();
+            triggerAutoSave();
+        }
+    );
 
-            cancelAnimationFrame(id_animation_frame);
-
-            if (transform_controls.object.category_name == "camera"){
+    // --- Scale ---
+    dg_controller[6].onChange(function(value) {
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (!transform_controls.object) return;
+            if (transform_controls.object.category_name == "camera") return;
+            if (envir.scene.keepScaleAspectRatio) {
+                transform_controls.object.scale.set(value, value, value);
+                gui_controls_funs.dg_s2 = value;
+                gui_controls_funs.dg_s3 = value;
+                dg_controller[7].updateDisplay();
+                dg_controller[8].updateDisplay();
+            } else {
+                transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
+            }
+            animate();
+        }
+    );
+    dg_controller[6].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_s1 = value;
+            if (!transform_controls.object) return;
+            if (transform_controls.object.category_name == "camera") {
                 transform_controls.object.scale.x = 1;
                 gui_controls_funs.dg_s1 = 1;
-            }
-            else{
+            } else {
                 if (envir.scene.keepScaleAspectRatio) {
                     transform_controls.object.scale.set(value, value, value);
                     gui_controls_funs.dg_s2 = value;
@@ -458,25 +585,40 @@ function controllerDatGuiOnChange() {
                     dg_controller[8].updateDisplay();
                 } else {
                     transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
-
                 }
                 envir.scene.dispatchEvent({ type: "modificationPendingSave" });
-
                 dg_s1_prev = value;
-                animate();
             }
+            animate();
+            triggerAutoSave();
         }
     );
 
-    dg_controller[7].onChange( function(value) {
-
-            cancelAnimationFrame( id_animation_frame );
-
-            if (transform_controls.object.category_name == "camera"){
+    dg_controller[7].onChange(function(value) {
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (!transform_controls.object) return;
+            if (transform_controls.object.category_name == "camera") return;
+            if (envir.scene.keepScaleAspectRatio) {
+                transform_controls.object.scale.set(value, value, value);
+                gui_controls_funs.dg_s1 = value;
+                gui_controls_funs.dg_s3 = value;
+                dg_controller[6].updateDisplay();
+                dg_controller[8].updateDisplay();
+            } else {
+                transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
+            }
+            animate();
+        }
+    );
+    dg_controller[7].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_s2 = value;
+            if (!transform_controls.object) return;
+            if (transform_controls.object.category_name == "camera") {
                 transform_controls.object.scale.y = 1;
                 gui_controls_funs.dg_s2 = 1;
-            }
-            else{
+            } else {
                 if (envir.scene.keepScaleAspectRatio) {
                     transform_controls.object.scale.set(value, value, value);
                     gui_controls_funs.dg_s1 = value;
@@ -487,23 +629,38 @@ function controllerDatGuiOnChange() {
                     transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
                 }
                 envir.scene.dispatchEvent({type:"modificationPendingSave"});
-
                 dg_s2_prev = value;
-                animate();
             }
+            animate();
+            triggerAutoSave();
         }
     );
 
-
-    dg_controller[8].onChange( function(value) {
-
-            cancelAnimationFrame( id_animation_frame );
-
-            if (transform_controls.object.category_name == "camera"){
+    dg_controller[8].onChange(function(value) {
+            if (!_isDragScrubbing) return;
+            value = parseFloat(value) || 0;
+            if (!transform_controls.object) return;
+            if (transform_controls.object.category_name == "camera") return;
+            if (envir.scene.keepScaleAspectRatio) {
+                transform_controls.object.scale.set(value, value, value);
+                gui_controls_funs.dg_s1 = value;
+                gui_controls_funs.dg_s2 = value;
+                dg_controller[6].updateDisplay();
+                dg_controller[7].updateDisplay();
+            } else {
+                transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
+            }
+            animate();
+        }
+    );
+    dg_controller[8].onFinishChange(function(value) {
+            value = parseFloat(value) || 0;
+            gui_controls_funs.dg_s3 = value;
+            if (!transform_controls.object) return;
+            if (transform_controls.object.category_name == "camera") {
                 transform_controls.object.scale.z = 1;
                 gui_controls_funs.dg_s3 = 1;
-            }
-            else{
+            } else {
                 if (envir.scene.keepScaleAspectRatio) {
                     transform_controls.object.scale.set(value, value, value);
                     gui_controls_funs.dg_s1 = value;
@@ -513,12 +670,11 @@ function controllerDatGuiOnChange() {
                 } else {
                     transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
                 }
-
                 envir.scene.dispatchEvent({type:"modificationPendingSave"});
-
                 dg_s3_prev = value;
-                animate();
             }
+            animate();
+            triggerAutoSave();
         }
     );
 
@@ -701,17 +857,19 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
 
 function setDatGuiInitialVales(object){
 
-    gui_controls_funs.dg_t1 = transform_controls.object.position.x;
-    gui_controls_funs.dg_t2 = transform_controls.object.position.y;
-    gui_controls_funs.dg_t3 = transform_controls.object.position.z;
+    if (!transform_controls.object) return;
 
-    gui_controls_funs.dg_r1 = transform_controls.object.rotation.x;
-    gui_controls_funs.dg_r2 = transform_controls.object.rotation.y;
-    gui_controls_funs.dg_r3 = transform_controls.object.rotation.z;
+    gui_controls_funs.dg_t1 = Number(transform_controls.object.position.x) || 0;
+    gui_controls_funs.dg_t2 = Number(transform_controls.object.position.y) || 0;
+    gui_controls_funs.dg_t3 = Number(transform_controls.object.position.z) || 0;
 
-    gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
-    gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
-    gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
+    gui_controls_funs.dg_r1 = Number(transform_controls.object.rotation.x) || 0;
+    gui_controls_funs.dg_r2 = Number(transform_controls.object.rotation.y) || 0;
+    gui_controls_funs.dg_r3 = Number(transform_controls.object.rotation.z) || 0;
+
+    gui_controls_funs.dg_s1 = Number(transform_controls.object.scale.x) || 0;
+    gui_controls_funs.dg_s2 = Number(transform_controls.object.scale.y) || 0;
+    gui_controls_funs.dg_s3 = Number(transform_controls.object.scale.z) || 0;
 
     // lil-gui: updateDisplay() reads from the bound object and formats with .decimals(2)
     for (let c = 0; c < 9; c++) {

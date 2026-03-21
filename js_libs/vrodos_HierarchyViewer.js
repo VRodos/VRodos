@@ -141,7 +141,8 @@ function setBackgroundColorHierarchyViewer(id) {
         }
     );
 
-    document.getElementById(id).style.background = 'rgb(191, 219, 254)';
+    var el = document.getElementById(id);
+    if (el) el.style.background = 'rgb(191, 219, 254)';
 }
 
 // Traverse the entire scene to insert scene children in Hierarchy Viewer

@@ -66,29 +66,20 @@ function dragDropVerticalRayCasting(event) {
 
 // On Double click center screen and focus to that object
 function onMouseDoubleClickFocus(event, id) {
-    
+
     if (typeof id == 'undefined') {
         id = envir.scene.getObjectById(selected_object_name);
-        
     }
 
     if (arguments.length === 2) {
-        if (envir.scene.getObjectByProperty( 'uuid' , id) && !envir.scene.getObjectByProperty( 'uuid' , id).locked){
-            selectorMajor(event, envir.scene.getObjectByProperty( 'uuid' , id), "1");
+        var obj = envir.scene.getObjectByProperty('uuid', id);
+        if (obj && !obj.locked) {
+            selectorMajor(event, obj, "1");
         }
-            
     }
 
-    // This makes the camera (in 3D mode) to go on top of the selected item
-    if (!envir.is2d && transform_controls.object) {
-        envir.orbitControls.target.x = transform_controls.object.position.x;
-        envir.orbitControls.target.y = transform_controls.object.position.y;
-        envir.orbitControls.target.z = transform_controls.object.position.z;
-    }
-
-
-
-    envir.orbitControls.object.updateProjectionMatrix();
+    // Don't move the camera — just select the object.
+    // Camera navigation is done manually by the user via orbit controls.
 }
 
 

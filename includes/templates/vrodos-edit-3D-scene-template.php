@@ -118,11 +118,33 @@ extract( $data );
 				<!-- Scene JSON content viewer (dialog) -->
 				<dialog id="sceneJsonContent" class="tw-modal">
 					<style>
+						#sceneJsonContent {
+							overflow: hidden !important;
+						}
 						#sceneJsonContent .tw-modal-box {
 							width: min(95vw, 900px) !important;
 							max-height: 90vh !important;
 							padding: 0 !important;
 							border-radius: 0.75rem !important;
+							overflow: hidden !important;
+						}
+						#sceneJsonContent textarea {
+							scrollbar-width: thin;
+							scrollbar-color: #475569 transparent;
+						}
+						#sceneJsonContent textarea::-webkit-scrollbar { width: 8px; }
+						#sceneJsonContent textarea::-webkit-scrollbar-track { background: transparent; }
+						#sceneJsonContent textarea::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+						#sceneJsonContent textarea::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+						/* Ensure no scrollbars on the main window */
+						html, body {
+							overflow: hidden !important;
+							scrollbar-width: none !important;
+							-ms-overflow-style: none !important;
+						}
+						html::-webkit-scrollbar, body::-webkit-scrollbar {
+							display: none !important;
 						}
 					</style>
 					<div class="tw-modal-box tw-bg-slate-900 tw-shadow-2xl tw-border tw-border-white/10 tw-flex tw-flex-col">
