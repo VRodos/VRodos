@@ -10,16 +10,12 @@
   }
 }
 
-/* VR-Inspired Aesthetics & Keyframes */
+/* ═══════════════════════════════════════════
+   VR-Inspired Aesthetics & Keyframes
+   ═══════════════════════════════════════════ */
 @keyframes vrodos-fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes vrodos-mesh-float {
@@ -32,7 +28,6 @@
   animation: vrodos-fade-in-up 0.5s var(--ease-out-quart) forwards;
 }
 
-/* Staggered delays for grids/lists */
 .tw-stagger-1 { animation-delay: 50ms; }
 .tw-stagger-2 { animation-delay: 100ms; }
 .tw-stagger-3 { animation-delay: 150ms; }
@@ -55,6 +50,10 @@
   }
 }
 
+
+/* ═══════════════════════════════════════════
+   WordPress Reset — override aggressive WP themes
+   ═══════════════════════════════════════════ */
 .vrodos-main-h {
   height: 100vh !important;
   height: calc(100vh - var(--wp-admin-bar-height, 0px)) !important;
@@ -70,16 +69,22 @@ body.vrodos-manager-wrapper {
   margin: 0 !important;
 }
 
-/* Custom modern styles for VRodos */
+/* Global box-sizing reset for all VRodos containers */
+#vrodos-project-manager *, #vrodos-project-manager *:before, #vrodos-project-manager *:after,
+#vrodos-assets-manager *, #vrodos-assets-manager *:before, #vrodos-assets-manager *:after,
+#vrodos-asset-editor *, #vrodos-asset-editor *:before, #vrodos-asset-editor *:after,
+#vrodos-scene-editor *, #vrodos-scene-editor *:before, #vrodos-scene-editor *:after,
+#vrodos-modal-wrapper *, #vrodos-modal-wrapper *:before, #vrodos-modal-wrapper *:after {
+  box-sizing: border-box !important;
+}
+
+/* Project manager container reset */
 #vrodos-project-manager {
   display: flex !important;
   flex-direction: column !important;
   background-color: #f8fafc !important;
   color: #334155 !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   overflow: hidden !important;
-  box-sizing: border-box !important;
-  /* Reset some common WP theme poisons */
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
@@ -88,331 +93,366 @@ body.vrodos-manager-wrapper {
   line-height: 1.5 !important;
 }
 
-/* Surgical protect for DaisyUI components from host theme poisons */
-#vrodos-project-manager .d-btn,
-#vrodos-assets-manager .d-btn,
-#vrodos-asset-editor .d-btn,
-#vrodos-scene-editor .d-btn,
-#vrodos-project-manager .d-select,
-#vrodos-assets-manager .d-select,
-#vrodos-asset-editor .d-select,
-#vrodos-scene-editor .d-select,
-#vrodos-project-manager .d-checkbox,
-#vrodos-assets-manager .d-checkbox,
-#vrodos-asset-editor .d-checkbox,
-#vrodos-scene-editor .d-checkbox,
-#vrodos-project-manager .d-radio,
-#vrodos-assets-manager .d-radio,
-#vrodos-asset-editor .d-radio,
-#vrodos-scene-editor .d-radio {
-  display: inline-flex !important;
+
+/* ═══════════════════════════════════════════
+   DaisyUI WP-Compatibility Patches
+   (Minimal overrides — DaisyUI now generates
+   the base component CSS via Tailwind plugin)
+   ═══════════════════════════════════════════ */
+
+/* WP themes set text-decoration on anchors — kill it for btn */
+.vrodos-manager-wrapper .tw-btn {
+  text-decoration: none !important;
+}
+
+/* WP themes aggressively style <input> — protect checkbox/radio */
+.vrodos-manager-wrapper .tw-checkbox,
+.vrodos-manager-wrapper .tw-radio {
   cursor: pointer !important;
 }
 
-#vrodos-project-manager .d-btn,
-#vrodos-assets-manager .d-btn,
-#vrodos-asset-editor .d-btn,
-#vrodos-scene-editor .d-btn {
-  height: 2.25rem !important;
-  min-height: 2.25rem !important;
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  text-transform: uppercase !important;
-  border-width: 1px !important;
-  border-radius: 0.5rem !important;
+/* Input focus ring — emerald accent */
+.vrodos-manager-wrapper .tw-input:focus,
+.vrodos-manager-wrapper .tw-select:focus {
+  border-color: #66cc8a !important;
+  outline: 2px solid #66cc8a22 !important;
+  box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
+}
+
+
+/* ═══════════════════════════════════════════
+   Modal Overrides — WP does weird things to <dialog>
+   ═══════════════════════════════════════════ */
+#vrodos-modal-wrapper {
+  position: static !important;
+  contain: none !important;
+}
+
+#vrodos-modal-wrapper .tw-modal,
+#vrodos-scene-editor .tw-modal {
+  z-index: 2147483647 !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+#vrodos-modal-wrapper .tw-modal[open],
+#vrodos-scene-editor .tw-modal[open] {
+  display: grid !important;
+  place-items: center !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+#vrodos-modal-wrapper .tw-modal::backdrop,
+#vrodos-scene-editor .tw-modal::backdrop {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-box,
+#vrodos-scene-editor .tw-modal-box {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  padding: 0 !important;
+  border-radius: 1.5rem !important;
+  border: none !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
+  z-index: 2147483647 !important;
+  overflow: hidden !important;
+  grid-column-start: 1 !important;
+  grid-row-start: 1 !important;
+  width: min(90vw, 440px) !important;
+  height: auto !important;
+  max-height: calc(100vh - 5rem) !important;
+  position: relative !important;
+  transform: none !important;
+}
+
+/* Kill residual WP theme pseudo-elements on modal-box */
+.tw-modal-box::before,
+.tw-modal-box::after {
+  content: none !important;
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-action,
+#vrodos-scene-editor .tw-modal-action {
+  display: flex !important;
+  gap: 1rem !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  border-top: none !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-action {
+  padding: 1rem 2rem 2.5rem 2rem !important;
+  background-color: #ffffff !important;
+}
+
+#vrodos-scene-editor .tw-modal-action {
+  justify-content: flex-end !important;
+  margin-top: 1.5rem !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-backdrop,
+#vrodos-scene-editor .tw-modal-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: -1 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  cursor: default !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-backdrop button,
+#vrodos-scene-editor .tw-modal-backdrop button {
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: transparent !important;
+}
+
+/* Modal inner layout (delete dialog, create project dialog) */
+#vrodos-modal-wrapper .modal-header {
+  padding: 2rem 2rem 1rem 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+#vrodos-modal-wrapper .modal-body {
+  padding: 0 2rem 1rem 2rem !important;
+  text-align: center !important;
+}
+
+#vrodos-modal-wrapper .modal-icon-container {
+  width: 3.5rem !important;
+  height: 3.5rem !important;
+  border-radius: 50% !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  cursor: pointer !important;
-  text-decoration: none !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin-bottom: 1.25rem !important;
+  background-color: rgba(102, 204, 138, 0.1) !important;
+  color: #66cc8a !important;
 }
 
-/* Modern Sidebar Handles */
+#delete-dialog .modal-icon-container {
+  background-color: rgba(255, 88, 97, 0.1) !important;
+  color: #ff5861 !important;
+}
+
+
+/* ═══════════════════════════════════════════
+   Scene Editor — Sidebar Toggle Handles
+   ═══════════════════════════════════════════ */
 .AssetsToggleStyle, .HierarchyToggleStyle {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    position: absolute !important;
-    width: 18px !important;
-    height: 48px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    z-index: 1001 !important;
-    cursor: pointer !important;
-    padding: 0 !important;
-    background-color: rgba(15, 23, 42, 0.25) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.07) !important;
-    transition: background-color 0.2s ease, transform 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: absolute !important;
+  width: 18px !important;
+  height: 48px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 1001 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  background-color: rgba(15, 23, 42, 0.25) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  transition: background-color 0.2s ease, transform 0.2s ease !important;
 }
 
 .AssetsToggleStyle {
-    right: -18px !important;
-    left: auto !important;
-    border-left: none !important;
-    border-radius: 0 8px 8px 0 !important;
+  right: -18px !important;
+  left: auto !important;
+  border-left: none !important;
+  border-radius: 0 8px 8px 0 !important;
 }
 
 .HierarchyToggleStyle {
-    left: -18px !important;
-    right: auto !important;
-    border-right: none !important;
-    border-radius: 8px 0 0 8px !important;
+  left: -18px !important;
+  right: auto !important;
+  border-right: none !important;
+  border-radius: 8px 0 0 8px !important;
 }
 
 .AssetsToggleStyle:hover, .HierarchyToggleStyle:hover {
-    background-color: rgba(15, 23, 42, 0.4) !important;
+  background-color: rgba(15, 23, 42, 0.4) !important;
 }
 
 .AssetsToggleStyle i, .HierarchyToggleStyle i {
-    color: rgba(255, 255, 255, 0.4) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .AssetsToggleStyle:hover i, .HierarchyToggleStyle:hover i {
-    color: rgba(255, 255, 255, 0.8) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
-/* Right elements panel modern transition */
 .right-elements-panel-style {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .right-elements-panel-style.closed {
-    transform: translateX(100%) !important;
+  transform: translateX(100%) !important;
 }
 
-/* Axes controls single row optimization (Floating Panel) */
+
+/* ═══════════════════════════════════════════
+   Scene Editor — Floating Object Controls Panel
+   ═══════════════════════════════════════════ */
 #object-controls-panel .affineSwitch {
-    width: auto !important;
-    min-width: 54px !important;
-    padding: 0 8px !important;
-    height: 24px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 10px !important;
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    color: #94a3b8 !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+  width: auto !important;
+  min-width: 54px !important;
+  padding: 0 8px !important;
+  height: 24px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 10px !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 #object-controls-panel .ObjectManipulationToggle label {
-    border-radius: 0 !important;
+  border-radius: 0 !important;
 }
 
 #object-controls-panel .ObjectManipulationToggle .tw-peer:checked + .affineSwitch {
-    background-color: #10b981 !important; /* Emerald primary */
-    border-color: #10b981 !important;
-    color: #ffffff !important;
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
 }
 
-#object-controls-panel .d-btn-xs {
-    height: 1.5rem !important;
-    min-height: 1.5rem !important;
+#object-controls-panel .tw-btn-xs {
+  height: 1.5rem !important;
+  min-height: 1.5rem !important;
 }
 
-/* lil-gui inside floating panel: no title, always open, transparent background */
+/* lil-gui inside floating panel */
 #numerical_gui-container .lil-gui {
-	--background-color: transparent !important;
-	--widget-color: rgba(255,255,255,0.12) !important;
-	--number-color: #4fc3f7 !important;
-	--string-color: #4fc3f7 !important;
-	--text-color: #e2e8f0 !important;
-	--title-background-color: transparent !important;
-	--title-text-color: #94a3b8 !important;
-	border: none !important;
+  --background-color: transparent !important;
+  --widget-color: rgba(255,255,255,0.12) !important;
+  --number-color: #4fc3f7 !important;
+  --string-color: #4fc3f7 !important;
+  --text-color: #e2e8f0 !important;
+  --title-background-color: transparent !important;
+  --title-text-color: #94a3b8 !important;
+  border: none !important;
 }
 
 #numerical_gui-container .lil-gui.autoHeight {
-	max-height: none !important;
-	overflow: visible !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 #numerical_gui-container .lil-gui .children {
-	display: block !important;
+  display: block !important;
 }
 
-/* Compact buttons for scene editor toolbar */
-#vrodos-scene-editor .scene_editor_upper_toolbar .d-btn {
+
+/* ═══════════════════════════════════════════
+   Scene Editor — Compact Toolbar Buttons
+   ═══════════════════════════════════════════ */
+#vrodos-scene-editor .scene_editor_upper_toolbar .tw-btn {
   padding-left: 0.15rem !important;
   padding-right: 0.15rem !important;
   font-size: 0.6rem !important;
-  height: 1.25rem !important; /* Base height for all toolbar buttons */
+  height: 1.25rem !important;
   min-height: 1.25rem !important;
 }
 
 #vrodos-scene-editor .scene_editor_upper_toolbar .EditorToolbarBtnStyle,
 #vrodos-scene-editor #optionsPopupBtn {
-    width: 1rem !important; /* Compact 1rem width as requested */
-    height: 1rem !important;
-    padding: 0 !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  padding: 0 !important;
 }
 
 #vrodos-scene-editor #optionsPopupBtn {
-    background-color: transparent !important;
-    border-color: transparent !important;
-    color: rgba(255, 255, 255, 0.5) !important;
-    box-shadow: none !important; /* Remove glow */
-    transform: none !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 #vrodos-scene-editor #optionsPopupBtn:hover {
-    color: rgba(255, 255, 255, 0.9) !important;
-    background-color: transparent !important; /* No background on hover */
-    box-shadow: none !important;
-    transform: none !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
-/* ─── Floating Toolbar (EnvironmentBar) refinements ─── */
+/* Floating Toolbar (EnvironmentBar) */
 .environmentBar {
-    display: inline-flex !important;
-    width: auto !important;
-    background-color: rgba(15, 23, 42, 0.45) !important; /* Slightly darker */
-    backdrop-filter: blur(10px) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
+  display: inline-flex !important;
+  width: auto !important;
+  background-color: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(10px) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 #vrodos-scene-editor #save-scene-button,
 #vrodos-scene-editor #compileGameBtn {
-    width: auto !important;
-    padding: 0 0.75rem !important;
+  width: auto !important;
+  padding: 0 0.75rem !important;
 }
 
-/* ─── Toggle buttons (Toolbar) ─── */
+
+/* ═══════════════════════════════════════════
+   Toggle Buttons (Scene Editor Toolbar)
+   ═══════════════════════════════════════════ */
 .toggle-btn {
-    border-color: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.45) !important;
-    background: rgba(15, 23, 42, 0.5) !important; /* Darker inactive BG */
-    transition: all 0.2s ease !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(15, 23, 42, 0.5) !important;
+  transition: all 0.2s ease !important;
 }
 
 .toggle-btn:hover {
-    border-color: rgba(255, 255, 255, 0.2) !important;
-    color: rgba(255, 255, 255, 0.7) !important;
-    background: rgba(15, 23, 42, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  background: rgba(15, 23, 42, 0.7) !important;
 }
 
 .toggle-btn.toggle-active {
-    background-color: rgba(15, 23, 42, 0.7) !important; /* Match hover state */
-    border-color: rgba(102, 204, 138, 0.8) !important;
-    color: #66cc8a !important; /* Vibrant Emerald green icon */
-    box-shadow: inset 0 0 6px rgba(102, 204, 138, 0.1) !important;
+  background-color: rgba(15, 23, 42, 0.7) !important;
+  border-color: rgba(102, 204, 138, 0.8) !important;
+  color: #66cc8a !important;
+  box-shadow: inset 0 0 6px rgba(102, 204, 138, 0.1) !important;
 }
 
 .toggle-btn.toggle-active i,
 .toggle-btn.toggle-active svg,
 .toggle-btn.toggle-active path {
-    color: #66cc8a !important;
-    stroke: #66cc8a !important;
+  color: #66cc8a !important;
+  stroke: #66cc8a !important;
 }
 
-/* Emerald Primary: #66cc8a */
-#vrodos-project-manager .d-btn-primary,
-#vrodos-assets-manager .d-btn-primary,
-#vrodos-asset-editor .d-btn-primary,
-#vrodos-scene-editor .d-btn-primary {
-  background-color: #66cc8a !important;
-  border: 1px solid #66cc8a !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 6px -1px rgba(102, 204, 138, 0.2) !important;
-}
 
-#vrodos-project-manager .d-btn-primary:hover,
-#vrodos-assets-manager .d-btn-primary:hover,
-#vrodos-asset-editor .d-btn-primary:hover,
-#vrodos-scene-editor .d-btn-primary:hover {
-  background-color: #4da670 !important;
-  border-color: #4da670 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 10px 15px -3px var(--vr-glow-primary) !important;
-}
-
-#vrodos-project-manager .d-btn-primary:active,
-#vrodos-assets-manager .d-btn-primary:active,
-#vrodos-asset-editor .d-btn-primary:active,
-#vrodos-scene-editor .d-btn-primary:active {
-  transform: translateY(1px) !important;
-}
-
-/* Emerald Secondary: #377cfb */
-#vrodos-project-manager .d-btn-secondary,
-#vrodos-assets-manager .d-btn-secondary,
-#vrodos-asset-editor .d-btn-secondary,
-#vrodos-scene-editor .d-btn-secondary {
-  background-color: #377cfb !important;
-  border: 1px solid #377cfb !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 6px -1px rgba(55, 124, 251, 0.2) !important;
-}
-
-#vrodos-project-manager .d-btn-secondary:hover,
-#vrodos-assets-manager .d-btn-secondary:hover,
-#vrodos-asset-editor .d-btn-secondary:hover,
-#vrodos-scene-editor .d-btn-secondary:hover {
-  background-color: #2563eb !important;
-  border-color: #2563eb !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 10px 15px -3px rgba(55, 124, 251, 0.4) !important;
-}
-
-#vrodos-project-manager .d-btn-secondary:active,
-#vrodos-assets-manager .d-btn-secondary:active,
-#vrodos-asset-editor .d-btn-secondary:active,
-#vrodos-scene-editor .d-btn-secondary:active {
-  transform: translateY(1px) !important;
-}
-
-#vrodos-asset-editor .d-range,
-#vrodos-scene-editor .d-range {
-  cursor: pointer !important;
-}
-
-#vrodos-project-manager .d-btn-outline,
-#vrodos-assets-manager .d-btn-outline,
-#vrodos-asset-editor .d-btn-outline,
-#vrodos-scene-editor .d-btn-outline {
-  background-color: transparent !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #475569 !important;
-}
-
-#vrodos-project-manager .d-btn-outline:hover,
-#vrodos-scene-editor .d-btn-outline:hover {
-  background-color: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-#vrodos-project-manager .d-input,
-#vrodos-assets-manager .d-input,
-#vrodos-asset-editor .d-input,
-#vrodos-scene-editor .d-input {
-  display: block !important;
-  width: 100% !important;
-  height: 2.5rem !important;
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-  font-size: 0.875rem !important;
-  background-color: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 0.5rem !important;
-  color: #334155 !important;
-}
-
-#vrodos-project-manager .d-input:focus,
-#vrodos-assets-manager .d-input:focus,
-#vrodos-asset-editor .d-input:focus,
-#vrodos-scene-editor .d-input:focus,
-#vrodos-asset-editor .d-select:focus,
-#vrodos-scene-editor .d-select:focus {
-  border-color: #66cc8a !important;
-  outline: 2PX solid #66cc8a22 !important;
-  box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
-}
-
-/* Global VRodos Component Classes */
+/* ═══════════════════════════════════════════
+   Custom VRodos Components (not DaisyUI)
+   ═══════════════════════════════════════════ */
 .vrodos-label {
   display: block !important;
   font-size: 0.75rem !important;
@@ -475,136 +515,7 @@ body.vrodos-manager-wrapper {
   transition: all 0.2s ease !important;
 }
 
-
-/* Modal styling overrides for WP stability - Surgically focused */
-#vrodos-modal-wrapper .d-modal {
-  z-index: 2147483647 !important;
-  background-color: transparent !important; /* The Ultimate fix for box-in-box */
-  border: none !important;
-  color: inherit !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  width: 100vw !important;
-  height: 100vh !important;
-}
-
-#vrodos-modal-wrapper .d-modal[open] {
-  display: grid !important;
-  place-items: center !important;
-  pointer-events: auto !important;
-  visibility: visible !important;
-}
-
-/* Ensure backdrop visibility and blur */
-#vrodos-modal-wrapper .d-modal::backdrop {
-  background-color: rgba(15, 23, 42, 0.4) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-#vrodos-modal-wrapper {
-  position: static !important;
-  contain: none !important;
-}
-
-/* Standard modal box tweaks */
-#vrodos-modal-wrapper .d-modal-box {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  padding: 0 !important;
-  border-radius: 1.5rem !important;
-  border: none !important;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
-  z-index: 2147483647 !important;
-  overflow: hidden !important;
-  grid-column-start: 1 !important;
-  grid-row-start: 1 !important;
-  width: min(90vw, 440px) !important;
-  height: auto !important;
-  max-height: calc(100vh - 5rem) !important;
-  position: relative !important;
-  transform: none !important;
-}
-
-/* Force-Kill ANY residual theme bars */
-#vrodos-modal-wrapper .d-modal-box::before,
-#vrodos-modal-wrapper .d-modal-box::after,
-.d-modal-box::before,
-.d-modal-box::after {
-  content: none !important;
-  display: none !important;
-  height: 0 !important;
-  width: 0 !important;
-}
-
-#vrodos-modal-wrapper .modal-header {
-  padding: 2rem 2rem 1rem 2rem !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  text-align: center !important;
-}
-
-#vrodos-modal-wrapper .modal-body {
-  padding: 0 2rem 1rem 2rem !important;
-  text-align: center !important;
-}
-
-#vrodos-modal-wrapper .modal-icon-container {
-  width: 3.5rem !important;
-  height: 3.5rem !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-bottom: 1.25rem !important;
-  background-color: rgba(102, 204, 138, 0.1) !important;
-  color: #66cc8a !important;
-}
-
-#delete-dialog .modal-icon-container {
-  background-color: rgba(255, 88, 97, 0.1) !important;
-  color: #ff5861 !important;
-}
-
-#vrodos-modal-wrapper .d-modal-action {
-  display: flex !important;
-  padding: 1rem 2rem 2.5rem 2rem !important;
-  background-color: #ffffff !important;
-  border-top: none !important;
-  gap: 1rem !important;
-  margin: 0 !important; /* Reset DaisyUI margin */
-  justify-content: center !important;
-}
-
-#vrodos-modal-wrapper .d-modal-action .d-btn {
-  height: 2.75rem !important;
-  padding: 0 1.5rem !important;
-  font-weight: 600 !important;
-  border-radius: 0.625rem !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.025em !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-width: 1px !important;
-  font-size: 0.75rem !important;
-}
-
-#vrodos-modal-wrapper .d-btn-error {
-  background-color: #ff5861 !important;
-  border-color: #ff5861 !important;
-  color: #ffffff !important;
-}
-
-#vrodos-modal-wrapper .d-btn-error:hover {
-  background-color: #e54d56 !important;
-  border-color: #e54d56 !important;
-}
-
-/* Premium Emerald Button - Refined */
+/* Premium Emerald Button */
 .vrodos-btn-premium {
   background-color: #66cc8a !important;
   color: #ffffff !important;
@@ -621,7 +532,7 @@ body.vrodos-manager-wrapper {
   box-shadow: 0 8px 15px -3px rgba(102, 204, 138, 0.5) !important;
 }
 
-/* Premium Error Button - Refined */
+/* Premium Error Button */
 .vrodos-btn-premium-error {
   background-color: #ff5861 !important;
   color: #ffffff !important;
@@ -643,23 +554,15 @@ body.vrodos-manager-wrapper {
   transform: translateY(0) scale(0.98) !important;
 }
 
-#vrodos-modal-wrapper .d-btn-ghost {
-  background-color: transparent !important;
-  border-color: transparent !important;
-  color: #64748b !important;
-  transition: all 0.2s ease !important;
-}
 
-#vrodos-modal-wrapper .d-btn-ghost:hover {
-  background-color: #f1f5f9 !important;
-  color: #1e293b !important;
-}
-
-/* Custom Div-based Progress Bar for Guaranteed Animation */
+/* ═══════════════════════════════════════════
+   Progress Bar (custom div-based)
+   ═══════════════════════════════════════════ */
 .vrodos-progress-track {
   width: 100% !important;
   height: 0.5rem !important;
   background-color: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 1rem !important;
   overflow: hidden !important;
   position: relative !important;
@@ -670,6 +573,8 @@ body.vrodos-manager-wrapper {
   width: 50% !important;
   border-radius: 1rem !important;
   position: absolute !important;
+  background: linear-gradient(90deg, #66cc8a, #88e0a8) !important;
+  box-shadow: 0 0 10px rgba(102, 204, 138, 0.3) !important;
 }
 
 .vrodos-progress-primary {
@@ -691,112 +596,10 @@ body.vrodos-manager-wrapper {
   100% { left: 100%; width: 30%; }
 }
 
-#vrodos-modal-wrapper .d-btn-ghost:hover {
-  background-color: #f1f5f9 !important;
-}
 
-#vrodos-modal-wrapper .d-modal-backdrop {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: -1 !important;
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  cursor: default !important;
-}
-
-#vrodos-modal-wrapper .d-modal-backdrop button {
-  width: 100% !important;
-  height: 100% !important;
-  background: transparent !important;
-  border: none !important;
-  cursor: pointer !important;
-  color: transparent !important;
-}
-
-#vrodos-project-manager *, #vrodos-project-manager *:before, #vrodos-project-manager *:after,
-#vrodos-assets-manager *, #vrodos-assets-manager *:before, #vrodos-assets-manager *:after,
-#vrodos-asset-editor *, #vrodos-asset-editor *:before, #vrodos-asset-editor *:after,
-#vrodos-scene-editor *, #vrodos-scene-editor *:before, #vrodos-scene-editor *:after,
-#vrodos-modal-wrapper *, #vrodos-modal-wrapper *:before, #vrodos-modal-wrapper *:after {
-  box-sizing: border-box !important;
-}
-
-/* Scene editor modal overrides */
-#vrodos-scene-editor .d-modal {
-  z-index: 2147483647 !important;
-  background-color: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  width: 100vw !important;
-  height: 100vh !important;
-}
-
-#vrodos-scene-editor .d-modal[open] {
-  display: grid !important;
-  place-items: center !important;
-}
-
-#vrodos-scene-editor .d-modal::backdrop {
-  background-color: rgba(15, 23, 42, 0.4) !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-#vrodos-scene-editor .d-modal-box {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  padding: 2rem !important;
-  border-radius: 1.5rem !important;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
-  width: min(90vw, 440px) !important;
-}
-
-#vrodos-scene-editor .d-modal-action {
-  display: flex !important;
-  gap: 1rem !important;
-  justify-content: flex-end !important;
-  margin-top: 1.5rem !important;
-}
-
-#vrodos-scene-editor .d-btn-error {
-  background-color: #ff5861 !important;
-  border-color: #ff5861 !important;
-  color: #ffffff !important;
-}
-
-#vrodos-scene-editor .d-btn-error:hover {
-  background-color: #e54d56 !important;
-  border-color: #e54d56 !important;
-}
-
-#vrodos-scene-editor .d-modal-backdrop {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: -1 !important;
-  background: transparent !important;
-}
-
-#vrodos-scene-editor .d-modal-backdrop button {
-  width: 100% !important;
-  height: 100% !important;
-  background: transparent !important;
-  border: none !important;
-  cursor: pointer !important;
-  color: transparent !important;
-}
-
-/* Admin bar height is handled globally above */
-
-/* Assets Manager Specific Styles */
+/* ═══════════════════════════════════════════
+   Assets Manager — Card Styles
+   ═══════════════════════════════════════════ */
 #vrodos-assets-manager .asset-card-shadow {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02) !important;
 }
@@ -807,7 +610,10 @@ body.vrodos-manager-wrapper {
   border-color: #66cc8a55 !important;
 }
 
-/* VR-Glass Utilities */
+
+/* ═══════════════════════════════════════════
+   Glass / VR-Mesh Utilities
+   ═══════════════════════════════════════════ */
 .vr-glass-panel {
   background: rgba(255, 255, 255, 0.7) !important;
   backdrop-filter: blur(12px) !important;
@@ -845,18 +651,10 @@ body.vrodos-manager-wrapper {
   opacity: 0.1;
 }
 
-/* Refined Progress Bar for Light Theme */
-.vrodos-progress-track {
-  background-color: #f1f5f9 !important;
-  border: 1px solid #e2e8f0 !important;
-}
 
-.vrodos-progress-bar {
-  background: linear-gradient(90deg, #66cc8a, #88e0a8) !important;
-  box-shadow: 0 0 10px rgba(102, 204, 138, 0.3) !important;
-}
-
-/* --- Skeleton Loaders --- */
+/* ═══════════════════════════════════════════
+   Skeleton Loaders
+   ═══════════════════════════════════════════ */
 @keyframes vrodos-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

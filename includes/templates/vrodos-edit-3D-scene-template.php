@@ -94,10 +94,10 @@ extract( $data );
                         </a>
 
                         <!-- View Json code UI -->
-                        <a id="toggleViewSceneContentBtn" data-toggle='off' type="button"
-                           class="tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-text-xs tw-font-bold tw-opacity-40 hover:tw-opacity-100 tw-transition-all tw-cursor-pointer"
-                           title="View JSON">
-                            <i data-lucide="eye-off" class="tw-w-3.5 tw-h-3.5"></i> JSON
+                        <a id="toggleViewSceneContentBtn" type="button"
+                           class="tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-text-xs tw-font-bold tw-opacity-60 hover:tw-opacity-100 tw-transition-all tw-cursor-pointer"
+                           title="View scene JSON data">
+                            <i data-lucide="braces" class="tw-w-3.5 tw-h-3.5"></i> JSON
                         </a>
 
                         <a id="save-scene-button" title="Save changes" class="tw-px-3 tw-py-1 tw-text-xs tw-font-bold tw-uppercase tw-tracking-wider hover:tw-bg-white/10 tw-rounded tw-transition-colors">
@@ -105,7 +105,7 @@ extract( $data );
                         </a>
 
 						<button id="compileGameBtn"
-							class="d-btn d-btn-primary tw-text-white tw-font-bold"
+							class="tw-btn tw-btn-primary tw-text-white tw-font-bold"
 							title="Build Project">
 							<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>&nbsp;Build Project
 						</button>
@@ -115,13 +115,43 @@ extract( $data );
 				<!--Compile Dialogue html-->
 				<?php require plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-CompileDialogue.php'; ?>
 
-				<!-- Scene JSON content TextArea display and set input field -->
-				<div id="sceneJsonContent" >
+				<!-- Scene JSON content viewer (dialog) -->
+				<dialog id="sceneJsonContent" class="tw-modal">
+					<style>
+						#sceneJsonContent .tw-modal-box {
+							width: min(95vw, 900px) !important;
+							max-height: 90vh !important;
+							padding: 0 !important;
+							border-radius: 0.75rem !important;
+						}
+					</style>
+					<div class="tw-modal-box tw-bg-slate-900 tw-shadow-2xl tw-border tw-border-white/10 tw-flex tw-flex-col">
+						<!-- Header -->
+						<div class="tw-flex tw-items-center tw-justify-between tw-px-4 tw-py-1.5 tw-bg-slate-800 tw-border-b tw-border-white/10 tw-rounded-t-lg tw-flex-shrink-0">
+							<div class="tw-flex tw-items-center tw-gap-2">
+								<i data-lucide="braces" class="tw-w-3.5 tw-h-3.5 tw-text-emerald-400"></i>
+								<span class="tw-text-xs tw-font-bold tw-text-white tw-tracking-wide">Scene JSON</span>
+							</div>
+							<div class="tw-flex tw-items-center tw-gap-2">
+								<button id="copyJsonBtn" type="button" class="tw-px-2.5 tw-py-0.5 tw-text-[10px] tw-font-semibold tw-text-slate-400 hover:tw-text-white tw-bg-slate-700 hover:tw-bg-slate-600 tw-rounded tw-transition-colors tw-flex tw-items-center tw-gap-1" title="Copy to clipboard">
+									<i data-lucide="clipboard-copy" class="tw-w-3 tw-h-3"></i> Copy
+								</button>
+								<button id="closeJsonBtn" type="button" class="tw-p-0.5 tw-text-slate-500 hover:tw-text-white tw-transition-colors tw-rounded" title="Close">
+									<i data-lucide="x" class="tw-w-3.5 tw-h-3.5"></i>
+								</button>
+							</div>
+						</div>
+						<!-- JSON content -->
 						<textarea id="vrodos_scene_json_input"
-								name="vrodos_scene_json_input"
-								title="vrodos_scene_json_input"
+								  name="vrodos_scene_json_input"
+								  title="Scene JSON data"
+								  class="tw-flex-1 tw-w-full tw-bg-slate-950 tw-text-emerald-300 tw-font-mono tw-text-[11px] tw-leading-relaxed tw-p-4 tw-border-0 tw-resize-none focus:tw-outline-none"
+								  style="min-height: 75vh;"
+								  spellcheck="false"
 						></textarea>
-				</div>
+					</div>
+					<form method="dialog" class="tw-modal-backdrop"><button>close</button></form>
+				</dialog>
 
 
 
@@ -166,14 +196,14 @@ extract( $data );
 						<!--  Dimensionality 2D 3D toggle -->
 						<a id="dim-change-btn"
 							title="Toggle between 2D mode (top view) and 3D mode (view with angle)."
-							class="EditorToolbarBtnStyle d-btn d-btn-sm toggle-btn toggle-active">3D</a>
+							class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn toggle-active">3D</a>
 					</div>
 
 					<!-- The button to start walking in the 3d environment -->
 					<div class="environmentButton">
 						<div id="firstPersonBlocker">
 							<a type="button" id="firstPersonBlockerBtn" data-toggle='on'
-								class="EditorToolbarBtnStyle d-btn d-btn-xs toggle-btn"
+								class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn"
 								title="Change camera to First Person View - Move: W,A,S,D,Q,E,R,F keys">
 								<i data-lucide="user" class="tw-w-4 tw-h-4"></i>
 							</a>
@@ -182,9 +212,9 @@ extract( $data );
 
 					<!--  Toggle Around Tour -->
 					<div class="environmentButton">
-						<a type="button" id="toggle-tour-around-btn" data-toggle='off'
+						<a type="button" id="toggle-tour-arountw-btn" data-toggle='off'
 							title="Auto-rotate 3D tour"
-							class="EditorToolbarBtnStyle d-btn d-btn-xs toggle-btn">
+							class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn">
 							<i data-lucide="rotate-ccw" class="tw-w-4 tw-h-4"></i>
 						</a>
 					</div>
@@ -194,7 +224,7 @@ extract( $data );
 						<input style="display: none" type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
 						<a id="env_texture-change-btn"
 							title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
-							class="EditorToolbarBtnStyle d-btn d-btn-xs toggle-btn toggle-active">
+							class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn toggle-active">
 							<i data-lucide="layers" class="tw-w-4 tw-h-4"></i>
 						</a>
 					</div>
@@ -203,7 +233,7 @@ extract( $data );
 					<div class="environmentButton">
 						<div id="row_cogwheel" class="row-right-panel">
 							<a type="button" id="optionsPopupBtn"
-								class="EditorToolbarBtnStyle d-btn d-btn-xs d-btn-primary"
+								class="EditorToolbarBtnStyle tw-btn tw-btn-sm tw-btn-primary"
 								title="Edit scene options">
 								<i data-lucide="settings" ></i>
 							</a>
@@ -235,18 +265,18 @@ extract( $data );
 						<span class="tw-text-[8pt] tw-font-semibold tw-text-slate-400 tw-leading-tight tw-shrink-0">Axes:</span>
 
 						<div id="object-manipulation-toggle"
-							 class="ObjectManipulationToggle d-join tw-flex tw-items-center tw-gap-0" style="display: none;">
+							 class="ObjectManipulationToggle tw-join tw-flex tw-items-center tw-gap-0" style="display: none;">
 							<input type="radio" id="translate-switch" name="object-manipulation-switch" value="translate" class="tw-peer tw-hidden" checked/>
-							<label for="translate-switch" id="translate-switch-label" class="d-join-item d-btn d-btn-xs affineSwitch">Move</label>
+							<label for="translate-switch" id="translate-switch-label" class="tw-join-item tw-btn tw-btn-xs affineSwitch">Move</label>
 							<input type="radio" id="rotate-switch" name="object-manipulation-switch" value="rotate" class="tw-peer tw-hidden" />
-							<label for="rotate-switch" id="rotate-switch-label" class="d-join-item d-btn d-btn-xs affineSwitch">Rotate</label>
+							<label for="rotate-switch" id="rotate-switch-label" class="tw-join-item tw-btn tw-btn-xs affineSwitch">Rotate</label>
 							<input type="radio" id="scale-switch" name="object-manipulation-switch" value="scale" class="tw-peer tw-hidden" />
-							<label for="scale-switch" id="scale-switch-label" class="d-join-item d-btn d-btn-xs affineSwitch">Scale</label>
+							<label for="scale-switch" id="scale-switch-label" class="tw-join-item tw-btn tw-btn-xs affineSwitch">Scale</label>
 						</div>
 
 						<div id="axis-manipulation-buttons" class="tw-flex tw-items-center tw-gap-0.5 tw-ml-auto" style="display: none;">
-							<a id="axis-size-increase-btn" title="Increase axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">+</a>
-							<a id="axis-size-decrease-btn" title="Decrease axes size" class="d-btn d-btn-xs d-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">-</a>
+							<a id="axis-size-increase-btn" title="Increase axes size" class="tw-btn tw-btn-xs tw-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">+</a>
+							<a id="axis-size-decrease-btn" title="Decrease axes size" class="tw-btn tw-btn-xs tw-btn-primary tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-p-0">-</a>
 						</div>
 					</div>
 
@@ -257,7 +287,7 @@ extract( $data );
 					<div class="tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1.5 tw-border-t tw-border-white/5">
 						<input type="checkbox" title="Constrain Scale dims to one value"
 							   id="scaleLockCheckbox" name="scaleLockCheckbox" form="3dAssetForm"
-							   class="d-checkbox d-checkbox-sm d-checkbox-primary"
+							   class="tw-checkbox tw-checkbox-sm tw-checkbox-primary"
 							   onchange="keepScaleAspectRatio(this.checked)">
 						<label for="scaleLockCheckbox" class="tw-text-xs tw-text-slate-300 tw-cursor-pointer">Constrain Scale</label>
 					</div>
@@ -270,7 +300,7 @@ extract( $data );
 
 				<!-- Pause rendering-->
 				<div id="divPauseRendering" class="pauseRenderingDivStyle">
-					<a id="pauseRendering" class="d-btn d-btn-sm d-btn-primary"
+					<a id="pauseRendering" class="tw-btn tw-btn-sm tw-btn-primary"
 						title="Pause rendering">
 						<i data-lucide="play" style="width:18px; height:18px;"></i>
 					</a>
@@ -302,7 +332,7 @@ extract( $data );
 
 					<!-- Categories of assets -->
 					<div id="assetCategTab" class="AssetCategoryTabStyle">
-						<button id="allAssetsViewBt" class="tablinks d-btn d-btn-xs d-btn-ghost active">All</button>
+						<button id="allAssetsViewBt" class="tablinks tw-btn tw-btn-xs tw-btn-ghost active">All</button>
 					</div>
 
 					<!-- Search bar -->
@@ -315,7 +345,7 @@ extract( $data );
 
 					<!-- ADD NEW ASSET FROM ASSETS LIST -->
 					<a id="addNewAssetBtnAssetsList"
-					   class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 d-btn-secondary tw-bg-secondary tw-text-white tw-rounded-full tw-shadow-lg hover:tw-bg-secondary-focus tw-transition-all tw-absolute tw-bottom-4 tw-right-4 tw-z-[1001]"
+					   class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-btn-secondary tw-bg-secondary tw-text-white tw-rounded-full tw-shadow-lg hover:tw-bg-secondary-focus tw-transition-all tw-absolute tw-bottom-4 tw-right-4 tw-z-[1001]"
 					   title="Add new private asset"
 					   href="<?php echo esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $project_id . '&vrodos_scene=' . $current_scene_id . '&scene_type=scene&preview=0&singleproject=true' ); ?>">
 						<i data-lucide="plus" class="tw-w-5 tw-h-5"></i>
@@ -326,7 +356,7 @@ extract( $data );
 				<!-- Popups are now inside the floating Object Controls panel -->
 
 				<!--  Open/Close Scene list panel-->
-				<a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable d-btn d-btn-sm d-btn-primary" title="Toggle scenes list">
+				<a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable tw-btn tw-btn-sm tw-btn-primary" title="Toggle scenes list">
 					<i data-lucide="panel-bottom" style="width:18px; height:18px; margin:auto"></i>
 				</a>
 
@@ -342,17 +372,17 @@ extract( $data );
 
 	</div>
 
-	<dialog id="confirm-deletion-dialog" class="d-modal" style="z-index: 1000;">
-		<div class="d-modal-box">
+	<dialog id="confirm-deletion-dialog" class="tw-modal" style="z-index: 1000;">
+		<div class="tw-modal-box">
 			<h3 id="confirm-asset-deletion-title" class="tw-font-bold tw-text-lg">Delete Asset</h3>
 			<p id="confirm-asset-deletion-description" class="tw-py-4">Do you really want to delete the selected asset?</p>
 			<p class="tw-text-sm tw-text-warning tw-font-semibold">WARNING: This action cannot be undone!</p>
-			<div class="d-modal-action">
-				<button class="d-btn" onclick="document.getElementById('confirm-deletion-dialog').close()">Cancel</button>
-				<button id="delete-asset-btn-confirmation" class="d-btn d-btn-error">DELETE</button>
+			<div class="tw-modal-action">
+				<button class="tw-btn" onclick="document.getElementById('confirm-deletion-dialog').close()">Cancel</button>
+				<button id="delete-asset-btn-confirmation" class="tw-btn tw-btn-error">DELETE</button>
 			</div>
 		</div>
-		<form method="dialog" class="d-modal-backdrop"><button>close</button></form>
+		<form method="dialog" class="tw-modal-backdrop"><button>close</button></form>
 	</dialog>
 
 	<!-- Scripts part 1: The GUIs -->

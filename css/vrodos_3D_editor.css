@@ -870,25 +870,8 @@ html [type="button"],
 	position: absolute;
 }
 
-#sceneJsonContent {
-	z-index: 100000;
-	position: absolute;
-	top: 15px;
-	left: calc(30%);
-	display: none
-}
-
-#vrodos_scene_json_input {
-	z-index: 100000;
-	width: 800px;
-	height: 50em;
-	font-size: 10pt;
-	position: absolute;
-	top: 50px;
-
-	background: white;
-	resize: both;
-}
+/* #sceneJsonContent and #vrodos_scene_json_input are now styled
+   inline via Tailwind classes on the <dialog> element. */
 
 #analyticsIframeContainer {
 	position: relative;

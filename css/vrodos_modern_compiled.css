@@ -828,6 +828,956 @@ body {
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 }
 
+@media (hover:hover) {
+  .tw-checkbox-primary:hover {
+    --tw-border-opacity: 1;
+    border-color: var(--fallback-p,oklch(var(--p)/var(--tw-border-opacity)));
+  }
+
+  .tw-radio-primary:hover {
+    --tw-border-opacity: 1;
+    border-color: var(--fallback-p,oklch(var(--p)/var(--tw-border-opacity)));
+  }
+}
+
+.tw-btn {
+  display: inline-flex;
+  height: 3rem;
+  min-height: 3rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--rounded-btn, 0.5rem);
+  border-color: transparent;
+  border-color: oklch(var(--btn-color, var(--b2)) / var(--tw-border-opacity));
+  padding-left: 1rem;
+  padding-right: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1em;
+  gap: 0.5rem;
+  font-weight: 600;
+  text-decoration-line: none;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  border-width: var(--border-btn, 1px);
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  --tw-text-opacity: 1;
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity)));
+  --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  outline-color: var(--fallback-bc,oklch(var(--bc)/1));
+  background-color: oklch(var(--btn-color, var(--b2)) / var(--tw-bg-opacity));
+  --tw-bg-opacity: 1;
+  --tw-border-opacity: 1;
+}
+
+.tw-btn-disabled,
+  .tw-btn[disabled],
+  .tw-btn:disabled {
+  pointer-events: none;
+}
+
+.tw-btn-square {
+  height: 3rem;
+  width: 3rem;
+  padding: 0px;
+}
+
+:where(.tw-btn:is(input[type="checkbox"])),
+:where(.tw-btn:is(input[type="radio"])) {
+  width: auto;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+}
+
+.tw-btn:is(input[type="checkbox"]):after,
+.tw-btn:is(input[type="radio"]):after {
+  --tw-content: attr(aria-label);
+  content: var(--tw-content);
+}
+
+.tw-checkbox {
+  flex-shrink: 0;
+  --chkbg: var(--fallback-bc,oklch(var(--bc)/1));
+  --chkfg: var(--fallback-b1,oklch(var(--b1)/1));
+  height: 1.5rem;
+  width: 1.5rem;
+  cursor: pointer;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  border-radius: var(--rounded-btn, 0.5rem);
+  border-width: 1px;
+  border-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-border-opacity)));
+  --tw-border-opacity: 0.2;
+}
+
+@media (hover: hover) {
+  .tw-btn:hover {
+    --tw-border-opacity: 1;
+    border-color: var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity)));
+    --tw-bg-opacity: 1;
+    background-color: var(--fallback-b3,oklch(var(--b3)/var(--tw-bg-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn:hover {
+      background-color: color-mix(
+            in oklab,
+            oklch(var(--btn-color, var(--b2)) / var(--tw-bg-opacity, 1)) 90%,
+            black
+          );
+      border-color: color-mix(
+            in oklab,
+            oklch(var(--btn-color, var(--b2)) / var(--tw-border-opacity, 1)) 90%,
+            black
+          );
+    }
+  }
+
+  @supports not (color: oklch(0% 0 0)) {
+    .tw-btn:hover {
+      background-color: var(--btn-color, var(--fallback-b2));
+      border-color: var(--btn-color, var(--fallback-b2));
+    }
+  }
+
+  .tw-btn:hover {
+    --tw-border-opacity: 1;
+    border-color: var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity)));
+    --tw-bg-opacity: 1;
+    background-color: var(--fallback-b3,oklch(var(--b3)/var(--tw-bg-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn:hover {
+      background-color: color-mix(
+            in oklab,
+            oklch(var(--btn-color, var(--b2)) / var(--tw-bg-opacity, 1)) 90%,
+            black
+          );
+      border-color: color-mix(
+            in oklab,
+            oklch(var(--btn-color, var(--b2)) / var(--tw-border-opacity, 1)) 90%,
+            black
+          );
+    }
+  }
+
+  @supports not (color: oklch(0% 0 0)) {
+    .tw-btn:hover {
+      background-color: var(--btn-color, var(--fallback-b2));
+      border-color: var(--btn-color, var(--fallback-b2));
+    }
+  }
+
+  .tw-btn:hover {
+    --tw-border-opacity: 1;
+    border-color: var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity)));
+    --tw-bg-opacity: 1;
+    background-color: var(--fallback-b3,oklch(var(--b3)/var(--tw-bg-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn:hover {
+      background-color: color-mix(
+            in oklab,
+            oklch(var(--btn-color, var(--b2)) / var(--tw-bg-opacity, 1)) 90%,
+            black
+          );
+      border-color: color-mix(
+            in oklab,
+            oklch(var(--btn-color, var(--b2)) / var(--tw-border-opacity, 1)) 90%,
+            black
+          );
+    }
+  }
+
+  @supports not (color: oklch(0% 0 0)) {
+    .tw-btn:hover {
+      background-color: var(--btn-color, var(--fallback-b2));
+      border-color: var(--btn-color, var(--fallback-b2));
+    }
+  }
+
+  .tw-btn.tw-glass:hover {
+    --glass-opacity: 25%;
+    --glass-border-opacity: 15%;
+  }
+
+  .tw-btn-ghost:hover {
+    border-color: transparent;
+  }
+
+  @supports (color: oklch(0% 0 0)) {
+    .tw-btn-ghost:hover {
+      background-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+    }
+  }
+
+  .tw-btn-ghost:hover {
+    border-color: transparent;
+  }
+
+  @supports (color: oklch(0% 0 0)) {
+    .tw-btn-ghost:hover {
+      background-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+    }
+  }
+
+  .tw-btn-outline:hover {
+    --tw-border-opacity: 1;
+    border-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-border-opacity)));
+    --tw-bg-opacity: 1;
+    background-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-bg-opacity)));
+    --tw-text-opacity: 1;
+    color: var(--fallback-b1,oklch(var(--b1)/var(--tw-text-opacity)));
+  }
+
+  .tw-btn-outline.tw-btn-primary:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-primary:hover {
+      background-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-primary:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-primary:hover {
+      background-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-primary:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-primary:hover {
+      background-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-primary:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-primary:hover {
+      background-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-secondary:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-sc,oklch(var(--sc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-secondary:hover {
+      background-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-secondary:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-sc,oklch(var(--sc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-secondary:hover {
+      background-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-secondary:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-sc,oklch(var(--sc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-secondary:hover {
+      background-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-secondary:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-sc,oklch(var(--sc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-secondary:hover {
+      background-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-accent:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-ac,oklch(var(--ac)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-accent:hover {
+      background-color: color-mix(in oklab, var(--fallback-a,oklch(var(--a)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-a,oklch(var(--a)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-accent:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-ac,oklch(var(--ac)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-accent:hover {
+      background-color: color-mix(in oklab, var(--fallback-a,oklch(var(--a)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-a,oklch(var(--a)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-success:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-suc,oklch(var(--suc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-success:hover {
+      background-color: color-mix(in oklab, var(--fallback-su,oklch(var(--su)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-su,oklch(var(--su)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-success:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-suc,oklch(var(--suc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-success:hover {
+      background-color: color-mix(in oklab, var(--fallback-su,oklch(var(--su)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-su,oklch(var(--su)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-info:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-inc,oklch(var(--inc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-info:hover {
+      background-color: color-mix(in oklab, var(--fallback-in,oklch(var(--in)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-in,oklch(var(--in)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-info:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-inc,oklch(var(--inc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-info:hover {
+      background-color: color-mix(in oklab, var(--fallback-in,oklch(var(--in)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-in,oklch(var(--in)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-warning:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-wac,oklch(var(--wac)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-warning:hover {
+      background-color: color-mix(in oklab, var(--fallback-wa,oklch(var(--wa)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-wa,oklch(var(--wa)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-warning:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-wac,oklch(var(--wac)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-warning:hover {
+      background-color: color-mix(in oklab, var(--fallback-wa,oklch(var(--wa)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-wa,oklch(var(--wa)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-error:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-erc,oklch(var(--erc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-error:hover {
+      background-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-error:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-erc,oklch(var(--erc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-error:hover {
+      background-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-error:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-erc,oklch(var(--erc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-error:hover {
+      background-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-outline.tw-btn-error:hover {
+    --tw-text-opacity: 1;
+    color: var(--fallback-erc,oklch(var(--erc)/var(--tw-text-opacity)));
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn-outline.tw-btn-error:hover {
+      background-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+    }
+  }
+
+  .tw-btn-disabled:hover,
+    .tw-btn[disabled]:hover,
+    .tw-btn:disabled:hover {
+    --tw-border-opacity: 0;
+    background-color: var(--fallback-n,oklch(var(--n)/var(--tw-bg-opacity)));
+    --tw-bg-opacity: 0.2;
+    color: var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity)));
+    --tw-text-opacity: 0.2;
+  }
+
+  @supports (color: color-mix(in oklab, black, black)) {
+    .tw-btn:is(input[type="checkbox"]:checked):hover, .tw-btn:is(input[type="radio"]:checked):hover {
+      background-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+      border-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+    }
+  }
+}
+
+.tw-input {
+  flex-shrink: 1;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  height: 3rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  font-size: 1rem;
+  line-height: 2;
+  line-height: 1.5rem;
+  border-radius: var(--rounded-btn, 0.5rem);
+  border-width: 1px;
+  border-color: transparent;
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)));
+}
+
+.tw-input[type="number"]::-webkit-inner-spin-button,
+.tw-input-md[type="number"]::-webkit-inner-spin-button {
+  margin-top: -1rem;
+  margin-bottom: -1rem;
+  margin-inline-end: -1rem;
+}
+
+.tw-join {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: var(--rounded-btn, 0.5rem);
+}
+
+.tw-join :where(.tw-join-item) {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+  border-end-start-radius: 0;
+  border-start-start-radius: 0;
+}
+
+.tw-join .tw-join-item:not(:first-child):not(:last-child),
+  .tw-join *:not(:first-child):not(:last-child) .tw-join-item {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+  border-end-start-radius: 0;
+  border-start-start-radius: 0;
+}
+
+.tw-join .tw-join-item:first-child:not(:last-child),
+  .tw-join *:first-child:not(:last-child) .tw-join-item {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.tw-join .tw-dropdown .tw-join-item:first-child:not(:last-child),
+  .tw-join *:first-child:not(:last-child) .tw-dropdown .tw-join-item {
+  border-start-end-radius: inherit;
+  border-end-end-radius: inherit;
+}
+
+.tw-join :where(.tw-join-item:first-child:not(:last-child)),
+  .tw-join :where(*:first-child:not(:last-child) .tw-join-item) {
+  border-end-start-radius: inherit;
+  border-start-start-radius: inherit;
+}
+
+.tw-join .tw-join-item:last-child:not(:first-child),
+  .tw-join *:last-child:not(:first-child) .tw-join-item {
+  border-end-start-radius: 0;
+  border-start-start-radius: 0;
+}
+
+.tw-join :where(.tw-join-item:last-child:not(:first-child)),
+  .tw-join :where(*:last-child:not(:first-child) .tw-join-item) {
+  border-start-end-radius: inherit;
+  border-end-end-radius: inherit;
+}
+
+@supports not selector(:has(*)) {
+  :where(.tw-join *) {
+    border-radius: inherit;
+  }
+}
+
+@supports selector(:has(*)) {
+  :where(.tw-join *:has(.tw-join-item)) {
+    border-radius: inherit;
+  }
+}
+
+.tw-link {
+  cursor: pointer;
+  text-decoration-line: underline;
+}
+
+.tw-modal {
+  pointer-events: none;
+  position: fixed;
+  inset: 0px;
+  margin: 0px;
+  display: grid;
+  height: 100%;
+  max-height: none;
+  width: 100%;
+  max-width: none;
+  justify-items: center;
+  padding: 0px;
+  opacity: 0;
+  overscroll-behavior: contain;
+  z-index: 999;
+  background-color: transparent;
+  color: inherit;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-property: transform, opacity, visibility;
+  overflow-y: hidden;
+}
+
+:where(.tw-modal) {
+  align-items: center;
+}
+
+.tw-modal-box {
+  max-height: calc(100vh - 5em);
+  grid-column-start: 1;
+  grid-row-start: 1;
+  width: 91.666667%;
+  max-width: 32rem;
+  --tw-scale-x: .9;
+  --tw-scale-y: .9;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  border-bottom-right-radius: var(--rounded-box, 1rem);
+  border-bottom-left-radius: var(--rounded-box, 1rem);
+  border-top-left-radius: var(--rounded-box, 1rem);
+  border-top-right-radius: var(--rounded-box, 1rem);
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)));
+  padding: 1.5rem;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: 200ms;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tw-modal-open,
+.tw-modal:target,
+.tw-modal-toggle:checked + .tw-modal,
+.tw-modal[open] {
+  pointer-events: auto;
+  visibility: visible;
+  opacity: 1;
+}
+
+.tw-modal-action {
+  display: flex;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+}
+
+:root:has(:is(.tw-modal-open, .tw-modal:target, .tw-modal-toggle:checked + .tw-modal, .tw-modal[open])) {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
+.tw-radio {
+  flex-shrink: 0;
+  --chkbg: var(--bc);
+  height: 1.5rem;
+  width: 1.5rem;
+  cursor: pointer;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  border-radius: 9999px;
+  border-width: 1px;
+  border-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-border-opacity)));
+  --tw-border-opacity: 0.2;
+}
+
+.tw-range {
+  height: 1.5rem;
+  width: 100%;
+  cursor: pointer;
+  -moz-appearance: none;
+       appearance: none;
+  -webkit-appearance: none;
+  --range-shdw: var(--fallback-bc,oklch(var(--bc)/1));
+  overflow: hidden;
+  border-radius: var(--rounded-box, 1rem);
+  background-color: transparent;
+}
+
+.tw-range:focus {
+  outline: none;
+}
+
+.tw-select {
+  display: inline-flex;
+  cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  height: 3rem;
+  min-height: 3rem;
+  padding-inline-start: 1rem;
+  padding-inline-end: 2.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  line-height: 2;
+  border-radius: var(--rounded-btn, 0.5rem);
+  border-width: 1px;
+  border-color: transparent;
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)));
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(1px + 50%),
+    calc(100% - 16.1px) calc(1px + 50%);
+  background-size: 4px 4px,
+    4px 4px;
+  background-repeat: no-repeat;
+}
+
+.tw-select[multiple] {
+  height: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tw-btn {
+    animation: button-pop var(--animation-btn, 0.25s) ease-out;
+  }
+}
+
+.tw-btn:active:hover,
+  .tw-btn:active:focus {
+  animation: button-pop 0s ease-out;
+  transform: scale(var(--btn-focus-scale, 0.97));
+}
+
+@supports not (color: oklch(0% 0 0)) {
+  .tw-btn {
+    background-color: var(--btn-color, var(--fallback-b2));
+    border-color: var(--btn-color, var(--fallback-b2));
+  }
+
+  .tw-btn-primary {
+    --btn-color: var(--fallback-p);
+  }
+
+  .tw-btn-secondary {
+    --btn-color: var(--fallback-s);
+  }
+
+  .tw-btn-error {
+    --btn-color: var(--fallback-er);
+  }
+}
+
+@supports (color: color-mix(in oklab, black, black)) {
+  .tw-btn-outline.tw-btn-primary.tw-btn-active {
+    background-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+    border-color: color-mix(in oklab, var(--fallback-p,oklch(var(--p)/1)) 90%, black);
+  }
+
+  .tw-btn-outline.tw-btn-secondary.tw-btn-active {
+    background-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+    border-color: color-mix(in oklab, var(--fallback-s,oklch(var(--s)/1)) 90%, black);
+  }
+
+  .tw-btn-outline.tw-btn-accent.tw-btn-active {
+    background-color: color-mix(in oklab, var(--fallback-a,oklch(var(--a)/1)) 90%, black);
+    border-color: color-mix(in oklab, var(--fallback-a,oklch(var(--a)/1)) 90%, black);
+  }
+
+  .tw-btn-outline.tw-btn-success.tw-btn-active {
+    background-color: color-mix(in oklab, var(--fallback-su,oklch(var(--su)/1)) 90%, black);
+    border-color: color-mix(in oklab, var(--fallback-su,oklch(var(--su)/1)) 90%, black);
+  }
+
+  .tw-btn-outline.tw-btn-info.tw-btn-active {
+    background-color: color-mix(in oklab, var(--fallback-in,oklch(var(--in)/1)) 90%, black);
+    border-color: color-mix(in oklab, var(--fallback-in,oklch(var(--in)/1)) 90%, black);
+  }
+
+  .tw-btn-outline.tw-btn-warning.tw-btn-active {
+    background-color: color-mix(in oklab, var(--fallback-wa,oklch(var(--wa)/1)) 90%, black);
+    border-color: color-mix(in oklab, var(--fallback-wa,oklch(var(--wa)/1)) 90%, black);
+  }
+
+  .tw-btn-outline.tw-btn-error.tw-btn-active {
+    background-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+    border-color: color-mix(in oklab, var(--fallback-er,oklch(var(--er)/1)) 90%, black);
+  }
+}
+
+.tw-btn:focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-offset: 2px;
+}
+
+.tw-btn-primary {
+  --tw-text-opacity: 1;
+  color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
+  outline-color: var(--fallback-p,oklch(var(--p)/1));
+}
+
+@supports (color: oklch(0% 0 0)) {
+  .tw-btn-primary {
+    --btn-color: var(--p);
+  }
+
+  .tw-btn-secondary {
+    --btn-color: var(--s);
+  }
+
+  .tw-btn-error {
+    --btn-color: var(--er);
+  }
+}
+
+.tw-btn-secondary {
+  --tw-text-opacity: 1;
+  color: var(--fallback-sc,oklch(var(--sc)/var(--tw-text-opacity)));
+  outline-color: var(--fallback-s,oklch(var(--s)/1));
+}
+
+.tw-btn-error {
+  --tw-text-opacity: 1;
+  color: var(--fallback-erc,oklch(var(--erc)/var(--tw-text-opacity)));
+  outline-color: var(--fallback-er,oklch(var(--er)/1));
+}
+
+.tw-btn.tw-glass {
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  outline-color: currentColor;
+}
+
+.tw-btn.tw-glass.tw-btn-active {
+  --glass-opacity: 25%;
+  --glass-border-opacity: 15%;
+}
+
+.tw-btn-ghost {
+  border-width: 1px;
+  border-color: transparent;
+  background-color: transparent;
+  color: currentColor;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  outline-color: currentColor;
+}
+
+.tw-btn-ghost.tw-btn-active {
+  border-color: transparent;
+  background-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+}
+
+.tw-btn-outline {
+  border-color: currentColor;
+  background-color: transparent;
+  --tw-text-opacity: 1;
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity)));
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.tw-btn-outline.tw-btn-active {
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-border-opacity)));
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-bg-opacity)));
+  --tw-text-opacity: 1;
+  color: var(--fallback-b1,oklch(var(--b1)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-primary {
+  --tw-text-opacity: 1;
+  color: var(--fallback-p,oklch(var(--p)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-primary.tw-btn-active {
+  --tw-text-opacity: 1;
+  color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-secondary {
+  --tw-text-opacity: 1;
+  color: var(--fallback-s,oklch(var(--s)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-secondary.tw-btn-active {
+  --tw-text-opacity: 1;
+  color: var(--fallback-sc,oklch(var(--sc)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-accent {
+  --tw-text-opacity: 1;
+  color: var(--fallback-a,oklch(var(--a)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-accent.tw-btn-active {
+  --tw-text-opacity: 1;
+  color: var(--fallback-ac,oklch(var(--ac)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-success {
+  --tw-text-opacity: 1;
+  color: var(--fallback-su,oklch(var(--su)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-success.tw-btn-active {
+  --tw-text-opacity: 1;
+  color: var(--fallback-suc,oklch(var(--suc)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-info {
+  --tw-text-opacity: 1;
+  color: var(--fallback-in,oklch(var(--in)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-info.tw-btn-active {
+  --tw-text-opacity: 1;
+  color: var(--fallback-inc,oklch(var(--inc)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-warning {
+  --tw-text-opacity: 1;
+  color: var(--fallback-wa,oklch(var(--wa)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-warning.tw-btn-active {
+  --tw-text-opacity: 1;
+  color: var(--fallback-wac,oklch(var(--wac)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-error {
+  --tw-text-opacity: 1;
+  color: var(--fallback-er,oklch(var(--er)/var(--tw-text-opacity)));
+}
+
+.tw-btn-outline.tw-btn-error.tw-btn-active {
+  --tw-text-opacity: 1;
+  color: var(--fallback-erc,oklch(var(--erc)/var(--tw-text-opacity)));
+}
+
+.tw-btn.tw-btn-disabled,
+  .tw-btn[disabled],
+  .tw-btn:disabled {
+  --tw-border-opacity: 0;
+  background-color: var(--fallback-n,oklch(var(--n)/var(--tw-bg-opacity)));
+  --tw-bg-opacity: 0.2;
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity)));
+  --tw-text-opacity: 0.2;
+}
+
+.tw-btn:is(input[type="checkbox"]:checked),
+.tw-btn:is(input[type="radio"]:checked) {
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-p,oklch(var(--p)/var(--tw-border-opacity)));
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-p,oklch(var(--p)/var(--tw-bg-opacity)));
+  --tw-text-opacity: 1;
+  color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
+}
+
+.tw-btn:is(input[type="checkbox"]:checked):focus-visible, .tw-btn:is(input[type="radio"]:checked):focus-visible {
+  outline-color: var(--fallback-p,oklch(var(--p)/1));
+}
+
 @keyframes button-pop {
   0% {
     transform: scale(var(--btn-focus-scale, 0.98));
@@ -840,6 +1790,75 @@ body {
   100% {
     transform: scale(1);
   }
+}
+
+.tw-checkbox:focus {
+  box-shadow: none;
+}
+
+.tw-checkbox:focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-offset: 2px;
+  outline-color: var(--fallback-bc,oklch(var(--bc)/1));
+}
+
+.tw-checkbox:disabled {
+  border-width: 0px;
+  cursor: not-allowed;
+  border-color: transparent;
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-bg-opacity)));
+  opacity: 0.2;
+}
+
+.tw-checkbox:checked,
+  .tw-checkbox[aria-checked="true"] {
+  background-repeat: no-repeat;
+  animation: checkmark var(--animation-input, 0.2s) ease-out;
+  background-color: var(--chkbg);
+  background-image: linear-gradient(-45deg, transparent 65%, var(--chkbg) 65.99%),
+      linear-gradient(45deg, transparent 75%, var(--chkbg) 75.99%),
+      linear-gradient(-45deg, var(--chkbg) 40%, transparent 40.99%),
+      linear-gradient(
+        45deg,
+        var(--chkbg) 30%,
+        var(--chkfg) 30.99%,
+        var(--chkfg) 40%,
+        transparent 40.99%
+      ),
+      linear-gradient(-45deg, var(--chkfg) 50%, var(--chkbg) 50.99%);
+}
+
+.tw-checkbox:indeterminate {
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-bg-opacity)));
+  background-repeat: no-repeat;
+  animation: checkmark var(--animation-input, 0.2s) ease-out;
+  background-image: linear-gradient(90deg, transparent 80%, var(--chkbg) 80%),
+      linear-gradient(-90deg, transparent 80%, var(--chkbg) 80%),
+      linear-gradient(0deg, var(--chkbg) 43%, var(--chkfg) 43%, var(--chkfg) 57%, var(--chkbg) 57%);
+}
+
+.tw-checkbox-primary {
+  --chkbg: var(--fallback-p,oklch(var(--p)/1));
+  --chkfg: var(--fallback-pc,oklch(var(--pc)/1));
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-p,oklch(var(--p)/var(--tw-border-opacity)));
+}
+
+.tw-checkbox-primary:focus-visible {
+  outline-color: var(--fallback-p,oklch(var(--p)/1));
+}
+
+.tw-checkbox-primary:checked,
+    .tw-checkbox-primary[aria-checked="true"] {
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-p,oklch(var(--p)/var(--tw-border-opacity)));
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-p,oklch(var(--p)/var(--tw-bg-opacity)));
+  --tw-text-opacity: 1;
+  color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
 }
 
 @keyframes checkmark {
@@ -856,6 +1875,199 @@ body {
   }
 }
 
+.tw-input input {
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-p,oklch(var(--p)/var(--tw-bg-opacity)));
+  background-color: transparent;
+}
+
+.tw-input input:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.tw-input[list]::-webkit-calendar-picker-indicator {
+  line-height: 1em;
+}
+
+.tw-input-bordered {
+  border-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+}
+
+.tw-input:focus,
+  .tw-input:focus-within {
+  box-shadow: none;
+  border-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+  outline-style: solid;
+  outline-width: 2px;
+  outline-offset: 2px;
+  outline-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+}
+
+.tw-input-error {
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-er,oklch(var(--er)/var(--tw-border-opacity)));
+}
+
+.tw-input-error:focus,
+    .tw-input-error:focus-within {
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-er,oklch(var(--er)/var(--tw-border-opacity)));
+  outline-color: var(--fallback-er,oklch(var(--er)/1));
+}
+
+.tw-input:has(> input[disabled]),
+  .tw-input-disabled,
+  .tw-input:disabled,
+  .tw-input[disabled] {
+  cursor: not-allowed;
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-border-opacity)));
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity)));
+  color: var(--fallback-bc,oklch(var(--bc)/0.4));
+}
+
+.tw-input:has(> input[disabled])::-moz-placeholder, .tw-input-disabled::-moz-placeholder, .tw-input:disabled::-moz-placeholder, .tw-input[disabled]::-moz-placeholder {
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-placeholder-opacity)));
+  --tw-placeholder-opacity: 0.2;
+}
+
+.tw-input:has(> input[disabled])::placeholder,
+  .tw-input-disabled::placeholder,
+  .tw-input:disabled::placeholder,
+  .tw-input[disabled]::placeholder {
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-placeholder-opacity)));
+  --tw-placeholder-opacity: 0.2;
+}
+
+.tw-input:has(> input[disabled]) > input[disabled] {
+  cursor: not-allowed;
+}
+
+.tw-input::-webkit-date-and-time-value {
+  text-align: inherit;
+}
+
+.tw-join > :where(*:not(:first-child)) {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-inline-start: -1px;
+}
+
+.tw-join > :where(*:not(:first-child)):is(.tw-btn) {
+  margin-inline-start: calc(var(--border-btn) * -1);
+}
+
+.tw-join-item:focus {
+  isolation: isolate;
+}
+
+.tw-link-primary {
+  --tw-text-opacity: 1;
+  color: var(--fallback-p,oklch(var(--p)/var(--tw-text-opacity)));
+}
+
+@supports (color:color-mix(in oklab,black,black)) {
+  @media (hover:hover) {
+    .tw-link-primary:hover {
+      color: color-mix(in oklab,var(--fallback-p,oklch(var(--p)/1)) 80%,black);
+    }
+  }
+}
+
+.tw-link:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.tw-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.tw-mockup-browser .tw-mockup-browser-toolbar .tw-input {
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  height: 1.75rem;
+  width: 24rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity)));
+  padding-left: 2rem;
+  direction: ltr;
+}
+
+.tw-mockup-browser .tw-mockup-browser-toolbar .tw-input:before {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  aspect-ratio: 1 / 1;
+  height: 0.75rem;
+  --tw-translate-y: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  border-radius: 9999px;
+  border-width: 2px;
+  border-color: currentColor;
+  opacity: 0.6;
+}
+
+.tw-mockup-browser .tw-mockup-browser-toolbar .tw-input:after {
+  content: "";
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  height: 0.5rem;
+  --tw-translate-y: 25%;
+  --tw-rotate: -45deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  border-radius: 9999px;
+  border-width: 1px;
+  border-color: currentColor;
+  opacity: 0.6;
+}
+
+.tw-modal:not(dialog:not(.tw-modal-open)),
+  .tw-modal::backdrop {
+  background-color: #0006;
+  animation: modal-pop 0.2s ease-out;
+}
+
+.tw-modal-backdrop {
+  z-index: -1;
+  grid-column-start: 1;
+  grid-row-start: 1;
+  display: grid;
+  align-self: stretch;
+  justify-self: stretch;
+  color: transparent;
+}
+
+.tw-modal-open .tw-modal-box,
+.tw-modal-toggle:checked + .tw-modal .tw-modal-box,
+.tw-modal:target .tw-modal-box,
+.tw-modal[open] .tw-modal-box {
+  --tw-translate-y: 0px;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.tw-modal-action > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+  margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+.tw-modal-action:where([dir="rtl"], [dir="rtl"] *) > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
 @keyframes modal-pop {
   0% {
     opacity: 0;
@@ -866,6 +2078,52 @@ body {
   50% {
     background-position-x: -115%;
   }
+}
+
+.tw-radio:focus {
+  box-shadow: none;
+}
+
+.tw-radio:focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-offset: 2px;
+  outline-color: var(--fallback-bc,oklch(var(--bc)/1));
+}
+
+.tw-radio:checked,
+  .tw-radio[aria-checked="true"] {
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-bg-opacity)));
+  background-image: none;
+  animation: radiomark var(--animation-input, 0.2s) ease-out;
+  box-shadow: 0 0 0 4px var(--fallback-b1,oklch(var(--b1)/1)) inset,
+      0 0 0 4px var(--fallback-b1,oklch(var(--b1)/1)) inset;
+}
+
+.tw-radio-primary {
+  --chkbg: var(--p);
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-p,oklch(var(--p)/var(--tw-border-opacity)));
+}
+
+.tw-radio-primary:focus-visible {
+  outline-color: var(--fallback-p,oklch(var(--p)/1));
+}
+
+.tw-radio-primary:checked,
+    .tw-radio-primary[aria-checked="true"] {
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-p,oklch(var(--p)/var(--tw-border-opacity)));
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-p,oklch(var(--p)/var(--tw-bg-opacity)));
+  --tw-text-opacity: 1;
+  color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity)));
+}
+
+.tw-radio:disabled {
+  cursor: not-allowed;
+  opacity: 0.2;
 }
 
 @keyframes radiomark {
@@ -885,6 +2143,69 @@ body {
   }
 }
 
+.tw-range:focus-visible::-webkit-slider-thumb {
+  --focus-shadow: 0 0 0 6px var(--fallback-b1,oklch(var(--b1)/1)) inset, 0 0 0 2rem var(--range-shdw) inset;
+}
+
+.tw-range:focus-visible::-moz-range-thumb {
+  --focus-shadow: 0 0 0 6px var(--fallback-b1,oklch(var(--b1)/1)) inset, 0 0 0 2rem var(--range-shdw) inset;
+}
+
+.tw-range::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  width: 100%;
+  border-radius: var(--rounded-box, 1rem);
+  background-color: var(--fallback-bc,oklch(var(--bc)/0.1));
+}
+
+.tw-range::-moz-range-track {
+  height: 0.5rem;
+  width: 100%;
+  border-radius: var(--rounded-box, 1rem);
+  background-color: var(--fallback-bc,oklch(var(--bc)/0.1));
+}
+
+.tw-range::-webkit-slider-thumb {
+  position: relative;
+  height: 1.5rem;
+  width: 1.5rem;
+  border-radius: var(--rounded-box, 1rem);
+  border-style: none;
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)));
+  appearance: none;
+  -webkit-appearance: none;
+  top: 50%;
+  color: var(--range-shdw);
+  transform: translateY(-50%);
+  --filler-size: 100rem;
+  --filler-offset: 0.6rem;
+  box-shadow: 0 0 0 3px var(--range-shdw) inset,
+      var(--focus-shadow, 0 0),
+      calc(var(--filler-size) * -1 - var(--filler-offset)) 0 0 var(--filler-size);
+}
+
+.tw-range::-moz-range-thumb {
+  position: relative;
+  height: 1.5rem;
+  width: 1.5rem;
+  border-radius: var(--rounded-box, 1rem);
+  border-style: none;
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)));
+  top: 50%;
+  color: var(--range-shdw);
+  --filler-size: 100rem;
+  --filler-offset: 0.5rem;
+  box-shadow: 0 0 0 3px var(--range-shdw) inset,
+      var(--focus-shadow, 0 0),
+      calc(var(--filler-size) * -1 - var(--filler-offset)) 0 0 var(--filler-size);
+}
+
+.tw-range-primary {
+  --range-shdw: var(--fallback-p,oklch(var(--p)/1));
+}
+
 @keyframes rating-pop {
   0% {
     transform: translateY(-0.125em);
@@ -897,6 +2218,64 @@ body {
   100% {
     transform: translateY(0);
   }
+}
+
+.tw-select-bordered {
+  border-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+}
+
+.tw-select:focus {
+  box-shadow: none;
+  border-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+  outline-style: solid;
+  outline-width: 2px;
+  outline-offset: 2px;
+  outline-color: var(--fallback-bc,oklch(var(--bc)/0.2));
+}
+
+.tw-select-ghost {
+  --tw-bg-opacity: 0.05;
+}
+
+.tw-select-ghost:focus {
+  --tw-bg-opacity: 1;
+  --tw-text-opacity: 1;
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity)));
+}
+
+.tw-select-disabled,
+  .tw-select:disabled,
+  .tw-select[disabled] {
+  cursor: not-allowed;
+  --tw-border-opacity: 1;
+  border-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-border-opacity)));
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity)));
+  color: var(--fallback-bc,oklch(var(--bc)/0.4));
+}
+
+.tw-select-disabled::-moz-placeholder, .tw-select:disabled::-moz-placeholder, .tw-select[disabled]::-moz-placeholder {
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-placeholder-opacity)));
+  --tw-placeholder-opacity: 0.2;
+}
+
+.tw-select-disabled::placeholder,
+  .tw-select:disabled::placeholder,
+  .tw-select[disabled]::placeholder {
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-placeholder-opacity)));
+  --tw-placeholder-opacity: 0.2;
+}
+
+.tw-select-multiple,
+  .tw-select[multiple],
+  .tw-select[size].tw-select:not([size="1"]) {
+  background-image: none;
+  padding-right: 1rem;
+}
+
+[dir="rtl"] .tw-select {
+  background-position: calc(0% + 12px) calc(1px + 50%),
+    calc(0% + 16px) calc(1px + 50%);
 }
 
 @keyframes skeleton {
@@ -921,16 +2300,285 @@ body {
   }
 }
 
-.vrodos-manager-wrapper .tw-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+.tw-btn-xs {
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.tw-btn-sm {
+  height: 2rem;
+  min-height: 2rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.tw-btn-md {
+  height: 3rem;
+  min-height: 3rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  font-size: 0.875rem;
+}
+
+.tw-btn-lg {
+  height: 4rem;
+  min-height: 4rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  font-size: 1.125rem;
+}
+
+.tw-btn-square:where(.tw-btn-xs) {
+  height: 1.5rem;
+  width: 1.5rem;
+  padding: 0px;
+}
+
+.tw-btn-square:where(.tw-btn-sm) {
+  height: 2rem;
+  width: 2rem;
+  padding: 0px;
+}
+
+.tw-btn-square:where(.tw-btn-md) {
+  height: 3rem;
+  width: 3rem;
+  padding: 0px;
+}
+
+.tw-btn-square:where(.tw-btn-lg) {
+  height: 4rem;
+  width: 4rem;
+  padding: 0px;
+}
+
+.tw-btn-circle:where(.tw-btn-xs) {
+  height: 1.5rem;
+  width: 1.5rem;
+  border-radius: 9999px;
+  padding: 0px;
+}
+
+.tw-btn-circle:where(.tw-btn-sm) {
+  height: 2rem;
+  width: 2rem;
+  border-radius: 9999px;
+  padding: 0px;
+}
+
+.tw-btn-circle:where(.tw-btn-md) {
+  height: 3rem;
+  width: 3rem;
+  border-radius: 9999px;
+  padding: 0px;
+}
+
+.tw-btn-circle:where(.tw-btn-lg) {
+  height: 4rem;
+  width: 4rem;
+  border-radius: 9999px;
+  padding: 0px;
+}
+
+[type="checkbox"].tw-checkbox-xs {
+  height: 1rem;
+  width: 1rem;
+}
+
+[type="checkbox"].tw-checkbox-sm {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.tw-join.tw-join-vertical {
+  flex-direction: column;
+}
+
+.tw-join.tw-join-vertical .tw-join-item:first-child:not(:last-child),
+  .tw-join.tw-join-vertical *:first-child:not(:last-child) .tw-join-item {
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+}
+
+.tw-join.tw-join-vertical .tw-join-item:last-child:not(:first-child),
+  .tw-join.tw-join-vertical *:last-child:not(:first-child) .tw-join-item {
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+  border-end-start-radius: inherit;
+  border-end-end-radius: inherit;
+}
+
+.tw-join.tw-join-horizontal {
+  flex-direction: row;
+}
+
+.tw-join.tw-join-horizontal .tw-join-item:first-child:not(:last-child),
+  .tw-join.tw-join-horizontal *:first-child:not(:last-child) .tw-join-item {
+  border-end-end-radius: 0;
+  border-start-end-radius: 0;
+  border-end-start-radius: inherit;
+  border-start-start-radius: inherit;
+}
+
+.tw-join.tw-join-horizontal .tw-join-item:last-child:not(:first-child),
+  .tw-join.tw-join-horizontal *:last-child:not(:first-child) .tw-join-item {
+  border-end-start-radius: 0;
+  border-start-start-radius: 0;
+  border-end-end-radius: inherit;
+  border-start-end-radius: inherit;
+}
+
+[type="radio"].tw-radio-xs {
+  height: 1rem;
+  width: 1rem;
+}
+
+[type="radio"].tw-radio-sm {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.tw-range-xs {
+  height: 1rem;
+}
+
+.tw-range-xs::-webkit-slider-runnable-track {
+  height: 0.25rem;
+}
+
+.tw-range-xs::-moz-range-track {
+  height: 0.25rem;
+}
+
+.tw-range-xs::-webkit-slider-thumb {
+  height: 1rem;
+  width: 1rem;
+  --filler-offset: 0.4rem;
+}
+
+.tw-range-xs::-moz-range-thumb {
+  height: 1rem;
+  width: 1rem;
+  --filler-offset: 0.4rem;
+}
+
+.tw-range-sm {
+  height: 1.25rem;
+}
+
+.tw-range-sm::-webkit-slider-runnable-track {
+  height: 0.25rem;
+}
+
+.tw-range-sm::-moz-range-track {
+  height: 0.25rem;
+}
+
+.tw-range-sm::-webkit-slider-thumb {
+  height: 1.25rem;
+  width: 1.25rem;
+  --filler-offset: 0.5rem;
+}
+
+.tw-range-sm::-moz-range-thumb {
+  height: 1.25rem;
+  width: 1.25rem;
+  --filler-offset: 0.5rem;
+}
+
+.tw-select-sm {
+  height: 2rem;
+  min-height: 2rem;
+  padding-left: 0.75rem;
+  padding-right: 2rem;
+  font-size: 0.875rem;
+  line-height: 2rem;
+}
+
+[dir="rtl"] .tw-select-sm {
+  padding-left: 2rem;
+  padding-right: 0.75rem;
+}
+
+.tw-select-xs {
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding-left: 0.5rem;
+  padding-right: 2rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  line-height: 1.625;
+}
+
+[dir="rtl"] .tw-select-xs {
+  padding-left: 2rem;
+  padding-right: 0.5rem;
+}
+
+.tw-join.tw-join-vertical > :where(*:not(:first-child)) {
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-top: -1px;
+}
+
+.tw-join.tw-join-vertical > :where(*:not(:first-child)):is(.tw-btn) {
+  margin-top: calc(var(--border-btn) * -1);
+}
+
+.tw-join.tw-join-horizontal > :where(*:not(:first-child)) {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-inline-start: -1px;
+}
+
+.tw-join.tw-join-horizontal > :where(*:not(:first-child)):is(.tw-btn) {
+  margin-inline-start: calc(var(--border-btn) * -1);
+  margin-top: 0px;
+}
+
+.tw-modal-top :where(.tw-modal-box) {
+  width: 100%;
+  max-width: none;
+  --tw-translate-y: -2.5rem;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  border-bottom-right-radius: var(--rounded-box, 1rem);
+  border-bottom-left-radius: var(--rounded-box, 1rem);
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+}
+
+.tw-modal-middle :where(.tw-modal-box) {
+  width: 91.666667%;
+  max-width: 32rem;
+  --tw-translate-y: 0px;
+  --tw-scale-x: .9;
+  --tw-scale-y: .9;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  border-top-left-radius: var(--rounded-box, 1rem);
+  border-top-right-radius: var(--rounded-box, 1rem);
+  border-bottom-right-radius: var(--rounded-box, 1rem);
+  border-bottom-left-radius: var(--rounded-box, 1rem);
+}
+
+.tw-modal-bottom :where(.tw-modal-box) {
+  width: 100%;
+  max-width: none;
+  --tw-translate-y: 2.5rem;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  border-top-left-radius: var(--rounded-box, 1rem);
+  border-top-right-radius: var(--rounded-box, 1rem);
+  border-bottom-right-radius: 0px;
+  border-bottom-left-radius: 0px;
 }
 
 .vrodos-manager-wrapper .tw-pointer-events-none {
@@ -1524,6 +3172,10 @@ body {
           user-select: none;
 }
 
+.vrodos-manager-wrapper .tw-resize-none {
+  resize: none;
+}
+
 .vrodos-manager-wrapper .tw-list-none {
   list-style-type: none;
 }
@@ -1704,8 +3356,17 @@ body {
   border-radius: 0.75rem;
 }
 
+.vrodos-manager-wrapper .tw-rounded-t-lg {
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
 .vrodos-manager-wrapper .tw-border {
   border-width: 1px;
+}
+
+.vrodos-manager-wrapper .tw-border-0 {
+  border-width: 0px;
 }
 
 .vrodos-manager-wrapper .tw-border-2 {
@@ -1915,6 +3576,11 @@ body {
   background-color: rgb(15 23 42 / 0.6);
 }
 
+.vrodos-manager-wrapper .tw-bg-slate-950 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(2 6 23 / var(--tw-bg-opacity, 1));
+}
+
 .vrodos-manager-wrapper .tw-bg-transparent {
   background-color: transparent;
 }
@@ -1938,10 +3604,6 @@ body {
 
 .vrodos-manager-wrapper .tw-bg-white\/90 {
   background-color: rgb(255 255 255 / 0.9);
-}
-
-.vrodos-manager-wrapper .tw-bg-slate-200\/60 {
-  background-color: rgb(226 232 240 / 0.6);
 }
 
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
@@ -2159,6 +3821,10 @@ body {
   text-align: center;
 }
 
+.vrodos-manager-wrapper .tw-font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
 .vrodos-manager-wrapper .tw-text-2xl {
   font-size: 1.5rem;
   line-height: 2rem;
@@ -2271,6 +3937,10 @@ body {
   letter-spacing: -0.025em;
 }
 
+.vrodos-manager-wrapper .tw-tracking-wide {
+  letter-spacing: 0.025em;
+}
+
 .vrodos-manager-wrapper .tw-tracking-wider {
   letter-spacing: 0.05em;
 }
@@ -2312,6 +3982,16 @@ body {
 .vrodos-manager-wrapper .tw-text-blue-400 {
   --tw-text-opacity: 1;
   color: rgb(96 165 250 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-emerald-300 {
+  --tw-text-opacity: 1;
+  color: rgb(110 231 183 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-emerald-400 {
+  --tw-text-opacity: 1;
+  color: rgb(52 211 153 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-text-emerald-500 {
@@ -2413,11 +4093,6 @@ body {
 
 .vrodos-manager-wrapper .tw-no-underline {
   text-decoration-line: none;
-}
-
-.vrodos-manager-wrapper .tw-antialiased {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 .vrodos-manager-wrapper .tw-opacity-0 {
@@ -2532,7 +4207,9 @@ body {
   transition-duration: 700ms;
 }
 
-/* VR-Inspired Aesthetics & Keyframes */
+/* ═══════════════════════════════════════════
+   VR-Inspired Aesthetics & Keyframes
+   ═══════════════════════════════════════════ */
 
 @keyframes vrodos-fade-in-up {
   from {
@@ -2563,8 +4240,6 @@ body {
 .tw-animate-fade-in-up {
   animation: vrodos-fade-in-up 0.5s var(--ease-out-quart) forwards;
 }
-
-/* Staggered delays for grids/lists */
 
 .tw-stagger-1 {
   animation-delay: 50ms;
@@ -2599,6 +4274,10 @@ body {
   }
 }
 
+/* ═══════════════════════════════════════════
+   WordPress Reset — override aggressive WP themes
+   ═══════════════════════════════════════════ */
+
 .vrodos-main-h {
   height: 100vh !important;
   height: calc(100vh - var(--wp-admin-bar-height, 0px)) !important;
@@ -2614,17 +4293,24 @@ body.vrodos-manager-wrapper {
   margin: 0 !important;
 }
 
-/* Custom modern styles for VRodos */
+/* Global box-sizing reset for all VRodos containers */
+
+#vrodos-project-manager *, #vrodos-project-manager *:before, #vrodos-project-manager *:after,
+#vrodos-assets-manager *, #vrodos-assets-manager *:before, #vrodos-assets-manager *:after,
+#vrodos-asset-editor *, #vrodos-asset-editor *:before, #vrodos-asset-editor *:after,
+#vrodos-scene-editor *, #vrodos-scene-editor *:before, #vrodos-scene-editor *:after,
+#vrodos-modal-wrapper *, #vrodos-modal-wrapper *:before, #vrodos-modal-wrapper *:after {
+  box-sizing: border-box !important;
+}
+
+/* Project manager container reset */
 
 #vrodos-project-manager {
   display: flex !important;
   flex-direction: column !important;
   background-color: #f8fafc !important;
   color: #334155 !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   overflow: hidden !important;
-  box-sizing: border-box !important;
-  /* Reset some common WP theme poisons */
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
@@ -2633,49 +4319,178 @@ body.vrodos-manager-wrapper {
   line-height: 1.5 !important;
 }
 
-/* Surgical protect for DaisyUI components from host theme poisons */
+/* ═══════════════════════════════════════════
+   DaisyUI WP-Compatibility Patches
+   (Minimal overrides — DaisyUI now generates
+   the base component CSS via Tailwind plugin)
+   ═══════════════════════════════════════════ */
 
-#vrodos-project-manager .d-btn,
-#vrodos-assets-manager .d-btn,
-#vrodos-asset-editor .d-btn,
-#vrodos-scene-editor .d-btn,
-#vrodos-project-manager .d-select,
-#vrodos-assets-manager .d-select,
-#vrodos-asset-editor .d-select,
-#vrodos-scene-editor .d-select,
-#vrodos-project-manager .d-checkbox,
-#vrodos-assets-manager .d-checkbox,
-#vrodos-asset-editor .d-checkbox,
-#vrodos-scene-editor .d-checkbox,
-#vrodos-project-manager .d-radio,
-#vrodos-assets-manager .d-radio,
-#vrodos-asset-editor .d-radio,
-#vrodos-scene-editor .d-radio {
-  display: inline-flex !important;
+/* WP themes set text-decoration on anchors — kill it for btn */
+
+.vrodos-manager-wrapper .tw-btn {
+  text-decoration: none !important;
+}
+
+/* WP themes aggressively style <input> — protect checkbox/radio */
+
+.vrodos-manager-wrapper .tw-checkbox,
+.vrodos-manager-wrapper .tw-radio {
   cursor: pointer !important;
 }
 
-#vrodos-project-manager .d-btn,
-#vrodos-assets-manager .d-btn,
-#vrodos-asset-editor .d-btn,
-#vrodos-scene-editor .d-btn {
-  height: 2.25rem !important;
-  min-height: 2.25rem !important;
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  text-transform: uppercase !important;
-  border-width: 1px !important;
-  border-radius: 0.5rem !important;
+/* Input focus ring — emerald accent */
+
+.vrodos-manager-wrapper .tw-input:focus,
+.vrodos-manager-wrapper .tw-select:focus {
+  border-color: #66cc8a !important;
+  outline: 2px solid #66cc8a22 !important;
+  box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
+}
+
+/* ═══════════════════════════════════════════
+   Modal Overrides — WP does weird things to <dialog>
+   ═══════════════════════════════════════════ */
+
+#vrodos-modal-wrapper {
+  position: static !important;
+  contain: none !important;
+}
+
+#vrodos-modal-wrapper .tw-modal,
+#vrodos-scene-editor .tw-modal {
+  z-index: 2147483647 !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+#vrodos-modal-wrapper .tw-modal[open],
+#vrodos-scene-editor .tw-modal[open] {
+  display: grid !important;
+  place-items: center !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+#vrodos-modal-wrapper .tw-modal::backdrop,
+#vrodos-scene-editor .tw-modal::backdrop {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-box,
+#vrodos-scene-editor .tw-modal-box {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  padding: 0 !important;
+  border-radius: 1.5rem !important;
+  border: none !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
+  z-index: 2147483647 !important;
+  overflow: hidden !important;
+  grid-column-start: 1 !important;
+  grid-row-start: 1 !important;
+  width: min(90vw, 440px) !important;
+  height: auto !important;
+  max-height: calc(100vh - 5rem) !important;
+  position: relative !important;
+  transform: none !important;
+}
+
+/* Kill residual WP theme pseudo-elements on modal-box */
+
+.tw-modal-box::before,
+.tw-modal-box::after {
+  content: none !important;
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-action,
+#vrodos-scene-editor .tw-modal-action {
+  display: flex !important;
+  gap: 1rem !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  border-top: none !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-action {
+  padding: 1rem 2rem 2.5rem 2rem !important;
+  background-color: #ffffff !important;
+}
+
+#vrodos-scene-editor .tw-modal-action {
+  justify-content: flex-end !important;
+  margin-top: 1.5rem !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-backdrop,
+#vrodos-scene-editor .tw-modal-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: -1 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  cursor: default !important;
+}
+
+#vrodos-modal-wrapper .tw-modal-backdrop button,
+#vrodos-scene-editor .tw-modal-backdrop button {
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: transparent !important;
+}
+
+/* Modal inner layout (delete dialog, create project dialog) */
+
+#vrodos-modal-wrapper .modal-header {
+  padding: 2rem 2rem 1rem 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+#vrodos-modal-wrapper .modal-body {
+  padding: 0 2rem 1rem 2rem !important;
+  text-align: center !important;
+}
+
+#vrodos-modal-wrapper .modal-icon-container {
+  width: 3.5rem !important;
+  height: 3.5rem !important;
+  border-radius: 50% !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  cursor: pointer !important;
-  text-decoration: none !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin-bottom: 1.25rem !important;
+  background-color: rgba(102, 204, 138, 0.1) !important;
+  color: #66cc8a !important;
 }
 
-/* Modern Sidebar Handles */
+#delete-dialog .modal-icon-container {
+  background-color: rgba(255, 88, 97, 0.1) !important;
+  color: #ff5861 !important;
+}
+
+/* ═══════════════════════════════════════════
+   Scene Editor — Sidebar Toggle Handles
+   ═══════════════════════════════════════════ */
 
 .AssetsToggleStyle, .HierarchyToggleStyle {
   display: flex !important;
@@ -2722,8 +4537,6 @@ body.vrodos-manager-wrapper {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-/* Right elements panel modern transition */
-
 .right-elements-panel-style {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
@@ -2732,7 +4545,9 @@ body.vrodos-manager-wrapper {
   transform: translateX(100%) !important;
 }
 
-/* Axes controls single row optimization (Floating Panel) */
+/* ═══════════════════════════════════════════
+   Scene Editor — Floating Object Controls Panel
+   ═══════════════════════════════════════════ */
 
 #object-controls-panel .affineSwitch {
   width: auto !important;
@@ -2754,17 +4569,16 @@ body.vrodos-manager-wrapper {
 
 #object-controls-panel .ObjectManipulationToggle .tw-peer:checked + .affineSwitch {
   background-color: #10b981 !important;
-  /* Emerald primary */
   border-color: #10b981 !important;
   color: #ffffff !important;
 }
 
-#object-controls-panel .d-btn-xs {
+#object-controls-panel .tw-btn-xs {
   height: 1.5rem !important;
   min-height: 1.5rem !important;
 }
 
-/* lil-gui inside floating panel: no title, always open, transparent background */
+/* lil-gui inside floating panel */
 
 #numerical_gui-container .lil-gui {
   --background-color: transparent !important;
@@ -2786,21 +4600,21 @@ body.vrodos-manager-wrapper {
   display: block !important;
 }
 
-/* Compact buttons for scene editor toolbar */
+/* ═══════════════════════════════════════════
+   Scene Editor — Compact Toolbar Buttons
+   ═══════════════════════════════════════════ */
 
-#vrodos-scene-editor .scene_editor_upper_toolbar .d-btn {
+#vrodos-scene-editor .scene_editor_upper_toolbar .tw-btn {
   padding-left: 0.15rem !important;
   padding-right: 0.15rem !important;
   font-size: 0.6rem !important;
   height: 1.25rem !important;
-  /* Base height for all toolbar buttons */
   min-height: 1.25rem !important;
 }
 
 #vrodos-scene-editor .scene_editor_upper_toolbar .EditorToolbarBtnStyle,
 #vrodos-scene-editor #optionsPopupBtn {
   width: 1rem !important;
-  /* Compact 1rem width as requested */
   height: 1rem !important;
   padding: 0 !important;
 }
@@ -2810,25 +4624,22 @@ body.vrodos-manager-wrapper {
   border-color: transparent !important;
   color: rgba(255, 255, 255, 0.5) !important;
   box-shadow: none !important;
-  /* Remove glow */
   transform: none !important;
 }
 
 #vrodos-scene-editor #optionsPopupBtn:hover {
   color: rgba(255, 255, 255, 0.9) !important;
   background-color: transparent !important;
-  /* No background on hover */
   box-shadow: none !important;
   transform: none !important;
 }
 
-/* ─── Floating Toolbar (EnvironmentBar) refinements ─── */
+/* Floating Toolbar (EnvironmentBar) */
 
 .environmentBar {
   display: inline-flex !important;
   width: auto !important;
   background-color: rgba(15, 23, 42, 0.45) !important;
-  /* Slightly darker */
   backdrop-filter: blur(10px) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
@@ -2839,13 +4650,14 @@ body.vrodos-manager-wrapper {
   padding: 0 0.75rem !important;
 }
 
-/* ─── Toggle buttons (Toolbar) ─── */
+/* ═══════════════════════════════════════════
+   Toggle Buttons (Scene Editor Toolbar)
+   ═══════════════════════════════════════════ */
 
 .toggle-btn {
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: rgba(255, 255, 255, 0.45) !important;
   background: rgba(15, 23, 42, 0.5) !important;
-  /* Darker inactive BG */
   transition: all 0.2s ease !important;
 }
 
@@ -2857,10 +4669,8 @@ body.vrodos-manager-wrapper {
 
 .toggle-btn.toggle-active {
   background-color: rgba(15, 23, 42, 0.7) !important;
-  /* Match hover state */
   border-color: rgba(102, 204, 138, 0.8) !important;
   color: #66cc8a !important;
-  /* Vibrant Emerald green icon */
   box-shadow: inset 0 0 6px rgba(102, 204, 138, 0.1) !important;
 }
 
@@ -2871,112 +4681,9 @@ body.vrodos-manager-wrapper {
   stroke: #66cc8a !important;
 }
 
-/* Emerald Primary: #66cc8a */
-
-#vrodos-project-manager .d-btn-primary,
-#vrodos-assets-manager .d-btn-primary,
-#vrodos-asset-editor .d-btn-primary,
-#vrodos-scene-editor .d-btn-primary {
-  background-color: #66cc8a !important;
-  border: 1px solid #66cc8a !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 6px -1px rgba(102, 204, 138, 0.2) !important;
-}
-
-#vrodos-project-manager .d-btn-primary:hover,
-#vrodos-assets-manager .d-btn-primary:hover,
-#vrodos-asset-editor .d-btn-primary:hover,
-#vrodos-scene-editor .d-btn-primary:hover {
-  background-color: #4da670 !important;
-  border-color: #4da670 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 10px 15px -3px var(--vr-glow-primary) !important;
-}
-
-#vrodos-project-manager .d-btn-primary:active,
-#vrodos-assets-manager .d-btn-primary:active,
-#vrodos-asset-editor .d-btn-primary:active,
-#vrodos-scene-editor .d-btn-primary:active {
-  transform: translateY(1px) !important;
-}
-
-/* Emerald Secondary: #377cfb */
-
-#vrodos-project-manager .d-btn-secondary,
-#vrodos-assets-manager .d-btn-secondary,
-#vrodos-asset-editor .d-btn-secondary,
-#vrodos-scene-editor .d-btn-secondary {
-  background-color: #377cfb !important;
-  border: 1px solid #377cfb !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 6px -1px rgba(55, 124, 251, 0.2) !important;
-}
-
-#vrodos-project-manager .d-btn-secondary:hover,
-#vrodos-assets-manager .d-btn-secondary:hover,
-#vrodos-asset-editor .d-btn-secondary:hover,
-#vrodos-scene-editor .d-btn-secondary:hover {
-  background-color: #2563eb !important;
-  border-color: #2563eb !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 10px 15px -3px rgba(55, 124, 251, 0.4) !important;
-}
-
-#vrodos-project-manager .d-btn-secondary:active,
-#vrodos-assets-manager .d-btn-secondary:active,
-#vrodos-asset-editor .d-btn-secondary:active,
-#vrodos-scene-editor .d-btn-secondary:active {
-  transform: translateY(1px) !important;
-}
-
-#vrodos-asset-editor .d-range,
-#vrodos-scene-editor .d-range {
-  cursor: pointer !important;
-}
-
-#vrodos-project-manager .d-btn-outline,
-#vrodos-assets-manager .d-btn-outline,
-#vrodos-asset-editor .d-btn-outline,
-#vrodos-scene-editor .d-btn-outline {
-  background-color: transparent !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #475569 !important;
-}
-
-#vrodos-project-manager .d-btn-outline:hover,
-#vrodos-scene-editor .d-btn-outline:hover {
-  background-color: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-#vrodos-project-manager .d-input,
-#vrodos-assets-manager .d-input,
-#vrodos-asset-editor .d-input,
-#vrodos-scene-editor .d-input {
-  display: block !important;
-  width: 100% !important;
-  height: 2.5rem !important;
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-  font-size: 0.875rem !important;
-  background-color: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 0.5rem !important;
-  color: #334155 !important;
-}
-
-#vrodos-project-manager .d-input:focus,
-#vrodos-assets-manager .d-input:focus,
-#vrodos-asset-editor .d-input:focus,
-#vrodos-scene-editor .d-input:focus,
-#vrodos-asset-editor .d-select:focus,
-#vrodos-scene-editor .d-select:focus {
-  border-color: #66cc8a !important;
-  outline: 2PX solid #66cc8a22 !important;
-  box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;
-}
-
-/* Global VRodos Component Classes */
+/* ═══════════════════════════════════════════
+   Custom VRodos Components (not DaisyUI)
+   ═══════════════════════════════════════════ */
 
 .vrodos-label {
   display: block !important;
@@ -3046,141 +4753,7 @@ body.vrodos-manager-wrapper {
   transition: all 0.2s ease !important;
 }
 
-/* Modal styling overrides for WP stability - Surgically focused */
-
-#vrodos-modal-wrapper .d-modal {
-  z-index: 2147483647 !important;
-  background-color: transparent !important;
-  /* The Ultimate fix for box-in-box */
-  border: none !important;
-  color: inherit !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  width: 100vw !important;
-  height: 100vh !important;
-}
-
-#vrodos-modal-wrapper .d-modal[open] {
-  display: grid !important;
-  place-items: center !important;
-  pointer-events: auto !important;
-  visibility: visible !important;
-}
-
-/* Ensure backdrop visibility and blur */
-
-#vrodos-modal-wrapper .d-modal::backdrop {
-  background-color: rgba(15, 23, 42, 0.4) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-#vrodos-modal-wrapper {
-  position: static !important;
-  contain: none !important;
-}
-
-/* Standard modal box tweaks */
-
-#vrodos-modal-wrapper .d-modal-box {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  padding: 0 !important;
-  border-radius: 1.5rem !important;
-  border: none !important;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
-  z-index: 2147483647 !important;
-  overflow: hidden !important;
-  grid-column-start: 1 !important;
-  grid-row-start: 1 !important;
-  width: min(90vw, 440px) !important;
-  height: auto !important;
-  max-height: calc(100vh - 5rem) !important;
-  position: relative !important;
-  transform: none !important;
-}
-
-/* Force-Kill ANY residual theme bars */
-
-#vrodos-modal-wrapper .d-modal-box::before,
-#vrodos-modal-wrapper .d-modal-box::after,
-.d-modal-box::before,
-.d-modal-box::after {
-  content: none !important;
-  display: none !important;
-  height: 0 !important;
-  width: 0 !important;
-}
-
-#vrodos-modal-wrapper .modal-header {
-  padding: 2rem 2rem 1rem 2rem !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  text-align: center !important;
-}
-
-#vrodos-modal-wrapper .modal-body {
-  padding: 0 2rem 1rem 2rem !important;
-  text-align: center !important;
-}
-
-#vrodos-modal-wrapper .modal-icon-container {
-  width: 3.5rem !important;
-  height: 3.5rem !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-bottom: 1.25rem !important;
-  background-color: rgba(102, 204, 138, 0.1) !important;
-  color: #66cc8a !important;
-}
-
-#delete-dialog .modal-icon-container {
-  background-color: rgba(255, 88, 97, 0.1) !important;
-  color: #ff5861 !important;
-}
-
-#vrodos-modal-wrapper .d-modal-action {
-  display: flex !important;
-  padding: 1rem 2rem 2.5rem 2rem !important;
-  background-color: #ffffff !important;
-  border-top: none !important;
-  gap: 1rem !important;
-  margin: 0 !important;
-  /* Reset DaisyUI margin */
-  justify-content: center !important;
-}
-
-#vrodos-modal-wrapper .d-modal-action .d-btn {
-  height: 2.75rem !important;
-  padding: 0 1.5rem !important;
-  font-weight: 600 !important;
-  border-radius: 0.625rem !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.025em !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-width: 1px !important;
-  font-size: 0.75rem !important;
-}
-
-#vrodos-modal-wrapper .d-btn-error {
-  background-color: #ff5861 !important;
-  border-color: #ff5861 !important;
-  color: #ffffff !important;
-}
-
-#vrodos-modal-wrapper .d-btn-error:hover {
-  background-color: #e54d56 !important;
-  border-color: #e54d56 !important;
-}
-
-/* Premium Emerald Button - Refined */
+/* Premium Emerald Button */
 
 .vrodos-btn-premium {
   background-color: #66cc8a !important;
@@ -3198,7 +4771,7 @@ body.vrodos-manager-wrapper {
   box-shadow: 0 8px 15px -3px rgba(102, 204, 138, 0.5) !important;
 }
 
-/* Premium Error Button - Refined */
+/* Premium Error Button */
 
 .vrodos-btn-premium-error {
   background-color: #ff5861 !important;
@@ -3221,24 +4794,15 @@ body.vrodos-manager-wrapper {
   transform: translateY(0) scale(0.98) !important;
 }
 
-#vrodos-modal-wrapper .d-btn-ghost {
-  background-color: transparent !important;
-  border-color: transparent !important;
-  color: #64748b !important;
-  transition: all 0.2s ease !important;
-}
-
-#vrodos-modal-wrapper .d-btn-ghost:hover {
-  background-color: #f1f5f9 !important;
-  color: #1e293b !important;
-}
-
-/* Custom Div-based Progress Bar for Guaranteed Animation */
+/* ═══════════════════════════════════════════
+   Progress Bar (custom div-based)
+   ═══════════════════════════════════════════ */
 
 .vrodos-progress-track {
   width: 100% !important;
   height: 0.5rem !important;
   background-color: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 1rem !important;
   overflow: hidden !important;
   position: relative !important;
@@ -3249,6 +4813,8 @@ body.vrodos-manager-wrapper {
   width: 50% !important;
   border-radius: 1rem !important;
   position: absolute !important;
+  background: linear-gradient(90deg, #66cc8a, #88e0a8) !important;
+  box-shadow: 0 0 10px rgba(102, 204, 138, 0.3) !important;
 }
 
 .vrodos-progress-primary {
@@ -3281,113 +4847,9 @@ body.vrodos-manager-wrapper {
   }
 }
 
-#vrodos-modal-wrapper .d-btn-ghost:hover {
-  background-color: #f1f5f9 !important;
-}
-
-#vrodos-modal-wrapper .d-modal-backdrop {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: -1 !important;
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  cursor: default !important;
-}
-
-#vrodos-modal-wrapper .d-modal-backdrop button {
-  width: 100% !important;
-  height: 100% !important;
-  background: transparent !important;
-  border: none !important;
-  cursor: pointer !important;
-  color: transparent !important;
-}
-
-#vrodos-project-manager *, #vrodos-project-manager *:before, #vrodos-project-manager *:after,
-#vrodos-assets-manager *, #vrodos-assets-manager *:before, #vrodos-assets-manager *:after,
-#vrodos-asset-editor *, #vrodos-asset-editor *:before, #vrodos-asset-editor *:after,
-#vrodos-scene-editor *, #vrodos-scene-editor *:before, #vrodos-scene-editor *:after,
-#vrodos-modal-wrapper *, #vrodos-modal-wrapper *:before, #vrodos-modal-wrapper *:after {
-  box-sizing: border-box !important;
-}
-
-/* Scene editor modal overrides */
-
-#vrodos-scene-editor .d-modal {
-  z-index: 2147483647 !important;
-  background-color: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  width: 100vw !important;
-  height: 100vh !important;
-}
-
-#vrodos-scene-editor .d-modal[open] {
-  display: grid !important;
-  place-items: center !important;
-}
-
-#vrodos-scene-editor .d-modal::backdrop {
-  background-color: rgba(15, 23, 42, 0.4) !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-#vrodos-scene-editor .d-modal-box {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  padding: 2rem !important;
-  border-radius: 1.5rem !important;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
-  width: min(90vw, 440px) !important;
-}
-
-#vrodos-scene-editor .d-modal-action {
-  display: flex !important;
-  gap: 1rem !important;
-  justify-content: flex-end !important;
-  margin-top: 1.5rem !important;
-}
-
-#vrodos-scene-editor .d-btn-error {
-  background-color: #ff5861 !important;
-  border-color: #ff5861 !important;
-  color: #ffffff !important;
-}
-
-#vrodos-scene-editor .d-btn-error:hover {
-  background-color: #e54d56 !important;
-  border-color: #e54d56 !important;
-}
-
-#vrodos-scene-editor .d-modal-backdrop {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: -1 !important;
-  background: transparent !important;
-}
-
-#vrodos-scene-editor .d-modal-backdrop button {
-  width: 100% !important;
-  height: 100% !important;
-  background: transparent !important;
-  border: none !important;
-  cursor: pointer !important;
-  color: transparent !important;
-}
-
-/* Admin bar height is handled globally above */
-
-/* Assets Manager Specific Styles */
+/* ═══════════════════════════════════════════
+   Assets Manager — Card Styles
+   ═══════════════════════════════════════════ */
 
 #vrodos-assets-manager .asset-card-shadow {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02) !important;
@@ -3399,7 +4861,9 @@ body.vrodos-manager-wrapper {
   border-color: #66cc8a55 !important;
 }
 
-/* VR-Glass Utilities */
+/* ═══════════════════════════════════════════
+   Glass / VR-Mesh Utilities
+   ═══════════════════════════════════════════ */
 
 .vr-glass-panel {
   background: rgba(255, 255, 255, 0.7) !important;
@@ -3438,19 +4902,9 @@ body.vrodos-manager-wrapper {
   opacity: 0.1;
 }
 
-/* Refined Progress Bar for Light Theme */
-
-.vrodos-progress-track {
-  background-color: #f1f5f9 !important;
-  border: 1px solid #e2e8f0 !important;
-}
-
-.vrodos-progress-bar {
-  background: linear-gradient(90deg, #66cc8a, #88e0a8) !important;
-  box-shadow: 0 0 10px rgba(102, 204, 138, 0.3) !important;
-}
-
-/* --- Skeleton Loaders --- */
+/* ═══════════════════════════════════════════
+   Skeleton Loaders
+   ═══════════════════════════════════════════ */
 
 @keyframes vrodos-shimmer {
   0% {
@@ -3547,6 +5001,11 @@ body.vrodos-manager-wrapper {
   background-color: rgb(248 250 252 / var(--tw-bg-opacity, 1));
 }
 
+.vrodos-manager-wrapper .hover\:tw-bg-slate-600:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(71 85 105 / var(--tw-bg-opacity, 1));
+}
+
 .vrodos-manager-wrapper .hover\:tw-bg-white:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
@@ -3629,6 +5088,11 @@ body.vrodos-manager-wrapper {
   background-color: rgb(255 255 255 / 0.1);
 }
 
+.vrodos-manager-wrapper .focus\:tw-outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
 .vrodos-manager-wrapper .focus\:tw-ring-0:focus {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
@@ -3678,22 +5142,6 @@ body.vrodos-manager-wrapper {
 
 .vrodos-manager-wrapper :is(.tw-group:hover .group-hover\:tw-opacity-90) {
   opacity: 0.9;
-}
-
-.vrodos-manager-wrapper :is(.tw-peer:checked ~ .peer-checked\:tw-bg-white) {
-  --tw-bg-opacity: 1;
-  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
-}
-
-.vrodos-manager-wrapper :is(.tw-peer:checked ~ .peer-checked\:tw-text-slate-900) {
-  --tw-text-opacity: 1;
-  color: rgb(15 23 42 / var(--tw-text-opacity, 1));
-}
-
-.vrodos-manager-wrapper :is(.tw-peer:checked ~ .peer-checked\:tw-shadow-sm) {
-  --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 .vrodos-manager-wrapper .has-\[\:checked\]\:tw-border-primary:has(:checked) {

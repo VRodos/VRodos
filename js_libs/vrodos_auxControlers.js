@@ -294,10 +294,13 @@ for (let key in gui_controls_funs) {
 /**
  * Adds mouse-drag scrubbing to a lil-gui number controller input.
  * Click and drag horizontally on the input to adjust the value.
+ * Single click (no drag) focuses the input for keyboard editing.
  * Sensitivity adapts: translation/rotation use 0.01 per pixel, scale uses 0.005.
  */
 function _addDragScrub(controller) {
     const input = controller.$input;
+    const DRAG_THRESHOLD = 3; // pixels before drag starts
+    let pointerDown = false;
     let dragging = false;
     let startX = 0;
     let startValue = 0;
@@ -309,29 +312,65 @@ function _addDragScrub(controller) {
     input.style.cursor = 'ew-resize';
 
     input.addEventListener('pointerdown', function (e) {
-        // Only scrub on left button; skip if user clicked to type
         if (e.button !== 0) return;
-        dragging = true;
+        // If input is already focused (user is typing), don't interfere
+        if (document.activeElement === input) return;
+        pointerDown = true;
+        dragging = false;
         startX = e.clientX;
         startValue = controller.getValue();
         input.setPointerCapture(e.pointerId);
-        e.preventDefault();
+        e.preventDefault(); // Prevent focus on pointerdown — we decide on pointerup
         cancelAnimationFrame(id_animation_frame);
     });
 
     input.addEventListener('pointermove', function (e) {
-        if (!dragging) return;
+        if (!pointerDown) return;
         const dx = e.clientX - startX;
-        const newValue = startValue + dx * sensitivity;
-        controller.setValue(parseFloat(newValue.toFixed(3)));
+        // Start dragging only after threshold
+        if (!dragging && Math.abs(dx) >= DRAG_THRESHOLD) {
+            dragging = true;
+            input.style.cursor = 'ew-resize';
+        }
+        if (dragging) {
+            const newValue = startValue + dx * sensitivity;
+            controller.setValue(parseFloat(newValue.toFixed(3)));
+        }
     });
 
     input.addEventListener('pointerup', function (e) {
-        if (!dragging) return;
+        if (!pointerDown) return;
+        const wasDragging = dragging;
+        pointerDown = false;
         dragging = false;
         input.releasePointerCapture(e.pointerId);
-        animate();
-        triggerAutoSave();
+
+        if (wasDragging) {
+            // Finished a drag — resume animation and save
+            animate();
+            triggerAutoSave();
+        } else {
+            // Was a click (no drag) — focus the input for keyboard editing
+            input.focus();
+            input.select();
+            input.style.cursor = 'text';
+        }
+    });
+
+    // Restore drag cursor when input loses focus (user clicked away)
+    input.addEventListener('blur', function () {
+        input.style.cursor = 'ew-resize';
+    });
+
+    // On Enter or Escape, blur the input (commit/cancel keyboard edit)
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            input.blur();
+            animate();
+            triggerAutoSave();
+        } else if (e.key === 'Escape') {
+            input.blur();
+        }
     });
 }
 

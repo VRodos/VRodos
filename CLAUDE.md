@@ -7,43 +7,50 @@
 
 ## 1. CSS & Styling — THE MOST IMPORTANT RULES
 
-### DaisyUI Component Classes DO NOT WORK
+### DaisyUI + Tailwind Architecture (FIXED)
 
-Due to a double-prefix bug (`tailwind.config.js` has both `prefix: 'tw-'` and DaisyUI `prefix: 'd-'`),
-**ZERO DaisyUI component CSS is generated** in the compiled output. DaisyUI only provides:
-- Theme CSS variables (`oklch(var(--p))`, `var(--b1)`, etc.) via `data-theme="emerald"`
-- Keyframe animations (`button-pop`, `modal-pop`, `skeleton`, etc.)
+The double-prefix bug has been fixed. DaisyUI prefix is now `""` (empty) in `tailwind.config.js`,
+so Tailwind's `prefix: 'tw-'` is the **only** prefix. This means:
 
-**The following DaisyUI classes produce NO CSS and MUST NOT be used alone:**
-`d-tabs`, `d-tab`, `d-tabs-box`, `d-tabs-lift`, `d-skeleton`, `d-join`, `d-join-item`,
-`d-collapse`, `d-tooltip`, `d-badge`, `d-card`, `d-alert`, `d-menu`, `d-dropdown`, `d-swap`,
-`d-toggle`, `d-progress`, `d-steps`, `d-stat`, `d-table`, `d-divider`, `d-hero`
+- **ALL classes** (both Tailwind utilities and DaisyUI components) use the `tw-` prefix
+- DaisyUI component CSS **is now generated** automatically by the Tailwind compiler
+- The `important: '.vrodos-manager-wrapper'` setting wraps all generated CSS for WP specificity
+- Theme colors come from `data-theme="emerald"` on the `<html>` tag
 
-**These DaisyUI classes APPEAR to work but ONLY because of hand-written CSS in `vrodos_modern.css`:**
-`d-btn`, `d-checkbox`, `d-radio`, `d-modal`, `d-input`, `d-select`, `d-range`
+### CSS Prefixes
 
-### How to Style New Components (MANDATORY)
+| What | Prefix | Example |
+|------|--------|---------|
+| Tailwind utilities | `tw-` | `tw-flex`, `tw-p-2`, `tw-bg-white` |
+| DaisyUI components | `tw-` | `tw-btn`, `tw-modal`, `tw-checkbox` |
+| Custom classes | none | `affineSwitch`, `fogSwitch`, `toggle-btn` |
 
-Use ONE of these approaches — never rely on DaisyUI component classes:
+### How to Use DaisyUI Components
 
-1. **Tailwind utilities** — always work (they use the `tw-` prefix):
+DaisyUI components now work directly. Just use `tw-` prefix:
+```html
+<button class="tw-btn tw-btn-primary">Click me</button>
+<dialog class="tw-modal">
+  <div class="tw-modal-box">...</div>
+</dialog>
+<input type="checkbox" class="tw-checkbox tw-checkbox-primary" />
+```
+
+### How to Style New Components
+
+1. **DaisyUI components** — use them directly with `tw-` prefix (they work now!)
+2. **Tailwind utilities** — for layout and custom styling:
    ```html
    <div class="tw-flex tw-items-center tw-gap-2 tw-bg-white tw-rounded-lg tw-shadow tw-p-2">
    ```
-
-2. **Inline `<style>` block** — guaranteed to work, no framework dependency:
+3. **Inline `<style>` block** — for complex one-off components:
    ```html
    <style>
      .my-component { display: flex; background: #fff; border-radius: 8px; }
-     .my-component input:checked + label { background: #10b981; color: #fff; }
    </style>
    ```
-
-3. **Manual CSS in `vrodos_modern.css`** — for reusable components:
-   - Scope under container ID: `#vrodos-scene-editor .my-class { ... }`
-   - Use `!important` on every property (required to override WP theme styles)
-
-4. **DaisyUI CSS variables** — always work for colors:
+4. **Manual CSS in `vrodos_modern.css`** — for reusable custom components only
+5. **DaisyUI CSS variables** — for theme-aware colors:
    ```css
    background-color: oklch(var(--p));  /* primary color */
    color: oklch(var(--pc));            /* primary content color */
@@ -63,22 +70,13 @@ Use ONE of these approaches — never rely on DaisyUI component classes:
 }
 ```
 
-### CSS Prefixes
-
-| What | Prefix | Example |
-|------|--------|---------|
-| Tailwind utilities | `tw-` | `tw-flex`, `tw-p-2`, `tw-bg-white` |
-| DaisyUI classes (with manual CSS) | `d-` | `d-btn`, `d-checkbox` |
-| Custom classes | none | `affineSwitch`, `fogSwitch`, `toggle-btn` |
-
 ### DO NOT
 
-- ❌ Use `aria-label` based DaisyUI radio tabs — they render as checkboxes
-- ❌ Use `d-skeleton` — no CSS exists, nothing will animate
-- ❌ Use `d-tabs`, `d-tabs-box` — unstyled, renders as plain inputs
+- ❌ Use the old `d-` prefix — it no longer exists; use `tw-` for everything
 - ❌ Use `peer-checked:tw-bg-*` Tailwind variants — specificity issues with WP
 - ❌ Manually rebuild CSS — `npm run watch:css` runs automatically
-- ❌ Use `d-join` expecting visual grouping — no CSS exists for it
+- ❌ Add hand-written component CSS to `vrodos_modern.css` for standard DaisyUI components
+- ❌ Use `!important` unless overriding a specific WP theme conflict (the `important` config handles it)
 
 ---
 

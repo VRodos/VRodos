@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             if (titleEl) {
                 titleEl.focus();
-                titleEl.classList.add('d-input-error');
+                titleEl.classList.add('tw-input-error');
             }
         }
     });

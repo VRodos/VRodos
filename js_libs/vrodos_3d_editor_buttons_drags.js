@@ -201,33 +201,34 @@ function loadButtonActions() {
         deleteDialog.show();
     }
 
-    // Toggle UIs to clear out vision
+    // Toggle JSON viewer dialog
     jQuery('#toggleViewSceneContentBtn').click(function () {
-        var btn = jQuery('#toggleViewSceneContentBtn');
-        var icon = jQuery('#toggleViewSceneContentBtn i');
-
-        if (btn.data('toggle') === 'on') {
-
-            // Hide
-            btn.addClass('tw-opacity-40');
-            btn.removeClass('tw-text-primary');
-            icon.html('<i data-lucide="eye-off" style="background: none; opacity:1; width:14px; height:14px;"></i>');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            btn.data('toggle', 'off');
-
-            jQuery("#sceneJsonContent").hide();  // Lights bar
-
+        var dialog = document.getElementById('sceneJsonContent');
+        if (dialog.open) {
+            dialog.close();
         } else {
-            // Show
-            btn.removeClass('tw-opacity-40');
-            btn.addClass('tw-text-primary');
-            icon.html('<i data-lucide="eye" style="background: none; opacity:1; width:14px; height:14px;"></i>');
+            // Refresh textarea with current scene data
+            document.getElementById('vrodos_scene_json_input').value = JSON.stringify(vrodos_scene_data, null, 2);
+            dialog.showModal();
             if (typeof lucide !== 'undefined') lucide.createIcons();
-            btn.data('toggle', 'on');
-
-            jQuery("#sceneJsonContent").show(); // Lights bar
-
         }
+    });
+
+    // Close JSON dialog via close button
+    jQuery('#closeJsonBtn').click(function () {
+        document.getElementById('sceneJsonContent').close();
+    });
+
+    // Copy JSON to clipboard
+    jQuery('#copyJsonBtn').click(function () {
+        var textarea = document.getElementById('vrodos_scene_json_input');
+        navigator.clipboard.writeText(textarea.value).then(function () {
+            var btn = document.getElementById('copyJsonBtn');
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check" class="tw-w-3.5 tw-h-3.5"></i> Copied!';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(function () { btn.innerHTML = orig; if (typeof lucide !== 'undefined') lucide.createIcons(); }, 1500);
+        });
     });
 
     // Drag elements inside VR Editor

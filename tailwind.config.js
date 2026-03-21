@@ -15,6 +15,6 @@ module.exports = {
   ],
   daisyui: {
     themes: ["light", "dark", "cupcake", "emerald"],
-    prefix: "d-", // daisyUI class prefix
+    prefix: "", // No DaisyUI prefix — Tailwind's 'tw-' prefix handles namespacing
   },
 }

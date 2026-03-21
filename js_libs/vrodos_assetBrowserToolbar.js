@@ -165,7 +165,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     //Create an input type dynamically.
                     let element = document.createElement("button");
                     //Assign different attributes to the element.
-                    element.className = "tablinks d-btn d-btn-xs d-btn-ghost";
+                    element.className = "tablinks tw-btn tw-btn-xs tw-btn-ghost";
                     element.id = f['category_slug'];
                     element.innerHTML = "<i data-lucide='" + lucideIconName + "' title='" + f['category_name'] + "' style='width:18px; height:18px;'></i>";
                     element.addEventListener("click", function (event) { openCategoryTab(event, this); });
