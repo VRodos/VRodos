@@ -150,40 +150,39 @@ global $parameter_Scenepass;
 
 
 	<!--Delete Scene Dialog-->
-	<aside id="delete-dialog"
-			class="mdc-dialog"
-			role="alertdialog"
-			style="z-index: 1000;"
-			aria-labelledby="Delete scene dialog"
-			aria-describedby="You can delete the selected from the current game project"
-			data-mdc-auto-init="MDCDialog">
-		<div class="mdc-dialog__surface">
-			<header class="mdc-dialog__header">
-				<h2 id="delete-dialog-title" class="mdc-dialog__header__title">
-					Delete scene?
-				</h2>
-			</header>
-			<section id="delete-dialog-description" class="mdc-dialog__body">
-				Are you sure you want to delete this scene? There is no Undo functionality once you delete it.
-			</section>
-
-			<section id="delete-scene-dialog-progress-bar" class="CenterContents mdc-dialog__body" style="display: none;">
-				<h3 class="mdc-typography--title">Deleting...</h3>
-
-				<div class="progressSlider">
-					<div class="progressSliderLine"></div>
-					<div class="progressSliderSubLine progressIncrease"></div>
-					<div class="progressSliderSubLine progressDecrease"></div>
+	<dialog id="delete-dialog" class="tw-modal" style="z-index: 1000;">
+		<div class="tw-modal-box tw-p-0 tw-overflow-hidden">
+			<!-- Header -->
+			<div class="tw-p-8 tw-pb-4 tw-flex tw-flex-col tw-items-center tw-text-center">
+				<div class="tw-w-16 tw-h-16 tw-bg-rose-50 tw-text-rose-500 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mb-4">
+					<i data-lucide="alert-circle" class="tw-w-8 tw-h-8"></i>
 				</div>
-			</section>
-
-			<footer class="mdc-dialog__footer">
-				<button class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button"
-					id="deleteSceneDialogCancelBtn">Cancel</button>
-				<button class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised"
-					id="deleteSceneDialogDeleteBtn">Delete</button>
-			</footer>
+				<h3 id="delete-dialog-title" class="tw-text-xl tw-font-bold tw-text-slate-800 tw-mb-1">Delete scene?</h3>
+				<p class="tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">Permanent Action</p>
+			</div>
+			<!-- Body -->
+			<div class="tw-px-8 tw-pb-6 tw-text-center">
+				<p id="delete-dialog-description" class="tw-text-slate-500 tw-text-sm tw-leading-relaxed">
+					Are you sure you want to delete this scene? There is no Undo functionality once you delete it.
+				</p>
+				<div id="delete-scene-dialog-progress-bar" class="tw-mt-6" style="display: none;">
+					<p class="tw-text-[10px] tw-font-bold tw-text-error tw-mb-2 tw-uppercase tw-tracking-widest">Deleting...</p>
+					<div class="vrodos-progress-track">
+						<div class="vrodos-progress-bar vrodos-progress-error vrodos-indeterminate"></div>
+					</div>
+				</div>
+			</div>
+			<!-- Actions -->
+			<div class="tw-modal-action tw-bg-white tw-p-6 tw-pt-2 tw-flex tw-justify-center tw-gap-3">
+				<button class="tw-btn tw-btn-ghost tw-text-slate-400 hover:tw-text-slate-600 tw-px-8"
+					id="deleteSceneDialogCancelBtn"
+					onclick="document.getElementById('delete-dialog').close()">CANCEL</button>
+				<button class="tw-btn vrodos-btn-premium-error tw-px-10"
+					id="deleteSceneDialogDeleteBtn">DELETE</button>
+			</div>
 		</div>
-		<div class="mdc-dialog__backdrop"></div>
-	</aside>
+		<form method="dialog" class="tw-modal-backdrop">
+			<button class="tw-cursor-default tw-outline-none tw-bg-slate-900/40 tw-backdrop-blur-sm tw-appearance-none tw-border-none tw-text-transparent">close</button>
+		</form>
+	</dialog>
 </div><!-- Scenes List Div -->

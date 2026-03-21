@@ -20,7 +20,8 @@ function loadButtonActions() {
  
     // Compile Project button
     jQuery("#compileGameBtn").click(function () {
-        compileDialog.show();
+        var dlg = document.getElementById('compile-dialog');
+        if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
         // Pause Rendering
         isPaused = true;
@@ -31,7 +32,8 @@ function loadButtonActions() {
 
     // Cogwheel options button
     jQuery("#optionsPopupBtn").click(function () {
-        (new mdc.dialog.MDCDialog(document.querySelector('#options-dialog'))).show();
+        var dlg = document.getElementById('options-dialog');
+        if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
     });
 
     // Select platform for compile
@@ -80,12 +82,26 @@ function loadButtonActions() {
         if (pid) {
             vrodos_killtask_compile(pid);
         }
+
+        // Close native dialog
+        var dlg = document.getElementById('compile-dialog');
+        if (dlg && dlg.open) dlg.close();
     });
 
-    // Compile Backdrop
-    jQuery(".mdc-dialog__backdrop").click(function (e) {
-        jQuery("#compileCancelBtn").click();
-    });
+    // Resume rendering when compile dialog is closed (by any means: cancel, backdrop, escape)
+    var compileDlg = document.getElementById('compile-dialog');
+    if (compileDlg) {
+        compileDlg.addEventListener('close', function () {
+            if (isPaused) {
+                isPaused = false;
+                swapLucideIcon(jQuery("#pauseRendering").get(0), "pause");
+                animate();
+            }
+            // Kill any running compile process
+            var pid = jQuery("#compileCancelBtn").attr("data-unity-pid");
+            if (pid) vrodos_killtask_compile(pid);
+        });
+    }
 
     // Hierarchy Toolbar close button (Event delegation for maximum robustness)
     jQuery(document).on('click', '#bt_close_hierarchy_toolbar', function (e) {
@@ -170,12 +186,14 @@ function loadButtonActions() {
         jQuery('#delete-scene-dialog-progress-bar').show();
         jQuery("#deleteSceneDialogDeleteBtn").addClass("LinkDisabled");
         jQuery("#deleteSceneDialogCancelBtn").addClass("LinkDisabled");
-        vrodos_deleteSceneAjax(deleteDialog.id, url_scene_redirect);
+        var dlg = document.getElementById('delete-dialog');
+        vrodos_deleteSceneAjax(dlg.dataset.sceneId, url_scene_redirect);
     });
 
     jQuery("#deleteSceneDialogCancelBtn").click(function (e) {
         jQuery('#delete-scene-dialog-progress-bar').hide();
-        deleteDialog.close();
+        var dlg = document.getElementById('delete-dialog');
+        if (dlg && dlg.open) dlg.close();
     });
 
 
@@ -194,10 +212,12 @@ function loadButtonActions() {
         var dialogDescription = document.getElementById("delete-dialog-description");
         var sceneTitle = document.getElementById(scene_id + "-title").textContent.trim();
 
-        dialogTitle.innerHTML = "<b>Delete " + sceneTitle + "?</b>";
+        dialogTitle.textContent = "Delete " + sceneTitle + "?";
         dialogDescription.innerHTML = "Are you sure you want to delete your scene '" + sceneTitle + "'? There is no Undo functionality once you delete it.";
-        deleteDialog.id = scene_id;
-        deleteDialog.show();
+        var dlg = document.getElementById('delete-dialog');
+        dlg.dataset.sceneId = scene_id;
+        dlg.showModal();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     // Toggle JSON viewer dialog

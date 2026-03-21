@@ -1,34 +1,36 @@
 
-<div id="compile-dialog"
-	class="mdc-dialog"
-	role="alertdialog"
+<dialog id="compile-dialog"
+	class="tw-modal"
 	style="z-index: 1000;"
 	data-game-slug="<?php echo esc_attr( $projectSlug ); ?>"
-	data-project-id="<?php echo esc_attr( $project_id ); ?>"
-	aria-labelledby="my-mdc-dialog-label"
-	aria-describedby="my-mdc-dialog-description" data-mdc-auto-init="MDCDialog">
+	data-project-id="<?php echo esc_attr( $project_id ); ?>">
 
-	<div class="mdc-dialog__surface" id="compile_dialogue_div" style="max-width: 1100px;">
+	<div class="tw-modal-box tw-p-0 tw-overflow-hidden" style="max-width: 1100px; width: 90vw;">
 
-		<header class="mdc-dialog__header">
-			<h2 class="mdc-dialog__header__title">
-				Build <?php echo esc_html( $single_lowercase ); ?>
-			</h2>
-		</header>
+		<!-- Header -->
+		<div class="tw-p-6 tw-pb-3 tw-flex tw-items-center tw-gap-3 tw-border-b tw-border-slate-200">
+			<div class="tw-w-10 tw-h-10 tw-bg-emerald-50 tw-text-emerald-600 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-flex-shrink-0">
+				<i data-lucide="hammer" class="tw-w-5 tw-h-5"></i>
+			</div>
+			<div>
+				<h3 class="tw-text-lg tw-font-bold tw-text-slate-800">Build <?php echo esc_html( $single_lowercase ); ?></h3>
+				<p class="tw-text-xs tw-text-slate-400">Compile your scene into a deployable experience</p>
+			</div>
+		</div>
 
-		<section class="mdc-dialog__body">
+		<!-- Body -->
+		<div class="tw-p-6">
 
 			<!--Values are important. Dont delete these hidden inputs (yet)-->
 			<input id="platformInput" type="hidden" value="platform-Aframe">
 			<input id="project-type" type="hidden" value="<?php echo esc_attr( strtolower( $project_type ) ); ?>">
 
-			<div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background">
-				<i title="Instructions" class="material-icons AlignIconToBottom">help</i>
+			<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600 tw-mb-4">
+				<i data-lucide="info" class="tw-w-4 tw-h-4 tw-text-slate-400 tw-flex-shrink-0 tw-mt-0.5"></i>
 				Click on "Build" in order to construct the virtual world.
 			</div>
 
-
-			<h2 id="compileProgressTitle" style="display: none" class="CenterContents mdc-typography--headline"></h2>
+			<h2 id="compileProgressTitle" style="display: none" class="tw-text-center tw-text-xl tw-font-bold tw-text-slate-700 tw-my-4"></h2>
 
 			<div class="progressSlider" id="compileProgressDeterminate" style="display: none;">
 				<div class="progressSliderLine"></div>
@@ -41,35 +43,40 @@
 				<div class="progressSliderSubLine progressDecrease"></div>
 			</div>
 
-			<div id="compilationProgressText" class="mdc-typography--title"></div>
+			<div id="compilationProgressText" class="tw-text-sm tw-font-semibold tw-text-slate-700"></div>
 
-			<hr class="WhiteSpaceSeparator" style="margin-top: 0;" tabIndex="0">
+			<hr class="tw-my-4 tw-border-slate-200">
 
-			<a id="compileProceedBtn" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" style="width: 20%;">Build</a>
+			<a id="compileProceedBtn" type="button" class="tw-btn tw-btn-primary tw-px-8">
+				<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
+				Build
+			</a>
 
-			<hr class="separator" >
+			<hr class="tw-my-4 tw-border-slate-200">
 
 			<div id="previewApp" class="previewApp" style="display:inline-block"></div>
 
-			<div id="appResultDiv" style="margin-top:20px;display:none">
-
-				<a class="mdc-typography--title" href="" id="vrodos-weblink" style="margin-left:30px" target="_blank">Web link</a>
-
-				<button title="Copy link to clipboard" id="buttonCopyWebLink" style="background: transparent; border: none; color: darkslateblue" >
-					<i class="material-icons" style="cursor: pointer; float: right;">content_copy</i></button>
-
-				<a id="openWebLinkhref" href="#" title="Open index.html in new window" target="_blank" style="color:darkslateblue" onclick="jQuery('#compileCancelBtn')[0].click();">Open experience link</a>
-
+			<div id="appResultDiv" class="tw-mt-5 tw-flex tw-items-center tw-gap-3 tw-flex-wrap" style="display:none">
+				<a class="tw-text-primary tw-font-semibold tw-text-sm" href="" id="vrodos-weblink" target="_blank">
+					<i data-lucide="external-link" class="tw-w-4 tw-h-4 tw-inline-block tw-mr-1"></i>Web link
+				</a>
+				<button title="Copy link to clipboard" id="buttonCopyWebLink" class="tw-btn tw-btn-ghost tw-btn-sm tw-text-slate-500">
+					<i data-lucide="copy" class="tw-w-4 tw-h-4"></i>
+				</button>
+				<a id="openWebLinkhref" href="#" title="Open index.html in new window" target="_blank"
+				   class="tw-btn tw-btn-ghost tw-btn-sm tw-text-primary"
+				   onclick="document.getElementById('compileCancelBtn').click();">
+					<i data-lucide="external-link" class="tw-w-4 tw-h-4 tw-mr-1"></i>Open experience
+				</a>
 			</div>
+		</div>
 
-		</section>
-
-		<footer class="mdc-dialog__footer">
-			<button id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button">Close</button>
-
-		</footer>
+		<!-- Footer -->
+		<div class="tw-modal-action tw-bg-slate-50 tw-p-4 tw-flex tw-justify-end tw-gap-3 tw-border-t tw-border-slate-200">
+			<button id="compileCancelBtn" class="tw-btn tw-btn-ghost tw-text-slate-500">Close</button>
+		</div>
 	</div>
-	<div class="mdc-dialog__backdrop"></div>
-
-</div>
-
+	<form method="dialog" class="tw-modal-backdrop">
+		<button class="tw-cursor-default tw-outline-none tw-bg-slate-900/40 tw-backdrop-blur-sm tw-appearance-none tw-border-none tw-text-transparent">close</button>
+	</form>
+</dialog>

@@ -427,16 +427,8 @@ extract( $data );
 	<!-- Scripts part 1: The GUIs -->
 	<script type="text/javascript">
 
-		let mdc = window.mdc;
-		mdc.autoInit();
-
-		// Delete scene dialogue
-		let deleteDialog = new mdc.dialog.MDCDialog(document.querySelector('#delete-dialog'));
-		deleteDialog.focusTrap_.deactivate();
-
-		// Compile dialogue
-		let compileDialog = new mdc.dialog.MDCDialog(document.querySelector('#compile-dialog'));
-		compileDialog.focusTrap_.deactivate();
+		// MDC auto-init for remaining components (scene cards, textfields in OtherScenes)
+		if (window.mdc) window.mdc.autoInit();
 
 		let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 		var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);
