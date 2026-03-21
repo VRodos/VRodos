@@ -3,8 +3,9 @@
 function setTransformControlsSize(){
     if (!transform_controls.object) return;
     let dims = findDimensions(transform_controls.object);
-    let sizeT = 0.25 * Math.log((Math.max(...dims) + 1)  + 1) ;
-    if (isNaN(sizeT) || sizeT <= 0) sizeT = 0.5;
+    let sizeT = 0.25 * Math.log((Math.max(...dims) + 1) + 1);
+    // Use isFinite to catch NaN and Infinity
+    if (!Number.isFinite(sizeT) || sizeT <= 0) sizeT = 0.5;
     transform_controls.setSize(sizeT);
 }
 
@@ -129,8 +130,6 @@ function updateFogColorPicker(picker){
 
 function loadFogType() {
 
-    console.log("hj");
-
     if (document.getElementById('RadioNoFog').checked) {
         envir.scene.fogCategory = 0;
         document.getElementById('FogType').value = "none";
@@ -175,9 +174,6 @@ function updateFog(whencalled){
     envir.scene.fogfar = fogFar;
     envir.scene.fogdensity = fogDensity;
     
-    console.log(document.getElementById("FogValues"));
-    
-
     let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
 
     if(fogType === 'linear') {

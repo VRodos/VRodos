@@ -809,10 +809,9 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     }
 
     //---------rotate_y -------------------------------
-    if (transform_controls.object.rotation.y*180/Math.PI !== this.dg_r2){
-        gui_controls_funs.dg_r2 = transform_controls.object.rotation.y * 180/Math.PI;
-
-        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    if (transform_controls.object.rotation.y * 180 / Math.PI !== gui_controls_funs.dg_r2) {
+        gui_controls_funs.dg_r2 = transform_controls.object.rotation.y * 180 / Math.PI;
+        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
     //---------rotate_z -------------------------------

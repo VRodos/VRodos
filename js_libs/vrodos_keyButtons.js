@@ -51,7 +51,6 @@ document.addEventListener('wheel', function (event) {
 firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
 if (firstPersonBlockerBtn) {
-    console.log("firstPersonBlockerBtn");
 };
 
 document.addEventListener('remove_movement',
@@ -75,7 +74,7 @@ let keydown_handler = (ev) => {
 
     switch (ev.keyCode) {
         //---------------------------- TRS ---------------------------------------
-        case 80: console.log("Pause"); pauseClickFun(); break; // r
+        case 80: pauseClickFun(); break; // r
         case 82: viewUp = true; break; // r
         case 70: viewDown = true; break; // f
         case 187: break;

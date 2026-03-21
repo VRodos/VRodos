@@ -24,6 +24,11 @@ function findDimensions(groupObj){
         box.geometry.computeBoundingBox();
         box.name = "bbox";
 
+        // Safety check for boundingBox
+        if (!box.geometry.boundingBox) {
+            return [1, 1, 1];
+        }
+
         var finalVec = new THREE.Vector3().subVectors(box.geometry.boundingBox.min, box.geometry.boundingBox.max);
 
         var x = Math.abs(finalVec.x);

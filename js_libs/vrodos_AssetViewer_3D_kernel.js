@@ -425,7 +425,6 @@ class VRodos_AssetViewer_3D_kernel {
                 let nTexturesLoaded = texturesStreams.length;
 
                 if (nTexturesLoaded < this.nJpg || nTexturesLoaded < this.nPng || nTexturesLoaded < this.nGif) {
-                    console.log("Not all textures loaded yet");
                     return;
                 }
 
@@ -437,8 +436,6 @@ class VRodos_AssetViewer_3D_kernel {
                 this.loadFbxStream(this.FbxBuffer, texturesStreams);
 
             } else if (this.nGlb === 1) {
-                console.log("Ignite reading glb");
-
                 this.loadGlbStream(this.GlbBuffer);
 
             }
@@ -1063,7 +1060,7 @@ class VRodos_AssetViewer_3D_kernel {
 
     // Report in console
     _reportProgress(text) {
-        console.log('Progress: ' + text);
+        // Progress reporting removed
     }
 }
 

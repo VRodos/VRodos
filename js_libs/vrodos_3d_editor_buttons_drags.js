@@ -182,7 +182,6 @@ function loadButtonActions() {
     // Select image as Scene icon
     jQuery(".cardDeleteIcon").each(function (index) {
         jQuery(this).on("click", function () {
-            console.log(index, this);
             deleteScene(this);
         });
     });

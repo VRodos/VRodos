@@ -100,7 +100,6 @@ class VRodos_LoaderMulti {
                         var expo_elems = document.getElementsByClassName('exponentialElement');
                         var color_elems = document.getElementsByClassName('colorElement');
 
-                        console.log(linear_elems);
                         if (resources3D[name] === "0") {
                             document.getElementById('RadioNoFog').checked = true;
                             for (var i = 0; i < linear_elems.length; ++i) {
@@ -263,7 +262,6 @@ class VRodos_LoaderMulti {
                                     return;
                                 }
 
-                                    console.log(glbURL);
                                 // Instantiate a loader
                                 jQuery("#progressWrapper").get(0).style.visibility = "visible";
                                 document.getElementById("result_download").innerHTML = "Loading ...";                               
@@ -344,7 +342,6 @@ class VRodos_LoaderMulti {
                             
                             
 
-                            console.log(resources3D[name].fogCategory);
                             if (resources3D[name].fogCategory === "0") {
                                 document.getElementById('RadioNoFog').checked = true;
                                 document.getElementById('FogType').value = "none";
@@ -511,8 +508,6 @@ function setObjectProperties(object, name, resources3D) {
     // avoid revealing the full path. Use the relative in the saving format.
     object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
     object['glb_id'] = resources3D[name]['glb_id'];
-
-    console.log(object.fnPath);
 
     // Not needed anymore, we dont override textures anymore
     /*if (resources3D[name]['overrideMaterial'] === "true") {

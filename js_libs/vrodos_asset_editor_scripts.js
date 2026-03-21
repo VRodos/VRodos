@@ -266,8 +266,6 @@ function loadFileInputLabel(objectType) {
 
 function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
 
-    console.log("vrodos_reset_panels", whocalls)
-
     // Clear all
     vrodos_clear_asset_files(asset_viewer_3d_kernel);
 

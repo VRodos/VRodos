@@ -441,8 +441,6 @@ class VRodos_LightsPawn_Loader {
                     lightTargetSpot.category_name = "lightTargetSpot";
                     lightTargetSpot.isLightTargetSpot = true;
 
-                    console.log("Pos: " + resources3D[name]['targetposition'][0]);
-
                     lightTargetSpot.position.set(resources3D[name]['targetposition'][0],
                         resources3D[name]['targetposition'][1],
                         resources3D[name]['targetposition'][2]);
@@ -606,7 +604,6 @@ class VRodos_LightsPawn_Loader {
                             pawn.add(pawnLabel);
                             //pawnLabel.layers.set( 0 );
 
-                            console.log(pawn);
                             envir.scene.add(pawn);
 
                             // If we do not attach them, they are not visible in Editor !

@@ -446,8 +446,6 @@ function displaySunProperties(event, name) {
 
     chboxjQ.prop('checked', envir.scene.getObjectByName(name).castingShadow);
     chboxsunSkyjQ.prop('checked', envir.scene.getObjectByName(name).sunSky);
-    console.log(envir.scene.getObjectByName(name).sunSky);
-    
     //textCameraBottom.attr('value', envir.scene.getObjectByName(name).shadowCameraBottom);
     //textCameraTop.attr('value', envir.scene.getObjectByName(name).shadowCameraTop);
     //textCameraLeft.attr('value', envir.scene.getObjectByName(name).shadowCameraLeft);
