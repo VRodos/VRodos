@@ -20,7 +20,7 @@ class VrodosSceneExporter {
                 enableAvatar: envir.scene.enableAvatar === true,
                 disableMovement: envir.scene.disableMovement === true,
                 backgroundPresetOption: envir.scene.backgroundPresetOption || 'None',
-                backgroundStyleOption: envir.scene.backgroundStyleOption || '0',
+                backgroundStyleOption: (envir.scene.backgroundStyleOption !== undefined) ? envir.scene.backgroundStyleOption : 0,
                 backgroundImagePath: envir.scene.img_bcg_path || '0',
                 objects: 0,
             },

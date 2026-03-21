@@ -34,7 +34,8 @@ class VRodos_LoaderMulti {
                 }
 
                 if (name === 'backgroundStyleOption'){
-                    envir.scene.backgroundStyleOption = resources3D[name];
+                    envir.scene.backgroundStyleOption = parseInt(resources3D[name]) || 0;
+                    envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
 
                     let color_sel = document.getElementById('jscolorpick');
                     let custom_img_sel = document.getElementById('img_upload_bcg');
@@ -42,42 +43,32 @@ class VRodos_LoaderMulti {
 
                     let img_thumb = document.getElementById('uploadImgThumb');
 
-                
+                    var colorRow = document.getElementById('bcgColorRow');
+                    var presetsRow = document.getElementById('bcgPresetsRow');
+                    var imageRow = document.getElementById('bcgImageRow');
+
+                    // Hide all rows first
+                    colorRow.style.display = 'none';
+                    presetsRow.style.display = 'none';
+                    imageRow.style.display = 'none';
+                    color_sel.disabled = true;
+                    preset_sel.disabled = true;
+                    custom_img_sel.disabled = true;
+
                     switch (envir.scene.bcg_selection){
                         case 0:
                             document.getElementById("sceneNone").checked = true;
-                            custom_img_sel.disabled = true;
-                            preset_sel.disabled = true;
-                            color_sel.disabled = true;
-    
-                            color_sel.hidden = true;
-                            preset_sel.hidden = true;
-                            custom_img_sel.hidden = true;
-                            img_thumb.hidden = true;
                             break;
                         case 1:
                             document.getElementById("sceneColorRadio").checked = true;
                             color_sel.disabled = false;
-                            preset_sel.disabled = true;
-                            custom_img_sel.disabled = true;
-    
-                            color_sel.hidden = false;
-                            preset_sel.hidden = true;
-                            custom_img_sel.hidden = true;
-                            img_thumb.hidden = true;
+                            colorRow.style.display = 'flex';
                             break;
                         case 2:
                             document.getElementById("sceneSky").checked = true;
-                            custom_img_sel.disabled = true;
                             preset_sel.disabled = false;
-                            color_sel.disabled = true;
-    
-                            color_sel.hidden = true;
-                            preset_sel.hidden = false;
-                            custom_img_sel.hidden = true;
-                            img_thumb.hidden = true;
+                            presetsRow.style.display = 'flex';
                             envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                         
                             for(let index = 0; index < preset_sel.options.length;index++){
                                 if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
                                     preset_sel.options[index].selected = true;
@@ -87,13 +78,7 @@ class VRodos_LoaderMulti {
                         case 3:
                             document.getElementById("sceneCustomImage").checked = true;
                             custom_img_sel.disabled = false;
-                            preset_sel.disabled = true;
-                            color_sel.disabled = true;
-    
-                            color_sel.hidden = true;
-                            preset_sel.hidden = true;
-                            custom_img_sel.hidden = false;
-    
+                            imageRow.style.display = 'flex';
                             if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
                                 img_thumb.src = resources3D["backgroundImagePath"];
                                 img_thumb.hidden = false;
@@ -119,53 +104,41 @@ class VRodos_LoaderMulti {
                         if (resources3D[name] === "0") {
                             document.getElementById('RadioNoFog').checked = true;
                             for (var i = 0; i < linear_elems.length; ++i) {
-                                var item = linear_elems[i];  
-                                item.style.display="none";
+                                linear_elems[i].style.display="none";
                             }
-                    
                             for (var i = 0; i < expo_elems.length; ++i) {
-                                var item = expo_elems[i];  
-                                item.style.display="none";
+                                expo_elems[i].style.display="none";
                             }
-                            document.getElementById("FogValues").style.display="none";  
                             for (var i = 0; i < color_elems.length; ++i) {
-                                var item = color_elems[i];  
-                                item.style.display="none";
+                                color_elems[i].style.display="none";
                             }
+                            document.getElementById("FogValues").style.display="none";
                             document.getElementById('FogType').value = "none";
                         } else if ( resources3D[name] === "1") {
                             document.getElementById('RadioLinearFog').checked = true;
-                            document.getElementById("FogValues").style.display="block";
-
+                            document.getElementById("FogValues").style.display="flex";
                             for (var i = 0; i < linear_elems.length; ++i) {
-                                var item = linear_elems[i];  
-                                item.style.display="block";
+                                linear_elems[i].style.display="flex";
                             }
-                    
                             for (var i = 0; i < expo_elems.length; ++i) {
-                                var item = expo_elems[i];  
-                                item.style.display="none";
+                                expo_elems[i].style.display="none";
                             }
                             for (var i = 0; i < color_elems.length; ++i) {
-                                var item = color_elems[i];  
-                                item.style.display="block";
+                                color_elems[i].style.display="flex";
                             }
                             document.getElementById('FogType').value = "linear";
                         } else if ( resources3D[name] === "2") {
                             document.getElementById('FogType').value = "exponential";
                             for (var i = 0; i < linear_elems.length; ++i) {
-                                var item = linear_elems[i];  
-                                item.style.display="none";
+                                linear_elems[i].style.display="none";
                             }
                             for (var i = 0; i < expo_elems.length; ++i) {
-                                var item = expo_elems[i];  
-                                item.style.display="block";
+                                expo_elems[i].style.display="flex";
                             }
                             for (var i = 0; i < color_elems.length; ++i) {
-                                var item = color_elems[i];  
-                                item.style.display="block";
+                                color_elems[i].style.display="flex";
                             }
-                            document.getElementById("FogValues").style.display="block";
+                            document.getElementById("FogValues").style.display="flex";
                             document.getElementById('RadioExponentialFog').checked =true;
                         }
                     }
@@ -375,18 +348,14 @@ class VRodos_LoaderMulti {
                             if (resources3D[name].fogCategory === "0") {
                                 document.getElementById('RadioNoFog').checked = true;
                                 document.getElementById('FogType').value = "none";
-
                                 for (var i = 0; i < linear_elems.length; ++i) {
-                                    var item = linear_elems[i];  
-                                    item.style.display="none";
+                                    linear_elems[i].style.display="none";
                                 }
                                 for (var i = 0; i < expo_elems.length; ++i) {
-                                    var item = expo_elems[i];  
-                                    item.style.display="none";
+                                    expo_elems[i].style.display="none";
                                 }
                                 for (var i = 0; i < color_elems.length; ++i) {
-                                    var item = color_elems[i];  
-                                    item.style.display="none";
+                                    color_elems[i].style.display="none";
                                 }
                                 document.getElementById("FogValues").style.display="none";
                             } else if ( resources3D[name].fogCategory === "1") {
@@ -395,40 +364,31 @@ class VRodos_LoaderMulti {
                                 document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D[name].fogcolor);
                                 document.getElementById('FogNear').value = JSON.parse(resources3D[name].fognear);
                                 document.getElementById('FogFar').value = JSON.parse(resources3D[name].fogfar);
-
                                 for (var i = 0; i < linear_elems.length; ++i) {
-                                    var item = linear_elems[i];  
-                                    item.style.display="block";
+                                    linear_elems[i].style.display="flex";
                                 }
                                 for (var i = 0; i < expo_elems.length; ++i) {
-                                    var item = expo_elems[i];  
-                                    item.style.display="none";
+                                    expo_elems[i].style.display="none";
                                 }
                                 for (var i = 0; i < color_elems.length; ++i) {
-                                    var item = color_elems[i];  
-                                    item.style.display="block";
+                                    color_elems[i].style.display="flex";
                                 }
-                                document.getElementById("FogValues").style.display="none";
+                                document.getElementById("FogValues").style.display="flex";
                             } else if ( resources3D[name].fogCategory === "2") {
                                 document.getElementById('FogType').value = "exponential";
                                 document.getElementById('RadioExponentialFog').checked =true;
                                 document.getElementById('FogDensity').value = JSON.parse(resources3D[name].fogdensity);
                                 document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D[name].fogcolor);
-                               
-
                                 for (var i = 0; i < linear_elems.length; ++i) {
-                                    var item = linear_elems[i];  
-                                    item.style.display="none";
+                                    linear_elems[i].style.display="none";
                                 }
                                 for (var i = 0; i < expo_elems.length; ++i) {
-                                    var item = expo_elems[i];  
-                                    item.style.display="block";
+                                    expo_elems[i].style.display="flex";
                                 }
                                 for (var i = 0; i < color_elems.length; ++i) {
-                                    var item = color_elems[i];  
-                                    item.style.display="block";
+                                    color_elems[i].style.display="flex";
                                 }
-                                document.getElementById("FogValues").style.display="block";
+                                document.getElementById("FogValues").style.display="flex";
                             }
                         }
                         else{
@@ -449,8 +409,8 @@ class VRodos_LoaderMulti {
 
                         //updateFog("undo");
 
-                        if (resources3D[name].backgroundStyleOption){
-                            envir.scene.backgroundStyleOption = resources3D[name].backgroundStyleOption;
+                        if (resources3D[name].backgroundStyleOption !== undefined){
+                            envir.scene.backgroundStyleOption = parseInt(resources3D[name].backgroundStyleOption) || 0;
                          
                               
                             let color_sel = document.getElementById('jscolorpick');
@@ -460,45 +420,35 @@ class VRodos_LoaderMulti {
                             let img_thumb = document.getElementById('uploadImgThumb');
         
                         
+                            var colorRow = document.getElementById('bcgColorRow');
+                            var presetsRow = document.getElementById('bcgPresetsRow');
+                            var imageRow = document.getElementById('bcgImageRow');
+
+                            // Hide all rows first
+                            colorRow.style.display = 'none';
+                            presetsRow.style.display = 'none';
+                            imageRow.style.display = 'none';
+                            color_sel.disabled = true;
+                            preset_sel.disabled = true;
+                            custom_img_sel.disabled = true;
+
                             switch (envir.scene.backgroundStyleOption){
                                 case 0:
                                     document.getElementById("sceneNone").checked = true;
-                                    custom_img_sel.disabled = true;
-                                    preset_sel.disabled = true;
-                                    color_sel.disabled = true;
-            
                                     var hex = rgbToHex(255, 255, 255);
-                                    //envir.renderer.setClearColor(hex);
                                     envir.scene.background = new THREE.Color(hex);
-                                    color_sel.hidden = true;
-                                    preset_sel.hidden = true;
-                                    custom_img_sel.hidden = true;
-                                    img_thumb.hidden = true;
                                     break;
                                 case 1:
                                     document.getElementById("sceneColorRadio").checked = true;
                                     color_sel.disabled = false;
-                                    preset_sel.disabled = true;
-                                    custom_img_sel.disabled = true;
-            
-                                    color_sel.hidden = false;
-                                    preset_sel.hidden = true;
-                                    custom_img_sel.hidden = true;
-                                    img_thumb.hidden = true;
+                                    colorRow.style.display = 'flex';
                                     break;
                                 case 2:
                                     document.getElementById("sceneSky").checked = true;
-                                    custom_img_sel.disabled = true;
                                     preset_sel.disabled = false;
-                                    color_sel.disabled = true;
-            
-                                    color_sel.hidden = true;
-                                    preset_sel.hidden = false;
-                                    custom_img_sel.hidden = true;
-                                    img_thumb.hidden = true;
+                                    presetsRow.style.display = 'flex';
                                     envir.scene.backgroundPresetOption = resources3D[name].backgroundPresetOption;
                                     envir.scene.preset_selection = resources3D[name].backgroundPresetOption;
-                                 
                                     for(let index = 0; index < preset_sel.options.length;index++){
                                         if(preset_sel.options[index].value == resources3D[name].backgroundPresetOption){
                                             preset_sel.options[index].selected = true;
@@ -508,13 +458,7 @@ class VRodos_LoaderMulti {
                                 case 3:
                                     document.getElementById("sceneCustomImage").checked = true;
                                     custom_img_sel.disabled = false;
-                                    preset_sel.disabled = true;
-                                    color_sel.disabled = true;
-            
-                                    color_sel.hidden = true;
-                                    preset_sel.hidden = true;
-                                    custom_img_sel.hidden = false;
-            
+                                    imageRow.style.display = 'flex';
                                     if (resources3D[name].backgroundImagePath  && resources3D[name].backgroundImagePath !=0 ){
                                         img_thumb.src = resources3D[name].backgroundImagePath;
                                         img_thumb.hidden = false;
@@ -522,8 +466,8 @@ class VRodos_LoaderMulti {
                                     break;
                             }
                             envir.scene.img_bcg_path = resources3D[name].backgroundImagePath;
-                            envir.scene.bcg_selection = JSON.parse(resources3D[name].backgroundStyleOption);
-                            envir.scene.backgroundStyleOption = JSON.parse(resources3D[name].backgroundStyleOption);
+                            envir.scene.bcg_selection = parseInt(resources3D[name].backgroundStyleOption) || 0;
+                            envir.scene.backgroundStyleOption = envir.scene.bcg_selection;
                         }
                     }
                     else if (name == 'cameraCoords'){

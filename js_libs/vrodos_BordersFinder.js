@@ -9,29 +9,37 @@ function findDimensions(groupObj){
         groupObj.remove( groupObj.getObjectByName('x_dim_line') );
     }
 
+    try {
+        // ======= bbox ========================
+        var box;
+        if (groupObj.type !== "PointLight" &&  groupObj.type !== "PointLightHelper" && groupObj.type !== "SpotLight") {
+            box = new THREE.BoxHelper(groupObj, 0xff00ff);
+        } else {
+            const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
+            const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+            var simpleBox = new THREE.Mesh( geometryBox, materialBox );
+            box = new THREE.BoxHelper(simpleBox, 0xff00ff);
+        }
 
-    // ======= bbox ========================
-    var box;
-    if (groupObj.type !== "PointLight" &&  groupObj.type !== "PointLightHelper" && groupObj.type !== "SpotLight") {
+        box.geometry.computeBoundingBox();
+        box.name = "bbox";
 
-        box = new THREE.BoxHelper(groupObj, 0xff00ff);
-    } else {
-        const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
-        const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
-        var simpleBox = new THREE.Mesh( geometryBox, materialBox );
-        box = new THREE.BoxHelper(simpleBox, 0xff00ff);
+        var finalVec = new THREE.Vector3().subVectors(box.geometry.boundingBox.min, box.geometry.boundingBox.max);
+
+        var x = Math.abs(finalVec.x);
+        var y = Math.abs(finalVec.y);
+        var z = Math.abs(finalVec.z);
+
+        // Guard against NaN from corrupted geometry
+        if (isNaN(x) || isNaN(y) || isNaN(z)) {
+            return [1, 1, 1];
+        }
+
+        return [x, y, z];
+    } catch (e) {
+        console.warn("findDimensions: could not compute bounds for", groupObj.name, e.message);
+        return [1, 1, 1];
     }
-
-    box.geometry.computeBoundingBox();
-    box.name = "bbox";
-
-    var finalVec = new THREE.Vector3().subVectors(box.geometry.boundingBox.min, box.geometry.boundingBox.max);
-
-    var x = Math.abs(finalVec.x);
-    var y = Math.abs(finalVec.y);
-    var z = Math.abs(finalVec.z);
-
-    return [x,y,z];
 }
 
 // Find dimensions of the selected object

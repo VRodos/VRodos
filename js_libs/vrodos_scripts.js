@@ -1,10 +1,11 @@
 'use strict';
 
 function setTransformControlsSize(){
-
+    if (!transform_controls.object) return;
     let dims = findDimensions(transform_controls.object);
     let sizeT = 0.25 * Math.log((Math.max(...dims) + 1)  + 1) ;
-    transform_controls.setSize(sizeT );
+    if (isNaN(sizeT) || sizeT <= 0) sizeT = 0.5;
+    transform_controls.setSize(sizeT);
 }
 
 function vrodos_fillin_widget_assettrs( selectedObject ) {
@@ -61,64 +62,52 @@ function bcgRadioSelect(option){
     let preset_sel = document.getElementById('presetsBcg');
     let img_thumb = document.getElementById('uploadImgThumb');
 
+    // Sub-option rows
+    let colorRow = document.getElementById('bcgColorRow');
+    let presetsRow = document.getElementById('bcgPresetsRow');
+    let imageRow = document.getElementById('bcgImageRow');
 
-    switch (option.value) {
-    case 0:
-        custom_img_sel.disabled = true;
-        preset_sel.disabled = true;
-        color_sel.disabled = true;
-        color_sel.hidden = true;
-        preset_sel.hidden = true;
-        custom_img_sel.hidden = true;
-        img_thumb.hidden = true;
-        var hex = rgbToHex(255, 255, 255);
-        //envir.renderer.setClearColor(hex);
-        envir.scene.background = new THREE.Color(hex);
-        //document.getElementById('assetback3dcolor').value = "ffffff"
-        break;
-    case 1: 
-        color_sel.disabled = false;
-        preset_sel.disabled = true;
-        custom_img_sel.disabled = true;
-        envir.scene.background = new THREE.Color("#"+document.getElementById('jscolorpick').value);
-        color_sel.hidden = false;
-        preset_sel.hidden = true;
-        custom_img_sel.hidden = true;
-        img_thumb.hidden = true;
-        break;
-    case 2 : 
-        custom_img_sel.disabled = true;
-        preset_sel.disabled = false;
-        color_sel.disabled = true;
-        envir.scene.preset_selection = preset_sel.value;
-        envir.scene.backgroundPresetOption = preset_sel.value;
-        color_sel.hidden = true;
-        preset_sel.hidden = false;
-        custom_img_sel.hidden = true;
-        img_thumb.hidden = true;
-        break;
-    case 3 : 
-        custom_img_sel.disabled = false;
-        preset_sel.disabled = true;
-        color_sel.disabled = true;
-        color_sel.hidden = true;
-        preset_sel.hidden = true;
-        custom_img_sel.hidden = false;
-        img_thumb.hidden = false;
+    // Hide all rows first
+    if (colorRow) colorRow.style.display = 'none';
+    if (presetsRow) presetsRow.style.display = 'none';
+    if (imageRow) imageRow.style.display = 'none';
+    if (color_sel) color_sel.disabled = true;
+    if (preset_sel) preset_sel.disabled = true;
+    if (custom_img_sel) custom_img_sel.disabled = true;
 
-        if (envir.scene.img_bcg_path && envir.scene.img_bcg_path !=0)
-        {
-           
-            //const loader = new THREE.TextureLoader();
-            //envir.scene.background = loader.load( envir.scene.img_bcg_path  );
-            document.getElementById('uploadImgThumb').src = envir.scene.img_bcg_path;
-            document.getElementById('uploadImgThumb').hidden = false;
+    var val = parseInt(option.value);
+    if (isNaN(val)) val = 0;
+
+    // Show the appropriate sub-option row
+    if (val === 1 && colorRow) { color_sel.disabled = false; colorRow.style.display = 'flex'; }
+    if (val === 2 && presetsRow) { preset_sel.disabled = false; presetsRow.style.display = 'flex'; }
+    if (val === 3 && imageRow) { custom_img_sel.disabled = false; imageRow.style.display = 'flex'; }
+
+    // Apply scene changes
+    if (envir && envir.scene) {
+        switch (val) {
+        case 0:
+            var hex = rgbToHex(255, 255, 255);
+            envir.scene.background = new THREE.Color(hex);
+            break;
+        case 1:
+            var colorVal = color_sel ? color_sel.value : '';
+            if (colorVal) envir.scene.background = new THREE.Color("#" + colorVal);
+            break;
+        case 2:
+            envir.scene.preset_selection = preset_sel.value;
+            envir.scene.backgroundPresetOption = preset_sel.value;
+            break;
+        case 3:
+            if (envir.scene.img_bcg_path && envir.scene.img_bcg_path != 0) {
+                img_thumb.src = envir.scene.img_bcg_path;
+                img_thumb.hidden = false;
+            }
+            break;
         }
-        break;
-        
+        envir.scene.bcg_selection = val;
+        envir.scene.backgroundStyleOption = val;
     }
-    envir.scene.bcg_selection = option.value;
-    envir.scene.backgroundStyleOption = option.value;
     saveChanges();
 }
 
@@ -192,63 +181,46 @@ function updateFog(whencalled){
     let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
 
     if(fogType === 'linear') {
-        // envir.scene.fog = new THREE.Fog(hex, fogNear, fogFar);
-        document.getElementById("FogValues").style.display="block";
+        document.getElementById("FogValues").style.display="flex";
 
         for (var i = 0; i < linear_elems.length; ++i) {
-            var item = linear_elems[i];  
-            item.style.display="block";
+            linear_elems[i].style.display="flex";
         }
-
         for (var i = 0; i < expo_elems.length; ++i) {
-            var item = expo_elems[i];  
-            item.style.display="none";
+            expo_elems[i].style.display="none";
         }
         for (var i = 0; i < color_elems.length; ++i) {
-            var item = color_elems[i];  
-            item.style.display="block";
+            color_elems[i].style.display="flex";
         }
 
-       
     } else if(fogType === 'exponential') {
-        // envir.scene.fog = new THREE.FogExp2(hex, fogDensity);
-        document.getElementById("FogValues").style.display="block";
+        document.getElementById("FogValues").style.display="flex";
 
         for (var i = 0; i < linear_elems.length; ++i) {
-            var item = linear_elems[i];  
-            item.style.display="none";
+            linear_elems[i].style.display="none";
         }
         for (var i = 0; i < expo_elems.length; ++i) {
-            var item = expo_elems[i];  
-            item.style.display="block";
+            expo_elems[i].style.display="flex";
         }
         for (var i = 0; i < color_elems.length; ++i) {
-            var item = color_elems[i];  
-            item.style.display="block";
+            color_elems[i].style.display="flex";
         }
+
     } else if(fogType === 'none') {
         if (envir.scene.fog){
             envir.scene.fog = null;
-            console.log("fog exists");
-        } else {
-            console.log("fog does not exists");
-        }
-        
-            
-        for (var i = 0; i < linear_elems.length; ++i) {
-            var item = linear_elems[i];  
-            item.style.display="none";
         }
 
+        for (var i = 0; i < linear_elems.length; ++i) {
+            linear_elems[i].style.display="none";
+        }
         for (var i = 0; i < expo_elems.length; ++i) {
-            var item = expo_elems[i];  
-            item.style.display="none";
+            expo_elems[i].style.display="none";
         }
-        document.getElementById("FogValues").style.display="none";  
         for (var i = 0; i < color_elems.length; ++i) {
-            var item = color_elems[i];  
-            item.style.display="none";
+            color_elems[i].style.display="none";
         }
+        document.getElementById("FogValues").style.display="none";
 
     }
     if(whencalled != "undo"){

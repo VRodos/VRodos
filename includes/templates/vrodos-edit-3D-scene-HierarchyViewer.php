@@ -55,23 +55,38 @@
 
         <hr class="tw-my-2 tw-border-slate-300">
 
+        <div class="tw-flex tw-flex-col tw-gap-1">
         <span class="tw-font-semibold tw-text-sm tw-text-slate-700">Background style</span>
 
-        <ul class="tw-list-none tw-p-0 tw-m-0">
-            <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0">
-                <input type="radio" id="sceneNone" name="sceneColorTypeRadio" value="None" class="tw-radio tw-radio-sm tw-radio-primary">
-                <label for="sceneNone" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Background: Horizon</label>
-            </li>
-            <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1">
-                <input type="radio" id="sceneColorRadio" name="sceneColorTypeRadio" value="color" class="tw-radio tw-radio-sm tw-radio-primary">
-                <label for="sceneColorRadio" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Background Color</label>
-                <input id="jscolorpick" hidden class="jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 10px; padding: 0; font-size: 10px; width: 50px;">
-                <input type="text" id="sceneClearColor" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
-            </li>
-            <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2">
-                <input type="radio" id="sceneSky" name="sceneColorTypeRadio" value="sky" class="tw-radio tw-radio-sm tw-radio-primary">
-                <label for="sceneSky" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Presets</label>
-                <select name="presetsBcg" hidden id="presetsBcg" disabled class="tw-select tw-select-xs tw-ml-2" style="font-size: 10px;">
+        <style>
+            .bcg-toggle { display: inline-flex; background: #e2e8f0; border-radius: 8px; padding: 2px; margin-top: 4px; margin-bottom: 4px; gap: 2px; }
+            .bcg-toggle input { display: none; }
+            .bcg-toggle label { padding: 4px 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; user-select: none; text-align: center; }
+            .bcg-toggle label:hover { color: #334155; }
+            .bcg-toggle input:checked + label { background: #fff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        </style>
+        <div class="bcg-toggle" id="bcgToggleGroup">
+            <input type="radio" id="sceneNone" name="sceneColorTypeRadio" value="None" checked />
+            <label for="sceneNone" onclick="bcgRadioSelect({value:0})">Horizon</label>
+            <input type="radio" id="sceneColorRadio" name="sceneColorTypeRadio" value="color" />
+            <label for="sceneColorRadio" onclick="bcgRadioSelect({value:1})">Color</label>
+            <input type="radio" id="sceneSky" name="sceneColorTypeRadio" value="sky" />
+            <label for="sceneSky" onclick="bcgRadioSelect({value:2})">Presets</label>
+            <input type="radio" id="sceneCustomImage" name="sceneColorTypeRadio" value="Custom_img" />
+            <label for="sceneCustomImage" onclick="bcgRadioSelect({value:3})">Image</label>
+        </div>
+
+        <!-- Background sub-options (shown/hidden by bcgRadioSelect) -->
+        <div id="bcgSubOptions" class="tw-flex tw-flex-col tw-gap-2 tw-mt-1 tw-mb-1">
+            <div id="bcgColorRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
+                <label class="tw-text-xs tw-text-slate-600 tw-w-12 tw-flex-shrink-0">Color</label>
+                <input id="jscolorpick" class="jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled
+                       value="000000" style="height:26px; width:60px; padding:2px; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer;">
+                <input type="text" id="sceneClearColor" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility:hidden; position:absolute;">
+            </div>
+            <div id="bcgPresetsRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
+                <label class="tw-text-xs tw-text-slate-600 tw-w-12 tw-flex-shrink-0">Preset</label>
+                <select name="presetsBcg" id="presetsBcg" disabled class="tw-select tw-select-xs" style="font-size: 10px;">
                     <option value="default">Default</option>
                     <option value="egypt">Egypt</option>
                     <option value="forest">Forest</option>
@@ -92,23 +107,25 @@
                     <option value="moon">Moon</option>
                     <option value="ocean">Ocean</option>
                 </select>
-            </li>
-            <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3">
-                <input type="radio" id="sceneCustomImage" name="sceneColorTypeRadio" value="Custom_img" class="tw-radio tw-radio-sm tw-radio-primary">
-                <label for="sceneCustomImage" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Custom Image</label>
+            </div>
+            <div id="bcgImageRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
+                <label class="tw-text-xs tw-text-slate-600 tw-w-12 tw-flex-shrink-0">Image</label>
+                <input id="img_upload_bcg" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()"
+                       style="font-size: 10px; max-width: 140px;">
                 <div class="thumbnailImg">
-                    <img id="uploadImgThumb" hidden>
+                    <img id="uploadImgThumb" hidden style="max-height:30px; border-radius:4px;">
                 </div>
-                <input id="img_upload_bcg" hidden type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()" style="margin-left: 20px; font-size: 10px;">
-            </li>
-        </ul>
+            </div>
+        </div>
+        </div>
 
         <hr class="tw-my-2 tw-border-slate-300">
 
+        <div class="tw-flex tw-flex-col tw-gap-1">
         <span class="tw-font-semibold tw-text-sm tw-text-slate-700">Fog</span>
 
         <style>
-            .fog-toggle { display: inline-flex; background: #e2e8f0; border-radius: 8px; padding: 2px; margin-top: 4px; margin-bottom: 12px; gap: 2px; }
+            .fog-toggle { display: inline-flex; background: #e2e8f0; border-radius: 8px; padding: 2px; margin-top: 4px; margin-bottom: 4px; gap: 2px; }
             .fog-toggle input { display: none; }
             .fog-toggle label { padding: 4px 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; user-select: none; text-align: center; }
             .fog-toggle label:hover { color: #334155; }
@@ -126,23 +143,34 @@
         <input type="text" id="FogType" name="FogType"
                form="3dAssetForm" value="none" style="visibility:hidden;display:none"/>
 
-        <span class="tw-font-semibold tw-text-sm tw-text-slate-700" id="FogValues" style="display:none">Fog values</span>
+        <div id="FogValues" style="display:none" class="tw-flex tw-flex-col tw-gap-2 tw-mt-1 tw-mb-2">
+            <span class="tw-font-semibold tw-text-xs tw-text-slate-600">Fog values</span>
 
-        <span style="display:none; margin-left:10px; font-size:9pt; font-weight: bold; color:gray; height:40px" class="colorElement">Color:
-                <input id="jscolorpickFog" class="jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off" style="height: 30px; padding:3px; border: 1px black solid; display:inline-block; width:80px; margin-left:5px">
-                <input type="text" id="FogColor" name="FogColor" class="colorElement" form="3dAssetForm" value="" style="visibility: hidden; height: 20px; width:20px;">
-            </span>
+            <div class="colorElement tw-flex tw-items-center tw-gap-2" style="display:none">
+                <label class="tw-text-xs tw-text-slate-600 tw-w-12 tw-flex-shrink-0">Color</label>
+                <input id="jscolorpickFog" class="jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off"
+                       style="height:26px; width:60px; padding:2px; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer;">
+                <input type="text" id="FogColor" name="FogColor" form="3dAssetForm" value="" style="visibility:hidden; position:absolute;">
+            </div>
 
-        <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Near limit (linear only):
-                <input type="text" id="FogNear" class="tw-h-5 tw-border tw-border-black tw-inline-block tw-w-10 tw-ml-1 linearElement" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="000000">
-            </span>
+            <div class="linearElement tw-flex tw-items-center tw-gap-2" style="display:none">
+                <label for="FogNear" class="tw-text-xs tw-text-slate-600 tw-w-12 tw-flex-shrink-0">Near</label>
+                <input type="text" id="FogNear" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="000000"
+                       class="tw-input tw-input-xs tw-input-bordered tw-w-16">
+            </div>
 
-        <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="linearElement">Far limit (linear only):
-                <input type="text" id="FogFar" class="tw-h-5 tw-border tw-border-black tw-inline-block tw-w-10 tw-ml-1 linearElement" name="FogFar" form="3dAssetForm" value="230" onchange="updateFog()">
-            </span>
+            <div class="linearElement tw-flex tw-items-center tw-gap-2" style="display:none">
+                <label for="FogFar" class="tw-text-xs tw-text-slate-600 tw-w-12 tw-flex-shrink-0">Far</label>
+                <input type="text" id="FogFar" name="FogFar" form="3dAssetForm" value="230" onchange="updateFog()"
+                       class="tw-input tw-input-xs tw-input-bordered tw-w-16">
+            </div>
 
-        <span style="display:none; margin:10px; font-size:9pt; font-weight: bold; color:black" class="exponentialElement">Density (exponential only):
-                <input type="text" id="FogDensity" class="tw-h-5 tw-border tw-border-black tw-inline-block tw-w-10 tw-ml-1 exponentialElement" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()">
-            </span>
+            <div class="exponentialElement tw-flex tw-items-center tw-gap-2" style="display:none">
+                <label for="FogDensity" class="tw-text-xs tw-text-slate-600 tw-w-12 tw-flex-shrink-0">Density</label>
+                <input type="text" id="FogDensity" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()"
+                       class="tw-input tw-input-xs tw-input-bordered tw-w-16">
+            </div>
+        </div>
+        </div>
     </div>
 </div>

@@ -180,6 +180,7 @@ extract( $data );
 				<!-- Lights -->
 				<div class="environmentBar hidable tw-flex tw-items-center tw-gap-2">
 
+					<?php if ( ! isset( $project_type_slug ) || $project_type_slug !== 'vrexpo_games' ) : ?>
 					<div title="An entry point for Actors, they can choose one of multiple points when logging in" class="lightpawnbutton" data-lightPawn="Pawn" draggable="true">
 						<header draggable="false" class="notdraggable">Actor</header>
 						<img draggable="false" class="lighticon notdraggable" style="padding:2px; margin-top:0"
@@ -187,6 +188,7 @@ extract( $data );
 					</div>
 
 					<div class="tw-w-px tw-h-[45px] tw-bg-white/30 tw-mx-0.5"></div>
+					<?php endif; ?>
 
 					<div class="lightpawnbutton" data-lightPawn="Sun" draggable="true" title="When adding a Sun, an automatic horizon is added to the scene, negating any Background color you have selected.">
 						<header draggable="false" class="notdraggable">Sun</header>
@@ -395,16 +397,31 @@ extract( $data );
 	</div>
 
 	<dialog id="confirm-deletion-dialog" class="tw-modal" style="z-index: 1000;">
-		<div class="tw-modal-box">
-			<h3 id="confirm-asset-deletion-title" class="tw-font-bold tw-text-lg">Delete Asset</h3>
-			<p id="confirm-asset-deletion-description" class="tw-py-4">Do you really want to delete the selected asset?</p>
-			<p class="tw-text-sm tw-text-warning tw-font-semibold">WARNING: This action cannot be undone!</p>
-			<div class="tw-modal-action">
-				<button class="tw-btn" onclick="document.getElementById('confirm-deletion-dialog').close()">Cancel</button>
-				<button id="delete-asset-btn-confirmation" class="tw-btn tw-btn-error">DELETE</button>
+		<div class="tw-modal-box tw-p-0 tw-overflow-hidden">
+			<!-- Header -->
+			<div class="tw-p-8 tw-pb-4 tw-flex tw-flex-col tw-items-center tw-text-center">
+				<div class="tw-w-16 tw-h-16 tw-bg-rose-50 tw-text-rose-500 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mb-4">
+					<i data-lucide="alert-circle" class="tw-w-8 tw-h-8"></i>
+				</div>
+				<h3 id="confirm-asset-deletion-title" class="tw-text-xl tw-font-bold tw-text-slate-800 tw-mb-1">Delete Asset</h3>
+				<p class="tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">Permanent Action</p>
+			</div>
+			<!-- Body -->
+			<div class="tw-px-8 tw-pb-8 tw-text-center">
+				<p id="confirm-asset-deletion-description" class="tw-text-slate-500 tw-text-sm tw-leading-relaxed">
+					Do you really want to delete the selected asset?
+				</p>
+			</div>
+			<!-- Actions -->
+			<div class="tw-modal-action tw-bg-white tw-p-6 tw-pt-2 tw-flex tw-justify-center tw-gap-3">
+				<button class="tw-btn tw-btn-ghost tw-text-slate-400 hover:tw-text-slate-600 tw-px-8"
+						onclick="document.getElementById('confirm-deletion-dialog').close()">CANCEL</button>
+				<button id="delete-asset-btn-confirmation" class="tw-btn vrodos-btn-premium-error tw-px-10">DELETE</button>
 			</div>
 		</div>
-		<form method="dialog" class="tw-modal-backdrop"><button>close</button></form>
+		<form method="dialog" class="tw-modal-backdrop">
+			<button class="tw-cursor-default tw-outline-none tw-bg-slate-900/40 tw-backdrop-blur-sm tw-appearance-none tw-border-none tw-text-transparent">close</button>
+		</form>
 	</dialog>
 
 	<!-- Scripts part 1: The GUIs -->
@@ -591,8 +608,8 @@ extract( $data );
 				document.getElementById("moveDisableCheckbox").checked = vrodos_scene_data["disableMovement"];
 				envir.scene.disableMovement = vrodos_scene_data["disableMovement"];
 			}
-			if (vrodos_scene_data["backgroundStyleOption"]) {
-				let  selOption = vrodos_scene_data["backgroundStyleOption"];
+			if (vrodos_scene_data["backgroundStyleOption"] !== undefined) {
+				let  selOption = parseInt(vrodos_scene_data["backgroundStyleOption"]);
 
 				switch (selOption){
 					case 0:
@@ -601,9 +618,9 @@ extract( $data );
 						preset_sel.disabled = true;
 						color_sel.disabled = true;
 
-						color_sel.hidden = true;
-						preset_sel.hidden = true;
-						custom_img_sel.hidden = true;
+						document.getElementById("bcgColorRow").style.display = 'none';
+						document.getElementById("bcgPresetsRow").style.display = 'none';
+						document.getElementById("bcgImageRow").style.display = 'none';
 						img_thumb.hidden = true;
 						break;
 					case 1:
@@ -612,9 +629,9 @@ extract( $data );
 						preset_sel.disabled = true;
 						custom_img_sel.disabled = true;
 
-						color_sel.hidden = false;
-						preset_sel.hidden = true;
-						custom_img_sel.hidden = true;
+						document.getElementById("bcgColorRow").style.display = 'flex';
+						document.getElementById("bcgPresetsRow").style.display = 'none';
+						document.getElementById("bcgImageRow").style.display = 'none';
 						img_thumb.hidden = true;
 						break;
 					case 2:
@@ -623,9 +640,9 @@ extract( $data );
 						preset_sel.disabled = false;
 						color_sel.disabled = true;
 
-						color_sel.hidden = true;
-						preset_sel.hidden = false;
-						custom_img_sel.hidden = true;
+						document.getElementById("bcgColorRow").style.display = 'none';
+						document.getElementById("bcgPresetsRow").style.display = 'flex';
+						document.getElementById("bcgImageRow").style.display = 'none';
 						img_thumb.hidden = true;
 						envir.scene.backgroundPresetOption = vrodos_scene_data["backgroundPresetOption"];
 
@@ -641,9 +658,9 @@ extract( $data );
 						preset_sel.disabled = true;
 						color_sel.disabled = true;
 
-						color_sel.hidden = true;
-						preset_sel.hidden = true;
-						custom_img_sel.hidden = false;
+						document.getElementById("bcgColorRow").style.display = 'none';
+						document.getElementById("bcgPresetsRow").style.display = 'none';
+						document.getElementById("bcgImageRow").style.display = 'flex';
 
 						if (vrodos_scene_data["backgroundImagePath"]  && vrodos_scene_data["backgroundImagePath"] !=0 ){
 							img_thumb.src = vrodos_scene_data["backgroundImagePath"];

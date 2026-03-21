@@ -26,55 +26,38 @@ class VRodos_LightsPawn_Loader {
                    
                     
                     if (resources3D[name].fogCategory === 1) {
-                        // envir.scene.fog = new THREE.Fog(resources3D[name].fogcolor,
-                        //     parseFloat(resources3D[name].fognear),
-                        //     parseFloat(resources3D[name].fogfar)
-                        // );
+                        document.getElementById("FogValues").style.display="flex";
                         for (var i = 0; i < linear_elems.length; ++i) {
-                            var item = linear_elems[i];  
-                            item.style.display="block";
+                            linear_elems[i].style.display="flex";
                         }
                         for (var i = 0; i < expo_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="none";
+                            expo_elems[i].style.display="none";
                         }
                         for (var i = 0; i < color_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="block";
+                            color_elems[i].style.display="flex";
                         }
                     } else if (resources3D[name].fogCategory === 2) {
-                        // envir.scene.fog = new THREE.FogExp2(resources3D[name].fogcolor,
-                        //     parseFloat(resources3D[name].fogdensity)
-                        // );
+                        document.getElementById("FogValues").style.display="flex";
                         for (var i = 0; i < linear_elems.length; ++i) {
-                            var item = linear_elems[i];  
-                            item.style.display="none";
+                            linear_elems[i].style.display="none";
                         }
                         for (var i = 0; i < expo_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="block";
+                            expo_elems[i].style.display="flex";
                         }
                         for (var i = 0; i < color_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="block";
+                            color_elems[i].style.display="flex";
                         }
                     } else{
+                        document.getElementById("FogValues").style.display="none";
                         for (var i = 0; i < linear_elems.length; ++i) {
-                            var item = linear_elems[i];  
-                            item.style.display="none";
+                            linear_elems[i].style.display="none";
                         }
                         for (var i = 0; i < expo_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="none";
+                            expo_elems[i].style.display="none";
                         }
                         for (var i = 0; i < color_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="none";
+                            color_elems[i].style.display="none";
                         }
-                        // document.getElementById('jscolorpickFog').value = 0;
-                        // document.getElementById('FogNear').value = 0;
-                        // document.getElementById('FogFar').value = 0;
-                        // document.getElementById('FogDensity').value = 0;
                     }
                     document.getElementById('FogType').value = resources3D[name].fogtype;
                     if (resources3D[name].fogCategory === 0) {
@@ -96,59 +79,38 @@ class VRodos_LightsPawn_Loader {
                     
 
                     if (resources3D['fogCategory'] === '1') {
-                        // envir.scene.fog = new THREE.Fog(resources3D['fogcolor'],
-                        //     parseFloat(resources3D['fognear']),
-                        //     parseFloat(resources3D['fogfar'])
-                        // );
-
                         for (var i = 0; i < linear_elems.length; ++i) {
-                            var item = linear_elems[i];  
-                            item.style.display="block";
+                            linear_elems[i].style.display="flex";
                         }
                         for (var i = 0; i < expo_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="none";
+                            expo_elems[i].style.display="none";
                         }
                         for (var i = 0; i < color_elems.length; ++i) {
-                            var item = color_elems[i];  
-                            item.style.display="block";
+                            color_elems[i].style.display="flex";
                         }
-                        document.getElementById("FogValues").style.display="none";
+                        document.getElementById("FogValues").style.display="flex";
                     } else if (resources3D['fogCategory'] === '2') {
-                        // envir.scene.fog = new THREE.FogExp2(resources3D['fogcolor'],
-                        //     parseFloat(resources3D['fogdensity'])
-                        // );
                         for (var i = 0; i < linear_elems.length; ++i) {
-                            var item = linear_elems[i];  
-                            item.style.display="none";
+                            linear_elems[i].style.display="none";
                         }
                         for (var i = 0; i < expo_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="block";
+                            expo_elems[i].style.display="flex";
                         }
                         for (var i = 0; i < color_elems.length; ++i) {
-                            var item = color_elems[i];  
-                            item.style.display="block";
+                            color_elems[i].style.display="flex";
                         }
-                        document.getElementById("FogValues").style.display="block";
+                        document.getElementById("FogValues").style.display="flex";
                     } else{
                         for (var i = 0; i < linear_elems.length; ++i) {
-                            var item = linear_elems[i];  
-                            item.style.display="none";
+                            linear_elems[i].style.display="none";
                         }
                         for (var i = 0; i < expo_elems.length; ++i) {
-                            var item = expo_elems[i];  
-                            item.style.display="none";
+                            expo_elems[i].style.display="none";
                         }
                         for (var i = 0; i < color_elems.length; ++i) {
-                            var item = color_elems[i];  
-                            item.style.display="none";
+                            color_elems[i].style.display="none";
                         }
                         document.getElementById("FogValues").style.display="none";
-                        // document.getElementById('jscolorpickFog').value = 0;
-                        // document.getElementById('FogNear').value = 0;
-                        // document.getElementById('FogFar').value = 0;
-                        // document.getElementById('FogDensity').value = 0;
                     }
                     if (resources3D['fogCategory'] === "0") {
                         document.getElementById('RadioNoFog').checked = true;
