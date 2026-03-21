@@ -203,13 +203,13 @@
 	<div class="prop-row">
 		<label for="castShadow" class="prop-label">Shadows</label>
 		<input type="checkbox" id="castShadow" name="castShadow" value="shadow_bool" checked="true"
-				title="Enable cast shadow" class="d-checkbox d-checkbox-xs d-checkbox-primary" />
+				title="Enable cast shadow" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" />
 	</div>
 
 	<div class="prop-row">
 		<label for="sunSky" class="prop-label">Create Sky</label>
 		<input type="checkbox" id="sunSky" name="sunSky" value="sky_bool" checked="true"
-				title="Add horizon (not compatible with presets)" class="d-checkbox d-checkbox-xs d-checkbox-primary" />
+				title="Add horizon (not compatible with presets)" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" />
 	</div>
 
 	<div class="prop-row">
@@ -296,7 +296,7 @@
 	<div class="prop-row">
 		<label for="lampcastShadow" class="prop-label">Shadows</label>
 		<input type="checkbox" id="lampcastShadow" name="lampcastShadow" value="shadow_bool" checked="true"
-				title="Enable cast shadow" class="d-checkbox d-checkbox-xs d-checkbox-primary" />
+				title="Enable cast shadow" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" />
 	</div>
 
 	<div class="prop-row">
@@ -466,7 +466,7 @@
 		<label for="poi_image_desc_checkbox" class="prop-label">Description</label>
 		<input type="checkbox" id="poi_image_desc_checkbox" name="poi_image_desc_checkbox"
 				title="Enable description" value="" checked="true"
-				class="d-checkbox d-checkbox-xs d-checkbox-primary" />
+				class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" />
 	</div>
 
 	<div class="prop-row">
@@ -483,14 +483,14 @@
 	<div class="prop-row">
 		<label for="poi_video_reward_checkbox" class="prop-label">Center Video</label>
 		<input type="checkbox" id="poi_video_reward_checkbox" name="poi_video_reward_checkbox" value="center_video"
-				checked="true" class="d-checkbox d-checkbox-xs d-checkbox-primary" />
+				checked="true" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" />
 	</div>
 
 	<div class="prop-row tw-flex-col tw-items-stretch">
 		<label class="prop-label tw-mb-1">X Coordinates</label>
 		<div class="tw-flex tw-items-center tw-gap-1">
 			<span class="tw-text-[9px] tw-text-slate-500">-30</span>
-			<input type="range" min="-30" max="30" value="0" class="d-range d-range-xs d-range-primary tw-flex-1" id="focus_X">
+			<input type="range" min="-30" max="30" value="0" class="tw-range tw-range-xs tw-range-primary tw-flex-1" id="focus_X">
 			<span class="tw-text-[9px] tw-text-slate-500">30</span>
 		</div>
 	</div>
@@ -499,7 +499,7 @@
 		<label class="prop-label tw-mb-1">Z Coordinates</label>
 		<div class="tw-flex tw-items-center tw-gap-1">
 			<span class="tw-text-[9px] tw-text-slate-500">-50</span>
-			<input type="range" min="-50" max="0" value="0" class="d-range d-range-xs d-range-primary tw-flex-1" id="focus_Z">
+			<input type="range" min="-50" max="0" value="0" class="tw-range tw-range-xs tw-range-primary tw-flex-1" id="focus_Z">
 			<span class="tw-text-[9px] tw-text-slate-500">0</span>
 		</div>
 	</div>

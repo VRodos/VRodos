@@ -43,7 +43,7 @@ if (!is_user_logged_in() || !current_user_can('administrator')) {
             <h2 class="tw-text-4xl tw-font-black tw-text-slate-900 tw-mb-4">Members Only</h2>
             <p class="tw-text-slate-600 tw-text-xl tw-mb-8 tw-font-medium"> Please <a class="tw-link tw-link-primary tw-font-black transition-all" href="<?php echo wp_login_url(get_permalink()); ?>">Login</a> to access the Project Manager.
                 <br><span class="tw-text-sm tw-opacity-50">Or register if you don't have an account.</span></p>
-            <a href="<?php echo wp_login_url(get_permalink()); ?>" class="d-btn d-btn-primary d-btn-lg tw-px-12 tw-rounded-2xl tw-font-black tw-text-white tw-shadow-2xl tw-shadow-primary/30">LOG IN NOW</a>
+            <a href="<?php echo wp_login_url(get_permalink()); ?>" class="tw-btn tw-btn-primary tw-btn-lg tw-px-12 tw-rounded-2xl tw-font-black tw-text-white tw-shadow-2xl tw-shadow-primary/30">LOG IN NOW</a>
         </div>
 	</div>
 
@@ -115,7 +115,7 @@ else {
                         <div class="tw-space-y-2">
                             <label for="title" class="tw-text-xs tw-font-medium tw-text-base-content/70">Project Name</label>
                             <input type="text" id="title" name="title" placeholder="My Awesome Scene" 
-                                   class="d-input d-input-bordered tw-w-full tw-rounded-md tw-bg-base-100" 
+                                   class="tw-input tw-input-bordered tw-w-full tw-rounded-md tw-bg-base-100" 
                                    required minlength="3" />
                         </div>
 
@@ -123,12 +123,12 @@ else {
                             <label class="tw-text-xs tw-font-medium tw-text-base-content/70">Template Type</label>
                             <div class="tw-grid tw-grid-cols-1 tw-gap-2">
                                 <label class="tw-flex tw-items-center tw-gap-3 tw-p-3 tw-rounded-lg tw-border tw-border-base-300 hover:tw-border-primary/50 tw-cursor-pointer has-[:checked]:tw-border-primary has-[:checked]:tw-bg-primary/5 transition-all">
-                                    <input type="radio" name="projectTypeRadio" value="vrexpo_games" class="d-radio d-radio-primary d-radio-xs" checked />
+                                    <input type="radio" name="projectTypeRadio" value="vrexpo_games" class="tw-radio tw-radio-primary tw-radio-xs" checked />
                                     <i data-lucide="globe" class="tw-w-4 tw-h-4 tw-text-slate-400"></i>
                                     <span class="tw-text-xs tw-font-medium tw-text-slate-600">3D Exposition</span>
                                 </label>
                                 <label class="tw-flex tw-items-center tw-gap-3 tw-p-3 tw-rounded-lg tw-border tw-border-base-300 hover:tw-border-primary/50 tw-cursor-pointer has-[:checked]:tw-border-primary has-[:checked]:tw-bg-primary/5 transition-all">
-                                    <input type="radio" name="projectTypeRadio" value="virtualproduction_games" class="d-radio d-radio-primary d-radio-xs" />
+                                    <input type="radio" name="projectTypeRadio" value="virtualproduction_games" class="tw-radio tw-radio-primary tw-radio-xs" />
                                     <i data-lucide="clapperboard" class="tw-w-4 tw-h-4 tw-text-slate-400"></i>
                                     <span class="tw-text-xs tw-font-medium tw-text-slate-600">Virtual Production</span>
                                 </label>
@@ -141,7 +141,7 @@ else {
                         <input type="hidden" name="submitted" id="submitted" value="true" />
                         
                         <button id="createNewProjectBtn" type="button" 
-                                class="d-btn vrodos-btn-premium tw-w-full tw-rounded-xl tw-shadow-lg">
+                                class="tw-btn vrodos-btn-premium tw-w-full tw-rounded-xl tw-shadow-lg">
                             CREATE PROJECT
                         </button>
 

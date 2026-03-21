@@ -752,12 +752,12 @@ class VRodos_AJAX_Handler {
 				echo '</div>';
 
 				// 3. Assets
-				echo '<a href="' . $loadProjectAssets . '" class="d-btn d-btn-outline d-btn-sm tw-text-[10px] tw-font-bold tw-rounded-md" title="Manage assets">';
+				echo '<a href="' . $loadProjectAssets . '" class="tw-btn tw-btn-outline tw-btn-sm tw-text-[10px] tw-font-bold tw-rounded-md" title="Manage assets">';
                 echo 'ASSETS';
 				echo '</a>';
 
 				// 4. Editor
-				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="d-btn d-btn-primary d-btn-sm tw-text-white tw-px-4 tw-rounded-md tw-text-[10px] tw-font-bold" title="Open 3D Editor">';
+				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="tw-btn tw-btn-primary tw-btn-sm tw-text-white tw-px-4 tw-rounded-md tw-text-[10px] tw-font-bold" title="Open 3D Editor">';
 				echo '3D EDITOR';
 				echo '</a>';
 

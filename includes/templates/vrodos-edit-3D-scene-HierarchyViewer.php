@@ -39,17 +39,17 @@
 
         <!-- Set Broadcast chat -->
         <div class="tw-flex tw-items-center tw-gap-2 tw-mt-1">
-            <input type="checkbox" title="Enable global chat" id="enableGeneralChatCheckbox" name="enableGeneralChatCheckbox" form="3dAssetForm" class="d-checkbox d-checkbox-sm d-checkbox-primary" onchange="toggleBroadcastChat(this.checked)">
+            <input type="checkbox" title="Enable global chat" id="enableGeneralChatCheckbox" name="enableGeneralChatCheckbox" form="3dAssetForm" class="tw-checkbox tw-checkbox-sm tw-checkbox-primary" onchange="toggleBroadcastChat(this.checked)">
             <label for="enableGeneralChatCheckbox" class="tw-text-sm tw-text-slate-700 tw-cursor-pointer">Enable general chat</label>
         </div>
 
         <div class="tw-flex tw-items-center tw-gap-2 tw-mt-1">
-            <input type="checkbox" title="Enable avatar selection" id="enableAvatarCheckbox" name="enableAvatarCheckbox" form="3dAssetForm" class="d-checkbox d-checkbox-sm d-checkbox-primary" onchange="toggleEnableAvatar(this.checked)">
+            <input type="checkbox" title="Enable avatar selection" id="enableAvatarCheckbox" name="enableAvatarCheckbox" form="3dAssetForm" class="tw-checkbox tw-checkbox-sm tw-checkbox-primary" onchange="toggleEnableAvatar(this.checked)">
             <label for="enableAvatarCheckbox" class="tw-text-sm tw-text-slate-700 tw-cursor-pointer">Enable avatar selection</label>
         </div>
 
         <div class="tw-flex tw-items-center tw-gap-2 tw-mt-1">
-            <input type="checkbox" title="Disable movement" id="moveDisableCheckbox" name="moveDisableCheckbox" form="3dAssetForm" class="d-checkbox d-checkbox-sm d-checkbox-primary" onchange="toggleDisableMovement(this.checked)">
+            <input type="checkbox" title="Disable movement" id="moveDisableCheckbox" name="moveDisableCheckbox" form="3dAssetForm" class="tw-checkbox tw-checkbox-sm tw-checkbox-primary" onchange="toggleDisableMovement(this.checked)">
             <label for="moveDisableCheckbox" class="tw-text-sm tw-text-slate-700 tw-cursor-pointer">Disable movement</label>
         </div>
 
@@ -59,19 +59,19 @@
 
         <ul class="tw-list-none tw-p-0 tw-m-0">
             <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="scenesceneNoneListItem" onclick="bcgRadioSelect(this)" value="0">
-                <input type="radio" id="sceneNone" name="sceneColorTypeRadio" value="None" class="d-radio d-radio-sm d-radio-primary">
+                <input type="radio" id="sceneNone" name="sceneColorTypeRadio" value="None" class="tw-radio tw-radio-sm tw-radio-primary">
                 <label for="sceneNone" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Background: Horizon</label>
             </li>
             <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="sceneColorRadioListItem" onclick="bcgRadioSelect(this)" value="1">
-                <input type="radio" id="sceneColorRadio" name="sceneColorTypeRadio" value="color" class="d-radio d-radio-sm d-radio-primary">
+                <input type="radio" id="sceneColorRadio" name="sceneColorTypeRadio" value="color" class="tw-radio tw-radio-sm tw-radio-primary">
                 <label for="sceneColorRadio" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Background Color</label>
                 <input id="jscolorpick" hidden class="jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled style="margin-left: 10px; padding: 0; font-size: 10px; width: 50px;">
                 <input type="text" id="sceneClearColor" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility: hidden; height: 20px; width:20px;">
             </li>
             <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="scenesceneSkyRadioListItem" onclick="bcgRadioSelect(this)" value="2">
-                <input type="radio" id="sceneSky" name="sceneColorTypeRadio" value="sky" class="d-radio d-radio-sm d-radio-primary">
+                <input type="radio" id="sceneSky" name="sceneColorTypeRadio" value="sky" class="tw-radio tw-radio-sm tw-radio-primary">
                 <label for="sceneSky" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Presets</label>
-                <select name="presetsBcg" hidden id="presetsBcg" disabled class="d-select d-select-xs tw-ml-2" style="font-size: 10px;">
+                <select name="presetsBcg" hidden id="presetsBcg" disabled class="tw-select tw-select-xs tw-ml-2" style="font-size: 10px;">
                     <option value="default">Default</option>
                     <option value="egypt">Egypt</option>
                     <option value="forest">Forest</option>
@@ -94,7 +94,7 @@
                 </select>
             </li>
             <li class="tw-flex tw-items-center tw-gap-2 tw-h-[30px]" id="sceneCustomImageRadioListItem" onclick="bcgRadioSelect(this)" value="3">
-                <input type="radio" id="sceneCustomImage" name="sceneColorTypeRadio" value="Custom_img" class="d-radio d-radio-sm d-radio-primary">
+                <input type="radio" id="sceneCustomImage" name="sceneColorTypeRadio" value="Custom_img" class="tw-radio tw-radio-sm tw-radio-primary">
                 <label for="sceneCustomImage" class="tw-text-xs tw-text-slate-700 tw-cursor-pointer tw-mb-0">Custom Image</label>
                 <div class="thumbnailImg">
                     <img id="uploadImgThumb" hidden>

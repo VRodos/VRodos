@@ -86,14 +86,14 @@ function vrodos_get_asset_category_icon($category_slug) {
         <div class="tw-mb-12 tw-flex tw-flex-wrap tw-items-center tw-gap-10 tw-bg-white/80 tw-backdrop-blur-md tw-p-3 tw-pr-8 tw-rounded-2xl tw-border tw-border-slate-200 tw-w-fit tw-shadow-sm">
             <!-- Visibility Filters -->
             <div class="tw-flex tw-items-center tw-gap-1.5 tw-p-1 tw-bg-slate-50 tw-rounded-xl">
-                <button class="visibility-filter-btn d-btn d-btn-xs d-btn-primary tw-rounded-lg tw-px-5" data-visibility="all">All</button>
-                <button class="visibility-filter-btn d-btn d-btn-xs d-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-visibility="shared">Shared</button>
-                <button class="visibility-filter-btn d-btn d-btn-xs d-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-visibility="private">Private</button>
+                <button class="visibility-filter-btn tw-btn tw-btn-xs tw-btn-primary tw-rounded-lg tw-px-5" data-visibility="all">All</button>
+                <button class="visibility-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-visibility="shared">Shared</button>
+                <button class="visibility-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-visibility="private">Private</button>
             </div>
 
             <!-- Category Filters -->
             <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-1">
-                <button class="category-filter-btn d-btn d-btn-sm d-btn-primary tw-rounded-xl tw-px-6 tw-gap-2" data-category="all">
+                <button class="category-filter-btn tw-btn tw-btn-sm tw-btn-primary tw-rounded-xl tw-px-6 tw-gap-2" data-category="all">
                     <i data-lucide="layers" class="tw-w-4 tw-h-4"></i>
                     All Categories
                 </button>
@@ -108,7 +108,7 @@ function vrodos_get_asset_category_icon($category_slug) {
                     }
                     $icon = vrodos_get_asset_category_icon($category_slug);
                 ?>
-                    <button class="category-filter-btn d-btn d-btn-sm d-btn-ghost tw-text-slate-400 tw-rounded-xl tw-px-4 hover:tw-bg-slate-50 hover:tw-text-slate-600 tw-gap-2" 
+                    <button class="category-filter-btn tw-btn tw-btn-sm tw-btn-ghost tw-text-slate-400 tw-rounded-xl tw-px-4 hover:tw-bg-slate-50 hover:tw-text-slate-600 tw-gap-2" 
                             data-category="<?php echo esc_attr($category_slug); ?>">
                         <i data-lucide="<?php echo $icon; ?>" class="tw-w-4 tw-h-4"></i>
                         <?php echo $cat; ?>
@@ -195,7 +195,7 @@ function vrodos_get_asset_category_icon($category_slug) {
                             <!-- Trash Button -->
                             <?php if ( $is_user_admin || ( $user_id == $asset['author_id'] ) ) : ?>
                                 <button onclick="openDeleteModal(<?php echo $asset['asset_id']; ?>, '<?php echo esc_js($asset['asset_name']); ?>', '<?php echo $joker_project_slug; ?>', <?php echo $asset['is_cloned']; ?>)"
-                                        class="d-btn d-btn-ghost d-btn-sm d-btn-square tw-text-slate-300 hover:tw-text-rose-500 tw-transition-colors"
+                                        class="tw-btn tw-btn-ghost tw-btn-sm tw-btn-square tw-text-slate-300 hover:tw-text-rose-500 tw-transition-colors"
                                         title="Delete Asset">
                                     <i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>
                                 </button>
@@ -228,7 +228,7 @@ function vrodos_get_asset_category_icon($category_slug) {
                 <p class="tw-text-slate-500 tw-max-w-md tw-mx-auto tw-font-medium">
                     Your repository is currently empty. Start by adding a new 3D model, image, or video to use in your projects.
                 </p>
-                <a href="<?php echo $link_to_add; ?>" class="d-btn d-btn-primary tw-mt-8 tw-px-10 tw-text-white tw-font-bold tw-rounded-xl">
+                <a href="<?php echo $link_to_add; ?>" class="tw-btn tw-btn-primary tw-mt-8 tw-px-10 tw-text-white tw-font-bold tw-rounded-xl">
                     Upload Your First Asset
                 </a>
             </div>
@@ -300,15 +300,15 @@ function vrodos_get_asset_category_icon($category_slug) {
 
         jQuery('.category-filter-btn').on('click', function() {
             activeCategory = jQuery(this).data('category');
-            jQuery('.category-filter-btn').removeClass('d-btn-primary').addClass('d-btn-ghost tw-text-slate-400');
-            jQuery(this).removeClass('d-btn-ghost tw-text-slate-400').addClass('d-btn-primary');
+            jQuery('.category-filter-btn').removeClass('tw-btn-primary').addClass('tw-btn-ghost tw-text-slate-400');
+            jQuery(this).removeClass('tw-btn-ghost tw-text-slate-400').addClass('tw-btn-primary');
             applyFilters();
         });
 
         jQuery('.visibility-filter-btn').on('click', function() {
             activeVisibility = jQuery(this).data('visibility');
-            jQuery('.visibility-filter-btn').removeClass('d-btn-primary').addClass('d-btn-ghost tw-text-slate-400');
-            jQuery(this).removeClass('d-btn-ghost tw-text-slate-400').addClass('d-btn-primary');
+            jQuery('.visibility-filter-btn').removeClass('tw-btn-primary').addClass('tw-btn-ghost tw-text-slate-400');
+            jQuery(this).removeClass('tw-btn-ghost tw-text-slate-400').addClass('tw-btn-primary');
             applyFilters();
         });
     });

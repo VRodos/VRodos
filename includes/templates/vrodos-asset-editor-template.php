@@ -55,8 +55,8 @@ extract($data);
                 <h2 class="tw-text-2xl tw-font-black tw-text-slate-800 tw-mb-4">Authentication Required</h2>
                 <p class="tw-text-slate-500 tw-font-medium tw-mb-8">Please login to access the asset editor and manage your 3D repository.</p>
                 <div class="tw-flex tw-flex-col tw-gap-3">
-                    <a href="<?php echo wp_login_url(get_permalink()); ?>" class="d-btn d-btn-primary tw-text-white tw-font-bold tw-rounded-xl">Log In</a>
-                    <a href="<?php echo wp_registration_url(); ?>" class="d-btn d-btn-ghost tw-text-slate-400 tw-font-bold">Create Account</a>
+                    <a href="<?php echo wp_login_url(get_permalink()); ?>" class="tw-btn tw-btn-primary tw-text-white tw-font-bold tw-rounded-xl">Log In</a>
+                    <a href="<?php echo wp_registration_url(); ?>" class="tw-btn tw-btn-ghost tw-text-slate-400 tw-font-bold">Create Account</a>
                 </div>
             </div>
         </main>
@@ -91,7 +91,7 @@ else { ?>
                         <div class="tw-absolute tw-bottom-4 tw-left-4 tw-z-30 tw-pointer-events-auto tw-flex tw-items-center tw-gap-2">
                             <span id="animButtonWrapper" style="display:none">
                                 <button type="button" id="animButton1" onclick="asset_viewer_3d_kernel.playStopAnimation();"
-                                        class="d-btn d-btn-xs tw-bg-white/90 tw-backdrop-blur-sm tw-border-none hover:tw-bg-white tw-shadow-md tw-rounded-lg tw-px-3 tw-gap-1.5 tw-h-8">
+                                        class="tw-btn tw-btn-xs tw-bg-white/90 tw-backdrop-blur-sm tw-border-none hover:tw-bg-white tw-shadow-md tw-rounded-lg tw-px-3 tw-gap-1.5 tw-h-8">
                                     <i data-lucide="play" class="tw-w-3.5 tw-h-3.5"></i>
                                     <span class="tw-text-[10px] tw-font-bold tw-uppercase">Anim</span>
                                 </button>
@@ -200,7 +200,7 @@ else { ?>
                             <span class="tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest"><?php echo $asset_id ? 'Editing Asset' : 'New Asset'; ?></span>
                         </div>
                         <?php if (($isOwner || $isUserAdmin)) { ?>
-                            <button id="formSubmitBtn" type="submit" class="d-btn d-btn-primary tw-text-white tw-font-black tw-px-10 tw-rounded-xl tw-shadow-lg tw-shadow-emerald-500/20 tw-transition-all active:tw-scale-95 tw-gap-2">
+                            <button id="formSubmitBtn" type="submit" class="tw-btn tw-btn-primary tw-text-white tw-font-black tw-px-10 tw-rounded-xl tw-shadow-lg tw-shadow-emerald-500/20 tw-transition-all active:tw-scale-95 tw-gap-2">
                                 <i data-lucide="<?php echo $asset_id ? 'save' : 'plus-circle'; ?>" class="tw-w-4 tw-h-4"></i>
                                 <?php echo $asset_id ? 'UPDATE ASSET' : 'CREATE ASSET'; ?>
                             </button>
@@ -235,31 +235,131 @@ else { ?>
                         </div>
                     </div>
 
-                    <!-- Category Selection -->
+                    <!-- Category Selection (custom dropdown with icons) -->
                     <div class="tw-space-y-2">
-                        <label for="category-select-native" class="vrodos-label">
-                            Asset Category
-                        </label>
-                        <div class="tw-relative">
-                            <select id="category-select-native" name="term_id_native" class="vrodos-select d-select d-select-ghost d-select-sm">
-                                <option disabled <?php echo empty($saved_term) ? 'selected' : ''; ?>>Select a category</option>
+                        <label class="vrodos-label">Asset Category</label>
+                        <?php
+                        // Icon map (mirrors vrodos_icons.js)
+                        $cat_icon_map = [
+                            'decoration'    => 'leaf',
+                            'door'          => 'door-open',
+                            'video'         => 'clapperboard',
+                            'poi-imagetext' => 'image',
+                            'chat'          => 'message-square',
+                            'poi-link'      => 'external-link',
+                        ];
+                        $selected_slug = !empty($saved_term) ? $saved_term[0]->slug : '';
+                        $selected_name = !empty($saved_term) ? $saved_term[0]->name : '';
+                        $selected_icon = $cat_icon_map[$selected_slug] ?? 'package';
+                        ?>
+                        <!-- Hidden real input for form submission -->
+                        <input type="hidden" id="category-select-native" name="term_id_native" value="<?php echo esc_attr($selected_slug); ?>" />
+                        <style>
+                            .vrodos-cat-dropdown { position: relative; }
+                            .vrodos-cat-trigger {
+                                display: flex; align-items: center; gap: 10px;
+                                width: 100%; padding: 10px 14px; cursor: pointer;
+                                background: #fff; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+                                font-size: 14px; color: #334155; font-weight: 500;
+                                transition: border-color 0.2s;
+                            }
+                            .vrodos-cat-trigger:hover { border-color: #cbd5e1; }
+                            .vrodos-cat-trigger:focus, .vrodos-cat-trigger.open { border-color: #66cc8a; outline: none; box-shadow: 0 0 0 3px rgba(102,204,138,0.12); }
+                            .vrodos-cat-trigger .trigger-icon { color: #94a3b8; flex-shrink: 0; }
+                            .vrodos-cat-trigger .trigger-label { flex: 1; }
+                            .vrodos-cat-trigger .trigger-chevron { color: #94a3b8; flex-shrink: 0; transition: transform 0.2s; }
+                            .vrodos-cat-trigger.open .trigger-chevron { transform: rotate(180deg); }
+                            .vrodos-cat-menu {
+                                display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+                                background: #fff; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+                                box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); z-index: 50;
+                                max-height: 260px; overflow-y: auto; padding: 4px;
+                            }
+                            .vrodos-cat-menu.show { display: block; }
+                            .vrodos-cat-option {
+                                display: flex; align-items: center; gap: 10px;
+                                padding: 8px 12px; cursor: pointer; border-radius: 0.375rem;
+                                font-size: 13px; color: #475569; transition: background 0.15s;
+                            }
+                            .vrodos-cat-option:hover { background: #f1f5f9; }
+                            .vrodos-cat-option.selected { background: #ecfdf5; color: #059669; font-weight: 600; }
+                            .vrodos-cat-option i { color: #94a3b8; flex-shrink: 0; }
+                            .vrodos-cat-option.selected i { color: #059669; }
+                        </style>
+                        <div class="vrodos-cat-dropdown" id="vrodos-cat-dropdown">
+                            <div class="vrodos-cat-trigger" id="vrodos-cat-trigger" tabindex="0">
+                                <i data-lucide="<?php echo esc_attr($selected_icon); ?>" class="trigger-icon tw-w-4 tw-h-4"></i>
+                                <span class="trigger-label"><?php echo $selected_name ? esc_html($selected_name) : 'Select a category'; ?></span>
+                                <i data-lucide="chevron-down" class="trigger-chevron tw-w-4 tw-h-4"></i>
+                            </div>
+                            <div class="vrodos-cat-menu" id="vrodos-cat-menu">
                                 <?php foreach ($cat_terms as $term):
-        $isSelected = !empty($saved_term) && $saved_term[0]->term_id == $term->term_id;
-?>
-                                    <option value="<?php echo esc_attr($term->slug); ?>" 
-                                            data-cat-desc="<?php echo esc_attr($term->description); ?>"
-                                            data-cat-id="<?php echo esc_attr($term->term_id); ?>"
-                                            <?php echo $isSelected ? 'selected' : ''; ?>>
-                                        <?php echo esc_html($term->name); ?>
-                                    </option>
-                                <?php
-    endforeach; ?>
-                            </select>
-                            <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-pr-4 tw-flex tw-items-center tw-pointer-events-none tw-text-slate-400">
-                                <i data-lucide="chevron-down" class="tw-w-5 tw-h-5"></i>
+                                    $icon = $cat_icon_map[$term->slug] ?? 'package';
+                                    $is_sel = (!empty($saved_term) && $saved_term[0]->term_id == $term->term_id);
+                                ?>
+                                <div class="vrodos-cat-option <?php echo $is_sel ? 'selected' : ''; ?>"
+                                     data-value="<?php echo esc_attr($term->slug); ?>"
+                                     data-cat-desc="<?php echo esc_attr($term->description); ?>"
+                                     data-cat-id="<?php echo esc_attr($term->term_id); ?>"
+                                     data-icon="<?php echo esc_attr($icon); ?>">
+                                    <i data-lucide="<?php echo esc_attr($icon); ?>" class="tw-w-4 tw-h-4"></i>
+                                    <span><?php echo esc_html($term->name); ?></span>
+                                </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
                         <p id="categoryDescription" class="tw-text-[11px] tw-text-emerald-600 tw-font-bold tw-leading-relaxed"></p>
+                        <script>
+                        (function() {
+                            const dropdown = document.getElementById('vrodos-cat-dropdown');
+                            const trigger  = document.getElementById('vrodos-cat-trigger');
+                            const menu     = document.getElementById('vrodos-cat-menu');
+                            const hidden   = document.getElementById('category-select-native');
+                            const descEl   = document.getElementById('categoryDescription');
+
+                            trigger.addEventListener('click', function() {
+                                const isOpen = menu.classList.toggle('show');
+                                trigger.classList.toggle('open', isOpen);
+                            });
+
+                            menu.addEventListener('click', function(e) {
+                                const opt = e.target.closest('.vrodos-cat-option');
+                                if (!opt) return;
+
+                                // Update hidden input
+                                hidden.value = opt.dataset.value;
+
+                                // Update trigger label + icon
+                                trigger.querySelector('.trigger-label').textContent = opt.querySelector('span').textContent;
+                                const triggerIcon = trigger.querySelector('.trigger-icon');
+                                triggerIcon.setAttribute('data-lucide', opt.dataset.icon);
+                                triggerIcon.style.color = '#334155';
+                                lucide.createIcons({ nodes: [triggerIcon] });
+
+                                // Update selected state
+                                menu.querySelectorAll('.vrodos-cat-option').forEach(o => o.classList.remove('selected'));
+                                opt.classList.add('selected');
+
+                                // Update description
+                                if (descEl) descEl.textContent = opt.dataset.catDesc || '';
+
+                                // Close
+                                menu.classList.remove('show');
+                                trigger.classList.remove('open');
+
+                                // Fire change event for any listeners
+                                hidden.dispatchEvent(new Event('change', { bubbles: true }));
+                            });
+
+                            // Close on outside click
+                            document.addEventListener('click', function(e) {
+                                if (!dropdown.contains(e.target)) {
+                                    menu.classList.remove('show');
+                                    trigger.classList.remove('open');
+                                }
+                            });
+                        })();
+                        </script>
                     </div>
 
                 </div>
@@ -304,7 +404,7 @@ else { ?>
                                 
                                 <!-- Capture Button Overlay -->
                                 <div class="tw-absolute tw-bottom-4 tw-right-4">
-                                    <button id="createModelScreenshotBtn" type="button" class="d-btn d-btn-md tw-bg-white/90 tw-backdrop-blur tw-border-none hover:tw-bg-white tw-text-slate-900 tw-font-bold tw-rounded-xl tw-shadow-xl tw-gap-2">
+                                    <button id="createModelScreenshotBtn" type="button" class="tw-btn tw-btn-md tw-bg-white/90 tw-backdrop-blur tw-border-none hover:tw-bg-white tw-text-slate-900 tw-font-bold tw-rounded-xl tw-shadow-xl tw-gap-2">
                                         <i data-lucide="camera" class="tw-w-4 tw-h-4"></i>
                                         Capture Screenshot
                                     </button>
@@ -366,7 +466,7 @@ else { ?>
 
                                 <div class="tw-flex tw-items-center tw-gap-4 tw-p-4 tw-bg-white tw-rounded-2xl tw-border tw-border-slate-100">
                                     <input type="checkbox" id="poiChatIndicators" name="poiChatIndicators"
-                                           class="d-checkbox d-checkbox-primary tw-rounded-lg"
+                                           class="tw-checkbox tw-checkbox-primary tw-rounded-lg"
                                            <?php echo $poi_chat_indicators; ?>/>
                                     <label for="poiChatIndicators" class="tw-cursor-pointer">
                                         <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Show 3D Indicator</span>
@@ -380,7 +480,7 @@ else { ?>
                                     </label>
                                     <div class="tw-flex tw-items-center tw-gap-4">
                                         <input id="poiChatNumPeople" type="range" min="2" max="8" step="1"
-                                               class="d-range d-range-primary d-range-sm tw-flex-1"
+                                               class="tw-range tw-range-primary tw-range-sm tw-flex-1"
                                                name="poiChatNumPeople"
                                                value="<?php echo esc_attr($poi_chat_num_people ?: 8); ?>"
                                                oninput="this.nextElementSibling.innerText = this.value">
@@ -441,7 +541,7 @@ else { ?>
                                 
                                 <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-slate-50 tw-rounded-2xl tw-border tw-border-slate-100">
                                     <input type="checkbox" id="video_autoloop_checkbox" name="video_autoloop_checkbox" 
-                                           class="d-checkbox d-checkbox-primary tw-rounded-lg" <?php echo $video_autoloop; ?>/>
+                                           class="tw-checkbox tw-checkbox-primary tw-rounded-lg" <?php echo $video_autoloop; ?>/>
                                     <label for="video_autoloop_checkbox" class="tw-cursor-pointer">
                                         <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Autoplay & Loop</span>
                                         <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Start instantly and repeat</span>
@@ -462,7 +562,7 @@ else { ?>
                                     <span class="tw-text-sm tw-font-medium">Click to upload image</span>
                                 </div>
                                 <div class="tw-absolute tw-inset-0 tw-bg-slate-900/40 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity tw-flex tw-items-center tw-justify-center tw-pointer-events-none">
-                                    <span class="d-btn d-btn-sm tw-bg-white tw-border-none tw-text-slate-900 tw-font-bold tw-rounded-xl tw-gap-2">
+                                    <span class="tw-btn tw-btn-sm tw-bg-white tw-border-none tw-text-slate-900 tw-font-bold tw-rounded-xl tw-gap-2">
                                         <i data-lucide="upload" class="tw-w-4 tw-h-4"></i>
                                         <?php echo empty($imagePoiImageURL) ? 'Upload' : 'Replace'; ?>
                                     </span>
@@ -476,25 +576,20 @@ else { ?>
                             <label for="category-ipr-select-native" class="vrodos-label">
                                 Intellectual Property
                             </label>
-                            <div class="tw-relative">
-                                <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-pl-4 tw-flex tw-items-center tw-pointer-events-none">
-                                    <i data-lucide="shield-check" class="tw-w-5 tw-h-5 tw-text-slate-300"></i>
-                                </div>
-                                <select id="category-ipr-select-native" name="term_id_ipr_native" class="vrodos-select d-select d-select-ghost !tw-pl-12">
-                                    <option disabled <?php echo empty($saved_ipr_term) ? 'selected' : ''; ?>>Select IPR Plan</option>
-                                    <?php foreach ($cat_ipr_terms as $term_ipr):
-                                        $isSelected = !empty($saved_ipr_term) && $saved_ipr_term[0]->term_id == $term_ipr->term_id;
+                            <select id="category-ipr-select-native" name="term_id_ipr_native" class="tw-select tw-select-bordered tw-w-full">
+                                <option disabled <?php echo empty($saved_ipr_term) ? 'selected' : ''; ?>>Select IPR Plan</option>
+                                <?php foreach ($cat_ipr_terms as $term_ipr):
+                                    $isSelected = !empty($saved_ipr_term) && $saved_ipr_term[0]->term_id == $term_ipr->term_id;
                                 ?>
-                                        <option value="<?php echo esc_attr($term_ipr->slug); ?>" 
-                                                data-cat-ipr-desc="<?php echo esc_attr($term_ipr->description); ?>"
-                                                id="<?php echo esc_attr($term_ipr->term_id); ?>"
-                                                <?php echo $isSelected ? 'selected' : ''; ?>>
-                                            <?php echo esc_html($term_ipr->name); ?>
-                                        </option>
-                                    <?php
-                                    endforeach; ?>
-                                </select>
-                            </div>
+                                    <option value="<?php echo esc_attr($term_ipr->slug); ?>"
+                                            data-cat-ipr-desc="<?php echo esc_attr($term_ipr->description); ?>"
+                                            id="<?php echo esc_attr($term_ipr->term_id); ?>"
+                                            <?php echo $isSelected ? 'selected' : ''; ?>>
+                                        <?php echo esc_html($term_ipr->name); ?>
+                                    </option>
+                                <?php
+                                endforeach; ?>
+                            </select>
                             <p id="categoryIPRDescription" class="tw-text-[11px] tw-text-slate-400 tw-font-bold tw-leading-relaxed"></p>
                             
                             <!-- Legacy JS Compatibility -->
@@ -687,7 +782,7 @@ else { ?>
 					if (iprSelected && iprSelected.getAttribute("data-cat-ipr-id")) {
 						if (iprDropdownNative) {
 							iprDropdownNative.disabled = true;
-							iprDropdownNative.classList.add('d-select-disabled');
+							iprDropdownNative.classList.add('tw-select-disabled');
 						}
 					}
 
@@ -699,14 +794,15 @@ else { ?>
 						document.getElementById('formSubmitBtn').disabled = false;
 					}
 
-					const selectedOption = categoryDropdownNative.options[categoryDropdownNative.selectedIndex];
-					const slug = selectedOption.value;
-					const catId = selectedOption.getAttribute('data-cat-id');
-					const catDesc = selectedOption.getAttribute('data-cat-desc');
+					const slug = categoryDropdownNative.value;
+					// Find the selected option in the custom dropdown
+					const selectedOpt = document.querySelector('#vrodos-cat-menu .vrodos-cat-option.selected');
+					const catId = selectedOpt ? selectedOpt.getAttribute('data-cat-id') : '';
+					const catDesc = selectedOpt ? selectedOpt.getAttribute('data-cat-desc') : '';
 
 					document.getElementById('termIdInput').value = catId;
 					document.getElementById('categoryDescription').innerHTML = catDesc;
-					
+
 					return slug;
 				}
 

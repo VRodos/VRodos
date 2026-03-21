@@ -17,8 +17,8 @@ $cancel_btn_id = $is_asset ? 'cancelDeleteButtonGeneric' : 'canceldeleteProjectB
 $confirm_text = $is_asset ? 'CONFIRM DELETE' : 'DELETE PROJECT';
 ?>
 
-<dialog id="<?php echo $modal_id; ?>" class="d-modal">
-    <div class="d-modal-box tw-p-0 tw-overflow-hidden">
+<dialog id="<?php echo $modal_id; ?>" class="tw-modal">
+    <div class="tw-modal-box tw-p-0 tw-overflow-hidden">
         <!-- Header Section -->
         <div class="tw-p-8 tw-pb-4 tw-flex tw-flex-col tw-items-center tw-text-center">
             <div class="tw-w-16 tw-h-16 tw-bg-rose-50 tw-text-rose-500 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mb-4">
@@ -47,15 +47,15 @@ $confirm_text = $is_asset ? 'CONFIRM DELETE' : 'DELETE PROJECT';
         </div>
 
         <!-- Action Section -->
-        <div class="d-modal-action tw-bg-white tw-p-6 tw-pt-2 tw-flex tw-justify-center tw-gap-3">
-            <button class="d-btn d-btn-ghost tw-text-slate-400 hover:tw-text-slate-600 tw-px-8" 
+        <div class="tw-modal-action tw-bg-white tw-p-6 tw-pt-2 tw-flex tw-justify-center tw-gap-3">
+            <button class="tw-btn tw-btn-ghost tw-text-slate-400 hover:tw-text-slate-600 tw-px-8" 
                     id="<?php echo $cancel_btn_id; ?>" 
                     onclick="document.getElementById('<?php echo $modal_id; ?>').close()">CANCEL</button>
-            <button class="d-btn vrodos-btn-premium-error tw-px-10" 
+            <button class="tw-btn vrodos-btn-premium-error tw-px-10" 
                     id="<?php echo $confirm_btn_id; ?>"><?php echo $confirm_text; ?></button>
         </div>
     </div>
-    <form method="dialog" class="d-modal-backdrop">
+    <form method="dialog" class="tw-modal-backdrop">
         <button class="tw-cursor-default tw-outline-none tw-bg-slate-900/40 tw-backdrop-blur-sm tw-appearance-none tw-border-none tw-text-transparent">close</button>
     </form>
 </dialog>
