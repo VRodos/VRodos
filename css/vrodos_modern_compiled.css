@@ -2812,6 +2812,10 @@ body {
   margin: 0px;
 }
 
+.vrodos-manager-wrapper .tw-m-4 {
+  margin: 1rem;
+}
+
 .vrodos-manager-wrapper .tw-mx-0\.5 {
   margin-left: 0.125rem;
   margin-right: 0.125rem;
@@ -2932,6 +2936,10 @@ body {
 
 .vrodos-manager-wrapper .tw-mt-auto {
   margin-top: auto;
+}
+
+.vrodos-manager-wrapper .tw-mt-3 {
+  margin-top: 0.75rem;
 }
 
 .vrodos-manager-wrapper .tw-block {
