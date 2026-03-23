@@ -11,10 +11,6 @@
 	display: block;
 }
 
-.mdc-tab {
-	min-width: 0;
-}
-
 .custom-header {
 	display: none;
 }

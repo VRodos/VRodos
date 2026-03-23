@@ -28,7 +28,7 @@ class VRodos_Pages_Manager {
 		add_filter( 'template_include', $this->view_project_template(...) );
 
 		// Add your templates to this array.
-		$this->templates = ['/templates/vrodos-project-manager-template.php' => 'Project Manager Template', '/templates/vrodos-assets-list-template.php'   => 'Assets List Template', '/templates/vrodos-edit-3D-scene-template.php' => 'Scene 3D Editor Template', '/templates/vrodos-view-3D-scene-template.php' => 'Scene 3D Viewer Template', '/templates/vrodos-asset-editor-template.php'  => 'Asset Editor Template'];
+		$this->templates = ['/templates/vrodos-project-manager-template.php' => 'Project Manager Template', '/templates/vrodos-assets-list-template.php'   => 'Assets List Template', '/templates/vrodos-edit-3D-scene-template.php' => 'Scene 3D Editor Template', '/templates/vrodos-asset-editor-template.php'  => 'Asset Editor Template'];
 
 		add_action( 'admin_notices', $this->vrodos_fx_admin_notice_notice(...) );
 	}
