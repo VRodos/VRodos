@@ -558,12 +558,6 @@ html [type="button"],
 	padding-left: 20px;
 }
 
-.sceneTab {
-	/*height:100px;*/
-	display: block;
-	background: transparent;
-}
-
 .SceneThumbnail {
 	position: relative;
 	width: 100%;
@@ -574,61 +568,6 @@ html [type="button"],
 	overflow: hidden;
 }
 
-.sceneDisplayBlock {
-	display: block;
-	width: 100%;
-	height: 100%;
-}
-
-.sceneDisplayBlock a {
-	width: 100%;
-	height: 100%;
-}
-
-.sceneDisplayBlock a img {
-	width: 100%;
-	height: 100%;
-}
-
-
-.landscapeIcon {
-	font-size: 34px;
-	padding-top: 20px;
-}
-
-/*.SceneThumbnail a {*/
-/*    display: block;*/
-/*    text-align: center;*/
-/*    vertical-align: middle;*/
-/*    !*height: 100%;*!*/
-/*}*/
-
-/*.SceneThumbnail a img {*/
-/*    position: absolute;*/
-/*    height:80px;*/
-/*    max-height:80px;*/
-/*    min-height:50px;*/
-/*    overflow: hidden;*/
-/*    -webkit-transform: translate(-50%,-50%);*/
-/*    -ms-transform: translate(-50%,-50%);*/
-/*    transform: translate(-50%,-50%);*/
-/*}*/
-
-.cardTitleDeleteWrapper {
-	width: 100%;
-	max-height: 30px;
-	background: white;
-}
-
-.cardTitle {
-	width: 70%;
-	margin: 0;
-	font-size: 14px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	padding-left: 5px;
-}
 
 .cardDeleteIcon {
 	float: right;
@@ -640,15 +579,6 @@ html [type="button"],
 	margin-top: 3px;
 }
 
-/*.cardDescription{*/
-/*    padding:0px;*/
-/*    margin:0px;*/
-/*    font-size:12px;*/
-/*}*/
-
-.deleteIconMaterial {
-	font-size: 18px;
-}
 
 .thumbnailImg img {
 	border: 1px solid #ddd;
@@ -788,9 +718,6 @@ html [type="button"],
 
 
 
-.mdc-tab {
-	min-width: 0;
-}
 
 .custom-header {
 	display: none;
@@ -1036,8 +963,7 @@ a.disabled {
 	pointer-events: none;
 }
 
-button#compileGameBtn:disabled,
-.mdc-button:disabled {
+button#compileGameBtn:disabled {
 	background-color: #cccccc;
 	color: #666666;
 	opacity: 0.2;

@@ -236,7 +236,7 @@ extract( $data );
 
 					<!--  Toggle Around Tour -->
 					<div class="environmentButton">
-						<a type="button" id="toggle-tour-arountw-btn" data-toggle='off'
+						<a type="button" id="toggle-tour-around-btn" data-toggle='off'
 							title="Auto-rotate 3D tour"
 							class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn">
 							<i data-lucide="rotate-ccw" class="tw-w-4 tw-h-4"></i>
@@ -427,8 +427,8 @@ extract( $data );
 	<!-- Scripts part 1: The GUIs -->
 	<script type="text/javascript">
 
-		// MDC auto-init for remaining components (scene cards, textfields in OtherScenes)
-		if (window.mdc) window.mdc.autoInit();
+		// Render Lucide icons after DOM is ready
+		if (typeof lucide !== 'undefined') lucide.createIcons();
 
 		let vr_editor_main_div = document.getElementById( 'vr_editor_main_div' );
 		var envir = new vrodos_3d_editor_environmentals(vr_editor_main_div);

@@ -93,9 +93,6 @@ class VRodos_Asset_Manager {
 		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
 		wp_enqueue_style( 'vrodos_modern_compiled' );
 		wp_enqueue_script( 'lucide-icons' );
-		wp_enqueue_style( 'vrodos_material_stylesheet' );
-		wp_enqueue_script( 'vrodos_material_scripts' );
-		wp_enqueue_style( 'vrodos_material_icons' );
 		wp_enqueue_style( 'vrodos_lilgui' );
 		wp_enqueue_style( 'vrodos_3D_editor' );
 		wp_enqueue_style( 'vrodos_3D_editor_browser' );
@@ -321,7 +318,6 @@ class VRodos_Asset_Manager {
       ['vrodos_load147_MTLLoader', $plugin_url_js . 'threejs147/MTLLoader.js'],
       // Other Libraries
       ['vrodos_load_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js'],
-      ['vrodos_material_scripts', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.js'],
       ['lucide-icons', 'https://unpkg.com/lucide@0.469.0'],
   ];
 
@@ -339,11 +335,9 @@ class VRodos_Asset_Manager {
 		wp_register_style( 'vrodos_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.esm.css' );
 		wp_register_style( 'vrodos_dashboard_table', $plugin_url . 'css/vrodos_dashboard_table_style.css' );
 		wp_register_style( 'vrodos_3D_editor_browser', $plugin_url . 'css/vrodos_3D_editor_browser.css' );
-		wp_register_style( 'vrodos_material_stylesheet', 'https://cdnjs.cloudflare.com/ajax/libs/material-components-web/0.22.0/material-components-web.min.css' );
 		wp_register_style( 'vrodos_frontend_stylesheet', $plugin_url . 'css/vrodos_frontend.css' );
 		wp_register_style( 'vrodos_asseteditor_stylesheet', $plugin_url . 'css/vrodos_asseteditor.css' );
 		wp_register_style( 'vrodos_widgets_stylesheet', $plugin_url . 'css/vrodos_widgets.css' );
-		wp_register_style( 'vrodos_material_icons', $plugin_url . 'css/material-icons/material-icons.css' );
 		wp_register_style( 'vrodos_modern_compiled', $plugin_url . 'css/vrodos_modern_compiled.css' );
 	}
 }

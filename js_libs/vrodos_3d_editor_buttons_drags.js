@@ -36,22 +36,8 @@ function loadButtonActions() {
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
     });
 
-    // Select platform for compile
-    if (document.getElementById('platform-select')) {
-        var platformSelect = MDCSelect.attachTo(document.getElementById('platform-select'));
-
-        document.getElementById('platform-select').addEventListener('MDCSelect:change',
-            function () {
-                jQuery("#platformInput").attr("value", platformSelect.selectedOptions[0].getAttribute("id"));
-                jQuery("#compileProceedBtn").removeClass("LinkDisabled");
-            }
-        );
-    }
-
     // Compile Proceed
     jQuery("#compileProceedBtn").click(function () {
-        
-        jQuery("#platform-select").addClass("mdc-select--disabled").attr("aria-disabled", "true");
         jQuery("#compileProgressSlider").show();
         jQuery("#compileProgressTitle").show();
 

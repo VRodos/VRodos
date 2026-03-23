@@ -21,9 +21,10 @@ function vrodos_compileAjax(showPawnPositions) {
 	compilationProgressText.append( 'Building...' );
 
 	jQuery( "#constantUpdateUser" ).html(
-		'<i title="Instructions" class="material-icons AlignIconToBottom">info</i> ' +
+		'<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
 		'Please wait while we build your scene'
 	);
+	if (typeof lucide !== 'undefined') lucide.createIcons();
 	// ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
 	jQuery.ajax(
 		{
@@ -48,9 +49,10 @@ function vrodos_compileAjax(showPawnPositions) {
 				jQuery( "#compilationProgressText" ).hide();
 
 				jQuery( "#constantUpdateUser" ).html(
-					'<i title="Instructions" class="material-icons AlignIconToBottom">info</i> ' +
+					'<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
 					'Finished successfully! - ' + new Date().toLocaleString()
 				);
+				if (typeof lucide !== 'undefined') lucide.createIcons();
 
 				let compile_dialogue_div       = document.getElementById( "previewApp" );
 				compile_dialogue_div.innerHTML = "";

@@ -80,15 +80,15 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
     let iconName = _hierarchyIconForObject(obj);
     let categoryName = obj.category_name || '';
     let isLight = categoryName.startsWith('light');
-    let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-slate-400';
+    let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-white/40';
     if (obj.name === 'avatarCamera') iconColor = 'tw-text-blue-400';
 
-    var itemHTML = '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-slate-200/60 hover:tw-bg-blue-50/70 tw-cursor-pointer tw-transition-colors" id="' + obj.uuid + '" data-name="' + obj.name + '">' +
+    var itemHTML = '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors" id="' + obj.uuid + '" data-name="' + obj.name + '">' +
         '<i data-lucide="' + iconName + '" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ' + iconColor + '"></i>' +
-        '<a href="javascript:void(0);" class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-[9pt] tw-leading-tight tw-text-slate-700 tw-no-underline" ' +
+        '<a href="javascript:void(0);" class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-[9pt] tw-leading-tight tw-text-white tw-no-underline" ' +
         'title="' + (obj.title || object_name) + '" onclick="onMouseDoubleClickFocus(event,\'' + obj.uuid + '\')">' +
         '<span class="tw-font-medium">' + object_name + '</span>' +
-        (created ? '<br/><span class="tw-text-[7pt] tw-text-slate-400 tw-font-normal">' + created + '</span>' : '') +
+        (created ? '<br/><span class="tw-text-[7pt] tw-text-white/50 tw-font-normal">' + created + '</span>' : '') +
         '</a>' +
         '<span class="tw-flex tw-items-center tw-gap-0.5 tw-flex-shrink-0">' +
         deleteButtonHTML +
@@ -108,7 +108,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
 
 
 function CreateDeleteButton(obj) {
-    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-slate-500 hover:tw-text-red-500 tw-transition-colors" aria-label="Delete asset"' +
+    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"' +
         ' title="Delete asset object" onclick="' + 'deleteFomScene(\'' + obj.uuid + '\', \'' + obj.asset_name + '\');' + '">' +
         '<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>' + '</a>';
 }
@@ -116,14 +116,14 @@ function CreateDeleteButton(obj) {
 
 function CreateLockButton(obj) {
     let lock_ic = (obj.locked) ? 'lock' : 'lock-open';
-    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-slate-500 hover:tw-text-slate-700 tw-transition-colors" aria-label="Lock asset"' +
+    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"' +
         ' title="Lock asset object" onclick="' + 'lockOnScene(\'' + obj.uuid + '\', \'' + obj.asset_name + '\');' + '">' +
         '<i data-lucide="' + lock_ic + '" class="tw-w-4 tw-h-4"></i>' + '</a>';
 }
 
 function CreateResetButton(obj){
 
-    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-slate-500 hover:tw-text-blue-500 tw-transition-colors" aria-label="Reset asset"' +
+    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"' +
         ' title="Reset asset object" onclick="' +
         'resetInScene(\'' + obj.name + '\');'
         + '">' +
@@ -142,7 +142,7 @@ function setBackgroundColorHierarchyViewer(id) {
     );
 
     var el = document.getElementById(id);
-    if (el) el.style.background = 'rgb(191, 219, 254)';
+    if (el) el.style.background = 'rgba(59, 130, 246, 0.3)';
 }
 
 // Traverse the entire scene to insert scene children in Hierarchy Viewer

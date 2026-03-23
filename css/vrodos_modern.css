@@ -274,7 +274,7 @@ body.vrodos-manager-wrapper {
   z-index: 1001 !important;
   cursor: pointer !important;
   padding: 0 !important;
-  background-color: rgba(15, 23, 42, 0.25) !important;
+  background-color: rgba(15, 23, 42, 0.75) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
@@ -308,6 +308,20 @@ body.vrodos-manager-wrapper {
 }
 
 .right-elements-panel-style {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: 300px;
+  height: calc(100% - 44px);
+  display: block;
+  z-index: 1000;
+  overflow: visible !important; /* Allow nested toggle to stick out */
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom-left-radius: 12px;
+  box-shadow: -10px 10px 20px -5px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
@@ -410,6 +424,8 @@ body.vrodos-manager-wrapper {
   background-color: rgba(15, 23, 42, 0.45) !important;
   backdrop-filter: blur(10px) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
 }
 
 #vrodos-scene-editor #save-scene-button,

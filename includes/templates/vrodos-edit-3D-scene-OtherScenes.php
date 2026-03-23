@@ -27,8 +27,8 @@ global $parameter_Scenepass;
 			$scene_title = get_the_title();
 			$scene_desc  = get_the_content();
 
-			// Set background color in card
-			$current_card_bg = ( $current_scene_id == $scene_id ? 'mdc-theme--primary-light-bg' : '' );
+			// Is this the currently edited scene?
+			$is_current = ( $current_scene_id == $scene_id );
 
 			// Get scene type
 			$scene_type = get_post_meta( $scene_id, 'vrodos_scene_metatype', true );
@@ -36,18 +36,12 @@ global $parameter_Scenepass;
 			// 0 or 1: depending if this scene is the default one
 			$default_scene = get_post_meta( $scene_id, 'vrodos_scene_default', true );
 
-			// Create the link when scene is clicked to be edited (permalink depending on the scene yaml category 2D or 3D)
+			// Create the link when scene is clicked to be edited
 			$edit_scene_page_id = $editscenePage ? $editscenePage[0]->ID : '';
-
-			// var_dump($scene_id);
-			/*
-			var_dump($default_scene);
-			exit;*/
 
 			// Url when the scene is deleted
 			$url_redirect_delete_scene = get_permalink( $edit_scene_page_id ) . $parameter_Scenepass .
 				$scene_id . '&vrodos_game=' . $project_id . '&scene_type=' . $scene_type;
-
 
 			// Create redirect javascript
 			if ( $default_scene ) {
@@ -56,54 +50,46 @@ global $parameter_Scenepass;
 				echo '</script>';
 			}
 
-
 			$edit_page_link = esc_url( $url_redirect_delete_scene );
 
 			?>
 
-			<!-- Create a tab for each scene -->
+			<!-- Scene Card -->
 			<div id="scene-<?php echo $scene_id; ?>" class="SceneCardContainer">
-				<div class="sceneTab mdc-card mdc-theme--background <?php echo $current_card_bg; ?> ">
+				<div class="tw-rounded-lg tw-overflow-hidden tw-shadow-md tw-bg-white tw-border <?php echo $is_current ? 'tw-border-emerald-400 tw-ring-2 tw-ring-emerald-200' : 'tw-border-slate-200'; ?> tw-transition-all hover:tw-shadow-lg">
 
+					<!-- Thumbnail -->
 					<div class="SceneThumbnail">
-						<div class="sceneDisplayBlock mdc-theme--primary-bg CenterContents">
-							<a href="<?php echo $edit_page_link; ?>">
-								<?php
-								if ( has_post_thumbnail( $scene_id ) ) {
-									echo get_the_post_thumbnail( $scene_id );
-								} else {
-									?>
-									<i class="landscapeIcon material-icons mdc-theme--text-icon-on-background">landscape</i>
-								<?php } ?>
-							</a>
-
-						</div>
+						<a href="<?php echo $edit_page_link; ?>" class="tw-block tw-w-full tw-h-full">
+							<?php if ( has_post_thumbnail( $scene_id ) ) : ?>
+								<?php echo get_the_post_thumbnail( $scene_id, 'thumbnail', ['class' => 'tw-w-full tw-h-full tw-object-cover'] ); ?>
+							<?php else : ?>
+								<div class="tw-w-full tw-h-full tw-bg-slate-100 tw-flex tw-items-center tw-justify-center">
+									<i data-lucide="image" class="tw-w-8 tw-h-8 tw-text-slate-300"></i>
+								</div>
+							<?php endif; ?>
+						</a>
 					</div>
 
-					<section class="cardTitleDeleteWrapper"
-							style="background:<?php echo $scene_id == $_GET['vrodos_scene'] ? 'lightgreen' : ''; ?>">
+					<!-- Title + Delete -->
+					<div class="tw-flex tw-items-center tw-px-1.5 tw-py-1 tw-gap-1 <?php echo $is_current ? 'tw-bg-emerald-50' : 'tw-bg-white'; ?>">
 						<span id="<?php echo $scene_id; ?>-title"
-								class="cardTitle mdc-card__title mdc-typography--title"
-								title="<?php echo $scene_title; ?>">
-							<a class="mdc-theme--primary"
-								href="<?php echo $edit_page_link; ?>">
-								<?php echo $scene_title; ?>
+							  class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-xs tw-font-semibold"
+							  title="<?php echo esc_attr( $scene_title ); ?>">
+							<a href="<?php echo $edit_page_link; ?>"
+							   class="tw-text-slate-700 tw-no-underline hover:tw-text-emerald-600 tw-transition-colors">
+								<?php echo esc_html( $scene_title ); ?>
 							</a>
 						</span>
 
-						<!-- Delete button for non-default scenes -->
-						<?php if ( ! $default_scene ) { ?>
-							<a id="deleteSceneBtn"
-								data-mdc-auto-init="MDCRipple"
-								title="Delete scene"
-								data-sceneid = "<?php echo $scene_id; ?>"
-								class="cardDeleteIcon mdc-button mdc-button--compact mdc-card__action">
-								<i class="material-icons deleteIconMaterial">
-									delete_forever
-								</i>
-							</a>
-						<?php } ?>
-					</section>
+						<?php if ( ! $default_scene ) : ?>
+							<button type="button" title="Delete scene"
+									data-sceneid="<?php echo $scene_id; ?>"
+									class="cardDeleteIcon tw-p-0.5 tw-text-slate-400 hover:tw-text-rose-500 tw-transition-colors tw-flex-shrink-0 tw-cursor-pointer tw-bg-transparent tw-border-none">
+								<i data-lucide="trash-2" class="tw-w-3.5 tw-h-3.5"></i>
+							</button>
+						<?php endif; ?>
+					</div>
 				</div>
 			</div>
 			<?php
@@ -112,38 +98,27 @@ global $parameter_Scenepass;
 	?>
 
 
+	<!-- Add New Scene Card -->
 	<div id="add-new-scene-card" class="SceneCardContainer">
-
 		<form name="create_new_scene_form" action="" id="create_new_scene_form"
-				method="POST" enctype="multipart/form-data">
+			  method="POST" enctype="multipart/form-data" class="tw-m-0">
 
 			<?php wp_nonce_field( 'post_nonce', 'post_nonce_field' ); ?>
 
 			<input type="hidden" name="submitted" id="submitted" value="true" />
 			<input type="hidden" name="project_id" value="<?php echo esc_attr( $project_id ); ?>">
 
-			<div class="mdc-card mdc-theme--secondary-light-bg">
-
-				<section class="mdc-card__primary" style="padding:8px;">
-					<!--Title-->
-					<div class="mdc-textfield FullWidth" data-mdc-auto-init="MDCTextfield"
-						style="padding:0; height:25px;">
-						<input id="title" name="scene-title" type="text"
-								class="mdc-textfield__input mdc-theme--text-primary-on-secondary-light cardNewSceneInput"
-								aria-controls="title-validation-msg" required minlength="3" maxlength="25">
-						<label for="title" class="mdc-textfield__label" style="font-size:12px;">Enter a scene title</label>
-						<div class="mdc-textfield__bottom-line"></div>
-					</div>
-				</section>
-
-				<!-- ADD NEW SCENE BUTTON -->
-				<section class="mdc-card__primary" style="padding:0;">
-					<button style="float:right; background-image:none;" class="mdc-button--raised mdc-button mdc-button-primary"
-							data-mdc-auto-init="MDCRipple" type="submit">
-						ADD NEW
-					</button>
-				</section>
-
+			<div class="tw-rounded-lg tw-border-2 tw-border-dashed tw-border-slate-300 tw-bg-slate-50/80 tw-overflow-hidden tw-flex tw-flex-col tw-h-full hover:tw-border-emerald-400 tw-transition-colors">
+				<div class="tw-flex-1 tw-flex tw-flex-col tw-items-center tw-justify-center tw-px-2 tw-py-2 tw-gap-1">
+					<i data-lucide="plus-circle" class="tw-w-6 tw-h-6 tw-text-slate-400"></i>
+					<input id="title" name="scene-title" type="text"
+						   class="tw-input tw-input-xs tw-input-bordered tw-w-full tw-text-center tw-text-xs"
+						   placeholder="Scene title" required minlength="3" maxlength="25">
+				</div>
+				<button type="submit" class="tw-btn tw-btn-xs tw-btn-primary tw-w-full tw-rounded-none tw-rounded-b-lg">
+					<i data-lucide="plus" class="tw-w-3 tw-h-3 tw-mr-1"></i>
+					ADD NEW
+				</button>
 			</div>
 		</form>
 	</div>

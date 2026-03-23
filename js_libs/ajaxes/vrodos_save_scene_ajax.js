@@ -63,8 +63,9 @@ function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 			type: 'POST',
 			data: postdata,
 			success: function (scene_json) {
-				jQuery( '#undo-scene-button' ).html( "<i class='material-icons'>undo</i>" ).removeClass( "LinkDisabled" );
-				jQuery( '#redo-scene-button' ).html( "<i class='material-icons'>redo</i>" ).removeClass( "LinkDisabled" );
+				jQuery( '#undo-scene-button' ).html( "<i data-lucide='undo-2'></i>" ).removeClass( "LinkDisabled" );
+				jQuery( '#redo-scene-button' ).html( "<i data-lucide='redo-2'></i>" ).removeClass( "LinkDisabled" );
+				if (typeof lucide !== 'undefined') lucide.createIcons();
 
 				// console.log(scene_json);
 				parseJSON_LoadScene( scene_json );
@@ -73,8 +74,9 @@ function vrodos_undoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 
 				console.log( "Ajax Undo Scene: ERROR: 158 - " + thrownError );
 
-				jQuery( '#undo-scene-button' ).html( "<i class='material-icons'>undo</i>" ).removeClass( "LinkDisabled" );
-				jQuery( '#redo-scene-button' ).html( "<i class='material-icons'>redo</i>" ).removeClass( "LinkDisabled" );
+				jQuery( '#undo-scene-button' ).html( "<i data-lucide='undo-2'></i>" ).removeClass( "LinkDisabled" );
+				jQuery( '#redo-scene-button' ).html( "<i data-lucide='redo-2'></i>" ).removeClass( "LinkDisabled" );
+				if (typeof lucide !== 'undefined') lucide.createIcons();
 
 				// alert("Ajax Save Scene: ERROR: 156" + thrownError);
 			}
@@ -97,8 +99,9 @@ function vrodos_redoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 			type: 'POST',
 			data: postdata,
 			success: function (scene_json) {
-				jQuery( '#undo-scene-button' ).html( "<i class='material-icons'>undo</i>" ).removeClass( "LinkDisabled" );
-				jQuery( '#redo-scene-button' ).html( "<i class='material-icons'>redo</i>" ).removeClass( "LinkDisabled" );
+				jQuery( '#undo-scene-button' ).html( "<i data-lucide='undo-2'></i>" ).removeClass( "LinkDisabled" );
+				jQuery( '#redo-scene-button' ).html( "<i data-lucide='redo-2'></i>" ).removeClass( "LinkDisabled" );
+				if (typeof lucide !== 'undefined') lucide.createIcons();
 
 				// console.log(scene_json);
 				parseJSON_LoadScene( scene_json );
@@ -107,8 +110,9 @@ function vrodos_redoSceneAjax(UPLOAD_DIR, post_revision_no_in) {
 
 				console.log( "Ajax Undo Scene: ERROR: 158 - " + thrownError );
 
-				jQuery( '#undo-scene-button' ).html( "<i class='material-icons'>undo</i>" ).removeClass( "LinkDisabled" );
-				jQuery( '#redo-scene-button' ).html( "<i class='material-icons'>redo</i>" ).removeClass( "LinkDisabled" );
+				jQuery( '#undo-scene-button' ).html( "<i data-lucide='undo-2'></i>" ).removeClass( "LinkDisabled" );
+				jQuery( '#redo-scene-button' ).html( "<i data-lucide='redo-2'></i>" ).removeClass( "LinkDisabled" );
+				if (typeof lucide !== 'undefined') lucide.createIcons();
 
 				// alert("Ajax Save Scene: ERROR: 156" + thrownError);
 			}

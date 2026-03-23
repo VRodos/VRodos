@@ -765,7 +765,7 @@ function displayDoorProperties(event, name) {
     // Show Selection (inside floating panel)
     popUpDoorPropertiesDiv.show();
 
-    //window.mdc.textfield.MDCTextfield.attachTo(document.getElementById('doorInputTextfield'));
+
 
     //doorid.change(function (e) {
     //    var nameDoorSource_simple = jQuery("#doorid").val();
