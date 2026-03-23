@@ -2748,6 +2748,10 @@ body {
   left: 1rem;
 }
 
+.vrodos-manager-wrapper .tw-left-\[320px\] {
+  left: 320px;
+}
+
 .vrodos-manager-wrapper .tw-right-0 {
   right: 0px;
 }
@@ -2792,6 +2796,10 @@ body {
   z-index: 30;
 }
 
+.vrodos-manager-wrapper .tw-z-\[1000\] {
+  z-index: 1000;
+}
+
 .vrodos-manager-wrapper .tw-z-\[1001\] {
   z-index: 1001;
 }
@@ -2812,10 +2820,6 @@ body {
   margin: 0px;
 }
 
-.vrodos-manager-wrapper .tw-m-4 {
-  margin: 1rem;
-}
-
 .vrodos-manager-wrapper .tw-mx-0\.5 {
   margin-left: 0.125rem;
   margin-right: 0.125rem;
@@ -2834,11 +2838,6 @@ body {
 .vrodos-manager-wrapper .tw-mx-auto {
   margin-left: auto;
   margin-right: auto;
-}
-
-.vrodos-manager-wrapper .tw-my-2 {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
 }
 
 .vrodos-manager-wrapper .tw-my-4 {
@@ -2894,6 +2893,10 @@ body {
   margin-left: auto;
 }
 
+.vrodos-manager-wrapper .tw-mr-0\.5 {
+  margin-right: 0.125rem;
+}
+
 .vrodos-manager-wrapper .tw-mr-1 {
   margin-right: 0.25rem;
 }
@@ -2938,16 +2941,16 @@ body {
   margin-top: auto;
 }
 
-.vrodos-manager-wrapper .tw-mt-3 {
-  margin-top: 0.75rem;
-}
-
 .vrodos-manager-wrapper .tw-block {
   display: block;
 }
 
 .vrodos-manager-wrapper .tw-inline-block {
   display: inline-block;
+}
+
+.vrodos-manager-wrapper .tw-inline {
+  display: inline;
 }
 
 .vrodos-manager-wrapper .tw-flex {
@@ -3483,17 +3486,8 @@ body {
   border-radius: 0.375rem;
 }
 
-.vrodos-manager-wrapper .tw-rounded-none {
-  border-radius: 0px;
-}
-
 .vrodos-manager-wrapper .tw-rounded-xl {
   border-radius: 0.75rem;
-}
-
-.vrodos-manager-wrapper .tw-rounded-b-lg {
-  border-bottom-right-radius: 0.5rem;
-  border-bottom-left-radius: 0.5rem;
 }
 
 .vrodos-manager-wrapper .tw-rounded-t-lg {
@@ -3547,9 +3541,9 @@ body {
   border-color: rgb(209 250 229 / var(--tw-border-opacity, 1));
 }
 
-.vrodos-manager-wrapper .tw-border-emerald-400 {
+.vrodos-manager-wrapper .tw-border-emerald-500 {
   --tw-border-opacity: 1;
-  border-color: rgb(52 211 153 / var(--tw-border-opacity, 1));
+  border-color: rgb(16 185 129 / var(--tw-border-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-border-slate-100 {
@@ -3560,11 +3554,6 @@ body {
 .vrodos-manager-wrapper .tw-border-slate-200 {
   --tw-border-opacity: 1;
   border-color: rgb(226 232 240 / var(--tw-border-opacity, 1));
-}
-
-.vrodos-manager-wrapper .tw-border-slate-300 {
-  --tw-border-opacity: 1;
-  border-color: rgb(203 213 225 / var(--tw-border-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-border-slate-50 {
@@ -3627,6 +3616,10 @@ body {
   background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
 }
 
+.vrodos-manager-wrapper .tw-bg-emerald-500\/20 {
+  background-color: rgb(16 185 129 / 0.2);
+}
+
 .vrodos-manager-wrapper .tw-bg-emerald-500\/80 {
   background-color: rgb(16 185 129 / 0.8);
 }
@@ -3682,10 +3675,6 @@ body {
   background-color: rgb(248 250 252 / 0.3);
 }
 
-.vrodos-manager-wrapper .tw-bg-slate-50\/80 {
-  background-color: rgb(248 250 252 / 0.8);
-}
-
 .vrodos-manager-wrapper .tw-bg-slate-700 {
   --tw-bg-opacity: 1;
   background-color: rgb(51 65 85 / var(--tw-bg-opacity, 1));
@@ -3702,6 +3691,18 @@ body {
 .vrodos-manager-wrapper .tw-bg-slate-800 {
   --tw-bg-opacity: 1;
   background-color: rgb(30 41 59 / var(--tw-bg-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-bg-slate-800\/40 {
+  background-color: rgb(30 41 59 / 0.4);
+}
+
+.vrodos-manager-wrapper .tw-bg-slate-800\/50 {
+  background-color: rgb(30 41 59 / 0.5);
+}
+
+.vrodos-manager-wrapper .tw-bg-slate-800\/80 {
+  background-color: rgb(30 41 59 / 0.8);
 }
 
 .vrodos-manager-wrapper .tw-bg-slate-800\/90 {
@@ -3827,6 +3828,11 @@ body {
   padding: 2rem;
 }
 
+.vrodos-manager-wrapper .tw-px-1 {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
 .vrodos-manager-wrapper .tw-px-1\.5 {
   padding-left: 0.375rem;
   padding-right: 0.375rem;
@@ -3902,19 +3908,9 @@ body {
   padding-bottom: 2.5rem;
 }
 
-.vrodos-manager-wrapper .tw-py-2 {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
 .vrodos-manager-wrapper .tw-py-20 {
   padding-top: 5rem;
   padding-bottom: 5rem;
-}
-
-.vrodos-manager-wrapper .tw-py-3 {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
 }
 
 .vrodos-manager-wrapper .tw-py-3\.5 {
@@ -4101,6 +4097,10 @@ body {
 
 .vrodos-manager-wrapper .tw-tracking-tight {
   letter-spacing: -0.025em;
+}
+
+.vrodos-manager-wrapper .tw-tracking-tighter {
+  letter-spacing: -0.05em;
 }
 
 .vrodos-manager-wrapper .tw-tracking-wide {
@@ -4354,15 +4354,14 @@ body {
   outline-offset: 2px;
 }
 
-.vrodos-manager-wrapper .tw-ring-2 {
+.vrodos-manager-wrapper .tw-ring-1 {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
 
-.vrodos-manager-wrapper .tw-ring-emerald-200 {
-  --tw-ring-opacity: 1;
-  --tw-ring-color: rgb(167 243 208 / var(--tw-ring-opacity, 1));
+.vrodos-manager-wrapper .tw-ring-emerald-500\/50 {
+  --tw-ring-color: rgb(16 185 129 / 0.5);
 }
 
 .vrodos-manager-wrapper .tw-backdrop-blur {
@@ -4877,6 +4876,45 @@ body.vrodos-manager-wrapper {
 }
 
 /* ═══════════════════════════════════════════
+   Scenes Drawer (Bottom Panel)
+   ═══════════════════════════════════════════ */
+
+#scenesInsideVREditor {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top-right-radius: 12px !important;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2) !important;
+  height: 94px !important;
+  /* Made smaller */
+  padding-left: 0 !important;
+  /* Total removal of dead space */
+  padding-right: 12px !important;
+  padding-top: 6px !important;
+  align-items: center !important;
+  /* Flex Wrapper Support & Legacy Overrides */
+  position: relative !important;
+  /* Overrides legacy absolute */
+  left: auto !important;
+  bottom: auto !important;
+  width: auto !important;
+  display: inline-flex;
+}
+
+#scenesInsideVREditor .SceneCardContainer {
+  width: 110px !important;
+  padding-left: 8px !important;
+  /* Minimal spacing between cards */
+}
+
+#scenesInsideVREditor .SceneThumbnail {
+  height: 54px !important;
+  min-height: 54px !important;
+}
+
+/* ═══════════════════════════════════════════
    Toggle Buttons (Scene Editor Toolbar)
    ═══════════════════════════════════════════ */
 
@@ -4891,6 +4929,78 @@ body.vrodos-manager-wrapper {
   border-color: rgba(255, 255, 255, 0.2) !important;
   color: rgba(255, 255, 255, 0.7) !important;
   background: rgba(15, 23, 42, 0.7) !important;
+}
+
+/* ═══════════════════════════════════════════
+   Scenes Drawer Container (Modern Flex Wrapper)
+   ═══════════════════════════════════════════ */
+
+#scenesDrawerWrapper {
+  left: 0 !important;
+  /* Floating left as requested */
+  transform: translateY(0);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  /* Center handle on drawer */
+}
+
+#scenesDrawerWrapper.closed-drawer {
+  transform: translateY(94px) !important;
+  /* Slide down off-screen */
+}
+
+/* Ensure the toggle button is always centered on the visible part */
+
+#scenesDrawerWrapper .scenesListToggleStyle {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ═══════════════════════════════════════════
+   Scenes Drawer Toggle Handle
+   ═══════════════════════════════════════════ */
+
+.scenesListToggleStyle {
+  position: relative !important;
+  width: 48px !important;
+  height: 18px !important;
+  /* Matched to side handle width */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1001 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-bottom: none !important;
+  border-radius: 8px 8px 0 0 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+}
+
+.scenesListToggleStyle:hover {
+  color: white !important;
+  background-color: rgba(15, 23, 42, 0.4) !important;
+}
+
+.scenesListToggleOn, .scenesListToggleOff {
+  height: 18px !important;
+  bottom: auto !important;
+}
+
+/* Icon rotation based on state */
+
+.closed-drawer .scenesListToggleStyle i {
+  transform: rotate(180deg) !important;
+}
+
+.scenesListToggleStyle i {
+  transition: transform 0.3s ease !important;
 }
 
 .toggle-btn.toggle-active {
@@ -5187,9 +5297,18 @@ body.vrodos-manager-wrapper {
   color: rgb(100 116 139 / var(--tw-text-opacity, 1));
 }
 
-.vrodos-manager-wrapper .hover\:tw-border-emerald-400:hover {
-  --tw-border-opacity: 1;
-  border-color: rgb(52 211 153 / var(--tw-border-opacity, 1));
+.vrodos-manager-wrapper .placeholder\:tw-text-slate-600::-moz-placeholder {
+  --tw-text-opacity: 1;
+  color: rgb(71 85 105 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .placeholder\:tw-text-slate-600::placeholder {
+  --tw-text-opacity: 1;
+  color: rgb(71 85 105 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .hover\:tw-border-emerald-500\/50:hover {
+  border-color: rgb(16 185 129 / 0.5);
 }
 
 .vrodos-manager-wrapper .hover\:tw-border-primary:hover {
@@ -5208,6 +5327,10 @@ body.vrodos-manager-wrapper {
 .vrodos-manager-wrapper .hover\:tw-bg-emerald-500:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
+}
+
+.vrodos-manager-wrapper .hover\:tw-bg-emerald-500\/20:hover {
+  background-color: rgb(16 185 129 / 0.2);
 }
 
 .vrodos-manager-wrapper .hover\:tw-bg-error\/10:hover {
@@ -5247,9 +5370,9 @@ body.vrodos-manager-wrapper {
   color: rgb(96 165 250 / var(--tw-text-opacity, 1));
 }
 
-.vrodos-manager-wrapper .hover\:tw-text-emerald-600:hover {
+.vrodos-manager-wrapper .hover\:tw-text-emerald-400:hover {
   --tw-text-opacity: 1;
-  color: rgb(5 150 105 / var(--tw-text-opacity, 1));
+  color: rgb(52 211 153 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .hover\:tw-text-error:hover {
@@ -5315,6 +5438,10 @@ body.vrodos-manager-wrapper {
 .vrodos-manager-wrapper .hover\:tw-shadow-primary\/10:hover {
   --tw-shadow-color: var(--fallback-p,oklch(var(--p)/0.1));
   --tw-shadow: var(--tw-shadow-colored);
+}
+
+.vrodos-manager-wrapper .focus\:tw-border-emerald-500\/30:focus {
+  border-color: rgb(16 185 129 / 0.3);
 }
 
 .vrodos-manager-wrapper .focus\:tw-bg-white\/10:focus {

@@ -436,6 +436,41 @@ body.vrodos-manager-wrapper {
 
 
 /* ═══════════════════════════════════════════
+   Scenes Drawer (Bottom Panel)
+   ═══════════════════════════════════════════ */
+#scenesInsideVREditor {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top-right-radius: 12px !important;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2) !important;
+  height: 94px !important; /* Made smaller */
+  padding-left: 0 !important; /* Total removal of dead space */
+  padding-right: 12px !important;
+  padding-top: 6px !important;
+  align-items: center !important;
+  
+  /* Flex Wrapper Support & Legacy Overrides */
+  position: relative !important; /* Overrides legacy absolute */
+  left: auto !important;
+  bottom: auto !important;
+  width: auto !important;
+  display: inline-flex; 
+}
+
+#scenesInsideVREditor .SceneCardContainer {
+  width: 110px !important;
+  padding-left: 8px !important; /* Minimal spacing between cards */
+}
+
+#scenesInsideVREditor .SceneThumbnail {
+  height: 54px !important;
+  min-height: 54px !important;
+}
+
+/* ═══════════════════════════════════════════
    Toggle Buttons (Scene Editor Toolbar)
    ═══════════════════════════════════════════ */
 .toggle-btn {
@@ -449,6 +484,70 @@ body.vrodos-manager-wrapper {
   border-color: rgba(255, 255, 255, 0.2) !important;
   color: rgba(255, 255, 255, 0.7) !important;
   background: rgba(15, 23, 42, 0.7) !important;
+}
+
+/* ═══════════════════════════════════════════
+   Scenes Drawer Container (Modern Flex Wrapper)
+   ═══════════════════════════════════════════ */
+#scenesDrawerWrapper {
+  left: 0 !important; /* Floating left as requested */
+  transform: translateY(0);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important; /* Center handle on drawer */
+}
+
+#scenesDrawerWrapper.closed-drawer {
+  transform: translateY(94px) !important; /* Slide down off-screen */
+}
+
+/* Ensure the toggle button is always centered on the visible part */
+#scenesDrawerWrapper .scenesListToggleStyle {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ═══════════════════════════════════════════
+   Scenes Drawer Toggle Handle
+   ═══════════════════════════════════════════ */
+.scenesListToggleStyle {
+  position: relative !important;
+  width: 48px !important;
+  height: 18px !important; /* Matched to side handle width */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1001 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-bottom: none !important;
+  border-radius: 8px 8px 0 0 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+}
+
+.scenesListToggleStyle:hover {
+  color: white !important;
+  background-color: rgba(15, 23, 42, 0.4) !important;
+}
+
+.scenesListToggleOn, .scenesListToggleOff {
+  height: 18px !important;
+  bottom: auto !important;
+}
+
+/* Icon rotation based on state */
+.closed-drawer .scenesListToggleStyle i {
+  transform: rotate(180deg) !important;
+}
+
+.scenesListToggleStyle i {
+  transition: transform 0.3s ease !important;
 }
 
 .toggle-btn.toggle-active {

@@ -379,13 +379,18 @@ extract( $data );
 
 				<!-- Popups are now inside the floating Object Controls panel -->
 
-				<!--  Open/Close Scene list panel-->
-				<a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable tw-btn tw-btn-sm tw-btn-primary" title="Toggle scenes list">
-					<i data-lucide="panel-bottom" style="width:18px; height:18px; margin:auto"></i>
-				</a>
+				<!-- Scenes Drawer Wrapper for dynamic centering -->
+				<div id="scenesDrawerWrapper" class="tw-absolute tw-bottom-0 tw-left-[320px] tw-z-[1000] tw-flex tw-flex-col tw-items-center">
+					<!--  Open/Close Scene list panel-->
+					<a id="scenesList-toggle-btn" data-toggle='on' type="button" class="scenesListToggleStyle scenesListToggleOn hidable" title="Toggle scenes list">
+						<div class="tw-flex tw-items-center tw-justify-center">
+							<i data-lucide="chevron-down" class="tw-w-3 tw-h-3"></i>
+						</div>
+					</a>
 
-				<!-- Scenes Credits and Main menu List -->
-				<?php require plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-OtherScenes.php'; ?>
+					<!-- Scenes Credits and Main menu List -->
+					<?php require plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-OtherScenes.php'; ?>
+				</div>
 
 			</div>   <!--   VR DIV   -->
 

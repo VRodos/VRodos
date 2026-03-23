@@ -56,7 +56,7 @@ global $parameter_Scenepass;
 
 			<!-- Scene Card -->
 			<div id="scene-<?php echo $scene_id; ?>" class="SceneCardContainer">
-				<div class="tw-rounded-lg tw-overflow-hidden tw-shadow-md tw-bg-white tw-border <?php echo $is_current ? 'tw-border-emerald-400 tw-ring-2 tw-ring-emerald-200' : 'tw-border-slate-200'; ?> tw-transition-all hover:tw-shadow-lg">
+				<div class="tw-rounded-lg tw-overflow-hidden tw-shadow-md tw-bg-slate-800 tw-border <?php echo $is_current ? 'tw-border-emerald-500 tw-ring-1 tw-ring-emerald-500/50' : 'tw-border-white/10'; ?> tw-transition-all hover:tw-shadow-lg">
 
 					<!-- Thumbnail -->
 					<div class="SceneThumbnail">
@@ -64,20 +64,20 @@ global $parameter_Scenepass;
 							<?php if ( has_post_thumbnail( $scene_id ) ) : ?>
 								<?php echo get_the_post_thumbnail( $scene_id, 'thumbnail', ['class' => 'tw-w-full tw-h-full tw-object-cover'] ); ?>
 							<?php else : ?>
-								<div class="tw-w-full tw-h-full tw-bg-slate-100 tw-flex tw-items-center tw-justify-center">
-									<i data-lucide="image" class="tw-w-8 tw-h-8 tw-text-slate-300"></i>
+								<div class="tw-w-full tw-h-full tw-bg-slate-800/80 tw-flex tw-items-center tw-justify-center">
+									<i data-lucide="image" class="tw-w-6 tw-h-6 tw-text-slate-500"></i>
 								</div>
 							<?php endif; ?>
 						</a>
 					</div>
 
 					<!-- Title + Delete -->
-					<div class="tw-flex tw-items-center tw-px-1.5 tw-py-1 tw-gap-1 <?php echo $is_current ? 'tw-bg-emerald-50' : 'tw-bg-white'; ?>">
+					<div class="tw-flex tw-items-center tw-px-1.5 tw-py-1 tw-gap-1 <?php echo $is_current ? 'tw-bg-emerald-500/20' : 'tw-bg-slate-800/50'; ?>">
 						<span id="<?php echo $scene_id; ?>-title"
-							  class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-xs tw-font-semibold"
+							  class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-[10px] tw-font-semibold"
 							  title="<?php echo esc_attr( $scene_title ); ?>">
 							<a href="<?php echo $edit_page_link; ?>"
-							   class="tw-text-slate-700 tw-no-underline hover:tw-text-emerald-600 tw-transition-colors">
+							   class="tw-text-slate-200 tw-no-underline hover:tw-text-emerald-400 tw-transition-colors">
 								<?php echo esc_html( $scene_title ); ?>
 							</a>
 						</span>
@@ -108,16 +108,16 @@ global $parameter_Scenepass;
 			<input type="hidden" name="submitted" id="submitted" value="true" />
 			<input type="hidden" name="project_id" value="<?php echo esc_attr( $project_id ); ?>">
 
-			<div class="tw-rounded-lg tw-border-2 tw-border-dashed tw-border-slate-300 tw-bg-slate-50/80 tw-overflow-hidden tw-flex tw-flex-col tw-h-full hover:tw-border-emerald-400 tw-transition-colors">
-				<div class="tw-flex-1 tw-flex tw-flex-col tw-items-center tw-justify-center tw-px-2 tw-py-2 tw-gap-1">
-					<i data-lucide="plus-circle" class="tw-w-6 tw-h-6 tw-text-slate-400"></i>
+			<div class="tw-rounded-lg tw-border-2 tw-border-dashed tw-border-white/10 tw-bg-slate-800/40 tw-overflow-hidden tw-flex tw-flex-col tw-h-full hover:tw-border-emerald-500/50 tw-transition-colors">
+				<div class="tw-flex-1 tw-flex tw-flex-col tw-items-center tw-justify-center tw-px-2 tw-py-1 tw-gap-1">
+					<i data-lucide="plus-circle" class="tw-w-5 tw-h-5 tw-text-slate-500"></i>
 					<input id="title" name="scene-title" type="text"
-						   class="tw-input tw-input-xs tw-input-bordered tw-w-full tw-text-center tw-text-xs"
-						   placeholder="Scene title" required minlength="3" maxlength="25">
+						   class="tw-input tw-input-bordered tw-w-full tw-text-center tw-text-[10px] tw-h-6 tw-bg-slate-900/60 tw-text-white tw-border-white/5 focus:tw-border-emerald-500/30 tw-px-1 placeholder:tw-text-slate-600"
+						   placeholder="Title..." required minlength="3" maxlength="25">
 				</div>
-				<button type="submit" class="tw-btn tw-btn-xs tw-btn-primary tw-w-full tw-rounded-none tw-rounded-b-lg">
-					<i data-lucide="plus" class="tw-w-3 tw-h-3 tw-mr-1"></i>
-					ADD NEW
+				<button type="submit" class="tw-w-full tw-bg-slate-800/80 hover:tw-bg-emerald-500/20 tw-text-slate-400 hover:tw-text-emerald-400 tw-text-[10px] tw-font-bold tw-py-1 tw-uppercase tw-tracking-tighter tw-transition-all tw-border-t tw-border-white/5">
+					<i data-lucide="plus" class="tw-w-2.5 tw-h-2.5 tw-inline tw-mr-0.5"></i>
+					Add
 				</button>
 			</div>
 		</form>

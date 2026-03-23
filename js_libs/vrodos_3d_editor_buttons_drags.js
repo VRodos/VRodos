@@ -133,12 +133,16 @@ function loadButtonActions() {
 
     // Scenes List Toolbar close button
     jQuery("#scenesList-toggle-btn").click(function () {
-        if (jQuery("#scenesList-toggle-btn").hasClass("scenesListToggleOn")) {
-            jQuery("#scenesList-toggle-btn").addClass("scenesListToggleOff").removeClass("scenesListToggleOn");
+        let wrapper = jQuery("#scenesDrawerWrapper");
+        let btn = jQuery("#scenesList-toggle-btn");
+        
+        if (btn.hasClass("scenesListToggleOn")) {
+            btn.addClass("scenesListToggleOff").removeClass("scenesListToggleOn");
+            wrapper.addClass("closed-drawer");
         } else {
-            jQuery("#scenesList-toggle-btn").addClass("scenesListToggleOn").removeClass("scenesListToggleOff");
+            btn.addClass("scenesListToggleOn").removeClass("scenesListToggleOff");
+            wrapper.removeClass("closed-drawer");
         }
-        jQuery("#scenesInsideVREditor").toggle("slow");
     });
 
     // Take SCREENSHOT OF SCENE

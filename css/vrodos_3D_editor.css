@@ -548,7 +548,6 @@ html [type="button"],
 	bottom: 0;
 	z-index: 500;
 	background: rgba(0, 0, 0, 0.12);
-	padding-left: 60px !important;
 	padding-top: 5px;
 	padding-right: 20px;
 }
