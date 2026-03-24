@@ -9,107 +9,98 @@ function vrodos_compileAjax(showPawnPositions) {
 	let projectType = document.getElementById( "project-type" ).value;
 
 	// Enable cancel button
-	jQuery( "#compileCancelBtn" ).removeClass( "LinkDisabled" );
+	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
 
-	// steps = [
-	// "Get Scene Information from scene setup",
-	// "Transform to Aframe format",
-	// "Provide link"
-	// ];
-
-	jQuery( "#compileProgressTitle" ).html( "Step: 1 / 2" );
+	document.getElementById( "compileProgressTitle" ).textContent = "Step: 1 / 2";
 	compilationProgressText.append( 'Building...' );
 
-	jQuery( "#constantUpdateUser" ).html(
+	document.getElementById( "constantUpdateUser" ).innerHTML =
 		'<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
-		'Please wait while we build your scene'
-	);
+		'Please wait while we build your scene';
 	if (typeof lucide !== 'undefined') lucide.createIcons();
+
+	// Build query string for GET request
+	let params = new URLSearchParams({
+		'action': 'vrodos_compile_action',
+		'projectId': my_ajax_object_compile.projectId,
+		'projectSlug': my_ajax_object_compile.slug,
+		'showPawnPositions': showPawnPositions,
+		'vrodos_scene': my_ajax_object_compile.sceneId,
+		'outputFormat': platform
+	});
+
+	let url = (isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url) + '?' + params.toString();
+
 	// ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
-	jQuery.ajax(
-		{
-			url :  isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url,
-			type : 'GET',
-			data : {
-				'action': 'vrodos_compile_action',
-				'projectId': my_ajax_object_compile.projectId,
-				'projectSlug': my_ajax_object_compile.slug,
-				'showPawnPositions': showPawnPositions,
-				'vrodos_scene' : my_ajax_object_compile.sceneId,
-				'outputFormat': platform
-			},
-			success : function (urlExperienceSequenceJSON) {
+	fetch( url )
+	.then( function (response) { return response.text(); })
+	.then( function (urlExperienceSequenceJSON) {
 
-				let urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
+		let urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
 
-				jQuery( "#compileProgressTitle" ).hide();
-				jQuery( "#progressSliderSubLineDeterminateValue" ).width( 1 );
-				jQuery( "#compileProgressDeterminate" ).hide();
-				jQuery( "#compileProgressSlider" ).hide();
-				jQuery( "#compilationProgressText" ).hide();
+		document.getElementById( "compileProgressTitle" ).style.display = 'none';
+		document.getElementById( "progressSliderSubLineDeterminateValue" ).style.width = '1px';
+		document.getElementById( "compileProgressDeterminate" ).style.display = 'none';
+		document.getElementById( "compileProgressSlider" ).style.display = 'none';
+		document.getElementById( "compilationProgressText" ).style.display = 'none';
 
-				jQuery( "#constantUpdateUser" ).html(
-					'<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
-					'Finished successfully! - ' + new Date().toLocaleString()
-				);
-				if (typeof lucide !== 'undefined') lucide.createIcons();
+		document.getElementById( "constantUpdateUser" ).innerHTML =
+			'<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
+			'Finished successfully! - ' + new Date().toLocaleString();
+		if (typeof lucide !== 'undefined') lucide.createIcons();
 
-				let compile_dialogue_div       = document.getElementById( "previewApp" );
-				compile_dialogue_div.innerHTML = "";
+		let compile_dialogue_div       = document.getElementById( "previewApp" );
+		compile_dialogue_div.innerHTML = "";
 
-				function createLinks(url, captionText){
+		function createLinks(url, captionText){
 
-					let section           = document.createElement( 'div' );
-					section.style.cssText = 'padding-top: 8px;';
+			let section           = document.createElement( 'div' );
+			section.style.cssText = 'padding-top: 8px;';
 
-					let title           = document.createElement( 'span' );
-					title.style.cssText = 'color: black; font-weight:500;';
-					title.innerText     = captionText + ': ';
+			let title           = document.createElement( 'span' );
+			title.style.cssText = 'color: black; font-weight:500;';
+			title.innerText     = captionText + ': ';
 
-					section.append( title );
+			section.append( title );
 
-					let link       = document.createElement( 'a' );
-					link.innerText = url;
-					link.setAttribute( "href", url );
-					link.setAttribute( "target", '_blank' );
-					section.append( link );
+			let link       = document.createElement( 'a' );
+			link.innerText = url;
+			link.setAttribute( "href", url );
+			link.setAttribute( "target", '_blank' );
+			section.append( link );
 
-					compile_dialogue_div.append( section );
-				}
-
-				if (projectType === 'vrexpo') {
-					createLinks( urlExperienceSequence["MasterClient"], "Exposition link" );
-					createLinks( urlExperienceSequence["SimpleClient"], "Actor link" );
-				} else {
-					createLinks( urlExperienceSequence["index"], "Index" );
-					createLinks( urlExperienceSequence["MasterClient"], "Director" );
-					createLinks( urlExperienceSequence["SimpleClient"],"Actor" );
-				}
-
-				if (projectType !== 'vrexpo') {
-					jQuery( "#appResultDiv" ).show();
-				}
-
-				jQuery( "#vrodos-weblink" )[0].href = urlExperienceSequence["index"];
-
-				document.getElementById( "openWebLinkhref" ).setAttribute( "href", urlExperienceSequence["index"] );
-
-			},
-			error : function (xhr, ajaxOptions, thrownError) {
-				console.log( "Ajax Aframe ERROR 189: " + thrownError );
-				console.log( ajaxOptions );
-				hideCompileProgressSlider();
-			}
+			compile_dialogue_div.append( section );
 		}
-	);
+
+		if (projectType === 'vrexpo') {
+			createLinks( urlExperienceSequence["MasterClient"], "Exposition link" );
+			createLinks( urlExperienceSequence["SimpleClient"], "Actor link" );
+		} else {
+			createLinks( urlExperienceSequence["index"], "Index" );
+			createLinks( urlExperienceSequence["MasterClient"], "Director" );
+			createLinks( urlExperienceSequence["SimpleClient"],"Actor" );
+		}
+
+		if (projectType !== 'vrexpo') {
+			document.getElementById( "appResultDiv" ).style.display = '';
+		}
+
+		document.getElementById( "vrodos-weblink" ).href = urlExperienceSequence["index"];
+		document.getElementById( "openWebLinkhref" ).setAttribute( "href", urlExperienceSequence["index"] );
+
+	})
+	.catch( function (err) {
+		console.log( "Ajax Aframe ERROR 189: " + err );
+		hideCompileProgressSlider();
+	});
 }
 
 
 // Hide compile progress slider
 function hideCompileProgressSlider() {
-	jQuery( "#compileProgressSlider" ).hide();
-	jQuery( "#compileProgressTitle" ).hide();
-	jQuery( "#compileProgressDeterminate" ).hide();
-	jQuery( "#compileProceedBtn" ).removeClass( "LinkDisabled" );
-	jQuery( "#compileCancelBtn" ).removeClass( "LinkDisabled" );
+	document.getElementById( "compileProgressSlider" ).style.display = 'none';
+	document.getElementById( "compileProgressTitle" ).style.display = 'none';
+	document.getElementById( "compileProgressDeterminate" ).style.display = 'none';
+	document.getElementById( "compileProceedBtn" ).classList.remove( "LinkDisabled" );
+	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
 }

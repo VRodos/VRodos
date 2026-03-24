@@ -19,42 +19,32 @@ function imgUpload(){
 			formData.append( "projectid", my_ajax_object_compile.projectId );
 			formData.append( "sceneid", my_ajax_object_compile.sceneId );
 
-			jQuery.ajax(
-				{
-					url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_uploadimage.ajax_url,
-					type: "POST",
-					data: formData,
-					processData: false,
-					contentType: false,
-					success:function (response) {
+			fetch( isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_uploadimage.ajax_url, {
+				method: 'POST',
+				body: formData
+			})
+			.then( function (response) { return response.text(); })
+			.then( function (response) {
 
-						// response_saved_json = JSON.parse(response);
-						// envir.scene.img_bcg_path = response.responseText;
-						// let data = JSON.parse(JSON.stringify(response))
-						const cleanResponse      = response.replace( 'File Uploaded Successfully', '' );
-						let data                 = JSON.parse( cleanResponse )
-						console.log( data.url );
-						envir.scene.img_bcg_path = data.url;
+				const cleanResponse      = response.replace( 'File Uploaded Successfully', '' );
+				let data                 = JSON.parse( cleanResponse );
+				console.log( data.url );
+				envir.scene.img_bcg_path = data.url;
 
-						jQuery( '#save-scene-button' ).html( "Saving..." ).addClass( "LinkDisabled" );
-						document.getElementById( "compileGameBtn" ).disabled = true;
+				let saveBtn = document.getElementById( 'save-scene-button' );
+				saveBtn.innerHTML = "Saving...";
+				saveBtn.classList.add( "LinkDisabled" );
+				document.getElementById( "compileGameBtn" ).disabled = true;
 
-						// Export using the new VrodosSceneExporter
-						let exporter = new VrodosSceneExporter();
-						document.getElementById( 'vrodos_scene_json_input' ).value = exporter.parse( envir.scene );
+				// Export using the new VrodosSceneExporter
+				let exporter = new VrodosSceneExporter();
+				document.getElementById( 'vrodos_scene_json_input' ).value = exporter.parse( envir.scene );
 
-						// let test = document.getElementById('vrodos_scene_json_input').value;
+				document.getElementById( 'uploadImgThumb' ).src    = data.url;
+				document.getElementById( 'uploadImgThumb' ).hidden = false;
 
-						// var json = JSON.stringify(test);
-
-						// console.log(test);
-						document.getElementById( 'uploadImgThumb' ).src    = data.url;
-						document.getElementById( 'uploadImgThumb' ).hidden = false;
-
-						vrodos_saveSceneAjax();
-					}
-				}
-			);
+				vrodos_saveSceneAjax();
+			});
 
 		};
 		reader.readAsDataURL( input.files[0] );

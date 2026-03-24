@@ -11,39 +11,42 @@ function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scene
 	if (_deleteGamePending) return;
 	_deleteGamePending = true;
 
-	jQuery.ajax(
-		{
-			url: my_ajax_object_deletegame.ajax_url,
-			type: 'POST',
-			data: {
-				'action': 'vrodos_delete_game_action',
-				'game_id': game_id
-			},
-			success: function (res) {
+	fetch( my_ajax_object_deletegame.ajax_url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: new URLSearchParams({
+			'action': 'vrodos_delete_game_action',
+			'game_id': game_id
+		})
+	})
+	.then( function (response) { return response.text(); })
+	.then( function (res) {
 
-				_deleteGamePending = false;
-				jQuery( '#delete-dialog-progress-bar' ).hide();
-				jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );
-				jQuery( "#cancelDeleteGameBtn" ).removeClass( "LinkDisabled" );
+		_deleteGamePending = false;
+		let progressBar = document.getElementById( 'delete-dialog-progress-bar' );
+		if (progressBar) progressBar.style.display = 'none';
+		let confirmBtn = document.getElementById( 'deleteProjectBtn' );
+		if (confirmBtn) confirmBtn.classList.remove( 'LinkDisabled' );
+		let cancelBtn = document.getElementById( 'canceldeleteProjectBtn' );
+		if (cancelBtn) cancelBtn.classList.remove( 'LinkDisabled' );
 
-				fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass );
+		fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass );
 
-				dialog.close();
+		dialog.close();
 
-			},
-			error: function (xhr, ajaxOptions, thrownError) {
+	})
+	.catch( function (err) {
 
-				_deleteGamePending = false;
-				jQuery( '#delete-dialog-progress-bar' ).hide();
+		_deleteGamePending = false;
+		let progressBar = document.getElementById( 'delete-dialog-progress-bar' );
+		if (progressBar) progressBar.style.display = 'none';
+		let confirmBtn = document.getElementById( 'deleteProjectBtn' );
+		if (confirmBtn) confirmBtn.classList.remove( 'LinkDisabled' );
+		let cancelBtn = document.getElementById( 'canceldeleteProjectBtn' );
+		if (cancelBtn) cancelBtn.classList.remove( 'LinkDisabled' );
 
-				jQuery( "#deleteGameBtn" ).removeClass( "LinkDisabled" );
-				jQuery( "#cancelDeleteGameBtn" ).removeClass( "LinkDisabled" );
-
-				alert( "Could not delete game. Try deleting it from the administration panel" );
-
-				console.log( "Ajax Delete Game: ERROR: 166" + thrownError );
-			}
-		}
-	);
+		alert( "Could not delete game. Try deleting it from the administration panel" );
+		console.log( "Ajax Delete Game: ERROR: 166 " + err );
+	});
 
 }

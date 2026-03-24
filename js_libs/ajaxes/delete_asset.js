@@ -1,9 +1,8 @@
 /**
- * Delete Scene
+ * Delete Asset
  *
  * Parameters from javascript
- * scene_id : the scene to delete
- * vrodos_deleteSceneAjax()
+ * asset_id : the asset to delete
  */
 let _deleteAssetPending = false;
 function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
@@ -11,78 +10,81 @@ function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
 	_deleteAssetPending = true;
 
 	if (typeof envir != "undefined") {
-		jQuery( "#deleteAssetProgressBar-" + asset_id ).show();
-		jQuery( "#asset-" + asset_id ).addClass( "LinkDisabled" );
+		let progressBar = document.getElementById( "deleteAssetProgressBar-" + asset_id );
+		if (progressBar) progressBar.style.display = '';
+		let assetEl = document.getElementById( "asset-" + asset_id );
+		if (assetEl) assetEl.classList.add( "LinkDisabled" );
 	}
 
-	jQuery.ajax(
-		{
-			url: my_ajax_object_deleteasset.ajax_url,
-			type: 'POST',
-			data: {
-				'action': 'vrodos_delete_asset_action',
-				'asset_id': asset_id,
-				'game_slug': game_slug,
-				'isCloned': isCloned
-			},
-			success: function (res) {
+	fetch( my_ajax_object_deleteasset.ajax_url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: new URLSearchParams({
+			'action': 'vrodos_delete_asset_action',
+			'asset_id': asset_id,
+			'game_slug': game_slug,
+			'isCloned': isCloned
+		})
+	})
+	.then( function (response) { return response.text(); })
+	.then( function (res) {
 
-				_deleteAssetPending = false;
-				res = JSON.parse( res );
+		_deleteAssetPending = false;
+		res = JSON.parse( res );
 
-				if (deleteDialog) {
-					jQuery( '#delete-scene-dialog-progress-bar' ).hide();
-					deleteDialog.close();
+		if (deleteDialog) {
+			let progressBar = document.getElementById( 'delete-scene-dialog-progress-bar' );
+			if (progressBar) progressBar.style.display = 'none';
+			deleteDialog.close();
+		}
+
+		// remove asset from scene (if we are at scene editor)
+		if (typeof envir != "undefined") {
+			// Remove objects from scene
+			let names_to_remove = [];
+			for (let i = 0; i < envir.scene.children.length; i++) {
+				if (envir.scene.children[i].assetid == "" + res + "") {
+					names_to_remove.push( envir.scene.children[i].name );
 				}
+			}
 
-				// remove asset from scene (if we are at scene editor
-				if (typeof envir != "undefined") {
-					// Remove objects from scene
+			for (let i = 0; i < names_to_remove.length; i++) {
+				envir.scene.remove( envir.scene.getObjectByName( names_to_remove[i] ) );
+			}
 
-					let names_to_remove = [];
-					for (let i = 0; i < envir.scene.children.length; i++) {
-						if (envir.scene.children[i].assetid == "" + res + "") {
-							names_to_remove.push( envir.scene.children[i].name );
-						}
-					}
+			let progressBar = document.getElementById( "deleteAssetProgressBar-" + asset_id );
+			if (progressBar) progressBar.style.display = 'none';
 
-					for (let i = 0; i < names_to_remove.length; i++) {
-						envir.scene.remove( envir.scene.getObjectByName( names_to_remove[i] ) );
-					}
+			let deleteDialog2 = document.getElementById( "delete-dialog" );
+			if (deleteDialog2) deleteDialog2.style.display = 'none';
 
-					jQuery( "#deleteAssetProgressBar-" + asset_id ).hide();
-
-					jQuery( "#delete-dialog" ).hide();
-
-					jQuery( "#asset-" + asset_id ).fadeOut(
-						300,
-						function () {
-							jQuery( "#asset-" + asset_id ).remove();
-						}
-					);
-				} else {
-					// remove the respective tile from the Project editor
-
-					jQuery( "#" + asset_id ).fadeOut(
-						300,
-						function () {
-							jQuery( "#" + asset_id ).remove();
-						}
-					);
-				}
-
-			},
-			error: function (xhr, ajaxOptions, thrownError) {
-
-				_deleteAssetPending = false;
-				jQuery( "#deleteAssetProgressBar-" + asset_id ).hide();
-
-				jQuery( "#asset-" + asset_id ).removeClass( "LinkDisabled" );
-
-				alert( "Could not delete asset. Please try again or try deleting it from the administration panel." );
-
-				console.log( "Ajax Delete Asset: ERROR: 170" + thrownError );
+			let assetEl = document.getElementById( "asset-" + asset_id );
+			if (assetEl) {
+				assetEl.style.transition = 'opacity 0.3s';
+				assetEl.style.opacity = '0';
+				setTimeout( function () { assetEl.remove(); }, 300 );
+			}
+		} else {
+			// remove the respective tile from the Project editor
+			let tileEl = document.getElementById( "" + asset_id );
+			if (tileEl) {
+				tileEl.style.transition = 'opacity 0.3s';
+				tileEl.style.opacity = '0';
+				setTimeout( function () { tileEl.remove(); }, 300 );
 			}
 		}
-	);
+
+	})
+	.catch( function (err) {
+
+		_deleteAssetPending = false;
+		let progressBar = document.getElementById( "deleteAssetProgressBar-" + asset_id );
+		if (progressBar) progressBar.style.display = 'none';
+
+		let assetEl = document.getElementById( "asset-" + asset_id );
+		if (assetEl) assetEl.classList.remove( "LinkDisabled" );
+
+		alert( "Could not delete asset. Please try again or try deleting it from the administration panel." );
+		console.log( "Ajax Delete Asset: ERROR: 170 " + err );
+	});
 }

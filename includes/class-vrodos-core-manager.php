@@ -423,7 +423,7 @@ class VRodos_Core_Manager {
 			'<i data-lucide="' . $project_type_icon . '" class="tw-text-white/60 tw-mr-2"' .
 			' title="' . $project_type . '" style="width:18px; height:18px;">' .
 			'</i> ' .
-			'<span title="Project Title" class="tw-font-medium tw-text-sm">' . $project_post->post_title . '</span>' .
+			'<span title="Project Title" class="tw-font-medium tw-text-sm">' . ( $project_post ? esc_html( $project_post->post_title ) : '' ) . '</span>' .
 			'<i data-lucide="chevron-right" class="tw-text-white/40 tw-mx-1" style="width:16px; height:16px;"></i>' .
 			'</div>' .
 			// Title Name at breadcrumps

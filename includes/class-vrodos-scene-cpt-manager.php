@@ -322,8 +322,10 @@ class VRodos_Scene_CPT_Manager {
 		$project_id       = isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
 		$project_type     = $project_id ? VRodos_Core_Manager::vrodos_return_project_type( $project_id )->string : null;
 
-		$scene_post         = get_post( $current_scene_id );
-		$scene_json_from_db = $scene_post->post_content ?: VRodos_Core_Manager::vrodos_getDefaultJSONscene( strtolower( $project_type ) );
+		$scene_post         = $current_scene_id ? get_post( $current_scene_id ) : null;
+		$scene_json_from_db = ( $scene_post && $scene_post->post_content )
+			? $scene_post->post_content
+			: VRodos_Core_Manager::vrodos_getDefaultJSONscene( strtolower( $project_type ?? '' ) );
 
 		$scene_model = new Vrodos_Scene_Model( $scene_json_from_db );
 		$sceneJSON   = $scene_model->to_json();
