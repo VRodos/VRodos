@@ -80,8 +80,8 @@ function showObjectControlsPanel(objectName) {
     if (!panel) return;
 
     panel.classList.remove('tw-hidden');
-    jQuery('#object-manipulation-toggle').show();
-    jQuery('#axis-manipulation-buttons').show();
+    document.getElementById('object-manipulation-toggle').style.display = '';
+    document.getElementById('axis-manipulation-buttons').style.display = '';
 
     if (objectName) {
         const title = document.getElementById('object-controls-title');

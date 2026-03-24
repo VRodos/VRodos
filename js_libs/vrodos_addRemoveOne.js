@@ -122,9 +122,6 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         setTransformControlsSize();
 
-        showObjectControlsPanel();
-        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
-
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
         //transform_controls.children[3].children[0].children[1].visible = false; // ROTATE GIZMO
 
@@ -226,13 +223,6 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Dimensions
         setTransformControlsSize();
-        // var dims = findDimensions(transform_controls.object);
-        // var sizeT = Math.max(...dims);
-        // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
-
-        showObjectControlsPanel();
-        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
-
 
         //transform_controls.children[3].handleGizmos.XZY[0][0].visible = true; // DELETE GIZMO
 
@@ -333,9 +323,6 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
         // Dimensions
         setTransformControlsSize();
-
-        showObjectControlsPanel();
-        setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
         // var dims = findDimensions(transform_controls.object);
         // var sizeT = Math.max(...dims);
         // transform_controls.setSize(sizeT > 1 ? sizeT : 1);
@@ -517,8 +504,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         // Add a GLB object
 
         // Make progress bar visible
-        jQuery("#progress").get(0).style.display = "block";
-        jQuery("#progressWrapper").get(0).style.visibility = "visible";
+        document.getElementById("progress").style.display = "block";
+        document.getElementById("progressWrapper").style.visibility = "visible";
         document.getElementById("result_download").innerHTML = "Loading";
 
         // Make a manager for the GLB
@@ -575,11 +562,8 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             // Auto-save
             triggerAutoSave();
 
-            //document.getElementById('numerical_gui-container').style.visibility = 'visible';
-            showObjectControlsPanel();
-            setDatGuiInitialVales(envir.scene.getObjectByProperty( 'uuid' , insertedObject.uuid));
             // Hide progress dialogue
-            jQuery("#progressWrapper").get(0).style.visibility = "hidden";
+            document.getElementById("progressWrapper").style.visibility = "hidden";
         };
 
 
@@ -713,7 +697,8 @@ function deleteAssetFromScene(uuid) {
     
             // Sun target spot remove from hierarchy viewer
             let target = "lightTargetSpot_" + objectSelected.name;
-            jQuery("[data-name='" +target +"']").remove();
+            let targetEl = document.querySelector("[data-name='" + target + "']");
+            if (targetEl) targetEl.remove();
     
             // Light Helper (for all lights)
             envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + objectSelected.name));
@@ -730,7 +715,8 @@ function deleteAssetFromScene(uuid) {
     envir.scene.remove(objectSelected);
 
     // Remove from hierarchy viewer
-    jQuery('#hierarchy-viewer').find('#' + uuid).remove();
+    let hierItem = document.getElementById(uuid);
+    if (hierItem) hierItem.remove();
 
     //transform_controls.detach();
 

@@ -89,6 +89,7 @@ function onMouseDoubleClickFocus(event, id) {
 var _mouseDownPos = { x: 0, y: 0 };
 var _mouseDownTime = 0;
 var _CLICK_THRESHOLD = 5; // pixels
+var _suppressNextSelection = false; // Set by drop handler to prevent selection on drop
 
 function _onCanvasMouseDown(event) {
     _mouseDownPos.x = event.clientX;
@@ -106,6 +107,12 @@ function _onCanvasMouseUp(event) {
 
     // Always trigger auto-save on mouseup (was previously bound to 'mouseup')
     saveScene(event);
+
+    // Suppress selection after a drop event
+    if (_suppressNextSelection) {
+        _suppressNextSelection = false;
+        return;
+    }
 
     // Only trigger selection if it was a click, not a drag
     if (dist > _CLICK_THRESHOLD) return;
@@ -208,6 +215,26 @@ function onLeftMouseClick(event) {
  * @param event
  * @param inters
  */
+/**
+ * Lightweight selection: attach gizmo + outline, highlight in hierarchy.
+ * No floating panel or properties shown. Used by hierarchy hover.
+ */
+function selectObjectPreview(objectSel) {
+    if (!objectSel) return;
+
+    setBackgroundColorHierarchyViewer(objectSel.uuid);
+    transform_controls.attach(objectSel);
+
+    if (objectSel.name !== "avatarCamera") {
+        setTransformControlsSize();
+    }
+
+    transform_controls.setMode("translate");
+
+    removeAllCelOutlines();
+    addCelOutline(objectSel);
+}
+
 function selectorMajor(event, objectSel, whocalls) {
 
     if (event.button === 0) {
@@ -644,12 +671,13 @@ function displaySpotProperties(event, name) {
     var spotTargetObject = document.getElementById("spotTargetObject");
     spotTargetObject.innerText = null;
 
-    for (var i = 0; i < jQuery('#hierarchy-viewer')[0].childNodes.length; i++) {
-        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).category_name ){
-        var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
+    var hierViewer = document.getElementById('hierarchy-viewer');
+    for (var i = 0; i < hierViewer.childNodes.length; i++) {
+        var id_Hierarchy = hierViewer.childNodes[i].id;
+        if (!id_Hierarchy) continue;
         var scene_object = envir.scene.getObjectByName(id_Hierarchy);
+        if (!scene_object) continue;
         spotTargetObject.appendChild(new Option(scene_object.name));
-        //}
     }
 
 

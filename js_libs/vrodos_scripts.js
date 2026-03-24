@@ -47,7 +47,9 @@ function saveChanges() {
         return;
     }
 
-    jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
+    let savBtn = document.getElementById('save-scene-button');
+    savBtn.innerHTML = "Saving...";
+    savBtn.classList.add("LinkDisabled");
     document.getElementById("compileGameBtn").disabled = true;
 
     // Export using the new VrodosSceneExporter

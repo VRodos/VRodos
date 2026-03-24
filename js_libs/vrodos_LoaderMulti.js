@@ -226,7 +226,7 @@ class VRodos_LoaderMulti {
                             //object = setObjectProperties(object.scene, name, resources3D);
                             //object.isSelectableMesh = true;
                             //envir.scene.add(object);
-                            //jQuery("#progressWrapper").get(0).style.visibility= "hidden";
+                            //document.getElementById("progressWrapper").style.visibility = "hidden";
                         },
                         // called while loading is progressing
                         function (xhr) {
@@ -243,14 +243,16 @@ class VRodos_LoaderMulti {
 
                     if ((resources3D[name]['glb_id'] !== "" && resources3D[name]['glb_id'] !== undefined) || resources3D[name]['category_slug'] == "video") {
 
-                        jQuery.ajax({
-                            url: my_ajax_object_fetchasset.ajax_url,
-                            type: 'POST',
-                            data: {
+                        fetch( my_ajax_object_fetchasset.ajax_url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: new URLSearchParams({
                                 'action': 'vrodos_fetch_glb_asset_action',
                                 'asset_id': resources3D[name]['asset_id']
-                            },
-                            success: function (res) {
+                            })
+                        })
+                        .then( function (response) { return response.text(); })
+                        .then( function (res) {
 
                                 let resourcesGLB = JSON.parse(res);
                                 let glbURL = resourcesGLB['glbURL'];
@@ -263,7 +265,7 @@ class VRodos_LoaderMulti {
                                 }
 
                                 // Instantiate a loader
-                                jQuery("#progressWrapper").get(0).style.visibility = "visible";
+                                document.getElementById("progressWrapper").style.visibility = "visible";
                                 document.getElementById("result_download").innerHTML = "Loading ...";                               
 
                                 loader.load(glbURL,
@@ -303,14 +305,10 @@ class VRodos_LoaderMulti {
                                         console.log('A GLB loading error happened. Error 1590', error);
                                     }
                                 );
-                            },
-                            // Ajax error
-                            error: function (xhr, ajaxOptions, thrownError) {
-
+                        })
+                        .catch( function (err) {
                                 alert("Could not fetch GLB asset. Probably deleted ? " + name);
-
-                                console.log("Ajax Fetch Asset: ERROR: 189" + thrownError);
-                            }
+                                console.log("Ajax Fetch Asset: ERROR: 189 " + err);
                         });
 
                     } 

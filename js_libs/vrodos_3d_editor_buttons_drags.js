@@ -135,14 +135,18 @@ function loadButtonActions() {
     jQuery("#scenesList-toggle-btn").click(function () {
         let wrapper = jQuery("#scenesDrawerWrapper");
         let btn = jQuery("#scenesList-toggle-btn");
-        
+
         if (btn.hasClass("scenesListToggleOn")) {
             btn.addClass("scenesListToggleOff").removeClass("scenesListToggleOn");
+            swapLucideIcon(this, 'chevron-up');
             wrapper.addClass("closed-drawer");
         } else {
             btn.addClass("scenesListToggleOn").removeClass("scenesListToggleOff");
+            swapLucideIcon(this, 'chevron-down');
             wrapper.removeClass("closed-drawer");
         }
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
     // Take SCREENSHOT OF SCENE
@@ -267,11 +271,11 @@ function loadButtonActions() {
             let translation = dragDropVerticalRayCasting(ev);
 
 
+            // Suppress the click-selection that would fire from the drop's mouseup
+            _suppressNextSelection = true;
+
             // Asset add to canvas
             addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath);
-
-            // Show floating controls panel
-            showObjectControlsPanel();
 
             showObjectPropertiesPanel(transform_controls.getMode());
 

@@ -70,8 +70,6 @@ document.addEventListener('add_movement',
     }
 );
 let keydown_handler = (ev) => {
-    var objManipulationSwitch = jQuery('input:radio[name=object-manipulation-switch]');
-
     switch (ev.keyCode) {
         //---------------------------- TRS ---------------------------------------
         case 80: pauseClickFun(); break; // r
