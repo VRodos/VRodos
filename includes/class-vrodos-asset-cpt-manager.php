@@ -729,6 +729,7 @@ class VRodos_Asset_CPT_Manager {
 		$data['isEditMode'] = ! isset( $_GET['preview'] ) || $_GET['preview'] !== '1';
 
 		$game_post            = get_post( $data['project_id'] );
+		$data['game_post']    = $game_post;
 		$gameSlug             = $game_post ? $game_post->post_name : '';
 		$assetPGame           = get_term_by( 'slug', $gameSlug, 'vrodos_asset3d_pgame' );
 		$data['assetPGameID'] = $assetPGame ? $assetPGame->term_id : null;

@@ -4083,6 +4083,10 @@ body {
   text-transform: uppercase;
 }
 
+.vrodos-manager-wrapper .tw-normal-case {
+  text-transform: none;
+}
+
 .vrodos-manager-wrapper .tw-italic {
   font-style: italic;
 }

@@ -30,18 +30,18 @@ document.addEventListener('DOMContentLoaded', function() {
         radio.addEventListener('change', loadProjectTypeDescription);
     });
 
-    jQuery('#createNewProjectBtn').click( function (e) {
+    document.getElementById('createNewProjectBtn').addEventListener('click', function (e) {
         // Title of game project
         let titleEl = document.getElementById('title');
         let title_vrodos_project = titleEl ? titleEl.value : "";
-        
+
         if (title_vrodos_project && title_vrodos_project.length > 2) {
             let checkedRadio = document.querySelector('input[name="projectTypeRadio"]:checked');
             let project_type = checkedRadio ? checkedRadio.value : 'archaeology_games';
 
             // CREATE THE PROJECT !
             vrodos_createProjectAjax(title_vrodos_project, project_type, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
-            
+
             // UI state updates
             document.getElementById('createNewProjectBtn').style.display = 'none';
             document.getElementById('create-game-progress-bar').style.display = '';
@@ -54,9 +54,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Delegated event listener for project deletion
-    jQuery('#ExistingProjectsDivDOM').on('click', '.vrodos-delete-project-btn', function() {
-        let gameId = jQuery(this).data('game-id');
-        let gameTitle = jQuery(this).data('game-title') || "this project";
+    document.getElementById('ExistingProjectsDivDOM').addEventListener('click', function(e) {
+        let btn = e.target.closest('.vrodos-delete-project-btn');
+        if (!btn) return;
+        let gameId = btn.dataset.gameId;
+        let gameTitle = btn.dataset.gameTitle || "this project";
         if (gameId) {
             deleteProject(gameId, gameTitle);
         }
@@ -72,13 +74,13 @@ document.addEventListener('DOMContentLoaded', function() {
         dialog.showModal();
     }
 
-    jQuery('#deleteProjectBtn').click( function (e) {
-        jQuery('#delete-dialog-progress-bar').show();
+    document.getElementById('deleteProjectBtn').addEventListener('click', function (e) {
+        document.getElementById('delete-dialog-progress-bar').style.display = '';
         vrodos_deleteGameAjax(dialog.dataset.projectId, dialog, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
     });
 
-    jQuery('#canceldeleteProjectBtn').click( function (e) {
-        jQuery('#delete-dialog-progress-bar').hide();
+    document.getElementById('canceldeleteProjectBtn').addEventListener('click', function (e) {
+        document.getElementById('delete-dialog-progress-bar').style.display = 'none';
         dialog.close();
     });
 

@@ -37,6 +37,18 @@ extract($data);
                 <div class="tw-flex tw-items-center tw-gap-3">
                     <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">Asset Editor</h1>
                 </div>
+                <div class="tw-flex tw-items-center tw-gap-2 tw-bg-slate-50 tw-px-3 tw-py-1.5 tw-rounded-lg tw-border tw-border-slate-100">
+                    <i data-lucide="<?php echo ($isJoker === 'true') ? 'globe' : 'folder'; ?>" class="tw-w-3 tw-h-3 tw-text-slate-400"></i>
+                    <span class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-wider <?php echo ($isJoker === 'true') ? 'tw-text-slate-500' : 'tw-text-primary'; ?>">
+                        <?php if ($isJoker === 'true'): ?>
+                            Shared Asset
+                        <?php elseif ($game_post): ?>
+                            <?php echo esc_html($game_post->post_title); ?>
+                        <?php else: ?>
+                            Project Asset
+                        <?php endif; ?>
+                    </span>
+                </div>
                 <div class="tw-h-4 tw-w-px tw-bg-slate-200"></div>
                 <a href="<?php echo $goBackToLink; ?>" class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-black tw-text-slate-400 hover:tw-text-primary tw-uppercase tw-tracking-wider tw-transition-all">
                     <i data-lucide="arrow-left" class="tw-w-4 tw-h-4"></i>
@@ -81,6 +93,13 @@ else { ?>
                             </div>
                         </div>
 
+                        <!-- Empty state placeholder -->
+                        <div id="preview3dPlaceholder" class="tw-absolute tw-inset-0 tw-z-5 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-slate-50 tw-pointer-events-none">
+                            <i data-lucide="box" class="tw-w-16 tw-h-16 tw-text-slate-300 tw-mb-3"></i>
+                            <span class="tw-text-sm tw-font-medium tw-text-slate-400">No 3D model loaded</span>
+                            <span class="tw-text-xs tw-text-slate-300 tw-mt-1">Upload a GLB file to preview</span>
+                        </div>
+
                         <!-- 3D Canvas -->
                         <div id="wrapper_3d_inner" class="tw-w-full tw-h-full">
                             <div id="previewCanvasLabels" class="tw-absolute tw-inset-0 tw-pointer-events-none tw-z-20"></div>
@@ -101,7 +120,7 @@ else { ?>
                         <?php
                             // --- COLOR NORMALIZATION FOR NATIVE PICKER ---
                             $raw_color = trim($asset_back_3d_color_saved);
-                            $normalized_hex = '#000000'; // Default
+                            $normalized_hex = '#FFFFFF'; // Default
                             
                             if ($raw_color) {
                                 // If it's already a hex (with or without #)

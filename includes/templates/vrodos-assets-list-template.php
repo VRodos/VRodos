@@ -56,7 +56,11 @@ function vrodos_get_asset_category_icon($category_slug) {
                 <div class="tw-flex tw-items-center tw-gap-2 tw-bg-slate-50 tw-px-3 tw-py-1.5 tw-rounded-lg tw-border tw-border-slate-100">
                     <div class="tw-flex tw-items-center tw-gap-1.5 tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-wider">
                         <i data-lucide="database" class="tw-w-3 tw-h-3"></i>
-                        <?php echo $single_project_asset_list ? "Project" : "Shared"; ?>
+                        <?php if ($single_project_asset_list && $current_game_project_post): ?>
+                            Project: <span class="tw-text-primary tw-normal-case"><?php echo esc_html($current_game_project_post->post_title); ?></span>
+                        <?php else: ?>
+                            Shared
+                        <?php endif; ?>
                     </div>
                     <?php if ($help_message): ?>
                         <div class="tw-w-px tw-h-3 tw-bg-slate-200"></div>

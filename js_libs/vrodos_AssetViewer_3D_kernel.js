@@ -507,6 +507,10 @@ class VRodos_AssetViewer_3D_kernel {
         // Hide animation button wrapper
         if (this.animationButtonWrapper) this.animationButtonWrapper.style.display = "none";
 
+        // Show placeholder again
+        var placeholder = document.getElementById('preview3dPlaceholder');
+        if (placeholder) placeholder.style.display = '';
+
         // Clear animations
         this.mixers = [];
         this.action = null;
@@ -569,6 +573,8 @@ class VRodos_AssetViewer_3D_kernel {
         // Kick renderer
         let scope = this;
         setTimeout(function () { scope.kickRendererOnDemand(); }, 500);
+        var placeholder = document.getElementById('preview3dPlaceholder');
+        if (placeholder) placeholder.style.display = 'none';
     }
 
     /* GLB GLTF loader */
@@ -613,6 +619,8 @@ class VRodos_AssetViewer_3D_kernel {
                 scope.scene.getObjectByName('root').add(gltf.scene);
                 scope.zoomer(scope.scene.getObjectByName('root'));
                 scope.kickRendererOnDemand();
+                var placeholder = document.getElementById('preview3dPlaceholder');
+                if (placeholder) placeholder.style.display = 'none';
                 //setTimeout(function(){scope.kickRendererOnDemand();} , 1);
 
             },
@@ -749,6 +757,8 @@ class VRodos_AssetViewer_3D_kernel {
                         scope.scene.getObjectByName('root').add(gltf.scene);
                         scope.zoomer(scope.scene.getObjectByName('root'));
                         scope.kickRendererOnDemand();
+                        var placeholder = document.getElementById('preview3dPlaceholder');
+                        if (placeholder) placeholder.style.display = 'none';
 
                         //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";
 
@@ -815,6 +825,8 @@ class VRodos_AssetViewer_3D_kernel {
 
                             scope.zoomer(scope.scene.getChildByName('root'));
                             scope.kickRendererOnDemand();
+                            var placeholder = document.getElementById('preview3dPlaceholder');
+                            if (placeholder) placeholder.style.display = 'none';
 
                             //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";
 
