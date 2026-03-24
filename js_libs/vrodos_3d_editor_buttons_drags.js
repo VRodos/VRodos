@@ -1,5 +1,6 @@
 // Swap a Lucide icon inside a container element
 function swapLucideIcon(container, iconName) {
+    if (!container) return;
     let icon = container.querySelector('[data-lucide], svg');
     if (icon) {
         let newIcon = document.createElement('i');
@@ -17,53 +18,53 @@ var new_screenshot_data = null;
 
 // Local
 function loadButtonActions() {
- 
+
     // Compile Project button
-    jQuery("#compileGameBtn").click(function () {
+    document.getElementById("compileGameBtn").addEventListener("click", function () {
         var dlg = document.getElementById('compile-dialog');
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
         // Pause Rendering
         isPaused = true;
-        swapLucideIcon(jQuery("#pauseRendering").get(0), "play");
+        swapLucideIcon(document.getElementById("pauseRendering"), "play");
         saveChanges();
     });
 
 
     // Cogwheel options button
-    jQuery("#optionsPopupBtn").click(function () {
+    document.getElementById("optionsPopupBtn").addEventListener("click", function () {
         var dlg = document.getElementById('options-dialog');
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
     });
 
     // Compile Proceed
-    jQuery("#compileProceedBtn").click(function () {
-        jQuery("#compileProgressSlider").show();
-        jQuery("#compileProgressTitle").show();
+    document.getElementById("compileProceedBtn").addEventListener("click", function () {
+        document.getElementById("compileProgressSlider").style.display = '';
+        document.getElementById("compileProgressTitle").style.display = '';
 
-        // jQuery("#compileProceedBtn").addClass("LinkDisabled");
-        // jQuery("#compileCancelBtn").addClass("LinkDisabled");
+        var zipLink = document.getElementById("vrodos-ziplink");
+        var webLink = document.getElementById("vrodos-weblink");
+        if (zipLink) zipLink.style.display = 'none';
+        if (webLink) webLink.style.display = 'none';
 
-        jQuery("#vrodos-ziplink").hide();
-        jQuery("#vrodos-weblink").hide();
-
-        jQuery("#compilationProgressText").html("");
-
-        jQuery('#unityTaskMemValue').html("0");
+        var progText = document.getElementById("compilationProgressText");
+        var memValue = document.getElementById("unityTaskMemValue");
+        if (progText) progText.innerHTML = "";
+        if (memValue) memValue.innerHTML = "0";
 
         vrodos_compileAjax(showPawnPositions);
     });
 
     // Compile Cancel
-    jQuery("#compileCancelBtn").click(function (e) {
+    document.getElementById("compileCancelBtn").addEventListener("click", function (e) {
 
         //Start Rendering
         isPaused = false;
-        swapLucideIcon(jQuery("#pauseRendering").get(0), "pause");
+        swapLucideIcon(document.getElementById("pauseRendering"), "pause");
         animate();
 
         // Get Pid of compile process
-        var pid = jQuery("#compileCancelBtn").attr("data-unity-pid");
+        var pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
 
         if (pid) {
             vrodos_killtask_compile(pid);
@@ -80,83 +81,91 @@ function loadButtonActions() {
         compileDlg.addEventListener('close', function () {
             if (isPaused) {
                 isPaused = false;
-                swapLucideIcon(jQuery("#pauseRendering").get(0), "pause");
+                swapLucideIcon(document.getElementById("pauseRendering"), "pause");
                 animate();
             }
             // Kill any running compile process
-            var pid = jQuery("#compileCancelBtn").attr("data-unity-pid");
+            var pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
             if (pid) vrodos_killtask_compile(pid);
         });
     }
 
     // Hierarchy Toolbar close button (Event delegation for maximum robustness)
-    jQuery(document).on('click', '#bt_close_hierarchy_toolbar', function (e) {
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('#bt_close_hierarchy_toolbar');
+        if (!btn) return;
         e.preventDefault();
-        let btn = jQuery(this);
-        let panel = jQuery("#right-elements-panel");
+        var panel = document.getElementById("right-elements-panel");
 
-        if (btn.hasClass("HierarchyToggleOn")) {
-            btn.addClass("HierarchyToggleOff").removeClass("HierarchyToggleOn");
-            btn.data('toggle', 'off');
-            swapLucideIcon(this, 'chevron-left');
-            panel.addClass("closed");
+        if (btn.classList.contains("HierarchyToggleOn")) {
+            btn.classList.add("HierarchyToggleOff");
+            btn.classList.remove("HierarchyToggleOn");
+            btn.dataset.toggle = 'off';
+            swapLucideIcon(btn, 'chevron-left');
+            panel.classList.add("closed");
         } else {
-            btn.addClass("HierarchyToggleOn").removeClass("HierarchyToggleOff");
-            btn.data('toggle', 'on');
-            swapLucideIcon(this, 'chevron-right');
-            panel.removeClass("closed");
+            btn.classList.add("HierarchyToggleOn");
+            btn.classList.remove("HierarchyToggleOff");
+            btn.dataset.toggle = 'on';
+            swapLucideIcon(btn, 'chevron-right');
+            panel.classList.remove("closed");
         }
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
     // File Browser Toolbar close button (Event delegation for maximum robustness)
-    jQuery(document).on('click', '#bt_close_file_toolbar', function (e) {
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('#bt_close_file_toolbar');
+        if (!btn) return;
         e.preventDefault();
-        let btn = jQuery(this);
-        let toolbar = jQuery("#assetBrowserToolbar");
-        
-        if (btn.hasClass("AssetsToggleOn")) {
-            btn.addClass("AssetsToggleOff").removeClass("AssetsToggleOn");
-            btn.data('toggle', 'off');
-            swapLucideIcon(this, 'chevron-right');
-            toolbar.addClass("closed");
+        var toolbar = document.getElementById("assetBrowserToolbar");
+
+        if (btn.classList.contains("AssetsToggleOn")) {
+            btn.classList.add("AssetsToggleOff");
+            btn.classList.remove("AssetsToggleOn");
+            btn.dataset.toggle = 'off';
+            swapLucideIcon(btn, 'chevron-right');
+            toolbar.classList.add("closed");
         } else {
-            btn.addClass("AssetsToggleOn").removeClass("AssetsToggleOff");
-            btn.data('toggle', 'on');
-            swapLucideIcon(this, 'chevron-left');
-            toolbar.removeClass("closed");
+            btn.classList.add("AssetsToggleOn");
+            btn.classList.remove("AssetsToggleOff");
+            btn.dataset.toggle = 'on';
+            swapLucideIcon(btn, 'chevron-left');
+            toolbar.classList.remove("closed");
         }
-        
+
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
     // Scenes List Toolbar close button
-    jQuery("#scenesList-toggle-btn").click(function () {
-        let wrapper = jQuery("#scenesDrawerWrapper");
-        let btn = jQuery("#scenesList-toggle-btn");
+    document.getElementById("scenesList-toggle-btn").addEventListener("click", function () {
+        var wrapper = document.getElementById("scenesDrawerWrapper");
+        var btn = document.getElementById("scenesList-toggle-btn");
 
-        if (btn.hasClass("scenesListToggleOn")) {
-            btn.addClass("scenesListToggleOff").removeClass("scenesListToggleOn");
+        if (btn.classList.contains("scenesListToggleOn")) {
+            btn.classList.add("scenesListToggleOff");
+            btn.classList.remove("scenesListToggleOn");
             swapLucideIcon(this, 'chevron-up');
-            wrapper.addClass("closed-drawer");
+            wrapper.classList.add("closed-drawer");
         } else {
-            btn.addClass("scenesListToggleOn").removeClass("scenesListToggleOff");
+            btn.classList.add("scenesListToggleOn");
+            btn.classList.remove("scenesListToggleOff");
             swapLucideIcon(this, 'chevron-down');
-            wrapper.removeClass("closed-drawer");
+            wrapper.classList.remove("closed-drawer");
         }
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
     // Take SCREENSHOT OF SCENE
-    jQuery("#takeScreenshotBtn").click(function () {
+    document.getElementById("takeScreenshotBtn").addEventListener("click", function () {
         takeScreenshot();
         is_scene_icon_manually_selected = false;
     });
 
     // Select image as Scene icon
-    jQuery("#vrodos_scene_sshot_manual_select").change(function () {
+    document.getElementById("vrodos_scene_sshot_manual_select").addEventListener("change", function () {
         readLocalImageAsSceneIcon(this);
     });
 
@@ -166,7 +175,7 @@ function loadButtonActions() {
             let reader = new FileReader();
 
             reader.onload = function (e) {
-                jQuery('#vrodos_scene_sshot').attr('src', e.target.result);
+                document.getElementById('vrodos_scene_sshot').src = e.target.result;
                 is_scene_icon_manually_selected = true;
             };
 
@@ -176,24 +185,24 @@ function loadButtonActions() {
 
 
     // DELETE SCENE DIALOGUE
-    jQuery("#deleteSceneDialogDeleteBtn").click(function (e) {
-        jQuery('#delete-scene-dialog-progress-bar').show();
-        jQuery("#deleteSceneDialogDeleteBtn").addClass("LinkDisabled");
-        jQuery("#deleteSceneDialogCancelBtn").addClass("LinkDisabled");
+    document.getElementById("deleteSceneDialogDeleteBtn").addEventListener("click", function (e) {
+        document.getElementById('delete-scene-dialog-progress-bar').style.display = '';
+        document.getElementById("deleteSceneDialogDeleteBtn").classList.add("LinkDisabled");
+        document.getElementById("deleteSceneDialogCancelBtn").classList.add("LinkDisabled");
         var dlg = document.getElementById('delete-dialog');
         vrodos_deleteSceneAjax(dlg.dataset.sceneId, url_scene_redirect);
     });
 
-    jQuery("#deleteSceneDialogCancelBtn").click(function (e) {
-        jQuery('#delete-scene-dialog-progress-bar').hide();
+    document.getElementById("deleteSceneDialogCancelBtn").addEventListener("click", function (e) {
+        document.getElementById('delete-scene-dialog-progress-bar').style.display = 'none';
         var dlg = document.getElementById('delete-dialog');
         if (dlg && dlg.open) dlg.close();
     });
 
 
-    // Select image as Scene icon
-    jQuery(".cardDeleteIcon").each(function (index) {
-        jQuery(this).on("click", function () {
+    // Scene card delete icons (delegated)
+    document.querySelectorAll(".cardDeleteIcon").forEach(function (el) {
+        el.addEventListener("click", function () {
             deleteScene(this);
         });
     });
@@ -215,7 +224,7 @@ function loadButtonActions() {
     }
 
     // Toggle JSON viewer dialog
-    jQuery('#toggleViewSceneContentBtn').click(function () {
+    document.getElementById('toggleViewSceneContentBtn').addEventListener('click', function () {
         var dialog = document.getElementById('sceneJsonContent');
         if (dialog.open) {
             dialog.close();
@@ -228,12 +237,12 @@ function loadButtonActions() {
     });
 
     // Close JSON dialog via close button
-    jQuery('#closeJsonBtn').click(function () {
+    document.getElementById('closeJsonBtn').addEventListener('click', function () {
         document.getElementById('sceneJsonContent').close();
     });
 
     // Copy JSON to clipboard
-    jQuery('#copyJsonBtn').click(function () {
+    document.getElementById('copyJsonBtn').addEventListener('click', function () {
         var textarea = document.getElementById('vrodos_scene_json_input');
         navigator.clipboard.writeText(textarea.value).then(function () {
             var btn = document.getElementById('copyJsonBtn');
@@ -281,7 +290,7 @@ function loadButtonActions() {
 
             if (envir.is2d) {
                 transform_controls.setMode("translate");
-                jQuery("#translatePanelGui").show();
+                document.getElementById("translatePanelGui").style.display = '';
             }
 
             ev.preventDefault();
@@ -295,53 +304,55 @@ function loadButtonActions() {
         };
 
 
-    if (jQuery("#pauseRendering").get(0)) {
-        jQuery("#pauseRendering").get(0).addEventListener('mousedown', function (event) {
+    var pauseBtn = document.getElementById("pauseRendering");
+    if (pauseBtn) {
+        pauseBtn.addEventListener('mousedown', function (event) {
             pauseClickFun();
         }, false);
     }
 
 
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
-    jQuery('#save-scene-button').click(function () {
+    document.getElementById('save-scene-button').addEventListener('click', function () {
 
         let save_scene_btn = document.getElementById("save-scene-button");
         if (save_scene_btn.classList.contains("LinkDisabled")){
             return;
         }
 
-        jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
+        save_scene_btn.innerHTML = "Saving...";
+        save_scene_btn.classList.add("LinkDisabled");
         document.getElementById("compileGameBtn").disabled = true;
 
         // Export using the new VrodosSceneExporter
         let exporter = new VrodosSceneExporter();
         document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-        //console.log(document.getElementById('vrodos_scene_json_input').value);
-
         vrodos_saveSceneAjax();
     });
 
 
     // UNDO button
-    jQuery('#undo-scene-button').click(function () {
+    document.getElementById('undo-scene-button').addEventListener('click', function () {
 
         post_revision_no += 1;
 
         document.getElementById('redo-scene-button').style.visibility = 'visible';
 
-        jQuery('#undo-scene-button').html("...").addClass("LinkDisabled");
+        this.innerHTML = "...";
+        this.classList.add("LinkDisabled");
 
         vrodos_undoSceneAjax(uploadDir, post_revision_no);
     });
 
     // REDO button
-    jQuery('#redo-scene-button').click(function () {
+    document.getElementById('redo-scene-button').addEventListener('click', function () {
 
         if (post_revision_no >= 1) {
             post_revision_no -= 1;
 
-            jQuery('#redo-scene-button').html("...").addClass("LinkDisabled");
+            this.innerHTML = "...";
+            this.classList.add("LinkDisabled");
             vrodos_redoSceneAjax(uploadDir, post_revision_no);
 
             if (post_revision_no < 1) {
@@ -352,42 +363,43 @@ function loadButtonActions() {
 
 
     // Autorotate in 3D
-    jQuery('#toggle-tour-around-btn').click(function () {
+    document.getElementById('toggle-tour-around-btn').addEventListener('click', function () {
 
-        var btn = jQuery('#toggle-tour-around-btn');
+        var btn = this;
 
         if (envir.is2d)
-            jQuery("#dim-change-btn").click();
+            document.getElementById("dim-change-btn").click();
 
-        if (btn.data('toggle') === 'off') {
+        if (btn.dataset.toggle === 'off') {
 
             envir.orbitControls.autoRotate = true;
             envir.orbitControls.autoRotateSpeed = 0.6;
-            btn.data('toggle', 'on');
+            btn.dataset.toggle = 'on';
 
         } else {
 
             envir.orbitControls.autoRotate = false;
-            btn.data('toggle', 'off');
+            btn.dataset.toggle = 'off';
         }
 
-        btn.toggleClass('toggle-active');
+        btn.classList.toggle('toggle-active');
     });
 
     if (firstPersonBlockerBtn) {
         firstPersonBlockerBtn.addEventListener('click', function (event) {
 
             firstPersonViewWithoutLock();
-            jQuery("#firstPersonBlockerBtn").toggleClass('toggle-active');
+            document.getElementById("firstPersonBlockerBtn").classList.toggle('toggle-active');
 
         }, false);
     }
 
 
     // 3D Widgets change mode (Translation-Rotation-Scale)
-    jQuery("#object-manipulation-toggle").click(function () {
+    document.getElementById("object-manipulation-toggle").addEventListener("click", function () {
 
-        let mode = jQuery("input[name='object-manipulation-switch']:checked").val();
+        var checked = document.querySelector("input[name='object-manipulation-switch']:checked");
+        let mode = checked ? checked.value : 'translate';
 
         // Sun and Target spot can not change control manipulation mode
         if (transform_controls.object) {
@@ -410,19 +422,19 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 });
 
     // Axis Increase size btn
-    jQuery("#axis-size-increase-btn").click(function () {
+    document.getElementById("axis-size-increase-btn").addEventListener("click", function () {
         transform_controls.setSize(transform_controls.size * 1.1);
     });
 
     // Axis Decrease size btn
-    jQuery("#axis-size-decrease-btn").click(function () {
+    document.getElementById("axis-size-decrease-btn").addEventListener("click", function () {
         transform_controls.setSize(Math.max(transform_controls.size * 0.9, 0.1));
     });
 
     // Toggle 2D vs 3D button
-    jQuery("#dim-change-btn").click(function () {
+    document.getElementById("dim-change-btn").addEventListener("click", function () {
 
-        jQuery("#translate-switch").click();
+        document.getElementById("translate-switch").click();
 
         if (envir.is2d) {
             //3d
@@ -430,38 +442,30 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             envir.gridHelper.visible = true;
             envir.axesHelper.visible = true;
 
-            jQuery("#object-manipulation-toggle")[0].style.display = "";
-            jQuery("#dim-change-btn").text("3D").attr("title", "3D mode");
+            document.getElementById("object-manipulation-toggle").style.display = "";
+            var dimBtn3d = document.getElementById("dim-change-btn");
+            dimBtn3d.textContent = "3D";
+            dimBtn3d.title = "3D mode";
 
             envir.is2d = false;
             transform_controls.setMode("translate");
 
         } else {
 
-            // envir.cameraOrbit.rotation._x = - Math.PI/2;
-            // envir.cameraOrbit.rotation._y = 0;
-            // envir.cameraOrbit.rotation._z = 0;
-
-            // ToDo: Zoom
             envir.orbitControls.reset();
-
-            //envir.orbitControls.object.quaternion = new THREE.Quaternion(0.707, 0 , 0, 0.707);
-
-            // envir.avatarControls.getObject().quaternion.set(0,0,0,1);
-            // envir.avatarControls.getObject().children[0].rotation.set(0,0,0);
-
 
             envir.orbitControls.enableRotate = false;
             envir.gridHelper.visible = false;
             envir.axesHelper.visible = false;
 
-            jQuery("#object-manipulation-toggle")[0].style.display = "none";
-            jQuery("#dim-change-btn").text("2D").attr("title", "2D mode");
+            document.getElementById("object-manipulation-toggle").style.display = "none";
+            var dimBtn2d = document.getElementById("dim-change-btn");
+            dimBtn2d.textContent = "2D";
+            dimBtn2d.title = "2D mode";
 
             envir.is2d = true;
             transform_controls.setMode("translate");
 
-            // envir.scene.getObjectByName("SteveOld").visible = false;
             envir.scene.getObjectByName("Camera3Dmodel").visible = true;
         }
 
@@ -469,13 +473,13 @@ transform_controls.addEventListener('dragging-changed', function (event) {
         envir.updateCameraGivenSceneLimits();
 
         envir.orbitControls.object.updateProjectionMatrix();
-        jQuery("#dim-change-btn").toggleClass('toggle-active');
+        document.getElementById("dim-change-btn").classList.toggle('toggle-active');
     });
 
 
     // Main canvas handlers
 
-    let canvas3D = jQuery("#vr_editor_main_div canvas").get(0);
+    let canvas3D = document.querySelector("#vr_editor_main_div canvas");
 
     // Update DAT GUI only when mouse pointer is active.
     canvas3D.addEventListener("mousemove", (event) => {
@@ -499,16 +503,13 @@ transform_controls.addEventListener('dragging-changed', function (event) {
     // Auto save listener
     envir.scene.addEventListener("modificationPendingSave", saveScene);
 
-    // Prevent showing the context menu (normal behaviour when rightclicking in web items)
-    jQuery("#popUpArtifactPropertiesDiv").bind('contextmenu', function (e) { return false; });
-    jQuery("#popUpDoorPropertiesDiv").bind('contextmenu', function (e) { return false; });
-
-    jQuery("#popUpPoiImageTextPropertiesDiv").bind('contextmenu', function (e) { return false; });
-    jQuery("#popUpPoiVideoPropertiesDiv").bind('contextmenu', function (e) { return false; });
-    jQuery("#popUpSunPropertiesDiv").bind('contextmenu', function (e) { return false; });
-    jQuery("#popUpLampPropertiesDiv").bind('contextmenu', function (e) { return false; });
-    jQuery("#popUpSpotPropertiesDiv").bind('contextmenu', function (e) { return false; });
-    jQuery("#popUpAmbientPropertiesDiv").bind('contextmenu', function (e) { return false; });
+    // Prevent showing the context menu on property panels
+    ['popUpArtifactPropertiesDiv', 'popUpDoorPropertiesDiv', 'popUpPoiImageTextPropertiesDiv',
+     'popUpPoiVideoPropertiesDiv', 'popUpSunPropertiesDiv', 'popUpLampPropertiesDiv',
+     'popUpSpotPropertiesDiv', 'popUpAmbientPropertiesDiv'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    });
 
 
     // Toggle UIs to clear out vision
@@ -645,7 +646,7 @@ function setVisiblityLightHelpingElements(statusVisibility) {
 
 function pauseClickFun() {
     isPaused = !isPaused;
-    swapLucideIcon(jQuery("#pauseRendering").get(0), isPaused ? "pause" : "play");
+    swapLucideIcon(document.getElementById("pauseRendering"), isPaused ? "pause" : "play");
 
     if (!isPaused) {
         animate();
@@ -662,24 +663,22 @@ function pauseClickFun() {
                 node.play();
         }
     });
-
-
-
-
 }
 
 
 
 // Hide right click panel for object properties
 function hideObjectPropertiesPanels() {
-    jQuery("#translatePanelGui").hide();
-    jQuery("#rotatePanelGui").hide();
-    jQuery("#scalePanelGui").hide();
+    var el;
+    el = document.getElementById("translatePanelGui"); if (el) el.style.display = 'none';
+    el = document.getElementById("rotatePanelGui");    if (el) el.style.display = 'none';
+    el = document.getElementById("scalePanelGui");     if (el) el.style.display = 'none';
 }
 
 function showObjectPropertiesPanel(type) {
     hideObjectPropertiesPanels();
-    jQuery("#" + type + "PanelGui").show();
+    var el = document.getElementById(type + "PanelGui");
+    if (el) el.style.display = '';
 }
 
 // Take screenshot of scene
@@ -690,21 +689,34 @@ function takeScreenshot() {
         envir.scene.getObjectByName("myTransformControls").visible = false;
     }
 
-    envir.renderer.preserveDrawingBuffer = true;
+    // Render to an offscreen canvas to capture the screenshot reliably
+    var camera = avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit;
+    var w = envir.renderer.domElement.width;
+    var h = envir.renderer.domElement.height;
 
-    // Save screenshot data to input
-    envir.renderer.render(envir.scene, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
+    var offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
+    offscreenRenderer.setSize(w, h);
+    offscreenRenderer.render(envir.scene, camera);
 
-    // if no manually selected file for icon, then take a screenshot of the 3D canvas
-    //if (document.getElementById("vrodos_scene_sshot").src.includes("noimagemagicword"))
-
-    new_screenshot_data = envir.renderer.domElement.toDataURL("image/jpeg");
+    new_screenshot_data = offscreenRenderer.domElement.toDataURL("image/jpeg");
     document.getElementById("vrodos_scene_sshot").src = new_screenshot_data;
-    envir.renderer.preserveDrawingBuffer = false;
 
-    //envir.cameraAvatarHelper.visible = true;
-    //envir.axisHelper.visible = true;
-    //envir.gridHelper.visible = true;
+    // Also update the current scene's drawer thumbnail
+    var drawerThumb = document.querySelector('.current-scene-thumb');
+    if (drawerThumb) {
+        drawerThumb.src = new_screenshot_data;
+    } else {
+        // If placeholder (no previous screenshot), replace it with an img
+        var placeholder = document.querySelector('.current-scene-thumb-placeholder');
+        if (placeholder) {
+            var img = document.createElement('img');
+            img.src = new_screenshot_data;
+            img.className = 'tw-w-full tw-h-full tw-object-cover current-scene-thumb';
+            placeholder.replaceWith(img);
+        }
+    }
+
+    offscreenRenderer.dispose();
 
     if (envir.scene.getObjectByName("myTransformControls"))
         envir.scene.getObjectByName("myTransformControls").visible = true;
@@ -724,7 +736,7 @@ function saveScene(e) {
         mapActions[e.type] = true;
 
         if (mapActions['mouseup'] && mapActions['modificationPendingSave']) {
-            jQuery('#save-scene-button').click();
+            document.getElementById('save-scene-button').click();
             mapActions = {};
             return;
         }
@@ -737,15 +749,7 @@ function triggerAutoSave() {
     // Add an event listener to scene
     envir.scene.dispatchEvent({ type: "modificationPendingSave" });
 
-    // Make a click event
-    let clickEvent = document.createEvent('MouseEvents');
-
-    // On mouse up initialize an event
-    clickEvent.initEvent("mouseup", true, true);
-
-    // Send the click with jQuery
-    jQuery("#vr_editor_main_div canvas").get(0).dispatchEvent(clickEvent);
+    // Dispatch mouseup on the canvas to trigger save
+    var canvas = document.querySelector("#vr_editor_main_div canvas");
+    if (canvas) canvas.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }));
 }
-
-
-

@@ -20,6 +20,7 @@ extract($data);
         let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
         let no_img_path = '<?php echo esc_url($no_img_path_url ?? ''); ?>';
         var asset_title = <?php echo json_encode($asset_title_value); ?>;
+        var vrodos_isEditable = <?php echo $isEditable ? 'true' : 'false'; ?>;
     </script>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
@@ -58,7 +59,7 @@ extract($data);
         </div>
     </header>
 
-    <?php if (!is_user_logged_in() || !current_user_can('administrator')) { ?>
+    <?php if (!is_user_logged_in()) { ?>
         <main class="tw-flex-1 tw-flex tw-items-center tw-justify-center tw-p-8">
             <div class="tw-max-w-md tw-w-full tw-bg-white tw-rounded-3xl tw-p-10 tw-border tw-border-slate-200 tw-shadow-xl tw-text-center">
                 <div class="tw-w-20 tw-h-20 tw-bg-slate-50 tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-6">
@@ -75,6 +76,12 @@ extract($data);
     <?php
 }
 else { ?>
+        <?php if (!$isOwner && !$isUserAdmin && $isEditMode) { ?>
+            <div class="tw-bg-amber-50 tw-border-b tw-border-amber-200 tw-px-8 tw-py-2 tw-flex tw-items-center tw-gap-2">
+                <i data-lucide="eye" class="tw-w-4 tw-h-4 tw-text-amber-600"></i>
+                <span class="tw-text-xs tw-font-bold tw-text-amber-700">View Only — You do not own this asset</span>
+            </div>
+        <?php } ?>
         <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col tw-min-h-0 tw-m-0 tw-bg-slate-50">
             <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-hidden tw-min-h-0 tw-bg-slate-50">
             
@@ -666,7 +673,17 @@ else { ?>
 			}
 		};
 
-		document.addEventListener('DOMContentLoaded', initIcons);
+		document.addEventListener('DOMContentLoaded', function() {
+			initIcons();
+			// Disable all form inputs if user cannot edit this asset
+			if (!vrodos_isEditable) {
+				var form = document.getElementById('3dAssetForm');
+				if (form) {
+					var inputs = form.querySelectorAll('input, textarea, select, button');
+					inputs.forEach(function(el) { el.disabled = true; });
+				}
+			}
+		});
 
 		let generateVideoSshot = (canvas, video) => {
 			let ctx = canvas.getContext('2d');

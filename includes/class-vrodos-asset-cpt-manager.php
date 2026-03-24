@@ -90,6 +90,19 @@ class VRodos_Asset_CPT_Manager {
 			return;
 		}
 
+		// Permission check: must be logged in, and must be asset owner or admin
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
+		$current_user_id = get_current_user_id();
+		$editing_asset_id = isset( $_GET['vrodos_asset'] ) ? absint( $_GET['vrodos_asset'] ) : 0;
+		if ( $editing_asset_id > 0 ) {
+			$asset_author = get_post_field( 'post_author', $editing_asset_id );
+			if ( $current_user_id != $asset_author && ! current_user_can( 'administrator' ) ) {
+				return; // Not owner and not admin — reject
+			}
+		}
+
 		$asset_id       = isset( $_GET['vrodos_asset'] ) ? sanitize_text_field( intval( $_GET['vrodos_asset'] ) ) : null;
 		$project_id     = isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
 		$game_post      = get_post( $project_id );

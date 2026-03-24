@@ -25,7 +25,8 @@ function vrodos_deleteSceneAjax(scene_id, url_scene_redirect) {
 		document.getElementById( 'deleteSceneDialogDeleteBtn' ).classList.remove( 'LinkDisabled' );
 		document.getElementById( 'deleteSceneDialogCancelBtn' ).classList.remove( 'LinkDisabled' );
 
-		deleteDialog.close();
+		var dlg = document.getElementById('delete-dialog');
+		if (dlg && dlg.open) dlg.close();
 
 		let sceneEl = document.getElementById( "scene-" + scene_id );
 		if (sceneEl) {
@@ -43,7 +44,7 @@ function vrodos_deleteSceneAjax(scene_id, url_scene_redirect) {
 		document.getElementById( 'deleteSceneDialogDeleteBtn' ).classList.remove( 'LinkDisabled' );
 		document.getElementById( 'deleteSceneDialogCancelBtn' ).classList.remove( 'LinkDisabled' );
 
-		alert( "Could not delete game. Try deleting it from the administration panel" );
+		alert( "Could not delete scene. Try deleting it from the administration panel." );
 		console.log( "Ajax Delete Scene: ERROR: 167 " + err );
 	});
 

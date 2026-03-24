@@ -3586,6 +3586,11 @@ body {
   border-color: rgb(255 255 255 / 0.5);
 }
 
+.vrodos-manager-wrapper .tw-border-amber-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(253 230 138 / var(--tw-border-opacity, 1));
+}
+
 .vrodos-manager-wrapper .tw-border-b-slate-900 {
   --tw-border-opacity: 1;
   border-bottom-color: rgb(15 23 42 / var(--tw-border-opacity, 1));
@@ -3756,6 +3761,11 @@ body {
   background-color: rgb(255 255 255 / 0.9);
 }
 
+.vrodos-manager-wrapper .tw-bg-amber-50 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 251 235 / var(--tw-bg-opacity, 1));
+}
+
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
   background-image: linear-gradient(to top, var(--tw-gradient-stops));
 }
@@ -3921,6 +3931,11 @@ body {
 .vrodos-manager-wrapper .tw-py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+.vrodos-manager-wrapper .tw-py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .vrodos-manager-wrapper .\!tw-pl-12 {
@@ -4291,6 +4306,16 @@ body {
 
 .vrodos-manager-wrapper .tw-text-white\/90 {
   color: rgb(255 255 255 / 0.9);
+}
+
+.vrodos-manager-wrapper .tw-text-amber-600 {
+  --tw-text-opacity: 1;
+  color: rgb(217 119 6 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-amber-700 {
+  --tw-text-opacity: 1;
+  color: rgb(180 83 9 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-no-underline {

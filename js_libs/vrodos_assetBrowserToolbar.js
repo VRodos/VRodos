@@ -170,12 +170,15 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                         '<i data-lucide="' + lucideIconName + '" class="tw-w-3 tw-h-3 tw-text-slate-200"></i>' +
                     '</div>' +
 
-                    '<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">' +
-                        (f['is_joker'] === 'false' ?
-                            '<button class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=0&editable=true\'">EDIT</button>' :
-                            '<button class="tw-w-full tw-bg-emerald-500/80 hover:tw-bg-emerald-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=1&editable=false\'">VIEW</button>'
-                        ) +
-                    '</div>' +
+                    (function() {
+                        var canEditThis = !!vrodos_data.isUserAdmin || (String(f['author_id']) === String(vrodos_data.current_user_id));
+                        if (canEditThis) {
+                            return '<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">' +
+                                '<button class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=0&editable=true\'">EDIT</button>' +
+                            '</div>';
+                        }
+                        return '';
+                    })() +
 
                     '<div id="deleteAssetProgressBar-' + f['asset_id'] + '" class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-h-0.5 tw-bg-slate-700 tw-hidden tw-z-20">' +
                         '<div class="tw-h-full tw-bg-indigo-500 tw-animate-pulse"></div>' +

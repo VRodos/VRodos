@@ -136,17 +136,23 @@ function vrodos_get_asset_category_icon($category_slug) {
                 </div>
             </a>
 
-            <?php 
-            foreach ( $assets as $asset ) : 
-                $pGameId = get_page_by_path( $asset['asset_parent_game_slug'], OBJECT, 'vrodos_game' )->ID; ?>
-                
+            <?php
+            foreach ( $assets as $asset ) :
+                $pGameId = get_page_by_path( $asset['asset_parent_game_slug'], OBJECT, 'vrodos_game' )->ID;
+                $can_edit_asset = $is_user_admin || ( $user_id == $asset['author_id'] );
+                $edit_link = $link_to_edit . 'vrodos_asset=' . $asset['asset_id'] . '&vrodos_game=' . $pGameId . '&preview=0';
+            ?>
+
                 <div id="<?php echo $asset['asset_id']; ?>" class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
                      data-category="<?php echo esc_attr(sanitize_title($asset['category_name'])); ?>"
                      data-visibility="<?php echo ($asset['is_joker'] == 'true') ? 'shared' : 'private'; ?>">
-                    
+
                     <!-- Clickable Area for Edit -->
-                    <a href="<?php echo $link_to_edit . 'vrodos_asset=' . $asset['asset_id'] . '&vrodos_game=' . $pGameId . '&preview=0'; ?>" 
+                    <?php if ( $can_edit_asset ) : ?>
+                    <a href="<?php echo $edit_link; ?>"
                        class="tw-block tw-relative tw-aspect-[4/3] tw-bg-slate-100 tw-overflow-hidden vr-glow-card tw-group/thumb">
+                    <?php else : ?>
+                    <div class="tw-block tw-relative tw-aspect-[4/3] tw-bg-slate-100 tw-overflow-hidden tw-group/thumb">
                         
                         <?php if ( $asset['screenshot_path'] ) : ?>
                             <img src="<?php echo $asset['screenshot_path']; ?>" 
@@ -158,12 +164,14 @@ function vrodos_get_asset_category_icon($category_slug) {
                             </div>
                         <?php endif; ?>
 
-                        <!-- Edit Hover Overlay -->
+                        <!-- Hover Overlay -->
+                        <?php if ( $can_edit_asset ) : ?>
                         <div class="tw-absolute tw-inset-0 tw-bg-primary/20 tw-opacity-0 group-hover/thumb:tw-opacity-100 tw-transition-opacity tw-duration-300 tw-flex tw-items-center tw-justify-center">
                              <div class="tw-bg-white/90 tw-backdrop-blur-sm tw-p-3 tw-rounded-full tw-shadow-xl tw-transform tw-scale-75 group-hover/thumb:tw-scale-100 tw-transition-transform tw-duration-300">
                                 <i data-lucide="pencil" class="tw-w-5 tw-h-5 tw-text-primary"></i>
                              </div>
                         </div>
+                        <?php endif; ?>
 
                         <!-- Absolute Badges (Refined) -->
                         <div class="tw-absolute tw-top-3 tw-left-3 tw-flex tw-flex-col tw-gap-1.5 tw-items-start">
@@ -185,16 +193,23 @@ function vrodos_get_asset_category_icon($category_slug) {
                                 </span>
                             <?php endif; ?>
                         </div>
-                    </a>
+                    <?php echo $can_edit_asset ? '</a>' : '</div>'; ?>
 
                     <!-- Content -->
                     <div class="tw-p-5 tw-flex-1 tw-flex tw-flex-col">
                         <div class="tw-flex tw-justify-between tw-items-start tw-mb-3">
-                            <a href="<?php echo $link_to_edit . 'vrodos_asset=' . $asset['asset_id'] . '&vrodos_game=' . $pGameId . '&preview=0'; ?>" 
+                            <?php if ( $can_edit_asset ) : ?>
+                            <a href="<?php echo $edit_link; ?>"
                                class="tw-block hover:tw-text-primary tw-transition-colors tw-min-w-0">
                                 <h3 class="tw-font-bold tw-text-slate-800 tw-leading-tight tw-mb-1 tw-truncate"><?php echo $asset['asset_name']; ?></h3>
                                 <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_joker'] === 'true') ? 'public' : $asset['asset_parent_game_slug']; ?></p>
                             </a>
+                            <?php else : ?>
+                            <div class="tw-min-w-0">
+                                <h3 class="tw-font-bold tw-text-slate-800 tw-leading-tight tw-mb-1 tw-truncate"><?php echo $asset['asset_name']; ?></h3>
+                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_joker'] === 'true') ? 'public' : $asset['asset_parent_game_slug']; ?></p>
+                            </div>
+                            <?php endif; ?>
                             
                             <!-- Trash Button -->
                             <?php if ( $is_user_admin || ( $user_id == $asset['author_id'] ) ) : ?>

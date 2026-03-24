@@ -404,8 +404,8 @@ class VRodos_LoaderMulti {
 
                         //updateFog("undo");
 
-                        if (resources3D[name].backgroundStyleOption !== undefined){
-                            envir.scene.backgroundStyleOption = parseInt(resources3D[name].backgroundStyleOption) || 0;
+                        {
+                            envir.scene.backgroundStyleOption = (resources3D[name].backgroundStyleOption !== undefined) ? parseInt(resources3D[name].backgroundStyleOption) || 0 : 0;
                          
                               
                             let color_sel = document.getElementById('jscolorpick');

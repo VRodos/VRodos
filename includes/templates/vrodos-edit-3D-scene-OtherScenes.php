@@ -62,9 +62,9 @@ global $parameter_Scenepass;
 					<div class="SceneThumbnail">
 						<a href="<?php echo $edit_page_link; ?>" class="tw-block tw-w-full tw-h-full">
 							<?php if ( has_post_thumbnail( $scene_id ) ) : ?>
-								<?php echo get_the_post_thumbnail( $scene_id, 'thumbnail', ['class' => 'tw-w-full tw-h-full tw-object-cover'] ); ?>
+								<?php echo get_the_post_thumbnail( $scene_id, 'thumbnail', ['class' => 'tw-w-full tw-h-full tw-object-cover' . ($is_current ? ' current-scene-thumb' : '')] ); ?>
 							<?php else : ?>
-								<div class="tw-w-full tw-h-full tw-bg-slate-800/80 tw-flex tw-items-center tw-justify-center">
+								<div class="tw-w-full tw-h-full tw-bg-slate-800/80 tw-flex tw-items-center tw-justify-center <?php echo $is_current ? 'current-scene-thumb-placeholder' : ''; ?>">
 									<i data-lucide="image" class="tw-w-6 tw-h-6 tw-text-slate-500"></i>
 								</div>
 							<?php endif; ?>
