@@ -1,26 +1,21 @@
 //  AJAX: FETCH Assets 3d
 let vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) => {
 
-    jQuery.ajax({
-        url: isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_fbrowse.ajax_url,
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            'action': 'vrodos_fetch_game_assets_action',
-            'gameProjectSlug': gameProjectSlug,
-            'gameProjectID': gameProjectID
-        },
-
-        success: function (responseRecords) {
-
-            responseRecords = responseRecords.items;
-
-            file_Browsing_By_DB(responseRecords, gameProjectSlug, urlforAssetEdit);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            console.log("ERROR 51:" + thrownError);
-        }
+    var url = isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_fbrowse.ajax_url;
+    var body = new URLSearchParams({
+        'action': 'vrodos_fetch_game_assets_action',
+        'gameProjectSlug': gameProjectSlug,
+        'gameProjectID': gameProjectID
     });
+
+    fetch(url, { method: 'POST', body: body })
+        .then(function(r) { return r.json(); })
+        .then(function(responseRecords) {
+            file_Browsing_By_DB(responseRecords.items, gameProjectSlug, urlforAssetEdit);
+        })
+        .catch(function(err) {
+            console.log("ERROR 51:" + err);
+        });
 }
 
 /**
@@ -29,116 +24,95 @@ let vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAsset
  */
 function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
-    let filemanager = jQuery('#assetBrowserToolbar');
-    // breadcrumbs = jQuery('.breadcrumbs'),
-    let fileList = filemanager.find('.data');
-    // closeButton = jQuery('#bt_close_file_toolbar');
+    let filemanager = document.getElementById('assetBrowserToolbar');
+    let fileList = filemanager.querySelector('.data');
 
-
-    // Create drag image BEFORE event is fired - THEN call it inside the event
-    function createDragImage() {
-        var img = jQuery('<img>');
-        img.attr('src', pluginPath + '/images/ic_asset.png');
-        img.css({
-            "top": 0,
-            "left": 0,
-            "width": "60px",
-            "height": "40px",
-            "position": "absolute",
-            "pointerEvents": "none"
-        }).appendTo(document.body);
-        setTimeout(function () {
-            img.remove();
-        });
-        return img[0];
-    }
-    let dragImg = createDragImage();
+    // Persistent drag ghost element — styled card with thumbnail + name
+    var dragGhost = document.createElement('div');
+    Object.assign(dragGhost.style, {
+        position: 'absolute', top: '-9999px', left: '-9999px',
+        width: '120px', borderRadius: '8px', overflow: 'hidden',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35)', pointerEvents: 'none',
+        background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)'
+    });
+    var dragGhostImg = document.createElement('img');
+    Object.assign(dragGhostImg.style, { width: '100%', height: '72px', objectFit: 'cover', display: 'block' });
+    var dragGhostLabel = document.createElement('div');
+    Object.assign(dragGhostLabel.style, {
+        padding: '4px 6px', fontSize: '9px', fontWeight: '700',
+        color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden',
+        textOverflow: 'ellipsis', textAlign: 'center', letterSpacing: '0.03em'
+    });
+    dragGhost.appendChild(dragGhostImg);
+    dragGhost.appendChild(dragGhostLabel);
+    document.body.appendChild(dragGhost);
 
     render(responseData, gameProjectSlug, urlforAssetEdit);
 
     // Hiding and showing the search box
-    filemanager.find('.search').click(function () {
-        var search = jQuery(this);
-        search.find('span').hide();
-        search.find('input[type=search]').show().focus();
-    });
+    var searchBox = filemanager.querySelector('.search');
+    if (searchBox) {
+        searchBox.addEventListener('click', function () {
+            var span = this.querySelector('span');
+            var input = this.querySelector('input[type=search]');
+            if (span) span.style.display = 'none';
+            if (input) { input.style.display = ''; input.focus(); }
+        });
+    }
 
     // Listening for keyboard input on the search field.
-    // We are using the "input" event which detects cut and paste
-    // in addition to keyboard input.
-
-    filemanager.find('input').on('input', function (e) {
-
-        let value = this.value.trim();
-
-        if (value.length) {
-            filemanager.addClass('searching');
-
-            fileList.empty();
-
-            // Filter the responseData according to value.trim()
-            let filteredResponseData = selectByTitleComparizon(responseData, value.trim());
-
-            render(filteredResponseData, gameProjectSlug, urlforAssetEdit);
-        } else {
-            filemanager.removeClass('searching');
-            render(responseData, gameProjectSlug, urlforAssetEdit);
-        }
-
-    }).on('keyup', function (e) { // Clicking 'ESC' button triggers focusout and cancels the search
-        var search = jQuery(this);
-        if (e.keyCode === 27)
-            search.trigger('focusout');
-    }).focusout(function (e) {  // Cancel the search
-        var search = jQuery(this);
-        if (!search.val().trim().length) {
-            //window.location.hash = encodeURIComponent(currentPath);
-            search.hide();
-            search.parent().find('span').show();
-        }
-    });
-
-
-    fileList.on({
-        click: function (e) {
-            //alert("Drag n drop models onto 3D space");
-
-            e.preventDefault();
-        },
-
-        dragstart: function (e) {
-            // Problems with Chrome. Firefox ok.
-
-            let screenshotImage = e.target.attributes.getNamedItem("data-screenshot_path");
-
-            dragImg.src = screenshotImage ? screenshotImage.value : "/wp-content/plugins/VRodos/images/ic_asset.png";
-
-            e.originalEvent.dataTransfer.setDragImage(dragImg, 32, 32);
-
-            let dragData = {};
-            for (let entry in Object.keys(e.target.attributes)) {
-
-                let name = (Object.values(e.target.attributes)[entry]).name;
-
-                name = name.substring(name.indexOf('-')+1);
-                dragData[name] = (Object.values(e.target.attributes)[entry]).value;
-
+    var searchInput = filemanager.querySelector('input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function (e) {
+            let value = this.value.trim();
+            if (value.length) {
+                filemanager.classList.add('searching');
+                fileList.innerHTML = '';
+                let filteredResponseData = selectByTitleComparizon(responseData, value.trim());
+                render(filteredResponseData, gameProjectSlug, urlforAssetEdit);
+            } else {
+                filemanager.classList.remove('searching');
+                render(responseData, gameProjectSlug, urlforAssetEdit);
             }
-            dragData.title = e.target.attributes.getNamedItem("data-asset_slug").value + "_" + Math.floor(Date.now() / 1000);
-            dragData.name = dragData.title;
+        });
+        searchInput.addEventListener('keyup', function (e) {
+            if (e.keyCode === 27) this.blur();
+        });
+        searchInput.addEventListener('focusout', function (e) {
+            if (!this.value.trim().length) {
+                this.style.display = 'none';
+                var span = this.parentElement.querySelector('span');
+                if (span) span.style.display = '';
+            }
+        });
+    }
 
-            let jsonDataDrag = JSON.stringify(dragData);
 
-            e.originalEvent.dataTransfer.setData("text/plain", jsonDataDrag);
+    fileList.addEventListener('click', function (e) { e.preventDefault(); });
 
-        },
-        drag: function (e) {
-            e.preventDefault();
-        },
-        dragend: function (e) {
-            e.preventDefault();
+    fileList.addEventListener('dragstart', function (e) {
+        var target = e.target.closest('li[draggable]') || e.target;
+        var screenshotImage = target.getAttribute("data-screenshot_path");
+        var assetName = target.getAttribute("data-asset_name") || '';
+
+        // Update drag ghost with this asset's image and name
+        dragGhostImg.src = screenshotImage || pluginPath + '/images/ic_asset.png';
+        dragGhostLabel.textContent = assetName;
+        e.dataTransfer.setDragImage(dragGhost, 60, 45);
+
+        var dragData = {};
+        for (var i = 0; i < target.attributes.length; i++) {
+            var attr = target.attributes[i];
+            var name = attr.name.substring(attr.name.indexOf('-') + 1);
+            dragData[name] = attr.value;
         }
+        dragData.title = target.getAttribute("data-asset_slug") + "_" + Math.floor(Date.now() / 1000);
+        dragData.name = dragData.title;
+        e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
     });
+
+    fileList.addEventListener('drag', function (e) { e.preventDefault(); });
+    fileList.addEventListener('dragend', function (e) { e.preventDefault(); });
 
     // Render the HTML for the file manager
     // Here we make the list
@@ -161,7 +135,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 let lucideIconName = vrodos_getCategoryIcon(f['category_slug'] || f['category_icon']);
 
                 // Add the category in tabs if not yet added
-                if (jQuery("#assetCategTab").find("[id='" + f.category_slug + "']").length == 0) {
+                if (!document.getElementById(f.category_slug)) {
                     //Create an input type dynamically.
                     let element = document.createElement("button");
                     //Assign different attributes to the element.
@@ -180,27 +154,22 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     draggable_string = draggable_string.concat('data-'+Object.keys(f)[entry] + '="' + Object.values(f)[entry]) + '" ';
                 }
 
-                let file = jQuery('<li draggable="true" id="asset-' + f['asset_id'] + '" ' +
+                var liHTML = '<li draggable="true" id="asset-' + f['asset_id'] + '" ' +
                     'class="vrodos-asset-card tw-relative tw-bg-slate-800 tw-rounded-lg tw-overflow-hidden tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-group tw-cursor-move"' +
                     ' title="Drag into scene" ' + draggable_string + '>' +
-                    
-                    // Full Image
+
                     '<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" src="' + encodeURI(f['screenshot_path']) + '">' +
-                    
-                    // Overlays
+
                     '<div class="tw-absolute tw-inset-0 tw-bg-gradient-to-t tw-from-slate-900/80 tw-via-transparent tw-to-transparent tw-opacity-60 group-hover:tw-opacity-90 tw-transition-opacity"></div>' +
 
-                    // Small Name Tag (Top Left)
                     '<div class="tw-absolute tw-top-1.5 tw-left-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-px-1.5 tw-py-0.5 tw-rounded-md tw-border tw-border-white/10 tw-z-10 tw-max-w-[70%]">' +
                          '<span class="tw-text-[9px] tw-font-bold tw-text-slate-200 tw-truncate tw-block">' + name + '</span>' +
                     '</div>' +
 
-                    // Category Icon (Top Right)
                     '<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-p-1 tw-rounded-md tw-border tw-border-white/10 tw-z-10">' +
                         '<i data-lucide="' + lucideIconName + '" class="tw-w-3 tw-h-3 tw-text-slate-200"></i>' +
                     '</div>' +
 
-                    // Actions (Bottom Overlay)
                     '<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">' +
                         (f['is_joker'] === 'false' ?
                             '<button class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=0&editable=true\'">EDIT</button>' :
@@ -211,24 +180,20 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     '<div id="deleteAssetProgressBar-' + f['asset_id'] + '" class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-h-0.5 tw-bg-slate-700 tw-hidden tw-z-20">' +
                         '<div class="tw-h-full tw-bg-indigo-500 tw-animate-pulse"></div>' +
                     '</div>' +
-                '</li>');
+                '</li>';
 
-
-                file.appendTo(fileList);
+                fileList.insertAdjacentHTML('beforeend', liHTML);
             }
             // Re-initialize Lucide icons after dynamic DOM insertion
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         // Remove animation
-        if (filemanager.hasClass('searching'))
-            fileList.removeClass('animated');
+        if (filemanager.classList.contains('searching'))
+            fileList.classList.remove('animated');
 
         // Show the generated elements
-        fileList.animate({ 'display': 'inline-block' });
-
-        // Perform click to open (bug appeared from migrating jquery-1.11 to 3.1.1
-        //closeButton.click();
+        fileList.style.display = '';
     }
 
     // Icon mapping now handled by vrodos_icons.js (single source of truth)
@@ -249,7 +214,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     function selectByTitleComparizon(input_data, needle) {
         let output_data = [];
         input_data.forEach(function (d) {
-            if (d['asset_name'].indexOf(needle) !== -1)
+            if (d['asset_name'].toLowerCase().indexOf(needle.toLowerCase()) !== -1)
                 output_data.push(d);
         });
         return output_data;
@@ -276,7 +241,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         }
 
         // Show the current tab, and add an "active" class to the button that opened the tab
-        let items = fileList[0].getElementsByTagName("li");
+        let items = fileList.getElementsByTagName("li");
         for (let i = 0; i < items.length; ++i) {
             if (categName === "allAssetsViewBt")
                 items[i].style.display = '';

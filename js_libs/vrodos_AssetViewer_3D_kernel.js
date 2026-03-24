@@ -356,7 +356,6 @@ class VRodos_AssetViewer_3D_kernel {
             (this.nFbx === 1 && this.FbxBuffer !== '') || (this.nGlb === 1 && this.GlbBuffer !== '')) {
 
             // Show progress slider
-            //jQuery('#previewProgressSlider').show();
 
             // Make the definition with the obj
             if (this.nObj === 1) {
@@ -390,13 +389,11 @@ class VRodos_AssetViewer_3D_kernel {
 
                         } else {
                             // Else check if textures have been loaded
-                            let nTexturesLength = jQuery("input[id='textureFileInput']").length;
+                            let textFil = document.querySelectorAll("input[id='textureFileInput']");
+                            let nTexturesLength = textFil.length;
 
                             if ((this.nPng > 0 && this.nPng === nTexturesLength)
                                 || (this.nJpg > 0 && this.nJpg === nTexturesLength)) {
-
-                                // Get textureFileInput array with jQuery
-                                let textFil = jQuery("input[id='textureFileInput']");
 
                                 // Store here the raw image textures
                                 objectDefinition.pathTexture = [];
@@ -421,7 +418,7 @@ class VRodos_AssetViewer_3D_kernel {
             } else if (this.nFbx === 1) {
 
                 // Get all fields
-                let texturesStreams = jQuery("input[id='textureFileInput']");
+                let texturesStreams = document.querySelectorAll("input[id='textureFileInput']");
                 let nTexturesLoaded = texturesStreams.length;
 
                 if (nTexturesLoaded < this.nJpg || nTexturesLoaded < this.nPng || nTexturesLoaded < this.nGif) {
@@ -760,7 +757,6 @@ class VRodos_AssetViewer_3D_kernel {
                         var placeholder = document.getElementById('preview3dPlaceholder');
                         if (placeholder) placeholder.style.display = 'none';
 
-                        //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";
 
                     },
                     // called while loading is progressing
@@ -828,8 +824,7 @@ class VRodos_AssetViewer_3D_kernel {
                             var placeholder = document.getElementById('preview3dPlaceholder');
                             if (placeholder) placeholder.style.display = 'none';
 
-                            //jQuery('#previewProgressSlider')[0].style.visibility = "hidden";
-
+    
                         },
                         //onObjProgressLoad
                         function (xhr) {
@@ -989,9 +984,6 @@ class VRodos_AssetViewer_3D_kernel {
                         y.setAttribute("name", "textureFileInput[" + file.name + "]");
                         document.body.appendChild(y);
 
-                        // jQuery('#3dAssetForm').append(
-                        //     '<input type="hidden" name="textureFileInput['+file.name+
-                        //     ']" id="textureFileInput" value="' + fileContent + '" />');
                         break;
                 }
 
