@@ -455,7 +455,7 @@ extract( $data );
 		var manager = new THREE.LoadingManager();
 
 		// load asset browser with data
-		jQuery(document).ready( function() {
+		document.addEventListener('DOMContentLoaded', function() {
 
 			vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
 			// make asset browser draggable: not working without get_footer
@@ -503,8 +503,8 @@ extract( $data );
 
 			// Load Manager
 			// Make progress bar visible
-			jQuery("#progress").get(0).style.display = "block";
-			jQuery("#progressWrapper").get(0).style.visibility = "visible";
+			document.getElementById("progress").style.display = "block";
+			document.getElementById("progressWrapper").style.visibility = "visible";
 			document.getElementById("result_download").innerHTML = "Loading";
 
 
@@ -560,7 +560,7 @@ extract( $data );
 					}
 				);
 
-				jQuery("#progressWrapper").get(0).style.visibility = "hidden";
+				document.getElementById("progressWrapper").style.visibility = "hidden";
 
 				document.getElementById("compileGameBtn").disabled = false;
 			}; // End of manager
@@ -759,7 +759,8 @@ extract( $data );
 
 			// Don't show the floating panel on initial scene load — only on user interaction
 			// showObjectControlsPanel();
-			jQuery('#double-sided-switch').show();
+			var dblSidedSwitch = document.getElementById('double-sided-switch');
+			if (dblSidedSwitch) dblSidedSwitch.style.display = '';
 
 			showObjectPropertiesPanel(transform_controls.getMode());
 
@@ -814,7 +815,7 @@ extract( $data );
 		}
 
 		let toggleEnvTexture = (el) => {
-			jQuery("#env_texture-change-btn").toggleClass('toggle-active');
+			document.getElementById("env_texture-change-btn").classList.toggle('toggle-active');
 			el.checked = !el.checked;
 			envir.scene.environment = !el.checked ? null : envir.maintexture;
 		}

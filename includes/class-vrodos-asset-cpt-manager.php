@@ -599,13 +599,13 @@ class VRodos_Asset_CPT_Manager {
 					}
 				}
 			}
-			jQuery(document).ready(function($) {
+			document.addEventListener('DOMContentLoaded', function() {
 				let file_frame;
 				let wp_media_post_id = wp.media.model.settings.post.id;
 				let set_to_post_id = <?php echo $post->ID; ?>;
 
-				$('#vrodos_asset3d_glb_btn').on('click', function() { uploadAssetToPage('vrodos_asset3d_glb', 'model/gltf-binary', 'GLB'); });
-				$('#vrodos_asset3d_screenimage_btn').on('click', function() { uploadAssetToPage('vrodos_asset3d_screenimage', 'image', 'Screenshot Image'); });
+				document.getElementById('vrodos_asset3d_glb_btn').addEventListener('click', function() { uploadAssetToPage('vrodos_asset3d_glb', 'model/gltf-binary', 'GLB'); });
+				document.getElementById('vrodos_asset3d_screenimage_btn').addEventListener('click', function() { uploadAssetToPage('vrodos_asset3d_screenimage', 'image', 'Screenshot Image'); });
 
 				function uploadAssetToPage(id, mime_type, type_string) {
 					wp.media.model.settings.post.id = set_to_post_id;
@@ -617,16 +617,19 @@ class VRodos_Asset_CPT_Manager {
 					});
 					file_frame.on('select', function() {
 						let attachment = file_frame.state().get('selection').first().toJSON();
-						$('#' + id).val(attachment.id);
+						document.getElementById(id).value = attachment.id;
 						if (mime_type === 'image') {
-							$('#' + id + '_preview').attr('src', attachment.url);
+							var preview = document.getElementById(id + '_preview');
+							if (preview) preview.src = attachment.url;
 						}
 						wp.media.model.settings.post.id = wp_media_post_id;
 					});
 					file_frame.open();
 				}
-				$('a.add_media').on('click', function() {
-					wp.media.model.settings.post.id = wp_media_post_id;
+				document.querySelectorAll('a.add_media').forEach(function(el) {
+					el.addEventListener('click', function() {
+						wp.media.model.settings.post.id = wp_media_post_id;
+					});
 				});
 			});
 		</script>

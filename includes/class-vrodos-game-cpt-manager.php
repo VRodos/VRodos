@@ -263,7 +263,7 @@ class VRodos_Game_CPT_Manager {
 			<button title="Copy link to clipboard" id="buttonCopyWebLink" style="background: transparent; border: none; color: darkslateblue" >
 				<i class="material-icons" style="cursor: pointer; float: right;">content_copy</i>
 			</button>
-			<a id="openWebLinkhref" href="#" title="Open index.html in new window" target="_blank" style="color:darkslateblue" onclick="jQuery('#compileCancelBtn')[0].click();">Open experience link</a>
+			<a id="openWebLinkhref" href="#" title="Open index.html in new window" target="_blank" style="color:darkslateblue" onclick="document.getElementById('compileCancelBtn').click();">Open experience link</a>
 		</div>
 		<a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" style="display:none;">Close</a>
 		<div id="vrodos_compile_report1"></div>

@@ -153,7 +153,8 @@ function vrodos_get_asset_category_icon($category_slug) {
                        class="tw-block tw-relative tw-aspect-[4/3] tw-bg-slate-100 tw-overflow-hidden vr-glow-card tw-group/thumb">
                     <?php else : ?>
                     <div class="tw-block tw-relative tw-aspect-[4/3] tw-bg-slate-100 tw-overflow-hidden tw-group/thumb">
-                        
+                    <?php endif; ?>
+
                         <?php if ( $asset['screenshot_path'] ) : ?>
                             <img src="<?php echo $asset['screenshot_path']; ?>" 
                                  alt="<?php echo $asset['asset_name']; ?>"
@@ -279,21 +280,22 @@ function vrodos_get_asset_category_icon($category_slug) {
         const confirmBtn = document.getElementById('confirmDeleteButton');
         
         confirmBtn.onclick = function() {
-            jQuery('#delete-scene-dialog-progress-bar').removeClass('tw-hidden').show();
+            var progressBar = document.getElementById('delete-scene-dialog-progress-bar');
+            if (progressBar) { progressBar.classList.remove('tw-hidden'); progressBar.style.display = ''; }
             vrodos_deleteAssetAjax(assetId, gameSlug, isCloned);
         };
         
         document.getElementById('vrodos_delete_asset_modal').showModal();
     }
 
-    jQuery(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         // Initialize Lucide icons
         const initIcons = () => {
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
         };
-        
+
         initIcons();
         // Fallback for slower loads
         setTimeout(initIcons, 500);
@@ -304,31 +306,40 @@ function vrodos_get_asset_category_icon($category_slug) {
         let activeVisibility = 'all';
 
         function applyFilters() {
-            jQuery('.asset-card').hide();
-            
-            jQuery('.asset-card').filter(function() {
-                const cardCat = jQuery(this).data('category');
-                const cardVis = jQuery(this).data('visibility');
-                
-                const catMatch = (activeCategory === 'all' || cardCat === activeCategory);
-                const visMatch = (activeVisibility === 'all' || cardVis === activeVisibility);
-                
-                return catMatch && visMatch;
-            }).fadeIn(300, initIcons); // Re-init icons after fade in
+            document.querySelectorAll('.asset-card').forEach(function(card) {
+                var cardCat = card.dataset.category;
+                var cardVis = card.dataset.visibility;
+                var catMatch = (activeCategory === 'all' || cardCat === activeCategory);
+                var visMatch = (activeVisibility === 'all' || cardVis === activeVisibility);
+                card.style.display = (catMatch && visMatch) ? '' : 'none';
+            });
+            initIcons();
         }
 
-        jQuery('.category-filter-btn').on('click', function() {
-            activeCategory = jQuery(this).data('category');
-            jQuery('.category-filter-btn').removeClass('tw-btn-primary').addClass('tw-btn-ghost tw-text-slate-400');
-            jQuery(this).removeClass('tw-btn-ghost tw-text-slate-400').addClass('tw-btn-primary');
-            applyFilters();
+        document.querySelectorAll('.category-filter-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                activeCategory = this.dataset.category;
+                document.querySelectorAll('.category-filter-btn').forEach(function(b) {
+                    b.classList.remove('tw-btn-primary');
+                    b.classList.add('tw-btn-ghost', 'tw-text-slate-400');
+                });
+                this.classList.remove('tw-btn-ghost', 'tw-text-slate-400');
+                this.classList.add('tw-btn-primary');
+                applyFilters();
+            });
         });
 
-        jQuery('.visibility-filter-btn').on('click', function() {
-            activeVisibility = jQuery(this).data('visibility');
-            jQuery('.visibility-filter-btn').removeClass('tw-btn-primary').addClass('tw-btn-ghost tw-text-slate-400');
-            jQuery(this).removeClass('tw-btn-ghost tw-text-slate-400').addClass('tw-btn-primary');
-            applyFilters();
+        document.querySelectorAll('.visibility-filter-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                activeVisibility = this.dataset.visibility;
+                document.querySelectorAll('.visibility-filter-btn').forEach(function(b) {
+                    b.classList.remove('tw-btn-primary');
+                    b.classList.add('tw-btn-ghost', 'tw-text-slate-400');
+                });
+                this.classList.remove('tw-btn-ghost', 'tw-text-slate-400');
+                this.classList.add('tw-btn-primary');
+                applyFilters();
+            });
         });
     });
 </script>

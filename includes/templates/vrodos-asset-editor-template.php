@@ -805,7 +805,7 @@ else { ?>
 					asset_viewer_3d_kernel.resizeDisplayGL();
 				};
 
-				jQuery( document ).ready(function() {
+				document.addEventListener('DOMContentLoaded', function() {
 					// Load preselected asset cat
 					const currentlySelected = document.getElementById('currently-selected-category');
 					if (currentlySelected && currentlySelected.getAttribute("data-cat-id")) {
