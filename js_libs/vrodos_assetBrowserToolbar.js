@@ -118,6 +118,9 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     // Here we make the list
     function render(enlistData, gameProjectSlug, urlforAssetEdit) {
 
+        // Remove skeleton placeholders on first render
+        fileList.querySelectorAll('.asset-skeleton').forEach(function(el) { el.remove(); });
+
         var f, name;
 
         if (enlistData) {

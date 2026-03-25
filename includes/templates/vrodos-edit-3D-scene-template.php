@@ -333,7 +333,7 @@ extract( $data );
 
 				<!--  Make form to submit user changes -->
 				<div id="progressWrapper" class="VrInfoPhpStyle" style="visibility: visible">
-					<div id="progress" class="ProgressContainerStyle tw-text-slate-700 tw-text-base">
+					<div id="progress" class="ProgressContainerStyle tw-text-slate-300 tw-text-base">
 					</div>
 
 					<div id="result_download" class="result"></div>
@@ -365,7 +365,16 @@ extract( $data );
 						<input type="search" placeholder="Find assets..." class="tw-w-full tw-bg-transparent tw-border-none tw-pl-8 tw-pr-4 tw-py-1 tw-text-[11px] tw-text-slate-200 focus:tw-ring-0 placeholder:tw-text-slate-500" />
 					</div>
 
-					<ul id="filesList" class="data"></ul>
+					<ul id="filesList" class="data">
+						<?php /* Skeleton placeholders — removed by JS when real assets arrive */ ?>
+						<?php for ( $i = 0; $i < 6; $i++ ) : ?>
+						<li class="asset-skeleton tw-relative tw-bg-slate-800 tw-rounded-lg tw-overflow-hidden tw-animate-pulse">
+							<div class="tw-w-full tw-aspect-square tw-bg-slate-700"></div>
+							<div class="tw-absolute tw-top-1.5 tw-left-1.5 tw-bg-slate-700 tw-rounded-md tw-h-3 tw-w-16"></div>
+							<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-bg-slate-700 tw-rounded-md tw-h-5 tw-w-5"></div>
+						</li>
+						<?php endfor; ?>
+					</ul>
 
 					<!-- ADD NEW ASSET FROM ASSETS LIST -->
 					<a id="addNewAssetBtnAssetsList"

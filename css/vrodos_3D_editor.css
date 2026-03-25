@@ -19,15 +19,20 @@
 
 /* Php info top right */
 .VrInfoPhpStyle {
-	font-size: 14pt;
-	background: rgba(255, 255, 255, .54);
-	color: #000;
+	font-size: 12pt;
+	background: rgba(30, 41, 59, 0.85);
+	color: #e2e8f0;
 	position: absolute;
 	text-align: center;
 	top: 50%;
 	left: 50%;
-	width: 20%;
-	padding: 2px;
+	transform: translate(-50%, -50%);
+	width: auto;
+	min-width: 200px;
+	padding: 16px 28px;
+	border-radius: 12px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	z-index: 200;
 }
 
 /* Progress bar */
