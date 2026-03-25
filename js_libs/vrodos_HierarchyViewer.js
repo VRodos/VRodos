@@ -79,6 +79,10 @@ function _hierarchyDisplayName(obj) {
  * Hover on hierarchy item: lightweight select (gizmo + outline, no panel).
  */
 function hierarchyHoverSelect(uuid) {
+    // Don't change selection on hover if a properties panel is open
+    var panel = document.getElementById('object-controls-panel');
+    if (panel && !panel.classList.contains('tw-hidden')) return;
+
     var obj = envir.scene.getObjectByProperty('uuid', uuid);
     if (!obj || obj.locked) return;
     selectObjectPreview(obj);

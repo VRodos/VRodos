@@ -14,9 +14,6 @@ class VRodos_AJAX_Handler {
 		add_action( 'wp_ajax_vrodos_undo_scene_async_action', $this->undo_scene_async_action_callback(...) );
 		add_action( 'wp_ajax_vrodos_redo_scene_async_action', $this->redo_scene_async_action_callback(...) );
 		add_action( 'wp_ajax_vrodos_delete_scene_action', $this->delete_scene_frontend_callback(...) );
-		add_action( 'wp_ajax_vrodos_fetch_description_action', $this->fetch_description_action_callback(...) );
-		add_action( 'wp_ajax_vrodos_fetch_image_action', $this->fetch_image_action_callback(...) );
-		add_action( 'wp_ajax_vrodos_fetch_video_action', $this->fetch_video_action_callback(...) );
 		add_action( 'wp_ajax_vrodos_delete_asset_action', $this->delete_asset3d_frontend_callback(...) );
 		add_action( 'wp_ajax_vrodos_fetch_assetmeta_action', $this->fetch_asset3d_meta_backend_callback(...) );
 		add_action( 'wp_ajax_vrodos_compile_action', $this->compile_action_callback(...) );
@@ -26,9 +23,6 @@ class VRodos_AJAX_Handler {
 		add_action( 'wp_ajax_nopriv_vrodos_notify_confpeers_action', $this->vrodos_notify_confpeers_callback(...) );
 		add_action( 'wp_ajax_vrodos_notify_confpeers_action', $this->vrodos_notify_confpeers_callback(...) );
 		add_action( 'wp_ajax_vrodos_update_expert_log_action', $this->vrodos_update_expert_log_callback(...) );
-
-		// AJAXES for semantics
-		add_action( 'wp_ajax_vrodos_segment_obj_action', $this->vrodos_segment_obj_action_callback(...) );
 
 		add_action( 'wp_ajax_vrodos_fetch_list_projects_action', $this->vrodos_fetch_list_projects_callback(...) );
 
@@ -152,77 +146,7 @@ class VRodos_AJAX_Handler {
 		wp_delete_post( $asset_id, true );
 	}
 
-	// =============================== SEMANTICS ON 3D ============================================================
-
-	// ---- AJAX SEMANTICS 1: run segmentation ----------
-	public function vrodos_segment_obj_action_callback() {
-
-		$DS = DIRECTORY_SEPARATOR;
-		if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
-
-			$curr_folder = wp_upload_dir()['basedir'] . $DS . $_POST['path'];
-			$curr_folder = str_replace( '/', '\\', $curr_folder ); // full path
-
-			$batfile = wp_upload_dir()['basedir'] . $DS . $_POST['path'] . 'segment.bat';
-
-			$batfile = str_replace( '/', '\\', $batfile ); // full path
-
-			$fnameobj = basename( (string) $_POST['obj'] );
-
-			$fnameobj = $curr_folder . $fnameobj;
-
-			// 1 : Generate bat
-			$myfile = fopen( $batfile, 'w' ) or die( 'Unable to open file!' );
-
-			$outputpath = wp_upload_dir()['basedir'] . $DS . $_POST['path'];
-			$outputpath = str_replace( '/', '\\', $outputpath ); // full path
-
-			$exefile = untrailingslashit( plugin_dir_path( __FILE__ ) ) . '\..\semantics\segment3D\pclTesting.exe';
-			$exefile = str_replace( '/', '\\', $exefile );
-
-			$iter      = $_POST['iter'];
-			$minDist   = $_POST['minDist'];
-			$maxDist   = $_POST['maxDist'];
-			$minPoints = $_POST['minPoints'];
-			$maxPoints = $_POST['maxPoints'];
-			// $exefile.' '.$fnameobj.' '.$iter.' 0.01 0.2 100 25000 1 '.$outputpath.PHP_EOL.
-
-			$txt = '@echo off' . PHP_EOL .
-				$exefile . ' ' . $fnameobj . ' ' . $iter . ' ' . $minDist . ' ' . $maxDist . ' ' . $minPoints . ' ' . $maxPoints . ' 1 ' . $outputpath . PHP_EOL .
-				'del "*.pcd"' . PHP_EOL .
-				'del "barycenters.txt"';
-
-			fwrite( $myfile, $txt );
-			fclose( $myfile );
-
-			shell_exec( 'del "' . $outputpath . 'log.txt"' );
-			shell_exec( 'del "' . $outputpath . 'cloud_cluster*.obj"' );
-			shell_exec( 'del "' . $outputpath . 'cloud_plane*.obj"' );
-
-			// 2: run bat
-			$output = shell_exec( $batfile );
-			echo $output;
-
-		} else { // LINUX SERVER // TODO
-
-			// $game_dirpath = realpath(dirname(__FILE__).'/..').$DS.'test_compiler'.$DS.'game_linux'; //$_GET['game_dirpath'];
-			//
-			// 1 : Generate sh
-			// $myfile = fopen($game_dirpath.$DS."starter_artificial.sh", "w") or print("Unable to open file!");
-			// $txt = "#/bin/bash"."\n".
-			// "projectPath=`pwd`"."\n".
-			// "xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24:32' /opt/Unity/Editor/Unity -batchmode -nographics -logfile stdout.log -force-opengl -quit -projectPath ${projectPath} -buildWindowsPlayer 'builds/myg3.exe'";
-			// fwrite($myfile, $txt);
-			// fclose($myfile);
-			//
-			// 2: run sh (nohup     '/dev ...' ensures that it is asynchronous called)
-			// $output = shell_exec('nohup sh starter_artificial.sh'.'> /dev/null 2>/dev/null &');
-		}
-
-		wp_die();
-	}
-
-	// ======================= CONTENT INTERLINKING =========================================================================
+	// ======================= PEER CONFERENCING =========================================================================
 
 
 	public function vrodos_notify_confpeers_callback() {
@@ -416,46 +340,6 @@ class VRodos_AJAX_Handler {
 		}
 
 		echo $postTitle;
-
-		wp_die();
-	}
-
-	public function fetch_description_action_callback() {
-
-		if ( $_POST['externalSource'] == 'Wikipedia' ) {
-			$url = 'https://' . $_POST['lang'] . '.wikipedia.org/w/api.php?action=query&format=json&exlimit=3&prop=extracts&' . $_POST['fulltext'] . 'titles=' . $_POST['titles'];
-		} else {
-			$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query=' . $_POST['titles'];// .'&qf=LANGUAGE:'.$_POST['lang'];
-		}
-
-		echo strip_tags( file_get_contents( $url ) );
-
-		wp_die();
-	}
-
-	public function fetch_image_action_callback() {
-
-		if ( $_POST['externalSource_image'] == 'Wikipedia' ) {
-			$url = 'https://' . $_POST['lang_image'] . '.wikipedia.org/w/api.php?action=query&prop=imageinfo&format=json&iiprop=url&generator=images&titles=' . $_POST['titles_image'];
-		} else {
-			$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query=' . $_POST['titles_image'];// .'&qf=LANGUAGE:'.$_POST['lang_image'];
-		}
-
-		echo file_get_contents( $url );
-
-		wp_die();
-	}
-
-	public function fetch_video_action_callback() {
-
-		if ( $_POST['externalSource_video'] == 'Wikipedia' ) {
-			$url = 'https://' . $_POST['lang_video'] . '.wikipedia.org/w/api.php?action=query&format=json&prop=videoinfo&viprop=derivatives&titles=File:' . $_POST['titles_video'] . '.ogv';
-		} else {
-			$url = 'https://www.europeana.eu/api/v2/search.json?wskey=8mfU6ZgfW&query=' . $_POST['titles_image'];// .'&qf=LANGUAGE:'.$_POST['lang_image'];
-		}
-
-		$content = file_get_contents( $url );
-		echo $content;
 
 		wp_die();
 	}

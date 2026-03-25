@@ -38,12 +38,6 @@ class VRodos_Asset_Manager {
 			['ajax_url' => admin_url( 'admin-ajax.php' )]
 		);
 
-		wp_enqueue_script( 'vrodos_content_interlinking_request' );
-		wp_localize_script(
-			'vrodos_content_interlinking_request',
-			'my_ajax_object_fetch_content',
-			['ajax_url' => admin_url( 'admin-ajax.php' )]
-		);
 	}
 
 	public function enqueue_project_manager_scripts() {
@@ -235,19 +229,6 @@ class VRodos_Asset_Manager {
 		// to capture screenshot of the 3D molecule and its tags
 		wp_enqueue_script( 'vrodos_html2canvas' );
 
-		// Content Interlinking
-		wp_enqueue_script(
-			'ajax-vrodos_content_interlinking_request',
-			plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'js_libs/content_interlinking_commands/content_interlinking.js',
-			['jquery']
-		);
-
-		// ajax php admin url
-		wp_localize_script(
-			'ajax-vrodos_content_interlinking_request',
-			'my_ajax_object_fetch_content',
-			['ajax_url' => admin_url( 'admin-ajax.php' ), null]
-		);
 	}
 
 	public function register_scripts() {
@@ -272,10 +253,6 @@ class VRodos_Asset_Manager {
       ['ajax-script_delete_game', $plugin_url_js . 'ajaxes/delete_game_scene_asset.js', ['jquery']],
       ['ajax-script_deleteasset', $plugin_url_js . 'ajaxes/delete_asset.js', ['jquery']],
       ['ajax-script_create_game', $plugin_url_js . 'ajaxes/create_project.js', ['jquery']],
-      // Command Scripts
-      ['vrodos_content_interlinking_request', $plugin_url_js . 'content_interlinking_commands/content_interlinking.js', ['jquery']],
-      ['vrodos_segmentation_request', $plugin_url_js . 'semantics_commands/segmentation.js'],
-      ['vrodos_classification_request', $plugin_url_js . 'semantics_commands/classification.js'],
       // 3D Editor & Viewer Scripts
       ['vrodos_AssetViewer_3D_kernel', $plugin_url_js . 'vrodos_AssetViewer_3D_kernel.js'],
       ['vrodos_3d_editor_buttons_drags', $plugin_url_js . 'vrodos_3d_editor_buttons_drags.js', ['jquery', 'vrodos_addRemoveOne']],

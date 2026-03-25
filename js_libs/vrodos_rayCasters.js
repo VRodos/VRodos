@@ -40,10 +40,10 @@ function raycasterSetter(event) {
     let mouse = new THREE.Vector2();
 
     // calculate mouse position in normalized device coordinates
-    let canvasOffset = jQuery('#vr_editor_main_div').offset();
-    let w = jQuery(window);
-    mouse.x = ((event.clientX - canvasOffset.left + w.scrollLeft()) / envir.vr_editor_main_div.clientWidth) * 2 - 1;
-    mouse.y = - ((event.clientY - canvasOffset.top + w.scrollTop()) / envir.vr_editor_main_div.clientHeight) * 2 + 1;
+    var mainDiv = document.getElementById('vr_editor_main_div');
+    var rect = mainDiv.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / mainDiv.clientWidth) * 2 - 1;
+    mouse.y = - ((event.clientY - rect.top) / mainDiv.clientHeight) * 2 + 1;
 
     // Main Raycast object
     let raycasterPick = new THREE.Raycaster();
@@ -145,8 +145,10 @@ function onLeftMouseClick(event) {
             transform_controls.detach();
             removeAllCelOutlines();
             hideObjectControlsPanel();
-            jQuery('#object-manipulation-toggle').hide();
-            jQuery('#axis-manipulation-buttons').hide();
+            var objManipToggle = document.getElementById('object-manipulation-toggle');
+            var axisManipBtns = document.getElementById('axis-manipulation-buttons');
+            if (objManipToggle) objManipToggle.style.display = 'none';
+            if (axisManipBtns) axisManipBtns.style.display = 'none';
         }
         return;
     }
@@ -336,7 +338,8 @@ function selectorMajor(event, objectSel, whocalls) {
 
 
         if (!envir.is2d) {
-            jQuery("#" + transform_controls.getMode() + "-switch").click();
+            var modeSwitch = document.getElementById(transform_controls.getMode() + "-switch");
+            if (modeSwitch) modeSwitch.click();
         }
 
         // highlight — cel-shaded outline
@@ -435,30 +438,7 @@ function sanitizeInputValue(value) {
  */
 function displaySunProperties(event, name) {
 
-    // The whole popup div
-    var ppPropertiesDiv = jQuery("#popUpSunPropertiesDiv");
-    var chboxjQ = jQuery("#castShadow");
-    var chbox = document.getElementById('castShadow');
-    var chboxsunSkyjQ = jQuery("#sunSky");
-    var chboxsunSky = document.getElementById('sunSky');
-
-    var textCameraBottomjQ = jQuery("#sunShadowCameraBottom");
-    var textCameraBottom = document.getElementById('sunShadowCameraBottom');
-    var textCameraTopjQ = jQuery("#sunShadowCameraTop");
-    var textCameraTop = document.getElementById('sunShadowCameraTop');
-    var textCameraLeftjQ = jQuery("#sunShadowCameraLeft");
-    var textCameraLeft = document.getElementById('sunShadowCameraLeft');
-    var textCameraRightjQ = jQuery("#sunShadowCameraRight");
-    var textCameraRight = document.getElementById('sunShadowCameraRight');
-    var textMapHeightjQ = jQuery("#sunshadowMapHeight");
-    var textMapHeight = document.getElementById('sunshadowMapHeight');
-    var textMapWidthjQ = jQuery("#sunshadowMapWidth");
-    var textMapWidth = document.getElementById('sunshadowMapWidth');
-    var textBiasjQ = jQuery("#sunshadowBias");
-    var textBias = document.getElementById('sunshadowBias');
-
-    // jQuery("#sunShadowCameraBottom").unbind('change');
-    // textCameraBottom.trigger("change");
+    var ppPropertiesDiv = document.getElementById("popUpSunPropertiesDiv");
 
     clearAndUnbind(null, null, "sunShadowCameraBottom");
     clearAndUnbind(null, null, "sunShadowCameraTop");
@@ -469,86 +449,80 @@ function displaySunProperties(event, name) {
     clearAndUnbind(null, null, "sunshadowBias");
     clearAndUnbind(null, null, "castShadow");
     clearAndUnbind(null, null, "sunSky");
-    
 
-    chboxjQ.prop('checked', envir.scene.getObjectByName(name).castingShadow);
-    chboxsunSkyjQ.prop('checked', envir.scene.getObjectByName(name).sunSky);
-    //textCameraBottom.attr('value', envir.scene.getObjectByName(name).shadowCameraBottom);
-    //textCameraTop.attr('value', envir.scene.getObjectByName(name).shadowCameraTop);
-    //textCameraLeft.attr('value', envir.scene.getObjectByName(name).shadowCameraLeft);
-    //textCameraRight.attr('value', envir.scene.getObjectByName(name).shadowCameraRight);
-    //textMapHeight.attr('value', envir.scene.getObjectByName(name).shadowMapHeight);
-    //textMapWidth.attr('value', envir.scene.getObjectByName(name).shadowMapWidth);
-    //textBias.attr('value', envir.scene.getObjectByName(name).shadowBias);
+    // Re-get elements after clearAndUnbind (clone+replace creates new DOM nodes)
+    var chbox = document.getElementById('castShadow');
+    var chboxsunSky = document.getElementById('sunSky');
+    var textCameraBottom = document.getElementById('sunShadowCameraBottom');
+    var textCameraTop = document.getElementById('sunShadowCameraTop');
+    var textCameraLeft = document.getElementById('sunShadowCameraLeft');
+    var textCameraRight = document.getElementById('sunShadowCameraRight');
+    var textMapHeight = document.getElementById('sunshadowMapHeight');
+    var textMapWidth = document.getElementById('sunshadowMapWidth');
+    var textBias = document.getElementById('sunshadowBias');
+    var sunColor = document.getElementById('sunColor');
+    var sunIntensity = document.getElementById('sunIntensity');
 
-    textCameraBottom.value = envir.scene.getObjectByName(name).shadowCameraBottom;
-    textCameraTop.value = envir.scene.getObjectByName(name).shadowCameraTop;
-    textCameraLeft.value = envir.scene.getObjectByName(name).shadowCameraLeft;
-    textCameraRight.value = envir.scene.getObjectByName(name).shadowCameraRight;
-    textMapHeight.value = envir.scene.getObjectByName(name).shadowMapHeight;
-    textMapWidth.value = envir.scene.getObjectByName(name).shadowMapWidth;
-    textBias.value = envir.scene.getObjectByName(name).shadowBias;
-    chbox.value = envir.scene.getObjectByName(name).castingShadow;
-    chboxsunSky.value = envir.scene.getObjectByName(name).sunSky;
-   
-    //jQuery("#sunColor")
-  
+    var sceneObj = envir.scene.getObjectByName(name);
+    chbox.checked = !!sceneObj.castingShadow;
+    chboxsunSky.checked = !!sceneObj.sunSky;
+
+    textCameraBottom.value = sceneObj.shadowCameraBottom;
+    textCameraTop.value = sceneObj.shadowCameraTop;
+    textCameraLeft.value = sceneObj.shadowCameraLeft;
+    textCameraRight.value = sceneObj.shadowCameraRight;
+    textMapHeight.value = sceneObj.shadowMapHeight;
+    textMapWidth.value = sceneObj.shadowMapWidth;
+    textBias.value = sceneObj.shadowBias;
+    chbox.value = sceneObj.castingShadow;
+    chboxsunSky.value = sceneObj.sunSky;
 
     // Show Selection (inside floating panel or at mouse position)
-    ppPropertiesDiv.show();
+    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
 
-    jQuery("#sunColor").change(function (e) {
-        //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
-        jQuery("#sunColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
-        // jQuery("#sunIntensity")[0].value = transform_controls.object.intensity;
-    
-        document.getElementById("sunColor").value = transform_controls.object.children[0].material.color.getHexString();
-        jQuery("#sunColor")[0].style.background = "#" + jQuery("#sunColor")[0].value;
-    
+    sunColor.addEventListener("change", function (e) {
+        sunColor.value = transform_controls.object.children[0].material.color.getHexString();
+        sunColor.style.background = "#" + sunColor.value;
         saveChanges();
     });
-    jQuery("#sunIntensity").change(function (e) {
+    sunIntensity.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lightintensity = sanitizeInputValue(this.value);
         saveChanges();
     });
 
-    
-    textCameraBottomjQ.change(function (e) {
-        //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
+    textCameraBottom.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).shadowCameraBottom = sanitizeInputValue(this.value);
-        //console.log(textCameraBottom);
         saveChanges();
     });
-
-    textCameraTopjQ.change(function (e) {
+    textCameraTop.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).shadowCameraTop = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textCameraLeftjQ.change(function (e) {
+    textCameraLeft.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).shadowCameraLeft = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textCameraRightjQ.change(function (e) {
+    textCameraRight.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).shadowCameraRight = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textMapHeightjQ.change(function (e) {
+    textMapHeight.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).shadowMapHeight = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textMapWidthjQ.change(function (e) {
+    textMapWidth.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).shadowMapWidth = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textBiasjQ.change(function (e) {
+    textBias.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).shadowBias = sanitizeInputValue(this.value);
         saveChanges();
     });
-    chboxjQ.change(function (e) {
+    chbox.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).castingShadow = this.checked ? 1 : 0;
         saveChanges();
     });
-    chboxsunSkyjQ.change(function (e) {
+    chboxsunSky.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).sunSky = this.checked ? 1 : 0;
         saveChanges();
     });
@@ -557,26 +531,7 @@ function displaySunProperties(event, name) {
 // LAMP PROPERTIES DIV show
 function displayLampProperties(event, name) {
 
-   
-    var chboxjQ = jQuery("#lampcastShadow");
-    var chbox = document.getElementById('lampcastShadow');
-    var textCameraBottomjQ = jQuery("#lampShadowCameraBottom");
-    var textCameraBottom = document.getElementById('lampShadowCameraBottom');
-    var textCameraTopjQ = jQuery("#lampShadowCameraTop");
-    var textCameraTop = document.getElementById('lampShadowCameraTop');
-    var textCameraLeftjQ = jQuery("#lampShadowCameraLeft");
-    var textCameraLeft = document.getElementById('lampShadowCameraLeft');
-    var textCameraRightjQ = jQuery("#lampShadowCameraRight");
-    var textCameraRight = document.getElementById('lampShadowCameraRight');
-    var textMapHeightjQ = jQuery("#lampshadowMapHeight");
-    var textMapHeight = document.getElementById('lampshadowMapHeight');
-    var textMapWidthjQ = jQuery("#lampshadowMapWidth");
-    var textMapWidth = document.getElementById('lampshadowMapWidth');
-    var textBiasjQ = jQuery("#lampshadowBias");
-    var textBias = document.getElementById('lampshadowBias');
-
-    // jQuery("#lampShadowCameraBottom").unbind('change');
-    // textCameraBottom.trigger("change");
+    var ppPropertiesDiv = document.getElementById("popUpLampPropertiesDiv");
 
     clearAndUnbind(null, null, "lampShadowCameraBottom");
     clearAndUnbind(null, null, "lampShadowCameraTop");
@@ -587,89 +542,86 @@ function displayLampProperties(event, name) {
     clearAndUnbind(null, null, "lampshadowBias");
     clearAndUnbind(null, null, "lampcastShadow");
 
-    // chbox.prop('checked', envir.scene.getObjectByName(name).lampcastingShadow);
+    // Re-get elements after clearAndUnbind (clone+replace creates new DOM nodes)
+    var chbox = document.getElementById('lampcastShadow');
+    var textCameraBottom = document.getElementById('lampShadowCameraBottom');
+    var textCameraTop = document.getElementById('lampShadowCameraTop');
+    var textCameraLeft = document.getElementById('lampShadowCameraLeft');
+    var textCameraRight = document.getElementById('lampShadowCameraRight');
+    var textMapHeight = document.getElementById('lampshadowMapHeight');
+    var textMapWidth = document.getElementById('lampshadowMapWidth');
+    var textBias = document.getElementById('lampshadowBias');
+    var lampColor = document.getElementById('lampColor');
+    var lampPower = document.getElementById('lampPower');
+    var lampDecay = document.getElementById('lampDecay');
+    var lampDistance = document.getElementById('lampDistance');
 
-    textCameraBottom.value = envir.scene.getObjectByName(name).lampshadowCameraBottom;
-    textCameraTop.value = envir.scene.getObjectByName(name).lampshadowCameraTop;
-    textCameraLeft.value = envir.scene.getObjectByName(name).lampshadowCameraLeft;
-    textCameraRight.value = envir.scene.getObjectByName(name).lampshadowCameraRight;
-    textMapHeight.value = envir.scene.getObjectByName(name).lampshadowMapHeight;
-    textMapWidth.value = envir.scene.getObjectByName(name).lampshadowMapWidth;
-    textBias.value = envir.scene.getObjectByName(name).lampshadowBias;
-    chbox.value = envir.scene.getObjectByName(name).lampcastingShadow;
+    var sceneObj = envir.scene.getObjectByName(name);
+    textCameraBottom.value = sceneObj.lampshadowCameraBottom;
+    textCameraTop.value = sceneObj.lampshadowCameraTop;
+    textCameraLeft.value = sceneObj.lampshadowCameraLeft;
+    textCameraRight.value = sceneObj.lampshadowCameraRight;
+    textMapHeight.value = sceneObj.lampshadowMapHeight;
+    textMapWidth.value = sceneObj.lampshadowMapWidth;
+    textBias.value = sceneObj.lampshadowBias;
+    chbox.value = sceneObj.lampcastingShadow;
 
-    // chbox.prop('checked', envir.scene.getObjectByName(name).castingShadow);
-
-    textCameraBottomjQ.change(function (e) {
-        //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
+    textCameraBottom.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lampshadowCameraBottom = sanitizeInputValue(this.value);
-        //console.log(textCameraBottom);
         saveChanges();
     });
-
-    textCameraTopjQ.change(function (e) {
+    textCameraTop.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lampshadowCameraTop = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textCameraLeftjQ.change(function (e) {
+    textCameraLeft.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lampshadowCameraLeft = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textCameraRightjQ.change(function (e) {
+    textCameraRight.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lampshadowCameraRight = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textMapHeightjQ.change(function (e) {
+    textMapHeight.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lampshadowMapHeight = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textMapWidthjQ.change(function (e) {
+    textMapWidth.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lampshadowMapWidth = sanitizeInputValue(this.value);
         saveChanges();
     });
-    textBiasjQ.change(function (e) {
+    textBias.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lampshadowBias = sanitizeInputValue(this.value);
         saveChanges();
     });
-    chboxjQ.change(function (e) {
+    chbox.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).lampcastingShadow = this.checked ? 1 : 0;
         saveChanges();
     });
 
+    lampColor.value = transform_controls.object.children[0].material.color.getHexString();
+    lampPower.value = transform_controls.object.power;
+    lampDecay.value = transform_controls.object.decay;
+    lampDistance.value = transform_controls.object.distance;
 
-    // The whole popup div
-    var ppPropertiesDiv = jQuery("#popUpLampPropertiesDiv");
-
-    //jQuery("#sunColor")
-    jQuery("#lampColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
-    jQuery("#lampPower")[0].value = transform_controls.object.power;
-    jQuery("#lampDecay")[0].value = transform_controls.object.decay;
-    jQuery("#lampDistance")[0].value = transform_controls.object.distance;
-
-    jQuery("#lampColor").change(function (e) {
-        //(isNaN(this.value)) ? envir.scene.getObjectByName(name).shadowCameraBottom = this.value : envir.scene.getObjectByName(name).shadowCameraBottom = 0;
-        jQuery("#lampColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
-        // jQuery("#sunIntensity")[0].value = transform_controls.object.intensity;
-    
-        document.getElementById("lampColor").value = transform_controls.object.children[0].material.color.getHexString();
-        jQuery("#lampColor")[0].style.background = "#" + jQuery("#lampColor")[0].value;
-    
+    lampColor.addEventListener("change", function (e) {
+        lampColor.value = transform_controls.object.children[0].material.color.getHexString();
+        lampColor.style.background = "#" + lampColor.value;
         saveChanges();
     });
 
     // Show Selection (inside floating panel)
-    ppPropertiesDiv.show();
+    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
 }
 
 
-// LAMP PROPERTIES DIV show
+// SPOT PROPERTIES DIV show
 function displaySpotProperties(event, name) {
 
-    // The whole popup div
-    var ppPropertiesDiv = jQuery("#popUpSpotPropertiesDiv");
+    var ppPropertiesDiv = document.getElementById("popUpSpotPropertiesDiv");
 
     var spotTargetObject = document.getElementById("spotTargetObject");
-    spotTargetObject.innerText = null;
+    spotTargetObject.innerText = '';
 
     var hierViewer = document.getElementById('hierarchy-viewer');
     for (var i = 0; i < hierViewer.childNodes.length; i++) {
@@ -680,47 +632,42 @@ function displaySpotProperties(event, name) {
         spotTargetObject.appendChild(new Option(scene_object.name));
     }
 
+    var spotColor = document.getElementById("spotColor");
+    spotColor.value = transform_controls.object.children[0].material.color.getHexString();
+    document.getElementById("spotPower").value = transform_controls.object.power;
+    document.getElementById("spotDecay").value = transform_controls.object.decay;
+    document.getElementById("spotDistance").value = transform_controls.object.distance;
+    document.getElementById("spotAngle").value = transform_controls.object.angle;
+    document.getElementById("spotPenumbra").value = transform_controls.object.penumbra;
+    document.getElementById("spotTargetObject").value = transform_controls.object.target.name;
 
-    jQuery("#spotColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
-    jQuery("#spotPower")[0].value = transform_controls.object.power;
-    jQuery("#spotDecay")[0].value = transform_controls.object.decay;
-    jQuery("#spotDistance")[0].value = transform_controls.object.distance;
-    jQuery("#spotAngle")[0].value = transform_controls.object.angle;
-    jQuery("#spotPenumbra")[0].value = transform_controls.object.penumbra;
-    jQuery("#spotTargetObject")[0].value = transform_controls.object.target.name;
-
-    document.getElementById("spotColor").value = transform_controls.object.children[0].material.color.getHexString();
-    jQuery("#spotColor")[0].style.background = "#" + jQuery("#spotColor")[0].value;
+    spotColor.style.background = "#" + spotColor.value;
 
     // Show Selection (inside floating panel)
-    ppPropertiesDiv.show();
+    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
 }
 
 
 
-// LAMP PROPERTIES DIV show
+// AMBIENT PROPERTIES DIV show
 function displayAmbientProperties(event, name) {
 
-    // The whole popup div
-    var ppPropertiesDiv = jQuery("#popUpAmbientPropertiesDiv");
+    var ppPropertiesDiv = document.getElementById("popUpAmbientPropertiesDiv");
 
-    for (var i = 0; i < jQuery('#hierarchy-viewer')[0].childNodes.length; i++) {
-        //if (envir.scene.getChildByName(jQuery('#hierarchy-viewer')[0].childNodes[2].id).category_name ){
-        var id_Hierarchy = jQuery('#hierarchy-viewer')[0].childNodes[i].id;
+    var hierViewer = document.getElementById('hierarchy-viewer');
+    for (var i = 0; i < hierViewer.childNodes.length; i++) {
+        var id_Hierarchy = hierViewer.childNodes[i].id;
         var scene_object = envir.scene.getObjectByName(id_Hierarchy);
-        //spotTargetObject.appendChild(new Option(scene_object.name));
-        //}
     }
 
+    var ambientColor = document.getElementById("ambientColor");
+    ambientColor.value = transform_controls.object.children[0].material.color.getHexString();
+    document.getElementById("ambientIntensity").value = transform_controls.object.intensity;
 
-    jQuery("#ambientColor")[0].value = transform_controls.object.children[0].material.color.getHexString();
-    jQuery("#ambientIntensity")[0].value = transform_controls.object.intensity;
-
-    document.getElementById("ambientColor").value = transform_controls.object.children[0].material.color.getHexString();
-    jQuery("#ambientColor")[0].style.background = "#" + jQuery("#ambientColor")[0].value;
+    ambientColor.style.background = "#" + ambientColor.value;
 
     // Show Selection (inside floating panel)
-    ppPropertiesDiv.show();
+    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
 }
 
 
@@ -734,105 +681,32 @@ function displayAmbientProperties(event, name) {
  */
 function displayDoorProperties(event, name) {
 
-    var popUpDoorPropertiesDiv = jQuery("#popUpDoorPropertiesDiv");
-    //var doorid = jQuery("#doorid");
-    var popupDoorSelect = jQuery("#popupDoorSelect");
-    jQuery("#popupDoorSelect").unbind('change');
-    //var chbox = jQuery("#door_reward_checkbox");
+    var popUpDoorPropertiesDiv = document.getElementById("popUpDoorPropertiesDiv");
+    var popupDoorSelect = document.getElementById("popupDoorSelect");
     var updName = name;
 
-    // Save the previous door values (in case of  direct mouse click on another door)
-    //doorid.trigger("change");
-    popupDoorSelect.trigger("change");
+    // Save the previous door values (trigger change before unbinding)
+    popupDoorSelect.dispatchEvent(new Event('change'));
 
     clearAndUnbind(null, null, "popupDoorSelect");
 
-    if (envir.scene.getObjectByName(updName).sceneID_target)
-        popupDoorSelect.val(envir.scene.getObjectByName(updName).sceneID_target);
+    var sceneObj = envir.scene.getObjectByName(updName);
+    if (sceneObj.sceneID_target)
+        popupDoorSelect.value = sceneObj.sceneID_target;
     else
-        popupDoorSelect.val("Default");
-
-    //chbox.trigger("change");
-    //clearAndUnbind("popupDoorSelect");
-
-    //clearAndUnbind(null, null, "door_reward_checkbox");
-
-
-    //chbox.prop('checked', envir.scene.getObjectByName(name).isreward == 1);
-    // Add change listener
-    //chbox.change(function (e) { envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0; });
-
-
-
-
-    // Add doors from other scenes
-    //var doorsFromOtherScenes = [];
-
-    //for (var l=0; l < doorsAll.length; l++)
-    //    if (envir.scene.getObjectByName(name).doorName_source !== doorsAll[l].door)
-    //        doorsFromOtherScenes.push ( doorsAll[l].door + " at " + doorsAll[l].scene + " (" + doorsAll[l].sceneSlug + ")" );
-
-    // Add options
-    //crOption(popupDoorSelect[0]);
-    //createOption(popupDoorSelect[0], "Select a door2", "Select a door2", false, false, "#fff");
-    //createOption(popupDoorSelect[0], "Select a door2", "Select a door2", false, false, "#fff");
-    //for (var doorName of doorsFromOtherScenes )
-    //    createOption(popupDoorSelect[0], doorName, doorName, false, false, "#fff");
-
-
-    // Set doorid from existing values
-    //if (envir.scene.getObjectByName(name).doorName_source)
-    //    doorid.val(envir.scene.getObjectByName(name).doorName_source);
-
+        popupDoorSelect.value = "Default";
 
     if (envir.scene.getObjectByName(name).doorName_target)
-        popupDoorSelect.val(envir.scene.getObjectByName(name).doorName_target + " at " +
-            envir.scene.getObjectByName(name).sceneName_target);
-
+        popupDoorSelect.value = envir.scene.getObjectByName(name).doorName_target + " at " +
+            envir.scene.getObjectByName(name).sceneName_target;
 
     // Show Selection (inside floating panel)
-    popUpDoorPropertiesDiv.show();
+    if (popUpDoorPropertiesDiv) popUpDoorPropertiesDiv.style.display = '';
 
-
-
-    //doorid.change(function (e) {
-    //    var nameDoorSource_simple = jQuery("#doorid").val();
-
-    // name is the scene object generated automatically e.g.    "mydoora_1231214515"
-    // doorName_source is more simplified given by the user  e.g.  "doorToCave"
-    //console.log(name);
-    //});
-
-    // On popup change
-
-
-    popupDoorSelect.change(function (e) {
-        //var valDoorScene = popupDoorSelect.val();
-        //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        //console.log(this.value);
-        //envir.scene.getObjectByName('scenesInsideVREditor').children;
-        //tempFunc.call(this, updName);
-
-        //if (!valDoorScene)
-        //    return;
-
-        //if (valDoorScene && valDoorScene != "Select a door") {
-
-        //    var nameDoor_Target = valDoorScene.split(" at ")[0];
-        //    var sceneName_Target = valDoorScene.split(" at ")[1];
+    popupDoorSelect.addEventListener("change", function (e) {
         if (this.value != "Default" && this.value)
             envir.scene.getObjectByName(updName).sceneID_target = this.value;
-        //envir.scene.getObjectByName(name).sceneName_target = this.value;
-        //envir.scene.getObjectByName(updName).tempValue = 0;
-
-        //Object.defineProperty(envir.scene.getObjectByName(updName), 'tempValue', {
-        //    value: 1
-        //})
-
-        //console.log(envir.scene.getObjectByName(updName));
-
         saveChanges();
-        //
     });
 
 }
@@ -842,24 +716,20 @@ function displayDoorProperties(event, name) {
 
 function displayLinkProperties(event, name) {
 
-    var popUpLinkPropertiesDiv = jQuery("#popUpLinkPropertiesDiv");
-    var popupLinkSelect = jQuery("#poi_link_text");
+    var popUpLinkPropertiesDiv = document.getElementById("popUpLinkPropertiesDiv");
+    var popupLinkSelect = document.getElementById("poi_link_text");
 
     clearAndUnbind(null, null, "poi_link_text");
     if (envir.scene.getObjectByName(name).poi_link_url)
-        popupLinkSelect.val(envir.scene.getObjectByName(name).poi_link_url);
+        popupLinkSelect.value = envir.scene.getObjectByName(name).poi_link_url;
 
     // Show Selection (inside floating panel)
-    popUpLinkPropertiesDiv.show();
+    if (popUpLinkPropertiesDiv) popUpLinkPropertiesDiv.style.display = '';
 
-    popupLinkSelect.change(function (e) {
-   
+    popupLinkSelect.addEventListener("change", function (e) {
         if (this.value)
             envir.scene.getObjectByName(name).poi_link_url = this.value;
-      
-
         saveChanges();
-
     });
 
 }
@@ -890,26 +760,37 @@ function displayLinkProperties(event, name) {
  */
 function clearAndUnbind(selectName = null, idstr = null, chkboxname = null) {
 
+    // Clone+replace to remove all event listeners from an element
+    function _unbindElement(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            var clone = el.cloneNode(true);
+            el.parentNode.replaceChild(clone, el);
+        }
+    }
+
     // Clear the select DOM
     if (selectName) {
-
         var selectDOM = document.getElementById(selectName);
-        for (var i = selectDOM.options.length; i-- > 0;)
-            selectDOM.options[i] = null;
-
-        // unbind onchange listener
-        jQuery("#" + selectName).unbind('change');
+        if (selectDOM) {
+            for (var i = selectDOM.options.length; i-- > 0;)
+                selectDOM.options[i] = null;
+        }
+        _unbindElement(selectName);
     }
 
     // Id (if any) unbind onchange listener
-    if (idstr)
-        jQuery("#" + idstr).val(null).unbind('change');
+    if (idstr) {
+        var idEl = document.getElementById(idstr);
+        if (idEl) idEl.value = '';
+        _unbindElement(idstr);
+    }
 
-    // Checbox clear and unbind (if any)
+    // Checkbox clear and unbind (if any)
     if (chkboxname) {
-        var chbox = jQuery("#" + chkboxname);
-        chbox.prop('checked', false);
-        chbox.unbind('change');     // Remove listeners
+        var chbox = document.getElementById(chkboxname);
+        if (chbox) chbox.checked = false;
+        _unbindElement(chkboxname);
     }
 
 }
@@ -985,15 +866,18 @@ function createOption(container, txt, val, sel, dis, backgr) {
 
 function showWholePopupDiv(popUpDiv, event) {
 
-    popUpDiv.show();
-    popUpDiv[0].style.left = 1 + event.clientX - jQuery('#vr_editor_main_div').offset().left + jQuery(window).scrollLeft() + 'px';
+    var el = (popUpDiv instanceof HTMLElement) ? popUpDiv : popUpDiv[0];
+    el.style.display = '';
 
-    if (popUpDiv.selector === '#popUpMarkerPropertiesDiv') {
-        popUpDiv[0].style.top = 0;
-        popUpDiv[0].style.left = 0;
-        popUpDiv[0].style.bottom = 'auto';
+    var rect = document.getElementById('vr_editor_main_div').getBoundingClientRect();
+    el.style.left = (1 + event.clientX - rect.left) + 'px';
+
+    if (el.id === 'popUpMarkerPropertiesDiv') {
+        el.style.top = '0';
+        el.style.left = '0';
+        el.style.bottom = 'auto';
     } else {
-        popUpDiv[0].style.top = event.clientY - jQuery('#vr_editor_main_div').offset().top + jQuery(window).scrollTop() + 'px';
+        el.style.top = (event.clientY - rect.top) + 'px';
     }
 
     event.preventDefault();
@@ -1007,60 +891,35 @@ function showWholePopupDiv(popUpDiv, event) {
  //  */
 function displayPoiImageTextProperties(event, name) {
 
-    // The whole popup div
-    var ppPropertiesDiv = jQuery("#popUpPoiImageTextPropertiesDiv");
-
-    var chboxImg = jQuery("#poi_image_desc_checkbox");
+    var ppPropertiesDiv = document.getElementById("popUpPoiImageTextPropertiesDiv");
+    var chboxImg = document.getElementById("poi_image_desc_checkbox");
     var setTitle = document.getElementById('poi_image_title_text');
     var setDesc = document.getElementById('poi_image_desc_text');
-    var titleArea = jQuery("#poi_image_title_text");
-    var descArea = jQuery("#poi_image_desc_text");
 
     clearAndUnbind(null, null, "poi_image_desc_checkbox");
-
     clearAndUnbind(null, null, "poi_image_title_text");
-
     clearAndUnbind(null, null, "poi_image_desc_text");
 
+    // Re-get elements after clearAndUnbind (clone+replace creates new DOM nodes)
+    chboxImg = document.getElementById("poi_image_desc_checkbox");
+    setTitle = document.getElementById('poi_image_title_text');
+    setDesc = document.getElementById('poi_image_desc_text');
 
-    // Save the previous artifact properties values (in case of  direct mouse click on another item)
+    var sceneObj = envir.scene.getObjectByName(name);
+    chboxImg.checked = sceneObj.poi_img_content != null;
+    setDesc.style.display = sceneObj.poi_img_content != null ? "block" : "none";
 
-    chboxImg.prop('checked', envir.scene.getObjectByName(name).poi_img_content != null);
-    if (envir.scene.getObjectByName(name).poi_img_content != null) {
-        setDesc.style.display = "block";
-    } else {
-        setDesc.style.display = "none";
-    }
-
-    //descArea.prop('disabled', envir.scene.getObjectByName(name).poi_onlyimg == 1);
-
-
-    //clearAndUnbind(null, null, "poi_image_desc_checkbox");
-
-    //clearAndUnbind(null, null, "poi_image_title_text");
-
-    //clearAndUnbind(null, null, "poi_image_desc_text");
-
-    setDesc.value = envir.scene.getObjectByName(name).poi_img_content;
-    setTitle.value = envir.scene.getObjectByName(name).poi_img_title;
-
+    setDesc.value = sceneObj.poi_img_content;
+    setTitle.value = sceneObj.poi_img_title;
 
     // Show Selection (inside floating panel)
-    ppPropertiesDiv.show();
+    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
 
-    chboxImg.change(function (e) {
-
-
-        //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
-        //envir.scene.getObjectByName(name).poi_onlyimg = this.checked ? 1 : 0;
-        //console.log(envir.scene.getObjectByName(name).poi_onlyimg);
-
+    chboxImg.addEventListener("change", function (e) {
         if (this.checked) {
-
             if (envir.scene.getObjectByName(name).poi_img_content != null) {
                 envir.scene.getObjectByName(name).poi_img_content = setDesc.value;
-            }
-            else {
+            } else {
                 envir.scene.getObjectByName(name).poi_img_content = '';
             }
             setDesc.style.display = "block";
@@ -1069,34 +928,17 @@ function displayPoiImageTextProperties(event, name) {
             envir.scene.getObjectByName(name).poi_img_content = null;
         }
         envir.scene.getObjectByName(name).poi_img_title = setTitle.value;
-
-
-
-        //descArea.prop("disabled", (this.checked));
-        //var sceneJson = document.getElementById("vrodos_scene_json_input").value;
-
         saveChanges();
-
-
-
     });
 
-    titleArea.change(function (e) {
-        //var valDoorScene = popupDoorSelect.val();
-        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+    setTitle.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).poi_img_title = this.value;
-        //console.log(this.value);
         saveChanges();
-
     });
 
-    descArea.change(function (e) {
-        //var valDoorScene = popupDoorSelect.val();
-        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+    setDesc.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).poi_img_content = this.value;
-        //console.log(this.value);
         saveChanges();
-
     });
 }
 //
@@ -1114,7 +956,8 @@ function saveChanges() {
         return;
     }
 
-    jQuery('#save-scene-button').html("Saving...").addClass("LinkDisabled");
+    save_scene_btn.innerHTML = "Saving...";
+    save_scene_btn.classList.add("LinkDisabled");
     document.getElementById("compileGameBtn").disabled = true;
 
     // Export using the new VrodosSceneExporter
@@ -1132,120 +975,51 @@ function saveChanges() {
 }
 function displayPoiVideoProperties(event, name) {
 
+    var ppPropertiesDiv = document.getElementById("popUpPoiVideoPropertiesDiv");
 
-    // The whole popup div
-    var ppPropertiesDiv = jQuery("#popUpPoiVideoPropertiesDiv");
+    clearAndUnbind(null, null, "poi_video_reward_checkbox");
+    clearAndUnbind(null, null, "poi_video_focus_dropdown");
+    clearAndUnbind(null, null, "focus_X");
+    clearAndUnbind(null, null, "focus_Z");
 
-    // The checkbox only
-    var chbox = jQuery("#poi_video_reward_checkbox");
-    //var popupFocusSelect = jQuery("#poi_video_focus_dropdown");
-
+    // Re-get elements after clearAndUnbind (clone+replace creates new DOM nodes)
+    var chbox = document.getElementById("poi_video_reward_checkbox");
     var setFocusX = document.getElementById('focus_X');
     var setFocusZ = document.getElementById('focus_Z');
 
+    var sceneObj = envir.scene.getObjectByName(name);
+    chbox.checked = sceneObj.follow_camera == 1;
 
-    var sliderFocusX = jQuery("#focus_X");
-    var sliderFocusZ = jQuery("#focus_Z");
-    // Save the previous artifact properties values (in case of  direct mouse click on another item)
-    //chbox.trigger("change");
-    //popupFocusSelect.trigger("change");
+    setFocusX.value = sceneObj.follow_camera_x;
+    setFocusZ.value = sceneObj.follow_camera_z;
 
-    //sliderFocusX.trigger("change");
-    //sliderFocusZ.trigger("change");
-    //sliderFocusX.slider('value', -50);
-
-
-    clearAndUnbind(null, null, "poi_video_reward_checkbox");
-
-    clearAndUnbind(null, null, "poi_video_focus_dropdown");
-
-    clearAndUnbind(null, null, "focus_X");
-
-    clearAndUnbind(null, null, "focus_Z");
-
-    chbox.prop('checked', envir.scene.getObjectByName(name).follow_camera == 1);
-    //chbox.prop('checked', envir.scene.getObjectByName(name).follow_camera == 1);
-
-    setFocusX.value = envir.scene.getObjectByName(name).follow_camera_x;
-    setFocusZ.value = envir.scene.getObjectByName(name).follow_camera_z;
-
-
-    //console.log(setFocusX.value);
-
-
-
-    sliderFocusX.prop('disabled', envir.scene.getObjectByName(name).follow_camera == 0);
-    sliderFocusZ.prop('disabled', envir.scene.getObjectByName(name).follow_camera == 0);
+    setFocusX.disabled = sceneObj.follow_camera == 0;
+    setFocusZ.disabled = sceneObj.follow_camera == 0;
 
     // Show Selection (inside floating panel)
-    ppPropertiesDiv.show();
+    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
 
-    // Add change listener
-    chbox.change(function (e) {
-
-
-        //envir.scene.getObjectByName(name).isreward = this.checked ? 1 : 0;
+    chbox.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).follow_camera = this.checked ? 1 : 0;
 
         if (this.checked) {
             envir.scene.getObjectByName(name).follow_camera_x = setFocusX.value;
             envir.scene.getObjectByName(name).follow_camera_z = setFocusZ.value;
-            //console.log(envir.scene.getObjectByName(name).follow_camera);
         }
 
-        sliderFocusX.prop("disabled", (!this.checked));
-        sliderFocusZ.prop("disabled", (!this.checked));
-        var sceneJson = document.getElementById("vrodos_scene_json_input").value;
+        setFocusX.disabled = !this.checked;
+        setFocusZ.disabled = !this.checked;
 
         saveChanges();
-
-
-
     });
-    //sliderFocusRight.prop("disabled", true);
-    //sliderFocusUp.prop("disabled", true);
 
-
-
-    sliderFocusX.change(function (e) {
-        //var valDoorScene = popupDoorSelect.val();
-        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+    setFocusX.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).follow_camera_x = this.value;
-        //console.log(this.value);
         saveChanges();
-
     });
 
-    sliderFocusZ.change(function (e) {
-        //var valDoorScene = popupDoorSelect.val();
-        //console.log(envir.scene.getObjectByName(name).sceneID_target);
+    setFocusZ.addEventListener("change", function (e) {
         envir.scene.getObjectByName(name).follow_camera_z = this.value;
-        //console.log(this.value);
         saveChanges();
-
     });
-
-    /*
-    popupFocusSelect.change(function (e) {
-        //var valDoorScene = popupDoorSelect.val();
-        //console.log(envir.scene.getObjectByName(name).sceneID_target);
-        console.log(this.value);
-        envir.scene.getObjectByName(name).isreward = this.value;
-        //envir.scene.getObjectByName('scenesInsideVREditor').children;
-        //tempFunc.call(this, updName);
-
-        //if (!valDoorScene)
-        //    return;
-
-        //if (valDoorScene && valDoorScene != "Select a door") {
-
-        //    var nameDoor_Target = valDoorScene.split(" at ")[0];
-        //    var sceneName_Target = valDoorScene.split(" at ")[1];
-        //if (this.value != "Default" && this.value)
-        //    envir.scene.getObjectByName(updName).sceneID_target = this.value;
-        //envir.scene.getObjectByName(name).sceneName_target = this.value;
-
-        //
-    });
-    */
 }
