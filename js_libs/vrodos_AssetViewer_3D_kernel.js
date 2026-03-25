@@ -93,19 +93,18 @@ class VRodos_AssetViewer_3D_kernel {
 
 
         let scope = this;
+        let _avRaycaster = new THREE.Raycaster();
+        let _avMouse = new THREE.Vector2();
         function onclick(event) {
-            let mouse = new THREE.Vector2();
 
-            mouse.x = ((event.clientX - scope.canvasToBindTo.getBoundingClientRect().left) /
+            _avMouse.x = ((event.clientX - scope.canvasToBindTo.getBoundingClientRect().left) /
                 scope.canvasToBindTo.clientWidth) * 2 - 1;
-            mouse.y = - ((event.clientY - scope.canvasToBindTo.getBoundingClientRect().top) /
+            _avMouse.y = - ((event.clientY - scope.canvasToBindTo.getBoundingClientRect().top) /
                 scope.canvasToBindTo.clientHeight) * 2 + 1;
 
-            let raycaster = new THREE.Raycaster();
+            _avRaycaster.setFromCamera(_avMouse, scope.camera);
 
-            raycaster.setFromCamera(mouse, scope.camera);
-
-            let intersects = raycaster.intersectObjects(scope.scene.children[0].children, true); //array
+            let intersects = _avRaycaster.intersectObjects(scope.scene.children[0].children, true); //array
 
             //scope.raylineShow(raycaster);
 

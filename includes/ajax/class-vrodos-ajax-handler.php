@@ -111,8 +111,7 @@ class VRodos_AJAX_Handler {
 
 		// Clear asset list transients
 		global $wpdb;
-		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_vrodos_assets_%'" );
-		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_timeout_vrodos_assets_%'" );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_vrodos_assets_%', '_transient_timeout_vrodos_assets_%' ) );
 
 		echo $gameTitle;
 		wp_die();
@@ -390,8 +389,7 @@ class VRodos_AJAX_Handler {
 
 		// Clear the asset list transients to ensure the list is updated on refresh
 		global $wpdb;
-		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_vrodos_assets_%'" );
-		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_timeout_vrodos_assets_%'" );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_vrodos_assets_%', '_transient_timeout_vrodos_assets_%' ) );
 
 		echo $asset_id;
 

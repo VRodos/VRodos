@@ -474,9 +474,8 @@ class VRodos_Core_Manager {
 				if ( $sshotID ) {
 					$sshotUrl = wp_get_attachment_url( $sshotID );
 					if ( $sshotUrl ) {
-						$file_path = get_attached_file( $sshotID );
-						$cache     = file_exists( $file_path ) ? filemtime( $file_path ) : time();
-						$sshotPath = add_query_arg( 't', $cache, $sshotUrl );
+						$cache     = get_post_modified_time( 'U', false, $sshotID );
+						$sshotPath = add_query_arg( 't', $cache ?: time(), $sshotUrl );
 					}
 				}
 
@@ -631,9 +630,8 @@ class VRodos_Core_Manager {
 				if ( $sshotID ) {
 					$sshotUrl = wp_get_attachment_url( $sshotID );
 					if ( $sshotUrl ) {
-						$file_path = get_attached_file( $sshotID );
-						$cache     = file_exists( $file_path ) ? filemtime( $file_path ) : time();
-						$sshotPath = add_query_arg( 't', $cache, $sshotUrl );
+						$cache     = get_post_modified_time( 'U', false, $sshotID );
+						$sshotPath = add_query_arg( 't', $cache ?: time(), $sshotUrl );
 					}
 				}
 
@@ -808,19 +806,14 @@ class VRodos_Core_Manager {
 				$scene_content = get_post_field( 'post_content', $scene_id );
 				$scene_data    = json_decode( $scene_content, true );
 
-				$asset_ids_in_scene = wp_list_pluck( $scene_data['objects'], 'asset_id' );
+				$original_count = count( $scene_data['objects'] );
+				$scene_data['objects'] = array_values( array_filter( $scene_data['objects'], function ( $obj ) use ( $asset_id ) {
+					return ! isset( $obj['asset_id'] ) || $obj['asset_id'] != $asset_id;
+				} ) );
 
-				if ( in_array( $asset_id, $asset_ids_in_scene ) ) {
-					foreach ( $scene_data['objects'] as $key => $scene_object ) {
-						if ( isset( $scene_object['asset_id'] ) && $scene_object['asset_id'] == $asset_id ) {
-							unset( $scene_data['objects'][ $key ] );
-						}
-					}
-
-					$scene_data['objects'] = array_values( $scene_data['objects'] );
-					$updated_scene_content = json_encode( $scene_data );
+				if ( count( $scene_data['objects'] ) < $original_count ) {
 					wp_update_post(
-						['ID'           => $scene_id, 'post_content' => $updated_scene_content]
+						['ID'           => $scene_id, 'post_content' => json_encode( $scene_data )]
 					);
 				}
 			}

@@ -33,26 +33,23 @@ function findIntersected(event) {
 }
 
 
+// Reusable raycaster and mouse vector (avoid allocations per event)
+var _reusableRaycaster = new THREE.Raycaster();
+var _reusableMouse = new THREE.Vector2();
+
 // raycasting for picking objects
 function raycasterSetter(event) {
-
-    /* Keep mouse clicks */
-    let mouse = new THREE.Vector2();
 
     // calculate mouse position in normalized device coordinates
     var mainDiv = document.getElementById('vr_editor_main_div');
     var rect = mainDiv.getBoundingClientRect();
-    mouse.x = ((event.clientX - rect.left) / mainDiv.clientWidth) * 2 - 1;
-    mouse.y = - ((event.clientY - rect.top) / mainDiv.clientHeight) * 2 + 1;
+    _reusableMouse.x = ((event.clientX - rect.left) / mainDiv.clientWidth) * 2 - 1;
+    _reusableMouse.y = - ((event.clientY - rect.top) / mainDiv.clientHeight) * 2 + 1;
 
     // Main Raycast object
-    let raycasterPick = new THREE.Raycaster();
-    raycasterPick.setFromCamera(mouse, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
+    _reusableRaycaster.setFromCamera(_reusableMouse, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
 
-    // Show the myBulletLine (raycast)
-    // raylineVisualize(raycasterPick);
-
-    return raycasterPick;
+    return _reusableRaycaster;
 }
 
 

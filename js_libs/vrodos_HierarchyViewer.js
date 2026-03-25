@@ -195,9 +195,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
     if (obj.name === 'avatarCamera') iconColor = 'tw-text-blue-400';
 
     var itemHTML = '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors"' +
-        ' id="' + obj.uuid + '" data-name="' + obj.name + '"' +
-        ' onmouseenter="hierarchyHoverSelect(\'' + obj.uuid + '\')"' +
-        ' onclick="hierarchyClickSelect(event,\'' + obj.uuid + '\')">' +
+        ' id="' + obj.uuid + '" data-name="' + obj.name + '" data-uuid="' + obj.uuid + '">' +
         '<i data-lucide="' + iconName + '" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ' + iconColor + '"></i>' +
         '<span class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-[9pt] tw-leading-tight tw-text-white"' +
         ' title="' + (obj.title || object_name) + '">' +
@@ -251,15 +249,19 @@ function CreateResetButton(obj){
 
 }
 
-// Highlight item in Hierarchy viewer
-function setBackgroundColorHierarchyViewer(id) {
+// Highlight item in Hierarchy viewer — tracks previous selection to avoid full DOM scan
+var _previousHighlightedId = null;
 
-    document.querySelectorAll('#hierarchy-viewer li').forEach(function (li) {
-        li.style.background = '';
-    });
+function setBackgroundColorHierarchyViewer(id) {
+    if (_previousHighlightedId) {
+        var prev = document.getElementById(_previousHighlightedId);
+        if (prev) prev.style.background = '';
+    }
 
     var el = document.getElementById(id);
     if (el) el.style.background = 'rgba(59, 130, 246, 0.3)';
+
+    _previousHighlightedId = id;
 }
 
 // Traverse the entire scene to insert scene children in Hierarchy Viewer
@@ -345,4 +347,29 @@ function addInHierarchyViewer(obj) {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     setBackgroundColorHierarchyViewer(obj.uuid);
+}
+
+/**
+ * Initialize delegated event handlers on the hierarchy viewer container.
+ * Call once after DOM is ready. Replaces per-item inline onmouseenter/onclick.
+ */
+function initHierarchyViewerEvents() {
+    var viewer = document.getElementById('hierarchy-viewer');
+    if (!viewer) return;
+
+    viewer.addEventListener('mouseenter', function (e) {
+        var item = e.target.closest('.hierarchyItem');
+        if (!item) return;
+        var uuid = item.dataset.uuid;
+        if (uuid) hierarchyHoverSelect(uuid);
+    }, true); // use capture so mouseenter fires for child elements
+
+    viewer.addEventListener('click', function (e) {
+        // Ignore clicks on action buttons (delete, lock, reset)
+        if (e.target.closest('a[aria-label]')) return;
+        var item = e.target.closest('.hierarchyItem');
+        if (!item) return;
+        var uuid = item.dataset.uuid;
+        if (uuid) hierarchyClickSelect(e, uuid);
+    });
 }

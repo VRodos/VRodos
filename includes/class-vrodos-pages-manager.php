@@ -126,14 +126,8 @@ class VRodos_Pages_Manager {
 	}
 
 	public static function vrodos_get_page_by_slug( $slug ) {
-		if ( $pages = get_pages() ) {
-			foreach ( $pages as $page ) {
-				if ( $slug === $page->post_name ) {
-					return $page;
-				}
-			}
-		}
-		return false;
+		$page = get_page_by_path( $slug );
+		return $page ?: false;
 	}
 
 	public static function prepare_assets_list_page_data() {

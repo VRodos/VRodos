@@ -690,26 +690,48 @@ function deleteAssetFromScene(uuid) {
         if (objectSelected.isLight) {
 
             // Sun Shadow Helper
-            envir.scene.remove(envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name));
-    
+            let shadowHelper = envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name);
+            if (shadowHelper) { shadowHelper.dispose(); envir.scene.remove(shadowHelper); }
+
             // Sun target spot
-            envir.scene.remove(envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name));
-    
+            let targetSpot = envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name);
+            if (targetSpot) envir.scene.remove(targetSpot);
+
             // Sun target spot remove from hierarchy viewer
             let target = "lightTargetSpot_" + objectSelected.name;
             let targetEl = document.querySelector("[data-name='" + target + "']");
             if (targetEl) targetEl.remove();
-    
+
             // Light Helper (for all lights)
-            envir.scene.remove(envir.scene.getObjectByName("lightHelper_" + objectSelected.name));
+            let lightHelper = envir.scene.getObjectByName("lightHelper_" + objectSelected.name);
+            if (lightHelper) { lightHelper.dispose(); envir.scene.remove(lightHelper); }
         }
     }
     
+
+    // Remove cel outline if present
+    if (typeof removeCelOutline === 'function') removeCelOutline(objectSelected);
 
     transform_controls.detach(objectSelected);
 
     // prevent orbiting
     document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
+
+    // Dispose GPU resources (geometry, materials, textures) to prevent VRAM leaks
+    objectSelected.traverse(function (node) {
+        if (node.geometry) node.geometry.dispose();
+        if (node.material) {
+            var materials = Array.isArray(node.material) ? node.material : [node.material];
+            materials.forEach(function (mat) {
+                for (var key in mat) {
+                    if (mat[key] && typeof mat[key].dispose === 'function') {
+                        mat[key].dispose(); // textures, env maps, etc.
+                    }
+                }
+                mat.dispose();
+            });
+        }
+    });
 
     // Remove object from scene
     envir.scene.remove(objectSelected);

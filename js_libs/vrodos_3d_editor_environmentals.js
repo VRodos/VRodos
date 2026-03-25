@@ -170,7 +170,7 @@ class vrodos_3d_editor_environmentals {
         this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
 
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-        this.renderer.setPixelRatio(this.ASPECT);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
 
         this.labelRenderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         //----------------------------------------------

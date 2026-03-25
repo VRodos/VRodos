@@ -457,6 +457,7 @@ extract( $data );
 		// load asset browser with data
 		document.addEventListener('DOMContentLoaded', function() {
 
+			initHierarchyViewerEvents();
 			vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
 			// make asset browser draggable: not working without get_footer
 			// jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
