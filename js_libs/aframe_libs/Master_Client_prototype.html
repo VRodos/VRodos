@@ -2,16 +2,6 @@
 <html lang="en">
 
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-63HJZ7CJRR"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-63HJZ7CJRR');
-    </script>
-
     <meta charset="utf-8" />
     <title>Collaborative content creation</title>
     <meta name="description" content="Collaborative content creation" />
@@ -28,8 +18,6 @@
 
     <script src="../easyrtc/easyrtc.js"></script>
     <script src="../dist/networked-aframe.js"></script>
-
-    <!--<script src="js/a-water_alphamask_master.js"></script>-->
 
     <script src="js/highlight_img.js"></script>
 
@@ -100,7 +88,6 @@
              document.getElementById('cameraA').setAttribute('player-info', 'color', newColor);
              document.getElementById('color-changer').style.backgroundColor = newColor;
              document.getElementById('color-changer').style.color = newColor;
-             gtag('event', 'player_color_change');
         ">■</button>
             <input id="username-overlay" maxlength="24" size="15"
                 oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)"
@@ -290,10 +277,10 @@
         fog="type: linear; color: #AAB; far: 230; near: 0" renderer="antialias: true;
             sortTransparentObjects: true;
             toneMapping: ACESFilmic;
-            precision: high;
+            precision: medium;
             alpha: true;" shadow="type: pcfsoft;" vr-mode-ui="enabled: true"
         device-orientation-permission-ui="enabled: false" loading-screen="dotsColor: gray; backgroundColor: black;"
-        networked-scene="app: appname; room: roomname; debug: true; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;">
+        networked-scene="app: appname; room: roomname; debug: false; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;">
 
         <a-assets id="scene-assets">
 

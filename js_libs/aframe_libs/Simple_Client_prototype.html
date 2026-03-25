@@ -41,7 +41,7 @@
         networked-scene="
         app: appname;
         room: roomname;
-        debug: true;
+        debug: false;
         adapter: easyrtc;
         audio: true;
         video: true;
@@ -179,6 +179,7 @@
                                     img.style.left="0";
                                     img.style.width = "100%";
                                     document.getElementById("renderFeedbackText").style.visibility = "hidden";
+                                    clearInterval(timerForScreenFeedback); // Stop polling once stream is connected
                                 }
                             }
                         }

@@ -233,7 +233,7 @@ class VRodos_Compiler_Manager {
 
 			// If there is a MV project id, then forward it to client
 			$mv_project_id = get_post_meta( $project_id, 'mv_project_id' );
-			if ( $mv_project_id ) {
+			if ( ! empty( $mv_project_id ) ) {
 				$mv_project_id_input = $dom->getElementById( 'mv-project-id-input' );
 				$mv_project_id_input->setAttribute( 'value', $mv_project_id[0] );
 			}
@@ -324,25 +324,16 @@ class VRodos_Compiler_Manager {
 		$ascenePlayer = $basicDomElements['ascenePlayer'];
 		$sceneColor   = $scene_json->metadata->ClearColor;
 
-		// print_r($title);
-
 		$pj_type = wp_get_post_terms( $project_id, 'vrodos_game_type' );
 
 		$projectType = $pj_type[0]->slug;
 		$a_asset     = $dom->createElement( 'a-assets' );
 
 		$dom->getElementsByTagName( 'title' )->item( 0 )->nodeValue = $scene_title[ $index ];
-		// $dom->getElementsByTagName("title")->item(0)->nodeValue = $project_title;
-
-		// $ascene->appendChild($a_entity_sky);
-
-		// print_r($objects->avatarCamera->isCamera);
 
 		$bcg_choice    = $scene_json->metadata->backgroundStyleOption ?? '';
 		$preset_choice = $scene_json->metadata->backgroundPresetOption ?? '';
 		$image_path    = $scene_json->metadata->backgroundImagePath ?? '';
-		// wp_upload_dir( '../uploads/Models/8664/8665_1695106416_scene_bcg.png', dirname(__FILE__))
-		// print_r(wp_upload_dir());
 		if ( $bcg_choice == '3' ) {
 
 			if ( $image_path ) {
@@ -361,7 +352,6 @@ class VRodos_Compiler_Manager {
 		$avatar_enabled    = isset( $scene_json->metadata->enableAvatar ) && filter_var( $scene_json->metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN );
 		$cam_position      = implode( ' ', $scene_json->objects->avatarCamera->position );
 		$public_chat       = isset( $scene_json->metadata->enableGeneralChat ) && filter_var( $scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN );
-		// $cam_rotation = implode(" ", [180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1], 180 / pi() * $scene_json->objects->avatarCamera->rotation[2]]);
 
 		$cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
 		if ( ! empty( $sceneColor ) ) {
@@ -373,21 +363,12 @@ class VRodos_Compiler_Manager {
 		// Set networked properties
 		$enable_director_audio = ( $projectType == 'vrexpo_games' ) ? 'false' : 'true';
 		$app_name              = ( $projectType == 'vrexpo_games' ) ? 'vrexpo' : 'vrodos';
-		$ascene->setAttribute( 'networked-scene', "app: $app_name; room: room$scene_id; debug: true; audio: $enable_director_audio; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;" );
+		$ascene->setAttribute( 'networked-scene', "app: $app_name; room: room$scene_id; debug: false; audio: $enable_director_audio; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;" );
 
 		if ( $projectType == 'vrexpo_games' ) {
-			// $a_entity_expo = $dom->createElement( "a-entity" );
-			// $ascenePlayer->setAttribute( "id", "camera-rig" );
-			// $ascenePlayer->setAttribute( "position", $cam_position );
-			// $ascenePlayer->setAttribute("rotation", implode(" ", [
-			// -180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1],
-			// 180 / pi() * $scene_json->objects->avatarCamera->rotation[2]
-			// ]));
-
 
 			$ascenePlayer->setAttribute( 'custom-movement', '' );
 			$ascenePlayer->setAttribute( 'show-position', '' );
-			// $ascenePlayer->setAttribute( "networked", "template:#avatar-template-expo;attachTemplateToLocal:false" );
 
 			// OCULUS
 			$a_camera = $dom->createElement( 'a-camera' );
@@ -398,14 +379,8 @@ class VRodos_Compiler_Manager {
 			$a_camera->setAttribute( 'avatar-movement-info', '' );
 			$a_camera->setAttribute( 'avatar-rotation-info', '' );
 			$a_camera->setAttribute( 'look-controls', '' );
-			// if($movement_disabled != "1")
-			// print_r($scene_json->metadata->disableMovement);
-			// if (filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN)  === true)
-			// $a_camera->setAttribute( "wasd-controls", "acceleration:20" );
 			$a_camera->setAttribute( 'entity-movement-emitter', '' );
 			$a_camera->setAttribute( 'entity-rotation-emitter', '' );
-
-			// $a_camera->setAttribute( "position-listener", "" );
 
 			$a_cursor = $dom->createElement( 'a-entity' );
 			$a_cursor->setAttribute( 'id', 'cursor' );
@@ -417,9 +392,8 @@ class VRodos_Compiler_Manager {
 			$a_entity_oc_right->setAttribute( 'oculus-touch-controls', 'hand: right' );
 			$a_entity_oc_right->setAttribute( 'laser-controls', 'hand: right' );
 			$a_entity_oc_right->setAttribute( 'raycaster', 'lineColor: black; objects: .raycastable' );
-			// $a_entity_oc_right->setAttribute("blink-controls", "");
-			$a_entity_oc_right->setAttribute( 'transparent', 'true' ); // Ensure transparency is set to true
-			$a_entity_oc_right->setAttribute( 'render-order', '9999999' ); // Set a high render-order value
+			$a_entity_oc_right->setAttribute( 'transparent', 'true' );
+			$a_entity_oc_right->setAttribute( 'render-order', '9999999' );
 
 			$a_entity_oc_left = $dom->createElement( 'a-entity' );
 			$a_entity_oc_left->setAttribute( 'id', 'oculusLeft' );
@@ -429,25 +403,17 @@ class VRodos_Compiler_Manager {
 			$a_entity_oc_left->setAttribute( 'transparent', 'true' ); // Ensure transparency is set to true
 			$a_entity_oc_left->setAttribute( 'blink-controls', '' );
 			$a_entity_oc_left->setAttribute( 'visible', 'false' );
-			$a_entity_oc_left->setAttribute( 'render-order', '9999999' ); // Set a high render-order value
+			$a_entity_oc_left->setAttribute( 'render-order', '9999999' );
 
 			$a_camera->appendChild( $a_cursor );
 			$ascenePlayer->appendChild( $a_camera );
 			$ascenePlayer->appendChild( $a_entity_oc_right );
 			$ascenePlayer->appendChild( $a_entity_oc_left );
-			// $ascenePlayer->appendChild( $a_entity_expo );
 
 		} else {
 			$ascenePlayer->setAttribute( 'position', '0 0.6 0' );
-			// $ascenePlayer->setAttribute( "position", $cam_position );
-			// $ascenePlayer->setAttribute("rotation", implode(" ", [
-			// -180 / pi() * $scene_json->objects->avatarCamera->rotation[0], 180 / pi() * $scene_json->objects->avatarCamera->rotation[1],
-			// 180 / pi() * $scene_json->objects->avatarCamera->rotation[2]
-			// ]));
 			$ascenePlayer->setAttribute( 'networked', 'template:#avatar-template;attachTemplateToLocal:false;' );
 			$ascenePlayer->setAttribute( 'show-position', '' );
-			// if($movement_disabled != "1")
-			// if (filter_var($scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN)  === true)
 			$ascenePlayer->setAttribute( 'wasd-controls', 'fly:false; acceleration:20' );
 			$ascenePlayer->setAttribute( 'look-controls', 'pointerLockEnabled: false' );
 
@@ -471,9 +437,6 @@ class VRodos_Compiler_Manager {
 		}
 
 		// print($scene_id)
-
-		// $i = array_search($scene_id, array_keys($scene_id_list));
-		// print_r($i);
 
 		foreach ( $objects as $contentObject ) {
 
@@ -518,10 +481,6 @@ class VRodos_Compiler_Manager {
 						);
 
 						$a_light->setAttribute( 'target', '#' . $uuid . 'target' );
-						// $a_light->setAttribute("shdadow-camera-automatic", "#environmentGround");
-
-						// Define the sun at the sky and add it to scene
-						// <a-sun-sky material="side:back; sunPosition: 1.0 1.0 0.0"></a-sun-sky>
 
 						$a_sun_sky = $dom->createElement( 'a-sun-sky' );
 						$a_sun_sky->appendChild( $dom->createTextNode( '' ) );
@@ -631,14 +590,10 @@ class VRodos_Compiler_Manager {
 							$a_entity = $dom->createElement( 'a-entity' );
 							$a_entity->appendChild( $dom->createTextNode( '' ) );
 
-							$f = fopen( 'output_actor_rot.txt', 'w' );
-							fwrite( $f, print_r( $contentObject, true ) );
-							fclose( $f );
-
 							$this->setAffineTransformations( $a_entity, $contentObject );
 							$a_entity->setAttribute(
 								'gltf-model',
-								'url(' . $this->plugin_path_url . 'assets/pawn.glb)'
+								'url(' . $this->normalize_url( $this->plugin_path_url . 'assets/pawn.glb' ) . ')'
 							);
 
 							$ascene->appendChild( $a_entity );
@@ -673,15 +628,8 @@ class VRodos_Compiler_Manager {
 						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
 						$gltf_model->setAttribute( 'preload', 'auto' );
 						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );
-						// $gltf_model->setAttribute( "animation-mixer", "" );
-
-						// $a_entity->setAttribute( "ammo-body", "type: dynamic;" );
-						// $a_entity->setAttribute( "ammo-shape", "type: sphere; fit: manual; sphereRadius:2.5" );
-						// $a_entity->setAttribute( "class", "collidable" );
 
 						$ascene->appendChild( $gltf_model );
-
-						// $ascene->appendChild( $a_entity );
 						break;
 
 					case 'door':
@@ -713,9 +661,6 @@ class VRodos_Compiler_Manager {
 
 						$gltf_model->setAttribute( 'material', $material );
 						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
-						// $a_entity->setAttribute("class", "");
-						// $a_entity->setAttribute("highlight", "$uuid");
-
 						$gltf_model->setAttribute( 'highlight', "entity_$uuid" );
 
 						if ( ! empty( $contentObject->sceneID_target ) ) {
@@ -732,34 +677,31 @@ class VRodos_Compiler_Manager {
 						$a_asset_fs = $dom->createElement( 'img' );
 						$a_asset_fs->setAttribute( 'mixin', 'vid_panel' );
 						$a_asset_fs->setAttribute( 'id', "video_fullScreen_$uuid" );
-						// $a_asset_fs->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/fullscreen.png");
 						$a_asset_fs->setAttribute( 'src', $this->plugin_path_url . 'assets/images/fullscreen.png' );
 						$a_asset_fs->setAttribute( 'crossorigin', 'anonymous' );
 
 						$a_asset_ex = $dom->createElement( 'img' );
 						$a_asset_ex->setAttribute( 'mixin', 'vid_panel' );
 						$a_asset_ex->setAttribute( 'id', "video_exit_$uuid" );
-						// $a_asset_ex->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/exit.png");
 						$a_asset_ex->setAttribute( 'src', $this->plugin_path_url . 'assets/images/exit.png' );
 						$a_asset_ex->setAttribute( 'crossorigin', 'anonymous' );
 
 						$a_asset_pl = $dom->createElement( 'img' );
 						$a_asset_pl->setAttribute( 'mixin', 'vid_panel' );
 						$a_asset_pl->setAttribute( 'id', "video_pl_$uuid" );
-						// $a_asset_pl->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/play.png");
 						$a_asset_pl->setAttribute( 'src', $this->plugin_path_url . 'assets/images/play.png' );
 						$a_asset_pl->setAttribute( 'crossorigin', 'anonymous' );
 
 						$a_asset_pas = $dom->createElement( 'img' );
 						$a_asset_pas->setAttribute( 'mixin', 'vid_panel' );
 						$a_asset_pas->setAttribute( 'id', "video_pas_$uuid" );
-						// $a_asset_pas->setAttribute("src",  "http://localhost/wp_vrodos/wp-content/uploads//Models/pause.png");
 						$a_asset_pas->setAttribute( 'src', $this->plugin_path_url . 'assets/images/pause.png' );
 						$a_asset_pas->setAttribute( 'crossorigin', 'anonymous' );
 
 						$a_video_asset = $dom->createElement( 'video' );
 						$a_video_asset->setAttribute( 'id', "video_$uuid" );
 						$a_video_asset->setAttribute( 'crossorigin', 'anonymous' );
+						$a_video_asset->setAttribute( 'preload', 'metadata' );
 
 						$contentObject->video_loop == 1 ? $a_video_asset->setAttribute( 'loop', 'true' ) : $a_video_asset->setAttribute( 'loop', 'false' );
 						if ( $contentObject->video_loop == 1 ) {
@@ -768,21 +710,15 @@ class VRodos_Compiler_Manager {
 							$a_video_asset->setAttribute( 'autoplay-manual', 'false' );
 						}
 
-						// $contentObject->video_link = "http://localhost/wp_vrodos/wp-content/uploads//Models/convVR.webm";
 						if ( $contentObject->video_path != 'false' ) {
 							$a_video_asset->setAttribute( 'src', $this->normalize_url( $contentObject->video_path ) );
 						}
-
-						// $a_video_asset->setAttribute("src", "http://localhost/wp_vrodos/wp-content/uploads//Models/VR.mp4");
 
 						$assets->appendChild( $a_video_asset );
 						$assets->appendChild( $a_asset_fs );
 						$assets->appendChild( $a_asset_ex );
 						$assets->appendChild( $a_asset_pl );
 						$assets->appendChild( $a_asset_pas );
-
-						// $a_entity = $dom->createElement("a-plane");
-						// $a_entity->setAttribute("id", "video-border_$uuid");
 
 						$pos_x = $contentObject->position[0];
 						$pos_y = $contentObject->position[1];
@@ -792,15 +728,9 @@ class VRodos_Compiler_Manager {
 						$rot_y = $contentObject->rotation[1];
 						$rot_z = $contentObject->rotation[2];
 
-						// print_r($pos_x);
-
-						// $a_entity->setAttribute('video-controls', "id: $uuid; orig_pos:$pos_x,$pos_y,$pos_z; orig_rot:$rot_x,$rot_y,$rot_z");
 						$sc_x = $contentObject->scale[0];
 						$sc_y = $contentObject->scale[1];
 						$sc_z = $contentObject->scale[2];
-						// $a_entity->setAttribute("original-scale", "$sc_x $sc_y $sc_z");
-						// $a_entity->setAttribute("camera-listener", "");
-						// $a_entity->setAttribute("class", "clickable hideable raycastable");
 
 						$a_entity_fs = $dom->createElement( 'a-plane' );
 						$a_entity_fs->setAttribute( 'id', "ent_fs_$uuid" );
@@ -849,12 +779,8 @@ class VRodos_Compiler_Manager {
 						$exit_vid_entity_panel->setAttribute( 'original-scale', '1 1 1' );
 						$exit_vid_entity_panel->setAttribute( 'class', 'raycastable hideable non-clickable' );
 
-						// $ascene->appendChild($a_entity_panel);
-
 						$a_title_vid_entity = $dom->createElement( 'a-entity' );
 						$a_title_vid_entity->setAttribute( 'id', "ent_tit_$uuid" );
-						// $a_title_vid_entity->setAttribute("position", "-0.2 0.11 0.000001");
-						// $a_title_vid_entity->setAttribute("position", "-0.18 0.2 0.000001");
 						$a_title_vid_entity->setAttribute( 'position', '-0.18 0.05 0.000001' );
 
 						$vid_font_path = $this->plugin_path_url . 'assets/fonts/Roboto-Black-msdf.json';
@@ -890,21 +816,13 @@ class VRodos_Compiler_Manager {
 						$a_video->setAttribute( 'video-controls', "id: $uuid; orig_pos:$pos_x,$pos_y,$pos_z; orig_rot:$rot_x,$rot_y,$rot_z" );
 						$a_video->setAttribute( 'height', '3' );          // Has to match size of the three.js asset
 						$a_video->setAttribute( 'width', '4' );
-						// $a_video->setAttribute("position", "0 0 0.1");
 						$a_video->setAttribute( 'src', "#video_$uuid" );
 						$a_video->setAttribute( 'material', 'shader: flat; side: double' );
 						$a_video->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
 						$a_video->setAttribute( 'class', 'clickable hideable' );
-						// $a_entity->setAttribute("id", "video-border_$uuid");
 
 						$this->setAffineTransformations( $a_video, $contentObject );
 
-						// $a_entity->setAttribute("height", "3");                      //TODO reformat without a entity component
-						// $a_entity->setAttribute("width", "4");
-
-						// $a_entity->appendChild($a_video);
-
-						// $assets->appendChild($a_video);
 						$ascene->appendChild( $a_video );
 
 						break;
@@ -1039,7 +957,6 @@ class VRodos_Compiler_Manager {
 						$a_ui_entity->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
 						$a_ui_entity->setAttribute( 'id', 'ui' );
 						$a_ui_entity->setAttribute( 'class', 'hideable raycastable' );
-						$a_ui_entity->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
 
 						$this->setAffineTransformations( $a_ui_entity, $contentObject );
 
@@ -1224,8 +1141,6 @@ class VRodos_Compiler_Manager {
 		$objects = $basicDomElements['objects'];
 
 		$actionsDiv = $basicDomElements['actionsDiv'];
-
-		$this->writer( 'output_simple_client.html', print_r( $basicDomElements, true ) );
 
 		$i = 0;
 		foreach ( $objects as $contentObject ) {
