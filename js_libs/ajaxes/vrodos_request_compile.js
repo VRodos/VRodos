@@ -74,19 +74,14 @@ function vrodos_compileAjax(showPawnPositions) {
 
 		if (projectType === 'vrexpo') {
 			createLinks( urlExperienceSequence["MasterClient"], "Exposition link" );
-			createLinks( urlExperienceSequence["SimpleClient"], "Actor link" );
 		} else {
 			createLinks( urlExperienceSequence["index"], "Index" );
 			createLinks( urlExperienceSequence["MasterClient"], "Director" );
 			createLinks( urlExperienceSequence["SimpleClient"],"Actor" );
-		}
-
-		if (projectType !== 'vrexpo') {
 			document.getElementById( "appResultDiv" ).style.display = '';
+			document.getElementById( "vrodos-weblink" ).href = urlExperienceSequence["index"];
+			document.getElementById( "openWebLinkhref" ).setAttribute( "href", urlExperienceSequence["index"] );
 		}
-
-		document.getElementById( "vrodos-weblink" ).href = urlExperienceSequence["index"];
-		document.getElementById( "openWebLinkhref" ).setAttribute( "href", urlExperienceSequence["index"] );
 
 	})
 	.catch( function (err) {

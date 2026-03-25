@@ -64,15 +64,29 @@ class VRodos_Compiler_Manager {
 			$scene_json[ $key ]         = json_decode( (string) $scene_content_text[ $key ] );
 		}
 
+		$project_type_terms = wp_get_post_terms( $project_id, 'vrodos_game_type' );
+		$is_vrexpo = ( ! empty( $project_type_terms ) && ! is_wp_error( $project_type_terms ) && $project_type_terms[0]->slug === 'vrexpo_games' );
+
 		foreach ( array_reverse( $scene_id_list ) as $key => &$value ) {
-			$this->createIndexFile( $project_title, $value, $scene_title );
+			if ( ! $is_vrexpo ) {
+				$this->createIndexFile( $project_title, $value, $scene_title );
+			}
 			$this->createMasterClient( $value, $scene_title, $scene_json[ $key ], $showPawnPositions, $key, $project_id, $scene_id_list );
-			$this->createSimpleClient( $value, $scene_json[ $key ], $project_id );
+			if ( ! $is_vrexpo ) {
+				$this->createSimpleClient( $value, $scene_json[ $key ], $project_id );
+			}
 		}
 
-		return json_encode(
-			['index'        => $this->nodeJSpath() . 'index_' . end( $scene_id_list ) . '.html', 'MasterClient' => $this->nodeJSpath() . 'Master_Client_' . end( $scene_id_list ) . '.html', 'SimpleClient' => $this->nodeJSpath() . 'Simple_Client_' . end( $scene_id_list ) . '.html']
-		);
+		$result = [
+			'MasterClient' => $this->nodeJSpath() . 'Master_Client_' . end( $scene_id_list ) . '.html',
+		];
+
+		if ( ! $is_vrexpo ) {
+			$result['index']        = $this->nodeJSpath() . 'index_' . end( $scene_id_list ) . '.html';
+			$result['SimpleClient'] = $this->nodeJSpath() . 'Simple_Client_' . end( $scene_id_list ) . '.html';
+		}
+
+		return json_encode( $result );
 	}
 
 	private function processExists( $processName ) {
