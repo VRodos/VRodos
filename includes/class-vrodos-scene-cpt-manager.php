@@ -463,7 +463,15 @@ class VRodos_Scene_CPT_Manager {
 
 		$scene_metas = ['vrodos_scene_default'  => 0, 'vrodos_scene_caption'  => esc_attr( strip_tags( $_POST['scene-caption'] ?? '' ) ), 'vrodos_scene_metatype' => $sceneMetaType];
 
-		$scene_information = ['post_title'   => esc_attr( strip_tags( (string) $_POST['scene-title'] ) ), 'post_content' => $default_json, 'post_type'    => 'vrodos_scene', 'post_status'  => 'publish', 'tax_input'    => $scene_taxonomies, 'meta_input'   => $scene_metas];
+		// Place new scene after all existing ones
+		$existing_scene_ids = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $parent_project_term->term_id );
+		$max_order = 0;
+		foreach ( $existing_scene_ids as $sid ) {
+			$order = (int) get_post_field( 'menu_order', $sid );
+			if ( $order > $max_order ) { $max_order = $order; }
+		}
+
+		$scene_information = ['post_title'   => esc_attr( strip_tags( (string) $_POST['scene-title'] ) ), 'post_content' => $default_json, 'post_type'    => 'vrodos_scene', 'post_status'  => 'publish', 'menu_order'   => $max_order + 1, 'tax_input'    => $scene_taxonomies, 'meta_input'   => $scene_metas];
 
 		$scene_id = wp_insert_post( $scene_information );
 

@@ -255,19 +255,17 @@ class VRodos_Core_Manager {
 
 		$scene_type_slug = 'wonderaround-yaml';
 
-		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => ['relation' => 'AND', ['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'slug', 'terms'    => $gameSlug], ['taxonomy' => 'vrodos_scene_yaml', 'field'    => 'slug', 'terms'    => $scene_type_slug]], 'orderby'        => 'menu_order', 'order'          => 'ASC'];
+		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => 1, 'tax_query'      => ['relation' => 'AND', ['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'slug', 'terms'    => $gameSlug], ['taxonomy' => 'vrodos_scene_yaml', 'field'    => 'slug', 'terms'    => $scene_type_slug]], 'orderby'        => 'menu_order', 'order'          => 'ASC'];
 		$scene_data        = [];
 		$custom_query      = new WP_Query( $custom_query_args );
 
 		if ( $custom_query->have_posts() ) {
-			while ( $custom_query->have_posts() ) {
-				$custom_query->the_post();
-
-				$scene_data['id']   = get_the_ID();
-				$scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
-			}
+			$custom_query->the_post();
+			$scene_data['id']   = get_the_ID();
+			$scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
 		}
 
+		wp_reset_postdata();
 		return $scene_data;
 	}
 
