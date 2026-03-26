@@ -562,8 +562,19 @@ class VRodos_AJAX_Handler {
 		$perma_structure     = (bool) get_option( 'permalink_structure' );
 		$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
+		// Exclude Joker projects (internal shared-asset repositories) from the listing
+		$joker_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+		$joker_ids = [];
+		foreach ($joker_slugs as $slug) {
+			$post = get_page_by_path($slug, OBJECT, 'vrodos_game');
+			if ($post) $joker_ids[] = $post->ID;
+		}
+
 		// Define custom query parameters
-		$custom_query_args = ['post_type'      => 'vrodos_game', 'posts_per_page' => -1];
+		$custom_query_args = ['post_type' => 'vrodos_game', 'posts_per_page' => -1];
+		if (!empty($joker_ids)) {
+			$custom_query_args['post__not_in'] = $joker_ids;
+		}
 
 		// if (current_user_can('administrator')){
 		//
@@ -602,11 +613,6 @@ class VRodos_AJAX_Handler {
 				// Stagger limit to 4
 				$stagger = ( $i % 4 ) == 0 ? 4 : ( $i % 4 );
 				$i++;
-
-				// Do not show Joker projects
-				if ( str_contains( $game_title, ' Joker' ) ) {
-					continue;
-				}
 
 				$game_type_obj = VRodos_Core_Manager::vrodos_return_project_type( $game_id );
 
@@ -695,16 +701,12 @@ class VRodos_AJAX_Handler {
 
 		} else {
 
-			echo '<hr class="WhiteSpaceSeparator">';
-			echo '<div class="CenterContents">' .
-			'<i class="material-icons mdc-theme--text-icon-on-light" style="font-size: 96px;" aria-hidden="true"' .
-			' title="No projects available">' .
-			'games' .
-			'</i>' .
-			'<h3 class="mdc-typography--headline"> projects available</h3>' .
-			'<hr class="WhiteSpaceSeparator">' .
-			'<h4 class="mdc-typography--title mdc-theme--text-secondary-on-light">' .
-			'You can try creating a new one</h4>';
+			echo '<div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-20 tw-text-center">';
+			echo '<div class="tw-w-20 tw-h-20 tw-rounded-full tw-bg-base-200 tw-flex tw-items-center tw-justify-center tw-mb-4">';
+			echo '<i data-lucide="folder-open" class="tw-w-10 tw-h-10 tw-text-base-content/30"></i>';
+			echo '</div>';
+			echo '<h3 class="tw-text-lg tw-font-semibold tw-text-base-content/70 tw-mb-1">No projects yet</h3>';
+			echo '<p class="tw-text-sm tw-text-base-content/40">Create your first project to get started</p>';
 			echo '</div>';
 		}
 

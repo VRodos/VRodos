@@ -238,21 +238,6 @@ function vrodos_get_asset_category_icon($category_slug) {
             <?php endforeach; ?>
         </div>
 
-        <!-- Empty State -->
-        <?php if ( ! $assets ) : ?>
-            <div class="tw-py-20 tw-text-center">
-                <div class="tw-w-32 tw-h-32 tw-bg-slate-100 tw-text-slate-300 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-8">
-                    <i data-lucide="package-open" class="tw-w-16 tw-h-16"></i>
-                </div>
-                <h2 class="tw-text-3xl tw-font-black tw-text-slate-800 tw-mb-3">No Assets Found</h2>
-                <p class="tw-text-slate-500 tw-max-w-md tw-mx-auto tw-font-medium">
-                    Your repository is currently empty. Start by adding a new 3D model, image, or video to use in your projects.
-                </p>
-                <a href="<?php echo $link_to_add; ?>" class="tw-btn tw-btn-primary tw-mt-8 tw-px-10 tw-text-white tw-font-bold tw-rounded-xl">
-                    Upload Your First Asset
-                </a>
-            </div>
-        <?php endif; ?>
 
     </main>
 

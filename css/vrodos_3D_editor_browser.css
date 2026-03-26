@@ -141,3 +141,14 @@
 	color: #fff;
 	border-color: #059669;
 }
+
+/* Empty State */
+.asset-empty-state {
+	grid-column: 1 / -1;
+	display: flex !important;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: auto !important;
+	min-height: 200px;
+}

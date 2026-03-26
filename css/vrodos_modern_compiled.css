@@ -2816,6 +2816,10 @@ body {
   z-index: 9999;
 }
 
+.vrodos-manager-wrapper .tw-col-span-full {
+  grid-column: 1 / -1;
+}
+
 .vrodos-manager-wrapper .tw-m-0 {
   margin: 0px;
 }
@@ -3766,6 +3770,14 @@ body {
   background-color: rgb(255 255 255 / 0.9);
 }
 
+.vrodos-manager-wrapper .tw-bg-slate-700\/50 {
+  background-color: rgb(51 65 85 / 0.5);
+}
+
+.vrodos-manager-wrapper .tw-bg-slate-800\/20 {
+  background-color: rgb(30 41 59 / 0.2);
+}
+
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
   background-image: linear-gradient(to top, var(--tw-gradient-stops));
 }
@@ -3936,6 +3948,16 @@ body {
 .vrodos-manager-wrapper .tw-py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+.vrodos-manager-wrapper .tw-py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.vrodos-manager-wrapper .tw-py-16 {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
 }
 
 .vrodos-manager-wrapper .\!tw-pl-12 {
@@ -4158,6 +4180,10 @@ body {
   color: var(--fallback-bc,oklch(var(--bc)/0.2));
 }
 
+.vrodos-manager-wrapper .tw-text-base-content\/30 {
+  color: var(--fallback-bc,oklch(var(--bc)/0.3));
+}
+
 .vrodos-manager-wrapper .tw-text-base-content\/40 {
   color: var(--fallback-bc,oklch(var(--bc)/0.4));
 }
@@ -4316,10 +4342,6 @@ body {
 
 .vrodos-manager-wrapper .tw-text-white\/90 {
   color: rgb(255 255 255 / 0.9);
-}
-
-.vrodos-manager-wrapper .tw-text-base-content\/30 {
-  color: var(--fallback-bc,oklch(var(--bc)/0.3));
 }
 
 .vrodos-manager-wrapper .tw-no-underline {

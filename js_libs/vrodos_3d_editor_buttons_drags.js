@@ -771,6 +771,9 @@ function takeScreenshot() {
 
     if (envir.scene.getObjectByName("myTransformControls"))
         envir.scene.getObjectByName("myTransformControls").visible = true;
+
+    // Auto-save the scene so the screenshot is persisted immediately
+    document.getElementById('save-scene-button').click();
 }
 
 

@@ -121,9 +121,12 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         // Remove skeleton placeholders on first render
         fileList.querySelectorAll('.asset-skeleton').forEach(function(el) { el.remove(); });
 
+        // Remove any previous empty state
+        fileList.querySelectorAll('.asset-empty-state').forEach(function(el) { el.remove(); });
+
         var f, name;
 
-        if (enlistData) {
+        if (enlistData && enlistData.length > 0) {
 
             // allAssetsViewBt
             document.getElementById("assetCategTab").children[0].addEventListener("click",
@@ -192,6 +195,17 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
             }
             // Re-initialize Lucide icons after dynamic DOM insertion
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        } else {
+            // Show empty state when no assets exist
+            var emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
+                '<div class="tw-bg-slate-800/40 tw-p-4 tw-rounded-full tw-mb-4 tw-border tw-border-white/5">' +
+                    '<i data-lucide="package-open" class="tw-w-10 tw-h-10 tw-text-slate-400"></i>' +
+                '</div>' +
+                '<p class="tw-text-xs tw-font-bold tw-text-white tw-tracking-wide">No assets found</p>' +
+                '<p class="tw-text-[10px] tw-text-slate-300 tw-mt-2 tw-leading-relaxed">Your library is empty. Add new 3D models and media from the Asset Manager to start building.</p>' +
+            '</li>';
+            fileList.insertAdjacentHTML('beforeend', emptyHTML);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         // Remove animation
@@ -247,17 +261,44 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         }
 
         // Show the current tab, and add an "active" class to the button that opened the tab
-        let items = fileList.getElementsByTagName("li");
+        let items = fileList.querySelectorAll("li:not(.asset-empty-state)");
+        let visibleCount = 0;
         for (let i = 0; i < items.length; ++i) {
-            if (categName === "allAssetsViewBt")
+            if (categName === "allAssetsViewBt") {
                 items[i].style.display = '';
-            else {
-                if (items[i].dataset.category_slug === categName)
+                visibleCount++;
+            } else {
+                if (items[i].dataset.category_slug === categName) {
                     items[i].style.display = '';
-                else
+                    visibleCount++;
+                } else {
                     items[i].style.display = 'none';
+                }
             }
         }
+
+        // Show/hide empty state based on visibility
+        let emptyState = fileList.querySelector(".asset-empty-state");
+        if (visibleCount === 0) {
+            if (!emptyState) {
+                var emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
+                    '<div class="tw-bg-slate-800/40 tw-p-4 tw-rounded-full tw-mb-4 tw-border tw-border-white/5">' +
+                    '<i data-lucide="package-open" class="tw-w-10 tw-h-10 tw-text-slate-400"></i>' +
+                    '</div>' +
+                    '<p class="tw-text-xs tw-font-bold tw-text-white tw-tracking-wide">Empty Category</p>' +
+                    '<p class="tw-text-[10px] tw-text-slate-300 tw-mt-2 tw-leading-relaxed">No assets match this category in your project library.</p>' +
+                    '</li>';
+                fileList.insertAdjacentHTML('beforeend', emptyHTML);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } else {
+                 emptyState.style.display = '';
+                 emptyState.querySelector('p:nth-of-type(1)').textContent = "Empty Category";
+                 emptyState.querySelector('p:nth-of-type(2)').textContent = "No assets match this category in your project library.";
+            }
+        } else {
+            if (emptyState) emptyState.style.display = 'none';
+        }
+
         evt.currentTarget.classList.add("active");
     }
 }

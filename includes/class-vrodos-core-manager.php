@@ -255,7 +255,8 @@ class VRodos_Core_Manager {
 
 		$scene_type_slug = 'wonderaround-yaml';
 
-		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => 1, 'tax_query'      => ['relation' => 'AND', ['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'slug', 'terms'    => $gameSlug], ['taxonomy' => 'vrodos_scene_yaml', 'field'    => 'slug', 'terms'    => $scene_type_slug]], 'orderby'        => 'menu_order', 'order'          => 'ASC'];
+		// First try: filter by yaml scene type
+		$custom_query_args = ['post_type' => 'vrodos_scene', 'posts_per_page' => 1, 'tax_query' => ['relation' => 'AND', ['taxonomy' => 'vrodos_scene_pgame', 'field' => 'slug', 'terms' => $gameSlug], ['taxonomy' => 'vrodos_scene_yaml', 'field' => 'slug', 'terms' => $scene_type_slug]], 'orderby' => 'menu_order', 'order' => 'ASC'];
 		$scene_data        = [];
 		$custom_query      = new WP_Query( $custom_query_args );
 
@@ -263,6 +264,21 @@ class VRodos_Core_Manager {
 			$custom_query->the_post();
 			$scene_data['id']   = get_the_ID();
 			$scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
+			wp_reset_postdata();
+			return $scene_data;
+		}
+
+		// Fallback: any scene for this project (no yaml filter)
+		$scene_pgame_term = get_term_by( 'slug', $gameSlug, 'vrodos_scene_pgame' );
+		if ( $scene_pgame_term ) {
+			$fallback_query = new WP_Query( ['post_type' => 'vrodos_scene', 'posts_per_page' => 1, 'tax_query' => [['taxonomy' => 'vrodos_scene_pgame', 'field' => 'term_id', 'terms' => $scene_pgame_term->term_id]], 'orderby' => 'menu_order', 'order' => 'ASC'] );
+			if ( $fallback_query->have_posts() ) {
+				$fallback_query->the_post();
+				$scene_data['id']   = get_the_ID();
+				$scene_data['type'] = get_post_meta( get_the_ID(), 'vrodos_scene_metatype', true );
+				wp_reset_postdata();
+				return $scene_data;
+			}
 		}
 
 		wp_reset_postdata();

@@ -322,6 +322,22 @@ class VRodos_Scene_CPT_Manager {
 		$project_id       = isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
 		$project_type     = $project_id ? VRodos_Core_Manager::vrodos_return_project_type( $project_id )->string : null;
 
+		// Fallback to first scene if no scene ID provided
+		if ( empty( $current_scene_id ) && ! empty( $project_id ) ) {
+			$project = get_post( $project_id );
+			if ( $project ) {
+				$scene_pgame_term = get_term_by( 'slug', $project->post_name, 'vrodos_scene_pgame' );
+				if ( $scene_pgame_term ) {
+					$first_scene_query = VRodos_Core_Manager::getProjectScenes( $scene_pgame_term->term_id );
+					if ( $first_scene_query->have_posts() ) {
+						$first_scene_query->the_post();
+						$current_scene_id = get_the_ID();
+						wp_reset_postdata();
+					}
+				}
+			}
+		}
+
 		$scene_post         = $current_scene_id ? get_post( $current_scene_id ) : null;
 		$scene_json_from_db = ( $scene_post && $scene_post->post_content )
 			? $scene_post->post_content
@@ -367,6 +383,22 @@ class VRodos_Scene_CPT_Manager {
 		$data['doorsAllInfo'] = null;
 		if ( isset( $data['project_type'] ) && $data['project_type'] === 'Archaeology' && function_exists( 'vrodos_get_all_doors_of_project_fastversion' ) ) {
 			$data['doorsAllInfo'] = vrodos_get_all_doors_of_project_fastversion( $data['project_id'] );
+		}
+
+		// Fallback: if no scene ID in URL, use the first scene of the project
+		if ( empty( $data['current_scene_id'] ) && ! empty( $data['project_id'] ) ) {
+			$project = get_post( $data['project_id'] );
+			if ( $project ) {
+				$scene_pgame_term = get_term_by( 'slug', $project->post_name, 'vrodos_scene_pgame' );
+				if ( $scene_pgame_term ) {
+					$first_scene_query = VRodos_Core_Manager::getProjectScenes( $scene_pgame_term->term_id );
+					if ( $first_scene_query->have_posts() ) {
+						$first_scene_query->the_post();
+						$data['current_scene_id'] = get_the_ID();
+						wp_reset_postdata();
+					}
+				}
+			}
 		}
 
 		// Scene Post
