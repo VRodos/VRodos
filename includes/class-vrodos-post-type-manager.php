@@ -13,6 +13,26 @@ class VRodos_Post_Type_Manager {
 		add_action( 'init', $this->vrodos_assets_taxcategory(...) );
 		add_action( 'init', $this->vrodos_assets_taxpgame(...) );
 		add_action( 'init', $this->vrodos_assets_taxcategory_ipr(...) );
+
+		// Hide joker projects from taxonomy lists in admin
+		add_filter( 'terms_clauses', $this->vrodos_exclude_joker_terms_clauses(...), 10, 3 );
+	}
+
+	public function vrodos_exclude_joker_terms_clauses( $clauses, $taxonomies, $args ): array {
+		if ( ! is_admin() ) {
+			return $clauses;
+		}
+
+		$project_taxonomies = ['vrodos_asset3d_pgame', 'vrodos_scene_pgame'];
+
+		// Check if we are querying one of the project taxonomies
+		if ( array_intersect( (array) $taxonomies, $project_taxonomies ) ) {
+			$joker_slugs = ["'archaeology-joker'", "'vrexpo-joker'", "'virtualproduction-joker'"];
+			$slugs_list  = implode( ',', $joker_slugs );
+			$clauses['where'] .= " AND t.slug NOT IN ($slugs_list)";
+		}
+
+		return $clauses;
 	}
 
 	// Create custom post type 'vrodos_game'

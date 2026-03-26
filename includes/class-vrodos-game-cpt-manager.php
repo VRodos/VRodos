@@ -12,6 +12,31 @@ class VRodos_Game_CPT_Manager {
 
 		// Set to the lowest priority in order to have game taxes available when joker games are created
 		add_action( 'init', $this->vrodos_create_joker_projects(...), 100, 2 );
+
+		// Hide joker projects from the admin list
+		add_action( 'pre_get_posts', $this->hide_joker_projects_from_admin_list(...) );
+	}
+
+	public function hide_joker_projects_from_admin_list( $query ): void {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+		if ( $screen && $screen->id === 'edit-vrodos_game' ) {
+			$joker_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+			$joker_ids   = [];
+			foreach ( $joker_slugs as $slug ) {
+				$joker_post = get_page_by_path( $slug, OBJECT, 'vrodos_game' );
+				if ( $joker_post ) {
+					$joker_ids[] = $joker_post->ID;
+				}
+			}
+
+			if ( ! empty( $joker_ids ) ) {
+				$query->set( 'post__not_in', $joker_ids );
+			}
+		}
 	}
 
 	public function vrodos_create_joker_projects(): void {
