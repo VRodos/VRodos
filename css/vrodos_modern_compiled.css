@@ -3113,6 +3113,10 @@ body {
   min-height: 100vh;
 }
 
+.vrodos-manager-wrapper .tw-min-h-\[90px\] {
+  min-height: 90px;
+}
+
 .vrodos-manager-wrapper .\!tw-w-full {
   width: 100% !important;
 }
@@ -3204,6 +3208,10 @@ body {
 
 .vrodos-manager-wrapper .tw-w-px {
   width: 1px;
+}
+
+.vrodos-manager-wrapper .tw-w-36 {
+  width: 9rem;
 }
 
 .vrodos-manager-wrapper .tw-min-w-0 {
@@ -3958,6 +3966,11 @@ body {
 .vrodos-manager-wrapper .tw-py-16 {
   padding-top: 4rem;
   padding-bottom: 4rem;
+}
+
+.vrodos-manager-wrapper .tw-py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 .vrodos-manager-wrapper .\!tw-pl-12 {
@@ -5529,6 +5542,12 @@ body.vrodos-manager-wrapper {
 .vrodos-manager-wrapper :is(.tw-group:hover .group-hover\:tw-scale-110) {
   --tw-scale-x: 1.1;
   --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.vrodos-manager-wrapper :is(.tw-group:hover .group-hover\:tw-scale-105) {
+  --tw-scale-x: 1.05;
+  --tw-scale-y: 1.05;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 

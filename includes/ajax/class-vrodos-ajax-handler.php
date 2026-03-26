@@ -649,48 +649,53 @@ class VRodos_AJAX_Handler {
 				$is_initial_load = isset($_POST['is_initial_load']) && $_POST['is_initial_load'] === 'true';
 				$stagger_classes = $is_initial_load ? '' : 'tw-animate-fade-in-up tw-stagger-' . $stagger;
 
-				echo '<div class="tw-bg-base-100 tw-border tw-border-base-300 tw-rounded-md tw-p-3 hover:tw-border-primary/30 transition-all tw-mb-1.5 ' . $stagger_classes . '">';
-				echo '<div class="tw-grid tw-grid-cols-[auto_1fr_auto_auto_auto] tw-items-center tw-gap-6">';
+					// Get scene thumbnail
+				$scene_thumb_url = '';
+				if ( ! empty( $scene_data['id'] ) && has_post_thumbnail( $scene_data['id'] ) ) {
+					$scene_thumb_url = get_the_post_thumbnail_url( $scene_data['id'], 'medium' );
+				}
+				$is_expo = str_contains( strtolower( $game_type_obj->slug ?? '' ), 'vrexpo' ) || str_contains( strtolower( $game_type_obj->string ?? '' ), 'expo' );
 
-				// 1. Icon
-				echo '<div class="tw-w-10 tw-h-10 tw-rounded-md tw-bg-base-200 tw-text-base-content/50 tw-flex tw-items-center tw-justify-center tw-border tw-border-base-300">';
-				$is_expo = str_contains(strtolower($game_type_obj->slug ?? ''), 'vrexpo') || str_contains(strtolower($game_type_obj->string ?? ''), 'expo');
-				echo '<i data-lucide="' . ($is_expo ? 'globe' : 'clapperboard') . '" class="tw-w-5 tw-h-5" title="' . esc_attr($game_type_obj->string ?? '') . '"></i>';
-				echo '</div>';
+				echo '<div class="tw-bg-base-100 tw-border tw-border-base-300 tw-rounded-lg tw-overflow-hidden hover:tw-border-primary/30 tw-transition-all tw-group ' . $stagger_classes . '">';
+				echo '<div class="tw-flex tw-items-stretch">';
 
-				// 2. Info
-				echo '<div class="tw-min-w-0 tw-flex tw-flex-col tw-gap-0.5">';
-                echo '<div id="' . $game_id . '-title" class="tw-text-base tw-font-bold tw-text-base-content tw-truncate">';
-				echo '<a href="' . $loadMasterClientLink . '" target="_blank" class="hover:tw-text-primary transition-colors" title="Open Master Client">' . esc_html($game_title) . '</a>';
-				echo '</div>';
-                echo '<div class="tw-flex tw-items-center tw-gap-2">';
-                echo '<span class="tw-text-xs tw-font-medium tw-text-base-content/40 uppercase tw-tracking-wider">' . esc_html($game_date) . '</span>';
-                echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . esc_html($game_type_obj->string) . '</span>';
-                echo '<span class="tw-text-[9px] tw-font-medium tw-text-base-content/30 tw-flex tw-items-center tw-gap-1" title="Scenes"><i data-lucide="layers" class="tw-w-3 tw-h-3"></i>' . $scene_count . '</span>';
-                echo '<span class="tw-text-[9px] tw-font-medium tw-text-base-content/30 tw-flex tw-items-center tw-gap-1" title="Assets in scenes"><i data-lucide="box" class="tw-w-3 tw-h-3"></i>' . $asset_count . '</span>';
-                echo '</div>';
-				echo '</div>';
-
-				// 3. Assets
-				echo '<a href="' . $loadProjectAssets . '" class="tw-btn tw-btn-outline tw-btn-sm tw-text-[10px] tw-font-bold tw-rounded-md" title="Manage assets">';
-                echo 'ASSETS';
+				// 1. Thumbnail
+				echo '<a href="' . $loadMainSceneLink . '" class="tw-block tw-w-36 tw-min-h-[90px] tw-flex-shrink-0 tw-overflow-hidden tw-bg-base-200">';
+				if ( $scene_thumb_url ) {
+					echo '<img src="' . esc_url( $scene_thumb_url ) . '" alt="" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-500" />';
+				} else {
+					echo '<div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-base-content/20">';
+					echo '<i data-lucide="' . ( $is_expo ? 'globe' : 'clapperboard' ) . '" class="tw-w-8 tw-h-8"></i>';
+					echo '</div>';
+				}
 				echo '</a>';
 
-				// 4. Editor
-				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="tw-btn tw-btn-primary tw-btn-sm tw-text-white tw-px-4 tw-rounded-md tw-text-[10px] tw-font-bold" title="Open 3D Editor">';
-				echo '3D EDITOR';
-				echo '</a>';
+				// 2. Content
+				echo '<div class="tw-flex tw-flex-1 tw-items-center tw-justify-between tw-px-4 tw-py-3 tw-gap-4 tw-min-w-0">';
 
-				// 5. Delete
-				echo '<button type="button" class="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-text-base-content/20 hover:tw-text-error hover:tw-bg-error/10 tw-rounded transition-all vrodos-delete-project-btn" 
-                              data-game-id="' . $game_id . '" 
-                              data-game-title="' . esc_attr($game_title) . '" 
-                              title="Delete project">';
+				// 2a. Info
+				echo '<div class="tw-min-w-0 tw-flex tw-flex-col tw-gap-1">';
+				echo '<div id="' . $game_id . '-title" class="tw-text-sm tw-font-bold tw-text-base-content tw-truncate">' . esc_html( $game_title ) . '</div>';
+				echo '<div class="tw-flex tw-items-center tw-gap-2 tw-flex-wrap">';
+				echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . esc_html( $game_type_obj->string ) . '</span>';
+				echo '<span class="tw-text-[10px] tw-text-base-content/40">' . esc_html( $game_date ) . '</span>';
+				echo '<span class="tw-text-[9px] tw-font-medium tw-text-base-content/30 tw-flex tw-items-center tw-gap-0.5" title="Scenes"><i data-lucide="layers" class="tw-w-3 tw-h-3"></i>' . $scene_count . '</span>';
+				echo '<span class="tw-text-[9px] tw-font-medium tw-text-base-content/30 tw-flex tw-items-center tw-gap-0.5" title="Assets"><i data-lucide="box" class="tw-w-3 tw-h-3"></i>' . $asset_count . '</span>';
+				echo '</div>';
+				echo '</div>';
+
+				// 2b. Actions
+				echo '<div class="tw-flex tw-items-center tw-gap-2 tw-flex-shrink-0">';
+				echo '<a href="' . $loadProjectAssets . '" class="tw-btn tw-btn-outline tw-btn-sm tw-text-[10px] tw-font-bold tw-rounded-md" title="Manage assets">ASSETS</a>';
+				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="tw-btn tw-btn-primary tw-btn-sm tw-text-white tw-px-4 tw-rounded-md tw-text-[10px] tw-font-bold" title="Open 3D Editor">3D EDITOR</a>';
+				echo '<button type="button" class="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-text-base-content/20 hover:tw-text-error hover:tw-bg-error/10 tw-rounded tw-transition-all vrodos-delete-project-btn" data-game-id="' . $game_id . '" data-game-title="' . esc_attr( $game_title ) . '" title="Delete project">';
 				echo '<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>';
 				echo '</button>';
+				echo '</div>';
 
-				echo '</div>';
-				echo '</div>';
+				echo '</div>'; // content
+				echo '</div>'; // flex row
+				echo '</div>'; // card
 			endwhile;
 
 			echo '</div>';
