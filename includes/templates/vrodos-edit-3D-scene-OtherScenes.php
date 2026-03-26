@@ -18,10 +18,11 @@ global $parameter_Scenepass;
 
 	// Get all scenes that have as parent this project
 	$custom_query = VRodos_Core_Manager::getProjectScenes( $parent_project_id_as_term_id );
+	$scene_index  = 0;
 
 	if ( $custom_query->have_posts() ) :
 		while ( $custom_query->have_posts() ) :
-
+			$scene_index++;
 			$custom_query->the_post();
 			$scene_id    = get_the_ID();
 			$scene_title = get_the_title();
@@ -55,11 +56,12 @@ global $parameter_Scenepass;
 			?>
 
 			<!-- Scene Card -->
-			<div id="scene-<?php echo $scene_id; ?>" class="SceneCardContainer">
+			<div id="scene-<?php echo $scene_id; ?>" class="SceneCardContainer" draggable="true" data-scene-id="<?php echo $scene_id; ?>">
 				<div class="tw-rounded-lg tw-overflow-hidden tw-shadow-md tw-bg-slate-800 tw-border <?php echo $is_current ? 'tw-border-emerald-500 tw-ring-1 tw-ring-emerald-500/50' : 'tw-border-white/10'; ?> tw-transition-all hover:tw-shadow-lg">
 
 					<!-- Thumbnail -->
-					<div class="SceneThumbnail">
+					<div class="SceneThumbnail tw-relative">
+						<span class="scene-order-badge"><?php echo $scene_index; ?></span>
 						<a href="<?php echo $edit_page_link; ?>" class="tw-block tw-w-full tw-h-full">
 							<?php if ( has_post_thumbnail( $scene_id ) ) : ?>
 								<?php echo get_the_post_thumbnail( $scene_id, 'thumbnail', ['class' => 'tw-w-full tw-h-full tw-object-cover' . ($is_current ? ' current-scene-thumb' : '')] ); ?>

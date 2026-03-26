@@ -158,6 +158,54 @@ function loadButtonActions() {
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
+    // ── Scene Reorder Drag-and-Drop ──
+    (function() {
+        var container = document.getElementById('scenesInsideVREditor');
+        if (!container) return;
+        var dragItem = null;
+
+        container.addEventListener('dragstart', function(e) {
+            var card = e.target.closest('.SceneCardContainer[draggable]');
+            if (!card) return;
+            dragItem = card;
+            card.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('application/vrodos-scene-reorder', 'true');
+        });
+
+        container.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            var card = e.target.closest('.SceneCardContainer[draggable]');
+            if (!card || card === dragItem) return;
+            var rect = card.getBoundingClientRect();
+            var midX = rect.left + rect.width / 2;
+            if (e.clientX < midX) {
+                container.insertBefore(dragItem, card);
+            } else {
+                container.insertBefore(dragItem, card.nextSibling);
+            }
+        });
+
+        container.addEventListener('dragend', function() {
+            if (dragItem) dragItem.classList.remove('dragging');
+            dragItem = null;
+            // Update number badges
+            container.querySelectorAll('.SceneCardContainer[draggable] .scene-order-badge').forEach(function(badge, i) {
+                badge.textContent = i + 1;
+            });
+            // Save new order via AJAX
+            var formData = new FormData();
+            formData.append('action', 'vrodos_reorder_scenes_action');
+            var nonceField = document.querySelector('[name="post_nonce_field"]');
+            if (nonceField) formData.append('nonce', nonceField.value);
+            container.querySelectorAll('.SceneCardContainer[draggable]').forEach(function(card) {
+                formData.append('scene_ids[]', card.dataset.sceneId);
+            });
+            fetch(my_ajax_object_deletescene.ajax_url, { method: 'POST', body: formData });
+        });
+    })();
+
     // Take SCREENSHOT OF SCENE
     document.getElementById("takeScreenshotBtn").addEventListener("click", function () {
         takeScreenshot();
@@ -256,6 +304,9 @@ function loadButtonActions() {
     // Drag elements inside VR Editor
     document.getElementById('vr_editor_main_div').ondrop =
         function (ev) {
+
+            // Ignore scene reorder drags
+            if (ev.dataTransfer.types.indexOf('application/vrodos-scene-reorder') !== -1) return;
 
             let dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
 

@@ -24,6 +24,7 @@ class VRodos_AJAX_Handler {
 		add_action( 'wp_ajax_vrodos_notify_confpeers_action', $this->vrodos_notify_confpeers_callback(...) );
 		add_action( 'wp_ajax_vrodos_update_expert_log_action', $this->vrodos_update_expert_log_callback(...) );
 
+		add_action( 'wp_ajax_vrodos_reorder_scenes_action', $this->reorder_scenes_callback(...) );
 		add_action( 'wp_ajax_vrodos_fetch_list_projects_action', $this->vrodos_fetch_list_projects_callback(...) );
 
 		add_action( 'wp_ajax_vrodos_fetch_game_assets_action', $this->vrodos_fetch_game_assets_action_callback(...) );
@@ -308,6 +309,22 @@ class VRodos_AJAX_Handler {
 		wp_die();
 	}
 
+	// REORDER SCENES
+	public function reorder_scenes_callback() {
+		check_ajax_referer( 'post_nonce', 'nonce' );
+		if ( ! current_user_can( 'edit_vrodos_scene' ) ) {
+			wp_die( -1 );
+		}
+
+		$scene_ids = array_map( 'absint', $_POST['scene_ids'] ?? [] );
+		foreach ( $scene_ids as $order => $scene_id ) {
+			if ( $scene_id > 0 ) {
+				wp_update_post( [ 'ID' => $scene_id, 'menu_order' => $order ] );
+			}
+		}
+		wp_send_json_success();
+	}
+
 	// DELETE specific SCENE
 	public function delete_scene_frontend_callback() {
 
@@ -542,8 +559,6 @@ class VRodos_AJAX_Handler {
 	// Fetch list of project through ajax
 	public function vrodos_fetch_list_projects_callback() {
 
-		$f = fopen( 'output_ajax_delay.txt', 'w' );
-
 		$perma_structure     = (bool) get_option( 'permalink_structure' );
 		$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
@@ -599,6 +614,21 @@ class VRodos_AJAX_Handler {
 				$game_category     = $all_game_category[0]->slug;
 				$scene_data        = VRodos_Core_Manager::vrodos_getFirstSceneID_byProjectID( $game_id, $game_category );// first 3D scene id
 
+				// Count scenes and assets-in-scenes for this project
+				$scene_pgame_term = get_term_by( 'slug', get_post( $game_id )->post_name, 'vrodos_scene_pgame' );
+				$scene_count      = 0;
+				$asset_count      = 0;
+				if ( $scene_pgame_term ) {
+					$scene_ids  = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $scene_pgame_term->term_id );
+					$scene_count = count( $scene_ids );
+					foreach ( $scene_ids as $sid ) {
+						$scene_json = json_decode( get_post_field( 'post_content', $sid ), true );
+						if ( ! empty( $scene_json['objects'] ) && is_array( $scene_json['objects'] ) ) {
+							$asset_count += count( $scene_json['objects'] );
+						}
+					}
+				}
+
 				$editscenePage = VRodos_Core_Manager::vrodos_getEditpage( 'scene' );
 
 				$edit_scene_page_id = $editscenePage[0]->ID;
@@ -630,6 +660,8 @@ class VRodos_AJAX_Handler {
                 echo '<div class="tw-flex tw-items-center tw-gap-2">';
                 echo '<span class="tw-text-xs tw-font-medium tw-text-base-content/40 uppercase tw-tracking-wider">' . esc_html($game_date) . '</span>';
                 echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . esc_html($game_type_obj->string) . '</span>';
+                echo '<span class="tw-text-[9px] tw-font-medium tw-text-base-content/30 tw-flex tw-items-center tw-gap-1" title="Scenes"><i data-lucide="layers" class="tw-w-3 tw-h-3"></i>' . $scene_count . '</span>';
+                echo '<span class="tw-text-[9px] tw-font-medium tw-text-base-content/30 tw-flex tw-items-center tw-gap-1" title="Assets in scenes"><i data-lucide="box" class="tw-w-3 tw-h-3"></i>' . $asset_count . '</span>';
                 echo '</div>';
 				echo '</div>';
 

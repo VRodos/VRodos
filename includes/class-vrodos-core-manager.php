@@ -255,7 +255,7 @@ class VRodos_Core_Manager {
 
 		$scene_type_slug = 'wonderaround-yaml';
 
-		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => ['relation' => 'AND', ['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'slug', 'terms'    => $gameSlug], ['taxonomy' => 'vrodos_scene_yaml', 'field'    => 'slug', 'terms'    => $scene_type_slug]], 'orderby'        => 'ID', 'order'          => 'DESC'];
+		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => ['relation' => 'AND', ['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'slug', 'terms'    => $gameSlug], ['taxonomy' => 'vrodos_scene_yaml', 'field'    => 'slug', 'terms'    => $scene_type_slug]], 'orderby'        => 'menu_order', 'order'          => 'ASC'];
 		$scene_data        = [];
 		$custom_query      = new WP_Query( $custom_query_args );
 
@@ -287,7 +287,7 @@ class VRodos_Core_Manager {
 	public static function vrodos_get_all_doors_of_project_fastversion( $parent_project_id_as_term_id ): array {
 
 		// Define custom query parameters
-		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'term_id', 'terms'    => $parent_project_id_as_term_id]], 'orderby'        => 'ID', 'order'          => 'DESC'];
+		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'term_id', 'terms'    => $parent_project_id_as_term_id]], 'orderby'        => 'menu_order', 'order'          => 'ASC'];
 
 		$custom_query = new WP_Query( $custom_query_args );
 
@@ -337,11 +337,10 @@ class VRodos_Core_Manager {
 		$sceneIds = [];
 
 		// Define custom query parameters
-		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'term_id', 'terms'    => $parent_project_id_as_term_id]], 'orderby'        => 'ID', 'order'          => 'DESC'];
+		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'term_id', 'terms'    => $parent_project_id_as_term_id]], 'orderby'        => 'menu_order', 'order'          => 'ASC'];
 
 		$custom_query = new WP_Query( $custom_query_args );
 
-		// Output custom query loop
 		if ( $custom_query->have_posts() ) {
 			while ( $custom_query->have_posts() ) {
 				$custom_query->the_post();
@@ -728,7 +727,7 @@ class VRodos_Core_Manager {
 
 	public static function getProjectScenes( $parent_project_id_as_term_id ): WP_Query {
 
-		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'term_id', 'terms'    => $parent_project_id_as_term_id]], 'orderby'        => 'ID', 'order'          => 'DESC'];
+		$custom_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'term_id', 'terms'    => $parent_project_id_as_term_id]], 'orderby'        => 'menu_order', 'order'          => 'ASC'];
 
 		return new WP_Query( $custom_query_args );
 	}

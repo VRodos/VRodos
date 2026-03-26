@@ -55,7 +55,7 @@ class VRodos_Compiler_Manager {
 
 		$scene_json  = [];
 		$scene_title = [];
-		foreach ( array_reverse( $scene_id_list ) as $key => &$value ) {
+		foreach ( $scene_id_list as $key => &$value ) {
 			$project_post[ $key ]       = get_post( $project_id );
 			$project_title              = $project_post[ $key ]->post_title;
 			$scene_post[ $key ]         = get_post( $value );
@@ -67,7 +67,7 @@ class VRodos_Compiler_Manager {
 		$project_type_terms = wp_get_post_terms( $project_id, 'vrodos_game_type' );
 		$is_vrexpo = ( ! empty( $project_type_terms ) && ! is_wp_error( $project_type_terms ) && $project_type_terms[0]->slug === 'vrexpo_games' );
 
-		foreach ( array_reverse( $scene_id_list ) as $key => &$value ) {
+		foreach ( $scene_id_list as $key => &$value ) {
 			if ( ! $is_vrexpo ) {
 				$this->createIndexFile( $project_title, $value, $scene_title );
 			}

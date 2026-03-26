@@ -560,6 +560,30 @@ html [type="button"],
 .SceneCardContainer {
 	width: 150px;
 	padding-left: 20px;
+	cursor: grab;
+}
+
+.SceneCardContainer.dragging {
+	opacity: 0.4;
+}
+
+.scene-order-badge {
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	z-index: 5;
+	background: rgba(15, 23, 42, 0.75);
+	color: #e2e8f0;
+	font-size: 9px;
+	font-weight: 700;
+	width: 18px;
+	height: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	pointer-events: none;
 }
 
 .SceneThumbnail {

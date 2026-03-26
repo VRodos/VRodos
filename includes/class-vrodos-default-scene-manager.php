@@ -20,12 +20,10 @@ class VRodos_Default_Scene_Manager {
 	}
 
 	private static function vrodos_create_vrexpo_default_scenes( $projectSlug ): void {
-		$default_json = VRodos_Core_Manager::vrodos_getDefaultJSONscene( 'vrexpo' );
-
 		$firstSceneData = self::vrodos_create_default_scene_kernel(
-			'Lobby',
-			$default_json,
-			$projectSlug . '-lobby-scene',
+			'Scene 1',
+			VRodos_Core_Manager::vrodos_getDefaultJSONscene( 'vrexpo' ),
+			$projectSlug . '-scene-1',
 			$projectSlug,
 			'wonderaround-yaml',
 			1,
@@ -35,68 +33,17 @@ class VRodos_Default_Scene_Manager {
 			0,
 			'Auto-created scene',
 			0,
-			'lobby'
-		);
-
-		$secondSceneData = self::vrodos_create_default_scene_kernel(
-			'Auditorium',
-			$default_json,
-			$projectSlug . '-auditorium-scene',
-			$projectSlug,
-			'wonderaround-yaml',
-			0,
-			'scene',
-			0,
-			0,
-			0,
-			'Auto-created scene',
-			0,
-			'auditorium'
-		);
-
-		$thirdSceneData = self::vrodos_create_default_scene_kernel(
-			'Cafe',
-			$default_json,
-			$projectSlug . '-cafe-scene',
-			$projectSlug,
-			'wonderaround-yaml',
-			0,
-			'scene',
-			0,
-			0,
-			0,
-			'Auto-created scene',
-			0,
-			'cafe'
-		);
-
-		$fourthSceneData = self::vrodos_create_default_scene_kernel(
-			'Expo',
-			$default_json,
-			$projectSlug . '-expo-scene',
-			$projectSlug,
-			'wonderaround-yaml',
-			0,
-			'scene',
-			0,
-			0,
-			0,
-			'Auto-created scene',
-			0,
-			'expo'
+			''
 		);
 
 		wp_insert_post( $firstSceneData );
-		wp_insert_post( $secondSceneData );
-		wp_insert_post( $thirdSceneData );
-		wp_insert_post( $fourthSceneData );
 	}
 
 	private static function vrodos_create_virtualproduction_default_scenes( $projectSlug ): void {
 		$firstSceneData = self::vrodos_create_default_scene_kernel(
-			'Chapter 1',
+			'Scene 1',
 			VRodos_Core_Manager::vrodos_getDefaultJSONscene( 'virtualproduction' ),
-			$projectSlug . '-chapter1-scene',
+			$projectSlug . '-scene-1',
 			$projectSlug,
 			'wonderaround-yaml',
 			1,
@@ -106,7 +53,7 @@ class VRodos_Default_Scene_Manager {
 			0,
 			'Auto-created scene',
 			0,
-			'chapter1'
+			''
 		);
 
 		wp_insert_post( $firstSceneData );
@@ -114,9 +61,9 @@ class VRodos_Default_Scene_Manager {
 
 	private static function vrodos_create_archaeology_default_scenes( $projectSlug ): void {
 		$firstSceneData = self::vrodos_create_default_scene_kernel(
-			'Place',
+			'Scene 1',
 			VRodos_Core_Manager::vrodos_getDefaultJSONscene( 'archaeology' ),
-			$projectSlug . '-first-scene',
+			$projectSlug . '-scene-1',
 			$projectSlug,
 			'wonderaround-yaml',
 			1,
