@@ -6060,6 +6060,11 @@ body.vrodos-manager-wrapper {
   .vrodos-manager-wrapper .lg\:tw-p-6 {
     padding: 1.5rem;
   }
+
+  .vrodos-manager-wrapper .lg\:tw-py-16 {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
 }
 
 @media (min-width: 1280px) {

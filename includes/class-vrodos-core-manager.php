@@ -84,12 +84,18 @@ class VRodos_Core_Manager {
 
 
 		<style>
+			/* Prevent Tailwind/DaisyUI from overriding WordPress core backgrounds */
+			html, body { background-color: #f0f0f1 !important; }
+			#wpwrap { background-color: #f0f0f1 !important; }
+			#adminmenuback, #adminmenuwrap { background-color: #1d2327 !important; }
 			#wpcontent, #wpbody-content { background: transparent !important; }
-			.vrodos-manager-wrapper { background: transparent !important; }
-			/* Fix for WordPress admin background consistency */
-			#wpbody { background: #f0f0f1 !important; }
+			.vrodos-manager-wrapper { 
+				background: transparent !important; 
+				margin-top: 40px !important;
+				margin-bottom: 80px !important;
+			}
 		</style>
-		<div class="vrodos-manager-wrapper tw-p-6 tw-pb-16 tw-bg-transparent">
+		<div class="vrodos-manager-wrapper tw-px-8 tw-py-12 lg:tw-py-16 tw-bg-transparent">
 			<div class="tw-max-w-7xl tw-mx-auto">
 				<!-- Header Section -->
 				<div class="tw-flex tw-justify-between tw-items-center tw-mb-8">
