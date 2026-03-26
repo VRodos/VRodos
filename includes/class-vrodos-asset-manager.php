@@ -11,10 +11,23 @@ class VRodos_Asset_Manager {
 		add_action( 'admin_enqueue_scripts', $this->register_scripts(...) );
 		add_action( 'wp_enqueue_scripts', $this->register_styles(...) );
 		add_action( 'admin_enqueue_scripts', $this->register_styles(...) );
+		add_action( 'admin_enqueue_scripts', $this->enqueue_dashboard_scripts(...) );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_asset_editor_scripts(...) );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_scene_editor_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_project_manager_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_assets_list_scripts(...) );
+	}
+	
+	public function enqueue_dashboard_scripts( $hook ) {
+		if ( 'toplevel_page_vrodos-plugin' !== $hook ) {
+			return;
+		}
+
+		wp_enqueue_style( 'vrodos_modern_compiled' );
+		wp_enqueue_script( 'lucide-icons' );
+		
+		// Initialize Lucide icons
+		wp_add_inline_script( 'lucide-icons', 'window.addEventListener("DOMContentLoaded", function() { lucide.createIcons(); });' );
 	}
 
 	public function enqueue_assets_list_scripts() {
