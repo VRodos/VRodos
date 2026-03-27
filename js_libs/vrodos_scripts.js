@@ -44,7 +44,7 @@ function saveChanges() {
 
     let save_scene_btn = document.getElementById("save-scene-button");
     if (save_scene_btn.classList.contains("LinkDisabled")){
-        return;
+        return (typeof vrodos_whenSceneSaveSettles === 'function') ? vrodos_whenSceneSaveSettles() : Promise.resolve();
     }
 
     let savBtn = document.getElementById('save-scene-button');
@@ -56,7 +56,27 @@ function saveChanges() {
     let exporter = new VrodosSceneExporter();
     document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-    vrodos_saveSceneAjax();
+    return vrodos_saveSceneAjax();
+}
+
+function setBackgroundPresetSelection(presetValue) {
+    if (!envir || !envir.scene) return;
+
+    envir.scene.preset_selection = presetValue;
+    envir.scene.backgroundPresetOption = presetValue;
+    envir.scene.bcg_selection = 2;
+    envir.scene.backgroundStyleOption = 2;
+}
+
+function handleBackgroundPresetChange(selectElement) {
+    if (!selectElement) return;
+
+    setBackgroundPresetSelection(selectElement.value);
+
+    var sceneSkyRadio = document.getElementById('sceneSky');
+    if (sceneSkyRadio) sceneSkyRadio.checked = true;
+
+    saveChanges();
 }
 
 function bcgRadioSelect(option){
@@ -98,8 +118,7 @@ function bcgRadioSelect(option){
             if (colorVal) envir.scene.background = new THREE.Color("#" + colorVal);
             break;
         case 2:
-            envir.scene.preset_selection = preset_sel.value;
-            envir.scene.backgroundPresetOption = preset_sel.value;
+            setBackgroundPresetSelection(preset_sel.value);
             break;
         case 3:
             if (envir.scene.img_bcg_path && envir.scene.img_bcg_path != 0) {

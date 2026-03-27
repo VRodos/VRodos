@@ -1,3 +1,10 @@
+var vrodosSceneSavePromise = Promise.resolve();
+var vrodosIsSceneSavePending = false;
+
+function vrodos_whenSceneSaveSettles() {
+	return vrodosSceneSavePromise || Promise.resolve();
+}
+
 function vrodos_saveSceneAjax() {
 
 	let postdata = new URLSearchParams({
@@ -13,7 +20,9 @@ function vrodos_saveSceneAjax() {
 		new_screenshot_data = null;
 	}
 
-	fetch( isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savescene.ajax_url, {
+	vrodosIsSceneSavePending = true;
+
+	vrodosSceneSavePromise = fetch( isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savescene.ajax_url, {
 		method: 'POST',
 		body: postdata
 	})
@@ -30,6 +39,7 @@ function vrodos_saveSceneAjax() {
 		};
 		document.getElementById( "compileGameBtn" ).disabled = true;
 		setTimeout( enableSaveFunctionality, 2000 );
+		return data;
 	})
 	.catch( function (err) {
 
@@ -39,7 +49,13 @@ function vrodos_saveSceneAjax() {
 		let saveBtn = document.getElementById( 'save-scene-button' );
 		saveBtn.innerHTML = "Save scene";
 		saveBtn.classList.remove( "LinkDisabled" );
+		throw err;
+	})
+	.finally( function () {
+		vrodosIsSceneSavePending = false;
 	});
+
+	return vrodosSceneSavePromise;
 }
 
 

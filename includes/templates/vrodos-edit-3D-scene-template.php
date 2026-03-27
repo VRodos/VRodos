@@ -595,6 +595,13 @@ extract( $data );
 			let custom_img_sel = document.getElementById('img_upload_bcg');
 			let preset_sel = document.getElementById('presetsBcg');
 
+			if (preset_sel && !preset_sel.dataset.vrodosChangeBound) {
+				preset_sel.addEventListener('change', function () {
+					handleBackgroundPresetChange(this);
+				});
+				preset_sel.dataset.vrodosChangeBound = 'true';
+			}
+
 			// Init UI values
 
 			let img_thumb = document.getElementById('uploadImgThumb');

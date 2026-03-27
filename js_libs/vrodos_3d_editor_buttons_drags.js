@@ -114,6 +114,14 @@ function refreshSceneJsonTextarea() {
     }
 }
 
+function waitForLatestSceneSave() {
+    if (typeof vrodos_whenSceneSaveSettles === 'function') {
+        return vrodos_whenSceneSaveSettles();
+    }
+
+    return Promise.resolve();
+}
+
 // Local
 function loadButtonActions() {
 
@@ -150,7 +158,28 @@ function loadButtonActions() {
         if (progText) progText.innerHTML = "";
         if (memValue) memValue.innerHTML = "0";
 
-        vrodos_compileAjax(showPawnPositions);
+        var constantUpdateUser = document.getElementById("constantUpdateUser");
+        if (constantUpdateUser && vrodosIsSceneSavePending) {
+            constantUpdateUser.innerHTML =
+                '<i data-lucide="save" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
+                'Saving latest scene changes before build...';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        waitForLatestSceneSave()
+            .then(function () {
+                vrodos_compileAjax(showPawnPositions);
+            })
+            .catch(function (error) {
+                hideCompileProgressSlider();
+                if (constantUpdateUser) {
+                    constantUpdateUser.innerHTML =
+                        '<i data-lucide="triangle-alert" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
+                        'Could not save the latest scene changes. Please try again.';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+                console.warn('VRodos: compile blocked because scene save failed.', error);
+            });
     });
 
     // Compile Cancel

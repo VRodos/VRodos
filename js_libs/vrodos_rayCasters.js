@@ -950,7 +950,7 @@ function saveChanges() {
 
     let save_scene_btn = document.getElementById("save-scene-button");
     if (save_scene_btn.classList.contains("LinkDisabled")){
-        return;
+        return (typeof vrodos_whenSceneSaveSettles === 'function') ? vrodos_whenSceneSaveSettles() : Promise.resolve();
     }
 
     save_scene_btn.innerHTML = "Saving...";
@@ -967,7 +967,7 @@ function saveChanges() {
 
     //console.log(test);
 
-    vrodos_saveSceneAjax();
+    return vrodos_saveSceneAjax();
     //.forEach(element => console.log(element));
 }
 function displayPoiVideoProperties(event, name) {
