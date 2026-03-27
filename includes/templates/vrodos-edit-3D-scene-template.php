@@ -594,12 +594,19 @@ extract( $data );
 			let color_sel = document.getElementById('jscolorpick');
 			let custom_img_sel = document.getElementById('img_upload_bcg');
 			let preset_sel = document.getElementById('presetsBcg');
+			let preset_ground_toggle = document.getElementById('presetGroundToggle');
 
 			if (preset_sel && !preset_sel.dataset.vrodosChangeBound) {
 				preset_sel.addEventListener('change', function () {
 					handleBackgroundPresetChange(this);
 				});
 				preset_sel.dataset.vrodosChangeBound = 'true';
+			}
+			if (preset_ground_toggle && !preset_ground_toggle.dataset.vrodosChangeBound) {
+				preset_ground_toggle.addEventListener('change', function () {
+					handleBackgroundPresetGroundToggle(this);
+				});
+				preset_ground_toggle.dataset.vrodosChangeBound = 'true';
 			}
 
 			// Init UI values
@@ -626,16 +633,24 @@ extract( $data );
 			}
 			if (vrodos_scene_data["backgroundStyleOption"] !== undefined) {
 				let  selOption = parseInt(vrodos_scene_data["backgroundStyleOption"]);
+				let presetGroundEnabled = vrodos_scene_data["backgroundPresetGroundEnabled"] !== false;
+				if (preset_ground_toggle) {
+					preset_ground_toggle.checked = presetGroundEnabled;
+					preset_ground_toggle.disabled = true;
+				}
+				setBackgroundPresetGroundEnabled(presetGroundEnabled);
 
 				switch (selOption){
 					case 0:
 						document.getElementById("sceneNone").checked = true;
 						custom_img_sel.disabled = true;
 						preset_sel.disabled = true;
+						if (preset_ground_toggle) preset_ground_toggle.disabled = true;
 						color_sel.disabled = true;
 
 						document.getElementById("bcgColorRow").style.display = 'none';
 						document.getElementById("bcgPresetsRow").style.display = 'none';
+						document.getElementById("bcgPresetGroundRow").style.display = 'none';
 						document.getElementById("bcgImageRow").style.display = 'none';
 						img_thumb.hidden = true;
 						break;
@@ -643,10 +658,12 @@ extract( $data );
 						document.getElementById("sceneColorRadio").checked = true;
 						color_sel.disabled = false;
 						preset_sel.disabled = true;
+						if (preset_ground_toggle) preset_ground_toggle.disabled = true;
 						custom_img_sel.disabled = true;
 
 						document.getElementById("bcgColorRow").style.display = 'flex';
 						document.getElementById("bcgPresetsRow").style.display = 'none';
+						document.getElementById("bcgPresetGroundRow").style.display = 'none';
 						document.getElementById("bcgImageRow").style.display = 'none';
 						img_thumb.hidden = true;
 						break;
@@ -654,10 +671,12 @@ extract( $data );
 						document.getElementById("sceneSky").checked = true;
 						custom_img_sel.disabled = true;
 						preset_sel.disabled = false;
+						if (preset_ground_toggle) preset_ground_toggle.disabled = false;
 						color_sel.disabled = true;
 
 						document.getElementById("bcgColorRow").style.display = 'none';
 						document.getElementById("bcgPresetsRow").style.display = 'flex';
+						document.getElementById("bcgPresetGroundRow").style.display = 'flex';
 						document.getElementById("bcgImageRow").style.display = 'none';
 						img_thumb.hidden = true;
 						envir.scene.backgroundPresetOption = vrodos_scene_data["backgroundPresetOption"];
@@ -672,10 +691,12 @@ extract( $data );
 						document.getElementById("sceneCustomImage").checked = true;
 						custom_img_sel.disabled = false;
 						preset_sel.disabled = true;
+						if (preset_ground_toggle) preset_ground_toggle.disabled = true;
 						color_sel.disabled = true;
 
 						document.getElementById("bcgColorRow").style.display = 'none';
 						document.getElementById("bcgPresetsRow").style.display = 'none';
+						document.getElementById("bcgPresetGroundRow").style.display = 'none';
 						document.getElementById("bcgImageRow").style.display = 'flex';
 
 						if (vrodos_scene_data["backgroundImagePath"]  && vrodos_scene_data["backgroundImagePath"] !=0 ){

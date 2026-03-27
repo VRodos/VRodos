@@ -3243,6 +3243,10 @@ body {
   margin-top: auto;
 }
 
+.vrodos-manager-wrapper .tw-ml-14 {
+  margin-left: 3.5rem;
+}
+
 .vrodos-manager-wrapper .tw-block {
   display: block;
 }

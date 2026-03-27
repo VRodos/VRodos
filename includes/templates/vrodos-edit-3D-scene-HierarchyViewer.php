@@ -122,6 +122,12 @@
                         <option value="ocean">Ocean</option>
                     </select>
                 </div>
+                <div id="bcgPresetGroundRow" class="tw-flex tw-items-center tw-gap-2 tw-ml-14" style="display:none">
+                    <label class="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-text-white/80 tw-cursor-pointer">
+                        <input id="presetGroundToggle" type="checkbox" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" checked>
+                        <span>Enable preset ground</span>
+                    </label>
+                </div>
                 <div id="bcgImageRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
                     <label class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Image</label>
                     <input id="img_upload_bcg" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()"

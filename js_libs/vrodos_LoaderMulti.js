@@ -40,20 +40,31 @@ class VRodos_LoaderMulti {
                     let color_sel = document.getElementById('jscolorpick');
                     let custom_img_sel = document.getElementById('img_upload_bcg');
                     let preset_sel = document.getElementById('presetsBcg');
+                    let preset_ground_toggle = document.getElementById('presetGroundToggle');
 
                     let img_thumb = document.getElementById('uploadImgThumb');
 
                     var colorRow = document.getElementById('bcgColorRow');
                     var presetsRow = document.getElementById('bcgPresetsRow');
+                    var presetGroundRow = document.getElementById('bcgPresetGroundRow');
                     var imageRow = document.getElementById('bcgImageRow');
+                    var presetGroundEnabled = resources3D["backgroundPresetGroundEnabled"] !== false;
 
                     // Hide all rows first
                     colorRow.style.display = 'none';
                     presetsRow.style.display = 'none';
+                    if (presetGroundRow) presetGroundRow.style.display = 'none';
                     imageRow.style.display = 'none';
                     color_sel.disabled = true;
                     preset_sel.disabled = true;
+                    if (preset_ground_toggle) {
+                        preset_ground_toggle.disabled = true;
+                        preset_ground_toggle.checked = presetGroundEnabled;
+                    }
                     custom_img_sel.disabled = true;
+                    if (typeof setBackgroundPresetGroundEnabled === 'function') {
+                        setBackgroundPresetGroundEnabled(presetGroundEnabled);
+                    }
 
                     switch (envir.scene.bcg_selection){
                         case 0:
@@ -68,6 +79,8 @@ class VRodos_LoaderMulti {
                             document.getElementById("sceneSky").checked = true;
                             preset_sel.disabled = false;
                             presetsRow.style.display = 'flex';
+                            if (preset_ground_toggle) preset_ground_toggle.disabled = false;
+                            if (presetGroundRow) presetGroundRow.style.display = 'flex';
                             envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
                             for(let index = 0; index < preset_sel.options.length;index++){
                                 if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
@@ -451,21 +464,32 @@ class VRodos_LoaderMulti {
                             let color_sel = document.getElementById('jscolorpick');
                             let custom_img_sel = document.getElementById('img_upload_bcg');
                             let preset_sel = document.getElementById('presetsBcg');
+                            let preset_ground_toggle = document.getElementById('presetGroundToggle');
         
                             let img_thumb = document.getElementById('uploadImgThumb');
         
                         
                             var colorRow = document.getElementById('bcgColorRow');
                             var presetsRow = document.getElementById('bcgPresetsRow');
+                            var presetGroundRow = document.getElementById('bcgPresetGroundRow');
                             var imageRow = document.getElementById('bcgImageRow');
+                            var presetGroundEnabled = resources3D[name].backgroundPresetGroundEnabled !== false;
 
                             // Hide all rows first
                             colorRow.style.display = 'none';
                             presetsRow.style.display = 'none';
+                            if (presetGroundRow) presetGroundRow.style.display = 'none';
                             imageRow.style.display = 'none';
                             color_sel.disabled = true;
                             preset_sel.disabled = true;
+                            if (preset_ground_toggle) {
+                                preset_ground_toggle.disabled = true;
+                                preset_ground_toggle.checked = presetGroundEnabled;
+                            }
                             custom_img_sel.disabled = true;
+                            if (typeof setBackgroundPresetGroundEnabled === 'function') {
+                                setBackgroundPresetGroundEnabled(presetGroundEnabled);
+                            }
 
                             switch (envir.scene.backgroundStyleOption){
                                 case 0:
@@ -482,6 +506,8 @@ class VRodos_LoaderMulti {
                                     document.getElementById("sceneSky").checked = true;
                                     preset_sel.disabled = false;
                                     presetsRow.style.display = 'flex';
+                                    if (preset_ground_toggle) preset_ground_toggle.disabled = false;
+                                    if (presetGroundRow) presetGroundRow.style.display = 'flex';
                                     envir.scene.backgroundPresetOption = resources3D[name].backgroundPresetOption;
                                     envir.scene.preset_selection = resources3D[name].backgroundPresetOption;
                                     for(let index = 0; index < preset_sel.options.length;index++){

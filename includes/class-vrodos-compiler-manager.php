@@ -347,6 +347,7 @@ class VRodos_Compiler_Manager {
 
 		$bcg_choice    = $scene_json->metadata->backgroundStyleOption ?? '';
 		$preset_choice = $scene_json->metadata->backgroundPresetOption ?? '';
+		$preset_ground_enabled = ! isset( $scene_json->metadata->backgroundPresetGroundEnabled ) || filter_var( $scene_json->metadata->backgroundPresetGroundEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
 		$image_path    = $scene_json->metadata->backgroundImagePath ?? '';
 		if ( $bcg_choice == '3' ) {
 
@@ -369,9 +370,9 @@ class VRodos_Compiler_Manager {
 
 		$cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
 		if ( ! empty( $sceneColor ) ) {
-			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		} else {
-			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		}
 
 		// Set networked properties

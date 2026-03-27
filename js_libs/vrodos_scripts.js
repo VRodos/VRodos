@@ -68,6 +68,12 @@ function setBackgroundPresetSelection(presetValue) {
     envir.scene.backgroundStyleOption = 2;
 }
 
+function setBackgroundPresetGroundEnabled(isEnabled) {
+    if (!envir || !envir.scene) return;
+
+    envir.scene.backgroundPresetGroundEnabled = !!isEnabled;
+}
+
 function handleBackgroundPresetChange(selectElement) {
     if (!selectElement) return;
 
@@ -79,23 +85,34 @@ function handleBackgroundPresetChange(selectElement) {
     saveChanges();
 }
 
+function handleBackgroundPresetGroundToggle(checkboxElement) {
+    if (!checkboxElement) return;
+
+    setBackgroundPresetGroundEnabled(checkboxElement.checked);
+    saveChanges();
+}
+
 function bcgRadioSelect(option){
     let color_sel = document.getElementById('jscolorpick');
     let custom_img_sel = document.getElementById('img_upload_bcg');
     let preset_sel = document.getElementById('presetsBcg');
+    let preset_ground_toggle = document.getElementById('presetGroundToggle');
     let img_thumb = document.getElementById('uploadImgThumb');
 
     // Sub-option rows
     let colorRow = document.getElementById('bcgColorRow');
     let presetsRow = document.getElementById('bcgPresetsRow');
+    let presetGroundRow = document.getElementById('bcgPresetGroundRow');
     let imageRow = document.getElementById('bcgImageRow');
 
     // Hide all rows first
     if (colorRow) colorRow.style.display = 'none';
     if (presetsRow) presetsRow.style.display = 'none';
+    if (presetGroundRow) presetGroundRow.style.display = 'none';
     if (imageRow) imageRow.style.display = 'none';
     if (color_sel) color_sel.disabled = true;
     if (preset_sel) preset_sel.disabled = true;
+    if (preset_ground_toggle) preset_ground_toggle.disabled = true;
     if (custom_img_sel) custom_img_sel.disabled = true;
 
     var val = parseInt(option.value);
@@ -103,7 +120,12 @@ function bcgRadioSelect(option){
 
     // Show the appropriate sub-option row
     if (val === 1 && colorRow) { color_sel.disabled = false; colorRow.style.display = 'flex'; }
-    if (val === 2 && presetsRow) { preset_sel.disabled = false; presetsRow.style.display = 'flex'; }
+    if (val === 2 && presetsRow) {
+        preset_sel.disabled = false;
+        presetsRow.style.display = 'flex';
+        if (preset_ground_toggle) preset_ground_toggle.disabled = false;
+        if (presetGroundRow) presetGroundRow.style.display = 'flex';
+    }
     if (val === 3 && imageRow) { custom_img_sel.disabled = false; imageRow.style.display = 'flex'; }
 
     // Apply scene changes
@@ -119,6 +141,7 @@ function bcgRadioSelect(option){
             break;
         case 2:
             setBackgroundPresetSelection(preset_sel.value);
+            setBackgroundPresetGroundEnabled(preset_ground_toggle ? preset_ground_toggle.checked : true);
             break;
         case 3:
             if (envir.scene.img_bcg_path && envir.scene.img_bcg_path != 0) {

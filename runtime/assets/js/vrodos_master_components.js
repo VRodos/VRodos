@@ -137,6 +137,7 @@ AFRAME.registerComponent('scene-settings', {
         img_link: { type: "string", default: "no_link" },
         selChoice: { type: "string", default: "0" },
         presChoice: { type: "string", default: "default" },
+        presetGroundEnabled: { type: "string", default: "1" },
         movement_disabled: { type: "string", default: "0" },
         cam_position: { type: "string", default: "0 1.6 0" },
         cam_rotation_y: { type: "string", default: "0" },
@@ -223,6 +224,7 @@ AFRAME.registerComponent('scene-settings', {
         }
 
         let backgroundEl = this.el;
+        const presetGroundEnabled = this.data.presetGroundEnabled !== "0";
         if (!this.data.selChoice) this.data.selChoice = "0";
 
         switch (this.data.selChoice) {
@@ -260,25 +262,32 @@ AFRAME.registerComponent('scene-settings', {
                 if (manSun2) manSun2.parentNode.removeChild(manSun2);
                 let oldSun2 = document.querySelector('a-sun-sky');
                 if (oldSun2) oldSun2.parentNode.removeChild(oldSun2);
+                let oldOceanPlane = backgroundEl.querySelector('.ocean_asset');
+                if (oldOceanPlane) oldOceanPlane.parentNode.removeChild(oldOceanPlane);
+                let oldPresetSky = backgroundEl.querySelector('a-sky[data-vrodos-preset-sky="true"]');
+                if (oldPresetSky) oldPresetSky.parentNode.removeChild(oldPresetSky);
 
                 if (this.data.presChoice == "ocean") {
                     backgroundEl.removeAttribute("environment");
                     let sky = document.createElement('a-sky');
                     sky.setAttribute("color", "#a4bede");
+                    sky.setAttribute("data-vrodos-preset-sky", "true");
                     backgroundEl.appendChild(sky);
-                    let plane = document.createElement('a-plane');
-                    plane.setAttribute("color", "#ffffff");
-                    plane.setAttribute("position", "0 4.5 0");
-                    plane.setAttribute("height", "11");
-                    plane.setAttribute("width", "11");
-                    plane.setAttribute("rotation", "90 90 0");
-                    plane.setAttribute("material", "opacity:0.4");
-                    plane.setAttribute("scale", "15 15 15");
-                    plane.setAttribute("class", "ocean_asset");
-                    backgroundEl.appendChild(plane);
+                    if (presetGroundEnabled) {
+                        let plane = document.createElement('a-plane');
+                        plane.setAttribute("color", "#ffffff");
+                        plane.setAttribute("position", "0 4.5 0");
+                        plane.setAttribute("height", "11");
+                        plane.setAttribute("width", "11");
+                        plane.setAttribute("rotation", "90 90 0");
+                        plane.setAttribute("material", "opacity:0.4");
+                        plane.setAttribute("scale", "15 15 15");
+                        plane.setAttribute("class", "ocean_asset");
+                        backgroundEl.appendChild(plane);
+                    }
                 } else {
                     backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
-                    backgroundEl.setAttribute("environment", "ground", "flat");
+                    backgroundEl.setAttribute("environment", "ground", presetGroundEnabled ? "flat" : "none");
                     backgroundEl.setAttribute("environment", "playArea", "1.4");
                     backgroundEl.setAttribute("environment", "shadow", "true");
                 }
