@@ -495,24 +495,33 @@ class VRodos_Core_Manager {
 	public static function vrodos_get_assets_by_game( $gameProjectSlug, $gameProjectID ): array {
 
 		$allAssets = [];
-		// find the joker game slug e.g. "Archaeology-joker"
-		// $joker_game_slug = wp_get_post_terms( $gameProjectID, 'vrodos_game_type')[0]->name."-joker";
-		//
-		// Slugs are low case "Archaeology-joker" -> "archaeology-joker"
-		// $joker_game_slug = strtolower($joker_game_slug);
 
-		// Dynamically collect all joker pgame slugs so new shared-asset project types are included automatically
-		$all_pgame_terms = get_terms( [ 'taxonomy' => 'vrodos_asset3d_pgame', 'hide_empty' => false ] );
-		$joker_slugs     = [];
-		if ( ! is_wp_error( $all_pgame_terms ) ) {
-			foreach ( $all_pgame_terms as $t ) {
-				if ( str_contains( $t->slug, 'joker' ) ) {
-					$joker_slugs[] = $t->slug;
-				}
-			}
+		// 1. Project-specific asset IDs via taxonomy
+		$project_ids = [];
+		if ( ! empty( $gameProjectSlug ) ) {
+			$project_ids = get_posts( [
+				'post_type'      => 'vrodos_asset3d',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'tax_query'      => [ [ 'taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'slug', 'terms' => [ $gameProjectSlug ] ] ],
+			] );
 		}
 
-		$queryargs = [ 'post_type' => 'vrodos_asset3d', 'posts_per_page' => -1, 'tax_query' => [ [ 'taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'slug', 'terms' => array_merge( [ $gameProjectSlug ], $joker_slugs ) ] ] ];
+		// 2. Shared (joker) asset IDs via meta flag — more reliable than taxonomy lookup
+		$joker_ids = get_posts( [
+			'post_type'      => 'vrodos_asset3d',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => [ [ 'key' => 'vrodos_asset3d_isJoker', 'value' => 'true', 'compare' => '=' ] ],
+		] );
+
+		$all_ids = array_unique( array_merge( $project_ids, $joker_ids ) );
+
+		if ( empty( $all_ids ) ) {
+			return $allAssets;
+		}
+
+		$queryargs = [ 'post_type' => 'vrodos_asset3d', 'posts_per_page' => -1, 'post__in' => $all_ids, 'orderby' => 'post__in' ];
 
 		$custom_query = new WP_Query( $queryargs );
 
