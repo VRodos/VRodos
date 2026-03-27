@@ -45,7 +45,7 @@ class VrodosSceneExporter {
                 return;
             }
 
-            if (node instanceof THREE.Mesh && node.category_name !== "pawn") {
+            if (node instanceof THREE.Mesh && node.category_name !== "pawn" && node.category_slug !== "image") {
                 return;
             }
 

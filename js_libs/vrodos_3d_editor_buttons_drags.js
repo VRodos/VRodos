@@ -16,6 +16,90 @@ function swapLucideIcon(container, iconName) {
 // Local and Global scope functions
 var new_screenshot_data = null;
 
+function focusWithoutScroll(element) {
+    if (!element || typeof element.focus !== 'function') return;
+
+    try {
+        element.focus({ preventScroll: true });
+    } catch (error) {
+        element.focus();
+    }
+}
+
+function copyTextareaText(textarea) {
+    if (!textarea) {
+        return Promise.reject(new Error('No textarea available for clipboard copy.'));
+    }
+
+    var text = textarea.value || '';
+
+    if (window.isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        return navigator.clipboard.writeText(text).catch(function () {
+            return fallbackCopyTextareaText(textarea);
+        });
+    }
+
+    return fallbackCopyTextareaText(textarea);
+}
+
+function fallbackCopyTextareaText(textarea) {
+    return new Promise(function (resolve, reject) {
+        var activeElement = document.activeElement;
+        var originalSelectionStart = textarea.selectionStart;
+        var originalSelectionEnd = textarea.selectionEnd;
+
+        try {
+            focusWithoutScroll(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, textarea.value.length);
+
+            var copied = document.execCommand('copy');
+            textarea.setSelectionRange(originalSelectionStart || 0, originalSelectionEnd || 0);
+
+            if (activeElement && typeof activeElement.focus === 'function' && activeElement !== textarea) {
+                focusWithoutScroll(activeElement);
+            }
+
+            if (copied) {
+                resolve();
+            } else {
+                reject(new Error('Clipboard copy command was rejected.'));
+            }
+        } catch (error) {
+            textarea.select();
+            reject(error);
+        }
+    });
+}
+
+function showTemporaryButtonSuccess(buttonId, message) {
+    var btn = document.getElementById(buttonId);
+    if (!btn) return;
+
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="check" class="tw-w-3.5 tw-h-3.5"></i> ' + message;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    setTimeout(function () {
+        btn.innerHTML = orig;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 1500);
+}
+
+function showTemporaryButtonWarning(buttonId, message) {
+    var btn = document.getElementById(buttonId);
+    if (!btn) return;
+
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="triangle-alert" class="tw-w-3.5 tw-h-3.5"></i> ' + message;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    setTimeout(function () {
+        btn.innerHTML = orig;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 2500);
+}
+
 // Local
 function loadButtonActions() {
 
@@ -292,13 +376,16 @@ function loadButtonActions() {
     // Copy JSON to clipboard
     document.getElementById('copyJsonBtn').addEventListener('click', function () {
         var textarea = document.getElementById('vrodos_scene_json_input');
-        navigator.clipboard.writeText(textarea.value).then(function () {
-            var btn = document.getElementById('copyJsonBtn');
-            var orig = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="check" class="tw-w-3.5 tw-h-3.5"></i> Copied!';
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            setTimeout(function () { btn.innerHTML = orig; if (typeof lucide !== 'undefined') lucide.createIcons(); }, 1500);
-        });
+        copyTextareaText(textarea)
+            .then(function () {
+                showTemporaryButtonSuccess('copyJsonBtn', 'Copied!');
+            })
+            .catch(function (error) {
+                textarea.select();
+                textarea.setSelectionRange(0, textarea.value.length);
+                showTemporaryButtonWarning('copyJsonBtn', 'Press Ctrl+C');
+                console.warn('VRodos: failed to copy scene JSON to clipboard.', error);
+            });
     });
 
     // Drag elements inside VR Editor
