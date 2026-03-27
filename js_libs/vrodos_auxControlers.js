@@ -349,7 +349,6 @@ function _addDragScrub(controller) {
         startValue = controller.getValue();
         input.setPointerCapture(e.pointerId);
         e.preventDefault(); // Prevent focus on pointerdown — we decide on pointerup
-        cancelAnimationFrame(id_animation_frame);
     });
 
     input.addEventListener('pointermove', function (e) {
@@ -419,7 +418,6 @@ function controllerDatGuiOnChange() {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) transform_controls.object.position.x = value;
-            animate();
         }
     );
     dg_controller[0].onFinishChange(function(value) {
@@ -435,7 +433,6 @@ function controllerDatGuiOnChange() {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) transform_controls.object.position.y = value;
-            animate();
         }
     );
     dg_controller[1].onFinishChange(function(value) {
@@ -451,7 +448,6 @@ function controllerDatGuiOnChange() {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) transform_controls.object.position.z = value;
-            animate();
         }
     );
     dg_controller[2].onFinishChange(function(value) {
@@ -474,7 +470,6 @@ function controllerDatGuiOnChange() {
                     transform_controls.object.rotation.x = value / 180 * Math.PI;
                 }
             }
-            animate();
         }
     );
     dg_controller[3].onFinishChange(function(value) {
@@ -503,7 +498,6 @@ function controllerDatGuiOnChange() {
                     transform_controls.object.rotation.y = value / 180 * Math.PI;
                 }
             }
-            animate();
         }
     );
     dg_controller[4].onFinishChange(function(value) {
@@ -532,7 +526,6 @@ function controllerDatGuiOnChange() {
                     transform_controls.object.rotation.z = value / 180 * Math.PI;
                 }
             }
-            animate();
         }
     );
     dg_controller[5].onFinishChange(function(value) {
@@ -566,7 +559,6 @@ function controllerDatGuiOnChange() {
             } else {
                 transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
             }
-            animate();
         }
     );
     dg_controller[6].onFinishChange(function(value) {
@@ -608,7 +600,6 @@ function controllerDatGuiOnChange() {
             } else {
                 transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
             }
-            animate();
         }
     );
     dg_controller[7].onFinishChange(function(value) {
@@ -650,7 +641,6 @@ function controllerDatGuiOnChange() {
             } else {
                 transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
             }
-            animate();
         }
     );
     dg_controller[8].onFinishChange(function(value) {

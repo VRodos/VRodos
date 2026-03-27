@@ -533,6 +533,11 @@ class VRodos_Core_Manager {
 				$asset_id      = get_the_ID();
 				$asset_cat_arr = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
 
+				// Skip assets with no category — accessing $asset_cat_arr[0] would crash
+				if ( is_wp_error( $asset_cat_arr ) || empty( $asset_cat_arr ) ) {
+					continue;
+				}
+
 				$glbID   = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ); // GLB ID
 				$glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
 
