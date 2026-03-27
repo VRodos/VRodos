@@ -187,11 +187,12 @@ class VRodos_Asset_CPT_Manager {
 				break;
 
 			case 'image':
-				$image_file = $_FILES['imageFileInput'] ?? [];
+				$image_file = $_FILES['imageFlatFileInput'] ?? [];
 				if ( ! empty( $image_file ) && ( $image_file['error'] ?? 4 ) != 4 ) {
-					$attachment_id = VRodos_Upload_Manager::create_asset_add_images_frontend( $asset_id, $image_file );
+					$attachment_id = VRodos_Upload_Manager::upload_img_vid_aud( $image_file, $asset_id );
 					if ( $attachment_id ) {
 						update_post_meta( $asset_id, 'vrodos_asset3d_image', $attachment_id );
+						update_post_meta( $asset_id, 'vrodos_asset3d_screenimage', $attachment_id );
 						set_post_thumbnail( $asset_id, $attachment_id );
 					}
 				}
@@ -867,6 +868,15 @@ class VRodos_Asset_CPT_Manager {
 			$imagePoiImageURL = wp_get_attachment_url( get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true ) );
 			if ( $imagePoiImageURL ) {
 				$data['imagePoiImageURL'] = $imagePoiImageURL;
+			}
+		}
+
+		// Image (flat plane)
+		$data['imageFlatImageURL'] = '';
+		if ( $asset_id ) {
+			$imageFlatImageURL = wp_get_attachment_url( get_post_meta( $asset_id, 'vrodos_asset3d_image', true ) );
+			if ( $imageFlatImageURL ) {
+				$data['imageFlatImageURL'] = $imageFlatImageURL;
 			}
 		}
 

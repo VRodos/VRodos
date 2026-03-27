@@ -22,6 +22,36 @@ extract($data);
         var asset_title = <?php echo json_encode($asset_title_value); ?>;
         var vrodos_isEditable = <?php echo $isEditable ? 'true' : 'false'; ?>;
     </script>
+    <?php
+    // Pre-apply the correct section visibility to prevent layout flicker on load.
+    $initial_cat_slug = ! empty( $saved_term ) ? $saved_term[0]->slug : '';
+    if ( $initial_cat_slug ) :
+        $hide_3d = in_array( $initial_cat_slug, [ 'image', 'video', 'poi-imagetext', 'poi-link', 'chat' ] );
+    ?>
+    <style>
+        <?php if ( $hide_3d ) : ?>
+        #glb_file_section,
+        #vrodos_3d_preview_card,
+        #vrodos_editor_tip_card,
+        #screenshot_section { display: none !important; }
+        <?php endif; ?>
+        <?php if ( $initial_cat_slug === 'image' ) : ?>
+        #image_preview_card    { display: flex  !important; }
+        #image_flat_file_section { display: block !important; }
+        <?php elseif ( $initial_cat_slug === 'video' ) : ?>
+        #video_section,
+        #video_options_section,
+        #video_screenshot_section { display: block !important; }
+        <?php elseif ( $initial_cat_slug === 'poi-imagetext' ) : ?>
+        #poi_image_text_section,
+        #poi_image_file_section { display: block !important; }
+        <?php elseif ( $initial_cat_slug === 'poi-link' ) : ?>
+        #poi_link_section { display: block !important; }
+        <?php elseif ( $initial_cat_slug === 'chat' ) : ?>
+        #poi_help_section { display: block !important; }
+        <?php endif; ?>
+    </style>
+    <?php endif; ?>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
 
@@ -189,6 +219,18 @@ else { ?>
                     </div>
                     <?php
     }?>
+
+                    <!-- Image Asset Preview (shown instead of 3D preview for image category) -->
+                    <div id="image_preview_card" class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3] tw-flex tw-items-center tw-justify-center" style="display:none;">
+                        <img id="imageFlatPreviewSidebar"
+                             src="<?php echo esc_url($imageFlatImageURL ?? ''); ?>"
+                             class="tw-w-full tw-h-full tw-object-contain <?php echo empty($imageFlatImageURL) ? 'tw-hidden' : ''; ?>"
+                             alt="Image preview">
+                        <div id="imageFlatSidebarPlaceholder" class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-2 tw-text-slate-300 <?php echo !empty($imageFlatImageURL) ? 'tw-hidden' : ''; ?>">
+                            <i data-lucide="image" class="tw-w-12 tw-h-12"></i>
+                            <span class="tw-text-xs tw-text-slate-400">No image saved yet</span>
+                        </div>
+                    </div>
 
                     <!-- Context Tip Card -->
                     <div id="vrodos_editor_tip_card" class="tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-p-5 tw-rounded-2xl">
@@ -583,8 +625,8 @@ else { ?>
                                 Image
                             </label>
                             <label for="imageFlatFileInput" class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border-2 tw-border-dashed tw-border-slate-200 hover:tw-border-primary tw-transition-all group tw-cursor-pointer tw-block">
-                                <img id="imageFlatPreviewImg" src="<?php echo esc_url(wp_get_attachment_url(get_post_meta($asset_id ?? 0, 'vrodos_asset3d_image', true)) ?: ''); ?>" alt="Image" class="tw-w-full tw-h-full tw-object-cover <?php echo empty(get_post_meta($asset_id ?? 0, 'vrodos_asset3d_image', true)) ? 'tw-hidden' : ''; ?>">
-                                <div id="imageFlatPlaceholder" class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-2 tw-text-slate-400 <?php echo !empty(get_post_meta($asset_id ?? 0, 'vrodos_asset3d_image', true)) ? 'tw-hidden' : ''; ?>">
+                                <img id="imageFlatPreviewImg" src="<?php echo esc_url($imageFlatImageURL ?? ''); ?>" alt="Image" class="tw-w-full tw-h-full tw-object-cover <?php echo empty($imageFlatImageURL) ? 'tw-hidden' : ''; ?>">
+                                <div id="imageFlatPlaceholder" class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-2 tw-text-slate-400 <?php echo !empty($imageFlatImageURL) ? 'tw-hidden' : ''; ?>">
                                     <i data-lucide="upload" class="tw-w-8 tw-h-8"></i>
                                     <span class="tw-text-sm tw-font-medium">Click to upload image</span>
                                 </div>
@@ -594,7 +636,7 @@ else { ?>
                                         Upload
                                     </span>
                                 </div>
-                                <input type="file" id="imageFlatFileInput" name="imageFileInput" class="tw-hidden" accept="image/png, image/jpg, image/jpeg"/>
+                                <input type="file" id="imageFlatFileInput" name="imageFlatFileInput" class="tw-hidden" accept="image/png, image/jpg, image/jpeg"/>
                             </label>
                         </div>
 
@@ -814,6 +856,7 @@ else { ?>
 					case "image":
 							document.getElementById('glb_file_section').style.display = "none";
 							document.getElementById('vrodos_3d_preview_card').style.display = "none";
+							document.getElementById('image_preview_card').style.display = "flex";
 							document.getElementById('vrodos_editor_tip_card').style.display = "none";
 							document.getElementById('screenshot_section').style.display = "none";
 							document.getElementById('image_flat_file_section').style.display = "block";
@@ -903,6 +946,10 @@ else { ?>
 								img.classList.remove('tw-hidden');
 								let ph = document.getElementById('imageFlatPlaceholder');
 								if (ph) ph.classList.add('tw-hidden');
+								let sidebarImg = document.getElementById('imageFlatPreviewSidebar');
+								if (sidebarImg) { sidebarImg.src = fr.result; sidebarImg.classList.remove('tw-hidden'); }
+								let sidebarPh = document.getElementById('imageFlatSidebarPlaceholder');
+								if (sidebarPh) sidebarPh.classList.add('tw-hidden');
 							}
 							fr.readAsDataURL(files[0]);
 						}

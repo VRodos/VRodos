@@ -501,7 +501,18 @@ class VRodos_Core_Manager {
 		// Slugs are low case "Archaeology-joker" -> "archaeology-joker"
 		// $joker_game_slug = strtolower($joker_game_slug);
 
-		$queryargs = ['post_type'      => 'vrodos_asset3d', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_asset3d_pgame', 'field'    => 'slug', 'terms'    => [$gameProjectSlug, 'vrexpo-joker', 'archaeology-joker', 'virtualproduction-joker']]]];
+		// Dynamically collect all joker pgame slugs so new shared-asset project types are included automatically
+		$all_pgame_terms = get_terms( [ 'taxonomy' => 'vrodos_asset3d_pgame', 'hide_empty' => false ] );
+		$joker_slugs     = [];
+		if ( ! is_wp_error( $all_pgame_terms ) ) {
+			foreach ( $all_pgame_terms as $t ) {
+				if ( str_contains( $t->slug, 'joker' ) ) {
+					$joker_slugs[] = $t->slug;
+				}
+			}
+		}
+
+		$queryargs = [ 'post_type' => 'vrodos_asset3d', 'posts_per_page' => -1, 'tax_query' => [ [ 'taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'slug', 'terms' => array_merge( [ $gameProjectSlug ], $joker_slugs ) ] ] ];
 
 		$custom_query = new WP_Query( $queryargs );
 

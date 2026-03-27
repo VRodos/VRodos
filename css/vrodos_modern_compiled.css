@@ -4123,6 +4123,11 @@ body {
   --tw-gradient-to: transparent var(--tw-gradient-to-position);
 }
 
+.vrodos-manager-wrapper .tw-object-contain {
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+
 .vrodos-manager-wrapper .tw-object-cover {
   -o-object-fit: cover;
      object-fit: cover;
