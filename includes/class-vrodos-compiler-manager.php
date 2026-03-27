@@ -671,6 +671,32 @@ class VRodos_Compiler_Manager {
 
 						break;
 
+					case 'image':
+						$assets = $dom->getElementById( 'scene-assets' );
+
+						$sc_x = $contentObject->scale[0];
+						$sc_y = $contentObject->scale[1];
+						$sc_z = $contentObject->scale[2];
+
+						$a_img = $dom->createElement( 'img' );
+						$a_img->setAttribute( 'id', "image_$uuid" );
+						$a_img->setAttribute( 'src', $this->normalize_url( $contentObject->image_path ) );
+						$a_img->setAttribute( 'crossorigin', 'anonymous' );
+						$assets->appendChild( $a_img );
+
+						$a_plane = $dom->createElement( 'a-image' );
+						$a_plane->setAttribute( 'id', "image-display_$uuid" );
+						$a_plane->setAttribute( 'src', "#image_$uuid" );
+						$a_plane->setAttribute( 'height', '2' );
+						$a_plane->setAttribute( 'width', '2' );
+						$a_plane->setAttribute( 'material', 'shader: flat; side: double; transparent: true' );
+						$a_plane->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
+						$a_plane->setAttribute( 'class', 'hideable raycastable' );
+						$a_plane->appendChild( $dom->createTextNode( '' ) );
+						$this->setAffineTransformations( $a_plane, $contentObject );
+						$ascene->appendChild( $a_plane );
+						break;
+
 					case 'video':
 						$assets = $dom->getElementById( 'scene-assets' );
 

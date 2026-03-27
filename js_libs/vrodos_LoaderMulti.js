@@ -239,6 +239,34 @@ class VRodos_LoaderMulti {
                         }
                     );
 
+                } else if (resources3D[name]['category_slug'] === 'image') { // Flat image plane
+
+                    const imageUrl = resources3D[name]['image_path'];
+                    if (!imageUrl) {
+                        envir.loadedObjectsCount++;
+                    } else {
+                        const geometry = new THREE.PlaneGeometry(2, 2);
+                        const texture  = new THREE.TextureLoader().load(imageUrl);
+                        const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
+                        let object     = new THREE.Mesh(geometry, material);
+                        object = setObjectProperties(object, name, resources3D);
+                        object.isSelectableMesh = true;
+                        object.position.set(
+                            resources3D[name].position[0],
+                            resources3D[name].position[1],
+                            resources3D[name].position[2]);
+                        object.rotation.set(
+                            resources3D[name].rotation[0],
+                            resources3D[name].rotation[1],
+                            resources3D[name].rotation[2]);
+                        object.scale.set(
+                            resources3D[name].scale[0],
+                            resources3D[name].scale[1],
+                            resources3D[name].scale[2]);
+                        envir.scene.add(object);
+                        envir.loadedObjectsCount++;
+                    }
+
                 } else { // GLB 3D models
 
                     if ((resources3D[name]['glb_id'] !== "" && resources3D[name]['glb_id'] !== undefined) || resources3D[name]['category_slug'] == "video") {

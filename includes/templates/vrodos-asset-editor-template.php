@@ -271,6 +271,7 @@ else { ?>
                             'door'          => 'door-open',
                             'video'         => 'clapperboard',
                             'poi-imagetext' => 'image',
+                            'image'         => 'image-play',
                             'chat'          => 'message-square',
                             'poi-link'      => 'external-link',
                         ];
@@ -576,6 +577,27 @@ else { ?>
                             </div>
                         </div>
 
+                        <!-- Image (flat plane) Upload -->
+                        <div id="image_flat_file_section" class="tw-space-y-6" style="display: none;">
+                            <label class="vrodos-label">
+                                Image
+                            </label>
+                            <label for="imageFlatFileInput" class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border-2 tw-border-dashed tw-border-slate-200 hover:tw-border-primary tw-transition-all group tw-cursor-pointer tw-block">
+                                <img id="imageFlatPreviewImg" src="<?php echo esc_url(wp_get_attachment_url(get_post_meta($asset_id ?? 0, 'vrodos_asset3d_image', true)) ?: ''); ?>" alt="Image" class="tw-w-full tw-h-full tw-object-cover <?php echo empty(get_post_meta($asset_id ?? 0, 'vrodos_asset3d_image', true)) ? 'tw-hidden' : ''; ?>">
+                                <div id="imageFlatPlaceholder" class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-2 tw-text-slate-400 <?php echo !empty(get_post_meta($asset_id ?? 0, 'vrodos_asset3d_image', true)) ? 'tw-hidden' : ''; ?>">
+                                    <i data-lucide="upload" class="tw-w-8 tw-h-8"></i>
+                                    <span class="tw-text-sm tw-font-medium">Click to upload image</span>
+                                </div>
+                                <div class="tw-absolute tw-inset-0 tw-bg-slate-900/40 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity tw-flex tw-items-center tw-justify-center tw-pointer-events-none">
+                                    <span class="tw-btn tw-btn-sm tw-bg-white tw-border-none tw-text-slate-900 tw-font-bold tw-rounded-xl tw-gap-2">
+                                        <i data-lucide="upload" class="tw-w-4 tw-h-4"></i>
+                                        Upload
+                                    </span>
+                                </div>
+                                <input type="file" id="imageFlatFileInput" name="imageFileInput" class="tw-hidden" accept="image/png, image/jpg, image/jpeg"/>
+                            </label>
+                        </div>
+
                         <!-- Image POI Upload -->
                         <div id="poi_image_file_section" class="tw-space-y-6" style="display: none;">
                             <label class="vrodos-label">
@@ -776,6 +798,7 @@ else { ?>
 					document.getElementById('video_screenshot_section').style.display = "none";
 					document.getElementById('poi_image_text_section').style.display = "none";
 					document.getElementById('poi_image_file_section').style.display = "none";
+				document.getElementById('image_flat_file_section').style.display = "none";
 				};
 
 				let loadLayout = (slug) => {
@@ -787,6 +810,13 @@ else { ?>
 						case "poi-imagetext":
 							document.getElementById('poi_image_text_section').style.display = "block";
 							document.getElementById('poi_image_file_section').style.display = "block";
+							break;
+					case "image":
+							document.getElementById('glb_file_section').style.display = "none";
+							document.getElementById('vrodos_3d_preview_card').style.display = "none";
+							document.getElementById('vrodos_editor_tip_card').style.display = "none";
+							document.getElementById('screenshot_section').style.display = "none";
+							document.getElementById('image_flat_file_section').style.display = "block";
 							break;
 						case "poi-link":
 							document.getElementById('poi_link_section').style.display = "block";
@@ -859,6 +889,24 @@ else { ?>
 					} else {
 						document.getElementById('imagePoiPreviewImg').src = no_img_path;
 					}
+				}
+
+				const imageFlatInput = document.getElementById('imageFlatFileInput');
+				if (imageFlatInput) {
+					imageFlatInput.onchange = function (evt) {
+						let files = evt.target.files;
+						if (FileReader && files && files.length) {
+							let fr = new FileReader();
+							fr.onload = function () {
+								let img = document.getElementById('imageFlatPreviewImg');
+								img.src = fr.result;
+								img.classList.remove('tw-hidden');
+								let ph = document.getElementById('imageFlatPlaceholder');
+								if (ph) ph.classList.add('tw-hidden');
+							}
+							fr.readAsDataURL(files[0]);
+						}
+					};
 				}
 			})();
 		}

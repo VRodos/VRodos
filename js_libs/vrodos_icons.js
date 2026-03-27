@@ -17,6 +17,7 @@ var VRODOS_CATEGORY_ICONS = {
     'door':            'door-open',
     'video':           'clapperboard',
     'poi-imagetext':   'image',
+    'image':           'image-play',
     'chat':            'message-square',
     'poi-link':        'external-link',
 

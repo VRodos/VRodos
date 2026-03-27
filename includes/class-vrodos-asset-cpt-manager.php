@@ -186,6 +186,17 @@ class VRodos_Asset_CPT_Manager {
 
 				break;
 
+			case 'image':
+				$image_file = $_FILES['imageFileInput'] ?? [];
+				if ( ! empty( $image_file ) && ( $image_file['error'] ?? 4 ) != 4 ) {
+					$attachment_id = VRodos_Upload_Manager::create_asset_add_images_frontend( $asset_id, $image_file );
+					if ( $attachment_id ) {
+						update_post_meta( $asset_id, 'vrodos_asset3d_image', $attachment_id );
+						set_post_thumbnail( $asset_id, $attachment_id );
+					}
+				}
+				break;
+
 			case 'poi-link':
 				update_post_meta( $asset_id, 'vrodos_asset3d_link', $_POST['assetLinkInput'] );
 				break;

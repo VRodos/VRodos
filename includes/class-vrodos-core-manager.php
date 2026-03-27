@@ -545,6 +545,10 @@ class VRodos_Core_Manager {
 						case 'chat':
 							$data_arr['chat_type'] = get_post_meta($asset_id, 'vrodos_asset3d_chat_type', true);
 							break;*/
+					case 'image':
+						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
+						$data_arr['image_path'] = wp_get_attachment_url( $data_arr['image_id'] ) ?: '';
+						break;
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
 						break;

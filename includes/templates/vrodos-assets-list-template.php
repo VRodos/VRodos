@@ -19,6 +19,7 @@ function vrodos_get_asset_category_icon($category_slug) {
         'door'          => 'door-open',
         'video'         => 'clapperboard',
         'poi-imagetext' => 'image',
+        'image'         => 'image-play',
         'chat'          => 'message-square',
         'poi-link'      => 'external-link',
     ];
