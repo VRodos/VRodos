@@ -245,26 +245,38 @@ class VRodos_LoaderMulti {
                     if (!imageUrl) {
                         envir.loadedObjectsCount++;
                     } else {
+                        // Support both scene-load format (pos/rot/scale flat arrays)
+                        // and drag-and-drop format (trs.translation/rotation/scale)
+                        const trs = resources3D[name].trs;
+                        const pos = resources3D[name].position || (trs && trs.translation) || [0, 0, 0];
+                        const rot = resources3D[name].rotation || (trs && trs.rotation)    || [0, 0, 0];
+                        const scl = resources3D[name].scale    || (trs && trs.scale)       || [1, 1, 1];
+
                         const geometry = new THREE.PlaneGeometry(2, 2);
                         const texture  = new THREE.TextureLoader().load(imageUrl);
                         const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
                         let object     = new THREE.Mesh(geometry, material);
                         object = setObjectProperties(object, name, resources3D);
                         object.isSelectableMesh = true;
-                        object.position.set(
-                            resources3D[name].position[0],
-                            resources3D[name].position[1],
-                            resources3D[name].position[2]);
-                        object.rotation.set(
-                            resources3D[name].rotation[0],
-                            resources3D[name].rotation[1],
-                            resources3D[name].rotation[2]);
-                        object.scale.set(
-                            resources3D[name].scale[0],
-                            resources3D[name].scale[1],
-                            resources3D[name].scale[2]);
+                        object.position.set(pos[0], pos[1], pos[2]);
+                        object.rotation.set(rot[0], rot[1], rot[2]);
+                        object.scale.set(scl[0], scl[1], scl[2]);
                         envir.scene.add(object);
                         envir.loadedObjectsCount++;
+
+                        // When dragged onto canvas (manager.onLoad won't fire — no GLTF items),
+                        // manually attach controls, update hierarchy, and save.
+                        if (trs) {
+                            transform_controls.attach(object);
+                            removeAllCelOutlines();
+                            addCelOutline(object);
+                            selected_object_name = name;
+                            setTransformControlsSize();
+                            if (typeof addInHierarchyViewer === 'function') addInHierarchyViewer(object);
+                            if (typeof triggerAutoSave === 'function') triggerAutoSave();
+                            if (typeof setDatGuiInitialVales === 'function') setDatGuiInitialVales(object);
+                            document.getElementById("progressWrapper").style.visibility = "hidden";
+                        }
                     }
 
                 } else { // GLB 3D models

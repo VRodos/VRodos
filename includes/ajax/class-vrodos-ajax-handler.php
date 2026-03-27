@@ -542,9 +542,12 @@ class VRodos_AJAX_Handler {
 		$showPawnPositions = $_REQUEST['showPawnPositions'] ?? 'false';
 		// $projectSlug = $_REQUEST['projectSlug'];
 
-		// $asset_id_temp = get_the_ID();
-		$parent_id = wp_get_post_terms( $sceneId, 'vrodos_scene_pgame' );
-		$parent_id = reset( $parent_id )->term_id;
+		$terms = wp_get_post_terms( $sceneId, 'vrodos_scene_pgame' );
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			wp_send_json_error( 'Scene has no project term assigned.', 400 );
+			return;
+		}
+		$parent_id = $terms[0]->term_id;
 
 		$sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $parent_id );
 

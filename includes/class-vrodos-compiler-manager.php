@@ -53,6 +53,12 @@ class VRodos_Compiler_Manager {
 			sleep( 2 );
 		}
 
+		// Ensure output directory exists before writing compiled files
+		$build_dir = $this->plugin_path_dir . '/runtime/build/';
+		if ( ! is_dir( $build_dir ) ) {
+			wp_mkdir_p( $build_dir );
+		}
+
 		$scene_json  = [];
 		$scene_title = [];
 		foreach ( $scene_id_list as $key => &$value ) {
@@ -116,7 +122,15 @@ class VRodos_Compiler_Manager {
 	}
 
 	private function writer( $filename, $content ) {
-		$f   = fopen( $filename, 'w' );
+		$dir = dirname( $filename );
+		if ( ! is_dir( $dir ) ) {
+			wp_mkdir_p( $dir );
+		}
+		$f = fopen( $filename, 'w' );
+		if ( ! $f ) {
+			error_log( '[VRodos] writer() failed to open: ' . $filename );
+			return false;
+		}
 		$res = fwrite( $f, (string) $content );
 		fclose( $f );
 		return $res;

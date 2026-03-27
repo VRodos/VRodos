@@ -29,8 +29,23 @@ class VRodos_Install_Manager {
 	 */
 	public function activate(): void {
 		$this->vrodos_db_create_games_versions_table();
+		$this->create_required_directories();
 		VRodos_Pages_Manager::vrodos_create_pages();
 		VRodos_Pages_Manager::vrodos_fx_admin_notice_activation_hook();
+	}
+
+	/**
+	 * Create directories required by the plugin at runtime.
+	 * Safe to call on every activation — wp_mkdir_p() is idempotent.
+	 */
+	private function create_required_directories(): void {
+		$plugin_dir = plugin_dir_path( VRODOS_PLUGIN_FILE );
+		$dirs = [
+			$plugin_dir . 'runtime/build',
+		];
+		foreach ( $dirs as $dir ) {
+			wp_mkdir_p( $dir );
+		}
 	}
 
 	/**
