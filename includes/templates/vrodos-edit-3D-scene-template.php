@@ -471,8 +471,10 @@ extract( $data );
 			// make asset browser draggable: not working without get_footer
 			// jQuery('#assetBrowserToolbar').draggable({cancel : 'ul'});
 
-			// Populate the JSON viewer textarea
-			document.getElementById('vrodos_scene_json_input').value = JSON.stringify(vrodos_scene_data, null, 2);
+			// Populate the JSON viewer textarea with the actual exported scene payload
+			if (typeof refreshSceneJsonTextarea === 'function') {
+				refreshSceneJsonTextarea();
+			}
 
 			// Set initial background color and UI from scene data
 			if (vrodos_scene_data.backgroundStyleOption === 1 && vrodos_scene_data.ClearColor) {

@@ -100,6 +100,20 @@ function showTemporaryButtonWarning(buttonId, message) {
     }, 2500);
 }
 
+function refreshSceneJsonTextarea() {
+    var textarea = document.getElementById('vrodos_scene_json_input');
+    if (!textarea || typeof VrodosSceneExporter === 'undefined' || !envir || !envir.scene) return;
+
+    var exporter = new VrodosSceneExporter();
+    var exportedJson = exporter.parse(envir.scene);
+
+    try {
+        textarea.value = JSON.stringify(JSON.parse(exportedJson), null, 2);
+    } catch (error) {
+        textarea.value = exportedJson;
+    }
+}
+
 // Local
 function loadButtonActions() {
 
@@ -361,8 +375,8 @@ function loadButtonActions() {
         if (dialog.open) {
             dialog.close();
         } else {
-            // Refresh textarea with current scene data
-            document.getElementById('vrodos_scene_json_input').value = JSON.stringify(vrodos_scene_data, null, 2);
+            // Refresh textarea with the exact exported scene payload
+            refreshSceneJsonTextarea();
             dialog.showModal();
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }

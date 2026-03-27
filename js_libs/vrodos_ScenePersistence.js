@@ -65,7 +65,21 @@ class VrodosSceneExporter {
     }
 
     processObject(o) {
-        const ignoredKeys = ['matrixAutoUpdate', 'matrixWorldNeedsUpdate', 'visible', 'castShadow', 'receiveShadow', 'frustumCulled', 'renderOrder', 'draggable', 'class', 'isGroup'];
+        const ignoredKeys = [
+            'matrixAutoUpdate',
+            'matrixWorldNeedsUpdate',
+            'visible',
+            'castShadow',
+            'receiveShadow',
+            'frustumCulled',
+            'renderOrder',
+            'draggable',
+            'class',
+            'id',
+            'title',
+            'name',
+            'isGroup'
+        ];
 
         const entryObject = {};
 
