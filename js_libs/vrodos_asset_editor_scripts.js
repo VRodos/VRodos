@@ -109,6 +109,11 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
     // PREVIEW Handler (not uploaded yet): Load from selected files
     let _handleFileSelect = function ( event ) {
 
+        if (typeof window.vrodos_validate_selected_glb === 'function' &&
+            !window.vrodos_validate_selected_glb()) {
+            return;
+        }
+
         let input = document.getElementById('fileUploadInput');
         let children = "";
 

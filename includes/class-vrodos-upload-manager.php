@@ -14,6 +14,8 @@ class VRodos_Upload_Manager {
 	public static function create_asset_3dfiles_extra_frontend( $asset_new_id, $project_id, $asset_cat_id ): void {
 		// Upload and update DB
 		if ( ( isset( $_POST['glbFileInput'] ) && $_POST['glbFileInput'] ) || ( isset( $_FILES['multipleFilesInput'] ) && $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE ) ) {
+			wp_raise_memory_limit( 'admin' );
+			@set_time_limit( 300 );
 
 			// Clear out all previous attachments only if we have a new upload
 			$attachments = get_children(
@@ -226,7 +228,16 @@ class VRodos_Upload_Manager {
 		$upload_overrides = ['test_form' => false];
 		$result = wp_handle_upload( $file_array, $upload_overrides );
 		if ( isset( $result['error'] ) ) {
-			error_log( "VRodos Upload Error (handle_asset_upload): " . $result['error'] );
+			error_log(
+				sprintf(
+					'VRodos Upload Error (handle_asset_upload): %s | file=%s | type=%s | size=%s | php_error=%s',
+					$result['error'],
+					(string) ( $file_array['name'] ?? '' ),
+					(string) ( $file_array['type'] ?? '' ),
+					(string) ( $file_array['size'] ?? '' ),
+					(string) ( $file_array['error'] ?? '' )
+				)
+			);
 		}
 		return $result;
 	}
@@ -234,9 +245,39 @@ class VRodos_Upload_Manager {
 	public static function insert_attachment_post( $file_return, $parent_post_id ) {
 		$filename        = $file_return['file'];
 		$attachment      = ['post_mime_type' => $file_return['type'], 'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( (string) $filename ) ), 'post_content'   => '', 'post_status'    => 'inherit', 'guid'           => $file_return['url']];
-		$attachment_id   = wp_insert_attachment( $attachment, $file_return['file'], $parent_post_id );
-		$attachment_data = wp_generate_attachment_metadata( $attachment_id, $filename );
-		wp_update_attachment_metadata( $attachment_id, $attachment_data );
+		$attachment_id   = wp_insert_attachment( $attachment, $file_return['file'], $parent_post_id, true );
+		if ( is_wp_error( $attachment_id ) || ! $attachment_id ) {
+			error_log(
+				sprintf(
+					'VRodos Upload Error (insert_attachment_post): failed to create attachment for %s | parent=%d | error=%s',
+					(string) $filename,
+					(int) $parent_post_id,
+					is_wp_error( $attachment_id ) ? $attachment_id->get_error_message() : 'unknown'
+				)
+			);
+			return false;
+		}
+
+		$is_media_metadata_target = wp_attachment_is_image( $attachment_id )
+			|| str_starts_with( (string) $attachment['post_mime_type'], 'video/' )
+			|| str_starts_with( (string) $attachment['post_mime_type'], 'audio/' );
+
+		if ( $is_media_metadata_target ) {
+			$attachment_data = wp_generate_attachment_metadata( $attachment_id, $filename );
+			if ( is_wp_error( $attachment_data ) ) {
+				error_log(
+					sprintf(
+						'VRodos Upload Error (attachment_metadata): %s | file=%s | parent=%d',
+						$attachment_data->get_error_message(),
+						(string) $filename,
+						(int) $parent_post_id
+					)
+				);
+			} else {
+				wp_update_attachment_metadata( $attachment_id, $attachment_data );
+			}
+		}
+
 		return $attachment_id;
 	}
 
@@ -335,6 +376,8 @@ class VRodos_Upload_Manager {
 
 	public static function upload_asset_text( $textContent, $textTitle, $parent_post_id, $TheFiles, $index_file, $project_id ) {
 		self::load_wp_admin_files();
+		wp_raise_memory_limit( 'admin' );
+		@set_time_limit( 300 );
 		$_REQUEST['post_id'] = $parent_post_id;
 		add_filter( 'upload_dir', self::upload_dir_for_scenes_or_assets(...) );
 		add_filter( 'intermediate_image_sizes_advanced', self::remove_allthumbs_sizes(...), 10, 2 );
@@ -359,6 +402,23 @@ class VRodos_Upload_Manager {
 			if ( $attachment_id ) {
 				return $attachment_id;
 			}
+			error_log(
+				sprintf(
+					'VRodos Upload Error (upload_asset_text): attachment creation failed | parent=%d | title=%s | source=%s',
+					(int) $parent_post_id,
+					(string) $textTitle,
+					isset( $TheFiles['multipleFilesInput']['name'][ $index_file ] ) ? (string) $TheFiles['multipleFilesInput']['name'][ $index_file ] : 'inline-text'
+				)
+			);
+		} else {
+			error_log(
+				sprintf(
+					'VRodos Upload Error (upload_asset_text): upload returned no attachment | parent=%d | title=%s | source=%s',
+					(int) $parent_post_id,
+					(string) $textTitle,
+					isset( $TheFiles['multipleFilesInput']['name'][ $index_file ] ) ? (string) $TheFiles['multipleFilesInput']['name'][ $index_file ] : 'inline-text'
+				)
+			);
 		}
 		return false;
 	}

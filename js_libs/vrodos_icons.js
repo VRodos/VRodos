@@ -14,6 +14,7 @@ var VRODOS_CATEGORY_ICONS = {
 
     // ── Asset taxonomy categories (slug) ──────────────────────
     'decoration':      'leaf',
+    'walkable-surface':'footprints',
     'door':            'door-open',
     'video':           'clapperboard',
     'poi-imagetext':   'image',

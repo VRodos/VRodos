@@ -92,6 +92,13 @@ function handleBackgroundPresetGroundToggle(checkboxElement) {
     saveChanges();
 }
 
+function toggleAframeCollisionMode(isEnabled) {
+    if (!envir || !envir.scene) return;
+
+    envir.scene.aframeCollisionMode = isEnabled ? 'auto' : 'off';
+    saveChanges();
+}
+
 function bcgRadioSelect(option){
     let color_sel = document.getElementById('jscolorpick');
     let custom_img_sel = document.getElementById('img_upload_bcg');

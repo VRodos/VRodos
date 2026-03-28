@@ -76,6 +76,45 @@ function _hierarchyDisplayName(obj) {
 }
 
 /**
+ * Resolve the "added to scene" timestamp for a hierarchy item.
+ * Prefer the explicit persisted field, fall back to the legacy timestamp suffix.
+ */
+function _hierarchyCreatedLabel(obj) {
+    if (!obj || obj.name === 'avatarCamera') return '';
+
+    if (obj.category_name === 'lightTargetSpot') {
+        var parentName = String(obj.name || '').replace('lightTargetSpot_', '');
+        var parentObj = envir.scene.getObjectByName(parentName);
+        if (parentObj && parentObj !== obj) {
+            return _hierarchyCreatedLabel(parentObj);
+        }
+    }
+
+    var addedAt = Number(obj.addedAt || 0);
+    if ((!Number.isFinite(addedAt) || addedAt <= 0) &&
+        typeof vrodos_scene_data !== 'undefined' &&
+        vrodos_scene_data.objects &&
+        vrodos_scene_data.objects[obj.name]) {
+        addedAt = Number(vrodos_scene_data.objects[obj.name].addedAt || 0);
+    }
+
+    if (Number.isFinite(addedAt) && addedAt > 0) {
+        if (addedAt > 9999999999) {
+            addedAt = Math.floor(addedAt / 1000);
+        }
+        var addedLabel = unixTimestamp_to_time(String(Math.floor(addedAt)));
+        return (addedLabel && !addedLabel.includes('NaN')) ? addedLabel : '';
+    }
+
+    var name = String(obj.name || '');
+    var match = name.match(/(\d{10})$/);
+    if (!match) return '';
+
+    var created = unixTimestamp_to_time(match[1]);
+    return (created && !created.includes('NaN')) ? created : '';
+}
+
+/**
  * Hover on hierarchy item: lightweight select (gizmo + outline, no panel).
  */
 function hierarchyHoverSelect(uuid) {
@@ -305,8 +344,7 @@ function setHierarchyViewer() {
 
     sorted.forEach(function (obj) {
         var asset_name = _hierarchyDisplayName(obj);
-        var created = obj.name === 'avatarCamera' ? "" : unixTimestamp_to_time(
-            obj.name.substring(obj.name.length - 10, obj.name.length));
+        var created = _hierarchyCreatedLabel(obj);
         var deleteButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
             CreateDeleteButton(obj);
         var lockButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
@@ -334,7 +372,7 @@ function addInHierarchyViewer(obj) {
 
     let asset_name = _hierarchyDisplayName(obj);
 
-    let created = unixTimestamp_to_time(obj.name.substring(obj.name.length - 10, obj.name.length));
+    let created = _hierarchyCreatedLabel(obj);
 
     let deleteButton = obj['category_name'] === "lightTargetSpot" ? "" : CreateDeleteButton(obj);
 

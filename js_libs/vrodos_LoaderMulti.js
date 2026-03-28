@@ -33,6 +33,14 @@ class VRodos_LoaderMulti {
                     envir.scene.disableMovement = resources3D[name];
                 }
 
+                if (name === 'aframeCollisionMode') {
+                    envir.scene.aframeCollisionMode = resources3D[name] || 'auto';
+                    let collisionToggle = document.getElementById('aframeCollisionModeCheckbox');
+                    if (collisionToggle) {
+                        collisionToggle.checked = envir.scene.aframeCollisionMode !== 'off';
+                    }
+                }
+
                 if (name === 'backgroundStyleOption'){
                     envir.scene.backgroundStyleOption = parseInt(resources3D[name]) || 0;
                     envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
@@ -381,6 +389,12 @@ class VRodos_LoaderMulti {
                         if (resources3D[name].disableMovement){
                             document.getElementById("moveDisableCheckbox").checked = resources3D[name].disableMovement;
                             envir.scene.disableMovement = resources3D[name].disableMovement;
+                        }
+
+                        envir.scene.aframeCollisionMode = resources3D[name].aframeCollisionMode || 'auto';
+                        let collisionToggle = document.getElementById('aframeCollisionModeCheckbox');
+                        if (collisionToggle) {
+                            collisionToggle.checked = envir.scene.aframeCollisionMode !== 'off';
                         }
                        
 

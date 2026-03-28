@@ -1,5 +1,13 @@
+function getSceneObjectAddedAt(dataDrag) {
+    const existingValue = dataDrag && dataDrag.addedAt ? Number(dataDrag.addedAt) : 0;
+    return Number.isFinite(existingValue) && existingValue > 0
+        ? Math.floor(existingValue)
+        : Math.floor(Date.now() / 1000);
+}
+
 function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath) {
     let trs_tmp;
+    const addedAt = getSceneObjectAddedAt(dataDrag);
 
     // Add javascript variables for viewing the object correctly
     let selected_object_trs = {
@@ -15,11 +23,13 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         "asset_name": nameModel,
         "category_name": categoryName,
         "isLight": categoryName.includes("light"),
+        "addedAt": addedAt,
     };
 
     for (let entry in Object.keys(dataDrag)) {
         vrodos_scene_data.objects[nameModel][Object.keys(dataDrag)[entry]] = Object.values(dataDrag)[entry];
     }
+    vrodos_scene_data.objects[nameModel].addedAt = addedAt;
     
     if (categoryName === 'lightSun') {
 
@@ -42,6 +52,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSun['category_name'] = "lightSun";
         lightSun['category_slug'] = "lightSun";
         lightSun.isLight = true;
+        lightSun.addedAt = addedAt;
 
         let hexcol = "0xffff00";
 
@@ -75,6 +86,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightTargetSpot['category_name'] = "lightTargetSpot";
         lightTargetSpot.isLightTargetSpot = true;
         lightTargetSpot.isLight = false;
+        lightTargetSpot.addedAt = addedAt;
         lightTargetSpot.position = new THREE.Vector3(0, 0, 0);
         lightTargetSpot.parentLight = lightSun;
         lightTargetSpot.parentLightHelper = lightSunHelper;
@@ -159,6 +171,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightLamp['category_name'] = "lightLamp";
         lightLamp.isLight = true;
         lightLamp.castShadow = true;
+        lightLamp.addedAt = addedAt;
 
         lightLamp.lampcastingShadow = true;
         lightLamp.lampshadowMapHeight = "1024";
@@ -243,6 +256,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightSpot.isSelectableMesh = true;
         lightSpot['category_name'] = "lightSpot";
         lightSpot.isLight = true;
+        lightSpot.addedAt = addedAt;
 
         let lightTargetSpot = new THREE.Object3D();
 
@@ -281,6 +295,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightTargetSpot['category_name'] = "lightTargetSpot";
         lightTargetSpot.isLightTargetSpot = true;
         lightTargetSpot.isLight = false;
+        lightTargetSpot.addedAt = addedAt;
         lightTargetSpot.position = new THREE.Vector3(0,0,0);
         lightTargetSpot.parentLight = lightSpot;
         // lightTargetSpot.parentLightHelper = lightSpotHelper;
@@ -349,6 +364,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         lightAmbient.isSelectableMesh = true;
         lightAmbient['category_name'] = "lightAmbient";
         lightAmbient.isLight = true;
+        lightAmbient.addedAt = addedAt;
 
         //// Add Lamp Helper
         let lampSphere = new THREE.Mesh(
@@ -425,6 +441,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
                 Pawn.isSelectableMesh = true;
                 Pawn['category_name'] = "pawn";
                 Pawn.isLight = false;
+                Pawn.addedAt = addedAt;
 
 
                 // Give a number to Pawn

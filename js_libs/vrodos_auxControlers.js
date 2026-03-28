@@ -117,7 +117,19 @@ var _lastClickY = 0;
 function hideObjectControlsPanel() {
     const panel = document.getElementById('object-controls-panel');
     if (panel) panel.classList.add('tw-hidden');
+    updateObjectControlsMeta(null);
     hideAllPropertyPanels();
+}
+
+function updateObjectControlsMeta(object) {
+    var badge = document.getElementById('object-controls-badge');
+    if (!badge) return;
+
+    if (object && object.category_slug === 'walkable-surface') {
+        badge.classList.remove('tw-hidden');
+    } else {
+        badge.classList.add('tw-hidden');
+    }
 }
 
 /**
@@ -140,6 +152,7 @@ function hideAllPropertyPanels() {
 function showPropertiesInPanel(object) {
     if (!object) return;
     hideAllPropertyPanels();
+    updateObjectControlsMeta(object);
 
     var name = object.name;
     var hasProperties = false;

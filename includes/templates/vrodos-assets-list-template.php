@@ -16,6 +16,7 @@ extract( $data );
 function vrodos_get_asset_category_icon($category_slug) {
     $map = [
         'decoration'    => 'leaf',
+        'walkable-surface' => 'footprints',
         'door'          => 'door-open',
         'video'         => 'clapperboard',
         'poi-imagetext' => 'image',
@@ -145,7 +146,7 @@ function vrodos_get_asset_category_icon($category_slug) {
             ?>
 
                 <div id="<?php echo $asset['asset_id']; ?>" class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
-                     data-category="<?php echo esc_attr(sanitize_title($asset['category_name'])); ?>"
+                     data-category="<?php echo esc_attr($asset['category_slug']); ?>"
                      data-visibility="<?php echo ($asset['is_joker'] == 'true') ? 'shared' : 'private'; ?>">
 
                     <!-- Clickable Area for Edit -->

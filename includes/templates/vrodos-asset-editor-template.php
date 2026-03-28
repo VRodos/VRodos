@@ -21,6 +21,8 @@ extract($data);
         let no_img_path = '<?php echo esc_url($no_img_path_url ?? ''); ?>';
         var asset_title = <?php echo json_encode($asset_title_value); ?>;
         var vrodos_isEditable = <?php echo $isEditable ? 'true' : 'false'; ?>;
+        var vrodosMaxUploadBytes = <?php echo (int) $max_upload_bytes; ?>;
+        var vrodosMaxUploadLabel = <?php echo json_encode($max_upload_label); ?>;
     </script>
     <?php
     // Pre-apply the correct section visibility to prevent layout flicker on load.
@@ -112,6 +114,12 @@ else { ?>
                 <span class="tw-text-xs tw-font-bold tw-text-amber-700">View Only — You do not own this asset</span>
             </div>
         <?php } ?>
+        <div id="assetEditorNotice"
+             class="<?php echo empty($asset_notice_message) ? 'tw-hidden ' : ''; ?>tw-border-b tw-px-8 tw-py-3 tw-flex tw-items-center tw-gap-2 <?php echo ($asset_notice_type === 'error') ? 'tw-bg-red-50 tw-border-red-200 tw-text-red-700' : 'tw-bg-emerald-50 tw-border-emerald-200 tw-text-emerald-700'; ?>"
+             <?php if (!empty($asset_notice_message)) : ?>data-message="<?php echo esc_attr($asset_notice_message); ?>"<?php endif; ?>>
+            <i data-lucide="<?php echo ($asset_notice_type === 'error') ? 'alert-triangle' : 'check-circle-2'; ?>" class="tw-w-4 tw-h-4"></i>
+            <span id="assetEditorNoticeText" class="tw-text-xs tw-font-bold"><?php echo esc_html($asset_notice_message); ?></span>
+        </div>
         <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col tw-min-h-0 tw-m-0 tw-bg-slate-50">
             <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-hidden tw-min-h-0 tw-bg-slate-50">
             
@@ -209,7 +217,7 @@ else { ?>
                                 </div>
                                 <div>
                                     <p id="fileUploadInputLabel" class="tw-text-xs tw-font-bold tw-text-slate-800">Model Upload</p>
-                                    <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">GLB MAX 50MB</p>
+                                    <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">GLB MAX <?php echo esc_html( strtoupper( $max_upload_label ) ); ?></p>
                                 </div>
                             </label>
                         </div>
@@ -310,6 +318,7 @@ else { ?>
                         // Icon map (mirrors vrodos_icons.js)
                         $cat_icon_map = [
                             'decoration'    => 'leaf',
+                            'walkable-surface' => 'footprints',
                             'door'          => 'door-open',
                             'video'         => 'clapperboard',
                             'poi-imagetext' => 'image',
@@ -435,7 +444,7 @@ else { ?>
 
                 <!-- Hidden inputs for legacy JS compatibility (moved outside grid) -->
                 <div id="category-select" style="display:none;"></div>
-                <input id="termIdInput" type="hidden" name="term_id" value="">
+                <input id="termIdInput" type="hidden" name="term_id" value="<?php echo !empty($saved_term) ? esc_attr($saved_term[0]->term_id) : ''; ?>">
                 <div id="currently-selected-category" 
                      data-cat-id="<?php echo !empty($saved_term) ? esc_attr($saved_term[0]->term_id) : ''; ?>"
                      data-cat-slug="<?php echo !empty($saved_term) ? esc_attr($saved_term[0]->slug) : ''; ?>"
@@ -684,7 +693,7 @@ else { ?>
                             
                             <!-- Legacy JS Compatibility -->
                             <div id="category-ipr-select" style="display:none;"></div>
-                            <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="">
+                        <input id="termIdInputIPR" type="hidden" name="term_id_ipr" value="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->term_id) : ''; ?>">
                             <div id="currently-ipr-selected"
                                  data-cat-ipr-id="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->term_id) : ''; ?>"
                                  data-cat-ipr-slug="<?php echo !empty($saved_ipr_term) ? esc_attr($saved_ipr_term[0]->slug) : ''; ?>"
@@ -725,6 +734,11 @@ else { ?>
 		let isEditMode = (isLoggedIn === 1) ? 1 : 0 ;
 		console.log("isEditModeA:", isEditMode);
 
+		const assetEditorNotice = document.getElementById("assetEditorNotice");
+		const assetEditorNoticeText = document.getElementById("assetEditorNoticeText");
+		const maxGlbUploadBytes = Number(window.vrodosMaxUploadBytes || 0);
+		const maxGlbUploadLabel = window.vrodosMaxUploadLabel || '';
+
 		// Define this globally so it's accessible to vrodos_asset_editor_scripts.js
 		var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg") ? document.getElementById("sshotPreviewImg").src : "";
 
@@ -737,8 +751,41 @@ else { ?>
 			}
 		};
 
+		const setAssetEditorNotice = (message) => {
+			if (!assetEditorNotice || !assetEditorNoticeText) return;
+			assetEditorNoticeText.textContent = message;
+			assetEditorNotice.classList.remove('tw-hidden');
+			initIcons();
+		};
+
+		const clearAssetEditorNotice = () => {
+			if (!assetEditorNotice) return;
+			if (assetEditorNotice.dataset.message) return;
+			assetEditorNotice.classList.add('tw-hidden');
+		};
+
+		window.vrodos_validate_selected_glb = function () {
+			if (!multipleFilesInputElem || !multipleFilesInputElem.files || !multipleFilesInputElem.files.length) {
+				clearAssetEditorNotice();
+				return true;
+			}
+
+			const file = multipleFilesInputElem.files[0];
+			if (!file || !maxGlbUploadBytes || file.size <= maxGlbUploadBytes) {
+				clearAssetEditorNotice();
+				return true;
+			}
+
+			setAssetEditorNotice('This GLB is too large for the current upload limit (' + maxGlbUploadLabel + '). Please reduce the file size or increase PHP upload_max_filesize/post_max_size.');
+			multipleFilesInputElem.value = '';
+			return false;
+		};
+
 		document.addEventListener('DOMContentLoaded', function() {
 			initIcons();
+			if (assetEditorNotice && assetEditorNotice.dataset.message) {
+				assetEditorNotice.classList.remove('tw-hidden');
+			}
 			// Disable all form inputs if user cannot edit this asset
 			if (!vrodos_isEditable) {
 				var form = document.getElementById('3dAssetForm');
@@ -795,6 +842,15 @@ else { ?>
 			null); // boundSphButton removed
 
 		addHandlerFor3Dfiles(asset_viewer_3d_kernel, multipleFilesInputElem);
+
+		const assetForm = document.getElementById('3dAssetForm');
+		if (assetForm) {
+			assetForm.addEventListener('submit', function(event) {
+				if (!window.vrodos_validate_selected_glb()) {
+					event.preventDefault();
+				}
+			});
+		}
 
 		// Select category handler
 		if( isEditMode === 1) {

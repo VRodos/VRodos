@@ -911,6 +911,9 @@ function takeScreenshot() {
 
 // Save scene
 function saveScene(e) {
+    if (!e || !e.type) {
+        return;
+    }
 
     // A change has been made and mouseup then save
     if (e.type == 'modificationPendingSave')
@@ -927,13 +930,21 @@ function saveScene(e) {
     }
 }
 
+function commitPendingSceneSave() {
+    mapActions['modificationPendingSave'] = true;
+    document.getElementById('save-scene-button').click();
+    mapActions = {};
+}
+
 // trigger autosave for the automatic cases (insert, delete asset from scene)
 function triggerAutoSave() {
+    if (!envir || !envir.scene) {
+        return;
+    }
 
-    // Add an event listener to scene
+    // For non-canvas actions like lil-gui finish-change, insert/delete, and property edits,
+    // save directly instead of synthesizing a mouseup event. Synthetic mouseup bubbled back
+    // into lil-gui's own onMouseUp handler and caused recursive autosave loops.
     envir.scene.dispatchEvent({ type: "modificationPendingSave" });
-
-    // Dispatch mouseup on the canvas to trigger save
-    var canvas = document.querySelector("#vr_editor_main_div canvas");
-    if (canvas) canvas.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }));
+    commitPendingSceneSave();
 }

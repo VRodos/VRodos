@@ -3191,6 +3191,10 @@ body {
   margin-bottom: 2rem;
 }
 
+.vrodos-manager-wrapper .tw-ml-14 {
+  margin-left: 3.5rem;
+}
+
 .vrodos-manager-wrapper .tw-ml-2 {
   margin-left: 0.5rem;
 }
@@ -3241,10 +3245,6 @@ body {
 
 .vrodos-manager-wrapper .tw-mt-auto {
   margin-top: auto;
-}
-
-.vrodos-manager-wrapper .tw-ml-14 {
-  margin-left: 3.5rem;
 }
 
 .vrodos-manager-wrapper .tw-block {
@@ -3880,9 +3880,23 @@ body {
   border-color: rgb(209 250 229 / var(--tw-border-opacity, 1));
 }
 
+.vrodos-manager-wrapper .tw-border-emerald-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(167 243 208 / var(--tw-border-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-border-emerald-400\/20 {
+  border-color: rgb(52 211 153 / 0.2);
+}
+
 .vrodos-manager-wrapper .tw-border-emerald-500 {
   --tw-border-opacity: 1;
   border-color: rgb(16 185 129 / var(--tw-border-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-border-red-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(254 202 202 / var(--tw-border-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-border-slate-100 {
@@ -3960,6 +3974,10 @@ body {
   background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
 }
 
+.vrodos-manager-wrapper .tw-bg-emerald-500\/15 {
+  background-color: rgb(16 185 129 / 0.15);
+}
+
 .vrodos-manager-wrapper .tw-bg-emerald-500\/20 {
   background-color: rgb(16 185 129 / 0.2);
 }
@@ -3984,6 +4002,11 @@ body {
 
 .vrodos-manager-wrapper .tw-bg-primary\/20 {
   background-color: var(--fallback-p,oklch(var(--p)/0.2));
+}
+
+.vrodos-manager-wrapper .tw-bg-red-50 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 242 242 / var(--tw-bg-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-bg-rose-50 {
@@ -4605,6 +4628,11 @@ body {
   color: var(--fallback-pc,oklch(var(--pc)/var(--tw-text-opacity, 1)));
 }
 
+.vrodos-manager-wrapper .tw-text-red-700 {
+  --tw-text-opacity: 1;
+  color: rgb(185 28 28 / var(--tw-text-opacity, 1));
+}
+
 .vrodos-manager-wrapper .tw-text-rose-400 {
   --tw-text-opacity: 1;
   color: rgb(251 113 133 / var(--tw-text-opacity, 1));
@@ -4685,6 +4713,10 @@ body {
 
 .vrodos-manager-wrapper .tw-text-white\/50 {
   color: rgb(255 255 255 / 0.5);
+}
+
+.vrodos-manager-wrapper .tw-text-white\/55 {
+  color: rgb(255 255 255 / 0.55);
 }
 
 .vrodos-manager-wrapper .tw-text-white\/60 {

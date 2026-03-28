@@ -365,14 +365,15 @@ class VRodos_Compiler_Manager {
 
 		$movement_disabled = isset( $scene_json->metadata->disableMovement ) && filter_var( $scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN );
 		$avatar_enabled    = isset( $scene_json->metadata->enableAvatar ) && filter_var( $scene_json->metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN );
+		$collision_mode    = $scene_json->metadata->aframeCollisionMode ?? 'auto';
 		$cam_position      = implode( ' ', $scene_json->objects->avatarCamera->position );
 		$public_chat       = isset( $scene_json->metadata->enableGeneralChat ) && filter_var( $scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN );
 
 		$cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
 		if ( ! empty( $sceneColor ) ) {
-			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		} else {
-			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		}
 
 		// Set networked properties
@@ -428,6 +429,7 @@ class VRodos_Compiler_Manager {
 		} else {
 			$ascenePlayer->setAttribute( 'position', '0 0.6 0' );
 			$ascenePlayer->setAttribute( 'networked', 'template:#avatar-template;attachTemplateToLocal:false;' );
+			$ascenePlayer->setAttribute( 'custom-movement', '' );
 			$ascenePlayer->setAttribute( 'show-position', '' );
 			$ascenePlayer->setAttribute( 'wasd-controls', 'fly:false; acceleration:20' );
 			$ascenePlayer->setAttribute( 'look-controls', 'pointerLockEnabled: false' );
@@ -640,6 +642,38 @@ class VRodos_Compiler_Manager {
 						$this->setMaterial( $material, $contentObject );
 						$gltf_model->setAttribute( 'class', 'override-materials hideable' );
 						$gltf_model->setAttribute( 'material', $material );
+						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
+						$gltf_model->setAttribute( 'preload', 'auto' );
+						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );
+
+						$ascene->appendChild( $gltf_model );
+						break;
+
+					case 'walkable-surface':
+						$assets = $dom->getElementById( 'scene-assets' );
+
+						$asset_item = $dom->createElement( 'a-asset-item' );
+						$asset_item->setAttribute( 'id', $uuid );
+						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
+						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
+						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
+
+						$assets->appendChild( $asset_item );
+
+						$sc_x = $contentObject->scale[0];
+						$sc_y = $contentObject->scale[1];
+						$sc_z = $contentObject->scale[2];
+
+						$gltf_model = $dom->createElement( 'a-entity' );
+						$gltf_model->setAttribute( 'gltf-model', '#' . $uuid );
+						$gltf_model->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
+						$gltf_model->appendChild( $dom->createTextNode( '' ) );
+						$material = '';
+						$this->setAffineTransformations( $gltf_model, $contentObject );
+						$this->setMaterial( $material, $contentObject );
+						$gltf_model->setAttribute( 'class', 'override-materials hideable vrodos-navmesh' );
+						$gltf_model->setAttribute( 'material', $material );
+						$gltf_model->setAttribute( 'data-vrodos-navmesh', 'true' );
 						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
 						$gltf_model->setAttribute( 'preload', 'auto' );
 						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );

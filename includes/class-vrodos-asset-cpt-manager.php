@@ -103,28 +103,65 @@ class VRodos_Asset_CPT_Manager {
 			}
 		}
 
+		$submission_buffer_level = self::begin_frontend_submission_buffer();
+
 		$asset_id       = isset( $_GET['vrodos_asset'] ) ? sanitize_text_field( intval( $_GET['vrodos_asset'] ) ) : null;
 		$project_id     = isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
 		$game_post      = get_post( $project_id );
 		$gameSlug       = $game_post ? $game_post->post_name : '';
-		$assetPGame     = get_term_by( 'slug', $gameSlug, 'vrodos_asset3d_pgame' );
+		$assetPGame     = self::ensure_asset_project_term( $game_post );
 		$assetPGameID   = $assetPGame ? $assetPGame->term_id : null;
 		$assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
 		$isJoker        = ( str_contains( $assetPGameSlug, 'joker' ) ) ? 'true' : 'false';
 
 		$assetTitle   = isset( $_POST['assetTitle'] ) ? esc_attr( strip_tags( (string) $_POST['assetTitle'] ) ) : '';
-		$assetCatID   = intval( $_POST['term_id'] ); // ID of Asset Category (hidden input)
+		$assetCatID   = isset( $_POST['term_id'] ) ? intval( $_POST['term_id'] ) : 0; // Legacy hidden input.
+		if ( $assetCatID <= 0 && ! empty( $_POST['term_id_native'] ) ) {
+			$asset_cat_term = get_term_by( 'slug', sanitize_text_field( (string) $_POST['term_id_native'] ), 'vrodos_asset3d_cat' );
+			$assetCatID     = $asset_cat_term ? (int) $asset_cat_term->term_id : 0;
+		}
 		$assetCatTerm = get_term_by( 'id', $assetCatID, 'vrodos_asset3d_cat' );
 
 		$assetFonts = isset( $_POST['assetFonts'] ) ? esc_attr( strip_tags( (string) $_POST['assetFonts'] ) ) : '';
 
 		$assetback3dcolor = esc_attr( strip_tags( (string) $_POST['assetback3dcolor'] ) );
 		$assettrs         = esc_attr( strip_tags( (string) $_POST['assettrs'] ) );
+		$redirect_url     = self::build_frontend_redirect_url();
 
-		$assetCatIPRID = intval( $_POST['term_id_ipr'] ); // ID of Asset Category IPR (hidden input)
-		get_term_by( 'id', $assetCatIPRID, 'vrodos_asset3d_ipr_cat' );
+		$glb_upload_error = self::get_frontend_glb_upload_error();
+		if ( $glb_upload_error ) {
+			self::redirect_with_frontend_notice( $redirect_url, $glb_upload_error, $submission_buffer_level );
+		}
+
+		$assetCatIPRID = isset( $_POST['term_id_ipr'] ) ? intval( $_POST['term_id_ipr'] ) : 0; // Legacy hidden input.
+		if ( $assetCatIPRID <= 0 && ! empty( $_POST['term_id_ipr_native'] ) ) {
+			$asset_ipr_term = get_term_by( 'slug', sanitize_text_field( (string) $_POST['term_id_ipr_native'] ), 'vrodos_asset3d_ipr_cat' );
+			$assetCatIPRID  = $asset_ipr_term ? (int) $asset_ipr_term->term_id : 0;
+		}
+		if ( $assetCatIPRID <= 0 ) {
+			$default_ipr_term = get_terms(
+				'vrodos_asset3d_ipr_cat',
+				[
+					'hide_empty' => false,
+					'number'     => 1,
+					'orderby'    => 'term_id',
+					'order'      => 'ASC',
+				]
+			);
+			if ( ! is_wp_error( $default_ipr_term ) && ! empty( $default_ipr_term ) ) {
+				$assetCatIPRID = (int) $default_ipr_term[0]->term_id;
+			}
+		}
+
+		// If the frontend bridge inputs fail to sync, abort safely instead of hard-failing the request.
+		if ( ! $project_id || ! $assetPGameID || ! $assetCatID || ! $assetCatIPRID || ! $assetTitle ) {
+			self::cleanup_frontend_submission_buffer( $submission_buffer_level );
+			return;
+		}
 
 		$asset_updatedConf = 0;
+		$has_new_glb_upload = ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && (int) $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE )
+			|| ( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) );
 		// NEW Asset: submit info to backend
 
 		if ( $asset_id == null ) {
@@ -140,9 +177,11 @@ class VRodos_Asset_CPT_Manager {
 
 			// NoCloning: Upload files from POST but check first
 			// if any 3D files have been selected for upload or glb blob is present
-			if ( ( isset( $_FILES['multipleFilesInput'] ) && $_FILES['multipleFilesInput']['error'][0] != 4 ) ||
-				( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) ) ) {
+			if ( $has_new_glb_upload ) {
 				VRodos_Upload_Manager::create_asset_3dfiles_extra_frontend( $asset_id, $project_id, $assetCatID );
+				if ( ! get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) ) {
+					self::redirect_with_frontend_notice( $redirect_url, 'glb-upload-failed', $submission_buffer_level );
+				}
 			}
 
 			update_post_meta( $asset_id, 'vrodos_asset3d_isCloned', 'false' );
@@ -216,12 +255,10 @@ class VRodos_Asset_CPT_Manager {
 		// Audio: To add
 		// VRodos_Upload_Manager::create_asset_add_audio_frontend($asset_id);
 
-		$redirect_url = $_SERVER['HTTP_REFERER'];
 		if ( ! isset( $_GET['vrodos_asset'] ) ) {
 			$redirect_url = add_query_arg( 'vrodos_asset', $asset_id, $redirect_url );
 		}
-		wp_redirect( $redirect_url );
-		exit;
+		self::perform_frontend_redirect( $redirect_url, $submission_buffer_level );
 	}
 
 	/**
@@ -755,11 +792,16 @@ class VRodos_Asset_CPT_Manager {
 		}
 
 		$data['isEditMode'] = ! isset( $_GET['preview'] ) || $_GET['preview'] !== '1';
+		$data['max_upload_bytes'] = wp_max_upload_size();
+		$data['max_upload_label'] = size_format( $data['max_upload_bytes'], 0 );
+		$data['asset_notice_code'] = isset( $_GET['vrodos_notice'] ) ? sanitize_key( (string) $_GET['vrodos_notice'] ) : '';
+		$data['asset_notice_type'] = 'error';
+		$data['asset_notice_message'] = self::map_frontend_notice_message( $data['asset_notice_code'], $data['max_upload_label'] );
 
 		$game_post            = get_post( $data['project_id'] );
 		$data['game_post']    = $game_post;
 		$gameSlug             = $game_post ? $game_post->post_name : '';
-		$assetPGame           = get_term_by( 'slug', $gameSlug, 'vrodos_asset3d_pgame' );
+		$assetPGame           = self::ensure_asset_project_term( $game_post );
 		$data['assetPGameID'] = $assetPGame ? $assetPGame->term_id : null;
 
 		// Fix for PHP 8 deprecation warning
@@ -834,6 +876,40 @@ class VRodos_Asset_CPT_Manager {
 		$data['saved_term']     = wp_get_post_terms( $data['asset_id'], 'vrodos_asset3d_cat' );
 		$data['saved_ipr_term'] = wp_get_post_terms( $data['asset_id'], 'vrodos_asset3d_ipr_cat' );
 		$data['cat_ipr_terms']  = get_terms( 'vrodos_asset3d_ipr_cat', ['get' => 'all'] );
+		if ( empty( $data['saved_ipr_term'] ) && ! empty( $data['cat_ipr_terms'] ) && ! is_wp_error( $data['cat_ipr_terms'] ) ) {
+			$data['saved_ipr_term'] = [ $data['cat_ipr_terms'][0] ];
+		}
+	}
+
+	private static function ensure_asset_project_term( $game_post ) {
+		if ( ! $game_post || empty( $game_post->post_name ) ) {
+			return null;
+		}
+
+		$game_slug  = $game_post->post_name;
+		$game_title = $game_post->post_title ?: $game_slug;
+		$asset_term = get_term_by( 'slug', $game_slug, 'vrodos_asset3d_pgame' );
+
+		if ( $asset_term ) {
+			return $asset_term;
+		}
+
+		$inserted_term = wp_insert_term(
+			$game_title,
+			'vrodos_asset3d_pgame',
+			['description' => '-', 'slug' => $game_slug]
+		);
+
+		if ( is_wp_error( $inserted_term ) ) {
+			$existing_id = $inserted_term->get_error_data( 'term_exists' );
+			if ( $existing_id ) {
+				return get_term( $existing_id, 'vrodos_asset3d_pgame' );
+			}
+
+			return null;
+		}
+
+		return get_term( $inserted_term['term_id'], 'vrodos_asset3d_pgame' );
 	}
 
 	private static function prepare_meta_data( &$data ): void {
@@ -897,6 +973,95 @@ class VRodos_Asset_CPT_Manager {
 			$data['audio_file_type'] = ( str_contains( (string) $data['audio_attachment_file'], 'mp3' ) ) ? 'mp3' : 'wav';
 		} else {
 			$data['audio_file_type'] = null;
+		}
+	}
+
+	private static function build_frontend_redirect_url(): string {
+		$redirect_url = wp_get_referer();
+		if ( ! $redirect_url ) {
+			$request_uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '/';
+			$redirect_url = home_url( $request_uri );
+		}
+
+		return remove_query_arg( 'vrodos_notice', $redirect_url );
+	}
+
+	private static function redirect_with_frontend_notice( string $redirect_url, string $notice_code, int $submission_buffer_level = -1 ): void {
+		self::perform_frontend_redirect( add_query_arg( 'vrodos_notice', sanitize_key( $notice_code ), $redirect_url ), $submission_buffer_level );
+	}
+
+	private static function begin_frontend_submission_buffer(): int {
+		$buffer_level = ob_get_level();
+		ob_start();
+		return $buffer_level;
+	}
+
+	private static function cleanup_frontend_submission_buffer( int $buffer_level ): string {
+		$buffer_output = '';
+		while ( ob_get_level() > $buffer_level ) {
+			$current_output = ob_get_contents();
+			if ( is_string( $current_output ) && $current_output !== '' ) {
+				$buffer_output = $current_output . $buffer_output;
+			}
+			ob_end_clean();
+		}
+
+		return trim( wp_strip_all_tags( $buffer_output ) );
+	}
+
+	private static function perform_frontend_redirect( string $redirect_url, int $submission_buffer_level = -1 ): void {
+		$buffer_output = '';
+		if ( $submission_buffer_level >= 0 ) {
+			$buffer_output = self::cleanup_frontend_submission_buffer( $submission_buffer_level );
+		}
+
+		if ( $buffer_output !== '' ) {
+			error_log( 'VRodos frontend asset submission emitted output before redirect: ' . substr( $buffer_output, 0, 500 ) );
+		}
+
+		if ( ! headers_sent( $sent_file, $sent_line ) ) {
+			wp_safe_redirect( $redirect_url );
+			exit;
+		}
+
+		error_log(
+			sprintf(
+				'VRodos frontend asset redirect fallback used because headers were already sent by %s:%d',
+				(string) $sent_file,
+				(int) $sent_line
+			)
+		);
+
+		$redirect_url = esc_url_raw( $redirect_url );
+		echo '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=' . esc_attr( $redirect_url ) . '"></head><body><script>window.location.replace(' . wp_json_encode( $redirect_url ) . ');</script></body></html>';
+		exit;
+	}
+
+	private static function get_frontend_glb_upload_error(): string {
+		if ( empty( $_FILES['multipleFilesInput'] ) || ! isset( $_FILES['multipleFilesInput']['error'][0] ) ) {
+			return '';
+		}
+
+		$upload_error = (int) $_FILES['multipleFilesInput']['error'][0];
+		if ( $upload_error === UPLOAD_ERR_OK || $upload_error === UPLOAD_ERR_NO_FILE ) {
+			return '';
+		}
+
+		if ( $upload_error === UPLOAD_ERR_INI_SIZE || $upload_error === UPLOAD_ERR_FORM_SIZE ) {
+			return 'glb-too-large';
+		}
+
+		return 'glb-upload-failed';
+	}
+
+	private static function map_frontend_notice_message( string $notice_code, string $max_upload_label ): string {
+		switch ( $notice_code ) {
+			case 'glb-too-large':
+				return 'The selected GLB is larger than the current upload limit (' . $max_upload_label . '). Please upload a smaller file or increase PHP upload_max_filesize/post_max_size.';
+			case 'glb-upload-failed':
+				return 'The GLB upload failed before the asset could be saved. Please try again, or reduce the file size if this model is especially large.';
+			default:
+				return '';
 		}
 	}
 }

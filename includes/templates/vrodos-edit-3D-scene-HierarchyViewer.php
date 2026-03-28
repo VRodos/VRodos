@@ -64,6 +64,16 @@
             <label for="moveDisableCheckbox" class="tw-text-xs tw-font-semibold tw-text-white/90 tw-cursor-pointer">Disable movement</label>
         </div>
 
+        <div class="tw-flex tw-items-start tw-gap-2 tw-mt-1 tw-px-3 tw-py-1">
+            <input type="checkbox" id="aframeCollisionModeCheckbox" name="aframeCollisionModeCheckbox" form="3dAssetForm"
+                   class="tw-checkbox tw-checkbox-xs tw-checkbox-primary tw-bg-slate-800 tw-border-white/20 tw-mt-0.5"
+                   onchange="toggleAframeCollisionMode(this.checked)">
+            <label for="aframeCollisionModeCheckbox" class="tw-cursor-pointer">
+                <span class="tw-block tw-text-xs tw-font-semibold tw-text-white/90">Enable walkable surface collisions</span>
+                <span class="tw-block tw-text-[10px] tw-text-white/55">Auto-applies only when Walkable Surface assets exist in the scene.</span>
+            </label>
+        </div>
+
         <div class="tw-flex tw-flex-col tw-gap-1">
 
             <div class="tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1.5 tw-mt-4 tw-mb-1 tw-bg-slate-950/40">
