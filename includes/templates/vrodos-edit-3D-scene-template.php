@@ -671,7 +671,7 @@ extract( $data );
 					let radioEl = document.getElementById(radioId);
 					if (radioEl) radioEl.checked = true;
 				}
-				if (typeof loadFogType === 'function') loadFogType();
+			if (typeof loadFogType === 'function') loadFogType();
 			}
 			if (vrodos_scene_data["disableMovement"]) {
 				document.getElementById("moveDisableCheckbox").checked = vrodos_scene_data["disableMovement"];
@@ -685,6 +685,9 @@ extract( $data );
 			envir.scene.aframeRenderQuality = vrodos_scene_data["aframeRenderQuality"] || 'standard';
 			envir.scene.aframeShadowQuality = vrodos_scene_data["aframeShadowQuality"] || 'medium';
 			envir.scene.aframeAAQuality = vrodos_scene_data["aframeAAQuality"] || 'balanced';
+			envir.scene.aframeFPSMeterEnabled = vrodos_scene_data["aframeFPSMeterEnabled"] === true || vrodos_scene_data["aframeFPSMeterEnabled"] === 'true';
+			envir.scene.aframeAmbientOcclusionPreset = vrodos_scene_data["aframeAmbientOcclusionPreset"] || 'balanced';
+			envir.scene.aframeContactShadowPreset = vrodos_scene_data["aframeContactShadowPreset"] || 'soft';
 			envir.scene.aframePostFXEnabled = vrodos_scene_data["aframePostFXEnabled"] === true || vrodos_scene_data["aframePostFXEnabled"] === 'true';
 			envir.scene.aframePostFXBloomEnabled = !(vrodos_scene_data["aframePostFXBloomEnabled"] === false || vrodos_scene_data["aframePostFXBloomEnabled"] === 'false');
 			envir.scene.aframePostFXColorEnabled = !(vrodos_scene_data["aframePostFXColorEnabled"] === false || vrodos_scene_data["aframePostFXColorEnabled"] === 'false');
@@ -699,17 +702,22 @@ extract( $data );
 			}
 			envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
 			envir.scene.aframeReflectionProfile = vrodos_scene_data["aframeReflectionProfile"] || 'balanced';
+			envir.scene.aframeHorizonSkyPreset = vrodos_scene_data["aframeHorizonSkyPreset"] || 'natural';
 			if (typeof syncCompileDialogFromSceneSettings === 'function') {
 				syncCompileDialogFromSceneSettings();
 			}
 			if (vrodos_scene_data["backgroundStyleOption"] !== undefined) {
 				let  selOption = parseInt(vrodos_scene_data["backgroundStyleOption"]);
 				let presetGroundEnabled = vrodos_scene_data["backgroundPresetGroundEnabled"] !== false;
+				let horizonSkyPresetSelect = document.getElementById("horizonSkyPreset");
+				let horizonSkyRow = document.getElementById("bcgHorizonSkyRow");
 				if (preset_ground_toggle) {
 					preset_ground_toggle.checked = presetGroundEnabled;
 					preset_ground_toggle.disabled = true;
 				}
-				setBackgroundPresetGroundEnabled(presetGroundEnabled);
+				if (typeof setBackgroundPresetGroundEnabled === 'function') {
+					setBackgroundPresetGroundEnabled(presetGroundEnabled);
+				}
 
 				switch (selOption){
 					case 0:
@@ -718,7 +726,12 @@ extract( $data );
 						preset_sel.disabled = true;
 						if (preset_ground_toggle) preset_ground_toggle.disabled = true;
 						color_sel.disabled = true;
+						if (horizonSkyPresetSelect) {
+							horizonSkyPresetSelect.value = envir.scene.aframeHorizonSkyPreset;
+							horizonSkyPresetSelect.disabled = false;
+						}
 
+						if (horizonSkyRow) horizonSkyRow.style.display = 'flex';
 						document.getElementById("bcgColorRow").style.display = 'none';
 						document.getElementById("bcgPresetsRow").style.display = 'none';
 						document.getElementById("bcgPresetGroundRow").style.display = 'none';
@@ -731,7 +744,9 @@ extract( $data );
 						preset_sel.disabled = true;
 						if (preset_ground_toggle) preset_ground_toggle.disabled = true;
 						custom_img_sel.disabled = true;
+						if (horizonSkyPresetSelect) horizonSkyPresetSelect.disabled = true;
 
+						if (horizonSkyRow) horizonSkyRow.style.display = 'none';
 						document.getElementById("bcgColorRow").style.display = 'flex';
 						document.getElementById("bcgPresetsRow").style.display = 'none';
 						document.getElementById("bcgPresetGroundRow").style.display = 'none';
@@ -744,7 +759,9 @@ extract( $data );
 						preset_sel.disabled = false;
 						if (preset_ground_toggle) preset_ground_toggle.disabled = false;
 						color_sel.disabled = true;
+						if (horizonSkyPresetSelect) horizonSkyPresetSelect.disabled = true;
 
+						if (horizonSkyRow) horizonSkyRow.style.display = 'none';
 						document.getElementById("bcgColorRow").style.display = 'none';
 						document.getElementById("bcgPresetsRow").style.display = 'flex';
 						document.getElementById("bcgPresetGroundRow").style.display = 'flex';
@@ -764,7 +781,9 @@ extract( $data );
 						preset_sel.disabled = true;
 						if (preset_ground_toggle) preset_ground_toggle.disabled = true;
 						color_sel.disabled = true;
+						if (horizonSkyPresetSelect) horizonSkyPresetSelect.disabled = true;
 
+						if (horizonSkyRow) horizonSkyRow.style.display = 'none';
 						document.getElementById("bcgColorRow").style.display = 'none';
 						document.getElementById("bcgPresetsRow").style.display = 'none';
 						document.getElementById("bcgPresetGroundRow").style.display = 'none';

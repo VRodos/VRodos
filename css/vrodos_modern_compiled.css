@@ -3040,6 +3040,12 @@ body {
   padding-right: 0.5rem;
 }
 
+[type="checkbox"].tw-toggle-xs {
+  --handleoffset: 0.5rem;
+  height: 1rem;
+  width: 1.5rem;
+}
+
 [type="checkbox"].tw-toggle-sm {
   --handleoffset: 0.75rem;
   height: 1.25rem;
@@ -3701,6 +3707,10 @@ body {
   max-width: 36rem;
 }
 
+.vrodos-manager-wrapper .tw-max-w-3xl {
+  max-width: 48rem;
+}
+
 .vrodos-manager-wrapper .tw-flex-1 {
   flex: 1 1 0%;
 }
@@ -4270,6 +4280,11 @@ body {
 
 .vrodos-manager-wrapper .tw-bg-white\/90 {
   background-color: rgb(255 255 255 / 0.9);
+}
+
+.vrodos-manager-wrapper .tw-bg-emerald-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(209 250 229 / var(--tw-bg-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
@@ -4875,6 +4890,16 @@ body {
 
 .vrodos-manager-wrapper .tw-text-white\/90 {
   color: rgb(255 255 255 / 0.9);
+}
+
+.vrodos-manager-wrapper .tw-text-amber-500 {
+  --tw-text-opacity: 1;
+  color: rgb(245 158 11 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-emerald-900 {
+  --tw-text-opacity: 1;
+  color: rgb(6 78 59 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-no-underline {

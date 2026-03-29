@@ -90,6 +90,18 @@ class VRodos_LoaderMulti {
                     envir.scene.aframeAAQuality = resource || 'balanced';
                 }
 
+                if (name === 'aframeFPSMeterEnabled') {
+                    envir.scene.aframeFPSMeterEnabled = resource === true || resource === 'true';
+                }
+
+                if (name === 'aframeAmbientOcclusionPreset') {
+                    envir.scene.aframeAmbientOcclusionPreset = resource || 'balanced';
+                }
+
+                if (name === 'aframeContactShadowPreset') {
+                    envir.scene.aframeContactShadowPreset = resource || 'soft';
+                }
+
                 if (name === 'aframePostFXEnabled') {
                     envir.scene.aframePostFXEnabled = resource === true || resource === 'true';
                 }
@@ -134,6 +146,10 @@ class VRodos_LoaderMulti {
                     envir.scene.aframeReflectionProfile = resource || 'balanced';
                 }
 
+                if (name === 'aframeHorizonSkyPreset') {
+                    envir.scene.aframeHorizonSkyPreset = resource || 'natural';
+                }
+
                 if (name === 'backgroundStyleOption'){
                     envir.scene.backgroundStyleOption = parseInt(resource) || 0;
                     envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
@@ -144,7 +160,9 @@ class VRodos_LoaderMulti {
                     let preset_ground_toggle = document.getElementById('presetGroundToggle');
 
                     let img_thumb = document.getElementById('uploadImgThumb');
+                    let horizon_sky_preset = document.getElementById('horizonSkyPreset');
 
+                    let horizonSkyRow = document.getElementById('bcgHorizonSkyRow');
                     let colorRow = document.getElementById('bcgColorRow');
                     let presetsRow = document.getElementById('bcgPresetsRow');
                     let presetGroundRow = document.getElementById('bcgPresetGroundRow');
@@ -153,6 +171,7 @@ class VRodos_LoaderMulti {
                     let presetGroundEnabled = resources3D["backgroundPresetGroundEnabled"] !== false;
 
                     // Hide all rows first
+                    if (horizonSkyRow) horizonSkyRow.style.display = 'none';
                     colorRow.style.display = 'none';
                     presetsRow.style.display = 'none';
                     if (presetGroundRow) presetGroundRow.style.display = 'none';
@@ -167,6 +186,10 @@ class VRodos_LoaderMulti {
                         preset_ground_toggle.disabled = true;
                         preset_ground_toggle.checked = presetGroundEnabled;
                     }
+                    if (horizon_sky_preset) {
+                        horizon_sky_preset.disabled = true;
+                        horizon_sky_preset.value = resources3D["aframeHorizonSkyPreset"] || 'natural';
+                    }
                     custom_img_sel.disabled = true;
                     if (typeof setBackgroundPresetGroundEnabled === 'function') {
                         setBackgroundPresetGroundEnabled(presetGroundEnabled);
@@ -178,6 +201,12 @@ class VRodos_LoaderMulti {
                             if (horizonDescription) {
                                 horizonDescription.style.display = 'block';
                                 horizonDescription.classList.remove('tw-hidden');
+                            }
+                            if (horizon_sky_preset) {
+                                horizon_sky_preset.disabled = false;
+                            }
+                            if (horizonSkyRow) {
+                                horizonSkyRow.style.display = 'flex';
                             }
                             break;
                         case 1:
@@ -463,6 +492,9 @@ class VRodos_LoaderMulti {
                         envir.scene.aframeRenderQuality = resource.aframeRenderQuality || 'standard';
                         envir.scene.aframeShadowQuality = resource.aframeShadowQuality || 'medium';
                         envir.scene.aframeAAQuality = resource.aframeAAQuality || 'balanced';
+                        envir.scene.aframeFPSMeterEnabled = resource.aframeFPSMeterEnabled === true || resource.aframeFPSMeterEnabled === 'true';
+                        envir.scene.aframeAmbientOcclusionPreset = resource.aframeAmbientOcclusionPreset || 'balanced';
+                        envir.scene.aframeContactShadowPreset = resource.aframeContactShadowPreset || 'soft';
                         envir.scene.aframePostFXEnabled = resource.aframePostFXEnabled === true || resource.aframePostFXEnabled === 'true';
                         envir.scene.aframePostFXBloomEnabled = !(resource.aframePostFXBloomEnabled === false || resource.aframePostFXBloomEnabled === 'false');
                         envir.scene.aframePostFXColorEnabled = !(resource.aframePostFXColorEnabled === false || resource.aframePostFXColorEnabled === 'false');
@@ -477,6 +509,7 @@ class VRodos_LoaderMulti {
                         envir.scene.aframeExposurePreset = resource.aframeExposurePreset || 'neutral';
                         envir.scene.aframeContrastPreset = resource.aframeContrastPreset || 'balanced';
                         envir.scene.aframeReflectionProfile = resource.aframeReflectionProfile || 'balanced';
+                        envir.scene.aframeHorizonSkyPreset = resource.aframeHorizonSkyPreset || 'natural';
 
                         if (typeof syncCompileDialogFromSceneSettings === 'function') {
                             syncCompileDialogFromSceneSettings();
@@ -566,8 +599,9 @@ class VRodos_LoaderMulti {
                             let preset_ground_toggle = document.getElementById('presetGroundToggle');
         
                             let img_thumb = document.getElementById('uploadImgThumb');
-        
-                        
+                            let horizon_sky_preset = document.getElementById('horizonSkyPreset');
+
+                            let horizonSkyRow = document.getElementById('bcgHorizonSkyRow');
                             let colorRow = document.getElementById('bcgColorRow');
                             let presetsRow = document.getElementById('bcgPresetsRow');
                             let presetGroundRow = document.getElementById('bcgPresetGroundRow');
@@ -576,6 +610,7 @@ class VRodos_LoaderMulti {
                             let presetGroundEnabled = resource.backgroundPresetGroundEnabled !== false;
 
                             // Hide all rows first
+                            if (horizonSkyRow) horizonSkyRow.style.display = 'none';
                             colorRow.style.display = 'none';
                             presetsRow.style.display = 'none';
                             if (presetGroundRow) presetGroundRow.style.display = 'none';
@@ -590,6 +625,10 @@ class VRodos_LoaderMulti {
                                 preset_ground_toggle.disabled = true;
                                 preset_ground_toggle.checked = presetGroundEnabled;
                             }
+                            if (horizon_sky_preset) {
+                                horizon_sky_preset.disabled = true;
+                                horizon_sky_preset.value = resource.aframeHorizonSkyPreset || 'natural';
+                            }
                             custom_img_sel.disabled = true;
                             if (typeof setBackgroundPresetGroundEnabled === 'function') {
                                 setBackgroundPresetGroundEnabled(presetGroundEnabled);
@@ -601,6 +640,12 @@ class VRodos_LoaderMulti {
                                     if (horizonDescription) {
                                         horizonDescription.style.display = 'block';
                                         horizonDescription.classList.remove('tw-hidden');
+                                    }
+                                    if (horizon_sky_preset) {
+                                        horizon_sky_preset.disabled = false;
+                                    }
+                                    if (horizonSkyRow) {
+                                        horizonSkyRow.style.display = 'flex';
                                     }
                                     let hex = rgbToHex(255, 255, 255);
                                     envir.scene.background = new THREE.Color(hex);

@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
             renderQuality: document.getElementById('compileRenderQualitySelect'),
             shadowQuality: document.getElementById('compileShadowQualitySelect'),
             aaQuality: document.getElementById('compileAAQualitySelect'),
+            ambientOcclusionPreset: document.getElementById('compileAmbientOcclusionPresetSelect'),
+            contactShadowPreset: document.getElementById('compileContactShadowPresetSelect'),
+            fpsMeter: document.getElementById('compileFPSMeterToggle'),
             postFx: document.getElementById('compilePostFxToggle'),
             postFxGroup: document.getElementById('compilePostFxGroup'),
             postFxColor: document.getElementById('compilePostFxColorToggle'),
@@ -90,6 +93,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'balanced';
     }
 
+    function normalizeAmbientOcclusionPreset(value) {
+        if (value === 'off' || value === 'soft' || value === 'strong' || value === 'balanced') {
+            return value;
+        }
+
+        return 'balanced';
+    }
+
+    function normalizeContactShadowPreset(value) {
+        if (value === 'off' || value === 'strong' || value === 'soft') {
+            return value;
+        }
+
+        return 'soft';
+    }
+
     function isBloomStrengthEnabled(value) {
         return normalizeBloomStrength(value) !== 'off';
     }
@@ -116,6 +135,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (!envir.scene.aframeAAQuality) {
             envir.scene.aframeAAQuality = 'balanced';
+        }
+        if (typeof envir.scene.aframeFPSMeterEnabled === 'undefined') {
+            envir.scene.aframeFPSMeterEnabled = false;
+        }
+        if (!envir.scene.aframeAmbientOcclusionPreset) {
+            envir.scene.aframeAmbientOcclusionPreset = 'balanced';
+        }
+        if (!envir.scene.aframeContactShadowPreset) {
+            envir.scene.aframeContactShadowPreset = 'soft';
         }
         if (typeof envir.scene.aframePostFXEnabled === 'undefined') {
             envir.scene.aframePostFXEnabled = false;
@@ -149,6 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         envir.scene.aframeAAQuality = normalizeAAQuality(envir.scene.aframeAAQuality);
+        envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(envir.scene.aframeAmbientOcclusionPreset);
+        envir.scene.aframeContactShadowPreset = normalizeContactShadowPreset(envir.scene.aframeContactShadowPreset);
         envir.scene.aframeBloomStrength = normalizeBloomStrength(envir.scene.aframeBloomStrength);
         envir.scene.aframeExposurePreset = normalizeExposurePreset(envir.scene.aframeExposurePreset);
         envir.scene.aframeContrastPreset = normalizeContrastPreset(envir.scene.aframeContrastPreset);
@@ -162,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function syncCompilePostFxState() {
         var controls = getCompileDialogElements();
-        if (!controls.postFx || !controls.bloomStrength || !controls.postFxColor || !controls.edgeAAStrength || !controls.exposurePreset || !controls.contrastPreset) {
+        if (!controls.postFx || !controls.bloomStrength || !controls.postFxColor || !controls.edgeAAStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile) {
             return;
         }
 
@@ -179,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         controls.postFxColor.disabled = !postFxEnabled;
         controls.bloomStrength.disabled = !postFxEnabled;
+        controls.reflectionProfile.disabled = !postFxEnabled;
         controls.exposurePreset.disabled = !colorGradingEnabled;
         controls.contrastPreset.disabled = !colorGradingEnabled;
         controls.edgeAAStrength.disabled = !postFxEnabled;
@@ -191,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         var controls = getCompileDialogElements();
-        if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile) {
+        if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile) {
             return;
         }
 
@@ -200,6 +231,9 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeRenderQuality = controls.renderQuality.value || 'standard';
         envir.scene.aframeShadowQuality = controls.shadowQuality.value || 'medium';
         envir.scene.aframeAAQuality = normalizeAAQuality(controls.aaQuality.value);
+        envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(controls.ambientOcclusionPreset.value);
+        envir.scene.aframeContactShadowPreset = normalizeContactShadowPreset(controls.contactShadowPreset.value);
+        envir.scene.aframeFPSMeterEnabled = controls.fpsMeter.checked === true;
         envir.scene.aframePostFXEnabled = controls.postFx.checked === true;
         envir.scene.aframeBloomStrength = normalizeBloomStrength(controls.bloomStrength.value);
         envir.scene.aframePostFXBloomEnabled = isBloomStrengthEnabled(envir.scene.aframeBloomStrength);
@@ -219,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.syncCompileDialogFromSceneSettings = function() {
         var controls = getCompileDialogElements();
-        if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile) {
+        if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile) {
             return;
         }
 
@@ -234,6 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.aaQuality.value = envir && envir.scene && envir.scene.aframeAAQuality
             ? normalizeAAQuality(envir.scene.aframeAAQuality)
             : 'balanced';
+        controls.ambientOcclusionPreset.value = envir && envir.scene
+            ? normalizeAmbientOcclusionPreset(envir.scene.aframeAmbientOcclusionPreset)
+            : 'balanced';
+        controls.contactShadowPreset.value = envir && envir.scene
+            ? normalizeContactShadowPreset(envir.scene.aframeContactShadowPreset)
+            : 'soft';
+        controls.fpsMeter.checked = !!(envir && envir.scene && envir.scene.aframeFPSMeterEnabled);
         controls.postFx.checked = !!(envir && envir.scene && envir.scene.aframePostFXEnabled);
         controls.postFxColor.checked = !(envir && envir.scene) || envir.scene.aframePostFXColorEnabled !== false;
 
@@ -268,6 +309,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.aaQuality) {
         controls.aaQuality.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.ambientOcclusionPreset) {
+        controls.ambientOcclusionPreset.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.contactShadowPreset) {
+        controls.contactShadowPreset.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.fpsMeter) {
+        controls.fpsMeter.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.postFx) {
         controls.postFx.addEventListener('change', function() {

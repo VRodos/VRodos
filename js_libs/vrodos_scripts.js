@@ -74,6 +74,12 @@ function setBackgroundPresetGroundEnabled(isEnabled) {
     envir.scene.backgroundPresetGroundEnabled = !!isEnabled;
 }
 
+function setHorizonSkyPresetSelection(presetValue) {
+    if (!envir || !envir.scene) return;
+
+    envir.scene.aframeHorizonSkyPreset = (presetValue === 'clear' || presetValue === 'crisp') ? presetValue : 'natural';
+}
+
 function handleBackgroundPresetChange(selectElement) {
     if (!selectElement) return;
 
@@ -89,6 +95,17 @@ function handleBackgroundPresetGroundToggle(checkboxElement) {
     if (!checkboxElement) return;
 
     setBackgroundPresetGroundEnabled(checkboxElement.checked);
+    saveChanges();
+}
+
+function handleHorizonSkyPresetChange(selectElement) {
+    if (!selectElement) return;
+
+    setHorizonSkyPresetSelection(selectElement.value);
+
+    let sceneHorizonRadio = document.getElementById('sceneNone');
+    if (sceneHorizonRadio) sceneHorizonRadio.checked = true;
+
     saveChanges();
 }
 
@@ -129,6 +146,8 @@ function bcgRadioSelect(option) {
         presetToggle: document.getElementById('presetGroundToggle'),
         thumb: document.getElementById('uploadImgThumb'),
         // Rows
+        horizonSkyRow: document.getElementById('bcgHorizonSkyRow'),
+        horizonSkyPreset: document.getElementById('horizonSkyPreset'),
         colorRow: document.getElementById('bcgColorRow'),
         presetsRow: document.getElementById('bcgPresetsRow'),
         presetGroundRow: document.getElementById('bcgPresetGroundRow'),
@@ -137,11 +156,11 @@ function bcgRadioSelect(option) {
     };
 
     // 1. Reset all state
-    [els.colorRow, els.presetsRow, els.presetGroundRow, els.imageRow, els.horizonDesc].forEach(el => {
+    [els.horizonSkyRow, els.colorRow, els.presetsRow, els.presetGroundRow, els.imageRow, els.horizonDesc].forEach(el => {
         if (el) el.style.display = 'none';
     });
     if (els.horizonDesc) els.horizonDesc.classList.add('tw-hidden');
-    [els.color, els.presets, els.presetToggle, els.image].forEach(el => {
+    [els.color, els.presets, els.presetToggle, els.image, els.horizonSkyPreset].forEach(el => {
         if (el) el.disabled = true;
     });
 
@@ -150,6 +169,10 @@ function bcgRadioSelect(option) {
 
     // 2. Show/Enable based on selection
     const uiHandlers = {
+        0: () => {
+            if (els.horizonSkyPreset) els.horizonSkyPreset.disabled = false;
+            if (els.horizonSkyRow) els.horizonSkyRow.style.display = 'flex';
+        },
         1: () => {
             if (els.color) els.color.disabled = false;
             if (els.colorRow) els.colorRow.style.display = 'flex';
@@ -172,6 +195,7 @@ function bcgRadioSelect(option) {
         const sceneHandlers = {
             0: () => {
                 envir.scene.background = new THREE.Color(rgbToHex(255, 255, 255));
+                setHorizonSkyPresetSelection(els.horizonSkyPreset ? els.horizonSkyPreset.value : 'natural');
             },
             1: () => {
                 if (els.color?.value) envir.scene.background = new THREE.Color("#" + els.color.value);

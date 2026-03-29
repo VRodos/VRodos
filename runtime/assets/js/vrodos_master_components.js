@@ -394,7 +394,22 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             if (typeof material.userData.vrodosBaseAoMapIntensity === 'undefined') {
                 material.userData.vrodosBaseAoMapIntensity = material.aoMapIntensity || 1;
             }
-            material.aoMapIntensity = Math.max(material.userData.vrodosBaseAoMapIntensity, 1.12);
+            var targetAoIntensity = material.userData.vrodosBaseAoMapIntensity;
+            switch (options.ambientOcclusionPreset) {
+                case 'off':
+                    targetAoIntensity = material.userData.vrodosBaseAoMapIntensity;
+                    break;
+                case 'soft':
+                    targetAoIntensity = Math.max(material.userData.vrodosBaseAoMapIntensity, 1.04);
+                    break;
+                case 'strong':
+                    targetAoIntensity = Math.max(material.userData.vrodosBaseAoMapIntensity, 1.22);
+                    break;
+                default:
+                    targetAoIntensity = Math.max(material.userData.vrodosBaseAoMapIntensity, 1.12);
+                    break;
+            }
+            material.aoMapIntensity = targetAoIntensity;
         }
 
         if (typeof material.normalScale !== 'undefined' && material.normalMap && material.normalScale) {
@@ -403,7 +418,22 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             }
 
             if (material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
-                material.normalScale.copy(material.userData.vrodosBaseNormalScale).multiplyScalar(1.05);
+                var normalBoost = 1.0;
+                switch (options.ambientOcclusionPreset) {
+                    case 'soft':
+                        normalBoost = 1.02;
+                        break;
+                    case 'strong':
+                        normalBoost = 1.08;
+                        break;
+                    case 'off':
+                        normalBoost = 1.0;
+                        break;
+                    default:
+                        normalBoost = 1.05;
+                        break;
+                }
+                material.normalScale.copy(material.userData.vrodosBaseNormalScale).multiplyScalar(normalBoost);
             }
         }
     } else {
@@ -677,6 +707,9 @@ AFRAME.registerComponent('scene-settings', {
         renderQuality: { type: "string", default: "standard" },
         shadowQuality: { type: "string", default: "medium" },
         aaQuality: { type: "string", default: "balanced" },
+        fpsMeterEnabled: { type: "string", default: "0" },
+        ambientOcclusionPreset: { type: "string", default: "balanced" },
+        contactShadowPreset: { type: "string", default: "soft" },
         postFXEnabled: { type: "string", default: "0" },
         postFXBloomEnabled: { type: "string", default: "0" },
         postFXColorEnabled: { type: "string", default: "1" },
@@ -687,6 +720,7 @@ AFRAME.registerComponent('scene-settings', {
         exposurePreset: { type: "string", default: "neutral" },
         contrastPreset: { type: "string", default: "balanced" },
         reflectionProfile: { type: "string", default: "balanced" },
+        horizonSkyPreset: { type: "string", default: "natural" },
         cam_position: { type: "string", default: "0 1.6 0" },
         cam_rotation_y: { type: "string", default: "0" },
         avatar_enabled: { type: "string", default: "0" },
@@ -744,6 +778,98 @@ AFRAME.registerComponent('scene-settings', {
             default:
                 return 2;
         }
+    },
+    getAmbientOcclusionPreset: function () {
+        switch (this.data.ambientOcclusionPreset) {
+            case 'off':
+            case 'soft':
+            case 'strong':
+                return this.data.ambientOcclusionPreset;
+            default:
+                return 'balanced';
+        }
+    },
+    getContactShadowPreset: function () {
+        switch (this.data.contactShadowPreset) {
+            case 'off':
+            case 'strong':
+                return this.data.contactShadowPreset;
+            default:
+                return 'soft';
+        }
+    },
+    getHorizonSkyPreset: function () {
+        switch (this.data.horizonSkyPreset) {
+            case 'clear':
+            case 'crisp':
+                return this.data.horizonSkyPreset;
+            default:
+                return 'natural';
+        }
+    },
+    getContactShadowSettings: function () {
+        var shadowQuality = this.data.shadowQuality || 'medium';
+        var preset = this.getContactShadowPreset();
+
+        if (preset === 'off') {
+            return shadowQuality === 'high'
+                ? { bias: -0.00008, normalBias: 0.03, helperKeyIntensity: 0.88, helperFillIntensity: 0.38, helperPosition: '7 11 5' }
+                : { bias: -0.00005, normalBias: 0.02, helperKeyIntensity: 0.84, helperFillIntensity: 0.34, helperPosition: '7 10 5' };
+        }
+
+        if (preset === 'strong') {
+            return shadowQuality === 'high'
+                ? { bias: -0.00022, normalBias: 0.012, helperKeyIntensity: 1.02, helperFillIntensity: 0.28, helperPosition: '5.2 8.8 3.2' }
+                : { bias: -0.00016, normalBias: 0.01, helperKeyIntensity: 0.96, helperFillIntensity: 0.3, helperPosition: '5.6 9.2 3.6' };
+        }
+
+        return shadowQuality === 'high'
+            ? { bias: -0.00016, normalBias: 0.018, helperKeyIntensity: 0.94, helperFillIntensity: 0.34, helperPosition: '6 10 4' }
+            : { bias: -0.0001, normalBias: 0.012, helperKeyIntensity: 0.9, helperFillIntensity: 0.32, helperPosition: '6.2 10 4.2' };
+    },
+    shouldShowFPSMeter: function () {
+        return this.data.fpsMeterEnabled !== '0' && typeof Stats !== 'undefined';
+    },
+    enableFPSMeter: function () {
+        if (this.fpsStats || !this.shouldShowFPSMeter()) {
+            return;
+        }
+
+        this.fpsStats = new Stats();
+        this.fpsStats.showPanel(0);
+        this.fpsStatsRoot = this.fpsStats.dom || this.fpsStats.domElement || null;
+        if (!this.fpsStatsRoot) {
+            this.fpsStats = null;
+            return;
+        }
+
+        this.fpsStatsRoot.style.position = 'fixed';
+        this.fpsStatsRoot.style.top = '12px';
+        this.fpsStatsRoot.style.right = '12px';
+        this.fpsStatsRoot.style.left = 'auto';
+        this.fpsStatsRoot.style.zIndex = '9999';
+        this.fpsStatsRoot.style.opacity = '0.92';
+        document.body.appendChild(this.fpsStatsRoot);
+    },
+    disableFPSMeter: function () {
+        if (!this.fpsStats) {
+            return;
+        }
+
+        if (this.fpsStatsRoot && this.fpsStatsRoot.parentNode) {
+            this.fpsStatsRoot.parentNode.removeChild(this.fpsStatsRoot);
+        }
+
+        this.fpsStats = null;
+        this.fpsStatsRoot = null;
+    },
+    syncFPSMeterState: function () {
+        if (this.shouldShowFPSMeter()) {
+            this.enableFPSMeter();
+            return;
+        }
+
+        this.disableFPSMeter();
     },
     getExposureValue: function () {
         switch (this.data.exposurePreset) {
@@ -1013,6 +1139,7 @@ AFRAME.registerComponent('scene-settings', {
         var renderer = this.el.renderer;
         var shadowQuality = this.data.shadowQuality || 'medium';
         var shadowsEnabled = shadowQuality !== 'off';
+        var contactShadowSettings = this.getContactShadowSettings();
 
         if (renderer && renderer.shadowMap) {
             renderer.shadowMap.enabled = shadowsEnabled;
@@ -1057,12 +1184,24 @@ AFRAME.registerComponent('scene-settings', {
                         node.shadow.mapSize.y = Math.max(node.shadow.mapSize.y || 0, targetMapSize);
                     }
 
-                    if (typeof node.shadow.bias !== 'undefined' && !node.shadow.bias) {
-                        node.shadow.bias = shadowQuality === 'high' ? -0.00018 : -0.0001;
+                    if (typeof node.userData.vrodosBaseShadowBias === 'undefined') {
+                        node.userData.vrodosBaseShadowBias = (typeof node.shadow.bias === 'number') ? node.shadow.bias : 0;
                     }
 
-                    if (typeof node.shadow.normalBias !== 'undefined' && !node.shadow.normalBias) {
-                        node.shadow.normalBias = shadowQuality === 'high' ? 0.02 : 0.01;
+                    if (typeof node.userData.vrodosBaseShadowNormalBias === 'undefined') {
+                        node.userData.vrodosBaseShadowNormalBias = (typeof node.shadow.normalBias === 'number') ? node.shadow.normalBias : 0;
+                    }
+
+                    if (typeof node.shadow.bias !== 'undefined') {
+                        node.shadow.bias = node.userData.vrodosBaseShadowBias !== 0
+                            ? node.userData.vrodosBaseShadowBias
+                            : contactShadowSettings.bias;
+                    }
+
+                    if (typeof node.shadow.normalBias !== 'undefined') {
+                        node.shadow.normalBias = node.userData.vrodosBaseShadowNormalBias !== 0
+                            ? node.userData.vrodosBaseShadowNormalBias
+                            : contactShadowSettings.normalBias;
                     }
                 }
 
@@ -1078,7 +1217,8 @@ AFRAME.registerComponent('scene-settings', {
         var options = {
             renderQuality: this.data.renderQuality || 'standard',
             maxAnisotropy: maxAnisotropy,
-            reflectionProfile: this.data.reflectionProfile || 'balanced'
+            reflectionProfile: this.data.reflectionProfile || 'balanced',
+            ambientOcclusionPreset: this.getAmbientOcclusionPreset()
         };
 
         Array.prototype.forEach.call(this.el.querySelectorAll('.override-materials'), function (entityEl) {
@@ -1128,6 +1268,43 @@ AFRAME.registerComponent('scene-settings', {
             }
         });
     },
+    applyHorizonSkyPreset: function () {
+        if (!this.el.hasAttribute('environment') || this.data.selChoice !== "0") {
+            return;
+        }
+
+        var preset = this.getHorizonSkyPreset();
+        var shadowEnabled = this.data.shadowQuality !== 'off';
+        var environmentConfig = {
+            preset: 'default',
+            ground: 'none',
+            fog: (this.data.fogCategory === "2") ? (parseFloat(this.data.fogdensity) * 1.5) : 0,
+            playArea: 1,
+            shadow: shadowEnabled
+        };
+
+        if (preset === 'clear') {
+            environmentConfig.skyType = 'atmosphere';
+            environmentConfig.skyColor = '#b8ddff';
+            environmentConfig.horizonColor = '#edf8ff';
+            environmentConfig.lighting = 'distant';
+            environmentConfig.lightPosition = '0.03 0.98 -0.08';
+        } else if (preset === 'crisp') {
+            environmentConfig.skyType = 'atmosphere';
+            environmentConfig.skyColor = '#9fd1ff';
+            environmentConfig.horizonColor = '#f7fbff';
+            environmentConfig.lighting = 'distant';
+            environmentConfig.lightPosition = '0.05 1 -0.1';
+        } else {
+            environmentConfig.skyType = 'atmosphere';
+            environmentConfig.skyColor = '#b2d8ff';
+            environmentConfig.horizonColor = '#e9f6ff';
+            environmentConfig.lighting = 'distant';
+            environmentConfig.lightPosition = '0 1 0';
+        }
+
+        this.el.setAttribute('environment', environmentConfig);
+    },
     applyBackgroundQualityProfile: function () {
         var isHighQuality = this.data.renderQuality === 'high';
         var shadowEnabled = this.data.shadowQuality !== 'off';
@@ -1135,10 +1312,13 @@ AFRAME.registerComponent('scene-settings', {
         var reflectionProfile = this.data.reflectionProfile || 'balanced';
         var enhancedReflections = reflectionProfile === 'enhanced';
         var softReflections = reflectionProfile === 'soft';
+        var contactShadowSettings = this.getContactShadowSettings();
 
         if (hasEnvironmentBackground && this.el.hasAttribute('environment')) {
             this.el.setAttribute('environment', 'shadow', shadowEnabled ? 'true' : 'false');
-            if (this.data.selChoice !== "0") {
+            if (this.data.selChoice === "0") {
+                this.applyHorizonSkyPreset();
+            } else {
                 this.el.setAttribute('environment', 'lighting', 'distant');
                 this.el.setAttribute('environment', 'lightPosition', isHighQuality ? (enhancedReflections ? '0.12 1 -0.08' : (softReflections ? '0.05 1 -0.02' : '0.08 1 -0.04')) : '0 1 0');
             }
@@ -1160,13 +1340,13 @@ AFRAME.registerComponent('scene-settings', {
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-key-light',
-            'type: directional; color: #fff2d8; intensity: ' + (enhancedReflections ? '1.0' : (softReflections ? '0.84' : '0.92')) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: -0.00018;',
-            '6 10 4'
+            'type: directional; color: #fff2d8; intensity: ' + (enhancedReflections ? Math.max(contactShadowSettings.helperKeyIntensity, 1.0).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperKeyIntensity - 0.08, 0.72).toFixed(2) : contactShadowSettings.helperKeyIntensity.toFixed(2))) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: ' + contactShadowSettings.bias + '; shadowNormalBias: ' + contactShadowSettings.normalBias + ';',
+            contactShadowSettings.helperPosition
         );
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-fill-light',
-            'type: ambient; color: #d8e4ff; intensity: ' + (enhancedReflections ? '0.42' : (softReflections ? '0.28' : '0.34')) + ';',
+            'type: ambient; color: #d8e4ff; intensity: ' + (enhancedReflections ? Math.max(contactShadowSettings.helperFillIntensity, 0.4).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperFillIntensity - 0.05, 0.22).toFixed(2) : contactShadowSettings.helperFillIntensity.toFixed(2))) + ';',
             '0 4 0'
         );
     },
@@ -1197,6 +1377,7 @@ AFRAME.registerComponent('scene-settings', {
         this.applyBackgroundQualityProfile();
         this.applyMaterialProfiles();
         this.applyPostFXProfile();
+        this.syncFPSMeterState();
     },
     init: function () {
         this.handleQualityModelLoad = this.applyQualityProfiles.bind(this);
@@ -1210,6 +1391,8 @@ AFRAME.registerComponent('scene-settings', {
         this.postProcessingOriginalRender = null;
         this.postProcessingActive = false;
         this.postProcessingRendering = false;
+        this.fpsStats = null;
+        this.fpsStatsRoot = null;
         window.addEventListener('resize', this.handleResize);
         // Event - When scene is loaded
         this.el.addEventListener("loaded", () => {
@@ -1314,6 +1497,7 @@ AFRAME.registerComponent('scene-settings', {
                     playArea: 1,
                     shadow: true
                 });
+                this.applyHorizonSkyPreset();
                 break;
             case "1":
                 backgroundEl.removeAttribute("environment");
@@ -1382,7 +1566,13 @@ AFRAME.registerComponent('scene-settings', {
         this.el.removeEventListener('model-loaded', this.handleQualityModelLoad);
         window.removeEventListener('resize', this.handleResize);
         this.disablePostProcessing();
+        this.disableFPSMeter();
         this.removePhotorealHelperLights();
+    },
+    tick: function () {
+        if (this.fpsStats && typeof this.fpsStats.update === 'function') {
+            this.fpsStats.update();
+        }
     }
 });
 

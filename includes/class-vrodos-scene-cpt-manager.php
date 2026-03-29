@@ -254,6 +254,9 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeRenderQuality']    = $json_metadata->aframeRenderQuality ?? 'standard';
 		$scene_data['aframeShadowQuality']    = $json_metadata->aframeShadowQuality ?? 'medium';
 		$scene_data['aframeAAQuality']        = $json_metadata->aframeAAQuality ?? 'balanced';
+		$scene_data['aframeFPSMeterEnabled']  = $json_metadata->aframeFPSMeterEnabled ?? false;
+		$scene_data['aframeAmbientOcclusionPreset'] = $json_metadata->aframeAmbientOcclusionPreset ?? 'balanced';
+		$scene_data['aframeContactShadowPreset'] = $json_metadata->aframeContactShadowPreset ?? 'soft';
 		$scene_data['aframePostFXEnabled']    = $json_metadata->aframePostFXEnabled ?? false;
 		$scene_data['aframePostFXBloomEnabled'] = $json_metadata->aframePostFXBloomEnabled ?? false;
 		$scene_data['aframePostFXColorEnabled'] = $json_metadata->aframePostFXColorEnabled ?? true;
@@ -268,6 +271,7 @@ class VRodos_Scene_CPT_Manager {
 		}
 		$scene_data['aframePostFXBloomEnabled'] = 'off' !== $scene_data['aframeBloomStrength'];
 		$scene_data['aframeReflectionProfile'] = $json_metadata->aframeReflectionProfile ?? 'balanced';
+		$scene_data['aframeHorizonSkyPreset'] = $json_metadata->aframeHorizonSkyPreset ?? 'natural';
 		$scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? '1';
 		$scene_data['backgroundPresetGroundEnabled'] = $json_metadata->backgroundPresetGroundEnabled ?? true;
 		$scene_data['backgroundImagePath']    = $json_metadata->backgroundImagePath ?? '';

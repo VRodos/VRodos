@@ -105,6 +105,14 @@
             </div>
             <!-- Background sub-options (shown/hidden by bcgRadioSelect) -->
             <div id="bcgSubOptions" class="tw-flex tw-flex-col tw-gap-2 tw-mt-1 tw-mb-1 tw-px-3 tw-py-1">
+                <div id="bcgHorizonSkyRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
+                    <label class="tw-text-xs tw-text-white/80 tw-w-20 tw-flex-shrink-0">Sky preset</label>
+                    <select name="horizonSkyPreset" id="horizonSkyPreset" class="tw-select tw-select-xs tw-bg-slate-800 tw-text-white tw-border-white/10" style="font-size: 10px;" onchange="handleHorizonSkyPresetChange(this)">
+                        <option value="natural">Natural</option>
+                        <option value="clear">Clear</option>
+                        <option value="crisp">Crisp</option>
+                    </select>
+                </div>
                 <div id="bcgColorRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
                     <label class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Color</label>
                     <input id="jscolorpick" class="jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled
