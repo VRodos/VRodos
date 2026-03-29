@@ -1428,6 +1428,11 @@ body {
   animation: button-pop var(--animation-btn, 0.25s) ease-out;
 }
 
+.tw-form-control {
+  display: flex;
+  flex-direction: column;
+}
+
 .tw-hero {
   display: grid;
   width: 100%;
@@ -2203,6 +2208,13 @@ body {
   --tw-text-opacity: 0.2;
 }
 
+.tw-label-text {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  --tw-text-opacity: 1;
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity)));
+}
+
 .tw-input input {
   --tw-bg-opacity: 1;
   background-color: var(--fallback-p,oklch(var(--p)/var(--tw-bg-opacity)));
@@ -2902,6 +2914,20 @@ body {
   --filler-offset: 0.5rem;
 }
 
+.tw-select-sm {
+  height: 2rem;
+  min-height: 2rem;
+  padding-left: 0.75rem;
+  padding-right: 2rem;
+  font-size: 0.875rem;
+  line-height: 2rem;
+}
+
+[dir="rtl"] .tw-select-sm {
+  padding-left: 2rem;
+  padding-right: 0.75rem;
+}
+
 .tw-select-xs {
   height: 1.5rem;
   min-height: 1.5rem;
@@ -3247,6 +3273,10 @@ body {
   margin-top: auto;
 }
 
+.vrodos-manager-wrapper .tw-mb-5 {
+  margin-bottom: 1.25rem;
+}
+
 .vrodos-manager-wrapper .tw-block {
   display: block;
 }
@@ -3566,6 +3596,10 @@ body {
 
 .vrodos-manager-wrapper .tw-max-w-xl {
   max-width: 36rem;
+}
+
+.vrodos-manager-wrapper .tw-max-w-xs {
+  max-width: 20rem;
 }
 
 .vrodos-manager-wrapper .tw-flex-1 {
@@ -4510,6 +4544,10 @@ body {
 
 .vrodos-manager-wrapper .tw-leading-tight {
   line-height: 1.25;
+}
+
+.vrodos-manager-wrapper .tw-leading-5 {
+  line-height: 1.25rem;
 }
 
 .vrodos-manager-wrapper .tw-tracking-tight {

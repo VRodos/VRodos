@@ -643,6 +643,12 @@ extract( $data );
 			if (aframeCollisionModeCheckbox) {
 				aframeCollisionModeCheckbox.checked = envir.scene.aframeCollisionMode !== 'off';
 			}
+			envir.scene.aframeRenderQuality = vrodos_scene_data["aframeRenderQuality"] || 'standard';
+			envir.scene.aframeShadowQuality = vrodos_scene_data["aframeShadowQuality"] || 'medium';
+			envir.scene.aframePostFXEnabled = vrodos_scene_data["aframePostFXEnabled"] === true || vrodos_scene_data["aframePostFXEnabled"] === 'true';
+			if (typeof syncCompileDialogFromSceneSettings === 'function') {
+				syncCompileDialogFromSceneSettings();
+			}
 			if (vrodos_scene_data["backgroundStyleOption"] !== undefined) {
 				let  selOption = parseInt(vrodos_scene_data["backgroundStyleOption"]);
 				let presetGroundEnabled = vrodos_scene_data["backgroundPresetGroundEnabled"] !== false;

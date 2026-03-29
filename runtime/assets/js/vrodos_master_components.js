@@ -434,12 +434,115 @@ AFRAME.registerComponent('scene-settings', {
         presetGroundEnabled: { type: "string", default: "1" },
         movement_disabled: { type: "string", default: "0" },
         collisionMode: { type: "string", default: "auto" },
+        renderQuality: { type: "string", default: "standard" },
+        shadowQuality: { type: "string", default: "medium" },
+        postFXEnabled: { type: "string", default: "0" },
         cam_position: { type: "string", default: "0 1.6 0" },
         cam_rotation_y: { type: "string", default: "0" },
         avatar_enabled: { type: "string", default: "0" },
         public_chat: { type: "string", default: "0" },
     },
+    applyRenderQualityProfile: function () {
+        var renderer = this.el.renderer;
+        if (!renderer) {
+            return;
+        }
+
+        var isHighQuality = this.data.renderQuality === 'high';
+        var targetPixelRatio = isHighQuality ? Math.min(window.devicePixelRatio || 1, 2) : Math.min(window.devicePixelRatio || 1, 1.25);
+        renderer.setPixelRatio(targetPixelRatio);
+        renderer.sortObjects = true;
+
+        if (typeof renderer.toneMappingExposure !== 'undefined') {
+            renderer.toneMappingExposure = isHighQuality ? 1.06 : 1.0;
+        }
+
+        if (typeof renderer.physicallyCorrectLights !== 'undefined') {
+            renderer.physicallyCorrectLights = isHighQuality;
+        }
+
+        if (typeof renderer.outputColorSpace !== 'undefined' && typeof THREE.SRGBColorSpace !== 'undefined') {
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+        } else if (typeof renderer.outputEncoding !== 'undefined' && typeof THREE.sRGBEncoding !== 'undefined') {
+            renderer.outputEncoding = THREE.sRGBEncoding;
+        }
+    },
+    applyShadowQualityProfile: function () {
+        var renderer = this.el.renderer;
+        var shadowQuality = this.data.shadowQuality || 'medium';
+        var shadowsEnabled = shadowQuality !== 'off';
+
+        if (renderer && renderer.shadowMap) {
+            renderer.shadowMap.enabled = shadowsEnabled;
+            renderer.shadowMap.type = shadowQuality === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFSoftShadowMap;
+            renderer.shadowMap.needsUpdate = true;
+        }
+
+        if (this.el.hasAttribute('environment')) {
+            this.el.setAttribute('environment', 'shadow', shadowsEnabled ? 'true' : 'false');
+        }
+
+        this.el.object3D.traverse(function (node) {
+            if (node.isMesh) {
+                var isNavmeshMesh = !!(node.el && node.el.classList && node.el.classList.contains('vrodos-navmesh'));
+                if (isNavmeshMesh) {
+                    node.castShadow = false;
+                    node.receiveShadow = false;
+                    return;
+                }
+
+                node.castShadow = shadowsEnabled;
+                node.receiveShadow = shadowsEnabled;
+            }
+
+            if (node.isDirectionalLight || node.isSpotLight || node.isPointLight) {
+                node.castShadow = shadowsEnabled;
+
+                if (!node.shadow) {
+                    return;
+                }
+
+                if (shadowsEnabled) {
+                    var targetMapSize = shadowQuality === 'high'
+                        ? (node.isDirectionalLight ? 2048 : 1024)
+                        : (node.isDirectionalLight ? 1024 : 512);
+
+                    if (node.shadow.mapSize) {
+                        node.shadow.mapSize.x = Math.max(node.shadow.mapSize.x || 0, targetMapSize);
+                        node.shadow.mapSize.y = Math.max(node.shadow.mapSize.y || 0, targetMapSize);
+                    }
+
+                    if (typeof node.shadow.bias !== 'undefined' && !node.shadow.bias) {
+                        node.shadow.bias = -0.0001;
+                    }
+                }
+
+                node.shadow.needsUpdate = true;
+            }
+        });
+    },
+    applyPostFXProfile: function () {
+        var renderer = this.el.renderer;
+        var canvas = this.el.canvas || (renderer ? renderer.domElement : null);
+        var postFxEnabled = this.data.renderQuality === 'high' && this.data.postFXEnabled !== '0';
+
+        if (!canvas) {
+            return;
+        }
+
+        canvas.style.filter = postFxEnabled ? 'contrast(1.04) saturate(1.03) brightness(1.01)' : '';
+
+        if (renderer && typeof renderer.toneMappingExposure !== 'undefined' && postFxEnabled) {
+            renderer.toneMappingExposure = 1.1;
+        }
+    },
+    applyQualityProfiles: function () {
+        this.applyRenderQualityProfile();
+        this.applyShadowQualityProfile();
+        this.applyPostFXProfile();
+    },
     init: function () {
+        this.handleQualityModelLoad = this.applyQualityProfiles.bind(this);
         // Event - When scene is loaded
         this.el.addEventListener("loaded", () => {
             if (this.data.pr_type === "vrexpo_games") {
@@ -495,7 +598,10 @@ AFRAME.registerComponent('scene-settings', {
                     if (typeof selectAvatarType !== 'undefined') selectAvatarType('no-avatar');
                 }
             }
+
+            this.applyQualityProfiles();
         });
+        this.el.addEventListener('model-loaded', this.handleQualityModelLoad);
 
         this.el.addEventListener("enter-vr", () => {
             if (typeof browsingModeVR !== 'undefined') browsingModeVR = true;
@@ -601,6 +707,11 @@ AFRAME.registerComponent('scene-settings', {
                 }
                 break;
         }
+
+        this.applyQualityProfiles();
+    },
+    remove: function () {
+        this.el.removeEventListener('model-loaded', this.handleQualityModelLoad);
     }
 });
 

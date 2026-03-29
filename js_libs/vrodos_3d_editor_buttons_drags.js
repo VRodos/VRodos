@@ -127,6 +127,9 @@ function loadButtonActions() {
 
     // Compile Project button
     document.getElementById("compileGameBtn").addEventListener("click", function () {
+        if (typeof syncCompileDialogFromSceneSettings === 'function') {
+            syncCompileDialogFromSceneSettings();
+        }
         var dlg = document.getElementById('compile-dialog');
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
 

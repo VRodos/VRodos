@@ -390,14 +390,17 @@ class VRodos_Compiler_Manager {
 		$movement_disabled = isset( $scene_json->metadata->disableMovement ) && filter_var( $scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN );
 		$avatar_enabled    = isset( $scene_json->metadata->enableAvatar ) && filter_var( $scene_json->metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN );
 		$collision_mode    = $scene_json->metadata->aframeCollisionMode ?? 'auto';
+		$render_quality    = $scene_json->metadata->aframeRenderQuality ?? 'standard';
+		$shadow_quality    = $scene_json->metadata->aframeShadowQuality ?? 'medium';
+		$post_fx_enabled   = isset( $scene_json->metadata->aframePostFXEnabled ) && filter_var( $scene_json->metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
 		$cam_position      = implode( ' ', $scene_json->objects->avatarCamera->position );
 		$public_chat       = isset( $scene_json->metadata->enableGeneralChat ) && filter_var( $scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN );
 
 		$cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
 		if ( ! empty( $sceneColor ) ) {
-			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; postFXEnabled: $post_fx_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		} else {
-			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; postFXEnabled: $post_fx_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		}
 		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 
@@ -758,17 +761,35 @@ class VRodos_Compiler_Manager {
 						$a_img->setAttribute( 'crossorigin', 'anonymous' );
 						$assets->appendChild( $a_img );
 
-						$a_plane = $dom->createElement( 'a-image' );
-						$a_plane->setAttribute( 'id', "image-display_$uuid" );
-						$a_plane->setAttribute( 'src', "#image_$uuid" );
-						$a_plane->setAttribute( 'height', '2' );
-						$a_plane->setAttribute( 'width', '2' );
-						$a_plane->setAttribute( 'material', 'shader: flat; side: double; transparent: true' );
-						$a_plane->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$a_plane->setAttribute( 'class', 'hideable raycastable' );
-						$a_plane->appendChild( $dom->createTextNode( '' ) );
-						$this->setAffineTransformations( $a_plane, $contentObject );
-						$ascene->appendChild( $a_plane );
+						$a_plane_parent = $dom->createElement( 'a-entity' );
+						$a_plane_parent->setAttribute( 'id', "image-display_$uuid" );
+						$a_plane_parent->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
+						$a_plane_parent->setAttribute( 'class', 'hideable' );
+						$a_plane_parent->appendChild( $dom->createTextNode( '' ) );
+						$this->setAffineTransformations( $a_plane_parent, $contentObject );
+
+						$a_plane_front = $dom->createElement( 'a-image' );
+						$a_plane_front->setAttribute( 'id', "image-display-front_$uuid" );
+						$a_plane_front->setAttribute( 'src', "#image_$uuid" );
+						$a_plane_front->setAttribute( 'height', '2' );
+						$a_plane_front->setAttribute( 'width', '2' );
+						$a_plane_front->setAttribute( 'position', '0 0 0.001' );
+						$a_plane_front->setAttribute( 'material', 'shader: flat; side: front; transparent: true; alphaTest: 0.001; depthWrite: true; depthTest: true' );
+						$a_plane_front->setAttribute( 'class', 'raycastable' );
+
+						$a_plane_back = $dom->createElement( 'a-image' );
+						$a_plane_back->setAttribute( 'id', "image-display-back_$uuid" );
+						$a_plane_back->setAttribute( 'src', "#image_$uuid" );
+						$a_plane_back->setAttribute( 'height', '2' );
+						$a_plane_back->setAttribute( 'width', '2' );
+						$a_plane_back->setAttribute( 'position', '0 0 -0.001' );
+						$a_plane_back->setAttribute( 'rotation', '0 180 0' );
+						$a_plane_back->setAttribute( 'material', 'shader: flat; side: front; transparent: true; alphaTest: 0.001; depthWrite: true; depthTest: true' );
+						$a_plane_back->setAttribute( 'class', 'raycastable' );
+
+						$a_plane_parent->appendChild( $a_plane_front );
+						$a_plane_parent->appendChild( $a_plane_back );
+						$ascene->appendChild( $a_plane_parent );
 						break;
 
 					case 'video':

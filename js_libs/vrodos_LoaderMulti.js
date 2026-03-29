@@ -41,6 +41,18 @@ class VRodos_LoaderMulti {
                     }
                 }
 
+                if (name === 'aframeRenderQuality') {
+                    envir.scene.aframeRenderQuality = resources3D[name] || 'standard';
+                }
+
+                if (name === 'aframeShadowQuality') {
+                    envir.scene.aframeShadowQuality = resources3D[name] || 'medium';
+                }
+
+                if (name === 'aframePostFXEnabled') {
+                    envir.scene.aframePostFXEnabled = resources3D[name] === true || resources3D[name] === 'true';
+                }
+
                 if (name === 'backgroundStyleOption'){
                     envir.scene.backgroundStyleOption = parseInt(resources3D[name]) || 0;
                     envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
@@ -404,6 +416,14 @@ class VRodos_LoaderMulti {
                         let collisionToggle = document.getElementById('aframeCollisionModeCheckbox');
                         if (collisionToggle) {
                             collisionToggle.checked = envir.scene.aframeCollisionMode !== 'off';
+                        }
+
+                        envir.scene.aframeRenderQuality = resources3D[name].aframeRenderQuality || 'standard';
+                        envir.scene.aframeShadowQuality = resources3D[name].aframeShadowQuality || 'medium';
+                        envir.scene.aframePostFXEnabled = resources3D[name].aframePostFXEnabled === true || resources3D[name].aframePostFXEnabled === 'true';
+
+                        if (typeof syncCompileDialogFromSceneSettings === 'function') {
+                            syncCompileDialogFromSceneSettings();
                         }
                        
 

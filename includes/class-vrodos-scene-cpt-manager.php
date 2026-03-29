@@ -251,6 +251,9 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['enableAvatar']           = $json_metadata->enableAvatar ?? false;
 		$scene_data['disableMovement']        = $json_metadata->disableMovement ?? false;
 		$scene_data['aframeCollisionMode']    = $json_metadata->aframeCollisionMode ?? 'auto';
+		$scene_data['aframeRenderQuality']    = $json_metadata->aframeRenderQuality ?? 'standard';
+		$scene_data['aframeShadowQuality']    = $json_metadata->aframeShadowQuality ?? 'medium';
+		$scene_data['aframePostFXEnabled']    = $json_metadata->aframePostFXEnabled ?? false;
 		$scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? '1';
 		$scene_data['backgroundPresetGroundEnabled'] = $json_metadata->backgroundPresetGroundEnabled ?? true;
 		$scene_data['backgroundImagePath']    = $json_metadata->backgroundImagePath ?? '';
