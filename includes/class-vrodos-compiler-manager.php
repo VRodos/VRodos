@@ -393,14 +393,24 @@ class VRodos_Compiler_Manager {
 		$render_quality    = $scene_json->metadata->aframeRenderQuality ?? 'standard';
 		$shadow_quality    = $scene_json->metadata->aframeShadowQuality ?? 'medium';
 		$post_fx_enabled   = isset( $scene_json->metadata->aframePostFXEnabled ) && filter_var( $scene_json->metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_color_enabled = ! isset( $scene_json->metadata->aframePostFXColorEnabled ) || filter_var( $scene_json->metadata->aframePostFXColorEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_edge_aa_enabled = ! isset( $scene_json->metadata->aframePostFXEdgeAAEnabled ) || filter_var( $scene_json->metadata->aframePostFXEdgeAAEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_edge_aa_strength = $scene_json->metadata->aframePostFXEdgeAAStrength ?? '3';
+		$bloom_strength    = $scene_json->metadata->aframeBloomStrength ?? 'off';
+		if ( isset( $scene_json->metadata->aframePostFXBloomEnabled ) && ! filter_var( $scene_json->metadata->aframePostFXBloomEnabled, FILTER_VALIDATE_BOOLEAN ) ) {
+			$bloom_strength = 'off';
+		}
+		$post_fx_bloom_enabled = 'off' !== $bloom_strength ? '1' : '0';
+		$post_fx_vignette_enabled = '0';
+		$reflection_profile = $scene_json->metadata->aframeReflectionProfile ?? 'balanced';
 		$cam_position      = implode( ' ', $scene_json->objects->avatarCamera->position );
 		$public_chat       = isset( $scene_json->metadata->enableGeneralChat ) && filter_var( $scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN );
 
 		$cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
 		if ( ! empty( $sceneColor ) ) {
-			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; postFXEnabled: $post_fx_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; reflectionProfile: $reflection_profile; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		} else {
-			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; postFXEnabled: $post_fx_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; reflectionProfile: $reflection_profile; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		}
 		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 

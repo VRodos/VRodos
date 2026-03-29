@@ -11,6 +11,12 @@ function vrodos_compileAjax(showPawnPositions) {
 	// Enable cancel button
 	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
 
+	var topResultLink = document.getElementById( "compileTopResultLink" );
+	if (topResultLink) {
+		topResultLink.classList.add( "tw-hidden" );
+		topResultLink.setAttribute( "href", "#" );
+	}
+
 	document.getElementById( "compileProgressTitle" ).textContent = "Step: 1 / 2";
 	compilationProgressText.append( 'Building...' );
 
@@ -37,6 +43,7 @@ function vrodos_compileAjax(showPawnPositions) {
 	.then( function (urlExperienceSequenceJSON) {
 
 		let urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
+		let primaryExperienceUrl = urlExperienceSequence["index"] || urlExperienceSequence["MasterClient"] || urlExperienceSequence["SimpleClient"] || '';
 
 		document.getElementById( "compileProgressTitle" ).style.display = 'none';
 		document.getElementById( "progressSliderSubLineDeterminateValue" ).style.width = '1px';
@@ -53,6 +60,9 @@ function vrodos_compileAjax(showPawnPositions) {
 		compile_dialogue_div.innerHTML = "";
 
 		function createLinks(url, captionText){
+			if (!url) {
+				return;
+			}
 
 			let section           = document.createElement( 'div' );
 			section.style.cssText = 'padding-top: 8px;';
@@ -78,9 +88,35 @@ function vrodos_compileAjax(showPawnPositions) {
 			createLinks( urlExperienceSequence["index"], "Index" );
 			createLinks( urlExperienceSequence["MasterClient"], "Director" );
 			createLinks( urlExperienceSequence["SimpleClient"],"Actor" );
-			document.getElementById( "appResultDiv" ).style.display = '';
-			document.getElementById( "vrodos-weblink" ).href = urlExperienceSequence["index"];
-			document.getElementById( "openWebLinkhref" ).setAttribute( "href", urlExperienceSequence["index"] );
+		}
+
+		if (primaryExperienceUrl) {
+			var appResultDiv = document.getElementById( "appResultDiv" );
+			var webLink = document.getElementById( "vrodos-weblink" );
+			var openWebLink = document.getElementById( "openWebLinkhref" );
+			var copyButton = document.getElementById( "buttonCopyWebLink" );
+			var topLink = document.getElementById( "compileTopResultLink" );
+
+			if (appResultDiv) {
+				appResultDiv.style.display = 'flex';
+			}
+			if (topLink) {
+				topLink.href = primaryExperienceUrl;
+				topLink.classList.remove( "tw-hidden" );
+				topLink.innerHTML = '<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>' + (projectType === 'vrexpo' ? 'Open Exposition' : 'Open Compiled Scene');
+			}
+			if (webLink) {
+				webLink.href = primaryExperienceUrl;
+				webLink.style.display = '';
+			}
+			if (openWebLink) {
+				openWebLink.setAttribute( "href", primaryExperienceUrl );
+				openWebLink.style.display = '';
+			}
+			if (copyButton) {
+				copyButton.style.display = '';
+			}
+			if (typeof lucide !== 'undefined') lucide.createIcons();
 		}
 
 	})

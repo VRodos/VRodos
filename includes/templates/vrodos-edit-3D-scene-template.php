@@ -522,6 +522,7 @@ extract( $data );
 
 			// Load Manager
 			// Make progress bar visible
+			envir.isSceneLoading = true;
 			document.getElementById("progress").style.display = "block";
 			document.getElementById("progressWrapper").style.visibility = "visible";
 			document.getElementById("result_download").innerHTML = "Loading";
@@ -535,6 +536,7 @@ extract( $data );
 
 			// When all are finished loading place them in the correct position
 			manager.onLoad = function () {
+				envir.isSceneLoading = false;
 
 				// Don't auto-select any object on load — user clicks to select
 				transform_controls.detach();
@@ -646,6 +648,17 @@ extract( $data );
 			envir.scene.aframeRenderQuality = vrodos_scene_data["aframeRenderQuality"] || 'standard';
 			envir.scene.aframeShadowQuality = vrodos_scene_data["aframeShadowQuality"] || 'medium';
 			envir.scene.aframePostFXEnabled = vrodos_scene_data["aframePostFXEnabled"] === true || vrodos_scene_data["aframePostFXEnabled"] === 'true';
+			envir.scene.aframePostFXBloomEnabled = !(vrodos_scene_data["aframePostFXBloomEnabled"] === false || vrodos_scene_data["aframePostFXBloomEnabled"] === 'false');
+			envir.scene.aframePostFXColorEnabled = !(vrodos_scene_data["aframePostFXColorEnabled"] === false || vrodos_scene_data["aframePostFXColorEnabled"] === 'false');
+			envir.scene.aframePostFXVignetteEnabled = false;
+			envir.scene.aframePostFXEdgeAAEnabled = !(vrodos_scene_data["aframePostFXEdgeAAEnabled"] === false || vrodos_scene_data["aframePostFXEdgeAAEnabled"] === 'false');
+			envir.scene.aframePostFXEdgeAAStrength = vrodos_scene_data["aframePostFXEdgeAAStrength"] || 3;
+			envir.scene.aframeBloomStrength = vrodos_scene_data["aframeBloomStrength"] || 'off';
+			if (envir.scene.aframePostFXBloomEnabled === false) {
+				envir.scene.aframeBloomStrength = 'off';
+			}
+			envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
+			envir.scene.aframeReflectionProfile = vrodos_scene_data["aframeReflectionProfile"] || 'balanced';
 			if (typeof syncCompileDialogFromSceneSettings === 'function') {
 				syncCompileDialogFromSceneSettings();
 			}
@@ -734,6 +747,7 @@ extract( $data );
 		function parseJSON_LoadScene(scene_json) {
 
 			let resources3D = new VrodosSceneImporter().parse(scene_json, uploadDir);
+			envir.isSceneLoading = true;
 
 			// CLEAR SCENE
 			let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];

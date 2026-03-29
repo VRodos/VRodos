@@ -136,7 +136,6 @@ function loadButtonActions() {
         // Pause Rendering
         isPaused = true;
         swapLucideIcon(document.getElementById("pauseRendering"), "play");
-        saveChanges();
     });
 
 
@@ -162,14 +161,21 @@ function loadButtonActions() {
         if (memValue) memValue.innerHTML = "0";
 
         var constantUpdateUser = document.getElementById("constantUpdateUser");
-        if (constantUpdateUser && vrodosIsSceneSavePending) {
+        if (typeof vrodosApplyCompileDialogSettingsToScene === 'function') {
+            vrodosApplyCompileDialogSettingsToScene();
+        }
+
+        if (constantUpdateUser) {
             constantUpdateUser.innerHTML =
                 '<i data-lucide="save" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
-                'Saving latest scene changes before build...';
+                'Saving build settings and latest scene changes before build...';
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         waitForLatestSceneSave()
+            .then(function () {
+                return (typeof saveChanges === 'function') ? saveChanges() : Promise.resolve();
+            })
             .then(function () {
                 vrodos_compileAjax(showPawnPositions);
             })
@@ -498,6 +504,14 @@ function loadButtonActions() {
 
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
     document.getElementById('save-scene-button').addEventListener('click', function () {
+
+        if (envir && envir.isSceneLoading) {
+            var loadingNotice = document.getElementById("result_download");
+            if (loadingNotice) {
+                loadingNotice.innerHTML = "Please wait until scene loading finishes before saving.";
+            }
+            return;
+        }
 
         let save_scene_btn = document.getElementById("save-scene-button");
         if (save_scene_btn.classList.contains("LinkDisabled")){
@@ -918,6 +932,10 @@ function saveScene(e) {
         return;
     }
 
+    if (envir && envir.isSceneLoading) {
+        return;
+    }
+
     // A change has been made and mouseup then save
     if (e.type == 'modificationPendingSave')
         mapActions[e.type] = true;
@@ -934,6 +952,9 @@ function saveScene(e) {
 }
 
 function commitPendingSceneSave() {
+    if (envir && envir.isSceneLoading) {
+        return;
+    }
     mapActions['modificationPendingSave'] = true;
     document.getElementById('save-scene-button').click();
     mapActions = {};
@@ -942,6 +963,10 @@ function commitPendingSceneSave() {
 // trigger autosave for the automatic cases (insert, delete asset from scene)
 function triggerAutoSave() {
     if (!envir || !envir.scene) {
+        return;
+    }
+
+    if (envir.isSceneLoading) {
         return;
     }
 

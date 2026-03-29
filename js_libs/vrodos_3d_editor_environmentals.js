@@ -1,6 +1,24 @@
 // noinspection DuplicatedCode
 
 "use strict";
+
+function vrodosClampNumber(value, min, max, fallback) {
+    var parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+        parsed = fallback;
+    }
+
+    return Math.min(max, Math.max(min, parsed));
+}
+
+function vrodosOrthoFitZoom(frustumSize, aspect, sceneSurfaceDimension) {
+    var safeDimension = Math.max(Number(sceneSurfaceDimension) || 0, 10);
+    var safeAspect = Math.max(Number(aspect) || 1, 0.1);
+    var visibleWidth = safeDimension * 2.2;
+    var computedZoom = (frustumSize * safeAspect) / visibleWidth;
+
+    return vrodosClampNumber(computedZoom, 10, 5000, 600);
+}
 class vrodos_3d_editor_environmentals {
 
     constructor(vr_editor_main_div) {
@@ -14,6 +32,7 @@ class vrodos_3d_editor_environmentals {
         this.isComposerOn = true;
         this.is2d = false;
         this.thirdPersonView = false;
+        this.isSceneLoading = false;
 
         this.ctx = this;
 
@@ -27,6 +46,9 @@ class vrodos_3d_editor_environmentals {
         this.FRUSTUM_SIZE = 100000; // For orthographic camera only
 
         this.SCENE_DIMENSION_SURFACE = 100; // It is the max of x z dimensions of the scene (found when all objects are loaded)
+        this.SCENE_CENTER_X = 0;
+        this.SCENE_CENTER_Y = 0;
+        this.SCENE_CENTER_Z = 0;
 
         this.NEAR = 0.01;
         this.FAR = 200000; // keep the camera empty until everything is loaded
@@ -185,9 +207,10 @@ class vrodos_3d_editor_environmentals {
         this.cameraThirdPerson.updateProjectionMatrix();
 
         //---------------------------------------------------------------
+        var pixelRatio = window.devicePixelRatio || 1;
         this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-        this.composer.renderer.setPixelRatio(this.ASPECT);
-        this.effectFXAA.uniforms['resolution'].value.set(1 / this.SCREEN_WIDTH / this.ASPECT, 1 / this.SCREEN_HEIGHT / this.ASPECT);
+        this.composer.renderer.setPixelRatio(pixelRatio);
+        this.effectFXAA.uniforms['resolution'].value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
     }
 
     /**
@@ -216,6 +239,8 @@ class vrodos_3d_editor_environmentals {
         this.orbitControls.userPanSpeed = 1;
         //this.orbitControls.target.set( 0, 0, 0);
         this.orbitControls.object.zoom = 1;
+        this.orbitControls.minZoom = 10;
+        this.orbitControls.maxZoom = 5000;
         this.orbitControls.object.updateProjectionMatrix();
         this.orbitControls.name = "orbitControls";
         this.orbitControls.enableRotate = true;
@@ -353,11 +378,11 @@ class vrodos_3d_editor_environmentals {
             this.cameraOrbit.left = this.FRUSTUM_SIZE * this.ASPECT / -2;
             this.cameraOrbit.right = this.FRUSTUM_SIZE * this.ASPECT / 2;
 
-            this.cameraOrbit.zoom = -1.5 * this.SCENE_DIMENSION_SURFACE + 2300;
+            this.cameraOrbit.zoom = vrodosOrthoFitZoom(this.FRUSTUM_SIZE, this.ASPECT, this.SCENE_DIMENSION_SURFACE);
         }
 
         if (this.is2d) {
-            this.cameraOrbit.position.set(0, this.FRUSTUM_SIZE, 0);
+            this.cameraOrbit.position.set(this.SCENE_CENTER_X, this.FRUSTUM_SIZE, this.SCENE_CENTER_Z);
 
             // this.cameraOrbit.rotation._x = - Math.PI/2;
             // this.cameraOrbit.rotation._y = 0;
@@ -366,11 +391,20 @@ class vrodos_3d_editor_environmentals {
             //this.cameraOrbit. orbitControls.object.quaternion = new THREE.Quaternion(0.707, 0 , 0, 0.707);
 
         } else {
-            this.cameraOrbit.position.set(this.FRUSTUM_SIZE, this.FRUSTUM_SIZE, this.FRUSTUM_SIZE);
+            this.cameraOrbit.position.set(
+                this.SCENE_CENTER_X + this.FRUSTUM_SIZE,
+                this.FRUSTUM_SIZE,
+                this.SCENE_CENTER_Z + this.FRUSTUM_SIZE
+            );
         }
 
+        if (this.orbitControls) {
+            this.orbitControls.target.set(this.SCENE_CENTER_X, this.SCENE_CENTER_Y, this.SCENE_CENTER_Z);
+            this.orbitControls.update();
+        }
+
+        this.cameraOrbit.zoom = vrodosClampNumber(this.cameraOrbit.zoom, 10, 5000, 600);
         this.cameraOrbit.updateProjectionMatrix();
         //this.orbitControls.object.updateProjectionMatrix();
     }
 }
-

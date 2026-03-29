@@ -25,9 +25,15 @@
 			<input id="platformInput" type="hidden" value="platform-Aframe">
 			<input id="project-type" type="hidden" value="<?php echo esc_attr( strtolower( $project_type ) ); ?>">
 
-			<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600 tw-mb-4">
-				<i data-lucide="info" class="tw-w-4 tw-h-4 tw-text-slate-400 tw-flex-shrink-0 tw-mt-0.5"></i>
-				Click on "Build" in order to construct the virtual world.
+			<div class="tw-flex tw-items-start tw-justify-between tw-gap-3 tw-flex-wrap tw-mb-4">
+				<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600">
+					<i data-lucide="info" class="tw-w-4 tw-h-4 tw-text-slate-400 tw-flex-shrink-0 tw-mt-0.5"></i>
+					Click on "Build" in order to construct the virtual world.
+				</div>
+				<a id="compileTopResultLink" href="#" target="_blank" class="tw-btn tw-btn-sm tw-btn-outline tw-btn-primary tw-hidden">
+					<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>
+					Open Compiled Scene
+				</a>
 			</div>
 
 			<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4 tw-mb-5">
@@ -57,13 +63,56 @@
 					</label>
 				</div>
 
-				<label class="tw-flex tw-items-start tw-gap-3 tw-mt-4">
-					<input id="compilePostFxToggle" type="checkbox" class="tw-checkbox tw-checkbox-sm tw-mt-0.5">
-					<span>
-						<span class="tw-block tw-text-sm tw-font-medium tw-text-slate-700">Enable cinematic post-processing</span>
-						<span id="compilePostFxHelp" class="tw-block tw-text-xs tw-text-slate-500">Available in High render quality for a subtle cinematic finish.</span>
-					</span>
+				<div class="tw-flex tw-items-center tw-gap-3 tw-mt-6 tw-mb-2">
+					<input id="compilePostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-sm">
+					<label for="compilePostFxToggle" class="tw-text-sm tw-font-bold tw-text-slate-800 tw-cursor-pointer">Cinematic Post-Processing</label>
+				</div>
+
+				<div id="compilePostFxGroup" class="tw-pl-4 tw-border-l-2 tw-border-slate-200 tw-ml-2 tw-space-y-4 tw-transition-opacity tw-duration-200 tw-opacity-50 tw-pointer-events-none">
+					<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-3">
+					<label class="tw-flex tw-items-center tw-gap-3">
+						<input id="compilePostFxColorToggle" type="checkbox" class="tw-checkbox tw-checkbox-sm" disabled>
+						<span class="tw-text-sm tw-text-slate-700">Color grading</span>
+					</label>
+				</div>
+
+				<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4 tw-mt-4">
+					<label class="tw-form-control">
+						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Bloom Strength</span>
+						<select id="compileBloomStrengthSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1" disabled>
+							<option value="off">Off</option>
+							<option value="soft">Soft</option>
+							<option value="medium">Medium</option>
+						</select>
+						<span class="tw-text-xs tw-text-slate-500 tw-mt-1">Set to <strong>Off</strong> to disable bloom.</span>
+					</label>
+
+					<label class="tw-form-control">
+						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Reflection Profile</span>
+						<select id="compileReflectionProfileSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
+							<option value="balanced">Balanced</option>
+							<option value="enhanced">Enhanced</option>
+						</select>
+					</label>
+				</div>
+
+				<label class="tw-form-control tw-mt-4">
+					<div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
+						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Edge Smoothing Strength</span>
+						<span id="compileEdgeAAStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[11px]">Balanced</span>
+					</div>
+					<input id="compileEdgeAAStrengthSlider" type="range" min="0" max="5" step="1" value="3" class="tw-range tw-range-primary tw-range-sm tw-mt-2" disabled>
+					<div class="tw-flex tw-justify-between tw-text-[11px] tw-text-slate-400 tw-mt-1 tw-px-0.5">
+						<span>Off</span>
+						<span>Crisp</span>
+						<span>Light</span>
+						<span>Balanced</span>
+						<span>Strong</span>
+						<span>Max</span>
+					</div>
+					<span class="tw-text-xs tw-text-slate-500 tw-mt-1">Lower keeps more crisp detail, higher smooths distant silhouettes more aggressively.</span>
 				</label>
+				</div>
 			</div>
 
 			<h2 id="compileProgressTitle" style="display: none" class="tw-text-center tw-text-xl tw-font-bold tw-text-slate-700 tw-my-4"></h2>

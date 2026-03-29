@@ -126,15 +126,21 @@ function findSceneDimensions(){
     var zMin = 0;
     var yMax = 0;
     var yMin = 0;
+    var hasSceneContent = false;
 
     for (var i = 0; i < envir.scene.children.length; i++) {
 
-        if (envir.scene.children[i].name !== "myTransformControls" && envir.scene.children[i].name !== "myGridHelper") {
+        if (envir.scene.children[i].name !== "myTransformControls" &&
+            envir.scene.children[i].name !== "myGridHelper" &&
+            envir.scene.children[i].name !== "myAxisHelper" &&
+            envir.scene.children[i].name !== "orbitCamera" &&
+            envir.scene.children[i].name !== "avatarCamera") {
 
             if ( envir.scene.children[i].category_name === 'lightHelper')
                 continue;
 
             var sizeXYZ_Arr = findObjectLimits(envir.scene.children[i]);
+            hasSceneContent = true;
 
             xMin = Math.min(sizeXYZ_Arr[0].x, xMin);
             xMax = Math.max(sizeXYZ_Arr[1].x, xMax);
@@ -149,6 +155,9 @@ function findSceneDimensions(){
     }
 
     envir.SCENE_DIMENSION_SURFACE = Math.max(xMax - xMin, zMax - zMin);
+    envir.SCENE_CENTER_X = hasSceneContent ? (xMin + xMax) / 2 : 0;
+    envir.SCENE_CENTER_Y = hasSceneContent ? (yMin + yMax) / 2 : 0;
+    envir.SCENE_CENTER_Z = hasSceneContent ? (zMin + zMax) / 2 : 0;
 
     // In empty scene lets fix it to 10
     //envir.SCENE_DIMENSION_SURFACE = envir.SCENE_DIMENSION_SURFACE > 0 ? envir.SCENE_DIMENSION_SURFACE * 1.5 : 10;

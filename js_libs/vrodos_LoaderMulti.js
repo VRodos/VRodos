@@ -4,6 +4,44 @@
 
 "use strict";
 
+function vrodosLoaderSafeNumber(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function vrodosLoaderSafeVector(values, fallback) {
+    const safeFallback = Array.isArray(fallback) ? fallback : [0, 0, 0];
+    const source = Array.isArray(values) ? values : safeFallback;
+
+    return [
+        vrodosLoaderSafeNumber(source[0], safeFallback[0]),
+        vrodosLoaderSafeNumber(source[1], safeFallback[1]),
+        vrodosLoaderSafeNumber(source[2], safeFallback[2])
+    ];
+}
+
+function vrodosLoaderSafeScale(values) {
+    return vrodosLoaderSafeVector(values, [1, 1, 1]);
+}
+
+function vrodosLoaderSafeObjectName(name, resource, object) {
+    const currentName = typeof name === 'string' ? name.trim() : '';
+    if (currentName !== '') {
+        return currentName;
+    }
+
+    const objectName = object && typeof object.name === 'string' ? object.name.trim() : '';
+    if (objectName !== '') {
+        return objectName;
+    }
+
+    const slugPart = resource && resource.asset_slug ? String(resource.asset_slug).trim() : '';
+    const idPart = resource && resource.asset_id ? String(resource.asset_id).trim() : '';
+    const uuidPart = resource && resource.uuid ? String(resource.uuid).split('-')[0] : String(Date.now());
+
+    return (slugPart || 'scene_object') + (idPart ? '_' + idPart : '') + '_' + uuidPart;
+}
+
 class VRodos_LoaderMulti {
 
     constructor(who) { };
@@ -51,6 +89,38 @@ class VRodos_LoaderMulti {
 
                 if (name === 'aframePostFXEnabled') {
                     envir.scene.aframePostFXEnabled = resources3D[name] === true || resources3D[name] === 'true';
+                }
+
+                if (name === 'aframePostFXBloomEnabled') {
+                    envir.scene.aframePostFXBloomEnabled = !(resources3D[name] === false || resources3D[name] === 'false');
+                }
+
+                if (name === 'aframePostFXColorEnabled') {
+                    envir.scene.aframePostFXColorEnabled = !(resources3D[name] === false || resources3D[name] === 'false');
+                }
+
+                if (name === 'aframePostFXVignetteEnabled') {
+                    envir.scene.aframePostFXVignetteEnabled = false;
+                }
+
+                if (name === 'aframePostFXEdgeAAEnabled') {
+                    envir.scene.aframePostFXEdgeAAEnabled = !(resources3D[name] === false || resources3D[name] === 'false');
+                }
+
+                if (name === 'aframePostFXEdgeAAStrength') {
+                    envir.scene.aframePostFXEdgeAAStrength = resources3D[name] || 3;
+                }
+
+                if (name === 'aframeBloomStrength') {
+                    envir.scene.aframeBloomStrength = resources3D[name] || 'off';
+                    if (envir.scene.aframePostFXBloomEnabled === false) {
+                        envir.scene.aframeBloomStrength = 'off';
+                    }
+                    envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
+                }
+
+                if (name === 'aframeReflectionProfile') {
+                    envir.scene.aframeReflectionProfile = resources3D[name] || 'balanced';
                 }
 
                 if (name === 'backgroundStyleOption'){
@@ -290,9 +360,9 @@ class VRodos_LoaderMulti {
                         // Support both scene-load format (pos/rot/scale flat arrays)
                         // and drag-and-drop format (trs.translation/rotation/scale)
                         const trs = resources3D[name].trs;
-                        const pos = resources3D[name].position || (trs && trs.translation) || [0, 0, 0];
-                        const rot = resources3D[name].rotation || (trs && trs.rotation)    || [0, 0, 0];
-                        const scl = resources3D[name].scale    || (trs && trs.scale)       || [1, 1, 1];
+                        const pos = vrodosLoaderSafeVector(resources3D[name].position || (trs && trs.translation), [0, 0, 0]);
+                        const rot = vrodosLoaderSafeVector(resources3D[name].rotation || (trs && trs.rotation), [0, 0, 0]);
+                        const scl = vrodosLoaderSafeScale(resources3D[name].scale || (trs && trs.scale));
 
                         const geometry = new THREE.PlaneGeometry(2, 2);
                         const texture  = new THREE.TextureLoader().load(imageUrl);
@@ -308,11 +378,11 @@ class VRodos_LoaderMulti {
 
                         // When dragged onto canvas (manager.onLoad won't fire — no GLTF items),
                         // manually attach controls, update hierarchy, and save.
-                        if (trs) {
+                        if (trs && !(envir && envir.isSceneLoading)) {
                             transform_controls.attach(object);
                             removeAllCelOutlines();
                             addCelOutline(object);
-                            selected_object_name = name;
+                            selected_object_name = object.name;
                             setTransformControlsSize();
                             if (typeof addInHierarchyViewer === 'function') addInHierarchyViewer(object);
                             if (typeof triggerAutoSave === 'function') triggerAutoSave();
@@ -421,6 +491,17 @@ class VRodos_LoaderMulti {
                         envir.scene.aframeRenderQuality = resources3D[name].aframeRenderQuality || 'standard';
                         envir.scene.aframeShadowQuality = resources3D[name].aframeShadowQuality || 'medium';
                         envir.scene.aframePostFXEnabled = resources3D[name].aframePostFXEnabled === true || resources3D[name].aframePostFXEnabled === 'true';
+                        envir.scene.aframePostFXBloomEnabled = !(resources3D[name].aframePostFXBloomEnabled === false || resources3D[name].aframePostFXBloomEnabled === 'false');
+                        envir.scene.aframePostFXColorEnabled = !(resources3D[name].aframePostFXColorEnabled === false || resources3D[name].aframePostFXColorEnabled === 'false');
+                        envir.scene.aframePostFXVignetteEnabled = false;
+                        envir.scene.aframePostFXEdgeAAEnabled = !(resources3D[name].aframePostFXEdgeAAEnabled === false || resources3D[name].aframePostFXEdgeAAEnabled === 'false');
+                        envir.scene.aframePostFXEdgeAAStrength = resources3D[name].aframePostFXEdgeAAStrength || 3;
+                        envir.scene.aframeBloomStrength = resources3D[name].aframeBloomStrength || 'off';
+                        if (envir.scene.aframePostFXBloomEnabled === false) {
+                            envir.scene.aframeBloomStrength = 'off';
+                        }
+                        envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
+                        envir.scene.aframeReflectionProfile = resources3D[name].aframeReflectionProfile || 'balanced';
 
                         if (typeof syncCompileDialogFromSceneSettings === 'function') {
                             syncCompileDialogFromSceneSettings();
@@ -609,21 +690,26 @@ class VRodos_LoaderMulti {
 
 // Set loaded Object or Scene (for GLBs) properties
 function setObjectProperties(object, name, resources3D) {
+    const resource = resources3D[name] || {};
 
     // Automatically load values that are available
-    for (let entry in Object.keys(resources3D[name])) {
-        if (!['id', 'translation', 'position', 'rotation', 'scale', 'quaternion', 'children', 'trs'].includes(Object.keys(resources3D[name])[entry])) {
-            object[[Object.keys(resources3D[name])[entry]]] = Object.values(resources3D[name])[entry];
+    for (let entry in Object.keys(resource)) {
+        if (!['id', 'translation', 'position', 'rotation', 'scale', 'quaternion', 'children', 'trs'].includes(Object.keys(resource)[entry])) {
+            object[[Object.keys(resource)[entry]]] = Object.values(resource)[entry];
         }
     }
 
+    object.name = vrodosLoaderSafeObjectName(name, resource, object);
+    resource.name = object.name;
     object.isSelectableMesh = true;
-    object.isLight = resources3D[name]['isLight'];
-    object.fnPath = resources3D[name]['path'];
+    object.isLight = resource['isLight'];
+    object.fnPath = resource['path'] || object.fnPath || '';
 
     // avoid revealing the full path. Use the relative in the saving format.
-    object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
-    object['glb_id'] = resources3D[name]['glb_id'];
+    if (typeof object.fnPath === 'string' && object.fnPath.indexOf('uploads/') !== -1) {
+        object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
+    }
+    object['glb_id'] = resource['glb_id'];
 
     // Not needed anymore, we dont override textures anymore
     /*if (resources3D[name]['overrideMaterial'] === "true") {
@@ -640,20 +726,25 @@ function setObjectProperties(object, name, resources3D) {
     //============== Video texture ==========
 
 
+    const trs = resource['trs'] || {};
+    const translation = vrodosLoaderSafeVector(trs['translation'] || resource['position'], [0, 0, 0]);
+    const rotation = vrodosLoaderSafeVector(trs['rotation'] || resource['rotation'], [0, 0, 0]);
+    const scale = vrodosLoaderSafeScale(trs['scale'] || resource['scale']);
+
     object.position.set(
-        resources3D[name]['trs']['translation'][0],
-        resources3D[name]['trs']['translation'][1],
-        resources3D[name]['trs']['translation'][2]);
+        translation[0],
+        translation[1],
+        translation[2]);
 
     object.rotation.set(
-        resources3D[name]['trs']['rotation'][0],
-        resources3D[name]['trs']['rotation'][1],
-        resources3D[name]['trs']['rotation'][2]);
+        rotation[0],
+        rotation[1],
+        rotation[2]);
 
     object.scale.set(
-        resources3D[name]['trs']['scale'][0],
-        resources3D[name]['trs']['scale'][1],
-        resources3D[name]['trs']['scale'][2]);
+        scale[0],
+        scale[1],
+        scale[2]);
 
 
     return object;

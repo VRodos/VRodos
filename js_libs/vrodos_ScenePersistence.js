@@ -2,6 +2,56 @@
 // This module replicates the logic of the old THREE.SceneExporter (r87)
 // and THREE.SceneImporter (r87) using modern JavaScript and Three.js (r147) methods.
 
+function vrodosSceneSafeNumber(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function vrodosSceneSafeVector(values, fallback) {
+    const safeFallback = Array.isArray(fallback) ? fallback : [0, 0, 0];
+    const source = Array.isArray(values) ? values : safeFallback;
+
+    return [
+        vrodosSceneSafeNumber(source[0], safeFallback[0]),
+        vrodosSceneSafeNumber(source[1], safeFallback[1]),
+        vrodosSceneSafeNumber(source[2], safeFallback[2])
+    ];
+}
+
+function vrodosSceneSafeScale(values) {
+    return vrodosSceneSafeVector(values, [1, 1, 1]);
+}
+
+function vrodosSceneSafeObjectName(node, fallbackIndex) {
+    const currentName = node && typeof node.name === 'string' ? node.name.trim() : '';
+    if (currentName !== '') {
+        return currentName;
+    }
+
+    const slugPart = node && node.asset_slug ? String(node.asset_slug).trim() : '';
+    const idPart = node && node.asset_id ? String(node.asset_id).trim() : '';
+    const uuidPart = node && node.uuid ? String(node.uuid).split('-')[0] : String(fallbackIndex || Date.now());
+    const fallbackName = (slugPart || 'scene_object') + (idPart ? '_' + idPart : '') + '_' + uuidPart;
+
+    if (node) {
+        node.name = fallbackName;
+    }
+
+    return fallbackName;
+}
+
+function vrodosSceneUniqueObjectName(name, existingObjects) {
+    let uniqueName = name;
+    let suffix = 2;
+
+    while (Object.prototype.hasOwnProperty.call(existingObjects, uniqueName)) {
+        uniqueName = name + '_' + suffix;
+        suffix++;
+    }
+
+    return uniqueName;
+}
+
 class VrodosSceneExporter {
     parse(scene) {
         const output = {
@@ -23,6 +73,13 @@ class VrodosSceneExporter {
                 aframeRenderQuality: envir.scene.aframeRenderQuality || 'standard',
                 aframeShadowQuality: envir.scene.aframeShadowQuality || 'medium',
                 aframePostFXEnabled: envir.scene.aframePostFXEnabled === true,
+                aframePostFXBloomEnabled: (envir.scene.aframeBloomStrength || 'off') !== 'off',
+                aframePostFXColorEnabled: envir.scene.aframePostFXColorEnabled !== false,
+                aframePostFXVignetteEnabled: false,
+                aframePostFXEdgeAAEnabled: envir.scene.aframePostFXEdgeAAEnabled !== false,
+                aframePostFXEdgeAAStrength: envir.scene.aframePostFXEdgeAAStrength || 3,
+                aframeBloomStrength: envir.scene.aframeBloomStrength || 'off',
+                aframeReflectionProfile: envir.scene.aframeReflectionProfile || 'balanced',
                 backgroundPresetOption: envir.scene.backgroundPresetOption || 'None',
                 backgroundPresetGroundEnabled: envir.scene.backgroundPresetGroundEnabled !== false,
                 backgroundStyleOption: (envir.scene.backgroundStyleOption !== undefined) ? envir.scene.backgroundStyleOption : 0,
@@ -61,7 +118,10 @@ class VrodosSceneExporter {
 
             const objectData = this.processObject(node);
             if (objectData) {
-                output.objects[node.name] = objectData;
+                const baseName = vrodosSceneSafeObjectName(node, output.metadata.objects);
+                const safeName = vrodosSceneUniqueObjectName(baseName, output.objects);
+                node.name = safeName;
+                output.objects[safeName] = objectData;
                 output.metadata.objects++;
             }
         });
@@ -105,13 +165,13 @@ class VrodosSceneExporter {
 
         entryObject.fnPath = o.fnPath ? o.fnPath : '';
 
-        entryObject.position = [o.position.x, o.position.y, o.position.z];
-        entryObject.rotation = [o.rotation.x, o.rotation.y, o.rotation.z];
-        entryObject.scale = [o.scale.x, o.scale.y, o.scale.z];
+        entryObject.position = vrodosSceneSafeVector([o.position.x, o.position.y, o.position.z], [0, 0, 0]);
+        entryObject.rotation = vrodosSceneSafeVector([o.rotation.x, o.rotation.y, o.rotation.z], [0, 0, 0]);
+        entryObject.scale = vrodosSceneSafeScale([o.scale.x, o.scale.y, o.scale.z]);
 
         if (o.quaternion) {
             let quatR = new THREE.Quaternion();
-            let eulerR = new THREE.Euler(o.rotation.x, -o.rotation.y, -o.rotation.z, 'XYZ');
+            let eulerR = new THREE.Euler(entryObject.rotation[0], -entryObject.rotation[1], -entryObject.rotation[2], 'XYZ');
             quatR.setFromEuler(eulerR);
             entryObject.quaternion = [quatR.x, quatR.y, quatR.z, quatR.w];
         }
@@ -146,18 +206,20 @@ class VrodosSceneExporter {
 
     processAvatar(o, entryObject) {
         let quatCombined = new THREE.Quaternion();
-        let camEulerCombined = new THREE.Euler(-o.children[0].rotation.x, (Math.PI - o.rotation.y) % (2 * Math.PI), 0, 'YXZ');
+        const childRotationX = vrodosSceneSafeNumber(o.children[0].rotation.x, 0);
+        const yawRotation = vrodosSceneSafeNumber(o.rotation.y, 0);
+        let camEulerCombined = new THREE.Euler(-childRotationX, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
         quatCombined.setFromEuler(camEulerCombined);
 
         let quatR_player = new THREE.Quaternion();
-        let eulerR_player = new THREE.Euler(0, (Math.PI - o.rotation.y) % (2 * Math.PI), 0, 'YXZ');
+        let eulerR_player = new THREE.Euler(0, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
         quatR_player.setFromEuler(eulerR_player);
 
         let quatR_camera = new THREE.Quaternion();
-        let eulerR_camera = new THREE.Euler(-o.children[0].rotation.x, 0, 0, 'YXZ');
+        let eulerR_camera = new THREE.Euler(-childRotationX, 0, 0, 'YXZ');
         quatR_camera.setFromEuler(eulerR_camera);
 
-        entryObject.rotation = [o.children[0].rotation.x, o.rotation.y, 0];
+        entryObject.rotation = [childRotationX, yawRotation, 0];
         entryObject.quaternion = [quatCombined.x, quatCombined.y, quatCombined.z, quatCombined.w];
         entryObject.quaternion_player = [quatR_player.x, quatR_player.y, quatR_player.z, quatR_player.w];
         entryObject.quaternion_camera = [quatR_camera.x, quatR_camera.y, quatR_camera.z, quatR_camera.w];
@@ -181,36 +243,47 @@ class VrodosSceneImporter {
 
         for (const key in scene_json_metadata) {
             const value = scene_json_metadata[key];
-            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframePostFXEnabled', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
+            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeReflectionProfile', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
                 resources3D_new["SceneSettings"][key] = value;
             }
         }
 
         const scene_objects = scene_json_obj['objects'];
+        let objectIndex = 0;
 
         for (const asset_key in scene_objects) {
-            const name = asset_key;
             const value = scene_objects[asset_key];
+            const name = vrodosSceneSafeObjectName({
+                name: asset_key,
+                asset_slug: value.asset_slug,
+                asset_id: value.asset_id,
+                uuid: value.uuid
+            }, objectIndex);
+            objectIndex++;
+
+            value.position = vrodosSceneSafeVector(value.position, [0, 0, 0]);
+            value.rotation = vrodosSceneSafeVector(value.rotation, [0, 0, 0]);
+            value.scale = vrodosSceneSafeScale(value.scale);
 
             if (name === 'avatarCamera') {
                 resources3D_new["cameraCoords"] = {
                     position: value.position,
-                    rotation: value.rotation,
+                    rotation: value.rotation
                 };
                 continue;
             }
 
             resources3D_new[name] = value;
+            resources3D_new[name].name = name;
 
             resources3D_new[name].trs = {
-                translation: [value['position'][0], value['position'][1], value['position'][2]],
-                rotation: [value['rotation'][0], value['rotation'][1], value['rotation'][2]],
-                scale: value['scale'][0],
+                translation: value.position.slice(0, 3),
+                rotation: value.rotation.slice(0, 3),
+                scale: value.scale.slice(0, 3),
             };
 
             if (!['lightsun', 'lightSpot', 'lightAmbient', 'Pawn', 'lightLamp'].some(el => name.includes(el))) {
                 resources3D_new[name].path = UPLOAD_DIR + value['fnPath'];
-                resources3D_new[name].trs.scale = [value['scale'][0], value['scale'][1], value['scale'][2]];
             }
         }
 

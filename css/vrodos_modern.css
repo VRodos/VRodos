@@ -107,8 +107,15 @@ body.vrodos-manager-wrapper {
 
 /* WP themes aggressively style <input> — protect checkbox/radio */
 .vrodos-manager-wrapper .tw-checkbox,
-.vrodos-manager-wrapper .tw-radio {
+.vrodos-manager-wrapper .tw-radio,
+.vrodos-manager-wrapper .tw-toggle {
   cursor: pointer !important;
+}
+
+.vrodos-manager-wrapper .tw-toggle {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border-radius: 2rem !important;
 }
 
 /* Input focus ring — emerald accent */

@@ -288,7 +288,20 @@ function vrodosApplyTextureQuality(texture, options, isColorTexture) {
     }
 
     if (!texture.isVideoTexture && typeof options.maxAnisotropy === 'number' && options.maxAnisotropy > 0) {
-        texture.anisotropy = Math.max(texture.anisotropy || 0, Math.min(options.maxAnisotropy, options.renderQuality === 'high' ? 8 : 4));
+        var targetAnisotropy = options.renderQuality === 'high'
+            ? Math.min(options.maxAnisotropy, 16)
+            : Math.min(options.maxAnisotropy, 8);
+        texture.anisotropy = Math.max(texture.anisotropy || 0, targetAnisotropy);
+    }
+
+    if (!texture.isVideoTexture) {
+        if (typeof THREE.LinearFilter !== 'undefined') {
+            texture.magFilter = THREE.LinearFilter;
+        }
+        if (typeof THREE.LinearMipmapLinearFilter !== 'undefined') {
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+        }
+        texture.generateMipmaps = true;
     }
 
     texture.needsUpdate = true;
@@ -327,9 +340,16 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             material.userData.vrodosBaseEnvMapIntensity = material.envMapIntensity || 1;
         }
 
-        material.envMapIntensity = options.renderQuality === 'high'
-            ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.18)
-            : material.userData.vrodosBaseEnvMapIntensity;
+        var targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
+        if (options.renderQuality === 'high') {
+            targetEnvMapIntensity = options.reflectionProfile === 'enhanced'
+                ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.12)
+                : Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.04);
+        } else if (options.reflectionProfile === 'enhanced') {
+            targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.02);
+        }
+
+        material.envMapIntensity = targetEnvMapIntensity;
     }
 
     if (typeof material.shadowSide !== 'undefined' && typeof THREE.FrontSide !== 'undefined') {
@@ -454,6 +474,101 @@ AFRAME.registerComponent('avatar-rotation-info', {
     }
 });
 
+function vrodosCreatePhotorealPostMaterial() {
+    var material = new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: null },
+            resolution: { value: new THREE.Vector2(1, 1) },
+            bloomStrength: { value: 0.18 },
+            vignetteStrength: { value: 0.16 },
+            saturation: { value: 1.04 },
+            contrast: { value: 1.04 },
+            exposure: { value: 1.0 },
+            outputExposure: { value: 1.06 },
+            aaStrength: { value: 0.75 }
+        },
+        vertexShader: [
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vUv = uv;',
+            '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+            '}'
+        ].join('\n'),
+        fragmentShader: [
+            'uniform sampler2D tDiffuse;',
+            'uniform vec2 resolution;',
+            'uniform float bloomStrength;',
+            'uniform float vignetteStrength;',
+            'uniform float saturation;',
+            'uniform float contrast;',
+            'uniform float exposure;',
+            'uniform float outputExposure;',
+            'uniform float aaStrength;',
+            'varying vec2 vUv;',
+            'vec3 applySaturation(vec3 color, float sat) {',
+            '  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));',
+            '  return mix(vec3(luma), color, sat);',
+            '}',
+            'vec3 acesFilm(vec3 x) {',
+            '  float a = 2.51;',
+            '  float b = 0.03;',
+            '  float c = 2.43;',
+            '  float d = 0.59;',
+            '  float e = 0.14;',
+            '  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);',
+            '}',
+            'vec3 linearToSRGB(vec3 color) {',
+            '  return pow(max(color, vec3(0.0)), vec3(1.0 / 2.2));',
+            '}',
+            'float lumaValue(vec3 color) {',
+            '  return dot(color, vec3(0.2126, 0.7152, 0.0722));',
+            '}',
+            'vec3 sampleBright(vec2 uv, vec2 offset) {',
+            '  vec3 c = texture2D(tDiffuse, uv + offset).rgb;',
+            '  float highlight = max(max(c.r, c.g), c.b);',
+            '  return max(c - vec3(0.86), 0.0) * smoothstep(0.86, 1.0, highlight);',
+            '}',
+            'void main() {',
+            '  vec2 texel = 1.0 / max(resolution, vec2(1.0));',
+            '  vec4 base = texture2D(tDiffuse, vUv);',
+            '  vec3 bloom = vec3(0.0);',
+            '  bloom += sampleBright(vUv, vec2(texel.x, 0.0));',
+            '  bloom += sampleBright(vUv, vec2(-texel.x, 0.0));',
+            '  bloom += sampleBright(vUv, vec2(0.0, texel.y));',
+            '  bloom += sampleBright(vUv, vec2(0.0, -texel.y));',
+            '  bloom += sampleBright(vUv, vec2(texel.x, texel.y));',
+            '  bloom += sampleBright(vUv, vec2(-texel.x, texel.y));',
+            '  bloom += sampleBright(vUv, vec2(texel.x, -texel.y));',
+            '  bloom += sampleBright(vUv, vec2(-texel.x, -texel.y));',
+            '  bloom *= 0.125;',
+            '  vec3 color = base.rgb + bloom * bloomStrength;',
+            '  vec3 north = texture2D(tDiffuse, vUv + vec2(0.0, texel.y)).rgb;',
+            '  vec3 south = texture2D(tDiffuse, vUv - vec2(0.0, texel.y)).rgb;',
+            '  vec3 east = texture2D(tDiffuse, vUv + vec2(texel.x, 0.0)).rgb;',
+            '  vec3 west = texture2D(tDiffuse, vUv - vec2(texel.x, 0.0)).rgb;',
+            '  float centerLuma = lumaValue(color);',
+            '  float edgeRange = max(max(abs(centerLuma - lumaValue(north)), abs(centerLuma - lumaValue(south))), max(abs(centerLuma - lumaValue(east)), abs(centerLuma - lumaValue(west))));',
+            '  float edgeBlend = smoothstep(0.06, 0.24, edgeRange) * aaStrength;',
+            '  vec3 aaColor = (north + south + east + west + color) * 0.2;',
+            '  color = mix(color, aaColor, edgeBlend);',
+            '  color = applySaturation(color, saturation);',
+            '  color = (color - 0.5) * contrast + 0.5;',
+            '  float dist = distance(vUv, vec2(0.5));',
+            '  float vignette = smoothstep(0.95, 0.24, dist);',
+            '  color *= mix(1.0 - vignetteStrength, 1.0, vignette);',
+            '  color *= exposure;',
+            '  color = acesFilm(max(color, vec3(0.0)) * outputExposure);',
+            '  color = linearToSRGB(color);',
+            '  gl_FragColor = vec4(color, base.a);',
+            '}'
+        ].join('\n'),
+        depthWrite: false,
+        depthTest: false
+    });
+    material.toneMapped = false;
+    return material;
+}
+
 AFRAME.registerComponent('player-info', {
     schema: {
         name: { type: 'string', default: 'user-' + Math.round(Math.random() * 10000) },
@@ -560,10 +675,222 @@ AFRAME.registerComponent('scene-settings', {
         renderQuality: { type: "string", default: "standard" },
         shadowQuality: { type: "string", default: "medium" },
         postFXEnabled: { type: "string", default: "0" },
+        postFXBloomEnabled: { type: "string", default: "0" },
+        postFXColorEnabled: { type: "string", default: "1" },
+        postFXVignetteEnabled: { type: "string", default: "0" },
+        postFXEdgeAAEnabled: { type: "string", default: "1" },
+        postFXEdgeAAStrength: { type: "string", default: "3" },
+        bloomStrength: { type: "string", default: "off" },
+        reflectionProfile: { type: "string", default: "balanced" },
         cam_position: { type: "string", default: "0 1.6 0" },
         cam_rotation_y: { type: "string", default: "0" },
         avatar_enabled: { type: "string", default: "0" },
         public_chat: { type: "string", default: "0" },
+    },
+    getBloomStrengthValue: function () {
+        switch (this.data.bloomStrength) {
+            case 'medium':
+                return 0.16;
+            case 'soft':
+                return 0.08;
+            default:
+                return 0.0;
+        }
+    },
+    hasBloomEffectEnabled: function () {
+        return this.getBloomStrengthValue() > 0;
+    },
+    isPostFXOptionEnabled: function (key) {
+        return this.data[key] !== '0';
+    },
+    hasEnabledPostFXOptions: function () {
+        return this.hasBloomEffectEnabled() ||
+            this.isPostFXOptionEnabled('postFXColorEnabled') ||
+            this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
+    },
+    hasCinematicShaderOptions: function () {
+        return this.hasBloomEffectEnabled() ||
+            this.isPostFXOptionEnabled('postFXColorEnabled');
+    },
+    shouldUseEdgeAAOversample: function () {
+        return this.data.renderQuality === 'high' &&
+            this.data.postFXEnabled !== '0' &&
+            this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
+    },
+    getEdgeAAStrengthFactor: function () {
+        var parsed = parseInt(this.data.postFXEdgeAAStrength, 10);
+        if (isNaN(parsed)) {
+            parsed = 3;
+        }
+
+        if (parsed > 5) {
+            if (parsed <= 20) {
+                parsed = 1;
+            } else if (parsed <= 40) {
+                parsed = 2;
+            } else if (parsed <= 65) {
+                parsed = 3;
+            } else if (parsed <= 85) {
+                parsed = 4;
+            } else {
+                parsed = 5;
+            }
+        }
+
+        parsed = Math.max(1, Math.min(5, parsed));
+
+        switch (parsed) {
+            case 1:
+                return 0.2;
+            case 2:
+                return 0.4;
+            case 4:
+                return 0.8;
+            case 5:
+                return 1.0;
+            default:
+                return 0.6;
+        }
+    },
+    shouldUsePostProcessing: function () {
+        var inVrMode = this.el.is && this.el.is('vr-mode');
+        return this.data.renderQuality === 'high' &&
+            this.data.postFXEnabled !== '0' &&
+            this.hasCinematicShaderOptions() &&
+            !inVrMode &&
+            !(this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting);
+    },
+    updatePostProcessingSize: function () {
+        if (!this.postProcessingTarget || !this.el.renderer) {
+            return;
+        }
+
+        var size = this.postProcessingSize;
+        this.el.renderer.getSize(size);
+        var pixelRatio = typeof this.el.renderer.getPixelRatio === 'function' ? this.el.renderer.getPixelRatio() : 1;
+        var width = Math.max(1, Math.floor(size.x * pixelRatio));
+        var height = Math.max(1, Math.floor(size.y * pixelRatio));
+
+        if (this.postProcessingTarget.width !== width || this.postProcessingTarget.height !== height) {
+            this.postProcessingTarget.setSize(width, height);
+        }
+
+        if (this.postProcessingMaterial && this.postProcessingMaterial.uniforms && this.postProcessingMaterial.uniforms.resolution) {
+            this.postProcessingMaterial.uniforms.resolution.value.set(width, height);
+        }
+    },
+    enablePostProcessing: function () {
+        var renderer = this.el.renderer;
+        if (!renderer || this.postProcessingActive) {
+            return;
+        }
+
+        var width = 1;
+        var height = 1;
+        if (typeof renderer.getSize === 'function') {
+            renderer.getSize(this.postProcessingSize);
+            var pixelRatio = typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : 1;
+            width = Math.max(1, Math.floor(this.postProcessingSize.x * pixelRatio));
+            height = Math.max(1, Math.floor(this.postProcessingSize.y * pixelRatio));
+        }
+
+        this.postProcessingTarget = new THREE.WebGLRenderTarget(width, height, {
+            depthBuffer: true
+        });
+        if (typeof this.postProcessingTarget.samples !== 'undefined') {
+            this.postProcessingTarget.samples = Math.min((renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4, 8);
+        }
+        this.postProcessingMaterial = vrodosCreatePhotorealPostMaterial();
+        this.postProcessingScene = new THREE.Scene();
+        this.postProcessingCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        this.postProcessingQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.postProcessingMaterial);
+        this.postProcessingScene.add(this.postProcessingQuad);
+
+        this.postProcessingOriginalRender = renderer.render.bind(renderer);
+        this.postProcessingActive = true;
+
+        renderer.render = function (scene, camera) {
+            var shouldIntercept = this.postProcessingActive &&
+                this.shouldUsePostProcessing() &&
+                !this.postProcessingRendering &&
+                scene === this.el.object3D &&
+                camera;
+
+            if (!shouldIntercept) {
+                return this.postProcessingOriginalRender(scene, camera);
+            }
+
+            this.updatePostProcessingSize();
+            this.postProcessingRendering = true;
+
+            try {
+                var previousTarget = renderer.getRenderTarget();
+                renderer.setRenderTarget(this.postProcessingTarget);
+                renderer.clear(true, true, true);
+                this.postProcessingOriginalRender(scene, camera);
+                renderer.setRenderTarget(previousTarget);
+
+                this.postProcessingMaterial.uniforms.tDiffuse.value = this.postProcessingTarget.texture;
+                this.postProcessingMaterial.uniforms.bloomStrength.value = this.getBloomStrengthValue();
+                this.postProcessingMaterial.uniforms.vignetteStrength.value = 0.0;
+                this.postProcessingMaterial.uniforms.saturation.value = this.isPostFXOptionEnabled('postFXColorEnabled')
+                    ? (this.data.bloomStrength === 'medium' ? 1.01 : 1.005)
+                    : 1.0;
+                this.postProcessingMaterial.uniforms.contrast.value = this.isPostFXOptionEnabled('postFXColorEnabled')
+                    ? (this.data.bloomStrength === 'medium' ? 1.015 : 1.008)
+                    : 1.0;
+                this.postProcessingMaterial.uniforms.exposure.value = 1.0;
+                this.postProcessingMaterial.uniforms.outputExposure.value = renderer && typeof renderer.toneMappingExposure !== 'undefined'
+                    ? renderer.toneMappingExposure
+                    : 1.0;
+                this.postProcessingMaterial.uniforms.aaStrength.value = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ? 0.82 : 0.0;
+                renderer.setRenderTarget(null);
+                renderer.clear(true, true, true);
+                this.postProcessingOriginalRender(this.postProcessingScene, this.postProcessingCamera);
+            } finally {
+                this.postProcessingRendering = false;
+            }
+        }.bind(this);
+    },
+    disablePostProcessing: function () {
+        if (!this.postProcessingActive || !this.el.renderer) {
+            return;
+        }
+
+        if (this.postProcessingOriginalRender) {
+            this.el.renderer.render = this.postProcessingOriginalRender;
+        }
+
+        if (this.postProcessingQuad) {
+            if (this.postProcessingQuad.geometry) {
+                this.postProcessingQuad.geometry.dispose();
+            }
+            if (this.postProcessingQuad.material) {
+                this.postProcessingQuad.material.dispose();
+            }
+        }
+
+        if (this.postProcessingTarget) {
+            this.postProcessingTarget.dispose();
+        }
+
+        this.postProcessingTarget = null;
+        this.postProcessingMaterial = null;
+        this.postProcessingScene = null;
+        this.postProcessingCamera = null;
+        this.postProcessingQuad = null;
+        this.postProcessingOriginalRender = null;
+        this.postProcessingActive = false;
+        this.postProcessingRendering = false;
+    },
+    syncPostProcessingState: function () {
+        if (this.shouldUsePostProcessing()) {
+            this.enablePostProcessing();
+            this.updatePostProcessingSize();
+            return;
+        }
+
+        this.disablePostProcessing();
     },
     applyRenderQualityProfile: function () {
         var renderer = this.el.renderer;
@@ -573,6 +900,9 @@ AFRAME.registerComponent('scene-settings', {
 
         var isHighQuality = this.data.renderQuality === 'high';
         var targetPixelRatio = isHighQuality ? Math.min(window.devicePixelRatio || 1, 2) : Math.min(window.devicePixelRatio || 1, 1.25);
+        if (this.shouldUseEdgeAAOversample()) {
+            targetPixelRatio = Math.max(targetPixelRatio, 1.2 + (this.getEdgeAAStrengthFactor() * 0.8));
+        }
         renderer.setPixelRatio(targetPixelRatio);
         renderer.sortObjects = true;
 
@@ -662,7 +992,8 @@ AFRAME.registerComponent('scene-settings', {
             : 0;
         var options = {
             renderQuality: this.data.renderQuality || 'standard',
-            maxAnisotropy: maxAnisotropy
+            maxAnisotropy: maxAnisotropy,
+            reflectionProfile: this.data.reflectionProfile || 'balanced'
         };
 
         Array.prototype.forEach.call(this.el.querySelectorAll('.override-materials'), function (entityEl) {
@@ -716,11 +1047,14 @@ AFRAME.registerComponent('scene-settings', {
         var isHighQuality = this.data.renderQuality === 'high';
         var shadowEnabled = this.data.shadowQuality !== 'off';
         var hasEnvironmentBackground = (this.data.selChoice === "0") || (this.data.selChoice === "2" && this.data.presChoice !== "ocean");
+        var enhancedReflections = this.data.reflectionProfile === 'enhanced';
 
         if (hasEnvironmentBackground && this.el.hasAttribute('environment')) {
-            this.el.setAttribute('environment', 'lighting', isHighQuality ? 'point' : 'distant');
-            this.el.setAttribute('environment', 'lightPosition', isHighQuality ? '0.15 1 -0.2' : '0 1 0');
             this.el.setAttribute('environment', 'shadow', shadowEnabled ? 'true' : 'false');
+            if (this.data.selChoice !== "0") {
+                this.el.setAttribute('environment', 'lighting', 'distant');
+                this.el.setAttribute('environment', 'lightPosition', isHighQuality ? (enhancedReflections ? '0.12 1 -0.08' : '0.08 1 -0.04') : '0 1 0');
+            }
             this.removePhotorealHelperLights();
             return;
         }
@@ -739,30 +1073,36 @@ AFRAME.registerComponent('scene-settings', {
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-key-light',
-            'type: directional; color: #fff2d8; intensity: 0.95; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: -0.00018;',
+            'type: directional; color: #fff2d8; intensity: ' + (enhancedReflections ? '1.0' : '0.92') + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: -0.00018;',
             '6 10 4'
         );
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-fill-light',
-            'type: ambient; color: #d8e4ff; intensity: 0.38;',
+            'type: ambient; color: #d8e4ff; intensity: ' + (enhancedReflections ? '0.42' : '0.34') + ';',
             '0 4 0'
         );
     },
     applyPostFXProfile: function () {
         var renderer = this.el.renderer;
         var canvas = this.el.canvas || (renderer ? renderer.domElement : null);
-        var postFxEnabled = this.data.renderQuality === 'high' && this.data.postFXEnabled !== '0';
+        var postFxEnabled = this.shouldUsePostProcessing();
 
         if (!canvas) {
             return;
         }
 
-        canvas.style.filter = postFxEnabled ? 'contrast(1.04) saturate(1.03) brightness(1.01)' : '';
+        canvas.style.filter = '';
 
-        if (renderer && typeof renderer.toneMappingExposure !== 'undefined' && postFxEnabled) {
-            renderer.toneMappingExposure = 1.1;
+        if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
+            if (this.data.renderQuality === 'high') {
+                renderer.toneMappingExposure = 1.06;
+            } else {
+                renderer.toneMappingExposure = 1.0;
+            }
         }
+
+        this.syncPostProcessingState();
     },
     applyQualityProfiles: function () {
         this.applyRenderQualityProfile();
@@ -773,6 +1113,17 @@ AFRAME.registerComponent('scene-settings', {
     },
     init: function () {
         this.handleQualityModelLoad = this.applyQualityProfiles.bind(this);
+        this.handleResize = this.updatePostProcessingSize.bind(this);
+        this.postProcessingSize = new THREE.Vector2();
+        this.postProcessingTarget = null;
+        this.postProcessingMaterial = null;
+        this.postProcessingScene = null;
+        this.postProcessingCamera = null;
+        this.postProcessingQuad = null;
+        this.postProcessingOriginalRender = null;
+        this.postProcessingActive = false;
+        this.postProcessingRendering = false;
+        window.addEventListener('resize', this.handleResize);
         // Event - When scene is loaded
         this.el.addEventListener("loaded", () => {
             if (this.data.pr_type === "vrexpo_games") {
@@ -835,10 +1186,12 @@ AFRAME.registerComponent('scene-settings', {
 
         this.el.addEventListener("enter-vr", () => {
             if (typeof browsingModeVR !== 'undefined') browsingModeVR = true;
+            this.syncPostProcessingState();
             if (typeof gtag !== 'undefined') gtag('event', 'vr_enabled');
         });
         this.el.addEventListener("exit-vr", () => {
             if (typeof browsingModeVR !== 'undefined') browsingModeVR = false;
+            this.syncPostProcessingState();
             if (typeof gtag !== 'undefined') gtag('event', 'vr_disabled');
         });
 
@@ -869,8 +1222,6 @@ AFRAME.registerComponent('scene-settings', {
                 if (manSun) manSun.parentNode.removeChild(manSun);
                 backgroundEl.setAttribute("environment", {
                     preset: 'default',
-                    skyType: 'atmosphere',
-                    lighting: 'distant',
                     ground: 'none',
                     fog: 0,
                     playArea: 1,
@@ -942,6 +1293,8 @@ AFRAME.registerComponent('scene-settings', {
     },
     remove: function () {
         this.el.removeEventListener('model-loaded', this.handleQualityModelLoad);
+        window.removeEventListener('resize', this.handleResize);
+        this.disablePostProcessing();
         this.removePhotorealHelperLights();
     }
 });
