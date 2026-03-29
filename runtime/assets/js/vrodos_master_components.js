@@ -341,9 +341,11 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         }
 
         var targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
-        if (options.renderQuality === 'high') {
+        if (options.reflectionProfile === 'soft') {
+            targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.88, 0.35);
+        } else if (options.renderQuality === 'high') {
             targetEnvMapIntensity = options.reflectionProfile === 'enhanced'
-                ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.12)
+                ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.10)
                 : Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.04);
         } else if (options.reflectionProfile === 'enhanced') {
             targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.02);
@@ -674,6 +676,7 @@ AFRAME.registerComponent('scene-settings', {
         collisionMode: { type: "string", default: "auto" },
         renderQuality: { type: "string", default: "standard" },
         shadowQuality: { type: "string", default: "medium" },
+        aaQuality: { type: "string", default: "balanced" },
         postFXEnabled: { type: "string", default: "0" },
         postFXBloomEnabled: { type: "string", default: "0" },
         postFXColorEnabled: { type: "string", default: "1" },
@@ -681,6 +684,8 @@ AFRAME.registerComponent('scene-settings', {
         postFXEdgeAAEnabled: { type: "string", default: "1" },
         postFXEdgeAAStrength: { type: "string", default: "3" },
         bloomStrength: { type: "string", default: "off" },
+        exposurePreset: { type: "string", default: "neutral" },
+        contrastPreset: { type: "string", default: "balanced" },
         reflectionProfile: { type: "string", default: "balanced" },
         cam_position: { type: "string", default: "0 1.6 0" },
         cam_rotation_y: { type: "string", default: "0" },
@@ -695,6 +700,74 @@ AFRAME.registerComponent('scene-settings', {
                 return 0.08;
             default:
                 return 0.0;
+        }
+    },
+    getAAQualityLevel: function () {
+        switch (this.data.aaQuality) {
+            case 'off':
+            case 'high':
+            case 'ultra':
+                return this.data.aaQuality;
+            default:
+                return 'balanced';
+        }
+    },
+    getAAQualityPixelRatioTarget: function () {
+        if (this.data.renderQuality !== 'high') {
+            return 0;
+        }
+
+        switch (this.getAAQualityLevel()) {
+            case 'off':
+                return 0;
+            case 'high':
+                return 1.75;
+            case 'ultra':
+                return 2.15;
+            default:
+                return 1.45;
+        }
+    },
+    getAAQualitySampleCount: function () {
+        switch (this.getAAQualityLevel()) {
+            case 'off':
+                return 0;
+            case 'high':
+                return 4;
+            case 'ultra':
+                return 8;
+            default:
+                return 2;
+        }
+    },
+    getExposureValue: function () {
+        switch (this.data.exposurePreset) {
+            case 'bright':
+                return 1.015;
+            case 'cinematic':
+                return 1.03;
+            default:
+                return 1.0;
+        }
+    },
+    getContrastValue: function () {
+        switch (this.data.contrastPreset) {
+            case 'soft':
+                return 0.992;
+            case 'punchy':
+                return 1.018;
+            default:
+                return 1.0;
+        }
+    },
+    getSaturationValue: function () {
+        switch (this.data.contrastPreset) {
+            case 'soft':
+                return 0.998;
+            case 'punchy':
+                return 1.006;
+            default:
+                return 1.0;
         }
     },
     hasBloomEffectEnabled: function () {
@@ -798,7 +871,8 @@ AFRAME.registerComponent('scene-settings', {
             depthBuffer: true
         });
         if (typeof this.postProcessingTarget.samples !== 'undefined') {
-            this.postProcessingTarget.samples = Math.min((renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4, 8);
+            var maxSamples = (renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4;
+            this.postProcessingTarget.samples = Math.min(maxSamples, this.getAAQualitySampleCount());
         }
         this.postProcessingMaterial = vrodosCreatePhotorealPostMaterial();
         this.postProcessingScene = new THREE.Scene();
@@ -834,12 +908,14 @@ AFRAME.registerComponent('scene-settings', {
                 this.postProcessingMaterial.uniforms.bloomStrength.value = this.getBloomStrengthValue();
                 this.postProcessingMaterial.uniforms.vignetteStrength.value = 0.0;
                 this.postProcessingMaterial.uniforms.saturation.value = this.isPostFXOptionEnabled('postFXColorEnabled')
-                    ? (this.data.bloomStrength === 'medium' ? 1.01 : 1.005)
+                    ? this.getSaturationValue()
                     : 1.0;
                 this.postProcessingMaterial.uniforms.contrast.value = this.isPostFXOptionEnabled('postFXColorEnabled')
-                    ? (this.data.bloomStrength === 'medium' ? 1.015 : 1.008)
+                    ? this.getContrastValue()
                     : 1.0;
-                this.postProcessingMaterial.uniforms.exposure.value = 1.0;
+                this.postProcessingMaterial.uniforms.exposure.value = this.isPostFXOptionEnabled('postFXColorEnabled')
+                    ? this.getExposureValue()
+                    : 1.0;
                 this.postProcessingMaterial.uniforms.outputExposure.value = renderer && typeof renderer.toneMappingExposure !== 'undefined'
                     ? renderer.toneMappingExposure
                     : 1.0;
@@ -900,9 +976,13 @@ AFRAME.registerComponent('scene-settings', {
 
         var isHighQuality = this.data.renderQuality === 'high';
         var targetPixelRatio = isHighQuality ? Math.min(window.devicePixelRatio || 1, 2) : Math.min(window.devicePixelRatio || 1, 1.25);
-        if (this.shouldUseEdgeAAOversample()) {
-            targetPixelRatio = Math.max(targetPixelRatio, 1.2 + (this.getEdgeAAStrengthFactor() * 0.8));
+        if (isHighQuality) {
+            targetPixelRatio = Math.max(targetPixelRatio, this.getAAQualityPixelRatioTarget());
         }
+        if (this.shouldUseEdgeAAOversample()) {
+            targetPixelRatio = Math.max(targetPixelRatio, 1.15 + (this.getEdgeAAStrengthFactor() * 0.7));
+        }
+        targetPixelRatio = Math.min(targetPixelRatio, isHighQuality ? 2.2 : 1.25);
         renderer.setPixelRatio(targetPixelRatio);
         renderer.sortObjects = true;
 
@@ -1047,13 +1127,15 @@ AFRAME.registerComponent('scene-settings', {
         var isHighQuality = this.data.renderQuality === 'high';
         var shadowEnabled = this.data.shadowQuality !== 'off';
         var hasEnvironmentBackground = (this.data.selChoice === "0") || (this.data.selChoice === "2" && this.data.presChoice !== "ocean");
-        var enhancedReflections = this.data.reflectionProfile === 'enhanced';
+        var reflectionProfile = this.data.reflectionProfile || 'balanced';
+        var enhancedReflections = reflectionProfile === 'enhanced';
+        var softReflections = reflectionProfile === 'soft';
 
         if (hasEnvironmentBackground && this.el.hasAttribute('environment')) {
             this.el.setAttribute('environment', 'shadow', shadowEnabled ? 'true' : 'false');
             if (this.data.selChoice !== "0") {
                 this.el.setAttribute('environment', 'lighting', 'distant');
-                this.el.setAttribute('environment', 'lightPosition', isHighQuality ? (enhancedReflections ? '0.12 1 -0.08' : '0.08 1 -0.04') : '0 1 0');
+                this.el.setAttribute('environment', 'lightPosition', isHighQuality ? (enhancedReflections ? '0.12 1 -0.08' : (softReflections ? '0.05 1 -0.02' : '0.08 1 -0.04')) : '0 1 0');
             }
             this.removePhotorealHelperLights();
             return;
@@ -1073,13 +1155,13 @@ AFRAME.registerComponent('scene-settings', {
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-key-light',
-            'type: directional; color: #fff2d8; intensity: ' + (enhancedReflections ? '1.0' : '0.92') + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: -0.00018;',
+            'type: directional; color: #fff2d8; intensity: ' + (enhancedReflections ? '1.0' : (softReflections ? '0.84' : '0.92')) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: -0.00018;',
             '6 10 4'
         );
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-fill-light',
-            'type: ambient; color: #d8e4ff; intensity: ' + (enhancedReflections ? '0.42' : '0.34') + ';',
+            'type: ambient; color: #d8e4ff; intensity: ' + (enhancedReflections ? '0.42' : (softReflections ? '0.28' : '0.34')) + ';',
             '0 4 0'
         );
     },

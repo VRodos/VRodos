@@ -182,6 +182,11 @@ body.vrodos-manager-wrapper {
   transform: none !important;
 }
 
+#compile-dialog .tw-modal-box {
+  width: min(96vw, 1280px) !important;
+  max-width: 1280px !important;
+}
+
 /* Kill residual WP theme pseudo-elements on modal-box */
 .tw-modal-box::before,
 .tw-modal-box::after {

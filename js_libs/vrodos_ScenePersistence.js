@@ -72,6 +72,7 @@ class VrodosSceneExporter {
                 aframeCollisionMode: envir.scene.aframeCollisionMode || 'auto',
                 aframeRenderQuality: envir.scene.aframeRenderQuality || 'standard',
                 aframeShadowQuality: envir.scene.aframeShadowQuality || 'medium',
+                aframeAAQuality: envir.scene.aframeAAQuality || 'balanced',
                 aframePostFXEnabled: envir.scene.aframePostFXEnabled === true,
                 aframePostFXBloomEnabled: (envir.scene.aframeBloomStrength || 'off') !== 'off',
                 aframePostFXColorEnabled: envir.scene.aframePostFXColorEnabled !== false,
@@ -79,6 +80,8 @@ class VrodosSceneExporter {
                 aframePostFXEdgeAAEnabled: envir.scene.aframePostFXEdgeAAEnabled !== false,
                 aframePostFXEdgeAAStrength: envir.scene.aframePostFXEdgeAAStrength || 3,
                 aframeBloomStrength: envir.scene.aframeBloomStrength || 'off',
+                aframeExposurePreset: envir.scene.aframeExposurePreset || 'neutral',
+                aframeContrastPreset: envir.scene.aframeContrastPreset || 'balanced',
                 aframeReflectionProfile: envir.scene.aframeReflectionProfile || 'balanced',
                 backgroundPresetOption: envir.scene.backgroundPresetOption || 'None',
                 backgroundPresetGroundEnabled: envir.scene.backgroundPresetGroundEnabled !== false,
@@ -243,7 +246,7 @@ class VrodosSceneImporter {
 
         for (const key in scene_json_metadata) {
             const value = scene_json_metadata[key];
-            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeReflectionProfile', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
+            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
                 resources3D_new["SceneSettings"][key] = value;
             }
         }

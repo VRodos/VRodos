@@ -87,6 +87,10 @@ class VRodos_LoaderMulti {
                     envir.scene.aframeShadowQuality = resources3D[name] || 'medium';
                 }
 
+                if (name === 'aframeAAQuality') {
+                    envir.scene.aframeAAQuality = resources3D[name] || 'balanced';
+                }
+
                 if (name === 'aframePostFXEnabled') {
                     envir.scene.aframePostFXEnabled = resources3D[name] === true || resources3D[name] === 'true';
                 }
@@ -117,6 +121,14 @@ class VRodos_LoaderMulti {
                         envir.scene.aframeBloomStrength = 'off';
                     }
                     envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
+                }
+
+                if (name === 'aframeExposurePreset') {
+                    envir.scene.aframeExposurePreset = resources3D[name] || 'neutral';
+                }
+
+                if (name === 'aframeContrastPreset') {
+                    envir.scene.aframeContrastPreset = resources3D[name] || 'balanced';
                 }
 
                 if (name === 'aframeReflectionProfile') {
@@ -490,6 +502,7 @@ class VRodos_LoaderMulti {
 
                         envir.scene.aframeRenderQuality = resources3D[name].aframeRenderQuality || 'standard';
                         envir.scene.aframeShadowQuality = resources3D[name].aframeShadowQuality || 'medium';
+                        envir.scene.aframeAAQuality = resources3D[name].aframeAAQuality || 'balanced';
                         envir.scene.aframePostFXEnabled = resources3D[name].aframePostFXEnabled === true || resources3D[name].aframePostFXEnabled === 'true';
                         envir.scene.aframePostFXBloomEnabled = !(resources3D[name].aframePostFXBloomEnabled === false || resources3D[name].aframePostFXBloomEnabled === 'false');
                         envir.scene.aframePostFXColorEnabled = !(resources3D[name].aframePostFXColorEnabled === false || resources3D[name].aframePostFXColorEnabled === 'false');
@@ -501,6 +514,8 @@ class VRodos_LoaderMulti {
                             envir.scene.aframeBloomStrength = 'off';
                         }
                         envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
+                        envir.scene.aframeExposurePreset = resources3D[name].aframeExposurePreset || 'neutral';
+                        envir.scene.aframeContrastPreset = resources3D[name].aframeContrastPreset || 'balanced';
                         envir.scene.aframeReflectionProfile = resources3D[name].aframeReflectionProfile || 'balanced';
 
                         if (typeof syncCompileDialogFromSceneSettings === 'function') {

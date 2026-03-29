@@ -647,6 +647,7 @@ extract( $data );
 			}
 			envir.scene.aframeRenderQuality = vrodos_scene_data["aframeRenderQuality"] || 'standard';
 			envir.scene.aframeShadowQuality = vrodos_scene_data["aframeShadowQuality"] || 'medium';
+			envir.scene.aframeAAQuality = vrodos_scene_data["aframeAAQuality"] || 'balanced';
 			envir.scene.aframePostFXEnabled = vrodos_scene_data["aframePostFXEnabled"] === true || vrodos_scene_data["aframePostFXEnabled"] === 'true';
 			envir.scene.aframePostFXBloomEnabled = !(vrodos_scene_data["aframePostFXBloomEnabled"] === false || vrodos_scene_data["aframePostFXBloomEnabled"] === 'false');
 			envir.scene.aframePostFXColorEnabled = !(vrodos_scene_data["aframePostFXColorEnabled"] === false || vrodos_scene_data["aframePostFXColorEnabled"] === 'false');
@@ -654,6 +655,8 @@ extract( $data );
 			envir.scene.aframePostFXEdgeAAEnabled = !(vrodos_scene_data["aframePostFXEdgeAAEnabled"] === false || vrodos_scene_data["aframePostFXEdgeAAEnabled"] === 'false');
 			envir.scene.aframePostFXEdgeAAStrength = vrodos_scene_data["aframePostFXEdgeAAStrength"] || 3;
 			envir.scene.aframeBloomStrength = vrodos_scene_data["aframeBloomStrength"] || 'off';
+			envir.scene.aframeExposurePreset = vrodos_scene_data["aframeExposurePreset"] || 'neutral';
+			envir.scene.aframeContrastPreset = vrodos_scene_data["aframeContrastPreset"] || 'balanced';
 			if (envir.scene.aframePostFXBloomEnabled === false) {
 				envir.scene.aframeBloomStrength = 'off';
 			}

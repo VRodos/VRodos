@@ -5,7 +5,7 @@
 	data-game-slug="<?php echo esc_attr( $projectSlug ); ?>"
 	data-project-id="<?php echo esc_attr( $project_id ); ?>">
 
-	<div class="tw-modal-box tw-p-0 tw-overflow-hidden" style="max-width: 1100px; width: 90vw;">
+	<div class="tw-modal-box tw-p-0 tw-overflow-hidden" style="max-width: 1280px; width: min(96vw, 1280px);">
 
 		<!-- Header -->
 		<div class="tw-p-6 tw-pb-3 tw-flex tw-items-center tw-gap-3 tw-border-b tw-border-slate-200">
@@ -44,7 +44,7 @@
 					</div>
 				</div>
 
-				<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+				<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-4">
 					<label class="tw-form-control">
 						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Render Quality</span>
 						<select id="compileRenderQualitySelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
@@ -61,6 +61,16 @@
 							<option value="high">High</option>
 						</select>
 					</label>
+
+					<label class="tw-form-control">
+						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Anti-Aliasing Quality</span>
+						<select id="compileAAQualitySelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
+							<option value="off">Off</option>
+							<option value="balanced">Balanced</option>
+							<option value="high">High</option>
+							<option value="ultra">Ultra</option>
+						</select>
+					</label>
 				</div>
 
 				<div class="tw-flex tw-items-center tw-gap-3 tw-mt-6 tw-mb-2">
@@ -69,7 +79,7 @@
 				</div>
 
 				<div id="compilePostFxGroup" class="tw-pl-4 tw-border-l-2 tw-border-slate-200 tw-ml-2 tw-space-y-4 tw-transition-opacity tw-duration-200 tw-opacity-50 tw-pointer-events-none">
-					<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-3">
+				<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-3">
 					<label class="tw-flex tw-items-center tw-gap-3">
 						<input id="compilePostFxColorToggle" type="checkbox" class="tw-checkbox tw-checkbox-sm" disabled>
 						<span class="tw-text-sm tw-text-slate-700">Color grading</span>
@@ -88,10 +98,31 @@
 					</label>
 
 					<label class="tw-form-control">
-						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Reflection Profile</span>
+						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Reflection Strength</span>
 						<select id="compileReflectionProfileSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
+							<option value="soft">Soft</option>
 							<option value="balanced">Balanced</option>
 							<option value="enhanced">Enhanced</option>
+						</select>
+					</label>
+				</div>
+
+				<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4 tw-mt-4">
+					<label class="tw-form-control">
+						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Exposure</span>
+						<select id="compileExposurePresetSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1" disabled>
+							<option value="neutral">Neutral</option>
+							<option value="bright">Bright</option>
+							<option value="cinematic">Cinematic</option>
+						</select>
+					</label>
+
+					<label class="tw-form-control">
+						<span class="tw-label-text tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-slate-500">Contrast</span>
+						<select id="compileContrastPresetSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1" disabled>
+							<option value="soft">Soft</option>
+							<option value="balanced">Balanced</option>
+							<option value="punchy">Punchy</option>
 						</select>
 					</label>
 				</div>

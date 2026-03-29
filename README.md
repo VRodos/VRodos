@@ -35,11 +35,14 @@ It combines a Three.js scene editor, custom WordPress content types, asset manag
 - Compile dialog controls for compiled-output quality settings:
   - Render Quality: `Standard` or `High`
   - Shadow Quality: `Off`, `Medium`, or `High`
+  - Anti-Aliasing Quality: `Off`, `Balanced`, `High`, or `Ultra`
   - Post-Processing toggle
   - Color grading toggle
   - Bloom Strength, where `Off` disables bloom
+  - Exposure preset
+  - Contrast preset
   - Edge smoothing strength
-  - Reflection Profile
+  - Reflection Strength: `Soft`, `Balanced`, or `Enhanced`
 - Scene editor remains the source of truth for:
   - Background style
   - Preset selection
@@ -66,7 +69,7 @@ It combines a Three.js scene editor, custom WordPress content types, asset manag
   - improved environment lighting behavior
   - PBR-friendly material enhancement for compiled GLBs
   - cinematic full-screen post pass for high-quality desktop builds
-  - compile dialog controls for color grading, bloom strength, edge smoothing, and reflection profile
+  - compile dialog controls for anti-aliasing quality, color grading, exposure, contrast, bloom strength, edge smoothing, and reflection strength
 
 ### Collaboration and publishing
 

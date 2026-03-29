@@ -253,6 +253,7 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeCollisionMode']    = $json_metadata->aframeCollisionMode ?? 'auto';
 		$scene_data['aframeRenderQuality']    = $json_metadata->aframeRenderQuality ?? 'standard';
 		$scene_data['aframeShadowQuality']    = $json_metadata->aframeShadowQuality ?? 'medium';
+		$scene_data['aframeAAQuality']        = $json_metadata->aframeAAQuality ?? 'balanced';
 		$scene_data['aframePostFXEnabled']    = $json_metadata->aframePostFXEnabled ?? false;
 		$scene_data['aframePostFXBloomEnabled'] = $json_metadata->aframePostFXBloomEnabled ?? false;
 		$scene_data['aframePostFXColorEnabled'] = $json_metadata->aframePostFXColorEnabled ?? true;
@@ -260,6 +261,8 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePostFXEdgeAAEnabled'] = $json_metadata->aframePostFXEdgeAAEnabled ?? true;
 		$scene_data['aframePostFXEdgeAAStrength'] = $json_metadata->aframePostFXEdgeAAStrength ?? 3;
 		$scene_data['aframeBloomStrength']    = $json_metadata->aframeBloomStrength ?? 'off';
+		$scene_data['aframeExposurePreset']   = $json_metadata->aframeExposurePreset ?? 'neutral';
+		$scene_data['aframeContrastPreset']   = $json_metadata->aframeContrastPreset ?? 'balanced';
 		if ( isset( $json_metadata->aframePostFXBloomEnabled ) && ! filter_var( $json_metadata->aframePostFXBloomEnabled, FILTER_VALIDATE_BOOLEAN ) ) {
 			$scene_data['aframeBloomStrength'] = 'off';
 		}
