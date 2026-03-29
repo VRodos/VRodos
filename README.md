@@ -1,157 +1,175 @@
-# VRodos: 3D/VR Content Management for WordPress
+# VRodos: 3D Scene Authoring and A-Frame Publishing for WordPress
 
-VRodos is a powerful WordPress plugin that transforms a standard website into a comprehensive 3D/VR content creation and management platform. It provides a complete ecosystem for authoring, managing, and displaying immersive 3D content, leveraging the power of WebGL, Three.js, and A-Frame directly within the WordPress environment.
+VRodos turns WordPress into a browser-based 3D scene authoring system with a compiled A-Frame output for interactive desktop, VR, and immersive web experiences.
 
-This document serves as a technical guide for end-users, site administrators, and developers. It covers the plugin's features, architecture, installation, and configuration.
+It combines a Three.js scene editor, custom WordPress content types, asset management, and an A-Frame runtime so creators can build, save, organize, and publish scenes from inside WordPress.
 
-## Features
+## What VRodos Supports Today
 
-- **WebGL-Based 3D Editor**: A sophisticated in-browser editor built with Three.js (r147) for creating and managing complex 3D scenes.
-- **Advanced Asset Management**: Upload, organize, and manage a wide range of 3D assets, including models (GLB, OBJ, FBX), textures, and media files.
-- **VR Scene Authoring**: Export scenes to the A-Frame framework for creating VR-ready experiences.
-- **Collaborative Editing**: Real-time, multi-user scene editing capabilities provided by a `networked-aframe` server component.
-- **WordPress Integration**: Seamlessly integrated with WordPress using custom post types for projects, scenes, and assets.
+### Scene authoring
 
-## Architecture Overview for Developers
+- In-browser 3D scene editor built on Three.js
+- Per-scene organization through custom post types for projects, scenes, and assets
+- Hierarchy viewer, transform editing, lighting placement, camera controls, and scene options
+- Scene save/load, undo/redo reload paths, and JSON-based scene persistence
+- Background authoring for:
+  - Horizon
+  - Solid color
+  - Presets
+  - Image sky
+- Fog controls and scene-level environment settings
 
-The VRodos plugin is built upon a modern, object-oriented architecture designed for stability, maintainability, and extensibility.
+### Asset workflows
 
-- **Manager Class Pattern**: The codebase is organized into a series of specialized manager classes, each responsible for a specific domain of functionality (e.g., asset management, post types, AJAX handling). This follows the single-responsibility principle and makes the code easier to navigate and maintain.
-- **Clean Bootstrap**: The main plugin file (`VRodos.php`) serves as a simple bootstrap, responsible only for loading and instantiating the manager classes.
-- **Centralized AJAX Handling**: All AJAX endpoints are managed within a single, dedicated handler class, ensuring consistent security and capability checks.
+- 3D asset upload and editing for GLB, OBJ, and FBX workflows
+- Image, video, audio, light, and helper asset usage inside scenes
+- Asset categories and taxonomy-driven organization
+- Dedicated `Walkable Surfaces` category for compiled navigation meshes
+- Scene-side asset browser and drag/drop placement
+- Asset editor integration from both standalone pages and inside scene workflows
 
-## Prerequisites
+### Compiled A-Frame output
 
-- **Apache 2** or equivalent web server
-- **MySQL 5+** or **MariaDB 10+**
-- **WordPress 6.0+**
-- **PHP 8.3+** (The plugin is modernized for PHP 8.3+)
-- **Node.js 16+** (for the collaborative editing server)
+- One-click scene compilation to A-Frame HTML output
+- Scene startup loader to reduce visible object pop-in during initial load
+- Compile dialog controls for compiled-output quality settings:
+  - Render Quality: `Standard` or `High`
+  - Shadow Quality: `Off`, `Medium`, or `High`
+  - Post-Processing toggle
+- Scene editor remains the source of truth for:
+  - Background style
+  - Preset selection
+  - Preset ground toggle
+- Fog-off scenes compile without inherited fallback fog
+- Improved double-sided image output using a two-plane compile strategy to avoid back-face overlap artifacts
 
-## Modernization & Automation
+### Navigation and interaction
 
-The VRodos plugin has been modernized for **PHP 8.3+** and includes several automation tools for developers:
+- Compiled movement with desktop and VR-friendly controls
+- Category-driven walkable surface collisions for compiled A-Frame scenes
+- Automatic walkable-surface detection when `Walkable Surfaces` assets exist in a scene
+- Scene-level collision override through `aframeCollisionMode`
+- Auto step-up traversal across walkable ramps and stairs
+- POI, image, video, and raycast-driven interactions in compiled scenes
 
-- **Rector**: Automatically upgrades code for PHP 8.3 compatibility.
-- **PHP CodeSniffer (PHPCS)**: Enforces coding standards (PSR-12/WordPress).
-- **Automated Testing**: Integrated **PHPUnit** for unit testing.
+### Runtime quality and visual features
 
-### Running Automated Tests
+- A-Frame scene settings passed from editor/compile metadata into runtime
+- Desktop-oriented `High` quality rendering path
+- Shadow quality presets applied at runtime
+- Photorealism groundwork with:
+  - quality-aware renderer tuning
+  - improved environment lighting behavior
+  - PBR-friendly material enhancement for compiled GLBs
+  - restrained post-FX path for high-quality builds
 
-To run the automated tests, ensure you have installed the dev dependencies via the setup script, then run:
+### Collaboration and publishing
 
-```powershell
-vendor/bin/phpunit
-```
+- Networked multi-user runtime through the bundled `networked-aframe` server
+- WebRTC/easyRTC-based collaboration support
+- Build outputs served through the local/runtime web server
 
-Or via composer:
+## Technology Stack
 
-```powershell
-composer test
-```
+- WordPress 6.x
+- PHP 8.3+
+- Vanilla JavaScript
+- Three.js r147 in the editor stack
+- A-Frame 1.7.x in the compiled runtime
+- Node.js server for networked/collaborative features
 
+## Core WordPress Model
 
-## Installation
+VRodos uses custom post types and taxonomies for its content model:
 
-### 1. WordPress Plugin Installation
+- `vrodos_game`: projects
+- `vrodos_scene`: scenes
+- `vrodos_asset3d`: assets
 
-1.  Download the latest version of the plugin as a `.zip` file.
-2.  In your WordPress dashboard, navigate to **Plugins → Add New → Upload Plugin**.
-3.  Upload the `.zip` file and activate the plugin.
+The plugin follows a manager-class architecture, with responsibilities split across dedicated managers for assets, scenes, AJAX, upload handling, compilation, defaults, roles, menus, settings, and pages.
 
-### 2. WordPress Configuration
+## Typical Workflow
 
-After activation, ensure your WordPress environment is configured correctly:
+1. Create a project.
+2. Create one or more scenes.
+3. Upload or edit assets.
+4. Add assets to the scene editor and configure transforms, lights, and background.
+5. Optionally add helper assets in the `Walkable Surfaces` category for compiled navigation.
+6. Open the compile dialog and choose compiled-output quality settings.
+7. Build the project to generate compiled A-Frame output.
 
-1.  **Set Permalinks**: Go to **Settings → Permalinks** and select a structure other than "Plain." **Post name** is recommended.
-2.  **Create Required Pages**: The plugin will automatically create the necessary pages for the editor and asset management. Add these pages to your desired menu in **Appearance → Menus**.
+## Local Development
 
-## Node.js Server Setup
+### WordPress
 
-The VRodos plugin requires a Node.js server component to serve the compiled 3D/VR scenes and to enable its real-time collaborative editing features. You must install and run this server for the plugin to function correctly.
+- Install WordPress locally.
+- Place the plugin in `wp-content/plugins/VRodos/`.
+- Activate the plugin from the WordPress admin.
+- Use a non-plain permalink structure.
 
-### 1. Install Server Dependencies
+### Collaborative/runtime server
 
-The collaborative server is located in the `runtime/networked-aframe/` directory. Navigate to this directory and install the required Node.js packages:
+The bundled server lives in:
+
+`runtime/networked-aframe/`
+
+Install and run it with:
 
 ```bash
 cd wp-content/plugins/VRodos/runtime/networked-aframe/
 npm install
-```
-
-### 2. Configure WebRTC TURN Server
-
-For collaborative editing to work reliably across different networks, a TURN server is required to handle WebRTC peer-to-peer connections.
-
-1.  Create a free account at [Metered TURN Servers](https://www.metered.ca/turn-server).
-2.  In your Metered dashboard, create a new credential.
-3.  Create a file named `keys.json` inside the `runtime/networked-aframe/server/` directory.
-4.  Add your credentials to the `keys.json` file using the following format:
-
-```json
-{
-  "iceServers": [
-    {
-      "urls": "stun:stun.relay.metered.ca:80"
-    },
-    {
-      "urls": "turn:a.relay.metered.ca:80",
-      "username": "YOUR_METERED_USERNAME",
-      "credential": "YOUR_METERED_CREDENTIAL"
-    },
-    {
-      "urls": "turn:a.relay.metered.ca:80?transport=tcp",
-      "username": "YOUR_METERED_USERNAME",
-      "credential": "YOUR_METERED_CREDENTIAL"
-    }
-  ]
-}
-```
-
-### 3. Start the Server
-
-Navigate to the server directory and start the server:
-
-```bash
-cd wp-content/plugins/VRodos/runtime/networked-aframe/server/
+cd server/
 node easyrtc-server.js
 ```
 
-The server will start, by default, on port `5832`. The collaborative editing feature in the 3D scene editor will now be enabled.
+By default, the local runtime server is commonly used on port `5832`.
+
+## Upload Limits
+
+Large GLB uploads depend on both PHP limits and web server limits.
+
+If large assets fail to upload, check:
+
+- PHP `upload_max_filesize`
+- PHP `post_max_size`
+- Apache or Local WP request/body size limits
+- WordPress/media-related server limits
+
+For Local WP environments, Apache limits can still block uploads even when PHP limits look large enough.
 
 ## Troubleshooting
 
-### WordPress API Not Working
+### Scene editor does not load correctly
 
--   **Issue**: REST API endpoints are not accessible, causing issues with saving or loading data.
--   **Solution**: Ensure you have set your **Settings → Permalinks** to a structure other than "Plain."
+- Verify plugin scripts are enqueued.
+- Check the browser console for JavaScript errors.
+- Confirm Three.js and editor assets are present in the plugin directory.
 
-### Collaborative Server Connection Issues
+### Compiled scene looks flat or low quality
 
--   **Issue**: The editor cannot connect to the collaborative server.
--   **Solution**:
-    1.  Verify that the Node.js server is running correctly.
-    2.  Check for firewall rules that might be blocking the server port.
-    3.  Ensure your `keys.json` file is correctly configured.
+- Rebuild after changing compile dialog quality settings.
+- Use `High` render quality for desktop-oriented scenes.
+- Review authored GLB material quality, textures, and lighting setup.
 
-### Large 3D Model Upload Limits
+### Walkable surfaces do not behave as expected
 
--   **Issue**: You receive an error when trying to upload large 3D model files.
--   **Solution**: You may need to increase the file upload limits for your web server and PHP. Add the following directives to your `.htaccess` file in the WordPress root directory:
+- Ensure the helper asset belongs to the `Walkable Surfaces` category.
+- Rebuild the scene after changing walkable geometry.
+- Use simpler helper meshes for navigation when the visible GLB is noisy or anomalous.
 
-```apache
-php_value upload_max_filesize 512M
-php_value post_max_size 512M
-php_value memory_limit 1024M
-php_value max_execution_time 1800
-php_value max_input_time 1800
-```
+### Large uploads fail
+
+- Check both PHP and Apache or Local WP limits.
+- Review server logs when a request fails before WordPress finishes handling the upload.
 
 ## Credits
 
--   **Authors**: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
--   **Website**: [https://vrodos.iti.gr](https://vrodos.iti.gr)
+- Anastasios Papazoglou Chalikias
+- Elias Kouslis
+- Dimitrios Ververidis
+
+Website: [https://vrodos.iti.gr](https://vrodos.iti.gr)
 
 ## License
 
-See the `LICENSE` file for details.
+See `LICENSE`.

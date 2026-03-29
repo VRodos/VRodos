@@ -768,24 +768,22 @@ class VRodos_Compiler_Manager {
 						$a_plane_parent->appendChild( $dom->createTextNode( '' ) );
 						$this->setAffineTransformations( $a_plane_parent, $contentObject );
 
-						$a_plane_front = $dom->createElement( 'a-image' );
+						$a_plane_front = $dom->createElement( 'a-plane' );
 						$a_plane_front->setAttribute( 'id', "image-display-front_$uuid" );
-						$a_plane_front->setAttribute( 'src', "#image_$uuid" );
 						$a_plane_front->setAttribute( 'height', '2' );
 						$a_plane_front->setAttribute( 'width', '2' );
 						$a_plane_front->setAttribute( 'position', '0 0 0.001' );
-						$a_plane_front->setAttribute( 'material', 'shader: flat; side: front; transparent: true; alphaTest: 0.001; depthWrite: true; depthTest: true' );
-						$a_plane_front->setAttribute( 'class', 'raycastable' );
+						$a_plane_front->setAttribute( 'material', "src: #image_$uuid; shader: flat; side: front; transparent: false; alphaTest: 0.01; depthWrite: true; depthTest: true" );
+						$a_plane_front->setAttribute( 'class', 'image-display-surface' );
 
-						$a_plane_back = $dom->createElement( 'a-image' );
+						$a_plane_back = $dom->createElement( 'a-plane' );
 						$a_plane_back->setAttribute( 'id', "image-display-back_$uuid" );
-						$a_plane_back->setAttribute( 'src', "#image_$uuid" );
 						$a_plane_back->setAttribute( 'height', '2' );
 						$a_plane_back->setAttribute( 'width', '2' );
 						$a_plane_back->setAttribute( 'position', '0 0 -0.001' );
 						$a_plane_back->setAttribute( 'rotation', '0 180 0' );
-						$a_plane_back->setAttribute( 'material', 'shader: flat; side: front; transparent: true; alphaTest: 0.001; depthWrite: true; depthTest: true' );
-						$a_plane_back->setAttribute( 'class', 'raycastable' );
+						$a_plane_back->setAttribute( 'material', "src: #image_$uuid; shader: flat; side: front; transparent: false; alphaTest: 0.01; depthWrite: true; depthTest: true" );
+						$a_plane_back->setAttribute( 'class', 'image-display-surface' );
 
 						$a_plane_parent->appendChild( $a_plane_front );
 						$a_plane_parent->appendChild( $a_plane_back );

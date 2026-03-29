@@ -274,6 +274,129 @@ function vrodosCreateHiddenNavmeshMaterial(sourceMaterial) {
     });
 }
 
+function vrodosApplyTextureQuality(texture, options, isColorTexture) {
+    if (!texture) {
+        return;
+    }
+
+    if (isColorTexture) {
+        if (typeof texture.colorSpace !== 'undefined' && typeof THREE.SRGBColorSpace !== 'undefined') {
+            texture.colorSpace = THREE.SRGBColorSpace;
+        } else if (typeof texture.encoding !== 'undefined' && typeof THREE.sRGBEncoding !== 'undefined') {
+            texture.encoding = THREE.sRGBEncoding;
+        }
+    }
+
+    if (!texture.isVideoTexture && typeof options.maxAnisotropy === 'number' && options.maxAnisotropy > 0) {
+        texture.anisotropy = Math.max(texture.anisotropy || 0, Math.min(options.maxAnisotropy, options.renderQuality === 'high' ? 8 : 4));
+    }
+
+    texture.needsUpdate = true;
+}
+
+function vrodosGetExplicitMaterialOverrides(entityEl) {
+    if (!entityEl) {
+        return {};
+    }
+
+    if (typeof entityEl.getDOMAttribute === 'function') {
+        return entityEl.getDOMAttribute('material') || {};
+    }
+
+    return entityEl.getAttribute('material') || {};
+}
+
+function vrodosEnhanceMeshMaterial(material, overrides, options) {
+    if (!material) {
+        return;
+    }
+
+    material.userData = material.userData || {};
+
+    vrodosApplyTextureQuality(material.map, options, true);
+    vrodosApplyTextureQuality(material.emissiveMap, options, true);
+    vrodosApplyTextureQuality(material.aoMap, options, false);
+    vrodosApplyTextureQuality(material.metalnessMap, options, false);
+    vrodosApplyTextureQuality(material.roughnessMap, options, false);
+    vrodosApplyTextureQuality(material.normalMap, options, false);
+
+    material.dithering = options.renderQuality === 'high';
+
+    if (typeof material.envMapIntensity !== 'undefined') {
+        if (typeof material.userData.vrodosBaseEnvMapIntensity === 'undefined') {
+            material.userData.vrodosBaseEnvMapIntensity = material.envMapIntensity || 1;
+        }
+
+        material.envMapIntensity = options.renderQuality === 'high'
+            ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.18)
+            : material.userData.vrodosBaseEnvMapIntensity;
+    }
+
+    if (typeof material.shadowSide !== 'undefined' && typeof THREE.FrontSide !== 'undefined') {
+        material.shadowSide = THREE.FrontSide;
+    }
+
+    if (material.transparent && typeof material.alphaTest !== 'undefined') {
+        material.alphaTest = Math.max(material.alphaTest || 0, 0.003);
+    }
+
+    if (typeof overrides.color !== 'undefined' && overrides.color !== null && overrides.color !== '' && material.color) {
+        material.color.set(overrides.color);
+    }
+
+    if (typeof overrides.emissive !== 'undefined' && overrides.emissive !== null && overrides.emissive !== '' && material.emissive) {
+        material.emissive.set(overrides.emissive);
+    }
+
+    if (typeof overrides.emissiveIntensity !== 'undefined' && overrides.emissiveIntensity !== null && overrides.emissiveIntensity !== '' && typeof material.emissiveIntensity !== 'undefined') {
+        material.emissiveIntensity = parseFloat(overrides.emissiveIntensity);
+    } else if (options.renderQuality === 'high' && material.emissive && material.emissiveMap && typeof material.emissiveIntensity !== 'undefined') {
+        if (typeof material.userData.vrodosBaseEmissiveIntensity === 'undefined') {
+            material.userData.vrodosBaseEmissiveIntensity = material.emissiveIntensity || 1;
+        }
+        material.emissiveIntensity = Math.max(material.userData.vrodosBaseEmissiveIntensity, 1.05);
+    } else if (typeof material.emissiveIntensity !== 'undefined' && typeof material.userData.vrodosBaseEmissiveIntensity !== 'undefined') {
+        material.emissiveIntensity = material.userData.vrodosBaseEmissiveIntensity;
+    }
+
+    if (typeof overrides.roughness !== 'undefined' && overrides.roughness !== null && overrides.roughness !== '' && typeof material.roughness !== 'undefined') {
+        material.roughness = parseFloat(overrides.roughness);
+    }
+
+    if (typeof overrides.metalness !== 'undefined' && overrides.metalness !== null && overrides.metalness !== '' && typeof material.metalness !== 'undefined') {
+        material.metalness = parseFloat(overrides.metalness);
+    }
+
+    if (options.renderQuality === 'high') {
+        if (typeof material.aoMapIntensity !== 'undefined' && material.aoMap) {
+            if (typeof material.userData.vrodosBaseAoMapIntensity === 'undefined') {
+                material.userData.vrodosBaseAoMapIntensity = material.aoMapIntensity || 1;
+            }
+            material.aoMapIntensity = Math.max(material.userData.vrodosBaseAoMapIntensity, 1.12);
+        }
+
+        if (typeof material.normalScale !== 'undefined' && material.normalMap && material.normalScale) {
+            if (!material.userData.vrodosBaseNormalScale && typeof material.normalScale.clone === 'function') {
+                material.userData.vrodosBaseNormalScale = material.normalScale.clone();
+            }
+
+            if (material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
+                material.normalScale.copy(material.userData.vrodosBaseNormalScale).multiplyScalar(1.05);
+            }
+        }
+    } else {
+        if (typeof material.aoMapIntensity !== 'undefined' && typeof material.userData.vrodosBaseAoMapIntensity !== 'undefined') {
+            material.aoMapIntensity = material.userData.vrodosBaseAoMapIntensity;
+        }
+
+        if (typeof material.normalScale !== 'undefined' && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
+            material.normalScale.copy(material.userData.vrodosBaseNormalScale);
+        }
+    }
+
+    material.needsUpdate = true;
+}
+
 AFRAME.registerComponent('vrodos-navmesh-helper', {
     init: function () {
         this.applyHiddenNavmeshState = this.applyHiddenNavmeshState.bind(this);
@@ -466,6 +589,10 @@ AFRAME.registerComponent('scene-settings', {
         } else if (typeof renderer.outputEncoding !== 'undefined' && typeof THREE.sRGBEncoding !== 'undefined') {
             renderer.outputEncoding = THREE.sRGBEncoding;
         }
+
+        if (typeof renderer.toneMapping !== 'undefined' && typeof THREE.ACESFilmicToneMapping !== 'undefined') {
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        }
     },
     applyShadowQualityProfile: function () {
         var renderer = this.el.renderer;
@@ -491,7 +618,10 @@ AFRAME.registerComponent('scene-settings', {
                     return;
                 }
 
-                node.castShadow = shadowsEnabled;
+                var nodeMaterial = Array.isArray(node.material) ? node.material[0] : node.material;
+                var isTransparentMesh = !!(nodeMaterial && (nodeMaterial.transparent || nodeMaterial.opacity < 0.98));
+
+                node.castShadow = shadowsEnabled && !isTransparentMesh;
                 node.receiveShadow = shadowsEnabled;
             }
 
@@ -513,13 +643,111 @@ AFRAME.registerComponent('scene-settings', {
                     }
 
                     if (typeof node.shadow.bias !== 'undefined' && !node.shadow.bias) {
-                        node.shadow.bias = -0.0001;
+                        node.shadow.bias = shadowQuality === 'high' ? -0.00018 : -0.0001;
+                    }
+
+                    if (typeof node.shadow.normalBias !== 'undefined' && !node.shadow.normalBias) {
+                        node.shadow.normalBias = shadowQuality === 'high' ? 0.02 : 0.01;
                     }
                 }
 
                 node.shadow.needsUpdate = true;
             }
         });
+    },
+    applyMaterialProfiles: function () {
+        var renderer = this.el.renderer;
+        var maxAnisotropy = renderer && typeof renderer.capabilities !== 'undefined' && typeof renderer.capabilities.getMaxAnisotropy === 'function'
+            ? renderer.capabilities.getMaxAnisotropy()
+            : 0;
+        var options = {
+            renderQuality: this.data.renderQuality || 'standard',
+            maxAnisotropy: maxAnisotropy
+        };
+
+        Array.prototype.forEach.call(this.el.querySelectorAll('.override-materials'), function (entityEl) {
+            if (!entityEl || (entityEl.classList && entityEl.classList.contains('vrodos-navmesh'))) {
+                return;
+            }
+
+            var meshRoot = entityEl.getObject3D('mesh');
+            if (!meshRoot) {
+                return;
+            }
+
+            var overrides = vrodosGetExplicitMaterialOverrides(entityEl);
+            meshRoot.traverse(function (node) {
+                if (!node.isMesh || !node.material) {
+                    return;
+                }
+
+                if (Array.isArray(node.material)) {
+                    node.material.forEach(function (material) {
+                        vrodosEnhanceMeshMaterial(material, overrides, options);
+                    });
+                } else {
+                    vrodosEnhanceMeshMaterial(node.material, overrides, options);
+                }
+            });
+        });
+    },
+    ensurePhotorealHelperLight: function (id, attributes, position) {
+        var lightEl = document.getElementById(id);
+        if (!lightEl) {
+            lightEl = document.createElement('a-entity');
+            lightEl.setAttribute('id', id);
+            this.el.appendChild(lightEl);
+        }
+
+        lightEl.setAttribute('light', attributes);
+        lightEl.setAttribute('position', position);
+        lightEl.setAttribute('data-vrodos-photoreal-light', 'true');
+        lightEl.setAttribute('visible', 'true');
+        return lightEl;
+    },
+    removePhotorealHelperLights: function () {
+        Array.prototype.forEach.call(this.el.querySelectorAll('[data-vrodos-photoreal-light="true"]'), function (lightEl) {
+            if (lightEl.parentNode) {
+                lightEl.parentNode.removeChild(lightEl);
+            }
+        });
+    },
+    applyBackgroundQualityProfile: function () {
+        var isHighQuality = this.data.renderQuality === 'high';
+        var shadowEnabled = this.data.shadowQuality !== 'off';
+        var hasEnvironmentBackground = (this.data.selChoice === "0") || (this.data.selChoice === "2" && this.data.presChoice !== "ocean");
+
+        if (hasEnvironmentBackground && this.el.hasAttribute('environment')) {
+            this.el.setAttribute('environment', 'lighting', isHighQuality ? 'point' : 'distant');
+            this.el.setAttribute('environment', 'lightPosition', isHighQuality ? '0.15 1 -0.2' : '0 1 0');
+            this.el.setAttribute('environment', 'shadow', shadowEnabled ? 'true' : 'false');
+            this.removePhotorealHelperLights();
+            return;
+        }
+
+        var hasAuthorLights = Array.prototype.some.call(this.el.querySelectorAll('[light]'), function (lightEl) {
+            return !lightEl.hasAttribute('data-vrodos-photoreal-light');
+        });
+
+        if (!isHighQuality || hasAuthorLights) {
+            this.removePhotorealHelperLights();
+            return;
+        }
+
+        var keyShadowMap = this.data.shadowQuality === 'high' ? 2048 : 1024;
+        var castShadow = shadowEnabled ? 'true' : 'false';
+
+        this.ensurePhotorealHelperLight(
+            'vrodos-photoreal-key-light',
+            'type: directional; color: #fff2d8; intensity: 0.95; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: -0.00018;',
+            '6 10 4'
+        );
+
+        this.ensurePhotorealHelperLight(
+            'vrodos-photoreal-fill-light',
+            'type: ambient; color: #d8e4ff; intensity: 0.38;',
+            '0 4 0'
+        );
     },
     applyPostFXProfile: function () {
         var renderer = this.el.renderer;
@@ -539,6 +767,8 @@ AFRAME.registerComponent('scene-settings', {
     applyQualityProfiles: function () {
         this.applyRenderQualityProfile();
         this.applyShadowQualityProfile();
+        this.applyBackgroundQualityProfile();
+        this.applyMaterialProfiles();
         this.applyPostFXProfile();
     },
     init: function () {
@@ -712,6 +942,7 @@ AFRAME.registerComponent('scene-settings', {
     },
     remove: function () {
         this.el.removeEventListener('model-loaded', this.handleQualityModelLoad);
+        this.removePhotorealHelperLights();
     }
 });
 
