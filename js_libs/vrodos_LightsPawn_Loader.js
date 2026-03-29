@@ -31,36 +31,30 @@ class VRodos_LightsPawn_Loader {
      * Main load entry point for lights and pawns.
      */
     load(resources3D, providedPath) {
+        if (!resources3D) return;
+        
         // Use provided path or fallback to global pluginPath
         const finalPath = providedPath || (typeof pluginPath !== 'undefined' ? pluginPath : '');
 
         for (const name in resources3D) {
             const resource = resources3D[name];
 
-            // 1. Handle Special Scene Keys
-            if (name === 'SceneSettings') {
-                this.updateFogUI(resource.fogCategory);
-                const fogTypeInput = document.getElementById('FogType');
-                if (fogTypeInput) fogTypeInput.value = resource.fogtype;
+            // 1. Recursive handling for nested objects
+            if (name === 'objects' && typeof resource === 'object') {
+                this.load(resource, finalPath);
                 continue;
             }
 
-            if (name === 'fogCategory') {
-                const fields = { 
-                    'FogNear': 'fognear', 'FogFar': 'fogfar', 
-                    'FogDensity': 'fogdensity' 
-                };
-                Object.entries(fields).forEach(([id, key]) => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = parseFloat(resource[key]);
-                });
-
-                if (document.getElementById('jscolorpickFog')?.jscolor) {
-                    document.getElementById('jscolorpickFog').jscolor.fromString("#" + resource['fogcolor']);
-                }
-
-                this.updateFogUI(resource['fogCategory']);
+            // 2. Handle Special Scene Keys (Metadata)
+            if (name === 'SceneSettings') {
+                this.processSceneSettings(resource);
                 continue;
+            }
+
+            // Fallback for flat metadata (backward compatibility)
+            if (name === 'fogCategory' || name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity') {
+               this.processSceneSettings(resources3D);
+               continue;
             }
 
             if (name === 'ClearColor') {
@@ -71,27 +65,76 @@ class VRodos_LightsPawn_Loader {
                     const el = document.getElementById(id);
                     if (el) el.value = resource;
                 });
+                if (document.getElementById('jscolorpick')?.jscolor) {
+                    document.getElementById('jscolorpick').jscolor.fromString(resource);
+                }
                 continue;
             }
 
-            // 2. Filter for Lights and Pawns
+            // 3. Filter for Lights and Pawns
             const category = resource['category_name'];
             if (!category || (!category.startsWith("light") && !category.startsWith("pawn"))) {
                 continue;
             }
 
-            // 3. Dispatch to Category Handlers
-            const handlers = {
-                'lightSun': () => this.initSun(name, resource),
-                'lightLamp': () => this.initLamp(name, resource),
-                'lightSpot': () => this.initSpot(name, resource),
-                'lightAmbient': () => this.initAmbient(name, resource),
-                'pawn': () => this.initPawn(name, resource, finalPath)
-            };
+            // 4. Dispatch to Category Handlers
+            this.dispatchToHandlers(name, resource, finalPath, category);
+        }
+    }
 
-            if (handlers[category]) {
-                handlers[category]();
+    processSceneSettings(settings) {
+        if (!settings) return;
+
+        // Populate UI fields
+        const fields = { 
+            'FogNear': 'fognear', 'FogFar': 'fogfar', 
+            'FogDensity': 'fogdensity' 
+        };
+        Object.entries(fields).forEach(([id, key]) => {
+            const el = document.getElementById(id);
+            if (el && settings[key] !== undefined) el.value = parseFloat(settings[key]);
+        });
+
+        // Sync Fog Type
+        if (settings.fogtype) {
+            const fogTypeInput = document.getElementById('FogType');
+            if (fogTypeInput) fogTypeInput.value = settings.fogtype;
+        }
+
+        // Sync Color Picker
+        if (settings.fogcolor) {
+            const fcolor = settings.fogcolor;
+            const colorValue = fcolor.startsWith('#') ? fcolor : '#' + fcolor;
+            const picker = document.getElementById('jscolorpickFog');
+            if (picker?.jscolor) {
+                picker.jscolor.fromString(colorValue);
+            } else if (picker) {
+                picker.value = colorValue;
             }
+        }
+
+        // Update Visibility & Radio buttons
+        if (settings.fogCategory !== undefined) {
+            this.updateFogUI(settings.fogCategory);
+        }
+        
+        // Apply to THREE.js Scene
+        if (typeof updateFog === 'function') {
+            updateFog("loading");
+        }
+    }
+
+    dispatchToHandlers(name, resource, finalPath, category) {
+        const handlers = {
+            'lightSun': () => this.initSun(name, resource),
+            'lightLamp': () => this.initLamp(name, resource),
+            'lightSpot': () => this.initSpot(name, resource),
+            'lightAmbient': () => this.initAmbient(name, resource),
+            'pawn': () => this.initPawn(name, resource, finalPath)
+        };
+
+        if (handlers[category]) {
+            handlers[category]();
         }
     }
 

@@ -1,6 +1,6 @@
 'use strict';
 
-function setTransformControlsSize(){
+function setTransformControlsSize() {
     if (!transform_controls.object) return;
     let dims = findDimensions(transform_controls.object);
     let sizeT = 0.25 * Math.log((Math.max(...dims) + 1) + 1);
@@ -9,7 +9,7 @@ function setTransformControlsSize(){
     transform_controls.setSize(sizeT);
 }
 
-function vrodos_fillin_widget_assettrs( selectedObject ) {
+function vrodos_fillin_widget_assettrs(selectedObject) {
     if (selectedObject) {
         let asset_id = selectedObject.value;
         vrodos_fetch_Assettrs_and_setWidget(asset_id, selectedObject);
@@ -32,7 +32,7 @@ function rgbToHex(red, green, blue) {
 }
 
 
-function updateClearColorPicker(picker){
+function updateClearColorPicker(picker) {
     document.getElementById('sceneClearColor').value = picker.toRGBString();
     let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
     //envir.renderer.setClearColor(hex);
@@ -43,7 +43,7 @@ function updateClearColorPicker(picker){
 function saveChanges() {
 
     let save_scene_btn = document.getElementById("save-scene-button");
-    if (save_scene_btn.classList.contains("LinkDisabled")){
+    if (save_scene_btn.classList.contains("LinkDisabled")) {
         return (typeof vrodos_whenSceneSaveSettles === 'function') ? vrodos_whenSceneSaveSettles() : Promise.resolve();
     }
 
@@ -116,7 +116,7 @@ function syncBackgroundStyleDescription(selectedValue) {
 
     val = parseInt(val, 10) || 0;
     const isVisible = val === 0;
-    
+
     horizonDescription.style.display = isVisible ? 'block' : 'none';
     horizonDescription.classList.toggle('tw-hidden', !isVisible);
 }
@@ -190,7 +190,7 @@ function bcgRadioSelect(option) {
             }
         };
         if (sceneHandlers[val]) sceneHandlers[val]();
-        
+
         envir.scene.bcg_selection = val;
         envir.scene.backgroundStyleOption = val;
     }
@@ -225,32 +225,75 @@ function loadFogType() {
             break;
         }
     }
+
+    // Initialize or Sync Fog Slider
+    if (envir.scene.fogCategory === 2) {
+        let density = envir.scene.fogdensity || 0.01;
+        let slider = document.getElementById('FogDensitySlider');
+        let hiddenInput = document.getElementById('FogDensity');
+        if (slider && hiddenInput) {
+            let index = mapDensityToSlider(density);
+            slider.value = index;
+            hiddenInput.value = density;
+            updateFogDensityLabel(index);
+        }
+    }
+
     updateFog("editing");
+}
+
+function handleFogDensitySlider(index) {
+    let density = mapSliderToDensity(index);
+    document.getElementById('FogDensity').value = density;
+    updateFogDensityLabel(index);
+    updateFog("editing");
+}
+
+function updateFogDensityLabel(index) {
+    const labels = ["OFF", "FAR", "MID", "NEAR"];
+    let labelEl = document.getElementById("FogDensityLabel");
+    if (labelEl) labelEl.innerText = labels[index] || "OFF";
+}
+
+function mapSliderToDensity(index) {
+    const mapping = [0.0, 0.001, 0.005, 0.01];
+    return mapping[index] ?? 0.001;
+}
+
+function mapDensityToSlider(density) {
+    const mapping = [0.0, 0.001, 0.005, 0.01];
+    let closestIndex = 0;
+    let minDiff = Infinity;
+    for (let i = 0; i < mapping.length; i++) {
+        let diff = Math.abs(mapping[i] - density);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestIndex = i;
+        }
+    }
+    return closestIndex;
 }
 
 function updateFog(whencalled) {
     if (!envir?.scene) return;
 
-    // Reset properties
-    envir.scene.fogcolor = 0;
-    envir.scene.fognear = 0;
-    envir.scene.fogfar = 0;
-    envir.scene.fogdensity = 0;
-
     const picker = document.getElementById('jscolorpickFog')?.jscolor;
     if (!picker) return;
 
     const fogType = document.getElementById('FogType').value;
-    const fogNear = document.getElementById('FogNear').value;
-    const fogFar = document.getElementById('FogFar').value;
-    const fogDensity = document.getElementById('FogDensity').value;
+    const fogNear = parseFloat(document.getElementById('FogNear').value || 0);
+    const fogFar = parseFloat(document.getElementById('FogFar').value || 1000);
+    const fogDensity = parseFloat(document.getElementById('FogDensity').value || 0.00000001);
 
     const colorHex = picker.rgb.map(x => {
-        const s = parseInt(x).toString(16);
+        const s = Math.round(x).toString(16);
         return s.length === 1 ? "0" + s : s;
     }).join("");
 
-    envir.scene.fogcolor = colorHex;
+    const standardizedColor = "#" + colorHex;
+
+    // 1. Update metadata for persistence
+    envir.scene.fogcolor = standardizedColor;
     envir.scene.fognear = fogNear;
     envir.scene.fogfar = fogFar;
     envir.scene.fogdensity = fogDensity;
@@ -268,15 +311,20 @@ function updateFog(whencalled) {
     };
 
     if (fogType === 'linear') {
+        envir.scene.fog = null; // show fog only in compiled stages
         setVisibility('flex', 'none', 'flex', 'flex');
+        envir.scene.fogCategory = 1;
     } else if (fogType === 'exponential') {
+        envir.scene.fog = null; // show fog only in compiled stages
         setVisibility('none', 'flex', 'flex', 'flex');
+        envir.scene.fogCategory = 2;
     } else if (fogType === 'none') {
         envir.scene.fog = null;
         setVisibility('none', 'none', 'none', 'none');
+        envir.scene.fogCategory = 0;
     }
 
-    if (whencalled !== "undo") {
+    if (whencalled !== "undo" && whencalled !== "loading") {
         saveChanges();
     }
 }

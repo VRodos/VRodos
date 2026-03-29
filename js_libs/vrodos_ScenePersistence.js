@@ -63,6 +63,7 @@ class VrodosSceneExporter {
                 ClearColor: scene.background ? '#' + scene.background.getHexString() : '#000000',
                 enableGeneralChat: envir.scene.enableGeneralChat === true,
                 fogCategory: envir.scene.fogCategory || 0,
+                fogtype: (envir.scene.fogCategory === 1) ? 'linear' : (envir.scene.fogCategory === 2 ? 'exponential' : 'none'),
                 fogcolor: envir.scene.fogcolor || '#FFFFFF',
                 fogfar: envir.scene.fogfar || '1000',
                 fognear: envir.scene.fognear || '0',

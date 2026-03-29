@@ -301,6 +301,13 @@ class VRodos_Compiler_Manager {
 			$is_base_scene_element->setAttribute( 'value', 'false' );
 		}
 
+		$is_base_scene_element = $dom->getElementById( 'is-base-scene-input' );
+		if ( min( $scene_id_list ) == $scene_id ) {
+			$is_base_scene_element->setAttribute( 'value', 'true' );
+		} else {
+			$is_base_scene_element->setAttribute( 'value', 'false' );
+		}
+
 		$metadata = $scene_json->metadata;
 		$objects  = $scene_json->objects;
 
@@ -323,35 +330,38 @@ class VRodos_Compiler_Manager {
 			. '/js_libs/aframe_libs/Master_Client_prototype.html'
 		);
 
+		// Fog Metadata for scene-settings component
+		$fog_category = $scene_json->metadata->fogCategory ?? 0;
+		$fog_color    = $scene_json->metadata->fogcolor ?? '#FFFFFF';
+		$fog_far      = $scene_json->metadata->fogfar ?? 1000;
+		$fog_near     = $scene_json->metadata->fognear ?? 0;
+		$fog_density  = $scene_json->metadata->fogdensity ?? 0.00000001;
+
 		// Modify strings
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 
-		$content = str_replace( 'background="color: #000000"', 'background="color: ' . $scene_json->metadata->ClearColor . '"', $content );
-
-		$fogstring = substr( $content, strpos( $content, 'fog=' ), strpos( $content, 'renderer=' ) - 9 - strpos( $content, 'fog=' ) );
+		$content = str_replace( 'AFRAME_CLEARCOLOR_PLACEHOLDER', $scene_json->metadata->ClearColor, $content );
 
 		// Replace Fog string
-		if ( isset( $scene_json->metadata->fogCategory ) ) {
-			if ( $scene_json->metadata->fogCategory == '0' ) {
-				$content = str_replace( $fogstring, ' ', $content );
+		if ( isset( $scene_json->metadata->fogCategory ) && (int)$scene_json->metadata->fogCategory !== 0 ) {
+			if ( (int)$scene_json->metadata->fogCategory === 1 ) {
+				$fogtype = 'linear';
 			} else {
-				if ( $scene_json->metadata->fogCategory === '1' ) {
-					$fogtype = 'linear';
-				} else {
-					$fogtype = 'exponential';
-				}
-				$content = str_replace(
-					$fogstring,
-					'fog="type: ' . $fogtype .
-					'; color: #' . $scene_json->metadata->fogcolor .
-					'; far: ' . $scene_json->metadata->fogfar .
-					'; density: ' . ( 1.5 * $scene_json->metadata->fogdensity ) .
-					'; near: ' . $scene_json->metadata->fognear . '"',
-					$content
-				);
+				$fogtype = 'exponential';
 			}
+
+			// Sanitize color (remove leading hash if present, then add exactly one)
+			$fogcolor = ltrim( $scene_json->metadata->fogcolor, '#' );
+
+			$fog_attr = 'type: ' . $fogtype .
+			            '; color: #' . $fogcolor .
+			            '; far: ' . ( $scene_json->metadata->fogfar ?? '1000' ) .
+			            '; density: ' . ( 1.5 * ( $scene_json->metadata->fogdensity ?? '0.00000001' ) ) .
+			            '; near: ' . ( $scene_json->metadata->fognear ?? '0' );
+
+			$content = str_replace( 'AFRAME_FOG_PLACEHOLDER', $fog_attr, $content );
 		} else {
-			$content = str_replace( $fogstring, ' ', $content );
+			$content = str_replace( 'AFRAME_FOG_PLACEHOLDER', ' ', $content );
 		}
 
 		$basicDomElements = $this->createBasicDomStructureAframeDirector( $content, $scene_json, $project_id, $scene_id, $scene_id_list );
@@ -411,9 +421,9 @@ class VRodos_Compiler_Manager {
 
 		$cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
 		if ( ! empty( $sceneColor ) ) {
-			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat; fogCategory: $fog_category; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" );
 		} else {
-			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
+			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat; fogCategory: $fog_category; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" );
 		}
 		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 
@@ -1268,6 +1278,29 @@ class VRodos_Compiler_Manager {
 
 		$content = str_replace( 'appname', $app_name, $content );
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
+
+		$content = str_replace( 'AFRAME_CLEARCOLOR_PLACEHOLDER', $scene_json->metadata->ClearColor, $content );
+
+		// Replace Fog string
+		if ( isset( $scene_json->metadata->fogCategory ) && $scene_json->metadata->fogCategory !== '0' ) {
+			if ( $scene_json->metadata->fogCategory === '1' ) {
+				$fogtype = 'linear';
+			} else {
+				$fogtype = 'exponential';
+			}
+
+			$fogcolor = ltrim( $scene_json->metadata->fogcolor, '#' );
+
+			$fog_attr = 'type: ' . $fogtype .
+			            '; color: #' . $fogcolor .
+			            '; far: ' . ( $scene_json->metadata->fogfar ?? '1000' ) .
+			            '; density: ' . ( 1.5 * ( $scene_json->metadata->fogdensity ?? '0.00000001' ) ) .
+			            '; near: ' . ( $scene_json->metadata->fognear ?? '0' );
+
+			$content = str_replace( 'AFRAME_FOG_PLACEHOLDER', $fog_attr, $content );
+		} else {
+			$content = str_replace( 'AFRAME_FOG_PLACEHOLDER', ' ', $content );
+		}
 
 		// Create Basic dom structure for an aframe page
 		$basicDomElements = $this->createBasicDomStructureAframeActor( $content, $scene_json );

@@ -425,113 +425,67 @@ class VRodos_AJAX_Handler {
 	}
 
 	public function image_upload_action_callback() {
+		check_ajax_referer( 'vrodos_scene_upload_image_nonce' ) || wp_die( 'Security check failed.' );
 
-		$DS = DIRECTORY_SEPARATOR;
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
 
-		$project_id = $_POST['projectid'];
-		$scene_id   = $_POST['sceneid'];
+		$project_id = intval( $_POST['projectid'] );
+		$scene_id   = intval( $_POST['sceneid'] );
 
-		add_filter( 'intermediate_image_sizes_advanced', 'vrodos_remove_allthumbs_sizes', 10, 2 );
-		require_once ABSPATH . 'wp-admin/includes/admin.php';
+		if ( ! $project_id || ! $scene_id ) {
+			wp_send_json_error( 'Invalid project or scene ID.', 400 );
+		}
 
-		// DELETE EXISTING FILE: See if has already a thumbnail and delete the file in the filesystem
+		// DELETE EXISTING FILE: See if has already a background image and delete the file in the filesystem
 		$scene_background_ids = get_post_meta( $scene_id, 'vrodos_scene_bg_image' );
 		if ( ! empty( $scene_background_ids ) && ! empty( $scene_background_ids[0] ) ) {
-			// Remove previous file from file system
-
-			$prevMeta = get_post_meta( $scene_background_ids[0], '_wp_attachment_metadata', false );
-
-			if ( count( $prevMeta ) > 0 ) {
-				if ( file_exists( $prevMeta[0]['file'] ) ) {
-					unlink( $prevMeta[0]['file'] );
-				}
-			}
+			$old_attachment_id = intval( $scene_background_ids[0] );
+			// wp_delete_attachment handles file deletion and meta cleanup safely
+			wp_delete_attachment( $old_attachment_id, true );
 		}
 
-		$upload_dir  = wp_upload_dir();
-		$upload_path = str_replace( '/', $DS, $upload_dir['basedir'] ) . $DS . 'scenes' . $DS . $scene_id . $DS;
+		$image_data = $_POST['image'] ?? '';
+		$filename   = sanitize_file_name( $_POST['filename'] ?? 'bg_image.jpg' );
+		$ext        = sanitize_key( $_POST['imagetype'] ?? 'jpg' );
 
-		// Make Scene folder
-		if ( ! is_dir( $upload_path ) ) {
-			mkdir( $upload_path, 0777, true );
-		}
-
-		$image = $_POST['image'];
-		$fn    = $_POST['filename'];
-		$ext   = $_POST['imagetype'];
-
+		// Ensure we have a unique filename to avoid collisions and cache issues
 		$hashed_filename = $project_id . '_' . time() . '_' . $scene_id . '_bg.' . $ext;
+		
+		// Decode base64 image
+		$decoded_image = base64_decode( substr( (string) $image_data, strpos( (string) $image_data, ',' ) + 1 ) );
+		
+		// Upload the background image file using WordPress standard bits
+		// This handles the directory creation and file writing safely
+		$_REQUEST['post_id'] = $scene_id; // Set for our upload_dir filter in Upload Manager
+		add_filter( 'upload_dir', [ 'VRodos_Upload_Manager', 'upload_dir_for_scenes_or_assets' ] );
+		
+		$file_return = wp_upload_bits( $hashed_filename, null, $decoded_image );
+		
+		remove_filter( 'upload_dir', [ 'VRodos_Upload_Manager', 'upload_dir_for_scenes_or_assets' ] );
+		unset( $_REQUEST['post_id'] );
 
-		// Write file string to a file in server
-		file_put_contents(
-			$upload_path . $hashed_filename,
-			base64_decode( substr( (string) $image, strpos( (string) $image, ',' ) + 1 ) )
-		);
-
-		$new_filename = str_replace( '\\', '/', $upload_path . $hashed_filename );
-
-		// --- End of upload ---
-
-		// DATABASE UPDATE
-		// If post meta already exists
-		if ( ! empty( $scene_background_ids ) && ! empty( $scene_background_ids[0] ) ) {
-
-			$scene_bg_id = $scene_background_ids[0];
-
-			// Update the post title into the database
-			wp_update_post(
-				['ID'         => $scene_bg_id, 'post_title' => $new_filename]
-			);
-
-			// Update meta _wp_attached_file
-			update_post_meta( $scene_bg_id, '_wp_attached_file', $new_filename );
-
-			// update also _attachment_meta
-			$data = wp_get_attachment_metadata( $scene_bg_id );
-
-			$data['file'] = $new_filename;
-
-			wp_update_attachment_metadata( $scene_bg_id, $data );
-
-			update_post_meta( $scene_id, 'vrodos_scene_bg_image', $scene_bg_id );
-
-		} else { // If post does not exist
-
-			$attachment = ['post_mime_type' => 'image/' . $ext, 'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $new_filename ) ), 'post_content'   => '', 'post_status'    => 'inherit', 'guid'           => $upload_path . $hashed_filename];
-
-			// Attach to
-			$attachment_id = wp_insert_attachment( $attachment, $new_filename, $scene_id );
-
-			require_once ABSPATH . 'wp-admin/includes/image.php';
-
-			$attachment_data = wp_generate_attachment_metadata( $attachment_id, $new_filename );
-
-			wp_update_attachment_metadata( $attachment_id, $attachment_data );
-
-			update_post_meta( $scene_id, 'vrodos_scene_bg_image', $attachment_id );
-
-			remove_filter(
-				'intermediate_image_sizes_advanced',
-				'vrodos_remove_allthumbs_sizes',
-				10
-			);
-
-			// if (0 < intval($attachment_id, 10)) {
-			// return $attachment_id;
-			// }
-
+		if ( ! $file_return || ! empty( $file_return['error'] ) ) {
+			wp_send_json_error( 'File upload failed: ' . ( $file_return['error'] ?? 'Unknown error' ), 500 );
 		}
 
-		$final_path = $attachment_id ? wp_get_attachment_url( $attachment_id ) : wp_get_attachment_url( $scene_bg_id );
+		// Insert the attachment into the database
+		$attachment_id = VRodos_Upload_Manager::insert_attachment_post( $file_return, $scene_id );
+		
+		if ( ! $attachment_id ) {
+			wp_send_json_error( 'Failed to create database attachment record.', 500 );
+		}
 
-		$compiler = new VRodos_Compiler_Manager();
+		// Update the scene's background image meta
+		update_post_meta( $scene_id, 'vrodos_scene_bg_image', $attachment_id );
+
+		// Prepare the final normalized URL for the editor
+		$final_path = wp_get_attachment_url( $attachment_id );
+		$compiler   = new VRodos_Compiler_Manager();
 		$final_path = $compiler->normalize_url( $final_path );
 
-		$content = json_encode( ['url' => $final_path] );
-
-		echo $content;
-
-		wp_die();
+		wp_send_json( [ 'url' => $final_path ] );
 	}
 
 	public function compile_action_callback() {

@@ -18,6 +18,7 @@ function imgUpload(){
 			formData.append( "filename", fn );
 			formData.append( "projectid", my_ajax_object_compile.projectId );
 			formData.append( "sceneid", my_ajax_object_compile.sceneId );
+			formData.append( "_ajax_nonce", vrodos_scene_upload_image_nonce );
 
 			fetch( isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_uploadimage.ajax_url, {
 				method: 'POST',

@@ -274,11 +274,20 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['backgroundStyleOption']  = $json_metadata->backgroundStyleOption ?? 1;
 
 		if ( property_exists( $json_metadata, 'fogCategory' ) ) {
+			$scene_data['SceneSettings'] = [
+				'fogCategory' => $json_metadata->fogCategory,
+				'fogtype'     => $json_metadata->fogtype ?? 'none',
+				'fogcolor'    => $json_metadata->fogcolor ?? '#ffffff',
+				'fognear'     => $json_metadata->fognear ?? 0.1,
+				'fogfar'      => $json_metadata->fogfar ?? 1000,
+				'fogdensity'  => $json_metadata->fogdensity ?? 0.01,
+			];
+			// Keep for backward compatibility if needed by other legacy scripts
 			$scene_data['fogCategory'] = $json_metadata->fogCategory;
-			$scene_data['fogcolor']    = $json_metadata->fogcolor;
-			$scene_data['fognear']     = $json_metadata->fognear;
-			$scene_data['fogfar']      = $json_metadata->fogfar;
-			$scene_data['fogdensity']  = $json_metadata->fogdensity;
+			$scene_data['fogcolor']    = $json_metadata->fogcolor ?? '#ffffff';
+			$scene_data['fognear']     = $json_metadata->fognear ?? 0.1;
+			$scene_data['fogfar']      = $json_metadata->fogfar ?? 1000;
+			$scene_data['fogdensity']  = $json_metadata->fogdensity ?? 0.01;
 		}
 
 		// Objects

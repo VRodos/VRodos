@@ -25,6 +25,7 @@ extract( $data );
 		var mapActions = {}; // You could also use an array
 
 		var showPawnPositions = "false";
+		var vrodos_scene_upload_image_nonce = "<?php echo wp_create_nonce( 'vrodos_scene_upload_image_nonce' ); ?>";
 	</script>
 </head>
 <body id="vrodos-scene-editor" <?php body_class( 'vrodos-manager-wrapper tw-overflow-hidden' ); ?>>
@@ -511,7 +512,7 @@ extract( $data );
 
 			// Add lights on scene
 			let lightsPawnLoader = new VRodos_LightsPawn_Loader();
-			lightsPawnLoader.load(vrodos_scene_data.objects);
+			lightsPawnLoader.load(vrodos_scene_data);
 
 			// Add all in hierarchy viewer
 			setHierarchyViewer();
@@ -654,11 +655,23 @@ extract( $data );
 				document.getElementById("enableAvatarCheckbox").checked = vrodos_scene_data["enableAvatar"];
 				envir.scene.enableAvatar = vrodos_scene_data["enableAvatar"];
 			}
-			if (vrodos_scene_data["fogCategory"]) {
-				envir.scene.fogCategory = vrodos_scene_data["fogCategory"];
-				envir.scene.fognear = vrodos_scene_data["fognear"];
-				envir.scene.fogfar = vrodos_scene_data["fogfar"];
-				envir.scene.fogdensity = vrodos_scene_data["fogdensity"];
+			if (vrodos_scene_data["SceneSettings"] || vrodos_scene_data["fogCategory"]) {
+				const settings = vrodos_scene_data["SceneSettings"] || vrodos_scene_data;
+				envir.scene.fogCategory = settings.fogCategory;
+				envir.scene.fogtype = settings.fogtype || 'none';
+				envir.scene.fogcolor = settings.fogcolor || '#ffffff';
+				envir.scene.fognear = settings.fognear || 0.1;
+				envir.scene.fogfar = settings.fogfar || 1000;
+				envir.scene.fogdensity = (settings.fogdensity !== undefined) ? settings.fogdensity : 0.01;
+
+				// Sync Fog UI
+				const fogTypeRadios = { 0: 'RadioNoFog', 1: 'RadioLinearFog', 2: 'RadioExponentialFog' };
+				let radioId = fogTypeRadios[envir.scene.fogCategory];
+				if (radioId) {
+					let radioEl = document.getElementById(radioId);
+					if (radioEl) radioEl.checked = true;
+				}
+				if (typeof loadFogType === 'function') loadFogType();
 			}
 			if (vrodos_scene_data["disableMovement"]) {
 				document.getElementById("moveDisableCheckbox").checked = vrodos_scene_data["disableMovement"];

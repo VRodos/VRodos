@@ -201,10 +201,21 @@
                                class="tw-input tw-input-xs tw-input-bordered tw-w-16 tw-bg-slate-800 tw-text-white tw-border-white/10">
                     </div>
 
-                    <div class="exponentialElement tw-flex tw-items-center tw-gap-2" style="display:none">
-                        <label for="FogDensity" class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Density</label>
-                        <input type="text" id="FogDensity" name="FogDensity" form="3dAssetForm" value="0.1" onchange="updateFog()"
-                               class="tw-input tw-input-xs tw-input-bordered tw-w-16 tw-bg-slate-800 tw-text-white tw-border-white/10">
+                    <div class="exponentialElement tw-flex tw-flex-col tw-gap-2 tw-mb-2" style="display:none">
+                        <div class="tw-flex tw-items-center tw-justify-between">
+                            <label for="FogDensitySlider" class="tw-text-xs tw-font-semibold tw-text-white/80">Density</label>
+                            <span id="FogDensityLabel" class="tw-text-[10px] tw-font-bold tw-text-primary tw-uppercase">OFF</span>
+                        </div>
+                        <input type="range" min="0" max="3" value="0" step="1" 
+                               class="tw-range tw-range-xs tw-range-primary" id="FogDensitySlider"
+                               oninput="handleFogDensitySlider(this.value)">
+                        <div class="tw-w-full tw-flex tw-justify-between tw-text-[9px] tw-px-1 tw-opacity-50">
+                            <span>OFF</span>
+                            <span>FAR</span>
+                            <span>MID</span>
+                            <span>NEAR</span>
+                        </div>
+                        <input type="hidden" id="FogDensity" name="FogDensity" form="3dAssetForm" value="0.0">
                     </div>
                 </div>
             </div>

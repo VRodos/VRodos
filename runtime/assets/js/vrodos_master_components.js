@@ -691,6 +691,11 @@ AFRAME.registerComponent('scene-settings', {
         cam_rotation_y: { type: "string", default: "0" },
         avatar_enabled: { type: "string", default: "0" },
         public_chat: { type: "string", default: "0" },
+        fogCategory: { type: "string", default: "0" },
+        fogcolor: { type: "string", default: "#ffffff" },
+        fogfar: { type: "string", default: "1000" },
+        fognear: { type: "string", default: "0" },
+        fogdensity: { type: "string", default: "0.00000001" },
     },
     getBloomStrengthValue: function () {
         switch (this.data.bloomStrength) {
@@ -1305,7 +1310,7 @@ AFRAME.registerComponent('scene-settings', {
                 backgroundEl.setAttribute("environment", {
                     preset: 'default',
                     ground: 'none',
-                    fog: 0,
+                    fog: (this.data.fogCategory === "2") ? (parseFloat(this.data.fogdensity) * 1.5) : 0,
                     playArea: 1,
                     shadow: true
                 });
@@ -1353,7 +1358,7 @@ AFRAME.registerComponent('scene-settings', {
                 } else {
                     backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
                     backgroundEl.setAttribute("environment", "ground", presetGroundEnabled ? "flat" : "none");
-                    backgroundEl.setAttribute("environment", "fog", "0");
+                    backgroundEl.setAttribute("environment", "fog", (this.data.fogCategory === "2") ? (parseFloat(this.data.fogdensity) * 1.5) : "0");
                     backgroundEl.setAttribute("environment", "playArea", "1.4");
                     backgroundEl.setAttribute("environment", "shadow", "true");
                 }
