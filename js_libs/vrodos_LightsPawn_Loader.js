@@ -1,629 +1,323 @@
-/**
- * Created by DIMITRIOS on 7/3/2022.
- */
-
-"use strict";
-
 class VRodos_LightsPawn_Loader {
+    constructor(who) {}
 
-    constructor(who) {
-    };
+    /**
+     * Update visibility of fog-related UI elements.
+     */
+    updateFogUI(fogCategory) {
+        const linearElems = document.getElementsByClassName('linearElement');
+        const expoElems = document.getElementsByClassName('exponentialElement');
+        const colorElems = document.getElementsByClassName('colorElement');
+        const fogValues = document.getElementById("FogValues");
 
-    load(resources3D) {
+        const isLinear = String(fogCategory) === '1';
+        const isExponential = String(fogCategory) === '2';
+        const isNone = String(fogCategory) === '0';
 
-        var linear_elems = document.getElementsByClassName('linearElement');
-        var expo_elems = document.getElementsByClassName('exponentialElement');
-        var color_elems = document.getElementsByClassName('colorElement');
-        
-        
+        if (fogValues) fogValues.style.display = isNone ? "none" : "flex";
 
-        // Lights and Scene Settings loop
+        for (let el of linearElems) el.style.display = isLinear ? "flex" : "none";
+        for (let el of expoElems) el.style.display = isExponential ? "flex" : "none";
+        for (let el of colorElems) el.style.display = isNone ? "none" : "flex";
+
+        const radioMap = { '0': 'RadioNoFog', '1': 'RadioLinearFog', '2': 'RadioExponentialFog' };
+        if (radioMap[fogCategory]) {
+            const radio = document.getElementById(radioMap[fogCategory]);
+            if (radio) radio.checked = true;
+        }
+    }
+
+    /**
+     * Main load entry point for lights and pawns.
+     */
+    load(resources3D, providedPath) {
+        // Use provided path or fallback to global pluginPath
+        const finalPath = providedPath || (typeof pluginPath !== 'undefined' ? pluginPath : '');
+
         for (const name in resources3D) {
             const resource = resources3D[name];
-                
-                if (name === 'SceneSettings') {
-                   
-                    
-                    if (resource.fogCategory === 1) {
-                        document.getElementById("FogValues").style.display="flex";
-                        for (var i = 0; i < linear_elems.length; ++i) {
-                            linear_elems[i].style.display="flex";
-                        }
-                        for (var i = 0; i < expo_elems.length; ++i) {
-                            expo_elems[i].style.display="none";
-                        }
-                        for (var i = 0; i < color_elems.length; ++i) {
-                            color_elems[i].style.display="flex";
-                        }
-                    } else if (resource.fogCategory === 2) {
-                        document.getElementById("FogValues").style.display="flex";
-                        for (var i = 0; i < linear_elems.length; ++i) {
-                            linear_elems[i].style.display="none";
-                        }
-                        for (var i = 0; i < expo_elems.length; ++i) {
-                            expo_elems[i].style.display="flex";
-                        }
-                        for (var i = 0; i < color_elems.length; ++i) {
-                            color_elems[i].style.display="flex";
-                        }
-                    } else{
-                        document.getElementById("FogValues").style.display="none";
-                        for (var i = 0; i < linear_elems.length; ++i) {
-                            linear_elems[i].style.display="none";
-                        }
-                        for (var i = 0; i < expo_elems.length; ++i) {
-                            expo_elems[i].style.display="none";
-                        }
-                        for (var i = 0; i < color_elems.length; ++i) {
-                            color_elems[i].style.display="none";
-                        }
-                    }
-                    document.getElementById('FogType').value = resource.fogtype;
-                    if (resource.fogCategory === 0) {
-                        document.getElementById('RadioNoFog').checked = true;
-                    } else if (resource.fogCategory === 1) {
-                        document.getElementById('RadioLinearFog').checked = true;
-                    } else if (resource.fogCategory === 2) {
-                        document.getElementById('RadioExponentialFog').checked = true;
-                    }                 
-                    return;
-                }
 
-                 if (name === 'fogCategory'){
+            // 1. Handle Special Scene Keys
+            if (name === 'SceneSettings') {
+                this.updateFogUI(resource.fogCategory);
+                const fogTypeInput = document.getElementById('FogType');
+                if (fogTypeInput) fogTypeInput.value = resource.fogtype;
+                continue;
+            }
 
-                    document.getElementById('FogNear').value = parseFloat(resource['fognear']);
-                    document.getElementById('FogFar').value = parseFloat(resource['fogfar']);
-                    document.getElementById('FogDensity').value = parseFloat(resource['fogdensity']);
+            if (name === 'fogCategory') {
+                const fields = { 
+                    'FogNear': 'fognear', 'FogFar': 'fogfar', 
+                    'FogDensity': 'fogdensity' 
+                };
+                Object.entries(fields).forEach(([id, key]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = parseFloat(resource[key]);
+                });
+
+                if (document.getElementById('jscolorpickFog')?.jscolor) {
                     document.getElementById('jscolorpickFog').jscolor.fromString("#" + resource['fogcolor']);
-                    
-
-                    if (resource['fogCategory'] === '1') {
-                        for (var i = 0; i < linear_elems.length; ++i) {
-                            linear_elems[i].style.display="flex";
-                        }
-                        for (var i = 0; i < expo_elems.length; ++i) {
-                            expo_elems[i].style.display="none";
-                        }
-                        for (var i = 0; i < color_elems.length; ++i) {
-                            color_elems[i].style.display="flex";
-                        }
-                        document.getElementById("FogValues").style.display="flex";
-                    } else if (resource['fogCategory'] === '2') {
-                        for (var i = 0; i < linear_elems.length; ++i) {
-                            linear_elems[i].style.display="none";
-                        }
-                        for (var i = 0; i < expo_elems.length; ++i) {
-                            expo_elems[i].style.display="flex";
-                        }
-                        for (var i = 0; i < color_elems.length; ++i) {
-                            color_elems[i].style.display="flex";
-                        }
-                        document.getElementById("FogValues").style.display="flex";
-                    } else{
-                        for (var i = 0; i < linear_elems.length; ++i) {
-                            linear_elems[i].style.display="none";
-                        }
-                        for (var i = 0; i < expo_elems.length; ++i) {
-                            expo_elems[i].style.display="none";
-                        }
-                        for (var i = 0; i < color_elems.length; ++i) {
-                            color_elems[i].style.display="none";
-                        }
-                        document.getElementById("FogValues").style.display="none";
-                    }
-                    if (resource['fogCategory'] === "0") {
-                        document.getElementById('RadioNoFog').checked = true;
-                    } else if (resource['fogCategory'] === "1") {
-                        document.getElementById('RadioLinearFog').checked = true;
-                    } else if (resource['fogCategory'] === "2") {
-                        document.getElementById('RadioExponentialFog').checked = true;
-                    }                 
-
-                     return;
-                 }
-                            
-                // Scene Settings
-                if (name === 'ClearColor') {
-
-                    //console.log("resources3D['ClearColor']", resources3D['ClearColor']);
-
-                    envir.scene.background = new THREE.Color(resources3D['ClearColor']);             // this.isBackGroundNull ? null : new THREE.Color(this.back_3d_color);
-
-                    //envir.renderer.setClearColor(resources3D['ClearColor']);
-
-                    if (document.getElementById('sceneClearColor')) {
-                        document.getElementById('sceneClearColor').value = resources3D['ClearColor'];
-                    }
-                    if (document.getElementById('jscolorpick')) {
-                        document.getElementById('jscolorpick').value = resources3D['ClearColor'];
-                    }
-                    return;
                 }
 
-                let clearToParse = null;
-                if (resource['category_name']) {
+                this.updateFogUI(resource['fogCategory']);
+                continue;
+            }
 
-                    clearToParse = resource['category_name'].startsWith("light") || resource['category_name'].startsWith("pawn");
-
-                    if(!clearToParse)
-                        return;
+            if (name === 'ClearColor') {
+                if (envir?.scene) {
+                    envir.scene.background = new THREE.Color(resource);
                 }
-
-
-                if (resource['category_name'] === 'lightSun') {
-
-                    var colora = new THREE.Color(resource['lightcolor'][0],
-                        resource['lightcolor'][1],
-                        resource['lightcolor'][2]);
-
-                    var lightintensity = resource['lightintensity'];
-
-                    // LIGHT
-                    var lightSun = new THREE.DirectionalLight(colora, lightintensity); //  new THREE.PointLight( 0xC0C090, 0.4, 1000, 0.01 );
-                    //lightSun.castShadow = true;
-
-                    //Set up shadow properties for the light
-                    lightSun.shadow.camera.near = 0.5;    // default
-                    lightSun.shadow.camera.far = 500;     // default
-
-                    // REM HERE
-                    lightSun.position.set(resource['trs']['translation'][0],
-                        resource['trs']['translation'][1],
-                        resource['trs']['translation'][2]);
-
-                    lightSun.rotation.set(
-                        resource['trs']['rotation'][0],
-                        resource['trs']['rotation'][1],
-                        resource['trs']['rotation'][2]);
-
-                    lightSun.scale.set(resource['trs']['scale'][0],
-                        resource['trs']['scale'][1],
-                        resource['trs']['scale'][2]);
-
-
-                    lightSun.target.position.set(resource['targetposition'][0],
-                        resource['targetposition'][1],
-                        resource['targetposition'][2]); // where it points
-
-                    lightSun.name = name;
-                    lightSun.asset_name = "mylightSun";
-                    lightSun.category_name = "lightSun";
-                    lightSun.isSelectableMesh = true;
-                    lightSun.isLight = true;
-                    lightSun.castShadow = true;
-                    lightSun.sunSky = resource['sunSky'];
-                    lightSun.locked = resource['locked'];
-                    lightSun.castingShadow = resource['castingShadow'];
-                    lightSun.shadowMapHeight = resource['shadowMapHeight'];
-                    lightSun.shadowMapWidth = resource['shadowMapWidth'];
-                    lightSun.shadowCameraTop = resource['shadowCameraTop'];
-                    lightSun.shadowCameraBottom = resource['shadowCameraBottom'];
-                    lightSun.shadowCameraLeft = resource['shadowCameraLeft'];
-                    lightSun.shadowCameraRight = resource['shadowCameraRight'];
-                    lightSun.shadowBias = resource['shadowBias'];
-
-                    //// Add Sun Helper
-                    var sunSphere = new THREE.Mesh(
-                        new THREE.SphereGeometry(1, 16, 8),
-                        new THREE.MeshBasicMaterial({ color: colora })
-                    );
-                    sunSphere.isSelectableMesh = true;
-                    sunSphere.name = "SunSphere";
-                    lightSun.add(sunSphere);
-
-                    // lightSun.shadow.mapSize.width = 200;
-                    // lightSun.shadow.mapSize.height = 200;
-
-                    var lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, colora);
-                    lightSunHelper.isLightHelper = true;
-                    lightSunHelper.name = 'lightHelper_' + lightSun.name;
-                    lightSunHelper.category_name = 'lightHelper';
-                    lightSunHelper.parentLightName = name;
-                    envir.scene.add(lightSunHelper);
-
-                    // end of sphere
-                    envir.scene.add(lightSun);
-
-                    lightSun.target.updateMatrixWorld();
-                    lightSunHelper.update();
-
-                    // REM LOAD ALSO THE SPOT HELPER AND EXPORT IMPORT IT : SEE FROM ADD REMOVE ONE !!!!
-                    // Target spot: Where Sun points
-                    var lightTargetSpot = new THREE.Object3D();
-
-                    lightTargetSpot.add(new THREE.Mesh(
-                        new THREE.SphereGeometry(0.5, 16, 8),
-                        new THREE.MeshBasicMaterial({ color: colora })
-                    ));
-
-                    lightTargetSpot.isSelectableMesh = true;
-                    lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
-                    lightTargetSpot.asset_name = "lightTargetSpot_" + lightSun.asset_name;
-                    lightTargetSpot.category_name = "lightTargetSpot";
-                    lightTargetSpot.isLightTargetSpot = true;
-
-                    lightTargetSpot.position.set(resource['targetposition'][0],
-                        resource['targetposition'][1],
-                        resource['targetposition'][2]);
-
-                    lightTargetSpot.parentLight = lightSun;
-                    lightTargetSpot.parentLightHelper = lightSunHelper;
-
-                    lightSun.target.position.set(lightTargetSpot.position.x, lightTargetSpot.position.y,
-                        lightTargetSpot.position.z);
-
-                    envir.scene.add(lightTargetSpot);
-
-                    //Create a helper for the shadow camera (optional)
-                    var lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
-                    lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
-                    envir.scene.add(lightSunShadowhelper);
-
-
-                }
-                else if (resource['category_name'] === 'lightLamp') {
-
-                    var colora = new THREE.Color(resource['lightcolor'][0],
-                        resource['lightcolor'][1],
-                        resource['lightcolor'][2]);
-
-                    var lightintensity = resource['lightintensity'];
-                    var lightdecay = resource['lightdecay'];
-                    var lightdistance = resource['lightdistance'];
-                    // LIGHT
-                    var lightLamp = new THREE.PointLight(colora, lightintensity, lightdistance, lightdecay);
-                    lightLamp.intensity = lightintensity;
-
-                    lightLamp.position.set(
-                        resource['trs']['translation'][0],
-                        resource['trs']['translation'][1],
-                        resource['trs']['translation'][2]);
-
-                    lightLamp.rotation.set(
-                        resource['trs']['rotation'][0],
-                        resource['trs']['rotation'][1],
-                        resource['trs']['rotation'][2]);
-
-                    lightLamp.scale.set(resource['trs']['scale'][0],
-                        resource['trs']['scale'][1],
-                        resource['trs']['scale'][2]);
-
-                //     if(isNaN(resource['scale'][0]) && resource['scale'][0] !=0 && isNaN(resource['scale'][1]) && resource['scale'][1] !=0 && isNaN(resource['scale'][3]) && resource['scale'][3] !=0){
-                //         lightLamp.scale.set(
-                //        resource['scale'][0],
-                //        resource['scale'][1],
-                //        resource['scale'][2]);
-                //    }else{
-                //     lightLamp.scale.set(1,1,1);
-                //    }
-                    lightLamp.name = name;
-                    lightLamp.asset_name = "mylightLamp";
-                    lightLamp.category_name = "lightLamp";
-                    lightLamp.isSelectableMesh = true;
-                    lightLamp.isLight = true;
-                    lightLamp.castShadow = true;
-                    lightLamp.shadow.radius = parseFloat(resource['shadowRadius']);
-
-                    lightLamp.locked = resource['locked'];
-                    lightLamp.lampcastingShadow = resource['lampcastingShadow'];
-                    lightLamp.lampshadowMapHeight = resource['lampshadowMapHeight'];
-                    lightLamp.lampshadowMapWidth = resource['lampshadowMapWidth'];
-                    lightLamp.lampshadowCameraTop = resource['lampshadowCameraTop'];
-                    lightLamp.lampshadowCameraBottom = resource['lampshadowCameraBottom'];
-                    lightLamp.lampshadowCameraLeft = resource['lampshadowCameraLeft'];
-                    lightLamp.lampshadowCameraRight = resource['lampshadowCameraRight'];
-                    lightLamp.lampshadowBias = resource['lampshadowBias'];
-
-                    // if (lightLamp.children ==='') {
-                    //     lightLamp.children = [];
-                    // }
-
-
-                    // console.log(lightLamp);
-                    envir.scene.add(lightLamp);
-
-                    // Add Lamp Sphere
-                    var lampSphere = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.5, 16, 8),
-                        new THREE.MeshBasicMaterial({ color: colora })
-                    );
-                    lampSphere.isSelectableMesh = false;
-                    lampSphere.name = "LampSphere";
-                    lightLamp.add(lampSphere);
-
-                    // Helper
-                    var lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, colora);
-                    lightLampHelper.isLightHelper = true;
-                    lightLampHelper.name = 'lightHelper_' + lightLamp.name;
-                    lightLampHelper.category_name = 'lightHelper';
-                    lightLampHelper.parentLightName = lightLamp.name;
-                    envir.scene.add(lightLampHelper);
-
-               
-                    //lightLampHelper.update();
-
-                    
-                    
-
-                    // If we do not attach them, they are not visible in Editor !
-                    // if (typeof transform_controls !== "undefined") {
-                    //     if (typeof attachToControls !== "undefined") {
-                            // attachToControls(name, envir.scene.getObjectByName(name));
-                    //     }
-                    // }
-
-
-                }
-                // SPOT
-                else if (resource['category_name'] === 'lightSpot') {
-
-                    var colora = new THREE.Color(0.996, 1, 0);
-
-                    var lightintensity = resource['lightintensity'];
-                    var lightdecay = resource['lightdecay'];
-                    var lightdistance = resource['lightdistance'];
-                    var lightangle = resource['lightangle'];
-                    var lightpenumbra = resource['lightpenumbra'];
-
-                    // LIGHT
-                    var lightSpot = new THREE.SpotLight(colora, lightintensity, lightdistance, lightangle, lightpenumbra, lightdecay);
-                    lightSpot.intensity = lightintensity;
-
-                    lightSpot.position.set(
-                        resource['trs']['translation'][0],
-                        resource['trs']['translation'][1],
-                        resource['trs']['translation'][2]);
-
-                    lightSpot.rotation.set(
-                        resource['trs']['rotation'][0],
-                        resource['trs']['rotation'][1],
-                        resource['trs']['rotation'][2]);
-
-                    // lightSpot.scale.set(resource['trs']['scale'][0],
-                    //     resource['trs']['scale'][1],
-                    //     resource['trs']['scale'][2]);
-
-                //     if(isNaN(resource['scale'][0]) && resource['scale'][0] !=0 && isNaN(resource['scale'][1]) && resource['scale'][1] !=0 && isNaN(resource['scale'][3]) && resource['scale'][3] !=0){
-                //         lightSpot.scale.set(
-                //        resource['scale'][0],
-                //        resource['scale'][1],
-                //        resource['scale'][2]);
-                //    }else{
-                    lightSpot.scale.set(1,1,1);
-                //    }
-
-                // lightSpot.target.position.set(resource['targetposition'][0],
-                // resource['targetposition'][1],
-                // resource['targetposition'][2]); // where it points
-
-
-
-
-                    lightSpot.name = name;
-                    lightSpot.asset_name = "mylightSpot";
-                    lightSpot.category_name = "lightSpot";
-                    lightSpot.isSelectableMesh = true;
-                    lightSpot.isLight = true;
-                    lightSpot.locked = resource['locked'];
-                    
-
-                    lightSpot.castShadow = true;
-
-                    // lightSpot.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 50, 1, 0.5, 100 ) );
-                    // lightSpot.shadow.bias = 0.0001;
-
-
-
-                    // lightSpot.shadow.mapSize.width = 1024;
-                    // lightSpot.shadow.mapSize.height = 1024;
-
-                    //// Add Spot Sphere
-                    var spotSphere = new THREE.Mesh(
-                        new THREE.SphereGeometry(1, 16, 8),
-                        new THREE.MeshBasicMaterial({ color: colora })
-                    );
-                    spotSphere.isSelectableMesh = true;
-                    spotSphere.name = "SpotSphere";
-                    lightSpot.add(spotSphere);
-                    // end of sphere
-
-                    var lightTargetSpot = new THREE.Object3D();
-
-                    lightTargetSpot.add(new THREE.Mesh(
-                        new THREE.SphereGeometry(0.5, 16, 8),
-                        new THREE.MeshBasicMaterial({ color: colora })
-                    ));
-
-                    lightTargetSpot.isSelectableMesh = true;
-                    lightTargetSpot.name = "lightTargetSpot_" + lightSpot.name;
-                    lightTargetSpot.asset_name = "lightTargetSpot_" + lightSpot.asset_name;
-                    lightTargetSpot.category_name = "lightTargetSpot";
-                    lightTargetSpot.isLightTargetSpot = true;
-
-                    lightTargetSpot.position.set(resource['targetposition'][0],
-                        resource['targetposition'][1],
-                        resource['targetposition'][2]);
-
-                    lightTargetSpot.parentLight = lightSpot;
-                    // lightTargetSpot.parentLightHelper = lightSpotHelper;
-
-                    envir.scene.add(lightTargetSpot);
-
-                    lightSpot.target.updateMatrixWorld();
-
-                    lightSpot.target.position.set(lightTargetSpot.position.x, lightTargetSpot.position.y,
-                        lightTargetSpot.position.z);
-
-                    // Add Spot cone Helper
-                    // var lightSpotHelper = new THREE.SpotLightHelper(lightSpot, colora);
-                    // lightSpotHelper.isLightHelper = true;
-                    // lightSpotHelper.name = 'lightHelper_' + lightSpot.name;
-                    // lightSpotHelper.category_name = 'lightHelper';
-                    // lightSpotHelper.parentLightName = lightSpot.name;
-
-                    envir.scene.add(lightSpot);
-                    triggerAutoSave();
-                    // envir.scene.add(lightSpotHelper);
-
-                    // lightSpotHelper.update();
-
-                    // If we do not attach them, they are not visible in Editor !
-                    // if (typeof transform_controls !== "undefined") {
-                    //     if (typeof attachToControls !== "undefined") {
-                    //         attachToControls(name, envir.scene.getObjectByName(name));
-                    //     }
-                    // }
-
-                    // updateSpot();
-
-                }
-                else if (resource['category_name'] === 'lightAmbient') {
-
-                    var colora = new THREE.Color(resource['lightcolor'][0],
-                        resource['lightcolor'][1],
-                        resource['lightcolor'][2]);
-
-                    var lightintensity = resource['lightintensity'];
-
-                    // LIGHT
-                    var lightAmbient = new THREE.AmbientLight(colora, lightintensity);
-                    lightAmbient.intensity = lightintensity;
-
-                    lightAmbient.position.set(
-                        resource['trs']['translation'][0],
-                        resource['trs']['translation'][1],
-                        resource['trs']['translation'][2]);
-
-                    lightAmbient.rotation.set(
-                        resource['trs']['rotation'][0],
-                        resource['trs']['rotation'][1],
-                        resource['trs']['rotation'][2]);
-
-                    lightAmbient.scale.set(resource['trs']['scale'][0],
-                        resource['trs']['scale'][1],
-                        resource['trs']['scale'][2]);
-
-                    // if(isNaN(resource['scale'][0]) && resource['scale'][0] !=0 && isNaN(resource['scale'][1]) && resource['scale'][1] !=0 && isNaN(resource['scale'][3]) && resource['scale'][3] !=0){
-                    //     lightAmbient.scale.set(
-                    //        resource['scale'][0],
-                    //        resource['scale'][1],
-                    //        resource['scale'][2]);
-                    // }else{
-                    //     lightAmbient.scale.set(1,1,1);
-                    // }
-
-          
-                    //lightAmbient.scale.set(1,1,1);
-                    lightAmbient.name = name;
-                    lightAmbient.asset_name = "mylightAmbient";
-                    lightAmbient.category_name = "lightAmbient";
-                    lightAmbient.isSelectableMesh = true;
-                    lightAmbient.isLight = true;
-                    lightAmbient.locked = resource['locked'];
-
-
-                    //// Add Sun Helper
-                    var ambientSphere = new THREE.Mesh(
-                        new THREE.SphereGeometry(1, 16, 8),
-                        new THREE.MeshBasicMaterial({ color: colora })
-                    );
-                    ambientSphere.isSelectableMesh = true;
-                    ambientSphere.name = "ambientSphere";
-                    lightAmbient.add(ambientSphere);
-
-                    envir.scene.add(lightAmbient);
-
-                 
-
-                    // If we do not attach them, they are not visible in Editor !
-                    // if (typeof transform_controls !== "undefined") {
-                    //     if (typeof attachToControls !== "undefined") {
-                    //         attachToControls(name, envir.scene.getObjectByName(name));
-
-                    //     }
-                    // }
-
-                }
-                else if (resource['category_name'] === 'pawn') {
-
-                    // Instantiate a loader
-                    const loader = new THREE.GLTFLoader();
-
-                    // Load a glTF resource
-                    loader.load(
-                        // resource URL
-                        pluginPath + '/assets/pawn.glb',
-                        // called when the resource is loaded
-                        function (gltf) {
-
-                            var pawn = gltf.scene.children[0];
-
-
-                            pawn.position.set(
-                                resource['trs']['translation'][0],
-                                resource['trs']['translation'][1],
-                                resource['trs']['translation'][2]);
-
-                            pawn.rotation.set(
-                                resource['trs']['rotation'][0],
-                                resource['trs']['rotation'][1],
-                                resource['trs']['rotation'][2]);
-
-                            pawn.scale.set(
-                                resource['trs']['scale'][0],
-                                resource['trs']['scale'][1],
-                                resource['trs']['scale'][2]);
-
-                            pawn.name = name;
-                            pawn.asset_name = "myActor";
-                            pawn.category_name = "pawn";
-                            pawn.isSelectableMesh = true;
-                            pawn.isLight = false;
-
-                            pawn.material.transparent = true;
-                            pawn.material.opacity = 0.6;
-
-                            // Give a number to Pawn
-                            var indexPawn = 1;
-                            for (let ch of envir.scene.children) {
-                                if (ch.name.includes("Pawn")) {
-                                    indexPawn += 1;
-                                }
-                            }
-
-                            var pawnLabelDiv = document.createElement('div');
-                            pawnLabelDiv.className = '';
-                            pawnLabelDiv.textContent = 'Actor ' + indexPawn;
-                            pawnLabelDiv.style.marginTop = '-1em';
-                            pawnLabelDiv.style.fontSize = '26px';
-                            pawnLabelDiv.style.color = "yellow";
-                            //pawnLabelDiv.style.letterSpacing = '4px';
-                            var pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
-                            pawnLabel.position.set(0, 1.5, 0);
-                            pawn.add(pawnLabel);
-                            //pawnLabel.layers.set( 0 );
-
-                            envir.scene.add(pawn);
-
-                            // If we do not attach them, they are not visible in Editor !
-                            // if (typeof transform_controls !== "undefined") {
-                            //     if (typeof attachToControls !== "undefined") {
-                            //         attachToControls(name, envir.scene.getObjectByName(name));
-                            //     }
-                            // }
-                            setHierarchyViewer();
-
-                        },
-                        // called while loading is progressing
-                        function (xhr) {
-                            //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-                        },
-                        // called when loading has errors
-                        function (error) {
-                            console.log('An error happened while loading Pawn. Error 455');
-                        }
-                    );
-                }
+                ['sceneClearColor', 'jscolorpick'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = resource;
+                });
+                continue;
+            }
+
+            // 2. Filter for Lights and Pawns
+            const category = resource['category_name'];
+            if (!category || (!category.startsWith("light") && !category.startsWith("pawn"))) {
+                continue;
+            }
+
+            // 3. Dispatch to Category Handlers
+            const handlers = {
+                'lightSun': () => this.initSun(name, resource),
+                'lightLamp': () => this.initLamp(name, resource),
+                'lightSpot': () => this.initSpot(name, resource),
+                'lightAmbient': () => this.initAmbient(name, resource),
+                'pawn': () => this.initPawn(name, resource, finalPath)
+            };
+
+            if (handlers[category]) {
+                handlers[category]();
+            }
         }
+    }
+
+    initSun(name, resource) {
+        const lc = resource['lightcolor'];
+        const color = new THREE.Color(lc[0], lc[1], lc[2]);
+        const light = new THREE.DirectionalLight(color, resource['lightintensity']);
+
+        light.shadow.camera.near = 0.5;
+        light.shadow.camera.far = 500;
+        this.applyTRS(light, resource['trs']);
+
+        const tp = resource['targetposition'];
+        light.target.position.set(tp[0], tp[1], tp[2]);
+        
+        light.name = name;
+        light.asset_name = "mylightSun";
+        light.category_name = "lightSun";
+        light.isSelectableMesh = true;
+        light.isLight = true;
+        light.castShadow = true;
+        light.sunSky = resource['sunSky'];
+        light.locked = resource['locked'];
+        light.castingShadow = resource['castingShadow'];
+        light.shadowMapHeight = resource['shadowMapHeight'];
+        light.shadowMapWidth = resource['shadowMapWidth'];
+        light.shadowCameraTop = resource['shadowCameraTop'];
+        light.shadowCameraBottom = resource['shadowCameraBottom'];
+        light.shadowCameraLeft = resource['shadowCameraLeft'];
+        light.shadowCameraRight = resource['shadowCameraRight'];
+        light.shadowBias = resource['shadowBias'];
+
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 16, 8),
+            new THREE.MeshBasicMaterial({ color })
+        );
+        sphere.isSelectableMesh = true;
+        sphere.name = "SunSphere";
+        light.add(sphere);
+
+        const helper = new THREE.DirectionalLightHelper(light, 3, color);
+        helper.isLightHelper = true;
+        helper.name = 'lightHelper_' + light.name;
+        helper.category_name = 'lightHelper';
+        helper.parentLightName = name;
+        envir.scene.add(helper);
+        envir.scene.add(light);
+
+        light.target.updateMatrixWorld();
+        helper.update();
+
+        const targetSpot = new THREE.Object3D();
+        targetSpot.add(new THREE.Mesh(
+            new THREE.SphereGeometry(0.5, 16, 8),
+            new THREE.MeshBasicMaterial({ color })
+        ));
+        targetSpot.isSelectableMesh = true;
+        targetSpot.name = "lightTargetSpot_" + light.name;
+        targetSpot.category_name = "lightTargetSpot";
+        targetSpot.isLightTargetSpot = true;
+        targetSpot.position.set(tp[0], tp[1], tp[2]);
+        targetSpot.parentLight = light;
+        targetSpot.parentLightHelper = helper;
+
+        light.target.position.copy(targetSpot.position);
+        envir.scene.add(targetSpot);
+
+        const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
+        shadowHelper.name = "lightShadowHelper_" + light.name;
+        envir.scene.add(shadowHelper);
+    }
+
+    initLamp(name, resource) {
+        const lc = resource['lightcolor'];
+        const color = new THREE.Color(lc[0], lc[1], lc[2]);
+        const light = new THREE.PointLight(color, resource['lightintensity'], resource['lightdistance'], resource['lightdecay']);
+        
+        this.applyTRS(light, resource['trs']);
+        light.name = name;
+        light.asset_name = "mylightLamp";
+        light.category_name = "lightLamp";
+        light.isSelectableMesh = true;
+        light.isLight = true;
+        light.castShadow = true;
+        light.shadow.radius = parseFloat(resource['shadowRadius']);
+        light.locked = resource['locked'];
+        light.lampcastingShadow = resource['lampcastingShadow'];
+        light.lampshadowMapHeight = resource['lampshadowMapHeight'];
+        light.lampshadowMapWidth = resource['lampshadowMapWidth'];
+        light.lampshadowCameraTop = resource['lampshadowCameraTop'];
+        light.lampshadowCameraBottom = resource['lampshadowCameraBottom'];
+        light.lampshadowCameraLeft = resource['lampshadowCameraLeft'];
+        light.lampshadowCameraRight = resource['lampshadowCameraRight'];
+        light.lampshadowBias = resource['lampshadowBias'];
+
+        envir.scene.add(light);
+
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.5, 16, 8),
+            new THREE.MeshBasicMaterial({ color })
+        );
+        sphere.isSelectableMesh = false;
+        sphere.name = "LampSphere";
+        light.add(sphere);
+
+        const helper = new THREE.PointLightHelper(light, 1, color);
+        helper.isLightHelper = true;
+        helper.name = 'lightHelper_' + light.name;
+        helper.category_name = 'lightHelper';
+        helper.parentLightName = light.name;
+        envir.scene.add(helper);
+    }
+
+    initSpot(name, resource) {
+        const color = new THREE.Color(0.996, 1, 0);
+        const light = new THREE.SpotLight(color, resource['lightintensity'], resource['lightdistance'], resource['lightangle'], resource['lightpenumbra'], resource['lightdecay']);
+
+        this.applyTRS(light, resource['trs']);
+        light.scale.set(1, 1, 1);
+        light.name = name;
+        light.asset_name = "mylightSpot";
+        light.category_name = "lightSpot";
+        light.isSelectableMesh = true;
+        light.isLight = true;
+        light.locked = resource['locked'];
+        light.castShadow = true;
+
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 16, 8),
+            new THREE.MeshBasicMaterial({ color })
+        );
+        sphere.isSelectableMesh = true;
+        sphere.name = "SpotSphere";
+        light.add(sphere);
+
+        const tp = resource['targetposition'];
+        const targetSpot = new THREE.Object3D();
+        targetSpot.add(new THREE.Mesh(
+            new THREE.SphereGeometry(0.5, 16, 8),
+            new THREE.MeshBasicMaterial({ color })
+        ));
+        targetSpot.isSelectableMesh = true;
+        targetSpot.name = "lightTargetSpot_" + light.name;
+        targetSpot.category_name = "lightTargetSpot";
+        targetSpot.isLightTargetSpot = true;
+        targetSpot.position.set(tp[0], tp[1], tp[2]);
+        targetSpot.parentLight = light;
+
+        envir.scene.add(targetSpot);
+        light.target.updateMatrixWorld();
+        light.target.position.copy(targetSpot.position);
+
+        envir.scene.add(light);
+        if (typeof triggerAutoSave === 'function') triggerAutoSave();
+    }
+
+    initAmbient(name, resource) {
+        const lc = resource['lightcolor'];
+        const color = new THREE.Color(lc[0], lc[1], lc[2]);
+        const light = new THREE.AmbientLight(color, resource['lightintensity']);
+
+        this.applyTRS(light, resource['trs']);
+        light.name = name;
+        light.asset_name = "mylightAmbient";
+        light.category_name = "lightAmbient";
+        light.isSelectableMesh = true;
+        light.isLight = true;
+        light.locked = resource['locked'];
+
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 16, 8),
+            new THREE.MeshBasicMaterial({ color })
+        );
+        sphere.isSelectableMesh = true;
+        sphere.name = "ambientSphere";
+        light.add(sphere);
+
+        envir.scene.add(light);
+    }
+
+    initPawn(name, resource, finalPath) {
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            finalPath + '/assets/pawn.glb',
+            (gltf) => {
+                const pawn = gltf.scene.children[0];
+                this.applyTRS(pawn, resource['trs']);
+
+                pawn.name = name;
+                pawn.asset_name = "myActor";
+                pawn.category_name = "pawn";
+                pawn.isSelectableMesh = true;
+                pawn.isLight = false;
+                pawn.material.transparent = true;
+                pawn.material.opacity = 0.6;
+
+                let indexPawn = 1;
+                for (let ch of envir.scene.children) {
+                    if (ch.name.includes("Pawn")) indexPawn++;
+                }
+
+                const labelDiv = document.createElement('div');
+                labelDiv.textContent = 'Actor ' + indexPawn;
+                labelDiv.style.marginTop = '-1em';
+                labelDiv.style.fontSize = '26px';
+                labelDiv.style.color = "yellow";
+
+                const label = new THREE.CSS2DObject(labelDiv);
+                label.position.set(0, 1.5, 0);
+                pawn.add(label);
+
+                envir.scene.add(pawn);
+                if (typeof setHierarchyViewer === 'function') setHierarchyViewer();
+            },
+            null,
+            (error) => console.log('Error loading Pawn during scene boot:', error)
+        );
+    }
+
+    applyTRS(obj, trs) {
+        if (!trs) return;
+        const t = trs['translation'];
+        const r = trs['rotation'];
+        const s = trs['scale'];
+        obj.position.set(t[0], t[1], t[2]);
+        obj.rotation.set(r[0], r[1], r[2]);
+        obj.scale.set(s[0], s[1], s[2]);
     }
 }

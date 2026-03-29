@@ -212,8 +212,8 @@ class VRodos_LoaderMulti {
                     envir.scene.backgroundStyleOption = resources3D["backgroundStyleOption"];
                 }
                    
-                if (name === 'ClearColor' | name === 'enableEnvironmentTexture')
-                    return;
+                if (name === 'ClearColor' || name === 'enableEnvironmentTexture')
+                    continue;
 
                 // Fog is not parsed here but in LightsPawn_Loader
                 if (name === 'fogCategory') {
@@ -285,7 +285,7 @@ class VRodos_LoaderMulti {
                 // Lights are in a different loop
                 if (resource['category_name']) {
                     if (resource['category_name'].startsWith("light") || resource['category_name'].startsWith("pawn"))
-                        return;
+                        continue;
                 }
                 // Load Camera object
                 if (name === 'avatarCamera') {

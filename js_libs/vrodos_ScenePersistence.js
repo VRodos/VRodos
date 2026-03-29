@@ -234,10 +234,10 @@ class VrodosSceneExporter {
 class VrodosSceneImporter {
     parse(scene_json, UPLOAD_DIR) {
         if (scene_json.length === 0) {
-            return [];
+            return {};
         }
 
-        const resources3D_new = [];
+        const resources3D_new = {};
         const scene_json_obj = JSON.parse(scene_json);
         const scene_json_metadata = scene_json_obj['metadata'];
 

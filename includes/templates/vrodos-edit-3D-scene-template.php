@@ -547,6 +547,30 @@ extract( $data );
 				findSceneDimensions();
 				envir.updateCameraGivenSceneLimits();
 
+				// FOCUS ON PLAYER/ACTOR ON LOAD
+				(function focusOnPlayer() {
+					let playerObject = null;
+					// Priority 1: Search for Actor/Pawn
+					envir.scene.traverse(obj => {
+						if (!playerObject && (obj.category_name === 'pawn' || obj.name?.includes('Pawn'))) {
+							playerObject = obj;
+						}
+					});
+					// Priority 2: Fallback to Avatar Camera
+					if (!playerObject) {
+						playerObject = envir.scene.getObjectByName('avatarCamera') || envir.scene.getObjectByName('Camera3Dmodel');
+					}
+
+					if (playerObject) {
+						// Center orbit controls on player
+						envir.orbitControls.target.copy(playerObject.position);
+						// Set a good close-up zoom level for Orthographic Camera
+						envir.cameraOrbit.zoom = 800; 
+						envir.cameraOrbit.updateProjectionMatrix();
+						envir.orbitControls.update();
+					}
+				})();
+
 				setHierarchyViewer();
 				removeHierarchySkeleton();
 

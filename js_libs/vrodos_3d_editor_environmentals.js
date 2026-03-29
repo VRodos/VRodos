@@ -237,10 +237,12 @@ class vrodos_3d_editor_environmentals {
         // Controls for Orbit camera
         this.orbitControls = new THREE.OrbitControls(this.cameraOrbit, this.renderer.domElement);
         this.orbitControls.userPanSpeed = 1;
-        //this.orbitControls.target.set( 0, 0, 0);
+        this.orbitControls.enableDamping = true;
+        this.orbitControls.dampingFactor = 0.05;
+        this.orbitControls.zoomSpeed = 1.25;
         this.orbitControls.object.zoom = 1;
-        this.orbitControls.minZoom = 10;
-        this.orbitControls.maxZoom = 5000;
+        this.orbitControls.minZoom = 1;
+        this.orbitControls.maxZoom = 10000;
         this.orbitControls.object.updateProjectionMatrix();
         this.orbitControls.name = "orbitControls";
         this.orbitControls.enableRotate = true;
