@@ -67,6 +67,7 @@ class VRodos_AssetViewer_3D_kernel {
 
         this.path_url = null;
         this.glb_file_name = null;
+        this.assettrsDOM = document.getElementById('assettrs');
 
         this.assettrs = assettrs.split(',');
         this.scene = new THREE.Scene();
@@ -302,18 +303,16 @@ class VRodos_AssetViewer_3D_kernel {
         }
 
 
-        let assettrsDOM = document.getElementById('assettrs');
-
-        if (assettrsDOM) {
-            assettrsDOM.value = Math.round(this.controls.object.position.x * 1000) / 1000 + ',' +
-                Math.round(this.controls.object.position.y * 1000) / 1000 + ',' +
-                Math.round(this.controls.object.position.z * 1000) / 1000 + ',' +
-                Math.round(this.controls.object.rotation.x * 1000) / 1000 + ',' +
-                Math.round(this.controls.object.rotation.y * 1000) / 1000 + ',' +
-                Math.round(this.controls.object.rotation.z * 1000) / 1000 + ',' +
-                Math.round(this.camera.position.x * 1000) / 1000 + ',' +
-                Math.round(this.camera.position.y * 1000) / 1000 + ',' +
-                Math.round(this.camera.position.z * 1000) / 1000
+        if (this.assettrsDOM) {
+            this.assettrsDOM.value = `${Math.round(this.controls.object.position.x * 1000) / 1000},` +
+                `${Math.round(this.controls.object.position.y * 1000) / 1000},` +
+                `${Math.round(this.controls.object.position.z * 1000) / 1000},` +
+                `${Math.round(this.controls.object.rotation.x * 1000) / 1000},` +
+                `${Math.round(this.controls.object.rotation.y * 1000) / 1000},` +
+                `${Math.round(this.controls.object.rotation.z * 1000) / 1000},` +
+                `${Math.round(this.camera.position.x * 1000) / 1000},` +
+                `${Math.round(this.camera.position.y * 1000) / 1000},` +
+                `${Math.round(this.camera.position.z * 1000) / 1000}`;
         }
 
     }
@@ -511,9 +510,25 @@ class VRodos_AssetViewer_3D_kernel {
         this.mixers = [];
         this.action = null;
 
-        // Clear any GLB, FBX, PDB or OBJ
-        if (this.scene.getObjectByName('root').clear)
-            this.scene.getObjectByName('root').clear(); // remove all children of root
+        // Clear any GLB, FBX, PDB or OBJ and dispose GPU resources
+        let rootObj = this.scene.getObjectByName('root');
+        if (rootObj) {
+            rootObj.traverse(function (node) {
+                if (node.geometry) node.geometry.dispose();
+                if (node.material) {
+                    let materials = Array.isArray(node.material) ? node.material : [node.material];
+                    materials.forEach(function (mat) {
+                        for (let key in mat) {
+                            if (mat[key] && typeof mat[key].dispose === 'function') {
+                                mat[key].dispose();
+                            }
+                        }
+                        mat.dispose();
+                    });
+                }
+            });
+            if (rootObj.clear) rootObj.clear(); // remove all children of root
+        }
     }
 
     /* OBJ Loader */

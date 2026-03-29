@@ -428,187 +428,92 @@ function sanitizeInputValue(value) {
   }
 
 /**
- * Poi video properties
+ * Sun properties
  *
  * @param event
  * @param name
  */
 function displaySunProperties(event, name) {
+    let ppPropertiesDiv = document.getElementById("popUpSunPropertiesDiv");
+    if (!ppPropertiesDiv) return;
 
-    var ppPropertiesDiv = document.getElementById("popUpSunPropertiesDiv");
+    let sceneObj = envir.scene.getObjectByName(name);
+    if (!sceneObj) return;
 
-    clearAndUnbind(null, null, "sunShadowCameraBottom");
-    clearAndUnbind(null, null, "sunShadowCameraTop");
-    clearAndUnbind(null, null, "sunShadowCameraLeft");
-    clearAndUnbind(null, null, "sunShadowCameraRight");
-    clearAndUnbind(null, null, "sunshadowMapHeight");
-    clearAndUnbind(null, null, "sunshadowMapWidth");
-    clearAndUnbind(null, null, "sunshadowBias");
-    clearAndUnbind(null, null, "castShadow");
-    clearAndUnbind(null, null, "sunSky");
+    let chbox = document.getElementById('castShadow');
+    let chboxsunSky = document.getElementById('sunSky');
+    let textCameraBottom = document.getElementById('sunShadowCameraBottom');
+    let textCameraTop = document.getElementById('sunShadowCameraTop');
+    let textCameraLeft = document.getElementById('sunShadowCameraLeft');
+    let textCameraRight = document.getElementById('sunShadowCameraRight');
+    let textMapHeight = document.getElementById('sunshadowMapHeight');
+    let textMapWidth = document.getElementById('sunshadowMapWidth');
+    let textBias = document.getElementById('sunshadowBias');
+    let sunColor = document.getElementById('sunColor');
+    let sunIntensity = document.getElementById('sunIntensity');
 
-    // Re-get elements after clearAndUnbind (clone+replace creates new DOM nodes)
-    var chbox = document.getElementById('castShadow');
-    var chboxsunSky = document.getElementById('sunSky');
-    var textCameraBottom = document.getElementById('sunShadowCameraBottom');
-    var textCameraTop = document.getElementById('sunShadowCameraTop');
-    var textCameraLeft = document.getElementById('sunShadowCameraLeft');
-    var textCameraRight = document.getElementById('sunShadowCameraRight');
-    var textMapHeight = document.getElementById('sunshadowMapHeight');
-    var textMapWidth = document.getElementById('sunshadowMapWidth');
-    var textBias = document.getElementById('sunshadowBias');
-    var sunColor = document.getElementById('sunColor');
-    var sunIntensity = document.getElementById('sunIntensity');
+    if (chbox) chbox.checked = !!sceneObj.castingShadow;
+    if (chboxsunSky) chboxsunSky.checked = !!sceneObj.sunSky;
 
-    var sceneObj = envir.scene.getObjectByName(name);
-    chbox.checked = !!sceneObj.castingShadow;
-    chboxsunSky.checked = !!sceneObj.sunSky;
+    if (textCameraBottom) textCameraBottom.value = sceneObj.shadowCameraBottom;
+    if (textCameraTop) textCameraTop.value = sceneObj.shadowCameraTop;
+    if (textCameraLeft) textCameraLeft.value = sceneObj.shadowCameraLeft;
+    if (textCameraRight) textCameraRight.value = sceneObj.shadowCameraRight;
+    if (textMapHeight) textMapHeight.value = sceneObj.shadowMapHeight;
+    if (textMapWidth) textMapWidth.value = sceneObj.shadowMapWidth;
+    if (textBias) textBias.value = sceneObj.shadowBias;
 
-    textCameraBottom.value = sceneObj.shadowCameraBottom;
-    textCameraTop.value = sceneObj.shadowCameraTop;
-    textCameraLeft.value = sceneObj.shadowCameraLeft;
-    textCameraRight.value = sceneObj.shadowCameraRight;
-    textMapHeight.value = sceneObj.shadowMapHeight;
-    textMapWidth.value = sceneObj.shadowMapWidth;
-    textBias.value = sceneObj.shadowBias;
-    chbox.value = sceneObj.castingShadow;
-    chboxsunSky.value = sceneObj.sunSky;
-
-    // Show Selection (inside floating panel or at mouse position)
-    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
-
-    sunColor.addEventListener("change", function (e) {
-        sunColor.value = transform_controls.object.children[0].material.color.getHexString();
+    if (sunColor && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
+        sunColor.value = sceneObj.children[0].material.color.getHexString();
         sunColor.style.background = "#" + sunColor.value;
-        saveChanges();
-    });
-    sunIntensity.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lightintensity = sanitizeInputValue(this.value);
-        saveChanges();
-    });
+    }
 
-    textCameraBottom.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).shadowCameraBottom = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textCameraTop.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).shadowCameraTop = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textCameraLeft.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).shadowCameraLeft = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textCameraRight.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).shadowCameraRight = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textMapHeight.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).shadowMapHeight = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textMapWidth.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).shadowMapWidth = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textBias.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).shadowBias = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    chbox.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).castingShadow = this.checked ? 1 : 0;
-        saveChanges();
-    });
-    chboxsunSky.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).sunSky = this.checked ? 1 : 0;
-        saveChanges();
-    });
+    if (sunIntensity) sunIntensity.value = sceneObj.lightintensity || 1;
+
+    ppPropertiesDiv.style.display = '';
 }
 
 // LAMP PROPERTIES DIV show
 function displayLampProperties(event, name) {
+    let ppPropertiesDiv = document.getElementById("popUpLampPropertiesDiv");
+    if (!ppPropertiesDiv) return;
 
-    var ppPropertiesDiv = document.getElementById("popUpLampPropertiesDiv");
+    let sceneObj = envir.scene.getObjectByName(name);
+    if (!sceneObj) return;
 
-    clearAndUnbind(null, null, "lampShadowCameraBottom");
-    clearAndUnbind(null, null, "lampShadowCameraTop");
-    clearAndUnbind(null, null, "lampShadowCameraLeft");
-    clearAndUnbind(null, null, "lampShadowCameraRight");
-    clearAndUnbind(null, null, "lampshadowMapHeight");
-    clearAndUnbind(null, null, "lampshadowMapWidth");
-    clearAndUnbind(null, null, "lampshadowBias");
-    clearAndUnbind(null, null, "lampcastShadow");
+    let chbox = document.getElementById('lampcastShadow');
+    let textCameraBottom = document.getElementById('lampShadowCameraBottom');
+    let textCameraTop = document.getElementById('lampShadowCameraTop');
+    let textCameraLeft = document.getElementById('lampShadowCameraLeft');
+    let textCameraRight = document.getElementById('lampShadowCameraRight');
+    let textMapHeight = document.getElementById('lampshadowMapHeight');
+    let textMapWidth = document.getElementById('lampshadowMapWidth');
+    let textBias = document.getElementById('lampshadowBias');
+    let lampColor = document.getElementById('lampColor');
+    let lampPower = document.getElementById('lampPower');
+    let lampDecay = document.getElementById('lampDecay');
+    let lampDistance = document.getElementById('lampDistance');
 
-    // Re-get elements after clearAndUnbind (clone+replace creates new DOM nodes)
-    var chbox = document.getElementById('lampcastShadow');
-    var textCameraBottom = document.getElementById('lampShadowCameraBottom');
-    var textCameraTop = document.getElementById('lampShadowCameraTop');
-    var textCameraLeft = document.getElementById('lampShadowCameraLeft');
-    var textCameraRight = document.getElementById('lampShadowCameraRight');
-    var textMapHeight = document.getElementById('lampshadowMapHeight');
-    var textMapWidth = document.getElementById('lampshadowMapWidth');
-    var textBias = document.getElementById('lampshadowBias');
-    var lampColor = document.getElementById('lampColor');
-    var lampPower = document.getElementById('lampPower');
-    var lampDecay = document.getElementById('lampDecay');
-    var lampDistance = document.getElementById('lampDistance');
+    if (chbox) chbox.checked = !!sceneObj.lampcastingShadow;
 
-    var sceneObj = envir.scene.getObjectByName(name);
-    textCameraBottom.value = sceneObj.lampshadowCameraBottom;
-    textCameraTop.value = sceneObj.lampshadowCameraTop;
-    textCameraLeft.value = sceneObj.lampshadowCameraLeft;
-    textCameraRight.value = sceneObj.lampshadowCameraRight;
-    textMapHeight.value = sceneObj.lampshadowMapHeight;
-    textMapWidth.value = sceneObj.lampshadowMapWidth;
-    textBias.value = sceneObj.lampshadowBias;
-    chbox.value = sceneObj.lampcastingShadow;
+    if (textCameraBottom) textCameraBottom.value = sceneObj.lampshadowCameraBottom;
+    if (textCameraTop) textCameraTop.value = sceneObj.lampshadowCameraTop;
+    if (textCameraLeft) textCameraLeft.value = sceneObj.lampshadowCameraLeft;
+    if (textCameraRight) textCameraRight.value = sceneObj.lampshadowCameraRight;
+    if (textMapHeight) textMapHeight.value = sceneObj.lampshadowMapHeight;
+    if (textMapWidth) textMapWidth.value = sceneObj.lampshadowMapWidth;
+    if (textBias) textBias.value = sceneObj.lampshadowBias;
 
-    textCameraBottom.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lampshadowCameraBottom = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textCameraTop.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lampshadowCameraTop = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textCameraLeft.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lampshadowCameraLeft = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textCameraRight.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lampshadowCameraRight = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textMapHeight.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lampshadowMapHeight = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textMapWidth.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lampshadowMapWidth = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    textBias.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lampshadowBias = sanitizeInputValue(this.value);
-        saveChanges();
-    });
-    chbox.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).lampcastingShadow = this.checked ? 1 : 0;
-        saveChanges();
-    });
-
-    lampColor.value = transform_controls.object.children[0].material.color.getHexString();
-    lampPower.value = transform_controls.object.power;
-    lampDecay.value = transform_controls.object.decay;
-    lampDistance.value = transform_controls.object.distance;
-
-    lampColor.addEventListener("change", function (e) {
-        lampColor.value = transform_controls.object.children[0].material.color.getHexString();
+    if (lampColor && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
+        lampColor.value = sceneObj.children[0].material.color.getHexString();
         lampColor.style.background = "#" + lampColor.value;
-        saveChanges();
-    });
+    }
 
-    // Show Selection (inside floating panel)
-    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
+    if (lampPower) lampPower.value = sceneObj.power;
+    if (lampDecay) lampDecay.value = sceneObj.decay;
+    if (lampDistance) lampDistance.value = sceneObj.distance;
+
+    ppPropertiesDiv.style.display = '';
 }
 
 
@@ -677,123 +582,204 @@ function displayAmbientProperties(event, name) {
  * @param name
  */
 function displayDoorProperties(event, name) {
+    let popUpDoorPropertiesDiv = document.getElementById("popUpDoorPropertiesDiv");
+    let popupDoorSelect = document.getElementById("popupDoorSelect");
+    if (!popupDoorSelect || !popUpDoorPropertiesDiv) return;
 
-    var popUpDoorPropertiesDiv = document.getElementById("popUpDoorPropertiesDiv");
-    var popupDoorSelect = document.getElementById("popupDoorSelect");
-    var updName = name;
+    let sceneObj = envir.scene.getObjectByName(name);
+    if (!sceneObj) return;
 
-    // Save the previous door values (trigger change before unbinding)
-    popupDoorSelect.dispatchEvent(new Event('change'));
-
-    clearAndUnbind(null, null, "popupDoorSelect");
-
-    var sceneObj = envir.scene.getObjectByName(updName);
-    if (sceneObj.sceneID_target)
+    if (sceneObj.sceneID_target) {
         popupDoorSelect.value = sceneObj.sceneID_target;
-    else
+    } else if (sceneObj.doorName_target) {
+        popupDoorSelect.value = sceneObj.doorName_target + " at " + sceneObj.sceneName_target;
+    } else {
         popupDoorSelect.value = "Default";
+    }
 
-    if (envir.scene.getObjectByName(name).doorName_target)
-        popupDoorSelect.value = envir.scene.getObjectByName(name).doorName_target + " at " +
-            envir.scene.getObjectByName(name).sceneName_target;
-
-    // Show Selection (inside floating panel)
-    if (popUpDoorPropertiesDiv) popUpDoorPropertiesDiv.style.display = '';
-
-    popupDoorSelect.addEventListener("change", function (e) {
-        if (this.value != "Default" && this.value)
-            envir.scene.getObjectByName(updName).sceneID_target = this.value;
-        saveChanges();
-    });
-
+    popUpDoorPropertiesDiv.style.display = '';
 }
-
-
-
 
 function displayLinkProperties(event, name) {
+    let popUpLinkPropertiesDiv = document.getElementById("popUpLinkPropertiesDiv");
+    let popupLinkSelect = document.getElementById("poi_link_text");
+    if (!popupLinkSelect || !popUpLinkPropertiesDiv) return;
 
-    var popUpLinkPropertiesDiv = document.getElementById("popUpLinkPropertiesDiv");
-    var popupLinkSelect = document.getElementById("poi_link_text");
+    let sceneObj = envir.scene.getObjectByName(name);
+    if (!sceneObj) return;
 
-    clearAndUnbind(null, null, "poi_link_text");
-    if (envir.scene.getObjectByName(name).poi_link_url)
-        popupLinkSelect.value = envir.scene.getObjectByName(name).poi_link_url;
+    if (sceneObj.poi_link_url) {
+        popupLinkSelect.value = sceneObj.poi_link_url;
+    } else {
+        popupLinkSelect.value = "";
+    }
 
-    // Show Selection (inside floating panel)
-    if (popUpLinkPropertiesDiv) popUpLinkPropertiesDiv.style.display = '';
-
-    popupLinkSelect.addEventListener("change", function (e) {
-        if (this.value)
-            envir.scene.getObjectByName(name).poi_link_url = this.value;
-        saveChanges();
-    });
-
+    popUpLinkPropertiesDiv.style.display = '';
 }
-
-
-// ----------------- Aux ----------------------------------------------------------
-// /**
-//  * Clear Door properties
-//  */
-// function clearAndUnbindDoorProperties() {
-//     // Clear past options
-//
-//     // door target
-//     var popupDoorSelect = document.getElementById("popupDoorSelect");
-//     for (var i = popupDoorSelect.options.length; i-->0;)
-//         popupDoorSelect.options[i] = null;
-//
-//     // door source title & remove listeners
-//     jQuery("#doorid").val( null ).unbind('change');
-//
-//     jQuery("#popupDoorSelect").unbind('change');
-// }
-
-
 
 /**
- * A general mechanism to clear popup and unbind any handlers
+ * Initializes persistent event listeners for light and properties panels
+ * so that we don't need to bind/unbind them on every click.
  */
-function clearAndUnbind(selectName = null, idstr = null, chkboxname = null) {
+function initPersistentPropertyListeners() {
+    
+    const setProp = (prop, isCheckbox, sanitize = false) => {
+        return function () {
+            if (transform_controls && transform_controls.object) {
+                let val = isCheckbox ? (this.checked ? 1 : 0) : this.value;
+                if (sanitize) val = sanitizeInputValue(val);
+                transform_controls.object[prop] = val;
+                saveChanges();
+            }
+        };
+    };
 
-    // Clone+replace to remove all event listeners from an element
-    function _unbindElement(id) {
-        var el = document.getElementById(id);
-        if (el) {
-            var clone = el.cloneNode(true);
-            el.parentNode.replaceChild(clone, el);
-        }
+    // --- Sun Properties ---
+    const sunColor = document.getElementById('sunColor');
+    if (sunColor) {
+        sunColor.addEventListener('change', function () {
+            if (transform_controls && transform_controls.object && transform_controls.object.children[0]) {
+                sunColor.value = transform_controls.object.children[0].material.color.getHexString();
+                sunColor.style.background = "#" + sunColor.value;
+                saveChanges();
+            }
+        });
     }
 
-    // Clear the select DOM
-    if (selectName) {
-        var selectDOM = document.getElementById(selectName);
-        if (selectDOM) {
-            for (var i = selectDOM.options.length; i-- > 0;)
-                selectDOM.options[i] = null;
-        }
-        _unbindElement(selectName);
+    const sunIntensity = document.getElementById('sunIntensity');
+    if (sunIntensity) sunIntensity.addEventListener('change', setProp('lightintensity', false, true));
+
+    ['Bottom', 'Top', 'Left', 'Right'].forEach(side => {
+        let el = document.getElementById('sunShadowCamera' + side);
+        if (el) el.addEventListener('change', setProp('shadowCamera' + side, false, true));
+    });
+
+    ['Height', 'Width'].forEach(dim => {
+        let el = document.getElementById('sunshadowMap' + dim);
+        if (el) el.addEventListener('change', setProp('shadowMap' + dim, false, true));
+    });
+
+    let elSunBias = document.getElementById('sunshadowBias');
+    if (elSunBias) elSunBias.addEventListener('change', setProp('shadowBias', false, true));
+
+    let elCast = document.getElementById('castShadow');
+    if (elCast) elCast.addEventListener('change', setProp('castingShadow', true));
+
+    let elSky = document.getElementById('sunSky');
+    if (elSky) elSky.addEventListener('change', setProp('sunSky', true));
+
+    // --- Lamp Properties ---
+    const lampColor = document.getElementById('lampColor');
+    if (lampColor) {
+        lampColor.addEventListener('change', function () {
+            if (transform_controls && transform_controls.object && transform_controls.object.children[0]) {
+                lampColor.value = transform_controls.object.children[0].material.color.getHexString();
+                lampColor.style.background = "#" + lampColor.value;
+                saveChanges();
+            }
+        });
     }
 
-    // Id (if any) unbind onchange listener
-    if (idstr) {
-        var idEl = document.getElementById(idstr);
-        if (idEl) idEl.value = '';
-        _unbindElement(idstr);
+    ['Power', 'Decay', 'Distance'].forEach(prop => {
+        let el = document.getElementById('lamp' + prop);
+        if (el) el.addEventListener('change', setProp(prop.toLowerCase(), false, true));
+    });
+
+    ['Bottom', 'Top', 'Left', 'Right'].forEach(side => {
+        let el = document.getElementById('lampShadowCamera' + side);
+        if (el) el.addEventListener('change', setProp('lampshadowCamera' + side, false, true));
+    });
+
+    ['Height', 'Width'].forEach(dim => {
+        let el = document.getElementById('lampshadowMap' + dim);
+        if (el) el.addEventListener('change', setProp('lampshadowMap' + dim, false, true));
+    });
+
+    let elLampBias = document.getElementById('lampshadowBias');
+    if (elLampBias) elLampBias.addEventListener('change', setProp('lampshadowBias', false, true));
+
+    let elLampCast = document.getElementById('lampcastShadow');
+    if (elLampCast) elLampCast.addEventListener('change', setProp('lampcastingShadow', true));
+
+    // --- Door & Link Properties ---
+    const popupDoorSelect = document.getElementById("popupDoorSelect");
+    if (popupDoorSelect) {
+        popupDoorSelect.addEventListener("change", function () {
+            if (transform_controls && transform_controls.object && this.value !== "Default" && this.value) {
+                transform_controls.object.sceneID_target = this.value;
+                saveChanges();
+            }
+        });
     }
 
-    // Checkbox clear and unbind (if any)
-    if (chkboxname) {
-        var chbox = document.getElementById(chkboxname);
-        if (chbox) chbox.checked = false;
-        _unbindElement(chkboxname);
+    const popupLinkSelect = document.getElementById("poi_link_text");
+    if (popupLinkSelect) {
+        popupLinkSelect.addEventListener("change", function () {
+            if (transform_controls && transform_controls.object && this.value) {
+                transform_controls.object.poi_link_url = this.value;
+                saveChanges();
+            }
+        });
     }
 
+    // --- POI Image Text Properties ---
+    const chboxImg = document.getElementById("poi_image_desc_checkbox");
+    const setTitle = document.getElementById('poi_image_title_text');
+    const setDesc = document.getElementById('poi_image_desc_text');
+
+    if (chboxImg) {
+        chboxImg.addEventListener("change", function () {
+            if (transform_controls && transform_controls.object) {
+                if (this.checked) {
+                    transform_controls.object.poi_img_content = setDesc && setDesc.value ? setDesc.value : '';
+                    if (setDesc) setDesc.style.display = "block";
+                } else {
+                    if (setDesc) setDesc.style.display = "none";
+                    transform_controls.object.poi_img_content = null;
+                }
+                if (setTitle) transform_controls.object.poi_img_title = setTitle.value;
+                saveChanges();
+            }
+        });
+    }
+
+    if (setTitle) {
+        setTitle.addEventListener("change", setProp('poi_img_title', false));
+    }
+
+    if (setDesc) {
+        setDesc.addEventListener("change", setProp('poi_img_content', false));
+    }
+
+    // --- POI Video Properties ---
+    const chboxVid = document.getElementById("poi_video_reward_checkbox");
+    const setFocusX = document.getElementById('focus_X');
+    const setFocusZ = document.getElementById('focus_Z');
+
+    if (chboxVid) {
+        chboxVid.addEventListener("change", function () {
+            if (transform_controls && transform_controls.object) {
+                transform_controls.object.follow_camera = this.checked ? 1 : 0;
+                
+                if (this.checked) {
+                    if (setFocusX) transform_controls.object.follow_camera_x = setFocusX.value;
+                    if (setFocusZ) transform_controls.object.follow_camera_z = setFocusZ.value;
+                }
+                
+                if (setFocusX) setFocusX.disabled = !this.checked;
+                if (setFocusZ) setFocusZ.disabled = !this.checked;
+                
+                saveChanges();
+            }
+        });
+    }
+
+    if (setFocusX) setFocusX.addEventListener("change", setProp('follow_camera_x', false));
+    if (setFocusZ) setFocusZ.addEventListener("change", setProp('follow_camera_z', false));
 }
 
-
-
+// Call once when script loads
+initPersistentPropertyListeners();
 
 /**
  * Get active meshes for raycast picking method
@@ -881,73 +867,33 @@ function showWholePopupDiv(popUpDiv, event) {
 }
 
 /**
- //  * Poi image text properties
- //  *
- //  * @param event
- //  * @param name
- //  */
+ * Poi image text properties
+ *
+ * @param event
+ * @param name
+ */
 function displayPoiImageTextProperties(event, name) {
+    let ppPropertiesDiv = document.getElementById("popUpPoiImageTextPropertiesDiv");
+    if (!ppPropertiesDiv) return;
 
-    var ppPropertiesDiv = document.getElementById("popUpPoiImageTextPropertiesDiv");
-    var chboxImg = document.getElementById("poi_image_desc_checkbox");
-    var setTitle = document.getElementById('poi_image_title_text');
-    var setDesc = document.getElementById('poi_image_desc_text');
+    let sceneObj = envir.scene.getObjectByName(name);
+    if (!sceneObj) return;
 
-    clearAndUnbind(null, null, "poi_image_desc_checkbox");
-    clearAndUnbind(null, null, "poi_image_title_text");
-    clearAndUnbind(null, null, "poi_image_desc_text");
+    let chboxImg = document.getElementById("poi_image_desc_checkbox");
+    let setTitle = document.getElementById('poi_image_title_text');
+    let setDesc = document.getElementById('poi_image_desc_text');
 
-    // Re-get elements after clearAndUnbind (clone+replace creates new DOM nodes)
-    chboxImg = document.getElementById("poi_image_desc_checkbox");
-    setTitle = document.getElementById('poi_image_title_text');
-    setDesc = document.getElementById('poi_image_desc_text');
+    if (chboxImg) chboxImg.checked = sceneObj.poi_img_content != null;
+    if (setDesc) {
+        setDesc.style.display = sceneObj.poi_img_content != null ? "block" : "none";
+        setDesc.value = sceneObj.poi_img_content;
+    }
+    if (setTitle) setTitle.value = sceneObj.poi_img_title;
 
-    var sceneObj = envir.scene.getObjectByName(name);
-    chboxImg.checked = sceneObj.poi_img_content != null;
-    setDesc.style.display = sceneObj.poi_img_content != null ? "block" : "none";
-
-    setDesc.value = sceneObj.poi_img_content;
-    setTitle.value = sceneObj.poi_img_title;
-
-    // Show Selection (inside floating panel)
-    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
-
-    chboxImg.addEventListener("change", function (e) {
-        if (this.checked) {
-            if (envir.scene.getObjectByName(name).poi_img_content != null) {
-                envir.scene.getObjectByName(name).poi_img_content = setDesc.value;
-            } else {
-                envir.scene.getObjectByName(name).poi_img_content = '';
-            }
-            setDesc.style.display = "block";
-        } else {
-            setDesc.style.display = "none";
-            envir.scene.getObjectByName(name).poi_img_content = null;
-        }
-        envir.scene.getObjectByName(name).poi_img_title = setTitle.value;
-        saveChanges();
-    });
-
-    setTitle.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).poi_img_title = this.value;
-        saveChanges();
-    });
-
-    setDesc.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).poi_img_content = this.value;
-        saveChanges();
-    });
+    ppPropertiesDiv.style.display = '';
 }
-//
-// /**
-//  * Poi video properties
-//  *
-//  * @param event
-//  * @param name
-//  */
 
 function saveChanges() {
-
     let save_scene_btn = document.getElementById("save-scene-button");
     if (save_scene_btn.classList.contains("LinkDisabled")){
         return (typeof vrodos_whenSceneSaveSettles === 'function') ? vrodos_whenSceneSaveSettles() : Promise.resolve();
@@ -961,62 +907,37 @@ function saveChanges() {
     let exporter = new VrodosSceneExporter();
     document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-    //let test = document.getElementById('vrodos_scene_json_input').value;
-
-    //var json = JSON.stringify(test);
-
-    //console.log(test);
-
     return vrodos_saveSceneAjax();
-    //.forEach(element => console.log(element));
 }
+
+/**
+ * Poi video properties
+ *
+ * @param event
+ * @param name
+ */
 function displayPoiVideoProperties(event, name) {
+    let ppPropertiesDiv = document.getElementById("popUpPoiVideoPropertiesDiv");
+    if (!ppPropertiesDiv) return;
 
-    var ppPropertiesDiv = document.getElementById("popUpPoiVideoPropertiesDiv");
+    let sceneObj = envir.scene.getObjectByName(name);
+    if (!sceneObj) return;
 
-    clearAndUnbind(null, null, "poi_video_reward_checkbox");
-    clearAndUnbind(null, null, "poi_video_focus_dropdown");
-    clearAndUnbind(null, null, "focus_X");
-    clearAndUnbind(null, null, "focus_Z");
+    let chbox = document.getElementById("poi_video_reward_checkbox");
+    let setFocusX = document.getElementById('focus_X');
+    let setFocusZ = document.getElementById('focus_Z');
 
-    // Re-get elements after clearAndUnbind (clone+replace creates new DOM nodes)
-    var chbox = document.getElementById("poi_video_reward_checkbox");
-    var setFocusX = document.getElementById('focus_X');
-    var setFocusZ = document.getElementById('focus_Z');
+    if (chbox) chbox.checked = sceneObj.follow_camera == 1;
 
-    var sceneObj = envir.scene.getObjectByName(name);
-    chbox.checked = sceneObj.follow_camera == 1;
+    if (setFocusX) {
+        setFocusX.value = sceneObj.follow_camera_x;
+        setFocusX.disabled = sceneObj.follow_camera == 0;
+    }
+    if (setFocusZ) {
+        setFocusZ.value = sceneObj.follow_camera_z;
+        setFocusZ.disabled = sceneObj.follow_camera == 0;
+    }
 
-    setFocusX.value = sceneObj.follow_camera_x;
-    setFocusZ.value = sceneObj.follow_camera_z;
-
-    setFocusX.disabled = sceneObj.follow_camera == 0;
-    setFocusZ.disabled = sceneObj.follow_camera == 0;
-
-    // Show Selection (inside floating panel)
-    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
-
-    chbox.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).follow_camera = this.checked ? 1 : 0;
-
-        if (this.checked) {
-            envir.scene.getObjectByName(name).follow_camera_x = setFocusX.value;
-            envir.scene.getObjectByName(name).follow_camera_z = setFocusZ.value;
-        }
-
-        setFocusX.disabled = !this.checked;
-        setFocusZ.disabled = !this.checked;
-
-        saveChanges();
-    });
-
-    setFocusX.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).follow_camera_x = this.value;
-        saveChanges();
-    });
-
-    setFocusZ.addEventListener("change", function (e) {
-        envir.scene.getObjectByName(name).follow_camera_z = this.value;
-        saveChanges();
-    });
+    ppPropertiesDiv.style.display = '';
 }
+

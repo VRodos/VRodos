@@ -671,58 +671,48 @@ function lockOnScene(uuid, name) {
  */
 function deleteAssetFromScene(uuid) {
 
-    let resChildren = Object.values(vrodos_scene_data.objects);
-    let envirChildren = Object.values(envir.scene.children);
-
     // 1. Delete object from js array (if it exists. Usually it is saved after reload)
-    for (let i in resChildren) {
-        if (typeof resChildren[i] === 'object' && resChildren[i] !== null) {
-            if (resChildren[i].uuid == uuid) {
-                delete vrodos_scene_data.objects[resChildren[i].name];
-            }
+    for (const obj of Object.values(vrodos_scene_data.objects)) {
+        if (typeof obj === 'object' && obj !== null && obj.uuid == uuid) {
+            delete vrodos_scene_data.objects[obj.name];
+            break;
         }
     }
 
     // 2. Find actual object inside scene
-    let objectSelected;
-    for (let i in envirChildren) {
-        if (typeof envirChildren[i] === 'object' && envirChildren[i] !== null) {
-            if (envirChildren[i].uuid == uuid) {
-                objectSelected = envir.scene.getObjectByName(envirChildren[i].name);
-            }
+    let objectSelected = null;
+    for (const child of envir.scene.children) {
+        if (typeof child === 'object' && child !== null && child.uuid == uuid) {
+            objectSelected = child; // We found the direct child map
+            break;
         }
     }
+
+    if (!objectSelected) return;
 
 
     // remove animations
     isPaused = true;
-    let filtered = envir.animationMixers.filter(function (el) {
-        return el._root.name !== objectSelected.name;
-    });
-    envir.animationMixers = filtered;
+    envir.animationMixers = envir.animationMixers.filter(el => el._root.name !== objectSelected.name);
     isPaused = false;
 
     // If deleting light then remove also its LightHelper and lightTargetSpot and Shadow Helper
-    if (typeof(objectSelected) != "undefined"){
-        if (objectSelected.isLight) {
+    if (objectSelected.isLight) {
+        // Sun Shadow Helper
+        let shadowHelper = envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name);
+        if (shadowHelper) { shadowHelper.dispose(); envir.scene.remove(shadowHelper); }
 
-            // Sun Shadow Helper
-            let shadowHelper = envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name);
-            if (shadowHelper) { shadowHelper.dispose(); envir.scene.remove(shadowHelper); }
+        // Sun target spot
+        let targetSpot = envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name);
+        if (targetSpot) envir.scene.remove(targetSpot);
 
-            // Sun target spot
-            let targetSpot = envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name);
-            if (targetSpot) envir.scene.remove(targetSpot);
+        // Sun target spot remove from hierarchy viewer
+        let targetEl = document.querySelector(`[data-name="lightTargetSpot_${objectSelected.name}"]`);
+        if (targetEl) targetEl.remove();
 
-            // Sun target spot remove from hierarchy viewer
-            let target = "lightTargetSpot_" + objectSelected.name;
-            let targetEl = document.querySelector("[data-name='" + target + "']");
-            if (targetEl) targetEl.remove();
-
-            // Light Helper (for all lights)
-            let lightHelper = envir.scene.getObjectByName("lightHelper_" + objectSelected.name);
-            if (lightHelper) { lightHelper.dispose(); envir.scene.remove(lightHelper); }
-        }
+        // Light Helper (for all lights)
+        let lightHelper = envir.scene.getObjectByName("lightHelper_" + objectSelected.name);
+        if (lightHelper) { lightHelper.dispose(); envir.scene.remove(lightHelper); }
     }
     
 
@@ -738,9 +728,9 @@ function deleteAssetFromScene(uuid) {
     objectSelected.traverse(function (node) {
         if (node.geometry) node.geometry.dispose();
         if (node.material) {
-            var materials = Array.isArray(node.material) ? node.material : [node.material];
+            let materials = Array.isArray(node.material) ? node.material : [node.material];
             materials.forEach(function (mat) {
-                for (var key in mat) {
+                for (const key in mat) {
                     if (mat[key] && typeof mat[key].dispose === 'function') {
                         mat[key].dispose(); // textures, env maps, etc.
                     }
