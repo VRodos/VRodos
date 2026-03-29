@@ -536,6 +536,7 @@ AFRAME.registerComponent('scene-settings', {
                     skyType: 'atmosphere',
                     lighting: 'distant',
                     ground: 'none',
+                    fog: 0,
                     playArea: 1,
                     shadow: true
                 });
@@ -583,6 +584,7 @@ AFRAME.registerComponent('scene-settings', {
                 } else {
                     backgroundEl.setAttribute("environment", "preset", this.data.presChoice);
                     backgroundEl.setAttribute("environment", "ground", presetGroundEnabled ? "flat" : "none");
+                    backgroundEl.setAttribute("environment", "fog", "0");
                     backgroundEl.setAttribute("environment", "playArea", "1.4");
                     backgroundEl.setAttribute("environment", "shadow", "true");
                 }

@@ -332,8 +332,9 @@ class VRodos_Compiler_Manager {
 
 		// Replace Fog string
 		if ( isset( $scene_json->metadata->fogCategory ) ) {
-			if ( $scene_json->metadata->fogCategory != '0' ) {
-
+			if ( $scene_json->metadata->fogCategory == '0' ) {
+				$content = str_replace( $fogstring, ' ', $content );
+			} else {
 				if ( $scene_json->metadata->fogCategory === '1' ) {
 					$fogtype = 'linear';
 				} else {
