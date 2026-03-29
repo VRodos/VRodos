@@ -158,6 +158,29 @@ class VRodos_Compiler_Manager {
 		return $url;
 	}
 
+	private function markDelayedRevealEntities( DOMDocument $dom ) {
+		$xpath          = new DOMXPath( $dom );
+		$hideable_nodes = $xpath->query( "//*[contains(concat(' ', normalize-space(@class), ' '), ' hideable ')]" );
+
+		if ( ! $hideable_nodes ) {
+			return;
+		}
+
+		foreach ( $hideable_nodes as $node ) {
+			if ( ! $node instanceof DOMElement ) {
+				continue;
+			}
+
+			$visible_attr = strtolower( trim( $node->getAttribute( 'visible' ) ) );
+			if ( $node->hasAttribute( 'visible' ) && $visible_attr === 'false' ) {
+				continue;
+			}
+
+			$node->setAttribute( 'visible', 'false' );
+			$node->setAttribute( 'data-vrodos-delayed-reveal', 'true' );
+		}
+	}
+
 	private function setAffineTransformations( $entity, $contentObject ) {
 		$entity->setAttribute( 'position', implode( ' ', $contentObject->position ) );
 		$entity->setAttribute(
@@ -375,6 +398,7 @@ class VRodos_Compiler_Manager {
 		} else {
 			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat" );
 		}
+		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 
 		// Set networked properties
 		$enable_director_audio = ( $projectType == 'vrexpo_games' ) ? 'false' : 'true';
@@ -1181,6 +1205,9 @@ class VRodos_Compiler_Manager {
 				}
 			}
 		}
+
+		$this->markDelayedRevealEntities( $dom );
+
 		$contentNew = $dom->saveHTML();
 		$contentNew = "<!-- Detected Hostname: {$this->website_root_url} -->\n" . $contentNew;
 

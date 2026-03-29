@@ -280,7 +280,7 @@ extract( $data );
 					<div id="object-controls-header" class="tw-flex tw-items-center tw-justify-between tw-px-3 tw-py-1.5 tw-bg-slate-700/80 tw-cursor-move tw-select-none tw-border-b tw-border-white/10">
 						<div class="tw-flex tw-items-center tw-gap-2 tw-min-w-0">
 							<span id="object-controls-title" class="tw-text-xs tw-font-semibold tw-text-slate-300 tw-uppercase tw-tracking-wider tw-truncate">Object Controls</span>
-							<span id="object-controls-badge" class="tw-hidden tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-bg-emerald-500/15 tw-text-emerald-300 tw-border tw-border-emerald-400/20 tw-rounded-full tw-px-2 tw-py-0.5">Walkable Surface</span>
+							<span id="object-controls-badge" class="tw-hidden tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-bg-slate-500/15 tw-text-slate-200 tw-border tw-border-white/10 tw-rounded-full tw-px-2 tw-py-0.5">Object Type</span>
 						</div>
 						<button id="object-controls-close" class="tw-p-0.5 tw-text-slate-400 hover:tw-text-white tw-transition-colors" title="Close panel">
 							<i data-lucide="x" class="tw-w-3.5 tw-h-3.5"></i>
@@ -489,6 +489,10 @@ extract( $data );
 				envir.scene.background = new THREE.Color(0xffffff);
 				document.getElementById('sceneColorRadio').checked = true;
 				document.getElementById('jscolorpick').value = 'ffffff';
+			}
+
+			if (typeof syncBackgroundStyleDescription === 'function') {
+				syncBackgroundStyleDescription(vrodos_scene_data.backgroundStyleOption);
 			}
 
 

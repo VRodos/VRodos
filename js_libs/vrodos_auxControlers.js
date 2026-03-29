@@ -121,15 +121,67 @@ function hideObjectControlsPanel() {
     hideAllPropertyPanels();
 }
 
+function humanizeObjectTypeLabel(typeValue) {
+    if (!typeValue) return '';
+
+    var aliases = {
+        'walkable-surface': 'Walkable Surface',
+        'poi-imagetext': 'Image Text POI',
+        'poi-link': 'Link POI',
+        'lightSun': 'Sun Light',
+        'lightLamp': 'Lamp Light',
+        'lightSpot': 'Spot Light',
+        'lightAmbient': 'Ambient Light',
+        'lightTargetSpot': 'Light Target',
+        'avatarCamera': 'Camera',
+        'pawn': 'Pawn'
+    };
+
+    if (aliases[typeValue]) {
+        return aliases[typeValue];
+    }
+
+    return String(typeValue)
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, function (char) { return char.toUpperCase(); });
+}
+
+function getObjectTypeLabel(object) {
+    if (!object) return '';
+
+    return humanizeObjectTypeLabel(
+        object.category_slug ||
+        object.category_name ||
+        object.asset_type ||
+        ''
+    );
+}
+
 function updateObjectControlsMeta(object) {
     var badge = document.getElementById('object-controls-badge');
     if (!badge) return;
 
-    if (object && object.category_slug === 'walkable-surface') {
-        badge.classList.remove('tw-hidden');
-    } else {
+    if (!object) {
         badge.classList.add('tw-hidden');
+        badge.textContent = 'Object Type';
+        badge.classList.remove('tw-bg-emerald-500/15', 'tw-text-emerald-300', 'tw-border-emerald-400/20');
+        badge.classList.add('tw-bg-slate-500/15', 'tw-text-slate-200', 'tw-border-white/10');
+        return;
     }
+
+    var typeLabel = getObjectTypeLabel(object);
+    if (!typeLabel) {
+        badge.classList.add('tw-hidden');
+        return;
+    }
+
+    badge.textContent = typeLabel;
+    badge.classList.remove('tw-hidden');
+    badge.classList.remove('tw-bg-emerald-500/15', 'tw-text-emerald-300', 'tw-border-emerald-400/20');
+    badge.classList.add('tw-bg-slate-500/15', 'tw-text-slate-200', 'tw-border-white/10');
 }
 
 /**

@@ -99,6 +99,9 @@
                     <input type="radio" id="sceneCustomImage" name="sceneColorTypeRadio" value="Custom_img" />
                     <label for="sceneCustomImage" onclick="bcgRadioSelect({value:3})">Image</label>
                 </div>
+                <p id="sceneHorizonDescription" class="tw-hidden tw-mt-2 tw-text-[11px] tw-leading-relaxed tw-text-white/60">
+                    Auto-generates a natural outdoor horizon with clear sky, sunlight, and balanced scene lighting for a bright daytime look.
+                </p>
             </div>
             <!-- Background sub-options (shown/hidden by bcgRadioSelect) -->
             <div id="bcgSubOptions" class="tw-flex tw-flex-col tw-gap-2 tw-mt-1 tw-mb-1 tw-px-3 tw-py-1">

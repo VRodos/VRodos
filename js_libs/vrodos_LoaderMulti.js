@@ -56,6 +56,7 @@ class VRodos_LoaderMulti {
                     var presetsRow = document.getElementById('bcgPresetsRow');
                     var presetGroundRow = document.getElementById('bcgPresetGroundRow');
                     var imageRow = document.getElementById('bcgImageRow');
+                    var horizonDescription = document.getElementById('sceneHorizonDescription');
                     var presetGroundEnabled = resources3D["backgroundPresetGroundEnabled"] !== false;
 
                     // Hide all rows first
@@ -63,6 +64,10 @@ class VRodos_LoaderMulti {
                     presetsRow.style.display = 'none';
                     if (presetGroundRow) presetGroundRow.style.display = 'none';
                     imageRow.style.display = 'none';
+                    if (horizonDescription) {
+                        horizonDescription.style.display = 'none';
+                        horizonDescription.classList.add('tw-hidden');
+                    }
                     color_sel.disabled = true;
                     preset_sel.disabled = true;
                     if (preset_ground_toggle) {
@@ -77,6 +82,10 @@ class VRodos_LoaderMulti {
                     switch (envir.scene.bcg_selection){
                         case 0:
                             document.getElementById("sceneNone").checked = true;
+                            if (horizonDescription) {
+                                horizonDescription.style.display = 'block';
+                                horizonDescription.classList.remove('tw-hidden');
+                            }
                             break;
                         case 1:
                             document.getElementById("sceneColorRadio").checked = true;
@@ -487,6 +496,7 @@ class VRodos_LoaderMulti {
                             var presetsRow = document.getElementById('bcgPresetsRow');
                             var presetGroundRow = document.getElementById('bcgPresetGroundRow');
                             var imageRow = document.getElementById('bcgImageRow');
+                            var horizonDescription = document.getElementById('sceneHorizonDescription');
                             var presetGroundEnabled = resources3D[name].backgroundPresetGroundEnabled !== false;
 
                             // Hide all rows first
@@ -494,6 +504,10 @@ class VRodos_LoaderMulti {
                             presetsRow.style.display = 'none';
                             if (presetGroundRow) presetGroundRow.style.display = 'none';
                             imageRow.style.display = 'none';
+                            if (horizonDescription) {
+                                horizonDescription.style.display = 'none';
+                                horizonDescription.classList.add('tw-hidden');
+                            }
                             color_sel.disabled = true;
                             preset_sel.disabled = true;
                             if (preset_ground_toggle) {
@@ -508,6 +522,10 @@ class VRodos_LoaderMulti {
                             switch (envir.scene.backgroundStyleOption){
                                 case 0:
                                     document.getElementById("sceneNone").checked = true;
+                                    if (horizonDescription) {
+                                        horizonDescription.style.display = 'block';
+                                        horizonDescription.classList.remove('tw-hidden');
+                                    }
                                     var hex = rgbToHex(255, 255, 255);
                                     envir.scene.background = new THREE.Color(hex);
                                     break;

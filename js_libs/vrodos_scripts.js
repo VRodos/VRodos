@@ -99,6 +99,35 @@ function toggleAframeCollisionMode(isEnabled) {
     saveChanges();
 }
 
+function syncBackgroundStyleDescription(selectedValue) {
+    var horizonDescription = document.getElementById('sceneHorizonDescription');
+    if (!horizonDescription) return;
+
+    var val = selectedValue;
+    if (val === undefined || val === null || val === '') {
+        if (document.getElementById('sceneNone') && document.getElementById('sceneNone').checked) {
+            val = 0;
+        } else if (document.getElementById('sceneColorRadio') && document.getElementById('sceneColorRadio').checked) {
+            val = 1;
+        } else if (document.getElementById('sceneSky') && document.getElementById('sceneSky').checked) {
+            val = 2;
+        } else if (document.getElementById('sceneCustomImage') && document.getElementById('sceneCustomImage').checked) {
+            val = 3;
+        }
+    }
+
+    val = parseInt(val, 10);
+    if (isNaN(val)) val = 0;
+
+    if (val === 0) {
+        horizonDescription.style.display = 'block';
+        horizonDescription.classList.remove('tw-hidden');
+    } else {
+        horizonDescription.style.display = 'none';
+        horizonDescription.classList.add('tw-hidden');
+    }
+}
+
 function bcgRadioSelect(option){
     let color_sel = document.getElementById('jscolorpick');
     let custom_img_sel = document.getElementById('img_upload_bcg');
@@ -111,12 +140,17 @@ function bcgRadioSelect(option){
     let presetsRow = document.getElementById('bcgPresetsRow');
     let presetGroundRow = document.getElementById('bcgPresetGroundRow');
     let imageRow = document.getElementById('bcgImageRow');
+    let horizonDescription = document.getElementById('sceneHorizonDescription');
 
     // Hide all rows first
     if (colorRow) colorRow.style.display = 'none';
     if (presetsRow) presetsRow.style.display = 'none';
     if (presetGroundRow) presetGroundRow.style.display = 'none';
     if (imageRow) imageRow.style.display = 'none';
+    if (horizonDescription) {
+        horizonDescription.style.display = 'none';
+        horizonDescription.classList.add('tw-hidden');
+    }
     if (color_sel) color_sel.disabled = true;
     if (preset_sel) preset_sel.disabled = true;
     if (preset_ground_toggle) preset_ground_toggle.disabled = true;
@@ -126,6 +160,7 @@ function bcgRadioSelect(option){
     if (isNaN(val)) val = 0;
 
     // Show the appropriate sub-option row
+    syncBackgroundStyleDescription(val);
     if (val === 1 && colorRow) { color_sel.disabled = false; colorRow.style.display = 'flex'; }
     if (val === 2 && presetsRow) {
         preset_sel.disabled = false;

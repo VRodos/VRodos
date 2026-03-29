@@ -4131,6 +4131,10 @@ body {
   background-color: rgb(255 255 255 / 0.9);
 }
 
+.vrodos-manager-wrapper .tw-bg-slate-500\/15 {
+  background-color: rgb(100 116 139 / 0.15);
+}
+
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
   background-image: linear-gradient(to top, var(--tw-gradient-stops));
 }
