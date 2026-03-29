@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     // Move modal wrapper to body root to ensure it breaks out of any clipping containers (WP theme wrappers)
     const modalWrapper = document.getElementById('vrodos-modal-wrapper');
     if (modalWrapper && modalWrapper.parentElement !== document.body) {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         radio.addEventListener('change', loadProjectTypeDescription);
     });
 
-    document.getElementById('createNewProjectBtn').addEventListener('click', function (e) {
+    document.getElementById('createNewProjectBtn').addEventListener('click', (e) => {
         // Title of game project
         let titleEl = document.getElementById('title');
         let title_vrodos_project = titleEl ? titleEl.value : "";
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Delegated event listener for project deletion
-    document.getElementById('ExistingProjectsDivDOM').addEventListener('click', function(e) {
+    document.getElementById('ExistingProjectsDivDOM').addEventListener('click', (e) => {
         let btn = e.target.closest('.vrodos-delete-project-btn');
         if (!btn) return;
         let gameId = btn.dataset.gameId;
@@ -74,12 +74,12 @@ document.addEventListener('DOMContentLoaded', function() {
         dialog.showModal();
     }
 
-    document.getElementById('deleteProjectBtn').addEventListener('click', function (e) {
+    document.getElementById('deleteProjectBtn').addEventListener('click', (e) => {
         document.getElementById('delete-dialog-progress-bar').style.display = '';
         vrodos_deleteGameAjax(dialog.dataset.projectId, dialog, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
     });
 
-    document.getElementById('canceldeleteProjectBtn').addEventListener('click', function (e) {
+    document.getElementById('canceldeleteProjectBtn').addEventListener('click', (e) => {
         document.getElementById('delete-dialog-progress-bar').style.display = 'none';
         dialog.close();
     });

@@ -3,7 +3,7 @@
 "use strict";
 
 function vrodosClampNumber(value, min, max, fallback) {
-    var parsed = Number(value);
+    let parsed = Number(value);
     if (!Number.isFinite(parsed)) {
         parsed = fallback;
     }
@@ -12,10 +12,10 @@ function vrodosClampNumber(value, min, max, fallback) {
 }
 
 function vrodosOrthoFitZoom(frustumSize, aspect, sceneSurfaceDimension) {
-    var safeDimension = Math.max(Number(sceneSurfaceDimension) || 0, 10);
-    var safeAspect = Math.max(Number(aspect) || 1, 0.1);
-    var visibleWidth = safeDimension * 2.2;
-    var computedZoom = (frustumSize * safeAspect) / visibleWidth;
+    let safeDimension = Math.max(Number(sceneSurfaceDimension) || 0, 10);
+    let safeAspect = Math.max(Number(aspect) || 1, 0.1);
+    let visibleWidth = safeDimension * 2.2;
+    let computedZoom = (frustumSize * safeAspect) / visibleWidth;
 
     return vrodosClampNumber(computedZoom, 10, 5000, 600);
 }
@@ -97,10 +97,10 @@ class vrodos_3d_editor_environmentals {
 
 
         // Add a background to the scene
-        var rgbeloader = new THREE.RGBELoader();
+        let rgbeloader = new THREE.RGBELoader();
 
         rgbeloader.setPath( pluginPath + '/images/hdr/' )
-            .load( 'Stonewall_Ref.hdr', function ( texture ) {
+            .load( 'Stonewall_Ref.hdr', (texture) => {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 envir.maintexture = texture;
                 //envir.scene.background = texture;
@@ -207,7 +207,7 @@ class vrodos_3d_editor_environmentals {
         this.cameraThirdPerson.updateProjectionMatrix();
 
         //---------------------------------------------------------------
-        var pixelRatio = window.devicePixelRatio || 1;
+        let pixelRatio = window.devicePixelRatio || 1;
         this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         this.composer.renderer.setPixelRatio(pixelRatio);
         this.effectFXAA.uniforms['resolution'].value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
@@ -275,7 +275,7 @@ class vrodos_3d_editor_environmentals {
         this.avatarControls.name = "avatarControls";
 
         // Avatar Yaw controls
-        var avatarControlsYawObject = this.avatarControls.getObject();
+        let avatarControlsYawObject = this.avatarControls.getObject();
         this.initAvatarPosition = new THREE.Vector3(0, 0, 0);
         avatarControlsYawObject.position.set(this.initAvatarPosition.x, this.initAvatarPosition.y, this.initAvatarPosition.z);
         this.scene.add(avatarControlsYawObject);
@@ -296,13 +296,13 @@ class vrodos_3d_editor_environmentals {
 
 
     setCamMeshToAvatarControls() {
-        var CamMesh = envir.scene.getObjectByName("Camera3Dmodel");
+        let CamMesh = envir.scene.getObjectByName("Camera3Dmodel");
         CamMesh.rotation.set(0, Math.PI / 2, 0);
         this.avatarControls.getObject().add(CamMesh);
     }
 
     // setSteveToAvatarControls() {
-    //     var SteveOld = envir.scene.getObjectByName("SteveOld");
+    //     let SteveOld = envir.scene.getObjectByName("SteveOld");
     //     SteveOld.rotation.set(0, Math.PI / 2, 0);
     //     this.avatarControls.getObject().add(SteveOld);
     // }
@@ -323,9 +323,9 @@ class vrodos_3d_editor_environmentals {
 
     /* X, Y ,Z letters  for axes */
     setAxisText() {
-        var loader = new THREE.FontLoader();
+        let loader = new THREE.FontLoader();
         loader.scene = this.scene;
-        // var pathn = window.location.pathname.replace(/[^/]*$/, '');
+        // let pathn = window.location.pathname.replace(/[^/]*$/, '');
         // pathn = pathn.split('/').slice(0,-2).join('/');
 
         loader.load(pluginPath + '/js_libs/threejs147/fonts/helvetiker_bold.typeface.json', this.loadtexts);
@@ -334,8 +334,8 @@ class vrodos_3d_editor_environmentals {
     loadtexts(font) {
 
         for (let letterAx of ['X', 'Y', 'Z']) {
-            for (var dist = 10; dist < 200; dist = dist + 10) {
-                var textGeo = new THREE.TextGeometry(dist + " m", {
+            for (let dist = 10; dist < 200; dist = dist + 10) {
+                let textGeo = new THREE.TextGeometry(dist + " m", {
                     font: font,
                     size: 0.2,
                     // height: 50,
@@ -344,10 +344,10 @@ class vrodos_3d_editor_environmentals {
                     // bevelSize: 5,
                     // bevelEnabled: true
                 });
-                var color = new THREE.Color();
+                let color = new THREE.Color();
                 color.setRGB(letterAx == 'X' ? 255 : 0, letterAx == 'Y' ? 255 : 0, letterAx == 'Z' ? 255 : 0);
-                var textMaterial = new THREE.MeshBasicMaterial({color: color});
-                var text = new THREE.Mesh(textGeo, textMaterial);
+                let textMaterial = new THREE.MeshBasicMaterial({color: color});
+                let text = new THREE.Mesh(textGeo, textMaterial);
 
                 if (letterAx == 'X')
                     text.rotation.y = -Math.PI / 2;

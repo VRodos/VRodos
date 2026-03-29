@@ -1,19 +1,19 @@
 //  AJAX: FETCH Assets 3d
 let vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) => {
 
-    var url = isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_fbrowse.ajax_url;
-    var body = new URLSearchParams({
+    let url = isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_fbrowse.ajax_url;
+    let body = new URLSearchParams({
         'action': 'vrodos_fetch_game_assets_action',
         'gameProjectSlug': gameProjectSlug,
         'gameProjectID': gameProjectID
     });
 
     fetch(url, { method: 'POST', body: body })
-        .then(function(r) { return r.json(); })
-        .then(function(responseRecords) {
+        .then((r) => { return r.json(); })
+        .then((responseRecords) => {
             file_Browsing_By_DB(responseRecords.items, gameProjectSlug, urlforAssetEdit);
         })
-        .catch(function(err) {
+        .catch((err) => {
             console.log("ERROR 51:" + err);
         });
 }
@@ -28,16 +28,16 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     let fileList = filemanager.querySelector('.data');
 
     // Persistent drag ghost element — styled card with thumbnail + name
-    var dragGhost = document.createElement('div');
+    let dragGhost = document.createElement('div');
     Object.assign(dragGhost.style, {
         position: 'absolute', top: '-9999px', left: '-9999px',
         width: '120px', borderRadius: '8px', overflow: 'hidden',
         boxShadow: '0 8px 24px rgba(0,0,0,0.35)', pointerEvents: 'none',
         background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)'
     });
-    var dragGhostImg = document.createElement('img');
+    let dragGhostImg = document.createElement('img');
     Object.assign(dragGhostImg.style, { width: '100%', height: '72px', objectFit: 'cover', display: 'block' });
-    var dragGhostLabel = document.createElement('div');
+    let dragGhostLabel = document.createElement('div');
     Object.assign(dragGhostLabel.style, {
         padding: '4px 6px', fontSize: '9px', fontWeight: '700',
         color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden',
@@ -50,18 +50,18 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     render(responseData, gameProjectSlug, urlforAssetEdit);
 
     // Hiding and showing the search box
-    var searchBox = filemanager.querySelector('.search');
+    let searchBox = filemanager.querySelector('.search');
     if (searchBox) {
         searchBox.addEventListener('click', function () {
-            var span = this.querySelector('span');
-            var input = this.querySelector('input[type=search]');
+            let span = this.querySelector('span');
+            let input = this.querySelector('input[type=search]');
             if (span) span.style.display = 'none';
             if (input) { input.style.display = ''; input.focus(); }
         });
     }
 
     // Listening for keyboard input on the search field.
-    var searchInput = filemanager.querySelector('input');
+    let searchInput = filemanager.querySelector('input');
     if (searchInput) {
         searchInput.addEventListener('input', function (e) {
             let value = this.value.trim();
@@ -72,6 +72,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 render(filteredResponseData, gameProjectSlug, urlforAssetEdit);
             } else {
                 filemanager.classList.remove('searching');
+                fileList.innerHTML = '';
                 render(responseData, gameProjectSlug, urlforAssetEdit);
             }
         });
@@ -81,7 +82,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         searchInput.addEventListener('focusout', function (e) {
             if (!this.value.trim().length) {
                 this.style.display = 'none';
-                var span = this.parentElement.querySelector('span');
+                let span = this.parentElement.querySelector('span');
                 if (span) span.style.display = '';
             }
         });
@@ -91,19 +92,19 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     fileList.addEventListener('click', function (e) { e.preventDefault(); });
 
     fileList.addEventListener('dragstart', function (e) {
-        var target = e.target.closest('li[draggable]') || e.target;
-        var screenshotImage = target.getAttribute("data-screenshot_path");
-        var assetName = target.getAttribute("data-asset_name") || '';
+        let target = e.target.closest('li[draggable]') || e.target;
+        let screenshotImage = target.getAttribute("data-screenshot_path");
+        let assetName = target.getAttribute("data-asset_name") || '';
 
         // Update drag ghost with this asset's image and name
         dragGhostImg.src = screenshotImage || pluginPath + '/images/ic_asset.png';
         dragGhostLabel.textContent = assetName;
         e.dataTransfer.setDragImage(dragGhost, 60, 45);
 
-        var dragData = {};
-        for (var i = 0; i < target.attributes.length; i++) {
-            var attr = target.attributes[i];
-            var name = attr.name.substring(attr.name.indexOf('-') + 1);
+        let dragData = {};
+        for (let i = 0; i < target.attributes.length; i++) {
+            let attr = target.attributes[i];
+            let name = attr.name.substring(attr.name.indexOf('-') + 1);
             dragData[name] = attr.value;
         }
         dragData.title = target.getAttribute("data-asset_slug") + "_" + Math.floor(Date.now() / 1000);
@@ -124,7 +125,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         // Remove any previous empty state
         fileList.querySelectorAll('.asset-empty-state').forEach(function(el) { el.remove(); });
 
-        var f, name;
+        let f, name;
 
         if (enlistData && enlistData.length > 0) {
 
@@ -156,11 +157,11 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 f['screenshot_path'] = f['screenshot_path'] ? f['screenshot_path'] : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
 
                 let draggable_string = '';
-                for (let entry in Object.keys(f)) {
-                    draggable_string = draggable_string.concat('data-'+Object.keys(f)[entry] + '="' + Object.values(f)[entry]) + '" ';
+                for (const [key, value] of Object.entries(f)) {
+                    draggable_string += 'data-' + key + '="' + value + '" ';
                 }
 
-                var liHTML = '<li draggable="true" id="asset-' + f['asset_id'] + '" ' +
+                let liHTML = '<li draggable="true" id="asset-' + f['asset_id'] + '" ' +
                     'class="vrodos-asset-card tw-relative tw-bg-slate-800 tw-rounded-lg tw-overflow-hidden tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-group tw-cursor-move"' +
                     ' title="Drag into scene" ' + draggable_string + '>' +
 
@@ -177,7 +178,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     '</div>' +
 
                     (function() {
-                        var canEditThis = !!vrodos_data.isUserAdmin || (String(f['author_id']) === String(vrodos_data.current_user_id));
+                        let canEditThis = !!vrodos_data.isUserAdmin || (String(f['author_id']) === String(vrodos_data.current_user_id));
                         if (canEditThis) {
                             return '<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">' +
                                 '<button class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href=\'' + urlforAssetEdit + f['asset_id'] + '&scene_type=scene&preview=0&editable=true\'">EDIT</button>' +
@@ -197,7 +198,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
             if (typeof lucide !== 'undefined') lucide.createIcons();
         } else {
             // Show empty state when no assets exist
-            var emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
+            let emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
                 '<div class="tw-bg-slate-800/40 tw-p-4 tw-rounded-full tw-mb-4 tw-border tw-border-white/5">' +
                     '<i data-lucide="package-open" class="tw-w-10 tw-h-10 tw-text-slate-400"></i>' +
                 '</div>' +
@@ -281,7 +282,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         let emptyState = fileList.querySelector(".asset-empty-state");
         if (visibleCount === 0) {
             if (!emptyState) {
-                var emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
+                let emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
                     '<div class="tw-bg-slate-800/40 tw-p-4 tw-rounded-full tw-mb-4 tw-border tw-border-white/5">' +
                     '<i data-lucide="package-open" class="tw-w-10 tw-h-10 tw-text-slate-400"></i>' +
                     '</div>' +

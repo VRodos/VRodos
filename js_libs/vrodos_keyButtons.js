@@ -1,17 +1,17 @@
-var moveForward = false;
-var moveBackward = false;
-var moveLeft = false;
-var moveRight = false;
-var moveUp = false;
-var moveDown = false;
-var viewUp = false;
-var viewDown = false;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let moveUp = false;
+let moveDown = false;
+let viewUp = false;
+let viewDown = false;
 
-var avatar_movement_speed_factor = 0.1;
+let avatar_movement_speed_factor = 0.1;
 
-var prevTime = performance.now();
-var velocity = new THREE.Vector3();
-var torgue = new THREE.Vector3();
+let prevTime = performance.now();
+let velocity = new THREE.Vector3();
+let torgue = new THREE.Vector3();
 
 // MOUSE DOWN
 // document.addEventListener( 'mousedown', function ( event ) {
@@ -35,7 +35,7 @@ var torgue = new THREE.Vector3();
 //
 // WHEEL
 
-document.addEventListener('wheel', function (event) {
+document.addEventListener('wheel', (event) => {
     if (avatarControlsEnabled)
         if (event.deltaY)
             if (event.deltaY > 0) {
@@ -54,7 +54,7 @@ if (firstPersonBlockerBtn) {
 };
 
 document.addEventListener('remove_movement',
-    function (event) {
+    (event) => {
         //abortController.abort()
         document.removeEventListener('keydown', keydown_handler);
         document.removeEventListener('keyup', keyup_handler);
@@ -64,7 +64,7 @@ document.addEventListener('remove_movement',
 
 
 document.addEventListener('add_movement',
-    function (event) {
+    (event) => {
         document.addEventListener('keydown', keydown_handler);
         document.addEventListener('keyup', keyup_handler);
     }
@@ -120,10 +120,10 @@ let keyup_handler = (ev) => {
 
 
 /* Update Steve when Steve walks by key presses */
-function updatePointerLockControls(){
+const updatePointerLockControls = function(){
 
-    var time = performance.now();
-    var delta = ( time - prevTime ) / 1000;
+    let time = performance.now();
+    let delta = ( time - prevTime ) / 1000;
 
     // Reductors of velocity
     velocity.x -= velocity.x * 2.0 * delta;
@@ -163,39 +163,39 @@ function updatePointerLockControls(){
 
 // TODO: RAYCASTING SIGNIFICANTLY DETERIORATES RENDERING SPEED
 
-//for (var vertexIndex = 0; vertexIndex < 1; vertexIndex++) //cubeRayShield.geometry.vertices.length
+//for (let vertexIndex = 0; vertexIndex < 1; vertexIndex++) //cubeRayShield.geometry.vertices.length
 //{
-//    var localVertex = cubeRayShield.geometry.vertices[vertexIndex].clone();
-//    var globalVertex = localVertex.applyProjection(cubeRayShield.matrixWorld);
+//    let localVertex = cubeRayShield.geometry.vertices[vertexIndex].clone();
+//    let globalVertex = localVertex.applyProjection(cubeRayShield.matrixWorld);
 //
 //
-//    var steveWorldPosition = Steve.position.clone().applyProjection(Steve.matrixWorld);
+//    let steveWorldPosition = Steve.position.clone().applyProjection(Steve.matrixWorld);
 //
-//    var directionVector = globalVertex.sub( steveWorldPosition  );
+//    let directionVector = globalVertex.sub( steveWorldPosition  );
 //
-//    var dirVecNorm = directionVector.clone().normalize();
+//    let dirVecNorm = directionVector.clone().normalize();
 //
 //    // Visualize Raycaster with a line
-//    //    var geometryL = new THREE.Geometry();
-//    //    var geometryL = new THREE.Geometry();
+//    //    let geometryL = new THREE.Geometry();
+//    //    let geometryL = new THREE.Geometry();
 //    //    geometryL.vertices.push(steveWorldPosition,
 //    //        steveWorldPosition.clone().add(dirVecNorm)
 //    //    );
 //    //    console.log(Steve.position.clone(), Steve.position.clone().add(dirVecNorm));
 //    //    envir.scene.add(new THREE.Line(geometryL, new THREE.LineBasicMaterial({color: 0x0000ff})));
 //
-//    var raycaster = new THREE.Raycaster( steveWorldPosition, dirVecNorm, 1, 10);
-//    var actMesh = getActiveMeshes();
-//    var collisionResults = raycaster.intersectObjects( actMesh, true );
+//    let raycaster = new THREE.Raycaster( steveWorldPosition, dirVecNorm, 1, 10);
+//    let actMesh = getActiveMeshes();
+//    let collisionResults = raycaster.intersectObjects( actMesh, true );
 //}
 
 
 // Collider test: Make everything touched red
-//for ( var i = 0; i < collisionResults.length; i++ )
+//for ( let i = 0; i < collisionResults.length; i++ )
 //    collisionResults[ i ].object.material.color.set( 0xff0000 );
 
 
-//        var isOnObject = collisionResults.length > 0; // && collisionResults[0].distance < directionVector.length();
+//        let isOnObject = collisionResults.length > 0; // && collisionResults[0].distance < directionVector.length();
 
 
 

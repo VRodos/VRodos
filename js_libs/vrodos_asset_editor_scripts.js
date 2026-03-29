@@ -7,7 +7,7 @@
 'use strict';
 
 // Initial slide to show (carousel top)
-var slideIndex = 0;
+let slideIndex = 0;
 
 
 function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
@@ -29,11 +29,11 @@ function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
 
 
     // Clear screenshot
-    var sshotImg = document.getElementById("sshotPreviewImg");
+    let sshotImg = document.getElementById("sshotPreviewImg");
     if (sshotImg) sshotImg.src = sshotPreviewDefaultImg;
 
     // Clear Title in Preview
-    var previewTitle = document.getElementById("objectPreviewTitle");
+    let previewTitle = document.getElementById("objectPreviewTitle");
     if (previewTitle) previewTitle.style.display = "none";
 }
 
@@ -62,8 +62,7 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local){
     }
 
     // --- Read it ------------------------
-    reader.onload = (function(reader) {
-        return function() {
+    reader.onload = () => {
 
             let fileContent = reader.result ? reader.result : '';
 
@@ -87,7 +86,7 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local){
                 case 'jpg':
                 case 'png':
                 case 'gif':
-                    var hiddenInput = document.createElement('input');
+                    let hiddenInput = document.createElement('input');
                     hiddenInput.type = 'hidden';
                     hiddenInput.name = 'textureFileInput[' + file.name + ']';
                     hiddenInput.id = 'textureFileInput';
@@ -100,14 +99,13 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local){
             asset_viewer_3d_kernel_local.checkerCompleteReading( type );
 
         };
-    })(reader);
 }
 
 
 function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputElem) {
 
     // PREVIEW Handler (not uploaded yet): Load from selected files
-    let _handleFileSelect = function ( event ) {
+    let _handleFileSelect = (event) => {
 
         if (typeof window.vrodos_validate_selected_glb === 'function' &&
             !window.vrodos_validate_selected_glb()) {
@@ -279,7 +277,7 @@ function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
     // Clear all
     vrodos_clear_asset_files(asset_viewer_3d_kernel);
 
-    document.querySelectorAll("div.ProducerPlotTooltip").forEach(function(el) { el.remove(); });
+    document.querySelectorAll("div.ProducerPlotTooltip").forEach((el) => { el.remove(); });
 }
 
 function clearList() {
@@ -289,9 +287,9 @@ function clearList() {
 function setScreenshotHandler(){
 
     // Screenshot handler
-    var sshotBtn = document.getElementById("createModelScreenshotBtn");
+    let sshotBtn = document.getElementById("createModelScreenshotBtn");
     if (sshotBtn && document.getElementById("sshotPreviewImg")) {
-        sshotBtn.addEventListener("click", function () {
+        sshotBtn.addEventListener("click", () => {
             asset_viewer_3d_kernel.renderer.preserveDrawingBuffer = true;
             vrodos_create_model_sshot(asset_viewer_3d_kernel);
         });

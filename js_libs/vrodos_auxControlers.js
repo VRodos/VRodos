@@ -3,9 +3,9 @@
  *
  * @type {gui_controls_funs}
  */
-var dg_s1_prev;
-var dg_s2_prev;
-var dg_s3_prev;
+let dg_s1_prev;
+let dg_s2_prev;
+let dg_s3_prev;
 
 // ─── Cel-shaded selection outline (back-face hull) ───
 
@@ -26,7 +26,7 @@ function addCelOutline(object) {
     if (!object) return;
     removeCelOutline(object);
 
-    object.traverse(function (child) {
+    object.traverse((child) => {
         if (child.isMesh && child.name !== CEL_OUTLINE_TAG) {
             const outline = new THREE.Mesh(child.geometry, CEL_OUTLINE_MATERIAL);
             outline.name = CEL_OUTLINE_TAG;
@@ -44,10 +44,10 @@ function addCelOutline(object) {
 function removeCelOutline(object) {
     if (!object) return;
     const toRemove = [];
-    object.traverse(function (child) {
+    object.traverse((child) => {
         if (child.name === CEL_OUTLINE_TAG) toRemove.push(child);
     });
-    toRemove.forEach(function (mesh) {
+    toRemove.forEach((mesh) => {
         if (mesh.parent) mesh.parent.remove(mesh);
     });
 }
@@ -58,10 +58,10 @@ function removeCelOutline(object) {
 function removeAllCelOutlines() {
     if (typeof envir === 'undefined' || !envir.scene) return;
     const toRemove = [];
-    envir.scene.traverse(function (child) {
+    envir.scene.traverse((child) => {
         if (child.name === CEL_OUTLINE_TAG) toRemove.push(child);
     });
-    toRemove.forEach(function (mesh) {
+    toRemove.forEach((mesh) => {
         if (mesh.parent) mesh.parent.remove(mesh);
     });
 }
@@ -89,13 +89,13 @@ function showObjectControlsPanel(objectName) {
     }
 
     // Position 100px to the right of last click, clamped to viewport
-    var panelW = panel.offsetWidth  || 280;
-    var panelH = panel.offsetHeight || 300;
-    var mx = _lastClickX || (window.innerWidth / 2);
-    var my = _lastClickY || (window.innerHeight / 2);
+    let panelW = panel.offsetWidth  || 280;
+    let panelH = panel.offsetHeight || 300;
+    let mx = _lastClickX || (window.innerWidth / 2);
+    let my = _lastClickY || (window.innerHeight / 2);
 
-    var left = mx + 100;
-    var top  = my - panelH / 2;
+    let left = mx + 100;
+    let top  = my - panelH / 2;
 
     // If it would go off the right edge, place it to the left of the cursor instead
     if (left + panelW > window.innerWidth - 8) {
@@ -111,8 +111,8 @@ function showObjectControlsPanel(objectName) {
 }
 
 // Track last click position (updated by the canvas mousedown handler)
-var _lastClickX = 0;
-var _lastClickY = 0;
+let _lastClickX = 0;
+let _lastClickY = 0;
 
 function hideObjectControlsPanel() {
     const panel = document.getElementById('object-controls-panel');
@@ -124,7 +124,7 @@ function hideObjectControlsPanel() {
 function humanizeObjectTypeLabel(typeValue) {
     if (!typeValue) return '';
 
-    var aliases = {
+    let aliases = {
         'walkable-surface': 'Walkable Surface',
         'poi-imagetext': 'Image Text POI',
         'poi-link': 'Link POI',
@@ -161,7 +161,7 @@ function getObjectTypeLabel(object) {
 }
 
 function updateObjectControlsMeta(object) {
-    var badge = document.getElementById('object-controls-badge');
+    let badge = document.getElementById('object-controls-badge');
     if (!badge) return;
 
     if (!object) {
@@ -172,7 +172,7 @@ function updateObjectControlsMeta(object) {
         return;
     }
 
-    var typeLabel = getObjectTypeLabel(object);
+    let typeLabel = getObjectTypeLabel(object);
     if (!typeLabel) {
         badge.classList.add('tw-hidden');
         return;
@@ -188,11 +188,11 @@ function updateObjectControlsMeta(object) {
  * Hide all object property sections inside the floating panel.
  */
 function hideAllPropertyPanels() {
-    var container = document.getElementById('object-properties-container');
+    let container = document.getElementById('object-properties-container');
     if (!container) return;
     container.style.display = 'none';
-    var sections = container.querySelectorAll('.object-property-section');
-    for (var i = 0; i < sections.length; i++) {
+    let sections = container.querySelectorAll('.object-property-section');
+    for (let i = 0; i < sections.length; i++) {
         sections[i].style.display = 'none';
     }
 }
@@ -206,8 +206,8 @@ function showPropertiesInPanel(object) {
     hideAllPropertyPanels();
     updateObjectControlsMeta(object);
 
-    var name = object.name;
-    var hasProperties = false;
+    let name = object.name;
+    let hasProperties = false;
 
     // Dispatch by category_slug first
     switch (object.category_slug) {
@@ -251,13 +251,13 @@ function showPropertiesInPanel(object) {
 
     // Show the container only if a property section is active
     if (hasProperties) {
-        var container = document.getElementById('object-properties-container');
+        let container = document.getElementById('object-properties-container');
         if (container) container.style.display = 'block';
     }
 }
 
 // Set up drag + close once DOM is ready
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
     const panel = document.getElementById('object-controls-panel');
     const header = document.getElementById('object-controls-header');
     const closeBtn = document.getElementById('object-controls-close');
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Close button hides the panel
     if (closeBtn) {
-        closeBtn.addEventListener('click', function () {
+        closeBtn.addEventListener('click', () => {
             hideObjectControlsPanel();
         });
     }
@@ -275,12 +275,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Panel is position:fixed, so coordinates are viewport-relative
     let isDragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
-    header.addEventListener('pointerdown', function (e) {
+    header.addEventListener('pointerdown', (e) => {
         if (e.target.closest('button')) return; // don't drag on close button
         isDragging = true;
 
         // For fixed positioning, getBoundingClientRect gives viewport coords directly
-        var rect = panel.getBoundingClientRect();
+        let rect = panel.getBoundingClientRect();
         startLeft = rect.left;
         startTop = rect.top;
 
@@ -297,20 +297,20 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
     });
 
-    header.addEventListener('pointermove', function (e) {
+    header.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
         panel.style.left = (startLeft + e.clientX - startX) + 'px';
         panel.style.top  = (startTop  + e.clientY - startY) + 'px';
     });
 
-    header.addEventListener('pointerup', function (e) {
+    header.addEventListener('pointerup', (e) => {
         isDragging = false;
         header.releasePointerCapture(e.pointerId);
     });
 });
 
 // GUI controls — lil-gui (successor to dat.gui)
-var controlInterface = new lil.GUI({ autoPlace: false });
+let controlInterface = new lil.GUI({ autoPlace: false });
 controlInterface.domElement.style.width = '100%';
 
 // Remove the lil-gui title bar (our floating panel has its own header)
@@ -322,14 +322,14 @@ let coordLabel = ['<span style="color:red">X</span>', '<span style="color:green"
 let actionLabel = ['translate', 'translate', 'translate', 'rotate', 'rotate', 'rotate', 'scale', 'scale', 'scale'];
 
 
-var dg_controller = Array();
+let dg_controller = Array();
 
-var gui_controls_funs = (function () {
+let gui_controls_funs = (function () {
     // Internal storage — always numeric
-    var _vals = { dg_t1: 0, dg_t2: 0, dg_t3: 0, dg_r1: 0, dg_r2: 0, dg_r3: 0, dg_s1: 0, dg_s2: 0, dg_s3: 0 };
-    var obj = {};
+    let _vals = { dg_t1: 0, dg_t2: 0, dg_t3: 0, dg_r1: 0, dg_r2: 0, dg_r3: 0, dg_s1: 0, dg_s2: 0, dg_s3: 0 };
+    let obj = {};
     // Define getter/setter for each property so lil-gui never stores a string
-    Object.keys(_vals).forEach(function (key) {
+    Object.keys(_vals).forEach((key) => {
         Object.defineProperty(obj, key, {
             get: function () { return _vals[key]; },
             set: function (v) { _vals[key] = parseFloat(v) || 0; },
@@ -354,9 +354,9 @@ for (let key in gui_controls_funs) {
     // Patch getValue to ALWAYS return a number — lil-gui's updateDisplay calls .toFixed()
     // which crashes on strings/NaN. This is the definitive guard.
     (function(ctrl) {
-        var _origGetValue = ctrl.getValue.bind(ctrl);
+        let _origGetValue = ctrl.getValue.bind(ctrl);
         ctrl.getValue = function() {
-            var v = _origGetValue();
+            let v = _origGetValue();
             return (typeof v === 'number' && !isNaN(v)) ? v : 0;
         };
     })(dg_controller[i]);
@@ -372,7 +372,7 @@ for (let key in gui_controls_funs) {
 
 // Global flag: true while a drag-scrub is active on any lil-gui input.
 // Used by onChange handlers to distinguish drag (apply live) vs keyboard (skip until commit).
-var _isDragScrubbing = false;
+let _isDragScrubbing = false;
 
 /**
  * Adds mouse-drag scrubbing to a lil-gui number controller input.
@@ -398,13 +398,13 @@ function _addDragScrub(controller) {
     // Block lil-gui's internal input handler during keyboard typing.
     // lil-gui listens on 'input' event and calls setValue() on every keystroke,
     // which moves the 3D object in real time. We stop that during keyboard mode.
-    input.addEventListener('input', function (e) {
+    input.addEventListener('input', (e) => {
         if (isKeyboardEditing) {
             e.stopImmediatePropagation();
         }
     }, true); // capture phase — fires before lil-gui's handler
 
-    input.addEventListener('pointerdown', function (e) {
+    input.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
         // If input is already focused (user is typing), don't interfere
         if (isKeyboardEditing) return;
@@ -416,7 +416,7 @@ function _addDragScrub(controller) {
         e.preventDefault(); // Prevent focus on pointerdown — we decide on pointerup
     });
 
-    input.addEventListener('pointermove', function (e) {
+    input.addEventListener('pointermove', (e) => {
         if (!pointerDown) return;
         const dx = e.clientX - startX;
         // Start dragging only after threshold
@@ -431,7 +431,7 @@ function _addDragScrub(controller) {
         }
     });
 
-    input.addEventListener('pointerup', function (e) {
+    input.addEventListener('pointerup', (e) => {
         if (!pointerDown) return;
         const wasDragging = dragging;
         pointerDown = false;
@@ -453,13 +453,13 @@ function _addDragScrub(controller) {
     });
 
     // Exit keyboard editing mode on blur
-    input.addEventListener('blur', function () {
+    input.addEventListener('blur', () => {
         isKeyboardEditing = false;
         input.style.cursor = 'ew-resize';
     });
 
     // On Enter or Escape, blur the input — onFinishChange handles the actual update
-    input.addEventListener('keydown', function (e) {
+    input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === 'Escape') {
             input.blur();
         }
@@ -479,13 +479,13 @@ function controllerDatGuiOnChange() {
     // Keyboard typing is committed via onFinishChange (Enter/blur).
 
     // --- Translation ---
-    dg_controller[0].onChange(function(value) {
+    dg_controller[0].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) transform_controls.object.position.x = value;
         }
     );
-    dg_controller[0].onFinishChange(function(value) {
+    dg_controller[0].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_t1 = value;
             if (transform_controls.object) transform_controls.object.position.x = value;
@@ -494,13 +494,13 @@ function controllerDatGuiOnChange() {
         }
     );
 
-    dg_controller[1].onChange(function(value) {
+    dg_controller[1].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) transform_controls.object.position.y = value;
         }
     );
-    dg_controller[1].onFinishChange(function(value) {
+    dg_controller[1].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_t2 = value;
             if (transform_controls.object) transform_controls.object.position.y = value;
@@ -509,13 +509,13 @@ function controllerDatGuiOnChange() {
         }
     );
 
-    dg_controller[2].onChange(function(value) {
+    dg_controller[2].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) transform_controls.object.position.z = value;
         }
     );
-    dg_controller[2].onFinishChange(function(value) {
+    dg_controller[2].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_t3 = value;
             if (transform_controls.object) transform_controls.object.position.z = value;
@@ -525,7 +525,7 @@ function controllerDatGuiOnChange() {
     );
 
     // --- Rotation ---
-    dg_controller[3].onChange(function(value) {
+    dg_controller[3].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) {
@@ -537,7 +537,7 @@ function controllerDatGuiOnChange() {
             }
         }
     );
-    dg_controller[3].onFinishChange(function(value) {
+    dg_controller[3].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_r1 = value;
             if (transform_controls.object) {
@@ -553,7 +553,7 @@ function controllerDatGuiOnChange() {
         }
     );
 
-    dg_controller[4].onChange(function(value) {
+    dg_controller[4].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) {
@@ -565,7 +565,7 @@ function controllerDatGuiOnChange() {
             }
         }
     );
-    dg_controller[4].onFinishChange(function(value) {
+    dg_controller[4].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_r2 = value;
             if (transform_controls.object) {
@@ -581,7 +581,7 @@ function controllerDatGuiOnChange() {
         }
     );
 
-    dg_controller[5].onChange(function(value) {
+    dg_controller[5].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (transform_controls.object) {
@@ -593,7 +593,7 @@ function controllerDatGuiOnChange() {
             }
         }
     );
-    dg_controller[5].onFinishChange(function(value) {
+    dg_controller[5].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_r3 = value;
             if (transform_controls.object) {
@@ -610,7 +610,7 @@ function controllerDatGuiOnChange() {
     );
 
     // --- Scale ---
-    dg_controller[6].onChange(function(value) {
+    dg_controller[6].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (!transform_controls.object) return;
@@ -626,7 +626,7 @@ function controllerDatGuiOnChange() {
             }
         }
     );
-    dg_controller[6].onFinishChange(function(value) {
+    dg_controller[6].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_s1 = value;
             if (!transform_controls.object) return;
@@ -651,7 +651,7 @@ function controllerDatGuiOnChange() {
         }
     );
 
-    dg_controller[7].onChange(function(value) {
+    dg_controller[7].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (!transform_controls.object) return;
@@ -667,7 +667,7 @@ function controllerDatGuiOnChange() {
             }
         }
     );
-    dg_controller[7].onFinishChange(function(value) {
+    dg_controller[7].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_s2 = value;
             if (!transform_controls.object) return;
@@ -692,7 +692,7 @@ function controllerDatGuiOnChange() {
         }
     );
 
-    dg_controller[8].onChange(function(value) {
+    dg_controller[8].onChange((value) => {
             if (!_isDragScrubbing) return;
             value = parseFloat(value) || 0;
             if (!transform_controls.object) return;
@@ -708,7 +708,7 @@ function controllerDatGuiOnChange() {
             }
         }
     );
-    dg_controller[8].onFinishChange(function(value) {
+    dg_controller[8].onFinishChange((value) => {
             value = parseFloat(value) || 0;
             gui_controls_funs.dg_s3 = value;
             if (!transform_controls.object) return;
@@ -762,7 +762,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
 
 
     // While on Input Field on Focus and pressing enter for value
-    element.addEventListener('keydown', function (e) {
+    element.addEventListener('keydown', (e) => {
 
         switch (controller._opCode) {
             case 'Tx':

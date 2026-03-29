@@ -79,7 +79,7 @@ function handleBackgroundPresetChange(selectElement) {
 
     setBackgroundPresetSelection(selectElement.value);
 
-    var sceneSkyRadio = document.getElementById('sceneSky');
+    let sceneSkyRadio = document.getElementById('sceneSky');
     if (sceneSkyRadio) sceneSkyRadio.checked = true;
 
     saveChanges();
@@ -100,10 +100,10 @@ function toggleAframeCollisionMode(isEnabled) {
 }
 
 function syncBackgroundStyleDescription(selectedValue) {
-    var horizonDescription = document.getElementById('sceneHorizonDescription');
+    let horizonDescription = document.getElementById('sceneHorizonDescription');
     if (!horizonDescription) return;
 
-    var val = selectedValue;
+    let val = selectedValue;
     if (val === undefined || val === null || val === '') {
         if (document.getElementById('sceneNone') && document.getElementById('sceneNone').checked) {
             val = 0;
@@ -156,7 +156,7 @@ function bcgRadioSelect(option){
     if (preset_ground_toggle) preset_ground_toggle.disabled = true;
     if (custom_img_sel) custom_img_sel.disabled = true;
 
-    var val = parseInt(option.value);
+    let val = parseInt(option.value);
     if (isNaN(val)) val = 0;
 
     // Show the appropriate sub-option row
@@ -174,11 +174,11 @@ function bcgRadioSelect(option){
     if (envir && envir.scene) {
         switch (val) {
         case 0:
-            var hex = rgbToHex(255, 255, 255);
+            let hex = rgbToHex(255, 255, 255);
             envir.scene.background = new THREE.Color(hex);
             break;
         case 1:
-            var colorVal = color_sel ? color_sel.value : '';
+            let colorVal = color_sel ? color_sel.value : '';
             if (colorVal) envir.scene.background = new THREE.Color("#" + colorVal);
             break;
         case 2:
@@ -199,7 +199,7 @@ function bcgRadioSelect(option){
 }
 
 function hexToRgb(hex) {
-    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
@@ -244,11 +244,11 @@ function updateFog(whencalled){
     let fogFar = document.getElementById('FogFar').value;
     let fogDensity = document.getElementById('FogDensity').value;
 
-    var linear_elems = document.getElementsByClassName('linearElement');
-    var expo_elems = document.getElementsByClassName('exponentialElement');
-    var color_elems = document.getElementsByClassName('colorElement');
+    let linear_elems = document.getElementsByClassName('linearElement');
+    let expo_elems = document.getElementsByClassName('exponentialElement');
+    let color_elems = document.getElementsByClassName('colorElement');
 
-    let colorHex = picker.rgb.map(function(x){             //For each array element
+    let colorHex = picker.rgb.map((x) => {             //For each array element
         x = parseInt(x).toString(16);      //Convert to a base16 string
         return (x.length==1) ? "0"+x : x;  //Add zero if we get only one character
     });
@@ -265,26 +265,26 @@ function updateFog(whencalled){
     if(fogType === 'linear') {
         document.getElementById("FogValues").style.display="flex";
 
-        for (var i = 0; i < linear_elems.length; ++i) {
+        for (let i = 0; i < linear_elems.length; ++i) {
             linear_elems[i].style.display="flex";
         }
-        for (var i = 0; i < expo_elems.length; ++i) {
+        for (let i = 0; i < expo_elems.length; ++i) {
             expo_elems[i].style.display="none";
         }
-        for (var i = 0; i < color_elems.length; ++i) {
+        for (let i = 0; i < color_elems.length; ++i) {
             color_elems[i].style.display="flex";
         }
 
     } else if(fogType === 'exponential') {
         document.getElementById("FogValues").style.display="flex";
 
-        for (var i = 0; i < linear_elems.length; ++i) {
+        for (let i = 0; i < linear_elems.length; ++i) {
             linear_elems[i].style.display="none";
         }
-        for (var i = 0; i < expo_elems.length; ++i) {
+        for (let i = 0; i < expo_elems.length; ++i) {
             expo_elems[i].style.display="flex";
         }
-        for (var i = 0; i < color_elems.length; ++i) {
+        for (let i = 0; i < color_elems.length; ++i) {
             color_elems[i].style.display="flex";
         }
 
@@ -293,13 +293,13 @@ function updateFog(whencalled){
             envir.scene.fog = null;
         }
 
-        for (var i = 0; i < linear_elems.length; ++i) {
+        for (let i = 0; i < linear_elems.length; ++i) {
             linear_elems[i].style.display="none";
         }
-        for (var i = 0; i < expo_elems.length; ++i) {
+        for (let i = 0; i < expo_elems.length; ++i) {
             expo_elems[i].style.display="none";
         }
-        for (var i = 0; i < color_elems.length; ++i) {
+        for (let i = 0; i < color_elems.length; ++i) {
             color_elems[i].style.display="none";
         }
         document.getElementById("FogValues").style.display="none";

@@ -14,7 +14,7 @@ function swapLucideIcon(container, iconName) {
 }
 
 // Local and Global scope functions
-var new_screenshot_data = null;
+let new_screenshot_data = null;
 
 function focusWithoutScroll(element) {
     if (!element || typeof element.focus !== 'function') return;
@@ -31,7 +31,7 @@ function copyTextareaText(textarea) {
         return Promise.reject(new Error('No textarea available for clipboard copy.'));
     }
 
-    var text = textarea.value || '';
+    let text = textarea.value || '';
 
     if (window.isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
         return navigator.clipboard.writeText(text).catch(function () {
@@ -44,16 +44,16 @@ function copyTextareaText(textarea) {
 
 function fallbackCopyTextareaText(textarea) {
     return new Promise(function (resolve, reject) {
-        var activeElement = document.activeElement;
-        var originalSelectionStart = textarea.selectionStart;
-        var originalSelectionEnd = textarea.selectionEnd;
+        let activeElement = document.activeElement;
+        let originalSelectionStart = textarea.selectionStart;
+        let originalSelectionEnd = textarea.selectionEnd;
 
         try {
             focusWithoutScroll(textarea);
             textarea.select();
             textarea.setSelectionRange(0, textarea.value.length);
 
-            var copied = document.execCommand('copy');
+            let copied = document.execCommand('copy');
             textarea.setSelectionRange(originalSelectionStart || 0, originalSelectionEnd || 0);
 
             if (activeElement && typeof activeElement.focus === 'function' && activeElement !== textarea) {
@@ -73,10 +73,10 @@ function fallbackCopyTextareaText(textarea) {
 }
 
 function showTemporaryButtonSuccess(buttonId, message) {
-    var btn = document.getElementById(buttonId);
+    let btn = document.getElementById(buttonId);
     if (!btn) return;
 
-    var orig = btn.innerHTML;
+    let orig = btn.innerHTML;
     btn.innerHTML = '<i data-lucide="check" class="tw-w-3.5 tw-h-3.5"></i> ' + message;
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -87,10 +87,10 @@ function showTemporaryButtonSuccess(buttonId, message) {
 }
 
 function showTemporaryButtonWarning(buttonId, message) {
-    var btn = document.getElementById(buttonId);
+    let btn = document.getElementById(buttonId);
     if (!btn) return;
 
-    var orig = btn.innerHTML;
+    let orig = btn.innerHTML;
     btn.innerHTML = '<i data-lucide="triangle-alert" class="tw-w-3.5 tw-h-3.5"></i> ' + message;
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -101,11 +101,11 @@ function showTemporaryButtonWarning(buttonId, message) {
 }
 
 function refreshSceneJsonTextarea() {
-    var textarea = document.getElementById('vrodos_scene_json_input');
+    let textarea = document.getElementById('vrodos_scene_json_input');
     if (!textarea || typeof VrodosSceneExporter === 'undefined' || !envir || !envir.scene) return;
 
-    var exporter = new VrodosSceneExporter();
-    var exportedJson = exporter.parse(envir.scene);
+    let exporter = new VrodosSceneExporter();
+    let exportedJson = exporter.parse(envir.scene);
 
     try {
         textarea.value = JSON.stringify(JSON.parse(exportedJson), null, 2);
@@ -130,7 +130,7 @@ function loadButtonActions() {
         if (typeof syncCompileDialogFromSceneSettings === 'function') {
             syncCompileDialogFromSceneSettings();
         }
-        var dlg = document.getElementById('compile-dialog');
+        let dlg = document.getElementById('compile-dialog');
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
         // Pause Rendering
@@ -141,7 +141,7 @@ function loadButtonActions() {
 
     // Cogwheel options button
     document.getElementById("optionsPopupBtn").addEventListener("click", function () {
-        var dlg = document.getElementById('options-dialog');
+        let dlg = document.getElementById('options-dialog');
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
     });
 
@@ -150,17 +150,17 @@ function loadButtonActions() {
         document.getElementById("compileProgressSlider").style.display = '';
         document.getElementById("compileProgressTitle").style.display = '';
 
-        var zipLink = document.getElementById("vrodos-ziplink");
-        var webLink = document.getElementById("vrodos-weblink");
+        let zipLink = document.getElementById("vrodos-ziplink");
+        let webLink = document.getElementById("vrodos-weblink");
         if (zipLink) zipLink.style.display = 'none';
         if (webLink) webLink.style.display = 'none';
 
-        var progText = document.getElementById("compilationProgressText");
-        var memValue = document.getElementById("unityTaskMemValue");
+        let progText = document.getElementById("compilationProgressText");
+        let memValue = document.getElementById("unityTaskMemValue");
         if (progText) progText.innerHTML = "";
         if (memValue) memValue.innerHTML = "0";
 
-        var constantUpdateUser = document.getElementById("constantUpdateUser");
+        let constantUpdateUser = document.getElementById("constantUpdateUser");
         if (typeof vrodosApplyCompileDialogSettingsToScene === 'function') {
             vrodosApplyCompileDialogSettingsToScene();
         }
@@ -200,19 +200,19 @@ function loadButtonActions() {
         animate();
 
         // Get Pid of compile process
-        var pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
+        let pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
 
         if (pid) {
             vrodos_killtask_compile(pid);
         }
 
         // Close native dialog
-        var dlg = document.getElementById('compile-dialog');
+        let dlg = document.getElementById('compile-dialog');
         if (dlg && dlg.open) dlg.close();
     });
 
     // Resume rendering when compile dialog is closed (by any means: cancel, backdrop, escape)
-    var compileDlg = document.getElementById('compile-dialog');
+    let compileDlg = document.getElementById('compile-dialog');
     if (compileDlg) {
         compileDlg.addEventListener('close', function () {
             if (isPaused) {
@@ -221,17 +221,17 @@ function loadButtonActions() {
                 animate();
             }
             // Kill any running compile process
-            var pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
+            let pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
             if (pid) vrodos_killtask_compile(pid);
         });
     }
 
     // Hierarchy Toolbar close button (Event delegation for maximum robustness)
     document.addEventListener('click', function (e) {
-        var btn = e.target.closest('#bt_close_hierarchy_toolbar');
+        let btn = e.target.closest('#bt_close_hierarchy_toolbar');
         if (!btn) return;
         e.preventDefault();
-        var panel = document.getElementById("right-elements-panel");
+        let panel = document.getElementById("right-elements-panel");
 
         if (btn.classList.contains("HierarchyToggleOn")) {
             btn.classList.add("HierarchyToggleOff");
@@ -252,10 +252,10 @@ function loadButtonActions() {
 
     // File Browser Toolbar close button (Event delegation for maximum robustness)
     document.addEventListener('click', function (e) {
-        var btn = e.target.closest('#bt_close_file_toolbar');
+        let btn = e.target.closest('#bt_close_file_toolbar');
         if (!btn) return;
         e.preventDefault();
-        var toolbar = document.getElementById("assetBrowserToolbar");
+        let toolbar = document.getElementById("assetBrowserToolbar");
 
         if (btn.classList.contains("AssetsToggleOn")) {
             btn.classList.add("AssetsToggleOff");
@@ -276,8 +276,8 @@ function loadButtonActions() {
 
     // Scenes List Toolbar close button
     document.getElementById("scenesList-toggle-btn").addEventListener("click", function () {
-        var wrapper = document.getElementById("scenesDrawerWrapper");
-        var btn = document.getElementById("scenesList-toggle-btn");
+        let wrapper = document.getElementById("scenesDrawerWrapper");
+        let btn = document.getElementById("scenesList-toggle-btn");
 
         if (btn.classList.contains("scenesListToggleOn")) {
             btn.classList.add("scenesListToggleOff");
@@ -296,12 +296,12 @@ function loadButtonActions() {
 
     // ── Scene Reorder Drag-and-Drop ──
     (function() {
-        var container = document.getElementById('scenesInsideVREditor');
+        let container = document.getElementById('scenesInsideVREditor');
         if (!container) return;
-        var dragItem = null;
+        let dragItem = null;
 
         container.addEventListener('dragstart', function(e) {
-            var card = e.target.closest('.SceneCardContainer[draggable]');
+            let card = e.target.closest('.SceneCardContainer[draggable]');
             if (!card) return;
             dragItem = card;
             card.classList.add('dragging');
@@ -312,10 +312,10 @@ function loadButtonActions() {
         container.addEventListener('dragover', function(e) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
-            var card = e.target.closest('.SceneCardContainer[draggable]');
+            let card = e.target.closest('.SceneCardContainer[draggable]');
             if (!card || card === dragItem) return;
-            var rect = card.getBoundingClientRect();
-            var midX = rect.left + rect.width / 2;
+            let rect = card.getBoundingClientRect();
+            let midX = rect.left + rect.width / 2;
             if (e.clientX < midX) {
                 container.insertBefore(dragItem, card);
             } else {
@@ -331,9 +331,9 @@ function loadButtonActions() {
                 badge.textContent = i + 1;
             });
             // Save new order via AJAX
-            var formData = new FormData();
+            let formData = new FormData();
             formData.append('action', 'vrodos_reorder_scenes_action');
-            var nonceField = document.querySelector('[name="post_nonce_field"]');
+            let nonceField = document.querySelector('[name="post_nonce_field"]');
             if (nonceField) formData.append('nonce', nonceField.value);
             container.querySelectorAll('.SceneCardContainer[draggable]').forEach(function(card) {
                 formData.append('scene_ids[]', card.dataset.sceneId);
@@ -373,13 +373,13 @@ function loadButtonActions() {
         document.getElementById('delete-scene-dialog-progress-bar').style.display = '';
         document.getElementById("deleteSceneDialogDeleteBtn").classList.add("LinkDisabled");
         document.getElementById("deleteSceneDialogCancelBtn").classList.add("LinkDisabled");
-        var dlg = document.getElementById('delete-dialog');
+        let dlg = document.getElementById('delete-dialog');
         vrodos_deleteSceneAjax(dlg.dataset.sceneId, url_scene_redirect);
     });
 
     document.getElementById("deleteSceneDialogCancelBtn").addEventListener("click", function (e) {
         document.getElementById('delete-scene-dialog-progress-bar').style.display = 'none';
-        var dlg = document.getElementById('delete-dialog');
+        let dlg = document.getElementById('delete-dialog');
         if (dlg && dlg.open) dlg.close();
     });
 
@@ -395,13 +395,13 @@ function loadButtonActions() {
     function deleteScene(btn) {
 
         let scene_id = btn.dataset.sceneid;
-        var dialogTitle = document.getElementById("delete-dialog-title");
-        var dialogDescription = document.getElementById("delete-dialog-description");
-        var sceneTitle = document.getElementById(scene_id + "-title").textContent.trim();
+        let dialogTitle = document.getElementById("delete-dialog-title");
+        let dialogDescription = document.getElementById("delete-dialog-description");
+        let sceneTitle = document.getElementById(scene_id + "-title").textContent.trim();
 
         dialogTitle.textContent = "Delete " + sceneTitle + "?";
         dialogDescription.innerHTML = "Are you sure you want to delete your scene '" + sceneTitle + "'? There is no Undo functionality once you delete it.";
-        var dlg = document.getElementById('delete-dialog');
+        let dlg = document.getElementById('delete-dialog');
         dlg.dataset.sceneId = scene_id;
         dlg.showModal();
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -409,7 +409,7 @@ function loadButtonActions() {
 
     // Toggle JSON viewer dialog
     document.getElementById('toggleViewSceneContentBtn').addEventListener('click', function () {
-        var dialog = document.getElementById('sceneJsonContent');
+        let dialog = document.getElementById('sceneJsonContent');
         if (dialog.open) {
             dialog.close();
         } else {
@@ -427,7 +427,7 @@ function loadButtonActions() {
 
     // Copy JSON to clipboard
     document.getElementById('copyJsonBtn').addEventListener('click', function () {
-        var textarea = document.getElementById('vrodos_scene_json_input');
+        let textarea = document.getElementById('vrodos_scene_json_input');
         copyTextareaText(textarea)
             .then(function () {
                 showTemporaryButtonSuccess('copyJsonBtn', 'Copied!');
@@ -494,7 +494,7 @@ function loadButtonActions() {
         };
 
 
-    var pauseBtn = document.getElementById("pauseRendering");
+    let pauseBtn = document.getElementById("pauseRendering");
     if (pauseBtn) {
         pauseBtn.addEventListener('mousedown', function (event) {
             pauseClickFun();
@@ -506,7 +506,7 @@ function loadButtonActions() {
     document.getElementById('save-scene-button').addEventListener('click', function () {
 
         if (envir && envir.isSceneLoading) {
-            var loadingNotice = document.getElementById("result_download");
+            let loadingNotice = document.getElementById("result_download");
             if (loadingNotice) {
                 loadingNotice.innerHTML = "Please wait until scene loading finishes before saving.";
             }
@@ -563,7 +563,7 @@ function loadButtonActions() {
     // Autorotate in 3D
     document.getElementById('toggle-tour-around-btn').addEventListener('click', function () {
 
-        var btn = this;
+        let btn = this;
 
         if (envir.is2d)
             document.getElementById("dim-change-btn").click();
@@ -596,7 +596,7 @@ function loadButtonActions() {
     // 3D Widgets change mode (Translation-Rotation-Scale)
     document.getElementById("object-manipulation-toggle").addEventListener("click", function () {
 
-        var checked = document.querySelector("input[name='object-manipulation-switch']:checked");
+        let checked = document.querySelector("input[name='object-manipulation-switch']:checked");
         let mode = checked ? checked.value : 'translate';
 
         // Sun and Target spot can not change control manipulation mode
@@ -641,7 +641,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             envir.axesHelper.visible = true;
 
             document.getElementById("object-manipulation-toggle").style.display = "";
-            var dimBtn3d = document.getElementById("dim-change-btn");
+            let dimBtn3d = document.getElementById("dim-change-btn");
             dimBtn3d.textContent = "3D";
             dimBtn3d.title = "3D mode";
 
@@ -657,7 +657,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             envir.axesHelper.visible = false;
 
             document.getElementById("object-manipulation-toggle").style.display = "none";
-            var dimBtn2d = document.getElementById("dim-change-btn");
+            let dimBtn2d = document.getElementById("dim-change-btn");
             dimBtn2d.textContent = "2D";
             dimBtn2d.title = "2D mode";
 
@@ -705,7 +705,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
     ['popUpArtifactPropertiesDiv', 'popUpDoorPropertiesDiv', 'popUpPoiImageTextPropertiesDiv',
      'popUpPoiVideoPropertiesDiv', 'popUpSunPropertiesDiv', 'popUpLampPropertiesDiv',
      'popUpSpotPropertiesDiv', 'popUpAmbientPropertiesDiv'].forEach(function (id) {
-        var el = document.getElementById(id);
+        let el = document.getElementById(id);
         if (el) el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     });
 
@@ -782,7 +782,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 
 
     // Drag light or Pawn: Add event listeners
-    var allUpperToolbarButtons = document.querySelectorAll('.environmentBar .lightpawnbutton');
+    let allUpperToolbarButtons = document.querySelectorAll('.environmentBar .lightpawnbutton');
 
     [].forEach.call(allUpperToolbarButtons, function (col) {
         col.addEventListener('dragstart', handleLightPawnDragStart, false);
@@ -792,7 +792,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
     // Handler for dragging lights or Pawn
     function handleLightPawnDragStart(e) {
 
-        var dragData;
+        let dragData;
         if (e.target.dataset.lightpawn === "Sun" ||
             e.target.dataset.lightpawn === "Spot" ||
             e.target.dataset.lightpawn === "Lamp" ||
@@ -821,8 +821,8 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 
 function setVisiblityLightHelpingElements(statusVisibility) {
 
-    for (var i = 0; i < envir.scene.children.length; i++) {
-        var curr_obj = envir.scene.children[i];
+    for (let i = 0; i < envir.scene.children.length; i++) {
+        let curr_obj = envir.scene.children[i];
 
         if (curr_obj['category_name'] === 'lightHelper' || curr_obj['category_name'] === 'lightTargetSpot')
             curr_obj.visible = statusVisibility;
@@ -867,7 +867,7 @@ function pauseClickFun() {
 
 // Hide right click panel for object properties
 function hideObjectPropertiesPanels() {
-    var el;
+    let el;
     el = document.getElementById("translatePanelGui"); if (el) el.style.display = 'none';
     el = document.getElementById("rotatePanelGui");    if (el) el.style.display = 'none';
     el = document.getElementById("scalePanelGui");     if (el) el.style.display = 'none';
@@ -875,7 +875,7 @@ function hideObjectPropertiesPanels() {
 
 function showObjectPropertiesPanel(type) {
     hideObjectPropertiesPanels();
-    var el = document.getElementById(type + "PanelGui");
+    let el = document.getElementById(type + "PanelGui");
     if (el) el.style.display = '';
 }
 
@@ -888,11 +888,11 @@ function takeScreenshot() {
     }
 
     // Render to an offscreen canvas to capture the screenshot reliably
-    var camera = avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit;
-    var w = envir.renderer.domElement.width;
-    var h = envir.renderer.domElement.height;
+    let camera = avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit;
+    let w = envir.renderer.domElement.width;
+    let h = envir.renderer.domElement.height;
 
-    var offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
+    let offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
     offscreenRenderer.setSize(w, h);
     offscreenRenderer.render(envir.scene, camera);
 
@@ -900,14 +900,14 @@ function takeScreenshot() {
     document.getElementById("vrodos_scene_sshot").src = new_screenshot_data;
 
     // Also update the current scene's drawer thumbnail
-    var drawerThumb = document.querySelector('.current-scene-thumb');
+    let drawerThumb = document.querySelector('.current-scene-thumb');
     if (drawerThumb) {
         drawerThumb.src = new_screenshot_data;
     } else {
         // If placeholder (no previous screenshot), replace it with an img
-        var placeholder = document.querySelector('.current-scene-thumb-placeholder');
+        let placeholder = document.querySelector('.current-scene-thumb-placeholder');
         if (placeholder) {
-            var img = document.createElement('img');
+            let img = document.createElement('img');
             img.src = new_screenshot_data;
             img.className = 'tw-w-full tw-h-full tw-object-cover current-scene-thumb';
             placeholder.replaceWith(img);

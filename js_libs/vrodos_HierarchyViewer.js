@@ -52,7 +52,7 @@ function _hierarchyDisplayName(obj) {
     if (_lightLabelMap[cat]) {
         let index = 0;
         let found = false;
-        envir.scene.traverse(function (child) {
+        envir.scene.traverse((child) => {
             if (found) return;
             if (child.category_name === cat && child.isSelectableMesh) {
                 index++;
@@ -83,14 +83,14 @@ function _hierarchyCreatedLabel(obj) {
     if (!obj || obj.name === 'avatarCamera') return '';
 
     if (obj.category_name === 'lightTargetSpot') {
-        var parentName = String(obj.name || '').replace('lightTargetSpot_', '');
-        var parentObj = envir.scene.getObjectByName(parentName);
+        let parentName = String(obj.name || '').replace('lightTargetSpot_', '');
+        let parentObj = envir.scene.getObjectByName(parentName);
         if (parentObj && parentObj !== obj) {
             return _hierarchyCreatedLabel(parentObj);
         }
     }
 
-    var addedAt = Number(obj.addedAt || 0);
+    let addedAt = Number(obj.addedAt || 0);
     if ((!Number.isFinite(addedAt) || addedAt <= 0) &&
         typeof vrodos_scene_data !== 'undefined' &&
         vrodos_scene_data.objects &&
@@ -102,15 +102,15 @@ function _hierarchyCreatedLabel(obj) {
         if (addedAt > 9999999999) {
             addedAt = Math.floor(addedAt / 1000);
         }
-        var addedLabel = unixTimestamp_to_time(String(Math.floor(addedAt)));
+        let addedLabel = unixTimestamp_to_time(String(Math.floor(addedAt)));
         return (addedLabel && !addedLabel.includes('NaN')) ? addedLabel : '';
     }
 
-    var name = String(obj.name || '');
-    var match = name.match(/(\d{10})$/);
+    let name = String(obj.name || '');
+    let match = name.match(/(\d{10})$/);
     if (!match) return '';
 
-    var created = unixTimestamp_to_time(match[1]);
+    let created = unixTimestamp_to_time(match[1]);
     return (created && !created.includes('NaN')) ? created : '';
 }
 
@@ -119,10 +119,10 @@ function _hierarchyCreatedLabel(obj) {
  */
 function hierarchyHoverSelect(uuid) {
     // Don't change selection on hover if a properties panel is open
-    var panel = document.getElementById('object-controls-panel');
+    let panel = document.getElementById('object-controls-panel');
     if (panel && !panel.classList.contains('tw-hidden')) return;
 
-    var obj = envir.scene.getObjectByProperty('uuid', uuid);
+    let obj = envir.scene.getObjectByProperty('uuid', uuid);
     if (!obj || obj.locked) return;
     selectObjectPreview(obj);
 }
@@ -131,10 +131,10 @@ function hierarchyHoverSelect(uuid) {
  * Click on hierarchy item: full select with floating panel and properties.
  */
 function hierarchyClickSelect(event, uuid) {
-    var obj = envir.scene.getObjectByProperty('uuid', uuid);
+    let obj = envir.scene.getObjectByProperty('uuid', uuid);
     if (!obj || obj.locked) return;
     // Simulate left-click event for selectorMajor
-    var fakeEvent = { button: 0 };
+    let fakeEvent = { button: 0 };
     selectorMajor(fakeEvent, obj, "1");
 }
 
@@ -142,25 +142,25 @@ function hierarchyClickSelect(event, uuid) {
  * Determine the correct insertion point for a hierarchy item.
  * Order: Director → Lights grouped by type (Sun, Lamp, Spot, Ambient) each with target → Regular objects
  */
-var _lightTypeOrder = ['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient'];
+let _lightTypeOrder = ['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient'];
 
 function _getItemCategory(item) {
-    var name = item.getAttribute('data-name');
+    let name = item.getAttribute('data-name');
     if (!name) return null;
     if (name === 'avatarCamera') return 'director';
-    var sceneObj = envir.scene.getObjectByName(name);
+    let sceneObj = envir.scene.getObjectByName(name);
     return sceneObj ? (sceneObj.category_name || '') : '';
 }
 
 function _findInsertionPoint(obj) {
-    var viewer = document.getElementById('hierarchy-viewer');
+    let viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return null;
 
-    var items = viewer.querySelectorAll('.hierarchyItem');
-    var categoryName = obj.category_name || '';
-    var isDirector = obj.name === 'avatarCamera';
-    var isTarget = categoryName === 'lightTargetSpot';
-    var isLight = categoryName.startsWith('light') && !isTarget;
+    let items = viewer.querySelectorAll('.hierarchyItem');
+    let categoryName = obj.category_name || '';
+    let isDirector = obj.name === 'avatarCamera';
+    let isTarget = categoryName === 'lightTargetSpot';
+    let isLight = categoryName.startsWith('light') && !isTarget;
 
     // Director always goes first
     if (isDirector) {
@@ -169,8 +169,8 @@ function _findInsertionPoint(obj) {
 
     // Light target: insert right after its source light
     if (isTarget) {
-        var parentName = obj.name.replace('lightTargetSpot_', '');
-        for (var i = 0; i < items.length; i++) {
+        let parentName = obj.name.replace('lightTargetSpot_', '');
+        for (let i = 0; i < items.length; i++) {
             if (items[i].getAttribute('data-name') === parentName) {
                 return items[i].nextElementSibling;
             }
@@ -179,32 +179,32 @@ function _findInsertionPoint(obj) {
 
     // Light source: insert after the last item of the same type, or after the preceding type group
     if (isLight) {
-        var typeIndex = _lightTypeOrder.indexOf(categoryName);
+        let typeIndex = _lightTypeOrder.indexOf(categoryName);
 
         // Find the last item of the same light type (including its targets)
-        var lastSameType = null;
-        for (var i = 0; i < items.length; i++) {
-            var cat = _getItemCategory(items[i]);
+        let lastSameType = null;
+        for (let i = 0; i < items.length; i++) {
+            let cat = _getItemCategory(items[i]);
             if (cat === categoryName) lastSameType = items[i];
             // Also count targets that belong to this type
             if (cat === 'lightTargetSpot') {
-                var pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
-                var pObj = envir.scene.getObjectByName(pName);
+                let pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
+                let pObj = envir.scene.getObjectByName(pName);
                 if (pObj && pObj.category_name === categoryName) lastSameType = items[i];
             }
         }
         if (lastSameType) return lastSameType.nextElementSibling;
 
         // No same-type exists yet — find insertion point after preceding type groups
-        for (var t = typeIndex - 1; t >= 0; t--) {
-            var precedingType = _lightTypeOrder[t];
-            var lastOfPreceding = null;
-            for (var i = 0; i < items.length; i++) {
-                var cat = _getItemCategory(items[i]);
+        for (let t = typeIndex - 1; t >= 0; t--) {
+            let precedingType = _lightTypeOrder[t];
+            let lastOfPreceding = null;
+            for (let i = 0; i < items.length; i++) {
+                let cat = _getItemCategory(items[i]);
                 if (cat === precedingType) lastOfPreceding = items[i];
                 if (cat === 'lightTargetSpot') {
-                    var pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
-                    var pObj = envir.scene.getObjectByName(pName);
+                    let pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
+                    let pObj = envir.scene.getObjectByName(pName);
                     if (pObj && pObj.category_name === precedingType) lastOfPreceding = items[i];
                 }
             }
@@ -212,7 +212,7 @@ function _findInsertionPoint(obj) {
         }
 
         // No lights at all yet — insert after director
-        for (var i = 0; i < items.length; i++) {
+        for (let i = 0; i < items.length; i++) {
             if (items[i].getAttribute('data-name') === 'avatarCamera') {
                 return items[i].nextElementSibling;
             }
@@ -221,7 +221,7 @@ function _findInsertionPoint(obj) {
     }
 
     // Regular object: append at end (before skeleton if present)
-    var skeleton = document.getElementById('hierarchy-skeleton');
+    let skeleton = document.getElementById('hierarchy-skeleton');
     return skeleton || null;
 }
 
@@ -233,7 +233,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
     let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-white/40';
     if (obj.name === 'avatarCamera') iconColor = 'tw-text-blue-400';
 
-    var itemHTML = '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors"' +
+    let itemHTML = '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors"' +
         ' id="' + obj.uuid + '" data-name="' + obj.name + '" data-uuid="' + obj.uuid + '">' +
         '<i data-lucide="' + iconName + '" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ' + iconColor + '"></i>' +
         '<span class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-[9pt] tw-leading-tight tw-text-white"' +
@@ -248,12 +248,12 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
         '</span>' +
         '</li>';
 
-    var viewer = document.getElementById('hierarchy-viewer');
+    let viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
 
-    var temp = document.createElement('template');
+    let temp = document.createElement('template');
     temp.innerHTML = itemHTML;
-    var insertBefore = _findInsertionPoint(obj);
+    let insertBefore = _findInsertionPoint(obj);
 
     if (insertBefore) {
         viewer.insertBefore(temp.content, insertBefore);
@@ -289,15 +289,15 @@ function CreateResetButton(obj){
 }
 
 // Highlight item in Hierarchy viewer — tracks previous selection to avoid full DOM scan
-var _previousHighlightedId = null;
+let _previousHighlightedId = null;
 
 function setBackgroundColorHierarchyViewer(id) {
     if (_previousHighlightedId) {
-        var prev = document.getElementById(_previousHighlightedId);
+        let prev = document.getElementById(_previousHighlightedId);
         if (prev) prev.style.background = '';
     }
 
-    var el = document.getElementById(id);
+    let el = document.getElementById(id);
     if (el) el.style.background = 'rgba(59, 130, 246, 0.3)';
 
     _previousHighlightedId = id;
@@ -307,15 +307,15 @@ function setBackgroundColorHierarchyViewer(id) {
 function setHierarchyViewer() {
 
     // Remove only real items, keep the skeleton placeholder if present
-    document.querySelectorAll('#hierarchy-viewer .hierarchyItem').forEach(function (el) { el.remove(); });
+    document.querySelectorAll('#hierarchy-viewer .hierarchyItem').forEach((el) => { el.remove(); });
 
     // Collect all hierarchy-worthy objects
-    var director = [];
-    var lights = [];      // light sources (sun, lamp, spot, ambient)
-    var targets = [];     // light targets
-    var regular = [];
+    let director = [];
+    let lights = [];      // light sources (sun, lamp, spot, ambient)
+    let targets = [];     // light targets
+    let regular = [];
 
-    envir.scene.traverse(function (obj) {
+    envir.scene.traverse((obj) => {
         if (obj.name === "SunSphere" || obj.name === "SpotSphere" || obj.name === "ambientSphere") return;
         if (!obj.isSelectableMesh && obj.name !== "avatarCamera") return;
 
@@ -326,28 +326,28 @@ function setHierarchyViewer() {
     });
 
     // Group lights by type, then each source followed by its target
-    var lightTypeOrder = ['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient'];
-    var sortedLights = [];
-    lightTypeOrder.forEach(function (type) {
-        lights.filter(function (l) { return l.category_name === type; }).forEach(function (light) {
+    let lightTypeOrder = ['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient'];
+    let sortedLights = [];
+    lightTypeOrder.forEach((type) => {
+        lights.filter((l) => { return l.category_name === type; }).forEach((light) => {
             sortedLights.push(light);
-            var target = targets.find(function (t) { return t.name === 'lightTargetSpot_' + light.name; });
+            let target = targets.find((t) => { return t.name === 'lightTargetSpot_' + light.name; });
             if (target) sortedLights.push(target);
         });
     });
     // Add any orphan targets not matched above
-    targets.forEach(function (t) {
+    targets.forEach((t) => {
         if (sortedLights.indexOf(t) === -1) sortedLights.push(t);
     });
 
-    var sorted = [].concat(director, sortedLights, regular);
+    let sorted = [].concat(director, sortedLights, regular);
 
-    sorted.forEach(function (obj) {
-        var asset_name = _hierarchyDisplayName(obj);
-        var created = _hierarchyCreatedLabel(obj);
-        var deleteButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
+    sorted.forEach((obj) => {
+        let asset_name = _hierarchyDisplayName(obj);
+        let created = _hierarchyCreatedLabel(obj);
+        let deleteButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
             CreateDeleteButton(obj);
-        var lockButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
+        let lockButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
             CreateLockButton(obj);
         AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj), lockButton);
     });
@@ -361,7 +361,7 @@ function setHierarchyViewer() {
  * Call this once ALL assets (lights + GLBs) have finished loading.
  */
 function removeHierarchySkeleton() {
-    var skeleton = document.getElementById('hierarchy-skeleton');
+    let skeleton = document.getElementById('hierarchy-skeleton');
     if (skeleton) skeleton.remove();
 }
 
@@ -392,22 +392,22 @@ function addInHierarchyViewer(obj) {
  * Call once after DOM is ready. Replaces per-item inline onmouseenter/onclick.
  */
 function initHierarchyViewerEvents() {
-    var viewer = document.getElementById('hierarchy-viewer');
+    let viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
 
-    viewer.addEventListener('mouseenter', function (e) {
-        var item = e.target.closest('.hierarchyItem');
+    viewer.addEventListener('mouseenter', (e) => {
+        let item = e.target.closest('.hierarchyItem');
         if (!item) return;
-        var uuid = item.dataset.uuid;
+        let uuid = item.dataset.uuid;
         if (uuid) hierarchyHoverSelect(uuid);
     }, true); // use capture so mouseenter fires for child elements
 
-    viewer.addEventListener('click', function (e) {
+    viewer.addEventListener('click', (e) => {
         // Ignore clicks on action buttons (delete, lock, reset)
         if (e.target.closest('a[aria-label]')) return;
-        var item = e.target.closest('.hierarchyItem');
+        let item = e.target.closest('.hierarchyItem');
         if (!item) return;
-        var uuid = item.dataset.uuid;
+        let uuid = item.dataset.uuid;
         if (uuid) hierarchyClickSelect(e, uuid);
     });
 }
