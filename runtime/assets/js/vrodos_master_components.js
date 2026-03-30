@@ -589,8 +589,9 @@ function vrodosCreatePhotorealPostMaterial() {
             '  float vignette = smoothstep(0.95, 0.24, dist);',
             '  color *= mix(1.0 - vignetteStrength, 1.0, vignette);',
             '  color *= exposure;',
-            '  color = acesFilm(max(color, vec3(0.0)) * outputExposure);',
-            '  color = linearToSRGB(color);',
+            '  // ACESFilmic tone mapping + sRGB conversion already applied by Three.js renderer',
+            '  // Only apply the final exposure adjustment here (no double tonemapping)',
+            '  color = clamp(color * outputExposure, 0.0, 1.0);',
             '  gl_FragColor = vec4(color, base.a);',
             '}'
         ].join('\n'),
@@ -1037,7 +1038,7 @@ AFRAME.registerComponent('scene-settings', {
 
                 this.postProcessingMaterial.uniforms.tDiffuse.value = this.postProcessingTarget.texture;
                 this.postProcessingMaterial.uniforms.bloomStrength.value = this.getBloomStrengthValue();
-                this.postProcessingMaterial.uniforms.vignetteStrength.value = 0.0;
+                this.postProcessingMaterial.uniforms.vignetteStrength.value = this.isPostFXOptionEnabled('postFXVignetteEnabled') ? 0.16 : 0.0;
                 this.postProcessingMaterial.uniforms.saturation.value = this.isPostFXOptionEnabled('postFXColorEnabled')
                     ? this.getSaturationValue()
                     : 1.0;
@@ -1121,14 +1122,12 @@ AFRAME.registerComponent('scene-settings', {
             renderer.toneMappingExposure = isHighQuality ? 1.06 : 1.0;
         }
 
-        if (typeof renderer.physicallyCorrectLights !== 'undefined') {
-            renderer.physicallyCorrectLights = isHighQuality;
-        }
-
+        // physicallyCorrectLights removed in Three.js r150→r165; always on in r173 (A-Frame 1.7.1)
+        // outputColorSpace & toneMapping are already set by A-Frame's renderer system
+        // (colorManagement: true → SRGBColorSpace; renderer="toneMapping: ACESFilmic" in HTML)
+        // These defensive guards ensure correctness if A-Frame defaults ever change.
         if (typeof renderer.outputColorSpace !== 'undefined' && typeof THREE.SRGBColorSpace !== 'undefined') {
             renderer.outputColorSpace = THREE.SRGBColorSpace;
-        } else if (typeof renderer.outputEncoding !== 'undefined' && typeof THREE.sRGBEncoding !== 'undefined') {
-            renderer.outputEncoding = THREE.sRGBEncoding;
         }
 
         if (typeof renderer.toneMapping !== 'undefined' && typeof THREE.ACESFilmicToneMapping !== 'undefined') {
@@ -1143,7 +1142,7 @@ AFRAME.registerComponent('scene-settings', {
 
         if (renderer && renderer.shadowMap) {
             renderer.shadowMap.enabled = shadowsEnabled;
-            renderer.shadowMap.type = shadowQuality === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFSoftShadowMap;
+            renderer.shadowMap.type = shadowQuality === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
             renderer.shadowMap.needsUpdate = true;
         }
 
