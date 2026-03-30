@@ -49,6 +49,7 @@ class VRodos_LoaderMulti {
     async load(manager, resources3D, pluginPath) {
 
         const loader = new THREE.GLTFLoader(manager);
+        const pendingLoads = [];
         
 
         for (const name in resources3D) {
@@ -319,46 +320,56 @@ class VRodos_LoaderMulti {
                 // Load Camera object
                 if (name === 'avatarCamera') {
 
-                    loader.load(`${pluginPath}/assets/Steve/camera.glb`,
-                        (objectMain) => {
-                            const object = objectMain.scene.children[0];
-                            object.name = "Camera3Dmodel";
-                            object.children[0].name = "Camera3DmodelMesh";
+                    pendingLoads.push(new Promise((resolve) => {
+                        if (manager) manager.itemStart(name);
+                        loader.load(`${pluginPath}/assets/Steve/camera.glb`,
+                            (objectMain) => {
+                                const object = objectMain.scene.children[0];
+                                object.name = "Camera3Dmodel";
+                                object.children[0].name = "Camera3DmodelMesh";
 
-                            // Make a shield around Steve
-                            const geometry = new THREE.BoxGeometry(4.2, 4.2, 4.2);
-                            geometry.name = "SteveShieldGeometry";
-                            const material = new THREE.MeshBasicMaterial({
-                                color: 0xaaaaaa,
-                                transparent: true,
-                                opacity: 0.2,
-                                visible: false
-                            });
+                                // Make a shield around Steve
+                                const geometry = new THREE.BoxGeometry(4.2, 4.2, 4.2);
+                                geometry.name = "SteveShieldGeometry";
+                                const material = new THREE.MeshBasicMaterial({
+                                    color: 0xaaaaaa,
+                                    transparent: true,
+                                    opacity: 0.2,
+                                    visible: false
+                                });
 
-                            const steveShieldMesh = new THREE.Mesh(geometry, material);
-                            steveShieldMesh.name = 'SteveShieldMesh';
-                            object.add(steveShieldMesh);
-                            object.renderOrder = 1;
+                                const steveShieldMesh = new THREE.Mesh(geometry, material);
+                                steveShieldMesh.name = 'SteveShieldMesh';
+                                object.add(steveShieldMesh);
+                                object.renderOrder = 1;
 
-                            envir.scene.add(object);
+                                envir.scene.add(object);
 
-                            const cam = envir.scene.getObjectByName("avatarCamera");
-                            if (cam) {
-                                // Prefer trs structure if available, otherwise reserve arrays
-                                const translation = resource?.trs?.translation ?? resource?.position ?? [0, 0, 0];
-                                const rotation = resource?.trs?.rotation ?? resource?.rotation ?? [0, 0, 0];
+                                const cam = envir.scene.getObjectByName("avatarCamera");
+                                if (cam) {
+                                    // Prefer trs structure if available, otherwise reserve arrays
+                                    const translation = resource?.trs?.translation ?? resource?.position ?? [0, 0, 0];
+                                    const rotation = resource?.trs?.rotation ?? resource?.rotation ?? [0, 0, 0];
 
-                                cam.position.set(translation[0], translation[1], translation[2]);
-                                cam.rotation.set(rotation[0], rotation[1], rotation[2]);
+                                    cam.position.set(translation[0], translation[1], translation[2]);
+                                    cam.rotation.set(rotation[0], rotation[1], rotation[2]);
+                                }
+
+                                envir.setCamMeshToAvatarControls();
+                                if (manager) manager.itemEnd(name);
+                                resolve();
+                            },
+                            undefined,
+                            (error) => {
+                                console.error('Cannot load camera GLB, loading error happened. Error 1595', error);
+                                if (manager) {
+                                    manager.itemError(name);
+                                    manager.itemEnd(name);
+                                }
+                                resolve();
                             }
-
-                            envir.setCamMeshToAvatarControls();
-                        },
-                        undefined, 
-                        (error) => {
-                            console.error('Cannot load camera GLB, loading error happened. Error 1595', error);
-                        }
-                    );
+                        );
+                    }));
 
                 } else if (resource['category_slug'] === 'image') { // Flat image plane
 
@@ -373,97 +384,134 @@ class VRodos_LoaderMulti {
                         const rot = vrodosLoaderSafeVector(resource.rotation || (trs && trs.rotation), [0, 0, 0]);
                         const scl = vrodosLoaderSafeScale(resource.scale || (trs && trs.scale));
 
-                        const geometry = new THREE.PlaneGeometry(2, 2);
-                        const texture  = new THREE.TextureLoader().load(imageUrl);
-                        const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
-                        let object     = new THREE.Mesh(geometry, material);
-                        object = setObjectProperties(object, name, resources3D);
-                        object.isSelectableMesh = true;
-                        object.position.set(pos[0], pos[1], pos[2]);
-                        object.rotation.set(rot[0], rot[1], rot[2]);
-                        object.scale.set(scl[0], scl[1], scl[2]);
-                        envir.scene.add(object);
-                        envir.loadedObjectsCount++;
+                        pendingLoads.push(new Promise((resolve) => {
+                            const geometry = new THREE.PlaneGeometry(2, 2);
+                            if (manager) manager.itemStart(name);
+                            const texture  = new THREE.TextureLoader(manager).load(
+                                imageUrl,
+                                () => {
+                                    if (manager) manager.itemEnd(name);
+                                    resolve();
+                                },
+                                undefined,
+                                () => {
+                                    if (manager) {
+                                        manager.itemError(name);
+                                        manager.itemEnd(name);
+                                    }
+                                    resolve();
+                                }
+                            );
+                            const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
+                            let object     = new THREE.Mesh(geometry, material);
+                            object = setObjectProperties(object, name, resources3D);
+                            object.isSelectableMesh = true;
+                            object.position.set(pos[0], pos[1], pos[2]);
+                            object.rotation.set(rot[0], rot[1], rot[2]);
+                            object.scale.set(scl[0], scl[1], scl[2]);
+                            envir.scene.add(object);
+                            envir.loadedObjectsCount++;
 
-                        // When dragged onto canvas (manager.onLoad won't fire — no GLTF items),
-                        // manually attach controls, update hierarchy, and save.
-                        if (trs && !(envir && envir.isSceneLoading)) {
-                            transform_controls.attach(object);
-                            removeAllCelOutlines();
-                            addCelOutline(object);
-                            selected_object_name = object.name;
-                            setTransformControlsSize();
-                            if (typeof addInHierarchyViewer === 'function') addInHierarchyViewer(object);
-                            if (typeof triggerAutoSave === 'function') triggerAutoSave();
-                            if (typeof setDatGuiInitialVales === 'function') setDatGuiInitialVales(object);
-                            document.getElementById("progressWrapper").style.visibility = "hidden";
-                        }
+                            // When dragged onto canvas (manager.onLoad won't fire — no GLTF items),
+                            // manually attach controls, update hierarchy, and save.
+                            if (trs && !(envir && envir.isSceneLoading)) {
+                                transform_controls.attach(object);
+                                removeAllCelOutlines();
+                                addCelOutline(object);
+                                selected_object_name = object.name;
+                                setTransformControlsSize();
+                                if (typeof addInHierarchyViewer === 'function') addInHierarchyViewer(object);
+                                if (typeof triggerAutoSave === 'function') triggerAutoSave();
+                                if (typeof setDatGuiInitialVales === 'function') setDatGuiInitialVales(object);
+                                document.getElementById("progressWrapper").style.visibility = "hidden";
+                            }
+                        }));
                     }
 
                 } else { // GLB 3D models
                     if ((resource['glb_id'] !== "" && resource['glb_id'] !== undefined) || resource['category_slug'] === "video") {
-                        const fetchAndLoadGLB = async () => {
-                            try {
-                                const response = await fetch(my_ajax_object_fetchasset.ajax_url, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                                    body: new URLSearchParams({
-                                        'action': 'vrodos_fetch_glb_asset_action',
-                                        'asset_id': resource['asset_id']
-                                    })
-                                });
-                                
-                                const resText = await response.text();
-                                const resourcesGLB = JSON.parse(resText);
-                                
-                                let glbURL = resourcesGLB['glbURL'];
-                                if (resource['category_slug'] === "video") {
-                                    glbURL = `${pluginPath}/assets/objects/tv_flat_scaled_rotated.glb`;
-                                }
+                        if (manager) manager.itemStart(name);
+                        pendingLoads.push(new Promise((resolve) => {
+                            const fetchAndLoadGLB = async () => {
+                                try {
+                                    const response = await fetch(my_ajax_object_fetchasset.ajax_url, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                        body: new URLSearchParams({
+                                            'action': 'vrodos_fetch_glb_asset_action',
+                                            'asset_id': resource['asset_id']
+                                        })
+                                    });
 
-                                if (!glbURL) {
-                                    console.warn(`Asset '${name}' has no GLB path and will be skipped.`);
-                                    return;
-                                }
+                                    const resText = await response.text();
+                                    const resourcesGLB = JSON.parse(resText);
 
-                                document.getElementById("progressWrapper").style.visibility = "visible";
-                                document.getElementById("result_download").innerHTML = "Loading ...";
-
-                                loader.load(
-                                    glbURL,
-                                    (object) => {
-                                        if (object.animations.length > 0) {
-                                            object.mixer = new THREE.AnimationMixer(object.scene);
-                                            envir.animationMixers.push(object.mixer);
-                                            const action = object.mixer.clipAction(object.animations[0]);
-                                            action.play();
-                                        }
-
-                                        let finalObject = setObjectProperties(object.scene, name, resources3D);
-                                        finalObject.isSelectableMesh = true;
-
-                                        if (finalObject.children === '') {
-                                            finalObject.children = [];
-                                        }
-
-                                        envir.scene.add(finalObject);
-                                        finalObject.glb_path = glbURL;
-                                    },
-                                    (xhr) => {
-                                        const mbLoaded = Math.floor(xhr.loaded / 104857.6) / 10;
-                                        document.getElementById("result_download").innerHTML = `'${resource['asset_name']}' downloaded ${mbLoaded} Mb`;
-                                    },
-                                    (error) => {
-                                        console.error('A GLB loading error happened. Error 1590', error);
+                                    let glbURL = resourcesGLB['glbURL'];
+                                    if (resource['category_slug'] === "video") {
+                                        glbURL = `${pluginPath}/assets/objects/tv_flat_scaled_rotated.glb`;
                                     }
-                                );
-                            } catch (err) {
-                                alert(`Could not fetch GLB asset. Probably deleted? ${name}`);
-                                console.error(`Ajax Fetch Asset ERROR: ${err}`);
-                            }
-                        };
 
-                        fetchAndLoadGLB();
+                                    if (!glbURL) {
+                                        if (manager) {
+                                            manager.itemError(name);
+                                            manager.itemEnd(name);
+                                        }
+                                        console.warn(`Asset '${name}' has no GLB path and will be skipped.`);
+                                        resolve();
+                                        return;
+                                    }
+
+                                    document.getElementById("progressWrapper").style.visibility = "visible";
+                                    document.getElementById("result_download").innerHTML = "Loading ...";
+
+                                    loader.load(
+                                        glbURL,
+                                        (object) => {
+                                            if (object.animations.length > 0) {
+                                                object.mixer = new THREE.AnimationMixer(object.scene);
+                                                envir.animationMixers.push(object.mixer);
+                                                const action = object.mixer.clipAction(object.animations[0]);
+                                                action.play();
+                                            }
+
+                                            let finalObject = setObjectProperties(object.scene, name, resources3D);
+                                            finalObject.isSelectableMesh = true;
+
+                                            if (finalObject.children === '') {
+                                                finalObject.children = [];
+                                            }
+
+                                            envir.scene.add(finalObject);
+                                            finalObject.glb_path = glbURL;
+                                            if (manager) manager.itemEnd(name);
+                                            resolve();
+                                        },
+                                        (xhr) => {
+                                            const mbLoaded = Math.floor(xhr.loaded / 104857.6) / 10;
+                                            document.getElementById("result_download").innerHTML = `'${resource['asset_name']}' downloaded ${mbLoaded} Mb`;
+                                        },
+                                        (error) => {
+                                            console.error('A GLB loading error happened. Error 1590', error);
+                                            if (manager) {
+                                                manager.itemError(name);
+                                                manager.itemEnd(name);
+                                            }
+                                            resolve();
+                                        }
+                                    );
+                                } catch (err) {
+                                    alert(`Could not fetch GLB asset. Probably deleted? ${name}`);
+                                    console.error(`Ajax Fetch Asset ERROR: ${err}`);
+                                    if (manager) {
+                                        manager.itemError(name);
+                                        manager.itemEnd(name);
+                                    }
+                                    resolve();
+                                }
+                            };
+
+                            fetchAndLoadGLB();
+                        }));
                     } 
                     else if (name =="SceneSettings") {
 
@@ -704,6 +752,8 @@ class VRodos_LoaderMulti {
                     }
                 }
         }
+
+        return Promise.allSettled(pendingLoads);
     }
 }
 

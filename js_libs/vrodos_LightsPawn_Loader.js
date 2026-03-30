@@ -30,8 +30,9 @@ class VRodos_LightsPawn_Loader {
     /**
      * Main load entry point for lights and pawns.
      */
-    load(resources3D, providedPath) {
+    load(resources3D, providedPath, manager) {
         if (!resources3D) return;
+        const pendingLoads = [];
         
         // Use provided path or fallback to global pluginPath
         const finalPath = providedPath || (typeof pluginPath !== 'undefined' ? pluginPath : '');
@@ -41,7 +42,7 @@ class VRodos_LightsPawn_Loader {
 
             // 1. Recursive handling for nested objects
             if (name === 'objects' && typeof resource === 'object') {
-                this.load(resource, finalPath);
+                pendingLoads.push(this.load(resource, finalPath, manager));
                 continue;
             }
 
@@ -78,8 +79,13 @@ class VRodos_LightsPawn_Loader {
             }
 
             // 4. Dispatch to Category Handlers
-            this.dispatchToHandlers(name, resource, finalPath, category);
+            const pendingLoad = this.dispatchToHandlers(name, resource, finalPath, category, manager);
+            if (pendingLoad) {
+                pendingLoads.push(pendingLoad);
+            }
         }
+
+        return Promise.allSettled(pendingLoads);
     }
 
     processSceneSettings(settings) {
@@ -124,17 +130,17 @@ class VRodos_LightsPawn_Loader {
         }
     }
 
-    dispatchToHandlers(name, resource, finalPath, category) {
+    dispatchToHandlers(name, resource, finalPath, category, manager) {
         const handlers = {
             'lightSun': () => this.initSun(name, resource),
             'lightLamp': () => this.initLamp(name, resource),
             'lightSpot': () => this.initSpot(name, resource),
             'lightAmbient': () => this.initAmbient(name, resource),
-            'pawn': () => this.initPawn(name, resource, finalPath)
+            'pawn': () => this.initPawn(name, resource, finalPath, manager)
         };
 
         if (handlers[category]) {
-            handlers[category]();
+            return handlers[category]();
         }
     }
 
@@ -288,7 +294,9 @@ class VRodos_LightsPawn_Loader {
         light.target.position.copy(targetSpot.position);
 
         envir.scene.add(light);
-        if (typeof triggerAutoSave === 'function') triggerAutoSave();
+        // No triggerAutoSave here — this loader only restores saved state.
+        // User-initiated spot light creation (vrodos_createLightSpot in vrodos_addRemoveOne.js)
+        // handles its own triggerAutoSave().
     }
 
     initAmbient(name, resource) {
@@ -315,43 +323,55 @@ class VRodos_LightsPawn_Loader {
         envir.scene.add(light);
     }
 
-    initPawn(name, resource, finalPath) {
-        const loader = new THREE.GLTFLoader();
-        loader.load(
-            finalPath + '/assets/pawn.glb',
-            (gltf) => {
-                const pawn = gltf.scene.children[0];
-                this.applyTRS(pawn, resource['trs']);
+    initPawn(name, resource, finalPath, manager) {
+        return new Promise((resolve) => {
+            if (manager) manager.itemStart(name);
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                finalPath + '/assets/pawn.glb',
+                (gltf) => {
+                    const pawn = gltf.scene.children[0];
+                    this.applyTRS(pawn, resource['trs']);
 
-                pawn.name = name;
-                pawn.asset_name = "myActor";
-                pawn.category_name = "pawn";
-                pawn.isSelectableMesh = true;
-                pawn.isLight = false;
-                pawn.material.transparent = true;
-                pawn.material.opacity = 0.6;
+                    pawn.name = name;
+                    pawn.asset_name = "myActor";
+                    pawn.category_name = "pawn";
+                    pawn.isSelectableMesh = true;
+                    pawn.isLight = false;
+                    pawn.material.transparent = true;
+                    pawn.material.opacity = 0.6;
 
-                let indexPawn = 1;
-                for (let ch of envir.scene.children) {
-                    if (ch.name.includes("Pawn")) indexPawn++;
+                    let indexPawn = 1;
+                    for (let ch of envir.scene.children) {
+                        if (ch.name.includes("Pawn")) indexPawn++;
+                    }
+
+                    const labelDiv = document.createElement('div');
+                    labelDiv.textContent = 'Actor ' + indexPawn;
+                    labelDiv.style.marginTop = '-1em';
+                    labelDiv.style.fontSize = '26px';
+                    labelDiv.style.color = "yellow";
+
+                    const label = new THREE.CSS2DObject(labelDiv);
+                    label.position.set(0, 1.5, 0);
+                    pawn.add(label);
+
+                    envir.scene.add(pawn);
+                    if (typeof setHierarchyViewer === 'function') setHierarchyViewer();
+                    if (manager) manager.itemEnd(name);
+                    resolve();
+                },
+                null,
+                (error) => {
+                    console.log('Error loading Pawn during scene boot:', error);
+                    if (manager) {
+                        manager.itemError(name);
+                        manager.itemEnd(name);
+                    }
+                    resolve();
                 }
-
-                const labelDiv = document.createElement('div');
-                labelDiv.textContent = 'Actor ' + indexPawn;
-                labelDiv.style.marginTop = '-1em';
-                labelDiv.style.fontSize = '26px';
-                labelDiv.style.color = "yellow";
-
-                const label = new THREE.CSS2DObject(labelDiv);
-                label.position.set(0, 1.5, 0);
-                pawn.add(label);
-
-                envir.scene.add(pawn);
-                if (typeof setHierarchyViewer === 'function') setHierarchyViewer();
-            },
-            null,
-            (error) => console.log('Error loading Pawn during scene boot:', error)
-        );
+            );
+        });
     }
 
     applyTRS(obj, trs) {

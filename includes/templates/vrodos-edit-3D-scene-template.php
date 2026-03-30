@@ -466,6 +466,97 @@ extract( $data );
 
 		// Make a Loading Manager
 		var manager = new THREE.LoadingManager();
+		envir.sceneLoadFinalized = false;
+
+		function finalizeSceneLoad() {
+			if (!envir || envir.sceneLoadFinalized) {
+				return;
+			}
+
+			envir.sceneLoadFinalized = true;
+			envir.isSceneLoading = false;
+
+			// Don't auto-select any object on load — user clicks to select
+			transform_controls.detach();
+			removeAllCelOutlines();
+			hideObjectControlsPanel();
+
+			// Find scene dimension in order to configure camera in 2D view (Y axis distance)
+			findSceneDimensions();
+			envir.updateCameraGivenSceneLimits();
+
+			// FOCUS ON PLAYER/ACTOR ON LOAD
+			(function focusOnPlayer() {
+				let playerObject = null;
+				// Priority 1: Search for Actor/Pawn
+				envir.scene.traverse(obj => {
+					if (!playerObject && (obj.category_name === 'pawn' || obj.name?.includes('Pawn'))) {
+						playerObject = obj;
+					}
+				});
+				// Priority 2: Fallback to Avatar Camera
+				if (!playerObject) {
+					playerObject = envir.scene.getObjectByName('avatarCamera') || envir.scene.getObjectByName('Camera3Dmodel');
+				}
+
+				if (playerObject) {
+					// Center orbit controls on player
+					envir.orbitControls.target.copy(playerObject.position);
+					// Set a good close-up zoom level for Orthographic Camera
+					envir.cameraOrbit.zoom = 800; 
+					envir.cameraOrbit.updateProjectionMatrix();
+					envir.orbitControls.update();
+				}
+			})();
+
+			setHierarchyViewer();
+			removeHierarchySkeleton();
+
+			for (let n in vrodos_scene_data.objects) {
+				// (function (name) {
+
+				//     // Set Target light for Spots
+				//     if (vrodos_scene_data.objects[name]['category_name'] === 'lightSpot') {
+				//         let lightSpot = envir.scene.getObjectByName(name);
+				//         lightSpot.target = envir.scene.getObjectByName(vrodos_scene_data.objects[name]['lighttargetobjectname']);
+				//     }
+				// })(n);
+			}
+
+			// Avoid culling by frustum
+			envir.scene.traverse(function (obj) {
+				obj.frustumCulled = false;
+			});
+
+			// Remote shadows. Recheck in v141
+			// envir.scene.children.forEach(function(item,index){
+			// 	if(item.type ==="DirectionalLight" || item.type==="SpotLight" || item.type==="PointLight"){
+			// 		item.shadow.mapSize.width = 0;
+			// 		item.shadow.mapSize.height = 0;
+			// 	}
+			// });
+
+			// Update Light Helpers to point to each object (spot light)
+			envir.scene.traverse(function(child) {
+					if (child.light != undefined)
+						child.update();
+				}
+			);
+
+			document.getElementById("progressWrapper").style.visibility = "hidden";
+
+			document.getElementById("compileGameBtn").disabled = false;
+		}
+
+		function prepareSceneLoadManager() {
+			envir.sceneLoadFinalized = false;
+
+			manager.onProgress = function ( url, loaded, total ) {
+				document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
+			};
+
+			manager.onLoad = function () {};
+		}
 
 		// load asset browser with data
 		document.addEventListener('DOMContentLoaded', function() {
@@ -510,9 +601,19 @@ extract( $data );
 			// Add Listeners for: When Dat.Gui changes update php, javascript vars and transform_controls
 			controllerDatGuiOnChange();
 
-			// Add lights on scene
+			// Block saves before any loader runs — prevents partial-scene autosaves
+			// (e.g. initSpot firing triggerAutoSave before GLB objects have loaded).
+			envir.isSceneLoading = true;
+			prepareSceneLoadManager();
+
+			// Add lights and assets on scene
 			let lightsPawnLoader = new VRodos_LightsPawn_Loader();
-			lightsPawnLoader.load(vrodos_scene_data);
+			let lightsLoadPromise = lightsPawnLoader.load(vrodos_scene_data, pluginPath, manager);
+
+			// Loader of assets (GLB models, Videos, Images)
+			let loaderMulti = new VRodos_LoaderMulti();
+			let assetsLoadPromise = loaderMulti.load(manager, vrodos_scene_data.objects, pluginPath);
+
 
 			// Add all in hierarchy viewer
 			setHierarchyViewer();
@@ -521,99 +622,14 @@ extract( $data );
 			envir.scene.add(transform_controls);
 			document.getElementById("compileGameBtn").disabled = true;
 
-			// Load Manager
+			// Load Manager UI
 			// Make progress bar visible
-			envir.isSceneLoading = true;
 			document.getElementById("progress").style.display = "block";
 			document.getElementById("progressWrapper").style.visibility = "visible";
 			document.getElementById("result_download").innerHTML = "Loading";
-
-
-
-			// On progress messages (loading)
-			manager.onProgress = function ( url, loaded, total ) {
-				document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
-			};
-
-			// When all are finished loading place them in the correct position
-			manager.onLoad = function () {
-				envir.isSceneLoading = false;
-
-				// Don't auto-select any object on load — user clicks to select
-				transform_controls.detach();
-				removeAllCelOutlines();
-				hideObjectControlsPanel();
-
-				// Find scene dimension in order to configure camera in 2D view (Y axis distance)
-				findSceneDimensions();
-				envir.updateCameraGivenSceneLimits();
-
-				// FOCUS ON PLAYER/ACTOR ON LOAD
-				(function focusOnPlayer() {
-					let playerObject = null;
-					// Priority 1: Search for Actor/Pawn
-					envir.scene.traverse(obj => {
-						if (!playerObject && (obj.category_name === 'pawn' || obj.name?.includes('Pawn'))) {
-							playerObject = obj;
-						}
-					});
-					// Priority 2: Fallback to Avatar Camera
-					if (!playerObject) {
-						playerObject = envir.scene.getObjectByName('avatarCamera') || envir.scene.getObjectByName('Camera3Dmodel');
-					}
-
-					if (playerObject) {
-						// Center orbit controls on player
-						envir.orbitControls.target.copy(playerObject.position);
-						// Set a good close-up zoom level for Orthographic Camera
-						envir.cameraOrbit.zoom = 800; 
-						envir.cameraOrbit.updateProjectionMatrix();
-						envir.orbitControls.update();
-					}
-				})();
-
-				setHierarchyViewer();
-				removeHierarchySkeleton();
-
-				for (let n in vrodos_scene_data.objects) {
-					// (function (name) {
-
-					//     // Set Target light for Spots
-					//     if (vrodos_scene_data.objects[name]['category_name'] === 'lightSpot') {
-					//         let lightSpot = envir.scene.getObjectByName(name);
-					//         lightSpot.target = envir.scene.getObjectByName(vrodos_scene_data.objects[name]['lighttargetobjectname']);
-					//     }
-					// })(n);
-				}
-
-				// Avoid culling by frustum
-				envir.scene.traverse(function (obj) {
-					obj.frustumCulled = false;
-				});
-
-				// Remote shadows. Recheck in v141
-				// envir.scene.children.forEach(function(item,index){
-				// 	if(item.type ==="DirectionalLight" || item.type==="SpotLight" || item.type==="PointLight"){
-				// 		item.shadow.mapSize.width = 0;
-				// 		item.shadow.mapSize.height = 0;
-				// 	}
-				// });
-
-				// Update Light Helpers to point to each object (spot light)
-				envir.scene.traverse(function(child) {
-						if (child.light != undefined)
-							child.update();
-					}
-				);
-
-				document.getElementById("progressWrapper").style.visibility = "hidden";
-
-				document.getElementById("compileGameBtn").disabled = false;
-			}; // End of manager
-
-			// Loader of assets
-			let loaderMulti = new VRodos_LoaderMulti();
-			loaderMulti.load(manager, vrodos_scene_data.objects, pluginPath);
+			Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(function () {
+				finalizeSceneLoad();
+			});
 
 			//--- initiate PointerLockControls ---------------
 			initPointerLock();
@@ -807,6 +823,7 @@ extract( $data );
 
 			let resources3D = new VrodosSceneImporter().parse(scene_json, uploadDir);
 			envir.isSceneLoading = true;
+			prepareSceneLoadManager();
 
 			// CLEAR SCENE
 			let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
@@ -816,7 +833,7 @@ extract( $data );
 					envir.scene.remove(envir.scene.children[i]);
 			}
 			var lightsLoader = new VRodos_LightsPawn_Loader();
-			lightsLoader.load(resources3D);
+			let lightsLoadPromise = lightsLoader.load(resources3D, pluginPath, manager);
 
 			setHierarchyViewer();
 			//setHierarchyViewerLight();
@@ -826,7 +843,10 @@ extract( $data );
 
 			
 			loaderMulti = new VRodos_LoaderMulti("2");
-			loaderMulti.load(manager, resources3D,pluginPath);
+			let assetsLoadPromise = loaderMulti.load(manager, resources3D, pluginPath);
+			Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(function () {
+				finalizeSceneLoad();
+			});
 
 		}
 		<!--  Part 3: Start 3D with Javascript   -->

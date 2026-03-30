@@ -124,8 +124,8 @@ class VRodos_Asset_CPT_Manager {
 
 		$assetFonts = isset( $_POST['assetFonts'] ) ? esc_attr( strip_tags( (string) $_POST['assetFonts'] ) ) : '';
 
-		$assetback3dcolor = esc_attr( strip_tags( (string) $_POST['assetback3dcolor'] ) );
-		$assettrs         = esc_attr( strip_tags( (string) $_POST['assettrs'] ) );
+		$assetback3dcolor = isset( $_POST['assetback3dcolor'] ) ? esc_attr( strip_tags( (string) $_POST['assetback3dcolor'] ) ) : '';
+		$assettrs         = isset( $_POST['assettrs'] ) ? esc_attr( strip_tags( (string) $_POST['assettrs'] ) ) : '0,0,0,0,0,0,0,0,-100';
 		$redirect_url     = self::build_frontend_redirect_url();
 
 		$glb_upload_error = self::get_frontend_glb_upload_error();

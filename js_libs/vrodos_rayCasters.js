@@ -894,6 +894,10 @@ function displayPoiImageTextProperties(event, name) {
 }
 
 function saveChanges() {
+    if (envir && envir.isSceneLoading) {
+        return Promise.resolve();
+    }
+
     let save_scene_btn = document.getElementById("save-scene-button");
     if (save_scene_btn.classList.contains("LinkDisabled")){
         return (typeof vrodos_whenSceneSaveSettles === 'function') ? vrodos_whenSceneSaveSettles() : Promise.resolve();
@@ -940,4 +944,3 @@ function displayPoiVideoProperties(event, name) {
 
     ppPropertiesDiv.style.display = '';
 }
-
