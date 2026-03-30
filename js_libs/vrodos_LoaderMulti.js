@@ -238,8 +238,12 @@ class VRodos_LoaderMulti {
                     }
 
                     switch (envir.scene.bcg_selection){
+                        case 4:
+                            envir.scene.background = null;
+                            document.getElementById("sceneNoBackground").checked = true;
+                            break;
                         case 0:
-                            document.getElementById("sceneNone").checked = true;
+                            document.getElementById("sceneHorizon").checked = true;
                             if (horizonDescription) {
                                 horizonDescription.style.display = 'block';
                                 horizonDescription.classList.remove('tw-hidden');
@@ -737,14 +741,18 @@ class VRodos_LoaderMulti {
                                 setBackgroundPresetGroundEnabled(presetGroundEnabled);
                             }
 
-                            switch (envir.scene.backgroundStyleOption){
-                                case 0:
-                                    document.getElementById("sceneNone").checked = true;
-                                    if (horizonDescription) {
-                                        horizonDescription.style.display = 'block';
-                                        horizonDescription.classList.remove('tw-hidden');
-                                    }
-                                    if (horizon_sky_preset) {
+                    switch (envir.scene.backgroundStyleOption){
+                        case 4:
+                            envir.scene.background = null;
+                            document.getElementById("sceneNoBackground").checked = true;
+                            break;
+                        case 0:
+                            document.getElementById("sceneHorizon").checked = true;
+                            if (horizonDescription) {
+                                horizonDescription.style.display = 'block';
+                                horizonDescription.classList.remove('tw-hidden');
+                            }
+                            if (horizon_sky_preset) {
                                         horizon_sky_preset.disabled = false;
                                     }
                                     if (horizonSkyRow) {

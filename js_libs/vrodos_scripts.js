@@ -107,7 +107,7 @@ function handleHorizonSkyPresetChange(selectElement) {
 
     setHorizonSkyPresetSelection(selectElement.value);
 
-    let sceneHorizonRadio = document.getElementById('sceneNone');
+    let sceneHorizonRadio = document.getElementById('sceneHorizon');
     if (sceneHorizonRadio) sceneHorizonRadio.checked = true;
 
     saveChanges();
@@ -126,7 +126,7 @@ function syncBackgroundStyleDescription(selectedValue) {
 
     let val = selectedValue;
     if (val === undefined || val === null || val === '') {
-        const radioMap = { 'sceneNone': 0, 'sceneColorRadio': 1, 'sceneSky': 2, 'sceneCustomImage': 3 };
+        const radioMap = { 'sceneNoBackground': 4, 'sceneHorizon': 0, 'sceneColorRadio': 1, 'sceneSky': 2, 'sceneCustomImage': 3 };
         for (const [id, value] of Object.entries(radioMap)) {
             if (document.getElementById(id)?.checked) {
                 val = value;
@@ -171,8 +171,13 @@ function bcgRadioSelect(option) {
     const val = parseInt(option.value, 10) || 0;
     syncBackgroundStyleDescription(val);
 
+    if (els.thumb && val !== 3) {
+        els.thumb.hidden = true;
+    }
+
     // 2. Show/Enable based on selection
     const uiHandlers = {
+        4: () => {},
         0: () => {
             if (els.horizonSkyPreset) els.horizonSkyPreset.disabled = false;
             if (els.horizonSkyRow) els.horizonSkyRow.style.display = 'flex';
@@ -197,6 +202,9 @@ function bcgRadioSelect(option) {
     // 3. Update Scene
     if (envir?.scene) {
         const sceneHandlers = {
+            4: () => {
+                envir.scene.background = null;
+            },
             0: () => {
                 envir.scene.background = new THREE.Color(rgbToHex(255, 255, 255));
                 setHorizonSkyPresetSelection(els.horizonSkyPreset ? els.horizonSkyPreset.value : 'natural');

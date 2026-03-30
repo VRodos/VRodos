@@ -90,8 +90,10 @@
             </style>
             <div class="tw-px-3 tw-py-1">
                 <div class="bcg-toggle" id="bcgToggleGroup">
-                    <input type="radio" id="sceneNone" name="sceneColorTypeRadio" value="None" checked />
-                    <label for="sceneNone" onclick="bcgRadioSelect({value:0})">Horizon</label>
+                    <input type="radio" id="sceneNoBackground" name="sceneColorTypeRadio" value="None" />
+                    <label for="sceneNoBackground" onclick="bcgRadioSelect({value:4})">None</label>
+                    <input type="radio" id="sceneHorizon" name="sceneColorTypeRadio" value="Horizon" checked />
+                    <label for="sceneHorizon" onclick="bcgRadioSelect({value:0})">Horizon</label>
                     <input type="radio" id="sceneColorRadio" name="sceneColorTypeRadio" value="color" />
                     <label for="sceneColorRadio" onclick="bcgRadioSelect({value:1})">Color</label>
                     <input type="radio" id="sceneSky" name="sceneColorTypeRadio" value="sky" />

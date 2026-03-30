@@ -1694,15 +1694,29 @@ AFRAME.registerComponent('scene-settings', {
         const presetGroundEnabled = this.data.presetGroundEnabled !== "0";
         if (!this.data.selChoice) this.data.selChoice = "0";
 
+        let clearGeneratedBackground = function () {
+            backgroundEl.removeAttribute("background");
+            backgroundEl.removeAttribute("environment");
+            let oldSun = document.querySelector('a-sun-sky');
+            if (oldSun) oldSun.parentNode.removeChild(oldSun);
+            let manSky = document.getElementById('default-sky');
+            if (manSky) manSky.parentNode.removeChild(manSky);
+            let manSun = document.getElementById('default-sun');
+            if (manSun) manSun.parentNode.removeChild(manSun);
+            let oldOceanPlane = backgroundEl.querySelector('.ocean_asset');
+            if (oldOceanPlane) oldOceanPlane.parentNode.removeChild(oldOceanPlane);
+            let oldPresetSky = backgroundEl.querySelector('a-sky[data-vrodos-preset-sky="true"]');
+            if (oldPresetSky) oldPresetSky.parentNode.removeChild(oldPresetSky);
+            let customSky = backgroundEl.querySelector('#sky');
+            if (customSky) customSky.parentNode.removeChild(customSky);
+        };
+
         switch (this.data.selChoice) {
+            case "4":
+                clearGeneratedBackground();
+                break;
             case "0":
-                backgroundEl.removeAttribute("background");
-                let oldSun = document.querySelector('a-sun-sky');
-                if (oldSun) oldSun.parentNode.removeChild(oldSun);
-                let manSky = document.getElementById('default-sky');
-                if (manSky) manSky.parentNode.removeChild(manSky);
-                let manSun = document.getElementById('default-sun');
-                if (manSun) manSun.parentNode.removeChild(manSun);
+                clearGeneratedBackground();
                 backgroundEl.setAttribute("environment", {
                     preset: 'default',
                     ground: 'none',
@@ -1713,29 +1727,13 @@ AFRAME.registerComponent('scene-settings', {
                 this.applyHorizonSkyPreset();
                 break;
             case "1":
-                backgroundEl.removeAttribute("environment");
-                let manSky1 = document.getElementById('default-sky');
-                if (manSky1) manSky1.parentNode.removeChild(manSky1);
-                let manSun1 = document.getElementById('default-sun');
-                if (manSun1) manSun1.parentNode.removeChild(manSun1);
-                let oldSun1 = document.querySelector('a-sun-sky');
-                if (oldSun1) oldSun1.parentNode.removeChild(oldSun1);
+                clearGeneratedBackground();
                 backgroundEl.setAttribute("background", "color", this.data.color);
                 break;
             case "2":
-                let manSky2 = document.getElementById('default-sky');
-                if (manSky2) manSky2.parentNode.removeChild(manSky2);
-                let manSun2 = document.getElementById('default-sun');
-                if (manSun2) manSun2.parentNode.removeChild(manSun2);
-                let oldSun2 = document.querySelector('a-sun-sky');
-                if (oldSun2) oldSun2.parentNode.removeChild(oldSun2);
-                let oldOceanPlane = backgroundEl.querySelector('.ocean_asset');
-                if (oldOceanPlane) oldOceanPlane.parentNode.removeChild(oldOceanPlane);
-                let oldPresetSky = backgroundEl.querySelector('a-sky[data-vrodos-preset-sky="true"]');
-                if (oldPresetSky) oldPresetSky.parentNode.removeChild(oldPresetSky);
+                clearGeneratedBackground();
 
                 if (this.data.presChoice == "ocean") {
-                    backgroundEl.removeAttribute("environment");
                     let sky = document.createElement('a-sky');
                     sky.setAttribute("color", "#a4bede");
                     sky.setAttribute("data-vrodos-preset-sky", "true");
@@ -1761,6 +1759,7 @@ AFRAME.registerComponent('scene-settings', {
                 }
                 break;
             case "3":
+                clearGeneratedBackground();
                 let customImgAsset = document.querySelector('#custom_sky');
                 if (customImgAsset && customImgAsset.getAttribute("src")) {
                     let skyElem = document.createElement('a-sky');

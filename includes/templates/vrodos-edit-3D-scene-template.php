@@ -572,7 +572,11 @@ extract( $data );
 			}
 
 			// Set initial background color and UI from scene data
-			if (vrodos_scene_data.backgroundStyleOption === 1 && vrodos_scene_data.ClearColor) {
+			if (vrodos_scene_data.backgroundStyleOption === 4) {
+				envir.scene.background = null;
+				document.getElementById('sceneNoBackground').checked = true;
+				document.getElementById('jscolorpick').value = 'ffffff';
+			} else if (vrodos_scene_data.backgroundStyleOption === 1 && vrodos_scene_data.ClearColor) {
 				envir.scene.background = new THREE.Color(vrodos_scene_data.ClearColor);
 				document.getElementById('sceneColorRadio').checked = true;
 				document.getElementById('jscolorpick').value = vrodos_scene_data.ClearColor.substring(1);
@@ -719,6 +723,7 @@ extract( $data );
 			envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
 			envir.scene.aframeReflectionProfile = vrodos_scene_data["aframeReflectionProfile"] || 'balanced';
 			envir.scene.aframeHorizonSkyPreset = vrodos_scene_data["aframeHorizonSkyPreset"] || 'natural';
+			envir.scene.aframeEnvMapPreset = vrodos_scene_data["aframeEnvMapPreset"] || 'none';
 			if (typeof syncCompileDialogFromSceneSettings === 'function') {
 				syncCompileDialogFromSceneSettings();
 			}
@@ -736,8 +741,24 @@ extract( $data );
 				}
 
 				switch (selOption){
+					case 4:
+						envir.scene.background = null;
+						document.getElementById("sceneNoBackground").checked = true;
+						custom_img_sel.disabled = true;
+						preset_sel.disabled = true;
+						if (preset_ground_toggle) preset_ground_toggle.disabled = true;
+						color_sel.disabled = true;
+						if (horizonSkyPresetSelect) horizonSkyPresetSelect.disabled = true;
+
+						if (horizonSkyRow) horizonSkyRow.style.display = 'none';
+						document.getElementById("bcgColorRow").style.display = 'none';
+						document.getElementById("bcgPresetsRow").style.display = 'none';
+						document.getElementById("bcgPresetGroundRow").style.display = 'none';
+						document.getElementById("bcgImageRow").style.display = 'none';
+						img_thumb.hidden = true;
+						break;
 					case 0:
-						document.getElementById("sceneNone").checked = true;
+						document.getElementById("sceneHorizon").checked = true;
 						custom_img_sel.disabled = true;
 						preset_sel.disabled = true;
 						if (preset_ground_toggle) preset_ground_toggle.disabled = true;
