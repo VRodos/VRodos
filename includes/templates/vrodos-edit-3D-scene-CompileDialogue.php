@@ -131,6 +131,15 @@
 									<option value="enhanced">Enhanced</option>
 								</select>
 							</label>
+							<label class="tw-form-control">
+								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="HDR environment map for PBR reflections and lighting">Env Lighting</span>
+								<select id="compileEnvMapPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+									<option value="none">None</option>
+									<option value="studio">Studio</option>
+									<option value="quarry">Quarry</option>
+									<option value="venice">Venice Sunset</option>
+								</select>
+							</label>
 						</div>
 
 						<div class="tw-pt-2 tw-border-t tw-border-slate-200">

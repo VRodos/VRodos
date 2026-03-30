@@ -488,6 +488,13 @@ class VRodos_Compiler_Manager {
 
 		$content = str_replace( 'AFRAME_CLEARCOLOR_PLACEHOLDER', $scene_json->metadata->ClearColor, $content );
 
+		// Inject plugin base URL so runtime can load HDR environment maps
+		$content = str_replace(
+			'<script src="js/RGBELoader.js"></script>',
+			'<script>window.VRODOS_PLUGIN_URL = "' . esc_js( $this->plugin_path_url ) . '";</script>' . "\n" . '    <script src="js/RGBELoader.js"></script>',
+			$content
+		);
+
 		// Replace Fog string
 		if ( isset( $scene_json->metadata->fogCategory ) && (int)$scene_json->metadata->fogCategory !== 0 ) {
 			if ( (int)$scene_json->metadata->fogCategory === 1 ) {
@@ -565,14 +572,15 @@ class VRodos_Compiler_Manager {
 		$contrast_preset  = $scene_json->metadata->aframeContrastPreset ?? 'balanced';
 		$reflection_profile = $scene_json->metadata->aframeReflectionProfile ?? 'balanced';
 		$horizon_sky_preset = $scene_json->metadata->aframeHorizonSkyPreset ?? 'natural';
+		$env_map_preset    = $scene_json->metadata->aframeEnvMapPreset ?? 'none';
 		$cam_position      = implode( ' ', $scene_json->objects->avatarCamera->position );
 		$public_chat       = isset( $scene_json->metadata->enableGeneralChat ) && filter_var( $scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN );
 
 		$cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
 		if ( ! empty( $sceneColor ) ) {
-			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; fpsMeterEnabled: $fps_meter_enabled; ambientOcclusionPreset: $ambient_occlusion_preset; contactShadowPreset: $contact_shadow_preset; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; horizonSkyPreset: $horizon_sky_preset; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat; fogCategory: $fog_category; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" );
+			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; fpsMeterEnabled: $fps_meter_enabled; ambientOcclusionPreset: $ambient_occlusion_preset; contactShadowPreset: $contact_shadow_preset; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; horizonSkyPreset: $horizon_sky_preset; envMapPreset: $env_map_preset; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat; fogCategory: $fog_category; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" );
 		} else {
-			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; fpsMeterEnabled: $fps_meter_enabled; ambientOcclusionPreset: $ambient_occlusion_preset; contactShadowPreset: $contact_shadow_preset; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; horizonSkyPreset: $horizon_sky_preset; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat; fogCategory: $fog_category; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" );
+			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; fpsMeterEnabled: $fps_meter_enabled; ambientOcclusionPreset: $ambient_occlusion_preset; contactShadowPreset: $contact_shadow_preset; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; horizonSkyPreset: $horizon_sky_preset; envMapPreset: $env_map_preset; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat; fogCategory: $fog_category; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" );
 		}
 		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 

@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
             bloomStrength: document.getElementById('compileBloomStrengthSelect'),
             exposurePreset: document.getElementById('compileExposurePresetSelect'),
             contrastPreset: document.getElementById('compileContrastPresetSelect'),
-            reflectionProfile: document.getElementById('compileReflectionProfileSelect')
+            reflectionProfile: document.getElementById('compileReflectionProfileSelect'),
+            envMapPreset: document.getElementById('compileEnvMapPresetSelect')
         };
     }
 
@@ -93,6 +94,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'balanced';
     }
 
+    function normalizeEnvMapPreset(value) {
+        if (value === 'studio' || value === 'quarry' || value === 'venice') {
+            return value;
+        }
+
+        return 'none';
+    }
+
     function normalizeAmbientOcclusionPreset(value) {
         if (value === 'off' || value === 'soft' || value === 'strong' || value === 'balanced') {
             return value;
@@ -154,6 +163,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!envir.scene.aframeReflectionProfile) {
             envir.scene.aframeReflectionProfile = 'balanced';
         }
+        if (!envir.scene.aframeEnvMapPreset) {
+            envir.scene.aframeEnvMapPreset = 'none';
+        }
         if (!envir.scene.aframeExposurePreset) {
             envir.scene.aframeExposurePreset = 'neutral';
         }
@@ -183,6 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeExposurePreset = normalizeExposurePreset(envir.scene.aframeExposurePreset);
         envir.scene.aframeContrastPreset = normalizeContrastPreset(envir.scene.aframeContrastPreset);
         envir.scene.aframeReflectionProfile = normalizeReflectionProfile(envir.scene.aframeReflectionProfile);
+        envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(envir.scene.aframeEnvMapPreset);
         if (envir.scene.aframePostFXBloomEnabled === false) {
             envir.scene.aframeBloomStrength = 'off';
         }
@@ -210,6 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.postFxColor.disabled = !postFxEnabled;
         controls.bloomStrength.disabled = !postFxEnabled;
         controls.reflectionProfile.disabled = !postFxEnabled;
+        if (controls.envMapPreset) {
+            controls.envMapPreset.disabled = !postFxEnabled;
+        }
         controls.exposurePreset.disabled = !colorGradingEnabled;
         controls.contrastPreset.disabled = !colorGradingEnabled;
         controls.edgeAAStrength.disabled = !postFxEnabled;
@@ -247,6 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframePostFXEdgeAAStrength = edgeAAValue > 0 ? edgeAAValue : (envir.scene.aframePostFXEdgeAAStrength || 3);
 
         envir.scene.aframeReflectionProfile = normalizeReflectionProfile(controls.reflectionProfile.value);
+        envir.scene.aframeEnvMapPreset = controls.envMapPreset ? normalizeEnvMapPreset(controls.envMapPreset.value) : 'none';
     }
 
     window.vrodosApplyCompileDialogSettingsToScene = applyCompileDialogSettingsToScene;
@@ -294,6 +311,11 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.reflectionProfile.value = envir && envir.scene && envir.scene.aframeReflectionProfile
             ? normalizeReflectionProfile(envir.scene.aframeReflectionProfile)
             : 'balanced';
+        if (controls.envMapPreset) {
+            controls.envMapPreset.value = envir && envir.scene && envir.scene.aframeEnvMapPreset
+                ? normalizeEnvMapPreset(envir.scene.aframeEnvMapPreset)
+                : 'none';
+        }
 
         syncCompilePostFxState();
     };
@@ -344,6 +366,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.reflectionProfile) {
         controls.reflectionProfile.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.envMapPreset) {
+        controls.envMapPreset.addEventListener('change', syncCompilePostFxState);
     }
 
     if (typeof window.syncCompileDialogFromSceneSettings === 'function') {

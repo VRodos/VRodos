@@ -342,13 +342,13 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
 
         var targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
         if (options.reflectionProfile === 'soft') {
-            targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.88, 0.35);
+            targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.5, 0.3);
         } else if (options.renderQuality === 'high') {
             targetEnvMapIntensity = options.reflectionProfile === 'enhanced'
-                ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.10)
-                : Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.04);
+                ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 2.0)
+                : Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.0);
         } else if (options.reflectionProfile === 'enhanced') {
-            targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.02);
+            targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.5);
         }
 
         material.envMapIntensity = targetEnvMapIntensity;
@@ -506,12 +506,84 @@ AFRAME.registerComponent('avatar-rotation-info', {
     }
 });
 
+// --- Multi-pass bloom shaders ---
+
+function vrodosCreateBrightPassMaterial() {
+    return new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: null },
+            threshold: { value: 0.80 }
+        },
+        vertexShader: [
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vUv = uv;',
+            '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+            '}'
+        ].join('\n'),
+        fragmentShader: [
+            'uniform sampler2D tDiffuse;',
+            'uniform float threshold;',
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vec4 color = texture2D(tDiffuse, vUv);',
+            '  float brightness = max(max(color.r, color.g), color.b);',
+            '  float contribution = smoothstep(threshold, threshold + 0.15, brightness);',
+            '  gl_FragColor = vec4(color.rgb * contribution, 1.0);',
+            '}'
+        ].join('\n'),
+        depthWrite: false,
+        depthTest: false
+    });
+}
+
+function vrodosCreateGaussianBlurMaterial() {
+    return new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: null },
+            direction: { value: new THREE.Vector2(1.0, 0.0) },
+            resolution: { value: new THREE.Vector2(1, 1) }
+        },
+        vertexShader: [
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vUv = uv;',
+            '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+            '}'
+        ].join('\n'),
+        fragmentShader: [
+            'uniform sampler2D tDiffuse;',
+            'uniform vec2 direction;',
+            'uniform vec2 resolution;',
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vec2 texel = direction / max(resolution, vec2(1.0));',
+            // 9-tap Gaussian kernel (sigma ~3.0)
+            '  vec4 result = vec4(0.0);',
+            '  result += texture2D(tDiffuse, vUv - 4.0 * texel) * 0.0162;',
+            '  result += texture2D(tDiffuse, vUv - 3.0 * texel) * 0.0540;',
+            '  result += texture2D(tDiffuse, vUv - 2.0 * texel) * 0.1216;',
+            '  result += texture2D(tDiffuse, vUv - 1.0 * texel) * 0.1945;',
+            '  result += texture2D(tDiffuse, vUv)                * 0.2270;',
+            '  result += texture2D(tDiffuse, vUv + 1.0 * texel) * 0.1945;',
+            '  result += texture2D(tDiffuse, vUv + 2.0 * texel) * 0.1216;',
+            '  result += texture2D(tDiffuse, vUv + 3.0 * texel) * 0.0540;',
+            '  result += texture2D(tDiffuse, vUv + 4.0 * texel) * 0.0162;',
+            '  gl_FragColor = result;',
+            '}'
+        ].join('\n'),
+        depthWrite: false,
+        depthTest: false
+    });
+}
+
 function vrodosCreatePhotorealPostMaterial() {
     var material = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: null },
+            tBloom: { value: null },
             resolution: { value: new THREE.Vector2(1, 1) },
-            bloomStrength: { value: 0.18 },
+            bloomStrength: { value: 0.35 },
             vignetteStrength: { value: 0.16 },
             saturation: { value: 1.04 },
             contrast: { value: 1.04 },
@@ -528,6 +600,7 @@ function vrodosCreatePhotorealPostMaterial() {
         ].join('\n'),
         fragmentShader: [
             'uniform sampler2D tDiffuse;',
+            'uniform sampler2D tBloom;',
             'uniform vec2 resolution;',
             'uniform float bloomStrength;',
             'uniform float vignetteStrength;',
@@ -541,39 +614,16 @@ function vrodosCreatePhotorealPostMaterial() {
             '  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));',
             '  return mix(vec3(luma), color, sat);',
             '}',
-            'vec3 acesFilm(vec3 x) {',
-            '  float a = 2.51;',
-            '  float b = 0.03;',
-            '  float c = 2.43;',
-            '  float d = 0.59;',
-            '  float e = 0.14;',
-            '  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);',
-            '}',
-            'vec3 linearToSRGB(vec3 color) {',
-            '  return pow(max(color, vec3(0.0)), vec3(1.0 / 2.2));',
-            '}',
             'float lumaValue(vec3 color) {',
             '  return dot(color, vec3(0.2126, 0.7152, 0.0722));',
-            '}',
-            'vec3 sampleBright(vec2 uv, vec2 offset) {',
-            '  vec3 c = texture2D(tDiffuse, uv + offset).rgb;',
-            '  float highlight = max(max(c.r, c.g), c.b);',
-            '  return max(c - vec3(0.86), 0.0) * smoothstep(0.86, 1.0, highlight);',
             '}',
             'void main() {',
             '  vec2 texel = 1.0 / max(resolution, vec2(1.0));',
             '  vec4 base = texture2D(tDiffuse, vUv);',
-            '  vec3 bloom = vec3(0.0);',
-            '  bloom += sampleBright(vUv, vec2(texel.x, 0.0));',
-            '  bloom += sampleBright(vUv, vec2(-texel.x, 0.0));',
-            '  bloom += sampleBright(vUv, vec2(0.0, texel.y));',
-            '  bloom += sampleBright(vUv, vec2(0.0, -texel.y));',
-            '  bloom += sampleBright(vUv, vec2(texel.x, texel.y));',
-            '  bloom += sampleBright(vUv, vec2(-texel.x, texel.y));',
-            '  bloom += sampleBright(vUv, vec2(texel.x, -texel.y));',
-            '  bloom += sampleBright(vUv, vec2(-texel.x, -texel.y));',
-            '  bloom *= 0.125;',
+            // Multi-pass bloom: read from blurred bloom texture
+            '  vec3 bloom = texture2D(tBloom, vUv).rgb;',
             '  vec3 color = base.rgb + bloom * bloomStrength;',
+            // Edge AA (luma-based)
             '  vec3 north = texture2D(tDiffuse, vUv + vec2(0.0, texel.y)).rgb;',
             '  vec3 south = texture2D(tDiffuse, vUv - vec2(0.0, texel.y)).rgb;',
             '  vec3 east = texture2D(tDiffuse, vUv + vec2(texel.x, 0.0)).rgb;',
@@ -583,14 +633,15 @@ function vrodosCreatePhotorealPostMaterial() {
             '  float edgeBlend = smoothstep(0.06, 0.24, edgeRange) * aaStrength;',
             '  vec3 aaColor = (north + south + east + west + color) * 0.2;',
             '  color = mix(color, aaColor, edgeBlend);',
+            // Color grading
             '  color = applySaturation(color, saturation);',
             '  color = (color - 0.5) * contrast + 0.5;',
+            // Vignette
             '  float dist = distance(vUv, vec2(0.5));',
             '  float vignette = smoothstep(0.95, 0.24, dist);',
             '  color *= mix(1.0 - vignetteStrength, 1.0, vignette);',
             '  color *= exposure;',
-            '  // ACESFilmic tone mapping + sRGB conversion already applied by Three.js renderer',
-            '  // Only apply the final exposure adjustment here (no double tonemapping)',
+            // ACESFilmic tone mapping + sRGB conversion already applied by Three.js renderer
             '  color = clamp(color * outputExposure, 0.0, 1.0);',
             '  gl_FragColor = vec4(color, base.a);',
             '}'
@@ -722,6 +773,7 @@ AFRAME.registerComponent('scene-settings', {
         contrastPreset: { type: "string", default: "balanced" },
         reflectionProfile: { type: "string", default: "balanced" },
         horizonSkyPreset: { type: "string", default: "natural" },
+        envMapPreset: { type: "string", default: "none" },
         cam_position: { type: "string", default: "0 1.6 0" },
         cam_rotation_y: { type: "string", default: "0" },
         avatar_enabled: { type: "string", default: "0" },
@@ -735,9 +787,9 @@ AFRAME.registerComponent('scene-settings', {
     getBloomStrengthValue: function () {
         switch (this.data.bloomStrength) {
             case 'medium':
-                return 0.16;
+                return 0.35;
             case 'soft':
-                return 0.08;
+                return 0.15;
             default:
                 return 0.0;
         }
@@ -761,11 +813,11 @@ AFRAME.registerComponent('scene-settings', {
             case 'off':
                 return 0;
             case 'high':
-                return 1.75;
+                return 1.35;
             case 'ultra':
-                return 2.15;
+                return 1.5;
             default:
-                return 1.45;
+                return 1.25;
         }
     },
     getAAQualitySampleCount: function () {
@@ -807,6 +859,67 @@ AFRAME.registerComponent('scene-settings', {
             default:
                 return 'natural';
         }
+    },
+    getEnvMapPath: function () {
+        var map = {
+            studio: 'spot1Lux.hdr',
+            quarry: 'quarry_01_1k.hdr',
+            venice: 'venice_sunset_1k.hdr'
+        };
+        return map[this.data.envMapPreset] || null;
+    },
+    applyEnvMapProfile: function () {
+        var preset = this.data.envMapPreset || 'none';
+
+        // Skip if no change from last applied preset
+        if (this._currentEnvMapPreset === preset) {
+            return;
+        }
+
+        // Clear environment if preset is "none"
+        if (preset === 'none') {
+            if (this._currentEnvMapPreset && this._currentEnvMapPreset !== 'none') {
+                this.el.object3D.environment = null;
+            }
+            this._currentEnvMapPreset = 'none';
+            return;
+        }
+
+        // Guard: RGBELoader must be available
+        if (typeof THREE.RGBELoader === 'undefined') {
+            console.warn('[VRodos] RGBELoader not available; HDR env map skipped.');
+            return;
+        }
+
+        var hdrFile = this.getEnvMapPath();
+        if (!hdrFile) { return; }
+
+        var baseUrl = window.VRODOS_PLUGIN_URL || '';
+        var hdrUrl = baseUrl + 'images/hdr/' + hdrFile;
+        var renderer = this.el.renderer;
+        var sceneObj = this.el.object3D;
+        var self = this;
+
+        var loader = new THREE.RGBELoader();
+        loader.load(hdrUrl, function (texture) {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+
+            var pmremGenerator = new THREE.PMREMGenerator(renderer);
+            pmremGenerator.compileEquirectangularShader();
+            var envMap = pmremGenerator.fromEquirectangular(texture).texture;
+
+            sceneObj.environment = envMap;
+            texture.dispose();
+            pmremGenerator.dispose();
+
+            self._currentEnvMapPreset = preset;
+            // Re-apply material profiles so envMapIntensity takes effect with the new env map
+            self.applyMaterialProfiles();
+
+            console.log('[VRodos] HDR environment map loaded:', hdrFile);
+        }, undefined, function (err) {
+            console.warn('[VRodos] Failed to load HDR env map:', hdrUrl, err);
+        });
     },
     getContactShadowSettings: function () {
         var shadowQuality = this.data.shadowQuality || 'medium';
@@ -983,6 +1096,19 @@ AFRAME.registerComponent('scene-settings', {
         if (this.postProcessingMaterial && this.postProcessingMaterial.uniforms && this.postProcessingMaterial.uniforms.resolution) {
             this.postProcessingMaterial.uniforms.resolution.value.set(width, height);
         }
+
+        // Resize bloom targets at half resolution
+        var halfW = Math.max(1, Math.floor(width / 2));
+        var halfH = Math.max(1, Math.floor(height / 2));
+        if (this.bloomTargetA && (this.bloomTargetA.width !== halfW || this.bloomTargetA.height !== halfH)) {
+            this.bloomTargetA.setSize(halfW, halfH);
+        }
+        if (this.bloomTargetB && (this.bloomTargetB.width !== halfW || this.bloomTargetB.height !== halfH)) {
+            this.bloomTargetB.setSize(halfW, halfH);
+        }
+        if (this.bloomBlurMaterial && this.bloomBlurMaterial.uniforms && this.bloomBlurMaterial.uniforms.resolution) {
+            this.bloomBlurMaterial.uniforms.resolution.value.set(halfW, halfH);
+        }
     },
     enablePostProcessing: function () {
         var renderer = this.el.renderer;
@@ -1012,6 +1138,18 @@ AFRAME.registerComponent('scene-settings', {
         this.postProcessingQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.postProcessingMaterial);
         this.postProcessingScene.add(this.postProcessingQuad);
 
+        // Multi-pass bloom targets (half resolution)
+        var halfW = Math.max(1, Math.floor(width / 2));
+        var halfH = Math.max(1, Math.floor(height / 2));
+        this.bloomTargetA = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
+        this.bloomTargetB = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
+        this.bloomBrightPassMaterial = vrodosCreateBrightPassMaterial();
+        this.bloomBlurMaterial = vrodosCreateGaussianBlurMaterial();
+        this.bloomBlurMaterial.uniforms.resolution.value.set(halfW, halfH);
+        this.bloomQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.bloomBrightPassMaterial);
+        this.bloomScene = new THREE.Scene();
+        this.bloomScene.add(this.bloomQuad);
+
         this.postProcessingOriginalRender = renderer.render.bind(renderer);
         this.postProcessingActive = true;
 
@@ -1031,13 +1169,54 @@ AFRAME.registerComponent('scene-settings', {
 
             try {
                 var previousTarget = renderer.getRenderTarget();
+
+                // Pass 1: Render scene to main target
                 renderer.setRenderTarget(this.postProcessingTarget);
                 renderer.clear(true, true, true);
                 this.postProcessingOriginalRender(scene, camera);
+
+                // Multi-pass bloom (only if bloom is enabled)
+                var bloomValue = this.getBloomStrengthValue();
+                if (bloomValue > 0 && this.bloomTargetA && this.bloomTargetB) {
+                    // Pass 2: Bright-pass extraction → bloomTargetA (half-res)
+                    this.bloomQuad.material = this.bloomBrightPassMaterial;
+                    this.bloomBrightPassMaterial.uniforms.tDiffuse.value = this.postProcessingTarget.texture;
+                    renderer.setRenderTarget(this.bloomTargetA);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.bloomScene, this.postProcessingCamera);
+
+                    // Pass 3: Horizontal Gaussian blur → bloomTargetB
+                    this.bloomQuad.material = this.bloomBlurMaterial;
+                    this.bloomBlurMaterial.uniforms.tDiffuse.value = this.bloomTargetA.texture;
+                    this.bloomBlurMaterial.uniforms.direction.value.set(1.0, 0.0);
+                    renderer.setRenderTarget(this.bloomTargetB);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.bloomScene, this.postProcessingCamera);
+
+                    // Pass 4: Vertical Gaussian blur → bloomTargetA (ping-pong)
+                    this.bloomBlurMaterial.uniforms.tDiffuse.value = this.bloomTargetB.texture;
+                    this.bloomBlurMaterial.uniforms.direction.value.set(0.0, 1.0);
+                    renderer.setRenderTarget(this.bloomTargetA);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.bloomScene, this.postProcessingCamera);
+
+                    // Feed blurred bloom to composite shader
+                    this.postProcessingMaterial.uniforms.tBloom.value = this.bloomTargetA.texture;
+                } else {
+                    // No bloom — feed 1x1 black texture (null would cause GPU errors)
+                    if (!this._blackBloomTexture) {
+                        var blackData = new Uint8Array([0, 0, 0, 255]);
+                        this._blackBloomTexture = new THREE.DataTexture(blackData, 1, 1, THREE.RGBAFormat);
+                        this._blackBloomTexture.needsUpdate = true;
+                    }
+                    this.postProcessingMaterial.uniforms.tBloom.value = this._blackBloomTexture;
+                }
+
                 renderer.setRenderTarget(previousTarget);
 
+                // Pass 5: Final composite
                 this.postProcessingMaterial.uniforms.tDiffuse.value = this.postProcessingTarget.texture;
-                this.postProcessingMaterial.uniforms.bloomStrength.value = this.getBloomStrengthValue();
+                this.postProcessingMaterial.uniforms.bloomStrength.value = bloomValue;
                 this.postProcessingMaterial.uniforms.vignetteStrength.value = this.isPostFXOptionEnabled('postFXVignetteEnabled') ? 0.16 : 0.0;
                 this.postProcessingMaterial.uniforms.saturation.value = this.isPostFXOptionEnabled('postFXColorEnabled')
                     ? this.getSaturationValue()
@@ -1082,6 +1261,15 @@ AFRAME.registerComponent('scene-settings', {
             this.postProcessingTarget.dispose();
         }
 
+        // Dispose bloom resources
+        if (this.bloomTargetA) { this.bloomTargetA.dispose(); }
+        if (this.bloomTargetB) { this.bloomTargetB.dispose(); }
+        if (this.bloomBrightPassMaterial) { this.bloomBrightPassMaterial.dispose(); }
+        if (this.bloomBlurMaterial) { this.bloomBlurMaterial.dispose(); }
+        if (this.bloomQuad) {
+            if (this.bloomQuad.geometry) { this.bloomQuad.geometry.dispose(); }
+        }
+
         this.postProcessingTarget = null;
         this.postProcessingMaterial = null;
         this.postProcessingScene = null;
@@ -1090,6 +1278,14 @@ AFRAME.registerComponent('scene-settings', {
         this.postProcessingOriginalRender = null;
         this.postProcessingActive = false;
         this.postProcessingRendering = false;
+        this.bloomTargetA = null;
+        this.bloomTargetB = null;
+        this.bloomBrightPassMaterial = null;
+        this.bloomBlurMaterial = null;
+        this.bloomQuad = null;
+        this.bloomScene = null;
+        if (this._blackBloomTexture) { this._blackBloomTexture.dispose(); }
+        this._blackBloomTexture = null;
     },
     syncPostProcessingState: function () {
         if (this.shouldUsePostProcessing()) {
@@ -1114,7 +1310,7 @@ AFRAME.registerComponent('scene-settings', {
         if (this.shouldUseEdgeAAOversample()) {
             targetPixelRatio = Math.max(targetPixelRatio, 1.15 + (this.getEdgeAAStrengthFactor() * 0.7));
         }
-        targetPixelRatio = Math.min(targetPixelRatio, isHighQuality ? 2.2 : 1.25);
+        targetPixelRatio = Math.min(targetPixelRatio, isHighQuality ? 1.5 : 1.25);
         renderer.setPixelRatio(targetPixelRatio);
         renderer.sortObjects = true;
 
@@ -1374,6 +1570,7 @@ AFRAME.registerComponent('scene-settings', {
         this.applyRenderQualityProfile();
         this.applyShadowQualityProfile();
         this.applyBackgroundQualityProfile();
+        this.applyEnvMapProfile();
         this.applyMaterialProfiles();
         this.applyPostFXProfile();
         this.syncFPSMeterState();
@@ -1392,6 +1589,14 @@ AFRAME.registerComponent('scene-settings', {
         this.postProcessingRendering = false;
         this.fpsStats = null;
         this.fpsStatsRoot = null;
+        this._currentEnvMapPreset = null;
+        this.bloomTargetA = null;
+        this.bloomTargetB = null;
+        this.bloomBrightPassMaterial = null;
+        this.bloomBlurMaterial = null;
+        this.bloomQuad = null;
+        this.bloomScene = null;
+        this._blackBloomTexture = null;
         window.addEventListener('resize', this.handleResize);
         // Event - When scene is loaded
         this.el.addEventListener("loaded", () => {
