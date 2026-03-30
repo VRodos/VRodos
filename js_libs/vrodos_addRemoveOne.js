@@ -459,6 +459,18 @@ function deleteFomScene(uuid, name) {
     }, { once: true });
 }
 
+function removeHierarchyEntriesForObject(uuid, objectName) {
+    document.querySelectorAll('#hierarchy-viewer .hierarchyItem').forEach((item) => {
+        if (
+            item.id === uuid ||
+            item.getAttribute('data-uuid') === uuid ||
+            item.getAttribute('data-name') === objectName
+        ) {
+            item.remove();
+        }
+    });
+}
+
 function lockOnScene(uuid, name) {
 
     let selectedObject = envir.scene.getObjectByProperty( 'uuid' , uuid);
@@ -535,8 +547,7 @@ function deleteAssetFromScene(uuid) {
         if (targetSpot) envir.scene.remove(targetSpot);
 
         // Sun target spot remove from hierarchy viewer
-        let targetEl = document.querySelector(`[data-name="lightTargetSpot_${objectSelected.name}"]`);
-        if (targetEl) targetEl.remove();
+        removeHierarchyEntriesForObject('', `lightTargetSpot_${objectSelected.name}`);
 
         // Light Helper (for all lights)
         let lightHelper = envir.scene.getObjectByName("lightHelper_" + objectSelected.name);
@@ -572,8 +583,7 @@ function deleteAssetFromScene(uuid) {
     envir.scene.remove(objectSelected);
 
     // Remove from hierarchy viewer
-    let hierItem = document.getElementById(uuid);
-    if (hierItem) hierItem.remove();
+    removeHierarchyEntriesForObject(uuid, objectSelected.name);
 
     //transform_controls.detach();
 

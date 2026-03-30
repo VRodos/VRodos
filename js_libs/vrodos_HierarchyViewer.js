@@ -376,6 +376,14 @@ function removeHierarchySkeleton() {
 // Single object add in Hierarchy
 function addInHierarchyViewer(obj) {
 
+    let existingItem = Array.from(document.querySelectorAll('#hierarchy-viewer .hierarchyItem')).find((item) => {
+        return item.getAttribute('data-uuid') === obj.uuid || item.getAttribute('data-name') === obj.name;
+    });
+    if (existingItem) {
+        setBackgroundColorHierarchyViewer(existingItem.id || obj.uuid);
+        return;
+    }
+
     let asset_name = _hierarchyDisplayName(obj);
 
     let created = _hierarchyCreatedLabel(obj);
