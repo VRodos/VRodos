@@ -238,7 +238,11 @@ function selectorMajor(event, objectSel, whocalls) {
 
     if (event.button === 0) {
 
-        showObjectControlsPanel(objectSel.asset_name || objectSel.name || 'Object Controls');
+        const objectTitle = typeof vrodosDecodeDisplayText === 'function'
+            ? vrodosDecodeDisplayText(objectSel.asset_name || objectSel.name || 'Object Controls')
+            : (objectSel.asset_name || objectSel.name || 'Object Controls');
+
+        showObjectControlsPanel(objectTitle);
 
         document.getElementById('translate-switch').checked = true;
         document.getElementById('rotate-switch').disabled = false;
@@ -792,7 +796,7 @@ function getActiveMeshes() {
 
     // ToDo: Is it possible to avoid traversing scene object in each drag event?
     envir.scene.traverse(function (child) {
-        if (child.hasOwnProperty('isSelectableMesh')) {
+        if (child.isSelectableMesh) {
             activeMeshes.push(child);
         }
     });

@@ -43,7 +43,9 @@ function vrodos_compileAjax(showPawnPositions) {
 	.then( function (urlExperienceSequenceJSON) {
 
 		let urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
-		let primaryExperienceUrl = urlExperienceSequence["index"] || urlExperienceSequence["MasterClient"] || urlExperienceSequence["SimpleClient"] || '';
+		let primaryExperienceUrl = projectType === 'vrexpo_games'
+			? (urlExperienceSequence["MasterClient"] || urlExperienceSequence["index"] || urlExperienceSequence["SimpleClient"] || '')
+			: (urlExperienceSequence["index"] || urlExperienceSequence["MasterClient"] || urlExperienceSequence["SimpleClient"] || '');
 
 		document.getElementById( "compileProgressTitle" ).style.display = 'none';
 		document.getElementById( "progressSliderSubLineDeterminateValue" ).style.width = '1px';
@@ -82,7 +84,7 @@ function vrodos_compileAjax(showPawnPositions) {
 			compile_dialogue_div.append( section );
 		}
 
-		if (projectType === 'vrexpo') {
+		if (projectType === 'vrexpo_games') {
 			createLinks( urlExperienceSequence["MasterClient"], "Exposition link" );
 		} else {
 			createLinks( urlExperienceSequence["index"], "Index" );
@@ -103,7 +105,7 @@ function vrodos_compileAjax(showPawnPositions) {
 			if (topLink) {
 				topLink.href = primaryExperienceUrl;
 				topLink.classList.remove( "tw-hidden" );
-				topLink.innerHTML = '<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>' + (projectType === 'vrexpo' ? 'Open Exposition' : 'Open Compiled Scene');
+				topLink.innerHTML = '<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>' + (projectType === 'vrexpo_games' ? 'Open Exposition' : 'Open Compiled Scene');
 			}
 			if (webLink) {
 				webLink.href = primaryExperienceUrl;

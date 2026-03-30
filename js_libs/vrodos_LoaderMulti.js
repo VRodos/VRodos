@@ -42,6 +42,43 @@ function vrodosLoaderSafeObjectName(name, resource, object) {
     return (slugPart || 'scene_object') + (idPart ? '_' + idPart : '') + '_' + uuidPart;
 }
 
+function vrodosLoaderCreateAssessmentObject(name, resource) {
+    if (typeof vrodosCreateAssessmentPlaceholder === 'function') {
+        return vrodosCreateAssessmentPlaceholder(name, resource);
+    }
+
+    const fallback = new THREE.Group();
+    fallback.name = name;
+    fallback['asset_name'] = typeof vrodosDecodeDisplayText === 'function'
+        ? vrodosDecodeDisplayText(resource.asset_name || resource.assessment_title || 'Assessment')
+        : (resource.asset_name || resource.assessment_title || 'Assessment');
+    fallback['category_name'] = resource.category_name || 'Assessment';
+    fallback['category_slug'] = 'assessment';
+    fallback['assessment_title'] = typeof vrodosDecodeDisplayText === 'function'
+        ? vrodosDecodeDisplayText(resource.assessment_title || resource.asset_name || 'Assessment')
+        : (resource.assessment_title || resource.asset_name || 'Assessment');
+    fallback['assessment_type'] = typeof vrodosDecodeDisplayText === 'function'
+        ? vrodosDecodeDisplayText(resource.assessment_type || '')
+        : (resource.assessment_type || '');
+    fallback['assessment_group'] = typeof vrodosDecodeDisplayText === 'function'
+        ? vrodosDecodeDisplayText(resource.assessment_group || '')
+        : (resource.assessment_group || '');
+    fallback['assessment_content'] = resource.assessment_content || '';
+    fallback['assessment_levels'] = resource.assessment_levels || '';
+    fallback['assessment_supported'] = resource.assessment_supported || 'false';
+    fallback.isSelectableMesh = true;
+    fallback.isLight = false;
+
+    const box = new THREE.Mesh(
+        new THREE.BoxGeometry(1.1, 0.72, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85, metalness: 0.1 })
+    );
+    box.isSelectableMesh = false;
+    fallback.add(box);
+
+    return fallback;
+}
+
 class VRodos_LoaderMulti {
 
     constructor(who) { };
@@ -369,6 +406,19 @@ class VRodos_LoaderMulti {
                                 resolve();
                             }
                         );
+                    }));
+
+                } else if (resource['category_slug'] === 'assessment') {
+
+                    pendingLoads.push(new Promise((resolve) => {
+                        const object = vrodosLoaderCreateAssessmentObject(name, resource);
+                        setObjectProperties(object, name, resources3D);
+                        envir.scene.add(object);
+                        envir.loadedObjectsCount++;
+                        if (typeof addInHierarchyViewer === 'function') {
+                            addInHierarchyViewer(object);
+                        }
+                        resolve();
                     }));
 
                 } else if (resource['category_slug'] === 'image') { // Flat image plane

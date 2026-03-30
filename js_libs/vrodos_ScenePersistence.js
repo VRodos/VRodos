@@ -22,6 +22,24 @@ function vrodosSceneSafeScale(values) {
     return vrodosSceneSafeVector(values, [1, 1, 1]);
 }
 
+function vrodosSceneResolveObjectPath(value, UPLOAD_DIR) {
+    const explicitPath = value && typeof value.path === 'string' ? value.path.trim() : '';
+    if (explicitPath !== '') {
+        return explicitPath;
+    }
+
+    const fnPath = value && typeof value.fnPath === 'string' ? value.fnPath.trim() : '';
+    if (fnPath === '') {
+        return '';
+    }
+
+    if (/^https?:\/\//i.test(fnPath) || fnPath.startsWith('uploads/')) {
+        return fnPath;
+    }
+
+    return UPLOAD_DIR + fnPath;
+}
+
 function vrodosSceneSafeObjectName(node, fallbackIndex) {
     const currentName = node && typeof node.name === 'string' ? node.name.trim() : '';
     if (currentName !== '') {
@@ -290,8 +308,11 @@ class VrodosSceneImporter {
                 scale: value.scale.slice(0, 3),
             };
 
-            if (!['lightsun', 'lightSpot', 'lightAmbient', 'Pawn', 'lightLamp'].some(el => name.includes(el))) {
-                resources3D_new[name].path = UPLOAD_DIR + value['fnPath'];
+            if (
+                resources3D_new[name].category_slug !== 'assessment' &&
+                !['lightsun', 'lightSpot', 'lightAmbient', 'Pawn', 'lightLamp'].some(el => name.includes(el))
+            ) {
+                resources3D_new[name].path = vrodosSceneResolveObjectPath(value, UPLOAD_DIR);
             }
         }
 

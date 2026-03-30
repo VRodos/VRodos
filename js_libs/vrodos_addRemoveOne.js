@@ -5,6 +5,133 @@ function getSceneObjectAddedAt(dataDrag) {
         : Math.floor(Date.now() / 1000);
 }
 
+function vrodosDecodeDisplayText(value) {
+    let text = typeof value === 'string' ? value : '';
+    if (!text) return '';
+
+    if (/%[0-9a-fA-F]{2}/.test(text)) {
+        try {
+            text = decodeURIComponent(text);
+        } catch (err) {
+            // Keep original text if decoding fails.
+        }
+    }
+
+    if (/(?:\\u|u)[0-9a-fA-F]{4}/.test(text)) {
+        text = text.replace(/(?:\\u|u)([0-9a-fA-F]{4})/g, (_, hex) =>
+            String.fromCharCode(parseInt(hex, 16))
+        );
+    }
+
+    return text;
+}
+
+function vrodosCreateAssessmentLabel(title, type) {
+    if (typeof THREE.CSS2DObject === 'undefined') {
+        return null;
+    }
+
+    const labelEl = document.createElement('div');
+    labelEl.style.minWidth = '150px';
+    labelEl.style.maxWidth = '190px';
+    labelEl.style.padding = '8px 10px';
+    labelEl.style.borderRadius = '10px';
+    labelEl.style.background = 'rgba(15, 23, 42, 0.92)';
+    labelEl.style.border = '1px solid rgba(148, 163, 184, 0.45)';
+    labelEl.style.boxShadow = '0 10px 26px rgba(15, 23, 42, 0.3)';
+    labelEl.style.backdropFilter = 'blur(8px)';
+    labelEl.style.color = '#e2e8f0';
+    labelEl.style.fontFamily = 'Arial, sans-serif';
+    labelEl.style.pointerEvents = 'none';
+
+    const typeEl = document.createElement('div');
+    typeEl.textContent = vrodosDecodeDisplayText(type || 'Assessment');
+    typeEl.style.fontSize = '10px';
+    typeEl.style.fontWeight = '700';
+    typeEl.style.textTransform = 'uppercase';
+    typeEl.style.letterSpacing = '0.08em';
+    typeEl.style.color = '#38bdf8';
+    typeEl.style.marginBottom = '4px';
+
+    const titleEl = document.createElement('div');
+    titleEl.textContent = vrodosDecodeDisplayText(title || 'Assessment');
+    titleEl.style.fontSize = '12px';
+    titleEl.style.fontWeight = '700';
+    titleEl.style.lineHeight = '1.3';
+
+    labelEl.appendChild(typeEl);
+    labelEl.appendChild(titleEl);
+
+    const label = new THREE.CSS2DObject(labelEl);
+    label.position.set(0, 0.9, 0);
+    return label;
+}
+
+function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
+    const assessmentGroup = new THREE.Group();
+    assessmentGroup.name = nameModel;
+    assessmentGroup['asset_name'] = vrodosDecodeDisplayText(resource.asset_name || resource.assessment_title || 'Assessment');
+    assessmentGroup['asset_slug'] = resource.asset_slug || '';
+    assessmentGroup['asset_id'] = resource.asset_id || 0;
+    assessmentGroup['category_name'] = resource.category_name || 'Assessment';
+    assessmentGroup['category_slug'] = 'assessment';
+    assessmentGroup['assessment_title'] = vrodosDecodeDisplayText(resource.assessment_title || resource.asset_name || 'Assessment');
+    assessmentGroup['assessment_type'] = vrodosDecodeDisplayText(resource.assessment_type || '');
+    assessmentGroup['assessment_group'] = vrodosDecodeDisplayText(resource.assessment_group || '');
+    assessmentGroup['assessment_source_id'] = resource.assessment_source_id || '';
+    assessmentGroup['assessment_content'] = resource.assessment_content || '';
+    assessmentGroup['assessment_levels'] = resource.assessment_levels || '';
+    assessmentGroup['assessment_supported'] = resource.assessment_supported || 'false';
+    assessmentGroup['addedAt'] = resource.addedAt || Math.floor(Date.now() / 1000);
+    assessmentGroup.isSelectableMesh = true;
+    assessmentGroup.isLight = false;
+    assessmentGroup.fnPath = '';
+
+    const card = new THREE.Mesh(
+        new THREE.BoxGeometry(1.1, 0.72, 0.08),
+        new THREE.MeshStandardMaterial({
+            color: 0x0f172a,
+            emissive: 0x0b1220,
+            roughness: 0.85,
+            metalness: 0.1
+        })
+    );
+    card.name = `${nameModel}_card`;
+    card.isSelectableMesh = false;
+    card.castShadow = true;
+    card.receiveShadow = true;
+
+    const accent = new THREE.Mesh(
+        new THREE.BoxGeometry(1.12, 0.1, 0.09),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    accent.position.set(0, 0.31, 0);
+    accent.name = `${nameModel}_accent`;
+    accent.isSelectableMesh = false;
+
+    const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.08, 24, 24),
+        new THREE.MeshBasicMaterial({ color: resource.assessment_supported === 'true' ? 0x22c55e : 0xf59e0b })
+    );
+    dot.position.set(-0.42, -0.18, 0.06);
+    dot.name = `${nameModel}_status`;
+    dot.isSelectableMesh = false;
+
+    assessmentGroup.add(card);
+    assessmentGroup.add(accent);
+    assessmentGroup.add(dot);
+
+    const label = vrodosCreateAssessmentLabel(
+        assessmentGroup['assessment_title'],
+        assessmentGroup['assessment_type'] || assessmentGroup['assessment_group']
+    );
+    if (label) {
+        assessmentGroup.add(label);
+    }
+
+    return assessmentGroup;
+}
+
 /**
  * Create a Sun light in the scene.
  */
@@ -378,6 +505,35 @@ function vrodos_createGlbAsset(nameModel, addedAt, pluginPath) {
     loaderMulti.load(manager, { [nameModel]: vrodos_scene_data.objects[nameModel] }, pluginPath);
 }
 
+function vrodos_createAssessmentAsset(nameModel, addedAt) {
+    const resource = vrodos_scene_data.objects[nameModel] || {};
+    const assessmentObject = vrodosCreateAssessmentPlaceholder(nameModel, {
+        ...resource,
+        addedAt
+    });
+
+    const trs_tmp = resource.trs || {
+        translation: [0, 0, 0],
+        rotation: [0, 0, 0],
+        scale: [1, 1, 1]
+    };
+
+    assessmentObject.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
+    assessmentObject.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
+    assessmentObject.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
+
+    envir.scene.add(assessmentObject);
+    transform_controls.attach(assessmentObject);
+    removeAllCelOutlines();
+    addCelOutline(assessmentObject);
+
+    selected_object_name = nameModel;
+    setTransformControlsSize();
+    addInHierarchyViewer(assessmentObject);
+
+    triggerAutoSave();
+}
+
 /**
  * Main function to add objects to the canvas.
  */
@@ -410,7 +566,9 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         'lightSpot': () => vrodos_createLightSpot(nameModel, addedAt),
         'lightAmbient': () => vrodos_createLightAmbient(nameModel, addedAt),
         'Pawn': () => vrodos_createPawn(nameModel, addedAt, pluginPath),
-        'pawn': () => vrodos_createPawn(nameModel, addedAt, pluginPath)
+        'pawn': () => vrodos_createPawn(nameModel, addedAt, pluginPath),
+        'Assessment': () => vrodos_createAssessmentAsset(nameModel, addedAt),
+        'assessment': () => vrodos_createAssessmentAsset(nameModel, addedAt)
     };
 
     // Execute the specific handler or fallback to generic GLB asset loader

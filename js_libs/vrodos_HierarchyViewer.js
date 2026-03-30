@@ -72,6 +72,10 @@ function _hierarchyDisplayName(obj) {
         return 'Light Target';
     }
 
+    if (typeof vrodosDecodeDisplayText === 'function') {
+        return vrodosDecodeDisplayText(obj.asset_name || obj.name);
+    }
+
     return obj.asset_name || obj.name;
 }
 

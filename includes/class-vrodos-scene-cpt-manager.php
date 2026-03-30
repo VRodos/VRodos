@@ -317,6 +317,10 @@ class VRodos_Scene_CPT_Manager {
 				} elseif ( str_contains( $name, 'Pawn' ) ) {
 					$object_data['asset_name'] = $name;
 					$object_data['path']       = '';
+				} elseif ( ( $object_data['category_slug'] ?? '' ) === 'assessment' ) {
+					// Immerse connector integration: assessment scene objects are editor/runtime
+					// placeholders and do not point to an uploaded binary asset.
+					$object_data['path'] = '';
 				} else {
 					// Standard Object
 					$object_data['path']             = $relative_path . ( $value->fnPath ?? '' );
@@ -351,7 +355,10 @@ class VRodos_Scene_CPT_Manager {
 	public static function get_scene_dat_for_script(): array {
 		$upload_url       = wp_upload_dir()['baseurl'];
 		$current_scene_id = isset( $_GET['vrodos_scene'] ) ? sanitize_text_field( intval( $_GET['vrodos_scene'] ) ) : null;
-		$project_id       = isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
+		$resolved_project = self::resolve_project_post_from_scene( (int) $current_scene_id );
+		$project_id       = $resolved_project instanceof WP_Post
+			? (int) $resolved_project->ID
+			: ( isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null );
 		$project_type     = $project_id ? VRodos_Core_Manager::vrodos_return_project_type( $project_id )->string : null;
 
 		// Fallback to first scene if no scene ID provided
@@ -394,6 +401,9 @@ class VRodos_Scene_CPT_Manager {
 		// Scene & Project IDs
 		$data['current_scene_id'] = isset( $_GET['vrodos_scene'] ) ? sanitize_text_field( intval( $_GET['vrodos_scene'] ) ) : null;
 		$data['project_id']       = isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
+		$data['is_immerse_project'] = $data['project_id']
+			? get_post_meta( $data['project_id'], '_immerse_source', true ) === 'immerse'
+			: false;
 
 		// From VRodos_Game_CPT_Manager::prepare_compile_dialogue_data()
 		$compile_data = VRodos_Game_CPT_Manager::prepare_compile_dialogue_data();
@@ -407,9 +417,6 @@ class VRodos_Scene_CPT_Manager {
 			$data['project_type_slug'] = '';
 			$data['single_lowercase']  = 'project';
 		}
-
-		// Project Post (used in breadcrumb)
-		$data['project_post'] = $data['project_id'] ? get_post( $data['project_id'] ) : null;
 
 		// Legacy Archaeology data
 		$data['doorsAllInfo'] = null;
@@ -436,6 +443,15 @@ class VRodos_Scene_CPT_Manager {
 		// Scene Post
 		$data['scene_post'] = $data['current_scene_id'] ? get_post( $data['current_scene_id'] ) : null;
 		$data['sceneTitle'] = $data['scene_post'] ? $data['scene_post']->post_name : '';
+
+		// The scene's own parent-project relationship is the authoritative source of
+		// project context for the editor.
+		$resolved_project_post = self::resolve_project_post_from_scene( (int) $data['current_scene_id'] );
+		if ( $resolved_project_post instanceof WP_Post ) {
+			$data['project_post'] = $resolved_project_post;
+			$data['project_id']   = (int) $resolved_project_post->ID;
+			$data['projectSlug']  = $resolved_project_post->post_name;
+		}
 
 		// Environment
 		$data['isAdmin'] = is_admin() ? 'back' : 'front';
@@ -473,8 +489,47 @@ class VRodos_Scene_CPT_Manager {
 		$data['is_user_admin']   = current_user_can( 'administrator' );
 
 		// Parent Project Term ID
-		$allScenePGame                        = isset( $data['projectSlug'] ) && ! empty( $data['projectSlug'] ) ? get_term_by( 'slug', $data['projectSlug'], 'vrodos_scene_pgame' ) : null;
+		$allScenePGame = isset( $data['projectSlug'] ) && ! empty( $data['projectSlug'] )
+			? get_term_by( 'slug', $data['projectSlug'], 'vrodos_scene_pgame' )
+			: null;
+
+		// If projectSlug is still missing, derive it from the scene parent term.
+		if ( ! $allScenePGame && ! empty( $data['current_scene_id'] ) ) {
+			$scene_terms = wp_get_post_terms( (int) $data['current_scene_id'], 'vrodos_scene_pgame' );
+			if ( ! is_wp_error( $scene_terms ) && ! empty( $scene_terms ) ) {
+				$allScenePGame = $scene_terms[0];
+				if ( empty( $data['projectSlug'] ) ) {
+					$data['projectSlug'] = $allScenePGame->slug;
+				}
+			}
+		}
+
 		$data['parent_project_id_as_term_id'] = $allScenePGame ? $allScenePGame->term_id : null;
+		$data['project_post'] = $data['project_id'] ? get_post( $data['project_id'] ) : null;
+
+		if ( empty( $data['projectSlug'] ) && $data['project_post'] instanceof WP_Post ) {
+			$data['projectSlug'] = $data['project_post']->post_name;
+		}
+
+		$data['is_immerse_project'] = $data['project_id']
+			? get_post_meta( $data['project_id'], '_immerse_source', true ) === 'immerse'
+			: false;
+
+		if ( ! empty( $data['project_id'] ) ) {
+			$project_type_obj = VRodos_Core_Manager::vrodos_return_project_type( $data['project_id'] );
+			if ( empty( $data['project_type'] ) && $project_type_obj ) {
+				$data['project_type'] = $project_type_obj->string;
+			}
+			if ( empty( $data['project_type_icon'] ) && $project_type_obj ) {
+				$data['project_type_icon'] = $project_type_obj->icon;
+			}
+			if ( empty( $data['project_type_slug'] ) ) {
+				$project_type_terms = wp_get_object_terms( $data['project_id'], 'vrodos_game_type' );
+				if ( ! is_wp_error( $project_type_terms ) && ! empty( $project_type_terms ) && ! empty( $project_type_terms[0]->slug ) ) {
+					$data['project_type_slug'] = $project_type_terms[0]->slug;
+				}
+			}
+		}
 
 		// Project Type Icon (used in breadcrumb)
 		$project_type_obj          = $data['project_id'] ? VRodos_Core_Manager::vrodos_return_project_type( $data['project_id'] ) : null;
@@ -496,6 +551,20 @@ class VRodos_Scene_CPT_Manager {
 		$data['upload_url'] = wp_upload_dir()['baseurl'];
 
 		return $data;
+	}
+
+	private static function resolve_project_post_from_scene( int $scene_id ): ?WP_Post {
+		if ( $scene_id <= 0 ) {
+			return null;
+		}
+
+		$scene_terms = wp_get_post_terms( $scene_id, 'vrodos_scene_pgame' );
+		if ( is_wp_error( $scene_terms ) || empty( $scene_terms ) || ! ( $scene_terms[0] instanceof WP_Term ) ) {
+			return null;
+		}
+
+		$project_post = get_page_by_path( $scene_terms[0]->slug, OBJECT, 'vrodos_game' );
+		return $project_post instanceof WP_Post ? $project_post : null;
 	}
 
 	public function handle_new_scene_submission(): void {

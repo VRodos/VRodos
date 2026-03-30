@@ -59,37 +59,66 @@ class VRodos_Compiler_Manager {
 			wp_mkdir_p( $build_dir );
 		}
 
-		$scene_json  = [];
-		$scene_title = [];
-		foreach ( $scene_id_list as $key => &$value ) {
-			$project_post[ $key ]       = get_post( $project_id );
-			$project_title              = $project_post[ $key ]->post_title;
-			$scene_post[ $key ]         = get_post( $value );
-			$scene_content_text[ $key ] = $scene_post[ $key ]->post_content;
-			$scene_title[ $key ]        = $scene_post[ $key ]->post_title;
-			$scene_json[ $key ]         = json_decode( (string) $scene_content_text[ $key ] );
+		$project_post = get_post( $project_id );
+		if ( ! ( $project_post instanceof WP_Post ) ) {
+			error_log( '[VRodos] compile_aframe() aborted: invalid project #' . (int) $project_id );
+			return wp_json_encode( [ 'error' => 'Invalid project.' ] );
 		}
 
-		$project_type_terms = wp_get_post_terms( $project_id, 'vrodos_game_type' );
-		$is_vrexpo = ( ! empty( $project_type_terms ) && ! is_wp_error( $project_type_terms ) && $project_type_terms[0]->slug === 'vrexpo_games' );
+		$project_title   = $project_post->post_title;
+		$scene_json      = [];
+		$scene_title     = [];
+		$valid_scene_ids = [];
+		foreach ( (array) $scene_id_list as $scene_id ) {
+			$scene_id = (int) $scene_id;
+			if ( $scene_id <= 0 ) {
+				continue;
+			}
 
-		foreach ( $scene_id_list as $key => &$value ) {
+			$scene_post = get_post( $scene_id );
+			if ( ! ( $scene_post instanceof WP_Post ) ) {
+				error_log( '[VRodos] compile_aframe() skipped invalid scene #' . $scene_id . ' for project #' . (int) $project_id );
+				continue;
+			}
+
+			$decoded_scene = json_decode( (string) $scene_post->post_content );
+			if ( ! is_object( $decoded_scene ) ) {
+				error_log( '[VRodos] compile_aframe() skipped scene #' . $scene_id . ' due to invalid JSON content.' );
+				continue;
+			}
+
+			$valid_scene_ids[] = $scene_id;
+			$scene_title[]     = $scene_post->post_title;
+			$scene_json[]      = $decoded_scene;
+		}
+
+		if ( empty( $valid_scene_ids ) ) {
+			error_log( '[VRodos] compile_aframe() aborted: no valid scenes for project #' . (int) $project_id );
+			return wp_json_encode( [ 'error' => 'No valid scenes to compile.' ] );
+		}
+
+		$project_type_slug = $this->get_project_type_slug( (int) $project_id );
+		$is_vrexpo         = ( $project_type_slug === 'vrexpo_games' );
+		$first_scene_id    = (int) reset( $valid_scene_ids );
+		$last_scene_id     = (int) end( $valid_scene_ids );
+
+		foreach ( $valid_scene_ids as $key => $value ) {
 			if ( ! $is_vrexpo ) {
 				$this->createIndexFile( $project_title, $value, $scene_title );
 			}
-			$this->createMasterClient( $value, $scene_title, $scene_json[ $key ], $showPawnPositions, $key, $project_id, $scene_id_list );
+			$this->createMasterClient( $value, $scene_title, $scene_json[ $key ], $showPawnPositions, $key, $project_id, $valid_scene_ids );
 			if ( ! $is_vrexpo ) {
 				$this->createSimpleClient( $value, $scene_json[ $key ], $project_id );
 			}
 		}
 
 		$result = [
-			'MasterClient' => $this->nodeJSpath() . 'Master_Client_' . end( $scene_id_list ) . '.html',
+			'MasterClient' => $this->nodeJSpath() . 'Master_Client_' . ( $is_vrexpo ? $first_scene_id : $last_scene_id ) . '.html',
 		];
 
 		if ( ! $is_vrexpo ) {
-			$result['index']        = $this->nodeJSpath() . 'index_' . end( $scene_id_list ) . '.html';
-			$result['SimpleClient'] = $this->nodeJSpath() . 'Simple_Client_' . end( $scene_id_list ) . '.html';
+			$result['index']        = $this->nodeJSpath() . 'index_' . $last_scene_id . '.html';
+			$result['SimpleClient'] = $this->nodeJSpath() . 'Simple_Client_' . $last_scene_id . '.html';
 		}
 
 		return json_encode( $result );
@@ -156,6 +185,118 @@ class VRodos_Compiler_Manager {
 		}
 
 		return $url;
+	}
+
+	private function is_immerse_project( int $project_id ): bool {
+		return $project_id > 0 && get_post_meta( $project_id, '_immerse_source', true ) === 'immerse';
+	}
+
+	private function get_project_type_slug( int $project_id ): string {
+		$project_type_terms = wp_get_post_terms( $project_id, 'vrodos_game_type' );
+		if ( ! empty( $project_type_terms ) && ! is_wp_error( $project_type_terms ) && ! empty( $project_type_terms[0]->slug ) ) {
+			return (string) $project_type_terms[0]->slug;
+		}
+
+		if ( $this->is_immerse_project( $project_id ) ) {
+			return 'vrexpo_games';
+		}
+
+		return '';
+	}
+
+	private function sanitize_text_attr( string $value ): string {
+		$value = $this->decode_display_text( $value );
+		$value = wp_strip_all_tags( $value );
+		$value = str_replace( [ "\r", "\n", ';' ], [ ' ', ' ', ',' ], $value );
+		return trim( $value );
+	}
+
+	private function decode_display_text( string $value ): string {
+		$text = trim( $value );
+		if ( $text === '' ) {
+			return '';
+		}
+
+		for ( $i = 0; $i < 2 && preg_match( '/%[0-9a-fA-F]{2}/', $text ); $i++ ) {
+			$decoded = rawurldecode( $text );
+			if ( ! is_string( $decoded ) || $decoded === '' || $decoded === $text ) {
+				break;
+			}
+
+			$text = $decoded;
+		}
+
+		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		for ( $i = 0; $i < 3 && preg_match( '/(?:\\\\+u|u)[0-9a-fA-F]{4}/', $text ); $i++ ) {
+			$decoded = preg_replace_callback(
+				'/(?:\\\\+u|u)([0-9a-fA-F]{4})/',
+				static function ( array $matches ): string {
+					return mb_convert_encoding( pack( 'H*', strtolower( $matches[1] ) ), 'UTF-8', 'UCS-2BE' );
+				},
+				$text
+			);
+
+			if ( ! is_string( $decoded ) || $decoded === '' || $decoded === $text ) {
+				break;
+			}
+
+			$text = $decoded;
+		}
+
+		return $text;
+	}
+
+	private function append_immerse_assessment_entity( DOMDocument $dom, DOMElement $ascene, $contentObject ): void {
+		$assessment_title   = $this->sanitize_text_attr( (string) ( $contentObject->assessment_title ?? 'Assessment' ) );
+		$assessment_type    = $this->sanitize_text_attr( (string) ( $contentObject->assessment_type ?? '' ) );
+		$assessment_group   = $this->sanitize_text_attr( (string) ( $contentObject->assessment_group ?? '' ) );
+		$assessment_content = (string) ( $contentObject->assessment_content ?? '' );
+		$assessment_levels  = (string) ( $contentObject->assessment_levels ?? '' );
+		$is_supported       = (string) ( $contentObject->assessment_supported ?? 'false' );
+		$accent_color       = $is_supported === 'true' ? '#0f766e' : '#92400e';
+
+		$anchor = $dom->createElement( 'a-entity' );
+		$this->setAffineTransformations( $anchor, $contentObject );
+
+		$plane = $dom->createElement( 'a-plane' );
+		$plane->setAttribute( 'width', '1.15' );
+		$plane->setAttribute( 'height', '0.68' );
+		$plane->setAttribute( 'material', 'color: #0f172a; shader: flat; side: double; opacity: 0.94' );
+		$plane->setAttribute( 'class', 'raycastable hideable non-vr' );
+		$plane->setAttribute( 'immerse-assessment-launcher', '' );
+		$plane->setAttribute( 'data-assessment-title', $assessment_title );
+		$plane->setAttribute( 'data-assessment-type', $assessment_type );
+		$plane->setAttribute( 'data-assessment-group', $assessment_group );
+		$plane->setAttribute( 'data-assessment-content', $assessment_content );
+		$plane->setAttribute( 'data-assessment-levels', $assessment_levels );
+		$plane->setAttribute( 'data-assessment-supported', $is_supported );
+
+		$accent = $dom->createElement( 'a-plane' );
+		$accent->setAttribute( 'width', '1.17' );
+		$accent->setAttribute( 'height', '0.08' );
+		$accent->setAttribute( 'position', '0 0.3 0.001' );
+		$accent->setAttribute( 'material', 'color: ' . $accent_color . '; shader: flat; side: double' );
+		$plane->appendChild( $accent );
+
+		$title_entity = $dom->createElement( 'a-entity' );
+		$title_entity->setAttribute( 'position', '0 -0.02 0.002' );
+		$title_entity->setAttribute(
+			'text',
+			'value: ' . $assessment_title . '; align: center; width: 2.2; wrapCount: 18; color: #e2e8f0; baseline: center'
+		);
+		$plane->appendChild( $title_entity );
+
+		$type_entity = $dom->createElement( 'a-entity' );
+		$type_entity->setAttribute( 'position', '0 -0.22 0.002' );
+		$type_entity->setAttribute(
+			'text',
+			'value: ' . ( $assessment_type !== '' ? $assessment_type : $assessment_group ) . '; align: center; width: 2.3; wrapCount: 24; color: #7dd3fc; baseline: center'
+		);
+		$plane->appendChild( $type_entity );
+
+		$anchor->appendChild( $plane );
+		$ascene->appendChild( $anchor );
 	}
 
 	private function markDelayedRevealEntities( DOMDocument $dom ) {
@@ -339,6 +480,11 @@ class VRodos_Compiler_Manager {
 
 		// Modify strings
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
+		$content = str_replace(
+			'js/components/immerse-assessment_component.js',
+			$this->normalize_url( $this->plugin_path_url . 'js_libs/aframe_libs/js/components/immerse-assessment_component.js' ),
+			$content
+		);
 
 		$content = str_replace( 'AFRAME_CLEARCOLOR_PLACEHOLDER', $scene_json->metadata->ClearColor, $content );
 
@@ -371,10 +517,9 @@ class VRodos_Compiler_Manager {
 		$ascene       = $basicDomElements['ascene'];
 		$ascenePlayer = $basicDomElements['ascenePlayer'];
 		$sceneColor   = $scene_json->metadata->ClearColor;
+		$is_immerse_project = $this->is_immerse_project( (int) $project_id );
 
-		$pj_type = wp_get_post_terms( $project_id, 'vrodos_game_type' );
-
-		$projectType = $pj_type[0]->slug;
+		$projectType = $this->get_project_type_slug( (int) $project_id );
 		$a_asset     = $dom->createElement( 'a-assets' );
 
 		$dom->getElementsByTagName( 'title' )->item( 0 )->nodeValue = $scene_title[ $index ];
@@ -1249,6 +1394,14 @@ class VRodos_Compiler_Manager {
 						$ascenePlayer->appendChild( $a_panel_entity );
 
 						break;
+
+					case 'assessment':
+						// Immerse connector integration: assessment anchors only compile inside
+						// Immerse projects and render via a dedicated HTML overlay component.
+						if ( $is_immerse_project ) {
+							$this->append_immerse_assessment_entity( $dom, $ascene, $contentObject );
+						}
+						break;
 				}
 			}
 		}
@@ -1276,8 +1429,7 @@ class VRodos_Compiler_Manager {
 		);
 
 		// Modify strings
-		$pj_type     = wp_get_post_terms( $project_id, 'vrodos_game_type' );
-		$projectType = $pj_type[0]->slug;
+		$projectType = $this->get_project_type_slug( (int) $project_id );
 		$app_name    = ( $projectType == 'vrexpo_games' ) ? 'vrexpo' : 'vrodos';
 
 		$content = str_replace( 'appname', $app_name, $content );

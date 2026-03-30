@@ -630,9 +630,14 @@ else { ?>
 
                         <!-- Image (flat plane) Upload -->
                         <div id="image_flat_file_section" class="tw-space-y-6" style="display: none;">
-                            <label class="vrodos-label">
-                                Image
-                            </label>
+                            <div class="tw-flex tw-items-center tw-justify-between tw-gap-4">
+                                <label class="vrodos-label !tw-mb-0">
+                                    Image
+                                </label>
+                                <span id="imageFlatSourceBadge" class="tw-inline-flex tw-items-center tw-rounded-full tw-px-3 tw-py-1 tw-text-[10px] tw-font-black tw-uppercase tw-tracking-wider <?php echo (($imageFlatSourceType ?? 'none') === 'local') ? 'tw-bg-emerald-100 tw-text-emerald-700' : ((($imageFlatSourceType ?? 'none') === 'external') ? 'tw-bg-amber-100 tw-text-amber-700' : 'tw-bg-slate-100 tw-text-slate-500'); ?>">
+                                    <?php echo (($imageFlatSourceType ?? 'none') === 'local') ? 'Local file' : ((($imageFlatSourceType ?? 'none') === 'external') ? 'External URL' : 'No source'); ?>
+                                </span>
+                            </div>
                             <label for="imageFlatFileInput" class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border-2 tw-border-dashed tw-border-slate-200 hover:tw-border-primary tw-transition-all group tw-cursor-pointer tw-block">
                                 <img id="imageFlatPreviewImg" src="<?php echo esc_url($imageFlatImageURL ?? ''); ?>" alt="Image" class="tw-w-full tw-h-full tw-object-cover <?php echo empty($imageFlatImageURL) ? 'tw-hidden' : ''; ?>">
                                 <div id="imageFlatPlaceholder" class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-2 tw-text-slate-400 <?php echo !empty($imageFlatImageURL) ? 'tw-hidden' : ''; ?>">
@@ -647,6 +652,36 @@ else { ?>
                                 </div>
                                 <input type="file" id="imageFlatFileInput" name="imageFlatFileInput" class="tw-hidden" accept="image/png, image/jpg, image/jpeg"/>
                             </label>
+                            <input type="hidden" id="restoreImageOriginalUrl" name="restoreImageOriginalUrl" value="0">
+
+                            <?php if ( ! empty( $imageFlatOriginalURL ) ) : ?>
+                                <div class="tw-rounded-2xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4 tw-space-y-3">
+                                    <div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
+                                        <div>
+                                            <div class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-widest tw-text-slate-500">Immerse Original URL</div>
+                                            <div class="tw-text-xs tw-font-medium tw-text-slate-700">Preserved as a non-destructive fallback source.</div>
+                                        </div>
+                                        <?php if ( ! empty( $imageFlatCanRestoreOriginal ) ) : ?>
+                                            <button type="button" id="restoreImageOriginalUrlBtn" class="tw-btn tw-btn-sm tw-rounded-xl tw-border-none tw-bg-amber-500 hover:tw-bg-amber-600 tw-text-white tw-font-bold">
+                                                Restore Original URL
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                    <input type="text"
+                                           id="imageFlatOriginalUrlField"
+                                           class="vrodos-input tw-text-xs"
+                                           readonly
+                                           value="<?php echo esc_attr( $imageFlatOriginalURL ); ?>">
+                                    <div class="tw-flex tw-items-center tw-gap-3">
+                                        <a href="<?php echo esc_url( $imageFlatOriginalURL ); ?>" target="_blank" rel="noopener noreferrer" class="tw-text-xs tw-font-bold tw-text-primary hover:tw-underline">
+                                            Open original image
+                                        </a>
+                                        <span class="tw-text-[11px] tw-text-slate-400">
+                                            Current source: <?php echo (($imageFlatSourceType ?? 'none') === 'local') ? 'local file' : ((($imageFlatSourceType ?? 'none') === 'external') ? 'external URL' : 'not set'); ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Image POI Upload -->
@@ -991,8 +1026,29 @@ else { ?>
 				}
 
 				const imageFlatInput = document.getElementById('imageFlatFileInput');
+				const imageFlatSourceBadge = document.getElementById('imageFlatSourceBadge');
+				const restoreOriginalInput = document.getElementById('restoreImageOriginalUrl');
+				const restoreOriginalButton = document.getElementById('restoreImageOriginalUrlBtn');
+				const imageFlatOriginalUrlField = document.getElementById('imageFlatOriginalUrlField');
+
+				function setImageFlatSourceBadge(type, label) {
+					if (!imageFlatSourceBadge) return;
+					imageFlatSourceBadge.className = 'tw-inline-flex tw-items-center tw-rounded-full tw-px-3 tw-py-1 tw-text-[10px] tw-font-black tw-uppercase tw-tracking-wider';
+					if (type === 'local') {
+						imageFlatSourceBadge.classList.add('tw-bg-emerald-100', 'tw-text-emerald-700');
+					} else if (type === 'external') {
+						imageFlatSourceBadge.classList.add('tw-bg-amber-100', 'tw-text-amber-700');
+					} else {
+						imageFlatSourceBadge.classList.add('tw-bg-slate-100', 'tw-text-slate-500');
+					}
+					imageFlatSourceBadge.textContent = label;
+				}
+
 				if (imageFlatInput) {
 					imageFlatInput.onchange = function (evt) {
+						if (restoreOriginalInput) {
+							restoreOriginalInput.value = '0';
+						}
 						let files = evt.target.files;
 						if (FileReader && files && files.length) {
 							let fr = new FileReader();
@@ -1006,10 +1062,43 @@ else { ?>
 								if (sidebarImg) { sidebarImg.src = fr.result; sidebarImg.classList.remove('tw-hidden'); }
 								let sidebarPh = document.getElementById('imageFlatSidebarPlaceholder');
 								if (sidebarPh) sidebarPh.classList.add('tw-hidden');
+								setImageFlatSourceBadge('local', 'Local file');
 							}
 							fr.readAsDataURL(files[0]);
 						}
 					};
+				}
+
+				if (restoreOriginalButton && imageFlatOriginalUrlField) {
+					restoreOriginalButton.addEventListener('click', function () {
+						const originalUrl = imageFlatOriginalUrlField.value;
+						if (!originalUrl) return;
+
+						if (restoreOriginalInput) {
+							restoreOriginalInput.value = '1';
+						}
+						if (imageFlatInput) {
+							imageFlatInput.value = '';
+						}
+
+						const img = document.getElementById('imageFlatPreviewImg');
+						if (img) {
+							img.src = originalUrl;
+							img.classList.remove('tw-hidden');
+						}
+						const ph = document.getElementById('imageFlatPlaceholder');
+						if (ph) ph.classList.add('tw-hidden');
+
+						const sidebarImg = document.getElementById('imageFlatPreviewSidebar');
+						if (sidebarImg) {
+							sidebarImg.src = originalUrl;
+							sidebarImg.classList.remove('tw-hidden');
+						}
+						const sidebarPh = document.getElementById('imageFlatSidebarPlaceholder');
+						if (sidebarPh) sidebarPh.classList.add('tw-hidden');
+
+						setImageFlatSourceBadge('external', 'External URL');
+					});
 				}
 			})();
 		}

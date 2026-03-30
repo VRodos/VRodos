@@ -21,6 +21,7 @@ var VRODOS_CATEGORY_ICONS = {
     'image':           'image-play',
     'chat':            'message-square',
     'poi-link':        'external-link',
+    'assessment':      'clipboard-check',
 
     // ── Lights (category_name, set by JS at runtime) ──────────
     'lightSun':        'sun',

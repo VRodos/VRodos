@@ -71,6 +71,18 @@ class VRodos_Core_Manager {
 		return $data;
 	}
 
+	private static function resolve_media_meta_url( $meta_value ): string {
+		if ( empty( $meta_value ) ) {
+			return '';
+		}
+
+		if ( is_numeric( $meta_value ) ) {
+			return wp_get_attachment_url( (int) $meta_value ) ?: '';
+		}
+
+		return esc_url_raw( (string) $meta_value );
+	}
+
 	public static function vrodos_plugin_main_page(): void {
 		$allProjectsPage = self::vrodos_getEditpage( 'allgames' );
 
@@ -541,13 +553,17 @@ class VRodos_Core_Manager {
 				$glbID   = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ); // GLB ID
 				$glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
 
-				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ); // Screenshot Image ID
+				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ); // Screenshot Image ID or remote URL
 				$sshotPath = '';
 				if ( $sshotID ) {
-					$sshotUrl = wp_get_attachment_url( $sshotID );
+					$sshotUrl = self::resolve_media_meta_url( $sshotID );
 					if ( $sshotUrl ) {
-						$cache     = get_post_modified_time( 'U', false, $sshotID );
-						$sshotPath = add_query_arg( 't', $cache ?: time(), $sshotUrl );
+						if ( is_numeric( $sshotID ) ) {
+							$cache     = get_post_modified_time( 'U', false, (int) $sshotID );
+							$sshotPath = add_query_arg( 't', $cache ?: time(), $sshotUrl );
+						} else {
+							$sshotPath = $sshotUrl;
+						}
 					}
 				}
 
@@ -556,13 +572,13 @@ class VRodos_Core_Manager {
 				switch ( $asset_cat_arr[0]->slug ) {
 					case 'video':
 						$data_arr['video_id']    = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
-						$data_arr['video_path']  = wp_get_attachment_url( $data_arr['video_id'] );
+						$data_arr['video_path']  = self::resolve_media_meta_url( $data_arr['video_id'] );
 						$data_arr['video_title'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
 						$data_arr['video_loop']  = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
 						break;
 					case 'poi-imagetext':
 						$data_arr['poi_img_id']      = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true );
-						$data_arr['poi_img_path']    = wp_get_attachment_url( $data_arr['poi_img_id'] );
+						$data_arr['poi_img_path']    = self::resolve_media_meta_url( $data_arr['poi_img_id'] );
 						$data_arr['poi_img_title']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_title', true );
 						$data_arr['poi_img_content'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', true );
 						break;
@@ -572,7 +588,7 @@ class VRodos_Core_Manager {
 							break;*/
 					case 'image':
 						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
-						$data_arr['image_path'] = wp_get_attachment_url( $data_arr['image_id'] ) ?: '';
+						$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
 						break;
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
@@ -582,6 +598,20 @@ class VRodos_Core_Manager {
 						$data_arr['poi_chat_participants'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatnum_people', true );
 						$data_arr['poi_chat_indicators']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatbut_indicators', true );
 						break;
+				}
+
+				// Immerse connector integration: allow external plugins to enrich or hide
+				// asset browser items for a specific project without changing the generic flow.
+				$data_arr = apply_filters(
+					'vrodos_asset_browser_item_data',
+					$data_arr,
+					$asset_id,
+					(int) $gameProjectID,
+					(string) $gameProjectSlug
+				);
+
+				if ( ! is_array( $data_arr ) || empty( $data_arr ) ) {
+					continue;
 				}
 
 				array_push( $allAssets, $data_arr );
@@ -704,10 +734,14 @@ class VRodos_Core_Manager {
 				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
 				$sshotPath = '';
 				if ( $sshotID ) {
-					$sshotUrl = wp_get_attachment_url( $sshotID );
+					$sshotUrl = self::resolve_media_meta_url( $sshotID );
 					if ( $sshotUrl ) {
-						$cache     = get_post_modified_time( 'U', false, $sshotID );
-						$sshotPath = add_query_arg( 't', $cache ?: time(), $sshotUrl );
+						if ( is_numeric( $sshotID ) ) {
+							$cache     = get_post_modified_time( 'U', false, (int) $sshotID );
+							$sshotPath = add_query_arg( 't', $cache ?: time(), $sshotUrl );
+						} else {
+							$sshotPath = $sshotUrl;
+						}
 					}
 				}
 
@@ -742,15 +776,19 @@ class VRodos_Core_Manager {
 				switch ( $asset_cat_arr[0]->slug ) {
 					case 'video':
 						$data_arr['video_id']    = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
-						$data_arr['video_path']  = wp_get_attachment_url( $data_arr['video_id'] );
+						$data_arr['video_path']  = self::resolve_media_meta_url( $data_arr['video_id'] );
 						$data_arr['video_title'] = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
 						$data_arr['video_loop']  = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true );
 						break;
 					case 'poi-imagetext':
 						$data_arr['poi_img_id']      = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true );
-						$data_arr['poi_img_path']    = wp_get_attachment_url( $data_arr['poi_img_id'] );
+						$data_arr['poi_img_path']    = self::resolve_media_meta_url( $data_arr['poi_img_id'] );
 						$data_arr['poi_img_title']   = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_title', true );
 						$data_arr['poi_img_content'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', true );
+						break;
+					case 'image':
+						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
+						$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
 						break;
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );

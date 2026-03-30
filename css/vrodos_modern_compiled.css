@@ -3378,6 +3378,10 @@ body {
   display: flex;
 }
 
+.vrodos-manager-wrapper .tw-inline-flex {
+  display: inline-flex;
+}
+
 .vrodos-manager-wrapper .tw-table {
   display: table;
 }
@@ -4257,6 +4261,16 @@ body {
 
 .vrodos-manager-wrapper .tw-bg-white\/90 {
   background-color: rgb(255 255 255 / 0.9);
+}
+
+.vrodos-manager-wrapper .tw-bg-amber-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 243 199 / var(--tw-bg-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-bg-amber-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(245 158 11 / var(--tw-bg-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
@@ -5973,6 +5987,11 @@ body.vrodos-manager-wrapper {
 
 .vrodos-manager-wrapper .hover\:tw-bg-white\/10:hover {
   background-color: rgb(255 255 255 / 0.1);
+}
+
+.vrodos-manager-wrapper .hover\:tw-bg-amber-600:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(217 119 6 / var(--tw-bg-opacity, 1));
 }
 
 .vrodos-manager-wrapper .hover\:tw-text-blue-400:hover {
