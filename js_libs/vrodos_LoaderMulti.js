@@ -188,6 +188,10 @@ class VRodos_LoaderMulti {
                     envir.scene.aframeHorizonSkyPreset = resource || 'natural';
                 }
 
+                if (name === 'aframeEnvMapPreset') {
+                    envir.scene.aframeEnvMapPreset = resource || 'none';
+                }
+
                 if (name === 'backgroundStyleOption'){
                     envir.scene.backgroundStyleOption = parseInt(resource) || 0;
                     envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
@@ -608,6 +612,7 @@ class VRodos_LoaderMulti {
                         envir.scene.aframeContrastPreset = resource.aframeContrastPreset || 'balanced';
                         envir.scene.aframeReflectionProfile = resource.aframeReflectionProfile || 'balanced';
                         envir.scene.aframeHorizonSkyPreset = resource.aframeHorizonSkyPreset || 'natural';
+                        envir.scene.aframeEnvMapPreset = resource.aframeEnvMapPreset || 'none';
 
                         if (typeof syncCompileDialogFromSceneSettings === 'function') {
                             syncCompileDialogFromSceneSettings();

@@ -106,6 +106,7 @@ class VrodosSceneExporter {
                 aframeContrastPreset: envir.scene.aframeContrastPreset || 'balanced',
                 aframeReflectionProfile: envir.scene.aframeReflectionProfile || 'balanced',
                 aframeHorizonSkyPreset: envir.scene.aframeHorizonSkyPreset || 'natural',
+                aframeEnvMapPreset: envir.scene.aframeEnvMapPreset || 'none',
                 backgroundPresetOption: envir.scene.backgroundPresetOption || 'None',
                 backgroundPresetGroundEnabled: envir.scene.backgroundPresetGroundEnabled !== false,
                 backgroundStyleOption: (envir.scene.backgroundStyleOption !== undefined) ? envir.scene.backgroundStyleOption : 0,
@@ -269,7 +270,7 @@ class VrodosSceneImporter {
 
         for (const key in scene_json_metadata) {
             const value = scene_json_metadata[key];
-            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeHorizonSkyPreset', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
+            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeHorizonSkyPreset', 'aframeEnvMapPreset', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
                 resources3D_new["SceneSettings"][key] = value;
             }
         }

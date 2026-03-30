@@ -641,7 +641,7 @@ function vrodosCreatePhotorealPostMaterial() {
             '  float vignette = smoothstep(0.95, 0.24, dist);',
             '  color *= mix(1.0 - vignetteStrength, 1.0, vignette);',
             '  color *= exposure;',
-            // ACESFilmic tone mapping + sRGB conversion already applied by Three.js renderer
+            // Tone mapping and output color conversion are handled by the renderer.
             '  color = clamp(color * outputExposure, 0.0, 1.0);',
             '  gl_FragColor = vec4(color, base.a);',
             '}'
@@ -870,17 +870,21 @@ AFRAME.registerComponent('scene-settings', {
     },
     applyEnvMapProfile: function () {
         var preset = this.data.envMapPreset || 'none';
+        var sceneObj = this.el.object3D;
 
         // Skip if no change from last applied preset
         if (this._currentEnvMapPreset === preset) {
             return;
         }
 
+        if (this._envMapRenderTarget) {
+            this._envMapRenderTarget.dispose();
+            this._envMapRenderTarget = null;
+        }
+
         // Clear environment if preset is "none"
         if (preset === 'none') {
-            if (this._currentEnvMapPreset && this._currentEnvMapPreset !== 'none') {
-                this.el.object3D.environment = null;
-            }
+            sceneObj.environment = null;
             this._currentEnvMapPreset = 'none';
             return;
         }
@@ -897,7 +901,6 @@ AFRAME.registerComponent('scene-settings', {
         var baseUrl = window.VRODOS_PLUGIN_URL || '';
         var hdrUrl = baseUrl + 'images/hdr/' + hdrFile;
         var renderer = this.el.renderer;
-        var sceneObj = this.el.object3D;
         var self = this;
 
         var loader = new THREE.RGBELoader();
@@ -906,9 +909,14 @@ AFRAME.registerComponent('scene-settings', {
 
             var pmremGenerator = new THREE.PMREMGenerator(renderer);
             pmremGenerator.compileEquirectangularShader();
-            var envMap = pmremGenerator.fromEquirectangular(texture).texture;
+            var envMapRenderTarget = pmremGenerator.fromEquirectangular(texture);
+            var envMap = envMapRenderTarget.texture;
 
             sceneObj.environment = envMap;
+            if (self._envMapRenderTarget) {
+                self._envMapRenderTarget.dispose();
+            }
+            self._envMapRenderTarget = envMapRenderTarget;
             texture.dispose();
             pmremGenerator.dispose();
 
@@ -1590,6 +1598,7 @@ AFRAME.registerComponent('scene-settings', {
         this.fpsStats = null;
         this.fpsStatsRoot = null;
         this._currentEnvMapPreset = null;
+        this._envMapRenderTarget = null;
         this.bloomTargetA = null;
         this.bloomTargetB = null;
         this.bloomBrightPassMaterial = null;
@@ -1770,6 +1779,13 @@ AFRAME.registerComponent('scene-settings', {
         this.el.removeEventListener('model-loaded', this.handleQualityModelLoad);
         window.removeEventListener('resize', this.handleResize);
         this.disablePostProcessing();
+        if (this._envMapRenderTarget) {
+            this._envMapRenderTarget.dispose();
+            this._envMapRenderTarget = null;
+        }
+        if (this.el && this.el.object3D) {
+            this.el.object3D.environment = null;
+        }
         this.disableFPSMeter();
         this.removePhotorealHelperLights();
     },
