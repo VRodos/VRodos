@@ -254,6 +254,12 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
     let temp = document.createElement('template');
     temp.innerHTML = itemHTML;
     let insertBefore = _findInsertionPoint(obj);
+    if (!insertBefore) {
+        let skeleton = document.getElementById('hierarchy-skeleton');
+        if (skeleton && skeleton.parentElement === viewer) {
+            insertBefore = skeleton;
+        }
+    }
 
     if (insertBefore) {
         viewer.insertBefore(temp.content, insertBefore);

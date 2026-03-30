@@ -509,8 +509,8 @@ extract( $data );
 				}
 			})();
 
-			setHierarchyViewer();
 			removeHierarchySkeleton();
+			setHierarchyViewer();
 
 			for (let n in vrodos_scene_data.objects) {
 				// (function (name) {
