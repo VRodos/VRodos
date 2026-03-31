@@ -580,7 +580,7 @@ function vrodosCreateGaussianBlurMaterial() {
 // --- FXAA pass (NVIDIA FXAA 3.11) ---
 
 function vrodosCreateFXAAMaterial() {
-    return new THREE.ShaderMaterial({
+    var material = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: null },
             resolution: { value: new THREE.Vector2(1 / 1024, 1 / 512) }
@@ -677,6 +677,8 @@ function vrodosCreateFXAAMaterial() {
         depthWrite: false,
         depthTest: false
     });
+    material.toneMapped = false;
+    return material;
 }
 
 function vrodosCreatePhotorealPostMaterial() {

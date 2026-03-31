@@ -176,7 +176,7 @@
 
 						<div class="tw-pt-2 tw-border-t tw-border-slate-200">
 							<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-								<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Edge Smoothing</span>
+								<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Edge Smoothing (FXAA 3.1)</span>
 								<span id="compileEdgeAAStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px] tw-font-bold tw-uppercase">Balanced</span>
 							</div>
 							<input id="compileEdgeAAStrengthSlider" type="range" min="0" max="5" step="1" value="3" class="tw-range tw-range-primary tw-range-xs tw-mt-1" disabled>
