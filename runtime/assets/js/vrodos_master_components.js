@@ -577,19 +577,119 @@ function vrodosCreateGaussianBlurMaterial() {
     });
 }
 
+// --- FXAA pass (NVIDIA FXAA 3.11) ---
+
+function vrodosCreateFXAAMaterial() {
+    return new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: null },
+            resolution: { value: new THREE.Vector2(1 / 1024, 1 / 512) }
+        },
+        vertexShader: [
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vUv = uv;',
+            '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+            '}'
+        ].join('\n'),
+        fragmentShader: [
+            'precision highp float;',
+            'uniform sampler2D tDiffuse;',
+            'uniform vec2 resolution;',
+            'varying vec2 vUv;',
+            '#define FxaaTexTop(t, p) texture2D(t, p, -100.0)',
+            '#define FxaaTexOff(t, p, o, r) texture2D(t, p + (o * r), -100.0)',
+            '#define NUM_SAMPLES 5',
+            'float contrast(vec4 a, vec4 b) {',
+            '  vec4 diff = abs(a - b);',
+            '  return max(max(max(diff.r, diff.g), diff.b), diff.a);',
+            '}',
+            'vec4 FxaaPixelShader(vec2 posM, sampler2D tex, vec2 fxaaQualityRcpFrame, float fxaaQualityEdgeThreshold, float fxaaQualityinvEdgeThreshold) {',
+            '  vec4 rgbaM = FxaaTexTop(tex, posM);',
+            '  vec4 rgbaS = FxaaTexOff(tex, posM, vec2(0.0, 1.0), fxaaQualityRcpFrame.xy);',
+            '  vec4 rgbaE = FxaaTexOff(tex, posM, vec2(1.0, 0.0), fxaaQualityRcpFrame.xy);',
+            '  vec4 rgbaN = FxaaTexOff(tex, posM, vec2(0.0,-1.0), fxaaQualityRcpFrame.xy);',
+            '  vec4 rgbaW = FxaaTexOff(tex, posM, vec2(-1.0, 0.0), fxaaQualityRcpFrame.xy);',
+            '  bool earlyExit = max(max(max(contrast(rgbaM, rgbaN), contrast(rgbaM, rgbaS)), contrast(rgbaM, rgbaE)), contrast(rgbaM, rgbaW)) < fxaaQualityEdgeThreshold;',
+            '  if (earlyExit) { return rgbaM; }',
+            '  float contrastN = contrast(rgbaM, rgbaN);',
+            '  float contrastS = contrast(rgbaM, rgbaS);',
+            '  float contrastE = contrast(rgbaM, rgbaE);',
+            '  float contrastW = contrast(rgbaM, rgbaW);',
+            '  float relativeVContrast = (contrastN + contrastS) - (contrastE + contrastW);',
+            '  relativeVContrast *= fxaaQualityinvEdgeThreshold;',
+            '  bool horzSpan = relativeVContrast > 0.;',
+            '  if (abs(relativeVContrast) < .3) {',
+            '    vec2 dirToEdge;',
+            '    dirToEdge.x = contrastE > contrastW ? 1. : -1.;',
+            '    dirToEdge.y = contrastS > contrastN ? 1. : -1.;',
+            '    vec4 rgbaAlongH = FxaaTexOff(tex, posM, vec2(dirToEdge.x, -dirToEdge.y), fxaaQualityRcpFrame.xy);',
+            '    float matchAlongH = contrast(rgbaM, rgbaAlongH);',
+            '    vec4 rgbaAlongV = FxaaTexOff(tex, posM, vec2(-dirToEdge.x, dirToEdge.y), fxaaQualityRcpFrame.xy);',
+            '    float matchAlongV = contrast(rgbaM, rgbaAlongV);',
+            '    relativeVContrast = matchAlongV - matchAlongH;',
+            '    relativeVContrast *= fxaaQualityinvEdgeThreshold;',
+            '    if (abs(relativeVContrast) < .3) {',
+            '      return mix(rgbaM, (rgbaN + rgbaS + rgbaE + rgbaW) * .25, .4);',
+            '    }',
+            '    horzSpan = relativeVContrast > 0.;',
+            '  }',
+            '  if (!horzSpan) { rgbaN = rgbaW; }',
+            '  if (!horzSpan) { rgbaS = rgbaE; }',
+            '  bool pairN = contrast(rgbaM, rgbaN) > contrast(rgbaM, rgbaS);',
+            '  if (!pairN) { rgbaN = rgbaS; }',
+            '  vec2 offNP;',
+            '  offNP.x = (!horzSpan) ? 0.0 : fxaaQualityRcpFrame.x;',
+            '  offNP.y = (horzSpan) ? 0.0 : fxaaQualityRcpFrame.y;',
+            '  bool doneN = false;',
+            '  bool doneP = false;',
+            '  float nDist = 0.;',
+            '  float pDist = 0.;',
+            '  vec2 posN = posM;',
+            '  vec2 posP = posM;',
+            '  for (int i = 0; i < NUM_SAMPLES; i++) {',
+            '    float increment = float(i + 1);',
+            '    if (!doneN) {',
+            '      nDist += increment;',
+            '      posN = posM + offNP * nDist;',
+            '      vec4 rgbaEndN = FxaaTexTop(tex, posN.xy);',
+            '      doneN = contrast(rgbaEndN, rgbaM) > contrast(rgbaEndN, rgbaN);',
+            '    }',
+            '    if (!doneP) {',
+            '      pDist += increment;',
+            '      posP = posM - offNP * pDist;',
+            '      vec4 rgbaEndP = FxaaTexTop(tex, posP.xy);',
+            '      doneP = contrast(rgbaEndP, rgbaM) > contrast(rgbaEndP, rgbaN);',
+            '    }',
+            '    if (doneN || doneP) { break; }',
+            '  }',
+            '  if (!doneP && !doneN) { return rgbaM; }',
+            '  float dist = min(doneN ? nDist / float(NUM_SAMPLES) : 1., doneP ? pDist / float(NUM_SAMPLES) : 1.);',
+            '  dist = 1. - pow(dist, .5);',
+            '  return mix(rgbaM, rgbaN, dist * .5);',
+            '}',
+            'void main() {',
+            '  const float edgeDetectionQuality = .2;',
+            '  const float invEdgeDetectionQuality = 1. / edgeDetectionQuality;',
+            '  gl_FragColor = FxaaPixelShader(vUv, tDiffuse, resolution, edgeDetectionQuality, invEdgeDetectionQuality);',
+            '}'
+        ].join('\n'),
+        depthWrite: false,
+        depthTest: false
+    });
+}
+
 function vrodosCreatePhotorealPostMaterial() {
     var material = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: null },
             tBloom: { value: null },
-            resolution: { value: new THREE.Vector2(1, 1) },
             bloomStrength: { value: 0.35 },
             vignetteStrength: { value: 0.16 },
             saturation: { value: 1.04 },
             contrast: { value: 1.04 },
             exposure: { value: 1.0 },
-            outputExposure: { value: 1.06 },
-            aaStrength: { value: 0.75 }
+            outputExposure: { value: 1.06 }
         },
         vertexShader: [
             'varying vec2 vUv;',
@@ -601,21 +701,16 @@ function vrodosCreatePhotorealPostMaterial() {
         fragmentShader: [
             'uniform sampler2D tDiffuse;',
             'uniform sampler2D tBloom;',
-            'uniform vec2 resolution;',
             'uniform float bloomStrength;',
             'uniform float vignetteStrength;',
             'uniform float saturation;',
             'uniform float contrast;',
             'uniform float exposure;',
             'uniform float outputExposure;',
-            'uniform float aaStrength;',
             'varying vec2 vUv;',
             'vec3 applySaturation(vec3 color, float sat) {',
             '  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));',
             '  return mix(vec3(luma), color, sat);',
-            '}',
-            'float lumaValue(vec3 color) {',
-            '  return dot(color, vec3(0.2126, 0.7152, 0.0722));',
             '}',
             'vec3 linearToSRGB(vec3 c) {',
             '  vec3 lo = c * 12.92;',
@@ -623,21 +718,9 @@ function vrodosCreatePhotorealPostMaterial() {
             '  return mix(lo, hi, step(vec3(0.0031308), c));',
             '}',
             'void main() {',
-            '  vec2 texel = 1.0 / max(resolution, vec2(1.0));',
             '  vec4 base = texture2D(tDiffuse, vUv);',
-            // Multi-pass bloom: read from blurred bloom texture
             '  vec3 bloom = texture2D(tBloom, vUv).rgb;',
             '  vec3 color = base.rgb + bloom * bloomStrength;',
-            // Edge AA (luma-based)
-            '  vec3 north = texture2D(tDiffuse, vUv + vec2(0.0, texel.y)).rgb;',
-            '  vec3 south = texture2D(tDiffuse, vUv - vec2(0.0, texel.y)).rgb;',
-            '  vec3 east = texture2D(tDiffuse, vUv + vec2(texel.x, 0.0)).rgb;',
-            '  vec3 west = texture2D(tDiffuse, vUv - vec2(texel.x, 0.0)).rgb;',
-            '  float centerLuma = lumaValue(color);',
-            '  float edgeRange = max(max(abs(centerLuma - lumaValue(north)), abs(centerLuma - lumaValue(south))), max(abs(centerLuma - lumaValue(east)), abs(centerLuma - lumaValue(west))));',
-            '  float edgeBlend = smoothstep(0.06, 0.24, edgeRange) * aaStrength;',
-            '  vec3 aaColor = (north + south + east + west + color) * 0.2;',
-            '  color = mix(color, aaColor, edgeBlend);',
             // Color grading
             '  color = applySaturation(color, saturation);',
             '  color = (color - 0.5) * contrast + 0.5;',
@@ -1312,7 +1395,8 @@ AFRAME.registerComponent('scene-settings', {
     },
     hasCinematicShaderOptions: function () {
         return this.hasBloomEffectEnabled() ||
-            this.isPostFXOptionEnabled('postFXColorEnabled');
+            this.isPostFXOptionEnabled('postFXColorEnabled') ||
+            this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
     },
     shouldUseEdgeAAOversample: function () {
         return this.data.renderQuality === 'high' &&
@@ -1377,8 +1461,12 @@ AFRAME.registerComponent('scene-settings', {
             this.postProcessingTarget.setSize(width, height);
         }
 
-        if (this.postProcessingMaterial && this.postProcessingMaterial.uniforms && this.postProcessingMaterial.uniforms.resolution) {
-            this.postProcessingMaterial.uniforms.resolution.value.set(width, height);
+        // Resize FXAA target
+        if (this.fxaaTarget && (this.fxaaTarget.width !== width || this.fxaaTarget.height !== height)) {
+            this.fxaaTarget.setSize(width, height);
+        }
+        if (this.fxaaMaterial && this.fxaaMaterial.uniforms && this.fxaaMaterial.uniforms.resolution) {
+            this.fxaaMaterial.uniforms.resolution.value.set(1.0 / width, 1.0 / height);
         }
 
         // Resize bloom targets at half resolution
@@ -1433,6 +1521,14 @@ AFRAME.registerComponent('scene-settings', {
         this.bloomQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.bloomBrightPassMaterial);
         this.bloomScene = new THREE.Scene();
         this.bloomScene.add(this.bloomQuad);
+
+        // FXAA pass (full resolution, after composite)
+        this.fxaaTarget = new THREE.WebGLRenderTarget(width, height, { depthBuffer: false });
+        this.fxaaMaterial = vrodosCreateFXAAMaterial();
+        this.fxaaMaterial.uniforms.resolution.value.set(1.0 / width, 1.0 / height);
+        this.fxaaQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.fxaaMaterial);
+        this.fxaaScene = new THREE.Scene();
+        this.fxaaScene.add(this.fxaaQuad);
 
         this.postProcessingOriginalRender = renderer.render.bind(renderer);
         this.postProcessingActive = true;
@@ -1513,10 +1609,26 @@ AFRAME.registerComponent('scene-settings', {
                     ? this.getExposureValue()
                     : 1.0;
                 this.postProcessingMaterial.uniforms.outputExposure.value = 1.0;
-                this.postProcessingMaterial.uniforms.aaStrength.value = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ? 0.82 : 0.0;
-                renderer.setRenderTarget(null);
-                renderer.clear(true, true, true);
-                this.postProcessingOriginalRender(this.postProcessingScene, this.postProcessingCamera);
+
+                var useFXAA = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') && this.fxaaTarget && this.fxaaMaterial;
+                if (useFXAA) {
+                    // Pass 5: Composite → fxaaTarget
+                    renderer.setRenderTarget(this.fxaaTarget);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.postProcessingScene, this.postProcessingCamera);
+
+                    // Pass 6: FXAA → screen
+                    this.fxaaMaterial.uniforms.tDiffuse.value = this.fxaaTarget.texture;
+                    this.fxaaQuad.material = this.fxaaMaterial;
+                    renderer.setRenderTarget(null);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.fxaaScene, this.postProcessingCamera);
+                } else {
+                    // Pass 5: Composite → screen (no FXAA)
+                    renderer.setRenderTarget(null);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.postProcessingScene, this.postProcessingCamera);
+                }
             } finally {
                 this.postProcessingRendering = false;
             }
@@ -1553,6 +1665,13 @@ AFRAME.registerComponent('scene-settings', {
             if (this.bloomQuad.geometry) { this.bloomQuad.geometry.dispose(); }
         }
 
+        // Dispose FXAA resources
+        if (this.fxaaTarget) { this.fxaaTarget.dispose(); }
+        if (this.fxaaMaterial) { this.fxaaMaterial.dispose(); }
+        if (this.fxaaQuad) {
+            if (this.fxaaQuad.geometry) { this.fxaaQuad.geometry.dispose(); }
+        }
+
         this.postProcessingTarget = null;
         this.postProcessingMaterial = null;
         this.postProcessingScene = null;
@@ -1567,6 +1686,10 @@ AFRAME.registerComponent('scene-settings', {
         this.bloomBlurMaterial = null;
         this.bloomQuad = null;
         this.bloomScene = null;
+        this.fxaaTarget = null;
+        this.fxaaMaterial = null;
+        this.fxaaQuad = null;
+        this.fxaaScene = null;
         if (this._blackBloomTexture) { this._blackBloomTexture.dispose(); }
         this._blackBloomTexture = null;
     },
@@ -1896,6 +2019,10 @@ AFRAME.registerComponent('scene-settings', {
         this.bloomBlurMaterial = null;
         this.bloomQuad = null;
         this.bloomScene = null;
+        this.fxaaTarget = null;
+        this.fxaaMaterial = null;
+        this.fxaaQuad = null;
+        this.fxaaScene = null;
         this._blackBloomTexture = null;
         window.addEventListener('resize', this.handleResize);
         // Event - When scene is loaded

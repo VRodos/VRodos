@@ -17,6 +17,19 @@ type: project
 - "Ambient Occlusion" renamed to "AO Map Boost" (only tweaks baked AO map intensity, not screen-space AO)
 - "Contact Shadows" renamed to "Shadow Precision" (only adjusts shadow bias, not real contact shadows)
 
+**Phase 3 — Biggest quality wins** (completed 2026-03-31):
+- 3.1 HDR environment maps at runtime (RGBELoader + PMREMGenerator pipeline, 3 HDR presets)
+- 3.2 Multi-pass bloom (bright-pass + separable 9-tap Gaussian blur, half-res ping-pong)
+- 3.3 Widened envMapIntensity range (0.5x–2.0x)
+- 3.4 Capped pixel ratio supersampling (max 1.5x)
+- Fix: Added `linearToSRGB()` to composite shader (post-processing was outputting linear to screen)
+- Fix: Removed double `toneMappingExposure` application in composite
+
+**Phase 4.2 — FXAA** (completed 2026-03-31):
+- Replaced basic 4-neighbor luma edge AA with NVIDIA FXAA 3.11 as separate post-processing pass
+- FXAA runs after composite (sRGB space), conditionally enabled via `postFXEdgeAAEnabled`
+- Edge detection with diagonal handling, 5-sample edge walking
+
 ---
 
 ## Phase 3: Biggest Quality Wins (TODO)
@@ -49,9 +62,8 @@ type: project
 **Why:** Current "AO" only boosts baked AO map intensity. Real SSAO adds darkening in crevices dynamically for all geometry.
 **How to apply:** Add depth buffer pass + noise-based occlusion kernel as a post-processing pass. Check if A-Frame 1.7.0's `effects` system supports SAO/GTAO.
 
-### 4.2 Replace Edge AA with FXAA
-**Why:** Current edge AA is basic 4-neighbor luma blending — far below FXAA quality. FXAA considers edge orientation and is a well-tested single-pass solution from Three.js examples.
-**How to apply:** Replace shader lines 577-585 with Three.js FXAA shader, or remove in favor of MSAA alone.
+### 4.2 ~~Replace Edge AA with FXAA~~ ✅ DONE
+Replaced basic 4-neighbor luma edge AA with NVIDIA FXAA 3.11 as a separate post-processing pass.
 
 ### 4.3 Evaluate A-Frame 1.7.0 Built-in Effects System
 **Why:** A-Frame 1.7.0 added experimental post-processing support (works in VR too). Could replace the custom render hijack approach entirely.
