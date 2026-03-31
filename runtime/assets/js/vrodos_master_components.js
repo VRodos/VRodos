@@ -617,6 +617,11 @@ function vrodosCreatePhotorealPostMaterial() {
             'float lumaValue(vec3 color) {',
             '  return dot(color, vec3(0.2126, 0.7152, 0.0722));',
             '}',
+            'vec3 linearToSRGB(vec3 c) {',
+            '  vec3 lo = c * 12.92;',
+            '  vec3 hi = pow(c, vec3(1.0 / 2.4)) * 1.055 - 0.055;',
+            '  return mix(lo, hi, step(vec3(0.0031308), c));',
+            '}',
             'void main() {',
             '  vec2 texel = 1.0 / max(resolution, vec2(1.0));',
             '  vec4 base = texture2D(tDiffuse, vUv);',
@@ -641,8 +646,8 @@ function vrodosCreatePhotorealPostMaterial() {
             '  float vignette = smoothstep(0.95, 0.24, dist);',
             '  color *= mix(1.0 - vignetteStrength, 1.0, vignette);',
             '  color *= exposure;',
-            // Tone mapping and output color conversion are handled by the renderer.
-            '  color = clamp(color * outputExposure, 0.0, 1.0);',
+            '  color = clamp(color, 0.0, 1.0);',
+            '  color = linearToSRGB(color);',
             '  gl_FragColor = vec4(color, base.a);',
             '}'
         ].join('\n'),
@@ -1507,9 +1512,7 @@ AFRAME.registerComponent('scene-settings', {
                 this.postProcessingMaterial.uniforms.exposure.value = this.isPostFXOptionEnabled('postFXColorEnabled')
                     ? this.getExposureValue()
                     : 1.0;
-                this.postProcessingMaterial.uniforms.outputExposure.value = renderer && typeof renderer.toneMappingExposure !== 'undefined'
-                    ? renderer.toneMappingExposure
-                    : 1.0;
+                this.postProcessingMaterial.uniforms.outputExposure.value = 1.0;
                 this.postProcessingMaterial.uniforms.aaStrength.value = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ? 0.82 : 0.0;
                 renderer.setRenderTarget(null);
                 renderer.clear(true, true, true);
