@@ -4067,9 +4067,19 @@ body {
   border-bottom-color: rgb(15 23 42 / var(--tw-border-opacity, 1));
 }
 
+.vrodos-manager-wrapper .tw-bg-amber-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 243 199 / var(--tw-bg-opacity, 1));
+}
+
 .vrodos-manager-wrapper .tw-bg-amber-50 {
   --tw-bg-opacity: 1;
   background-color: rgb(255 251 235 / var(--tw-bg-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-bg-amber-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(245 158 11 / var(--tw-bg-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-bg-base-100 {
@@ -4261,16 +4271,6 @@ body {
 
 .vrodos-manager-wrapper .tw-bg-white\/90 {
   background-color: rgb(255 255 255 / 0.9);
-}
-
-.vrodos-manager-wrapper .tw-bg-amber-100 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(254 243 199 / var(--tw-bg-opacity, 1));
-}
-
-.vrodos-manager-wrapper .tw-bg-amber-500 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(245 158 11 / var(--tw-bg-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
@@ -5949,6 +5949,11 @@ body.vrodos-manager-wrapper {
   border-color: var(--fallback-p,oklch(var(--p)/0.5));
 }
 
+.vrodos-manager-wrapper .hover\:tw-bg-amber-600:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(217 119 6 / var(--tw-bg-opacity, 1));
+}
+
 .vrodos-manager-wrapper .hover\:tw-bg-emerald-500\/20:hover {
   background-color: rgb(16 185 129 / 0.2);
 }
@@ -5987,11 +5992,6 @@ body.vrodos-manager-wrapper {
 
 .vrodos-manager-wrapper .hover\:tw-bg-white\/10:hover {
   background-color: rgb(255 255 255 / 0.1);
-}
-
-.vrodos-manager-wrapper .hover\:tw-bg-amber-600:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(217 119 6 / var(--tw-bg-opacity, 1));
 }
 
 .vrodos-manager-wrapper .hover\:tw-text-blue-400:hover {

@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
             exposurePreset: document.getElementById('compileExposurePresetSelect'),
             contrastPreset: document.getElementById('compileContrastPresetSelect'),
             reflectionProfile: document.getElementById('compileReflectionProfileSelect'),
+            reflectionSource: document.getElementById('compileReflectionSourceSelect'),
             envMapPreset: document.getElementById('compileEnvMapPresetSelect')
         };
     }
@@ -94,6 +95,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'balanced';
     }
 
+    function normalizeReflectionSource(value) {
+        if (value === 'scene-probe') {
+            return value;
+        }
+
+        return 'hdr';
+    }
+
     function normalizeEnvMapPreset(value) {
         if (value === 'studio' || value === 'quarry' || value === 'venice') {
             return value;
@@ -163,6 +172,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!envir.scene.aframeReflectionProfile) {
             envir.scene.aframeReflectionProfile = 'balanced';
         }
+        if (!envir.scene.aframeReflectionSource) {
+            envir.scene.aframeReflectionSource = 'hdr';
+        }
         if (!envir.scene.aframeEnvMapPreset) {
             envir.scene.aframeEnvMapPreset = 'none';
         }
@@ -195,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeExposurePreset = normalizeExposurePreset(envir.scene.aframeExposurePreset);
         envir.scene.aframeContrastPreset = normalizeContrastPreset(envir.scene.aframeContrastPreset);
         envir.scene.aframeReflectionProfile = normalizeReflectionProfile(envir.scene.aframeReflectionProfile);
+        envir.scene.aframeReflectionSource = normalizeReflectionSource(envir.scene.aframeReflectionSource);
         envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(envir.scene.aframeEnvMapPreset);
         if (envir.scene.aframePostFXBloomEnabled === false) {
             envir.scene.aframeBloomStrength = 'off';
@@ -205,12 +218,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function syncCompilePostFxState() {
         var controls = getCompileDialogElements();
-        if (!controls.postFx || !controls.bloomStrength || !controls.postFxColor || !controls.edgeAAStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile) {
+        if (!controls.postFx || !controls.bloomStrength || !controls.postFxColor || !controls.edgeAAStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile || !controls.reflectionSource) {
             return;
         }
 
         var postFxEnabled = controls.postFx.checked;
         var colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
+        var envLightingEnabled = postFxEnabled && normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
 
         if (controls.postFxGroup) {
             if (postFxEnabled) {
@@ -223,8 +237,13 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.postFxColor.disabled = !postFxEnabled;
         controls.bloomStrength.disabled = !postFxEnabled;
         controls.reflectionProfile.disabled = !postFxEnabled;
+        controls.reflectionSource.disabled = !postFxEnabled;
         if (controls.envMapPreset) {
-            controls.envMapPreset.disabled = !postFxEnabled;
+            controls.envMapPreset.disabled = !envLightingEnabled;
+            controls.envMapPreset.classList.toggle('tw-opacity-60', !envLightingEnabled);
+            controls.envMapPreset.title = envLightingEnabled
+                ? 'HDR environment map for PBR reflections and lighting'
+                : 'Env Lighting is used only when Reflection Source is HDR';
         }
         controls.exposurePreset.disabled = !colorGradingEnabled;
         controls.contrastPreset.disabled = !colorGradingEnabled;
@@ -238,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         var controls = getCompileDialogElements();
-        if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile) {
+        if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile || !controls.reflectionSource) {
             return;
         }
 
@@ -263,6 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframePostFXEdgeAAStrength = edgeAAValue > 0 ? edgeAAValue : (envir.scene.aframePostFXEdgeAAStrength || 3);
 
         envir.scene.aframeReflectionProfile = normalizeReflectionProfile(controls.reflectionProfile.value);
+        envir.scene.aframeReflectionSource = normalizeReflectionSource(controls.reflectionSource.value);
         envir.scene.aframeEnvMapPreset = controls.envMapPreset ? normalizeEnvMapPreset(controls.envMapPreset.value) : 'none';
     }
 
@@ -270,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.syncCompileDialogFromSceneSettings = function() {
         var controls = getCompileDialogElements();
-        if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile) {
+        if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile || !controls.reflectionSource) {
             return;
         }
 
@@ -311,6 +331,9 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.reflectionProfile.value = envir && envir.scene && envir.scene.aframeReflectionProfile
             ? normalizeReflectionProfile(envir.scene.aframeReflectionProfile)
             : 'balanced';
+        controls.reflectionSource.value = envir && envir.scene && envir.scene.aframeReflectionSource
+            ? normalizeReflectionSource(envir.scene.aframeReflectionSource)
+            : 'hdr';
         if (controls.envMapPreset) {
             controls.envMapPreset.value = envir && envir.scene && envir.scene.aframeEnvMapPreset
                 ? normalizeEnvMapPreset(envir.scene.aframeEnvMapPreset)
@@ -366,6 +389,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.reflectionProfile) {
         controls.reflectionProfile.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.reflectionSource) {
+        controls.reflectionSource.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.envMapPreset) {
         controls.envMapPreset.addEventListener('change', syncCompilePostFxState);

@@ -132,6 +132,13 @@
 								</select>
 							</label>
 							<label class="tw-form-control">
+								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose between HDR reflections or a live scene-based reflection probe">Reflection Source</span>
+								<select id="compileReflectionSourceSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+									<option value="hdr">HDR</option>
+									<option value="scene-probe">Scene Probe</option>
+								</select>
+							</label>
+							<label class="tw-form-control">
 								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="HDR environment map for PBR reflections and lighting">Env Lighting</span>
 								<select id="compileEnvMapPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
 									<option value="none">None</option>

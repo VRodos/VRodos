@@ -184,6 +184,10 @@ class VRodos_LoaderMulti {
                     envir.scene.aframeReflectionProfile = resource || 'balanced';
                 }
 
+                if (name === 'aframeReflectionSource') {
+                    envir.scene.aframeReflectionSource = resource || 'hdr';
+                }
+
                 if (name === 'aframeHorizonSkyPreset') {
                     envir.scene.aframeHorizonSkyPreset = resource || 'natural';
                 }
@@ -615,6 +619,7 @@ class VRodos_LoaderMulti {
                         envir.scene.aframeExposurePreset = resource.aframeExposurePreset || 'neutral';
                         envir.scene.aframeContrastPreset = resource.aframeContrastPreset || 'balanced';
                         envir.scene.aframeReflectionProfile = resource.aframeReflectionProfile || 'balanced';
+                        envir.scene.aframeReflectionSource = resource.aframeReflectionSource || 'hdr';
                         envir.scene.aframeHorizonSkyPreset = resource.aframeHorizonSkyPreset || 'natural';
                         envir.scene.aframeEnvMapPreset = resource.aframeEnvMapPreset || 'none';
 

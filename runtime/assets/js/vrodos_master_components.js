@@ -772,6 +772,7 @@ AFRAME.registerComponent('scene-settings', {
         exposurePreset: { type: "string", default: "neutral" },
         contrastPreset: { type: "string", default: "balanced" },
         reflectionProfile: { type: "string", default: "balanced" },
+        reflectionSource: { type: "string", default: "hdr" },
         horizonSkyPreset: { type: "string", default: "natural" },
         envMapPreset: { type: "string", default: "none" },
         cam_position: { type: "string", default: "0 1.6 0" },
@@ -868,26 +869,295 @@ AFRAME.registerComponent('scene-settings', {
         };
         return map[this.data.envMapPreset] || null;
     },
-    applyEnvMapProfile: function () {
-        var preset = this.data.envMapPreset || 'none';
-        var sceneObj = this.el.object3D;
-
-        // Skip if no change from last applied preset
-        if (this._currentEnvMapPreset === preset) {
-            return;
+    getReflectionSource: function () {
+        return this.data.reflectionSource === 'scene-probe' ? 'scene-probe' : 'hdr';
+    },
+    isVrPresentationActive: function () {
+        var inVrMode = this.el.is && this.el.is('vr-mode');
+        return !!(inVrMode || (this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting));
+    },
+    isMobileDevice: function () {
+        return !!(AFRAME.utils &&
+            AFRAME.utils.device &&
+            typeof AFRAME.utils.device.isMobile === 'function' &&
+            AFRAME.utils.device.isMobile());
+    },
+    canUseSceneProbe: function () {
+        return this.getReflectionSource() === 'scene-probe' &&
+            this.data.renderQuality === 'high' &&
+            !this.isVrPresentationActive() &&
+            !this.isMobileDevice() &&
+            !!this.el.renderer &&
+            typeof THREE.WebGLCubeRenderTarget !== 'undefined' &&
+            typeof THREE.CubeCamera !== 'undefined' &&
+            typeof THREE.PMREMGenerator !== 'undefined';
+    },
+    getEffectiveReflectionSource: function () {
+        if (this.canUseSceneProbe()) {
+            return 'scene-probe';
         }
 
+        if ((this.data.envMapPreset || 'none') !== 'none') {
+            return 'hdr';
+        }
+
+        return 'none';
+    },
+    clearHdrEnvironmentMap: function (clearSceneEnvironment) {
         if (this._envMapRenderTarget) {
             this._envMapRenderTarget.dispose();
             this._envMapRenderTarget = null;
         }
 
-        // Clear environment if preset is "none"
-        if (preset === 'none') {
-            sceneObj.environment = null;
-            this._currentEnvMapPreset = 'none';
+        this._currentEnvMapPreset = null;
+
+        if (clearSceneEnvironment && this.el && this.el.object3D) {
+            this.el.object3D.environment = null;
+        }
+    },
+    disposeSceneProbe: function (clearSceneEnvironment) {
+        if (this._sceneProbePmremTarget) {
+            this._sceneProbePmremTarget.dispose();
+            this._sceneProbePmremTarget = null;
+        }
+
+        if (this._sceneProbePmremGenerator) {
+            this._sceneProbePmremGenerator.dispose();
+            this._sceneProbePmremGenerator = null;
+        }
+
+        if (this._sceneProbeCubeCamera && this._sceneProbeCubeCamera.parent) {
+            this._sceneProbeCubeCamera.parent.remove(this._sceneProbeCubeCamera);
+        }
+        this._sceneProbeCubeCamera = null;
+
+        if (this._sceneProbeCubeRenderTarget) {
+            this._sceneProbeCubeRenderTarget.dispose();
+            this._sceneProbeCubeRenderTarget = null;
+        }
+
+        this._sceneProbeNeedsUpdate = false;
+        this._sceneProbeLastCaptureMs = 0;
+        this._sceneProbeLastModelEventMs = 0;
+        this._sceneProbeLastYaw = null;
+        this.sceneProbeCapturing = false;
+
+        if (clearSceneEnvironment && this.el && this.el.object3D) {
+            this.el.object3D.environment = null;
+        }
+    },
+    ensureSceneProbeResources: function () {
+        var renderer = this.el.renderer;
+        var sceneObj = this.el.object3D;
+        if (!renderer || !sceneObj) {
+            return false;
+        }
+
+        if (!this._sceneProbeCubeRenderTarget) {
+            this._sceneProbeCubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
+                generateMipmaps: true,
+                minFilter: THREE.LinearMipmapLinearFilter
+            });
+        }
+
+        if (!this._sceneProbeCubeCamera) {
+            this._sceneProbeCubeCamera = new THREE.CubeCamera(0.1, 1000, this._sceneProbeCubeRenderTarget);
+            sceneObj.add(this._sceneProbeCubeCamera);
+        } else if (this._sceneProbeCubeCamera.parent !== sceneObj) {
+            sceneObj.add(this._sceneProbeCubeCamera);
+        }
+
+        if (!this._sceneProbePmremGenerator) {
+            this._sceneProbePmremGenerator = new THREE.PMREMGenerator(renderer);
+            if (typeof this._sceneProbePmremGenerator.compileCubemapShader === 'function') {
+                this._sceneProbePmremGenerator.compileCubemapShader();
+            }
+        }
+
+        return true;
+    },
+    requestSceneProbeRefresh: function (waitForModelSettle) {
+        if (this.getReflectionSource() !== 'scene-probe') {
             return;
         }
+
+        this._sceneProbeNeedsUpdate = true;
+        if (waitForModelSettle !== false) {
+            this._sceneProbeLastModelEventMs = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+                ? performance.now()
+                : Date.now();
+        }
+    },
+    getSceneProbeAnchorObject: function () {
+        var cameraRig = document.getElementById('cameraA');
+        if (cameraRig && cameraRig.object3D) {
+            return cameraRig.object3D;
+        }
+
+        if (this.el.camera && this.el.camera.el && this.el.camera.el.object3D) {
+            return this.el.camera.el.object3D;
+        }
+
+        return this.el.camera || null;
+    },
+    getSceneProbeAnchorYaw: function (anchorObject) {
+        if (!anchorObject) {
+            return 0;
+        }
+
+        anchorObject.updateMatrixWorld(true);
+        anchorObject.getWorldDirection(this._sceneProbeTempDirection);
+        this._sceneProbeTempDirection.y = 0;
+
+        if (this._sceneProbeTempDirection.lengthSq() < 0.000001) {
+            return 0;
+        }
+
+        this._sceneProbeTempDirection.normalize();
+        return Math.atan2(this._sceneProbeTempDirection.x, this._sceneProbeTempDirection.z);
+    },
+    getSceneProbeYawDeltaDegrees: function (a, b) {
+        if (a === null || b === null) {
+            return 180;
+        }
+
+        var delta = Math.atan2(Math.sin(a - b), Math.cos(a - b));
+        return Math.abs(delta * 180 / Math.PI);
+    },
+    hideSceneProbeObject: function (object3D, hiddenObjects, hiddenLookup) {
+        if (!object3D || !object3D.uuid || hiddenLookup[object3D.uuid]) {
+            return;
+        }
+
+        hiddenLookup[object3D.uuid] = true;
+        hiddenObjects.push({ object: object3D, visible: object3D.visible });
+        object3D.visible = false;
+    },
+    collectSceneProbeExcludedObjects: function () {
+        var self = this;
+        var hiddenObjects = [];
+        var hiddenLookup = {};
+
+        Array.prototype.forEach.call(this.el.querySelectorAll('[data-vrodos-photoreal-light="true"]'), function (entityEl) {
+            if (entityEl && entityEl.object3D) {
+                self.hideSceneProbeObject(entityEl.object3D, hiddenObjects, hiddenLookup);
+            }
+        });
+
+        Array.prototype.forEach.call(this.el.querySelectorAll('.vrodos-navmesh'), function (entityEl) {
+            if (entityEl && entityEl.object3D) {
+                self.hideSceneProbeObject(entityEl.object3D, hiddenObjects, hiddenLookup);
+            }
+        });
+
+        var cameraRig = document.getElementById('cameraA');
+        if (cameraRig && cameraRig.object3D) {
+            this.hideSceneProbeObject(cameraRig.object3D, hiddenObjects, hiddenLookup);
+        }
+
+        return hiddenObjects;
+    },
+    restoreSceneProbeExcludedObjects: function (hiddenObjects) {
+        if (!hiddenObjects || !hiddenObjects.length) {
+            return;
+        }
+
+        hiddenObjects.forEach(function (entry) {
+            if (entry && entry.object) {
+                entry.object.visible = entry.visible;
+            }
+        });
+    },
+    captureSceneProbe: function (now) {
+        var renderer = this.el.renderer;
+        var sceneObj = this.el.object3D;
+        var anchorObject = this.getSceneProbeAnchorObject();
+
+        if (!renderer || !sceneObj || !anchorObject || !this.ensureSceneProbeResources()) {
+            return false;
+        }
+
+        anchorObject.updateMatrixWorld(true);
+        anchorObject.getWorldPosition(this._sceneProbeCurrentPosition);
+
+        this._sceneProbeCubeCamera.position.copy(this._sceneProbeCurrentPosition);
+        this._sceneProbeCubeCamera.updateMatrixWorld(true);
+
+        var previousEnvironment = sceneObj.environment;
+        var hiddenObjects = this.collectSceneProbeExcludedObjects();
+
+        sceneObj.environment = null;
+        this.sceneProbeCapturing = true;
+
+        try {
+            this._sceneProbeCubeCamera.update(renderer, sceneObj);
+        } catch (error) {
+            console.warn('[VRodos] Scene reflection probe capture failed.', error);
+            sceneObj.environment = previousEnvironment;
+            this.restoreSceneProbeExcludedObjects(hiddenObjects);
+            this.sceneProbeCapturing = false;
+            return false;
+        }
+
+        this.restoreSceneProbeExcludedObjects(hiddenObjects);
+        this.sceneProbeCapturing = false;
+        sceneObj.environment = previousEnvironment;
+
+        var probeTarget = this._sceneProbePmremGenerator.fromCubemap(this._sceneProbeCubeRenderTarget.texture);
+        if (!probeTarget || !probeTarget.texture) {
+            return false;
+        }
+
+        if (this._sceneProbePmremTarget) {
+            this._sceneProbePmremTarget.dispose();
+        }
+
+        this._sceneProbePmremTarget = probeTarget;
+        sceneObj.environment = probeTarget.texture;
+        this._sceneProbeLastCaptureMs = now;
+        this._sceneProbeLastYaw = this.getSceneProbeAnchorYaw(anchorObject);
+        this._sceneProbeLastPosition.copy(this._sceneProbeCurrentPosition);
+        this._sceneProbeNeedsUpdate = false;
+        this._currentReflectionSource = 'scene-probe';
+        this.applyMaterialProfiles();
+        return true;
+    },
+    applyEnvMapProfile: function () {
+        var preset = this.data.envMapPreset || 'none';
+        var sceneObj = this.el.object3D;
+        var effectiveSource = this.getEffectiveReflectionSource();
+
+        if (effectiveSource === 'scene-probe') {
+            this.clearHdrEnvironmentMap(this._currentReflectionSource !== 'scene-probe');
+            if (!this.ensureSceneProbeResources()) {
+                sceneObj.environment = null;
+                this._currentReflectionSource = 'none';
+                this.applyMaterialProfiles();
+                return;
+            }
+
+            sceneObj.environment = this._sceneProbePmremTarget ? this._sceneProbePmremTarget.texture : null;
+            this._currentReflectionSource = 'scene-probe';
+            this.requestSceneProbeRefresh(true);
+            return;
+        }
+
+        this.disposeSceneProbe(true);
+
+        if (effectiveSource === 'none' || preset === 'none') {
+            this.clearHdrEnvironmentMap(true);
+            sceneObj.environment = null;
+            this._currentReflectionSource = 'none';
+            this._currentEnvMapPreset = 'none';
+            this.applyMaterialProfiles();
+            return;
+        }
+
+        if (this._currentReflectionSource === 'hdr' && this._currentEnvMapPreset === preset && this._envMapRenderTarget) {
+            return;
+        }
+
+        this.clearHdrEnvironmentMap(false);
 
         // Guard: RGBELoader must be available
         if (typeof THREE.RGBELoader === 'undefined') {
@@ -920,6 +1190,7 @@ AFRAME.registerComponent('scene-settings', {
             texture.dispose();
             pmremGenerator.dispose();
 
+            self._currentReflectionSource = 'hdr';
             self._currentEnvMapPreset = preset;
             // Re-apply material profiles so envMapIntensity takes effect with the new env map
             self.applyMaterialProfiles();
@@ -1165,6 +1436,7 @@ AFRAME.registerComponent('scene-settings', {
             var shouldIntercept = this.postProcessingActive &&
                 this.shouldUsePostProcessing() &&
                 !this.postProcessingRendering &&
+                !this.sceneProbeCapturing &&
                 scene === this.el.object3D &&
                 camera;
 
@@ -1584,7 +1856,10 @@ AFRAME.registerComponent('scene-settings', {
         this.syncFPSMeterState();
     },
     init: function () {
-        this.handleQualityModelLoad = this.applyQualityProfiles.bind(this);
+        this.handleQualityModelLoad = () => {
+            this.applyQualityProfiles();
+            this.requestSceneProbeRefresh(true);
+        };
         this.handleResize = this.updatePostProcessingSize.bind(this);
         this.postProcessingSize = new THREE.Vector2();
         this.postProcessingTarget = null;
@@ -1597,8 +1872,21 @@ AFRAME.registerComponent('scene-settings', {
         this.postProcessingRendering = false;
         this.fpsStats = null;
         this.fpsStatsRoot = null;
+        this._currentReflectionSource = null;
         this._currentEnvMapPreset = null;
         this._envMapRenderTarget = null;
+        this._sceneProbeCubeRenderTarget = null;
+        this._sceneProbeCubeCamera = null;
+        this._sceneProbePmremGenerator = null;
+        this._sceneProbePmremTarget = null;
+        this._sceneProbeNeedsUpdate = false;
+        this._sceneProbeLastCaptureMs = 0;
+        this._sceneProbeLastModelEventMs = 0;
+        this._sceneProbeLastYaw = null;
+        this._sceneProbeLastPosition = new THREE.Vector3();
+        this._sceneProbeCurrentPosition = new THREE.Vector3();
+        this._sceneProbeTempDirection = new THREE.Vector3();
+        this.sceneProbeCapturing = false;
         this.bloomTargetA = null;
         this.bloomTargetB = null;
         this.bloomBrightPassMaterial = null;
@@ -1664,16 +1952,19 @@ AFRAME.registerComponent('scene-settings', {
             }
 
             this.applyQualityProfiles();
+            this.requestSceneProbeRefresh(true);
         });
         this.el.addEventListener('model-loaded', this.handleQualityModelLoad);
 
         this.el.addEventListener("enter-vr", () => {
             if (typeof browsingModeVR !== 'undefined') browsingModeVR = true;
+            this.applyEnvMapProfile();
             this.syncPostProcessingState();
             if (typeof gtag !== 'undefined') gtag('event', 'vr_enabled');
         });
         this.el.addEventListener("exit-vr", () => {
             if (typeof browsingModeVR !== 'undefined') browsingModeVR = false;
+            this.applyEnvMapProfile();
             this.syncPostProcessingState();
             if (typeof gtag !== 'undefined') gtag('event', 'vr_disabled');
         });
@@ -1782,16 +2073,47 @@ AFRAME.registerComponent('scene-settings', {
             this._envMapRenderTarget.dispose();
             this._envMapRenderTarget = null;
         }
+        this.disposeSceneProbe(false);
         if (this.el && this.el.object3D) {
             this.el.object3D.environment = null;
         }
         this.disableFPSMeter();
         this.removePhotorealHelperLights();
     },
-    tick: function () {
+    tick: function (time) {
         if (this.fpsStats && typeof this.fpsStats.update === 'function') {
             this.fpsStats.update();
         }
+
+        if (this.getEffectiveReflectionSource() !== 'scene-probe') {
+            return;
+        }
+
+        if (!this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
+            var anchorObject = this.getSceneProbeAnchorObject();
+            if (anchorObject) {
+                anchorObject.updateMatrixWorld(true);
+                anchorObject.getWorldPosition(this._sceneProbeCurrentPosition);
+                if (this._sceneProbeCurrentPosition.distanceToSquared(this._sceneProbeLastPosition) > (0.75 * 0.75) ||
+                    this.getSceneProbeYawDeltaDegrees(this.getSceneProbeAnchorYaw(anchorObject), this._sceneProbeLastYaw) > 12) {
+                    this._sceneProbeNeedsUpdate = true;
+                }
+            }
+        }
+
+        if (!this._sceneProbeNeedsUpdate) {
+            return;
+        }
+
+        if ((time - this._sceneProbeLastCaptureMs) < 250) {
+            return;
+        }
+
+        if (this._sceneProbeLastModelEventMs && (time - this._sceneProbeLastModelEventMs) < 350) {
+            return;
+        }
+
+        this.captureSceneProbe(time);
     }
 });
 

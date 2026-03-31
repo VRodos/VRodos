@@ -722,6 +722,7 @@ extract( $data );
 			}
 			envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
 			envir.scene.aframeReflectionProfile = vrodos_scene_data["aframeReflectionProfile"] || 'balanced';
+			envir.scene.aframeReflectionSource = vrodos_scene_data["aframeReflectionSource"] || 'hdr';
 			envir.scene.aframeHorizonSkyPreset = vrodos_scene_data["aframeHorizonSkyPreset"] || 'natural';
 			envir.scene.aframeEnvMapPreset = vrodos_scene_data["aframeEnvMapPreset"] || 'none';
 			if (typeof syncCompileDialogFromSceneSettings === 'function') {

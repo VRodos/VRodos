@@ -271,6 +271,7 @@ class VRodos_Scene_CPT_Manager {
 		}
 		$scene_data['aframePostFXBloomEnabled'] = 'off' !== $scene_data['aframeBloomStrength'];
 		$scene_data['aframeReflectionProfile'] = $json_metadata->aframeReflectionProfile ?? 'balanced';
+		$scene_data['aframeReflectionSource'] = $json_metadata->aframeReflectionSource ?? 'hdr';
 		$scene_data['aframeHorizonSkyPreset'] = $json_metadata->aframeHorizonSkyPreset ?? 'natural';
 		$scene_data['aframeEnvMapPreset'] = $json_metadata->aframeEnvMapPreset ?? 'none';
 		$scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? '1';
