@@ -75,7 +75,7 @@
 
 						<div class="tw-grid tw-grid-cols-2 tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
 							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Boosts baked AO map intensity on models that include occlusion textures">AO Map Boost</span>
+								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Screen-space ambient occlusion darkens crevices and corners dynamically, plus boosts baked AO maps">Ambient Occlusion (SSAO)</span>
 								<select id="compileAmbientOcclusionPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 									<option value="off">Off</option>
 									<option value="soft">Soft</option>

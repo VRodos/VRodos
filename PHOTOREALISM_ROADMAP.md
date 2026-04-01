@@ -30,6 +30,18 @@ type: project
 - FXAA runs after composite (sRGB space), conditionally enabled via `postFXEdgeAAEnabled`
 - Edge detection with diagonal handling, 5-sample edge walking
 
+**Phase 4.1 — SSAO (SAO)** (completed 2026-04-01):
+- Depth-only Scalable Ambient Occlusion adapted from Three.js r173 SAOShader
+- Normals reconstructed from depth via `dFdx`/`dFdy` (no normal pre-pass needed)
+- Depth-aware bilateral blur (9-tap Gaussian with depth cutoff) prevents AO bleeding across edges
+- 3 quality presets: soft (8 samples), balanced (16), strong (24) — uses existing `ambientOcclusionPreset`
+- Runs at half resolution for performance; stacks with existing baked AO map intensity boost
+- DepthTexture attached to main render target when SAO active (disables MSAA; FXAA compensates)
+- Pipeline: Scene→SAO(3 passes)→Bloom(3 passes)→Composite(AO*scene+bloom+grading+sRGB)→FXAA
+
+**Phase 4.3 — A-Frame Effects** (resolved 2026-04-01):
+- A-Frame 1.7.1 has NO built-in post-processing/effects system. Custom render hijack is the only approach.
+
 ---
 
 ## Phase 3: Biggest Quality Wins (TODO)
@@ -58,16 +70,14 @@ type: project
 
 ## Phase 4: Advanced (Future)
 
-### 4.1 SSAO Post-Processing Pass
-**Why:** Current "AO" only boosts baked AO map intensity. Real SSAO adds darkening in crevices dynamically for all geometry.
-**How to apply:** Add depth buffer pass + noise-based occlusion kernel as a post-processing pass. Check if A-Frame 1.7.0's `effects` system supports SAO/GTAO.
+### 4.1 ~~SSAO Post-Processing Pass~~ ✅ DONE
+Depth-only SAO with `dFdx`/`dFdy` normal reconstruction, depth-aware bilateral blur, 3 presets.
 
 ### 4.2 ~~Replace Edge AA with FXAA~~ ✅ DONE
 Replaced basic 4-neighbor luma edge AA with NVIDIA FXAA 3.11 as a separate post-processing pass.
 
-### 4.3 Evaluate A-Frame 1.7.0 Built-in Effects System
-**Why:** A-Frame 1.7.0 added experimental post-processing support (works in VR too). Could replace the custom render hijack approach entirely.
-**How to apply:** Investigate the `effects` component and whether it can handle bloom, FXAA, color grading natively.
+### 4.3 ~~Evaluate A-Frame Built-in Effects System~~ ✅ RESOLVED
+A-Frame 1.7.1 has no built-in post-processing system. Custom render hijack is the only viable approach.
 
 ### 4.4 Screen-Space Reflections (SSR)
 For reflective floors, glass, polished surfaces.
