@@ -577,6 +577,187 @@ function vrodosCreateGaussianBlurMaterial() {
     });
 }
 
+// --- SAO pass (Depth-only Scalable Ambient Occlusion) ---
+
+function vrodosCreateSAOMaterial() {
+    // Simple depth-comparison SSAO: compares linearized depth of center pixel
+    // against spiral samples. Pixels deeper than center (in a concavity) contribute
+    // occlusion. No normal reconstruction needed — avoids halo artifacts on edges.
+    var material = new THREE.ShaderMaterial({
+        defines: {
+            'NUM_SAMPLES': 16,
+            'NUM_RINGS': 4
+        },
+        uniforms: {
+            tDepth: { value: null },
+            size: { value: new THREE.Vector2(512, 512) },
+            cameraNear: { value: 1 },
+            cameraFar: { value: 100 },
+            intensity: { value: 0.12 },
+            bias: { value: 0.005 },
+            kernelRadius: { value: 16.0 },
+            maxDistance: { value: 120.0 }
+        },
+        vertexShader: [
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vUv = uv;',
+            '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+            '}'
+        ].join('\n'),
+        fragmentShader: [
+            '#define PI2 6.283185307179586',
+            'varying vec2 vUv;',
+            'uniform highp sampler2D tDepth;',
+            'uniform float cameraNear;',
+            'uniform float cameraFar;',
+            'uniform float intensity;',
+            'uniform float bias;',
+            'uniform float kernelRadius;',
+            'uniform vec2 size;',
+            'uniform float maxDistance;',
+            '',
+            'float linearizeDepth(float d) {',
+            '  return (cameraNear * cameraFar) / (cameraFar - d * (cameraFar - cameraNear));',
+            '}',
+            '',
+            'highp float rand(const in vec2 uv) {',
+            '  const highp float a = 12.9898, b = 78.233, c = 43758.5453;',
+            '  highp float dt = dot(uv.xy, vec2(a, b)), sn = mod(dt, PI2);',
+            '  return fract(sin(sn) * c);',
+            '}',
+            '',
+            'void main() {',
+            '  float rawDepth = texture2D(tDepth, vUv).x;',
+            '  if (rawDepth >= 0.9999) { gl_FragColor = vec4(1.0); return; }',
+            '',
+            '  float centerDepth = linearizeDepth(rawDepth);',
+            '  if (centerDepth > maxDistance) { gl_FragColor = vec4(1.0); return; }',
+            '',
+            '  // Depth-proportional bias: rejects perspective-induced gradients on flat surfaces',
+            '  float effectiveBias = bias * centerDepth;',
+            '  // World-space AO radius — how far (in units) to look for occluders',
+            '  float aoRadius = kernelRadius;',
+            '  // Convert world-space radius to screen pixels at this depth',
+            '  // Approximate: screenPixels ≈ worldSize * (size.y / (2 * depth * tan(fov/2)))',
+            '  // Simplified: use projection-like scaling',
+            '  float screenRadius = aoRadius * size.y / (centerDepth * 2.0);',
+            '  screenRadius = clamp(screenRadius, 2.0, 64.0);',
+            '',
+            '  float angle = rand(vUv) * PI2;',
+            '  float angleStep = PI2 * float(NUM_RINGS) / float(NUM_SAMPLES);',
+            '  float invSamples = 1.0 / float(NUM_SAMPLES);',
+            '  vec2 radiusStep = vec2(screenRadius * invSamples) / size;',
+            '  vec2 radius = radiusStep;',
+            '',
+            '  float occlusion = 0.0;',
+            '  float validSamples = 0.0;',
+            '  for (int i = 0; i < NUM_SAMPLES; i++) {',
+            '    vec2 sampleUv = vUv + vec2(cos(angle), sin(angle)) * radius;',
+            '    radius += radiusStep;',
+            '    angle += angleStep;',
+            '',
+            '    float sRaw = texture2D(tDepth, sampleUv).x;',
+            '    if (sRaw >= 0.9999) { validSamples += 1.0; continue; }',
+            '',
+            '    float sampleDepth = linearizeDepth(sRaw);',
+            '    float depthDiff = centerDepth - sampleDepth;',
+            '    validSamples += 1.0;',
+            '',
+            '    // Only occlude when sample is meaningfully closer (center is in a concavity)',
+            '    // effectiveBias scales with depth to reject perspective gradients on flat surfaces',
+            '    // rangeCheck rejects depth discontinuities (object edges, sky boundaries)',
+            '    float rangeCheck = 1.0 - smoothstep(aoRadius * 0.5, aoRadius * 2.0, abs(depthDiff));',
+            '    float occFactor = smoothstep(effectiveBias, effectiveBias * 3.0, depthDiff);',
+            '    occlusion += occFactor * rangeCheck;',
+            '  }',
+            '',
+            '  occlusion = (validSamples > 0.0) ? occlusion / validSamples * intensity : 0.0;',
+            '  float distFade = smoothstep(maxDistance * 0.4, maxDistance, centerDepth);',
+            '  occlusion *= (1.0 - distFade);',
+            '',
+            '  gl_FragColor = vec4(vec3(clamp(1.0 - occlusion, 0.0, 1.0)), 1.0);',
+            '}'
+        ].join('\n'),
+        depthWrite: false,
+        depthTest: false
+    });
+    material.toneMapped = false;
+    return material;
+}
+
+// --- SAO bilateral blur pass (depth-aware) ---
+
+function vrodosCreateSAOBlurMaterial() {
+    var material = new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: null },
+            tDepth: { value: null },
+            cameraNear: { value: 1 },
+            cameraFar: { value: 100 },
+            size: { value: new THREE.Vector2(512, 512) },
+            direction: { value: new THREE.Vector2(1.0, 0.0) },
+            depthCutoff: { value: 0.01 }
+        },
+        vertexShader: [
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vUv = uv;',
+            '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+            '}'
+        ].join('\n'),
+        fragmentShader: [
+            'uniform sampler2D tDiffuse;',
+            'uniform highp sampler2D tDepth;',
+            'uniform float cameraNear;',
+            'uniform float cameraFar;',
+            'uniform vec2 size;',
+            'uniform vec2 direction;',
+            'uniform float depthCutoff;',
+            'varying vec2 vUv;',
+            '',
+            'float getLinearDepth(const in vec2 uv) {',
+            '  float d = texture2D(tDepth, uv).x;',
+            '  float viewZ = (cameraNear * cameraFar) / ((cameraFar - cameraNear) * d - cameraFar);',
+            '  return (-viewZ - cameraNear) / (cameraFar - cameraNear);',
+            '}',
+            '',
+            'void main() {',
+            '  vec2 texel = direction / max(size, vec2(1.0));',
+            '  float centerDepth = getLinearDepth(vUv);',
+            '  float result = 0.0;',
+            '  float weightSum = 0.0;',
+            // 9-tap bilateral Gaussian (sigma ~3.0)
+            '  float weights[9];',
+            '  weights[0] = 0.0162; weights[1] = 0.0540; weights[2] = 0.1216;',
+            '  weights[3] = 0.1945; weights[4] = 0.2270; weights[5] = 0.1945;',
+            '  weights[6] = 0.1216; weights[7] = 0.0540; weights[8] = 0.0162;',
+            '  for (int i = 0; i < 9; i++) {',
+            '    vec2 offset = texel * float(i - 4);',
+            '    vec2 sampleUv = vUv + offset;',
+            '    float sampleDepth = getLinearDepth(sampleUv);',
+            '    float depthDiff = abs(centerDepth - sampleDepth);',
+            '    if (depthDiff < depthCutoff) {',
+            '      float sampleValue = texture2D(tDiffuse, sampleUv).r;',
+            '      result += sampleValue * weights[i];',
+            '      weightSum += weights[i];',
+            '    }',
+            '  }',
+            '  if (weightSum > 0.0) {',
+            '    result /= weightSum;',
+            '  } else {',
+            '    result = texture2D(tDiffuse, vUv).r;',
+            '  }',
+            '  gl_FragColor = vec4(vec3(result), 1.0);',
+            '}'
+        ].join('\n'),
+        depthWrite: false,
+        depthTest: false
+    });
+    material.toneMapped = false;
+    return material;
+}
+
 // --- FXAA pass (NVIDIA FXAA 3.11) ---
 
 function vrodosCreateFXAAMaterial() {
@@ -686,6 +867,7 @@ function vrodosCreatePhotorealPostMaterial() {
         uniforms: {
             tDiffuse: { value: null },
             tBloom: { value: null },
+            tSAO: { value: null },
             bloomStrength: { value: 0.35 },
             vignetteStrength: { value: 0.16 },
             saturation: { value: 1.04 },
@@ -703,6 +885,7 @@ function vrodosCreatePhotorealPostMaterial() {
         fragmentShader: [
             'uniform sampler2D tDiffuse;',
             'uniform sampler2D tBloom;',
+            'uniform sampler2D tSAO;',
             'uniform float bloomStrength;',
             'uniform float vignetteStrength;',
             'uniform float saturation;',
@@ -721,8 +904,10 @@ function vrodosCreatePhotorealPostMaterial() {
             '}',
             'void main() {',
             '  vec4 base = texture2D(tDiffuse, vUv);',
+            '  float ao = texture2D(tSAO, vUv).r;',
+            '  vec3 color = base.rgb * ao;',
             '  vec3 bloom = texture2D(tBloom, vUv).rgb;',
-            '  vec3 color = base.rgb + bloom * bloomStrength;',
+            '  color += bloom * bloomStrength;',
             // Color grading
             '  color = applySaturation(color, saturation);',
             '  color = (color - 0.5) * contrast + 0.5;',
@@ -931,6 +1116,19 @@ AFRAME.registerComponent('scene-settings', {
                 return this.data.ambientOcclusionPreset;
             default:
                 return 'balanced';
+        }
+    },
+    getSAOParams: function () {
+        var preset = this.getAmbientOcclusionPreset();
+        switch (preset) {
+            case 'soft':
+                return { numSamples: 8, numRings: 3, intensity: 0.25, kernelRadius: 10, bias: 0.02, depthCutoff: 0.005, maxDistance: 60 };
+            case 'balanced':
+                return { numSamples: 16, numRings: 4, intensity: 0.35, kernelRadius: 14, bias: 0.01, depthCutoff: 0.005, maxDistance: 80 };
+            case 'strong':
+                return { numSamples: 24, numRings: 5, intensity: 0.5, kernelRadius: 18, bias: 0.005, depthCutoff: 0.005, maxDistance: 120 };
+            default:
+                return null;
         }
     },
     getContactShadowPreset: function () {
@@ -1398,7 +1596,8 @@ AFRAME.registerComponent('scene-settings', {
     hasCinematicShaderOptions: function () {
         return this.hasBloomEffectEnabled() ||
             this.isPostFXOptionEnabled('postFXColorEnabled') ||
-            this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
+            this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ||
+            this.getAmbientOcclusionPreset() !== 'off';
     },
     shouldUseEdgeAAOversample: function () {
         return this.data.renderQuality === 'high' &&
@@ -1483,6 +1682,20 @@ AFRAME.registerComponent('scene-settings', {
         if (this.bloomBlurMaterial && this.bloomBlurMaterial.uniforms && this.bloomBlurMaterial.uniforms.resolution) {
             this.bloomBlurMaterial.uniforms.resolution.value.set(halfW, halfH);
         }
+
+        // Resize SAO targets at half resolution
+        if (this.saoTargetA && (this.saoTargetA.width !== halfW || this.saoTargetA.height !== halfH)) {
+            this.saoTargetA.setSize(halfW, halfH);
+        }
+        if (this.saoTargetB && (this.saoTargetB.width !== halfW || this.saoTargetB.height !== halfH)) {
+            this.saoTargetB.setSize(halfW, halfH);
+        }
+        if (this.saoMaterial && this.saoMaterial.uniforms && this.saoMaterial.uniforms.size) {
+            this.saoMaterial.uniforms.size.value.set(halfW, halfH);
+        }
+        if (this.saoBlurMaterial && this.saoBlurMaterial.uniforms && this.saoBlurMaterial.uniforms.size) {
+            this.saoBlurMaterial.uniforms.size.value.set(halfW, halfH);
+        }
     },
     enablePostProcessing: function () {
         var renderer = this.el.renderer;
@@ -1499,10 +1712,17 @@ AFRAME.registerComponent('scene-settings', {
             height = Math.max(1, Math.floor(this.postProcessingSize.y * pixelRatio));
         }
 
-        this.postProcessingTarget = new THREE.WebGLRenderTarget(width, height, {
-            depthBuffer: true
-        });
-        if (typeof this.postProcessingTarget.samples !== 'undefined') {
+        // Create main render target — attach DepthTexture when SAO is active (disables MSAA)
+        var saoParams = this.getSAOParams();
+        var targetOptions = { depthBuffer: true };
+        if (saoParams) {
+            var depthTexture = new THREE.DepthTexture(width, height);
+            depthTexture.type = THREE.UnsignedIntType;
+            targetOptions.depthTexture = depthTexture;
+        }
+        this.postProcessingTarget = new THREE.WebGLRenderTarget(width, height, targetOptions);
+        // MSAA only when SAO is off (DepthTexture + MSAA conflict in WebGL2)
+        if (!saoParams && typeof this.postProcessingTarget.samples !== 'undefined') {
             var maxSamples = (renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4;
             this.postProcessingTarget.samples = Math.min(maxSamples, this.getAAQualitySampleCount());
         }
@@ -1523,6 +1743,27 @@ AFRAME.registerComponent('scene-settings', {
         this.bloomQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.bloomBrightPassMaterial);
         this.bloomScene = new THREE.Scene();
         this.bloomScene.add(this.bloomQuad);
+
+        // SAO pass (half resolution, depth-only ambient occlusion)
+        if (saoParams) {
+            this.saoTargetA = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
+            this.saoTargetB = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
+            this.saoMaterial = vrodosCreateSAOMaterial();
+            this.saoMaterial.defines.NUM_SAMPLES = saoParams.numSamples;
+            this.saoMaterial.defines.NUM_RINGS = saoParams.numRings;
+            this.saoMaterial.needsUpdate = true;
+            this.saoMaterial.uniforms.intensity.value = saoParams.intensity;
+            this.saoMaterial.uniforms.kernelRadius.value = saoParams.kernelRadius;
+            this.saoMaterial.uniforms.bias.value = saoParams.bias;
+            this.saoMaterial.uniforms.maxDistance.value = saoParams.maxDistance;
+            this.saoMaterial.uniforms.size.value.set(halfW, halfH);
+            this.saoBlurMaterial = vrodosCreateSAOBlurMaterial();
+            this.saoBlurMaterial.uniforms.size.value.set(halfW, halfH);
+            this.saoBlurMaterial.uniforms.depthCutoff.value = saoParams.depthCutoff;
+            this.saoQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.saoMaterial);
+            this.saoScene = new THREE.Scene();
+            this.saoScene.add(this.saoQuad);
+        }
 
         // FXAA pass (full resolution, after composite)
         this.fxaaTarget = new THREE.WebGLRenderTarget(width, height, { depthBuffer: false });
@@ -1558,17 +1799,62 @@ AFRAME.registerComponent('scene-settings', {
                 renderer.clear(true, true, true);
                 this.postProcessingOriginalRender(scene, camera);
 
+                // SAO passes (only if SAO is active and resources exist)
+                if (this.saoMaterial && this.saoTargetA && this.saoTargetB && this.postProcessingTarget.depthTexture) {
+                    // Update camera uniforms for SAO
+                    this.saoMaterial.uniforms.cameraNear.value = camera.near;
+                    this.saoMaterial.uniforms.cameraFar.value = camera.far;
+
+                    // Pass 2: SAO computation → saoTargetA (half-res)
+                    this.saoQuad.material = this.saoMaterial;
+                    this.saoMaterial.uniforms.tDepth.value = this.postProcessingTarget.depthTexture;
+                    renderer.setRenderTarget(this.saoTargetA);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.saoScene, this.postProcessingCamera);
+
+                    // Update blur camera uniforms
+                    this.saoBlurMaterial.uniforms.cameraNear.value = camera.near;
+                    this.saoBlurMaterial.uniforms.cameraFar.value = camera.far;
+                    this.saoBlurMaterial.uniforms.tDepth.value = this.postProcessingTarget.depthTexture;
+
+                    // Pass 3: SAO blur H → saoTargetB
+                    this.saoQuad.material = this.saoBlurMaterial;
+                    this.saoBlurMaterial.uniforms.tDiffuse.value = this.saoTargetA.texture;
+                    this.saoBlurMaterial.uniforms.direction.value.set(1.0, 0.0);
+                    renderer.setRenderTarget(this.saoTargetB);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.saoScene, this.postProcessingCamera);
+
+                    // Pass 4: SAO blur V → saoTargetA (ping-pong)
+                    this.saoBlurMaterial.uniforms.tDiffuse.value = this.saoTargetB.texture;
+                    this.saoBlurMaterial.uniforms.direction.value.set(0.0, 1.0);
+                    renderer.setRenderTarget(this.saoTargetA);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.saoScene, this.postProcessingCamera);
+
+                    // Feed blurred SAO to composite shader
+                    this.postProcessingMaterial.uniforms.tSAO.value = this.saoTargetA.texture;
+                } else {
+                    // No SAO — feed 1x1 white texture (ao=1.0 means no darkening)
+                    if (!this._whiteSAOTexture) {
+                        var whiteData = new Uint8Array([255, 255, 255, 255]);
+                        this._whiteSAOTexture = new THREE.DataTexture(whiteData, 1, 1, THREE.RGBAFormat);
+                        this._whiteSAOTexture.needsUpdate = true;
+                    }
+                    this.postProcessingMaterial.uniforms.tSAO.value = this._whiteSAOTexture;
+                }
+
                 // Multi-pass bloom (only if bloom is enabled)
                 var bloomValue = this.getBloomStrengthValue();
                 if (bloomValue > 0 && this.bloomTargetA && this.bloomTargetB) {
-                    // Pass 2: Bright-pass extraction → bloomTargetA (half-res)
+                    // Bloom pass A: Bright-pass extraction → bloomTargetA (half-res)
                     this.bloomQuad.material = this.bloomBrightPassMaterial;
                     this.bloomBrightPassMaterial.uniforms.tDiffuse.value = this.postProcessingTarget.texture;
                     renderer.setRenderTarget(this.bloomTargetA);
                     renderer.clear(true, true, true);
                     this.postProcessingOriginalRender(this.bloomScene, this.postProcessingCamera);
 
-                    // Pass 3: Horizontal Gaussian blur → bloomTargetB
+                    // Bloom pass B: Horizontal Gaussian blur → bloomTargetB
                     this.bloomQuad.material = this.bloomBlurMaterial;
                     this.bloomBlurMaterial.uniforms.tDiffuse.value = this.bloomTargetA.texture;
                     this.bloomBlurMaterial.uniforms.direction.value.set(1.0, 0.0);
@@ -1576,7 +1862,7 @@ AFRAME.registerComponent('scene-settings', {
                     renderer.clear(true, true, true);
                     this.postProcessingOriginalRender(this.bloomScene, this.postProcessingCamera);
 
-                    // Pass 4: Vertical Gaussian blur → bloomTargetA (ping-pong)
+                    // Bloom pass C: Vertical Gaussian blur → bloomTargetA (ping-pong)
                     this.bloomBlurMaterial.uniforms.tDiffuse.value = this.bloomTargetB.texture;
                     this.bloomBlurMaterial.uniforms.direction.value.set(0.0, 1.0);
                     renderer.setRenderTarget(this.bloomTargetA);
@@ -1674,6 +1960,15 @@ AFRAME.registerComponent('scene-settings', {
             if (this.fxaaQuad.geometry) { this.fxaaQuad.geometry.dispose(); }
         }
 
+        // Dispose SAO resources
+        if (this.saoTargetA) { this.saoTargetA.dispose(); }
+        if (this.saoTargetB) { this.saoTargetB.dispose(); }
+        if (this.saoMaterial) { this.saoMaterial.dispose(); }
+        if (this.saoBlurMaterial) { this.saoBlurMaterial.dispose(); }
+        if (this.saoQuad) {
+            if (this.saoQuad.geometry) { this.saoQuad.geometry.dispose(); }
+        }
+
         this.postProcessingTarget = null;
         this.postProcessingMaterial = null;
         this.postProcessingScene = null;
@@ -1692,8 +1987,16 @@ AFRAME.registerComponent('scene-settings', {
         this.fxaaMaterial = null;
         this.fxaaQuad = null;
         this.fxaaScene = null;
+        this.saoTargetA = null;
+        this.saoTargetB = null;
+        this.saoMaterial = null;
+        this.saoBlurMaterial = null;
+        this.saoQuad = null;
+        this.saoScene = null;
         if (this._blackBloomTexture) { this._blackBloomTexture.dispose(); }
         this._blackBloomTexture = null;
+        if (this._whiteSAOTexture) { this._whiteSAOTexture.dispose(); }
+        this._whiteSAOTexture = null;
     },
     syncPostProcessingState: function () {
         if (this.shouldUsePostProcessing()) {
@@ -2025,7 +2328,14 @@ AFRAME.registerComponent('scene-settings', {
         this.fxaaMaterial = null;
         this.fxaaQuad = null;
         this.fxaaScene = null;
+        this.saoTargetA = null;
+        this.saoTargetB = null;
+        this.saoMaterial = null;
+        this.saoBlurMaterial = null;
+        this.saoQuad = null;
+        this.saoScene = null;
         this._blackBloomTexture = null;
+        this._whiteSAOTexture = null;
         window.addEventListener('resize', this.handleResize);
         // Event - When scene is loaded
         this.el.addEventListener("loaded", () => {
