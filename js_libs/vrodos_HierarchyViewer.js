@@ -4,10 +4,7 @@
 function resetInScene(name){
 
     if (name === "avatarCamera") {
-        envir.avatarControls.getObject().position.set(0, 0.2, 0);
-        envir.avatarControls.getObject().quaternion.set(0, 0, 0, 1);
-        envir.avatarControls.getObject().children[0].rotation.set(0, 0, 0);
-        envir.avatarControls.getObject().children[0].scale.set(1, 1, 1);
+        envir.resetDirectorTransform();
     } else {
         envir.scene.getObjectByName(name).position.set(0, 1.3, 0);
         envir.scene.getObjectByName(name).rotation.set(0, 0, 0);
@@ -327,6 +324,7 @@ function setHierarchyViewer() {
 
     envir.scene.traverse((obj) => {
         if (obj.name === "SunSphere" || obj.name === "SpotSphere" || obj.name === "ambientSphere") return;
+        if (obj.vrodos_internal_helper === true) return;
         if (!obj.isSelectableMesh && obj.name !== "avatarCamera") return;
 
         if (obj.name === 'avatarCamera') { director.push(obj); }
@@ -379,6 +377,9 @@ function removeHierarchySkeleton() {
 
 // Single object add in Hierarchy
 function addInHierarchyViewer(obj) {
+    if (!obj || obj.vrodos_internal_helper === true) {
+        return;
+    }
 
     let existingItem = Array.from(document.querySelectorAll('#hierarchy-viewer .hierarchyItem')).find((item) => {
         return item.getAttribute('data-uuid') === obj.uuid || item.getAttribute('data-name') === obj.name;

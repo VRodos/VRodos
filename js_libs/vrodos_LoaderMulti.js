@@ -371,40 +371,35 @@ class VRodos_LoaderMulti {
 
                     pendingLoads.push(new Promise((resolve) => {
                         if (manager) manager.itemStart(name);
-                        loader.load(`${pluginPath}/assets/Steve/camera.glb`,
+                        loader.load(`${pluginPath}/assets/Director/camera.glb`,
                             (objectMain) => {
                                 const object = objectMain.scene.children[0];
                                 object.name = "Camera3Dmodel";
-                                object.children[0].name = "Camera3DmodelMesh";
-
-                                // Make a shield around Steve
-                                const geometry = new THREE.BoxGeometry(4.2, 4.2, 4.2);
-                                geometry.name = "SteveShieldGeometry";
-                                const material = new THREE.MeshBasicMaterial({
-                                    color: 0xaaaaaa,
-                                    transparent: true,
-                                    opacity: 0.2,
-                                    visible: false
+                                object.vrodos_internal_helper = true;
+                                object.isSelectableMesh = false;
+                                object.renderOrder = 1;
+                                object.traverse((child) => {
+                                    child.vrodos_internal_helper = true;
+                                    if (child !== object) {
+                                        child.isSelectableMesh = !!child.isMesh;
+                                    }
                                 });
 
-                                const steveShieldMesh = new THREE.Mesh(geometry, material);
-                                steveShieldMesh.name = 'SteveShieldMesh';
-                                object.add(steveShieldMesh);
-                                object.renderOrder = 1;
-
-                                envir.scene.add(object);
-
-                                const cam = envir.scene.getObjectByName("avatarCamera");
-                                if (cam) {
-                                    // Prefer trs structure if available, otherwise reserve arrays
-                                    const translation = resource?.trs?.translation ?? resource?.position ?? [0, 0, 0];
-                                    const rotation = resource?.trs?.rotation ?? resource?.rotation ?? [0, 0, 0];
-
-                                    cam.position.set(translation[0], translation[1], translation[2]);
-                                    cam.rotation.set(rotation[0], rotation[1], rotation[2]);
+                                if (object.children[0]) {
+                                    object.children[0].name = "Camera3DmodelMesh";
                                 }
 
-                                envir.setCamMeshToAvatarControls();
+                                const translation = resource?.trs?.translation ?? resource?.position ?? [0, 0.2, 0];
+                                const rotation = resource?.trs?.rotation ?? resource?.rotation ?? [0, 0, 0];
+                                if (typeof envir.installDirectorHelpers === 'function') {
+                                    envir.installDirectorHelpers(object, null);
+                                } else {
+                                    const director = envir.getDirectorObject ? envir.getDirectorObject() : envir.scene.getObjectByName("avatarCamera");
+                                    if (director) {
+                                        director.add(object);
+                                    }
+                                }
+                                envir.applyDirectorTransform(translation, rotation);
                                 if (manager) manager.itemEnd(name);
                                 resolve();
                             },
@@ -806,15 +801,7 @@ class VRodos_LoaderMulti {
                         //     envir.scene.enableGeneralChat = JSON.parse(resources3D[Settings].enableGeneralChat);
                         // // }
                         // console.log("Unsupported 3D model format. Error 118.");
-                        envir.scene.getObjectByName("avatarCamera").position.set(
-                            resource.position[0],
-                            resource.position[1],
-                            resource.position[2]);
-
-                        envir.scene.getObjectByName("avatarCamera").rotation.set(
-                            resource.rotation[0],
-                            resource.rotation[1],
-                            resource.rotation[2]);
+                        envir.applyDirectorTransform(resource.position, resource.rotation);
                         // console.log("glbID", resource['glbID']);
                         // console.log("Unsupported 3D model format: ERROR: 118");
                     }

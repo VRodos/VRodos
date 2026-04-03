@@ -119,12 +119,14 @@ class VrodosSceneExporter {
         };
 
         scene.traverse(node => {
+            if (node.vrodos_internal_helper === true) {
+                return;
+            }
+
             if ((node.name === 'rayLine' ||
                 node.name === 'mylightAvatar' ||
                 node.name === 'mylightOrbit' ||
-                node.name === 'SteveShieldMesh' ||
-                node.name === 'Steve' ||
-                node.name === 'SteveMesh' || node.name === 'avatarPitchObject' ||
+                node.name === 'avatarPitchObject' ||
                 node.name === 'orbitCamera' || node.name === 'myAxisHelper' ||
                 node.name === 'myGridHelper' || node.name === 'myTransformControls' ||
                 node.category_name === 'lightHelper' ||
@@ -140,7 +142,7 @@ class VrodosSceneExporter {
             }
 
             if (node.name === "bbox" || node.name === "xline" || node.name === "yline" ||
-                node.name === "zline" || node.name === 'SteveOld') {
+                node.name === "zline") {
                 return;
             }
 
@@ -234,9 +236,9 @@ class VrodosSceneExporter {
 
     processAvatar(o, entryObject) {
         let quatCombined = new THREE.Quaternion();
-        const childRotationX = vrodosSceneSafeNumber(o.children[0].rotation.x, 0);
+        const pitchRotation = vrodosSceneSafeNumber(o.rotation.x, 0);
         const yawRotation = vrodosSceneSafeNumber(o.rotation.y, 0);
-        let camEulerCombined = new THREE.Euler(-childRotationX, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
+        let camEulerCombined = new THREE.Euler(-pitchRotation, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
         quatCombined.setFromEuler(camEulerCombined);
 
         let quatR_player = new THREE.Quaternion();
@@ -244,10 +246,10 @@ class VrodosSceneExporter {
         quatR_player.setFromEuler(eulerR_player);
 
         let quatR_camera = new THREE.Quaternion();
-        let eulerR_camera = new THREE.Euler(-childRotationX, 0, 0, 'YXZ');
+        let eulerR_camera = new THREE.Euler(-pitchRotation, 0, 0, 'YXZ');
         quatR_camera.setFromEuler(eulerR_camera);
 
-        entryObject.rotation = [childRotationX, yawRotation, 0];
+        entryObject.rotation = [pitchRotation, yawRotation, 0];
         entryObject.quaternion = [quatCombined.x, quatCombined.y, quatCombined.z, quatCombined.w];
         entryObject.quaternion_player = [quatR_player.x, quatR_player.y, quatR_player.z, quatR_player.w];
         entryObject.quaternion_camera = [quatR_camera.x, quatR_camera.y, quatR_camera.z, quatR_camera.w];

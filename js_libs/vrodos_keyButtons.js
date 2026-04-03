@@ -119,7 +119,7 @@ let keyup_handler = (ev) => {
 };
 
 
-/* Update Steve when Steve walks by key presses */
+/* Update the Director rig while moving with key presses */
 const updatePointerLockControls = function(){
 
     let time = performance.now();
@@ -169,22 +169,22 @@ const updatePointerLockControls = function(){
 //    let globalVertex = localVertex.applyProjection(cubeRayShield.matrixWorld);
 //
 //
-//    let steveWorldPosition = Steve.position.clone().applyProjection(Steve.matrixWorld);
+//    let directorWorldPosition = director.position.clone().applyProjection(director.matrixWorld);
 //
-//    let directionVector = globalVertex.sub( steveWorldPosition  );
+//    let directionVector = globalVertex.sub(directorWorldPosition);
 //
 //    let dirVecNorm = directionVector.clone().normalize();
 //
 //    // Visualize Raycaster with a line
 //    //    let geometryL = new THREE.Geometry();
 //    //    let geometryL = new THREE.Geometry();
-//    //    geometryL.vertices.push(steveWorldPosition,
-//    //        steveWorldPosition.clone().add(dirVecNorm)
+//    //    geometryL.vertices.push(directorWorldPosition,
+//    //        directorWorldPosition.clone().add(dirVecNorm)
 //    //    );
-//    //    console.log(Steve.position.clone(), Steve.position.clone().add(dirVecNorm));
+//    //    console.log(director.position.clone(), director.position.clone().add(dirVecNorm));
 //    //    envir.scene.add(new THREE.Line(geometryL, new THREE.LineBasicMaterial({color: 0x0000ff})));
 //
-//    let raycaster = new THREE.Raycaster( steveWorldPosition, dirVecNorm, 1, 10);
+//    let raycaster = new THREE.Raycaster(directorWorldPosition, dirVecNorm, 1, 10);
 //    let actMesh = getActiveMeshes();
 //    let collisionResults = raycaster.intersectObjects( actMesh, true );
 //}

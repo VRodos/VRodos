@@ -5,12 +5,19 @@ function normalizeIntersectedObjects(intersectedObjects) {
     for (let i = 0; i < intersectedObjects.length; i++) {
 
         let examineObject = intersectedObjects[i].object;
-        if (examineObject.parent) {
-            while (examineObject.parent.name !== "vrodosScene") {
-                examineObject = examineObject.parent;
-            }
-            res.push(examineObject);
+        if (!examineObject) {
+            continue;
         }
+
+        while (examineObject && examineObject.parent && examineObject.parent.name !== "vrodosScene") {
+            examineObject = examineObject.parent;
+        }
+
+        if (!examineObject) {
+            continue;
+        }
+
+        res.push(examineObject);
     }
 
     // remove duplicates
@@ -31,7 +38,6 @@ function findIntersected(event) {
 
     return normalizeIntersectedObjects(findIntersectedRaw(event));
 }
-
 
 // Reusable raycaster and mouse vector (avoid allocations per event)
 var _reusableRaycaster = new THREE.Raycaster();
@@ -137,7 +143,7 @@ function onLeftMouseClick(event) {
     let intersects = findIntersected(event);
 
     if (intersects.length === 0) {
-        // Clicked empty canvas — deselect current object
+        // Clicked empty canvas - deselect current object
         if (event.button === 0) {
             transform_controls.detach();
             removeAllCelOutlines();
@@ -150,44 +156,17 @@ function onLeftMouseClick(event) {
         return;
     }
 
-    if (intersects.length > 0) {
-
-        // If Steve is selected
-        if ((intersects[0].name === 'Steve' || intersects[0].name === 'SteveShieldMesh'
-            || intersects[0].name === 'SteveMesh') && event.button === 0) {
-
-            setBackgroundColorHierarchyViewer("avatarCamera");
-
-            // highlight — cel outline on avatar
-            removeAllCelOutlines();
-            addCelOutline(envir.scene.getObjectByName("avatarCamera"));
-
-            transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
-
-            //envir.renderer.setClearColor( 0xeeeeee, 1);
-
-            // Steve can not be deleted
-            transform_controls.size = 0.3;
-            //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
-            return;
-        }
-    }
-
-
     // If only one object is intersected
     if (intersects.length === 1) {
 
-        if(!intersects[0].locked)
+        if (!intersects[0].locked)
             selectorMajor(event, intersects[0], "2");
         return;
     }
 
     // More than one objects intersected
-
     var prevSelected = typeof transform_controls.object != 'undefined' ? transform_controls.object.name : null;
     var selectNext = false;
-
-
     var i = 0;
 
     for (i = 0; i < intersects.length; i++) {
@@ -199,11 +178,8 @@ function onLeftMouseClick(event) {
     if (!selectNext || i === intersects.length - 1)
         i = -1;
 
-
-
-    if(!intersects[0].locked)
+    if (!intersects[0].locked)
         selectorMajor(event, intersects[i + 1], "3");
-
 
 }// onMouseDown
 
@@ -374,11 +350,6 @@ function contextMenuClick(event) {
 
 // Right click raycast operations
 function showProperties(event, object) {
-
-    if (object.name === "Camera3Dmodel") {
-        alert("Do not right click the camera or its front part");
-        return;
-    }
 
     //var objectParent  = inters.object.parent;
     var name = object.name;
@@ -948,3 +919,4 @@ function displayPoiVideoProperties(event, name) {
 
     ppPropertiesDiv.style.display = '';
 }
+

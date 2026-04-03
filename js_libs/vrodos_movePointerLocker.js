@@ -36,11 +36,8 @@ function firstPersonViewWithoutLock(){
         // Mouse controls orbit
         envir.orbitControls.enabled = false;
 
-        // The avatarControls position is the orbit controls target
-        envir.avatarControls.getObject().position = envir.orbitControls.target;
-
-        envir.avatarControls.getObject().children[0].position = envir.orbitControls.target;
-        envir.avatarControls.getObject().children[1].position = envir.orbitControls.target;
+        // Keep the saved Director transform as the source of truth when entering first-person preview.
+        envir.moveDirectorToOrbitTarget();
 
         //transform_controls.visible = false;
         //
@@ -53,7 +50,7 @@ function firstPersonViewWithoutLock(){
 
 
         // // if in 3rd person view then show the cameraobject
-        envir.getSteveFrustum().visible = envir.thirdPersonView && avatarControlsEnabled;
+        envir.getDirectorRig().visible = envir.thirdPersonView && avatarControlsEnabled;
 
 
 
@@ -75,8 +72,7 @@ function firstPersonViewWithoutLock(){
 
         envir.thirdPersonView = false;
 
-        //envir.scene.getObjectByName("SteveOld").visible = false;
-        envir.scene.getObjectByName("Camera3Dmodel").visible = true;
+        if (envir.getDirectorVisualObject()) envir.getDirectorVisualObject().visible = true;
 
 
         envir.composer = [];
@@ -87,7 +83,7 @@ function firstPersonViewWithoutLock(){
         if(!envir.is2d)
             transform_controls.visible  = true;
 
-        envir.getSteveFrustum().visible = true;
+        envir.getDirectorRig().visible = true;
 
         // ToDo: Zoom
         envir.orbitControls.reset();

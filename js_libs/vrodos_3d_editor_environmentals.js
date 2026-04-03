@@ -19,6 +19,29 @@ function vrodosOrthoFitZoom(frustumSize, aspect, sceneSurfaceDimension) {
 
     return vrodosClampNumber(computedZoom, 10, 5000, 600);
 }
+
+function vrodosDirectorSafeVector(values, fallback) {
+    const safeFallback = Array.isArray(fallback) ? fallback : [0, 0, 0];
+    const source = Array.isArray(values) ? values : safeFallback;
+
+    return [
+        vrodosClampNumber(source[0], -1000000, 1000000, safeFallback[0]),
+        vrodosClampNumber(source[1], -1000000, 1000000, safeFallback[1]),
+        vrodosClampNumber(source[2], -1000000, 1000000, safeFallback[2])
+    ];
+}
+
+function vrodosDirectorIsInternalHelper(object) {
+    if (!object) {
+        return false;
+    }
+
+    if (object.vrodos_internal_helper === true) {
+        return true;
+    }
+
+    return ['Camera3Dmodel', 'Camera3DmodelMesh', 'DirectorHitProxy'].includes(object.name);
+}
 class vrodos_3d_editor_environmentals {
 
     constructor(vr_editor_main_div) {
@@ -237,8 +260,9 @@ class vrodos_3d_editor_environmentals {
         // Controls for Orbit camera
         this.orbitControls = new THREE.OrbitControls(this.cameraOrbit, this.renderer.domElement);
         this.orbitControls.userPanSpeed = 1;
-        this.orbitControls.enableDamping = true;
-        this.orbitControls.dampingFactor = 0.05;
+        // Keep editor picking deterministic: orbit rotation should stop immediately on mouseup.
+        this.orbitControls.enableDamping = false;
+        this.orbitControls.dampingFactor = 0;
         this.orbitControls.zoomSpeed = 1.25;
         this.orbitControls.object.zoom = 1;
         this.orbitControls.minZoom = 1;
@@ -261,7 +285,8 @@ class vrodos_3d_editor_environmentals {
         this.cameraAvatar = new THREE.PerspectiveCamera(this.VIEW_ANGLE, this.ASPECT, 0.01, 4000);
         this.cameraAvatar.name = "avatarCamera";
         this.cameraAvatar.category_name = "avatarYawObject";
-        this.cameraAvatar.isSelectableMesh = true;
+        this.cameraAvatar.isSelectableMesh = false;
+        this.cameraAvatar.rotation.order = 'YXZ';
         this.cameraAvatar.rotation.y = Math.PI*2;
 
         this.audiolistener = new THREE.AudioListener();
@@ -297,28 +322,150 @@ class vrodos_3d_editor_environmentals {
     }
 
 
-    setCamMeshToAvatarControls() {
-        let CamMesh = envir.scene.getObjectByName("Camera3Dmodel");
-        CamMesh.rotation.set(0, Math.PI / 2, 0);
-        this.avatarControls.getObject().add(CamMesh);
+    clearDirectorInternalHelpers() {
+        const director = this.getDirectorObject();
+
+        if (director) {
+            const childrenToRemove = director.children.filter((child) => {
+                return vrodosDirectorIsInternalHelper(child);
+            });
+
+            childrenToRemove.forEach((child) => {
+                director.remove(child);
+            });
+        }
+
+        const rootHelpers = [];
+        this.scene.traverse((child) => {
+            if (child === director) {
+                return;
+            }
+
+            if (vrodosDirectorIsInternalHelper(child)) {
+                rootHelpers.push(child);
+            }
+        });
+
+        rootHelpers.forEach((child) => {
+            if (child.parent) {
+                child.parent.remove(child);
+            }
+        });
     }
 
-    // setSteveToAvatarControls() {
-    //     let SteveOld = envir.scene.getObjectByName("SteveOld");
-    //     SteveOld.rotation.set(0, Math.PI / 2, 0);
-    //     this.avatarControls.getObject().add(SteveOld);
-    // }
+    createDirectorHitProxy() {
+        const geometry = new THREE.BoxGeometry(2.2, 2.2, 2.2);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.001,
+            depthWrite: false
+        });
 
-    getSteveFrustum() {
+        const hitProxy = new THREE.Mesh(geometry, material);
+        hitProxy.name = "DirectorHitProxy";
+        hitProxy.vrodos_internal_helper = true;
+        hitProxy.isSelectableMesh = true;
+        hitProxy.renderOrder = -1;
+        hitProxy.frustumCulled = false;
+        hitProxy.visible = true;
+        hitProxy.position.set(0, 0, 0);
+        hitProxy.updateMatrixWorld(true);
+
+        return hitProxy;
+    }
+
+    setCamMeshToAvatarControls() {
+        const camMesh = this.getDirectorVisualObject();
+        const director = this.getDirectorObject();
+
+        if (!camMesh || !director) {
+            return;
+        }
+
+        if (camMesh.parent !== director) {
+            director.add(camMesh);
+        }
+        camMesh.updateMatrixWorld(true);
+    }
+
+    getDirectorRig() {
         return envir.avatarControls.getObject();
     }
 
-    setSteveWorldPosition(x, y, z, rx, ry) {
-        envir.avatarControls.getObject().position.x = x;
-        envir.avatarControls.getObject().position.y = y;
-        envir.avatarControls.getObject().position.z = z;
-        envir.avatarControls.getObject().children[0].rotation.x = rx;
-        envir.avatarControls.getObject().rotation.y = ry;
+    setDirectorWorldPosition(x, y, z, rx, ry) {
+        const director = this.getDirectorObject();
+        if (!director) {
+            return;
+        }
+
+        director.position.set(x, y, z);
+        director.rotation.set(rx, ry, 0);
+        this.setCamMeshToAvatarControls();
+        director.updateMatrixWorld(true);
+    }
+
+    getDirectorObject() {
+        return this.scene.getObjectByName("avatarCamera") || this.cameraAvatar || null;
+    }
+
+    getDirectorVisualObject() {
+        return this.scene.getObjectByName("Camera3Dmodel") || null;
+    }
+
+    getDirectorHitProxy() {
+        return this.scene.getObjectByName("DirectorHitProxy") || null;
+    }
+
+    installDirectorHelpers(camMesh, hitProxy) {
+        const director = this.getDirectorObject();
+        if (!director) {
+            return;
+        }
+
+        this.clearDirectorInternalHelpers();
+
+        if (camMesh) {
+            director.add(camMesh);
+            camMesh.updateMatrixWorld(true);
+        }
+
+        if (hitProxy) {
+            director.add(hitProxy);
+            hitProxy.updateMatrixWorld(true);
+        }
+    }
+
+    applyDirectorTransform(position, rotation) {
+        const director = this.getDirectorObject();
+        if (!director) {
+            return;
+        }
+
+        const safePosition = vrodosDirectorSafeVector(position, [0, 0.2, 0]);
+        const safeRotation = vrodosDirectorSafeVector(rotation, [0, 0, 0]);
+
+        director.position.set(safePosition[0], safePosition[1], safePosition[2]);
+        director.rotation.set(safeRotation[0], safeRotation[1], safeRotation[2]);
+        director.scale.set(1, 1, 1);
+        this.setCamMeshToAvatarControls();
+        director.updateMatrixWorld(true);
+    }
+
+    moveDirectorToOrbitTarget() {
+        const director = this.getDirectorObject();
+        if (!director || !this.orbitControls) {
+            return;
+        }
+
+        director.position.copy(this.orbitControls.target);
+        director.scale.set(1, 1, 1);
+        this.setCamMeshToAvatarControls();
+        director.updateMatrixWorld(true);
+    }
+
+    resetDirectorTransform() {
+        this.applyDirectorTransform([0, 0.2, 0], [0, 0, 0]);
     }
 
     //================= Static Environmentals ==============================

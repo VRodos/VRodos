@@ -664,7 +664,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             envir.is2d = true;
             transform_controls.setMode("translate");
 
-            envir.scene.getObjectByName("Camera3Dmodel").visible = true;
+            if (envir.getDirectorVisualObject()) envir.getDirectorVisualObject().visible = true;
         }
 
         findSceneDimensions();
@@ -747,7 +747,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                 uiElementsToToggle.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
                 transform_controls.visible = false;
-                if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = false;
+                if (envir.getDirectorRig()) envir.getDirectorRig().visible = false;
                 if (envir.gridHelper) envir.gridHelper.visible = false;
                 if (envir.axesHelper) envir.axesHelper.visible = false;
                 removeAllCelOutlines();
@@ -771,9 +771,9 @@ transform_controls.addEventListener('dragging-changed', function (event) {
                 setVisiblityLightHelpingElements(true);
 
                 if (envir.thirdPersonView || avatarControlsEnabled) {
-                    if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = false;
+                    if (envir.getDirectorRig()) envir.getDirectorRig().visible = false;
                 } else {
-                    if (envir.getSteveFrustum()) envir.getSteveFrustum().visible = true;
+                    if (envir.getDirectorRig()) envir.getDirectorRig().visible = true;
                 }
             }
             if (envir.turboResize) envir.turboResize();
