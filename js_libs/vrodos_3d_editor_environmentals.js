@@ -236,6 +236,44 @@ class vrodos_3d_editor_environmentals {
         this.effectFXAA.uniforms['resolution'].value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
     }
 
+    getActiveEditorCamera() {
+        if (avatarControlsEnabled) {
+            return this.thirdPersonView ? this.cameraThirdPerson : this.cameraAvatar;
+        }
+
+        return this.cameraOrbit;
+    }
+
+    updateCompassUI() {
+        const compassElement = document.getElementById('scene-editor-compass');
+        if (!compassElement) {
+            return;
+        }
+
+        const needleElement = document.getElementById('scene-editor-compass-needle');
+        const activeCamera = this.getActiveEditorCamera();
+
+        if (!activeCamera || !needleElement) {
+            return;
+        }
+
+        const direction = new THREE.Vector3();
+        activeCamera.getWorldDirection(direction);
+        direction.y = 0;
+
+        if (direction.lengthSq() < 1e-6) {
+            needleElement.style.transform = 'rotate(0deg)';
+            return;
+        }
+
+        direction.normalize();
+
+        const headingRadians = Math.atan2(direction.x, -direction.z);
+        const headingDegrees = (THREE.MathUtils.radToDeg(headingRadians) + 360) % 360;
+
+        needleElement.style.transform = 'rotate(' + headingDegrees.toFixed(2) + 'deg)';
+    }
+
     /**
      Set the Orbit Camera
      */

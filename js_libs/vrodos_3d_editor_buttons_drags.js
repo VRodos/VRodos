@@ -232,6 +232,7 @@ function loadButtonActions() {
         if (!btn) return;
         e.preventDefault();
         let panel = document.getElementById("right-elements-panel");
+        let compass = document.getElementById("scene-editor-compass");
 
         if (btn.classList.contains("HierarchyToggleOn")) {
             btn.classList.add("HierarchyToggleOff");
@@ -239,12 +240,14 @@ function loadButtonActions() {
             btn.dataset.toggle = 'off';
             swapLucideIcon(btn, 'chevron-left');
             panel.classList.add("closed");
+            if (compass) compass.classList.add("panel-closed");
         } else {
             btn.classList.add("HierarchyToggleOn");
             btn.classList.remove("HierarchyToggleOff");
             btn.dataset.toggle = 'on';
             swapLucideIcon(btn, 'chevron-right');
             panel.classList.remove("closed");
+            if (compass) compass.classList.remove("panel-closed");
         }
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -717,6 +720,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
         const uiElementsToToggle = [
             // upper toolbar kept visible (toggle button lives there)
             document.getElementById('right-elements-panel'),
+            document.getElementById('scene-editor-compass'),
             document.getElementById('object-controls-panel'),
             document.querySelector('.environmentBar'),
             document.getElementById('scenesInsideVREditor'),

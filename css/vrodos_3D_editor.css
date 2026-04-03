@@ -315,6 +315,132 @@ canvas { pointer-events:none; z-index:10; }
 	overflow: hidden;
 }
 
+.scene-editor-compass {
+	position: absolute;
+	top: calc(var(--wp-admin-bar-height, 0px) + 18px);
+	right: 316px;
+	z-index: 1000;
+	pointer-events: none;
+	transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+
+.scene-editor-compass.panel-closed {
+	right: 22px;
+}
+
+.scene-editor-compass__card {
+	width: 88px;
+	height: 88px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: 999px;
+	box-shadow: none;
+	color: #e2e8f0;
+}
+
+.scene-editor-compass__rose {
+	position: relative;
+	width: 88px;
+	height: 88px;
+	margin: 0 auto;
+}
+
+.scene-editor-compass__ring {
+	position: absolute;
+	inset: 0;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background:
+		radial-gradient(circle at center, rgba(15, 23, 42, 0.08) 0 24%, transparent 25% 100%),
+		linear-gradient(180deg, rgba(34, 211, 238, 0.08), rgba(248, 250, 252, 0.02));
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.scene-editor-compass__needle {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 2px;
+	height: 32px;
+	margin-left: -1px;
+	margin-top: -28px;
+	transform-origin: center 28px;
+	transition: transform 0.12s ease-out;
+}
+
+.scene-editor-compass__needle::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 0;
+	width: 0;
+	height: 0;
+	margin-left: -6px;
+	border-left: 6px solid transparent;
+	border-right: 6px solid transparent;
+	border-bottom: 18px solid #22d3ee;
+	filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.35));
+}
+
+.scene-editor-compass__needle::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 14px;
+	width: 2px;
+	height: 36px;
+	margin-left: -1px;
+	background: linear-gradient(180deg, rgba(34, 211, 238, 0.95), rgba(248, 250, 252, 0.2));
+	border-radius: 999px;
+}
+
+.scene-editor-compass__needle-dot {
+	position: absolute;
+	left: 50%;
+	top: 28px;
+	width: 10px;
+	height: 10px;
+	margin-left: -5px;
+	margin-top: -5px;
+	border-radius: 999px;
+	background: #f8fafc;
+	box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.78);
+}
+
+.scene-editor-compass__label {
+	position: absolute;
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.1em;
+	color: rgba(226, 232, 240, 0.78);
+}
+
+.scene-editor-compass__label--north {
+	left: 50%;
+	top: 5px;
+	transform: translateX(-50%);
+	color: #f87171;
+}
+
+.scene-editor-compass__label--east {
+	right: 7px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.scene-editor-compass__label--south {
+	left: 50%;
+	bottom: 5px;
+	transform: translateX(-50%);
+}
+
+.scene-editor-compass__label--west {
+	left: 7px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
 .row-right-panel {
 	/*width:100%;*/
 	display: flex;

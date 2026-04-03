@@ -269,6 +269,22 @@ extract( $data );
 
 				<!-- toggleUIBtn moved into upper toolbar -->
 
+				<!-- Editor Compass -->
+				<div id="scene-editor-compass" class="scene-editor-compass hidable" aria-hidden="true">
+					<div class="scene-editor-compass__card">
+						<div class="scene-editor-compass__rose">
+							<div class="scene-editor-compass__ring"></div>
+							<span class="scene-editor-compass__label scene-editor-compass__label--north">N</span>
+							<span class="scene-editor-compass__label scene-editor-compass__label--east">E</span>
+							<span class="scene-editor-compass__label scene-editor-compass__label--south">S</span>
+							<span class="scene-editor-compass__label scene-editor-compass__label--west">W</span>
+							<div id="scene-editor-compass-needle" class="scene-editor-compass__needle">
+								<span class="scene-editor-compass__needle-dot"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+
 				<!-- Hierachy Viewer -->
 				<?php
 				require plugin_dir_path( __DIR__ ) . '/templates/vrodos-edit-3D-scene-HierarchyViewer.php';
@@ -981,6 +997,9 @@ extract( $data );
 			// Update it
 			envir.orbitControls.update();
 			updatePointerLockControls();
+			if (typeof envir.updateCompassUI === 'function') {
+				envir.updateCompassUI();
+			}
 
 			//updatePositionsAndControls();
 
