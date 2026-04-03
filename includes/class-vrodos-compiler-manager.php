@@ -488,10 +488,10 @@ class VRodos_Compiler_Manager {
 
 		$content = str_replace( 'AFRAME_CLEARCOLOR_PLACEHOLDER', $scene_json->metadata->ClearColor, $content );
 
-		// Inject plugin base URL so runtime can load HDR environment maps
+		// Inject plugin base URL so runtime can load HDR environment maps.
 		$content = str_replace(
-			'<script src="js/RGBELoader.js"></script>',
-			'<script>window.VRODOS_PLUGIN_URL = "' . esc_js( $this->plugin_path_url ) . '";</script>' . "\n" . '    <script src="js/RGBELoader.js"></script>',
+			'VRODOS_PLUGIN_URL_PLACEHOLDER',
+			esc_js( $this->plugin_path_url ),
 			$content
 		);
 

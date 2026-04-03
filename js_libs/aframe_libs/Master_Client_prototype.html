@@ -49,10 +49,16 @@
     <!---- Blink Controls ---->
     <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
 
-    <!-- Master Client Extracted Assets -->
-    <script src="js/vrodos_master_logic.js"></script>
-    <script src="js/RGBELoader.js"></script>
-    <script src="js/vrodos_master_components.js"></script>
+    <!-- Master Client Modular Runtime -->
+    <script>window.VRODOS_PLUGIN_URL = "VRODOS_PLUGIN_URL_PLACEHOLDER";</script>
+    <script src="js/master/vrodos_master_shared.js"></script>
+    <script src="js/master/vrodos_master_bootstrap.js"></script>
+    <script src="js/master/vrodos_master_rendering.js"></script>
+    <script src="js/master/components/vrodos_scene_loader.component.js"></script>
+    <script src="js/master/components/vrodos_avatar.component.js"></script>
+    <script src="js/master/components/vrodos_scene_settings.component.js"></script>
+    <script src="js/master/components/vrodos_navigation.component.js"></script>
+    <script src="js/master/components/vrodos_misc.component.js"></script>
 
 </head>
 
