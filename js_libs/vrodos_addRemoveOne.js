@@ -5,6 +5,53 @@ function getSceneObjectAddedAt(dataDrag) {
         : Math.floor(Date.now() / 1000);
 }
 
+function frameNewSceneObject(object3D) {
+    if (!object3D || !envir || !envir.cameraOrbit || !envir.orbitControls) {
+        return;
+    }
+
+    object3D.updateWorldMatrix(true, true);
+
+    const bounds = new THREE.Box3().setFromObject(object3D);
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+
+    if (bounds.isEmpty()) {
+        object3D.getWorldPosition(center);
+        size.set(1, 1, 1);
+    } else {
+        bounds.getCenter(center);
+        bounds.getSize(size);
+    }
+
+    const focusDimension = Math.max(size.x, size.y, size.z, 1);
+    const paddedSurface = Math.max(focusDimension * 2.4, 6);
+    const currentOffset = new THREE.Vector3().subVectors(envir.cameraOrbit.position, envir.orbitControls.target);
+
+    if (currentOffset.lengthSq() < 0.000001) {
+        currentOffset.set(envir.FRUSTUM_SIZE, envir.FRUSTUM_SIZE, envir.FRUSTUM_SIZE);
+    }
+
+    envir.orbitControls.target.copy(center);
+
+    if (envir.is2d) {
+        envir.cameraOrbit.position.set(center.x, envir.FRUSTUM_SIZE, center.z);
+    } else {
+        envir.cameraOrbit.position.copy(center).add(currentOffset);
+    }
+
+    if (typeof vrodosOrthoFitZoom === 'function') {
+        envir.cameraOrbit.zoom = vrodosOrthoFitZoom(envir.FRUSTUM_SIZE, envir.ASPECT, paddedSurface);
+    }
+
+    if (typeof vrodosClampNumber === 'function') {
+        envir.cameraOrbit.zoom = vrodosClampNumber(envir.cameraOrbit.zoom, 10, 5000, 600);
+    }
+
+    envir.cameraOrbit.updateProjectionMatrix();
+    envir.orbitControls.update();
+}
+
 function vrodosDecodeDisplayText(value) {
     let text = typeof value === 'string' ? value : '';
     if (!text) return '';
@@ -256,6 +303,7 @@ function vrodos_createLightSun(nameModel, addedAt) {
     transform_controls.attach(lightSun);
     removeAllCelOutlines();
     addCelOutline(lightSun);
+    frameNewSceneObject(lightSun);
 
     selected_object_name = nameModel;
     setTransformControlsSize();
@@ -324,6 +372,7 @@ function vrodos_createLightLamp(nameModel, addedAt) {
     transform_controls.attach(lightLamp);
     removeAllCelOutlines();
     addCelOutline(lightLamp);
+    frameNewSceneObject(lightLamp);
 
     lightLamp.color.setHex(hexcol);
     lightLamp.power = 10;
@@ -388,6 +437,7 @@ function vrodos_createLightSpot(nameModel, addedAt) {
     transform_controls.attach(lightSpot);
     removeAllCelOutlines();
     addCelOutline(lightSpot);
+    frameNewSceneObject(lightSpot);
 
     selected_object_name = nameModel;
     setTransformControlsSize();
@@ -431,6 +481,7 @@ function vrodos_createLightAmbient(nameModel, addedAt) {
     transform_controls.attach(lightAmbient);
     removeAllCelOutlines();
     addCelOutline(lightAmbient);
+    frameNewSceneObject(lightAmbient);
 
     selected_object_name = nameModel;
     setTransformControlsSize();
@@ -483,6 +534,7 @@ function vrodos_createPawn(nameModel, addedAt, pluginPath) {
             transform_controls.attach(Pawn);
             removeAllCelOutlines();
             addCelOutline(Pawn);
+            frameNewSceneObject(Pawn);
 
             selected_object_name = nameModel;
             setTransformControlsSize();
@@ -532,6 +584,7 @@ function vrodos_createGlbAsset(nameModel, addedAt, pluginPath) {
         envir.setComposerAndPasses();
         removeAllCelOutlines();
         addCelOutline(insertedObject);
+        frameNewSceneObject(insertedObject);
 
         selected_object_name = nameModel;
         setTransformControlsSize();
@@ -566,6 +619,7 @@ function vrodos_createAssessmentAsset(nameModel, addedAt) {
     transform_controls.attach(assessmentObject);
     removeAllCelOutlines();
     addCelOutline(assessmentObject);
+    frameNewSceneObject(assessmentObject);
 
     selected_object_name = nameModel;
     setTransformControlsSize();

@@ -1,23 +1,23 @@
 {
-    "name": "vrodos-plugin",
-    "version": "2.5.0",
-    "description": "VRodos WordPress Plugin",
-    "scripts": {
-        "lint": "eslint \"runtime/assets/js/master/**/*.js\"",
-        "lint:fix": "eslint \"runtime/assets/js/master/**/*.js\" --fix",
-        "format": "prettier --write \"**/*.{js,css,md,json}\"",
-        "build:css": "tailwindcss -i ./css/vrodos_modern.css -o ./css/vrodos_modern_compiled.css",
-        "watch:css": "tailwindcss -i ./css/vrodos_modern.css -o ./css/vrodos_modern_compiled.css --watch"
-    },
-    "devDependencies": {
-        "autoprefixer": "^10.4.27",
-        "daisyui": "^4.12.24",
-        "eslint": "^9.39.4",
-        "postcss": "^8.5.8",
-        "prettier": "^3.8.1",
-        "tailwindcss": "^3.4.19"
-    },
-    "engines": {
-        "node": ">=16.0.0"
-    }
+  "name": "vrodos-plugin",
+  "version": "2.5.0",
+  "description": "VRodos WordPress Plugin",
+  "scripts": {
+    "lint": "eslint \"runtime/assets/js/master/**/*.js\"",
+    "lint:fix": "eslint \"runtime/assets/js/master/**/*.js\" --fix",
+    "format": "prettier --write \"**/*.{js,css,md,json}\"",
+    "build:css": "tailwindcss -i ./css/vrodos_modern.css -o ./css/vrodos_modern_compiled.css",
+    "watch:css": "tailwindcss -i ./css/vrodos_modern.css -o ./css/vrodos_modern_compiled.css --watch"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.27",
+    "daisyui": "^4.12.24",
+    "eslint": "^9.39.4",
+    "postcss": "^8.5.8",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^3.4.19"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }
