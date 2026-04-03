@@ -26,7 +26,36 @@ function vrodosDecodeDisplayText(value) {
     return text;
 }
 
-function vrodosCreateAssessmentLabel(title, type) {
+function vrodosNormalizeAssessmentLevels(levels) {
+    let source = levels;
+
+    if (typeof source === 'string' && source.trim() !== '') {
+        try {
+            source = JSON.parse(source);
+        } catch (err) {
+            try {
+                const binary = window.atob(source);
+                const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+                const decoded = new TextDecoder('utf-8').decode(bytes);
+                source = JSON.parse(decoded);
+            } catch (base64Err) {
+                source = source.split(/[,\s]+/);
+            }
+        }
+    }
+
+    if (!Array.isArray(source)) {
+        return [];
+    }
+
+    return Array.from(new Set(
+        source
+            .map((level) => vrodosDecodeDisplayText(level).trim().toUpperCase())
+            .filter(Boolean)
+    ));
+}
+
+function vrodosCreateAssessmentLabel(title, type, levels) {
     if (typeof THREE.CSS2DObject === 'undefined') {
         return null;
     }
@@ -59,8 +88,18 @@ function vrodosCreateAssessmentLabel(title, type) {
     titleEl.style.fontWeight = '700';
     titleEl.style.lineHeight = '1.3';
 
+    const normalizedLevels = vrodosNormalizeAssessmentLevels(levels);
+    const levelsEl = document.createElement('div');
+    levelsEl.textContent = normalizedLevels.length ? `CEFR ${normalizedLevels.join(' / ')}` : 'CEFR All levels';
+    levelsEl.style.marginTop = '6px';
+    levelsEl.style.fontSize = '10px';
+    levelsEl.style.fontWeight = '700';
+    levelsEl.style.letterSpacing = '0.04em';
+    levelsEl.style.color = '#94a3b8';
+
     labelEl.appendChild(typeEl);
     labelEl.appendChild(titleEl);
+    labelEl.appendChild(levelsEl);
 
     const label = new THREE.CSS2DObject(labelEl);
     label.position.set(0, 0.9, 0);
@@ -80,7 +119,7 @@ function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
     assessmentGroup['assessment_group'] = vrodosDecodeDisplayText(resource.assessment_group || '');
     assessmentGroup['assessment_source_id'] = resource.assessment_source_id || '';
     assessmentGroup['assessment_content'] = resource.assessment_content || '';
-    assessmentGroup['assessment_levels'] = resource.assessment_levels || '';
+    assessmentGroup['assessment_levels'] = vrodosNormalizeAssessmentLevels(resource.assessment_levels || '');
     assessmentGroup['assessment_supported'] = resource.assessment_supported || 'false';
     assessmentGroup['addedAt'] = resource.addedAt || Math.floor(Date.now() / 1000);
     assessmentGroup.isSelectableMesh = true;
@@ -123,7 +162,8 @@ function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
 
     const label = vrodosCreateAssessmentLabel(
         assessmentGroup['assessment_title'],
-        assessmentGroup['assessment_type'] || assessmentGroup['assessment_group']
+        assessmentGroup['assessment_type'] || assessmentGroup['assessment_group'],
+        assessmentGroup['assessment_levels']
     );
     if (label) {
         assessmentGroup.add(label);

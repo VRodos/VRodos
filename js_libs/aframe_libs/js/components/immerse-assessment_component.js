@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    const CEFR_LEVELS = ["A1", "A2", "B1", "B2"];
+
     function decodeDisplayText(value) {
         let text = typeof value === "string" ? value : "";
         if (!text) {
@@ -30,6 +32,25 @@
         return text;
     }
 
+    function normalizeLevel(value) {
+        const normalized = String(value || "").trim().toUpperCase();
+        return CEFR_LEVELS.includes(normalized) ? normalized : "";
+    }
+
+    function normalizeLevels(values) {
+        if (!Array.isArray(values)) {
+            return [];
+        }
+
+        return Array.from(
+            new Set(
+                values
+                    .map((value) => normalizeLevel(value))
+                    .filter(Boolean)
+            )
+        );
+    }
+
     function decodeBase64Json(value, fallback) {
         if (!value) {
             return fallback;
@@ -54,6 +75,278 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#39;");
+    }
+
+    function getAssessmentLevels(element) {
+        return normalizeLevels(
+            decodeBase64Json(element.getAttribute("data-assessment-levels"), [])
+        );
+    }
+
+    function setAssessmentVisible(element, isVisible) {
+        element.setAttribute("visible", isVisible ? "true" : "false");
+
+        if (!element.dataset.immerseRaycastableOriginal) {
+            element.dataset.immerseRaycastableOriginal = element.classList.contains("raycastable") ? "true" : "false";
+        }
+
+        if (isVisible) {
+            if (element.dataset.immerseRaycastableOriginal === "true") {
+                element.classList.add("raycastable");
+            }
+        } else {
+            element.classList.remove("raycastable");
+        }
+    }
+
+    function getCefrRuntime() {
+        if (window.__vrodosImmerseCefrRuntime) {
+            return window.__vrodosImmerseCefrRuntime;
+        }
+
+        const runtime = {
+            elements: [],
+            selectedLevel: "",
+            selectedButton: null,
+            root: null,
+            chip: null,
+            chipButton: null,
+            continueButton: null,
+            initialized: false,
+            promptScheduled: false
+        };
+
+        runtime.register = function (element) {
+            if (!element || runtime.elements.includes(element)) {
+                return;
+            }
+
+            runtime.elements.push(element);
+            element.removeAttribute("data-vrodos-delayed-reveal");
+            setAssessmentVisible(element, false);
+            runtime.schedulePrompt();
+        };
+
+        runtime.matchesLevel = function (element, level) {
+            const levels = getAssessmentLevels(element);
+            if (!level) {
+                return false;
+            }
+
+            if (!levels.length) {
+                return true;
+            }
+
+            return levels.includes(level);
+        };
+
+        runtime.applyLevel = function (level) {
+            const normalizedLevel = normalizeLevel(level);
+            runtime.selectedLevel = normalizedLevel;
+            if (!normalizedLevel) {
+                return;
+            }
+
+            runtime.elements.forEach((element) => {
+                setAssessmentVisible(element, runtime.matchesLevel(element, normalizedLevel));
+            });
+
+            if (runtime.chipButton) {
+                runtime.chipButton.textContent = "CEFR " + normalizedLevel;
+            }
+        };
+
+        runtime.ensureUi = function () {
+            if (runtime.initialized) {
+                return;
+            }
+
+            const root = document.createElement("div");
+            root.id = "vrodos-immerse-cefr-overlay";
+            root.style.position = "fixed";
+            root.style.inset = "0";
+            root.style.zIndex = "2147481500";
+            root.style.display = "none";
+            root.style.alignItems = "center";
+            root.style.justifyContent = "center";
+            root.style.padding = "24px";
+            root.style.background = "rgba(2, 6, 23, 0.72)";
+            root.style.backdropFilter = "blur(10px)";
+
+            const panel = document.createElement("div");
+            panel.style.width = "min(560px, 100%)";
+            panel.style.borderRadius = "24px";
+            panel.style.background = "linear-gradient(180deg, #0f172a 0%, #111827 100%)";
+            panel.style.border = "1px solid rgba(148, 163, 184, 0.2)";
+            panel.style.boxShadow = "0 30px 80px rgba(2, 6, 23, 0.45)";
+            panel.style.padding = "26px";
+            panel.style.color = "#e5e7eb";
+            panel.style.fontFamily = "Segoe UI, sans-serif";
+
+            panel.innerHTML = [
+                '<div style="font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#7dd3fc;margin-bottom:8px;">Immerse CEFR Level</div>',
+                '<div style="font-size:28px;font-weight:800;line-height:1.15;margin-bottom:10px;">Choose your level</div>',
+                '<div style="font-size:15px;line-height:1.6;color:#cbd5e1;margin-bottom:18px;">Only assessments that match the selected CEFR level will be shown in this scene.</div>'
+            ].join("");
+
+            const buttonRow = document.createElement("div");
+            buttonRow.style.display = "grid";
+            buttonRow.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
+            buttonRow.style.gap = "12px";
+            buttonRow.style.marginBottom = "18px";
+
+            const buttons = {};
+            CEFR_LEVELS.forEach((level) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.textContent = level;
+                button.dataset.cefrLevel = level;
+                button.style.border = "1px solid rgba(148, 163, 184, 0.2)";
+                button.style.background = "rgba(15, 23, 42, 0.85)";
+                button.style.color = "#f8fafc";
+                button.style.borderRadius = "16px";
+                button.style.padding = "16px 12px";
+                button.style.fontSize = "18px";
+                button.style.fontWeight = "800";
+                button.style.cursor = "pointer";
+                button.style.transition = "transform 120ms ease, border-color 120ms ease, background 120ms ease";
+                button.addEventListener("click", () => {
+                    runtime.selectLevel(level);
+                });
+                buttonRow.appendChild(button);
+                buttons[level] = button;
+            });
+
+            const footer = document.createElement("div");
+            footer.style.display = "flex";
+            footer.style.justifyContent = "space-between";
+            footer.style.alignItems = "center";
+            footer.style.gap = "12px";
+
+            const helper = document.createElement("div");
+            helper.textContent = "You can change this later during the scene.";
+            helper.style.fontSize = "13px";
+            helper.style.color = "#94a3b8";
+
+            const continueButton = document.createElement("button");
+            continueButton.type = "button";
+            continueButton.textContent = "Start experience";
+            continueButton.style.border = "0";
+            continueButton.style.borderRadius = "999px";
+            continueButton.style.padding = "12px 18px";
+            continueButton.style.fontWeight = "800";
+            continueButton.style.cursor = "pointer";
+            continueButton.style.background = "#0f766e";
+            continueButton.style.color = "#f8fafc";
+            continueButton.style.opacity = "0.55";
+            continueButton.style.pointerEvents = "none";
+            continueButton.addEventListener("click", () => {
+                if (!runtime.selectedLevel) {
+                    return;
+                }
+
+                runtime.applyLevel(runtime.selectedLevel);
+                runtime.hidePrompt();
+            });
+
+            footer.appendChild(helper);
+            footer.appendChild(continueButton);
+            panel.appendChild(buttonRow);
+            panel.appendChild(footer);
+            root.appendChild(panel);
+            document.body.appendChild(root);
+
+            const chip = document.createElement("div");
+            chip.id = "vrodos-immerse-cefr-chip";
+            chip.style.position = "fixed";
+            chip.style.right = "20px";
+            chip.style.bottom = "20px";
+            chip.style.zIndex = "2147481400";
+            chip.style.display = "none";
+
+            const chipButton = document.createElement("button");
+            chipButton.type = "button";
+            chipButton.style.border = "1px solid rgba(148, 163, 184, 0.24)";
+            chipButton.style.borderRadius = "999px";
+            chipButton.style.padding = "10px 14px";
+            chipButton.style.background = "rgba(15, 23, 42, 0.9)";
+            chipButton.style.color = "#f8fafc";
+            chipButton.style.fontWeight = "800";
+            chipButton.style.cursor = "pointer";
+            chipButton.style.boxShadow = "0 16px 40px rgba(2, 6, 23, 0.35)";
+            chipButton.addEventListener("click", () => {
+                runtime.showPrompt();
+            });
+            chip.appendChild(chipButton);
+            document.body.appendChild(chip);
+
+            runtime.root = root;
+            runtime.levelButtons = buttons;
+            runtime.continueButton = continueButton;
+            runtime.chip = chip;
+            runtime.chipButton = chipButton;
+            runtime.initialized = true;
+
+            runtime.selectLevel(runtime.selectedLevel || "");
+        };
+
+        runtime.selectLevel = function (level) {
+            runtime.selectedLevel = normalizeLevel(level);
+
+            Object.entries(runtime.levelButtons || {}).forEach(([buttonLevel, button]) => {
+                const isActive = buttonLevel === runtime.selectedLevel;
+                button.style.background = isActive ? "rgba(15, 118, 110, 0.95)" : "rgba(15, 23, 42, 0.85)";
+                button.style.borderColor = isActive ? "rgba(94, 234, 212, 0.65)" : "rgba(148, 163, 184, 0.2)";
+                button.style.transform = isActive ? "translateY(-1px)" : "translateY(0)";
+            });
+
+            if (runtime.continueButton) {
+                const enabled = Boolean(runtime.selectedLevel);
+                runtime.continueButton.style.opacity = enabled ? "1" : "0.55";
+                runtime.continueButton.style.pointerEvents = enabled ? "auto" : "none";
+            }
+        };
+
+        runtime.showPrompt = function () {
+            runtime.ensureUi();
+            runtime.root.style.display = "flex";
+            runtime.chip.style.display = "none";
+            runtime.selectLevel(runtime.selectedLevel || "");
+        };
+
+        runtime.hidePrompt = function () {
+            if (runtime.root) {
+                runtime.root.style.display = "none";
+            }
+            if (runtime.chip) {
+                runtime.chip.style.display = "block";
+            }
+        };
+
+        runtime.schedulePrompt = function () {
+            if (runtime.promptScheduled) {
+                return;
+            }
+
+            runtime.promptScheduled = true;
+
+            const waitForSceneReady = () => {
+                const scene = document.querySelector("a-scene");
+                const loaderOverlay = document.getElementById("vrodos-scene-loader-overlay");
+
+                if (!scene || !scene.hasLoaded || loaderOverlay) {
+                    window.setTimeout(waitForSceneReady, 180);
+                    return;
+                }
+
+                runtime.showPrompt();
+            };
+
+            waitForSceneReady();
+        };
+
+        window.__vrodosImmerseCefrRuntime = runtime;
+        return runtime;
     }
 
     function getOverlayRuntime() {
@@ -333,6 +626,8 @@
     if (typeof AFRAME !== "undefined") {
         AFRAME.registerComponent("immerse-assessment-launcher", {
             init: function () {
+                getCefrRuntime().register(this.el);
+
                 this.onClick = () => {
                     const runtime = getOverlayRuntime();
                     runtime.open(payloadFromElement(this.el));
