@@ -129,17 +129,21 @@ function findSceneDimensions(){
     var hasSceneContent = false;
 
     for (var i = 0; i < envir.scene.children.length; i++) {
+        var sceneChild = envir.scene.children[i];
 
-        if (envir.scene.children[i].name !== "myTransformControls" &&
-            envir.scene.children[i].name !== "myGridHelper" &&
-            envir.scene.children[i].name !== "myAxisHelper" &&
-            envir.scene.children[i].name !== "orbitCamera" &&
-            envir.scene.children[i].name !== "avatarCamera") {
+        if (sceneChild.name !== "myTransformControls" &&
+            sceneChild.name !== "myGridHelper" &&
+            sceneChild.name !== "myAxisHelper" &&
+            sceneChild.name !== "orbitCamera" &&
+            sceneChild.name !== "avatarCamera") {
 
-            if ( envir.scene.children[i].category_name === 'lightHelper')
+            if (sceneChild.category_name === 'lightHelper' ||
+                sceneChild.category_name === 'lightTargetSpot' ||
+                sceneChild.name.startsWith('lightShadowHelper_') ||
+                sceneChild.vrodos_internal_helper === true)
                 continue;
 
-            var sizeXYZ_Arr = findObjectLimits(envir.scene.children[i]);
+            var sizeXYZ_Arr = findObjectLimits(sceneChild);
             hasSceneContent = true;
 
             xMin = Math.min(sizeXYZ_Arr[0].x, xMin);

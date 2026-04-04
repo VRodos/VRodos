@@ -147,12 +147,21 @@ const updatePointerLockControls = function(){
     if ( viewDown ) torgue.x += avatar_movement_speed_factor * delta;
 
     // Move avatar
-    envir.avatarControls.getObject().translateX( velocity.x );
-    envir.avatarControls.getObject().translateY( velocity.y );
-    envir.avatarControls.getObject().translateZ( velocity.z );
+    let pointerLockObject = (typeof vrodosGetPointerLockObject === 'function') ?
+        vrodosGetPointerLockObject(envir.avatarControls) :
+        (envir.avatarControls ? envir.avatarControls.object : null);
+
+    if (!pointerLockObject) {
+        prevTime = time;
+        return;
+    }
+
+    pointerLockObject.translateX( velocity.x );
+    pointerLockObject.translateY( velocity.y );
+    pointerLockObject.translateZ( velocity.z );
 
     // if (!avatarControlsEnabled)
-    envir.avatarControls.getObject().rotation.y += torgue.y;
+    pointerLockObject.rotation.y += torgue.y;
     envir.cameraAvatar.rotation.x += torgue.x;
 
     // moveUp = false;
@@ -217,11 +226,11 @@ const updatePointerLockControls = function(){
 //if ( moveForward )
 //    envir.orbitControls.object.translateY( - velocity.y * delta );
 
-//if ( envir.avatarControls.getObject().position.y < 1.80 ) {
+//if ( envir.avatarControls.object.position.y < 1.80 ) {
 //    velocity.y = 0;
-//    envir.avatarControls.getObject().position.y = 0;
-//    envir.avatarControls.getObject().children[1].position.y=0;
-//    envir.avatarControls.getObject().children[0].position.y=0;
+//    envir.avatarControls.object.position.y = 0;
+//    envir.avatarControls.object.children[1].position.y=0;
+//    envir.avatarControls.object.children[0].position.y=0;
 //
 //    canJump = true;
 //}

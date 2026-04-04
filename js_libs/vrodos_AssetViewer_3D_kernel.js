@@ -1,42 +1,19 @@
-/* 3D viewer for all types of files in assetEditor */
+/* GLB-only 3D viewer used by the asset editor. */
 class VRodos_AssetViewer_3D_kernel {
 
-    // asset_viewer_3d_kernel.scene.children :
-    // 0: root (pdb, audio, fbx, GLB, OBJ)
-    // 1,2,3,4: Directional light 1,2,3, 4: Ambient light
-
-    // PDB is the same loader for url and client side
-    // OBJ, FBX, and GLB call first an xhr loader in editor_scripts.js and then the streaming version here
-
-
-    // noinspection DuplicatedCode
     setZeroVars() {
-        this.nObj = 0;
-        this.nFbx = 0;
-        this.nMtl = 0;
-        this.nJpg = 0;
-        this.nPng = 0;
-        this.nPdb = 0;
-        this.nGif = 0;
-        this.nGlb = 0;
-        this.FbxBuffer = '';
-        this.texturesBuffer = [];
+        this.GlbBuffer = '';
     }
 
-    constructor(canvasToBindTo,
+    constructor(
+        canvasToBindTo,
         canvasLabelsToBindTo,
         animationButton,
         previewProgressLabel,
         previewProgressLine,
         back_3d_color,
-        audioElement,
-        pathUrl = null,
-        mtlFilename = null,
-        objFilename = null,
-        pdbFileContent = null,
-        fbxFilename = null,
+        audioElement = null,
         glbFilename = null,
-        textures_fbx_string_connected = null,
         statsSwitch = true,
         isBackGroundNull = false,
         lockTranslation = false,
@@ -44,93 +21,52 @@ class VRodos_AssetViewer_3D_kernel {
         assettrs = '0,0,0,0,0,0,0,0,-100',
         boundingSphereButton = null
     ) {
-
-        //console.log(pathUrl, fbxFilename + " t:" + textures_fbx_string_connected );
-
         this.statsSwitch = statsSwitch;
-
         this.canvasToBindTo = canvasToBindTo;
+        this.canvasLabelsToBindTo = canvasLabelsToBindTo;
         this.animationButton = animationButton;
         this.animationButtonWrapper = animationButton ? animationButton.parentElement : null;
-        this.boundingSphereButton = boundingSphereButton;
-        this.canvasLabelsToBindTo = canvasLabelsToBindTo;
         this.previewProgressLabel = previewProgressLabel;
         this.previewProgressLine = previewProgressLine;
+        this.back_3d_color = back_3d_color;
+        this.audioElement = audioElement;
+        this.boundingSphereButton = boundingSphereButton;
+        this.isBackGroundNull = isBackGroundNull;
+        this.assettrsDOM = document.getElementById('assettrs');
+        this.assettrs = (assettrs || '0,0,0,0,0,0,0,0,-100').split(',');
+        this.mixers = [];
+        this.action = null;
+        this.clock = new THREE.Clock();
+        this.idRequestFrame = null;
 
         this.setZeroVars();
-        this.back_3d_color = back_3d_color;
 
-        this.isBackGroundNull = isBackGroundNull;
-
-        this.FbxBuffer = '';
-        this.GlbBuffer = '';
-
-        this.path_url = null;
-        this.glb_file_name = null;
-        this.assettrsDOM = document.getElementById('assettrs');
-
-        this.assettrs = assettrs.split(',');
         this.scene = new THREE.Scene();
-
-        if (this.statsSwitch) {
-            this.stats = new Stats();
-            document.getElementById('wrapper_3d_inner').appendChild(this.stats.dom);
-            this.stats.dom.style.removeProperty("left");
-        }
-
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvasToBindTo,
             antialias: true,
             logarithmicDepthBuffer: true,
             alpha: true
         });
-
-        //this.renderer.setClearAlpha(1);
         this.renderer.setClearColor(0x000000, 0);
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-
-        this.renderer.domElement.addEventListener("click", onclick, true);
-        let selectedObject;
-
-
-        let scope = this;
-        let _avRaycaster = new THREE.Raycaster();
-        let _avMouse = new THREE.Vector2();
-        function onclick(event) {
-
-            _avMouse.x = ((event.clientX - scope.canvasToBindTo.getBoundingClientRect().left) /
-                scope.canvasToBindTo.clientWidth) * 2 - 1;
-            _avMouse.y = - ((event.clientY - scope.canvasToBindTo.getBoundingClientRect().top) /
-                scope.canvasToBindTo.clientHeight) * 2 + 1;
-
-            _avRaycaster.setFromCamera(_avMouse, scope.camera);
-
-            let intersects = _avRaycaster.intersectObjects(scope.scene.children[0].children, true); //array
-
-            //scope.raylineShow(raycaster);
-
-            if (intersects.length > 0) {
-                selectedObject = intersects[0];
-                if (scope.mixers.length > 0) {
-                    scope.playStopAnimation();
-                }
+        if (this.statsSwitch) {
+            this.stats = new Stats();
+            const wrapper = document.getElementById('wrapper_3d_inner');
+            if (wrapper) {
+                wrapper.appendChild(this.stats.dom);
+                this.stats.dom.style.removeProperty('left');
             }
         }
-
-
-        this.camera = null;
-        this.listener = null;
-
-        this.audioElement = audioElement;
 
         this.aspectRatio = 1;
         this.recalcAspectRatio();
 
-
-        let cameraPosX = this.assettrs[6];
-        let cameraPosY = this.assettrs[7];
-        let cameraPosZ = this.assettrs[8];
-
+        const cameraPosX = parseFloat(this.assettrs[6] || 0);
+        const cameraPosY = parseFloat(this.assettrs[7] || 0);
+        const cameraPosZ = parseFloat(this.assettrs[8] || -100);
 
         this.cameraDefaults = {
             posCamera: new THREE.Vector3(cameraPosX, cameraPosY, cameraPosZ),
@@ -140,950 +76,426 @@ class VRodos_AssetViewer_3D_kernel {
             fov: 45
         };
 
-        // Set up camera
-        this.camera = new THREE.PerspectiveCamera(this.cameraDefaults.fov,
-            this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far);
-
-        this.cameraTarget = this.cameraDefaults.posCameraTarget;
-
-        // Trackball or OrbitControls controls
+        this.camera = new THREE.PerspectiveCamera(
+            this.cameraDefaults.fov,
+            this.aspectRatio,
+            this.cameraDefaults.near,
+            this.cameraDefaults.far
+        );
+        this.cameraTarget = this.cameraDefaults.posCameraTarget.clone();
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-
-        //this.scene.add(new THREE.AxisHelper(5,5,5));
-
         this.controls.zoomSpeed = 1.02;
-        //this.controls.dynamicDampingFactor = 0.3;
-        //this.controls.dynamicDampingFactor = 0;
-        //this.controls.staticMoving = true;
-
         this.controls.enablePan = !lockTranslation;
         this.controls.enableZoom = enableZoom;
 
-        // this.updateTRSfields();
-        // this.controls.addEventListener('change', this.updateTRSfields);
-
-        // For the animation
-        this.clock = new THREE.Clock();
-        this.mixers = [];
-
-        // Scene.children[0] is root: Here all chemistry 3D and 2D labels items are stored
-        let root = new THREE.Group();
-        root.name = "root";
+        const root = new THREE.Group();
+        root.name = 'root';
         this.scene.add(root);
-
-        // const size = 10;
-        // const divisions = 10;
-        //
-        // const gridHelper = new THREE.GridHelper( size, divisions );
-        // this.scene.add( gridHelper );
-
 
         this.boundRender = this.render.bind(this);
         this.initGL();
+        this.attachAnimationClickHandler();
+        this.loader_asset_exists(glbFilename);
 
-
-        this.loader_asset_exists(pathUrl, mtlFilename,
-            objFilename, pdbFileContent,
-            fbxFilename, glbFilename,
-            textures_fbx_string_connected);
-
-        // Resize Canvas
         this.canvasResizeBounded = this.onCanvasResize.bind(this);
         window.addEventListener('resize', this.canvasResizeBounded, true);
+    }
+
+    attachAnimationClickHandler() {
+        this.renderer.domElement.addEventListener('click', (event) => {
+            const root = this.scene.getObjectByName('root');
+            if (!root) {
+                return;
+            }
+
+            const mouse = new THREE.Vector2();
+            const raycaster = new THREE.Raycaster();
+            const rect = this.canvasToBindTo.getBoundingClientRect();
+
+            mouse.x = ((event.clientX - rect.left) / this.canvasToBindTo.clientWidth) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / this.canvasToBindTo.clientHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, this.camera);
+
+            const intersects = raycaster.intersectObjects(root.children, true);
+            if (intersects.length > 0 && this.mixers.length > 0) {
+                this.playStopAnimation();
+            }
+        }, true);
     }
 
     onCanvasResize() {
         this.resizeDisplayGL();
     }
 
-    raylineShow(raycasterPick) {
-
-        let points = [];
-
-        let c = 1000;
-        points.push(raycasterPick.ray.origin);
-        points.push(new THREE.Vector3((raycasterPick.ray.origin.x + c * raycasterPick.ray.direction.x),
-            (raycasterPick.ray.origin.y + c * raycasterPick.ray.direction.y),
-            (raycasterPick.ray.origin.z + c * raycasterPick.ray.direction.z))
-        );
-
-        let geolinecast = new THREE.BufferGeometry().setFromPoints(points);
-
-        let myBulletLine = new THREE.Line(geolinecast, new THREE.LineBasicMaterial({ color: 0x0000ff }));
-        myBulletLine.name = 'rayLine';
-
-        this.scene.add(myBulletLine);
-
-        // This will force scene to update and show the line
-        //this.camera.position.x += 0.1;
-
-        // let scope = this;
-        // setTimeout(function () {
-        //      scope.camera.position.x -= 0.2;
-        //  }, 1500);
-
-        // Remove the line
-        // setTimeout(function () {
-        //     scope.scene.remove(scope.scene.getObjectByName('rayLine'));
-        // }, 3500);
-
-
-    }
-
-
-    // Add OrbitControl listeners to render on demand
     addControlEventListeners() {
-
         this.controls.addEventListener('change', this.boundRender);
-
-        // this.controls.dispatchEvent( { type: 'change' } );
-        //window.addEventListener('resize', this.boundRender);
     }
 
-    // Remove OrbitControl listeners to render on demand. (this is useful for continuous animation)
     removeControlEventListeners() {
-
         this.controls.removeEventListener('change', this.boundRender);
-
-        //window.removeEventListener('resize', this.boundRender);
     }
 
-    // Check if animations array contains playable clips (some exporters embed empty/single-frame clips)
     hasPlayableAnimations(animations) {
-        if (!animations || animations.length === 0) return false;
-        return animations.some(clip => clip.duration > 0 && clip.tracks && clip.tracks.length > 0);
+        if (!animations || animations.length === 0) {
+            return false;
+        }
+
+        return animations.some((clip) => clip.duration > 0 && clip.tracks && clip.tracks.length > 0);
     }
 
-    // Play or Stop animation
     playStopAnimation() {
+        if (!this.action) {
+            return;
+        }
 
-        if (!this.action) return;
         if (!this.action.isRunning()) {
-
             this.removeControlEventListeners();
             this.startAutoLoopRendering();
 
-            // Play the audio
             if (this.audioElement) {
                 this.audioElement.play();
             }
 
-            // Play the animation
             this.action.paused = false;
             this.action.play();
-
-        } else {
-
-            this.stopAutoLoopRendering();
-            this.addControlEventListeners();
-
-            if (this.audioElement) {
-                this.audioElement.pause();
-            }
-            this.action.paused = true;
-
+            return;
         }
+
+        this.stopAutoLoopRendering();
+        this.addControlEventListeners();
+
+        if (this.audioElement) {
+            this.audioElement.pause();
+        }
+
+        this.action.paused = true;
     }
 
-    // Start Renderer amd label Renderer
     render() {
-
-        if (!this.renderer.autoClear)
+        if (!this.renderer.autoClear) {
             this.renderer.clear();
+        }
 
-        if (this.statsSwitch) {
+        if (this.statsSwitch && this.stats) {
             this.stats.update();
         }
+
         this.renderer.render(this.scene, this.camera);
         this.labelRenderer.render(this.scene, this.camera);
 
-        // Animation
         if (this.mixers.length > 0) {
             this.mixers[0].update(this.clock.getDelta());
         }
 
-
         if (this.assettrsDOM) {
-            this.assettrsDOM.value = `${Math.round(this.controls.object.position.x * 1000) / 1000},` +
-                `${Math.round(this.controls.object.position.y * 1000) / 1000},` +
-                `${Math.round(this.controls.object.position.z * 1000) / 1000},` +
-                `${Math.round(this.controls.object.rotation.x * 1000) / 1000},` +
-                `${Math.round(this.controls.object.rotation.y * 1000) / 1000},` +
-                `${Math.round(this.controls.object.rotation.z * 1000) / 1000},` +
+            this.assettrsDOM.value = `${Math.round(this.camera.position.x * 1000) / 1000},` +
+                `${Math.round(this.camera.position.y * 1000) / 1000},` +
+                `${Math.round(this.camera.position.z * 1000) / 1000},` +
+                `${Math.round(this.camera.rotation.x * 1000) / 1000},` +
+                `${Math.round(this.camera.rotation.y * 1000) / 1000},` +
+                `${Math.round(this.camera.rotation.z * 1000) / 1000},` +
                 `${Math.round(this.camera.position.x * 1000) / 1000},` +
                 `${Math.round(this.camera.position.y * 1000) / 1000},` +
                 `${Math.round(this.camera.position.z * 1000) / 1000}`;
         }
-
     }
 
-    // Render only when OrbitControls change of window is resized
     kickRendererOnDemand() {
         this.render();
         this.addControlEventListeners();
         this.resizeDisplayGL();
         this.render();
-        if (this.previewProgressLabel)
-            this.previewProgressLabel.style.visibility = "hidden";
+        this.setPreviewLoading(false);
     }
 
-    // Start auto loop (when animation)
     startAutoLoopRendering() {
-        // continuous rendering
-        let scope = this;
-
-        let looprender = function () {
-            scope.idRequestFrame = requestAnimationFrame(looprender);
-            scope.boundRender();
-        }
+        const looprender = () => {
+            this.idRequestFrame = requestAnimationFrame(looprender);
+            this.boundRender();
+        };
 
         looprender();
     }
 
-    // Stop auto loop rendering (when animation)
     stopAutoLoopRendering() {
         cancelAnimationFrame(this.idRequestFrame);
+        this.idRequestFrame = null;
     }
 
-    /**
-     * Reading from  files on client side for OBJ, FBX, and GLB
-     */
-    checkerCompleteReading(whocalls) {
-
-        if ((this.nObj === 1 && this.objFileContent !== '') ||
-            (this.nFbx === 1 && this.FbxBuffer !== '') || (this.nGlb === 1 && this.GlbBuffer !== '')) {
-
-            // Show progress slider
-
-            // Make the definition with the obj
-            if (this.nObj === 1) {
-
-                let objFileContent = document.getElementById('objFileInput').value;
-                let mtlFileContent = document.getElementById('mtlFileInput').value;
-
-
-                let encoder = new TextEncoder();
-                let uint8Array = encoder.encode(objFileContent);
-
-                let objectDefinition = {
-                    name: this.nObj === 1 ? 'userObj' : 'userFbx',
-                    objAsArrayBuffer: uint8Array,
-                    pathTexture: "",
-                    mtlAsString: null
-                };
-
-                if (this.nMtl === 0) {
-                    // Start without MTL
-                    this.loadObjStream(objectDefinition);
-
-                } else {
-                    if (mtlFileContent !== '') {
-
-                        objectDefinition.mtlAsString = mtlFileContent;
-
-                        if (this.nJpg === 0 && this.nPng === 0) {
-                            // Start without Textures
-                            this.loadObjStream(objectDefinition);
-
-                        } else {
-                            // Else check if textures have been loaded
-                            let textFil = document.querySelectorAll("input[id='textureFileInput']");
-                            let nTexturesLength = textFil.length;
-
-                            if ((this.nPng > 0 && this.nPng === nTexturesLength)
-                                || (this.nJpg > 0 && this.nJpg === nTexturesLength)) {
-
-                                // Store here the raw image textures
-                                objectDefinition.pathTexture = [];
-
-                                for (let k = 0; k < textFil.length; k++) {
-                                    let myname = textFil[k].name;
-
-                                    // do some text processing on the names to remove textureFileInput[ and ] from name
-                                    myname = myname.replace('textureFileInput[', '');
-                                    myname = myname.replace(']', '');
-
-                                    objectDefinition.pathTexture[myname] = textFil[k].value;
-                                }
-
-
-
-                                this.loadObjStream(objectDefinition);
-                            }
-                        }
-                    }
-                }
-            } else if (this.nFbx === 1) {
-
-                // Get all fields
-                let texturesStreams = document.querySelectorAll("input[id='textureFileInput']");
-                let nTexturesLoaded = texturesStreams.length;
-
-                if (nTexturesLoaded < this.nJpg || nTexturesLoaded < this.nPng || nTexturesLoaded < this.nGif) {
-                    return;
-                }
-
-                if (nTexturesLoaded === 0)
-                    texturesStreams = '';
-
-                // console.log("Ignite reading fbx");
-
-                this.loadFbxStream(this.FbxBuffer, texturesStreams);
-
-            } else if (this.nGlb === 1) {
-                this.loadGlbStream(this.GlbBuffer);
-
-            }
-
+    checkerCompleteReading() {
+        if (this.GlbBuffer) {
+            this.loadGlbStream(this.GlbBuffer);
         }
     }
 
-    // Initialize Scene
     initGL() {
-
         this.scene.background = this.isBackGroundNull ? null : new THREE.Color(this.back_3d_color);
 
-        // - Label renderer -
         this.labelRenderer = new THREE.CSS2DRenderer();
         this.labelRenderer.domElement.style.position = 'absolute';
         this.labelRenderer.domElement.style.top = '0';
-        this.labelRenderer.domElement.style.fontSize = "25pt";
-        this.labelRenderer.domElement.style.textShadow = "-1px -1px #000, 1px -1px #000, -1px 1px  #000, 1px 1px #000";
+        this.labelRenderer.domElement.style.fontSize = '25pt';
+        this.labelRenderer.domElement.style.textShadow = '-1px -1px #000, 1px -1px #000, -1px 1px  #000, 1px 1px #000';
         this.labelRenderer.domElement.style.pointerEvents = 'none';
-
-
-        // add label renderer
         this.canvasLabelsToBindTo.appendChild(this.labelRenderer.domElement);
 
-
-        // Add audio listener to the camera
         if (this.audioElement != null) {
             this.listener = new THREE.AudioListener();
             this.camera.add(this.listener);
             this.positionalAudio = new THREE.PositionalAudio(this.listener);
-
-            this.positionalAudio.name = "audio1";
+            this.positionalAudio.name = 'audio1';
             this.positionalAudio.setMediaElementSource(this.audioElement);
             this.positionalAudio.setRefDistance(200);
             this.positionalAudio.setDirectionalCone(330, 230, 0.01);
-
-            // This adds the audio element to loaded 3D object
-            this.scene.getChildByName('root').add(this.positionalAudio);
+            this.scene.getObjectByName('root').add(this.positionalAudio);
         }
 
         this.resetCamera();
 
-        // Light
-        let ambientLight = new THREE.AmbientLight(0x404040, 2);
-        let directionalLight1 = new THREE.DirectionalLight(0xA0A050);
-        let directionalLight2 = new THREE.DirectionalLight(0x909050);
-        let directionalLight3 = new THREE.DirectionalLight(0xA0A050);
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        const directionalLight1 = new THREE.DirectionalLight(0xa0a050);
+        const directionalLight2 = new THREE.DirectionalLight(0x909050);
+        const directionalLight3 = new THREE.DirectionalLight(0xa0a050);
 
         directionalLight1.position.set(-1000, -550, 1000);
         directionalLight2.position.set(1000, 550, -1000);
         directionalLight3.position.set(0, 550, 0);
 
-        // Scene.children[1],[2],[3],[4] are lights
         this.scene.add(directionalLight1);
         this.scene.add(directionalLight2);
         this.scene.add(directionalLight3);
         this.scene.add(ambientLight);
-
-        return true;
     }
 
-    // Clear Previous model
     clearAllAssets(whocalls) {
-
-        //        console.log("CLEARING", whocalls);
-
         this.setZeroVars();
-
-        // Hide animation button wrapper
-        if (this.animationButtonWrapper) this.animationButtonWrapper.style.display = "none";
-
-        // Show placeholder again
-        var placeholder = document.getElementById('preview3dPlaceholder');
-        if (placeholder) placeholder.style.display = '';
-
-        // Clear animations
+        this.stopAutoLoopRendering();
         this.mixers = [];
         this.action = null;
 
-        // Clear any GLB, FBX, PDB or OBJ and dispose GPU resources
-        let rootObj = this.scene.getObjectByName('root');
-        if (rootObj) {
-            rootObj.traverse(function (node) {
-                if (node.geometry) node.geometry.dispose();
-                if (node.material) {
-                    let materials = Array.isArray(node.material) ? node.material : [node.material];
-                    materials.forEach(function (mat) {
-                        for (let key in mat) {
-                            if (mat[key] && typeof mat[key].dispose === 'function') {
-                                mat[key].dispose();
-                            }
-                        }
-                        mat.dispose();
-                    });
+        if (this.animationButtonWrapper) {
+            this.animationButtonWrapper.style.display = 'none';
+        }
+
+        if (this.boundingSphereButton) {
+            this.boundingSphereButton.style.display = 'none';
+        }
+
+        const placeholder = document.getElementById('preview3dPlaceholder');
+        if (placeholder) {
+            placeholder.style.display = '';
+        }
+
+        const existingSphere = this.scene.getObjectByName('myBoundingSphere');
+        if (existingSphere && existingSphere.parent) {
+            existingSphere.parent.remove(existingSphere);
+        }
+
+        const rootObj = this.scene.getObjectByName('root');
+        if (!rootObj) {
+            return;
+        }
+
+        rootObj.traverse((node) => {
+            if (node.geometry) {
+                node.geometry.dispose();
+            }
+
+            if (!node.material) {
+                return;
+            }
+
+            const materials = Array.isArray(node.material) ? node.material : [node.material];
+            materials.forEach((material) => {
+                for (const key in material) {
+                    if (material[key] && typeof material[key].dispose === 'function') {
+                        material[key].dispose();
+                    }
                 }
+                material.dispose();
             });
-            if (rootObj.clear) rootObj.clear(); // remove all children of root
+        });
+
+        if (rootObj.clear) {
+            rootObj.clear();
         }
     }
 
-    /* OBJ Loader */
-    loadObjStream(objDef) {
-
-        let prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-            objDef.name,
-            objDef.objAsArrayBuffer,
-            objDef.pathTexture,  // URL if already uploaded or array of raw images if in preview (client side)
-            objDef.mtlAsString
-        );
-
-        prepData.setSceneGraphBaseNode(this.scene.getChildByName('root'));
-        prepData.setStreamMeshes(true);
-        this.wwObjLoader2.prepareRun(prepData);
-        this.wwObjLoader2.run();
-    }
-
-
-    /* FBX loader */
-    loadFbxStream(fbxBuffer, texturesStreams) {
-
-        // Clear Previous
-        this.clearAllAssets("loadFbxStream");
-
-        let fbxLoader = new THREE.FBXLoader();
-
-        let fbxObject = fbxLoader.parseStream(fbxBuffer, texturesStreams);
-
-        // With animation
-        if (this.hasPlayableAnimations(fbxObject.animations)) {
-
-            fbxObject.mixer = new THREE.AnimationMixer(fbxObject);
-
-            this.mixers.push(fbxObject.mixer);
-
-            this.action = fbxObject.mixer.clipAction(fbxObject.animations[0]);
-
-            // Display button to start animation inside the Asset 3D previewer
-            this.animationButtonWrapper.style.display = "";
-
-            // No-animation
-        } else {
-            this.animationButtonWrapper.style.display = "none";
+    getDracoDecoderPath() {
+        if (window.vrodos_three_decoder_path) {
+            return window.vrodos_three_decoder_path;
         }
 
-        // FBX is added to root
-        this.scene.getChildByName("root").add(fbxObject);
+        if (typeof vrodos_data !== 'undefined' && vrodos_data.pluginPath) {
+            return vrodos_data.pluginPath + 'js_libs/threejs173/draco/';
+        }
 
-        // zoom
-        this.zoomer(this.scene.getChildByName('root'));
-
-        // Kick renderer
-        let scope = this;
-        setTimeout(function () { scope.kickRendererOnDemand(); }, 500);
-        var placeholder = document.getElementById('preview3dPlaceholder');
-        if (placeholder) placeholder.style.display = 'none';
+        return '../wp-content/plugins/VRodos/js_libs/threejs173/draco/';
     }
 
-    /* GLB GLTF loader */
-    loadGlbStream(GlbBuffer) {
-        let scope = this;
-
-        // Clear Previous
-        this.clearAllAssets("loadGlbStream");
-
-        let manager = new THREE.LoadingManager();
-        manager.onProgress = function (item, loaded, total) { };
-
-        let glbLoader = new THREE.GLTFLoader(manager);
-
+    createGlbLoader() {
+        const loader = new THREE.GLTFLoader();
         const dracoLoader = new THREE.DRACOLoader();
-        dracoLoader.setDecoderPath('/wp-content/plugins/vrodos/js_libs/threejs147/draco/');
-        glbLoader.setDRACOLoader(dracoLoader);
+        dracoLoader.setDecoderPath(this.getDracoDecoderPath());
+        loader.setDRACOLoader(dracoLoader);
+        return loader;
+    }
 
+    setPreviewLoading(isVisible) {
+        if (this.previewProgressLabel) {
+            this.previewProgressLabel.style.visibility = isVisible ? 'visible' : 'hidden';
+        }
 
-        // Load a glTF resource
-        glbLoader.parse(
-            GlbBuffer, '',
-            // called when the resource is loaded
-            function (gltf) {
+        if (this.previewProgressLine) {
+            this.previewProgressLine.style.width = isVisible ? '0%' : '100%';
+        }
+    }
 
-                if (scope.hasPlayableAnimations(gltf.animations)) {
+    handleLoadedGltf(gltf) {
+        if (this.hasPlayableAnimations(gltf.animations)) {
+            const glbMixer = new THREE.AnimationMixer(gltf.scene);
+            this.mixers.push(glbMixer);
+            this.action = glbMixer.clipAction(gltf.animations[0]);
 
-                    let glbMixer = new THREE.AnimationMixer(gltf.scene);
-                    scope.mixers.push(glbMixer);
-                    scope.action = glbMixer.clipAction(gltf.animations[0]);
+            if (this.animationButtonWrapper) {
+                this.animationButtonWrapper.style.display = '';
+            }
+        } else if (this.animationButtonWrapper) {
+            this.animationButtonWrapper.style.display = 'none';
+        }
 
-                    // Display button to start animation inside the Asset 3D previewer
-                    scope.animationButtonWrapper.style.display = "";
+        if (this.boundingSphereButton) {
+            this.boundingSphereButton.style.display = 'inline-block';
+        }
 
-                } else {
+        this.scene.getObjectByName('root').add(gltf.scene);
+        this.zoomer(this.scene.getObjectByName('root'));
+        this.kickRendererOnDemand();
 
-                    // Display button to start animation inside the Asset 3D previewer
-                    scope.animationButtonWrapper.style.display = "none";
+        const placeholder = document.getElementById('preview3dPlaceholder');
+        if (placeholder) {
+            placeholder.style.display = 'none';
+        }
+    }
 
-                }
+    loadGlbStream(glbBuffer) {
+        this.clearAllAssets('loadGlbStream');
+        this.setPreviewLoading(true);
 
-                scope.scene.getObjectByName('root').add(gltf.scene);
-                scope.zoomer(scope.scene.getObjectByName('root'));
-                scope.kickRendererOnDemand();
-                var placeholder = document.getElementById('preview3dPlaceholder');
-                if (placeholder) placeholder.style.display = 'none';
-                //setTimeout(function(){scope.kickRendererOnDemand();} , 1);
-
-            },
+        const loader = this.createGlbLoader();
+        loader.parse(
+            glbBuffer,
             '',
-            // called when loading has errors
-            function (error) {
-
-                console.log('An error happened');
-
+            (gltf) => {
+                this.handleLoadedGltf(gltf);
+            },
+            (error) => {
+                console.log('An error happened', error);
+                this.setPreviewLoading(false);
             }
         );
-
     }
 
-    /*  Auto zoom on obj with multiple meshes */
     computeSceneBoundingSphereAll(myGroupObj) {
-        let sceneBSCenter = new THREE.Vector3(0, 0, 0);
-        let sceneBSRadius = 0;
-        let nObjects = 0;
+        const box = new THREE.Box3().setFromObject(myGroupObj);
+        const sphere = new THREE.Sphere();
+        box.getBoundingSphere(sphere);
 
-        myGroupObj.traverse(function (object) {
-            if (object instanceof THREE.Mesh) {
-
-                //console.log(object.position);
-                sceneBSCenter.add(object.position);
-                nObjects++;
-            }
-        });
-
-        // console.log(nObjects, sceneBSCenter);
-        sceneBSCenter.divideScalar(nObjects);
-
-        myGroupObj.traverse(function (object) {
-            if (object instanceof THREE.Mesh) {
-                object.geometry.computeBoundingSphere();
-
-                // Object radius
-                let radius = object.geometry.boundingSphere.radius;
-
-                //                console.log(object.name + " " + radius, object.position);
-
-
-                if (radius) {
-                    sceneBSRadius = Math.max(sceneBSRadius, radius + object.position.length());
-                }
-            }
-        });
-
-        let sphereGeometry = new THREE.SphereGeometry(sceneBSRadius, 32, 32);
-        let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
-        let sphereObject = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        const safeRadius = Math.max(sphere.radius || 0, 0.1);
+        const sphereGeometry = new THREE.SphereGeometry(safeRadius, 32, 32);
+        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        const sphereObject = new THREE.Mesh(sphereGeometry, sphereMaterial);
         sphereObject.visible = false;
-        sphereObject.name = "myBoundingSphere";
+        sphereObject.name = 'myBoundingSphere';
 
-        return [sceneBSCenter, sceneBSRadius, sphereObject];
+        return [sphere.center.clone(), safeRadius, sphereObject];
     }
-
 
     showHideBoundSphere() {
-        let sphObj = this.scene.getObjectByName('myBoundingSphere');
-        let isVisible = sphObj.visible;
-        sphObj.visible = !isVisible;
+        const sphObj = this.scene.getObjectByName('myBoundingSphere');
+        if (!sphObj) {
+            return;
+        }
+
+        sphObj.visible = !sphObj.visible;
         this.render();
     }
 
-
-    //-------------------- loading from saved data --------------------------------------
-    loader_asset_exists(pathUrl = null, mtlFilename = null,
-        objFilename = null, pdbFileContent = null,
-        fbxFilename = null, glbFilename = null,
-        textures_fbx_string_connected = null) {
-
-        if (this.scene != null) {
-            if (this.renderer)
-                this.clearAllAssets("loader_asset_exists");
+    loader_asset_exists(glbFilename = null) {
+        if (this.renderer) {
+            this.clearAllAssets('loader_asset_exists');
         }
 
-
-
-
-        // GLB
-        if (glbFilename) {
-            //console.log("Loading from existing resource","GLB");
-            //console.log("glbFilename", glbFilename);
-
-            // Show progress slider now that we are actually loading
-            if (this.previewProgressLabel)
-                this.previewProgressLabel.style.visibility = "visible";
-
-            // Instantiate a loader
-            const loader = new THREE.GLTFLoader();
-
-            // Set up DRACOLoader with dynamic path
-            const dracoLoader = new THREE.DRACOLoader();
-
-            // Try to get plugin path from localized data, fallback to relative
-            let dracoPath = (typeof vrodos_data !== 'undefined' && vrodos_data.pluginPath) ?
-                vrodos_data.pluginPath + 'js_libs/threejs147/draco/' :
-                '../wp-content/plugins/VRodos/js_libs/threejs147/draco/';
-
-            dracoLoader.setDecoderPath(dracoPath);
-            loader.setDRACOLoader(dracoLoader);
-
-            let scope = this;
-
-            if (glbFilename) {
-                // Load a glTF resource
-                loader.load(
-                    // resource URL
-                    glbFilename,
-                    // called when the resource is loaded
-                    function (gltf) {
-
-                        if (scope.hasPlayableAnimations(gltf.animations)) {
-
-                            let glbmixer = new THREE.AnimationMixer(gltf.scene);
-                            scope.mixers.push(glbmixer);
-                            scope.action = glbmixer.clipAction(gltf.animations[0]);
-
-                            // Display button to start animation inside the Asset 3D previewer
-                            scope.animationButtonWrapper.style.display = "";
-
-                        } else {
-
-                            // Display button to start animation inside the Asset 3D previewer
-                            scope.animationButtonWrapper.style.display = "none";
-                        }
-
-                        if (scope.boundingSphereButton) {
-                            scope.boundingSphereButton.style.display = "inline-block";
-                        }
-
-                        // Add to root
-                        scope.scene.getObjectByName('root').add(gltf.scene);
-                        scope.zoomer(scope.scene.getObjectByName('root'));
-                        scope.kickRendererOnDemand();
-                        var placeholder = document.getElementById('preview3dPlaceholder');
-                        if (placeholder) placeholder.style.display = 'none';
-
-
-                    },
-                    // called while loading is progressing
-                    function (xhr) {
-
-                        scope.previewProgressLabel.innerHTML =
-                            Math.floor(xhr.loaded / 104857.6) / 10 + ' Mb';
-
-                    },
-                    // called when loading has errors
-                    function (error) {
-
-                        console.log('An error happened', error);
-
-                    }
-                );
-            }
-
-            // OBJ load
-        } else if (pathUrl) {
-
-            //console.log("Loading from existing resource","OBJ");
-
-            let scope = this;
-
-            let manager = new THREE.LoadingManager();
-
-            if (objFilename) { // this means that 3D model exists for this asset
-
-                var mtlLoader = new THREE.MTLLoader();
-
-                mtlLoader.setPath(pathUrl);
-
-                mtlLoader.load(mtlFilename, function (materials) {
-                    materials.preload();
-
-                    var objLoader = new THREE.OBJLoader(manager);
-                    objLoader.setMaterials(materials);
-                    objLoader.setPath(pathUrl);
-
-                    objLoader.load(objFilename, 'after',
-                        // OnObjLoad
-                        function (object) {
-
-                            // Find bounding sphere
-                            let sphere = scope.computeSceneBoundingSphereAll(object);
-
-                            // translate object to the center
-                            object.traverse(function (object) {
-                                if (object instanceof THREE.Mesh) {
-                                    object.geometry.translate(-sphere[0].x, -sphere[0].y, -sphere[0].z);
-                                }
-                            });
-
-                            // Add to pivot
-                            scope.scene.getChildByName('root').add(object);
-
-                            // Find new zoom
-                            var totalradius = sphere[1];
-                            scope.controls.minDistance = 0.001 * totalradius;
-                            scope.controls.maxDistance = 15 * totalradius;
-
-                            scope.zoomer(scope.scene.getChildByName('root'));
-                            scope.kickRendererOnDemand();
-                            var placeholder = document.getElementById('preview3dPlaceholder');
-                            if (placeholder) placeholder.style.display = 'none';
-
-    
-                        },
-                        //onObjProgressLoad
-                        function (xhr) {
-
-                            if (this.previewProgressLabel) {
-                                this.previewProgressLabel.innerHTML =
-                                    Math.round(xhr.loaded / xhr.total * 100) + '% loaded';
-                                //Math.round(xhr.loaded / 1000) + "KB";
-                            }
-                        },
-                        //onObjErrorLoad
-                        function (xhr) {
-                            console.log("Error 351");
-                        }
-                    );
-                });
-
-
-            } else if (fbxFilename) {
-
-
-                //console.log("Loading from existing resource","FBX");
-
-                // split texture string into each texture
-                let url_files = textures_fbx_string_connected.split('|');
-
-
-
-                if (url_files[0].includes('.jpg')) {
-                    this.nJpg = url_files.length;
-                } else if (url_files[0].includes('.png')) {
-                    this.nJpg = url_files.length;
-                } else if (url_files[0].includes('.gif')) {
-                    this.nJpg = url_files.length;
-                }
-
-                // console.log("this.nJpg", this.nJpg);
-
-
-                // Add the fbx also
-                url_files.push(pathUrl + fbxFilename);
-
-                for (let i = 0; i < url_files.length; i++) {
-
-                    let xhr = new XMLHttpRequest();
-                    let basename = '';
-
-                    let url = url_files[i];//.replace('http:', 'https:');
-
-
-                    if (url.includes(".txt")) {
-
-                        // We want the basename and the extension for naming the file object
-                        basename = url.replace('.txt', '.fbx');
-                        basename = new String(basename).substring(basename.lastIndexOf('/') + 1);
-
-                        // Set xhr to get the url as text
-                        xhr.open('GET', url, true);
-                        //xhr.responseType = 'text';
-                        xhr.responseType = 'arraybuffer';
-
-                    } else if (url.includes("texture")) {
-
-                        basename = new String(url).substring(url.lastIndexOf('/') + 1);
-
-                        let file_extension = basename.split('.').pop();
-
-                        let i_first_underscore = basename.indexOf('_');
-                        let i_last_underscore = basename.lastIndexOf('_');
-                        basename = basename.substring(i_first_underscore + 1, i_last_underscore);
-                        basename = basename.replace('texture_', '');
-
-                        basename = basename + "." + file_extension;
-                        xhr.open('GET', url, true);
-                        xhr.responseType = 'blob';
-                    }
-
-                    let scope = this;
-
-                    xhr.onload = function (e) {
-                        if (this.status === 200) {
-
-                            let file = new File([this.response], basename);
-                            scope.file_reader_cortex2(file);
-                        }
-                    };
-
-                    xhr.send();
-                }
-
-            } else {
-                console.log("WARNING", "UNKNOWN 155");
-            }
+        if (!glbFilename) {
+            return;
         }
 
+        this.setPreviewLoading(true);
+
+        const loader = this.createGlbLoader();
+        loader.load(
+            glbFilename,
+            (gltf) => {
+                this.handleLoadedGltf(gltf);
+            },
+            (xhr) => {
+                if (!this.previewProgressLine || !xhr.total) {
+                    return;
+                }
+
+                const progress = Math.max(0, Math.min(100, Math.round((xhr.loaded / xhr.total) * 100)));
+                this.previewProgressLine.style.width = progress + '%';
+            },
+            (error) => {
+                console.log('An error happened', error);
+                this.setPreviewLoading(false);
+            }
+        );
     }
 
-
-    // File reader cortex
-    file_reader_cortex2(file) {
-
-        let scope = this;
-
-        // Get the extension
-        let type = file.name.split('.').pop();
-
-        // set the reader
-        let reader = new FileReader();
-
-        switch (type) {
-            case 'pdb': this.nPdb = 1; reader.readAsText(file); break;
-            case 'mtl': this.nMtl = 1; reader.readAsText(file); break;
-            case 'obj': this.nObj = 1; reader.readAsArrayBuffer(file); break;
-            case 'fbx': this.nFbx = 1; reader.readAsArrayBuffer(file); break;
-            case 'glb': this.nGlb = 1; reader.readAsArrayBuffer(file); break;
-            case 'jpg': reader.readAsDataURL(file); break;
-            case 'png': reader.readAsDataURL(file); break;
-            case 'gif': reader.readAsDataURL(file); break;
+    zoomer(towhatObj) {
+        const existingSphere = this.scene.getObjectByName('myBoundingSphere');
+        if (existingSphere && existingSphere.parent) {
+            existingSphere.parent.remove(existingSphere);
         }
 
-        // --- Read it ------------------------
-        reader.onload = (function (reader) {
-            return function () {
-
-                let fileContent = reader.result ? reader.result : '';
-
-                let dec = new TextDecoder();
-
-                switch (type) {
-                    case 'mtl':
-                        // Replace quotes because they create a bug in input form
-                        document.getElementById('mtlFileInput').value = fileContent.replace(/'/g, "");
-                        break;
-                    case 'obj': document.getElementById('objFileInput').value = dec.decode(fileContent); break;
-                    case 'fbx':
-
-                        let x = document.createElement("INPUT");
-                        x.setAttribute("type", "hidden");
-                        x.setAttribute("id", "fbxFileInput");
-                        document.body.appendChild(x);
-
-                        document.getElementById('fbxFileInput').value = dec.decode(fileContent);
-                        scope.FbxBuffer = fileContent;
-                        break;
-                    case 'glb':
-                        // document.getElementById('glbFileInput').value = dec.decode(fileContent);
-                        scope.GlbBuffer = fileContent;
-                        break;
-                    case 'pdb': document.getElementById('pdbFileInput').value = fileContent; break;
-                    case 'jpg':
-                    case 'png':
-                    case 'gif':
-                        let y = document.createElement("INPUT");
-                        y.setAttribute("type", "hidden");
-                        y.setAttribute("id", "textureFileInput");
-                        y.setAttribute("value", fileContent);
-                        y.setAttribute("name", "textureFileInput[" + file.name + "]");
-                        document.body.appendChild(y);
-
-                        break;
-                }
-
-                // console.log("TYPE", type + " " + file);
-                scope.checkerCompleteReading(type);
-            };
-        })(reader);
-    }
-
-
-
-    // ----------------- Auxiliary ---------------------------
-
-    /* Zoom to object */
-    zoomer(towhatObj) { // FBX or OBJ
-
+        const sphere = this.computeSceneBoundingSphereAll(towhatObj);
+        this.scene.add(sphere[2]);
 
         if (this.controls.enableZoom) {
-
-            let sphere = this.computeSceneBoundingSphereAll(towhatObj);
-
-            this.scene.add(sphere[2]);
-
-            let totalRadius = sphere[1];
+            const totalRadius = Math.max(sphere[1], 0.1);
+            this.controls.target.copy(sphere[0]);
             this.controls.minDistance = 0.01 * totalRadius;
             this.controls.maxDistance = 100 * totalRadius;
-            this.resizeDisplayGL();
             this.controls.update();
         }
 
-
-
-        this.controls.object.position.x = parseFloat(this.assettrs[0]);
-        this.controls.object.position.y = parseFloat(this.assettrs[1]);
-        this.controls.object.position.z = parseFloat(this.assettrs[2]);
-
-        this.controls.object.rotation.x = parseFloat(this.assettrs[3]);
-        this.controls.object.rotation.y = parseFloat(this.assettrs[4]);
-        this.controls.object.rotation.z = parseFloat(this.assettrs[5]);
-
+        this.cameraTarget.copy(sphere[0]);
         this.resetCamera();
     }
 
-    // Resize Renderer and Label Renderer
     resizeDisplayGL() {
-
-        // This is needed for TrackballControls
-        //this.controls.handleResize();
-
         this.recalcAspectRatio();
-
         this.renderer.setSize(this.canvasToBindTo.offsetWidth, this.canvasToBindTo.offsetHeight, false);
         this.labelRenderer.setSize(this.canvasLabelsToBindTo.offsetWidth, this.canvasLabelsToBindTo.offsetHeight, false);
-
         this.updateCamera();
-
         this.render();
     }
 
-    // Recalculate canvas aspect ratio
     recalcAspectRatio() {
-        this.aspectRatio = (this.canvasToBindTo.offsetHeight === 0) ? 1 : this.canvasToBindTo.offsetWidth / this.canvasToBindTo.offsetHeight;
+        this.aspectRatio = this.canvasToBindTo.offsetHeight === 0 ? 1 : this.canvasToBindTo.offsetWidth / this.canvasToBindTo.offsetHeight;
     }
 
-    // Reset Camera
     resetCamera() {
         this.camera.position.copy(this.cameraDefaults.posCamera);
-        this.cameraTarget.copy(this.cameraDefaults.posCameraTarget);
+        this.cameraTarget.copy(this.controls.target || this.cameraDefaults.posCameraTarget);
         this.updateCamera();
     }
 
-    // Update camera aspect
     updateCamera() {
         this.camera.aspect = this.aspectRatio;
         this.camera.lookAt(this.cameraTarget);
         this.camera.updateProjectionMatrix();
     }
-
-    // Report in console
-    _reportProgress(text) {
-        // Progress reporting removed
-    }
 }
-
-
-
-
-
-

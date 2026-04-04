@@ -884,6 +884,11 @@ class VRodos_Asset_CPT_Manager {
 			$data['asset_fonts_saved']         = get_post_meta( $data['asset_id'], 'vrodos_asset3d_fonts', true );
 			$data['asset_back_3d_color_saved'] = get_post_meta( $data['asset_id'], 'vrodos_asset3d_back3dcolor', true ) ?: '#000000';
 			$data['assettrs_saved']            = get_post_meta( $data['asset_id'], 'vrodos_asset3d_assettrs', true ) ?: '0,0,0,0,0,0,0,0,-100';
+
+			if ( empty( $data['glb_file_name'] ) && self::asset_uses_legacy_non_glb_model( (int) $data['asset_id'] ) ) {
+				$data['asset_notice_type'] = 'error';
+				$data['asset_notice_message'] = 'This asset still uses a legacy non-GLB 3D format. Preview and placement now require a GLB upload.';
+			}
 		}
 
 		return $data;
@@ -1108,5 +1113,15 @@ class VRodos_Asset_CPT_Manager {
 			default:
 				return '';
 		}
+	}
+
+	private static function asset_uses_legacy_non_glb_model( int $asset_id ): bool {
+		foreach ( [ 'vrodos_asset3d_fbx', 'vrodos_asset3d_obj', 'vrodos_asset3d_mtl', 'vrodos_asset3d_pdb' ] as $meta_key ) {
+			if ( get_post_meta( $asset_id, $meta_key, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

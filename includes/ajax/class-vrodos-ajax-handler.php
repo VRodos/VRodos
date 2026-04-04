@@ -135,10 +135,8 @@ class VRodos_AJAX_Handler {
 	}
 
 	private function vrodos_delete_asset3d_noscenes_frontend( $asset_id ): void {
-		$mtlID = get_post_meta( $asset_id, 'vrodos_asset3d_mtl', true );
-		wp_delete_attachment( $mtlID, true );
-		$objID = get_post_meta( $asset_id, 'vrodos_asset3d_obj', true );
-		wp_delete_attachment( $objID, true );
+		$glbID = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
+		wp_delete_attachment( $glbID, true );
 		$difID = get_post_meta( $asset_id, 'vrodos_asset3d_diffimage', true );
 		wp_delete_attachment( $difID, true );
 		$screenID = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );

@@ -31,7 +31,7 @@ function findIntersectedRaw(event) {
     // All 3D meshes that can be clicked
     let activeMeshes = getActiveMeshes();
 
-    return raycasterPick.intersectObjects(activeMeshes);
+    return raycasterPick.intersectObjects(activeMeshes, true);
 }
 
 function findIntersected(event) {
@@ -778,14 +778,15 @@ function getActiveMeshes() {
 
 function raylineVisualize(raycasterPick) {
 
-    let geolinecast = new THREE.Geometry();
-
     let c = 10000;
-    geolinecast.vertices.push(raycasterPick.ray.origin,
-        new THREE.Vector3((raycasterPick.ray.origin.x - c * raycasterPick.ray.direction.x),
-            (raycasterPick.ray.origin.y - c * raycasterPick.ray.direction.y),
-            (raycasterPick.ray.origin.z - c * raycasterPick.ray.direction.z))
-    );
+    let geolinecast = new THREE.BufferGeometry().setFromPoints([
+        raycasterPick.ray.origin.clone(),
+        new THREE.Vector3(
+            raycasterPick.ray.origin.x - c * raycasterPick.ray.direction.x,
+            raycasterPick.ray.origin.y - c * raycasterPick.ray.direction.y,
+            raycasterPick.ray.origin.z - c * raycasterPick.ray.direction.z
+        )
+    ]);
 
     let myBulletLine = new THREE.Line(geolinecast, new THREE.LineBasicMaterial({ color: 0x0000ff }));
     myBulletLine.name = 'rayLine';

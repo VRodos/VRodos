@@ -3,6 +3,9 @@
   "version": "2.5.0",
   "description": "VRodos WordPress Plugin",
   "scripts": {
+    "build": "npm run build:three && npm run build:css",
+    "build:three": "node ./scripts/build-three-r173.mjs",
+    "build:vendor": "npm run build:three",
     "lint": "eslint \"runtime/assets/js/master/**/*.js\"",
     "lint:fix": "eslint \"runtime/assets/js/master/**/*.js\" --fix",
     "format": "prettier --write \"**/*.{js,css,md,json}\"",
@@ -12,10 +15,12 @@
   "devDependencies": {
     "autoprefixer": "^10.4.27",
     "daisyui": "^4.12.24",
+    "esbuild": "^0.25.2",
     "eslint": "^9.39.4",
     "postcss": "^8.5.8",
     "prettier": "^3.8.1",
-    "tailwindcss": "^3.4.19"
+    "tailwindcss": "^3.4.19",
+    "three": "0.173.0"
   },
   "engines": {
     "node": ">=16.0.0"

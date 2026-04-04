@@ -48,14 +48,9 @@ class VRodos_Core_Manager {
 
 	public function vrodos_mime_types( $mime_types ): array {
 		$mime_types['json'] = 'text/json';
-		$mime_types['obj']  = 'text/plain';
 		$mime_types['mp4']  = 'video/mp4';
 		$mime_types['ogv']  = 'application/ogg';
 		$mime_types['ogg']  = 'application/ogg';
-		$mime_types['mtl']  = 'text/plain';
-		$mime_types['mat']  = 'text/plain';
-		$mime_types['pdb']  = 'text/plain';
-		$mime_types['fbx']  = 'application/octet-stream';
 		$mime_types['glb']  = 'model/gltf-binary';
 		return $mime_types;
 	}
@@ -848,63 +843,23 @@ class VRodos_Core_Manager {
 	}
 
 	public static function get_3D_model_files( $assetpostMeta, $asset_id ): array {
+		unset( $asset_id );
 
-		$mtl_file_name                 = $obj_file_name = $pdb_file_name = $glb_file_name = $fbx_file_name =
-		$textures_fbx_string_connected = $path_url = null;
-
-		// OBJ
-		if ( array_key_exists( 'vrodos_asset3d_obj', $assetpostMeta ) ) {
-
-			$mtl_url = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_mtl'][0] );
-			$obj_url = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_obj'][0] );
-
-			$mtl_file_name = basename( $mtl_url );
-			$obj_file_name = basename( $obj_url );
-			$path_url      = pathinfo( $mtl_url )['dirname'];
-
-			// PDB
-		} elseif ( array_key_exists( 'vrodos_asset3d_pdb', $assetpostMeta ) ) {
-			$pdb_file_name = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_pdb'][0] );
-
-			// GLB
-		} elseif ( array_key_exists( 'vrodos_asset3d_glb', $assetpostMeta ) ) {
-
+		$glb_file_name = null;
+		if ( array_key_exists( 'vrodos_asset3d_glb', $assetpostMeta ) && ! empty( $assetpostMeta['vrodos_asset3d_glb'][0] ) ) {
 			$glb_file_name = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_glb'][0] );
-
-			// FBX
-		} elseif ( array_key_exists( 'vrodos_asset3d_fbx', $assetpostMeta ) ) {
-
-			// Get texture attachments of post
-			$args = ['posts_per_page' => 100, 'order'          => 'DESC', 'post_mime_type' => 'image', 'post_parent'    => $asset_id, 'post_type'      => 'attachment'];
-
-			$attachments_array = get_children( $args, OBJECT );  // returns Array ( [$image_ID].
-
-			// Add texture urls to a string separated by |
-			$textures_fbx_string_connected = '';
-
-			foreach ( $attachments_array as $k ) {
-				$url = wp_get_attachment_url( $k->ID );
-
-				// ignore screenshot attachment
-				if ( ! str_contains( $url, 'texture' ) ) {
-					continue;
-				}
-
-				$textures_fbx_string_connected .= $url . '|';
-			}
-
-			// remove the last separator
-			$textures_fbx_string_connected = trim( $textures_fbx_string_connected, '|' );
-
-			$fbx_url = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_fbx'][0] );
-
-			if ( $fbx_url ) {
-				$fbx_file_name = basename( $fbx_url );
-				$path_url      = pathinfo( $fbx_url )['dirname'];
-			}
 		}
 
-		return ['mtl'         => $mtl_file_name, 'obj'         => $obj_file_name, 'pdb'         => $pdb_file_name, 'glb'         => $glb_file_name, 'fbx'         => $fbx_file_name, 'texturesFbx' => $textures_fbx_string_connected, 'path'        => $path_url];
+		// Keep the historical keys for compatibility, but only GLB remains an active model source.
+		return [
+			'mtl'         => null,
+			'obj'         => null,
+			'pdb'         => null,
+			'glb'         => $glb_file_name,
+			'fbx'         => null,
+			'texturesFbx' => null,
+			'path'        => $glb_file_name,
+		];
 	}
 
 

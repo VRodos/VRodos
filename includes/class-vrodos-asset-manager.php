@@ -107,25 +107,11 @@ class VRodos_Asset_Manager {
 		// Scripts from original enqueue_scene_editor_scripts
 		wp_enqueue_script( 'jquery-ui-draggable' );
 		wp_enqueue_script( 'vrodos_scripts' );
-		wp_enqueue_script( 'vrodos_load147_threejs' );
-		wp_enqueue_script( 'vrodos_load147_FontLoader' );
-		wp_enqueue_script( 'vrodos_load147_TextGeometry' );
-		wp_enqueue_script( 'vrodos_load147_CSS2DRenderer' );
-		wp_enqueue_script( 'vrodos_load147_CopyShader' );
-		wp_enqueue_script( 'vrodos_load147_FXAAShader' );
-		wp_enqueue_script( 'vrodos_load147_EffectComposer' );
-		wp_enqueue_script( 'vrodos_load147_RenderPass' );
-		wp_enqueue_script( 'vrodos_load147_OutlinePass' );
-		wp_enqueue_script( 'vrodos_load147_ShaderPass' );
-		wp_enqueue_script( 'vrodos_load147_RGBELoader' );
-		wp_enqueue_script( 'vrodos_load147_GLTFLoader' );
+		$this->enqueue_three_vendor_bundle();
 		wp_enqueue_script( 'vrodos_inflate' );
 		wp_enqueue_script( 'vrodos_icons' );
 		wp_enqueue_script( 'vrodos_HierarchyViewer' );
 		wp_enqueue_script( 'vrodos_load_lilgui' );
-		wp_enqueue_script( 'vrodos_load147_OrbitControls' );
-		wp_enqueue_script( 'vrodos_load147_TransformControls' );
-		wp_enqueue_script( 'vrodos_load147_PointerLockControls' );
 		wp_enqueue_script( 'vrodos_ScenePersistence' );
 		wp_enqueue_script( 'vrodos_jscolorpick' );
 		wp_enqueue_script( 'vrodos_html2canvas' );
@@ -224,11 +210,7 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_scripts' );
 
 		// 1. Three js library
-		wp_enqueue_script( 'vrodos_load147_threejs' );
-		wp_enqueue_script( 'vrodos_load147_OrbitControls' );
-		wp_enqueue_script( 'vrodos_load147_GLTFLoader' );
-		wp_enqueue_script( 'vrodos_load147_CSS2DRenderer' );
-		wp_enqueue_script( 'vrodos_load147_DRACOLoader' );
+		$this->enqueue_three_vendor_bundle();
 
 		// Load single asset: Load existing asset
 		wp_enqueue_script( 'vrodos_AssetViewer_3D_kernel' );
@@ -282,30 +264,8 @@ class VRodos_Asset_Manager {
       ['vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'],
       ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'],
       ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game']],
-      // Three.js r141
-      ['vrodos_load147_threejs', $plugin_url_js . 'threejs147/three.js'],
-      ['vrodos_load147_FontLoader', $plugin_url_js . 'threejs147/FontLoader.js'],
-      ['vrodos_load147_TextGeometry', $plugin_url_js . 'threejs147/TextGeometry.js'],
-      ['vrodos_load147_statjs', $plugin_url_js . 'threejs147/stats.js'],
-      ['vrodos_load147_FBXloader', $plugin_url_js . 'threejs147/FBXLoader.js'],
-      ['vrodos_load147_GLTFLoader', $plugin_url_js . 'threejs147/GLTFLoader.js'],
-      ['vrodos_load147_DRACOLoader', $plugin_url_js . 'threejs147/DRACOLoader.js'],
-      ['vrodos_load147_DDSLoader', $plugin_url_js . 'threejs147/DDSLoader.js'],
-      ['vrodos_load147_KTXLoader', $plugin_url_js . 'threejs147/KTXLoader.js'],
-      ['vrodos_load147_OrbitControls', $plugin_url_js . 'threejs147/OrbitControls.js'],
-      ['vrodos_load147_TransformControls', $plugin_url_js . 'threejs147/TransformControls.js'],
-      ['vrodos_load147_TrackballControls', $plugin_url_js . 'threejs147/TrackballControls.js'],
-      ['vrodos_load147_PointerLockControls', $plugin_url_js . 'threejs147/PointerLockControls.js'],
-      ['vrodos_load147_CSS2DRenderer', $plugin_url_js . 'threejs147/CSS2DRenderer.js'],
-      ['vrodos_load147_CopyShader', $plugin_url_js . 'threejs147/CopyShader.js'],
-      ['vrodos_load147_FXAAShader', $plugin_url_js . 'threejs147/FXAAShader.js'],
-      ['vrodos_load147_EffectComposer', $plugin_url_js . 'threejs147/EffectComposer.js'],
-      ['vrodos_load147_RenderPass', $plugin_url_js . 'threejs147/RenderPass.js'],
-      ['vrodos_load147_OutlinePass', $plugin_url_js . 'threejs147/OutlinePass.js'],
-      ['vrodos_load147_ShaderPass', $plugin_url_js . 'threejs147/ShaderPass.js'],
-      ['vrodos_load147_RGBELoader', $plugin_url_js . 'threejs147/RGBELoader.js'],
-      ['vrodos_load147_OBJLoader', $plugin_url_js . 'threejs147/OBJLoader.js'],
-      ['vrodos_load147_MTLLoader', $plugin_url_js . 'threejs147/MTLLoader.js'],
+      // Three.js r173 bundle
+      ['vrodos_three_r173_bundle', $plugin_url_js . 'threejs173/vrodos-three-r173.bundle.js'],
       // Other Libraries
       ['vrodos_load_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js'],
       ['lucide-icons', 'https://unpkg.com/lucide@0.469.0'],
@@ -329,5 +289,14 @@ class VRodos_Asset_Manager {
 		wp_register_style( 'vrodos_asseteditor_stylesheet', $plugin_url . 'css/vrodos_asseteditor.css' );
 		wp_register_style( 'vrodos_widgets_stylesheet', $plugin_url . 'css/vrodos_widgets.css' );
 		wp_register_style( 'vrodos_modern_compiled', $plugin_url . 'css/vrodos_modern_compiled.css' );
+	}
+
+	private function enqueue_three_vendor_bundle(): void {
+		wp_enqueue_script( 'vrodos_three_r173_bundle' );
+
+		$plugin_url = plugin_dir_url( VRODOS_PLUGIN_FILE );
+		$inline_script = 'window.vrodos_three_decoder_path = ' . wp_json_encode( $plugin_url . 'js_libs/threejs173/draco/' ) . ';'
+			. 'window.vrodos_three_font_path = ' . wp_json_encode( $plugin_url . 'js_libs/threejs173/fonts/helvetiker_bold.typeface.json' ) . ';';
+		wp_add_inline_script( 'vrodos_three_r173_bundle', $inline_script, 'before' );
 	}
 }

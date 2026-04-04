@@ -42,6 +42,15 @@ function vrodosDirectorIsInternalHelper(object) {
 
     return ['Camera3Dmodel', 'Camera3DmodelMesh', 'DirectorHitProxy'].includes(object.name);
 }
+
+function vrodosGetPointerLockObject(pointerLockControls) {
+    if (!pointerLockControls) {
+        return null;
+    }
+
+    return pointerLockControls.object || null;
+}
+
 class vrodos_3d_editor_environmentals {
 
     constructor(vr_editor_main_div) {
@@ -86,7 +95,7 @@ class vrodos_3d_editor_environmentals {
         // VSMShadowMap filters shadow maps using the Variance Shadow Map (VSM) algorithm. When using VSMShadowMap all shadow receivers will also cast shadows.
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.autoClear = false;
-        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
 
@@ -121,14 +130,13 @@ class vrodos_3d_editor_environmentals {
 
         // Add a background to the scene
         let rgbeloader = new THREE.RGBELoader();
+        let scope = this;
 
         rgbeloader.setPath( pluginPath + '/images/hdr/' )
             .load( 'Stonewall_Ref.hdr', (texture) => {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
-                envir.maintexture = texture;
-                //envir.scene.background = texture;
-                //envir.scene.background = new THREE.Color(0xeeeeee);
-                envir.scene.environment = envir.maintexture;
+                scope.maintexture = texture;
+                scope.scene.environment = scope.maintexture;
             } );
         //
         // this.cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
@@ -340,7 +348,10 @@ class vrodos_3d_editor_environmentals {
         this.avatarControls.name = "avatarControls";
 
         // Avatar Yaw controls
-        let avatarControlsYawObject = this.avatarControls.getObject();
+        let avatarControlsYawObject = vrodosGetPointerLockObject(this.avatarControls);
+        if (!avatarControlsYawObject) {
+            return;
+        }
         this.initAvatarPosition = new THREE.Vector3(0, 0, 0);
         avatarControlsYawObject.position.set(this.initAvatarPosition.x, this.initAvatarPosition.y, this.initAvatarPosition.z);
         this.scene.add(avatarControlsYawObject);
@@ -428,7 +439,7 @@ class vrodos_3d_editor_environmentals {
     }
 
     getDirectorRig() {
-        return envir.avatarControls.getObject();
+        return vrodosGetPointerLockObject(envir.avatarControls);
     }
 
     setDirectorWorldPosition(x, y, z, rx, ry) {
@@ -496,7 +507,17 @@ class vrodos_3d_editor_environmentals {
             return;
         }
 
-        director.position.copy(this.orbitControls.target);
+        const safeFloorY = 0.2;
+        const targetY = Number(this.orbitControls.target.y);
+        const currentY = Number(director.position.y);
+
+        director.position.x = this.orbitControls.target.x;
+        director.position.z = this.orbitControls.target.z;
+        director.position.y = Math.max(
+            Number.isFinite(currentY) ? currentY : safeFloorY,
+            Number.isFinite(targetY) ? targetY : safeFloorY,
+            safeFloorY
+        );
         director.scale.set(1, 1, 1);
         this.setCamMeshToAvatarControls();
         director.updateMatrixWorld(true);
@@ -515,7 +536,8 @@ class vrodos_3d_editor_environmentals {
         // let pathn = window.location.pathname.replace(/[^/]*$/, '');
         // pathn = pathn.split('/').slice(0,-2).join('/');
 
-        loader.load(pluginPath + '/js_libs/threejs147/fonts/helvetiker_bold.typeface.json', this.loadtexts);
+        let fontPath = window.vrodos_three_font_path || (pluginPath + '/js_libs/threejs173/fonts/helvetiker_bold.typeface.json');
+        loader.load(fontPath, this.loadtexts);
     }
 
     loadtexts(font) {

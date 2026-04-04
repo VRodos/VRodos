@@ -469,7 +469,10 @@ extract( $data );
 		envir.is2d = false;
 
 		var transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement );
-		transform_controls.name = 'myTransformControls';
+		var transform_controls_helper = (typeof transform_controls.getHelper === 'function') ?
+			transform_controls.getHelper() :
+			transform_controls;
+		transform_controls_helper.name = 'myTransformControls';
 
 		// id of animation frame is used for canceling animation when dat-gui changes
 		let id_animation_frame;
@@ -639,7 +642,7 @@ extract( $data );
 			setHierarchyViewer();
 
 			// Add transform controls to scene
-			envir.scene.add(transform_controls);
+			envir.scene.add(transform_controls_helper);
 			document.getElementById("compileGameBtn").disabled = true;
 
 			// Load Manager UI
@@ -876,7 +879,6 @@ extract( $data );
 			setHierarchyViewer();
 			//setHierarchyViewerLight();
 
-			transform_controls = envir.scene.getObjectByName('myTransformControls');
 			transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
 			

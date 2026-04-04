@@ -4,6 +4,16 @@
 
 var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 
+function vrodosSetLinearWorkingTextureColorSpace( texture ) {
+
+	if ( ! texture ) {
+		return;
+	}
+
+	texture.colorSpace = THREE.LinearSRGBColorSpace;
+
+}
+
 ( function () {
 
 	// https://github.com/mrdoob/three.js/issues/5552
@@ -424,7 +434,7 @@ var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 
 					case THREE.FloatType:
 					case THREE.HalfFloatType:
-						texture.encoding = THREE.LinearEncoding;
+						vrodosSetLinearWorkingTextureColorSpace( texture );
 						texture.minFilter = THREE.LinearFilter;
 						texture.magFilter = THREE.LinearFilter;
 						texture.generateMipmaps = false;
@@ -473,11 +483,7 @@ function vrodosApplyTextureQuality(texture, options, isColorTexture) {
     }
 
     if (isColorTexture) {
-        if (typeof texture.colorSpace !== 'undefined' && typeof THREE.SRGBColorSpace !== 'undefined') {
-            texture.colorSpace = THREE.SRGBColorSpace;
-        } else if (typeof texture.encoding !== 'undefined' && typeof THREE.sRGBEncoding !== 'undefined') {
-            texture.encoding = THREE.sRGBEncoding;
-        }
+        texture.colorSpace = THREE.SRGBColorSpace;
     }
 
     if (!texture.isVideoTexture && typeof options.maxAnisotropy === 'number' && options.maxAnisotropy > 0) {

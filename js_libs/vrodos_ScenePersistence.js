@@ -1,6 +1,6 @@
 // Custom Scene Exporter and Importer for VRodos
-// This module replicates the logic of the old THREE.SceneExporter (r87)
-// and THREE.SceneImporter (r87) using modern JavaScript and Three.js (r147) methods.
+// This module keeps the legacy VRodos scene JSON contract while using the
+// current active Three.js runtime and editor object model.
 
 function vrodosSceneSafeNumber(value, fallback) {
     const parsed = Number(value);

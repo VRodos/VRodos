@@ -16,7 +16,6 @@ extract($data);
     <?php wp_head(); ?>
     <script>
         let isAdmin="<?php echo $isAdmin; ?>";
-        let path_url = null;
         let glb_file_name = <?php echo json_encode($glb_file_name); ?>;
         let no_img_path = '<?php echo esc_url($no_img_path_url ?? ''); ?>';
         var asset_title = <?php echo json_encode($asset_title_value); ?>;
@@ -862,13 +861,7 @@ else { ?>
 			document.getElementById('previewProgressSliderLine'),
 			back_3d_color,
 			null,
-			path_url, // OBJ textures path
-			null,
-			null,
-			null,
-			null,
 			glb_file_name,
-			null,
 			false,
 			false,
 			false,

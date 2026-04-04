@@ -1,298 +1,214 @@
 /**
- * Created by tpapazoglou on 11/7/2017.
- * Modified by dverver on 18/10/2017: Multiple jpgs as textures. fReader called once not twice for the same file.
- * dverver 02/04/2018
- * dverver 17/07/2020
+ * Asset editor helpers for the GLB-only upload and preview workflow.
  */
 'use strict';
 
-// Initial slide to show (carousel top)
 let slideIndex = 0;
 
-
 function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
-
-    if (asset_viewer_3d_kernel.renderer) {
-        asset_viewer_3d_kernel.clearAllAssets("vrodos_clear_asset_files");
+    if (asset_viewer_3d_kernel && asset_viewer_3d_kernel.renderer) {
+        asset_viewer_3d_kernel.clearAllAssets('vrodos_clear_asset_files');
     }
 
-    // Clear inputs
-    document.getElementById("glbFileInput").value = "";
-
-    // Clear select 3D files input
-    if (document.getElementById("fileUploadInput")){
-        document.getElementById("fileUploadInput").value = "";
+    const glbInput = document.getElementById('glbFileInput');
+    if (glbInput) {
+        glbInput.value = '';
     }
-        
 
-    document.getElementById("sshotFileInput").value = "";
+    const fileUploadInput = document.getElementById('fileUploadInput');
+    if (fileUploadInput) {
+        fileUploadInput.value = '';
+    }
 
+    const screenshotInput = document.getElementById('sshotFileInput');
+    if (screenshotInput) {
+        screenshotInput.value = '';
+    }
 
-    // Clear screenshot
-    let sshotImg = document.getElementById("sshotPreviewImg");
-    if (sshotImg) sshotImg.src = sshotPreviewDefaultImg;
+    const sshotImg = document.getElementById('sshotPreviewImg');
+    if (sshotImg) {
+        sshotImg.src = sshotPreviewDefaultImg;
+    }
 
-    // Clear Title in Preview
-    let previewTitle = document.getElementById("objectPreviewTitle");
-    if (previewTitle) previewTitle.style.display = "none";
+    const previewTitle = document.getElementById('objectPreviewTitle');
+    if (previewTitle) {
+        previewTitle.style.display = 'none';
+    }
 }
 
-
-// File reader cortex
-function file_reader_cortex(file, asset_viewer_3d_kernel_local){
-
-    // Get the extension
-    let type = file.name.split('.').pop();
-
-    // set the reader
-    let reader = new FileReader();
-
-    switch (type) {
-        case 'pdb': asset_viewer_3d_kernel_local.nPdb = 1; reader.readAsText(file);        break;
-        case 'mtl': asset_viewer_3d_kernel_local.nMtl = 1; reader.readAsText(file);        break;
-        case 'obj': asset_viewer_3d_kernel_local.nObj = 1; reader.readAsArrayBuffer(file); break;
-        case 'fbx': asset_viewer_3d_kernel_local.nFbx = 1; reader.readAsArrayBuffer(file); break;
-        case 'glb':
-            asset_viewer_3d_kernel_local.nGlb = 1;
-            reader.readAsArrayBuffer(file);
-            break;
-        case 'jpg': reader.readAsDataURL(file);     break;
-        case 'png': reader.readAsDataURL(file);     break;
-        case 'gif': reader.readAsDataURL(file);     break;
+function file_reader_cortex(file, asset_viewer_3d_kernel_local) {
+    const extension = (file.name.split('.').pop() || '').toLowerCase();
+    if (extension !== 'glb') {
+        return;
     }
 
-    // --- Read it ------------------------
+    const reader = new FileReader();
     reader.onload = () => {
-
-            let fileContent = reader.result ? reader.result : '';
-
-            let dec = new TextDecoder();
-
-            switch (type) {
-                case 'mtl':
-                    // Replace quotes because they create a bug in input form
-                    document.getElementById('mtlFileInput').value = fileContent.replace(/'/g, "");
-                    break;
-                case 'obj': document.getElementById('objFileInput').value = dec.decode(fileContent); break;
-                case 'fbx':
-                    document.getElementById('fbxFileInput').value = dec.decode(fileContent);
-                    asset_viewer_3d_kernel_local.FbxBuffer =  fileContent;
-                    break;
-                case 'glb':
-                    //document.getElementById('glbFileInput').value = dec.decode(fileContent);
-                    asset_viewer_3d_kernel_local.GlbBuffer =  fileContent;
-                    break;
-                case 'pdb': document.getElementById('pdbFileInput').value = fileContent; break;
-                case 'jpg':
-                case 'png':
-                case 'gif':
-                    let hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'textureFileInput[' + file.name + ']';
-                    hiddenInput.id = 'textureFileInput';
-                    hiddenInput.value = fileContent;
-                    document.getElementById('3dAssetForm').appendChild(hiddenInput);
-                    break;
-            }
-
-            // console.log("TYPE", type + " " + file);
-            asset_viewer_3d_kernel_local.checkerCompleteReading( type );
-
-        };
+        asset_viewer_3d_kernel_local.GlbBuffer = reader.result || '';
+        asset_viewer_3d_kernel_local.checkerCompleteReading(extension);
+    };
+    reader.readAsArrayBuffer(file);
 }
-
 
 function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputElem) {
-
-    // PREVIEW Handler (not uploaded yet): Load from selected files
-    let _handleFileSelect = (event) => {
-
+    const handleFileSelect = (event) => {
         if (typeof window.vrodos_validate_selected_glb === 'function' &&
             !window.vrodos_validate_selected_glb()) {
             return;
         }
 
-        let input = document.getElementById('fileUploadInput');
-        let children = "";
-
-        for (let i = 0; i < input.files.length; ++i) {
-            children += '<li>' + input.files.item(i).name + '</li>';
+        const input = event.target;
+        const file = input && input.files && input.files.length ? input.files[0] : null;
+        if (!file) {
+            return;
         }
 
-        // Reset Screenshot
-        document.getElementById("sshotPreviewImg").src = sshotPreviewDefaultImg;
-        document.getElementById("sshotFileInput").value = "";
-
-        // Copy because clear asset files in the following clears the total input fields also.
-        // Files are blobs
-        let files = {... event.target.files};
-
-        //  Read each file and put the string content in an input dom
-        for ( let i = 0; i < Object.keys(files).length; i++) {
-            if (files[i].name.includes('jpg')){
-                asset_viewer_3d_kernel_local.nJpg ++;
-            } else if (files[i].name.includes('png')){
-                asset_viewer_3d_kernel_local.nPng ++;
-            } else if (files[i].name.includes('gif')){
-                asset_viewer_3d_kernel_local.nGif ++;
-            }
+        const extension = (file.name.split('.').pop() || '').toLowerCase();
+        if (extension !== 'glb') {
+            return;
         }
 
-        //  Read each file and put the string content in an input dom
-        for ( let i = 0; i < Object.keys(files).length; i++) {
-            file_reader_cortex(files[i], asset_viewer_3d_kernel_local);
+        const label = document.getElementById('fileUploadInputLabel');
+        if (label) {
+            label.textContent = file.name;
         }
+
+        const screenshotImg = document.getElementById('sshotPreviewImg');
+        if (screenshotImg) {
+            screenshotImg.src = sshotPreviewDefaultImg;
+        }
+
+        const screenshotInput = document.getElementById('sshotFileInput');
+        if (screenshotInput) {
+            screenshotInput.value = '';
+        }
+
+        file_reader_cortex(file, asset_viewer_3d_kernel_local);
     };
-    // End of event handler
 
-    // Set event handler on input dom element
-    if(multipleFilesInputElem)
-        multipleFilesInputElem.addEventListener( 'change' , _handleFileSelect, false );
+    if (multipleFilesInputElem) {
+        multipleFilesInputElem.addEventListener('change', handleFileSelect, false);
+    }
 }
 
-
-//--------------------- Auxiliary (Easy stuff) -------------------------------------------------------------
-
-function updateColorPicker(picker, asset_viewer_3d_kernel_local){
+function updateColorPicker(picker, asset_viewer_3d_kernel_local) {
     document.getElementById('assetback3dcolor').value = picker.toRGBString();
 
-    asset_viewer_3d_kernel_local.scene.background.r = picker.rgb[0]/255;
-    asset_viewer_3d_kernel_local.scene.background.g = picker.rgb[1]/255;
-    asset_viewer_3d_kernel_local.scene.background.b = picker.rgb[2]/255;
+    asset_viewer_3d_kernel_local.scene.background.r = picker.rgb[0] / 255;
+    asset_viewer_3d_kernel_local.scene.background.g = picker.rgb[1] / 255;
+    asset_viewer_3d_kernel_local.scene.background.b = picker.rgb[2] / 255;
 
     asset_viewer_3d_kernel_local.render();
 }
 
-/**
- * Modern Native Color Picker Handler
- */
 function updateNativeColorPicker(input, asset_viewer_3d_kernel_local) {
-    const hex = input.value; // Format: #RRGGBB
-    
-    // Update the visual hex label
+    const hex = input.value;
     const label = document.getElementById('colorHexLabel');
-    if (label) label.innerText = hex.toUpperCase();
-    
-    // Update the hidden field for WordPress saving (strip #)
+    if (label) {
+        label.innerText = hex.toUpperCase();
+    }
+
     const hiddenInput = document.getElementById('assetback3dcolor');
-    if (hiddenInput) hiddenInput.value = hex.replace('#', '');
-    
-    // Update Three.js background
+    if (hiddenInput) {
+        hiddenInput.value = hex.replace('#', '');
+    }
+
     if (asset_viewer_3d_kernel_local && asset_viewer_3d_kernel_local.scene) {
-        // Convert hex to normalized RGB
         const r = parseInt(hex.slice(1, 3), 16) / 255;
         const g = parseInt(hex.slice(3, 5), 16) / 255;
         const b = parseInt(hex.slice(5, 7), 16) / 255;
-        
+
         asset_viewer_3d_kernel_local.scene.background.setRGB(r, g, b);
         asset_viewer_3d_kernel_local.render();
     }
 }
 
 function rgbToHex(r, g, b) {
-
-    /*If values are negative make them zero*/
     r = Math.max(r, 0);
     g = Math.max(g, 0);
     b = Math.max(b, 0);
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
-// Create model screenshot
 function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
-
     asset_viewer_3d_kernel_local.render();
 
-    // I used html2canvas because there is no toDataURL in labelRenderer so there were no labels
-    html2canvas(document.querySelector("#wrapper_3d_inner")).then(canvas => {
-
+    html2canvas(document.querySelector('#wrapper_3d_inner')).then((canvas) => {
         asset_viewer_3d_kernel_local.render();
-        document.getElementById("sshotPreviewImg").src = canvas.toDataURL("image/png");
+        document.getElementById('sshotPreviewImg').src = canvas.toDataURL('image/png');
 
-        //------------ Resize and Crop ---------------------------------------
-        const targetWidth = 1068; // 3x higher resolution than before (was 356)
-        const targetHeight = 600; // 3x higher resolution than before (was 200)
+        const targetWidth = 1068;
+        const targetHeight = 600;
         const targetRatio = targetWidth / targetHeight;
 
         let sourceWidth = canvas.width;
         let sourceHeight = canvas.height;
-        let sourceRatio = sourceWidth / sourceHeight;
+        const sourceRatio = sourceWidth / sourceHeight;
 
         let sourceX = 0;
         let sourceY = 0;
 
         if (sourceRatio > targetRatio) {
-            // Source is wider than target, crop the sides
-            let newSourceWidth = sourceHeight * targetRatio;
+            const newSourceWidth = sourceHeight * targetRatio;
             sourceX = (sourceWidth - newSourceWidth) / 2;
             sourceWidth = newSourceWidth;
         } else if (sourceRatio < targetRatio) {
-            // Source is taller than target, crop the top and bottom
-            let newSourceHeight = sourceWidth / targetRatio;
+            const newSourceHeight = sourceWidth / targetRatio;
             sourceY = (sourceHeight - newSourceHeight) / 2;
             sourceHeight = newSourceHeight;
         }
 
-        let resizedCanvas = document.createElement("canvas");
+        const resizedCanvas = document.createElement('canvas');
         resizedCanvas.width = targetWidth;
         resizedCanvas.height = targetHeight;
 
-        resizedCanvas.getContext("2d").drawImage(
+        resizedCanvas.getContext('2d').drawImage(
             canvas,
-            sourceX, sourceY,
-            sourceWidth, sourceHeight,
-            0, 0,
-            targetWidth, targetHeight
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
+            0,
+            0,
+            targetWidth,
+            targetHeight
         );
 
-        document.getElementById("sshotFileInput").value = resizedCanvas.toDataURL();
+        document.getElementById('sshotFileInput').value = resizedCanvas.toDataURL();
     });
 }
 
+function loadFileInputLabel() {
+    const inputLabel = document.getElementById('fileUploadInputLabel');
+    const input = document.getElementById('fileUploadInput');
 
+    if (inputLabel) {
+        inputLabel.innerHTML = 'Select a glb file';
+    }
 
-function loadFileInputLabel(objectType) {
-
-    let inputLabel = document.getElementById('fileUploadInputLabel');
-    let input = document.getElementById('fileUploadInput');
-
-    if (inputLabel)
-        if (objectType === 'pdb') {
-            inputLabel.innerHTML = 'Select a pdb file';
-            input.accept = ".pdb";
-        } else if (objectType === 'obj') {
-            inputLabel.innerHTML = 'Select an a) obj, b) mtl, & c) optional texture files (jpgs or pngs)';
-            input.accept = ".obj,.mtl,.jpg,.png";
-        } else if (objectType === 'fbx') {
-            inputLabel.innerHTML = 'Select an a) fbx & b) optional texture file (gif, jpg, png)';
-            input.accept = ".fbx,.jpg,.png,.gif";
-        } else if (objectType === 'glb') {
-            inputLabel.innerHTML = 'Select a glb file';
-            input.accept = ".glb";
-        }
+    if (input) {
+        input.accept = '.glb';
+    }
 }
 
 function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
-
-    // Clear all
     vrodos_clear_asset_files(asset_viewer_3d_kernel);
-
-    document.querySelectorAll("div.ProducerPlotTooltip").forEach((el) => { el.remove(); });
+    document.querySelectorAll('div.ProducerPlotTooltip').forEach((el) => {
+        el.remove();
+    });
 }
 
 function clearList() {
-    vrodos_reset_panels(asset_viewer_3d_kernel, "clearList");
+    vrodos_reset_panels(asset_viewer_3d_kernel, 'clearList');
+    loadFileInputLabel();
 }
 
-function setScreenshotHandler(){
-
-    // Screenshot handler
-    let sshotBtn = document.getElementById("createModelScreenshotBtn");
-    if (sshotBtn && document.getElementById("sshotPreviewImg")) {
-        sshotBtn.addEventListener("click", () => {
+function setScreenshotHandler() {
+    const sshotBtn = document.getElementById('createModelScreenshotBtn');
+    if (sshotBtn && document.getElementById('sshotPreviewImg')) {
+        sshotBtn.addEventListener('click', () => {
             asset_viewer_3d_kernel.renderer.preserveDrawingBuffer = true;
             vrodos_create_model_sshot(asset_viewer_3d_kernel);
         });
     }
-
 }

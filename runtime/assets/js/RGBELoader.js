@@ -1,5 +1,15 @@
 ( function () {
 
+	function vrodosSetLinearWorkingTextureColorSpace( texture ) {
+
+		if ( ! texture ) {
+			return;
+		}
+
+		texture.colorSpace = THREE.LinearSRGBColorSpace;
+
+	}
+
 	// https://github.com/mrdoob/three.js/issues/5552
 	// http://en.wikipedia.org/wiki/RGBE_image_format
 
@@ -418,7 +428,7 @@
 
 					case THREE.FloatType:
 					case THREE.HalfFloatType:
-						texture.encoding = THREE.LinearEncoding;
+						vrodosSetLinearWorkingTextureColorSpace( texture );
 						texture.minFilter = THREE.LinearFilter;
 						texture.magFilter = THREE.LinearFilter;
 						texture.generateMipmaps = false;

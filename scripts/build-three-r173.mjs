@@ -1,0 +1,106 @@
+import { mkdir, rm, writeFile, cp, access } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { build } from 'esbuild';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
+const outputDir = path.join(rootDir, 'js_libs', 'threejs173');
+const bundlePath = path.join(outputDir, 'vrodos-three-r173.bundle.js');
+const dracoSourceDir = path.join(rootDir, 'node_modules', 'three', 'examples', 'jsm', 'libs', 'draco');
+const dracoOutputDir = path.join(outputDir, 'draco');
+const fontSourcePath = path.join(rootDir, 'node_modules', 'three', 'examples', 'fonts', 'helvetiker_bold.typeface.json');
+const fontOutputDir = path.join(outputDir, 'fonts');
+const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
+const tempEntryPath = path.join(rootDir, 'scripts', '.tmp-build-three-r173-entry.mjs');
+
+const bundleEntrySource = `
+import * as THREEBase from 'three';
+import Stats from 'three/examples/jsm/libs/stats.module.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+
+const THREE = window.THREE && typeof window.THREE === 'object' ? window.THREE : {};
+
+Object.assign(THREE, { ...THREEBase }, {
+  OrbitControls,
+  TransformControls,
+  PointerLockControls,
+  GLTFLoader,
+  DRACOLoader,
+  RGBELoader,
+  CSS2DRenderer,
+  CSS2DObject,
+  EffectComposer,
+  RenderPass,
+  ShaderPass,
+  OutlinePass,
+  FXAAShader,
+  FontLoader,
+  TextGeometry,
+});
+
+window.THREE = THREE;
+window.Stats = Stats;
+`;
+
+async function ensurePathExists(targetPath, label) {
+  try {
+    await access(targetPath);
+  } catch {
+    throw new Error(`${label} is missing at ${targetPath}. Run npm install first.`);
+  }
+}
+
+async function copySupportAssets() {
+  await ensurePathExists(dracoSourceDir, 'Draco decoder assets');
+  await ensurePathExists(fontSourcePath, 'Helvetiker font asset');
+
+  await mkdir(dracoOutputDir, { recursive: true });
+  await mkdir(fontOutputDir, { recursive: true });
+  await cp(dracoSourceDir, dracoOutputDir, { recursive: true, force: true });
+  await cp(fontSourcePath, fontOutputPath, { force: true });
+}
+
+async function buildBundle() {
+  await mkdir(outputDir, { recursive: true });
+  await writeFile(tempEntryPath, bundleEntrySource, 'utf8');
+
+  try {
+    await build({
+      entryPoints: [tempEntryPath],
+      bundle: true,
+      format: 'iife',
+      platform: 'browser',
+      target: ['es2019'],
+      outfile: bundlePath,
+      legalComments: 'none',
+    });
+  } finally {
+    await rm(tempEntryPath, { force: true });
+  }
+}
+
+async function main() {
+  await buildBundle();
+  await copySupportAssets();
+  console.log(`Built ${path.relative(rootDir, bundlePath)}`);
+}
+
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

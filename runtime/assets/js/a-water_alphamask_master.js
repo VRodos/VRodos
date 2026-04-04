@@ -2877,7 +2877,7 @@ AWater.AOcean.OceanGrid = function(data, scene, renderer, camera){
         texture.wrapT = THREE.RepeatWrapping;
         texture.magFilter = THREE.LinearFilter;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.encoding = THREE.LinearEncoding;
+        texture.colorSpace = THREE.NoColorSpace;
         texture.format = THREE.RGBAFormat;
         self.smallNormalMap = texture;
     }, function(err){
@@ -2893,7 +2893,7 @@ AWater.AOcean.OceanGrid = function(data, scene, renderer, camera){
         texture.wrapT = THREE.RepeatWrapping;
         texture.magFilter = THREE.LinearFilter;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.encoding = THREE.LinearEncoding;
+        texture.colorSpace = THREE.NoColorSpace;
         texture.format = THREE.RGBAFormat;
         self.largeNormalMap = texture;
     }, function(err){

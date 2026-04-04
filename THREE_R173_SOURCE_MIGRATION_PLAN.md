@@ -16,6 +16,22 @@ Chosen defaults:
 - supported 3D upload format in this migration: `GLB` only
 - glTF-family stance: keep the architecture glTF-oriented, but postpone real `.gltf` multi-file upload support to a later phase
 
+## Implementation Status
+Completed in source:
+- local vendor build added with `three@0.173.0`, `esbuild`, and `scripts/build-three-r173.mjs`
+- generated vendor assets committed under `js_libs/threejs173/`
+- editor and asset-editor enqueues switched from `threejs147/*` to the single r173 bundle
+- active 3D asset workflow reduced to `GLB` only
+- asset editor preview kernel reduced to `GLB` and `DRACO` only
+- legacy non-GLB assets now surface as unsupported instead of using removed loaders
+- active editor and runtime source updated to r173 color-space APIs and current `PointerLockControls.object`
+- `TransformControls` scene integration updated for the newer helper API
+- old vendored `js_libs/threejs147/` removed from the repo
+
+Still intentionally pending:
+- broader end-to-end smoke testing of editor, compiler, and compiled runtime scenes
+- optional future `.gltf` multi-file upload support, which is out of scope for this migration
+
 ## Build and Packaging Model
 ### Build approach
 - Add `three@0.173.0` and `esbuild` as root devDependencies.
