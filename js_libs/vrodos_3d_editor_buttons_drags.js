@@ -124,12 +124,36 @@ function waitForLatestSceneSave() {
 
 // Local
 function loadButtonActions() {
+    function resetCompileDialogStatusState() {
+        let statusRow = document.getElementById("compileStatusRow");
+        let constantUpdateUser = document.getElementById("constantUpdateUser");
+        let appResultDiv = document.getElementById("appResultDiv");
+        let topResultLink = document.getElementById("compileTopResultLink");
+        let resultMeta = document.getElementById("compileResultMeta");
+
+        if (statusRow) statusRow.style.display = 'flex';
+        if (appResultDiv) appResultDiv.style.display = 'none';
+        if (topResultLink) {
+            topResultLink.classList.add("tw-hidden");
+            topResultLink.setAttribute("href", "#");
+        }
+        if (resultMeta) {
+            resultMeta.textContent = 'The experience is ready to be shared';
+        }
+        if (constantUpdateUser) {
+            constantUpdateUser.innerHTML =
+                '<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
+                'Configure your scene quality settings and click "Build" to construct the virtual world.';
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 
     // Compile Project button
     document.getElementById("compileGameBtn").addEventListener("click", function () {
         if (typeof syncCompileDialogFromSceneSettings === 'function') {
             syncCompileDialogFromSceneSettings();
         }
+        resetCompileDialogStatusState();
         let dlg = document.getElementById('compile-dialog');
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
@@ -147,6 +171,7 @@ function loadButtonActions() {
 
     // Compile Proceed
     document.getElementById("compileProceedBtn").addEventListener("click", function () {
+        resetCompileDialogStatusState();
         document.getElementById("compileProgressSlider").style.display = '';
         document.getElementById("compileProgressTitle").style.display = '';
 

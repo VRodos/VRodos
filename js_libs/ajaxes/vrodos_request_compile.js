@@ -11,7 +11,19 @@ function vrodos_compileAjax(showPawnPositions) {
 	// Enable cancel button
 	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
 
+	var statusRow = document.getElementById( "compileStatusRow" );
+	var appResultDiv = document.getElementById( "appResultDiv" );
+	var resultMeta = document.getElementById( "compileResultMeta" );
 	var topResultLink = document.getElementById( "compileTopResultLink" );
+	if (statusRow) {
+		statusRow.style.display = 'flex';
+	}
+	if (appResultDiv) {
+		appResultDiv.style.display = 'none';
+	}
+	if (resultMeta) {
+		resultMeta.textContent = 'The experience is ready to be shared';
+	}
 	if (topResultLink) {
 		topResultLink.classList.add( "tw-hidden" );
 		topResultLink.setAttribute( "href", "#" );
@@ -53,11 +65,6 @@ function vrodos_compileAjax(showPawnPositions) {
 		document.getElementById( "compileProgressSlider" ).style.display = 'none';
 		document.getElementById( "compilationProgressText" ).style.display = 'none';
 
-		document.getElementById( "constantUpdateUser" ).innerHTML =
-			'<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
-			'Finished successfully! - ' + new Date().toLocaleString();
-		if (typeof lucide !== 'undefined') lucide.createIcons();
-
 		let compile_dialogue_div       = document.getElementById( "previewApp" );
 		compile_dialogue_div.innerHTML = "";
 
@@ -93,19 +100,18 @@ function vrodos_compileAjax(showPawnPositions) {
 		}
 
 		if (primaryExperienceUrl) {
-			var appResultDiv = document.getElementById( "appResultDiv" );
 			var webLink = document.getElementById( "vrodos-weblink" );
 			var openWebLink = document.getElementById( "openWebLinkhref" );
 			var copyButton = document.getElementById( "buttonCopyWebLink" );
-			var topLink = document.getElementById( "compileTopResultLink" );
 
+			if (statusRow) {
+				statusRow.style.display = 'none';
+			}
 			if (appResultDiv) {
 				appResultDiv.style.display = 'flex';
 			}
-			if (topLink) {
-				topLink.href = primaryExperienceUrl;
-				topLink.classList.remove( "tw-hidden" );
-				topLink.innerHTML = '<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>' + (projectType === 'vrexpo_games' ? 'Open Exposition' : 'Open Compiled Scene');
+			if (resultMeta) {
+				resultMeta.textContent = 'Ready to be shared - ' + new Date().toLocaleString();
 			}
 			if (webLink) {
 				webLink.href = primaryExperienceUrl;

@@ -25,15 +25,43 @@
 			<input id="platformInput" type="hidden" value="platform-Aframe">
 			<input id="project-type" type="hidden" value="<?php echo esc_attr( strtolower( $project_type ) ); ?>">
 
-			<div class="tw-flex tw-items-start tw-justify-between tw-gap-3 tw-flex-wrap tw-mb-4">
-				<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600">
-					<i data-lucide="info" class="tw-w-4 tw-h-4 tw-text-slate-400 tw-flex-shrink-0 tw-mt-0.5"></i>
-					Configure your scene quality settings and click "Build" to construct the virtual world.
+			<div class="tw-mb-4">
+				<div id="compileStatusRow" class="tw-flex tw-items-start tw-justify-between tw-gap-3 tw-flex-wrap">
+					<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600">
+						<i data-lucide="info" class="tw-w-4 tw-h-4 tw-text-slate-400 tw-flex-shrink-0 tw-mt-0.5"></i>
+						Configure your scene quality settings and click "Build" to construct the virtual world.
+					</div>
+					<a id="compileTopResultLink" href="#" target="_blank" class="tw-btn tw-btn-sm tw-btn-outline tw-btn-primary tw-hidden">
+						<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>
+						Open Compiled Scene
+					</a>
 				</div>
-				<a id="compileTopResultLink" href="#" target="_blank" class="tw-btn tw-btn-sm tw-btn-outline tw-btn-primary tw-hidden">
-					<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>
-					Open Compiled Scene
-				</a>
+
+				<div id="appResultDiv" class="tw-rounded-xl tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-p-4 tw-flex tw-items-center tw-justify-between tw-gap-3 tw-flex-wrap" style="display:none">
+					<div class="tw-flex tw-items-center tw-gap-3">
+						<div class="tw-w-8 tw-h-8 tw-bg-emerald-100 tw-text-emerald-600 tw-rounded-lg tw-flex tw-items-center tw-justify-center">
+							<i data-lucide="check-circle" class="tw-w-4 tw-h-4"></i>
+						</div>
+						<div>
+							<p class="tw-text-sm tw-font-bold tw-text-emerald-900">Build Successful</p>
+							<p id="compileResultMeta" class="tw-text-xs tw-text-emerald-700">The experience is ready to be shared</p>
+						</div>
+					</div>
+					<div class="tw-flex tw-items-center tw-gap-2">
+						<a class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700" href="" id="vrodos-weblink" target="_blank">
+							<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>
+							Copy Link
+						</a>
+						<button id="buttonCopyWebLink" class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700">
+							<i data-lucide="copy" class="tw-w-4 tw-h-4"></i>
+						</button>
+						<a id="openWebLinkhref" href="#" target="_blank" class="tw-btn tw-btn-primary tw-btn-sm"
+						   onclick="document.getElementById('compileCancelBtn').click();">
+							<i data-lucide="rocket" class="tw-w-4 tw-h-4"></i>
+							Launch
+						</a>
+					</div>
+				</div>
 			</div>
 
 			<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-5">
@@ -205,31 +233,6 @@
 
 			<div id="previewApp" class="previewApp" style="display:none"></div>
 
-			<div id="appResultDiv" class="tw-rounded-xl tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-p-4 tw-flex tw-items-center tw-justify-between tw-gap-3 tw-flex-wrap" style="display:none">
-				<div class="tw-flex tw-items-center tw-gap-3">
-					<div class="tw-w-8 tw-h-8 tw-bg-emerald-100 tw-text-emerald-600 tw-rounded-lg tw-flex tw-items-center tw-justify-center">
-						<i data-lucide="check-circle" class="tw-w-4 tw-h-4"></i>
-					</div>
-					<div>
-						<p class="tw-text-sm tw-font-bold tw-text-emerald-900">Build Successful</p>
-						<p class="tw-text-xs tw-text-emerald-700">The experience is ready to be shared</p>
-					</div>
-				</div>
-				<div class="tw-flex tw-items-center tw-gap-2">
-					<a class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700" href="" id="vrodos-weblink" target="_blank">
-						<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>
-						Copy Link
-					</a>
-					<button id="buttonCopyWebLink" class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700">
-						<i data-lucide="copy" class="tw-w-4 tw-h-4"></i>
-					</button>
-					<a id="openWebLinkhref" href="#" target="_blank" class="tw-btn tw-btn-primary tw-btn-sm"
-					   onclick="document.getElementById('compileCancelBtn').click();">
-						<i data-lucide="rocket" class="tw-w-4 tw-h-4"></i>
-						Launch
-					</a>
-				</div>
-			</div>
 		</div>
 
 		<!-- Footer -->
