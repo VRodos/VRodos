@@ -42,6 +42,17 @@ AFRAME.registerComponent('scene-settings', {
         fogfar: { type: "string", default: "1000" },
         fognear: { type: "string", default: "0" },
         fogdensity: { type: "string", default: "0.00000001" },
+        postFXTAAEnabled: { type: "string", default: "0" },
+        postFXSSREnabled: { type: "string", default: "0" },
+        postFXSSRStrength: { type: "string", default: "balanced" },
+    },
+    getSSRStrengthValue: function () {
+        switch (this.data.postFXSSRStrength) {
+            case 'subtle': return 0.3;
+            case 'balanced': return 0.6;
+            case 'strong': return 0.9;
+            default: return 0.0;
+        }
     },
     getBloomStrengthValue: function () {
         switch (this.data.bloomStrength) {
@@ -100,6 +111,18 @@ AFRAME.registerComponent('scene-settings', {
             default:
                 return 'balanced';
         }
+    },
+    // Halton low-discrepancy sequence for TAA jitter
+    _halton: function (index, base) {
+        var result = 0;
+        var f = 1.0 / base;
+        var i = index;
+        while (i > 0) {
+            result += f * (i % base);
+            i = Math.floor(i / base);
+            f /= base;
+        }
+        return result;
     },
     getSAOParams: function () {
         var preset = this.getAmbientOcclusionPreset();
@@ -609,6 +632,8 @@ AFRAME.registerComponent('scene-settings', {
         return this.hasBloomEffectEnabled() ||
             this.isPostFXOptionEnabled('postFXColorEnabled') ||
             this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ||
+            this.isPostFXOptionEnabled('postFXTAAEnabled') ||
+            this.isPostFXOptionEnabled('postFXSSREnabled') ||
             this.getAmbientOcclusionPreset() !== 'off';
     },
     shouldUseEdgeAAOversample: function () {
@@ -708,6 +733,25 @@ AFRAME.registerComponent('scene-settings', {
         if (this.saoBlurMaterial && this.saoBlurMaterial.uniforms && this.saoBlurMaterial.uniforms.size) {
             this.saoBlurMaterial.uniforms.size.value.set(halfW, halfH);
         }
+
+        // Resize TAA targets at full resolution
+        if (this.taaTargetA && (this.taaTargetA.width !== width || this.taaTargetA.height !== height)) {
+            this.taaTargetA.setSize(width, height);
+        }
+        if (this.taaTargetB && (this.taaTargetB.width !== width || this.taaTargetB.height !== height)) {
+            this.taaTargetB.setSize(width, height);
+        }
+        if (this.taaMaterial && this.taaMaterial.uniforms && this.taaMaterial.uniforms.resolution) {
+            this.taaMaterial.uniforms.resolution.value.set(width, height);
+        }
+
+        // Resize SSR target at half resolution
+        if (this.ssrTargetA && (this.ssrTargetA.width !== halfW || this.ssrTargetA.height !== halfH)) {
+            this.ssrTargetA.setSize(halfW, halfH);
+        }
+        if (this.ssrMaterial && this.ssrMaterial.uniforms && this.ssrMaterial.uniforms.resolution) {
+            this.ssrMaterial.uniforms.resolution.value.set(halfW, halfH);
+        }
     },
     enablePostProcessing: function () {
         var renderer = this.el.renderer;
@@ -724,10 +768,13 @@ AFRAME.registerComponent('scene-settings', {
             height = Math.max(1, Math.floor(this.postProcessingSize.y * pixelRatio));
         }
 
-        // Create main render target â€” attach DepthTexture when SAO is active (disables MSAA)
+        // Create main render target — attach DepthTexture when SAO, TAA, or SSR is active (disables MSAA)
         var saoParams = this.getSAOParams();
+        var taaEnabled = this.isPostFXOptionEnabled('postFXTAAEnabled');
+        var ssrEnabled = this.isPostFXOptionEnabled('postFXSSREnabled');
+        var needsDepthTexture = saoParams || taaEnabled || ssrEnabled;
         var targetOptions = { depthBuffer: true };
-        if (saoParams) {
+        if (needsDepthTexture) {
             var depthTexture = new THREE.DepthTexture(width, height);
             depthTexture.type = THREE.UnsignedIntType;
             targetOptions.depthTexture = depthTexture;
@@ -740,8 +787,8 @@ AFRAME.registerComponent('scene-settings', {
         // The composite shader then needs NO linearToSRGB since the RT is already fully encoded.
         this.postProcessingTarget.isXRRenderTarget = true;
         this.postProcessingTarget.texture.colorSpace = THREE.SRGBColorSpace;
-        // MSAA only when SAO is off (DepthTexture + MSAA conflict in WebGL2)
-        if (!saoParams && typeof this.postProcessingTarget.samples !== 'undefined') {
+        // MSAA only when DepthTexture is off (DepthTexture + MSAA conflict in WebGL2)
+        if (!needsDepthTexture && typeof this.postProcessingTarget.samples !== 'undefined') {
             var maxSamples = (renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4;
             this.postProcessingTarget.samples = Math.min(maxSamples, this.getAAQualitySampleCount());
         }
@@ -792,6 +839,38 @@ AFRAME.registerComponent('scene-settings', {
         this.fxaaScene = new THREE.Scene();
         this.fxaaScene.add(this.fxaaQuad);
 
+        // TAA pass (full resolution, temporal accumulation with ping-pong)
+        if (taaEnabled) {
+            this.taaTargetA = new THREE.WebGLRenderTarget(width, height, { depthBuffer: false });
+            this.taaTargetB = new THREE.WebGLRenderTarget(width, height, { depthBuffer: false });
+            this.taaCurrentTarget = this.taaTargetA;
+            this.taaHistoryTarget = this.taaTargetB;
+            this.taaMaterial = VRODOSMaster.createTAAMaterial();
+            this.taaMaterial.uniforms.resolution.value.set(width, height);
+            this.taaQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.taaMaterial);
+            this.taaScene = new THREE.Scene();
+            this.taaScene.add(this.taaQuad);
+            this._taaFrameIndex = 0;
+            // Pre-compute Halton(2,3) jitter sequence (16 samples)
+            this._taaJitterSequence = [];
+            for (var ji = 0; ji < 16; ji++) {
+                this._taaJitterSequence.push({
+                    x: this._halton(ji + 1, 2) - 0.5,
+                    y: this._halton(ji + 1, 3) - 0.5
+                });
+            }
+        }
+
+        // SSR pass (half resolution, screen-space ray marching)
+        if (ssrEnabled) {
+            this.ssrTargetA = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
+            this.ssrMaterial = VRODOSMaster.createSSRMaterial();
+            this.ssrMaterial.uniforms.resolution.value.set(halfW, halfH);
+            this.ssrQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.ssrMaterial);
+            this.ssrScene = new THREE.Scene();
+            this.ssrScene.add(this.ssrQuad);
+        }
+
         this.postProcessingOriginalRender = renderer.render.bind(renderer);
         this.postProcessingActive = true;
 
@@ -813,10 +892,28 @@ AFRAME.registerComponent('scene-settings', {
             try {
                 var previousTarget = renderer.getRenderTarget();
 
+                // TAA jitter: apply sub-pixel offset to camera projection
+                var useTAA = this.isPostFXOptionEnabled('postFXTAAEnabled') && this.taaMaterial && this.taaCurrentTarget;
+                if (useTAA) {
+                    // Apply Halton jitter to projection matrix
+                    this._taaSavedProjectionMatrix = this._taaSavedProjectionMatrix || new THREE.Matrix4();
+                    this._taaSavedProjectionMatrix.copy(camera.projectionMatrix);
+                    var jitter = this._taaJitterSequence[this._taaFrameIndex % 16];
+                    var size = renderer.getSize(this.postProcessingSize);
+                    camera.projectionMatrix.elements[8] += (jitter.x * 2.0) / size.x;
+                    camera.projectionMatrix.elements[9] += (jitter.y * 2.0) / size.y;
+                    this._taaFrameIndex++;
+                }
+
                 // Pass 1: Render scene to main target
                 renderer.setRenderTarget(this.postProcessingTarget);
                 renderer.clear(true, true, true);
                 this.postProcessingOriginalRender(scene, camera);
+
+                // Restore un-jittered projection after scene render
+                if (useTAA) {
+                    camera.projectionMatrix.copy(this._taaSavedProjectionMatrix);
+                }
 
                 // SAO passes (only if SAO is active and resources exist)
                 if (this.saoMaterial && this.saoTargetA && this.saoTargetB && this.postProcessingTarget.depthTexture) {
@@ -861,6 +958,36 @@ AFRAME.registerComponent('scene-settings', {
                         this._whiteSAOTexture.needsUpdate = true;
                     }
                     this.postProcessingMaterial.uniforms.tSAO.value = this._whiteSAOTexture;
+                }
+
+                // SSR pass (half resolution, after SAO, before bloom)
+                var useSSR = this.isPostFXOptionEnabled('postFXSSREnabled') && this.ssrMaterial && this.ssrTargetA && this.postProcessingTarget.depthTexture;
+                if (useSSR) {
+                    this.ssrMaterial.uniforms.tDiffuse.value = this.postProcessingTarget.texture;
+                    this.ssrMaterial.uniforms.tDepth.value = this.postProcessingTarget.depthTexture;
+                    this.ssrMaterial.uniforms.cameraNear.value = camera.near;
+                    this.ssrMaterial.uniforms.cameraFar.value = camera.far;
+                    this.ssrMaterial.uniforms.projectionMatrix.value.copy(camera.projectionMatrix);
+                    this.ssrMaterial.uniforms.inverseProjectionMatrix.value.copy(camera.projectionMatrixInverse);
+                    // Add temporal jitter to SSR to reduce banding (TAA will accumulate)
+                    this.ssrMaterial.uniforms.jitter.value = useTAA ? (this._taaFrameIndex % 16) / 16.0 : 0.0;
+
+                    this.ssrQuad.material = this.ssrMaterial;
+                    renderer.setRenderTarget(this.ssrTargetA);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.ssrScene, this.postProcessingCamera);
+
+                    this.postProcessingMaterial.uniforms.tSSR.value = this.ssrTargetA.texture;
+                    this.postProcessingMaterial.uniforms.ssrStrength.value = this.getSSRStrengthValue();
+                } else {
+                    // No SSR — feed 1x1 transparent black texture
+                    if (!this._blackSSRTexture) {
+                        var ssrData = new Uint8Array([0, 0, 0, 0]);
+                        this._blackSSRTexture = new THREE.DataTexture(ssrData, 1, 1, THREE.RGBAFormat);
+                        this._blackSSRTexture.needsUpdate = true;
+                    }
+                    this.postProcessingMaterial.uniforms.tSSR.value = this._blackSSRTexture;
+                    this.postProcessingMaterial.uniforms.ssrStrength.value = 0.0;
                 }
 
                 // Multi-pass bloom (only if bloom is enabled)
@@ -919,20 +1046,47 @@ AFRAME.registerComponent('scene-settings', {
                 this.postProcessingMaterial.uniforms.outputExposure.value = (renderer && renderer.toneMappingExposure) ? renderer.toneMappingExposure : 1.0;
 
                 var useFXAA = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') && this.fxaaTarget && this.fxaaMaterial;
-                if (useFXAA) {
-                    // Pass 5: Composite â†’ fxaaTarget
+
+                // Determine where composite outputs to (depends on TAA and FXAA)
+                if (useTAA) {
+                    // Composite → fxaaTarget (used as temp composite buffer)
                     renderer.setRenderTarget(this.fxaaTarget);
                     renderer.clear(true, true, true);
                     this.postProcessingOriginalRender(this.postProcessingScene, this.postProcessingCamera);
 
-                    // Pass 6: FXAA â†’ screen
+                    // TAA resolve: blend composite + clipped history → taaCurrentTarget
+                    this.taaMaterial.uniforms.tCurrent.value = this.fxaaTarget.texture;
+                    this.taaMaterial.uniforms.tHistory.value = this.taaHistoryTarget.texture;
+
+                    this.taaQuad.material = this.taaMaterial;
+                    renderer.setRenderTarget(this.taaCurrentTarget);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.taaScene, this.postProcessingCamera);
+
+                    // Display TAA result → screen (via FXAA blit for final output)
+                    this.fxaaMaterial.uniforms.tDiffuse.value = this.taaCurrentTarget.texture;
+                    this.fxaaQuad.material = this.fxaaMaterial;
+                    renderer.setRenderTarget(null);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.fxaaScene, this.postProcessingCamera);
+
+                    // Swap ping-pong: taaCurrentTarget becomes next frame’s history
+                    var tmpTarget = this.taaCurrentTarget;
+                    this.taaCurrentTarget = this.taaHistoryTarget;
+                    this.taaHistoryTarget = tmpTarget;
+                } else if (useFXAA) {
+                    // Composite → fxaaTarget → FXAA → screen
+                    renderer.setRenderTarget(this.fxaaTarget);
+                    renderer.clear(true, true, true);
+                    this.postProcessingOriginalRender(this.postProcessingScene, this.postProcessingCamera);
+
                     this.fxaaMaterial.uniforms.tDiffuse.value = this.fxaaTarget.texture;
                     this.fxaaQuad.material = this.fxaaMaterial;
                     renderer.setRenderTarget(null);
                     renderer.clear(true, true, true);
                     this.postProcessingOriginalRender(this.fxaaScene, this.postProcessingCamera);
                 } else {
-                    // Pass 5: Composite â†’ screen (no FXAA)
+                    // Composite → screen (no TAA, no FXAA)
                     renderer.setRenderTarget(null);
                     renderer.clear(true, true, true);
                     this.postProcessingOriginalRender(this.postProcessingScene, this.postProcessingCamera);
@@ -989,6 +1143,21 @@ AFRAME.registerComponent('scene-settings', {
             if (this.saoQuad.geometry) { this.saoQuad.geometry.dispose(); }
         }
 
+        // Dispose TAA resources
+        if (this.taaTargetA) { this.taaTargetA.dispose(); }
+        if (this.taaTargetB) { this.taaTargetB.dispose(); }
+        if (this.taaMaterial) { this.taaMaterial.dispose(); }
+        if (this.taaQuad) {
+            if (this.taaQuad.geometry) { this.taaQuad.geometry.dispose(); }
+        }
+
+        // Dispose SSR resources
+        if (this.ssrTargetA) { this.ssrTargetA.dispose(); }
+        if (this.ssrMaterial) { this.ssrMaterial.dispose(); }
+        if (this.ssrQuad) {
+            if (this.ssrQuad.geometry) { this.ssrQuad.geometry.dispose(); }
+        }
+
         this.postProcessingTarget = null;
         this.postProcessingMaterial = null;
         this.postProcessingScene = null;
@@ -1013,6 +1182,21 @@ AFRAME.registerComponent('scene-settings', {
         this.saoBlurMaterial = null;
         this.saoQuad = null;
         this.saoScene = null;
+        this.taaTargetA = null;
+        this.taaTargetB = null;
+        this.taaCurrentTarget = null;
+        this.taaHistoryTarget = null;
+        this.taaMaterial = null;
+        this.taaQuad = null;
+        this.taaScene = null;
+        this._taaFrameIndex = 0;
+        this._taaJitterSequence = null;
+        this.ssrTargetA = null;
+        this.ssrMaterial = null;
+        this.ssrQuad = null;
+        this.ssrScene = null;
+        if (this._blackSSRTexture) { this._blackSSRTexture.dispose(); }
+        this._blackSSRTexture = null;
         if (this._blackBloomTexture) { this._blackBloomTexture.dispose(); }
         this._blackBloomTexture = null;
         if (this._whiteSAOTexture) { this._whiteSAOTexture.dispose(); }
@@ -1366,8 +1550,22 @@ AFRAME.registerComponent('scene-settings', {
         this.saoBlurMaterial = null;
         this.saoQuad = null;
         this.saoScene = null;
+        this.taaTargetA = null;
+        this.taaTargetB = null;
+        this.taaCurrentTarget = null;
+        this.taaHistoryTarget = null;
+        this.taaMaterial = null;
+        this.taaQuad = null;
+        this.taaScene = null;
+        this._taaFrameIndex = 0;
+        this._taaJitterSequence = null;
+        this.ssrTargetA = null;
+        this.ssrMaterial = null;
+        this.ssrQuad = null;
+        this.ssrScene = null;
         this._blackBloomTexture = null;
         this._whiteSAOTexture = null;
+        this._blackSSRTexture = null;
         window.addEventListener('resize', this.handleResize);
         this.el.addEventListener('child-attached', this.handleSceneMutation);
         this.el.addEventListener('child-detached', this.handleSceneMutation);

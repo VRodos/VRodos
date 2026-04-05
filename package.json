@@ -3,6 +3,7 @@
   "version": "2.5.0",
   "description": "VRodos WordPress Plugin",
   "scripts": {
+
     "build": "npm run build:three && npm run build:css",
     "build:three": "node ./scripts/build-three-r173.mjs",
     "build:vendor": "npm run build:three",

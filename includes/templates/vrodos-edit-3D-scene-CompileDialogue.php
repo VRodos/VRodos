@@ -5,21 +5,28 @@
 	data-game-slug="<?php echo esc_attr( $projectSlug ); ?>"
 	data-project-id="<?php echo esc_attr( $project_id ); ?>">
 
-	<div class="tw-modal-box tw-p-0 tw-overflow-hidden tw-max-w-3xl tw-w-full">
+	<div class="tw-modal-box tw-p-0 tw-overflow-hidden tw-max-w-3xl tw-w-full tw-max-h-[90vh] tw-flex tw-flex-col">
 
 		<!-- Header -->
-		<div class="tw-p-6 tw-pb-3 tw-flex tw-items-center tw-gap-3 tw-border-b tw-border-slate-200">
+		<div class="tw-p-4 tw-px-6 tw-flex tw-items-center tw-gap-3 tw-border-b tw-border-slate-200 tw-flex-shrink-0">
 			<div class="tw-w-10 tw-h-10 tw-bg-emerald-50 tw-text-emerald-600 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-flex-shrink-0">
 				<i data-lucide="hammer" class="tw-w-5 tw-h-5"></i>
 			</div>
-			<div>
+			<div class="tw-flex-1">
 				<h3 class="tw-text-lg tw-font-bold tw-text-slate-800">Build <?php echo esc_html( $single_lowercase ); ?></h3>
 				<p class="tw-text-xs tw-text-slate-400">Compile your scene into a deployable experience</p>
+			</div>
+			<div class="tw-flex tw-items-center tw-gap-2 tw-flex-shrink-0">
+				<button id="compileCancelBtn" class="tw-btn tw-btn-ghost tw-text-slate-500 tw-btn-sm">Cancel</button>
+				<a id="compileProceedBtn" type="button" class="tw-btn tw-btn-primary tw-btn-sm tw-px-6">
+					<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
+					Build Project
+				</a>
 			</div>
 		</div>
 
 		<!-- Body -->
-		<div class="tw-p-6">
+		<div class="tw-p-6 tw-overflow-y-auto tw-flex-1">
 
 			<!--Values are important. Dont delete these hidden inputs (yet)-->
 			<input id="platformInput" type="hidden" value="platform-Aframe">
@@ -203,11 +210,32 @@
 						</div>
 
 						<div class="tw-pt-2 tw-border-t tw-border-slate-200">
+							<label class="tw-form-control">
+								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500"
+									  title="Screen-space reflections for floors, glass, and polished surfaces">Reflections (SSR)</span>
+								<select id="compileSSRStrengthSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+									<option value="off">Off</option>
+									<option value="subtle">Subtle</option>
+									<option value="balanced">Balanced</option>
+									<option value="strong">Strong</option>
+								</select>
+							</label>
+						</div>
+
+						<div class="tw-pt-2 tw-border-t tw-border-slate-200">
 							<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 								<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Edge Smoothing (FXAA 3.1)</span>
 								<span id="compileEdgeAAStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px] tw-font-bold tw-uppercase">Balanced</span>
 							</div>
 							<input id="compileEdgeAAStrengthSlider" type="range" min="0" max="5" step="1" value="3" class="tw-range tw-range-primary tw-range-xs tw-mt-1" disabled>
+						</div>
+
+						<div class="tw-pt-2 tw-border-t tw-border-slate-200">
+							<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+								<input id="compilePostFxTAAToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs" disabled>
+								<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500"
+									  title="Temporal anti-aliasing for smoother edges and reduced specular shimmer. Supplements FXAA.">Temporal AA (TAA)</span>
+							</label>
 						</div>
 					</div>
 				</div>
@@ -235,14 +263,6 @@
 
 		</div>
 
-		<!-- Footer -->
-		<div class="tw-modal-action tw-bg-slate-50 tw-p-4 tw-m-0 tw-flex tw-justify-end tw-gap-3 tw-border-t tw-border-slate-200">
-			<button id="compileCancelBtn" class="tw-btn tw-btn-ghost tw-text-slate-500 tw-btn-sm">Cancel</button>
-			<a id="compileProceedBtn" type="button" class="tw-btn tw-btn-primary tw-btn-sm tw-px-6">
-				<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
-				Build Project
-			</a>
-		</div>
 	</div>
 	<form method="dialog" class="tw-modal-backdrop">
 		<button class="tw-cursor-default tw-outline-none tw-bg-slate-900/40 tw-backdrop-blur-sm tw-appearance-none tw-border-none tw-text-transparent">close</button>

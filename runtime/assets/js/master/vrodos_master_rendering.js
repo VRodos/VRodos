@@ -1017,12 +1017,97 @@ function vrodosCreateFXAAMaterial() {
     return material;
 }
 
+// --- TAA (Temporal Anti-Aliasing) ---
+// Simple temporal accumulation with aggressive YCoCg variance clipping.
+// No depth reprojection — history is sampled at the same UV and clipped to the
+// current frame's 3x3 neighborhood. When the camera moves, the clipping forces
+// the output toward the current frame, preventing ghosting.
+function vrodosCreateTAAMaterial() {
+    var material = new THREE.ShaderMaterial({
+        uniforms: {
+            tCurrent: { value: null },
+            tHistory: { value: null },
+            resolution: { value: new THREE.Vector2(1, 1) }
+        },
+        vertexShader: [
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vUv = uv;',
+            '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+            '}'
+        ].join('\n'),
+        fragmentShader: [
+            'uniform sampler2D tCurrent;',
+            'uniform sampler2D tHistory;',
+            'uniform vec2 resolution;',
+            'varying vec2 vUv;',
+            '',
+            'vec3 rgbToYCoCg(vec3 c) {',
+            '  return vec3(',
+            '    0.25 * c.r + 0.5 * c.g + 0.25 * c.b,',
+            '    0.5 * c.r - 0.5 * c.b,',
+            '    -0.25 * c.r + 0.5 * c.g - 0.25 * c.b',
+            '  );',
+            '}',
+            'vec3 yCoCgToRgb(vec3 c) {',
+            '  return vec3(',
+            '    c.x + c.y - c.z,',
+            '    c.x + c.z,',
+            '    c.x - c.y - c.z',
+            '  );',
+            '}',
+            '',
+            'void main() {',
+            '  vec3 current = texture2D(tCurrent, vUv).rgb;',
+            '  vec3 history = texture2D(tHistory, vUv).rgb;',
+            '',
+            '  // --- 3x3 neighborhood statistics in YCoCg ---',
+            '  vec2 texelSize = 1.0 / resolution;',
+            '  vec3 m1 = vec3(0.0);',
+            '  vec3 m2 = vec3(0.0);',
+            '  for (int x = -1; x <= 1; x++) {',
+            '    for (int y = -1; y <= 1; y++) {',
+            '      vec3 s = texture2D(tCurrent, vUv + vec2(float(x), float(y)) * texelSize).rgb;',
+            '      vec3 sYCoCg = rgbToYCoCg(s);',
+            '      m1 += sYCoCg;',
+            '      m2 += sYCoCg * sYCoCg;',
+            '    }',
+            '  }',
+            '',
+            '  // Variance clipping (1.5 sigma) — wide enough to preserve thin geometry',
+            '  vec3 mu = m1 / 9.0;',
+            '  vec3 sigma = sqrt(max(m2 / 9.0 - mu * mu, vec3(0.0)));',
+            '  vec3 clipMin = mu - 1.5 * sigma;',
+            '  vec3 clipMax = mu + 1.5 * sigma;',
+            '',
+            '  // Clip history to current neighborhood',
+            '  vec3 historyYCoCg = rgbToYCoCg(history);',
+            '  vec3 clippedYCoCg = clamp(historyYCoCg, clipMin, clipMax);',
+            '  vec3 clippedHistory = yCoCgToRgb(clippedYCoCg);',
+            '',
+            '  // Adaptive blend: high history weight for strong accumulation, reduce when clipped',
+            '  float clipDist = length(historyYCoCg - clippedYCoCg);',
+            '  float blend = mix(0.95, 0.5, clamp(clipDist * 4.0, 0.0, 1.0));',
+            '',
+            '  vec3 result = mix(current, clippedHistory, blend);',
+            '  gl_FragColor = vec4(result, 1.0);',
+            '}'
+        ].join('\n'),
+        depthWrite: false,
+        depthTest: false
+    });
+    material.toneMapped = false;
+    return material;
+}
+
 function vrodosCreatePhotorealPostMaterial() {
     var material = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: null },
             tBloom: { value: null },
             tSAO: { value: null },
+            tSSR: { value: null },
+            ssrStrength: { value: 0.0 },
             bloomStrength: { value: 0.35 },
             vignetteStrength: { value: 0.16 },
             saturation: { value: 1.04 },
@@ -1041,6 +1126,8 @@ function vrodosCreatePhotorealPostMaterial() {
             'uniform sampler2D tDiffuse;',
             'uniform sampler2D tBloom;',
             'uniform sampler2D tSAO;',
+            'uniform sampler2D tSSR;',
+            'uniform float ssrStrength;',
             'uniform float bloomStrength;',
             'uniform float vignetteStrength;',
             'uniform float saturation;',
@@ -1056,6 +1143,9 @@ function vrodosCreatePhotorealPostMaterial() {
             '  vec4 base = texture2D(tDiffuse, vUv);',
             '  float ao = texture2D(tSAO, vUv).r;',
             '  vec3 color = base.rgb * ao;',
+            // SSR blending (alpha = hit mask, rgb = reflected color)
+            '  vec4 ssr = texture2D(tSSR, vUv);',
+            '  color = mix(color, ssr.rgb, ssr.a * ssrStrength);',
             '  vec3 bloom = texture2D(tBloom, vUv).rgb;',
             '  color += bloom * bloomStrength;',
             // Color grading (in sRGB space — RT is already ACES+sRGB encoded by Three.js
@@ -1079,6 +1169,190 @@ function vrodosCreatePhotorealPostMaterial() {
     return material;
 }
 
+// --- SSR (Screen-Space Reflections) ---
+// Ray marches in screen space using the depth buffer to find reflections.
+// Runs at half resolution for performance. Outputs reflection color in rgb, hit mask in alpha.
+function vrodosCreateSSRMaterial() {
+    var material = new THREE.ShaderMaterial({
+        defines: {
+            MAX_STEPS: 48,
+            BINARY_STEPS: 5
+        },
+        uniforms: {
+            tDiffuse: { value: null },
+            tDepth: { value: null },
+            resolution: { value: new THREE.Vector2(1, 1) },
+            cameraNear: { value: 0.1 },
+            cameraFar: { value: 1000.0 },
+            projectionMatrix: { value: new THREE.Matrix4() },
+            inverseProjectionMatrix: { value: new THREE.Matrix4() },
+            maxDistance: { value: 50.0 },
+            thickness: { value: 0.5 },
+            stride: { value: 1.5 },
+            fadeEdge: { value: 0.1 },
+            jitter: { value: 0.0 }
+        },
+        vertexShader: [
+            'varying vec2 vUv;',
+            'void main() {',
+            '  vUv = uv;',
+            '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+            '}'
+        ].join('\n'),
+        fragmentShader: [
+            'uniform sampler2D tDiffuse;',
+            'uniform sampler2D tDepth;',
+            'uniform vec2 resolution;',
+            'uniform float cameraNear;',
+            'uniform float cameraFar;',
+            'uniform mat4 projectionMatrix;',
+            'uniform mat4 inverseProjectionMatrix;',
+            'uniform float maxDistance;',
+            'uniform float thickness;',
+            'uniform float stride;',
+            'uniform float fadeEdge;',
+            'uniform float jitter;',
+            'varying vec2 vUv;',
+            '',
+            'float getLinearDepth(vec2 uv) {',
+            '  float d = texture2D(tDepth, uv).r;',
+            '  return (cameraNear * cameraFar) / (cameraFar - d * (cameraFar - cameraNear));',
+            '}',
+            '',
+            '// Reconstruct view-space position from UV + depth',
+            'vec3 getViewPos(vec2 uv) {',
+            '  float depth = texture2D(tDepth, uv).r;',
+            '  vec2 ndc = uv * 2.0 - 1.0;',
+            '  vec4 clip = vec4(ndc, depth * 2.0 - 1.0, 1.0);',
+            '  vec4 view = inverseProjectionMatrix * clip;',
+            '  return view.xyz / view.w;',
+            '}',
+            '',
+            '// Reconstruct normal from depth using screen-space derivatives',
+            'vec3 getViewNormal(vec2 uv) {',
+            '  vec3 p = getViewPos(uv);',
+            '  vec3 dx = dFdx(p);',
+            '  vec3 dy = dFdy(p);',
+            '  return normalize(cross(dy, dx));',
+            '}',
+            '',
+            '// Project view-space position to screen UV',
+            'vec2 viewToScreen(vec3 viewPos) {',
+            '  vec4 clip = projectionMatrix * vec4(viewPos, 1.0);',
+            '  return (clip.xy / clip.w) * 0.5 + 0.5;',
+            '}',
+            '',
+            'void main() {',
+            '  float centerDepth = texture2D(tDepth, vUv).r;',
+            '',
+            '  // Skip sky — no geometry to reflect',
+            '  if (centerDepth >= 0.9999) {',
+            '    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);',
+            '    return;',
+            '  }',
+            '',
+            '  vec3 viewPos = getViewPos(vUv);',
+            '  vec3 normal = getViewNormal(vUv);',
+            '',
+            '  // Skip surfaces facing away from camera (back faces)',
+            '  vec3 viewDir = normalize(viewPos);',
+            '  float NdotV = dot(normal, -viewDir);',
+            '  if (NdotV < 0.01) {',
+            '    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);',
+            '    return;',
+            '  }',
+            '',
+            '  // Fresnel — stronger reflections at glancing angles',
+            '  float fresnel = pow(1.0 - NdotV, 3.0);',
+            '  fresnel = mix(0.04, 1.0, fresnel);',
+            '',
+            '  // Reflection direction in view space',
+            '  vec3 reflectDir = reflect(viewDir, normal);',
+            '',
+            '  // Only reflect directions pointing toward camera (up/toward screen)',
+            '  if (reflectDir.z > 0.0) {',
+            '    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);',
+            '    return;',
+            '  }',
+            '',
+            '  // --- Screen-space ray march ---',
+            '  vec3 rayOrigin = viewPos + normal * 0.02;',
+            '  float stepSize = stride;',
+            '  vec3 rayPos = rayOrigin;',
+            '  vec2 hitUV = vec2(0.0);',
+            '  bool hit = false;',
+            '  float travelDist = 0.0;',
+            '',
+            '  // Add jitter to reduce banding',
+            '  rayPos += reflectDir * stepSize * jitter;',
+            '',
+            '  for (int i = 0; i < MAX_STEPS; i++) {',
+            '    rayPos += reflectDir * stepSize;',
+            '    travelDist += stepSize;',
+            '',
+            '    if (travelDist > maxDistance) break;',
+            '',
+            '    vec2 screenUV = viewToScreen(rayPos);',
+            '',
+            '    // Out of screen bounds',
+            '    if (screenUV.x < 0.0 || screenUV.x > 1.0 || screenUV.y < 0.0 || screenUV.y > 1.0) break;',
+            '',
+            '    float sampledDepth = getLinearDepth(screenUV);',
+            '    float rayDepth = -rayPos.z;',
+            '',
+            '    // Check if ray is behind the surface',
+            '    if (rayDepth > sampledDepth && rayDepth < sampledDepth + thickness) {',
+            '',
+            '      // Binary refinement for sub-pixel accuracy',
+            '      vec3 refinePos = rayPos;',
+            '      vec3 refineStep = reflectDir * stepSize * 0.5;',
+            '      for (int j = 0; j < BINARY_STEPS; j++) {',
+            '        refinePos -= refineStep;',
+            '        refineStep *= 0.5;',
+            '        vec2 refUV = viewToScreen(refinePos);',
+            '        float refDepth = getLinearDepth(refUV);',
+            '        float refRayDepth = -refinePos.z;',
+            '        if (refRayDepth > refDepth) {',
+            '          refinePos += refineStep * 2.0;',
+            '        }',
+            '      }',
+            '',
+            '      hitUV = viewToScreen(refinePos);',
+            '      hit = true;',
+            '      break;',
+            '    }',
+            '',
+            '    // Increase step size with distance (hierarchical stepping)',
+            '    stepSize *= 1.05;',
+            '  }',
+            '',
+            '  if (!hit) {',
+            '    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);',
+            '    return;',
+            '  }',
+            '',
+            '  // --- Fade based on screen edge proximity ---',
+            '  vec2 edgeDist = min(hitUV, 1.0 - hitUV);',
+            '  float edgeFade = smoothstep(0.0, fadeEdge, min(edgeDist.x, edgeDist.y));',
+            '',
+            '  // Fade based on travel distance',
+            '  float distFade = 1.0 - clamp(travelDist / maxDistance, 0.0, 1.0);',
+            '  distFade = distFade * distFade;',
+            '',
+            '  // Sample reflected color',
+            '  vec3 reflectedColor = texture2D(tDiffuse, hitUV).rgb;',
+            '',
+            '  float alpha = fresnel * edgeFade * distFade;',
+            '  gl_FragColor = vec4(reflectedColor, alpha);',
+            '}'
+        ].join('\n'),
+        depthWrite: false,
+        depthTest: false
+    });
+    material.toneMapped = false;
+    return material;
+}
+
 VRODOSMaster.NAVMESH_DEFAULTS = VRODOS_NAVMESH_DEFAULTS;
 VRODOSMaster.clamp = vrodosClamp;
 VRODOSMaster.createHiddenNavmeshMaterial = vrodosCreateHiddenNavmeshMaterial;
@@ -1090,5 +1364,7 @@ VRODOSMaster.createGaussianBlurMaterial = vrodosCreateGaussianBlurMaterial;
 VRODOSMaster.createSAOMaterial = vrodosCreateSAOMaterial;
 VRODOSMaster.createSAOBlurMaterial = vrodosCreateSAOBlurMaterial;
 VRODOSMaster.createFXAAMaterial = vrodosCreateFXAAMaterial;
+VRODOSMaster.createTAAMaterial = vrodosCreateTAAMaterial;
+VRODOSMaster.createSSRMaterial = vrodosCreateSSRMaterial;
 VRODOSMaster.createPhotorealPostMaterial = vrodosCreatePhotorealPostMaterial;
 

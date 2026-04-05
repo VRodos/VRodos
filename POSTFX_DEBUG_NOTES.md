@@ -103,9 +103,9 @@ The circular glow around the sun seen with post FX on was **not an SAO artifact*
 
 - `THREE.ShaderMaterial` does NOT auto-call `linearToOutputTexel` — it's defined in the prefix but never invoked unless the shader includes `#include <colorspace_fragment>`. Do not assume automatic encoding.
 - Tone mapping is controlled per-pass by what `_currentRenderTarget` is at draw time (compiled into the program cache). Changing render target changes the compiled program.
-- The composite must replicate tone mapping + linearToSRGB to match the direct-render path.
-- The pipeline order matters: AO/bloom in linear → ACES with exposure → grading → vignette → linearToSRGB.
-- `outputExposure` uniform must track `renderer.toneMappingExposure` each frame.
+- `postProcessingTarget.isXRRenderTarget = true` + `texture.colorSpace = SRGBColorSpace` forces Three.js to apply ACES + sRGB encoding to the RT, matching the direct-to-screen path. The composite needs NO extra encoding.
+- The pipeline order: Scene→RT (ACES+sRGB) → SAO(3 passes) → SSR(half-res) → Bloom(3 passes) → Composite(AO*scene+SSR+bloom+grading) → TAA(temporal resolve) → FXAA → screen.
+- Features requiring DepthTexture (SAO, TAA, SSR) disable MSAA — FXAA compensates.
 
 ## Critical Architecture Discovery (2026-04-05)
 

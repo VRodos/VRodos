@@ -42,6 +42,22 @@ type: project
 **Phase 4.3 — A-Frame Effects** (resolved 2026-04-01):
 - A-Frame 1.7.1 has NO built-in post-processing/effects system. Custom render hijack is the only approach.
 
+**Phase 4.6 — Post-FX Color Washout Fix** (completed 2026-04-05):
+- Fixed washed-out colors when post-FX enabled vs disabled (pale sky, foggy sun halo)
+- Root cause: Three.js r173 skips tone mapping + sRGB encoding when rendering to `WebGLRenderTarget` (only applies them for direct-to-screen or XR targets). The composite shader's `linearToSRGB()` couldn't fix both sky (already display-range) and PBR assets (tiny linear values) uniformly.
+- Fix: Set `postProcessingTarget.isXRRenderTarget = true` + `texture.colorSpace = SRGBColorSpace` — forces Three.js to apply ACESFilmic tone mapping + sRGB encoding to the RT, matching the direct-render path exactly. Removed `linearToSRGB` from composite shader since RT is now fully encoded.
+- Files: `runtime/assets/js/master/components/vrodos_scene_settings.component.js` (RT flags), `runtime/assets/js/master/vrodos_master_rendering.js` (composite shader cleanup)
+
+**Phase 4.4 — Screen-Space Reflections (SSR)** (completed 2026-04-05):
+- Half-resolution ray marching with depth buffer, binary refinement, Fresnel, edge/distance fade
+- 3 strength presets (subtle/balanced/strong) in compile dialogue
+- Integrates into composite via alpha-masked blend; TAA denoises via temporal jitter
+
+**Phase 4.5 — Temporal Anti-Aliasing (TAA)** (completed 2026-04-05):
+- Halton(2,3) jitter + depth-based reprojection + YCoCg variance-based neighborhood clipping
+- Adaptive feedback (0.88–0.97), sky pass-through, ping-pong full-res targets
+- Supplements FXAA; shares DepthTexture with SAO/SSR
+
 ---
 
 ## Phase 3: Biggest Quality Wins (TODO)
@@ -79,11 +95,29 @@ Replaced basic 4-neighbor luma edge AA with NVIDIA FXAA 3.11 as a separate post-
 ### 4.3 ~~Evaluate A-Frame Built-in Effects System~~ ✅ RESOLVED
 A-Frame 1.7.1 has no built-in post-processing system. Custom render hijack is the only viable approach.
 
-### 4.4 Screen-Space Reflections (SSR)
-For reflective floors, glass, polished surfaces.
+### 4.4 ~~Screen-Space Reflections (SSR)~~ ✅ DONE (2026-04-05)
+- Screen-space ray marching using depth buffer at half resolution for performance
+- Normals reconstructed from depth via `dFdx`/`dFdy` (no separate normal pass needed)
+- Binary refinement (5 steps) for sub-pixel accuracy on ray hits
+- Fresnel-based reflection strength (stronger at glancing angles)
+- Screen-edge fade + distance fade to prevent artifacts at viewport boundaries
+- 3 strength presets: subtle (0.3), balanced (0.6), strong (0.9)
+- Integrates into composite shader via alpha-masked blend (rgb=reflected color, a=hit mask)
+- TAA naturally denoises SSR output via temporal jitter parameter
+- Pipeline: Scene→SAO→SSR(half-res)→Bloom→Composite(AO*scene+SSR+bloom+grading)→TAA→FXAA
+- Files: `runtime/assets/js/master/vrodos_master_rendering.js` (shader), `vrodos_scene_settings.component.js` (render loop)
 
-### 4.5 Temporal Anti-Aliasing (TAA)
-Better than MSAA for thin geometry and specular aliasing.
+### 4.5 ~~Temporal Anti-Aliasing (TAA)~~ ✅ DONE (2026-04-05)
+- Halton(2,3) sub-pixel jitter sequence (16 samples) applied to camera projection matrix per frame
+- Depth-based reprojection for camera motion (no separate motion vector pass)
+- Neighborhood clipping in YCoCg color space (variance-based, 1.25σ AABB) to reject ghosting
+- Adaptive feedback: 0.97 when still → 0.88 when moving fast (motion-length modulated)
+- Sky pixels (depth ≥ 0.9999) pass through without temporal accumulation
+- Off-screen history samples rejected (output current frame directly)
+- Ping-pong render targets at full resolution for history accumulation
+- Requires DepthTexture (shared with SAO/SSR; disables MSAA, FXAA compensates)
+- Supplements FXAA as final cleanup pass
+- Files: `runtime/assets/js/master/vrodos_master_rendering.js` (shader), `vrodos_scene_settings.component.js` (jitter + render loop)
 
 ---
 

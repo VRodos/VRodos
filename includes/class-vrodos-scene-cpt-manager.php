@@ -263,6 +263,9 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePostFXVignetteEnabled'] = false;
 		$scene_data['aframePostFXEdgeAAEnabled'] = $json_metadata->aframePostFXEdgeAAEnabled ?? true;
 		$scene_data['aframePostFXEdgeAAStrength'] = $json_metadata->aframePostFXEdgeAAStrength ?? 3;
+		$scene_data['aframePostFXTAAEnabled'] = $json_metadata->aframePostFXTAAEnabled ?? false;
+		$scene_data['aframePostFXSSREnabled'] = $json_metadata->aframePostFXSSREnabled ?? false;
+		$scene_data['aframePostFXSSRStrength'] = $json_metadata->aframePostFXSSRStrength ?? 'off';
 		$scene_data['aframeBloomStrength']    = $json_metadata->aframeBloomStrength ?? 'off';
 		$scene_data['aframeExposurePreset']   = $json_metadata->aframeExposurePreset ?? 'neutral';
 		$scene_data['aframeContrastPreset']   = $json_metadata->aframeContrastPreset ?? 'balanced';

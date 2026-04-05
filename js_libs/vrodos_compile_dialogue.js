@@ -17,7 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
             contrastPreset: document.getElementById('compileContrastPresetSelect'),
             reflectionProfile: document.getElementById('compileReflectionProfileSelect'),
             reflectionSource: document.getElementById('compileReflectionSourceSelect'),
-            envMapPreset: document.getElementById('compileEnvMapPresetSelect')
+            envMapPreset: document.getElementById('compileEnvMapPresetSelect'),
+            ssrStrength: document.getElementById('compileSSRStrengthSelect'),
+            taaEnabled: document.getElementById('compilePostFxTAAToggle')
         };
     }
 
@@ -101,6 +103,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         return 'hdr';
+    }
+
+    function normalizeSSRStrength(value) {
+        if (value === 'subtle' || value === 'balanced' || value === 'strong') {
+            return value;
+        }
+
+        return 'off';
     }
 
     function normalizeEnvMapPreset(value) {
@@ -199,6 +209,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof envir.scene.aframePostFXEdgeAAStrength === 'undefined') {
             envir.scene.aframePostFXEdgeAAStrength = 3;
         }
+        if (typeof envir.scene.aframePostFXTAAEnabled === 'undefined') {
+            envir.scene.aframePostFXTAAEnabled = false;
+        }
+        if (!envir.scene.aframePostFXSSRStrength) {
+            envir.scene.aframePostFXSSRStrength = 'off';
+        }
+        if (typeof envir.scene.aframePostFXSSREnabled === 'undefined') {
+            envir.scene.aframePostFXSSREnabled = false;
+        }
 
         envir.scene.aframeAAQuality = normalizeAAQuality(envir.scene.aframeAAQuality);
         envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(envir.scene.aframeAmbientOcclusionPreset);
@@ -209,6 +228,8 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeReflectionProfile = normalizeReflectionProfile(envir.scene.aframeReflectionProfile);
         envir.scene.aframeReflectionSource = normalizeReflectionSource(envir.scene.aframeReflectionSource);
         envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(envir.scene.aframeEnvMapPreset);
+        envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(envir.scene.aframePostFXSSRStrength);
+        envir.scene.aframePostFXSSREnabled = envir.scene.aframePostFXSSRStrength !== 'off';
         if (envir.scene.aframePostFXBloomEnabled === false) {
             envir.scene.aframeBloomStrength = 'off';
         }
@@ -248,6 +269,12 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.exposurePreset.disabled = !colorGradingEnabled;
         controls.contrastPreset.disabled = !colorGradingEnabled;
         controls.edgeAAStrength.disabled = !postFxEnabled;
+        if (controls.ssrStrength) {
+            controls.ssrStrength.disabled = !postFxEnabled;
+        }
+        if (controls.taaEnabled) {
+            controls.taaEnabled.disabled = !postFxEnabled;
+        }
         updateEdgeAAStrengthLabel();
     }
 
@@ -284,6 +311,14 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeReflectionProfile = normalizeReflectionProfile(controls.reflectionProfile.value);
         envir.scene.aframeReflectionSource = normalizeReflectionSource(controls.reflectionSource.value);
         envir.scene.aframeEnvMapPreset = controls.envMapPreset ? normalizeEnvMapPreset(controls.envMapPreset.value) : 'none';
+
+        if (controls.ssrStrength) {
+            envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(controls.ssrStrength.value);
+            envir.scene.aframePostFXSSREnabled = envir.scene.aframePostFXSSRStrength !== 'off';
+        }
+        if (controls.taaEnabled) {
+            envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
+        }
     }
 
     window.vrodosApplyCompileDialogSettingsToScene = applyCompileDialogSettingsToScene;
@@ -338,6 +373,14 @@ document.addEventListener('DOMContentLoaded', function() {
             controls.envMapPreset.value = envir && envir.scene && envir.scene.aframeEnvMapPreset
                 ? normalizeEnvMapPreset(envir.scene.aframeEnvMapPreset)
                 : 'none';
+        }
+        if (controls.ssrStrength) {
+            controls.ssrStrength.value = envir && envir.scene && envir.scene.aframePostFXSSRStrength
+                ? normalizeSSRStrength(envir.scene.aframePostFXSSRStrength)
+                : 'off';
+        }
+        if (controls.taaEnabled) {
+            controls.taaEnabled.checked = !!(envir && envir.scene && envir.scene.aframePostFXTAAEnabled);
         }
 
         syncCompilePostFxState();
@@ -395,6 +438,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.envMapPreset) {
         controls.envMapPreset.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.ssrStrength) {
+        controls.ssrStrength.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.taaEnabled) {
+        controls.taaEnabled.addEventListener('change', syncCompilePostFxState);
     }
 
     if (typeof window.syncCompileDialogFromSceneSettings === 'function') {

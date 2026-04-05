@@ -164,6 +164,18 @@ class VRodos_LoaderMulti {
                     envir.scene.aframePostFXEdgeAAStrength = resource || 3;
                 }
 
+                if (name === 'aframePostFXTAAEnabled') {
+                    envir.scene.aframePostFXTAAEnabled = resource === true || resource === 'true';
+                }
+
+                if (name === 'aframePostFXSSREnabled') {
+                    envir.scene.aframePostFXSSREnabled = resource === true || resource === 'true';
+                }
+
+                if (name === 'aframePostFXSSRStrength') {
+                    envir.scene.aframePostFXSSRStrength = resource || 'off';
+                }
+
                 if (name === 'aframeBloomStrength') {
                     envir.scene.aframeBloomStrength = resource || 'off';
                     if (envir.scene.aframePostFXBloomEnabled === false) {
@@ -606,6 +618,9 @@ class VRodos_LoaderMulti {
                         envir.scene.aframePostFXVignetteEnabled = false;
                         envir.scene.aframePostFXEdgeAAEnabled = !(resource.aframePostFXEdgeAAEnabled === false || resource.aframePostFXEdgeAAEnabled === 'false');
                         envir.scene.aframePostFXEdgeAAStrength = resource.aframePostFXEdgeAAStrength || 3;
+                        envir.scene.aframePostFXTAAEnabled = resource.aframePostFXTAAEnabled === true || resource.aframePostFXTAAEnabled === 'true';
+                        envir.scene.aframePostFXSSREnabled = resource.aframePostFXSSREnabled === true || resource.aframePostFXSSREnabled === 'true';
+                        envir.scene.aframePostFXSSRStrength = resource.aframePostFXSSRStrength || 'off';
                         envir.scene.aframeBloomStrength = resource.aframeBloomStrength || 'off';
                         if (envir.scene.aframePostFXBloomEnabled === false) {
                             envir.scene.aframeBloomStrength = 'off';
