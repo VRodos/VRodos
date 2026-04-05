@@ -54,37 +54,15 @@ type: project
 - Integrates into composite via alpha-masked blend; TAA denoises via temporal jitter
 
 **Phase 4.5 — Temporal Anti-Aliasing (TAA)** (completed 2026-04-05):
-- Halton(2,3) jitter + depth-based reprojection + YCoCg variance-based neighborhood clipping
-- Adaptive feedback (0.88–0.97), sky pass-through, ping-pong full-res targets
-- Supplements FXAA; shares DepthTexture with SAO/SSR
+- Halton(2,3) sub-pixel jitter (16 samples, ±0.5px) + YCoCg variance-clipped temporal accumulation
+- No depth reprojection (caused ghosting) — simple same-UV blend with aggressive neighborhood clipping (1.5σ)
+- Adaptive blend: 95% history when stable, 50% when clipped (motion/disocclusion)
+- Ping-pong full-res targets; supplements FXAA; shares DepthTexture with SAO/SSR
+- SSR uses TAA jitter for temporal denoising of ray-marched reflections
 
 ---
 
-## Phase 3: Biggest Quality Wins (TODO)
-
-### 3.1 HDR Environment Maps at Runtime — HIGHEST IMPACT
-**Why:** The editor loads HDR env maps (`images/hdr/Stonewall_Ref.hdr`) but compiled runtime scenes load NONE. Without `scene.environment`, PBR materials have nothing to reflect — metallic/reflective surfaces appear flat black.
-**How to apply:** Load HDR via `RGBELoader` + `PMREMGenerator` in the `scene-settings` component init. The plugin ships 4 HDR files in `images/hdr/` — offer as presets. Set `scene.environment` on the Three.js scene. This alone will transform PBR rendering.
-**Files:** `runtime/assets/js/master/vrodos_master_rendering.js` (init), reference pattern in `js_libs/vrodos_3d_editor_environmentals.js` lines 100-109.
-
-### 3.2 Multi-Pass Bloom — Replace Single-Pixel Bloom
-**Why:** Current bloom samples only 8 immediate neighbor texels (1px radius). At 1080p+, this is invisible. Real bloom needs multi-pass Gaussian blur with progressive downsampling.
-**How to apply:** Render bright-pass to half-res target, ping-pong Gaussian blur at progressively lower resolutions (4-5 passes), composite back at full res. Matches the UnrealBloomPass approach. Alternatively, leverage A-Frame 1.7.0's experimental post-processing if it exposes bloom.
-**Files:** `runtime/assets/js/master/vrodos_master_rendering.js` lines 558-575 (current bloom), lines 986-1091 (post-processing pipeline).
-
-### 3.3 Widen envMapIntensity Range
-**Why:** Current range is 0.88x-1.10x (22% total), barely perceptible. Once HDR env maps are loaded (3.1), wider range becomes meaningful.
-**How to apply:** Change range to 0.5x-2.0x in `vrodosEnhanceMeshMaterial()`.
-**Files:** `runtime/assets/js/master/vrodos_master_rendering.js` lines 338-354.
-
-### 3.4 Cap Pixel Ratio Supersampling
-**Why:** Current max is 2.2x pixel ratio = rendering at ~4.8x the pixels. At 4K this is 8448x4752 — extremely GPU heavy. MSAA on the render target is more efficient and already implemented.
-**How to apply:** Cap at 1.5x, rely on MSAA (`samples` property, line 1004-1006) for remaining AA quality.
-**Files:** `runtime/assets/js/master/vrodos_master_rendering.js` lines 1108-1116.
-
----
-
-## Phase 4: Advanced (Future)
+## Phase 4: Advanced
 
 ### 4.1 ~~SSAO Post-Processing Pass~~ ✅ DONE
 Depth-only SAO with `dFdx`/`dFdy` normal reconstruction, depth-aware bilateral blur, 3 presets.
@@ -108,16 +86,41 @@ A-Frame 1.7.1 has no built-in post-processing system. Custom render hijack is th
 - Files: `runtime/assets/js/master/vrodos_master_rendering.js` (shader), `vrodos_scene_settings.component.js` (render loop)
 
 ### 4.5 ~~Temporal Anti-Aliasing (TAA)~~ ✅ DONE (2026-04-05)
-- Halton(2,3) sub-pixel jitter sequence (16 samples) applied to camera projection matrix per frame
-- Depth-based reprojection for camera motion (no separate motion vector pass)
-- Neighborhood clipping in YCoCg color space (variance-based, 1.25σ AABB) to reject ghosting
-- Adaptive feedback: 0.97 when still → 0.88 when moving fast (motion-length modulated)
-- Sky pixels (depth ≥ 0.9999) pass through without temporal accumulation
-- Off-screen history samples rejected (output current frame directly)
-- Ping-pong render targets at full resolution for history accumulation
+- Halton(2,3) sub-pixel jitter sequence (16 samples, ±0.5px) applied to `camera.projectionMatrix` per frame
+- Simple variance-clipped temporal accumulation — **no depth reprojection** (reprojection caused persistent ghost/duplicate artifacts; removed in favor of same-UV blend)
+- Neighborhood clipping in YCoCg color space (3×3 statistics, 1.5σ AABB) — wide enough to preserve thin geometry
+- Adaptive blend: `mix(0.95, 0.5, clamp(clipDist * 4.0, 0.0, 1.0))` — 95% history when stable, 50% replacement when history diverges from current neighborhood
+- Ping-pong render targets at full resolution (taaTargetA/B swap each frame)
+- SSR pass receives `jitter = frameIndex/16` for temporal denoising via TAA accumulation
 - Requires DepthTexture (shared with SAO/SSR; disables MSAA, FXAA compensates)
 - Supplements FXAA as final cleanup pass
 - Files: `runtime/assets/js/master/vrodos_master_rendering.js` (shader), `vrodos_scene_settings.component.js` (jitter + render loop)
+
+---
+
+## Current Full Pipeline (2026-04-05)
+
+```
+Scene → postProcessingTarget (ACES+sRGB via isXRRenderTarget)
+  → SAO (3 passes, half-res: raw AO → H blur → V blur)
+  → SSR (1 pass, half-res: ray march + binary refine + Fresnel)
+  → Bloom (3 passes, half-res: bright-pass → H blur → V blur)
+  → Composite (AO × scene + SSR blend + bloom + grading + vignette)
+  → TAA (variance-clipped temporal blend, full-res ping-pong)
+  → FXAA → screen
+```
+
+Total passes: up to 11 (when all effects active). Each can be individually toggled.
+
+---
+
+## Phase 5: Performance & Refactoring (TODO)
+
+- Split `vrodos_master_rendering.js` (~48KB) into per-effect shader modules
+- Split `vrodos_scene_settings.component.js` (~63KB) into render loop + setup + quality profiles
+- Lazy pass instantiation (only create RT + material when effect is enabled)
+- Adaptive quality for SAO/SSR based on FPS feedback
+- Reduced texture sampling in composite when effects are disabled
 
 ---
 

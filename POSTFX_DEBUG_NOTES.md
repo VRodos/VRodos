@@ -104,8 +104,59 @@ The circular glow around the sun seen with post FX on was **not an SAO artifact*
 - `THREE.ShaderMaterial` does NOT auto-call `linearToOutputTexel` — it's defined in the prefix but never invoked unless the shader includes `#include <colorspace_fragment>`. Do not assume automatic encoding.
 - Tone mapping is controlled per-pass by what `_currentRenderTarget` is at draw time (compiled into the program cache). Changing render target changes the compiled program.
 - `postProcessingTarget.isXRRenderTarget = true` + `texture.colorSpace = SRGBColorSpace` forces Three.js to apply ACES + sRGB encoding to the RT, matching the direct-to-screen path. The composite needs NO extra encoding.
-- The pipeline order: Scene→RT (ACES+sRGB) → SAO(3 passes) → SSR(half-res) → Bloom(3 passes) → Composite(AO*scene+SSR+bloom+grading) → TAA(temporal resolve) → FXAA → screen.
 - Features requiring DepthTexture (SAO, TAA, SSR) disable MSAA — FXAA compensates.
+
+### Full Pipeline Order (as of 2026-04-05)
+
+```
+Scene → postProcessingTarget (ACES+sRGB via isXRRenderTarget trick)
+  ↓
+SAO (3 passes, half-res):
+  Pass 1: Depth → raw AO (saoTargetA)
+  Pass 2: Horizontal bilateral blur (saoTargetA → saoTargetB)
+  Pass 3: Vertical bilateral blur (saoTargetB → saoTargetA)
+  ↓
+SSR (1 pass, half-res):
+  Ray march depth buffer, binary refine, Fresnel + edge fade → ssrTarget
+  ↓
+Bloom (3 passes, half-res):
+  Pass A: Bright-pass threshold → bloomTargetA
+  Pass B: Horizontal Gaussian blur → bloomTargetB
+  Pass C: Vertical Gaussian blur → bloomTargetA
+  ↓
+Composite (full-res):
+  AO multiply × scene + SSR blend + bloom add + color grading + vignette + exposure
+  → fxaaTarget (if TAA active) or fxaaTarget/screen (if no TAA)
+  ↓
+TAA (full-res, ping-pong):
+  Read composite from fxaaTarget + history from taaHistoryTarget
+  YCoCg variance clipping (1.5σ), adaptive blend (95% stable / 50% clipped)
+  Write resolved → taaCurrentTarget, then swap current↔history
+  ↓
+FXAA:
+  Final pass → screen (reads TAA output or composite directly)
+```
+
+### TAA Implementation Details
+
+The TAA shader is a simple variance-clipped temporal accumulation — **no depth reprojection**. This was chosen after depth-based reprojection caused persistent ghosting artifacts:
+
+1. **Jitter**: Halton(2,3) sequence, 16 samples, ±0.5 pixel offset applied to `camera.projectionMatrix.elements[8,9]` before scene render, restored after
+2. **Color space**: 3×3 neighborhood statistics computed in YCoCg (decorrelated, better clipping)
+3. **Variance clipping**: `mu ± 1.5σ` AABB clamp on history sample — wide enough to preserve thin geometry
+4. **Adaptive blend**: `mix(0.95, 0.5, clamp(clipDist * 4.0, 0.0, 1.0))` — high temporal stability when history matches neighborhood, aggressive replacement when it doesn't
+5. **Ping-pong**: Two full-res targets (taaTargetA/B) swap each frame; resolved output serves as next frame's history
+6. **SSR denoising**: SSR pass receives `jitter = frameIndex/16` uniform; TAA naturally accumulates the jittered SSR samples
+
+### SSR Implementation Details
+
+- Half-resolution screen-space ray marching (48 max steps, 0.3 step size)
+- 5-step binary refinement for sub-pixel hit accuracy
+- Normals reconstructed from depth via `dFdx`/`dFdy` (no normal pre-pass)
+- Fresnel-based reflection strength (Schlick approximation, F0=0.04)
+- Edge fade (screen border) + distance fade (ray travel length)
+- 3 strength presets: subtle (0.3), balanced (0.6), strong (0.9)
+- Blended into composite shader: `color = mix(color, ssr.rgb, ssr.a * ssrStrength)`
 
 ## Critical Architecture Discovery (2026-04-05)
 

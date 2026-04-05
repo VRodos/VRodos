@@ -33,20 +33,7 @@ It combines a Three.js scene editor, custom WordPress content types, asset manag
 
 - One-click scene compilation to A-Frame HTML output
 - Scene startup loader to reduce visible object pop-in during initial load
-- Compile dialog controls for compiled-output quality settings:
-  - Render Quality: `Standard` or `High`
-  - Shadow Quality: `Off`, `Medium`, or `High`
-  - Anti-Aliasing Quality: `Off`, `Balanced`, `High`, or `Ultra`
-  - FPS Meter toggle for live compiled-scene performance checks
-  - Ambient Occlusion: `Off`, `Soft`, `Balanced`, or `Strong`
-  - Contact Shadows: `Off`, `Soft`, or `Strong`
-  - Post-Processing toggle
-  - Color grading toggle
-  - Bloom Strength, where `Off` disables bloom
-  - Exposure preset
-  - Contrast preset
-  - Edge smoothing strength
-  - Reflection Strength: `Soft`, `Balanced`, or `Enhanced`
+- Compile dialog controls for compiled-output quality settings (see "Post-processing pipeline" below for details)
 - Scene editor remains the source of truth for:
   - Background style
   - Horizon sky preset
@@ -66,15 +53,39 @@ It combines a Three.js scene editor, custom WordPress content types, asset manag
 
 ### Runtime quality and visual features
 
-- A-Frame scene settings passed from editor/compile metadata into runtime
-- Desktop-oriented `High` quality rendering path
-- Shadow quality presets applied at runtime
-- Photorealism groundwork with:
-  - quality-aware renderer tuning
-  - improved environment lighting behavior
-  - PBR-friendly material enhancement for compiled GLBs
-  - cinematic full-screen post pass for high-quality desktop builds
-  - compile dialog controls for anti-aliasing quality, ambient occlusion, contact shadows, color grading, exposure, contrast, bloom strength, edge smoothing, and reflection strength
+- A-Frame 1.7.1 + Three.js r173 runtime with full PBR material support
+- Desktop-oriented `High` quality rendering path with quality-aware renderer tuning
+- Shadow quality presets (off / medium PCFShadowMap / high PCFSoftShadowMap)
+- HDR environment maps (RGBELoader + PMREMGenerator) with 3 presets for realistic PBR reflections
+- PBR material enhancement: envMapIntensity range (0.5x–2.0x), physically correct lights
+
+#### Post-processing pipeline
+
+When post-FX is enabled, a multi-pass cinematic pipeline runs:
+
+1. **Scene render** — ACESFilmic tone mapping + sRGB encoding applied to render target via Three.js `isXRRenderTarget` trick
+2. **SAO (Scalable Ambient Obscurance)** — depth-only screen-space AO with bilateral blur, 3 quality presets (soft/balanced/strong), runs at half resolution
+3. **SSR (Screen-Space Reflections)** — ray marching with binary refinement, Fresnel-based strength, edge/distance fade, 3 strength presets (subtle/balanced/strong), runs at half resolution
+4. **Bloom** — bright-pass + separable 9-tap Gaussian blur at half resolution
+5. **Composite** — combines AO × scene + SSR + bloom + color grading + vignette + exposure control
+6. **TAA (Temporal Anti-Aliasing)** — Halton(2,3) sub-pixel jitter with YCoCg variance-clipped temporal accumulation, full-resolution ping-pong targets
+7. **FXAA** — NVIDIA FXAA 3.11 as final cleanup pass
+
+All effects are individually toggleable from the compile dialog. Up to 11 render passes when fully active.
+
+#### Compile dialog controls
+
+- Render quality: Standard / High
+- Shadow quality: Off / Medium / High
+- Anti-aliasing: Off / Balanced / High / Ultra
+- Post-processing master toggle
+- SAO ambient occlusion: Off / Soft / Balanced / Strong
+- SSR reflection strength: Off / Subtle / Balanced / Strong
+- TAA temporal anti-aliasing toggle
+- Bloom strength: Off / Subtle / Moderate / Strong
+- Color grading, exposure, contrast, vignette presets
+- FXAA edge smoothing strength
+- FPS meter toggle for performance monitoring
 
 ### Collaboration and publishing
 
@@ -87,8 +98,8 @@ It combines a Three.js scene editor, custom WordPress content types, asset manag
 - WordPress 6.x
 - PHP 8.3+
 - Vanilla JavaScript
-- Three.js r147 in the editor stack
-- A-Frame 1.7.x in the compiled runtime
+- Three.js r173 in the editor stack (migrated from r147)
+- A-Frame 1.7.1 (bundles Three.js r173) in the compiled runtime
 - Node.js server for networked/collaborative features
 
 ## Core WordPress Model
@@ -162,6 +173,8 @@ For Local WP environments, Apache limits can still block uploads even when PHP l
 
 - Rebuild after changing compile dialog quality settings.
 - Use `High` render quality for desktop-oriented scenes.
+- Enable post-processing and set SAO to Balanced or Strong for depth.
+- Enable SSR (Balanced) for reflective surfaces — requires PBR materials with metalness/roughness.
 - Review authored GLB material quality, textures, and lighting setup.
 
 ### Walkable surfaces do not behave as expected
