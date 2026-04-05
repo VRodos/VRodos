@@ -792,7 +792,7 @@ AFRAME.registerComponent('scene-settings', {
             var maxSamples = (renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4;
             this.postProcessingTarget.samples = Math.min(maxSamples, this.getAAQualitySampleCount());
         }
-        this.postProcessingMaterial = vrodosCreatePhotorealPostMaterial();
+        this.postProcessingMaterial = VRODOSMaster.createPhotorealPostMaterial();
         this.postProcessingScene = new THREE.Scene();
         this.postProcessingCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         this.postProcessingQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.postProcessingMaterial);
@@ -803,8 +803,8 @@ AFRAME.registerComponent('scene-settings', {
         var halfH = Math.max(1, Math.floor(height / 2));
         this.bloomTargetA = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
         this.bloomTargetB = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
-        this.bloomBrightPassMaterial = vrodosCreateBrightPassMaterial();
-        this.bloomBlurMaterial = vrodosCreateGaussianBlurMaterial();
+        this.bloomBrightPassMaterial = VRODOSMaster.createBrightPassMaterial();
+        this.bloomBlurMaterial = VRODOSMaster.createGaussianBlurMaterial();
         this.bloomBlurMaterial.uniforms.resolution.value.set(halfW, halfH);
         this.bloomQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.bloomBrightPassMaterial);
         this.bloomScene = new THREE.Scene();
@@ -814,7 +814,7 @@ AFRAME.registerComponent('scene-settings', {
         if (saoParams) {
             this.saoTargetA = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
             this.saoTargetB = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
-            this.saoMaterial = vrodosCreateSAOMaterial();
+            this.saoMaterial = VRODOSMaster.createSAOMaterial();
             this.saoMaterial.defines.NUM_SAMPLES = saoParams.numSamples;
             this.saoMaterial.defines.NUM_RINGS = saoParams.numRings;
             this.saoMaterial.needsUpdate = true;
@@ -823,7 +823,7 @@ AFRAME.registerComponent('scene-settings', {
             this.saoMaterial.uniforms.bias.value = saoParams.bias;
             this.saoMaterial.uniforms.maxDistance.value = saoParams.maxDistance;
             this.saoMaterial.uniforms.size.value.set(halfW, halfH);
-            this.saoBlurMaterial = vrodosCreateSAOBlurMaterial();
+            this.saoBlurMaterial = VRODOSMaster.createSAOBlurMaterial();
             this.saoBlurMaterial.uniforms.size.value.set(halfW, halfH);
             this.saoBlurMaterial.uniforms.depthCutoff.value = saoParams.depthCutoff;
             this.saoQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.saoMaterial);
@@ -833,7 +833,7 @@ AFRAME.registerComponent('scene-settings', {
 
         // FXAA pass (full resolution, after composite)
         this.fxaaTarget = new THREE.WebGLRenderTarget(width, height, { depthBuffer: false });
-        this.fxaaMaterial = vrodosCreateFXAAMaterial();
+        this.fxaaMaterial = VRODOSMaster.createFXAAMaterial();
         this.fxaaMaterial.uniforms.resolution.value.set(1.0 / width, 1.0 / height);
         this.fxaaQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.fxaaMaterial);
         this.fxaaScene = new THREE.Scene();

@@ -168,14 +168,21 @@ When both SAO and bloom are active, they each use half-res targets. These could 
 
 ## Implementation Order
 
-1. **Shader extraction** (1A) — lowest risk, purely moving code between files
-2. **Update HTML template + compiler** (1D) — wire up new files
-3. **Test compiled scene** — verify no regressions
-4. **Helper extraction** (1B) — more complex, needs careful `this` context handling
-5. **Test again** — full pipeline verification
-6. **Lazy pass instantiation** (2A) — behavior change, needs thorough testing
-7. **Composite skip-sampling** (2D) — small, safe optimization
-8. **Adaptive SAO quality** (2B) — optional, can defer
+1. ~~**Shader extraction** (1A) — lowest risk, purely moving code between files~~ ✅ DONE (2026-04-05)
+2. ~~**Update HTML template + compiler** (1D) — wire up new files~~ ✅ DONE (2026-04-05)
+3. ~~**Delete duplicate RGBELoader** (1C)~~ ✅ DONE (2026-04-05)
+4. **Test compiled scene** — verify no regressions
+5. **Helper extraction** (1B) — more complex, needs careful `this` context handling
+6. **Test again** — full pipeline verification
+7. **Lazy pass instantiation** (2A) — behavior change, needs thorough testing
+8. **Composite skip-sampling** (2D) — small, safe optimization
+9. **Adaptive SAO quality** (2B) — optional, can defer
+
+### Phase 1A Results (2026-04-05)
+- `vrodos_master_rendering.js`: 1,370 lines → 675 lines (51% reduction)
+- Created 6 new shader files: bloom (76 lines), sao (162 lines), fxaa (100 lines), taa (84 lines), ssr (170 lines), composite (66 lines)
+- `Master_Client_prototype.html` updated with 6 new `<script>` tags
+- Deleted duplicate `runtime/assets/js/RGBELoader.js`
 
 ## Verification
 
