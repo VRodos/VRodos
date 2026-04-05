@@ -6,7 +6,7 @@ type: project
 
 ## Completed (2026-03-30)
 
-**Phase 1 — Bug fixes** in `runtime/assets/js/vrodos_master_components.js`:
+**Phase 1 — Bug fixes** in `runtime/assets/js/master/vrodos_master_rendering.js` + `runtime/assets/js/master/components/vrodos_scene_settings.component.js`:
 - Removed `physicallyCorrectLights` dead code (Three.js r173 always-on)
 - Removed `outputEncoding` fallback (removed in r152)
 - Fixed shadow ternary bug (medium now uses `PCFShadowMap`, was identical to high)
@@ -49,22 +49,22 @@ type: project
 ### 3.1 HDR Environment Maps at Runtime — HIGHEST IMPACT
 **Why:** The editor loads HDR env maps (`images/hdr/Stonewall_Ref.hdr`) but compiled runtime scenes load NONE. Without `scene.environment`, PBR materials have nothing to reflect — metallic/reflective surfaces appear flat black.
 **How to apply:** Load HDR via `RGBELoader` + `PMREMGenerator` in the `scene-settings` component init. The plugin ships 4 HDR files in `images/hdr/` — offer as presets. Set `scene.environment` on the Three.js scene. This alone will transform PBR rendering.
-**Files:** `runtime/assets/js/vrodos_master_components.js` (init), reference pattern in `js_libs/vrodos_3d_editor_environmentals.js` lines 100-109.
+**Files:** `runtime/assets/js/master/vrodos_master_rendering.js` (init), reference pattern in `js_libs/vrodos_3d_editor_environmentals.js` lines 100-109.
 
 ### 3.2 Multi-Pass Bloom — Replace Single-Pixel Bloom
 **Why:** Current bloom samples only 8 immediate neighbor texels (1px radius). At 1080p+, this is invisible. Real bloom needs multi-pass Gaussian blur with progressive downsampling.
 **How to apply:** Render bright-pass to half-res target, ping-pong Gaussian blur at progressively lower resolutions (4-5 passes), composite back at full res. Matches the UnrealBloomPass approach. Alternatively, leverage A-Frame 1.7.0's experimental post-processing if it exposes bloom.
-**Files:** `runtime/assets/js/vrodos_master_components.js` lines 558-575 (current bloom), lines 986-1091 (post-processing pipeline).
+**Files:** `runtime/assets/js/master/vrodos_master_rendering.js` lines 558-575 (current bloom), lines 986-1091 (post-processing pipeline).
 
 ### 3.3 Widen envMapIntensity Range
 **Why:** Current range is 0.88x-1.10x (22% total), barely perceptible. Once HDR env maps are loaded (3.1), wider range becomes meaningful.
 **How to apply:** Change range to 0.5x-2.0x in `vrodosEnhanceMeshMaterial()`.
-**Files:** `runtime/assets/js/vrodos_master_components.js` lines 338-354.
+**Files:** `runtime/assets/js/master/vrodos_master_rendering.js` lines 338-354.
 
 ### 3.4 Cap Pixel Ratio Supersampling
 **Why:** Current max is 2.2x pixel ratio = rendering at ~4.8x the pixels. At 4K this is 8448x4752 — extremely GPU heavy. MSAA on the render target is more efficient and already implemented.
 **How to apply:** Cap at 1.5x, rely on MSAA (`samples` property, line 1004-1006) for remaining AA quality.
-**Files:** `runtime/assets/js/vrodos_master_components.js` lines 1108-1116.
+**Files:** `runtime/assets/js/master/vrodos_master_rendering.js` lines 1108-1116.
 
 ---
 
@@ -88,7 +88,6 @@ Better than MSAA for thin geometry and specular aliasing.
 ---
 
 ## Key Version Info
-- A-Frame 1.7.1 bundles **Three.js r173** (NOT r147)
-- Local `js_libs/threejs147/` is editor-only, NOT used in compiled scenes
+- A-Frame 1.7.1 bundles **Three.js r173**
 - `physicallyCorrectLights` is always on in r173 — no flag needed
 - A-Frame 1.7.0 has experimental post-processing + WebGPU support

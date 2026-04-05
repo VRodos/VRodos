@@ -733,6 +733,13 @@ AFRAME.registerComponent('scene-settings', {
             targetOptions.depthTexture = depthTexture;
         }
         this.postProcessingTarget = new THREE.WebGLRenderTarget(width, height, targetOptions);
+        // Force Three.js r173 to apply ACESFilmic tone mapping + sRGB encoding when rendering
+        // to this target. Normally Three.js skips both for WebGLRenderTarget (only does them
+        // for null/screen target). Setting isXRRenderTarget=true + colorSpace=SRGBColorSpace
+        // makes it follow the XR path which applies both — matching the direct-to-screen output.
+        // The composite shader then needs NO linearToSRGB since the RT is already fully encoded.
+        this.postProcessingTarget.isXRRenderTarget = true;
+        this.postProcessingTarget.texture.colorSpace = THREE.SRGBColorSpace;
         // MSAA only when SAO is off (DepthTexture + MSAA conflict in WebGL2)
         if (!saoParams && typeof this.postProcessingTarget.samples !== 'undefined') {
             var maxSamples = (renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4;
@@ -908,7 +915,8 @@ AFRAME.registerComponent('scene-settings', {
                 this.postProcessingMaterial.uniforms.exposure.value = this.isPostFXOptionEnabled('postFXColorEnabled')
                     ? this.getExposureValue()
                     : 1.0;
-                this.postProcessingMaterial.uniforms.outputExposure.value = 1.0;
+                // Mirror renderer.toneMappingExposure so ACES in composite matches direct-render path
+                this.postProcessingMaterial.uniforms.outputExposure.value = (renderer && renderer.toneMappingExposure) ? renderer.toneMappingExposure : 1.0;
 
                 var useFXAA = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') && this.fxaaTarget && this.fxaaMaterial;
                 if (useFXAA) {

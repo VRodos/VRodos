@@ -1052,18 +1052,14 @@ function vrodosCreatePhotorealPostMaterial() {
             '  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));',
             '  return mix(vec3(luma), color, sat);',
             '}',
-            'vec3 linearToSRGB(vec3 c) {',
-            '  vec3 lo = c * 12.92;',
-            '  vec3 hi = pow(c, vec3(1.0 / 2.4)) * 1.055 - 0.055;',
-            '  return mix(lo, hi, step(vec3(0.0031308), c));',
-            '}',
             'void main() {',
             '  vec4 base = texture2D(tDiffuse, vUv);',
             '  float ao = texture2D(tSAO, vUv).r;',
             '  vec3 color = base.rgb * ao;',
             '  vec3 bloom = texture2D(tBloom, vUv).rgb;',
             '  color += bloom * bloomStrength;',
-            // Color grading
+            // Color grading (in sRGB space — RT is already ACES+sRGB encoded by Three.js
+            // because postProcessingTarget.isXRRenderTarget=true + colorSpace=SRGBColorSpace)
             '  color = applySaturation(color, saturation);',
             '  color = (color - 0.5) * contrast + 0.5;',
             // Vignette
@@ -1072,7 +1068,7 @@ function vrodosCreatePhotorealPostMaterial() {
             '  color *= mix(1.0 - vignetteStrength, 1.0, vignette);',
             '  color *= exposure;',
             '  color = clamp(color, 0.0, 1.0);',
-            '  color = linearToSRGB(color);',
+            // No linearToSRGB here — RT is already fully encoded (ACES + sRGB applied by Three.js)
             '  gl_FragColor = vec4(color, base.a);',
             '}'
         ].join('\n'),
