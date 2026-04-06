@@ -169,11 +169,11 @@ When both SAO and bloom are active, they each use half-res targets. These could 
 ## Implementation Order
 
 1. ~~**Shader extraction** (1A) — lowest risk, purely moving code between files~~ ✅ DONE (2026-04-05)
-2. ~~**Update HTML template + compiler** (1D) — wire up new files~~ ✅ DONE (2026-04-05)
+2. ~~**Update HTML template + compiler** (1D, shader portion)~~ ✅ DONE (2026-04-05)
 3. ~~**Delete duplicate RGBELoader** (1C)~~ ✅ DONE (2026-04-05)
-4. **Test compiled scene** — verify no regressions
-5. **Helper extraction** (1B) — more complex, needs careful `this` context handling
-6. **Test again** — full pipeline verification
+4. ~~**Helper extraction** (1B) — post-processing, scene probe, quality profiles~~ ✅ DONE (2026-04-06)
+5. ~~**Update HTML template** (1D, helper portion) — wire up helper scripts~~ ✅ DONE (2026-04-06)
+6. **Test compiled scene** — verify no regressions (full pipeline)
 7. **Lazy pass instantiation** (2A) — behavior change, needs thorough testing
 8. **Composite skip-sampling** (2D) — small, safe optimization
 9. **Adaptive SAO quality** (2B) — optional, can defer
@@ -183,6 +183,17 @@ When both SAO and bloom are active, they each use half-res targets. These could 
 - Created 6 new shader files: bloom (76 lines), sao (162 lines), fxaa (100 lines), taa (84 lines), ssr (170 lines), composite (66 lines)
 - `Master_Client_prototype.html` updated with 6 new `<script>` tags
 - Deleted duplicate `runtime/assets/js/RGBELoader.js`
+- Fix-up: rewrote 6 bare-global shader factory calls in the component to use the `VRODOSMaster.*` namespace (user-confirmed working)
+
+### Phase 1B Results (2026-04-06)
+- `vrodos_scene_settings.component.js`: 1,799 lines → **694 lines** (61% reduction)
+- Created 3 new helper files using the `VRODOSMaster.SceneSettingsHelpers` IIFE pattern:
+  - `vrodos_postprocessing.js` — 535 lines (render loop patch, RT creation/disposal, `enablePostProcessing`, `disablePostProcessing`, `updatePostProcessingSize`, `syncPostProcessingState`)
+  - `vrodos_scene_probe.js` — 333 lines (15 probe/env-map functions incl. `captureSceneProbe`, `ensureSceneProbeResources`, `applyEnvMapProfile`, `clearHdrEnvironmentMap`)
+  - `vrodos_quality_profiles.js` — 291 lines (9 profile functions: render/shadow/material/background/postFX/horizon-sky/helper-light/overall `applyQualityProfiles`)
+- Component methods delegate via direct property references (`method: VRODOSMaster.SceneSettingsHelpers.method`) — `this` binding preserved because methods are invoked as `component.method()`
+- `Master_Client_prototype.html` updated with 3 new `<script>` tags inserted after the shader block, before the component script
+- No compiler (`class-vrodos-compiler-manager.php`) edit needed — it relies on directory copy, not per-file enumeration
 
 ## Verification
 
