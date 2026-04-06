@@ -109,8 +109,6 @@
             selectedLevel: "",
             selectedButton: null,
             root: null,
-            chip: null,
-            chipButton: null,
             continueButton: null,
             initialized: false,
             promptScheduled: false
@@ -150,10 +148,6 @@
             runtime.elements.forEach((element) => {
                 setAssessmentVisible(element, runtime.matchesLevel(element, normalizedLevel));
             });
-
-            if (runtime.chipButton) {
-                runtime.chipButton.textContent = normalizedLevel;
-            }
         };
 
         runtime.ensureUi = function () {
@@ -170,23 +164,22 @@
             root.style.alignItems = "center";
             root.style.justifyContent = "center";
             root.style.padding = "24px";
-            root.style.background = "rgba(2, 6, 23, 0.72)";
-            root.style.backdropFilter = "blur(10px)";
+            root.style.background = "rgba(148, 163, 184, 0.34)";
+            root.style.backdropFilter = "blur(12px)";
 
             const panel = document.createElement("div");
             panel.style.width = "min(560px, 100%)";
             panel.style.borderRadius = "24px";
-            panel.style.background = "linear-gradient(180deg, #0f172a 0%, #111827 100%)";
-            panel.style.border = "1px solid rgba(148, 163, 184, 0.2)";
-            panel.style.boxShadow = "0 30px 80px rgba(2, 6, 23, 0.45)";
+            panel.style.background = "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)";
+            panel.style.border = "1px solid rgba(203, 213, 225, 0.9)";
+            panel.style.boxShadow = "0 28px 80px rgba(15, 23, 42, 0.18)";
             panel.style.padding = "26px";
-            panel.style.color = "#e5e7eb";
-            panel.style.fontFamily = "Segoe UI, sans-serif";
+            panel.style.color = "#1e293b";
+            panel.style.fontFamily = "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
             panel.innerHTML = [
-                '<div style="font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#7dd3fc;margin-bottom:8px;">Immerse CEFR Level</div>',
-                '<div style="font-size:28px;font-weight:800;line-height:1.15;margin-bottom:10px;">Choose your level</div>',
-                '<div style="font-size:15px;line-height:1.6;color:#cbd5e1;margin-bottom:18px;">Only assessments that match the selected CEFR level will be shown in this scene.</div>'
+                '<div style="font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#3b82f6;margin-bottom:8px;">CEFR Level</div>',
+                '<div style="font-size:28px;font-weight:800;line-height:1.15;color:#0f172a;margin-bottom:18px;">Choose your level</div>'
             ].join("");
 
             const buttonRow = document.createElement("div");
@@ -201,14 +194,15 @@
                 button.type = "button";
                 button.textContent = level;
                 button.dataset.cefrLevel = level;
-                button.style.border = "1px solid rgba(148, 163, 184, 0.2)";
-                button.style.background = "rgba(15, 23, 42, 0.85)";
-                button.style.color = "#f8fafc";
+                button.style.border = "1px solid rgba(203, 213, 225, 0.95)";
+                button.style.background = "#ffffff";
+                button.style.color = "#1e293b";
                 button.style.borderRadius = "16px";
                 button.style.padding = "16px 12px";
                 button.style.fontSize = "18px";
                 button.style.fontWeight = "800";
                 button.style.cursor = "pointer";
+                button.style.boxShadow = "0 8px 18px rgba(15,23,42,0.04)";
                 button.style.transition = "transform 120ms ease, border-color 120ms ease, background 120ms ease";
                 button.addEventListener("click", () => {
                     runtime.selectLevel(level);
@@ -223,11 +217,6 @@
             footer.style.alignItems = "center";
             footer.style.gap = "12px";
 
-            const helper = document.createElement("div");
-            helper.textContent = "You can change this later during the scene.";
-            helper.style.fontSize = "13px";
-            helper.style.color = "#94a3b8";
-
             const continueButton = document.createElement("button");
             continueButton.type = "button";
             continueButton.textContent = "Start experience";
@@ -236,8 +225,8 @@
             continueButton.style.padding = "12px 18px";
             continueButton.style.fontWeight = "800";
             continueButton.style.cursor = "pointer";
-            continueButton.style.background = "#0f766e";
-            continueButton.style.color = "#f8fafc";
+            continueButton.style.background = "#5cc887";
+            continueButton.style.color = "#ffffff";
             continueButton.style.opacity = "0.55";
             continueButton.style.pointerEvents = "none";
             continueButton.addEventListener("click", () => {
@@ -249,44 +238,15 @@
                 runtime.hidePrompt();
             });
 
-            footer.appendChild(helper);
             footer.appendChild(continueButton);
             panel.appendChild(buttonRow);
             panel.appendChild(footer);
             root.appendChild(panel);
             document.body.appendChild(root);
 
-            const chip = document.createElement("div");
-            chip.id = "vrodos-immerse-cefr-chip";
-            chip.style.position = "fixed";
-            chip.style.left = "20px";
-            chip.style.top = "20px";
-            chip.style.right = "auto";
-            chip.style.bottom = "auto";
-            chip.style.zIndex = "2147481400";
-            chip.style.display = "none";
-
-            const chipButton = document.createElement("button");
-            chipButton.type = "button";
-            chipButton.style.border = "1px solid rgba(148, 163, 184, 0.24)";
-            chipButton.style.borderRadius = "999px";
-            chipButton.style.padding = "10px 14px";
-            chipButton.style.background = "rgba(15, 23, 42, 0.9)";
-            chipButton.style.color = "#f8fafc";
-            chipButton.style.fontWeight = "800";
-            chipButton.style.cursor = "pointer";
-            chipButton.style.boxShadow = "0 16px 40px rgba(2, 6, 23, 0.35)";
-            chipButton.addEventListener("click", () => {
-                runtime.showPrompt();
-            });
-            chip.appendChild(chipButton);
-            document.body.appendChild(chip);
-
             runtime.root = root;
             runtime.levelButtons = buttons;
             runtime.continueButton = continueButton;
-            runtime.chip = chip;
-            runtime.chipButton = chipButton;
             runtime.initialized = true;
 
             runtime.selectLevel(runtime.selectedLevel || "");
@@ -297,8 +257,9 @@
 
             Object.entries(runtime.levelButtons || {}).forEach(([buttonLevel, button]) => {
                 const isActive = buttonLevel === runtime.selectedLevel;
-                button.style.background = isActive ? "rgba(15, 118, 110, 0.95)" : "rgba(15, 23, 42, 0.85)";
-                button.style.borderColor = isActive ? "rgba(94, 234, 212, 0.65)" : "rgba(148, 163, 184, 0.2)";
+                button.style.background = isActive ? "rgba(92, 200, 135, 0.14)" : "#ffffff";
+                button.style.color = isActive ? "#166534" : "#1e293b";
+                button.style.borderColor = isActive ? "rgba(92, 200, 135, 0.9)" : "rgba(203, 213, 225, 0.95)";
                 button.style.transform = isActive ? "translateY(-1px)" : "translateY(0)";
             });
 
@@ -312,16 +273,12 @@
         runtime.showPrompt = function () {
             runtime.ensureUi();
             runtime.root.style.display = "flex";
-            runtime.chip.style.display = "none";
             runtime.selectLevel(runtime.selectedLevel || "");
         };
 
         runtime.hidePrompt = function () {
             if (runtime.root) {
                 runtime.root.style.display = "none";
-            }
-            if (runtime.chip) {
-                runtime.chip.style.display = "block";
             }
         };
 
@@ -359,11 +316,13 @@
         const runtime = {
             activeIndex: 0,
             selectedIndex: null,
+            recordedAnswers: [],
+            lastResult: null,
             payload: null,
             root: null,
             body: null,
-            closeButton: null,
-            nextButton: null
+            nextButton: null,
+            dismissButton: null
         };
 
         const root = document.createElement("div");
@@ -375,43 +334,54 @@
         root.style.alignItems = "center";
         root.style.justifyContent = "center";
         root.style.padding = "24px";
-        root.style.background = "rgba(2, 6, 23, 0.7)";
-        root.style.backdropFilter = "blur(10px)";
+        root.style.background = "rgba(148, 163, 184, 0.34)";
+        root.style.backdropFilter = "blur(12px)";
+        root.style.fontFamily = "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
         const panel = document.createElement("div");
         panel.style.width = "min(720px, 100%)";
         panel.style.maxHeight = "min(84vh, 860px)";
         panel.style.overflow = "auto";
         panel.style.borderRadius = "22px";
-        panel.style.background = "linear-gradient(180deg, #0f172a 0%, #111827 100%)";
-        panel.style.color = "#e5e7eb";
-        panel.style.border = "1px solid rgba(148, 163, 184, 0.28)";
-        panel.style.boxShadow = "0 25px 70px rgba(2, 6, 23, 0.45)";
+        panel.style.background = "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)";
+        panel.style.color = "#1e293b";
+        panel.style.border = "1px solid rgba(203, 213, 225, 0.9)";
+        panel.style.boxShadow = "0 28px 80px rgba(15, 23, 42, 0.18)";
 
         const header = document.createElement("div");
         header.style.display = "flex";
         header.style.justifyContent = "space-between";
-        header.style.alignItems = "center";
+        header.style.alignItems = "flex-start";
         header.style.gap = "16px";
         header.style.padding = "20px 22px 14px";
-        header.style.borderBottom = "1px solid rgba(148, 163, 184, 0.16)";
+        header.style.borderBottom = "1px solid rgba(226, 232, 240, 0.9)";
 
         const titleWrap = document.createElement("div");
         titleWrap.innerHTML = [
-            '<div id="vrodos-immerse-assessment-kicker" style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;margin-bottom:6px;"></div>',
-            '<div id="vrodos-immerse-assessment-title" style="font-size:24px;font-weight:800;line-height:1.2;"></div>'
+            '<div id="vrodos-immerse-assessment-kicker" style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#3b82f6;margin-bottom:6px;"></div>',
+            '<div id="vrodos-immerse-assessment-title" style="font-size:24px;font-weight:800;line-height:1.2;color:#0f172a;"></div>'
         ].join("");
 
-        const closeButton = document.createElement("button");
-        closeButton.type = "button";
-        closeButton.textContent = "Close";
-        closeButton.style.border = "0";
-        closeButton.style.borderRadius = "999px";
-        closeButton.style.padding = "10px 14px";
-        closeButton.style.cursor = "pointer";
-        closeButton.style.background = "rgba(148, 163, 184, 0.16)";
-        closeButton.style.color = "#f8fafc";
-        closeButton.style.fontWeight = "700";
+        const actionsWrap = document.createElement("div");
+        actionsWrap.style.display = "flex";
+        actionsWrap.style.alignItems = "center";
+        actionsWrap.style.gap = "0";
+
+        const dismissButton = document.createElement("button");
+        dismissButton.type = "button";
+        dismissButton.setAttribute("aria-label", "Close assessment");
+        dismissButton.textContent = "×";
+        dismissButton.style.border = "1px solid rgba(203, 213, 225, 0.95)";
+        dismissButton.style.borderRadius = "999px";
+        dismissButton.style.width = "42px";
+        dismissButton.style.height = "42px";
+        dismissButton.style.cursor = "pointer";
+        dismissButton.style.background = "#ffffff";
+        dismissButton.style.color = "#475569";
+        dismissButton.style.fontSize = "24px";
+        dismissButton.style.lineHeight = "1";
+        dismissButton.style.fontWeight = "500";
+        dismissButton.innerHTML = "&times;";
 
         const body = document.createElement("div");
         body.id = "vrodos-immerse-assessment-body";
@@ -427,7 +397,7 @@
         const status = document.createElement("div");
         status.id = "vrodos-immerse-assessment-status";
         status.style.fontSize = "13px";
-        status.style.color = "#cbd5e1";
+        status.style.color = "#64748b";
 
         const nextButton = document.createElement("button");
         nextButton.type = "button";
@@ -436,13 +406,14 @@
         nextButton.style.borderRadius = "999px";
         nextButton.style.padding = "12px 18px";
         nextButton.style.cursor = "pointer";
-        nextButton.style.background = "#0f766e";
-        nextButton.style.color = "#f8fafc";
+        nextButton.style.background = "#5cc887";
+        nextButton.style.color = "#ffffff";
         nextButton.style.fontWeight = "800";
         nextButton.style.display = "none";
 
         header.appendChild(titleWrap);
-        header.appendChild(closeButton);
+        actionsWrap.appendChild(dismissButton);
+        header.appendChild(actionsWrap);
         footer.appendChild(status);
         footer.appendChild(nextButton);
         panel.appendChild(header);
@@ -453,17 +424,19 @@
 
         runtime.root = root;
         runtime.body = body;
-        runtime.closeButton = closeButton;
         runtime.nextButton = nextButton;
+        runtime.dismissButton = dismissButton;
         runtime.status = status;
         runtime.title = titleWrap.querySelector("#vrodos-immerse-assessment-title");
         runtime.kicker = titleWrap.querySelector("#vrodos-immerse-assessment-kicker");
 
         runtime.hide = function () {
             runtime.root.style.display = "none";
+            setAssessmentSceneInteractionLocked(false);
             runtime.payload = null;
             runtime.activeIndex = 0;
             runtime.selectedIndex = null;
+            runtime.recordedAnswers = [];
         };
 
         runtime.getQuestions = function () {
@@ -481,9 +454,9 @@
 
         runtime.renderUnsupported = function () {
             runtime.body.innerHTML = [
-                '<div style="padding:18px;border-radius:18px;background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.14);">',
-                '<div style="font-size:18px;font-weight:800;margin-bottom:10px;">This assessment type is not interactive in VRODOS v1.</div>',
-                '<div style="font-size:14px;line-height:1.6;color:#cbd5e1;">',
+                '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);box-shadow:0 12px 30px rgba(15,23,42,0.06);">',
+                '<div style="font-size:18px;font-weight:800;margin-bottom:10px;color:#0f172a;">This assessment type is not interactive in VRODOS v1.</div>',
+                '<div style="font-size:14px;line-height:1.6;color:#64748b;">',
                 'The scene can still compile safely, but this assessment currently opens as a read-only card. Supported interactive groups are Question and Image quiz.',
                 '</div>',
                 '</div>'
@@ -507,43 +480,28 @@
                     : [];
 
             const selected = runtime.selectedIndex;
-            const showFeedback = selected !== null && Number.isInteger(question.correctIndex);
-            const correctIndex = Number.isInteger(question.correctIndex) ? Number(question.correctIndex) : null;
-            const feedback = showFeedback
-                ? (selected === correctIndex ? "Correct answer selected." : "Answer recorded.")
-                : "Choose an answer to continue.";
 
             runtime.body.innerHTML = [
                 question.imageUrl
-                    ? `<div style="margin-bottom:16px;"><img src="${escapeHtml(question.imageUrl)}" alt="" style="width:100%;max-height:280px;object-fit:contain;border-radius:18px;background:#020617;border:1px solid rgba(148,163,184,0.14);" /></div>`
+                    ? `<div style="margin-bottom:16px;"><img src="${escapeHtml(question.imageUrl)}" alt="" style="width:100%;max-height:280px;object-fit:contain;border-radius:18px;background:#f8fafc;border:1px solid rgba(226,232,240,0.95);" /></div>`
                     : "",
-                `<div style="font-size:20px;font-weight:800;line-height:1.35;margin-bottom:18px;">${escapeHtml(question.question || `Question ${runtime.activeIndex + 1}`)}</div>`,
+                `<div style="font-size:20px;font-weight:800;line-height:1.35;margin-bottom:18px;color:#0f172a;">${escapeHtml(question.question || `Question ${runtime.activeIndex + 1}`)}</div>`,
                 '<div style="display:grid;gap:12px;">',
                 answers.map((answer, index) => {
                     const isSelected = selected === index;
-                    const isCorrect = showFeedback && correctIndex === index;
-                    const background = isCorrect
-                        ? "rgba(34,197,94,0.18)"
-                        : isSelected
-                            ? "rgba(56,189,248,0.18)"
-                            : "rgba(15,23,42,0.88)";
-
-                    const border = isCorrect
-                        ? "rgba(34,197,94,0.55)"
-                        : isSelected
-                            ? "rgba(56,189,248,0.55)"
-                            : "rgba(148,163,184,0.2)";
+                    const background = isSelected ? "rgba(92, 200, 135, 0.14)" : "#ffffff";
+                    const border = isSelected ? "rgba(92, 200, 135, 0.9)" : "rgba(203, 213, 225, 0.95)";
+                    const color = isSelected ? "#166534" : "#1e293b";
 
                     return [
-                        `<button type="button" data-answer-index="${index}"`,
+                        `<button type="button" class="assessment-answer-option" data-answer-index="${index}"`,
                         ' style="text-align:left;border-radius:16px;padding:14px 16px;border:1px solid ' + border + ';',
-                        ' background:' + background + ';color:#f8fafc;cursor:pointer;font-size:15px;font-weight:700;">',
+                        ' background:' + background + ';color:' + color + ';cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 8px 18px rgba(15,23,42,0.04);">',
                         `${escapeHtml(answer || `Option ${index + 1}`)}`,
                         "</button>"
                     ].join("");
                 }).join(""),
-                "</div>",
-                `<div style="margin-top:16px;font-size:13px;color:#cbd5e1;">${escapeHtml(feedback)}</div>`
+                "</div>"
             ].join("");
 
             runtime.status.textContent = `Question ${runtime.activeIndex + 1} of ${questions.length}`;
@@ -564,6 +522,7 @@
             runtime.payload = payload;
             runtime.activeIndex = 0;
             runtime.selectedIndex = null;
+            runtime.recordedAnswers = [];
             runtime.kicker.textContent = payload.type || payload.group || "Assessment";
             if (typeof vrodosDecodeDisplayText === "function") {
                 runtime.title.textContent = vrodosDecodeDisplayText(payload.title || "Assessment");
@@ -571,6 +530,7 @@
                 runtime.title.textContent = decodeDisplayText(payload.title || "Assessment");
             }
             runtime.root.style.display = "flex";
+            setAssessmentSceneInteractionLocked(true);
 
             if (!payload.supported || !["Question", "ImageQuiz"].includes(payload.group)) {
                 runtime.renderUnsupported();
@@ -580,14 +540,40 @@
             runtime.renderQuestion();
         };
 
-        closeButton.addEventListener("click", runtime.hide);
+        dismissButton.addEventListener("click", runtime.hide);
         nextButton.addEventListener("click", () => {
             const questions = runtime.getQuestions();
             if (runtime.selectedIndex === null) {
                 return;
             }
 
+            const currentQuestion = questions[runtime.activeIndex] || {};
+            const currentAnswers = Array.isArray(currentQuestion.answers)
+                ? currentQuestion.answers.map((item) => item && typeof item === "object" ? item.text : item)
+                : Array.isArray(currentQuestion.options)
+                    ? currentQuestion.options.map((item) => item && typeof item === "object" ? item.text : item)
+                    : [];
+
+            runtime.recordedAnswers[runtime.activeIndex] = {
+                questionIndex: runtime.activeIndex,
+                prompt: currentQuestion.question || "",
+                selectedIndex: runtime.selectedIndex,
+                selectedAnswer: currentAnswers[runtime.selectedIndex] || ""
+            };
+
             if (runtime.activeIndex >= questions.length - 1) {
+                if (runtime.payload) {
+                    runtime.lastResult = {
+                        completedAt: new Date().toISOString(),
+                        title: runtime.payload.title || "",
+                        type: runtime.payload.type || "",
+                        group: runtime.payload.group || "",
+                        levels: Array.isArray(runtime.payload.levels) ? runtime.payload.levels.slice() : [],
+                        answers: runtime.recordedAnswers.slice()
+                    };
+                    runtime.payload.result = runtime.lastResult;
+                    window.__vrodosLastAssessmentResult = runtime.lastResult;
+                }
                 runtime.hide();
                 return;
             }
@@ -597,14 +583,53 @@
             runtime.renderQuestion();
         });
 
-        root.addEventListener("click", (event) => {
-            if (event.target === root) {
-                runtime.hide();
-            }
-        });
-
         window.__vrodosImmerseAssessmentRuntime = runtime;
         return runtime;
+    }
+
+    function setAttributeEnabled(el, attrName, enabled) {
+        if (!el) {
+            return;
+        }
+
+        if (el.components && el.components[attrName]) {
+            if (enabled && typeof el.components[attrName].play === "function") {
+                el.components[attrName].play();
+            } else if (!enabled && typeof el.components[attrName].pause === "function") {
+                el.components[attrName].pause();
+            }
+        }
+
+        if (attrName === "custom-movement") {
+            return;
+        }
+
+        el.setAttribute(attrName, "enabled: " + (enabled ? "true" : "false"));
+    }
+
+    function setAssessmentSceneInteractionLocked(isLocked) {
+        const player = document.getElementById("player");
+        const camera = document.getElementById("cameraA");
+        const scene = document.querySelector("a-scene");
+        const canvas = scene && scene.canvas ? scene.canvas : null;
+
+        setAttributeEnabled(player, "custom-movement", !isLocked);
+        setAttributeEnabled(player, "wasd-controls", !isLocked);
+        setAttributeEnabled(player, "look-controls", !isLocked);
+        setAttributeEnabled(camera, "custom-movement", !isLocked);
+        setAttributeEnabled(camera, "look-controls", !isLocked);
+
+        if (!isLocked) {
+            document.body.style.cursor = "";
+            document.documentElement.style.cursor = "";
+            document.body.classList.remove("a-grab-cursor", "a-grabbing");
+            document.documentElement.classList.remove("a-grab-cursor", "a-grabbing");
+
+            if (canvas) {
+                canvas.style.cursor = "";
+                canvas.classList.remove("a-grab-cursor", "a-grabbing");
+            }
+        }
     }
 
     function payloadFromElement(element) {
