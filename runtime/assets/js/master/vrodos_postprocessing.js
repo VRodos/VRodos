@@ -119,17 +119,22 @@
         this.postProcessingQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.postProcessingMaterial);
         this.postProcessingScene.add(this.postProcessingQuad);
 
-        // Multi-pass bloom targets (half resolution)
+        // Half-res dimensions (reused by bloom, SAO, SSR)
         var halfW = Math.max(1, Math.floor(width / 2));
         var halfH = Math.max(1, Math.floor(height / 2));
-        this.bloomTargetA = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
-        this.bloomTargetB = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
-        this.bloomBrightPassMaterial = VRODOSMaster.createBrightPassMaterial();
-        this.bloomBlurMaterial = VRODOSMaster.createGaussianBlurMaterial();
-        this.bloomBlurMaterial.uniforms.resolution.value.set(halfW, halfH);
-        this.bloomQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.bloomBrightPassMaterial);
-        this.bloomScene = new THREE.Scene();
-        this.bloomScene.add(this.bloomQuad);
+
+        // Multi-pass bloom targets (half resolution) — lazy: only when strength > 0
+        var bloomEnabled = this.getBloomStrengthValue() > 0;
+        if (bloomEnabled) {
+            this.bloomTargetA = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
+            this.bloomTargetB = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
+            this.bloomBrightPassMaterial = VRODOSMaster.createBrightPassMaterial();
+            this.bloomBlurMaterial = VRODOSMaster.createGaussianBlurMaterial();
+            this.bloomBlurMaterial.uniforms.resolution.value.set(halfW, halfH);
+            this.bloomQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.bloomBrightPassMaterial);
+            this.bloomScene = new THREE.Scene();
+            this.bloomScene.add(this.bloomQuad);
+        }
 
         // SAO pass (half resolution, depth-only ambient occlusion)
         if (saoParams) {
@@ -152,13 +157,24 @@
             this.saoScene.add(this.saoQuad);
         }
 
-        // FXAA pass (full resolution, after composite)
-        this.fxaaTarget = new THREE.WebGLRenderTarget(width, height, { depthBuffer: false });
-        this.fxaaMaterial = VRODOSMaster.createFXAAMaterial();
-        this.fxaaMaterial.uniforms.resolution.value.set(1.0 / width, 1.0 / height);
-        this.fxaaQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.fxaaMaterial);
-        this.fxaaScene = new THREE.Scene();
-        this.fxaaScene.add(this.fxaaQuad);
+        // FXAA pass (full resolution, after composite) — lazy.
+        // fxaaTarget doubles as the temp composite buffer when TAA is on, and
+        // fxaaScene/fxaaQuad are reused for the final TAA→screen blit, so they
+        // are allocated whenever EITHER FXAA or TAA is enabled.
+        // fxaaMaterial itself is only needed when FXAA is actually the final pass
+        // (skipped when TAA is on — FXAA would blur TAA's texture detail).
+        var fxaaEnabled = this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
+        if (fxaaEnabled || taaEnabled) {
+            this.fxaaTarget = new THREE.WebGLRenderTarget(width, height, { depthBuffer: false });
+            this.fxaaQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), null);
+            this.fxaaScene = new THREE.Scene();
+            this.fxaaScene.add(this.fxaaQuad);
+        }
+        if (fxaaEnabled && !taaEnabled) {
+            this.fxaaMaterial = VRODOSMaster.createFXAAMaterial();
+            this.fxaaMaterial.uniforms.resolution.value.set(1.0 / width, 1.0 / height);
+            this.fxaaQuad.material = this.fxaaMaterial;
+        }
 
         // TAA pass (full resolution, temporal accumulation with ping-pong)
         if (taaEnabled) {

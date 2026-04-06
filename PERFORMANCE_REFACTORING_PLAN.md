@@ -173,8 +173,8 @@ When both SAO and bloom are active, they each use half-res targets. These could 
 3. ~~**Delete duplicate RGBELoader** (1C)~~ ✅ DONE (2026-04-05)
 4. ~~**Helper extraction** (1B) — post-processing, scene probe, quality profiles~~ ✅ DONE (2026-04-06)
 5. ~~**Update HTML template** (1D, helper portion) — wire up helper scripts~~ ✅ DONE (2026-04-06)
-6. **Test compiled scene** — verify no regressions (full pipeline)
-7. **Lazy pass instantiation** (2A) — behavior change, needs thorough testing
+6. ~~**Test compiled scene** — verify no regressions (full pipeline)~~ ✅ DONE (2026-04-06, user-confirmed)
+7. ~~**Lazy pass instantiation** (2A)~~ ✅ DONE (2026-04-06)
 8. **Composite skip-sampling** (2D) — small, safe optimization
 9. **Adaptive SAO quality** (2B) — optional, can defer
 
@@ -194,6 +194,28 @@ When both SAO and bloom are active, they each use half-res targets. These could 
 - Component methods delegate via direct property references (`method: VRODOSMaster.SceneSettingsHelpers.method`) — `this` binding preserved because methods are invoked as `component.method()`
 - `Master_Client_prototype.html` updated with 3 new `<script>` tags inserted after the shader block, before the component script
 - No compiler (`class-vrodos-compiler-manager.php`) edit needed — it relies on directory copy, not per-file enumeration
+
+### TAA Quality Fixes (2026-04-06)
+User reported "JPG-like" degradation when TAA was enabled, becoming noticeable even at mid-range distance. Root causes and fixes:
+- **Catmull-Rom history sampling** (5-tap Jimenez) replaces bilinear in `vrodos_shaders_taa.js`. Bilinear sampling of the history buffer at sub-pixel jittered UVs compounded softening on every accumulation frame — this was the dominant source of detail loss. Catmull-Rom preserves high-frequency texture detail through repeated resamples.
+- Variance clipping tightened: **1.5σ → 1.0σ** (rejects stale blurry history more aggressively)
+- History blend weight lowered: **0.95 → 0.88** (flushes accumulation faster)
+- Halton jitter magnitude reduced: **±0.5 px → ±0.375 px** (less sub-pixel drift per frame)
+- **Skip final FXAA blit when TAA is on.** New `taaBlitMaterial` (trivial passthrough ShaderMaterial) copies TAA output directly to screen. Previously FXAA was applied on top of TAA — its edge detector was treating fine texture micro-contrast as aliasing and blurring it, compounding TAA's own softening into the "JPG" look. TAA already provides anti-aliasing.
+
+### Phase 2A Results (2026-04-06) — Lazy Pass Instantiation
+Post-FX settings are static per session (no A-Frame `update` hook), so disabled passes can be omitted entirely without needing runtime rebuild.
+
+- **Bloom**: resources (2 half-res RTs + bright-pass + blur materials + scene) now gated on `getBloomStrengthValue() > 0`. Scenes with bloom strength "off" skip ~2 half-res RTs entirely.
+- **FXAA**:
+  - `fxaaTarget` + `fxaaScene`/`fxaaQuad` created only when FXAA OR TAA is enabled (they're reused as the TAA temp composite buffer and final TAA→screen blit scene)
+  - `fxaaMaterial` created only when FXAA is actually the final pass (FXAA disabled entirely when TAA is on, so no material needed)
+- Runtime guards in the render loop already handled missing resources (`useFXAA = ... && this.fxaaTarget && this.fxaaMaterial`; bloom path already checked `if (bloomValue > 0 && this.bloomTargetA && this.bloomTargetB)`). `updatePostProcessingSize` also already had null-guards on every target/material.
+
+**VRAM savings at 1920×1080:**
+- Bloom off → saves ~2 × (960×540×4) ≈ 4.0 MB
+- FXAA+TAA off → saves ~1 × (1920×1080×4) ≈ 8.3 MB
+- Both off → ~12 MB saved plus 4 shader material compiles
 
 ## Verification
 
