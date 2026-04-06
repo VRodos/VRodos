@@ -24,6 +24,13 @@ let vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAsset
  */
 function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
+    function vrodos_getAssetPreviewFallbackIcon(asset) {
+        const categoryKey = asset && (asset.category_slug || asset.category_icon);
+        return categoryKey === "assessment"
+          ? vrodos_getCategoryIcon(categoryKey)
+          : "image-off";
+    }
+
     let filemanager = document.getElementById('assetBrowserToolbar');
     let fileList = filemanager.querySelector('.data');
 
@@ -35,15 +42,35 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         boxShadow: '0 8px 24px rgba(0,0,0,0.35)', pointerEvents: 'none',
         background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)'
     });
+    let dragGhostMedia = document.createElement('div');
+    Object.assign(dragGhostMedia.style, {
+        width: '100%',
+        height: '72px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#334155'
+    });
     let dragGhostImg = document.createElement('img');
-    Object.assign(dragGhostImg.style, { width: '100%', height: '72px', objectFit: 'cover', display: 'block' });
+    Object.assign(dragGhostImg.style, { width: '100%', height: '72px', objectFit: 'cover', display: 'none' });
+    let dragGhostFallback = document.createElement('div');
+    Object.assign(dragGhostFallback.style, {
+        width: '100%',
+        height: '72px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#cbd5e1'
+    });
     let dragGhostLabel = document.createElement('div');
     Object.assign(dragGhostLabel.style, {
         padding: '4px 6px', fontSize: '9px', fontWeight: '700',
         color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden',
         textOverflow: 'ellipsis', textAlign: 'center', letterSpacing: '0.03em'
     });
-    dragGhost.appendChild(dragGhostImg);
+    dragGhostMedia.appendChild(dragGhostImg);
+    dragGhostMedia.appendChild(dragGhostFallback);
+    dragGhost.appendChild(dragGhostMedia);
     dragGhost.appendChild(dragGhostLabel);
     document.body.appendChild(dragGhost);
 
@@ -95,9 +122,26 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         let target = e.target.closest('li[draggable]') || e.target;
         let screenshotImage = target.getAttribute("data-screenshot_path");
         let assetName = target.getAttribute("data-asset_name") || '';
+        let fallbackIcon = vrodos_getAssetPreviewFallbackIcon({
+            category_slug: target.getAttribute("data-category_slug"),
+            category_icon: target.getAttribute("data-category_icon")
+        });
 
         // Update drag ghost with this asset's image and name
-        dragGhostImg.src = screenshotImage || pluginPath + '/images/ic_asset.png';
+        if (screenshotImage) {
+            dragGhostImg.src = screenshotImage;
+            dragGhostImg.style.display = 'block';
+            dragGhostFallback.style.display = 'none';
+            dragGhostFallback.innerHTML = '';
+        } else {
+            dragGhostImg.removeAttribute('src');
+            dragGhostImg.style.display = 'none';
+            dragGhostFallback.style.display = 'flex';
+            dragGhostFallback.innerHTML = '<i data-lucide="' + fallbackIcon + '" style="width:28px; height:28px;"></i>';
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
         dragGhostLabel.textContent = assetName;
         e.dataTransfer.setDragImage(dragGhost, 60, 45);
 
@@ -154,18 +198,23 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     document.getElementById("assetCategTab").appendChild(element);
                 }
 
-                f['screenshot_path'] = f['screenshot_path'] ? f['screenshot_path'] : "../wp-content/plugins/vrodos/images/ic_no_sshot.png";
-
                 let draggable_string = '';
                 for (const [key, value] of Object.entries(f)) {
                     draggable_string += 'data-' + key + '="' + value + '" ';
                 }
 
+                let previewFallbackIcon = vrodos_getAssetPreviewFallbackIcon(f);
+                let previewMarkup = f['screenshot_path']
+                    ? '<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" src="' + encodeURI(f['screenshot_path']) + '">'
+                    : '<div class="assetImg tw-flex tw-items-center tw-justify-center tw-bg-slate-700/80">' +
+                        '<i data-lucide="' + previewFallbackIcon + '" class="tw-w-10 tw-h-10 tw-text-slate-300"></i>' +
+                      '</div>';
+
                 let liHTML = '<li draggable="true" id="asset-' + f['asset_id'] + '" ' +
                     'class="vrodos-asset-card tw-relative tw-bg-slate-800 tw-rounded-lg tw-overflow-hidden tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-group tw-cursor-move"' +
                     ' title="Drag into scene" ' + draggable_string + '>' +
 
-                    '<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" src="' + encodeURI(f['screenshot_path']) + '">' +
+                    previewMarkup +
 
                     '<div class="tw-absolute tw-inset-0 tw-bg-gradient-to-t tw-from-slate-900/80 tw-via-transparent tw-to-transparent tw-opacity-60 group-hover:tw-opacity-90 tw-transition-opacity"></div>' +
 

@@ -3205,6 +3205,10 @@ body {
   top: 100%;
 }
 
+.vrodos-manager-wrapper .tw-top-4 {
+  top: 1rem;
+}
+
 .vrodos-manager-wrapper .tw-z-10 {
   z-index: 10;
 }
@@ -3544,6 +3548,10 @@ body {
 
 .vrodos-manager-wrapper .tw-min-h-screen {
   min-height: 100vh;
+}
+
+.vrodos-manager-wrapper .tw-min-h-\[180px\] {
+  min-height: 180px;
 }
 
 .vrodos-manager-wrapper .\!tw-w-full {
@@ -5998,6 +6006,11 @@ body.vrodos-manager-wrapper {
   background-color: rgb(255 255 255 / 0.1);
 }
 
+.vrodos-manager-wrapper .hover\:tw-bg-slate-100:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 245 249 / var(--tw-bg-opacity, 1));
+}
+
 .vrodos-manager-wrapper .hover\:tw-text-blue-400:hover {
   --tw-text-opacity: 1;
   color: rgb(96 165 250 / var(--tw-text-opacity, 1));
@@ -6036,6 +6049,11 @@ body.vrodos-manager-wrapper {
 .vrodos-manager-wrapper .hover\:tw-text-white:hover {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .hover\:tw-text-slate-700:hover {
+  --tw-text-opacity: 1;
+  color: rgb(51 65 85 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .hover\:tw-underline:hover {
@@ -6118,6 +6136,12 @@ body.vrodos-manager-wrapper {
 .vrodos-manager-wrapper :is(.tw-group:hover .group-hover\:tw-scale-110) {
   --tw-scale-x: 1.1;
   --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.vrodos-manager-wrapper :is(.tw-group:hover .group-hover\:tw-scale-\[1\.02\]) {
+  --tw-scale-x: 1.02;
+  --tw-scale-y: 1.02;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 

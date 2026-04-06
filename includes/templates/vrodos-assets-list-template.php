@@ -23,8 +23,15 @@ function vrodos_get_asset_category_icon($category_slug) {
         'image'         => 'image-play',
         'chat'          => 'message-square',
         'poi-link'      => 'external-link',
+        'assessment'    => 'clipboard-check',
     ];
     return $map[$category_slug] ?? 'package';
+}
+
+function vrodos_get_asset_preview_fallback_icon($category_slug) {
+    return $category_slug === 'assessment'
+        ? vrodos_get_asset_category_icon($category_slug)
+        : 'image-off';
 }
 ?>
 <!DOCTYPE html>
@@ -77,7 +84,7 @@ function vrodos_get_asset_category_icon($category_slug) {
                         </div>
                     <?php endif; ?>
                 </div>
-                
+
                 <a href="<?php echo get_site_url(); ?>/vrodos-project-manager-page/" class="tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-primary transition-all">Projects Manager</a>
             </div>
         </div>
@@ -86,7 +93,7 @@ function vrodos_get_asset_category_icon($category_slug) {
     <main class="tw-flex-1 tw-min-h-0 tw-overflow-y-auto tw-max-w-screen-2xl tw-w-full tw-mx-auto tw-px-8 tw-py-10">
 
         <!-- Filter Toolbar -->
-        <?php 
+        <?php
         $categories = array_unique(array_column($assets, 'category_name'));
         ?>
         <div class="tw-mb-12 tw-flex tw-flex-wrap tw-items-center tw-gap-10 tw-bg-white/80 tw-backdrop-blur-md tw-p-3 tw-pr-8 tw-rounded-2xl tw-border tw-border-slate-200 tw-w-fit tw-shadow-sm">
@@ -103,7 +110,7 @@ function vrodos_get_asset_category_icon($category_slug) {
                     <i data-lucide="layers" class="tw-w-4 tw-h-4"></i>
                     All Categories
                 </button>
-                <?php foreach ($categories as $cat) : 
+                <?php foreach ($categories as $cat) :
                     // Find an asset with this category to get the slug
                     $category_slug = 'package';
                     foreach($assets as $a) {
@@ -114,7 +121,7 @@ function vrodos_get_asset_category_icon($category_slug) {
                     }
                     $icon = vrodos_get_asset_category_icon($category_slug);
                 ?>
-                    <button class="category-filter-btn tw-btn tw-btn-sm tw-btn-ghost tw-text-slate-400 tw-rounded-xl tw-px-4 hover:tw-bg-slate-50 hover:tw-text-slate-600 tw-gap-2" 
+                    <button class="category-filter-btn tw-btn tw-btn-sm tw-btn-ghost tw-text-slate-400 tw-rounded-xl tw-px-4 hover:tw-bg-slate-50 hover:tw-text-slate-600 tw-gap-2"
                             data-category="<?php echo esc_attr($category_slug); ?>">
                         <i data-lucide="<?php echo $icon; ?>" class="tw-w-4 tw-h-4"></i>
                         <?php echo $cat; ?>
@@ -125,9 +132,9 @@ function vrodos_get_asset_category_icon($category_slug) {
 
         <!-- Asset Grid -->
         <div id="asset-grid" class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 xl:tw-grid-cols-4 tw-gap-8">
-            
+
             <!-- Add New Asset Card -->
-            <a href="<?php echo $link_to_add; ?>" 
+            <a href="<?php echo $link_to_add; ?>"
                class="tw-group tw-relative tw-flex tw-flex-col tw-items-center tw-justify-center tw-p-8 tw-bg-white tw-border-2 tw-border-dashed tw-border-slate-200 tw-rounded-2xl hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-duration-300 tw-h-full tw-min-h-[280px] vr-glow-card">
                 <div class="tw-w-16 tw-h-16 tw-bg-slate-50 tw-text-slate-400 group-hover:tw-bg-primary group-hover:tw-text-white tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-transition-all tw-duration-300">
                     <i data-lucide="plus" class="tw-w-8 tw-h-8"></i>
@@ -143,6 +150,8 @@ function vrodos_get_asset_category_icon($category_slug) {
                 $pGameId = get_page_by_path( $asset['asset_parent_game_slug'], OBJECT, 'vrodos_game' )->ID;
                 $can_edit_asset = $is_user_admin || ( $user_id == $asset['author_id'] );
                 $edit_link = $link_to_edit . 'vrodos_asset=' . $asset['asset_id'] . '&vrodos_game=' . $pGameId . '&preview=0';
+                $asset_icon = vrodos_get_asset_category_icon( $asset['category_slug'] );
+                $asset_preview_icon = vrodos_get_asset_preview_fallback_icon( $asset['category_slug'] );
             ?>
 
                 <div id="<?php echo $asset['asset_id']; ?>" class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
@@ -158,12 +167,12 @@ function vrodos_get_asset_category_icon($category_slug) {
                     <?php endif; ?>
 
                         <?php if ( $asset['screenshot_path'] ) : ?>
-                            <img src="<?php echo $asset['screenshot_path']; ?>" 
+                            <img src="<?php echo $asset['screenshot_path']; ?>"
                                  alt="<?php echo $asset['asset_name']; ?>"
                                  class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-110 tw-transition-transform tw-duration-500">
                         <?php else : ?>
                             <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-slate-300">
-                                <i data-lucide="box" class="tw-w-12 tw-h-12"></i>
+                                <i data-lucide="<?php echo esc_attr( $asset_preview_icon ); ?>" class="tw-w-12 tw-h-12"></i>
                             </div>
                         <?php endif; ?>
 
@@ -180,10 +189,10 @@ function vrodos_get_asset_category_icon($category_slug) {
                         <div class="tw-absolute tw-top-3 tw-left-3 tw-flex tw-flex-col tw-gap-1.5 tw-items-start">
                             <!-- Category Badge -->
                             <span class="tw-w-fit tw-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-bg-white tw-text-slate-900 tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-sm tw-border tw-border-slate-100">
-                                <i data-lucide="<?php echo vrodos_get_asset_category_icon($asset['category_slug']); ?>" class="tw-w-3 tw-h-3"></i>
+                                <i data-lucide="<?php echo esc_attr( $asset_icon ); ?>" class="tw-w-3 tw-h-3"></i>
                                 <?php echo $asset['category_name']; ?>
                             </span>
-                            
+
                             <!-- Visibility Badge -->
                             <?php if ( $asset['is_joker'] == 'true' ) : ?>
                                 <span class="tw-w-fit tw-px-2.5 tw-py-1 tw-bg-emerald-500 tw-text-white tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-md">
@@ -213,7 +222,7 @@ function vrodos_get_asset_category_icon($category_slug) {
                                 <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_joker'] === 'true') ? 'public' : $asset['asset_parent_game_slug']; ?></p>
                             </div>
                             <?php endif; ?>
-                            
+
                             <!-- Trash Button -->
                             <?php if ( $is_user_admin || ( $user_id == $asset['author_id'] ) ) : ?>
                                 <button onclick="openDeleteModal(<?php echo $asset['asset_id']; ?>, '<?php echo esc_js($asset['asset_name']); ?>', '<?php echo $joker_project_slug; ?>', <?php echo $asset['is_cloned']; ?>)"
@@ -246,9 +255,9 @@ function vrodos_get_asset_category_icon($category_slug) {
     <!-- Modals Wrapper -->
     <div id="vrodos-modal-wrapper">
         <!-- Reusable Delete Asset Modal -->
-        <?php 
+        <?php
             $context = 'asset';
-            include 'vrodos-delete-dialog.php'; 
+            include 'vrodos-delete-dialog.php';
         ?>
     </div>
 </div>
@@ -265,13 +274,13 @@ function vrodos_get_asset_category_icon($category_slug) {
     function openDeleteModal(assetId, assetName, gameSlug, isCloned) {
         document.getElementById('delete_asset_name').textContent = assetName;
         const confirmBtn = document.getElementById('confirmDeleteButton');
-        
+
         confirmBtn.onclick = function() {
             var progressBar = document.getElementById('delete-scene-dialog-progress-bar');
             if (progressBar) { progressBar.classList.remove('tw-hidden'); progressBar.style.display = ''; }
             vrodos_deleteAssetAjax(assetId, gameSlug, isCloned);
         };
-        
+
         document.getElementById('vrodos_delete_asset_modal').showModal();
     }
 

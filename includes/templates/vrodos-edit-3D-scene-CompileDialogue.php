@@ -22,6 +22,12 @@
 					<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
 					Build Project
 				</a>
+				<button type="button"
+						class="tw-p-1.5 tw-text-slate-400 hover:tw-text-slate-700 tw-rounded-lg hover:tw-bg-slate-100 tw-transition-colors"
+						title="Close"
+						onclick="document.getElementById('compile-dialog').close()">
+					<i data-lucide="x" class="tw-w-4 tw-h-4"></i>
+				</button>
 			</div>
 		</div>
 

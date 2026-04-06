@@ -44,7 +44,7 @@ class VRodos_Asset_CPT_Manager {
       ['isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'string', 'false', true, true],
       ['isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'string', 'false', true, true],
       ['fonts', 'fonts', 'vrodos_asset3d_fonts', 'string', '', true, true],
-      ['back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'string', 'rgb(221, 185, 155)', true, true],
+      ['back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'string', '#FFFFFF', true, true],
       ['Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'string', '0,0,0,0,0,0,0,0,0', true, true],
   ];
 
@@ -863,7 +863,7 @@ class VRodos_Asset_CPT_Manager {
 		$data['asset_title_value']         = '';
 		$data['asset_description_value']   = '';
 		$data['asset_fonts_saved']         = '';
-		$data['asset_back_3d_color_saved'] = '#000000';
+		$data['asset_back_3d_color_saved'] = '#FFFFFF';
 		$data['assettrs_saved']            = '0,0,0,0,0,0,0,0,-100';
 		$data['dropdownHeading']           = 'Select a category';
 
@@ -882,7 +882,7 @@ class VRodos_Asset_CPT_Manager {
 			$data['asset_title_value']         = get_the_title( $data['asset_id'] );
 			$data['asset_description_value']   = get_post_field( 'post_content', $data['asset_id'] );
 			$data['asset_fonts_saved']         = get_post_meta( $data['asset_id'], 'vrodos_asset3d_fonts', true );
-			$data['asset_back_3d_color_saved'] = get_post_meta( $data['asset_id'], 'vrodos_asset3d_back3dcolor', true ) ?: '#000000';
+			$data['asset_back_3d_color_saved'] = get_post_meta( $data['asset_id'], 'vrodos_asset3d_back3dcolor', true ) ?: '#FFFFFF';
 			$data['assettrs_saved']            = get_post_meta( $data['asset_id'], 'vrodos_asset3d_assettrs', true ) ?: '0,0,0,0,0,0,0,0,-100';
 
 			if ( empty( $data['glb_file_name'] ) && self::asset_uses_legacy_non_glb_model( (int) $data['asset_id'] ) ) {
@@ -959,7 +959,8 @@ class VRodos_Asset_CPT_Manager {
 		$data['video_autoloop']        = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true ) ? 'checked' : '';
 
 		// Screenshot
-		$data['scrnImageURL'] = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/ic_sshot.png';
+		$data['scrnImageURL'] = '';
+		$data['hasScreenshot'] = false;
 		if ( $asset_id ) {
 			$screenshot_id = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
 			$scrnImageURL  = self::resolve_media_meta_url( $screenshot_id );
@@ -971,6 +972,7 @@ class VRodos_Asset_CPT_Manager {
 				} else {
 					$data['scrnImageURL'] = $scrnImageURL;
 				}
+				$data['hasScreenshot'] = true;
 			}
 		}
 

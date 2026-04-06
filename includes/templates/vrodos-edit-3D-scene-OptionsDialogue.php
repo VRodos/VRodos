@@ -15,6 +15,12 @@
 				<h3 class="tw-text-lg tw-font-bold tw-text-slate-800">Scene options</h3>
 				<p class="tw-text-xs tw-text-slate-400">Description and screenshot settings</p>
 			</div>
+			<button type="button"
+					class="tw-ml-auto tw-p-1.5 tw-text-slate-400 hover:tw-text-slate-700 tw-rounded-lg hover:tw-bg-slate-100 tw-transition-colors"
+					title="Close"
+					onclick="document.getElementById('options-dialog').close()">
+				<i data-lucide="x" class="tw-w-4 tw-h-4"></i>
+			</button>
 		</div>
 
 		<!-- Body -->
@@ -56,18 +62,21 @@
 							. 'is_scene_icon_manually_selected=true</script>';
 					}
 
-					if ( $screenshotImgUrl ) {
-						$dataScreenshot       = file_get_contents( $screenshotImgUrl );
-						$scene_screenshot_bin = 'data:image/jpeg;base64,' . base64_encode( $dataScreenshot );
-					} else {
-						$scene_screenshot_bin = plugins_url( '../images/ic_sshot.png', __DIR__ );
-					}
 					?>
 
 					<div class="tw-rounded-lg tw-border tw-border-slate-200 tw-overflow-hidden tw-bg-slate-50 tw-flex tw-items-center tw-justify-center tw-p-2">
-						<img width="300" id="vrodos_scene_sshot" alt="VRodos scene screenshot"
-							 class="tw-rounded tw-max-w-full tw-h-auto"
-							 src="<?php echo $scene_screenshot_bin; ?>">
+						<?php if ( $screenshotImgUrl ) : ?>
+							<img width="300" id="vrodos_scene_sshot" alt="VRodos scene screenshot"
+								 class="tw-rounded tw-max-w-full tw-h-auto"
+								 src="<?php echo esc_url( $screenshotImgUrl ); ?>">
+						<?php else : ?>
+							<div id="vrodos_scene_sshot_placeholder" class="tw-w-full tw-min-h-[180px] tw-flex tw-items-center tw-justify-center tw-text-slate-300">
+								<i data-lucide="image-off" class="tw-w-16 tw-h-16"></i>
+							</div>
+							<img width="300" id="vrodos_scene_sshot" alt="VRodos scene screenshot"
+								 class="tw-rounded tw-max-w-full tw-h-auto tw-hidden"
+								 src="">
+						<?php endif; ?>
 					</div>
 
 					<input type="file"

@@ -20,7 +20,13 @@ $confirm_text = $is_asset ? 'CONFIRM DELETE' : 'DELETE PROJECT';
 <dialog id="<?php echo $modal_id; ?>" class="tw-modal">
     <div class="tw-modal-box tw-p-0 tw-overflow-hidden">
         <!-- Header Section -->
-        <div class="tw-p-8 tw-pb-4 tw-flex tw-flex-col tw-items-center tw-text-center">
+        <div class="tw-relative tw-p-8 tw-pb-4 tw-flex tw-flex-col tw-items-center tw-text-center">
+            <button type="button"
+                    class="tw-absolute tw-top-4 tw-right-4 tw-p-1.5 tw-text-slate-400 hover:tw-text-slate-700 tw-rounded-lg hover:tw-bg-slate-100 tw-transition-colors"
+                    title="Close"
+                    onclick="document.getElementById('<?php echo $modal_id; ?>').close()">
+                <i data-lucide="x" class="tw-w-4 tw-h-4"></i>
+            </button>
             <div class="tw-w-16 tw-h-16 tw-bg-rose-50 tw-text-rose-500 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mb-4">
                 <i data-lucide="alert-circle" class="tw-w-8 tw-h-8"></i>
             </div>

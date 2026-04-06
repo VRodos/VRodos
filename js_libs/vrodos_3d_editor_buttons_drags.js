@@ -122,6 +122,29 @@ function waitForLatestSceneSave() {
     return Promise.resolve();
 }
 
+function setSceneScreenshotPreview(src) {
+    let sceneShot = document.getElementById('vrodos_scene_sshot');
+    let placeholder = document.getElementById('vrodos_scene_sshot_placeholder');
+
+    if (!sceneShot) {
+        return;
+    }
+
+    if (src) {
+        sceneShot.src = src;
+        sceneShot.classList.remove('tw-hidden');
+        if (placeholder) {
+            placeholder.classList.add('tw-hidden');
+        }
+    } else {
+        sceneShot.removeAttribute('src');
+        sceneShot.classList.add('tw-hidden');
+        if (placeholder) {
+            placeholder.classList.remove('tw-hidden');
+        }
+    }
+}
+
 // Local
 function loadButtonActions() {
     function resetCompileDialogStatusState() {
@@ -387,7 +410,7 @@ function loadButtonActions() {
             let reader = new FileReader();
 
             reader.onload = function (e) {
-                document.getElementById('vrodos_scene_sshot').src = e.target.result;
+                setSceneScreenshotPreview(e.target.result);
                 is_scene_icon_manually_selected = true;
             };
 
@@ -926,7 +949,7 @@ function takeScreenshot() {
     offscreenRenderer.render(envir.scene, camera);
 
     new_screenshot_data = offscreenRenderer.domElement.toDataURL("image/jpeg");
-    document.getElementById("vrodos_scene_sshot").src = new_screenshot_data;
+    setSceneScreenshotPreview(new_screenshot_data);
 
     // Also update the current scene's drawer thumbnail
     let drawerThumb = document.querySelector('.current-scene-thumb');

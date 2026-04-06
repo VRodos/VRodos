@@ -5,6 +5,26 @@
 
 let slideIndex = 0;
 
+function vrodos_set_asset_screenshot_preview(src) {
+    const sshotImg = document.getElementById('sshotPreviewImg');
+    const placeholder = document.getElementById('sshotPreviewPlaceholder');
+    const hasSource = !!src;
+
+    if (sshotImg) {
+        if (hasSource) {
+            sshotImg.src = src;
+            sshotImg.classList.remove('tw-hidden');
+        } else {
+            sshotImg.removeAttribute('src');
+            sshotImg.classList.add('tw-hidden');
+        }
+    }
+
+    if (placeholder) {
+        placeholder.classList.toggle('tw-hidden', hasSource);
+    }
+}
+
 function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
     if (asset_viewer_3d_kernel && asset_viewer_3d_kernel.renderer) {
         asset_viewer_3d_kernel.clearAllAssets('vrodos_clear_asset_files');
@@ -27,7 +47,7 @@ function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
 
     const sshotImg = document.getElementById('sshotPreviewImg');
     if (sshotImg) {
-        sshotImg.src = sshotPreviewDefaultImg;
+        vrodos_set_asset_screenshot_preview(sshotPreviewDefaultImg);
     }
 
     const previewTitle = document.getElementById('objectPreviewTitle');
@@ -75,7 +95,7 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
 
         const screenshotImg = document.getElementById('sshotPreviewImg');
         if (screenshotImg) {
-            screenshotImg.src = sshotPreviewDefaultImg;
+            vrodos_set_asset_screenshot_preview(sshotPreviewDefaultImg);
         }
 
         const screenshotInput = document.getElementById('sshotFileInput');
@@ -135,28 +155,9 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
 
     html2canvas(document.querySelector('#wrapper_3d_inner')).then((canvas) => {
         asset_viewer_3d_kernel_local.render();
-        document.getElementById('sshotPreviewImg').src = canvas.toDataURL('image/png');
-
+        const sourceRatio = canvas.width / canvas.height;
         const targetWidth = 1068;
-        const targetHeight = 600;
-        const targetRatio = targetWidth / targetHeight;
-
-        let sourceWidth = canvas.width;
-        let sourceHeight = canvas.height;
-        const sourceRatio = sourceWidth / sourceHeight;
-
-        let sourceX = 0;
-        let sourceY = 0;
-
-        if (sourceRatio > targetRatio) {
-            const newSourceWidth = sourceHeight * targetRatio;
-            sourceX = (sourceWidth - newSourceWidth) / 2;
-            sourceWidth = newSourceWidth;
-        } else if (sourceRatio < targetRatio) {
-            const newSourceHeight = sourceWidth / targetRatio;
-            sourceY = (sourceHeight - newSourceHeight) / 2;
-            sourceHeight = newSourceHeight;
-        }
+        const targetHeight = Math.max(1, Math.round(targetWidth / sourceRatio));
 
         const resizedCanvas = document.createElement('canvas');
         resizedCanvas.width = targetWidth;
@@ -164,17 +165,15 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
 
         resizedCanvas.getContext('2d').drawImage(
             canvas,
-            sourceX,
-            sourceY,
-            sourceWidth,
-            sourceHeight,
             0,
             0,
             targetWidth,
             targetHeight
         );
 
-        document.getElementById('sshotFileInput').value = resizedCanvas.toDataURL();
+        const screenshotDataUrl = resizedCanvas.toDataURL('image/png');
+        vrodos_set_asset_screenshot_preview(screenshotDataUrl);
+        document.getElementById('sshotFileInput').value = screenshotDataUrl;
     });
 }
 

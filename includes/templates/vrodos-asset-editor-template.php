@@ -27,7 +27,7 @@ extract($data);
     // Pre-apply the correct section visibility to prevent layout flicker on load.
     $initial_cat_slug = ! empty( $saved_term ) ? $saved_term[0]->slug : '';
     if ( $initial_cat_slug ) :
-        $hide_3d = in_array( $initial_cat_slug, [ 'image', 'video', 'poi-imagetext', 'poi-link', 'chat' ] );
+        $hide_3d = in_array( $initial_cat_slug, [ 'image', 'video' ] );
     ?>
     <style>
         <?php if ( $hide_3d ) : ?>
@@ -464,18 +464,16 @@ else { ?>
                             </div>
 
                             <!-- Screenshot Preview -->
-                            <div class="tw-relative tw-aspect-video tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border tw-border-slate-200 tw-group">
-                                <?php if ($scrnImageURL): ?>
+                            <div class="tw-relative tw-aspect-[4/3] tw-bg-slate-100 tw-rounded-3xl tw-overflow-hidden tw-border tw-border-slate-200 tw-group">
+                                <?php if ( ! empty( $hasScreenshot ) ) : ?>
                                     <img id="sshotPreviewImg" src="<?php echo esc_url($scrnImageURL); ?>" alt="Asset Screenshot" 
-                                         class="tw-w-full tw-h-full tw-object-cover tw-transition-transform group-hover:tw-scale-110 !tw-max-h-none !tw-w-full !tw-h-full">
-                                <?php
-        else: ?>
-                                    <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-slate-300">
-                                        <i data-lucide="camera" class="tw-w-16 tw-h-16"></i>
+                                         class="tw-w-full tw-h-full tw-object-contain tw-transition-transform group-hover:tw-scale-[1.02] !tw-max-h-none !tw-w-full !tw-h-full">
+                                <?php else : ?>
+                                    <div id="sshotPreviewPlaceholder" class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-slate-300">
+                                        <i data-lucide="image-off" class="tw-w-16 tw-h-16"></i>
                                     </div>
-                                    <img id="sshotPreviewImg" src="" class="tw-hidden !tw-max-h-none !tw-w-full !tw-h-full">
-                                <?php
-        endif; ?>
+                                    <img id="sshotPreviewImg" src="" class="tw-hidden tw-w-full tw-h-full tw-object-contain !tw-max-h-none !tw-w-full !tw-h-full">
+                                <?php endif; ?>
                                 
                                 <input type="hidden" name="sshotFileInput" value="" id="sshotFileInput" accept="image/png"/>
                                 
@@ -967,6 +965,7 @@ else { ?>
 					const currentlySelected = document.getElementById('currently-selected-category');
 					if (currentlySelected && currentlySelected.getAttribute("data-cat-id")) {
 						let catSlug = updateSelectComponent();
+						resetCategory();
 						loadLayout(catSlug);
 					}
 
