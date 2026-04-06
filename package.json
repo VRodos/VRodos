@@ -3,7 +3,6 @@
   "version": "2.5.0",
   "description": "VRodos WordPress Plugin",
   "scripts": {
-
     "build": "npm run build:three && npm run build:css",
     "build:three": "node ./scripts/build-three-r173.mjs",
     "build:vendor": "npm run build:three",
@@ -18,7 +17,9 @@
     "daisyui": "^4.12.24",
     "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
+    "n8ao": "^1.10.1",
     "postcss": "^8.5.8",
+    "postprocessing": "^6.39.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^3.4.19",
     "three": "0.173.0"
