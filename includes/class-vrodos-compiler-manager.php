@@ -605,10 +605,8 @@ class VRodos_Compiler_Manager {
 			$a_camera->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
 			$a_camera->setAttribute( 'player-info', '' );
 			$a_camera->setAttribute( 'avatar-movement-info', '' );
-			$a_camera->setAttribute( 'avatar-rotation-info', '' );
 			$a_camera->setAttribute( 'look-controls', '' );
 			$a_camera->setAttribute( 'entity-movement-emitter', '' );
-			$a_camera->setAttribute( 'entity-rotation-emitter', '' );
 
 			$a_cursor = $dom->createElement( 'a-entity' );
 			$a_cursor->setAttribute( 'id', 'cursor' );
@@ -659,7 +657,6 @@ class VRodos_Compiler_Manager {
 			$a_entity->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
 			$a_entity->setAttribute( 'player-info', '' );
 			$a_entity->setAttribute( 'avatar-movement-info', '' );
-			$a_entity->setAttribute( 'avatar-rotation-info', '' );
 
 			$a_entity->appendChild( $a_cursor );
 			$ascenePlayer->appendChild( $a_entity );

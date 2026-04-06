@@ -11,16 +11,6 @@ AFRAME.registerComponent('avatar-movement-info', {
     }
 });
 
-AFRAME.registerComponent('avatar-rotation-info', {
-    schema: {
-        rotationState: { type: 'string', default: 'idle' }
-    },
-    init: function () {
-
-    }
-});
-
-
 AFRAME.registerComponent('player-info', {
     schema: {
         name: { type: 'string', default: 'user-' + Math.round(Math.random() * 10000) },

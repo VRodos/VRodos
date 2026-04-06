@@ -56,48 +56,6 @@ AFRAME.registerComponent('entity-movement-emitter', {
     }
 });
 
-AFRAME.registerComponent('entity-rotation-emitter', {
-    init: function () {
-        this.el.addEventListener('componentchanged', function (evt) {
-            if (evt.detail.name === 'rotation') {
-                // Rotation sync handled by NAF
-            }
-        });
-    }
-});
-
-AFRAME.registerComponent('animation-embed', {
-    schema: {
-        clip: { type: "string", default: "idle" },
-        glb_id: { type: "string", default: "" }
-    },
-    init: function () {
-        var loader = new THREE.GLTFLoader();
-        this.el.addEventListener("model-loaded", e => {
-            var objectMesh = this.el.getObject3D("mesh");
-            var link = "../assets/templates/multimalev2.glb";
-            var elem = this.el;
-            if (this.el.object3DMap.mesh.children[0].userData.name === "Armature") {
-                loader.load(link, function (gltf) {
-                    for (let i = 0; i < gltf.animations.length; i++) {
-                        objectMesh.animations[i] = gltf.animations[i];
-                    }
-                    elem.removeAttribute('animation-mixer');
-                    elem.setAttribute('animation-mixer', "clip: idle");
-                    elem.addState('loadedanimations');
-                });
-            } else {
-                elem.addState('noanimations');
-                elem.object3D.traverse((child) => {
-                    if (child.name.includes('Hand')) {
-                        child.visible = false;
-                    }
-                });
-            }
-        });
-    }
-});
-
 AFRAME.registerComponent('static-mask-me', {
     init: function () {
         let el = this.el;
