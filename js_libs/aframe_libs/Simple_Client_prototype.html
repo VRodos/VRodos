@@ -59,7 +59,7 @@
         adapter: easyrtc;
         audio: true;
         video: true;
-        connectOnLoad: true;
+        connectOnLoad: false;
         serverURL: /;
     ">
 
@@ -206,6 +206,70 @@
 
     let timerForScreenFeedback = setInterval(scanForStreamsAndShowInFullScreen, 3000);
 
+    function actorMediaSupported() {
+        return !!(
+            navigator.mediaDevices &&
+            typeof navigator.mediaDevices.getUserMedia === 'function'
+        );
+    }
+
+    function showActorMediaRequirements() {
+        let feedbackText = document.getElementById("renderFeedbackText");
+        let reportingEl = document.getElementById("reporting");
+        let isSecureLocalOrigin = window.isSecureContext ||
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1';
+
+        if (feedbackText) {
+            feedbackText.classList.remove('tw-animate-pulse');
+            feedbackText.innerHTML =
+                '<div class="tw-flex tw-max-w-md tw-flex-col tw-items-center tw-gap-4">' +
+                '<div class="tw-flex tw-h-14 tw-w-14 tw-items-center tw-justify-center tw-rounded-full tw-bg-amber-100 tw-text-amber-600">' +
+                '<i data-lucide="triangle-alert" class="tw-h-7 tw-w-7"></i>' +
+                '</div>' +
+                '<div class="tw-text-xl tw-font-black tw-text-slate-900">Camera and microphone are unavailable</div>' +
+                '<p class="tw-text-sm tw-font-medium tw-leading-6 tw-text-slate-600">' +
+                (isSecureLocalOrigin
+                    ? 'This browser is not exposing media capture to the actor client. Check camera and microphone permissions, then reload the page.'
+                    : 'Open this actor link over HTTPS or localhost, then allow camera and microphone access.') +
+                '</p>' +
+                '</div>';
+        }
+
+        if (reportingEl) {
+            reportingEl.classList.add('tw-border', 'tw-border-amber-200', 'tw-bg-amber-50', 'tw-text-amber-900');
+            reportingEl.innerHTML = isSecureLocalOrigin
+                ? 'Camera or microphone access is blocked in this browser. Check site permissions and reload.'
+                : 'Camera and microphone require HTTPS or localhost. Current origin: ' + window.location.origin;
+        }
+
+        if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
+
+    function startActorConnection() {
+        let scene = document.getElementById('aframe-scene-container');
+        if (!scene) {
+            return;
+        }
+
+        if (!actorMediaSupported()) {
+            showActorMediaRequirements();
+            return;
+        }
+
+        if (scene.hasLoaded) {
+            scene.emit('connect', null, false);
+            return;
+        }
+
+        scene.addEventListener('loaded', function handleSceneLoaded() {
+            scene.removeEventListener('loaded', handleSceneLoaded);
+            scene.emit('connect', null, false);
+        });
+    }
+
     // Initialize NoSleep
     let noSleep = new NoSleep();
 
@@ -230,6 +294,7 @@
         if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
             window.lucide.createIcons();
         }
+        startActorConnection();
     });
 
 </script>

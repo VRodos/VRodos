@@ -166,58 +166,71 @@
             <video id="recording" hidden></video>
         </div>
 
-        <div class="actionsDirector" name="actionsDiv" id="actionsDiv">
-            <div id="toggle_controls">Close <span style="color: white">("x" button to show again)</span></div>
-            <div id="directorline"></div>
-
-
-            <div class="wrapperControlElement">
-                <label for="roomNameShow" title="Name of Room">&#127917;</label>
-                <span id="roomNameShow">roomname</span>
-            </div>
-
-            <div class="wrapperControlElement">
-                <label for="occupantsNumberShow" title="Number of actors">&#128101;</label>
-                <span id="occupantsNumberShow"></span>
-            </div>
-
-            <div class="wrapperControlElement">
-                <button id="obtainStatusAndSetSizeControls" class="buttonMultiplaying"
-                    title="Obtain status and control green screens">
-                    &#128260; &#9989;
+        <div class="actionsDirector tw-absolute tw-bottom-6 tw-right-6 tw-w-[280px] tw-bg-white/95 tw-backdrop-blur-xl tw-rounded-3xl tw-border tw-border-slate-100 tw-shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] tw-p-5 tw-z-[1000] tw-flex tw-flex-col tw-gap-4" name="actionsDiv" id="actionsDiv">
+            
+            <!-- Header -->
+            <div class="tw-flex tw-items-center tw-justify-between tw-pb-3 tw-border-b tw-border-slate-100">
+                <span class="tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-text-slate-800">Director Panel</span>
+                <button id="toggle_controls" class="tw-btn tw-btn-circle tw-btn-xs tw-btn-ghost tw-text-slate-400 hover:tw-text-rose-500 tw-min-h-0 tw-h-6 tw-w-6" title="Hide panel (Press 'X' to show again)">
+                    <i data-lucide="x" class="tw-h-3.5 tw-w-3.5"></i>
                 </button>
             </div>
 
-            <div class="wrapperControlElement">
-                <button id="screen-btn-sendscreen" class="buttonMultiplaying" title="Send scene stream back to actors">
-                    &#127909; &#9654; &#128101;
+            <!-- Stats -->
+            <div class="tw-grid tw-grid-cols-2 tw-gap-3">
+                <div class="tw-rounded-2xl tw-bg-slate-50 tw-p-3 tw-flex tw-flex-col tw-items-center tw-justify-center">
+                    <i data-lucide="theater" class="tw-h-5 tw-w-5 tw-text-emerald-500 tw-mb-1"></i>
+                    <span id="roomNameShow" class="tw-text-[10px] tw-font-bold tw-text-slate-600 tw-truncate tw-w-full tw-text-center">roomname</span>
+                </div>
+                <div class="tw-rounded-2xl tw-bg-slate-50 tw-p-3 tw-flex tw-flex-col tw-items-center tw-justify-center">
+                    <i data-lucide="users" class="tw-h-5 tw-w-5 tw-text-emerald-500 tw-mb-1"></i>
+                    <span id="occupantsNumberShow" class="tw-text-xs tw-font-black tw-text-slate-800">0</span>
+                </div>
+            </div>
+
+            <!-- Main Actions -->
+            <div class="tw-flex tw-flex-col tw-gap-2">
+                <button id="obtainStatusAndSetSizeControls" class="tw-btn tw-btn-sm tw-w-full tw-rounded-xl tw-bg-slate-50 tw-border tw-border-slate-200 tw-text-slate-700 hover:tw-bg-white hover:tw-border-emerald-300 hover:tw-text-emerald-600 tw-shadow-sm tw-flex tw-items-center tw-justify-center tw-gap-2 tw-font-bold tw-transition-colors" title="Obtain status and control green screens">
+                    <i data-lucide="refresh-cw" class="tw-h-4 tw-w-4"></i>
+                    Sync Green Screens
+                </button>
+                <button id="screen-btn-sendscreen" class="tw-btn tw-btn-sm tw-w-full tw-rounded-xl tw-bg-slate-50 tw-border tw-border-slate-200 tw-text-slate-700 hover:tw-bg-white hover:tw-border-emerald-300 hover:tw-text-emerald-600 tw-shadow-sm tw-flex tw-items-center tw-justify-center tw-gap-2 tw-font-bold tw-transition-colors" title="Send scene stream back to actors">
+                    <i data-lucide="monitor-play" class="tw-h-4 tw-w-4"></i>
+                    Stream to Actors
                 </button>
             </div>
 
-            <div class="wrapperControlLineElement">
-                <button id="start-recording-btn" class="buttonStartRecord" title="Start capturing video">
-                    ⚪️
-                </button>
-
-                <a id="download-recording-btn" class="buttonDownloadRecording" title="Download video"
-                    style="visibility: hidden">
-                    💾️️
-                </a>
-
-                <button id="upload-recording-btn" class="buttonUploadRecording" style="visibility: hidden;"
-                    title="Upload Recording to MediaVerse" disabled>
-                    ⬆️️️
-                </button>
-            </div>
-            <div class="wrapperControlElement">
-                <span id="captured-video-label"></span>
-            </div>
-            <div class="wrapperControlElement">
-                <label for="positionShow" title="Camera Position">&#127909;</label>
-                <span id="positionShow"></span>
+            <!-- Recording Controls -->
+            <div class="tw-bg-slate-50 tw-rounded-2xl tw-p-3 tw-border tw-border-slate-100 tw-flex tw-flex-col tw-gap-2">
+                <div class="tw-flex tw-items-center tw-justify-center tw-gap-3">
+                    <button id="start-recording-btn" class="tw-btn tw-btn-circle tw-btn-sm tw-bg-white tw-border tw-border-slate-200 hover:tw-bg-rose-50 hover:tw-border-rose-200 tw-shadow-sm tw-transition-colors" title="Start capturing video">
+                        <span class="tw-h-3 tw-w-3 tw-rounded-full tw-bg-rose-500 tw-shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>
+                    </button>
+                    
+                    <a id="download-recording-btn" class="tw-btn tw-btn-circle tw-btn-sm tw-bg-slate-200 tw-border-none tw-text-slate-600 hover:tw-bg-slate-300 hover:tw-text-slate-800" title="Download video" style="visibility: hidden">
+                        <i data-lucide="download" class="tw-h-4 tw-w-4"></i>
+                    </a>
+                    
+                    <button id="upload-recording-btn" class="tw-btn tw-btn-circle tw-btn-sm tw-bg-emerald-100 tw-border-none tw-text-emerald-700 hover:tw-bg-emerald-200 active:tw-scale-95" title="Upload Recording to MediaVerse" style="visibility: hidden;" disabled>
+                        <i data-lucide="upload-cloud" class="tw-h-4 tw-w-4"></i>
+                    </button>
+                </div>
+                <div class="tw-text-center tw-empty:tw-hidden">
+                    <span id="captured-video-label" class="tw-text-[10px] tw-font-bold tw-text-slate-500"></span>
+                </div>
             </div>
 
-            <div id="panelsSizeControlsDiv"></div>
+            <!-- Footer / Camera Position -->
+            <div class="tw-flex tw-items-center tw-justify-between tw-pt-3 tw-border-t tw-border-slate-100">
+                <div class="tw-flex tw-items-center tw-gap-2 tw-text-slate-400">
+                    <i data-lucide="camera" class="tw-h-3.5 tw-w-3.5"></i>
+                    <span class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-wider">Camera Pos</span>
+                </div>
+                <span id="positionShow" class="tw-text-[10px] tw-font-mono tw-font-bold tw-text-emerald-600"></span>
+            </div>
+
+            <div id="panelsSizeControlsDiv" class="tw-hidden"></div>
+        </div>
             <input id="node-url-input" hidden disabled />
             <input id="node-token-input" hidden disabled />
             <input id="is-base-scene-input" hidden disabled />

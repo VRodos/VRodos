@@ -439,6 +439,11 @@ class VRodos_Compiler_Manager {
 		$content        = $this->reader( $filenameSource );
 		$content        = str_replace( 'Client.html', 'Client_' . $scene_id . '.html', $content );
 		$content        = str_replace( 'project_sceneId', $project_title . ' - ' . $scene_title[0], $content );
+		$content        = str_replace(
+			'VRODOS_PLUGIN_URL_PLACEHOLDER',
+			esc_url( $this->plugin_path_url ),
+			$content
+		);
 		return $this->writer( $this->plugin_path_dir . '/runtime/build/' . 'index_' . $scene_id . '.html', $content );
 	}
 
@@ -1422,6 +1427,11 @@ class VRodos_Compiler_Manager {
 
 		$content = str_replace( 'appname', $app_name, $content );
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
+		$content = str_replace(
+			'VRODOS_PLUGIN_URL_PLACEHOLDER',
+			esc_url( $this->plugin_path_url ),
+			$content
+		);
 
 		$content = str_replace( 'AFRAME_CLEARCOLOR_PLACEHOLDER', $scene_json->metadata->ClearColor, $content );
 
