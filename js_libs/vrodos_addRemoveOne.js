@@ -117,6 +117,96 @@ function vrodosResolvedAssessmentLevels(levels) {
     return allLevels.filter((level) => normalizedLevels.includes(level));
 }
 
+function vrodosDrawRoundedRect(ctx, x, y, width, height, radius, fillStyle, strokeStyle, lineWidth) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+
+    if (fillStyle) {
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+    }
+
+    if (strokeStyle && lineWidth > 0) {
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = strokeStyle;
+        ctx.stroke();
+    }
+}
+
+function vrodosCreateAssessmentInfoPlate(type, levels) {
+    if (typeof THREE.CanvasTexture === 'undefined') {
+        return null;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 192;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        return null;
+    }
+
+    const resolvedType = vrodosDecodeDisplayText(type || 'Assessment').trim() || 'Assessment';
+    const resolvedLevels = vrodosResolvedAssessmentLevels(levels);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    vrodosDrawRoundedRect(ctx, 8, 8, 496, 176, 22, 'rgba(15, 23, 42, 0.92)', 'rgba(148, 163, 184, 0.28)', 2);
+
+    ctx.font = '700 28px Arial';
+    ctx.textBaseline = 'middle';
+    const typeMetrics = ctx.measureText(resolvedType);
+    const typeWidth = Math.min(typeMetrics.width + 48, 460);
+    vrodosDrawRoundedRect(ctx, 26, 24, typeWidth, 38, 18, 'rgba(14, 165, 233, 0.14)', 'rgba(56, 189, 248, 0.5)', 2);
+    ctx.fillStyle = '#bae6fd';
+    ctx.fillText(resolvedType, 50, 43);
+
+    const startX = 28;
+    const startY = 92;
+    const gap = 12;
+    let currentX = startX;
+
+    ctx.font = '700 24px Arial';
+    resolvedLevels.forEach((level) => {
+        const levelWidth = ctx.measureText(level).width + 34;
+        vrodosDrawRoundedRect(ctx, currentX, startY, levelWidth, 34, 17, 'rgba(16, 185, 129, 0.14)', 'rgba(52, 211, 153, 0.44)', 2);
+        ctx.fillStyle = '#bbf7d0';
+        ctx.fillText(level, currentX + 17, startY + 17);
+        currentX += levelWidth + gap;
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    if (typeof THREE.SRGBColorSpace !== 'undefined') {
+        texture.colorSpace = THREE.SRGBColorSpace;
+    }
+
+    const plate = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.02, 0.38),
+        new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        })
+    );
+    plate.name = 'assessment_info_plate';
+    plate.position.set(0, 0.05, 0.051);
+    plate.isSelectableMesh = false;
+    plate.renderOrder = 12;
+    return plate;
+}
+
 function vrodosCreateAssessmentLabel(title, type, levels) {
     if (typeof THREE.CSS2DObject === 'undefined') {
         return null;
@@ -202,7 +292,11 @@ function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
     assessmentGroup.fnPath = '';
 
     const card = new THREE.Mesh(
-        new THREE.BoxGeometry(1.1, 0.72, 0.08),
+        new THREE.BoxGeometry(
+            1.1,
+            0.72,
+            0.08
+        ),
         new THREE.MeshStandardMaterial({
             color: 0x0f172a,
             emissive: 0x0b1220,
@@ -216,7 +310,11 @@ function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
     card.receiveShadow = true;
 
     const accent = new THREE.Mesh(
-        new THREE.BoxGeometry(1.12, 0.1, 0.09),
+        new THREE.BoxGeometry(
+            1.12,
+            0.1,
+            0.09
+        ),
         new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
     );
     accent.position.set(0, 0.31, 0);
@@ -227,13 +325,25 @@ function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
         new THREE.SphereGeometry(0.08, 24, 24),
         new THREE.MeshBasicMaterial({ color: resource.assessment_supported === 'true' ? 0x22c55e : 0xf59e0b })
     );
-    dot.position.set(-0.42, -0.18, 0.06);
+    dot.position.set(
+        -0.42,
+        -0.18,
+        0.06
+    );
     dot.name = `${nameModel}_status`;
     dot.isSelectableMesh = false;
 
     assessmentGroup.add(card);
     assessmentGroup.add(accent);
     assessmentGroup.add(dot);
+
+    const infoPlate = vrodosCreateAssessmentInfoPlate(
+        assessmentGroup['assessment_type'] || assessmentGroup['assessment_group'],
+        assessmentGroup['assessment_levels']
+    );
+    if (infoPlate) {
+        assessmentGroup.add(infoPlate);
+    }
 
     return assessmentGroup;
 }

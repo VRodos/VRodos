@@ -254,48 +254,27 @@ class VRodos_Compiler_Manager {
 		$assessment_content = (string) ( $contentObject->assessment_content ?? '' );
 		$assessment_levels  = (string) ( $contentObject->assessment_levels ?? '' );
 		$is_supported       = (string) ( $contentObject->assessment_supported ?? 'false' );
-		$accent_color       = $is_supported === 'true' ? '#0f766e' : '#92400e';
 
 		$anchor = $dom->createElement( 'a-entity' );
 		$this->setAffineTransformations( $anchor, $contentObject );
 
-		$plane = $dom->createElement( 'a-plane' );
-		$plane->setAttribute( 'width', '1.15' );
-		$plane->setAttribute( 'height', '0.68' );
-		$plane->setAttribute( 'material', 'color: #0f172a; shader: flat; side: double; opacity: 0.94' );
-		$plane->setAttribute( 'class', 'raycastable hideable non-vr' );
-		$plane->setAttribute( 'immerse-assessment-launcher', '' );
-		$plane->setAttribute( 'data-assessment-title', $assessment_title );
-		$plane->setAttribute( 'data-assessment-type', $assessment_type );
-		$plane->setAttribute( 'data-assessment-group', $assessment_group );
-		$plane->setAttribute( 'data-assessment-content', $assessment_content );
-		$plane->setAttribute( 'data-assessment-levels', $assessment_levels );
-		$plane->setAttribute( 'data-assessment-supported', $is_supported );
-
-		$accent = $dom->createElement( 'a-plane' );
-		$accent->setAttribute( 'width', '1.17' );
-		$accent->setAttribute( 'height', '0.08' );
-		$accent->setAttribute( 'position', '0 0.3 0.001' );
-		$accent->setAttribute( 'material', 'color: ' . $accent_color . '; shader: flat; side: double' );
-		$plane->appendChild( $accent );
-
-		$title_entity = $dom->createElement( 'a-entity' );
-		$title_entity->setAttribute( 'position', '0 -0.02 0.002' );
-		$title_entity->setAttribute(
-			'text',
-			'value: ' . $assessment_title . '; align: center; width: 2.2; wrapCount: 18; color: #e2e8f0; baseline: center'
+		$model = $dom->createElement( 'a-entity' );
+		$model->setAttribute(
+			'gltf-model',
+			'url(' . $this->normalize_url( $this->plugin_path_url . 'runtime/assets/media/assessment.glb' ) . ')'
 		);
-		$plane->appendChild( $title_entity );
+		$model->setAttribute( 'rotation', '-90 0 0' );
+		$model->setAttribute( 'class', 'raycastable hideable non-vr' );
+		$model->setAttribute( 'immerse-assessment-launcher', '' );
+		$model->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$model->setAttribute( 'data-assessment-title', $assessment_title );
+		$model->setAttribute( 'data-assessment-type', $assessment_type );
+		$model->setAttribute( 'data-assessment-group', $assessment_group );
+		$model->setAttribute( 'data-assessment-content', $assessment_content );
+		$model->setAttribute( 'data-assessment-levels', $assessment_levels );
+		$model->setAttribute( 'data-assessment-supported', $is_supported );
 
-		$type_entity = $dom->createElement( 'a-entity' );
-		$type_entity->setAttribute( 'position', '0 -0.22 0.002' );
-		$type_entity->setAttribute(
-			'text',
-			'value: ' . ( $assessment_type !== '' ? $assessment_type : $assessment_group ) . '; align: center; width: 2.3; wrapCount: 24; color: #7dd3fc; baseline: center'
-		);
-		$plane->appendChild( $type_entity );
-
-		$anchor->appendChild( $plane );
+		$anchor->appendChild( $model );
 		$ascene->appendChild( $anchor );
 	}
 

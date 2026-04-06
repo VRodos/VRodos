@@ -152,7 +152,7 @@
             });
 
             if (runtime.chipButton) {
-                runtime.chipButton.textContent = "CEFR " + normalizedLevel;
+                runtime.chipButton.textContent = normalizedLevel;
             }
         };
 
@@ -259,8 +259,10 @@
             const chip = document.createElement("div");
             chip.id = "vrodos-immerse-cefr-chip";
             chip.style.position = "fixed";
-            chip.style.right = "20px";
-            chip.style.bottom = "20px";
+            chip.style.left = "20px";
+            chip.style.top = "20px";
+            chip.style.right = "auto";
+            chip.style.bottom = "auto";
             chip.style.zIndex = "2147481400";
             chip.style.display = "none";
 
