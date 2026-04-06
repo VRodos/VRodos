@@ -1,9 +1,10 @@
 /**
  * VRodos TAA Shader — Temporal Anti-Aliasing
- * Simple temporal accumulation with aggressive YCoCg variance clipping.
- * No depth reprojection — history is sampled at the same UV and clipped to the
- * current frame's 3x3 neighborhood. When the camera moves, the clipping forces
- * the output toward the current frame, preventing ghosting.
+ * Temporal accumulation with YCoCg variance clipping and Catmull-Rom history
+ * sampling. No depth reprojection — history is sampled at the same UV and
+ * clipped to the current frame's 3x3 neighborhood. Catmull-Rom resampling
+ * preserves high-frequency texture detail across repeated accumulations,
+ * preventing the "JPG mush" that bilinear history sampling accumulates.
  */
 (function () {
     var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
@@ -43,9 +44,34 @@
                 '  );',
                 '}',
                 '',
+                '// 5-tap Catmull-Rom history sample (Filmic SMAA / Jimenez).',
+                '// Preserves sharpness across repeated temporal resamples, whereas',
+                '// bilinear sampling would compound softening every frame.',
+                'vec3 sampleHistoryCatmullRom(sampler2D tex, vec2 uv, vec2 texSize) {',
+                '  vec2 samplePos = uv * texSize;',
+                '  vec2 texPos1 = floor(samplePos - 0.5) + 0.5;',
+                '  vec2 f = samplePos - texPos1;',
+                '  vec2 w0 = f * (-0.5 + f * (1.0 - 0.5 * f));',
+                '  vec2 w1 = 1.0 + f * f * (-2.5 + 1.5 * f);',
+                '  vec2 w2 = f * (0.5 + f * (2.0 - 1.5 * f));',
+                '  vec2 w3 = f * f * (-0.5 + 0.5 * f);',
+                '  vec2 w12 = w1 + w2;',
+                '  vec2 offset12 = w2 / (w1 + w2);',
+                '  vec2 texPos0 = (texPos1 - 1.0) / texSize;',
+                '  vec2 texPos3 = (texPos1 + 2.0) / texSize;',
+                '  vec2 texPos12 = (texPos1 + offset12) / texSize;',
+                '  vec3 result = vec3(0.0);',
+                '  result += texture2D(tex, vec2(texPos12.x, texPos0.y)).rgb * (w12.x * w0.y);',
+                '  result += texture2D(tex, vec2(texPos0.x,  texPos12.y)).rgb * (w0.x  * w12.y);',
+                '  result += texture2D(tex, vec2(texPos12.x, texPos12.y)).rgb * (w12.x * w12.y);',
+                '  result += texture2D(tex, vec2(texPos3.x,  texPos12.y)).rgb * (w3.x  * w12.y);',
+                '  result += texture2D(tex, vec2(texPos12.x, texPos3.y)).rgb * (w12.x * w3.y);',
+                '  return max(result, vec3(0.0));',
+                '}',
+                '',
                 'void main() {',
                 '  vec3 current = texture2D(tCurrent, vUv).rgb;',
-                '  vec3 history = texture2D(tHistory, vUv).rgb;',
+                '  vec3 history = sampleHistoryCatmullRom(tHistory, vUv, resolution);',
                 '',
                 '  // --- 3x3 neighborhood statistics in YCoCg ---',
                 '  vec2 texelSize = 1.0 / resolution;',
@@ -60,20 +86,20 @@
                 '    }',
                 '  }',
                 '',
-                '  // Variance clipping (1.5 sigma) — wide enough to preserve thin geometry',
+                '  // Variance clipping (1.0 sigma) — tight enough to reject stale blurry history',
                 '  vec3 mu = m1 / 9.0;',
                 '  vec3 sigma = sqrt(max(m2 / 9.0 - mu * mu, vec3(0.0)));',
-                '  vec3 clipMin = mu - 1.5 * sigma;',
-                '  vec3 clipMax = mu + 1.5 * sigma;',
+                '  vec3 clipMin = mu - 1.0 * sigma;',
+                '  vec3 clipMax = mu + 1.0 * sigma;',
                 '',
                 '  // Clip history to current neighborhood',
                 '  vec3 historyYCoCg = rgbToYCoCg(history);',
                 '  vec3 clippedYCoCg = clamp(historyYCoCg, clipMin, clipMax);',
                 '  vec3 clippedHistory = yCoCgToRgb(clippedYCoCg);',
                 '',
-                '  // Adaptive blend: high history weight for strong accumulation, reduce when clipped',
+                '  // Adaptive blend: moderate history weight, reduce when clipping is active',
                 '  float clipDist = length(historyYCoCg - clippedYCoCg);',
-                '  float blend = mix(0.95, 0.5, clamp(clipDist * 4.0, 0.0, 1.0));',
+                '  float blend = mix(0.88, 0.5, clamp(clipDist * 4.0, 0.0, 1.0));',
                 '',
                 '  vec3 result = mix(current, clippedHistory, blend);',
                 '  gl_FragColor = vec4(result, 1.0);',

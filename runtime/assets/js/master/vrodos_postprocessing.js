@@ -180,6 +180,30 @@
                     y: this._halton(ji + 1, 3) - 0.5
                 });
             }
+
+            // Simple blit material — used to copy the TAA output to screen
+            // WITHOUT running FXAA on top of it (FXAA blurs texture detail and
+            // compounds TAA's temporal softening).
+            this.taaBlitMaterial = new THREE.ShaderMaterial({
+                uniforms: { tDiffuse: { value: null } },
+                vertexShader: [
+                    'varying vec2 vUv;',
+                    'void main() {',
+                    '  vUv = uv;',
+                    '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+                    '}'
+                ].join('\n'),
+                fragmentShader: [
+                    'uniform sampler2D tDiffuse;',
+                    'varying vec2 vUv;',
+                    'void main() {',
+                    '  gl_FragColor = texture2D(tDiffuse, vUv);',
+                    '}'
+                ].join('\n'),
+                depthWrite: false,
+                depthTest: false
+            });
+            this.taaBlitMaterial.toneMapped = false;
         }
 
         // SSR pass (half resolution, screen-space ray marching)
@@ -221,8 +245,10 @@
                     this._taaSavedProjectionMatrix.copy(camera.projectionMatrix);
                     var jitter = this._taaJitterSequence[this._taaFrameIndex % 16];
                     var size = renderer.getSize(this.postProcessingSize);
-                    camera.projectionMatrix.elements[8] += (jitter.x * 2.0) / size.x;
-                    camera.projectionMatrix.elements[9] += (jitter.y * 2.0) / size.y;
+                    // Jitter magnitude ±0.375 px (reduced from ±0.5) — less sub-pixel
+                    // drift per frame means less accumulated softening in the history buffer.
+                    camera.projectionMatrix.elements[8] += (jitter.x * 1.5) / size.x;
+                    camera.projectionMatrix.elements[9] += (jitter.y * 1.5) / size.y;
                     this._taaFrameIndex++;
                 }
 
@@ -384,9 +410,13 @@
                     renderer.clear(true, true, true);
                     this.postProcessingOriginalRender(this.taaScene, this.postProcessingCamera);
 
-                    // Display TAA result → screen (via FXAA blit for final output)
-                    this.fxaaMaterial.uniforms.tDiffuse.value = this.taaCurrentTarget.texture;
-                    this.fxaaQuad.material = this.fxaaMaterial;
+                    // Display TAA result → screen via a straight passthrough blit.
+                    // We intentionally do NOT run FXAA here — FXAA's edge detector
+                    // treats fine texture micro-contrast as aliasing and blurs it,
+                    // which compounds TAA's own temporal softening into visible
+                    // "JPG-like" detail loss. TAA already provides anti-aliasing.
+                    this.taaBlitMaterial.uniforms.tDiffuse.value = this.taaCurrentTarget.texture;
+                    this.fxaaQuad.material = this.taaBlitMaterial;
                     renderer.setRenderTarget(null);
                     renderer.clear(true, true, true);
                     this.postProcessingOriginalRender(this.fxaaScene, this.postProcessingCamera);
@@ -468,6 +498,7 @@
         if (this.taaTargetA) { this.taaTargetA.dispose(); }
         if (this.taaTargetB) { this.taaTargetB.dispose(); }
         if (this.taaMaterial) { this.taaMaterial.dispose(); }
+        if (this.taaBlitMaterial) { this.taaBlitMaterial.dispose(); }
         if (this.taaQuad) {
             if (this.taaQuad.geometry) { this.taaQuad.geometry.dispose(); }
         }
@@ -508,6 +539,7 @@
         this.taaCurrentTarget = null;
         this.taaHistoryTarget = null;
         this.taaMaterial = null;
+        this.taaBlitMaterial = null;
         this.taaQuad = null;
         this.taaScene = null;
         this._taaFrameIndex = 0;
