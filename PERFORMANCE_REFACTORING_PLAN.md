@@ -176,7 +176,7 @@ When both SAO and bloom are active, they each use half-res targets. These could 
 6. ~~**Test compiled scene** — verify no regressions (full pipeline)~~ ✅ DONE (2026-04-06, user-confirmed)
 7. ~~**Lazy pass instantiation** (2A)~~ ✅ DONE (2026-04-06)
 8. ~~**Composite skip-sampling** (2D)~~ ✅ DONE (2026-04-06)
-9. **Adaptive SAO quality** (2B) — optional, can defer
+9. ~~**Adaptive SAO quality** (2B)~~ ✅ DONE (2026-04-06)
 
 ### Phase 1A Results (2026-04-05)
 - `vrodos_master_rendering.js`: 1,370 lines → 675 lines (51% reduction)
@@ -235,6 +235,21 @@ The composite shader (`vrodos_shaders_composite.js`) is now compiled with **per-
 - Vignette off: -1 distance + 1 smoothstep + 1 mix + 1 multiply
 
 At 1080p that's up to ~2 million texture fetches per frame avoided when all five are off.
+
+### Phase 2B Results (2026-04-06) — Adaptive SAO Quality
+Implemented via **temporal subsampling** rather than runtime shader recompile (avoiding recompile hitches and target resizes). SAO is computed at half the framerate when the scene is struggling; the composite still reads `saoTargetA`, which retains the last computed result. SAO is low-frequency so the visual delta is nearly imperceptible.
+
+- **State machine**: two modes — full-rate and half-rate (every other frame)
+- **Trigger**: 30-frame rolling average FPS (ring buffer, filled before any decisions)
+- Enter half-rate: avg FPS < 30
+- Exit half-rate: avg FPS > 45
+- **3-second cooldown** between state transitions prevents oscillation
+- Ignores per-frame deltas > 1 second (tab switches, first-frame outliers)
+- Only active when SAO resources exist (no-op for scenes with SAO off)
+- Zero shader recompile, zero target resize, zero additional allocations per frame — state lives in a 30-slot Float32Array
+- GPU cost of SAO effectively cut to **50%** during heavy sequences, restoring headroom transparently
+
+All state (ring buffer, counters, timestamps) is allocated once in `enablePostProcessing` inside the SAO-enabled block and checked via `if (this.saoMaterial && this._adaptiveFPSHistory)` in the render loop.
 
 ## Verification
 

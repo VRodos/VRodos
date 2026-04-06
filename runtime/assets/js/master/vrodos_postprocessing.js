@@ -167,6 +167,20 @@
             this.saoQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.saoMaterial);
             this.saoScene = new THREE.Scene();
             this.saoScene.add(this.saoQuad);
+
+            // Adaptive SAO state — FPS-based half-rate temporal subsampling.
+            // When rolling avg FPS drops below 30, SAO is computed every 2nd
+            // frame instead of every frame; the composite shader still samples
+            // saoTargetA which holds the previous frame's result. SAO is
+            // low-frequency so the visual delta is nearly invisible, but it
+            // cuts SAO GPU cost in half during heavy scenes.
+            this._adaptiveSAOHalfRate = false;
+            this._adaptiveSAOFrameCounter = 0;
+            this._adaptiveFPSHistory = new Float32Array(30);
+            this._adaptiveFPSHistoryIdx = 0;
+            this._adaptiveFPSHistoryFilled = false;
+            this._adaptiveLastStateChange = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+            this._adaptiveLastFrameTime = this._adaptiveLastStateChange;
         }
 
         // FXAA pass (full resolution, after composite) — lazy.
@@ -265,6 +279,41 @@
             try {
                 var previousTarget = renderer.getRenderTarget();
 
+                // --- Adaptive SAO quality: update FPS history and state machine ---
+                // Only active when SAO resources exist. Temporal subsampling cuts
+                // SAO cost in half when the 30-frame rolling avg FPS drops below 30.
+                if (this.saoMaterial && this._adaptiveFPSHistory) {
+                    var nowMs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+                    var frameDt = nowMs - this._adaptiveLastFrameTime;
+                    this._adaptiveLastFrameTime = nowMs;
+                    // Ignore tab-pause / first-frame outliers
+                    if (frameDt > 0 && frameDt < 1000) {
+                        this._adaptiveFPSHistory[this._adaptiveFPSHistoryIdx] = 1000 / frameDt;
+                        this._adaptiveFPSHistoryIdx = (this._adaptiveFPSHistoryIdx + 1) % 30;
+                        if (this._adaptiveFPSHistoryIdx === 0) {
+                            this._adaptiveFPSHistoryFilled = true;
+                        }
+                    }
+                    if (this._adaptiveFPSHistoryFilled) {
+                        var fpsSum = 0;
+                        for (var ai = 0; ai < 30; ai++) {
+                            fpsSum += this._adaptiveFPSHistory[ai];
+                        }
+                        var avgFps = fpsSum / 30;
+                        var sinceChange = nowMs - this._adaptiveLastStateChange;
+                        // 3-second cooldown between state changes to prevent oscillation
+                        if (sinceChange > 3000) {
+                            if (!this._adaptiveSAOHalfRate && avgFps < 30) {
+                                this._adaptiveSAOHalfRate = true;
+                                this._adaptiveLastStateChange = nowMs;
+                            } else if (this._adaptiveSAOHalfRate && avgFps > 45) {
+                                this._adaptiveSAOHalfRate = false;
+                                this._adaptiveLastStateChange = nowMs;
+                            }
+                        }
+                    }
+                }
+
                 // TAA jitter: apply sub-pixel offset to camera projection
                 var useTAA = this.isPostFXOptionEnabled('postFXTAAEnabled') && this.taaMaterial && this.taaCurrentTarget;
                 if (useTAA) {
@@ -290,8 +339,18 @@
                     camera.projectionMatrix.copy(this._taaSavedProjectionMatrix);
                 }
 
-                // SAO passes (only if SAO is active and resources exist)
-                if (this.saoMaterial && this.saoTargetA && this.saoTargetB && this.postProcessingTarget.depthTexture) {
+                // SAO passes (only if SAO is active and resources exist).
+                // Adaptive: in half-rate mode, compute only on even frames and
+                // reuse the previous frame's saoTargetA on odd frames. The
+                // composite shader still samples saoTargetA which holds the
+                // last computed result — SAO is low-frequency so this is
+                // nearly imperceptible but halves SAO GPU cost.
+                var skipSAOThisFrame = false;
+                if (this.saoMaterial && this._adaptiveSAOHalfRate) {
+                    skipSAOThisFrame = (this._adaptiveSAOFrameCounter & 1) === 1;
+                    this._adaptiveSAOFrameCounter++;
+                }
+                if (!skipSAOThisFrame && this.saoMaterial && this.saoTargetA && this.saoTargetB && this.postProcessingTarget.depthTexture) {
                     // Update camera uniforms for SAO
                     this.saoMaterial.uniforms.cameraNear.value = camera.near;
                     this.saoMaterial.uniforms.cameraFar.value = camera.far;
