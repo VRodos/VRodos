@@ -61,17 +61,17 @@ It combines a Three.js scene editor, custom WordPress content types, asset manag
 
 #### Post-processing pipeline
 
-When post-FX is enabled, a multi-pass cinematic pipeline runs:
+When post-FX is enabled, a lazily-instantiated multi-pass cinematic pipeline runs. Only passes for effects actually enabled in the compile dialog are allocated — disabled effects consume zero VRAM and zero ALU.
 
 1. **Scene render** — ACESFilmic tone mapping + sRGB encoding applied to render target via Three.js `isXRRenderTarget` trick
-2. **SAO (Scalable Ambient Obscurance)** — depth-only screen-space AO with bilateral blur, 3 quality presets (soft/balanced/strong), runs at half resolution
-3. **SSR (Screen-Space Reflections)** — ray marching with binary refinement, Fresnel-based strength, edge/distance fade, 3 strength presets (subtle/balanced/strong), runs at half resolution
+2. **SAO (Scalable Ambient Obscurance)** — depth-only screen-space AO with bilateral blur, 3 quality presets (soft/balanced/strong), half resolution. Adaptive temporal subsampling: when average FPS drops below 30, SAO computes every other frame and reuses the previous result, restoring full rate when FPS recovers above 45 (3-second hysteresis)
+3. **SSR (Screen-Space Reflections)** — ray marching with binary refinement, Fresnel-based strength, edge/distance fade, 3 strength presets, half resolution
 4. **Bloom** — bright-pass + separable 9-tap Gaussian blur at half resolution
-5. **Composite** — combines AO × scene + SSR + bloom + color grading + vignette + exposure control
-6. **TAA (Temporal Anti-Aliasing)** — Halton(2,3) sub-pixel jitter with YCoCg variance-clipped temporal accumulation, full-resolution ping-pong targets
-7. **FXAA** — NVIDIA FXAA 3.11 as final cleanup pass
+5. **Composite** — `#define`-specialized shader that combines only the enabled features (AO × scene + SSR + bloom + color grading + vignette + exposure); disabled paths are compiled out entirely
+6. **TAA (Temporal Anti-Aliasing)** — Halton(2,3) sub-pixel jitter with 5-tap Catmull-Rom history sampling and YCoCg variance-clipped temporal accumulation. Catmull-Rom resampling preserves high-frequency texture detail across repeated accumulations, preventing the "JPG mush" that bilinear history sampling compounds
+7. **FXAA** — NVIDIA FXAA 3.11 as final cleanup pass. Automatically skipped when TAA is on (TAA already resolves aliasing and FXAA would blur its output)
 
-All effects are individually toggleable from the compile dialog. Up to 11 render passes when fully active.
+All effects are individually toggleable from the compile dialog. For the full technical breakdown of every pass, shader, and design trade-off, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
 
 #### Compile dialog controls
 
