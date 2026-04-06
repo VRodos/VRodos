@@ -175,7 +175,7 @@ When both SAO and bloom are active, they each use half-res targets. These could 
 5. ~~**Update HTML template** (1D, helper portion) — wire up helper scripts~~ ✅ DONE (2026-04-06)
 6. ~~**Test compiled scene** — verify no regressions (full pipeline)~~ ✅ DONE (2026-04-06, user-confirmed)
 7. ~~**Lazy pass instantiation** (2A)~~ ✅ DONE (2026-04-06)
-8. **Composite skip-sampling** (2D) — small, safe optimization
+8. ~~**Composite skip-sampling** (2D)~~ ✅ DONE (2026-04-06)
 9. **Adaptive SAO quality** (2B) — optional, can defer
 
 ### Phase 1A Results (2026-04-05)
@@ -216,6 +216,25 @@ Post-FX settings are static per session (no A-Frame `update` hook), so disabled 
 - Bloom off → saves ~2 × (960×540×4) ≈ 4.0 MB
 - FXAA+TAA off → saves ~1 × (1920×1080×4) ≈ 8.3 MB
 - Both off → ~12 MB saved plus 4 shader material compiles
+
+### Phase 2D Results (2026-04-06) — Composite Shader Skip-Sampling
+The composite shader (`vrodos_shaders_composite.js`) is now compiled with **per-scene feature flags** via GLSL `#define`. Each disabled effect is fully compiled out of the fragment shader — zero texture fetches, zero ALU.
+
+- **New API**: `createPhotorealPostMaterial({ sao, ssr, bloom, colorGrading, vignette })`
+- Defines emitted: `VRODOS_USE_SAO`, `VRODOS_USE_SSR`, `VRODOS_USE_BLOOM`, `VRODOS_USE_COLOR_GRADING`, `VRODOS_USE_VIGNETTE`
+- Uniforms are only declared in the shader (and only created on the JS side) for features actually in use — smaller uniform block, fewer JS-side uniform writes per frame
+- Component stores `this._compositeFeatures` once at `enablePostProcessing` and Pass 5 reads from it to decide which uniforms to touch
+- **Removed the three 1×1 fallback textures** (`_whiteSAOTexture`, `_blackSSRTexture`, `_blackBloomTexture`) — no longer needed because disabled sampling paths are compiled out entirely. Dispose guards kept for safety.
+- Removed dead `outputExposure` uniform (was written from JS but never referenced in the shader — pre-existing bug)
+
+**GPU cost eliminated per pixel when effects are off:**
+- SAO off: -1 texture fetch + 1 multiply
+- SSR off: -1 texture fetch + mix() call
+- Bloom off: -1 texture fetch + madd
+- Color grading off: -1 dot product + 1 mix + 1 madd (contrast)
+- Vignette off: -1 distance + 1 smoothstep + 1 mix + 1 multiply
+
+At 1080p that's up to ~2 million texture fetches per frame avoided when all five are off.
 
 ## Verification
 

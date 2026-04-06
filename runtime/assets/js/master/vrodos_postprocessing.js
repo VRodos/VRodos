@@ -113,7 +113,19 @@
             var maxSamples = (renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4;
             this.postProcessingTarget.samples = Math.min(maxSamples, this.getAAQualitySampleCount());
         }
-        this.postProcessingMaterial = VRODOSMaster.createPhotorealPostMaterial();
+        // Compile the composite shader with ONLY the features enabled for this
+        // session — disabled effects contribute zero texture fetches and zero
+        // ALU. Post-FX settings are static per session so compile-time
+        // specialization is safe and optimal.
+        var compositeFeatures = {
+            sao: !!saoParams,
+            ssr: ssrEnabled,
+            bloom: this.getBloomStrengthValue() > 0,
+            colorGrading: this.isPostFXOptionEnabled('postFXColorEnabled'),
+            vignette: this.isPostFXOptionEnabled('postFXVignetteEnabled')
+        };
+        this._compositeFeatures = compositeFeatures;
+        this.postProcessingMaterial = VRODOSMaster.createPhotorealPostMaterial(compositeFeatures);
         this.postProcessingScene = new THREE.Scene();
         this.postProcessingCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         this.postProcessingQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.postProcessingMaterial);
@@ -313,15 +325,9 @@
 
                     // Feed blurred SAO to composite shader
                     this.postProcessingMaterial.uniforms.tSAO.value = this.saoTargetA.texture;
-                } else {
-                    // No SAO â€” feed 1x1 white texture (ao=1.0 means no darkening)
-                    if (!this._whiteSAOTexture) {
-                        var whiteData = new Uint8Array([255, 255, 255, 255]);
-                        this._whiteSAOTexture = new THREE.DataTexture(whiteData, 1, 1, THREE.RGBAFormat);
-                        this._whiteSAOTexture.needsUpdate = true;
-                    }
-                    this.postProcessingMaterial.uniforms.tSAO.value = this._whiteSAOTexture;
                 }
+                // No SAO fallback needed — composite shader is compiled without
+                // the SAO sampling path when VRODOS_USE_SAO is undefined.
 
                 // SSR pass (half resolution, after SAO, before bloom)
                 var useSSR = this.isPostFXOptionEnabled('postFXSSREnabled') && this.ssrMaterial && this.ssrTargetA && this.postProcessingTarget.depthTexture;
@@ -342,16 +348,9 @@
 
                     this.postProcessingMaterial.uniforms.tSSR.value = this.ssrTargetA.texture;
                     this.postProcessingMaterial.uniforms.ssrStrength.value = this.getSSRStrengthValue();
-                } else {
-                    // No SSR — feed 1x1 transparent black texture
-                    if (!this._blackSSRTexture) {
-                        var ssrData = new Uint8Array([0, 0, 0, 0]);
-                        this._blackSSRTexture = new THREE.DataTexture(ssrData, 1, 1, THREE.RGBAFormat);
-                        this._blackSSRTexture.needsUpdate = true;
-                    }
-                    this.postProcessingMaterial.uniforms.tSSR.value = this._blackSSRTexture;
-                    this.postProcessingMaterial.uniforms.ssrStrength.value = 0.0;
                 }
+                // No SSR fallback needed — composite shader is compiled without
+                // the SSR sampling path when VRODOS_USE_SSR is undefined.
 
                 // Multi-pass bloom (only if bloom is enabled)
                 var bloomValue = this.getBloomStrengthValue();
@@ -380,33 +379,30 @@
 
                     // Feed blurred bloom to composite shader
                     this.postProcessingMaterial.uniforms.tBloom.value = this.bloomTargetA.texture;
-                } else {
-                    // No bloom â€” feed 1x1 black texture (null would cause GPU errors)
-                    if (!this._blackBloomTexture) {
-                        var blackData = new Uint8Array([0, 0, 0, 255]);
-                        this._blackBloomTexture = new THREE.DataTexture(blackData, 1, 1, THREE.RGBAFormat);
-                        this._blackBloomTexture.needsUpdate = true;
-                    }
-                    this.postProcessingMaterial.uniforms.tBloom.value = this._blackBloomTexture;
                 }
+                // No bloom fallback needed — composite shader is compiled without
+                // the bloom sampling path when VRODOS_USE_BLOOM is undefined.
 
                 renderer.setRenderTarget(previousTarget);
 
-                // Pass 5: Final composite
-                this.postProcessingMaterial.uniforms.tDiffuse.value = this.postProcessingTarget.texture;
-                this.postProcessingMaterial.uniforms.bloomStrength.value = bloomValue;
-                this.postProcessingMaterial.uniforms.vignetteStrength.value = this.isPostFXOptionEnabled('postFXVignetteEnabled') ? 0.16 : 0.0;
-                this.postProcessingMaterial.uniforms.saturation.value = this.isPostFXOptionEnabled('postFXColorEnabled')
-                    ? this.getSaturationValue()
-                    : 1.0;
-                this.postProcessingMaterial.uniforms.contrast.value = this.isPostFXOptionEnabled('postFXColorEnabled')
-                    ? this.getContrastValue()
-                    : 1.0;
-                this.postProcessingMaterial.uniforms.exposure.value = this.isPostFXOptionEnabled('postFXColorEnabled')
-                    ? this.getExposureValue()
-                    : 1.0;
-                // Mirror renderer.toneMappingExposure so ACES in composite matches direct-render path
-                this.postProcessingMaterial.uniforms.outputExposure.value = (renderer && renderer.toneMappingExposure) ? renderer.toneMappingExposure : 1.0;
+                // Pass 5: Final composite — only touch uniforms that exist on
+                // the specialized material (features compile out disabled paths).
+                var compUniforms = this.postProcessingMaterial.uniforms;
+                var compFeatures = this._compositeFeatures;
+                compUniforms.tDiffuse.value = this.postProcessingTarget.texture;
+                if (compFeatures.bloom) {
+                    compUniforms.bloomStrength.value = bloomValue;
+                }
+                if (compFeatures.vignette) {
+                    compUniforms.vignetteStrength.value = 0.16;
+                }
+                if (compFeatures.colorGrading) {
+                    compUniforms.saturation.value = this.getSaturationValue();
+                    compUniforms.contrast.value = this.getContrastValue();
+                    compUniforms.exposure.value = this.getExposureValue();
+                } else {
+                    compUniforms.exposure.value = 1.0;
+                }
 
                 var useFXAA = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') && this.fxaaTarget && this.fxaaMaterial;
 
