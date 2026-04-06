@@ -1,17 +1,17 @@
-const WsEasyRtcAdapter = require("./WsEasyRtcAdapter");
-const EasyRtcAdapter = require("./EasyRtcAdapter");
-const WebrtcAdapter = require("./naf-webrtc-adapter");
+const WsEasyRtcAdapter = require('./WsEasyRtcAdapter');
+const EasyRtcAdapter = require('./EasyRtcAdapter');
+const WebrtcAdapter = require('./naf-webrtc-adapter');
 const SocketioAdapter = require('./naf-socketio-adapter');
 const UWSAdapter = require('./naf-uws-adapter');
 
 class AdapterFactory {
   constructor() {
     this.adapters = {
-      "wseasyrtc": WsEasyRtcAdapter,
-      "easyrtc": EasyRtcAdapter,
-      "socketio": SocketioAdapter,
-      "webrtc": WebrtcAdapter,
-      "uws": UWSAdapter,
+      wseasyrtc: WsEasyRtcAdapter,
+      easyrtc: EasyRtcAdapter,
+      socketio: SocketioAdapter,
+      webrtc: WebrtcAdapter,
+      uws: UWSAdapter
     };
 
     this.IS_CONNECTED = AdapterFactory.IS_CONNECTED;
@@ -30,16 +30,14 @@ class AdapterFactory {
       return new AdapterClass();
     } else {
       throw new Error(
-        "Adapter: " +
-          adapterName +
-          " not registered. Please use NAF.adapters.register() to register this adapter."
+        'Adapter: ' + adapterName + ' not registered. Please use NAF.adapters.register() to register this adapter.'
       );
     }
   }
 }
 
-AdapterFactory.IS_CONNECTED = "IS_CONNECTED";
-AdapterFactory.CONNECTING = "CONNECTING";
-AdapterFactory.NOT_CONNECTED = "NOT_CONNECTED";
+AdapterFactory.IS_CONNECTED = 'IS_CONNECTED';
+AdapterFactory.CONNECTING = 'CONNECTING';
+AdapterFactory.NOT_CONNECTED = 'NOT_CONNECTED';
 
 module.exports = AdapterFactory;

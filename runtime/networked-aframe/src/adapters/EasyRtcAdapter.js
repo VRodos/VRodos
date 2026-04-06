@@ -2,13 +2,12 @@
 const NoOpAdapter = require('./NoOpAdapter');
 
 class EasyRtcAdapter extends NoOpAdapter {
-
   constructor(easyrtc) {
     super();
 
     this.easyrtc = easyrtc || window.easyrtc;
-    this.app = "default";
-    this.room = "default";
+    this.app = 'default';
+    this.room = 'default';
     this.destination = { targetRoom: this.room };
 
     this.mediaStreams = {};
@@ -28,7 +27,7 @@ class EasyRtcAdapter extends NoOpAdapter {
       delete this.remoteClients[clientId];
       const pendingMediaRequests = this.pendingMediaRequests.get(clientId);
       if (pendingMediaRequests) {
-        const msg = "The user disconnected before the media stream was resolved.";
+        const msg = 'The user disconnected before the media stream was resolved.';
         Object.keys(pendingMediaRequests).forEach((streamName) => {
           pendingMediaRequests[streamName].reject(msg);
         });
@@ -69,11 +68,7 @@ class EasyRtcAdapter extends NoOpAdapter {
   }
 
   setRoomOccupantListener(occupantListener) {
-    this.easyrtc.setRoomOccupantListener(function (
-      roomName,
-      occupants,
-      primary
-    ) {
+    this.easyrtc.setRoomOccupantListener(function (roomName, occupants, primary) {
       occupantListener(occupants);
     });
   }
@@ -87,30 +82,29 @@ class EasyRtcAdapter extends NoOpAdapter {
   updateTimeOffset() {
     const clientSentTime = Date.now() + this.avgTimeOffset;
 
-    return fetch(document.location.href, { method: "HEAD", cache: "no-cache" })
-      .then(res => {
-        var precision = 1000;
-        var serverReceivedTime = new Date(res.headers.get("Date")).getTime() + (precision / 2);
-        var clientReceivedTime = Date.now();
-        var serverTime = serverReceivedTime + ((clientReceivedTime - clientSentTime) / 2);
-        var timeOffset = serverTime - clientReceivedTime;
+    return fetch(document.location.href, { method: 'HEAD', cache: 'no-cache' }).then((res) => {
+      var precision = 1000;
+      var serverReceivedTime = new Date(res.headers.get('Date')).getTime() + precision / 2;
+      var clientReceivedTime = Date.now();
+      var serverTime = serverReceivedTime + (clientReceivedTime - clientSentTime) / 2;
+      var timeOffset = serverTime - clientReceivedTime;
 
-        this.serverTimeRequests++;
+      this.serverTimeRequests++;
 
-        if (this.serverTimeRequests <= 10) {
-          this.timeOffsets.push(timeOffset);
-        } else {
-          this.timeOffsets[this.serverTimeRequests % 10] = timeOffset;
-        }
+      if (this.serverTimeRequests <= 10) {
+        this.timeOffsets.push(timeOffset);
+      } else {
+        this.timeOffsets[this.serverTimeRequests % 10] = timeOffset;
+      }
 
-        this.avgTimeOffset = this.timeOffsets.reduce((acc, offset) => acc += offset, 0) / this.timeOffsets.length;
+      this.avgTimeOffset = this.timeOffsets.reduce((acc, offset) => (acc += offset), 0) / this.timeOffsets.length;
 
-        if (this.serverTimeRequests > 10) {
-          setTimeout(() => this.updateTimeOffset(), 5 * 60 * 1000); // Sync clock every 5 minutes.
-        } else {
-          this.updateTimeOffset();
-        }
-      });
+      if (this.serverTimeRequests > 10) {
+        setTimeout(() => this.updateTimeOffset(), 5 * 60 * 1000); // Sync clock every 5 minutes.
+      } else {
+        this.updateTimeOffset();
+      }
+    });
   }
 
   connect() {
@@ -119,15 +113,21 @@ class EasyRtcAdapter extends NoOpAdapter {
       new Promise((resolve, reject) => {
         this._connect(resolve, reject);
       })
-    ]).then(([_, clientId]) => {
-      this.easyrtc.joinRoom(this.room, null,
-        () => {
-          this._myRoomJoinTime = this._getRoomJoinTime(clientId);
-          this.connectSuccess(clientId);
-        },
-        (errorCode, errorText) => { this.connectFailure(errorCode, errorText); }
-      );
-    }).catch(this.connectFailure);
+    ])
+      .then(([_, clientId]) => {
+        this.easyrtc.joinRoom(
+          this.room,
+          null,
+          () => {
+            this._myRoomJoinTime = this._getRoomJoinTime(clientId);
+            this.connectSuccess(clientId);
+          },
+          (errorCode, errorText) => {
+            this.connectFailure(errorCode, errorText);
+          }
+        );
+      })
+      .catch(this.connectFailure);
   }
 
   shouldStartConnectionTo(client, clientId) {
@@ -142,17 +142,17 @@ class EasyRtcAdapter extends NoOpAdapter {
     this.easyrtc.call(
       clientId,
       function (caller, media) {
-        if (media === "datachannel") {
-          NAF.log.write("Successfully started datachannel to ", caller);
+        if (media === 'datachannel') {
+          NAF.log.write('Successfully started datachannel to ', caller);
         }
       },
       function (errorCode, errorText) {
-        if (errorCode === "ALREADY_CONNECTED") {
-           // This is a harmless race condition when both clients try to connect simultaneously.
-           // EasyRTC will drop the duplicate connection attempt gracefully.
-           NAF.log.write("Ignoring ALREADY_CONNECTED glare from " + clientId);
+        if (errorCode === 'ALREADY_CONNECTED') {
+          // This is a harmless race condition when both clients try to connect simultaneously.
+          // EasyRTC will drop the duplicate connection attempt gracefully.
+          NAF.log.write('Ignoring ALREADY_CONNECTED glare from ' + clientId);
         } else {
-           NAF.log.error(errorCode, errorText);
+          NAF.log.error(errorCode, errorText);
         }
       },
       function (wasAccepted) {
@@ -168,7 +168,7 @@ class EasyRtcAdapter extends NoOpAdapter {
   sendData(clientId, dataType, data) {
     // send via webrtc otherwise fallback to websockets
     // Clone data to avoid closure races if tick modifies it before async send finishes
-    const msgData = (typeof data === 'object' && data !== null) ? JSON.parse(JSON.stringify(data)) : data;
+    const msgData = typeof data === 'object' && data !== null ? JSON.parse(JSON.stringify(data)) : data;
     this.easyrtc.sendData(clientId, dataType, msgData);
   }
 
@@ -178,17 +178,14 @@ class EasyRtcAdapter extends NoOpAdapter {
 
   broadcastData(dataType, data) {
     var roomOccupants = this.easyrtc.getRoomOccupantsAsMap(this.room);
-    
+
     // Clone data once per broadcast to avoid closure races
-    const msgData = (typeof data === 'object' && data !== null) ? JSON.parse(JSON.stringify(data)) : data;
+    const msgData = typeof data === 'object' && data !== null ? JSON.parse(JSON.stringify(data)) : data;
 
     // Iterate over the keys of the easyrtc room occupants map.
     // getRoomOccupantsAsArray uses Object.keys which allocates memory.
     for (var roomOccupant in roomOccupants) {
-      if (
-        roomOccupants[roomOccupant] &&
-        roomOccupant !== this.easyrtc.myEasyrtcid
-      ) {
+      if (roomOccupants[roomOccupant] && roomOccupant !== this.easyrtc.myEasyrtcid) {
         // send via webrtc otherwise fallback to websockets
         this.easyrtc.sendData(roomOccupant, dataType, msgData);
       }
@@ -211,7 +208,7 @@ class EasyRtcAdapter extends NoOpAdapter {
     }
   }
 
-  getMediaStream(clientId, streamName = "audio") {
+  getMediaStream(clientId, streamName = 'audio') {
     if (this.mediaStreams[clientId] && this.mediaStreams[clientId][streamName]) {
       NAF.log.write(`Already had ${streamName} for ${clientId}`);
       return Promise.resolve(this.mediaStreams[clientId][streamName]);
@@ -224,12 +221,12 @@ class EasyRtcAdapter extends NoOpAdapter {
 
         const audioPromise = new Promise((resolve, reject) => {
           pendingMediaRequests.audio = { resolve, reject };
-        }).catch(e => NAF.log.warn(`${clientId} getMediaStream Audio Error`, e));
+        }).catch((e) => NAF.log.warn(`${clientId} getMediaStream Audio Error`, e));
         pendingMediaRequests.audio.promise = audioPromise;
 
         const videoPromise = new Promise((resolve, reject) => {
           pendingMediaRequests.video = { resolve, reject };
-        }).catch(e => NAF.log.warn(`${clientId} getMediaStream Video Error`, e));
+        }).catch((e) => NAF.log.warn(`${clientId} getMediaStream Video Error`, e));
         pendingMediaRequests.video.promise = videoPromise;
 
         this.pendingMediaRequests.set(clientId, pendingMediaRequests);
@@ -241,7 +238,7 @@ class EasyRtcAdapter extends NoOpAdapter {
       if (!pendingMediaRequests[streamName]) {
         const streamPromise = new Promise((resolve, reject) => {
           pendingMediaRequests[streamName] = { resolve, reject };
-        }).catch(e => NAF.log.warn(`${clientId} getMediaStream "${streamName}" Error`, e))
+        }).catch((e) => NAF.log.warn(`${clientId} getMediaStream "${streamName}" Error`, e));
         pendingMediaRequests[streamName].promise = streamPromise;
       }
 
@@ -251,9 +248,9 @@ class EasyRtcAdapter extends NoOpAdapter {
 
   setMediaStream(clientId, stream, streamName) {
     const pendingMediaRequests = this.pendingMediaRequests.get(clientId); // return undefined if there is no entry in the Map
-    const clientMediaStreams = this.mediaStreams[clientId] = this.mediaStreams[clientId] || {};
+    const clientMediaStreams = (this.mediaStreams[clientId] = this.mediaStreams[clientId] || {});
 
-    if (streamName === "default") {
+    if (streamName === 'default') {
       // Safari doesn't like it when you use a mixed media stream where one of the tracks is inactive, so we
       // split the tracks into two streams.
       // Add mediaStreams audio streamName alias
@@ -261,7 +258,7 @@ class EasyRtcAdapter extends NoOpAdapter {
       if (audioTracks.length > 0) {
         const audioStream = new MediaStream();
         try {
-          audioTracks.forEach(track => audioStream.addTrack(track));
+          audioTracks.forEach((track) => audioStream.addTrack(track));
           clientMediaStreams.audio = audioStream;
         } catch (e) {
           NAF.log.warn(`${clientId} setMediaStream "audio" alias Error`, e);
@@ -276,7 +273,7 @@ class EasyRtcAdapter extends NoOpAdapter {
       if (videoTracks.length > 0) {
         const videoStream = new MediaStream();
         try {
-          videoTracks.forEach(track => videoStream.addTrack(track));
+          videoTracks.forEach((track) => videoStream.addTrack(track));
           clientMediaStreams.video = videoStream;
         } catch (e) {
           NAF.log.warn(`${clientId} setMediaStream "video" alias Error`, e);
@@ -299,7 +296,7 @@ class EasyRtcAdapter extends NoOpAdapter {
   addLocalMediaStream(stream, streamName) {
     const easyrtc = this.easyrtc;
     streamName = streamName || stream.id;
-    this.setMediaStream("local", stream, streamName);
+    this.setMediaStream('local', stream, streamName);
     easyrtc.register3rdPartyLocalMediaStream(stream, streamName);
 
     // Add local stream to existing connections
@@ -312,7 +309,7 @@ class EasyRtcAdapter extends NoOpAdapter {
 
   removeLocalMediaStream(streamName) {
     this.easyrtc.closeLocalMediaStream(streamName);
-    delete this.mediaStreams["local"][streamName];
+    delete this.mediaStreams['local'][streamName];
   }
 
   enableMicrophone(enabled) {
@@ -337,7 +334,7 @@ class EasyRtcAdapter extends NoOpAdapter {
     this.easyrtc.setStreamAcceptor(this.setMediaStream.bind(this));
 
     this.easyrtc.setOnStreamClosed(function (clientId, stream, streamName) {
-      if (streamName === "default") {
+      if (streamName === 'default') {
         delete that.mediaStreams[clientId].audio;
         delete that.mediaStreams[clientId].video;
       } else {
@@ -350,18 +347,20 @@ class EasyRtcAdapter extends NoOpAdapter {
     });
 
     if (that.easyrtc.audioEnabled || that.easyrtc.videoEnabled) {
-      navigator.mediaDevices.getUserMedia({
-        video: that.easyrtc.videoEnabled,
-        audio: that.easyrtc.audioEnabled
-      }).then(
-        function (stream) {
-          that.addLocalMediaStream(stream, "default");
-          that.easyrtc.connect(that.app, connectSuccess, connectFailure);
-        },
-        function (errorCode, errmesg) {
-          NAF.log.error(errorCode, errmesg);
-        }
-      );
+      navigator.mediaDevices
+        .getUserMedia({
+          video: that.easyrtc.videoEnabled,
+          audio: that.easyrtc.audioEnabled
+        })
+        .then(
+          function (stream) {
+            that.addLocalMediaStream(stream, 'default');
+            that.easyrtc.connect(that.app, connectSuccess, connectFailure);
+          },
+          function (errorCode, errmesg) {
+            NAF.log.error(errorCode, errmesg);
+          }
+        );
     } else {
       that.easyrtc.connect(that.app, connectSuccess, connectFailure);
     }

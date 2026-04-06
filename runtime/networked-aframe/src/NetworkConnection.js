@@ -105,7 +105,7 @@ class NetworkConnection {
           NAF.log.write('Opening datachannel to', id);
           this.adapter.startStreamConnection(id);
         }
-        
+
         // Sync state via WS immediately so newcomers see us even if P2P lags/fails
         NAF.log.write('Forcing early sync to new client via WS', id);
         this.entities.completeSync(id, true);
@@ -130,8 +130,7 @@ class NetworkConnection {
   }
 
   isConnectedTo(clientId) {
-    var status = this.adapter.getConnectStatus(clientId);
-    return status === NAF.adapters.IS_CONNECTED || status === NAF.adapters.CONNECTING;
+    return this.adapter.getConnectStatus(clientId) === NAF.adapters.IS_CONNECTED;
   }
 
   dataChannelOpen(clientId) {
@@ -165,10 +164,14 @@ class NetworkConnection {
   }
 
   sendData(toClientId, dataType, data, guaranteed) {
-    if (guaranteed) {
-      this.adapter.sendDataGuaranteed(toClientId, dataType, data);
+    if (this.hasActiveDataChannel(toClientId)) {
+      if (guaranteed) {
+        this.adapter.sendDataGuaranteed(toClientId, dataType, data);
+      } else {
+        this.adapter.sendData(toClientId, dataType, data);
+      }
     } else {
-      this.adapter.sendData(toClientId, dataType, data);
+      // console.error("NOT-CONNECTED", "not connected to " + toClient);
     }
   }
 
