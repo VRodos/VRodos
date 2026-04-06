@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (NAF.connection) {
             NAF.connection.broadcastData("chat", { txt: chatInput.value, player: player_info });
         }
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'chat_public_msg_dispatched');
+        if (typeof window.gtag === 'function') {
+            window.gtag('event', 'chat_public_msg_dispatched');
         }
     }
 

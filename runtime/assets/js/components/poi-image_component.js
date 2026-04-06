@@ -241,7 +241,9 @@ AFRAME.registerComponent('info-panel', {
 
     onMenuButtonClick: function (evt) {
 
-        gtag('event', 'poiimgtext_open');
+        if (typeof window.gtag === 'function') {
+            window.gtag('event', 'poiimgtext_open');
+        }
 
         if (!browsingModeVR) {
 

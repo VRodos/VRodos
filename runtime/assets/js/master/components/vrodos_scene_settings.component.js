@@ -475,7 +475,7 @@ AFRAME.registerComponent('scene-settings', {
                 privateChatBtn.addEventListener("click", () => {
                     let event = new CustomEvent('chat-selected', { "detail": "private" });
                     document.dispatchEvent(event);
-                    if (typeof gtag !== 'undefined') gtag('event', 'chat_private_tab_selected');
+                    if (typeof window.gtag === 'function') window.gtag('event', 'chat_private_tab_selected');
                 });
             }
 
@@ -484,7 +484,7 @@ AFRAME.registerComponent('scene-settings', {
                 publicChatBtn.addEventListener("click", (evt) => {
                     let event = new CustomEvent('chat-selected', { "detail": "public" });
                     document.dispatchEvent(event);
-                    if (typeof gtag !== 'undefined') gtag('event', 'chat_public_tab_selected');
+                    if (typeof window.gtag === 'function') window.gtag('event', 'chat_public_tab_selected');
                 });
             }
 
@@ -528,13 +528,13 @@ AFRAME.registerComponent('scene-settings', {
             VRODOSMaster.setBrowsingModeVR(true);
             this.applyEnvMapProfile();
             this.syncPostProcessingState();
-            if (typeof gtag !== 'undefined') gtag('event', 'vr_enabled');
+            if (typeof window.gtag === 'function') window.gtag('event', 'vr_enabled');
         });
         this.el.addEventListener("exit-vr", () => {
             VRODOSMaster.setBrowsingModeVR(false);
             this.applyEnvMapProfile();
             this.syncPostProcessingState();
-            if (typeof gtag !== 'undefined') gtag('event', 'vr_disabled');
+            if (typeof window.gtag === 'function') window.gtag('event', 'vr_disabled');
         });
 
         let cam = document.querySelector("#cameraA");

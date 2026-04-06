@@ -71,11 +71,15 @@ AFRAME.registerComponent('video-controls', {
         video.addEventListener('pause', pausing_no_vr);
 
         function playing_no_vr(e) {
-            gtag('event', 'poivideo_video_play');
+            if (typeof window.gtag === 'function') {
+                window.gtag('event', 'poivideo_video_play');
+            }
         }
 
          function pausing_no_vr(e) {
-            gtag('event', 'poivideo_video_pause');
+            if (typeof window.gtag === 'function') {
+                window.gtag('event', 'poivideo_video_pause');
+            }
         }
 
         if(this.video.getAttribute("autoplay-manual") == "true"){
@@ -188,11 +192,15 @@ AFRAME.registerComponent('video-controls', {
     playVideo: function(event) {
         if (this.video.paused) {
             this.video.play();
-            gtag('event', 'poivideo_video_play_vr');
+            if (typeof window.gtag === 'function') {
+                window.gtag('event', 'poivideo_video_play_vr');
+            }
         }
         else {
             this.video.pause();
-            gtag('event', 'poivideo_video_pause_vr');
+            if (typeof window.gtag === 'function') {
+                window.gtag('event', 'poivideo_video_pause_vr');
+            }
         }
         this.playUpd(this.plEl);
     },
@@ -330,7 +338,9 @@ AFRAME.registerComponent('video-controls', {
         // this.el.object3D.position.z = -2.5;
         this.restorePanel = this.restorePanel.bind(this);
 
-        gtag('event', 'video_click');
+        if (typeof window.gtag === 'function') {
+            window.gtag('event', 'video_click');
+        }
         
         if (!browsingModeVR) {
             let video_element = document.getElementById("video-panel-video");
@@ -375,7 +385,9 @@ AFRAME.registerComponent('video-controls', {
     
     onFullScreenClick:  function (evt) {
 
-        gtag('event', 'poivideo_video_fullscreen_vr');
+        if (typeof window.gtag === 'function') {
+            window.gtag('event', 'poivideo_video_fullscreen_vr');
+        }
 
         this.is_fs = true;
         let projType = this.backgroundEl.getAttribute("scene-settings").pr_type;

@@ -3,7 +3,9 @@ AFRAME.registerComponent('door-listener', {
     init: function () {
         this.el.setAttribute("link", "on: click; href: " + this.data);
         this.el.addEventListener("click", e => {
-            gtag('event', 'door_click');
+            if (typeof window.gtag === 'function') {
+                window.gtag('event', 'door_click');
+            }
         });
     }
 });
