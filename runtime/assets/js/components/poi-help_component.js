@@ -22,6 +22,37 @@ AFRAME.registerComponent('help-chat', {
         let private_button_label = document.getElementById('private-chat-button-label');
         private_button_label.innerHTML = this.el.getAttribute("title");
 
+        const setPrivateChatButtonVisibility = function (isVisible) {
+            const button = document.getElementById("private-chat-button");
+            if (!button) {
+                return;
+            }
+
+            if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.setButtonVisible === 'function') {
+                window.VRODOSMasterUI.setButtonVisible(button, isVisible);
+            } else {
+                button.style.visibility = isVisible ? 'visible' : 'hidden';
+            }
+        };
+
+        const setChatTabState = function (activeTab) {
+            if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.setChatTabState === 'function') {
+                window.VRODOSMasterUI.setChatTabState(activeTab);
+                return;
+            }
+
+            const publicButton = document.getElementById("public-chat-button");
+            const privateButton = document.getElementById("private-chat-button");
+
+            if (publicButton) {
+                publicButton.classList.toggle('tw-btn-active', activeTab === 'public');
+            }
+
+            if (privateButton) {
+                privateButton.classList.toggle('tw-btn-active', activeTab === 'private');
+            }
+        };
+
         const getUniqueNumbers = (arr1, arr2) => {
             let uniqueOfBoth = arr1.filter((ele) => {
                 return arr2.indexOf(ele) !== -1
@@ -197,8 +228,7 @@ AFRAME.registerComponent('help-chat', {
                         publicChatIsActive = true;
                         chatLogPublicHistory.forEach((element)=> chatLog.innerHTML += "<span>" + element + "</span>");
                         sendMsgChatBtn.addEventListener("click", sendPublicMessage);
-                        document.getElementById("public-chat-button").classList.add('mdc-tab--active');
-                        document.getElementById("private-chat-button").classList.remove('mdc-tab--active');
+                        setChatTabState('public');
                     }
                 }
             }
@@ -222,7 +252,7 @@ AFRAME.registerComponent('help-chat', {
         };
         const stopExitPrivateChatNode = (stepIndex) => {
             document.getElementById('exit-help-btn').removeEventListener("click", exitPrivateChatHandlers[stepIndex], true);
-            document.getElementById("private-chat-button").style.visibility = 'hidden';
+            setPrivateChatButtonVisibility(false);
             chatLogPrivateHistory = [];
         };
         document.addEventListener("chat-selected", (evt) =>{
@@ -237,10 +267,9 @@ AFRAME.registerComponent('help-chat', {
         });
         elem.addEventListener("click", evt => {
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';
-            document.getElementById("public-chat-button").classList.remove('mdc-tab--active');
+            setChatTabState('private');
             document.getElementById("public-chat-button").disabled = false;
-            document.getElementById("private-chat-button").style.visibility = 'visible';
-            document.getElementById("private-chat-button").classList.add('mdc-tab--active');
+            setPrivateChatButtonVisibility(true);
             publicChatIsActive = false;
 
             if (typeof window.gtag === 'function') {
@@ -271,13 +300,13 @@ AFRAME.registerComponent('help-chat', {
 
                 }else if (chatlist >= maxParticipants && syncComplete){
                     chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Current chat is full. Please try again later ' + "</span> <br>";
-                    document.getElementById("private-chat-button").style.visibility = 'hidden';
+                    setPrivateChatButtonVisibility(false);
                     chatLogUpdate("public",elem.getAttribute("id"),elem, "Current chat is full. Returning to public chat");
                     document.getElementById("public-chat-button").disabled = false;
 
                 }else if (!syncComplete) {
                     chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Chat is loading. Please try again later ' + "</span><br>";
-                    document.getElementById("private-chat-button").style.visibility = 'hidden';
+                    setPrivateChatButtonVisibility(false);
                     chatLogUpdate("public",elem.getAttribute("id"),elem, "Chat is loading. Please try again later");
                 }
 
@@ -293,8 +322,7 @@ AFRAME.registerComponent('help-chat', {
                     chatLogPublicHistory.forEach((element)=> chatLog.innerHTML += "<span>" + element + "</span><br>");
                     stopPrivateMessageNode(chat_id);
                     sendMsgChatBtn.addEventListener("click",sendPublicMessage);
-                    document.getElementById("public-chat-button").classList.add('mdc-tab--active');
-                    document.getElementById("private-chat-button").classList.remove('mdc-tab--active');
+                    setChatTabState('public');
                     break;
 
                 case "private":
@@ -304,8 +332,7 @@ AFRAME.registerComponent('help-chat', {
                     chatLogPrivateHistory.forEach((element)=> chatLog.innerHTML += "<span>" + element + "</span><br>");
                     sendMsgChatBtn.removeEventListener("click",sendPublicMessage);
                     startPrivateMessageNode(chat_id, element);
-                    document.getElementById("private-chat-button").classList.add('mdc-tab--active');
-                    document.getElementById("public-chat-button").classList.remove('mdc-tab--active');
+                    setChatTabState('private');
                     break;
             }
         }

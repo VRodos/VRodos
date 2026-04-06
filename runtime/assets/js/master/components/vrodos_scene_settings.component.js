@@ -495,8 +495,12 @@ AFRAME.registerComponent('scene-settings', {
                     if (privateChatBtn) privateChatBtn.disabled = true;
                 } else {
                     if (publicChatBtn) {
-                        publicChatBtn.style.visibility = 'visible';
-                        publicChatBtn.classList.add('mdc-tab--active');
+                        if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.setButtonVisible === 'function') {
+                            window.VRODOSMasterUI.setButtonVisible(publicChatBtn, true);
+                            window.VRODOSMasterUI.setChatTabState('public');
+                        } else {
+                            publicChatBtn.style.visibility = 'visible';
+                        }
                         publicChatBtn.disabled = true;
                     }
                 }
@@ -505,16 +509,21 @@ AFRAME.registerComponent('scene-settings', {
             // Avatar Selector
             let avatarDialog = document.querySelector('#avatar-selection-dialog');
             if (avatarDialog) {
-                let avatar_dialog_element = new mdc.dialog.MDCDialog(avatarDialog);
-                let closeAvatarDialogListener = function (event) {
-                    avatar_dialog_element.unlisten("MDCDialog:cancel", closeAvatarDialogListener);
-                    if (typeof selectAvatarType !== 'undefined') selectAvatarType('no-avatar');
+                let closeAvatarDialogListener = function () {
+                    avatarDialog.removeEventListener('close', closeAvatarDialogListener);
+                    if (avatarDialog.returnValue !== 'accept' && typeof selectAvatarType !== 'undefined') {
+                        selectAvatarType('no-avatar');
+                    }
                 };
 
                 const settings = sceneContainer.getAttribute("scene-settings");
                 if (settings && settings.avatar_enabled == 1) {
-                    avatar_dialog_element.show();
-                    avatar_dialog_element.listen("MDCDialog:cancel", closeAvatarDialogListener);
+                    avatarDialog.addEventListener('close', closeAvatarDialogListener);
+                    if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
+                        window.VRODOSMasterUI.showDialog(avatarDialog);
+                    } else if (typeof avatarDialog.showModal === 'function') {
+                        avatarDialog.showModal();
+                    }
                 } else {
                     if (typeof selectAvatarType !== 'undefined') selectAvatarType('no-avatar');
                 }

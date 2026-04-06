@@ -1,153 +1,167 @@
-.renderFeedback{
-    width:100%;
-    height:100%;
-    position:absolute;
+.renderFeedback {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 10000;
 }
 
-.renderFeedbackText{
+.renderFeedbackText {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%,-50%);
-    font-size: 16pt;
+    transform: translate(-50%, -50%);
 }
 
-
-.actionsActor {
-    position: absolute;
-    background: rgba(0,0,0,0.5);
-    display: block;
-    top:35px;
-    bottom: 3%;
-    right:0;
-    width:100px;
-    /*transform: translate(-50%, 0%);*/
-    z-index:1000;
-    text-align: center;
-    color: white;
-}
+/* legacy styles moved to Tailwind */
 
 .actionsDirector {
     position: absolute;
-    background: rgba(0,0,0,0.5);
-    display: block;
-    bottom: 3%;
-    left:50%;
-    width:250px;
-    transform: translate(-50%, 0%);
-    z-index:1000;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    bottom: 2rem;
+    right: 2rem;
+    width: 250px;
+    z-index: 1000;
     text-align: center;
-    color: white;
+    color: #1e293b;
+    padding: 1.5rem;
+    border-radius: 1.75rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(12px);
 }
 
-
-
-#directorline{
-    height:30px;
-    background: repeating-linear-gradient(
-            45deg,
-            rgba(255,255,255,0.5),
-            rgba(255,255,255,0.5) 10px,
-            rgba(0,0,0,0.5) 10px,
-            rgba(0,0,0,0.5) 20px
-    );
+#directorline {
+    height: 4px;
+    border-radius: 2px;
+    background: #e2e8f0;
+    margin: 0.5rem 0;
 }
 
-.wrapperControlElement{
-    position:relative;
-    display:block;
-    margin:5px;
-}
-
-.wrapperControlLineElement{
+.wrapperControlElement {
     position: relative;
-    display: inline-block;
-    margin:5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.wrapperControlLineElement {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
 }
 
 .wrapperVideoElement {
     position: absolute;
     display: block;
-    top: 5px;
-    left: 5px;
-    z-index:1001;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 2px solid white;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .buttonMultiplaying {
-    display:block;
-    margin-top:10px;
-    padding:5px;
+    display: block;
+    padding: 0.5rem 1rem;
     cursor: pointer;
     background: #fff;
-    border-radius: 20px;
-    margin-left:auto;
-    margin-right:auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.2s ease;
+}
+
+.buttonMultiplaying:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
 }
 
 .buttonStartRecord {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
     cursor: pointer;
-    background: crimson;
-    border-radius: 20px;
-    margin-left:auto;
-    margin-right:auto;
+    background: #ef4444;
+    color: white;
+    border-radius: 0.75rem;
     border: none;
+    transition: all 0.2s ease;
+}
+
+.buttonStartRecord:hover {
+    background: #dc2626;
+    transform: scale(1.05);
 }
 
 .buttonStopRecord {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
     cursor: pointer;
-    background: none;
-    margin-left:auto;
-    margin-right:auto;
+    background: #64748b;
+    color: white;
+    border-radius: 0.75rem;
     border: none;
 }
 
-.buttonDownloadRecording {
-    display: inline-block;
+.buttonDownloadRecording, .buttonUploadRecording {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
     cursor: pointer;
-    background: none;
-    margin-left:auto;
-    margin-right:auto;
-    border: none;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
     text-decoration: none;
+    transition: all 0.2s ease;
 }
 
-.buttonUploadRecording {
-    display: inline-block;
-    cursor: pointer;
-    background: none;
-    margin-left:auto;
-    margin-right:auto;
-    border: none;
-    text-decoration: none;
+.buttonDownloadRecording:hover, .buttonUploadRecording:hover {
+    background: #e2e8f0;
 }
 
-#positionShow{
-    font-size: 9pt;
+#positionShow {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #94a3b8;
 }
-
 
 .videoUI {
-    border: 1px solid cyan;
     position: fixed;
-    bottom: 10px;
-    left: 350px;
+    bottom: 2rem;
+    left: 20rem;
     width: 400px;
     height: 140px;
     z-index: 15;
-    opacity:0.8;
-    pointer-events: none; /* allow click-through in transparent areas */
+    pointer-events: none;
 }
 
-
-#live_label{
+#live_label {
     display: flex;
     justify-content: center;
-    font-size: 9pt;
-    width: 100%;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #ef4444;
 }
 
 .video-canvas-container {
@@ -155,12 +169,8 @@
     position: absolute;
     flex-direction: row;
     left: 10px;
-    bottom:0;
-    border: 1px solid violet;
+    bottom: 0;
     pointer-events: none;
-    opacity:0.8;
-    /*justify-content: center;*/
-    /*align-items: center;*/
 }
 
 .output_canvas {
@@ -171,42 +181,37 @@
     height: 240px;
     left: 0;
     bottom: 0;
-    border: 3px solid darkgray;
+    border-radius: 1rem;
+    border: 4px solid white;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
     pointer-events: none;
-    z-index:999;
+    z-index: 999;
 }
 
-.control-panel {
+/* dat gui customization for Emerald theme */
+.dg.ac {
+    z-index: 10000 !important;
+}
+
+.dg.main {
+    font-family: inherit !important;
+}
+
+#panelsSizeControlsDiv {
     position: absolute;
-    left: 10px;
-    top: 10px;
-}
-
-/* dat gui */
-.dg.ac{
-    z-index: 1000;
-}
-
-
-#panelsSizeControlsDiv{
-    position:absolute;
-    height:350px;
-    left:20px;
-    bottom:350px;
-    z-index:10000;
-    scroll-behavior:auto;
-}
-
-.positionalButtons{
-    width:60px;
-    height:40px;
+    height: auto;
+    max-height: 50vh;
+    left: 2rem;
+    bottom: 20rem;
     z-index: 10000;
-    cursor:pointer;
-    left:50%;
+    overflow-y: auto;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    border-radius: 1.5rem;
+    border: 1px solid #e2e8f0;
 }
 
 .VideoControlsDialogStyle {
-    width: 200px; !important;
+    width: 250px !important;
 }
-
-

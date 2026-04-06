@@ -259,7 +259,12 @@ AFRAME.registerComponent('info-panel', {
 
             if(this.DescriptionEl)
                 document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
-            (new mdc.dialog.MDCDialog(document.querySelector('#poi-img-dialog'))).show();
+            let imageDialog = document.querySelector('#poi-img-dialog');
+            if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
+                window.VRODOSMasterUI.showDialog(imageDialog);
+            } else if (imageDialog && typeof imageDialog.showModal === 'function') {
+                imageDialog.showModal();
+            }
 
 
         } else {

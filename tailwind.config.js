@@ -5,6 +5,8 @@ module.exports = {
   content: [
     "./includes/**/*.php",
     "./js_libs/**/*.js",
+    "./js_libs/aframe_libs/**/*.html",
+    "./runtime/assets/js/**/*.js",
     "./VRodos.php"
   ],
   theme: {

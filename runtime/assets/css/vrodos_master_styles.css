@@ -1,74 +1,69 @@
 .button-tab {
     background-color: #fff;
-    border: none;
+    border: 1px solid #e2e8f0;
     border-radius: 1.5rem;
     box-sizing: border-box;
     color: #0d172a;
     cursor: pointer;
     display: inline-block;
-    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
-        Droid Sans, Helvetica Neue, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
     font-size: 0.8em;
     font-weight: 600;
-    padding: 0;
+    padding: 0.5rem 1rem;
     text-align: center;
-    text-decoration: none #0d172a solid;
-    transition: all .1s cubic-bezier(.4, 0, .2, 1);
-    box-shadow: 0 1px 2px rgba(166, 175, 195, 0.25);
+    text-decoration: none;
+    transition: all .2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
 }
 
-.mdc-tab {
-    background-color: rgba(255, 255, 255, .54);
-    color: rgba(0, 0, 0, .23);
-}
-
-.mdc-tab--active {
-    background-color: white;
-    color: black;
-}
-
-.ChatWrapperStyle {
-    position: absolute;
-    bottom: 0;
-    height: auto;
-}
-
-.ChatWrapperStyleExpanded {
-    position: absolute;
-    height: auto;
-}
-
-.ChatMessagesStyle {
-    width: 450px;
-    background-color: rgba(0, 0, 0, .7);
-    overflow: auto;
-    z-index: 100;
+.ChatDrawerStyle {
+    position: fixed;
     bottom: 0;
     left: 0;
-    display: flex;
-    flex-direction: column-reverse;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 14px;
-    color: #ccc;
-    text-shadow: 1px 1px 2px black;
+    width: 22rem;
+    height: 50%;
+    background: rgba(15, 23, 42, 0.45); /* More transparent dark tinted glass */
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-top-right-radius: 1rem;
+    z-index: 1000;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ChatDrawerStyleExpanded {
+    width: 28rem;
+    height: 85%;
+    border-top-right-radius: 1.5rem;
+}
+
+.ChatDrawerStyleMinimized {
+    width: 14rem;
+    height: 2.25rem; /* Matches the ultra-thin header height */
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0.75rem;
+}
+
+.ChatDrawerStyleMinimized #chat-messages-wrapper,
+.ChatDrawerStyleMinimized #chatControlsOverlay {
+    display: none !important;
 }
 
 .ChatMessagesStyleNormal {
-    height: 200px;
-    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
 }
 
-.ChatMessagesStyleExpanded {
-    height: 100%;
-    position: fixed;
+.ChatMessagesStyleNormal::-webkit-scrollbar {
+    width: 4px;
 }
 
-.ChatMessagesStyleMinimized {
-    height: 0;
-    position: relative;
+.ChatMessagesStyleNormal::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
 }
 
 .IconButtonStyle {
@@ -78,37 +73,11 @@
     height: 24px;
     width: 24px;
     margin: 0 auto;
-    padding: 0 2px 0 2px;
+    padding: 0 2px;
 }
 
 .IconButtonStyle i {
-    text-shadow: 0 0 3px #fff;
+    color: #64748b;
 }
 
-.AvatarTypeSelection img {
-    display: block;
-}
-
-.AvatarTypeSelection label {
-    /*width: 20vw;
-    height: 20vw;*/
-    padding: 1vw;
-}
-
-.AvatarTypeSelection input[type=radio] {
-    display: none;
-}
-
-.AvatarTypeSelection label:hover {
-    opacity: 0.6;
-    cursor: pointer;
-}
-
-.AvatarTypeSelection label:active {
-    opacity: 0.4;
-    cursor: pointer;
-}
-
-.AvatarTypeSelection input[type=radio]:checked+label {
-    border: 10px solid rgb(228, 207, 94);
-}
+/* Removed legacy AvatarTypeSelection styles to avoid conflict with new modern designs */

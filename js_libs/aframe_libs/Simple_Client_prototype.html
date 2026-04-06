@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="emerald">
 <head>
     <meta charset="utf-8">
     <title>Take part</title>
@@ -13,19 +13,32 @@
     <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
     <script src="js/datgui/0.7.9/dat.gui.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
 
     <script src="../easyrtc/easyrtc.js"></script>
     <script src="../dist/networked-aframe.js"></script>
     <script src="../js/NoSleep.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/adv-screen.css" />
+    <link rel="stylesheet" type="text/css" href="VRODOS_PLUGIN_URL_PLACEHOLDERcss/vrodos_modern_compiled.css" />
 </head>
 
-<body style="background: gray" id="simple-client-body">
-<div id="renderFeedback" class="renderFeedback">
-    <div class="renderFeedbackText" id="renderFeedbackText">Waiting for the rendered scene ...</div>
+<body id="simple-client-body" class="vrodos-manager-wrapper tw-min-h-screen tw-bg-slate-50 tw-text-slate-900 tw-antialiased">
+
+<div id="renderFeedback" class="renderFeedback tw-grid tw-place-items-center tw-bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.08),_rgba(248,250,252,0.96)_48%,_rgba(241,245,249,1)_100%)]">
+    <div class="renderFeedbackText tw-rounded-[2rem] tw-border-2 tw-border-white tw-bg-white/80 tw-px-8 tw-py-6 tw-text-center tw-text-lg tw-font-bold tw-text-slate-800 tw-shadow-[0_20px_50px_rgba(0,0,0,0.05)] tw-backdrop-blur-xl tw-animate-pulse" id="renderFeedbackText">
+        <div class="tw-flex tw-flex-col tw-items-center tw-gap-4">
+            <div class="tw-w-12 tw-h-12 tw-border-4 tw-border-emerald-500 tw-border-t-transparent tw-rounded-full tw-animate-spin"></div>
+            <span>Waiting for the rendered scene ...</span>
+        </div>
+    </div>
 </div>
-<div class="actionsActor" name="actionsDiv" id="actionsDiv">
-    <div id="reporting"></div>
+
+<div class="actionsActor tw-fixed tw-right-4 tw-top-4 tw-bottom-auto tw-z-[1000] tw-flex tw-w-[min(22rem,calc(100vw-2rem))] tw-flex-col tw-gap-3 tw-rounded-[1.75rem] tw-border tw-border-slate-200 tw-bg-white/90 tw-p-4 tw-text-slate-900 tw-shadow-[0_28px_70px_rgba(0,0,0,0.08)] tw-backdrop-blur-xl" name="actionsDiv" id="actionsDiv">
+    <div class="tw-flex tw-items-center tw-gap-2 tw-mb-1">
+        <div class="tw-w-2 tw-h-2 tw-bg-emerald-500 tw-rounded-full tw-animate-pulse"></div>
+        <span class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-widest tw-text-emerald-700">Live Status</span>
+    </div>
+    <div id="reporting" class="tw-rounded-2xl tw-bg-slate-50 tw-px-4 tw-py-3 tw-text-left tw-text-sm tw-font-medium tw-leading-5 tw-text-slate-600 tw-border tw-border-slate-100"></div>
 </div>
 
 <!--
@@ -179,6 +192,7 @@
                                     img.style.position="absolute";
                                     img.style.left="0";
                                     img.style.width = "100%";
+                                    img.className = "tw-h-full tw-w-full tw-object-contain";
                                     document.getElementById("renderFeedbackText").style.visibility = "hidden";
                                     clearInterval(timerForScreenFeedback); // Stop polling once stream is connected
                                 }
@@ -212,10 +226,19 @@
         document.getElementById("view-fullscreen").style.display = "none";
     }
 
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    });
+
 </script>
 
-<button id="view-fullscreen" style="z-index:10000000;position:absolute;right:0;top:0"
-        onClick="go_full_screen();">Fullscreen</button>
+<button id="view-fullscreen" class="tw-btn tw-btn-primary tw-fixed tw-right-4 tw-bottom-4 tw-z-[10000000] tw-rounded-2xl tw-border-0 tw-px-6 tw-text-white tw-shadow-[0_15px_35px_rgba(16,185,129,0.25)] hover:tw-shadow-[0_20px_45px_rgba(16,185,129,0.35)] tw-transition-all"
+        onClick="go_full_screen();">
+    <i data-lucide="maximize" class="tw-h-4 tw-w-4"></i>
+    <span>Enter Fullscreen</span>
+</button>
 
 </body>
 </html>

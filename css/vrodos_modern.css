@@ -821,3 +821,99 @@ body.vrodos-manager-wrapper {
   border-radius: 0.75rem !important;
   margin-top: 0 !important;
 }
+
+/* Compiled scene runtime modal + overlay support */
+#master-client-body .tw-modal,
+#vrodos-compiled-scene .tw-modal {
+  z-index: 2147483647 !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+#master-client-body .tw-modal[open],
+#vrodos-compiled-scene .tw-modal[open] {
+  display: grid !important;
+  place-items: center !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+#master-client-body .tw-modal::backdrop,
+#vrodos-compiled-scene .tw-modal::backdrop {
+  background: rgba(2, 6, 23, 0.72) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+}
+
+#master-client-body .tw-modal-box,
+#vrodos-compiled-scene .tw-modal-box {
+  width: min(92vw, 46rem) !important;
+  max-height: calc(100vh - 3rem) !important;
+  padding: 0 !important;
+  border-radius: 1.75rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 28px 80px rgba(2, 6, 23, 0.48) !important;
+  overflow: hidden !important;
+}
+
+#master-client-body .vrodos-runtime-video-modal .tw-modal-box,
+#vrodos-compiled-scene .vrodos-runtime-video-modal .tw-modal-box {
+  width: min(94vw, 72rem) !important;
+}
+
+/* ═══════════════════════════════════════════
+   MODERNIZED RUNTIME DIALOGS - SCROLLBAR SUPPRESSION
+   ═══════════════════════════════════════════ */
+
+/* Global suppression for all runtime dialogs and their children */
+.vrodos-runtime-dialog,
+.vrodos-runtime-dialog *,
+.vrodos-runtime-dialog .tw-modal-box,
+#master-client-body .tw-modal,
+#vrodos-compiled-scene .tw-modal {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.vrodos-runtime-dialog::-webkit-scrollbar,
+.vrodos-runtime-dialog *::-webkit-scrollbar,
+.vrodos-runtime-dialog .tw-modal-box::-webkit-scrollbar,
+#master-client-body .tw-modal::-webkit-scrollbar,
+#vrodos-compiled-scene .tw-modal::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Ensure body remains locked during runtime */
+#master-client-body {
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+}
+
+/* Modal specific overrides for ultra-clean look */
+#master-client-body .tw-modal-box {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  overflow: hidden !important;
+}
+
+/* Custom Utility: Scrollbar None */
+.tw-scrollbar-none {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.tw-scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Removed legacy avatar and chat overrides to allow new Tailwind system to take precedence */

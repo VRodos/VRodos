@@ -354,14 +354,39 @@ AFRAME.registerComponent('video-controls', {
             video_source.setAttribute('type', 'video/'+ video_file_url.substring(extension_pos + 1));
             video_element.appendChild(video_source);
 
-            let video_dialog_element = new mdc.dialog.MDCDialog(document.querySelector('#video-controls-dialog'));
+            let videoDialog = document.querySelector('#video-controls-dialog');
+            let videoTitleEl = document.querySelector('#video-controls-dialog-title');
+            let videoHeaderContent = videoTitleEl ? videoTitleEl.closest('.tw-flex.tw-items-center.tw-gap-3') : null;
 
-            let closeDialogListener = function(event) {
+            if (videoTitleEl) {
+                let titleVal = "";
+                if (this.titEl && this.titEl.hasAttribute('text')) {
+                    titleVal = this.titEl.getAttribute('text').value;
+                }
+
+                // If no valid title, hide the icon/title wrapper
+                if (titleVal && titleVal.trim() !== '' && titleVal !== "video-title" && titleVal !== "Video Viewer") {
+                    videoTitleEl.innerText = titleVal;
+                    if (videoHeaderContent) videoHeaderContent.classList.remove('tw-hidden');
+                } else {
+                    if (videoHeaderContent) videoHeaderContent.classList.add('tw-hidden');
+                }
+            }
+
+            let closeDialogListener = function () {
                 video_element.pause();
-                video_dialog_element.unlisten("MDCDialog:cancel", closeDialogListener);
+                if (videoDialog) {
+                    videoDialog.removeEventListener('close', closeDialogListener);
+                }
             };
-            video_dialog_element.show();
-            video_dialog_element.listen("MDCDialog:cancel", closeDialogListener);
+            if (videoDialog) {
+                videoDialog.addEventListener('close', closeDialogListener);
+                if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
+                    window.VRODOSMasterUI.showDialog(videoDialog);
+                } else if (typeof videoDialog.showModal === 'function') {
+                    videoDialog.showModal();
+                }
+            }
         } else {
             this.restorePanel();
             if(this.is_fs){

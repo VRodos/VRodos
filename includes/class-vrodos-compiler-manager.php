@@ -1465,7 +1465,8 @@ class VRodos_Compiler_Manager {
 
 				$buttonDiv->setAttribute( 'id', 'screen-btn-' . $i );
 				$buttonDiv->setAttribute( 'type', 'button' );
-				$buttonDiv->setAttribute( 'class', 'positionalButtons' );
+				$buttonDiv->setAttribute( 'class', 'screen-position-btn tw-btn tw-btn-sm tw-min-h-0 tw-h-auto tw-justify-start tw-gap-2 tw-rounded-2xl tw-border-white/10 tw-bg-white/8 tw-px-3 tw-py-2 tw-font-semibold tw-text-white hover:tw-bg-white/14' );
+				$buttonDiv->setAttribute( 'aria-label', 'Go to position ' . $i );
 
 				$pos_x = $contentObject->position[0];
 				$pos_y = $contentObject->position[1];
@@ -1478,13 +1479,17 @@ class VRodos_Compiler_Manager {
 				$buttonDiv->setAttribute( 'data-position', '{"x":' . $pos_x . ',"y":' . $pos_y . ',"z":' . $pos_z . '}' );
 				$buttonDiv->setAttribute( 'data-rotation', '{"x":' . $rot_x . ',"y":' . $rot_y . ',"z":' . $rot_z . '}' );
 
-				$iconSpan = $dom->createElement( 'span' );
-				$iconSpan->appendChild( $dom->createTextNode( 'room' ) );
-				$iconSpan->setAttribute( 'class', 'material-icons' );
+				$iconSpan = $dom->createElement( 'i' );
+				$iconSpan->setAttribute( 'data-lucide', 'map-pinned' );
+				$iconSpan->setAttribute( 'class', 'tw-h-4 tw-w-4 tw-shrink-0' );
+				$iconSpan->setAttribute( 'aria-hidden', 'true' );
+
+				$labelSpan = $dom->createElement( 'span' );
+				$labelSpan->setAttribute( 'class', 'tw-text-xs tw-font-semibold' );
+				$labelSpan->appendChild( $dom->createTextNode( 'Position ' . $i ) );
 
 				$buttonDiv->appendChild( $iconSpan );
-
-				$buttonDiv->appendChild( $dom->createTextNode( $i ) );
+				$buttonDiv->appendChild( $labelSpan );
 				$actionsDiv->appendChild( $buttonDiv );
 			}
 		}
