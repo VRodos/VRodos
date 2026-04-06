@@ -115,6 +115,129 @@ function _hierarchyCreatedLabel(obj) {
     return (created && !created.includes('NaN')) ? created : '';
 }
 
+function _hierarchyEscapeHTML(text) {
+    return String(text || '')
+        .replace(/\&/g, '&amp;')
+        .replace(/\</g, '&lt;')
+        .replace(/\>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function _hierarchyDecodeText(value) {
+    let text = typeof value === 'string' ? value : '';
+    if (!text) return '';
+
+    if (/%[0-9a-fA-F]{2}/.test(text)) {
+        try {
+            text = decodeURIComponent(text);
+        } catch (err) {
+            // Keep original text if decoding fails.
+        }
+    }
+
+    if (/(?:\\u|u)[0-9a-fA-F]{4}/.test(text)) {
+        text = text.replace(/(?:\\u|u)([0-9a-fA-F]{4})/g, function (_, hex) {
+            return String.fromCharCode(parseInt(hex, 16));
+        });
+    }
+
+    return text;
+}
+
+function _hierarchyNormalizeAssessmentLevels(levels) {
+    let source = levels;
+
+    if (Array.isArray(source)) {
+        return source
+            .map(function (level) { return _hierarchyDecodeText(level).trim().toUpperCase(); })
+            .filter(Boolean);
+    }
+
+    if (typeof source === 'string' && source.trim() !== '') {
+        try {
+            source = JSON.parse(source);
+        } catch (err) {
+            try {
+                const binary = window.atob(source);
+                const bytes = Uint8Array.from(binary, function (ch) { return ch.charCodeAt(0); });
+                const decoded = new TextDecoder('utf-8').decode(bytes);
+                source = JSON.parse(decoded);
+            } catch (base64Err) {
+                source = source.split(/[,\s/]+/);
+            }
+        }
+    }
+
+    if (!Array.isArray(source)) {
+        return [];
+    }
+
+    return Array.from(new Set(source
+        .map(function (level) { return _hierarchyDecodeText(level).trim().toUpperCase(); })
+        .filter(Boolean)));
+}
+
+function _hierarchyResolvedAssessmentLevels(levels) {
+    let normalizedLevels = _hierarchyNormalizeAssessmentLevels(levels);
+    let allLevels = ['A1', 'A2', 'B1', 'B2'];
+
+    if (!normalizedLevels.length) {
+        return allLevels;
+    }
+
+    if (normalizedLevels.indexOf('ALL') !== -1 || normalizedLevels.indexOf('ALL LEVELS') !== -1) {
+        return allLevels;
+    }
+
+    return allLevels.filter(function (level) {
+        return normalizedLevels.indexOf(level) !== -1;
+    });
+}
+
+function _hierarchyAssessmentBadgesHTML(obj) {
+    if (!obj) {
+        return '';
+    }
+
+    let categorySlug = String(obj.category_slug || '').toLowerCase();
+    let categoryName = String(obj.category_name || '').toLowerCase();
+    if (categorySlug !== 'assessment' && categoryName !== 'assessment') {
+        return '';
+    }
+
+    let assessmentType = _hierarchyDecodeText(obj.assessment_type || obj.assessment_group || '').trim();
+    let assessmentLevels = _hierarchyResolvedAssessmentLevels(obj.assessment_levels || '');
+    let typeBadgeHTML = '';
+    let levelBadgesHTML = '';
+
+    if (assessmentType) {
+        typeBadgeHTML =
+            '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-200">' +
+            _hierarchyEscapeHTML(assessmentType) +
+            '</span>';
+    }
+
+    if (assessmentLevels.length) {
+        levelBadgesHTML = assessmentLevels.map(function (level) {
+            return (
+                '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-emerald-400/35 tw-bg-emerald-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-emerald-200">' +
+                _hierarchyEscapeHTML(level) +
+                '</span>'
+            );
+        }).join('');
+    }
+
+    if (!typeBadgeHTML && !levelBadgesHTML) {
+        return '';
+    }
+
+    return '<span class="tw-mt-1 tw-flex tw-flex-col tw-gap-1 tw-leading-none">' +
+        (typeBadgeHTML ? '<span class="tw-flex tw-flex-wrap tw-gap-1">' + typeBadgeHTML + '</span>' : '') +
+        (levelBadgesHTML ? '<span class="tw-flex tw-flex-wrap tw-gap-1">' + levelBadgesHTML + '</span>' : '') +
+        '</span>';
+}
+
 /**
  * Hover on hierarchy item: lightweight select (gizmo + outline, no panel).
  */
@@ -233,14 +356,16 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
     let isLight = categoryName.startsWith('light');
     let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-white/40';
     if (obj.name === 'avatarCamera') iconColor = 'tw-text-blue-400';
+    let assessmentBadgesHTML = _hierarchyAssessmentBadgesHTML(obj);
 
     let itemHTML = '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors"' +
         ' id="' + obj.uuid + '" data-name="' + obj.name + '" data-uuid="' + obj.uuid + '">' +
         '<i data-lucide="' + iconName + '" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ' + iconColor + '"></i>' +
-        '<span class="tw-flex-1 tw-min-w-0 tw-truncate tw-text-[9pt] tw-leading-tight tw-text-white"' +
+        '<span class="tw-flex-1 tw-min-w-0 tw-text-[9pt] tw-leading-tight tw-text-white"' +
         ' title="' + (obj.title || object_name) + '">' +
-        '<span class="tw-font-medium">' + object_name + '</span>' +
-        (created ? '<br/><span class="tw-text-[7pt] tw-text-white/50 tw-font-normal">' + created + '</span>' : '') +
+        '<span class="tw-block tw-font-medium tw-truncate">' + object_name + '</span>' +
+        assessmentBadgesHTML +
+        (created ? '<span class="tw-mt-1 tw-block tw-text-[7pt] tw-text-white/50 tw-font-normal">' + created + '</span>' : '') +
         '</span>' +
         '<span class="tw-flex tw-items-center tw-gap-0.5 tw-flex-shrink-0">' +
         deleteButtonHTML +

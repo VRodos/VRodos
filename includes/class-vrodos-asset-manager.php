@@ -179,7 +179,7 @@ class VRodos_Asset_Manager {
 			['ajax_url' => admin_url( 'admin-ajax.php' )]
 		);
 
-		$localized_data = ['scene_data'      => $scene_data, 'pluginPath'      => $template_data['pluginpath'], 'uploadDir'       => $template_data['upload_url'], 'projectId'       => $template_data['project_id'], 'projectSlug'     => $template_data['projectSlug'], 'isAdmin'         => $template_data['isAdmin'], 'isUserAdmin'     => $template_data['is_user_admin'], 'urlforAssetEdit' => $template_data['urlforAssetEdit'], 'scene_id'        => $template_data['current_scene_id'], 'game_type'       => strtolower( (string) $template_data['project_type'] ), 'user_email'      => $template_data['user_email'], 'current_user_id' => $template_data['current_user_id'], 'siteurl'         => site_url()];
+		$localized_data = ['scene_data'          => $scene_data, 'pluginPath'          => $template_data['pluginpath'], 'uploadDir'           => $template_data['upload_url'], 'projectId'           => $template_data['project_id'], 'projectSlug'         => $template_data['projectSlug'], 'isAdmin'             => $template_data['isAdmin'], 'isUserAdmin'         => $template_data['is_user_admin'], 'urlforAssetEdit'     => $template_data['urlforAssetEdit'], 'scene_id'            => $template_data['current_scene_id'], 'game_type'           => strtolower( (string) $template_data['project_type'] ), 'is_immerse_project' => ! empty( $template_data['is_immerse_project'] ), 'user_email'          => $template_data['user_email'], 'current_user_id'     => $template_data['current_user_id'], 'siteurl'             => site_url()];
 
 		wp_localize_script( 'vrodos_scripts', 'vrodos_data', $localized_data );
 

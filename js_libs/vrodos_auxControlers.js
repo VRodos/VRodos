@@ -184,6 +184,82 @@ function updateObjectControlsMeta(object) {
     badge.classList.add('tw-bg-slate-500/15', 'tw-text-slate-200', 'tw-border-white/10');
 }
 
+function ensureAssessmentPropertiesSection() {
+    let container = document.getElementById('object-properties-container');
+    if (!container) return null;
+
+    let section = document.getElementById('popUpAssessmentPropertiesDiv');
+    if (section) {
+        return section;
+    }
+
+    section = document.createElement('div');
+    section.id = 'popUpAssessmentPropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    section.innerHTML =
+        '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Assessment Details</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+            '<div>' +
+                '<div id="assessmentTypeValue" class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-2 tw-py-0.5 tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-[0.1em] tw-text-sky-200"></div>' +
+            '</div>' +
+            '<div>' +
+                '<div id="assessmentLevelsValue" class="tw-flex tw-flex-wrap tw-gap-1"></div>' +
+            '</div>' +
+        '</div>';
+
+    container.appendChild(section);
+    return section;
+}
+
+function getAssessmentTypeLabel(object) {
+    if (!object) return '';
+
+    let rawValue = object.assessment_type || object.assessment_group || '';
+    if (typeof vrodosDecodeDisplayText === 'function') {
+        return vrodosDecodeDisplayText(rawValue).trim();
+    }
+
+    return String(rawValue || '').trim();
+}
+
+function getAssessmentLevelsList(object) {
+    if (!object) return [];
+
+    if (typeof vrodosResolvedAssessmentLevels === 'function') {
+        return vrodosResolvedAssessmentLevels(object.assessment_levels || '');
+    }
+
+    return [];
+}
+
+function displayAssessmentProperties(object) {
+    let section = ensureAssessmentPropertiesSection();
+    if (!section || !object) return;
+
+    let typeValue = document.getElementById('assessmentTypeValue');
+    let levelsValue = document.getElementById('assessmentLevelsValue');
+    let assessmentType = getAssessmentTypeLabel(object) || 'Assessment';
+    let assessmentLevels = getAssessmentLevelsList(object);
+
+    if (typeValue) {
+        typeValue.textContent = assessmentType;
+    }
+
+    if (levelsValue) {
+        levelsValue.innerHTML = '';
+
+        assessmentLevels.forEach(function (level) {
+            let pill = document.createElement('span');
+            pill.className = 'tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-emerald-400/35 tw-bg-emerald-500/10 tw-px-1.5 tw-py-0.5 tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-[0.1em] tw-text-emerald-200';
+            pill.textContent = level;
+            levelsValue.appendChild(pill);
+        });
+    }
+
+    section.style.display = 'block';
+}
+
 /**
  * Hide all object property sections inside the floating panel.
  */
@@ -211,6 +287,10 @@ function showPropertiesInPanel(object) {
 
     // Dispatch by category_slug first
     switch (object.category_slug) {
+        case 'assessment':
+            displayAssessmentProperties(object);
+            hasProperties = true;
+            break;
         case 'poi-imagetext':
             displayPoiImageTextProperties(null, name);
             hasProperties = true;

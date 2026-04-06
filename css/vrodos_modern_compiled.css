@@ -3703,6 +3703,10 @@ body {
   max-width: 36rem;
 }
 
+.vrodos-manager-wrapper .tw-max-w-\[78\%\] {
+  max-width: 78%;
+}
+
 .vrodos-manager-wrapper .tw-flex-1 {
   flex: 1 1 0%;
 }
@@ -4074,6 +4078,14 @@ body {
   border-color: rgb(255 255 255 / 0.5);
 }
 
+.vrodos-manager-wrapper .tw-border-emerald-400\/35 {
+  border-color: rgb(52 211 153 / 0.35);
+}
+
+.vrodos-manager-wrapper .tw-border-sky-400\/35 {
+  border-color: rgb(56 189 248 / 0.35);
+}
+
 .vrodos-manager-wrapper .tw-border-b-slate-900 {
   --tw-border-opacity: 1;
   border-bottom-color: rgb(15 23 42 / var(--tw-border-opacity, 1));
@@ -4283,6 +4295,14 @@ body {
 
 .vrodos-manager-wrapper .tw-bg-white\/90 {
   background-color: rgb(255 255 255 / 0.9);
+}
+
+.vrodos-manager-wrapper .tw-bg-emerald-500\/10 {
+  background-color: rgb(16 185 129 / 0.1);
+}
+
+.vrodos-manager-wrapper .tw-bg-sky-500\/10 {
+  background-color: rgb(14 165 233 / 0.1);
 }
 
 .vrodos-manager-wrapper .tw-bg-gradient-to-t {
@@ -4614,6 +4634,10 @@ body {
   line-height: 1rem;
 }
 
+.vrodos-manager-wrapper .tw-text-\[7px\] {
+  font-size: 7px;
+}
+
 .vrodos-manager-wrapper .\!tw-font-medium {
   font-weight: 500 !important;
 }
@@ -4662,6 +4686,10 @@ body {
   line-height: 1.25;
 }
 
+.vrodos-manager-wrapper .tw-leading-none {
+  line-height: 1;
+}
+
 .vrodos-manager-wrapper .tw-tracking-tight {
   letter-spacing: -0.025em;
 }
@@ -4679,6 +4707,18 @@ body {
 }
 
 .vrodos-manager-wrapper .tw-tracking-widest {
+  letter-spacing: 0.1em;
+}
+
+.vrodos-manager-wrapper .tw-tracking-\[0\.12em\] {
+  letter-spacing: 0.12em;
+}
+
+.vrodos-manager-wrapper .tw-tracking-\[0\.14em\] {
+  letter-spacing: 0.14em;
+}
+
+.vrodos-manager-wrapper .tw-tracking-\[0\.1em\] {
   letter-spacing: 0.1em;
 }
 
@@ -4893,6 +4933,26 @@ body {
 
 .vrodos-manager-wrapper .tw-text-white\/90 {
   color: rgb(255 255 255 / 0.9);
+}
+
+.vrodos-manager-wrapper .tw-text-emerald-200 {
+  --tw-text-opacity: 1;
+  color: rgb(167 243 208 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-sky-200 {
+  --tw-text-opacity: 1;
+  color: rgb(186 230 253 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-emerald-100 {
+  --tw-text-opacity: 1;
+  color: rgb(209 250 229 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-sky-100 {
+  --tw-text-opacity: 1;
+  color: rgb(224 242 254 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-no-underline {

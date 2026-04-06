@@ -31,6 +31,118 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
           : "image-off";
     }
 
+    function vrodos_decodeAssessmentText(value) {
+        let text = typeof value === 'string' ? value : '';
+        if (!text) return '';
+
+        if (/%[0-9a-fA-F]{2}/.test(text)) {
+            try {
+                text = decodeURIComponent(text);
+            } catch (err) {
+                // Keep original text if decoding fails.
+            }
+        }
+
+        if (/(?:\\u|u)[0-9a-fA-F]{4}/.test(text)) {
+            text = text.replace(/(?:\\u|u)([0-9a-fA-F]{4})/g, function (_, hex) {
+                return String.fromCharCode(parseInt(hex, 16));
+            });
+        }
+
+        return text;
+    }
+
+    function vrodos_normalizeAssessmentLevels(levels) {
+        let source = levels;
+
+        if (Array.isArray(source)) {
+            return source
+                .map(function (level) { return vrodos_decodeAssessmentText(level).trim().toUpperCase(); })
+                .filter(Boolean);
+        }
+
+        if (typeof source === 'string' && source.trim() !== '') {
+            try {
+                source = JSON.parse(source);
+            } catch (err) {
+                try {
+                    const binary = window.atob(source);
+                    const bytes = Uint8Array.from(binary, function (ch) { return ch.charCodeAt(0); });
+                    const decoded = new TextDecoder('utf-8').decode(bytes);
+                    source = JSON.parse(decoded);
+                } catch (base64Err) {
+                    source = source.split(/[,\s/]+/);
+                }
+            }
+        }
+
+        if (!Array.isArray(source)) {
+            return [];
+        }
+
+        return Array.from(new Set(source
+            .map(function (level) { return vrodos_decodeAssessmentText(level).trim().toUpperCase(); })
+            .filter(Boolean)));
+    }
+
+    function vrodos_resolvedAssessmentLevels(levels) {
+        let normalizedLevels = vrodos_normalizeAssessmentLevels(levels);
+        let allLevels = ['A1', 'A2', 'B1', 'B2'];
+
+        if (!normalizedLevels.length) {
+            return allLevels;
+        }
+
+        if (normalizedLevels.indexOf('ALL') !== -1 || normalizedLevels.indexOf('ALL LEVELS') !== -1) {
+            return allLevels;
+        }
+
+        return allLevels.filter(function (level) {
+            return normalizedLevels.indexOf(level) !== -1;
+        });
+    }
+
+    function vrodos_buildAssessmentMetaHTML(asset) {
+        if (!asset) {
+            return '';
+        }
+
+        if (String(asset.category_slug || '').toLowerCase() !== 'assessment') {
+            return '';
+        }
+
+        let assessmentType = vrodos_decodeAssessmentText(asset.assessment_type || asset.assessment_group || '').trim();
+        let assessmentLevels = vrodos_resolvedAssessmentLevels(asset.assessment_levels || '');
+        let typeBadgeHTML = '';
+        let levelBadgesHTML = '';
+
+        if (assessmentType) {
+            typeBadgeHTML =
+                '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-100">' +
+                escapeHTML(assessmentType) +
+                '</span>';
+        }
+
+        if (assessmentLevels.length) {
+            levelBadgesHTML = assessmentLevels.map(function (level) {
+                return (
+                    '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-emerald-400/35 tw-bg-emerald-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-emerald-100">' +
+                    escapeHTML(level) +
+                    '</span>'
+                );
+            }).join('');
+        }
+
+        if (!typeBadgeHTML && !levelBadgesHTML) {
+            return '';
+        }
+
+        return '<div class="tw-mt-1 tw-flex tw-flex-col tw-gap-1">' +
+            (typeBadgeHTML ? '<div class="tw-flex tw-flex-wrap tw-gap-1">' + typeBadgeHTML + '</div>' : '') +
+            (levelBadgesHTML ? '<div class="tw-flex tw-flex-wrap tw-gap-1">' + levelBadgesHTML + '</div>' : '') +
+            '</div>';
+    }
+
     let filemanager = document.getElementById('assetBrowserToolbar');
     let fileList = filemanager.querySelector('.data');
 
@@ -204,6 +316,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                 }
 
                 let previewFallbackIcon = vrodos_getAssetPreviewFallbackIcon(f);
+                let assessmentMetaHTML = vrodos_buildAssessmentMetaHTML(f);
                 let previewMarkup = f['screenshot_path']
                     ? '<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" src="' + encodeURI(f['screenshot_path']) + '">'
                     : '<div class="assetImg tw-flex tw-items-center tw-justify-center tw-bg-slate-700/80">' +
@@ -218,8 +331,9 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
                     '<div class="tw-absolute tw-inset-0 tw-bg-gradient-to-t tw-from-slate-900/80 tw-via-transparent tw-to-transparent tw-opacity-60 group-hover:tw-opacity-90 tw-transition-opacity"></div>' +
 
-                    '<div class="tw-absolute tw-top-1.5 tw-left-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-px-1.5 tw-py-0.5 tw-rounded-md tw-border tw-border-white/10 tw-z-10 tw-max-w-[70%]">' +
+                    '<div class="tw-absolute tw-top-1.5 tw-left-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-px-1.5 tw-py-1 tw-rounded-md tw-border tw-border-white/10 tw-z-10 tw-max-w-[78%]">' +
                          '<span class="tw-text-[9px] tw-font-bold tw-text-slate-200 tw-truncate tw-block">' + name + '</span>' +
+                         assessmentMetaHTML +
                     '</div>' +
 
                     '<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-p-1 tw-rounded-md tw-border tw-border-white/10 tw-z-10">' +

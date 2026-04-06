@@ -102,6 +102,21 @@ function vrodosNormalizeAssessmentLevels(levels) {
     ));
 }
 
+function vrodosResolvedAssessmentLevels(levels) {
+    const normalizedLevels = vrodosNormalizeAssessmentLevels(levels);
+    const allLevels = ['A1', 'A2', 'B1', 'B2'];
+
+    if (!normalizedLevels.length) {
+        return allLevels;
+    }
+
+    if (normalizedLevels.includes('ALL') || normalizedLevels.includes('ALL LEVELS')) {
+        return allLevels;
+    }
+
+    return allLevels.filter((level) => normalizedLevels.includes(level));
+}
+
 function vrodosCreateAssessmentLabel(title, type, levels) {
     if (typeof THREE.CSS2DObject === 'undefined') {
         return null;
@@ -134,19 +149,32 @@ function vrodosCreateAssessmentLabel(title, type, levels) {
     titleEl.style.fontSize = '12px';
     titleEl.style.fontWeight = '700';
     titleEl.style.lineHeight = '1.3';
+    titleEl.style.marginBottom = '6px';
 
-    const normalizedLevels = vrodosNormalizeAssessmentLevels(levels);
-    const levelsEl = document.createElement('div');
-    levelsEl.textContent = normalizedLevels.length ? `CEFR ${normalizedLevels.join(' / ')}` : 'CEFR All levels';
-    levelsEl.style.marginTop = '6px';
-    levelsEl.style.fontSize = '10px';
-    levelsEl.style.fontWeight = '700';
-    levelsEl.style.letterSpacing = '0.04em';
-    levelsEl.style.color = '#94a3b8';
+    const levelsWrap = document.createElement('div');
+    levelsWrap.style.display = 'flex';
+    levelsWrap.style.flexWrap = 'wrap';
+    levelsWrap.style.gap = '4px';
+
+    vrodosResolvedAssessmentLevels(levels).forEach((level) => {
+        const levelEl = document.createElement('span');
+        levelEl.textContent = level;
+        levelEl.style.display = 'inline-flex';
+        levelEl.style.alignItems = 'center';
+        levelEl.style.padding = '3px 7px';
+        levelEl.style.borderRadius = '999px';
+        levelEl.style.border = '1px solid rgba(52, 211, 153, 0.35)';
+        levelEl.style.background = 'rgba(16, 185, 129, 0.12)';
+        levelEl.style.fontSize = '9px';
+        levelEl.style.fontWeight = '700';
+        levelEl.style.letterSpacing = '0.04em';
+        levelEl.style.color = '#bbf7d0';
+        levelsWrap.appendChild(levelEl);
+    });
 
     labelEl.appendChild(typeEl);
     labelEl.appendChild(titleEl);
-    labelEl.appendChild(levelsEl);
+    labelEl.appendChild(levelsWrap);
 
     const label = new THREE.CSS2DObject(labelEl);
     label.position.set(0, 0.9, 0);
@@ -206,15 +234,6 @@ function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
     assessmentGroup.add(card);
     assessmentGroup.add(accent);
     assessmentGroup.add(dot);
-
-    const label = vrodosCreateAssessmentLabel(
-        assessmentGroup['assessment_title'],
-        assessmentGroup['assessment_type'] || assessmentGroup['assessment_group'],
-        assessmentGroup['assessment_levels']
-    );
-    if (label) {
-        assessmentGroup.add(label);
-    }
 
     return assessmentGroup;
 }
