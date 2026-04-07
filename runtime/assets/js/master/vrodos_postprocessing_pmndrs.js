@@ -45,18 +45,41 @@
     }
 
     /**
-     * Map the legacy bloomStrength preset to a numeric intensity for pmndrs BloomEffect.
-     * The legacy getBloomStrengthValue() already returns a number we can reuse, but
-     * pmndrs expects a different scale; this helper rescales it.
+     * Map the legacy bloomStrength preset to a numeric intensity for pmndrs BloomEffect,
+     * then multiply by the per-scene Pmndrs bloom intensity tweak. Threshold is also
+     * taken from the per-scene tweak. Both knobs come from the compile dialog and are
+     * persisted via scene-settings (pmndrsBloomIntensity / pmndrsBloomThreshold).
      */
-    function bloomOptionsForLegacyValue(legacyValue) {
+    function bloomOptionsForLegacyValue(legacyValue, intensityMultiplier, threshold) {
         // legacy values are roughly 0..2; pmndrs intensity is roughly 0..3
+        var mult = (typeof intensityMultiplier === 'number' && !isNaN(intensityMultiplier)) ? intensityMultiplier : 1.0;
+        var thr = (typeof threshold === 'number' && !isNaN(threshold)) ? threshold : 0.62;
         return {
-            intensity: Math.max(0, legacyValue) * 1.4,
-            luminanceThreshold: 0.62,
+            intensity: Math.max(0, legacyValue) * 1.4 * mult,
+            luminanceThreshold: thr,
             luminanceSmoothing: 0.18,
             mipmapBlur: true
         };
+    }
+
+    /**
+     * Read a pmndrs-tweak number from the component's `data` (A-Frame schema).
+     * Schema fields are typed as 'string' (see vrodos_scene_settings.component.js)
+     * so we always parseFloat. Returns `fallback` on parse failure or out-of-range.
+     */
+    function readPmndrsNumber(self, key, min, max, fallback) {
+        var raw = (self && self.data && self.data[key] !== undefined) ? self.data[key] : fallback;
+        var n = parseFloat(raw);
+        if (isNaN(n)) return fallback;
+        if (n < min) return min;
+        if (n > max) return max;
+        return n;
+    }
+
+    function readPmndrsBool(self, key) {
+        if (!self || !self.data) return false;
+        var v = self.data[key];
+        return v === true || v === 'true' || v === '1' || v === 1;
     }
 
     /**
@@ -94,23 +117,31 @@
 
         var effects = [];
 
-        // SSAO — pmndrs SSAOEffect, depth-only fallback (normalBuffer = null).
+        // SSAO — temporarily disabled in the pmndrs pipeline (Phase 3).
+        //
+        // pmndrs SSAOEffect with normalBuffer=null shares the composer's depth
+        // attachment, which causes
+        //   GL_INVALID_OPERATION: glBlitFramebuffer: Read and write depth stencil
+        //   attachments cannot be the same image
+        // when combined with HalfFloatType frame buffers. Wiring up
+        // DepthDownsamplingPass + a separate normal buffer is the proper fix
+        // (Phase 3 follow-up). For now we no-op so the rest of the pipeline
+        // can render. Scenes that require SSAO should compile against the
+        // legacy engine.
         var aoPreset = (typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
-        if (aoPreset && aoPreset !== 'off') {
-            try {
-                this.pmndrsSsaoEffect = new PP.SSAOEffect(camera, null, ssaoOptionsForPreset(aoPreset));
-                effects.push(this.pmndrsSsaoEffect);
-            } catch (err) {
-                console.warn('[VRodos] pmndrs SSAOEffect construction failed, skipping:', err);
-                this.pmndrsSsaoEffect = null;
-            }
+        if (aoPreset && aoPreset !== 'off' && !this._pmndrsSsaoSkipWarned) {
+            console.info('[VRodos] pmndrs pipeline: SSAO preset "' + aoPreset + '" requested but SSAOEffect is disabled in this Phase 3 build (depth-attachment blit conflict). Switch postFXEngine to "legacy" if SSAO is required.');
+            this._pmndrsSsaoSkipWarned = true;
         }
+        this.pmndrsSsaoEffect = null;
 
-        // Bloom
+        // Bloom (intensity & threshold come from per-scene Pmndrs tweaks)
         var bloomVal = (typeof this.getBloomStrengthValue === 'function') ? this.getBloomStrengthValue() : 0;
-        if (bloomVal > 0) {
+        var pmndrsBloomMult = readPmndrsNumber(this, 'pmndrsBloomIntensity', 0, 3, 1.0);
+        var pmndrsBloomThr  = readPmndrsNumber(this, 'pmndrsBloomThreshold', 0, 1, 0.62);
+        if (bloomVal > 0 && pmndrsBloomMult > 0) {
             try {
-                this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(bloomVal));
+                this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(bloomVal, pmndrsBloomMult, pmndrsBloomThr));
                 effects.push(this.pmndrsBloomEffect);
             } catch (err) {
                 console.warn('[VRodos] pmndrs BloomEffect construction failed, skipping:', err);
@@ -130,18 +161,28 @@
             }
         }
 
-        // Vignette
-        if (this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXVignetteEnabled')) {
+        // Vignette — pmndrs engine has its own per-scene flag (legacy postFXVignetteEnabled
+        // is hard-coded false, so we honour pmndrsVignetteEnabled instead)
+        var pmndrsVignetteOn = readPmndrsBool(this, 'pmndrsVignetteEnabled');
+        if (pmndrsVignetteOn) {
             try {
-                effects.push(new PP.VignetteEffect({ offset: 0.35, darkness: 0.5 }));
+                var vDarkness = readPmndrsNumber(this, 'pmndrsVignetteDarkness', 0, 1, 0.5);
+                effects.push(new PP.VignetteEffect({ offset: 0.35, darkness: vDarkness }));
             } catch (err) {
                 console.warn('[VRodos] pmndrs VignetteEffect failed, skipping:', err);
             }
         }
 
-        // ACES Filmic tone mapping — always, last so it operates on the final HDR result
+        // ACES Filmic tone mapping — always, last so it operates on the final HDR result.
+        // Per-scene exposure multiplier is applied via the renderer's toneMappingExposure,
+        // which the pmndrs ToneMappingEffect respects.
         try {
             effects.push(new PP.ToneMappingEffect({ mode: PP.ToneMappingMode.ACES_FILMIC }));
+            var pmndrsExposure = readPmndrsNumber(this, 'pmndrsToneMappingExposure', 0.3, 2.5, 1.0);
+            if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
+                this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
+                renderer.toneMappingExposure = pmndrsExposure;
+            }
         } catch (err) {
             console.warn('[VRodos] pmndrs ToneMappingEffect failed, skipping:', err);
         }
@@ -275,9 +316,14 @@
         var renderer = this.el.renderer;
         var size = this.postProcessingSize;
         renderer.getSize(size);
-        var pixelRatio = (typeof renderer.getPixelRatio === 'function') ? renderer.getPixelRatio() : 1;
-        var w = Math.max(1, Math.floor(size.x * pixelRatio));
-        var h = Math.max(1, Math.floor(size.y * pixelRatio));
+        // pmndrs/postprocessing's EffectComposer.setSize expects CSS pixels (NOT
+        // device pixels) — it re-applies the renderer pixel ratio internally.
+        // The legacy file pre-multiplies because its custom composer is built
+        // around physical pixel buffers. Multiplying here causes max-texture-size
+        // overflow on HiDPI screens and the framebuffer comes back with zero-size
+        // attachments (black screen).
+        var w = Math.max(1, Math.floor(size.x));
+        var h = Math.max(1, Math.floor(size.y));
         if (this._pmndrsLastW !== w || this._pmndrsLastH !== h) {
             this.pmndrsComposer.setSize(w, h);
             this._pmndrsLastW = w;
@@ -342,6 +388,10 @@
         }
         if (this.pmndrsOriginalRender) {
             this.el.renderer.render = this.pmndrsOriginalRender;
+        }
+        if (typeof this._pmndrsPrevToneMappingExposure === 'number' && this.el.renderer) {
+            this.el.renderer.toneMappingExposure = this._pmndrsPrevToneMappingExposure;
+            this._pmndrsPrevToneMappingExposure = undefined;
         }
         if (this.pmndrsComposer) {
             try {

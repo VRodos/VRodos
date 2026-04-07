@@ -111,6 +111,14 @@ class VrodosSceneExporter {
                 aframeReflectionSource: envir.scene.aframeReflectionSource || 'hdr',
                 aframeHorizonSkyPreset: envir.scene.aframeHorizonSkyPreset || 'natural',
                 aframeEnvMapPreset: envir.scene.aframeEnvMapPreset || 'none',
+                // Post-processing engine selector ('legacy' or 'pmndrs')
+                aframePostFXEngine: (envir.scene.aframePostFXEngine === 'pmndrs') ? 'pmndrs' : 'legacy',
+                // Pmndrs-only tweakable knobs (ignored when aframePostFXEngine === 'legacy')
+                aframePmndrsBloomIntensity: (typeof envir.scene.aframePmndrsBloomIntensity === 'number') ? envir.scene.aframePmndrsBloomIntensity : 1.0,
+                aframePmndrsBloomThreshold: (typeof envir.scene.aframePmndrsBloomThreshold === 'number') ? envir.scene.aframePmndrsBloomThreshold : 0.62,
+                aframePmndrsVignetteEnabled: envir.scene.aframePmndrsVignetteEnabled === true,
+                aframePmndrsVignetteDarkness: (typeof envir.scene.aframePmndrsVignetteDarkness === 'number') ? envir.scene.aframePmndrsVignetteDarkness : 0.5,
+                aframePmndrsToneMappingExposure: (typeof envir.scene.aframePmndrsToneMappingExposure === 'number') ? envir.scene.aframePmndrsToneMappingExposure : 1.0,
                 backgroundPresetOption: envir.scene.backgroundPresetOption || 'None',
                 backgroundPresetGroundEnabled: envir.scene.backgroundPresetGroundEnabled !== false,
                 backgroundStyleOption: (envir.scene.backgroundStyleOption !== undefined) ? envir.scene.backgroundStyleOption : 0,

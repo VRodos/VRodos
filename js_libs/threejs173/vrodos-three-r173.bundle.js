@@ -56121,5 +56121,4 @@ void main() {
   window.Stats = stats_module_default;
   window.POSTPROCESSING = build_exports;
   window.N8AOPostPass = $87431ee93b037844$export$2489f9981ab0fa82;
-  window.REALISM = REALISM;
 })();

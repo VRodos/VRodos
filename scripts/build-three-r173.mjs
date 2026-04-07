@@ -71,7 +71,6 @@ window.THREE = THREE;
 window.Stats = Stats;
 window.POSTPROCESSING = POSTPROCESSING;
 window.N8AOPostPass = N8AOPostPass;
-window.REALISM = REALISM;
 `;
 
 async function ensurePathExists(targetPath, label) {

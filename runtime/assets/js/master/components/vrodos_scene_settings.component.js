@@ -51,6 +51,13 @@ AFRAME.registerComponent('scene-settings', {
         // SSR/TRAA). Default 'legacy' for v1 — flips to 'pmndrs' once Phase 3 confirms
         // visual parity. See POSTPROCESSING_MIGRATION_PLAN.md §11.
         postFXEngine: { type: "string", default: "legacy" },
+        // Pmndrs-only tweakable knobs. Numbers serialized as strings since
+        // A-Frame string-typed schema is what the rest of this component uses.
+        pmndrsBloomIntensity: { type: "string", default: "1.0" },
+        pmndrsBloomThreshold: { type: "string", default: "0.62" },
+        pmndrsVignetteEnabled: { type: "string", default: "0" },
+        pmndrsVignetteDarkness: { type: "string", default: "0.5" },
+        pmndrsToneMappingExposure: { type: "string", default: "1.0" },
     },
     getSSRStrengthValue: function () {
         switch (this.data.postFXSSRStrength) {

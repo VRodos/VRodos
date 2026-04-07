@@ -21,8 +21,43 @@ document.addEventListener('DOMContentLoaded', function() {
             ssrStrength: document.getElementById('compileSSRStrengthSelect'),
             taaEnabled: document.getElementById('compilePostFxTAAToggle'),
             postFxEngine: document.getElementById('compilePostFxEngineSelect'),
-            postFxEngineHint: document.getElementById('compilePostFxEngineHint')
+            postFxEngineHint: document.getElementById('compilePostFxEngineHint'),
+            postFxEngineTabLegacy: document.getElementById('compilePostFxEngineTabLegacy'),
+            postFxEngineTabPmndrs: document.getElementById('compilePostFxEngineTabPmndrs'),
+            pmndrsTweaksGroup: document.getElementById('compilePmndrsTweaks'),
+            pmndrsBloomIntensity: document.getElementById('compilePmndrsBloomIntensitySlider'),
+            pmndrsBloomIntensityValue: document.getElementById('compilePmndrsBloomIntensityValue'),
+            pmndrsBloomThreshold: document.getElementById('compilePmndrsBloomThresholdSlider'),
+            pmndrsBloomThresholdValue: document.getElementById('compilePmndrsBloomThresholdValue'),
+            pmndrsExposure: document.getElementById('compilePmndrsExposureSlider'),
+            pmndrsExposureValue: document.getElementById('compilePmndrsExposureValue'),
+            pmndrsVignette: document.getElementById('compilePmndrsVignetteToggle'),
+            pmndrsVignetteDarkness: document.getElementById('compilePmndrsVignetteDarknessSlider'),
+            pmndrsVignetteDarknessValue: document.getElementById('compilePmndrsVignetteDarknessValue'),
+            pmndrsResetBtn: document.getElementById('compilePmndrsResetBtn')
         };
+    }
+
+    // Single source of truth for the pmndrs-tweak default values. Used by both
+    // the Reset button and the loader/normalizer to keep behaviour consistent.
+    var PMNDRS_TWEAK_DEFAULTS = {
+        bloomIntensity: 1.0,
+        bloomThreshold: 0.62,
+        toneMappingExposure: 1.0,
+        vignetteEnabled: false,
+        vignetteDarkness: 0.5
+    };
+
+    function clampNumber(value, min, max, fallback) {
+        var n = parseFloat(value);
+        if (isNaN(n)) return fallback;
+        if (n < min) return min;
+        if (n > max) return max;
+        return n;
+    }
+
+    function formatPmndrsNumber(value) {
+        return (Math.round(value * 100) / 100).toFixed(2);
     }
 
     function normalizePostFxEngine(value) {
@@ -230,6 +265,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!envir.scene.aframePostFXEngine) {
             envir.scene.aframePostFXEngine = 'legacy';
         }
+        if (typeof envir.scene.aframePmndrsBloomIntensity !== 'number') {
+            envir.scene.aframePmndrsBloomIntensity = clampNumber(envir.scene.aframePmndrsBloomIntensity, 0, 3, 1.0);
+        }
+        if (typeof envir.scene.aframePmndrsBloomThreshold !== 'number') {
+            envir.scene.aframePmndrsBloomThreshold = clampNumber(envir.scene.aframePmndrsBloomThreshold, 0, 1, 0.62);
+        }
+        if (typeof envir.scene.aframePmndrsVignetteEnabled === 'undefined') {
+            envir.scene.aframePmndrsVignetteEnabled = false;
+        }
+        if (typeof envir.scene.aframePmndrsVignetteDarkness !== 'number') {
+            envir.scene.aframePmndrsVignetteDarkness = clampNumber(envir.scene.aframePmndrsVignetteDarkness, 0, 1, 0.5);
+        }
+        if (typeof envir.scene.aframePmndrsToneMappingExposure !== 'number') {
+            envir.scene.aframePmndrsToneMappingExposure = clampNumber(envir.scene.aframePmndrsToneMappingExposure, 0.3, 2.5, 1.0);
+        }
 
         envir.scene.aframeAAQuality = normalizeAAQuality(envir.scene.aframeAAQuality);
         envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(envir.scene.aframeAmbientOcclusionPreset);
@@ -273,6 +323,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (controls.postFxEngine) {
             controls.postFxEngine.disabled = !postFxEnabled;
         }
+        // Visually reflect the active engine on the tab strip and gate the tabs by postFx
+        if (controls.postFxEngineTabLegacy && controls.postFxEngineTabPmndrs) {
+            controls.postFxEngineTabLegacy.classList.toggle('tw-tab-active', !isPmndrs);
+            controls.postFxEngineTabPmndrs.classList.toggle('tw-tab-active', isPmndrs);
+            [controls.postFxEngineTabLegacy, controls.postFxEngineTabPmndrs].forEach(function (tab) {
+                tab.disabled = !postFxEnabled;
+                tab.classList.toggle('tw-opacity-50', !postFxEnabled);
+                tab.style.cursor = postFxEnabled ? 'pointer' : 'not-allowed';
+            });
+        }
         if (controls.postFxEngineHint) {
             controls.postFxEngineHint.textContent = isPmndrs
                 ? 'Modern fused EffectPass. SSR and Temporal AA are not available in this engine.'
@@ -311,7 +371,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? 'Temporal AA is not available in the Pmndrs engine. Switch to Legacy to use TAA.'
                 : 'Temporal anti-aliasing for smoother edges and reduced specular shimmer. Supplements FXAA.';
         }
+        // Pmndrs tweakables: only show & enable when engine === 'pmndrs' AND postFx is on
+        if (controls.pmndrsTweaksGroup) {
+            controls.pmndrsTweaksGroup.style.display = (postFxEnabled && isPmndrs) ? '' : 'none';
+        }
+        var pmndrsTweakEnabled = postFxEnabled && isPmndrs;
+        if (controls.pmndrsBloomIntensity) controls.pmndrsBloomIntensity.disabled = !pmndrsTweakEnabled;
+        if (controls.pmndrsBloomThreshold) controls.pmndrsBloomThreshold.disabled = !pmndrsTweakEnabled;
+        if (controls.pmndrsExposure) controls.pmndrsExposure.disabled = !pmndrsTweakEnabled;
+        if (controls.pmndrsVignette) controls.pmndrsVignette.disabled = !pmndrsTweakEnabled;
+        if (controls.pmndrsVignetteDarkness) {
+            controls.pmndrsVignetteDarkness.disabled = !pmndrsTweakEnabled || !(controls.pmndrsVignette && controls.pmndrsVignette.checked);
+        }
+
         updateEdgeAAStrengthLabel();
+    }
+
+    function updatePmndrsValueLabels() {
+        var c = getCompileDialogElements();
+        if (c.pmndrsBloomIntensity && c.pmndrsBloomIntensityValue) {
+            c.pmndrsBloomIntensityValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsBloomIntensity.value));
+        }
+        if (c.pmndrsBloomThreshold && c.pmndrsBloomThresholdValue) {
+            c.pmndrsBloomThresholdValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsBloomThreshold.value));
+        }
+        if (c.pmndrsExposure && c.pmndrsExposureValue) {
+            c.pmndrsExposureValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsExposure.value));
+        }
+        if (c.pmndrsVignetteDarkness && c.pmndrsVignetteDarknessValue) {
+            c.pmndrsVignetteDarknessValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsVignetteDarkness.value));
+        }
     }
 
     function applyCompileDialogSettingsToScene() {
@@ -357,6 +446,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (controls.postFxEngine) {
             envir.scene.aframePostFXEngine = normalizePostFxEngine(controls.postFxEngine.value);
+        }
+        if (controls.pmndrsBloomIntensity) {
+            envir.scene.aframePmndrsBloomIntensity = clampNumber(controls.pmndrsBloomIntensity.value, 0, 3, 1.0);
+        }
+        if (controls.pmndrsBloomThreshold) {
+            envir.scene.aframePmndrsBloomThreshold = clampNumber(controls.pmndrsBloomThreshold.value, 0, 1, 0.62);
+        }
+        if (controls.pmndrsExposure) {
+            envir.scene.aframePmndrsToneMappingExposure = clampNumber(controls.pmndrsExposure.value, 0.3, 2.5, 1.0);
+        }
+        if (controls.pmndrsVignette) {
+            envir.scene.aframePmndrsVignetteEnabled = controls.pmndrsVignette.checked === true;
+        }
+        if (controls.pmndrsVignetteDarkness) {
+            envir.scene.aframePmndrsVignetteDarkness = clampNumber(controls.pmndrsVignetteDarkness.value, 0, 1, 0.5);
         }
     }
 
@@ -427,6 +531,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 : 'legacy';
         }
 
+        if (controls.pmndrsBloomIntensity) {
+            controls.pmndrsBloomIntensity.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsBloomIntensity : 1.0, 0, 3, 1.0);
+        }
+        if (controls.pmndrsBloomThreshold) {
+            controls.pmndrsBloomThreshold.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsBloomThreshold : 0.62, 0, 1, 0.62);
+        }
+        if (controls.pmndrsExposure) {
+            controls.pmndrsExposure.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsToneMappingExposure : 1.0, 0.3, 2.5, 1.0);
+        }
+        if (controls.pmndrsVignette) {
+            controls.pmndrsVignette.checked = !!(envir && envir.scene && envir.scene.aframePmndrsVignetteEnabled);
+        }
+        if (controls.pmndrsVignetteDarkness) {
+            controls.pmndrsVignetteDarkness.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsVignetteDarkness : 0.5, 0, 1, 0.5);
+        }
+        updatePmndrsValueLabels();
+
         syncCompilePostFxState();
     };
 
@@ -491,6 +612,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.postFxEngine) {
         controls.postFxEngine.addEventListener('change', syncCompilePostFxState);
+    }
+    // Tab strip — clicking a tab writes the engine value into the hidden input
+    // and re-runs the show/hide gating. Disabled tabs (when postFx is off) are no-ops.
+    function bindEngineTab(tabEl) {
+        if (!tabEl) return;
+        tabEl.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (tabEl.disabled) return;
+            var engine = tabEl.getAttribute('data-engine') === 'pmndrs' ? 'pmndrs' : 'legacy';
+            if (controls.postFxEngine) {
+                controls.postFxEngine.value = engine;
+            }
+            syncCompilePostFxState();
+        });
+    }
+    bindEngineTab(controls.postFxEngineTabLegacy);
+    bindEngineTab(controls.postFxEngineTabPmndrs);
+    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsVignetteDarkness].forEach(function (el) {
+        if (el) {
+            el.addEventListener('input', updatePmndrsValueLabels);
+        }
+    });
+    if (controls.pmndrsVignette) {
+        controls.pmndrsVignette.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.pmndrsResetBtn) {
+        controls.pmndrsResetBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var c = getCompileDialogElements();
+            if (c.pmndrsBloomIntensity) c.pmndrsBloomIntensity.value = PMNDRS_TWEAK_DEFAULTS.bloomIntensity;
+            if (c.pmndrsBloomThreshold) c.pmndrsBloomThreshold.value = PMNDRS_TWEAK_DEFAULTS.bloomThreshold;
+            if (c.pmndrsExposure) c.pmndrsExposure.value = PMNDRS_TWEAK_DEFAULTS.toneMappingExposure;
+            if (c.pmndrsVignette) c.pmndrsVignette.checked = PMNDRS_TWEAK_DEFAULTS.vignetteEnabled;
+            if (c.pmndrsVignetteDarkness) c.pmndrsVignetteDarkness.value = PMNDRS_TWEAK_DEFAULTS.vignetteDarkness;
+            updatePmndrsValueLabels();
+            syncCompilePostFxState();
+        });
     }
 
     if (typeof window.syncCompileDialogFromSceneSettings === 'function') {

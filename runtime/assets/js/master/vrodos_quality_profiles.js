@@ -190,20 +190,26 @@
             shadow: shadowEnabled
         };
 
+        // skyType 'gradient' draws a smooth horizonColor → skyColor blend with no
+        // procedural sun disk. We previously used 'atmosphere', but its built-in
+        // sun shader renders a pale disk + halo at lightPosition that looks alien
+        // through HDR tone-mapping. The scene's directional light is a separate
+        // THREE.DirectionalLight controlled by lightPosition, so removing the sky
+        // sun disk has no effect on actual illumination or shadows.
         if (preset === 'clear') {
-            environmentConfig.skyType = 'atmosphere';
+            environmentConfig.skyType = 'gradient';
             environmentConfig.skyColor = '#b8ddff';
             environmentConfig.horizonColor = '#edf8ff';
             environmentConfig.lighting = 'distant';
             environmentConfig.lightPosition = '0.03 0.98 -0.08';
         } else if (preset === 'crisp') {
-            environmentConfig.skyType = 'atmosphere';
+            environmentConfig.skyType = 'gradient';
             environmentConfig.skyColor = '#9fd1ff';
             environmentConfig.horizonColor = '#f7fbff';
             environmentConfig.lighting = 'distant';
             environmentConfig.lightPosition = '0.05 1 -0.1';
         } else {
-            environmentConfig.skyType = 'atmosphere';
+            environmentConfig.skyType = 'gradient';
             environmentConfig.skyColor = '#b2d8ff';
             environmentConfig.horizonColor = '#e9f6ff';
             environmentConfig.lighting = 'distant';
@@ -211,6 +217,33 @@
         }
 
         this.el.setAttribute('environment', environmentConfig);
+
+        // aframe-environment-component creates a visible "sun" sphere mesh as a
+        // child of the sky whenever lighting === 'distant', regardless of skyType.
+        // With skyType 'atmosphere' the procedural shader masks the sphere, but
+        // with 'gradient' the bare mesh shows up as a giant pale disc that ACES
+        // Filmic tone-mapping turns into a "burnt disc" artifact. We can't move
+        // it independently of the directional light (they share lightPosition).
+        // Solution: hide the sun mesh on the next tick (after env component has
+        // built the scenegraph), keeping the directional light and shadows intact.
+        var envEl = this.el;
+        var hideEnvSunMesh = function () {
+            if (!envEl || !envEl.object3D) {
+                return;
+            }
+            envEl.object3D.traverse(function (node) {
+                if (node && node.isMesh && (node.name === 'sun' || node.name === 'sunMesh' || node.name === 'sunsphere')) {
+                    node.visible = false;
+                }
+            });
+        };
+        // Run twice — once on the next animation frame, and once after a short
+        // delay — because the environment component sometimes rebuilds its mesh
+        // tree asynchronously after a setAttribute call.
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(hideEnvSunMesh);
+        }
+        setTimeout(hideEnvSunMesh, 100);
     };
     H.applyBackgroundQualityProfile = function () {
         var isHighQuality = this.data.renderQuality === 'high';
