@@ -45,6 +45,12 @@ AFRAME.registerComponent('scene-settings', {
         postFXTAAEnabled: { type: "string", default: "0" },
         postFXSSREnabled: { type: "string", default: "0" },
         postFXSSRStrength: { type: "string", default: "balanced" },
+        // Post-processing engine selector — 'legacy' = vrodos_postprocessing.js (custom
+        // SAO/SSR/TAA composite), 'pmndrs' = vrodos_postprocessing_pmndrs.js (pmndrs
+        // EffectComposer with fused EffectPass; supports clouds in Phase 5 but no
+        // SSR/TRAA). Default 'legacy' for v1 — flips to 'pmndrs' once Phase 3 confirms
+        // visual parity. See POSTPROCESSING_MIGRATION_PLAN.md §11.
+        postFXEngine: { type: "string", default: "legacy" },
     },
     getSSRStrengthValue: function () {
         switch (this.data.postFXSSRStrength) {
