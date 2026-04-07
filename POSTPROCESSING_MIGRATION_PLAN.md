@@ -131,31 +131,49 @@ Create `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` (sibling to th
 
 1. On `scene-settings` `init()`, if `renderQuality === 'high'` and not in VR, build a pmndrs `EffectComposer` on the A-Frame renderer.
 2. Add a `RenderPass(scene, camera)` first.
-3. Conditionally construct effects from the scene-settings schema:
-   - `aaQuality` → `SMAAEffect({ preset: … })` (map `balanced|high|ultra` onto `SMAAPreset.MEDIUM|HIGH|ULTRA`).
-   - `ambientOcclusionPreset !== 'off'` → `N8AOPostPass` (separate pass, added before the final EffectPass).
-   - `postFXSSREnabled === '1'` → `realism-effects` `SSREffect`.
-   - `postFXTAAEnabled === '1'` → `realism-effects` `TRAAEffect` (or pmndrs TAA if v7 exposes it stably on r173).
-   - `bloomStrength !== 'off'` → `BloomEffect({ intensity, luminanceThreshold })`.
-   - `postFXColorEnabled === '1'` → `BrightnessContrastEffect` + `HueSaturationEffect`.
-   - `postFXVignetteEnabled === '1'` → `VignetteEffect`.
-   - Always → `ToneMappingEffect({ mode: ToneMappingMode.ACES_FILMIC })`.
-4. Stuff all "merge-friendly" effects (i.e. everything except `N8AOPostPass`, SMAA, SSR, TRAA which are separate `Pass`es by design) into a single `EffectPass(camera, …)` at the end.
+3. Conditionally construct effects from the scene-settings schema (revised after Phase 0/1 — see §9 and §11):
+    - `aaQuality` → `FXAAEffect()` (SMAA is broken inside EffectPass on r173 — see §9). Treat `balanced|high|ultra` as a no-op or map to subpixel intensity tweaks if FXAA exposes them.
+    - `ambientOcclusionPreset !== 'off'` → pmndrs `SSAOEffect` (n8ao is broken on r173 — see §9). Construct as a normal effect; it merges into the final EffectPass.
+    - `postFXSSREnabled === '1'` → **NOT supported in the new pipeline.** Log a one-time `console.info` telling the user this scene needs the legacy pipeline if SSR is required. See §11.
+    - `postFXTAAEnabled === '1'` → **NOT supported in the new pipeline.** Same handling as SSR. See §11.
+    - `bloomStrength !== 'off'` → `BloomEffect({ intensity, luminanceThreshold })`.
+    - `postFXColorEnabled === '1'` → `BrightnessContrastEffect` + `HueSaturationEffect`.
+    - `postFXVignetteEnabled === '1'` → `VignetteEffect`.
+    - Always → `ToneMappingEffect({ mode: ToneMappingMode.ACES_FILMIC })`.
+4. Stuff every constructed effect into a single `EffectPass(camera, …)` at the end. With SSR/TRAA dropped and n8ao replaced by pmndrs `SSAOEffect`, **everything merges** — no separate passes needed.
 5. Install the same `renderer.render` monkey-patch shape as the current code, but delegate to `composer.render(deltaTime)` instead. Keep the `shouldUsePostProcessing()` gate unchanged (VR fallback preserved).
-6. Re-implement **adaptive SAO half-rate** as a thin wrapper around the N8AOPass: track the same 30-frame rolling FPS window from the old file (lines 282–315), and when active, call `n8aoPass.enabled = (frameCounter & 1) === 0` to skip every other frame.
+6. Re-implement **adaptive AO half-rate** as a thin wrapper around the SSAOEffect: track the same 30-frame rolling FPS window from the old file (lines 282–315), and when active, toggle `ssaoEffect.blendMode.opacity.value` between full and zero on alternate frames (since the effect is merged into the EffectPass and cannot simply be `enabled=false`). Document this departure from the old half-rate behaviour in the module header.
 7. On disable / scene teardown, `composer.dispose()` and null everything — same lifecycle as the current code.
+8. **Defensive composer init**: before the first `composer.render()`, call `composer.setSize(w, h)` with `renderer.domElement.clientWidth || renderer.domElement.width || window.innerWidth` (and the height equivalent), guarding against the A-Frame zero-canvas race observed in Phase 0.
 
-### Phase 3 — Wire the new module into the HTML shells
+### Phase 3 — Wire the new module into the HTML shells AND add the engine selector
 
-- `js_libs/aframe_libs/Master_Client_prototype.html`: replace the `<script src="js/master/vrodos_postprocessing.js">` line (around line 64 in the current file) with the new module. Keep the existing shader helper files (`vrodos_shaders_*.js`) loaded **only until Phase 6** — they're harmless but unused.
+- `js_libs/aframe_libs/Master_Client_prototype.html`: load the **new** `vrodos_postprocessing_pmndrs.js` **alongside** (not replacing) the existing `vrodos_postprocessing.js` line (~line 64). Both files self-register as engine candidates; only one wires up at runtime per the `postFXEngine` field on `<a-scene scene-settings="…">`.
 - `js_libs/aframe_libs/Simple_Client_prototype.html`: same change for parity.
-- Run a compiled scene with clouds/atmosphere features flagged **off**, and confirm visually that SMAA + N8AO + Bloom + Tone mapping produce output that is at least as good as the old pipeline. Capture screenshots at identical camera positions for before/after review.
+- The legacy `vrodos_shaders_*.js` helpers stay loaded — they back the legacy engine and remain in use until Phase 6.
+- Compile a reference scene with `postFXEngine='pmndrs'` and confirm visually that SSAO + Bloom + Tone mapping + FXAA produce output at least on par with the legacy pipeline. Capture screenshots at identical camera positions for before/after review.
+- Compile a second reference scene with `postFXEngine='legacy'` (the default) and confirm zero behavioural change vs. main.
 
-### Phase 4 — Scene-settings schema (no new cloud fields yet)
+### Phase 4 — Scene-settings schema (engine selector + compiler dialog UI)
 
-No schema changes required in Phase 4. Existing fields (`postFXBloomEnabled`, `postFXSSREnabled`, `postFXTAAEnabled`, etc.) keep their current meaning. The mapping from those strings to pmndrs effect construction lives entirely inside `vrodos_postprocessing_pmndrs.js`.
+The scene-settings schema in `runtime/assets/js/master/components/vrodos_scene_settings.component.js` (schema block at lines 8–48) gains exactly one new field for v1:
 
-This is important: **compiled scenes out there in the wild continue to work unchanged** — they still write the same `scene-settings` attribute, only the runtime interpretation of those fields changes.
+```js
+postFXEngine: { type: 'string', default: 'legacy' }, // 'legacy' | 'pmndrs'
+```
+
+`'legacy'` is the v1 default so that **all existing scenes and all newly-compiled scenes keep behaving exactly as today** until the new pipeline has visible mileage. Flipping the default to `'pmndrs'` happens in a follow-up commit after Phase 3 confirms parity.
+
+The other post-FX fields (`postFXBloomEnabled`, `postFXSSREnabled`, `postFXTAAEnabled`, `ambientOcclusionPreset`, `aaQuality`, `bloomStrength`, `postFXColorEnabled`, `postFXVignetteEnabled`) keep their current meaning. Their interpretation depends on which engine is active:
+
+- **legacy engine** — interpreted exactly as today by `vrodos_postprocessing.js`. Full SSR/TRAA/SAO support.
+- **pmndrs engine** — interpreted by `vrodos_postprocessing_pmndrs.js`. `postFXSSREnabled` and `postFXTAAEnabled` are silently no-ops with a one-time `console.info`. Everything else maps onto the merged EffectPass per Phase 2.
+
+**Compiler change** — `includes/class-vrodos-compiler-manager.php` (lines 534–567) gets the new `postFXEngine` key serialized into the `scene-settings` attribute string.
+
+**Compilation dialog UI** — The scene compilation dialog gains one new dropdown labeled "Post-processing engine" with two options: "Legacy (custom SSR/TRAA, no clouds)" and "Pmndrs (modern, supports clouds)". Default selection mirrors the schema default. Clouds-related UI (Phase 5) is disabled when "Legacy" is selected.
+
+**Compatibility guarantee**: scenes compiled before this field existed deserialize with `postFXEngine='legacy'` (the schema default), so **every existing scene out there in the wild continues to work unchanged**.
 
 ### Phase 5 — Add the Takram clouds feature on top (the original ask)
 
@@ -254,7 +272,104 @@ End-to-end gates — each phase has its own go/no-go:
 
 ---
 
-## 9. Reference Links
+## 9. Phase 0 Results (2026-04-07) — GO with caveats
+
+Smoke test built via `scripts/build-phase0-smoke.mjs` → `js_libs/threejs173/vrodos-phase0-smoke.bundle.js` (2,146,507 bytes vs production 1,567,597 bytes; **delta ≈ 580 KB** for postprocessing + n8ao). Driven by `phase0-pmndrs-smoke-test.html` against A-Frame 1.7.1 + Three r173.
+
+### Verified working
+- ✅ `new EffectComposer(renderer)` constructs against Three r173 — no errors.
+- ✅ `RenderPass` + `EffectPass` merging — multiple effects fused into one fragment shader pass.
+- ✅ **Production-candidate pipeline** rendered cleanly at **1920×1080 over 10 frames, NO_ERROR**:
+  `BloomEffect + BrightnessContrastEffect + HueSaturationEffect + VignetteEffect + ToneMappingEffect(ACES_FILMIC) + FXAAEffect`
+- ✅ HalfFloat HDR framebuffer type works.
+- ✅ UnsignedByte framebuffer type also works (fallback path available).
+- ✅ Dispose / rebuild cycles clean — 3× sequential `composer.dispose()` + reconstruct loops, NO_ERROR.
+
+### Known issues / workarounds
+- ❌ **`SMAAEffect` is broken inside `EffectPass` on r173 + A-Frame 1.7.1.** Even with lookup textures (`searchImageDataURL` / `areaImageDataURL`) loaded directly via `new Image()`, SMAA throws `INVALID_OPERATION` when routed through EffectPass. SMAA's internal `edgeDetectionPass` and `weightsPass` render NO_ERROR in isolation, so the issue is the EffectPass texture binding contract on this Three version. **Workaround for Phase 2: use `FXAAEffect` instead.** Revisit SMAA when (or if) we upgrade Three to r18x.
+- ❌ **`N8AOPostPass` from `n8ao@1.10.1` throws `INVALID_OPERATION`** on first render against r173. **Workaround for Phase 2: fall back to pmndrs `SSAOEffect`** (constructs cleanly; render path to be confirmed in Phase 2 isolation test). Alternatively, pin a different n8ao version compatible with r173 — investigate during Phase 1.
+- ⚠️ **Critical setup gotcha**: `composer.setSize(w, h)` MUST be called with non-zero dimensions before the first `composer.render()`. If A-Frame's canvas reports `width=0` (e.g. when overlays are present, or the scene hasn't laid out yet), the first composer render throws `INVALID_FRAMEBUFFER_OPERATION (0x506)`. Phase 2 must guard for this — ideally hook composer construction off A-Frame's `loaded` event AND call `setSize()` with `renderer.domElement.clientWidth || window.innerWidth` fallback.
+
+### Verdict: **GO**
+The architectural win — fused EffectPass for color grading / bloom / tonemap / vignette / AA — is achieved. SMAA and N8AO failures do not block the migration; the fallback choices (FXAA for AA, pmndrs SSAOEffect for AO) are well-understood and within the pmndrs ecosystem. Realism-effects SSR/TRAA remains unverified (deferred to Phase 1/2).
+
+### Phase 1 entry checklist
+1. Decide on AA strategy in Phase 2: FXAA-only for v1, or attempt SMAA workaround (separate `SMAAPass` outside EffectPass) as a stretch.
+2. Decide on AO strategy in Phase 2: pmndrs `SSAOEffect` (default), or investigate n8ao version pinning.
+3. Smoke-test `realism-effects` SSR/TRAA construction in Phase 1 bundle before committing in Phase 2.
+4. Phase 2 module must handle the `setSize()` zero-canvas case explicitly.
+
+---
+
+## 10. Phase 1 Results (2026-04-07) — DONE
+
+### Bundle extension
+`scripts/build-three-r173.mjs` extended to import `postprocessing` and `n8ao` and re-export them onto `window.POSTPROCESSING` and `window.N8AOPostPass` alongside the existing `window.THREE` / `window.Stats` exports. The build runs cleanly.
+
+### Bundle size delta
+| | bytes | MB |
+|---|---:|---:|
+| Before (Three r173 + examples only) | 1,567,597 | 1.49 |
+| After (+ postprocessing 6.39 + n8ao 1.10.1) | 2,371,897 | 2.26 |
+| **Delta** | **+804,300** | **+0.77 (+51%)** |
+
+This is a meaningful but not show-stopping growth. The new pipeline is gated on `postFXEnabled` / `renderQuality === 'high'` at runtime, not at load, so we are paying parse cost on all desktop scenes whether they enable the new pipeline or not. **Decision: do NOT split into a lazy secondary bundle for v1.** Re-evaluate after Phase 3 if mobile boot times regress; the bootstrap shells already have hook points for conditional script loading if it becomes necessary.
+
+### Static bundle verification
+- `window.POSTPROCESSING` assignment is present in the IIFE.
+- `window.N8AOPostPass` assignment is present in the IIFE.
+- `EffectComposer`, `SMAAEffect`, `BloomEffect`, `ToneMappingEffect`, `SSAOEffect`, `N8AOPostPass` symbols are all present in the bundle (esbuild minifies class names so a literal `class EffectComposer` regex misses them — symbol presence confirmed via substring search).
+
+### realism-effects: REJECTED
+`realism-effects@1.1.2` (last published 2022) declares a peer dep of `three: '>=0.148.0'` but actually imports `WebGLMultipleRenderTargets`, which Three removed in r162. Bundling fails immediately with `No matching export in three.module.js for import "WebGLMultipleRenderTargets"`. The package is effectively pinned to ≤r161 and abandoned. **Removed from `package.json` devDependencies and never bundled.**
+
+### Phase 1 → Phase 2 entry checklist
+1. **AA**: `FXAAEffect` only. SMAA workaround (separate `SMAAPass` outside EffectPass) deferred — not worth the complexity for v1.
+2. **AO**: pmndrs `SSAOEffect` only. n8ao stays bundled-but-unused for now in case a future Three upgrade unblocks it; remove from bundle in Phase 6 if still broken.
+3. **SSR / TRAA**: not supported in the new pipeline. See §11. Old pipeline retains them.
+4. **Defensive setSize**: Phase 2 module must guard against zero-width canvas race (see §9).
+
+---
+
+## 11. SSR / TRAA + Pipeline Selection Architectural Decision (2026-04-07)
+
+### Decision
+**Two pipelines, mutually exclusive, per-scene selection, zero blending.**
+
+1. The new pmndrs-based pipeline (`vrodos_postprocessing_pmndrs.js`) is a **clean room** — it does not import, call, or share render targets with anything from the legacy file. pmndrs's optimized internal state stays uncontaminated.
+2. The legacy pipeline (`vrodos_postprocessing.js`) stays exactly as it is, retaining hand-rolled SSR and Halton-jitter TAA.
+3. Scenes pick **one** engine via the new `postFXEngine` scene-settings field (`'legacy' | 'pmndrs'`), exposed as a dropdown in the scene compilation dialog. There is no layering, no "legacy effects on top of pmndrs", no shared composer.
+4. **The new pmndrs-based pipeline does NOT implement SSR or TRAA.** Scenes that need those effects pick `postFXEngine='legacy'` and give up access to the new pipeline's features (clouds in Phase 5, fused EffectPass).
+5. v1 default is `'legacy'` so existing and newly-compiled scenes keep current behaviour. Default flips to `'pmndrs'` only after Phase 3 ships and parity is confirmed.
+
+### Why
+1. **No actively-maintained, r173-compatible drop-in exists.**
+   - `pmndrs/postprocessing` 6.x **explicitly removed** SSR and TAA from the library; the maintainers consider both effects out-of-scope (too sensitive to scene topology and renderer state to ship as a generic effect).
+   - `realism-effects` (the de facto community SSR/TRAA package) is incompatible with Three r162+ and unmaintained — see §10.
+   - Three's stock `SSRPass` in `examples/jsm` is fragile, doesn't slot into the pmndrs `EffectComposer` cleanly, and would require us to maintain a custom `Pass` wrapper.
+2. **Wrapping the existing VRodos custom SSR/TAA shaders inside a custom pmndrs `Pass`** would weaken the architectural thesis ("pmndrs is the pipeline") and create a hybrid surface area we then have to debug. Not worth it.
+3. **Parallel pipelines were already approved** (user decision, see conversation context). The legacy pipeline stays in the codebase through Phase 6 anyway. SSR/TRAA scenes simply route to it.
+4. **The visible quality win** from the new pipeline — fused EffectPass for Bloom + AO + ToneMap + Color + Vignette + AA — is independent of SSR/TRAA. Most scenes that opt into the new pipeline are doing it for clouds (Phase 5) and/or the cleaner color/bloom stack, not for reflections.
+
+### Runtime behaviour
+When `vrodos_postprocessing_pmndrs.js` is the active pipeline and a scene has `postFXSSREnabled='1'` or `postFXTAAEnabled='1'`:
+
+- The flag is silently honored as "no-op" (effect not constructed).
+- A one-time `console.info('[VRodos] SSR/TRAA requested but not available in pmndrs pipeline — use legacy pipeline if required')` is logged per scene load.
+- No scene-settings schema change. The flags keep their meaning on the legacy path.
+
+### Pipeline selection (decided in Phase 2/3)
+The mechanism for choosing legacy vs pmndrs is not yet specified — it could be a global feature flag, a per-scene `postFXEngine` field, or auto-fallback (use pmndrs if neither SSR nor TRAA is requested, else legacy). Open question for Phase 2.
+
+### Future re-evaluation
+Revisit if any of the following happen:
+1. pmndrs/postprocessing reintroduces SSR/TAA (unlikely — they removed them deliberately).
+2. A new community SSR/TRAA library targeting Three r170+ emerges and proves stable.
+3. We upgrade Three to r18x+ as a separate project, in which case re-test `realism-effects` against whatever the latest version is.
+
+---
+
+## 12. Reference Links
 
 - pmndrs/postprocessing: <https://github.com/pmndrs/postprocessing>
 - pmndrs/postprocessing WebXR research issue #677: <https://github.com/pmndrs/postprocessing/issues/677>

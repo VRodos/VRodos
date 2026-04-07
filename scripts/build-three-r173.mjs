@@ -33,6 +33,20 @@ import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
+// pmndrs/postprocessing pipeline (Phase 1 of POSTPROCESSING_MIGRATION_PLAN.md).
+// Bundled alongside the legacy three/examples postprocessing helpers above so
+// the new pmndrs runtime module can be enabled without a second bundle load.
+//
+// NOTE: realism-effects is intentionally NOT bundled. Its latest release
+// (1.1.2, last published 2022) imports the removed-in-r162 symbol
+// WebGLMultipleRenderTargets from three, which makes it hard-incompatible with
+// our pinned Three r173. pmndrs/postprocessing 6.x has also dropped SSR and
+// TAA from its core, so the new pipeline simply does not provide SSR/TRAA;
+// scenes that need those stay on the legacy vrodos_postprocessing.js path.
+// See POSTPROCESSING_MIGRATION_PLAN.md sections 9 and 11 for details.
+import * as POSTPROCESSING from 'postprocessing';
+import { N8AOPostPass } from 'n8ao';
+
 const THREE = window.THREE && typeof window.THREE === 'object' ? window.THREE : {};
 
 Object.assign(THREE, { ...THREEBase }, {
@@ -55,6 +69,9 @@ Object.assign(THREE, { ...THREEBase }, {
 
 window.THREE = THREE;
 window.Stats = Stats;
+window.POSTPROCESSING = POSTPROCESSING;
+window.N8AOPostPass = N8AOPostPass;
+window.REALISM = REALISM;
 `;
 
 async function ensurePathExists(targetPath, label) {
