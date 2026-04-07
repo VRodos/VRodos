@@ -254,7 +254,36 @@ End-to-end gates — each phase has its own go/no-go:
 
 ---
 
-## 9. Reference Links
+## 9. Phase 0 Results (2026-04-07) — GO with caveats
+
+Smoke test built via `scripts/build-phase0-smoke.mjs` → `js_libs/threejs173/vrodos-phase0-smoke.bundle.js` (2,146,507 bytes vs production 1,567,597 bytes; **delta ≈ 580 KB** for postprocessing + n8ao). Driven by `phase0-pmndrs-smoke-test.html` against A-Frame 1.7.1 + Three r173.
+
+### Verified working
+- ✅ `new EffectComposer(renderer)` constructs against Three r173 — no errors.
+- ✅ `RenderPass` + `EffectPass` merging — multiple effects fused into one fragment shader pass.
+- ✅ **Production-candidate pipeline** rendered cleanly at **1920×1080 over 10 frames, NO_ERROR**:
+  `BloomEffect + BrightnessContrastEffect + HueSaturationEffect + VignetteEffect + ToneMappingEffect(ACES_FILMIC) + FXAAEffect`
+- ✅ HalfFloat HDR framebuffer type works.
+- ✅ UnsignedByte framebuffer type also works (fallback path available).
+- ✅ Dispose / rebuild cycles clean — 3× sequential `composer.dispose()` + reconstruct loops, NO_ERROR.
+
+### Known issues / workarounds
+- ❌ **`SMAAEffect` is broken inside `EffectPass` on r173 + A-Frame 1.7.1.** Even with lookup textures (`searchImageDataURL` / `areaImageDataURL`) loaded directly via `new Image()`, SMAA throws `INVALID_OPERATION` when routed through EffectPass. SMAA's internal `edgeDetectionPass` and `weightsPass` render NO_ERROR in isolation, so the issue is the EffectPass texture binding contract on this Three version. **Workaround for Phase 2: use `FXAAEffect` instead.** Revisit SMAA when (or if) we upgrade Three to r18x.
+- ❌ **`N8AOPostPass` from `n8ao@1.10.1` throws `INVALID_OPERATION`** on first render against r173. **Workaround for Phase 2: fall back to pmndrs `SSAOEffect`** (constructs cleanly; render path to be confirmed in Phase 2 isolation test). Alternatively, pin a different n8ao version compatible with r173 — investigate during Phase 1.
+- ⚠️ **Critical setup gotcha**: `composer.setSize(w, h)` MUST be called with non-zero dimensions before the first `composer.render()`. If A-Frame's canvas reports `width=0` (e.g. when overlays are present, or the scene hasn't laid out yet), the first composer render throws `INVALID_FRAMEBUFFER_OPERATION (0x506)`. Phase 2 must guard for this — ideally hook composer construction off A-Frame's `loaded` event AND call `setSize()` with `renderer.domElement.clientWidth || window.innerWidth` fallback.
+
+### Verdict: **GO**
+The architectural win — fused EffectPass for color grading / bloom / tonemap / vignette / AA — is achieved. SMAA and N8AO failures do not block the migration; the fallback choices (FXAA for AA, pmndrs SSAOEffect for AO) are well-understood and within the pmndrs ecosystem. Realism-effects SSR/TRAA remains unverified (deferred to Phase 1/2).
+
+### Phase 1 entry checklist
+1. Decide on AA strategy in Phase 2: FXAA-only for v1, or attempt SMAA workaround (separate `SMAAPass` outside EffectPass) as a stretch.
+2. Decide on AO strategy in Phase 2: pmndrs `SSAOEffect` (default), or investigate n8ao version pinning.
+3. Smoke-test `realism-effects` SSR/TRAA construction in Phase 1 bundle before committing in Phase 2.
+4. Phase 2 module must handle the `setSize()` zero-canvas case explicitly.
+
+---
+
+## 10. Reference Links
 
 - pmndrs/postprocessing: <https://github.com/pmndrs/postprocessing>
 - pmndrs/postprocessing WebXR research issue #677: <https://github.com/pmndrs/postprocessing/issues/677>
