@@ -19,8 +19,17 @@ document.addEventListener('DOMContentLoaded', function() {
             reflectionSource: document.getElementById('compileReflectionSourceSelect'),
             envMapPreset: document.getElementById('compileEnvMapPresetSelect'),
             ssrStrength: document.getElementById('compileSSRStrengthSelect'),
-            taaEnabled: document.getElementById('compilePostFxTAAToggle')
+            taaEnabled: document.getElementById('compilePostFxTAAToggle'),
+            postFxEngine: document.getElementById('compilePostFxEngineSelect'),
+            postFxEngineHint: document.getElementById('compilePostFxEngineHint')
         };
+    }
+
+    function normalizePostFxEngine(value) {
+        if (value === 'pmndrs') {
+            return 'pmndrs';
+        }
+        return 'legacy';
     }
 
     function normalizeAAQuality(value) {
@@ -218,6 +227,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof envir.scene.aframePostFXSSREnabled === 'undefined') {
             envir.scene.aframePostFXSSREnabled = false;
         }
+        if (!envir.scene.aframePostFXEngine) {
+            envir.scene.aframePostFXEngine = 'legacy';
+        }
 
         envir.scene.aframeAAQuality = normalizeAAQuality(envir.scene.aframeAAQuality);
         envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(envir.scene.aframeAmbientOcclusionPreset);
@@ -230,6 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(envir.scene.aframeEnvMapPreset);
         envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(envir.scene.aframePostFXSSRStrength);
         envir.scene.aframePostFXSSREnabled = envir.scene.aframePostFXSSRStrength !== 'off';
+        envir.scene.aframePostFXEngine = normalizePostFxEngine(envir.scene.aframePostFXEngine);
         if (envir.scene.aframePostFXBloomEnabled === false) {
             envir.scene.aframeBloomStrength = 'off';
         }
@@ -246,6 +259,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var postFxEnabled = controls.postFx.checked;
         var colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
         var envLightingEnabled = postFxEnabled && normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
+        var engine = controls.postFxEngine ? normalizePostFxEngine(controls.postFxEngine.value) : 'legacy';
+        var isPmndrs = engine === 'pmndrs';
 
         if (controls.postFxGroup) {
             if (postFxEnabled) {
@@ -253,6 +268,15 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 controls.postFxGroup.classList.add('tw-opacity-50', 'tw-pointer-events-none');
             }
+        }
+
+        if (controls.postFxEngine) {
+            controls.postFxEngine.disabled = !postFxEnabled;
+        }
+        if (controls.postFxEngineHint) {
+            controls.postFxEngineHint.textContent = isPmndrs
+                ? 'Modern fused EffectPass. SSR and Temporal AA are not available in this engine.'
+                : 'Hand-rolled custom pipeline. Supports SSR and Temporal AA, no volumetric clouds.';
         }
 
         controls.postFxColor.disabled = !postFxEnabled;
@@ -269,11 +293,23 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.exposurePreset.disabled = !colorGradingEnabled;
         controls.contrastPreset.disabled = !colorGradingEnabled;
         controls.edgeAAStrength.disabled = !postFxEnabled;
+
+        // SSR and TAA are unavailable when the pmndrs engine is selected — see
+        // POSTPROCESSING_MIGRATION_PLAN.md §11. Force them disabled and apply a
+        // tooltip explaining why so the user understands the trade-off.
         if (controls.ssrStrength) {
-            controls.ssrStrength.disabled = !postFxEnabled;
+            controls.ssrStrength.disabled = !postFxEnabled || isPmndrs;
+            controls.ssrStrength.classList.toggle('tw-opacity-60', isPmndrs);
+            controls.ssrStrength.title = isPmndrs
+                ? 'Screen-space reflections are not available in the Pmndrs engine. Switch to Legacy to use SSR.'
+                : 'Screen-space reflections for floors, glass, and polished surfaces';
         }
         if (controls.taaEnabled) {
-            controls.taaEnabled.disabled = !postFxEnabled;
+            controls.taaEnabled.disabled = !postFxEnabled || isPmndrs;
+            controls.taaEnabled.parentElement && controls.taaEnabled.parentElement.classList.toggle('tw-opacity-60', isPmndrs);
+            controls.taaEnabled.title = isPmndrs
+                ? 'Temporal AA is not available in the Pmndrs engine. Switch to Legacy to use TAA.'
+                : 'Temporal anti-aliasing for smoother edges and reduced specular shimmer. Supplements FXAA.';
         }
         updateEdgeAAStrengthLabel();
     }
@@ -318,6 +354,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (controls.taaEnabled) {
             envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
+        }
+        if (controls.postFxEngine) {
+            envir.scene.aframePostFXEngine = normalizePostFxEngine(controls.postFxEngine.value);
         }
     }
 
@@ -382,6 +421,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (controls.taaEnabled) {
             controls.taaEnabled.checked = !!(envir && envir.scene && envir.scene.aframePostFXTAAEnabled);
         }
+        if (controls.postFxEngine) {
+            controls.postFxEngine.value = envir && envir.scene && envir.scene.aframePostFXEngine
+                ? normalizePostFxEngine(envir.scene.aframePostFXEngine)
+                : 'legacy';
+        }
 
         syncCompilePostFxState();
     };
@@ -444,6 +488,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.taaEnabled) {
         controls.taaEnabled.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.postFxEngine) {
+        controls.postFxEngine.addEventListener('change', syncCompilePostFxState);
     }
 
     if (typeof window.syncCompileDialogFromSceneSettings === 'function') {

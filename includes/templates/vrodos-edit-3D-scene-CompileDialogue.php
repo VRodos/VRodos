@@ -155,6 +155,16 @@
 					</div>
 
 					<div id="compilePostFxGroup" class="tw-space-y-4 tw-transition-opacity tw-duration-200 tw-opacity-50 tw-pointer-events-none">
+						<div class="tw-pb-2 tw-border-b tw-border-slate-200">
+							<label class="tw-form-control">
+								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Legacy = custom hand-rolled pipeline (supports SSR & TAA, no volumetric clouds). Pmndrs = modern pmndrs/postprocessing pipeline (fused EffectPass, will support volumetric clouds, but no SSR or TAA).">Post-Processing Engine</span>
+								<select id="compilePostFxEngineSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+									<option value="legacy">Legacy &mdash; custom SSR / TAA, no clouds</option>
+									<option value="pmndrs">Pmndrs &mdash; modern, supports clouds, no SSR / TAA</option>
+								</select>
+								<span id="compilePostFxEngineHint" class="tw-text-[10px] tw-text-slate-400 tw-mt-1"></span>
+							</label>
+						</div>
 						<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 							<label class="tw-form-control">
 								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Bloom</span>
