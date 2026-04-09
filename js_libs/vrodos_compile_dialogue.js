@@ -37,6 +37,36 @@ document.addEventListener('DOMContentLoaded', function() {
             pmndrsVignette: document.getElementById('compilePmndrsVignetteToggle'),
             pmndrsVignetteDarkness: document.getElementById('compilePmndrsVignetteDarknessSlider'),
             pmndrsVignetteDarknessValue: document.getElementById('compilePmndrsVignetteDarknessValue'),
+            pmndrsAtmosphere: document.getElementById('compilePmndrsAtmosphereToggle'),
+            pmndrsAtmosphereQuality: document.getElementById('compilePmndrsAtmosphereQualitySelect'),
+            pmndrsAtmosphereAdvanced: document.getElementById('compilePmndrsAtmosphereAdvanced'),
+            pmndrsSunElevation: document.getElementById('compilePmndrsSunElevationSlider'),
+            pmndrsSunElevationValue: document.getElementById('compilePmndrsSunElevationValue'),
+            pmndrsSunAzimuth: document.getElementById('compilePmndrsSunAzimuthSlider'),
+            pmndrsSunAzimuthValue: document.getElementById('compilePmndrsSunAzimuthValue'),
+            pmndrsSunAngularRadius: document.getElementById('compilePmndrsSunAngularRadiusSlider'),
+            pmndrsSunAngularRadiusValue: document.getElementById('compilePmndrsSunAngularRadiusValue'),
+            pmndrsSunDistance: document.getElementById('compilePmndrsSunDistanceSlider'),
+            pmndrsSunDistanceValue: document.getElementById('compilePmndrsSunDistanceValue'),
+            pmndrsAerialStrength: document.getElementById('compilePmndrsAerialStrengthSlider'),
+            pmndrsAerialStrengthValue: document.getElementById('compilePmndrsAerialStrengthValue'),
+            pmndrsAlbedoScale: document.getElementById('compilePmndrsAlbedoScaleSlider'),
+            pmndrsAlbedoScaleValue: document.getElementById('compilePmndrsAlbedoScaleValue'),
+            pmndrsTransmittance: document.getElementById('compilePmndrsTransmittanceToggle'),
+            pmndrsInscatter: document.getElementById('compilePmndrsInscatterToggle'),
+            pmndrsGround: document.getElementById('compilePmndrsGroundToggle'),
+            pmndrsGroundAlbedo: document.getElementById('compilePmndrsGroundAlbedoInput'),
+            pmndrsRayleighScale: document.getElementById('compilePmndrsRayleighScaleSlider'),
+            pmndrsRayleighScaleValue: document.getElementById('compilePmndrsRayleighScaleValue'),
+            pmndrsMieScatteringScale: document.getElementById('compilePmndrsMieScatteringScaleSlider'),
+            pmndrsMieScatteringScaleValue: document.getElementById('compilePmndrsMieScatteringScaleValue'),
+            pmndrsMieExtinctionScale: document.getElementById('compilePmndrsMieExtinctionScaleSlider'),
+            pmndrsMieExtinctionScaleValue: document.getElementById('compilePmndrsMieExtinctionScaleValue'),
+            pmndrsMiePhaseG: document.getElementById('compilePmndrsMiePhaseGSlider'),
+            pmndrsMiePhaseGValue: document.getElementById('compilePmndrsMiePhaseGValue'),
+            pmndrsAbsorptionScale: document.getElementById('compilePmndrsAbsorptionScaleSlider'),
+            pmndrsAbsorptionScaleValue: document.getElementById('compilePmndrsAbsorptionScaleValue'),
+            pmndrsMoon: document.getElementById('compilePmndrsMoonToggle'),
             pmndrsResetBtn: document.getElementById('compilePmndrsResetBtn')
         };
     }
@@ -48,7 +78,100 @@ document.addEventListener('DOMContentLoaded', function() {
         bloomThreshold: 0.62,
         toneMappingExposure: 1.0,
         vignetteEnabled: false,
-        vignetteDarkness: 0.5
+        vignetteDarkness: 0.5,
+        atmosphereEnabled: true,
+        atmosphereQuality: 'balanced',
+        sunElevationDeg: 10,
+        sunAzimuthDeg: 38,
+        sunDistance: 5200,
+        sunAngularRadius: 0.0068,
+        aerialStrength: 0.85,
+        albedoScale: 0.96,
+        transmittanceEnabled: true,
+        inscatterEnabled: true,
+        groundEnabled: true,
+        groundAlbedo: '#f0e6d6',
+        rayleighScale: 1.0,
+        mieScatteringScale: 0.9,
+        mieExtinctionScale: 1.0,
+        miePhaseG: 0.8,
+        absorptionScale: 1.0,
+        moonEnabled: false
+    };
+
+    var PMNDRS_ATMOSPHERE_PRESETS = {
+        performance: {
+            sunElevationDeg: 8,
+            sunAzimuthDeg: 34,
+            sunDistance: 4800,
+            sunAngularRadius: 0.0056,
+            aerialStrength: 0.6,
+            albedoScale: 0.92,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#e8ddc9',
+            rayleighScale: 0.82,
+            mieScatteringScale: 0.62,
+            mieExtinctionScale: 0.74,
+            miePhaseG: 0.72,
+            absorptionScale: 0.82,
+            moonEnabled: false
+        },
+        balanced: {
+            sunElevationDeg: 10,
+            sunAzimuthDeg: 38,
+            sunDistance: 5200,
+            sunAngularRadius: 0.0068,
+            aerialStrength: 0.85,
+            albedoScale: 0.96,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#f0e6d6',
+            rayleighScale: 1.0,
+            mieScatteringScale: 0.9,
+            mieExtinctionScale: 1.0,
+            miePhaseG: 0.8,
+            absorptionScale: 1.0,
+            moonEnabled: false
+        },
+        quality: {
+            sunElevationDeg: 12,
+            sunAzimuthDeg: 40,
+            sunDistance: 5600,
+            sunAngularRadius: 0.0082,
+            aerialStrength: 1.0,
+            albedoScale: 1.0,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#f6ead7',
+            rayleighScale: 1.12,
+            mieScatteringScale: 1.02,
+            mieExtinctionScale: 1.05,
+            miePhaseG: 0.82,
+            absorptionScale: 1.02,
+            moonEnabled: false
+        },
+        cinematic: {
+            sunElevationDeg: 7,
+            sunAzimuthDeg: 28,
+            sunDistance: 6200,
+            sunAngularRadius: 0.0105,
+            aerialStrength: 1.15,
+            albedoScale: 1.05,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#f8ead2',
+            rayleighScale: 1.2,
+            mieScatteringScale: 1.16,
+            mieExtinctionScale: 1.18,
+            miePhaseG: 0.84,
+            absorptionScale: 0.96,
+            moonEnabled: false
+        }
     };
 
     function clampNumber(value, min, max, fallback) {
@@ -61,6 +184,89 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatPmndrsNumber(value) {
         return (Math.round(value * 100) / 100).toFixed(2);
+    }
+
+    function formatPmndrsDegrees(value) {
+        return String(Math.round(parseFloat(value) || 0)) + '\u00b0';
+    }
+
+    function normalizePmndrsAtmosphereQuality(value) {
+        if (value === 'performance' || value === 'quality' || value === 'cinematic' || value === 'custom') {
+            return value;
+        }
+        return 'balanced';
+    }
+
+    function normalizeColorHex(value, fallback) {
+        var raw = (typeof value === 'string') ? value.trim() : '';
+        if (!/^#?[0-9a-fA-F]{6}$/.test(raw)) {
+            return fallback;
+        }
+        return raw.charAt(0) === '#' ? raw.toLowerCase() : ('#' + raw.toLowerCase());
+    }
+
+    function applyPmndrsAtmospherePreset(controls, quality) {
+        var presetKey = normalizePmndrsAtmosphereQuality(quality);
+        if (presetKey === 'custom') {
+            return;
+        }
+
+        var preset = PMNDRS_ATMOSPHERE_PRESETS[presetKey] || PMNDRS_ATMOSPHERE_PRESETS.balanced;
+        if (controls.pmndrsAtmosphereQuality) controls.pmndrsAtmosphereQuality.value = presetKey;
+        if (controls.pmndrsSunElevation) controls.pmndrsSunElevation.value = preset.sunElevationDeg;
+        if (controls.pmndrsSunAzimuth) controls.pmndrsSunAzimuth.value = preset.sunAzimuthDeg;
+        if (controls.pmndrsSunDistance) controls.pmndrsSunDistance.value = preset.sunDistance;
+        if (controls.pmndrsSunAngularRadius) controls.pmndrsSunAngularRadius.value = preset.sunAngularRadius;
+        if (controls.pmndrsAerialStrength) controls.pmndrsAerialStrength.value = preset.aerialStrength;
+        if (controls.pmndrsAlbedoScale) controls.pmndrsAlbedoScale.value = preset.albedoScale;
+        if (controls.pmndrsTransmittance) controls.pmndrsTransmittance.checked = preset.transmittanceEnabled === true;
+        if (controls.pmndrsInscatter) controls.pmndrsInscatter.checked = preset.inscatterEnabled === true;
+        if (controls.pmndrsGround) controls.pmndrsGround.checked = preset.groundEnabled === true;
+        if (controls.pmndrsGroundAlbedo) controls.pmndrsGroundAlbedo.value = normalizeColorHex(preset.groundAlbedo, PMNDRS_TWEAK_DEFAULTS.groundAlbedo);
+        if (controls.pmndrsRayleighScale) controls.pmndrsRayleighScale.value = preset.rayleighScale;
+        if (controls.pmndrsMieScatteringScale) controls.pmndrsMieScatteringScale.value = preset.mieScatteringScale;
+        if (controls.pmndrsMieExtinctionScale) controls.pmndrsMieExtinctionScale.value = preset.mieExtinctionScale;
+        if (controls.pmndrsMiePhaseG) controls.pmndrsMiePhaseG.value = preset.miePhaseG;
+        if (controls.pmndrsAbsorptionScale) controls.pmndrsAbsorptionScale.value = preset.absorptionScale;
+        if (controls.pmndrsMoon) controls.pmndrsMoon.checked = preset.moonEnabled === true;
+    }
+
+    function markPmndrsAtmosphereCustom(controls) {
+        if (controls.pmndrsAtmosphereQuality) {
+            controls.pmndrsAtmosphereQuality.value = 'custom';
+        }
+    }
+
+    function setPmndrsAtmosphereAdvancedState(controls, enabled) {
+        var isEnabled = enabled === true;
+        if (controls.pmndrsAtmosphereAdvanced) {
+            controls.pmndrsAtmosphereAdvanced.classList.toggle('tw-opacity-50', !isEnabled);
+            controls.pmndrsAtmosphereAdvanced.classList.toggle('tw-pointer-events-none', !isEnabled);
+        }
+
+        [
+            controls.pmndrsAtmosphereQuality,
+            controls.pmndrsSunElevation,
+            controls.pmndrsSunAzimuth,
+            controls.pmndrsSunAngularRadius,
+            controls.pmndrsSunDistance,
+            controls.pmndrsAerialStrength,
+            controls.pmndrsAlbedoScale,
+            controls.pmndrsTransmittance,
+            controls.pmndrsInscatter,
+            controls.pmndrsGround,
+            controls.pmndrsGroundAlbedo,
+            controls.pmndrsRayleighScale,
+            controls.pmndrsMieScatteringScale,
+            controls.pmndrsMieExtinctionScale,
+            controls.pmndrsMiePhaseG,
+            controls.pmndrsAbsorptionScale,
+            controls.pmndrsMoon
+        ].forEach(function (el) {
+            if (el) {
+                el.disabled = !isEnabled;
+            }
+        });
     }
 
     function clampLegacyHorizonStageSize(value) {
@@ -298,6 +504,58 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof envir.scene.aframePmndrsToneMappingExposure !== 'number') {
             envir.scene.aframePmndrsToneMappingExposure = clampNumber(envir.scene.aframePmndrsToneMappingExposure, 0.3, 2.5, 1.0);
         }
+        if (typeof envir.scene.aframePmndrsAtmosphereEnabled === 'undefined') {
+            envir.scene.aframePmndrsAtmosphereEnabled = PMNDRS_TWEAK_DEFAULTS.atmosphereEnabled;
+        }
+        if (!envir.scene.aframePmndrsAtmosphereQuality) {
+            envir.scene.aframePmndrsAtmosphereQuality = PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
+        }
+        if (typeof envir.scene.aframePmndrsSunElevationDeg !== 'number') {
+            envir.scene.aframePmndrsSunElevationDeg = clampNumber(envir.scene.aframePmndrsSunElevationDeg, -15, 75, PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
+        }
+        if (typeof envir.scene.aframePmndrsSunAzimuthDeg !== 'number') {
+            envir.scene.aframePmndrsSunAzimuthDeg = clampNumber(envir.scene.aframePmndrsSunAzimuthDeg, -180, 180, PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg);
+        }
+        if (typeof envir.scene.aframePmndrsSunDistance !== 'number') {
+            envir.scene.aframePmndrsSunDistance = clampNumber(envir.scene.aframePmndrsSunDistance, 1500, 12000, PMNDRS_TWEAK_DEFAULTS.sunDistance);
+        }
+        if (typeof envir.scene.aframePmndrsSunAngularRadius !== 'number') {
+            envir.scene.aframePmndrsSunAngularRadius = clampNumber(envir.scene.aframePmndrsSunAngularRadius, 0.001, 0.03, PMNDRS_TWEAK_DEFAULTS.sunAngularRadius);
+        }
+        if (typeof envir.scene.aframePmndrsAerialStrength !== 'number') {
+            envir.scene.aframePmndrsAerialStrength = clampNumber(envir.scene.aframePmndrsAerialStrength, 0, 2, PMNDRS_TWEAK_DEFAULTS.aerialStrength);
+        }
+        if (typeof envir.scene.aframePmndrsAlbedoScale !== 'number') {
+            envir.scene.aframePmndrsAlbedoScale = clampNumber(envir.scene.aframePmndrsAlbedoScale, 0, 2, PMNDRS_TWEAK_DEFAULTS.albedoScale);
+        }
+        if (typeof envir.scene.aframePmndrsTransmittanceEnabled === 'undefined') {
+            envir.scene.aframePmndrsTransmittanceEnabled = PMNDRS_TWEAK_DEFAULTS.transmittanceEnabled;
+        }
+        if (typeof envir.scene.aframePmndrsInscatterEnabled === 'undefined') {
+            envir.scene.aframePmndrsInscatterEnabled = PMNDRS_TWEAK_DEFAULTS.inscatterEnabled;
+        }
+        if (typeof envir.scene.aframePmndrsGroundEnabled === 'undefined') {
+            envir.scene.aframePmndrsGroundEnabled = PMNDRS_TWEAK_DEFAULTS.groundEnabled;
+        }
+        envir.scene.aframePmndrsGroundAlbedo = normalizeColorHex(envir.scene.aframePmndrsGroundAlbedo, PMNDRS_TWEAK_DEFAULTS.groundAlbedo);
+        if (typeof envir.scene.aframePmndrsRayleighScale !== 'number') {
+            envir.scene.aframePmndrsRayleighScale = clampNumber(envir.scene.aframePmndrsRayleighScale, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.rayleighScale);
+        }
+        if (typeof envir.scene.aframePmndrsMieScatteringScale !== 'number') {
+            envir.scene.aframePmndrsMieScatteringScale = clampNumber(envir.scene.aframePmndrsMieScatteringScale, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.mieScatteringScale);
+        }
+        if (typeof envir.scene.aframePmndrsMieExtinctionScale !== 'number') {
+            envir.scene.aframePmndrsMieExtinctionScale = clampNumber(envir.scene.aframePmndrsMieExtinctionScale, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.mieExtinctionScale);
+        }
+        if (typeof envir.scene.aframePmndrsMiePhaseG !== 'number') {
+            envir.scene.aframePmndrsMiePhaseG = clampNumber(envir.scene.aframePmndrsMiePhaseG, 0, 0.99, PMNDRS_TWEAK_DEFAULTS.miePhaseG);
+        }
+        if (typeof envir.scene.aframePmndrsAbsorptionScale !== 'number') {
+            envir.scene.aframePmndrsAbsorptionScale = clampNumber(envir.scene.aframePmndrsAbsorptionScale, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.absorptionScale);
+        }
+        if (typeof envir.scene.aframePmndrsMoonEnabled === 'undefined') {
+            envir.scene.aframePmndrsMoonEnabled = PMNDRS_TWEAK_DEFAULTS.moonEnabled;
+        }
 
         envir.scene.aframeAAQuality = normalizeAAQuality(envir.scene.aframeAAQuality);
         envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(envir.scene.aframeAmbientOcclusionPreset);
@@ -311,6 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(envir.scene.aframePostFXSSRStrength);
         envir.scene.aframePostFXSSREnabled = envir.scene.aframePostFXSSRStrength !== 'off';
         envir.scene.aframePostFXEngine = normalizePostFxEngine(envir.scene.aframePostFXEngine);
+        envir.scene.aframePmndrsAtmosphereQuality = normalizePmndrsAtmosphereQuality(envir.scene.aframePmndrsAtmosphereQuality);
         if (envir.scene.aframePostFXBloomEnabled === false) {
             envir.scene.aframeBloomStrength = 'off';
         }
@@ -432,6 +691,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (controls.pmndrsVignetteDarkness) {
             controls.pmndrsVignetteDarkness.disabled = !pmndrsTweakEnabled || !(controls.pmndrsVignette && controls.pmndrsVignette.checked);
         }
+        if (controls.pmndrsAtmosphere) {
+            controls.pmndrsAtmosphere.disabled = !pmndrsTweakEnabled;
+        }
+        setPmndrsAtmosphereAdvancedState(
+            controls,
+            pmndrsTweakEnabled && controls.pmndrsAtmosphere && controls.pmndrsAtmosphere.checked === true
+        );
 
         updateEdgeAAStrengthLabel();
     }
@@ -452,6 +718,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (c.pmndrsVignetteDarkness && c.pmndrsVignetteDarknessValue) {
             c.pmndrsVignetteDarknessValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsVignetteDarkness.value));
+        }
+        if (c.pmndrsSunElevation && c.pmndrsSunElevationValue) {
+            c.pmndrsSunElevationValue.textContent = formatPmndrsDegrees(c.pmndrsSunElevation.value);
+        }
+        if (c.pmndrsSunAzimuth && c.pmndrsSunAzimuthValue) {
+            c.pmndrsSunAzimuthValue.textContent = formatPmndrsDegrees(c.pmndrsSunAzimuth.value);
+        }
+        if (c.pmndrsSunAngularRadius && c.pmndrsSunAngularRadiusValue) {
+            c.pmndrsSunAngularRadiusValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsSunAngularRadius.value));
+        }
+        if (c.pmndrsSunDistance && c.pmndrsSunDistanceValue) {
+            c.pmndrsSunDistanceValue.textContent = String(Math.round(parseFloat(c.pmndrsSunDistance.value) || 0));
+        }
+        if (c.pmndrsAerialStrength && c.pmndrsAerialStrengthValue) {
+            c.pmndrsAerialStrengthValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsAerialStrength.value));
+        }
+        if (c.pmndrsAlbedoScale && c.pmndrsAlbedoScaleValue) {
+            c.pmndrsAlbedoScaleValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsAlbedoScale.value));
+        }
+        if (c.pmndrsRayleighScale && c.pmndrsRayleighScaleValue) {
+            c.pmndrsRayleighScaleValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsRayleighScale.value));
+        }
+        if (c.pmndrsMieScatteringScale && c.pmndrsMieScatteringScaleValue) {
+            c.pmndrsMieScatteringScaleValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsMieScatteringScale.value));
+        }
+        if (c.pmndrsMieExtinctionScale && c.pmndrsMieExtinctionScaleValue) {
+            c.pmndrsMieExtinctionScaleValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsMieExtinctionScale.value));
+        }
+        if (c.pmndrsMiePhaseG && c.pmndrsMiePhaseGValue) {
+            c.pmndrsMiePhaseGValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsMiePhaseG.value));
+        }
+        if (c.pmndrsAbsorptionScale && c.pmndrsAbsorptionScaleValue) {
+            c.pmndrsAbsorptionScaleValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsAbsorptionScale.value));
         }
     }
 
@@ -516,6 +815,60 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (controls.pmndrsVignetteDarkness) {
             envir.scene.aframePmndrsVignetteDarkness = clampNumber(controls.pmndrsVignetteDarkness.value, 0, 1, 0.5);
+        }
+        if (controls.pmndrsAtmosphere) {
+            envir.scene.aframePmndrsAtmosphereEnabled = controls.pmndrsAtmosphere.checked === true;
+        }
+        if (controls.pmndrsAtmosphereQuality) {
+            envir.scene.aframePmndrsAtmosphereQuality = normalizePmndrsAtmosphereQuality(controls.pmndrsAtmosphereQuality.value);
+        }
+        if (controls.pmndrsSunElevation) {
+            envir.scene.aframePmndrsSunElevationDeg = clampNumber(controls.pmndrsSunElevation.value, -15, 75, PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
+        }
+        if (controls.pmndrsSunAzimuth) {
+            envir.scene.aframePmndrsSunAzimuthDeg = clampNumber(controls.pmndrsSunAzimuth.value, -180, 180, PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg);
+        }
+        if (controls.pmndrsSunDistance) {
+            envir.scene.aframePmndrsSunDistance = clampNumber(controls.pmndrsSunDistance.value, 1500, 12000, PMNDRS_TWEAK_DEFAULTS.sunDistance);
+        }
+        if (controls.pmndrsSunAngularRadius) {
+            envir.scene.aframePmndrsSunAngularRadius = clampNumber(controls.pmndrsSunAngularRadius.value, 0.001, 0.03, PMNDRS_TWEAK_DEFAULTS.sunAngularRadius);
+        }
+        if (controls.pmndrsAerialStrength) {
+            envir.scene.aframePmndrsAerialStrength = clampNumber(controls.pmndrsAerialStrength.value, 0, 2, PMNDRS_TWEAK_DEFAULTS.aerialStrength);
+        }
+        if (controls.pmndrsAlbedoScale) {
+            envir.scene.aframePmndrsAlbedoScale = clampNumber(controls.pmndrsAlbedoScale.value, 0, 2, PMNDRS_TWEAK_DEFAULTS.albedoScale);
+        }
+        if (controls.pmndrsTransmittance) {
+            envir.scene.aframePmndrsTransmittanceEnabled = controls.pmndrsTransmittance.checked === true;
+        }
+        if (controls.pmndrsInscatter) {
+            envir.scene.aframePmndrsInscatterEnabled = controls.pmndrsInscatter.checked === true;
+        }
+        if (controls.pmndrsGround) {
+            envir.scene.aframePmndrsGroundEnabled = controls.pmndrsGround.checked === true;
+        }
+        if (controls.pmndrsGroundAlbedo) {
+            envir.scene.aframePmndrsGroundAlbedo = normalizeColorHex(controls.pmndrsGroundAlbedo.value, PMNDRS_TWEAK_DEFAULTS.groundAlbedo);
+        }
+        if (controls.pmndrsRayleighScale) {
+            envir.scene.aframePmndrsRayleighScale = clampNumber(controls.pmndrsRayleighScale.value, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.rayleighScale);
+        }
+        if (controls.pmndrsMieScatteringScale) {
+            envir.scene.aframePmndrsMieScatteringScale = clampNumber(controls.pmndrsMieScatteringScale.value, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.mieScatteringScale);
+        }
+        if (controls.pmndrsMieExtinctionScale) {
+            envir.scene.aframePmndrsMieExtinctionScale = clampNumber(controls.pmndrsMieExtinctionScale.value, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.mieExtinctionScale);
+        }
+        if (controls.pmndrsMiePhaseG) {
+            envir.scene.aframePmndrsMiePhaseG = clampNumber(controls.pmndrsMiePhaseG.value, 0, 0.99, PMNDRS_TWEAK_DEFAULTS.miePhaseG);
+        }
+        if (controls.pmndrsAbsorptionScale) {
+            envir.scene.aframePmndrsAbsorptionScale = clampNumber(controls.pmndrsAbsorptionScale.value, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.absorptionScale);
+        }
+        if (controls.pmndrsMoon) {
+            envir.scene.aframePmndrsMoonEnabled = controls.pmndrsMoon.checked === true;
         }
     }
 
@@ -603,6 +956,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (controls.pmndrsVignetteDarkness) {
             controls.pmndrsVignetteDarkness.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsVignetteDarkness : 0.5, 0, 1, 0.5);
+        }
+        if (controls.pmndrsAtmosphere) {
+            controls.pmndrsAtmosphere.checked = !(envir && envir.scene) || envir.scene.aframePmndrsAtmosphereEnabled !== false;
+        }
+        if (controls.pmndrsAtmosphereQuality) {
+            controls.pmndrsAtmosphereQuality.value = envir && envir.scene && envir.scene.aframePmndrsAtmosphereQuality
+                ? normalizePmndrsAtmosphereQuality(envir.scene.aframePmndrsAtmosphereQuality)
+                : PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
+        }
+        if (controls.pmndrsSunElevation) {
+            controls.pmndrsSunElevation.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunElevationDeg : PMNDRS_TWEAK_DEFAULTS.sunElevationDeg, -15, 75, PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
+        }
+        if (controls.pmndrsSunAzimuth) {
+            controls.pmndrsSunAzimuth.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunAzimuthDeg : PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg, -180, 180, PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg);
+        }
+        if (controls.pmndrsSunDistance) {
+            controls.pmndrsSunDistance.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunDistance : PMNDRS_TWEAK_DEFAULTS.sunDistance, 1500, 12000, PMNDRS_TWEAK_DEFAULTS.sunDistance);
+        }
+        if (controls.pmndrsSunAngularRadius) {
+            controls.pmndrsSunAngularRadius.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunAngularRadius : PMNDRS_TWEAK_DEFAULTS.sunAngularRadius, 0.001, 0.03, PMNDRS_TWEAK_DEFAULTS.sunAngularRadius);
+        }
+        if (controls.pmndrsAerialStrength) {
+            controls.pmndrsAerialStrength.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAerialStrength : PMNDRS_TWEAK_DEFAULTS.aerialStrength, 0, 2, PMNDRS_TWEAK_DEFAULTS.aerialStrength);
+        }
+        if (controls.pmndrsAlbedoScale) {
+            controls.pmndrsAlbedoScale.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAlbedoScale : PMNDRS_TWEAK_DEFAULTS.albedoScale, 0, 2, PMNDRS_TWEAK_DEFAULTS.albedoScale);
+        }
+        if (controls.pmndrsTransmittance) {
+            controls.pmndrsTransmittance.checked = !(envir && envir.scene) || envir.scene.aframePmndrsTransmittanceEnabled !== false;
+        }
+        if (controls.pmndrsInscatter) {
+            controls.pmndrsInscatter.checked = !(envir && envir.scene) || envir.scene.aframePmndrsInscatterEnabled !== false;
+        }
+        if (controls.pmndrsGround) {
+            controls.pmndrsGround.checked = !(envir && envir.scene) || envir.scene.aframePmndrsGroundEnabled !== false;
+        }
+        if (controls.pmndrsGroundAlbedo) {
+            controls.pmndrsGroundAlbedo.value = normalizeColorHex(
+                envir && envir.scene ? envir.scene.aframePmndrsGroundAlbedo : PMNDRS_TWEAK_DEFAULTS.groundAlbedo,
+                PMNDRS_TWEAK_DEFAULTS.groundAlbedo
+            );
+        }
+        if (controls.pmndrsRayleighScale) {
+            controls.pmndrsRayleighScale.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsRayleighScale : PMNDRS_TWEAK_DEFAULTS.rayleighScale, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.rayleighScale);
+        }
+        if (controls.pmndrsMieScatteringScale) {
+            controls.pmndrsMieScatteringScale.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMieScatteringScale : PMNDRS_TWEAK_DEFAULTS.mieScatteringScale, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.mieScatteringScale);
+        }
+        if (controls.pmndrsMieExtinctionScale) {
+            controls.pmndrsMieExtinctionScale.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMieExtinctionScale : PMNDRS_TWEAK_DEFAULTS.mieExtinctionScale, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.mieExtinctionScale);
+        }
+        if (controls.pmndrsMiePhaseG) {
+            controls.pmndrsMiePhaseG.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMiePhaseG : PMNDRS_TWEAK_DEFAULTS.miePhaseG, 0, 0.99, PMNDRS_TWEAK_DEFAULTS.miePhaseG);
+        }
+        if (controls.pmndrsAbsorptionScale) {
+            controls.pmndrsAbsorptionScale.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAbsorptionScale : PMNDRS_TWEAK_DEFAULTS.absorptionScale, 0.1, 3, PMNDRS_TWEAK_DEFAULTS.absorptionScale);
+        }
+        if (controls.pmndrsMoon) {
+            controls.pmndrsMoon.checked = !!(envir && envir.scene && envir.scene.aframePmndrsMoonEnabled);
         }
         updatePmndrsValueLabels();
 
@@ -696,8 +1108,56 @@ document.addEventListener('DOMContentLoaded', function() {
             el.addEventListener('input', updatePmndrsValueLabels);
         }
     });
+    [
+        controls.pmndrsSunElevation,
+        controls.pmndrsSunAzimuth,
+        controls.pmndrsSunAngularRadius,
+        controls.pmndrsSunDistance,
+        controls.pmndrsAerialStrength,
+        controls.pmndrsAlbedoScale,
+        controls.pmndrsRayleighScale,
+        controls.pmndrsMieScatteringScale,
+        controls.pmndrsMieExtinctionScale,
+        controls.pmndrsMiePhaseG,
+        controls.pmndrsAbsorptionScale
+    ].forEach(function (el) {
+        if (el) {
+            el.addEventListener('input', function () {
+                updatePmndrsValueLabels();
+                markPmndrsAtmosphereCustom(controls);
+            });
+        }
+    });
+    [
+        controls.pmndrsTransmittance,
+        controls.pmndrsInscatter,
+        controls.pmndrsGround,
+        controls.pmndrsGroundAlbedo,
+        controls.pmndrsMoon
+    ].forEach(function (el) {
+        if (el) {
+            el.addEventListener('change', function () {
+                markPmndrsAtmosphereCustom(controls);
+                updatePmndrsValueLabels();
+                syncCompilePostFxState();
+            });
+        }
+    });
     if (controls.pmndrsVignette) {
         controls.pmndrsVignette.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.pmndrsAtmosphere) {
+        controls.pmndrsAtmosphere.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.pmndrsAtmosphereQuality) {
+        controls.pmndrsAtmosphereQuality.addEventListener('change', function () {
+            var quality = normalizePmndrsAtmosphereQuality(controls.pmndrsAtmosphereQuality.value);
+            if (quality !== 'custom') {
+                applyPmndrsAtmospherePreset(controls, quality);
+                updatePmndrsValueLabels();
+            }
+            syncCompilePostFxState();
+        });
     }
     if (controls.pmndrsResetBtn) {
         controls.pmndrsResetBtn.addEventListener('click', function (e) {
@@ -708,6 +1168,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (c.pmndrsExposure) c.pmndrsExposure.value = PMNDRS_TWEAK_DEFAULTS.toneMappingExposure;
             if (c.pmndrsVignette) c.pmndrsVignette.checked = PMNDRS_TWEAK_DEFAULTS.vignetteEnabled;
             if (c.pmndrsVignetteDarkness) c.pmndrsVignetteDarkness.value = PMNDRS_TWEAK_DEFAULTS.vignetteDarkness;
+            if (c.pmndrsAtmosphere) c.pmndrsAtmosphere.checked = PMNDRS_TWEAK_DEFAULTS.atmosphereEnabled;
+            applyPmndrsAtmospherePreset(c, PMNDRS_TWEAK_DEFAULTS.atmosphereQuality);
             updatePmndrsValueLabels();
             syncCompilePostFxState();
         });

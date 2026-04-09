@@ -126,6 +126,47 @@
         composer.addPass(renderPass);
 
         var effects = [];
+        var atmosphereConfig = (typeof this.getPmndrsAtmosphereConfig === 'function') ? this.getPmndrsAtmosphereConfig() : null;
+
+        if (atmosphereConfig && atmosphereConfig.enabled && !isHorizonBackground(this)) {
+            var VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
+            var atmosphereState = (typeof this.ensurePmndrsAtmosphereResources === 'function') ? this.ensurePmndrsAtmosphereResources() : null;
+
+            if (VTA && atmosphereState && !atmosphereState.failed && atmosphereState.textures) {
+                try {
+                    this.pmndrsAerialPerspectiveEffect = new VTA.AerialPerspectiveEffect(camera, {
+                        irradianceTexture: atmosphereState.textures.irradianceTexture || null,
+                        scatteringTexture: atmosphereState.textures.scatteringTexture || null,
+                        transmittanceTexture: atmosphereState.textures.transmittanceTexture || null,
+                        singleMieScatteringTexture: atmosphereState.textures.singleMieScatteringTexture || null,
+                        higherOrderScatteringTexture: atmosphereState.textures.higherOrderScatteringTexture || null,
+                        transmittance: atmosphereConfig.transmittanceEnabled,
+                        inscatter: atmosphereConfig.inscatterEnabled,
+                        albedoScale: atmosphereConfig.albedoScale,
+                        sky: false,
+                        sun: true,
+                        moon: atmosphereConfig.moonEnabled,
+                        ground: atmosphereConfig.groundEnabled
+                    });
+                    if (typeof this.applyPmndrsAtmosphereConfigToTarget === 'function') {
+                        this.applyPmndrsAtmosphereConfigToTarget(this.pmndrsAerialPerspectiveEffect, atmosphereConfig);
+                    }
+                    effects.push(this.pmndrsAerialPerspectiveEffect);
+                } catch (err) {
+                    console.warn('[VRodos] pmndrs Takram AerialPerspectiveEffect construction failed, skipping:', err);
+                    this.pmndrsAerialPerspectiveEffect = null;
+                }
+            } else if (!this._pmndrsAtmosphereWarned) {
+                console.info('[VRodos] PMNDRS atmosphere requested but Takram atmosphere resources are not ready - using fallback horizon visuals.');
+                this._pmndrsAtmosphereWarned = true;
+            }
+        } else if (atmosphereConfig && atmosphereConfig.enabled && isHorizonBackground(this)) {
+            // Horizon now uses Takram SkyMaterial directly and skips the depth-based
+            // AerialPerspectiveEffect. This avoids the EffectComposer depth blit path
+            // that currently produces repeated glBlitFramebuffer warnings on the
+            // A-Frame r173 runtime while still giving us the Takram sky + sun.
+            this.pmndrsAerialPerspectiveEffect = null;
+        }
 
         // SSAO — temporarily disabled in the pmndrs pipeline (Phase 3).
         //
@@ -281,6 +322,7 @@
         this.pmndrsActive = true;
         this.pmndrsRendering = false;
         this._pmndrsSsrTraaWarned = false;
+        this._pmndrsAtmosphereWarned = false;
 
         var self = this;
         renderer.render = function (scene, camera) {
@@ -309,6 +351,9 @@
                 self.pmndrsRenderPass.mainCamera = camera;
                 if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== 'undefined') {
                     self.pmndrsEffectPass.mainCamera = camera;
+                }
+                if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
+                    self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
                 }
             }
 
@@ -428,6 +473,7 @@
         this.pmndrsEffectPass = null;
         this.pmndrsSsaoEffect = null;
         this.pmndrsBloomEffect = null;
+        this.pmndrsAerialPerspectiveEffect = null;
         this.pmndrsOriginalRender = null;
         this.pmndrsActive = false;
         this.pmndrsRendering = false;
@@ -435,6 +481,7 @@
         this._pmndrsLastH = 0;
         this._pmndrsAdaptive = null;
         this._pmndrsSsrTraaWarned = false;
+        this._pmndrsAtmosphereWarned = false;
     };
 
     /**

@@ -26,5 +26,9 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@takram/three-atmosphere": "^0.18.0",
+    "@takram/three-clouds": "^0.7.4"
   }
 }

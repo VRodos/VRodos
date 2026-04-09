@@ -238,6 +238,136 @@
 									<input id="compilePmndrsVignetteDarknessSlider" type="range" min="0" max="1" step="0.02" value="0.5" class="tw-range tw-range-primary tw-range-xs" disabled>
 								</div>
 							</div>
+
+							<div class="tw-pt-2 tw-border-t tw-border-slate-200 tw-space-y-3">
+								<div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
+									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+										<input id="compilePmndrsAtmosphereToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Enable Takram atmosphere and aerial perspective in the PMNDRS pipeline.">Atmosphere</span>
+									</label>
+									<label class="tw-form-control tw-min-w-[9rem]">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Atmosphere Preset</span>
+										<select id="compilePmndrsAtmosphereQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="performance">Performance</option>
+											<option value="balanced">Balanced</option>
+											<option value="quality">Quality</option>
+											<option value="cinematic">Cinematic</option>
+											<option value="custom">Custom</option>
+										</select>
+									</label>
+								</div>
+								<p class="tw-text-[10px] tw-text-slate-400 tw-leading-4">
+									Takram atmosphere replaces the PMNDRS Horizon sky workaround with a proper sun, sky scattering, and aerial haze. Presets write all advanced atmosphere values; moving any advanced control switches to <span class="tw-font-semibold">Custom</span>.
+								</p>
+
+								<div id="compilePmndrsAtmosphereAdvanced" class="tw-space-y-3">
+									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Elevation</span>
+												<span id="compilePmndrsSunElevationValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">10°</span>
+											</div>
+											<input id="compilePmndrsSunElevationSlider" type="range" min="-5" max="45" step="1" value="10" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Azimuth</span>
+												<span id="compilePmndrsSunAzimuthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">38°</span>
+											</div>
+											<input id="compilePmndrsSunAzimuthSlider" type="range" min="-180" max="180" step="1" value="38" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Radius</span>
+												<span id="compilePmndrsSunAngularRadiusValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.0068</span>
+											</div>
+											<input id="compilePmndrsSunAngularRadiusSlider" type="range" min="0.002" max="0.03" step="0.0002" value="0.0068" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Distance</span>
+												<span id="compilePmndrsSunDistanceValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">5200</span>
+											</div>
+											<input id="compilePmndrsSunDistanceSlider" type="range" min="1500" max="20000" step="100" value="5200" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Aerial Strength</span>
+												<span id="compilePmndrsAerialStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.85</span>
+											</div>
+											<input id="compilePmndrsAerialStrengthSlider" type="range" min="0" max="1.5" step="0.01" value="0.85" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Albedo Scale</span>
+												<span id="compilePmndrsAlbedoScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.96</span>
+											</div>
+											<input id="compilePmndrsAlbedoScaleSlider" type="range" min="0.5" max="1.5" step="0.01" value="0.96" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+									</div>
+
+									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+											<input id="compilePmndrsTransmittanceToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Transmittance</span>
+										</label>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+											<input id="compilePmndrsInscatterToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Inscatter</span>
+										</label>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+											<input id="compilePmndrsGroundToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Ground</span>
+										</label>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+											<input id="compilePmndrsMoonToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Moon</span>
+										</label>
+									</div>
+
+									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Rayleigh</span>
+												<span id="compilePmndrsRayleighScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											</div>
+											<input id="compilePmndrsRayleighScaleSlider" type="range" min="0.2" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Scatter</span>
+												<span id="compilePmndrsMieScatteringScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.90</span>
+											</div>
+											<input id="compilePmndrsMieScatteringScaleSlider" type="range" min="0.1" max="2.5" step="0.01" value="0.9" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Extinction</span>
+												<span id="compilePmndrsMieExtinctionScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											</div>
+											<input id="compilePmndrsMieExtinctionScaleSlider" type="range" min="0.1" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Phase G</span>
+												<span id="compilePmndrsMiePhaseGValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.80</span>
+											</div>
+											<input id="compilePmndrsMiePhaseGSlider" type="range" min="0" max="0.95" step="0.01" value="0.8" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Absorption</span>
+												<span id="compilePmndrsAbsorptionScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											</div>
+											<input id="compilePmndrsAbsorptionScaleSlider" type="range" min="0" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<label class="tw-form-control">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Ground Albedo</span>
+											<input id="compilePmndrsGroundAlbedoInput" type="color" value="#f0e6d6" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1 tw-h-8 tw-p-1">
+										</label>
+									</div>
+								</div>
+							</div>
 						</div>
 
 						<div class="tw-grid tw-grid-cols-2 tw-gap-3">

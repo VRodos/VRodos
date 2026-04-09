@@ -14,6 +14,11 @@ const fontSourcePath = path.join(rootDir, 'node_modules', 'three', 'examples', '
 const fontOutputDir = path.join(outputDir, 'fonts');
 const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
 const tempEntryPath = path.join(rootDir, 'scripts', '.tmp-build-three-r173-entry.mjs');
+const runtimeVendorDir = path.join(rootDir, 'runtime', 'assets', 'js', 'master', 'lib');
+const takramBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-atmosphere.bundle.js');
+const takramEntryPath = path.join(rootDir, 'scripts', '.tmp-build-takram-atmosphere-entry.mjs');
+const threeShimPath = path.join(rootDir, 'scripts', '.tmp-three-global-shim.mjs');
+const postprocessingShimPath = path.join(rootDir, 'scripts', '.tmp-postprocessing-global-shim.mjs');
 
 const bundleEntrySource = `
 import * as THREEBase from 'three';
@@ -91,6 +96,35 @@ async function copySupportAssets() {
   await cp(fontSourcePath, fontOutputPath, { force: true });
 }
 
+function createAliasPlugin(aliases) {
+  return {
+    name: 'vrodos-alias-plugin',
+    setup(buildContext) {
+      Object.entries(aliases).forEach(([filterValue, replacementPath]) => {
+        buildContext.onResolve({ filter: new RegExp(`^${filterValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }, () => ({
+          path: replacementPath
+        }));
+      });
+    }
+  };
+}
+
+function createGlobalShimSource(globalExpression, exportNames) {
+  const safeNames = exportNames.filter((name) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name));
+  const exportLines = safeNames
+    .map((name) => `export const ${name} = moduleValue[${JSON.stringify(name)}];`)
+    .join('\n');
+
+  return `const moduleValue = ${globalExpression};\nexport default moduleValue;\n${exportLines}\n`;
+}
+
+async function writeGlobalShim(moduleName, globalExpression, outputPath) {
+  const importedModule = await import(moduleName);
+  const exportNames = Object.keys(importedModule).filter((name) => name !== 'default');
+  const source = createGlobalShimSource(globalExpression, exportNames);
+  await writeFile(outputPath, source, 'utf8');
+}
+
 async function buildBundle() {
   await mkdir(outputDir, { recursive: true });
   await writeFile(tempEntryPath, bundleEntrySource, 'utf8');
@@ -110,10 +144,47 @@ async function buildBundle() {
   }
 }
 
+async function buildTakramAtmosphereBundle() {
+  await mkdir(runtimeVendorDir, { recursive: true });
+  await writeGlobalShim('three', 'window.THREE || {}', threeShimPath);
+  await writeGlobalShim('postprocessing', 'window.POSTPROCESSING || {}', postprocessingShimPath);
+
+  const entrySource = `
+import * as VRODOSTakramAtmosphere from '@takram/three-atmosphere';
+window.VRODOS_TAKRAM_ATMOSPHERE = VRODOSTakramAtmosphere;
+`;
+
+  await writeFile(takramEntryPath, entrySource, 'utf8');
+
+  try {
+    await build({
+      entryPoints: [takramEntryPath],
+      bundle: true,
+      format: 'iife',
+      platform: 'browser',
+      target: ['es2019'],
+      outfile: takramBundlePath,
+      legalComments: 'none',
+      plugins: [
+        createAliasPlugin({
+          three: threeShimPath,
+          postprocessing: postprocessingShimPath
+        })
+      ]
+    });
+  } finally {
+    await rm(takramEntryPath, { force: true });
+    await rm(threeShimPath, { force: true });
+    await rm(postprocessingShimPath, { force: true });
+  }
+}
+
 async function main() {
   await buildBundle();
+  await buildTakramAtmosphereBundle();
   await copySupportAssets();
   console.log(`Built ${path.relative(rootDir, bundlePath)}`);
+  console.log(`Built ${path.relative(rootDir, takramBundlePath)}`);
 }
 
 main().catch((error) => {

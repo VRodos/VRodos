@@ -120,6 +120,24 @@ class VrodosSceneExporter {
                 aframePmndrsVignetteEnabled: envir.scene.aframePmndrsVignetteEnabled === true,
                 aframePmndrsVignetteDarkness: (typeof envir.scene.aframePmndrsVignetteDarkness === 'number') ? envir.scene.aframePmndrsVignetteDarkness : 0.5,
                 aframePmndrsToneMappingExposure: (typeof envir.scene.aframePmndrsToneMappingExposure === 'number') ? envir.scene.aframePmndrsToneMappingExposure : 1.0,
+                aframePmndrsAtmosphereEnabled: envir.scene.aframePmndrsAtmosphereEnabled !== false,
+                aframePmndrsAtmosphereQuality: envir.scene.aframePmndrsAtmosphereQuality || 'balanced',
+                aframePmndrsSunElevationDeg: (typeof envir.scene.aframePmndrsSunElevationDeg === 'number') ? envir.scene.aframePmndrsSunElevationDeg : 10,
+                aframePmndrsSunAzimuthDeg: (typeof envir.scene.aframePmndrsSunAzimuthDeg === 'number') ? envir.scene.aframePmndrsSunAzimuthDeg : 38,
+                aframePmndrsSunDistance: (typeof envir.scene.aframePmndrsSunDistance === 'number') ? envir.scene.aframePmndrsSunDistance : 5200,
+                aframePmndrsSunAngularRadius: (typeof envir.scene.aframePmndrsSunAngularRadius === 'number') ? envir.scene.aframePmndrsSunAngularRadius : 0.0068,
+                aframePmndrsAerialStrength: (typeof envir.scene.aframePmndrsAerialStrength === 'number') ? envir.scene.aframePmndrsAerialStrength : 0.85,
+                aframePmndrsAlbedoScale: (typeof envir.scene.aframePmndrsAlbedoScale === 'number') ? envir.scene.aframePmndrsAlbedoScale : 0.96,
+                aframePmndrsTransmittanceEnabled: envir.scene.aframePmndrsTransmittanceEnabled !== false,
+                aframePmndrsInscatterEnabled: envir.scene.aframePmndrsInscatterEnabled !== false,
+                aframePmndrsGroundEnabled: envir.scene.aframePmndrsGroundEnabled !== false,
+                aframePmndrsGroundAlbedo: envir.scene.aframePmndrsGroundAlbedo || '#f0e6d6',
+                aframePmndrsRayleighScale: (typeof envir.scene.aframePmndrsRayleighScale === 'number') ? envir.scene.aframePmndrsRayleighScale : 1.0,
+                aframePmndrsMieScatteringScale: (typeof envir.scene.aframePmndrsMieScatteringScale === 'number') ? envir.scene.aframePmndrsMieScatteringScale : 0.9,
+                aframePmndrsMieExtinctionScale: (typeof envir.scene.aframePmndrsMieExtinctionScale === 'number') ? envir.scene.aframePmndrsMieExtinctionScale : 1.0,
+                aframePmndrsMiePhaseG: (typeof envir.scene.aframePmndrsMiePhaseG === 'number') ? envir.scene.aframePmndrsMiePhaseG : 0.8,
+                aframePmndrsAbsorptionScale: (typeof envir.scene.aframePmndrsAbsorptionScale === 'number') ? envir.scene.aframePmndrsAbsorptionScale : 1.0,
+                aframePmndrsMoonEnabled: envir.scene.aframePmndrsMoonEnabled === true,
                 backgroundPresetOption: envir.scene.backgroundPresetOption || 'None',
                 backgroundPresetGroundEnabled: envir.scene.backgroundPresetGroundEnabled !== false,
                 backgroundStyleOption: (envir.scene.backgroundStyleOption !== undefined) ? envir.scene.backgroundStyleOption : 0,
@@ -285,7 +303,7 @@ class VrodosSceneImporter {
 
         for (const key in scene_json_metadata) {
             const value = scene_json_metadata[key];
-            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeLegacyHorizonStageSize', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeReflectionSource', 'aframeHorizonSkyPreset', 'aframeEnvMapPreset', 'aframePostFXEngine', 'aframePmndrsBloomIntensity', 'aframePmndrsBloomThreshold', 'aframePmndrsVignetteEnabled', 'aframePmndrsVignetteDarkness', 'aframePmndrsToneMappingExposure', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
+            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeLegacyHorizonStageSize', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeReflectionSource', 'aframeHorizonSkyPreset', 'aframeEnvMapPreset', 'aframePostFXEngine', 'aframePmndrsBloomIntensity', 'aframePmndrsBloomThreshold', 'aframePmndrsVignetteEnabled', 'aframePmndrsVignetteDarkness', 'aframePmndrsToneMappingExposure', 'aframePmndrsAtmosphereEnabled', 'aframePmndrsAtmosphereQuality', 'aframePmndrsSunElevationDeg', 'aframePmndrsSunAzimuthDeg', 'aframePmndrsSunDistance', 'aframePmndrsSunAngularRadius', 'aframePmndrsAerialStrength', 'aframePmndrsAlbedoScale', 'aframePmndrsTransmittanceEnabled', 'aframePmndrsInscatterEnabled', 'aframePmndrsGroundEnabled', 'aframePmndrsGroundAlbedo', 'aframePmndrsRayleighScale', 'aframePmndrsMieScatteringScale', 'aframePmndrsMieExtinctionScale', 'aframePmndrsMiePhaseG', 'aframePmndrsAbsorptionScale', 'aframePmndrsMoonEnabled', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
                 resources3D_new["SceneSettings"][key] = value;
             }
         }

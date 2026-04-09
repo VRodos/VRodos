@@ -209,6 +209,89 @@ class VRodos_LoaderMulti {
                     envir.scene.aframePmndrsToneMappingExposure = isNaN(_ptE) ? 1.0 : _ptE;
                 }
 
+                if (name === 'aframePmndrsAtmosphereEnabled') {
+                    envir.scene.aframePmndrsAtmosphereEnabled = !(resource === false || resource === 'false');
+                }
+
+                if (name === 'aframePmndrsAtmosphereQuality') {
+                    envir.scene.aframePmndrsAtmosphereQuality = resource || 'balanced';
+                }
+
+                if (name === 'aframePmndrsSunElevationDeg') {
+                    var _pmSunEl = parseFloat(resource);
+                    envir.scene.aframePmndrsSunElevationDeg = isNaN(_pmSunEl) ? 10 : _pmSunEl;
+                }
+
+                if (name === 'aframePmndrsSunAzimuthDeg') {
+                    var _pmSunAz = parseFloat(resource);
+                    envir.scene.aframePmndrsSunAzimuthDeg = isNaN(_pmSunAz) ? 38 : _pmSunAz;
+                }
+
+                if (name === 'aframePmndrsSunDistance') {
+                    var _pmSunDist = parseFloat(resource);
+                    envir.scene.aframePmndrsSunDistance = isNaN(_pmSunDist) ? 5200 : _pmSunDist;
+                }
+
+                if (name === 'aframePmndrsSunAngularRadius') {
+                    var _pmSunRadius = parseFloat(resource);
+                    envir.scene.aframePmndrsSunAngularRadius = isNaN(_pmSunRadius) ? 0.0068 : _pmSunRadius;
+                }
+
+                if (name === 'aframePmndrsAerialStrength') {
+                    var _pmAerial = parseFloat(resource);
+                    envir.scene.aframePmndrsAerialStrength = isNaN(_pmAerial) ? 0.85 : _pmAerial;
+                }
+
+                if (name === 'aframePmndrsAlbedoScale') {
+                    var _pmAlbedo = parseFloat(resource);
+                    envir.scene.aframePmndrsAlbedoScale = isNaN(_pmAlbedo) ? 0.96 : _pmAlbedo;
+                }
+
+                if (name === 'aframePmndrsTransmittanceEnabled') {
+                    envir.scene.aframePmndrsTransmittanceEnabled = !(resource === false || resource === 'false');
+                }
+
+                if (name === 'aframePmndrsInscatterEnabled') {
+                    envir.scene.aframePmndrsInscatterEnabled = !(resource === false || resource === 'false');
+                }
+
+                if (name === 'aframePmndrsGroundEnabled') {
+                    envir.scene.aframePmndrsGroundEnabled = !(resource === false || resource === 'false');
+                }
+
+                if (name === 'aframePmndrsGroundAlbedo') {
+                    envir.scene.aframePmndrsGroundAlbedo = resource || '#f0e6d6';
+                }
+
+                if (name === 'aframePmndrsRayleighScale') {
+                    var _pmRayleigh = parseFloat(resource);
+                    envir.scene.aframePmndrsRayleighScale = isNaN(_pmRayleigh) ? 1.0 : _pmRayleigh;
+                }
+
+                if (name === 'aframePmndrsMieScatteringScale') {
+                    var _pmMieScat = parseFloat(resource);
+                    envir.scene.aframePmndrsMieScatteringScale = isNaN(_pmMieScat) ? 0.9 : _pmMieScat;
+                }
+
+                if (name === 'aframePmndrsMieExtinctionScale') {
+                    var _pmMieExt = parseFloat(resource);
+                    envir.scene.aframePmndrsMieExtinctionScale = isNaN(_pmMieExt) ? 1.0 : _pmMieExt;
+                }
+
+                if (name === 'aframePmndrsMiePhaseG') {
+                    var _pmMieG = parseFloat(resource);
+                    envir.scene.aframePmndrsMiePhaseG = isNaN(_pmMieG) ? 0.8 : _pmMieG;
+                }
+
+                if (name === 'aframePmndrsAbsorptionScale') {
+                    var _pmAbsorb = parseFloat(resource);
+                    envir.scene.aframePmndrsAbsorptionScale = isNaN(_pmAbsorb) ? 1.0 : _pmAbsorb;
+                }
+
+                if (name === 'aframePmndrsMoonEnabled') {
+                    envir.scene.aframePmndrsMoonEnabled = resource === true || resource === 'true';
+                }
+
                 if (name === 'aframeBloomStrength') {
                     envir.scene.aframeBloomStrength = resource || 'off';
                     if (envir.scene.aframePostFXBloomEnabled === false) {
@@ -666,6 +749,35 @@ class VRodos_LoaderMulti {
                         envir.scene.aframePmndrsVignetteDarkness = isNaN(_resPmVD) ? 0.5 : _resPmVD;
                         var _resPmTE = parseFloat(resource.aframePmndrsToneMappingExposure);
                         envir.scene.aframePmndrsToneMappingExposure = isNaN(_resPmTE) ? 1.0 : _resPmTE;
+                        envir.scene.aframePmndrsAtmosphereEnabled = !(resource.aframePmndrsAtmosphereEnabled === false || resource.aframePmndrsAtmosphereEnabled === 'false');
+                        envir.scene.aframePmndrsAtmosphereQuality = resource.aframePmndrsAtmosphereQuality || 'balanced';
+                        var _resPmSunEl = parseFloat(resource.aframePmndrsSunElevationDeg);
+                        envir.scene.aframePmndrsSunElevationDeg = isNaN(_resPmSunEl) ? 10 : _resPmSunEl;
+                        var _resPmSunAz = parseFloat(resource.aframePmndrsSunAzimuthDeg);
+                        envir.scene.aframePmndrsSunAzimuthDeg = isNaN(_resPmSunAz) ? 38 : _resPmSunAz;
+                        var _resPmSunDistance = parseFloat(resource.aframePmndrsSunDistance);
+                        envir.scene.aframePmndrsSunDistance = isNaN(_resPmSunDistance) ? 5200 : _resPmSunDistance;
+                        var _resPmSunRadius = parseFloat(resource.aframePmndrsSunAngularRadius);
+                        envir.scene.aframePmndrsSunAngularRadius = isNaN(_resPmSunRadius) ? 0.0068 : _resPmSunRadius;
+                        var _resPmAerial = parseFloat(resource.aframePmndrsAerialStrength);
+                        envir.scene.aframePmndrsAerialStrength = isNaN(_resPmAerial) ? 0.85 : _resPmAerial;
+                        var _resPmAlbedo = parseFloat(resource.aframePmndrsAlbedoScale);
+                        envir.scene.aframePmndrsAlbedoScale = isNaN(_resPmAlbedo) ? 0.96 : _resPmAlbedo;
+                        envir.scene.aframePmndrsTransmittanceEnabled = !(resource.aframePmndrsTransmittanceEnabled === false || resource.aframePmndrsTransmittanceEnabled === 'false');
+                        envir.scene.aframePmndrsInscatterEnabled = !(resource.aframePmndrsInscatterEnabled === false || resource.aframePmndrsInscatterEnabled === 'false');
+                        envir.scene.aframePmndrsGroundEnabled = !(resource.aframePmndrsGroundEnabled === false || resource.aframePmndrsGroundEnabled === 'false');
+                        envir.scene.aframePmndrsGroundAlbedo = resource.aframePmndrsGroundAlbedo || '#f0e6d6';
+                        var _resPmRayleigh = parseFloat(resource.aframePmndrsRayleighScale);
+                        envir.scene.aframePmndrsRayleighScale = isNaN(_resPmRayleigh) ? 1.0 : _resPmRayleigh;
+                        var _resPmMieScat = parseFloat(resource.aframePmndrsMieScatteringScale);
+                        envir.scene.aframePmndrsMieScatteringScale = isNaN(_resPmMieScat) ? 0.9 : _resPmMieScat;
+                        var _resPmMieExt = parseFloat(resource.aframePmndrsMieExtinctionScale);
+                        envir.scene.aframePmndrsMieExtinctionScale = isNaN(_resPmMieExt) ? 1.0 : _resPmMieExt;
+                        var _resPmMieG = parseFloat(resource.aframePmndrsMiePhaseG);
+                        envir.scene.aframePmndrsMiePhaseG = isNaN(_resPmMieG) ? 0.8 : _resPmMieG;
+                        var _resPmAbsorb = parseFloat(resource.aframePmndrsAbsorptionScale);
+                        envir.scene.aframePmndrsAbsorptionScale = isNaN(_resPmAbsorb) ? 1.0 : _resPmAbsorb;
+                        envir.scene.aframePmndrsMoonEnabled = resource.aframePmndrsMoonEnabled === true || resource.aframePmndrsMoonEnabled === 'true';
                         envir.scene.aframeBloomStrength = resource.aframeBloomStrength || 'off';
                         if (envir.scene.aframePostFXBloomEnabled === false) {
                             envir.scene.aframeBloomStrength = 'off';

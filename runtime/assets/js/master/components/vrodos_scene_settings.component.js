@@ -59,6 +59,24 @@ AFRAME.registerComponent('scene-settings', {
         pmndrsVignetteEnabled: { type: "string", default: "0" },
         pmndrsVignetteDarkness: { type: "string", default: "0.5" },
         pmndrsToneMappingExposure: { type: "string", default: "1.0" },
+        pmndrsAtmosphereEnabled: { type: "string", default: "1" },
+        pmndrsAtmosphereQuality: { type: "string", default: "balanced" },
+        pmndrsSunElevationDeg: { type: "string", default: "10" },
+        pmndrsSunAzimuthDeg: { type: "string", default: "38" },
+        pmndrsSunDistance: { type: "string", default: "5200" },
+        pmndrsSunAngularRadius: { type: "string", default: "0.0068" },
+        pmndrsAerialStrength: { type: "string", default: "0.85" },
+        pmndrsAlbedoScale: { type: "string", default: "0.96" },
+        pmndrsTransmittanceEnabled: { type: "string", default: "1" },
+        pmndrsInscatterEnabled: { type: "string", default: "1" },
+        pmndrsGroundEnabled: { type: "string", default: "1" },
+        pmndrsGroundAlbedo: { type: "string", default: "#f0e6d6" },
+        pmndrsRayleighScale: { type: "string", default: "1.0" },
+        pmndrsMieScatteringScale: { type: "string", default: "0.9" },
+        pmndrsMieExtinctionScale: { type: "string", default: "1.0" },
+        pmndrsMiePhaseG: { type: "string", default: "0.8" },
+        pmndrsAbsorptionScale: { type: "string", default: "1.0" },
+        pmndrsMoonEnabled: { type: "string", default: "0" },
     },
     getSSRStrengthValue: function () {
         switch (this.data.postFXSSRStrength) {
@@ -176,6 +194,20 @@ AFRAME.registerComponent('scene-settings', {
             venice: 'venice_sunset_1k.hdr'
         };
         return map[this.data.envMapPreset] || null;
+    },
+    getPmndrsAtmosphereQuality: function () {
+        switch (this.data.pmndrsAtmosphereQuality) {
+            case 'performance':
+            case 'quality':
+            case 'cinematic':
+            case 'custom':
+                return this.data.pmndrsAtmosphereQuality;
+            default:
+                return 'balanced';
+        }
+    },
+    isPmndrsAtmosphereEnabled: function () {
+        return this.data.postFXEngine === 'pmndrs' && this.data.pmndrsAtmosphereEnabled !== '0';
     },
     getReflectionSource: function () {
         return this.data.reflectionSource === 'scene-probe' ? 'scene-probe' : 'hdr';
@@ -330,7 +362,8 @@ AFRAME.registerComponent('scene-settings', {
     hasEnabledPostFXOptions: function () {
         return this.hasBloomEffectEnabled() ||
             this.isPostFXOptionEnabled('postFXColorEnabled') ||
-            this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
+            this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ||
+            this.isPmndrsAtmosphereEnabled();
     },
     hasCinematicShaderOptions: function () {
         return this.hasBloomEffectEnabled() ||
@@ -338,7 +371,8 @@ AFRAME.registerComponent('scene-settings', {
             this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ||
             this.isPostFXOptionEnabled('postFXTAAEnabled') ||
             this.isPostFXOptionEnabled('postFXSSREnabled') ||
-            this.getAmbientOcclusionPreset() !== 'off';
+            this.getAmbientOcclusionPreset() !== 'off' ||
+            this.isPmndrsAtmosphereEnabled();
     },
     shouldUseEdgeAAOversample: function () {
         return this.data.renderQuality === 'high' &&
@@ -437,6 +471,10 @@ AFRAME.registerComponent('scene-settings', {
     ensurePhotorealHelperLight: VRODOSMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
     removePhotorealHelperLights: VRODOSMaster.SceneSettingsHelpers.removePhotorealHelperLights,
     applyHorizonSkyPreset: VRODOSMaster.SceneSettingsHelpers.applyHorizonSkyPreset,
+    ensurePmndrsAtmosphereResources: VRODOSMaster.SceneSettingsHelpers.ensurePmndrsAtmosphereResources || function () { return null; },
+    disposePmndrsAtmosphere: VRODOSMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || function () {},
+    getPmndrsAtmosphereConfig: VRODOSMaster.SceneSettingsHelpers.getPmndrsAtmosphereConfig || function () { return null; },
+    applyPmndrsAtmosphereConfigToTarget: VRODOSMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || function () {},
     updatePmndrsHorizonSun: VRODOSMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function () {},
     applyBackgroundQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyBackgroundQualityProfile,
     applyPostFXProfile: VRODOSMaster.SceneSettingsHelpers.applyPostFXProfile,
@@ -449,7 +487,11 @@ AFRAME.registerComponent('scene-settings', {
         this.handleSceneMutation = function () {
             this.markSceneCollectionsDirty();
         }.bind(this);
-        this.handleResize = this.updatePostProcessingSize.bind(this);
+        this.handleResize = function () {
+            this.updatePostProcessingSize();
+            this.updatePmndrsPostProcessingSize();
+            this.updatePmndrsHorizonSun();
+        }.bind(this);
         this.postProcessingSize = new THREE.Vector2();
         this.sceneQueryCache = {};
         this.sceneCollectionsDirty = true;
@@ -637,13 +679,15 @@ AFRAME.registerComponent('scene-settings', {
                 break;
             case "0":
                 clearGeneratedBackground();
-                backgroundEl.setAttribute("environment", {
-                    preset: 'default',
-                    ground: 'none',
-                    fog: (this.data.fogCategory === "2") ? (parseFloat(this.data.fogdensity) * 1.5) : 0,
-                    playArea: 1,
-                    shadow: true
-                });
+                if (!(this.data.postFXEngine === 'pmndrs' && this.isPmndrsAtmosphereEnabled() && window.VRODOS_TAKRAM_ATMOSPHERE)) {
+                    backgroundEl.setAttribute("environment", {
+                        preset: 'default',
+                        ground: 'none',
+                        fog: (this.data.fogCategory === "2") ? (parseFloat(this.data.fogdensity) * 1.5) : 0,
+                        playArea: 1,
+                        shadow: true
+                    });
+                }
                 this.applyHorizonSkyPreset();
                 break;
             case "1":
@@ -705,6 +749,7 @@ AFRAME.registerComponent('scene-settings', {
         }
         this.disablePostProcessing();
         this.disablePmndrsPostProcessing();
+        this.disposePmndrsAtmosphere();
         if (this._envMapRenderTarget) {
             this._envMapRenderTarget.dispose();
             this._envMapRenderTarget = null;
