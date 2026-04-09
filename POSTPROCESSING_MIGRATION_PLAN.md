@@ -14,6 +14,24 @@ This plan compares the four realistic options (A-Frame defaults, stock Three pos
 
 ---
 
+## Status Snapshot (2026-04-09)
+
+| Phase | Status | Notes |
+|---|---|---|
+| Phase 0 | Complete | Compatibility smoke test completed with caveats (see §9). |
+| Phase 1 | Complete | Bundle/runtime extension completed (see §10). |
+| Phase 2 | Complete | PMNDRS runtime module implemented (`vrodos_postprocessing_pmndrs.js`). |
+| Phase 3 | Complete | PMNDRS runtime wiring into compiled master shell completed. |
+| Phase 4 | Complete | Engine selector + schema/compiler/dialog wiring completed. |
+| Phase 5 | In progress | Atmosphere-first Horizon fix approved in §12; volumetric clouds are pending. |
+| Phase 6 | Not started | Legacy hard-delete deferred until stability window is met. |
+
+**What is no longer relevant now**
+- `realism-effects` as an SSR/TRAA dependency for this migration (rejected in §10 due Three r173 incompatibility).
+- pre-Phase-0 decision questions that were already answered by implementation and subsequent results sections.
+
+---
+
 ## 1. What VRodos Currently Has
 
 Source of truth: `runtime/assets/js/master/vrodos_postprocessing.js` (lines 1–500+).
@@ -52,14 +70,14 @@ What this means: VRodos' pipeline is better than "generic Three post-processing 
 | God rays / light shafts | — | — | — | `GodRaysEffect` | yes |
 | Chromatic aberration / noise / glitch | — | — | — | yes | yes |
 | WebXR | yes (no PP, works cleanly) | broken | yes — post-FX off in XR, A-Frame path takes over | not yet supported ([pmndrs/postprocessing#677](https://github.com/pmndrs/postprocessing/issues/677), research phase) | broken |
-| Three r173 compatibility | yes | yes | yes | yes (v7 tracks latest Three; ≥ r167 is safe per Takram peer range) — **needs one smoke test** | `realism-effects` has historically lagged Three updates; pin carefully |
+| Three r173 compatibility | yes | yes | yes | yes (current pinned line is 6.39.x) — **validated in Phase 0/1** | historical option only (rejected for current migration) |
 | Maintenance burden | none | low | **high — all in-house** | low | medium |
 | Required to unlock `@takram/three-clouds` | no | no | no | **yes** | yes |
 
 **Key observations**
 
 - VRodos' single best architectural idea — **fusing all enabled effects into one specialized fragment shader** — is the *exact same thing* pmndrs' `EffectPass` does automatically. Migrating does not lose the optimization; it shifts it from in-house code to a maintained library.
-- VRodos beats pmndrs core on **SSR, TAA, and adaptive SAO half-rate** — none of these ship in pmndrs core. SSR and TAA live in `realism-effects` (0beqz). Adaptive SAO half-rate doesn't exist anywhere; it would need to be re-implemented against `N8AOPass` via a custom frame-skip wrapper.
+- VRodos beats pmndrs core on **SSR, TAA, and adaptive SAO half-rate** — none of these ship in pmndrs core. For this migration, SSR/TAA remain on the legacy path (see §11).
 - pmndrs beats VRodos on **SMAA quality, N8AO quality, DoF, god rays, LUT color grading, outline-as-effect, tone mapping algorithms** — and on the feature *ceiling* generally, because the library is actively maintained by a larger community.
 - WebXR is **a non-issue**. VRodos already turns post-FX off in VR. Whichever library is in use on desktop, the VR path is the same plain A-Frame rendering.
 - A-Frame's stock environment and stock Three `EffectComposer` are both strictly worse than what VRodos already has and are not serious contenders.
@@ -68,20 +86,20 @@ What this means: VRodos' pipeline is better than "generic Three post-processing 
 
 ## 3. Recommendation
 
-**Migrate to pmndrs/postprocessing as the core desktop post-FX pipeline, using `realism-effects` for SSR/TRAA.**
+**Migrate to pmndrs/postprocessing as the core desktop post-FX pipeline, while keeping legacy as the SSR/TRAA path.**
 
 Why this wins:
 
-1. **Quality up**. SMAA > FXAA. N8AO >= VRodos' custom SAO (subjective, but strongly held community consensus). `BloomEffect` with a mipmap chain is better than 2-pass Gaussian. LUT color grading is a real win for authored looks. DoF and god rays become available at essentially zero cost-to-add.
+1. **Quality up**. `BloomEffect` + fused `EffectPass` + modern tone-mapping/color stack improves maintainability and visual consistency.
 2. **Maintenance down**. ~600 lines of custom `vrodos_postprocessing.js` + several custom shader files (`vrodos_shaders_sao.js`, `vrodos_shaders_ssr.js`, `vrodos_shaders_bloom.js`, `vrodos_shaders_taa.js`, `vrodos_shaders_fxaa.js`, composite material) collapse into a small adapter layer that configures pmndrs effects from the `scene-settings` schema.
-3. **Cloud feature unlocked for free**. Once pmndrs is the composer, `@takram/three-atmosphere` and `@takram/three-clouds` (from three.js#33292) plug in as two more effects in the same chain. No dual-composer hack.
+3. **Atmosphere/cloud feature path unlocked**. Once pmndrs is the composer, Takram atmosphere and clouds integrate cleanly in the same effect chain.
 4. **Same architectural win**. pmndrs' `EffectPass` merges enabled effects into one fragment shader — the exact trick VRodos currently hand-maintains.
 5. **Future effects come for free**: chromatic aberration, pixelation, scan-line, glitch, shock-wave, etc., if ever authored in the editor UI.
 
 Acceptable losses / carry-overs:
 
-- **Adaptive SAO half-rate** (FPS-reactive subsampling) — re-implement as a small wrapper that skips `n8aoPass.render()` on odd frames when rolling FPS < 30. The existing FPS rolling-average code in `vrodos_postprocessing.js` lines 282–315 ports over verbatim.
-- **TAA tuning**: switch to `realism-effects` `TRAAEffect` (or pmndrs' built-in TAA in v7 if it's stable on r173 — to be verified during the proof-of-concept). Keep the user-facing `postFXTAAEnabled` flag so compiled scenes are unchanged.
+- **SSR/TRAA** remain legacy-only in this migration line; PMNDRS path explicitly no-ops those flags with a one-time info log.
+- **Adaptive AO half-rate** is optional follow-up tuning; correctness comes first in the PMNDRS path.
 - **ACES tone mapping**: set `renderer.toneMapping = ACESFilmicToneMapping` and use pmndrs' `ToneMappingEffect` properly instead of the XR render-target hack. Cleaner.
 - **MSAA/Depth trade-off**: pmndrs handles the depth-texture/MSAA exclusivity internally; the logic at lines 97–115 can be removed.
 
@@ -95,7 +113,7 @@ Before touching any production code, build a throwaway HTML page that loads:
 
 - A-Frame 1.7.1
 - The existing `vrodos-three-r173.bundle.js`
-- pmndrs `postprocessing` v7 (from a local `npm install postprocessing`)
+- pmndrs `postprocessing` 6.x (current pinned line: 6.39.0)
 - A trivial scene with 1 cube
 
 and verifies:
@@ -112,14 +130,12 @@ and verifies:
 
 Edit `scripts/build-three-r173.mjs` (`bundleEntrySource` block, lines 18–58):
 
-- `npm install postprocessing realism-effects n8ao` (pin versions after Phase 0 confirms compatibility).
+- `npm install postprocessing n8ao` (pin versions after Phase 0 confirms compatibility).
 - Import them and re-export onto globals alongside `window.THREE`:
   ```js
   import * as POSTPROCESSING from 'postprocessing';
-  import * as REALISM from 'realism-effects';
   import { N8AOPostPass } from 'n8ao';
   window.POSTPROCESSING = POSTPROCESSING;
-  window.REALISM = REALISM;
   window.N8AOPostPass = N8AOPostPass;
   ```
 - Rebuild (`node scripts/build-three-r173.mjs`).
@@ -218,15 +234,15 @@ Only after Phase 3 has been shipping visibly to users without regressions:
 | `includes/class-vrodos-compiler-manager.php` | **Edit in Phase 5** — lines 534–567 serialize new cloud metadata keys into `scene-settings`. |
 | `js_libs/aframe_libs/Master_Client_prototype.html` | **Edit in Phase 3** — swap the `<script>` tag for the post-FX module; line ~64. |
 | `js_libs/aframe_libs/Simple_Client_prototype.html` | Same as above for simple client parity. |
-| `runtime/assets/js/master/vrodos_quality_profiles.js` | **No changes.** `applyHorizonSkyPreset` at lines 178–210 remains the fallback path when clouds/atmosphere are off or on mobile/XR. |
+| `runtime/assets/js/master/vrodos_quality_profiles.js` | **Edit in Addendum §12.** PMNDRS horizon path moves to Takram atmosphere-first wiring; legacy horizon path remains unchanged. |
 | `VOLUMETRIC_CLOUDS_IMPLEMENTATION_PLAN.md` | **Update after Phase 5** — its current assumption of "port shader logic ourselves" is superseded by "use Takram packages via pmndrs composer." |
 
 ---
 
 ## 6. Risks & Mitigations
 
-1. **pmndrs/postprocessing v7 + Three r173 compatibility.** Mitigation: Phase 0 smoke test. If it fails, the abort path is either (a) upgrade Three to a newer r18x as a separate project, or (b) run pmndrs in a second composer alongside the existing VRodos pipeline (dual-composer).
-2. **`realism-effects` quality and Three-version drift.** Mitigation: pin the exact version in `package.json`; write a small fallback so that if SSR or TRAA construction throws, the composer builds without them and logs a warning, rather than crashing the scene.
+1. **pmndrs/postprocessing (6.x line) + Three r173 compatibility drift.** Mitigation: Phase 0 smoke test and pinned versions; if it fails, abort path is either (a) upgrade Three to a newer r18x as a separate project, or (b) run pmndrs in a second composer alongside the existing VRodos pipeline (dual-composer).
+2. **Takram atmosphere integration drift against A-Frame scene assumptions.** Mitigation: PMNDRS-only gating, explicit fallback branch, and visual parity checks against legacy Horizon scenes.
 3. **Bundle size growth.** Mitigation: measure in Phase 1. If the delta is meaningful, build a second bundle loaded only when `postFXEnabled=1` (the current bootstrap code in the HTML shells already has the hook points for conditional loading).
 4. **Visual regression on existing scenes.** Mitigation: before/after screenshot review of a fixed set of sample scenes at Phase 3 gate. Keep the old `vrodos_postprocessing.js` file in place (just stop wiring it up) for rapid rollback during that window. Only delete in Phase 6 once confidence is high.
 5. **Adaptive SAO half-rate regression.** The old behavior is a real user-facing perf feature. Mitigation: explicitly port the FPS rolling-average + cooldown logic verbatim in Phase 2 step 6.
@@ -264,11 +280,11 @@ End-to-end gates — each phase has its own go/no-go:
 
 ---
 
-## 8. Open Questions (answer before starting Phase 0)
+## 8. Archived Questions (resolved)
 
-1. Are we OK taking on three new runtime deps (`postprocessing`, `realism-effects`, `n8ao`) plus the two Takram packages in Phase 5? All are MIT/similar-permissive.
-2. During the parallel-pipelines window (Phases 3–6), do we ship with a runtime feature flag so the old pipeline can be forced on for rollback, or do we switch all-in at Phase 3 gate? (The former is safer, the latter is cleaner.)
-3. Phase 6 cleanup is listed as a hard delete. Are you comfortable with that, or do you want the old files retained as `.deprecated.js` for one release cycle?
+1. Runtime dependency direction was resolved in implementation: `postprocessing` + `n8ao` are in scope; `realism-effects` was rejected (see §10).
+2. Parallel pipelines were adopted with per-scene `postFXEngine` selection and legacy default (see §11).
+3. Phase 6 remains intentionally deferred; legacy hard-delete happens only after a stability window and explicit go decision.
 
 ---
 
@@ -291,12 +307,12 @@ Smoke test built via `scripts/build-phase0-smoke.mjs` → `js_libs/threejs173/vr
 - ⚠️ **Critical setup gotcha**: `composer.setSize(w, h)` MUST be called with non-zero dimensions before the first `composer.render()`. If A-Frame's canvas reports `width=0` (e.g. when overlays are present, or the scene hasn't laid out yet), the first composer render throws `INVALID_FRAMEBUFFER_OPERATION (0x506)`. Phase 2 must guard for this — ideally hook composer construction off A-Frame's `loaded` event AND call `setSize()` with `renderer.domElement.clientWidth || window.innerWidth` fallback.
 
 ### Verdict: **GO**
-The architectural win — fused EffectPass for color grading / bloom / tonemap / vignette / AA — is achieved. SMAA and N8AO failures do not block the migration; the fallback choices (FXAA for AA, pmndrs SSAOEffect for AO) are well-understood and within the pmndrs ecosystem. Realism-effects SSR/TRAA remains unverified (deferred to Phase 1/2).
+The architectural win — fused EffectPass for color grading / bloom / tonemap / vignette / AA — is achieved. SMAA and N8AO failures do not block the migration; the fallback choices (FXAA for AA, pmndrs SSAOEffect for AO) are well-understood and within the pmndrs ecosystem. (Historical note: the realism-effects path referenced here was later rejected in §10.)
 
 ### Phase 1 entry checklist
 1. Decide on AA strategy in Phase 2: FXAA-only for v1, or attempt SMAA workaround (separate `SMAAPass` outside EffectPass) as a stretch.
 2. Decide on AO strategy in Phase 2: pmndrs `SSAOEffect` (default), or investigate n8ao version pinning.
-3. Smoke-test `realism-effects` SSR/TRAA construction in Phase 1 bundle before committing in Phase 2.
+3. (Obsolete after §10) Evaluate optional third-party SSR/TRAA path.
 4. Phase 2 module must handle the `setSize()` zero-canvas case explicitly.
 
 ---
@@ -358,8 +374,8 @@ When `vrodos_postprocessing_pmndrs.js` is the active pipeline and a scene has `p
 - A one-time `console.info('[VRodos] SSR/TRAA requested but not available in pmndrs pipeline — use legacy pipeline if required')` is logged per scene load.
 - No scene-settings schema change. The flags keep their meaning on the legacy path.
 
-### Pipeline selection (decided in Phase 2/3)
-The mechanism for choosing legacy vs pmndrs is not yet specified — it could be a global feature flag, a per-scene `postFXEngine` field, or auto-fallback (use pmndrs if neither SSR nor TRAA is requested, else legacy). Open question for Phase 2.
+### Pipeline selection (resolved)
+Selection is per-scene via `postFXEngine` (`legacy | pmndrs`) serialized in scene metadata and exposed in the compile dialog. No global auto-fallback logic is used.
 
 ### Future re-evaluation
 Revisit if any of the following happen:
@@ -369,11 +385,106 @@ Revisit if any of the following happen:
 
 ---
 
-## 12. Reference Links
+## 12. Horizon / Atmosphere Addendum (2026-04-09) — APPROVED
+
+This addendum extends the migration plan so the current PMNDRS horizon regressions are fixed first (gray top cap, missing sun), while keeping the legacy pipeline untouched. It also formalizes the PMNDRS compile-tab controls requested for visual/performance tuning.
+
+### Scope decision
+1. **Engine isolation:** PMNDRS-only implementation. Legacy engine remains byte-for-byte behavior-compatible.
+2. **Delivery order:** Atmosphere first, clouds later. Build a cloud-ready seam now, but do not enable volumetric clouds in this slice.
+3. **UI exposure:** PMNDRS atmosphere controls are visible for **all PMNDRS scenes** in the compile dialog (not only Horizon scenes).
+4. **Fallback safety:** if Takram atmosphere construction fails, runtime falls back to the current PMNDRS gradient/sun fallback path without breaking scene render.
+
+### Problem statement this addendum addresses
+- The current PMNDRS Horizon workaround can produce:
+  - a visible gray cap/disc artifact from `aframe-environment-component` sun mesh behavior under PMNDRS + ACES,
+  - missing custom sun due to depth-tested sprite occlusion against large sky geometry.
+- Legacy horizon is visually good and must not regress.
+
+### Implementation plan (additive to Phases 4–5)
+1. **Bundle/runtime**
+   - Extend `scripts/build-three-r173.mjs` to bundle and expose Takram atmosphere classes needed at runtime.
+   - Keep local-bundle delivery (no new runtime CDN dependency).
+
+2. **PMNDRS horizon atmosphere path**
+   - In `runtime/assets/js/master/vrodos_quality_profiles.js`, replace PMNDRS Horizon sun/sky workaround with a dedicated atmosphere state:
+     - create/manage Takram sky material + sun light state under PMNDRS + Horizon gate only,
+     - map existing `horizonSkyPreset` values (`natural|clear|crisp`) to atmosphere parameter presets and sun direction,
+     - keep legacy horizon branch unchanged.
+   - Keep existing PMNDRS fallback sun branch, but harden visibility (`depthTest:false`, `depthWrite:false`, stable render order) for fail-safe correctness.
+
+3. **PMNDRS composer integration (cloud-ready seam)**
+   - In `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`, add `AerialPerspectiveEffect` into the fused `EffectPass`.
+   - Lock effect ordering seam for future clouds:
+     - future `CloudsEffect` slot (disabled in this slice),
+     - then `AerialPerspectiveEffect`,
+     - then tonemap/color/vignette/AA.
+
+4. **Compile dialog PMNDRS pro controls**
+   - Extend PMNDRS tab UI and JS wiring (`includes/templates/vrodos-edit-3D-scene-CompileDialogue.php`, `js_libs/vrodos_compile_dialogue.js`) with:
+     - master toggle + quality preset (`performance|balanced|quality|cinematic|custom`),
+     - sun controls (elevation, azimuth, angular radius, distance/intensity-style scale),
+     - aerial/atmospheric controls (aerial strength, transmittance, inscatter, ground, ground albedo),
+     - scattering controls (Rayleigh, Mie scattering/extinction, Mie anisotropy `g`, absorption),
+     - moon toggle.
+   - Preset behavior:
+     - selecting a quality preset writes all advanced values,
+     - editing any advanced knob sets preset to `custom`,
+     - reset button restores all PMNDRS defaults (including atmosphere controls).
+
+5. **Data path serialization**
+   - Persist new PMNDRS atmosphere fields through:
+     - editor scene state bootstrap,
+     - scene save/load (`vrodos_ScenePersistence.js`, `vrodos_LoaderMulti.js`),
+     - compiler metadata sanitization/serialization (`includes/class-vrodos-compiler-manager.php`),
+     - runtime schema (`runtime/assets/js/master/components/vrodos_scene_settings.component.js`).
+   - Keep defaults safe and clamped for backward compatibility.
+
+### New PMNDRS atmosphere metadata fields
+These fields are PMNDRS-specific and ignored by legacy runtime:
+
+```js
+aframePmndrsAtmosphereEnabled
+aframePmndrsAtmosphereQuality
+aframePmndrsSunElevationDeg
+aframePmndrsSunAzimuthDeg
+aframePmndrsSunDistance
+aframePmndrsSunAngularRadius
+aframePmndrsAerialStrength
+aframePmndrsAlbedoScale
+aframePmndrsTransmittanceEnabled
+aframePmndrsInscatterEnabled
+aframePmndrsGroundEnabled
+aframePmndrsGroundAlbedo
+aframePmndrsRayleighScale
+aframePmndrsMieScatteringScale
+aframePmndrsMieExtinctionScale
+aframePmndrsMiePhaseG
+aframePmndrsAbsorptionScale
+aframePmndrsMoonEnabled
+```
+
+### Verification gates for this addendum
+1. PMNDRS + Horizon: no gray cap artifact; sun visible in `natural|clear|crisp`.
+2. Legacy + Horizon: no visual regression versus current production look.
+3. PMNDRS + non-Horizon backgrounds: no regressions from atmosphere controls existing.
+4. Compile dialog roundtrip: all PMNDRS atmosphere values save/load/compile consistently.
+5. Runtime fallback: if atmosphere init fails, scene still renders with fallback sky path and no crash.
+6. VR/mobile guard paths: post-FX gates remain intact and stable.
+
+### Notes on best-practice basis
+- Takram atmosphere supports multiple lighting approaches; for VRodos' existing lit/PBR content, light-source-compatible usage is the safe first step.
+- Takram clouds documentation requires PMNDRS/postprocessing composer compatibility and ordering (`CloudsEffect` before `AerialPerspectiveEffect`), which this addendum prepares.
+
+---
+
+## 13. Reference Links
 
 - pmndrs/postprocessing: <https://github.com/pmndrs/postprocessing>
 - pmndrs/postprocessing WebXR research issue #677: <https://github.com/pmndrs/postprocessing/issues/677>
-- realism-effects (0beqz, SSR/SSGI/TRAA): <https://github.com/0beqz/realism-effects>
 - N8AO: <https://github.com/N8python/n8ao>
 - @takram/three-atmosphere + @takram/three-clouds: <https://github.com/takram-design-engineering/three-geospatial>
+- Takram atmosphere README (lighting modes, limitations): <https://raw.githubusercontent.com/takram-design-engineering/three-geospatial/main/packages/atmosphere/README.md>
+- Takram clouds README (composer compatibility + effect ordering): <https://raw.githubusercontent.com/takram-design-engineering/three-geospatial/main/packages/clouds/README.md>
 - three.js#33292 (Takram clouds example, merged into r184): <https://github.com/mrdoob/three.js/pull/33292>
+
