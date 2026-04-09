@@ -739,6 +739,7 @@ extract( $data );
 			envir.scene.aframePostFXVignetteEnabled = false;
 			envir.scene.aframePostFXEdgeAAEnabled = !(vrodos_scene_data["aframePostFXEdgeAAEnabled"] === false || vrodos_scene_data["aframePostFXEdgeAAEnabled"] === 'false');
 			envir.scene.aframePostFXEdgeAAStrength = vrodos_scene_data["aframePostFXEdgeAAStrength"] || 3;
+			envir.scene.aframeLegacyHorizonStageSize = (typeof vrodos_scene_data["aframeLegacyHorizonStageSize"] === 'number') ? Math.max(500, Math.min(8000, vrodos_scene_data["aframeLegacyHorizonStageSize"])) : 5000;
 			envir.scene.aframePostFXTAAEnabled = vrodos_scene_data["aframePostFXTAAEnabled"] === true || vrodos_scene_data["aframePostFXTAAEnabled"] === 'true';
 			envir.scene.aframePostFXSSREnabled = vrodos_scene_data["aframePostFXSSREnabled"] === true || vrodos_scene_data["aframePostFXSSREnabled"] === 'true';
 			envir.scene.aframePostFXSSRStrength = vrodos_scene_data["aframePostFXSSRStrength"] || 'off';
@@ -753,6 +754,12 @@ extract( $data );
 			envir.scene.aframeReflectionSource = vrodos_scene_data["aframeReflectionSource"] || 'hdr';
 			envir.scene.aframeHorizonSkyPreset = vrodos_scene_data["aframeHorizonSkyPreset"] || 'natural';
 			envir.scene.aframeEnvMapPreset = vrodos_scene_data["aframeEnvMapPreset"] || 'none';
+			envir.scene.aframePostFXEngine = (vrodos_scene_data["aframePostFXEngine"] === 'pmndrs') ? 'pmndrs' : 'legacy';
+			envir.scene.aframePmndrsBloomIntensity = (typeof vrodos_scene_data["aframePmndrsBloomIntensity"] === 'number') ? vrodos_scene_data["aframePmndrsBloomIntensity"] : 1.0;
+			envir.scene.aframePmndrsBloomThreshold = (typeof vrodos_scene_data["aframePmndrsBloomThreshold"] === 'number') ? vrodos_scene_data["aframePmndrsBloomThreshold"] : 0.62;
+			envir.scene.aframePmndrsVignetteEnabled = vrodos_scene_data["aframePmndrsVignetteEnabled"] === true || vrodos_scene_data["aframePmndrsVignetteEnabled"] === 'true';
+			envir.scene.aframePmndrsVignetteDarkness = (typeof vrodos_scene_data["aframePmndrsVignetteDarkness"] === 'number') ? vrodos_scene_data["aframePmndrsVignetteDarkness"] : 0.5;
+			envir.scene.aframePmndrsToneMappingExposure = (typeof vrodos_scene_data["aframePmndrsToneMappingExposure"] === 'number') ? vrodos_scene_data["aframePmndrsToneMappingExposure"] : 1.0;
 			if (typeof syncCompileDialogFromSceneSettings === 'function') {
 				syncCompileDialogFromSceneSettings();
 			}

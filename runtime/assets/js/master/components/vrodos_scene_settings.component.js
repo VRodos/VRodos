@@ -18,6 +18,7 @@ AFRAME.registerComponent('scene-settings', {
         shadowQuality: { type: "string", default: "medium" },
         aaQuality: { type: "string", default: "balanced" },
         fpsMeterEnabled: { type: "string", default: "0" },
+        legacyHorizonStageSize: { type: "string", default: "5000" },
         ambientOcclusionPreset: { type: "string", default: "balanced" },
         contactShadowPreset: { type: "string", default: "soft" },
         postFXEnabled: { type: "string", default: "0" },
@@ -45,6 +46,19 @@ AFRAME.registerComponent('scene-settings', {
         postFXTAAEnabled: { type: "string", default: "0" },
         postFXSSREnabled: { type: "string", default: "0" },
         postFXSSRStrength: { type: "string", default: "balanced" },
+        // Post-processing engine selector — 'legacy' = vrodos_postprocessing.js (custom
+        // SAO/SSR/TAA composite), 'pmndrs' = vrodos_postprocessing_pmndrs.js (pmndrs
+        // EffectComposer with fused EffectPass; supports clouds in Phase 5 but no
+        // SSR/TRAA). Default 'legacy' for v1 — flips to 'pmndrs' once Phase 3 confirms
+        // visual parity. See POSTPROCESSING_MIGRATION_PLAN.md §11.
+        postFXEngine: { type: "string", default: "legacy" },
+        // Pmndrs-only tweakable knobs. Numbers serialized as strings since
+        // A-Frame string-typed schema is what the rest of this component uses.
+        pmndrsBloomIntensity: { type: "string", default: "1.0" },
+        pmndrsBloomThreshold: { type: "string", default: "0.62" },
+        pmndrsVignetteEnabled: { type: "string", default: "0" },
+        pmndrsVignetteDarkness: { type: "string", default: "0.5" },
+        pmndrsToneMappingExposure: { type: "string", default: "1.0" },
     },
     getSSRStrengthValue: function () {
         switch (this.data.postFXSSRStrength) {
@@ -374,11 +388,48 @@ AFRAME.registerComponent('scene-settings', {
             !inVrMode &&
             !(this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting);
     },
-    // --- Post-processing methods (extracted to vrodos_postprocessing.js) ---
+    // --- Post-processing methods — LEGACY engine (extracted to vrodos_postprocessing.js) ---
     updatePostProcessingSize: VRODOSMaster.SceneSettingsHelpers.updatePostProcessingSize,
     enablePostProcessing: VRODOSMaster.SceneSettingsHelpers.enablePostProcessing,
     disablePostProcessing: VRODOSMaster.SceneSettingsHelpers.disablePostProcessing,
-    syncPostProcessingState: VRODOSMaster.SceneSettingsHelpers.syncPostProcessingState,
+    _syncLegacyPostProcessingState: VRODOSMaster.SceneSettingsHelpers.syncPostProcessingState,
+    // --- Post-processing methods — PMNDRS engine (extracted to vrodos_postprocessing_pmndrs.js) ---
+    // The PmndrsHelpers bag is created by vrodos_postprocessing_pmndrs.js. If that file
+    // failed to load for any reason, the no-op fallbacks below ensure the component still
+    // initialises and the scene degrades gracefully to a non-post-FX render.
+    enablePmndrsPostProcessing: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.enablePmndrsPostProcessing) || function () {},
+    disablePmndrsPostProcessing: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.disablePmndrsPostProcessing) || function () {},
+    updatePmndrsPostProcessingSize: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.updatePmndrsPostProcessingSize) || function () {},
+    _buildPmndrsComposer: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers._buildPmndrsComposer) || function () { return false; },
+    _updatePmndrsAdaptiveAO: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers._updatePmndrsAdaptiveAO) || function () {},
+    // --- Engine dispatcher: routes to legacy or pmndrs path based on data.postFXEngine ---
+    // See POSTPROCESSING_MIGRATION_PLAN.md §11. Engines are mutually exclusive: switching
+    // from one to the other (e.g. via a future runtime toggle) tears the previous engine
+    // down before bringing the new one up. Defensive disable of the OTHER engine on every
+    // call protects against drift if data.postFXEngine ever changes mid-session.
+    syncPostProcessingState: function () {
+        if (this.data.postFXEngine === 'pmndrs') {
+            if (this.postProcessingActive) {
+                this.disablePostProcessing();
+            }
+            if (this.shouldUsePostProcessing()) {
+                this.enablePmndrsPostProcessing();
+                this.updatePmndrsPostProcessingSize();
+            } else {
+                this.disablePmndrsPostProcessing();
+            }
+        } else {
+            if (this.pmndrsActive) {
+                this.disablePmndrsPostProcessing();
+            }
+            if (this.shouldUsePostProcessing()) {
+                this.enablePostProcessing();
+                this.updatePostProcessingSize();
+            } else {
+                this.disablePostProcessing();
+            }
+        }
+    },
     // --- Quality profile methods (extracted to vrodos_quality_profiles.js) ---
     applyRenderQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyRenderQualityProfile,
     applyShadowQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyShadowQualityProfile,
@@ -386,6 +437,7 @@ AFRAME.registerComponent('scene-settings', {
     ensurePhotorealHelperLight: VRODOSMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
     removePhotorealHelperLights: VRODOSMaster.SceneSettingsHelpers.removePhotorealHelperLights,
     applyHorizonSkyPreset: VRODOSMaster.SceneSettingsHelpers.applyHorizonSkyPreset,
+    updatePmndrsHorizonSun: VRODOSMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function () {},
     applyBackgroundQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyBackgroundQualityProfile,
     applyPostFXProfile: VRODOSMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSMaster.SceneSettingsHelpers.applyQualityProfiles,
@@ -652,6 +704,7 @@ AFRAME.registerComponent('scene-settings', {
             this.queuedQualityRefreshId = null;
         }
         this.disablePostProcessing();
+        this.disablePmndrsPostProcessing();
         if (this._envMapRenderTarget) {
             this._envMapRenderTarget.dispose();
             this._envMapRenderTarget = null;
@@ -662,11 +715,17 @@ AFRAME.registerComponent('scene-settings', {
         }
         this.disableFPSMeter();
         this.removePhotorealHelperLights();
+        let manualSun = document.getElementById('default-sun');
+        if (manualSun && manualSun.parentNode) {
+            manualSun.parentNode.removeChild(manualSun);
+        }
     },
     tick: function (time) {
         if (this.fpsStats && typeof this.fpsStats.update === 'function') {
             this.fpsStats.update();
         }
+
+        this.updatePmndrsHorizonSun();
 
         if (this.getEffectiveReflectionSource() !== 'scene-probe') {
             return;
@@ -699,4 +758,3 @@ AFRAME.registerComponent('scene-settings', {
         this.captureSceneProbe(time);
     }
 });
-

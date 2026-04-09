@@ -176,6 +176,39 @@ class VRodos_LoaderMulti {
                     envir.scene.aframePostFXSSRStrength = resource || 'off';
                 }
 
+                if (name === 'aframePostFXEngine') {
+                    envir.scene.aframePostFXEngine = (resource === 'pmndrs') ? 'pmndrs' : 'legacy';
+                }
+
+                if (name === 'aframeLegacyHorizonStageSize') {
+                    var _lhs = parseFloat(resource);
+                    envir.scene.aframeLegacyHorizonStageSize = isNaN(_lhs) ? 5000 : Math.max(500, Math.min(8000, _lhs));
+                }
+
+                if (name === 'aframePmndrsBloomIntensity') {
+                    var _pbI = parseFloat(resource);
+                    envir.scene.aframePmndrsBloomIntensity = isNaN(_pbI) ? 1.0 : _pbI;
+                }
+
+                if (name === 'aframePmndrsBloomThreshold') {
+                    var _pbT = parseFloat(resource);
+                    envir.scene.aframePmndrsBloomThreshold = isNaN(_pbT) ? 0.62 : _pbT;
+                }
+
+                if (name === 'aframePmndrsVignetteEnabled') {
+                    envir.scene.aframePmndrsVignetteEnabled = resource === true || resource === 'true';
+                }
+
+                if (name === 'aframePmndrsVignetteDarkness') {
+                    var _pvD = parseFloat(resource);
+                    envir.scene.aframePmndrsVignetteDarkness = isNaN(_pvD) ? 0.5 : _pvD;
+                }
+
+                if (name === 'aframePmndrsToneMappingExposure') {
+                    var _ptE = parseFloat(resource);
+                    envir.scene.aframePmndrsToneMappingExposure = isNaN(_ptE) ? 1.0 : _ptE;
+                }
+
                 if (name === 'aframeBloomStrength') {
                     envir.scene.aframeBloomStrength = resource || 'off';
                     if (envir.scene.aframePostFXBloomEnabled === false) {
@@ -621,6 +654,18 @@ class VRodos_LoaderMulti {
                         envir.scene.aframePostFXTAAEnabled = resource.aframePostFXTAAEnabled === true || resource.aframePostFXTAAEnabled === 'true';
                         envir.scene.aframePostFXSSREnabled = resource.aframePostFXSSREnabled === true || resource.aframePostFXSSREnabled === 'true';
                         envir.scene.aframePostFXSSRStrength = resource.aframePostFXSSRStrength || 'off';
+                        envir.scene.aframePostFXEngine = (resource.aframePostFXEngine === 'pmndrs') ? 'pmndrs' : 'legacy';
+                        var _resLhs = parseFloat(resource.aframeLegacyHorizonStageSize);
+                        envir.scene.aframeLegacyHorizonStageSize = isNaN(_resLhs) ? 5000 : Math.max(500, Math.min(8000, _resLhs));
+                        var _resPmBI = parseFloat(resource.aframePmndrsBloomIntensity);
+                        envir.scene.aframePmndrsBloomIntensity = isNaN(_resPmBI) ? 1.0 : _resPmBI;
+                        var _resPmBT = parseFloat(resource.aframePmndrsBloomThreshold);
+                        envir.scene.aframePmndrsBloomThreshold = isNaN(_resPmBT) ? 0.62 : _resPmBT;
+                        envir.scene.aframePmndrsVignetteEnabled = resource.aframePmndrsVignetteEnabled === true || resource.aframePmndrsVignetteEnabled === 'true';
+                        var _resPmVD = parseFloat(resource.aframePmndrsVignetteDarkness);
+                        envir.scene.aframePmndrsVignetteDarkness = isNaN(_resPmVD) ? 0.5 : _resPmVD;
+                        var _resPmTE = parseFloat(resource.aframePmndrsToneMappingExposure);
+                        envir.scene.aframePmndrsToneMappingExposure = isNaN(_resPmTE) ? 1.0 : _resPmTE;
                         envir.scene.aframeBloomStrength = resource.aframeBloomStrength || 'off';
                         if (envir.scene.aframePostFXBloomEnabled === false) {
                             envir.scene.aframeBloomStrength = 'off';

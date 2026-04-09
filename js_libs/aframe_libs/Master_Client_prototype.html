@@ -95,6 +95,11 @@
     <script src="js/master/vrodos_shaders_ssr.js"></script>
     <script src="js/master/vrodos_shaders_composite.js"></script>
     <script src="js/master/vrodos_postprocessing.js"></script>
+    <!-- pmndrs/postprocessing 6.39 UMD build. Top-level `var POSTPROCESSING = (...)`
+         in a non-module script tag becomes `window.POSTPROCESSING` automatically.
+         Required by vrodos_postprocessing_pmndrs.js when postFXEngine === 'pmndrs'. -->
+    <script src="js/master/lib/postprocessing.min.js"></script>
+    <script src="js/master/vrodos_postprocessing_pmndrs.js"></script>
     <script src="js/master/vrodos_scene_probe.js"></script>
     <script src="js/master/vrodos_quality_profiles.js"></script>
     <script src="js/master/components/vrodos_scene_loader.component.js"></script>

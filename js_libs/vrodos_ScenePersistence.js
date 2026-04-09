@@ -93,6 +93,7 @@ class VrodosSceneExporter {
                 aframeShadowQuality: envir.scene.aframeShadowQuality || 'medium',
                 aframeAAQuality: envir.scene.aframeAAQuality || 'balanced',
                 aframeFPSMeterEnabled: envir.scene.aframeFPSMeterEnabled === true,
+                aframeLegacyHorizonStageSize: (typeof envir.scene.aframeLegacyHorizonStageSize === 'number') ? envir.scene.aframeLegacyHorizonStageSize : 5000,
                 aframeAmbientOcclusionPreset: envir.scene.aframeAmbientOcclusionPreset || 'balanced',
                 aframeContactShadowPreset: envir.scene.aframeContactShadowPreset || 'soft',
                 aframePostFXEnabled: envir.scene.aframePostFXEnabled === true,
@@ -111,6 +112,14 @@ class VrodosSceneExporter {
                 aframeReflectionSource: envir.scene.aframeReflectionSource || 'hdr',
                 aframeHorizonSkyPreset: envir.scene.aframeHorizonSkyPreset || 'natural',
                 aframeEnvMapPreset: envir.scene.aframeEnvMapPreset || 'none',
+                // Post-processing engine selector ('legacy' or 'pmndrs')
+                aframePostFXEngine: (envir.scene.aframePostFXEngine === 'pmndrs') ? 'pmndrs' : 'legacy',
+                // Pmndrs-only tweakable knobs (ignored when aframePostFXEngine === 'legacy')
+                aframePmndrsBloomIntensity: (typeof envir.scene.aframePmndrsBloomIntensity === 'number') ? envir.scene.aframePmndrsBloomIntensity : 1.0,
+                aframePmndrsBloomThreshold: (typeof envir.scene.aframePmndrsBloomThreshold === 'number') ? envir.scene.aframePmndrsBloomThreshold : 0.62,
+                aframePmndrsVignetteEnabled: envir.scene.aframePmndrsVignetteEnabled === true,
+                aframePmndrsVignetteDarkness: (typeof envir.scene.aframePmndrsVignetteDarkness === 'number') ? envir.scene.aframePmndrsVignetteDarkness : 0.5,
+                aframePmndrsToneMappingExposure: (typeof envir.scene.aframePmndrsToneMappingExposure === 'number') ? envir.scene.aframePmndrsToneMappingExposure : 1.0,
                 backgroundPresetOption: envir.scene.backgroundPresetOption || 'None',
                 backgroundPresetGroundEnabled: envir.scene.backgroundPresetGroundEnabled !== false,
                 backgroundStyleOption: (envir.scene.backgroundStyleOption !== undefined) ? envir.scene.backgroundStyleOption : 0,
@@ -276,7 +285,7 @@ class VrodosSceneImporter {
 
         for (const key in scene_json_metadata) {
             const value = scene_json_metadata[key];
-            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeReflectionSource', 'aframeHorizonSkyPreset', 'aframeEnvMapPreset', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
+            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeLegacyHorizonStageSize', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeReflectionSource', 'aframeHorizonSkyPreset', 'aframeEnvMapPreset', 'aframePostFXEngine', 'aframePmndrsBloomIntensity', 'aframePmndrsBloomThreshold', 'aframePmndrsVignetteEnabled', 'aframePmndrsVignetteDarkness', 'aframePmndrsToneMappingExposure', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
                 resources3D_new["SceneSettings"][key] = value;
             }
         }

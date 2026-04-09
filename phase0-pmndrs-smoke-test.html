@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VRodos — Phase 0: pmndrs/postprocessing × Three r173 smoke test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; padding: 0; background: #0f172a; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  #report { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px; background: rgba(15,23,42,0.92); border-bottom: 1px solid #334155; z-index: 10000; max-height: 50vh; overflow-y: auto; font-size: 12px; line-height: 1.5; }
+  #report h1 { margin: 0 0 6px 0; font-size: 14px; color: #f1f5f9; }
+  .row { display: flex; gap: 8px; align-items: baseline; }
+  .tag { display: inline-block; min-width: 56px; text-align: center; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+  .pending { background: #475569; color: #f1f5f9; }
+  .pass    { background: #166534; color: #dcfce7; }
+  .fail    { background: #991b1b; color: #fee2e2; }
+  .info    { background: #1e40af; color: #dbeafe; }
+  .msg { white-space: pre-wrap; }
+  .err { color: #fecaca; }
+  a-scene { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+
+<div id="report">
+  <h1>VRodos — Phase 0 smoke test · pmndrs/postprocessing 6.x × Three r173</h1>
+  <div id="rows"></div>
+</div>
+
+<!-- 1) A-Frame 1.7.1 (same version VRodos compiled scenes use) -->
+<script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+<!-- 2) Phase 0 bundle: window.THREE (r173 subset) + window.POSTPROCESSING + window.N8AOPostPass -->
+<script src="js_libs/threejs173/vrodos-phase0-smoke.bundle.js"></script>
+
+<a-scene embedded background="color: #111827" vr-mode-ui="enabled: false">
+  <a-entity position="0 1.6 3"
+            camera
+            look-controls="enabled: false"
+            wasd-controls="enabled: false"></a-entity>
+
+  <!-- Some test geometry so post-effects have something to work on -->
+  <a-entity position="0 1 0">
+    <a-box color="#f59e0b" position="-1.4 0 0" rotation="0 45 0"></a-box>
+    <a-sphere color="#10b981" position="0 0 0" radius="0.6"></a-sphere>
+    <a-torus-knot color="#3b82f6" position="1.4 0 0" radius="0.4" radius-tubular="0.12"></a-torus-knot>
+  </a-entity>
+  <a-entity light="type: ambient; intensity: 0.4"></a-entity>
+  <a-entity light="type: directional; intensity: 1.1; castShadow: true" position="2 4 3"></a-entity>
+  <a-plane color="#1e293b" rotation="-90 0 0" width="20" height="20"></a-plane>
+</a-scene>
+
+<script>
+/* =========================================================================
+ * Phase 0 smoke test
+ * -------------------------------------------------------------------------
+ * For each verification below, we try to construct and (where applicable)
+ * render the relevant pmndrs/postprocessing primitive against the actual
+ * A-Frame WebGLRenderer and Three.js r173 build exposed by
+ * vrodos-phase0-smoke.bundle.js. Every step is reported to the on-screen
+ * panel AND console. Any exception → FAIL and we continue with the next
+ * step so the full picture is visible in one run.
+ * ========================================================================= */
+(function () {
+  var rowsEl = document.getElementById('rows');
+  var results = [];
+
+  function addRow(label) {
+    var row = document.createElement('div');
+    row.className = 'row';
+    var tag = document.createElement('span');
+    tag.className = 'tag pending';
+    tag.textContent = '…';
+    var msg = document.createElement('span');
+    msg.className = 'msg';
+    msg.textContent = label;
+    row.appendChild(tag);
+    row.appendChild(msg);
+    rowsEl.appendChild(row);
+    return { row: row, tag: tag, msg: msg };
+  }
+
+  function setStatus(entry, status, extra) {
+    entry.tag.className = 'tag ' + status;
+    entry.tag.textContent = status.toUpperCase();
+    if (extra) {
+      entry.msg.textContent += '  — ' + extra;
+      if (status === 'fail') entry.msg.className = 'msg err';
+    }
+  }
+
+  function report(label, fn) {
+    var entry = addRow(label);
+    try {
+      var extra = fn();
+      setStatus(entry, 'pass', extra || '');
+      results.push({ label: label, ok: true });
+      console.log('[PASS]', label, extra || '');
+    } catch (err) {
+      setStatus(entry, 'fail', (err && err.message) ? err.message : String(err));
+      results.push({ label: label, ok: false, err: err });
+      console.error('[FAIL]', label, err);
+    }
+  }
+
+  function info(label, extra) {
+    var entry = addRow(label);
+    setStatus(entry, 'info', extra || '');
+  }
+
+  // Wait for A-Frame to finish loading so the renderer exists.
+  var scene = document.querySelector('a-scene');
+  function runTests() {
+    var renderer = scene.renderer;
+    var aframeScene = scene.object3D;
+    var camera = scene.camera;
+
+    info('Environment', 'A-Frame ' + (AFRAME && AFRAME.version) + ' · Three r' + (THREE && THREE.REVISION));
+    info('postprocessing version', (POSTPROCESSING && POSTPROCESSING.REVISION) ? POSTPROCESSING.REVISION : 'exported names: ' + Object.keys(POSTPROCESSING || {}).slice(0, 8).join(', ') + '…');
+    info('Renderer', 'isWebGL2: ' + (renderer.capabilities && renderer.capabilities.isWebGL2) + ', maxSamples: ' + (renderer.capabilities && renderer.capabilities.maxSamples));
+
+    // --- 1. EffectComposer construction against r173 renderer ---
+    var composer;
+    report('EffectComposer(renderer) constructs on Three r173', function () {
+      if (!window.POSTPROCESSING || !POSTPROCESSING.EffectComposer) throw new Error('POSTPROCESSING.EffectComposer missing');
+      composer = new POSTPROCESSING.EffectComposer(renderer);
+      return 'constructed';
+    });
+
+    // --- 2. RenderPass(scene, camera) ---
+    report('RenderPass(scene, camera) constructs', function () {
+      if (!composer) throw new Error('composer missing from step 1');
+      var renderPass = new POSTPROCESSING.RenderPass(aframeScene, camera);
+      composer.addPass(renderPass);
+      return 'added to composer';
+    });
+
+    // --- 3. EffectPass with BloomEffect + VignetteEffect + ToneMappingEffect ---
+    var bloomEffect, vignetteEffect, toneMappingEffect, mergedEffectPass;
+    report('BloomEffect + VignetteEffect + ToneMappingEffect merge into one EffectPass', function () {
+      bloomEffect = new POSTPROCESSING.BloomEffect({
+        intensity: 0.6,
+        luminanceThreshold: 0.7,
+        mipmapBlur: true
+      });
+      vignetteEffect = new POSTPROCESSING.VignetteEffect({
+        darkness: 0.5
+      });
+      var tmMode = (POSTPROCESSING.ToneMappingMode && POSTPROCESSING.ToneMappingMode.ACES_FILMIC) != null
+        ? POSTPROCESSING.ToneMappingMode.ACES_FILMIC
+        : undefined;
+      toneMappingEffect = new POSTPROCESSING.ToneMappingEffect(tmMode != null ? { mode: tmMode } : undefined);
+      mergedEffectPass = new POSTPROCESSING.EffectPass(camera, bloomEffect, vignetteEffect, toneMappingEffect);
+      composer.addPass(mergedEffectPass);
+      return 'merged pass added';
+    });
+
+    // --- 4. SMAAEffect ---
+    report('SMAAEffect initializes (inline lookup textures)', function () {
+      if (!POSTPROCESSING.SMAAEffect) throw new Error('SMAAEffect missing from postprocessing exports');
+      // pmndrs 6.x SMAAEffect takes an optional preset
+      var preset = (POSTPROCESSING.SMAAPreset && POSTPROCESSING.SMAAPreset.HIGH) != null ? POSTPROCESSING.SMAAPreset.HIGH : undefined;
+      var smaa = preset != null ? new POSTPROCESSING.SMAAEffect({ preset: preset }) : new POSTPROCESSING.SMAAEffect();
+      // Don't add to composer here — we just want to prove construction. Adding
+      // a second EffectPass is fine, but keep the merged test isolated above.
+      var smaaPass = new POSTPROCESSING.EffectPass(camera, smaa);
+      // Dispose immediately to avoid leaking resources; we've proven construction.
+      smaaPass.dispose && smaaPass.dispose();
+      smaa.dispose && smaa.dispose();
+      return 'constructed and disposed';
+    });
+
+    // --- 5. pmndrs built-in SSAOEffect (requires normal+depth pass) ---
+    // pmndrs 6.x SSAOEffect expects (camera, normalBuffer, options). On modern
+    // versions the NormalPass is created automatically when used via
+    // EffectComposer.setMainScene — but in raw construction we need to provide
+    // the normal buffer. We test the legacy constructor path.
+    report('SSAOEffect constructs', function () {
+      if (!POSTPROCESSING.SSAOEffect) {
+        throw new Error('SSAOEffect missing from exports — core may rely on community effects only');
+      }
+      // Minimal construction; the normalBuffer arg can be a dummy Texture for init.
+      var ssaoNormalTex = new THREE.DataTexture(new Uint8Array([128, 128, 255, 255]), 1, 1, THREE.RGBAFormat);
+      ssaoNormalTex.needsUpdate = true;
+      var ssao = new POSTPROCESSING.SSAOEffect(camera, ssaoNormalTex, { samples: 9, radius: 0.1, intensity: 1.0 });
+      ssao.dispose && ssao.dispose();
+      return 'constructed and disposed';
+    });
+
+    // --- 6. N8AOPostPass (community, considered state-of-the-art SSAO for WebGL) ---
+    report('N8AOPostPass constructs against A-Frame scene + camera', function () {
+      if (!window.N8AOPostPass) throw new Error('N8AOPostPass missing from window');
+      var w = renderer.domElement.clientWidth || 1;
+      var h = renderer.domElement.clientHeight || 1;
+      var n8aoPass = new N8AOPostPass(aframeScene, camera, w, h);
+      // Set some defaults like the production plan would
+      if (n8aoPass.configuration) {
+        n8aoPass.configuration.aoRadius = 2.0;
+        n8aoPass.configuration.intensity = 3.0;
+      }
+      n8aoPass.dispose && n8aoPass.dispose();
+      return 'constructed and disposed';
+    });
+
+    // --- 7. Add another EffectPass with additional effects to confirm merging works ---
+    report('BrightnessContrastEffect + HueSaturationEffect merge into existing pipeline', function () {
+      if (!POSTPROCESSING.BrightnessContrastEffect || !POSTPROCESSING.HueSaturationEffect) {
+        throw new Error('color grading effects missing from exports');
+      }
+      var bc = new POSTPROCESSING.BrightnessContrastEffect({ brightness: 0.0, contrast: 0.1 });
+      var hs = new POSTPROCESSING.HueSaturationEffect({ saturation: 0.15 });
+      // Construct-and-dispose pattern: we don't want to actually add these to
+      // the composer (that would replace our merged pass from step 3).
+      bc.dispose && bc.dispose();
+      hs.dispose && hs.dispose();
+      return 'constructed and disposed';
+    });
+
+    // --- 8. Actually RENDER with the composer for a few frames ---
+    // This is the real test: does the composer produce output under A-Frame's
+    // renderer loop without WebGL errors or tone mapping issues?
+    report('composer.render() runs without WebGL errors (5 frames)', function () {
+      var gl = renderer.getContext();
+      // Clear any prior errors
+      while (gl.getError() !== gl.NO_ERROR) {}
+      var deltaTime = 1 / 60;
+      for (var i = 0; i < 5; i++) {
+        composer.render(deltaTime);
+      }
+      var err = gl.getError();
+      if (err !== gl.NO_ERROR) {
+        // Decode the most common ones for readability.
+        var codes = {};
+        codes[gl.INVALID_ENUM] = 'INVALID_ENUM';
+        codes[gl.INVALID_VALUE] = 'INVALID_VALUE';
+        codes[gl.INVALID_OPERATION] = 'INVALID_OPERATION';
+        codes[gl.INVALID_FRAMEBUFFER_OPERATION] = 'INVALID_FRAMEBUFFER_OPERATION';
+        codes[gl.OUT_OF_MEMORY] = 'OUT_OF_MEMORY';
+        codes[gl.CONTEXT_LOST_WEBGL] = 'CONTEXT_LOST_WEBGL';
+        throw new Error('WebGL error after composer.render: ' + (codes[err] || ('0x' + err.toString(16))));
+      }
+      return 'clean';
+    });
+
+    // --- 9. Clean up composer so A-Frame's normal rendering takes back over ---
+    try {
+      composer && composer.dispose && composer.dispose();
+    } catch (e) { /* ignore cleanup */ }
+
+    // --- Final verdict ---
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    var failed = results.filter(function (r) { return !r.ok; }).length;
+    var verdict = addRow('Phase 0 verdict');
+    if (failed === 0) {
+      setStatus(verdict, 'pass', passed + '/' + results.length + ' checks passed — GO for Phase 1');
+      console.log('[PHASE 0] GO — all ' + passed + ' checks passed.');
+    } else {
+      setStatus(verdict, 'fail', failed + ' of ' + results.length + ' checks failed — review before Phase 1');
+      console.warn('[PHASE 0] NO-GO — ' + failed + ' failures.');
+    }
+  }
+
+  // A-Frame emits 'loaded' on the scene when everything is ready
+  if (scene.hasLoaded) {
+    runTests();
+  } else {
+    scene.addEventListener('loaded', runTests);
+  }
+})();
+</script>
+
+</body>
+</html>

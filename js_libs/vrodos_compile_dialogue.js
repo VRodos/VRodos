@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ambientOcclusionPreset: document.getElementById('compileAmbientOcclusionPresetSelect'),
             contactShadowPreset: document.getElementById('compileContactShadowPresetSelect'),
             fpsMeter: document.getElementById('compileFPSMeterToggle'),
+            legacyHorizonStageSizeRow: document.getElementById('compileLegacyHorizonStageSizeRow'),
+            legacyHorizonStageSize: document.getElementById('compileLegacyHorizonStageSizeSlider'),
+            legacyHorizonStageSizeValue: document.getElementById('compileLegacyHorizonStageSizeValue'),
             postFx: document.getElementById('compilePostFxToggle'),
             postFxGroup: document.getElementById('compilePostFxGroup'),
             postFxColor: document.getElementById('compilePostFxColorToggle'),
@@ -19,8 +22,64 @@ document.addEventListener('DOMContentLoaded', function() {
             reflectionSource: document.getElementById('compileReflectionSourceSelect'),
             envMapPreset: document.getElementById('compileEnvMapPresetSelect'),
             ssrStrength: document.getElementById('compileSSRStrengthSelect'),
-            taaEnabled: document.getElementById('compilePostFxTAAToggle')
+            taaEnabled: document.getElementById('compilePostFxTAAToggle'),
+            postFxEngine: document.getElementById('compilePostFxEngineSelect'),
+            postFxEngineHint: document.getElementById('compilePostFxEngineHint'),
+            postFxEngineTabLegacy: document.getElementById('compilePostFxEngineTabLegacy'),
+            postFxEngineTabPmndrs: document.getElementById('compilePostFxEngineTabPmndrs'),
+            pmndrsTweaksGroup: document.getElementById('compilePmndrsTweaks'),
+            pmndrsBloomIntensity: document.getElementById('compilePmndrsBloomIntensitySlider'),
+            pmndrsBloomIntensityValue: document.getElementById('compilePmndrsBloomIntensityValue'),
+            pmndrsBloomThreshold: document.getElementById('compilePmndrsBloomThresholdSlider'),
+            pmndrsBloomThresholdValue: document.getElementById('compilePmndrsBloomThresholdValue'),
+            pmndrsExposure: document.getElementById('compilePmndrsExposureSlider'),
+            pmndrsExposureValue: document.getElementById('compilePmndrsExposureValue'),
+            pmndrsVignette: document.getElementById('compilePmndrsVignetteToggle'),
+            pmndrsVignetteDarkness: document.getElementById('compilePmndrsVignetteDarknessSlider'),
+            pmndrsVignetteDarknessValue: document.getElementById('compilePmndrsVignetteDarknessValue'),
+            pmndrsResetBtn: document.getElementById('compilePmndrsResetBtn')
         };
+    }
+
+    // Single source of truth for the pmndrs-tweak default values. Used by both
+    // the Reset button and the loader/normalizer to keep behaviour consistent.
+    var PMNDRS_TWEAK_DEFAULTS = {
+        bloomIntensity: 1.0,
+        bloomThreshold: 0.62,
+        toneMappingExposure: 1.0,
+        vignetteEnabled: false,
+        vignetteDarkness: 0.5
+    };
+
+    function clampNumber(value, min, max, fallback) {
+        var n = parseFloat(value);
+        if (isNaN(n)) return fallback;
+        if (n < min) return min;
+        if (n > max) return max;
+        return n;
+    }
+
+    function formatPmndrsNumber(value) {
+        return (Math.round(value * 100) / 100).toFixed(2);
+    }
+
+    function clampLegacyHorizonStageSize(value) {
+        return Math.round(clampNumber(value, 500, 8000, 5000) / 100) * 100;
+    }
+
+    function isLegacyHorizonStageApplicable() {
+        if (typeof envir === 'undefined' || !envir.scene) {
+            return false;
+        }
+
+        return parseInt(envir.scene.backgroundStyleOption, 10) === 0;
+    }
+
+    function normalizePostFxEngine(value) {
+        if (value === 'pmndrs') {
+            return 'pmndrs';
+        }
+        return 'legacy';
     }
 
     function normalizeAAQuality(value) {
@@ -167,6 +226,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof envir.scene.aframeFPSMeterEnabled === 'undefined') {
             envir.scene.aframeFPSMeterEnabled = false;
         }
+        if (typeof envir.scene.aframeLegacyHorizonStageSize !== 'number') {
+            envir.scene.aframeLegacyHorizonStageSize = clampLegacyHorizonStageSize(envir.scene.aframeLegacyHorizonStageSize);
+        }
         if (!envir.scene.aframeAmbientOcclusionPreset) {
             envir.scene.aframeAmbientOcclusionPreset = 'balanced';
         }
@@ -218,6 +280,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof envir.scene.aframePostFXSSREnabled === 'undefined') {
             envir.scene.aframePostFXSSREnabled = false;
         }
+        if (!envir.scene.aframePostFXEngine) {
+            envir.scene.aframePostFXEngine = 'legacy';
+        }
+        if (typeof envir.scene.aframePmndrsBloomIntensity !== 'number') {
+            envir.scene.aframePmndrsBloomIntensity = clampNumber(envir.scene.aframePmndrsBloomIntensity, 0, 3, 1.0);
+        }
+        if (typeof envir.scene.aframePmndrsBloomThreshold !== 'number') {
+            envir.scene.aframePmndrsBloomThreshold = clampNumber(envir.scene.aframePmndrsBloomThreshold, 0, 1, 0.62);
+        }
+        if (typeof envir.scene.aframePmndrsVignetteEnabled === 'undefined') {
+            envir.scene.aframePmndrsVignetteEnabled = false;
+        }
+        if (typeof envir.scene.aframePmndrsVignetteDarkness !== 'number') {
+            envir.scene.aframePmndrsVignetteDarkness = clampNumber(envir.scene.aframePmndrsVignetteDarkness, 0, 1, 0.5);
+        }
+        if (typeof envir.scene.aframePmndrsToneMappingExposure !== 'number') {
+            envir.scene.aframePmndrsToneMappingExposure = clampNumber(envir.scene.aframePmndrsToneMappingExposure, 0.3, 2.5, 1.0);
+        }
 
         envir.scene.aframeAAQuality = normalizeAAQuality(envir.scene.aframeAAQuality);
         envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(envir.scene.aframeAmbientOcclusionPreset);
@@ -230,6 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(envir.scene.aframeEnvMapPreset);
         envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(envir.scene.aframePostFXSSRStrength);
         envir.scene.aframePostFXSSREnabled = envir.scene.aframePostFXSSRStrength !== 'off';
+        envir.scene.aframePostFXEngine = normalizePostFxEngine(envir.scene.aframePostFXEngine);
         if (envir.scene.aframePostFXBloomEnabled === false) {
             envir.scene.aframeBloomStrength = 'off';
         }
@@ -246,6 +327,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var postFxEnabled = controls.postFx.checked;
         var colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
         var envLightingEnabled = postFxEnabled && normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
+        var bloomEnabled = postFxEnabled && isBloomStrengthEnabled(controls.bloomStrength.value);
+        var engine = controls.postFxEngine ? normalizePostFxEngine(controls.postFxEngine.value) : 'legacy';
+        var isPmndrs = engine === 'pmndrs';
+        var legacyHorizonStageEnabled = !isPmndrs && isLegacyHorizonStageApplicable();
 
         if (controls.postFxGroup) {
             if (postFxEnabled) {
@@ -253,6 +338,42 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 controls.postFxGroup.classList.add('tw-opacity-50', 'tw-pointer-events-none');
             }
+        }
+
+        if (controls.postFxEngine) {
+            controls.postFxEngine.disabled = !postFxEnabled;
+        }
+        // Visually reflect the active engine on the tab strip and gate the tabs by postFx
+        if (controls.postFxEngineTabLegacy && controls.postFxEngineTabPmndrs) {
+            controls.postFxEngineTabLegacy.classList.toggle('tw-tab-active', !isPmndrs);
+            controls.postFxEngineTabPmndrs.classList.toggle('tw-tab-active', isPmndrs);
+            [controls.postFxEngineTabLegacy, controls.postFxEngineTabPmndrs].forEach(function (tab) {
+                tab.disabled = !postFxEnabled;
+                tab.classList.toggle('tw-opacity-50', !postFxEnabled);
+                tab.style.cursor = postFxEnabled ? 'pointer' : 'not-allowed';
+            });
+        }
+        if (controls.postFxEngineHint) {
+            controls.postFxEngineHint.textContent = isPmndrs
+                ? 'Modern fused EffectPass. SSR and Temporal AA are not available in this engine.'
+                : 'Hand-rolled custom pipeline. Supports SSR and Temporal AA, no volumetric clouds.';
+        }
+
+        if (controls.legacyHorizonStageSizeRow) {
+            controls.legacyHorizonStageSizeRow.classList.toggle('tw-opacity-60', !legacyHorizonStageEnabled);
+            controls.legacyHorizonStageSizeRow.title = legacyHorizonStageEnabled
+                ? 'Controls the environment dome size for Legacy + HORIZON scenes'
+                : (isPmndrs
+                    ? 'Legacy Horizon Size applies only when the Legacy engine is selected'
+                    : 'Legacy Horizon Size applies only when the HORIZON background is selected');
+        }
+        if (controls.legacyHorizonStageSize) {
+            controls.legacyHorizonStageSize.disabled = !legacyHorizonStageEnabled;
+            controls.legacyHorizonStageSize.title = legacyHorizonStageEnabled
+                ? 'Larger values push the edge of the legacy HORIZON dome farther away'
+                : (isPmndrs
+                    ? 'Legacy Horizon Size applies only when the Legacy engine is selected'
+                    : 'Legacy Horizon Size applies only when the HORIZON background is selected');
         }
 
         controls.postFxColor.disabled = !postFxEnabled;
@@ -269,13 +390,69 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.exposurePreset.disabled = !colorGradingEnabled;
         controls.contrastPreset.disabled = !colorGradingEnabled;
         controls.edgeAAStrength.disabled = !postFxEnabled;
+
+        // SSR and TAA are unavailable when the pmndrs engine is selected — see
+        // POSTPROCESSING_MIGRATION_PLAN.md §11. Force them disabled and apply a
+        // tooltip explaining why so the user understands the trade-off.
         if (controls.ssrStrength) {
-            controls.ssrStrength.disabled = !postFxEnabled;
+            controls.ssrStrength.disabled = !postFxEnabled || isPmndrs;
+            controls.ssrStrength.classList.toggle('tw-opacity-60', isPmndrs);
+            controls.ssrStrength.title = isPmndrs
+                ? 'Screen-space reflections are not available in the Pmndrs engine. Switch to Legacy to use SSR.'
+                : 'Screen-space reflections for floors, glass, and polished surfaces';
         }
         if (controls.taaEnabled) {
-            controls.taaEnabled.disabled = !postFxEnabled;
+            controls.taaEnabled.disabled = !postFxEnabled || isPmndrs;
+            controls.taaEnabled.parentElement && controls.taaEnabled.parentElement.classList.toggle('tw-opacity-60', isPmndrs);
+            controls.taaEnabled.title = isPmndrs
+                ? 'Temporal AA is not available in the Pmndrs engine. Switch to Legacy to use TAA.'
+                : 'Temporal anti-aliasing for smoother edges and reduced specular shimmer. Supplements FXAA.';
         }
+        // Pmndrs tweakables: only show & enable when engine === 'pmndrs' AND postFx is on
+        if (controls.pmndrsTweaksGroup) {
+            controls.pmndrsTweaksGroup.style.display = (postFxEnabled && isPmndrs) ? '' : 'none';
+        }
+        var pmndrsTweakEnabled = postFxEnabled && isPmndrs;
+        if (controls.pmndrsBloomIntensity) {
+            controls.pmndrsBloomIntensity.disabled = !pmndrsTweakEnabled || !bloomEnabled;
+            controls.pmndrsBloomIntensity.classList.toggle('tw-opacity-60', !bloomEnabled);
+            controls.pmndrsBloomIntensity.title = bloomEnabled
+                ? 'Multiplier applied to the shared Bloom preset when Pmndrs is active'
+                : 'Enable the shared Bloom preset below to use the Pmndrs bloom multiplier';
+        }
+        if (controls.pmndrsBloomThreshold) {
+            controls.pmndrsBloomThreshold.disabled = !pmndrsTweakEnabled || !bloomEnabled;
+            controls.pmndrsBloomThreshold.classList.toggle('tw-opacity-60', !bloomEnabled);
+            controls.pmndrsBloomThreshold.title = bloomEnabled
+                ? 'Luminance threshold for the Pmndrs bloom pass'
+                : 'Enable the shared Bloom preset below to adjust the Pmndrs bloom threshold';
+        }
+        if (controls.pmndrsExposure) controls.pmndrsExposure.disabled = !pmndrsTweakEnabled;
+        if (controls.pmndrsVignette) controls.pmndrsVignette.disabled = !pmndrsTweakEnabled;
+        if (controls.pmndrsVignetteDarkness) {
+            controls.pmndrsVignetteDarkness.disabled = !pmndrsTweakEnabled || !(controls.pmndrsVignette && controls.pmndrsVignette.checked);
+        }
+
         updateEdgeAAStrengthLabel();
+    }
+
+    function updatePmndrsValueLabels() {
+        var c = getCompileDialogElements();
+        if (c.legacyHorizonStageSize && c.legacyHorizonStageSizeValue) {
+            c.legacyHorizonStageSizeValue.textContent = String(clampLegacyHorizonStageSize(c.legacyHorizonStageSize.value));
+        }
+        if (c.pmndrsBloomIntensity && c.pmndrsBloomIntensityValue) {
+            c.pmndrsBloomIntensityValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsBloomIntensity.value));
+        }
+        if (c.pmndrsBloomThreshold && c.pmndrsBloomThresholdValue) {
+            c.pmndrsBloomThresholdValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsBloomThreshold.value));
+        }
+        if (c.pmndrsExposure && c.pmndrsExposureValue) {
+            c.pmndrsExposureValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsExposure.value));
+        }
+        if (c.pmndrsVignetteDarkness && c.pmndrsVignetteDarknessValue) {
+            c.pmndrsVignetteDarknessValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsVignetteDarkness.value));
+        }
     }
 
     function applyCompileDialogSettingsToScene() {
@@ -296,6 +473,9 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(controls.ambientOcclusionPreset.value);
         envir.scene.aframeContactShadowPreset = normalizeContactShadowPreset(controls.contactShadowPreset.value);
         envir.scene.aframeFPSMeterEnabled = controls.fpsMeter.checked === true;
+        if (controls.legacyHorizonStageSize) {
+            envir.scene.aframeLegacyHorizonStageSize = clampLegacyHorizonStageSize(controls.legacyHorizonStageSize.value);
+        }
         envir.scene.aframePostFXEnabled = controls.postFx.checked === true;
         envir.scene.aframeBloomStrength = normalizeBloomStrength(controls.bloomStrength.value);
         envir.scene.aframePostFXBloomEnabled = isBloomStrengthEnabled(envir.scene.aframeBloomStrength);
@@ -318,6 +498,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (controls.taaEnabled) {
             envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
+        }
+        if (controls.postFxEngine) {
+            envir.scene.aframePostFXEngine = normalizePostFxEngine(controls.postFxEngine.value);
+        }
+        if (controls.pmndrsBloomIntensity) {
+            envir.scene.aframePmndrsBloomIntensity = clampNumber(controls.pmndrsBloomIntensity.value, 0, 3, 1.0);
+        }
+        if (controls.pmndrsBloomThreshold) {
+            envir.scene.aframePmndrsBloomThreshold = clampNumber(controls.pmndrsBloomThreshold.value, 0, 1, 0.62);
+        }
+        if (controls.pmndrsExposure) {
+            envir.scene.aframePmndrsToneMappingExposure = clampNumber(controls.pmndrsExposure.value, 0.3, 2.5, 1.0);
+        }
+        if (controls.pmndrsVignette) {
+            envir.scene.aframePmndrsVignetteEnabled = controls.pmndrsVignette.checked === true;
+        }
+        if (controls.pmndrsVignetteDarkness) {
+            envir.scene.aframePmndrsVignetteDarkness = clampNumber(controls.pmndrsVignetteDarkness.value, 0, 1, 0.5);
         }
     }
 
@@ -348,6 +546,9 @@ document.addEventListener('DOMContentLoaded', function() {
             : 'soft';
         controls.fpsMeter.checked = !!(envir && envir.scene && envir.scene.aframeFPSMeterEnabled);
         controls.postFx.checked = !!(envir && envir.scene && envir.scene.aframePostFXEnabled);
+        if (controls.legacyHorizonStageSize) {
+            controls.legacyHorizonStageSize.value = clampLegacyHorizonStageSize(envir && envir.scene ? envir.scene.aframeLegacyHorizonStageSize : 5000);
+        }
         controls.postFxColor.checked = !(envir && envir.scene) || envir.scene.aframePostFXColorEnabled !== false;
 
         var edgeAAEnabled = !(envir && envir.scene) || envir.scene.aframePostFXEdgeAAEnabled !== false;
@@ -382,6 +583,28 @@ document.addEventListener('DOMContentLoaded', function() {
         if (controls.taaEnabled) {
             controls.taaEnabled.checked = !!(envir && envir.scene && envir.scene.aframePostFXTAAEnabled);
         }
+        if (controls.postFxEngine) {
+            controls.postFxEngine.value = envir && envir.scene && envir.scene.aframePostFXEngine
+                ? normalizePostFxEngine(envir.scene.aframePostFXEngine)
+                : 'legacy';
+        }
+
+        if (controls.pmndrsBloomIntensity) {
+            controls.pmndrsBloomIntensity.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsBloomIntensity : 1.0, 0, 3, 1.0);
+        }
+        if (controls.pmndrsBloomThreshold) {
+            controls.pmndrsBloomThreshold.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsBloomThreshold : 0.62, 0, 1, 0.62);
+        }
+        if (controls.pmndrsExposure) {
+            controls.pmndrsExposure.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsToneMappingExposure : 1.0, 0.3, 2.5, 1.0);
+        }
+        if (controls.pmndrsVignette) {
+            controls.pmndrsVignette.checked = !!(envir && envir.scene && envir.scene.aframePmndrsVignetteEnabled);
+        }
+        if (controls.pmndrsVignetteDarkness) {
+            controls.pmndrsVignetteDarkness.value = clampNumber(envir && envir.scene ? envir.scene.aframePmndrsVignetteDarkness : 0.5, 0, 1, 0.5);
+        }
+        updatePmndrsValueLabels();
 
         syncCompilePostFxState();
     };
@@ -406,6 +629,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.fpsMeter) {
         controls.fpsMeter.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.legacyHorizonStageSize) {
+        controls.legacyHorizonStageSize.addEventListener('input', updatePmndrsValueLabels);
+        controls.legacyHorizonStageSize.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.postFx) {
         controls.postFx.addEventListener('change', function() {
@@ -444,6 +671,46 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.taaEnabled) {
         controls.taaEnabled.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.postFxEngine) {
+        controls.postFxEngine.addEventListener('change', syncCompilePostFxState);
+    }
+    // Tab strip — clicking a tab writes the engine value into the hidden input
+    // and re-runs the show/hide gating. Disabled tabs (when postFx is off) are no-ops.
+    function bindEngineTab(tabEl) {
+        if (!tabEl) return;
+        tabEl.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (tabEl.disabled) return;
+            var engine = tabEl.getAttribute('data-engine') === 'pmndrs' ? 'pmndrs' : 'legacy';
+            if (controls.postFxEngine) {
+                controls.postFxEngine.value = engine;
+            }
+            syncCompilePostFxState();
+        });
+    }
+    bindEngineTab(controls.postFxEngineTabLegacy);
+    bindEngineTab(controls.postFxEngineTabPmndrs);
+    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsVignetteDarkness].forEach(function (el) {
+        if (el) {
+            el.addEventListener('input', updatePmndrsValueLabels);
+        }
+    });
+    if (controls.pmndrsVignette) {
+        controls.pmndrsVignette.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.pmndrsResetBtn) {
+        controls.pmndrsResetBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var c = getCompileDialogElements();
+            if (c.pmndrsBloomIntensity) c.pmndrsBloomIntensity.value = PMNDRS_TWEAK_DEFAULTS.bloomIntensity;
+            if (c.pmndrsBloomThreshold) c.pmndrsBloomThreshold.value = PMNDRS_TWEAK_DEFAULTS.bloomThreshold;
+            if (c.pmndrsExposure) c.pmndrsExposure.value = PMNDRS_TWEAK_DEFAULTS.toneMappingExposure;
+            if (c.pmndrsVignette) c.pmndrsVignette.checked = PMNDRS_TWEAK_DEFAULTS.vignetteEnabled;
+            if (c.pmndrsVignetteDarkness) c.pmndrsVignetteDarkness.value = PMNDRS_TWEAK_DEFAULTS.vignetteDarkness;
+            updatePmndrsValueLabels();
+            syncCompilePostFxState();
+        });
     }
 
     if (typeof window.syncCompileDialogFromSceneSettings === 'function') {

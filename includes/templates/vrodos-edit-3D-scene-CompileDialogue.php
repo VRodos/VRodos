@@ -141,6 +141,17 @@
 							</div>
 							<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
 						</label>
+
+						<div id="compileLegacyHorizonStageSizeRow" class="tw-pt-2 tw-border-t tw-border-slate-200">
+							<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+								<div>
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Legacy Horizon Size</span>
+									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Expands the A-Frame environment dome for Legacy + HORIZON scenes. Safe range currently tops out at 8000.</p>
+								</div>
+								<span id="compileLegacyHorizonStageSizeValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">5000</span>
+							</div>
+							<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
+						</div>
 					</div>
 				</div>
 
@@ -155,6 +166,80 @@
 					</div>
 
 					<div id="compilePostFxGroup" class="tw-space-y-4 tw-transition-opacity tw-duration-200 tw-opacity-50 tw-pointer-events-none">
+						<!-- Engine selector as tabs. Each tab maps to a value of postFXEngine.
+						     The Legacy tab unhides SSR + TAA controls; the Pmndrs tab unhides
+						     the Pmndrs Tweaks block. Shared controls (bloom preset, reflection,
+						     color, edge AA, env map) live below the tabs and apply to both. -->
+						<div class="tw-pb-2 tw-border-b tw-border-slate-200">
+							<div role="tablist" class="tw-tabs tw-tabs-boxed tw-bg-slate-100">
+								<button type="button" id="compilePostFxEngineTabLegacy" role="tab" data-engine="legacy" class="tw-tab tw-tab-active tw-text-[11px] tw-font-bold">
+									<i data-lucide="cpu" class="tw-w-3 tw-h-3 tw-mr-1"></i>
+									Legacy
+								</button>
+								<button type="button" id="compilePostFxEngineTabPmndrs" role="tab" data-engine="pmndrs" class="tw-tab tw-text-[11px] tw-font-bold">
+									<i data-lucide="sparkles" class="tw-w-3 tw-h-3 tw-mr-1"></i>
+									Pmndrs
+								</button>
+							</div>
+							<input type="hidden" id="compilePostFxEngineSelect" value="legacy">
+							<p id="compilePostFxEngineHint" class="tw-text-[10px] tw-text-slate-400 tw-mt-1"></p>
+						</div>
+
+						<!-- Pmndrs-only tweakable knobs. Hidden unless engine === 'pmndrs'. -->
+						<div id="compilePmndrsTweaks" class="tw-pb-2 tw-border-b tw-border-slate-200 tw-space-y-3" style="display:none;">
+							<div class="tw-flex tw-items-center tw-justify-between">
+								<div class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-600 tw-flex tw-items-center tw-gap-1">
+									<i data-lucide="sliders" class="tw-w-3 tw-h-3"></i>
+									Pmndrs Tweaks
+								</div>
+								<button type="button" id="compilePmndrsResetBtn" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-[10px] tw-text-slate-500 hover:tw-text-emerald-600" title="Reset all Pmndrs tweaks to their default values">
+									<i data-lucide="rotate-ccw" class="tw-w-3 tw-h-3"></i>
+									Reset
+								</button>
+							</div>
+							<p class="tw-text-[10px] tw-text-slate-400 tw-leading-4">
+								Shared <span class="tw-font-semibold">Bloom</span> below chooses the base bloom preset for both engines. These Pmndrs controls only adjust that base bloom and do not create a second bloom pass.
+							</p>
+
+							<div>
+								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Multiplier on the shared Bloom preset when the Pmndrs engine is active. 0 = off, 1 = preset default, 3 = much stronger.">Bloom Multiplier</span>
+									<span id="compilePmndrsBloomIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+								</div>
+								<input id="compilePmndrsBloomIntensitySlider" type="range" min="0" max="3" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+							</div>
+
+							<div>
+								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Luminance threshold for the Pmndrs bloom pass. Lower = more pixels bloom; higher = only the brightest highlights.">Bloom Threshold</span>
+									<span id="compilePmndrsBloomThresholdValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.62</span>
+								</div>
+								<input id="compilePmndrsBloomThresholdSlider" type="range" min="0" max="1" step="0.01" value="0.62" class="tw-range tw-range-primary tw-range-xs">
+							</div>
+
+							<div>
+								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before ACES Filmic. 1.0 = neutral.">Tone Map Exposure</span>
+									<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+								</div>
+								<input id="compilePmndrsExposureSlider" type="range" min="0.3" max="2.5" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+							</div>
+
+							<div class="tw-pt-2 tw-border-t tw-border-slate-200">
+								<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-mb-2">
+									<input id="compilePmndrsVignetteToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Darken the corners of the rendered frame for a cinematic feel.">Vignette</span>
+								</label>
+								<div>
+									<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Vignette Darkness</span>
+										<span id="compilePmndrsVignetteDarknessValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.50</span>
+									</div>
+									<input id="compilePmndrsVignetteDarknessSlider" type="range" min="0" max="1" step="0.02" value="0.5" class="tw-range tw-range-primary tw-range-xs" disabled>
+								</div>
+							</div>
+						</div>
+
 						<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 							<label class="tw-form-control">
 								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Bloom</span>

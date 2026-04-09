@@ -255,6 +255,7 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeShadowQuality']    = $json_metadata->aframeShadowQuality ?? 'medium';
 		$scene_data['aframeAAQuality']        = $json_metadata->aframeAAQuality ?? 'balanced';
 		$scene_data['aframeFPSMeterEnabled']  = $json_metadata->aframeFPSMeterEnabled ?? false;
+		$scene_data['aframeLegacyHorizonStageSize'] = isset( $json_metadata->aframeLegacyHorizonStageSize ) ? max( 500, min( 8000, (int) $json_metadata->aframeLegacyHorizonStageSize ) ) : 5000;
 		$scene_data['aframeAmbientOcclusionPreset'] = $json_metadata->aframeAmbientOcclusionPreset ?? 'balanced';
 		$scene_data['aframeContactShadowPreset'] = $json_metadata->aframeContactShadowPreset ?? 'soft';
 		$scene_data['aframePostFXEnabled']    = $json_metadata->aframePostFXEnabled ?? false;
@@ -277,6 +278,12 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeReflectionSource'] = $json_metadata->aframeReflectionSource ?? 'hdr';
 		$scene_data['aframeHorizonSkyPreset'] = $json_metadata->aframeHorizonSkyPreset ?? 'natural';
 		$scene_data['aframeEnvMapPreset'] = $json_metadata->aframeEnvMapPreset ?? 'none';
+		$scene_data['aframePostFXEngine'] = ( $json_metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ? 'pmndrs' : 'legacy';
+		$scene_data['aframePmndrsBloomIntensity'] = isset( $json_metadata->aframePmndrsBloomIntensity ) ? (float) $json_metadata->aframePmndrsBloomIntensity : 1.0;
+		$scene_data['aframePmndrsBloomThreshold'] = isset( $json_metadata->aframePmndrsBloomThreshold ) ? (float) $json_metadata->aframePmndrsBloomThreshold : 0.62;
+		$scene_data['aframePmndrsVignetteEnabled'] = $json_metadata->aframePmndrsVignetteEnabled ?? false;
+		$scene_data['aframePmndrsVignetteDarkness'] = isset( $json_metadata->aframePmndrsVignetteDarkness ) ? (float) $json_metadata->aframePmndrsVignetteDarkness : 0.5;
+		$scene_data['aframePmndrsToneMappingExposure'] = isset( $json_metadata->aframePmndrsToneMappingExposure ) ? (float) $json_metadata->aframePmndrsToneMappingExposure : 1.0;
 		$scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? '1';
 		$scene_data['backgroundPresetGroundEnabled'] = $json_metadata->backgroundPresetGroundEnabled ?? true;
 		$scene_data['backgroundImagePath']    = $json_metadata->backgroundImagePath ?? '';
