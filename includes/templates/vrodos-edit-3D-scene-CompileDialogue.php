@@ -141,6 +141,17 @@
 							</div>
 							<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
 						</label>
+
+						<div id="compileLegacyHorizonStageSizeRow" class="tw-pt-2 tw-border-t tw-border-slate-200">
+							<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+								<div>
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Legacy Horizon Size</span>
+									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Expands the A-Frame environment dome for Legacy + HORIZON scenes. Safe range currently tops out at 8000.</p>
+								</div>
+								<span id="compileLegacyHorizonStageSizeValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">5000</span>
+							</div>
+							<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
+						</div>
 					</div>
 				</div>
 
@@ -186,10 +197,13 @@
 									Reset
 								</button>
 							</div>
+							<p class="tw-text-[10px] tw-text-slate-400 tw-leading-4">
+								Shared <span class="tw-font-semibold">Bloom</span> below chooses the base bloom preset for both engines. These Pmndrs controls only adjust that base bloom and do not create a second bloom pass.
+							</p>
 
 							<div>
 								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Multiplier on the BloomEffect intensity. 0 = off, 1 = default, 3 = very strong.">Bloom Intensity</span>
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Multiplier on the shared Bloom preset when the Pmndrs engine is active. 0 = off, 1 = preset default, 3 = much stronger.">Bloom Multiplier</span>
 									<span id="compilePmndrsBloomIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
 								</div>
 								<input id="compilePmndrsBloomIntensitySlider" type="range" min="0" max="3" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
@@ -197,7 +211,7 @@
 
 							<div>
 								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Luminance threshold for BloomEffect. Lower = more pixels bloom; higher = only the brightest highlights.">Bloom Threshold</span>
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Luminance threshold for the Pmndrs bloom pass. Lower = more pixels bloom; higher = only the brightest highlights.">Bloom Threshold</span>
 									<span id="compilePmndrsBloomThresholdValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.62</span>
 								</div>
 								<input id="compilePmndrsBloomThresholdSlider" type="range" min="0" max="1" step="0.01" value="0.62" class="tw-range tw-range-primary tw-range-xs">

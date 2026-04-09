@@ -93,6 +93,7 @@ class VrodosSceneExporter {
                 aframeShadowQuality: envir.scene.aframeShadowQuality || 'medium',
                 aframeAAQuality: envir.scene.aframeAAQuality || 'balanced',
                 aframeFPSMeterEnabled: envir.scene.aframeFPSMeterEnabled === true,
+                aframeLegacyHorizonStageSize: (typeof envir.scene.aframeLegacyHorizonStageSize === 'number') ? envir.scene.aframeLegacyHorizonStageSize : 5000,
                 aframeAmbientOcclusionPreset: envir.scene.aframeAmbientOcclusionPreset || 'balanced',
                 aframeContactShadowPreset: envir.scene.aframeContactShadowPreset || 'soft',
                 aframePostFXEnabled: envir.scene.aframePostFXEnabled === true,
@@ -284,7 +285,7 @@ class VrodosSceneImporter {
 
         for (const key in scene_json_metadata) {
             const value = scene_json_metadata[key];
-            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeReflectionSource', 'aframeHorizonSkyPreset', 'aframeEnvMapPreset', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
+            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeLegacyHorizonStageSize', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeReflectionSource', 'aframeHorizonSkyPreset', 'aframeEnvMapPreset', 'aframePostFXEngine', 'aframePmndrsBloomIntensity', 'aframePmndrsBloomThreshold', 'aframePmndrsVignetteEnabled', 'aframePmndrsVignetteDarkness', 'aframePmndrsToneMappingExposure', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
                 resources3D_new["SceneSettings"][key] = value;
             }
         }

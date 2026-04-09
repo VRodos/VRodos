@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ambientOcclusionPreset: document.getElementById('compileAmbientOcclusionPresetSelect'),
             contactShadowPreset: document.getElementById('compileContactShadowPresetSelect'),
             fpsMeter: document.getElementById('compileFPSMeterToggle'),
+            legacyHorizonStageSizeRow: document.getElementById('compileLegacyHorizonStageSizeRow'),
+            legacyHorizonStageSize: document.getElementById('compileLegacyHorizonStageSizeSlider'),
+            legacyHorizonStageSizeValue: document.getElementById('compileLegacyHorizonStageSizeValue'),
             postFx: document.getElementById('compilePostFxToggle'),
             postFxGroup: document.getElementById('compilePostFxGroup'),
             postFxColor: document.getElementById('compilePostFxColorToggle'),
@@ -58,6 +61,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatPmndrsNumber(value) {
         return (Math.round(value * 100) / 100).toFixed(2);
+    }
+
+    function clampLegacyHorizonStageSize(value) {
+        return Math.round(clampNumber(value, 500, 8000, 5000) / 100) * 100;
+    }
+
+    function isLegacyHorizonStageApplicable() {
+        if (typeof envir === 'undefined' || !envir.scene) {
+            return false;
+        }
+
+        return parseInt(envir.scene.backgroundStyleOption, 10) === 0;
     }
 
     function normalizePostFxEngine(value) {
@@ -211,6 +226,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof envir.scene.aframeFPSMeterEnabled === 'undefined') {
             envir.scene.aframeFPSMeterEnabled = false;
         }
+        if (typeof envir.scene.aframeLegacyHorizonStageSize !== 'number') {
+            envir.scene.aframeLegacyHorizonStageSize = clampLegacyHorizonStageSize(envir.scene.aframeLegacyHorizonStageSize);
+        }
         if (!envir.scene.aframeAmbientOcclusionPreset) {
             envir.scene.aframeAmbientOcclusionPreset = 'balanced';
         }
@@ -309,8 +327,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var postFxEnabled = controls.postFx.checked;
         var colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
         var envLightingEnabled = postFxEnabled && normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
+        var bloomEnabled = postFxEnabled && isBloomStrengthEnabled(controls.bloomStrength.value);
         var engine = controls.postFxEngine ? normalizePostFxEngine(controls.postFxEngine.value) : 'legacy';
         var isPmndrs = engine === 'pmndrs';
+        var legacyHorizonStageEnabled = !isPmndrs && isLegacyHorizonStageApplicable();
 
         if (controls.postFxGroup) {
             if (postFxEnabled) {
@@ -337,6 +357,23 @@ document.addEventListener('DOMContentLoaded', function() {
             controls.postFxEngineHint.textContent = isPmndrs
                 ? 'Modern fused EffectPass. SSR and Temporal AA are not available in this engine.'
                 : 'Hand-rolled custom pipeline. Supports SSR and Temporal AA, no volumetric clouds.';
+        }
+
+        if (controls.legacyHorizonStageSizeRow) {
+            controls.legacyHorizonStageSizeRow.classList.toggle('tw-opacity-60', !legacyHorizonStageEnabled);
+            controls.legacyHorizonStageSizeRow.title = legacyHorizonStageEnabled
+                ? 'Controls the environment dome size for Legacy + HORIZON scenes'
+                : (isPmndrs
+                    ? 'Legacy Horizon Size applies only when the Legacy engine is selected'
+                    : 'Legacy Horizon Size applies only when the HORIZON background is selected');
+        }
+        if (controls.legacyHorizonStageSize) {
+            controls.legacyHorizonStageSize.disabled = !legacyHorizonStageEnabled;
+            controls.legacyHorizonStageSize.title = legacyHorizonStageEnabled
+                ? 'Larger values push the edge of the legacy HORIZON dome farther away'
+                : (isPmndrs
+                    ? 'Legacy Horizon Size applies only when the Legacy engine is selected'
+                    : 'Legacy Horizon Size applies only when the HORIZON background is selected');
         }
 
         controls.postFxColor.disabled = !postFxEnabled;
@@ -376,8 +413,20 @@ document.addEventListener('DOMContentLoaded', function() {
             controls.pmndrsTweaksGroup.style.display = (postFxEnabled && isPmndrs) ? '' : 'none';
         }
         var pmndrsTweakEnabled = postFxEnabled && isPmndrs;
-        if (controls.pmndrsBloomIntensity) controls.pmndrsBloomIntensity.disabled = !pmndrsTweakEnabled;
-        if (controls.pmndrsBloomThreshold) controls.pmndrsBloomThreshold.disabled = !pmndrsTweakEnabled;
+        if (controls.pmndrsBloomIntensity) {
+            controls.pmndrsBloomIntensity.disabled = !pmndrsTweakEnabled || !bloomEnabled;
+            controls.pmndrsBloomIntensity.classList.toggle('tw-opacity-60', !bloomEnabled);
+            controls.pmndrsBloomIntensity.title = bloomEnabled
+                ? 'Multiplier applied to the shared Bloom preset when Pmndrs is active'
+                : 'Enable the shared Bloom preset below to use the Pmndrs bloom multiplier';
+        }
+        if (controls.pmndrsBloomThreshold) {
+            controls.pmndrsBloomThreshold.disabled = !pmndrsTweakEnabled || !bloomEnabled;
+            controls.pmndrsBloomThreshold.classList.toggle('tw-opacity-60', !bloomEnabled);
+            controls.pmndrsBloomThreshold.title = bloomEnabled
+                ? 'Luminance threshold for the Pmndrs bloom pass'
+                : 'Enable the shared Bloom preset below to adjust the Pmndrs bloom threshold';
+        }
         if (controls.pmndrsExposure) controls.pmndrsExposure.disabled = !pmndrsTweakEnabled;
         if (controls.pmndrsVignette) controls.pmndrsVignette.disabled = !pmndrsTweakEnabled;
         if (controls.pmndrsVignetteDarkness) {
@@ -389,6 +438,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updatePmndrsValueLabels() {
         var c = getCompileDialogElements();
+        if (c.legacyHorizonStageSize && c.legacyHorizonStageSizeValue) {
+            c.legacyHorizonStageSizeValue.textContent = String(clampLegacyHorizonStageSize(c.legacyHorizonStageSize.value));
+        }
         if (c.pmndrsBloomIntensity && c.pmndrsBloomIntensityValue) {
             c.pmndrsBloomIntensityValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsBloomIntensity.value));
         }
@@ -421,6 +473,9 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(controls.ambientOcclusionPreset.value);
         envir.scene.aframeContactShadowPreset = normalizeContactShadowPreset(controls.contactShadowPreset.value);
         envir.scene.aframeFPSMeterEnabled = controls.fpsMeter.checked === true;
+        if (controls.legacyHorizonStageSize) {
+            envir.scene.aframeLegacyHorizonStageSize = clampLegacyHorizonStageSize(controls.legacyHorizonStageSize.value);
+        }
         envir.scene.aframePostFXEnabled = controls.postFx.checked === true;
         envir.scene.aframeBloomStrength = normalizeBloomStrength(controls.bloomStrength.value);
         envir.scene.aframePostFXBloomEnabled = isBloomStrengthEnabled(envir.scene.aframeBloomStrength);
@@ -491,6 +546,9 @@ document.addEventListener('DOMContentLoaded', function() {
             : 'soft';
         controls.fpsMeter.checked = !!(envir && envir.scene && envir.scene.aframeFPSMeterEnabled);
         controls.postFx.checked = !!(envir && envir.scene && envir.scene.aframePostFXEnabled);
+        if (controls.legacyHorizonStageSize) {
+            controls.legacyHorizonStageSize.value = clampLegacyHorizonStageSize(envir && envir.scene ? envir.scene.aframeLegacyHorizonStageSize : 5000);
+        }
         controls.postFxColor.checked = !(envir && envir.scene) || envir.scene.aframePostFXColorEnabled !== false;
 
         var edgeAAEnabled = !(envir && envir.scene) || envir.scene.aframePostFXEdgeAAEnabled !== false;
@@ -571,6 +629,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (controls.fpsMeter) {
         controls.fpsMeter.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.legacyHorizonStageSize) {
+        controls.legacyHorizonStageSize.addEventListener('input', updatePmndrsValueLabels);
+        controls.legacyHorizonStageSize.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.postFx) {
         controls.postFx.addEventListener('change', function() {

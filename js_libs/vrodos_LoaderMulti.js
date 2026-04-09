@@ -180,6 +180,11 @@ class VRodos_LoaderMulti {
                     envir.scene.aframePostFXEngine = (resource === 'pmndrs') ? 'pmndrs' : 'legacy';
                 }
 
+                if (name === 'aframeLegacyHorizonStageSize') {
+                    var _lhs = parseFloat(resource);
+                    envir.scene.aframeLegacyHorizonStageSize = isNaN(_lhs) ? 5000 : Math.max(500, Math.min(8000, _lhs));
+                }
+
                 if (name === 'aframePmndrsBloomIntensity') {
                     var _pbI = parseFloat(resource);
                     envir.scene.aframePmndrsBloomIntensity = isNaN(_pbI) ? 1.0 : _pbI;
@@ -650,6 +655,8 @@ class VRodos_LoaderMulti {
                         envir.scene.aframePostFXSSREnabled = resource.aframePostFXSSREnabled === true || resource.aframePostFXSSREnabled === 'true';
                         envir.scene.aframePostFXSSRStrength = resource.aframePostFXSSRStrength || 'off';
                         envir.scene.aframePostFXEngine = (resource.aframePostFXEngine === 'pmndrs') ? 'pmndrs' : 'legacy';
+                        var _resLhs = parseFloat(resource.aframeLegacyHorizonStageSize);
+                        envir.scene.aframeLegacyHorizonStageSize = isNaN(_resLhs) ? 5000 : Math.max(500, Math.min(8000, _resLhs));
                         var _resPmBI = parseFloat(resource.aframePmndrsBloomIntensity);
                         envir.scene.aframePmndrsBloomIntensity = isNaN(_resPmBI) ? 1.0 : _resPmBI;
                         var _resPmBT = parseFloat(resource.aframePmndrsBloomThreshold);

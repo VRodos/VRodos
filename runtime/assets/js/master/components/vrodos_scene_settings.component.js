@@ -18,6 +18,7 @@ AFRAME.registerComponent('scene-settings', {
         shadowQuality: { type: "string", default: "medium" },
         aaQuality: { type: "string", default: "balanced" },
         fpsMeterEnabled: { type: "string", default: "0" },
+        legacyHorizonStageSize: { type: "string", default: "5000" },
         ambientOcclusionPreset: { type: "string", default: "balanced" },
         contactShadowPreset: { type: "string", default: "soft" },
         postFXEnabled: { type: "string", default: "0" },
@@ -741,4 +742,3 @@ AFRAME.registerComponent('scene-settings', {
         this.captureSceneProbe(time);
     }
 });
-

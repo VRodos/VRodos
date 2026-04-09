@@ -4,6 +4,71 @@
  */
 (function () {
     var H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
+
+    function getPmndrsExposureValue(self) {
+        if (!self || !self.data) {
+            return 1.0;
+        }
+
+        var raw = parseFloat(self.data.pmndrsToneMappingExposure);
+        if (isNaN(raw)) {
+            raw = 1.0;
+        }
+
+        return Math.max(0.3, Math.min(2.5, raw));
+    }
+
+    function getLegacyHorizonStageSizeValue(self) {
+        if (!self || !self.data) {
+            return 5000;
+        }
+
+        var raw = parseFloat(self.data.legacyHorizonStageSize);
+        if (isNaN(raw)) {
+            raw = 5000;
+        }
+
+        return Math.max(500, Math.min(8000, Math.round(raw)));
+    }
+
+    function syncLegacyHorizonCameraFar(self) {
+        if (!self || !self.el) {
+            return;
+        }
+
+        var defaultFar = 7000;
+        var targetFar = defaultFar;
+
+        if (self.data &&
+            self.data.selChoice === "0" &&
+            self.data.postFXEngine !== 'pmndrs') {
+            targetFar = Math.max(defaultFar, Math.min(24000, getLegacyHorizonStageSizeValue(self) + 1000));
+        }
+
+        if (self.el.camera && typeof self.el.camera.far === 'number' && Math.abs(self.el.camera.far - targetFar) > 0.5) {
+            self.el.camera.far = targetFar;
+            if (typeof self.el.camera.updateProjectionMatrix === 'function') {
+                self.el.camera.updateProjectionMatrix();
+            }
+        }
+
+        Array.prototype.forEach.call(self.el.querySelectorAll('[camera]'), function (cameraEl) {
+            if (!cameraEl || !cameraEl.components || !cameraEl.components.camera) {
+                return;
+            }
+
+            cameraEl.setAttribute('camera', 'far', String(targetFar));
+
+            var threeCamera = cameraEl.components.camera.camera;
+            if (threeCamera && typeof threeCamera.far === 'number' && Math.abs(threeCamera.far - targetFar) > 0.5) {
+                threeCamera.far = targetFar;
+                if (typeof threeCamera.updateProjectionMatrix === 'function') {
+                    threeCamera.updateProjectionMatrix();
+                }
+            }
+        });
+    }
+
     H.applyRenderQualityProfile = function () {
         var renderer = this.el.renderer;
         if (!renderer) {
@@ -23,7 +88,9 @@
         renderer.sortObjects = true;
 
         if (typeof renderer.toneMappingExposure !== 'undefined') {
-            renderer.toneMappingExposure = isHighQuality ? 1.06 : 1.0;
+            renderer.toneMappingExposure = this.data.postFXEngine === 'pmndrs'
+                ? getPmndrsExposureValue(this)
+                : (isHighQuality ? 1.06 : 1.0);
         }
 
         // physicallyCorrectLights removed in Three.js r150â†’r165; always on in r173 (A-Frame 1.7.1)
@@ -34,8 +101,12 @@
             renderer.outputColorSpace = THREE.SRGBColorSpace;
         }
 
-        if (typeof renderer.toneMapping !== 'undefined' && typeof THREE.ACESFilmicToneMapping !== 'undefined') {
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        if (typeof renderer.toneMapping !== 'undefined') {
+            if (this.data.postFXEngine === 'pmndrs' && typeof THREE.NoToneMapping !== 'undefined') {
+                renderer.toneMapping = THREE.NoToneMapping;
+            } else if (typeof THREE.ACESFilmicToneMapping !== 'undefined') {
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            }
         }
     };
     H.applyShadowQualityProfile = function () {
@@ -181,6 +252,7 @@
         }
 
         var preset = this.getHorizonSkyPreset();
+        var isPmndrs = this.data.postFXEngine === 'pmndrs';
         var shadowEnabled = this.data.shadowQuality !== 'off';
         var environmentConfig = {
             preset: 'default',
@@ -190,6 +262,10 @@
             shadow: shadowEnabled
         };
 
+        if (!isPmndrs) {
+            environmentConfig.stageSize = getLegacyHorizonStageSizeValue(this);
+        }
+
         // skyType 'gradient' draws a smooth horizonColor → skyColor blend with no
         // procedural sun disk. We previously used 'atmosphere', but its built-in
         // sun shader renders a pale disk + halo at lightPosition that looks alien
@@ -197,26 +273,30 @@
         // THREE.DirectionalLight controlled by lightPosition, so removing the sky
         // sun disk has no effect on actual illumination or shadows.
         if (preset === 'clear') {
-            environmentConfig.skyType = 'gradient';
-            environmentConfig.skyColor = '#b8ddff';
-            environmentConfig.horizonColor = '#edf8ff';
+            environmentConfig.skyType = isPmndrs ? 'gradient' : 'atmosphere';
+            environmentConfig.skyColor = '#bfe0ff';
+            environmentConfig.horizonColor = '#fff8ee';
             environmentConfig.lighting = 'distant';
-            environmentConfig.lightPosition = '0.03 0.98 -0.08';
+            environmentConfig.lightPosition = '0.08 0.98 -0.12';
         } else if (preset === 'crisp') {
-            environmentConfig.skyType = 'gradient';
-            environmentConfig.skyColor = '#9fd1ff';
-            environmentConfig.horizonColor = '#f7fbff';
+            environmentConfig.skyType = isPmndrs ? 'gradient' : 'atmosphere';
+            environmentConfig.skyColor = '#abd7ff';
+            environmentConfig.horizonColor = '#fffaf2';
             environmentConfig.lighting = 'distant';
-            environmentConfig.lightPosition = '0.05 1 -0.1';
+            environmentConfig.lightPosition = '0.1 0.99 -0.12';
         } else {
-            environmentConfig.skyType = 'gradient';
-            environmentConfig.skyColor = '#b2d8ff';
-            environmentConfig.horizonColor = '#e9f6ff';
+            environmentConfig.skyType = isPmndrs ? 'gradient' : 'atmosphere';
+            environmentConfig.skyColor = '#b8dcff';
+            environmentConfig.horizonColor = '#fff7ec';
             environmentConfig.lighting = 'distant';
-            environmentConfig.lightPosition = '0 1 0';
+            environmentConfig.lightPosition = '0.08 0.99 -0.1';
         }
 
         this.el.setAttribute('environment', environmentConfig);
+
+        if (!isPmndrs) {
+            return;
+        }
 
         // aframe-environment-component creates a visible "sun" sphere mesh as a
         // child of the sky whenever lighting === 'distant', regardless of skyType.
@@ -237,9 +317,6 @@
                 }
             });
         };
-        // Run twice — once on the next animation frame, and once after a short
-        // delay — because the environment component sometimes rebuilds its mesh
-        // tree asynchronously after a setAttribute call.
         if (typeof requestAnimationFrame === 'function') {
             requestAnimationFrame(hideEnvSunMesh);
         }
@@ -253,6 +330,11 @@
         var enhancedReflections = reflectionProfile === 'enhanced';
         var softReflections = reflectionProfile === 'soft';
         var contactShadowSettings = this.getContactShadowSettings();
+        var hasAuthorLights = Array.prototype.some.call(this.getCachedSceneQuery('lightEntities', '[light]'), function (lightEl) {
+            return !lightEl.hasAttribute('data-vrodos-photoreal-light');
+        });
+
+        syncLegacyHorizonCameraFar(this);
 
         if (hasEnvironmentBackground && this.el.hasAttribute('environment')) {
             this.el.setAttribute('environment', 'shadow', shadowEnabled ? 'true' : 'false');
@@ -265,10 +347,6 @@
             this.removePhotorealHelperLights();
             return;
         }
-
-        var hasAuthorLights = Array.prototype.some.call(this.getCachedSceneQuery('lightEntities', '[light]'), function (lightEl) {
-            return !lightEl.hasAttribute('data-vrodos-photoreal-light');
-        });
 
         if (!isHighQuality || hasAuthorLights) {
             this.removePhotorealHelperLights();
@@ -302,7 +380,9 @@
         canvas.style.filter = '';
 
         if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
-            if (this.data.renderQuality === 'high') {
+            if (this.data.postFXEngine === 'pmndrs') {
+                renderer.toneMappingExposure = getPmndrsExposureValue(this);
+            } else if (this.data.renderQuality === 'high') {
                 renderer.toneMappingExposure = 1.06;
             } else {
                 renderer.toneMappingExposure = 1.0;

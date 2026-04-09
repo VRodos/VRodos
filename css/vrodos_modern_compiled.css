@@ -4936,6 +4936,10 @@ input.tw-tab:checked + .tw-tab-content,
   line-height: 1.25;
 }
 
+.vrodos-manager-wrapper .tw-leading-4 {
+  line-height: 1rem;
+}
+
 .vrodos-manager-wrapper .tw-tracking-\[0\.12em\] {
   letter-spacing: 0.12em;
 }
@@ -6323,6 +6327,11 @@ body.vrodos-manager-wrapper {
   color: rgb(52 211 153 / var(--tw-text-opacity, 1));
 }
 
+.vrodos-manager-wrapper .hover\:tw-text-emerald-600:hover {
+  --tw-text-opacity: 1;
+  color: rgb(5 150 105 / var(--tw-text-opacity, 1));
+}
+
 .vrodos-manager-wrapper .hover\:tw-text-error:hover {
   --tw-text-opacity: 1;
   color: var(--fallback-er,oklch(var(--er)/var(--tw-text-opacity, 1)));
@@ -6356,11 +6365,6 @@ body.vrodos-manager-wrapper {
 .vrodos-manager-wrapper .hover\:tw-text-white:hover {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
-}
-
-.vrodos-manager-wrapper .hover\:tw-text-emerald-600:hover {
-  --tw-text-opacity: 1;
-  color: rgb(5 150 105 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .hover\:tw-underline:hover {

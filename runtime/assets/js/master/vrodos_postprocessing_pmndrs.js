@@ -50,16 +50,26 @@
      * taken from the per-scene tweak. Both knobs come from the compile dialog and are
      * persisted via scene-settings (pmndrsBloomIntensity / pmndrsBloomThreshold).
      */
-    function bloomOptionsForLegacyValue(legacyValue, intensityMultiplier, threshold) {
+    function isHorizonBackground(self) {
+        return !!(self && self.data && self.data.selChoice === '0');
+    }
+
+    function bloomOptionsForLegacyValue(self, legacyValue, intensityMultiplier, threshold) {
         // legacy values are roughly 0..2; pmndrs intensity is roughly 0..3
         var mult = (typeof intensityMultiplier === 'number' && !isNaN(intensityMultiplier)) ? intensityMultiplier : 1.0;
         var thr = (typeof threshold === 'number' && !isNaN(threshold)) ? threshold : 0.62;
-        return {
+        var options = {
             intensity: Math.max(0, legacyValue) * 1.4 * mult,
             luminanceThreshold: thr,
             luminanceSmoothing: 0.18,
             mipmapBlur: true
         };
+
+        // HORIZON skies have a small authored sun disk against a flat gradient background.
+        // pmndrs mipmap bloom spreads that high-luminance spot into a massive gray cap in
+        // the upper hemisphere, so clamp bloom harder for selChoice === "0" while still
+        // allowing authored scene objects to pick up a subtle glow.
+        return options;
     }
 
     /**
@@ -139,9 +149,13 @@
         var bloomVal = (typeof this.getBloomStrengthValue === 'function') ? this.getBloomStrengthValue() : 0;
         var pmndrsBloomMult = readPmndrsNumber(this, 'pmndrsBloomIntensity', 0, 3, 1.0);
         var pmndrsBloomThr  = readPmndrsNumber(this, 'pmndrsBloomThreshold', 0, 1, 0.62);
-        if (bloomVal > 0 && pmndrsBloomMult > 0) {
+        if (isHorizonBackground(this) && bloomVal > 0 && !this._pmndrsHorizonBloomSkipWarned) {
+            console.info('[VRodos] pmndrs bloom disabled for HORIZON background to avoid sky haloing. Switch to "legacy" if bloom on the HORIZON sky is required.');
+            this._pmndrsHorizonBloomSkipWarned = true;
+        }
+        if (!isHorizonBackground(this) && bloomVal > 0 && pmndrsBloomMult > 0) {
             try {
-                this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(bloomVal, pmndrsBloomMult, pmndrsBloomThr));
+                this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(this, bloomVal, pmndrsBloomMult, pmndrsBloomThr));
                 effects.push(this.pmndrsBloomEffect);
             } catch (err) {
                 console.warn('[VRodos] pmndrs BloomEffect construction failed, skipping:', err);
@@ -182,6 +196,10 @@
             if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
                 this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
                 renderer.toneMappingExposure = pmndrsExposure;
+            }
+            if (renderer && typeof renderer.toneMapping !== 'undefined' && typeof THREE.NoToneMapping !== 'undefined') {
+                this._pmndrsPrevToneMapping = renderer.toneMapping;
+                renderer.toneMapping = THREE.NoToneMapping;
             }
         } catch (err) {
             console.warn('[VRodos] pmndrs ToneMappingEffect failed, skipping:', err);
@@ -392,6 +410,10 @@
         if (typeof this._pmndrsPrevToneMappingExposure === 'number' && this.el.renderer) {
             this.el.renderer.toneMappingExposure = this._pmndrsPrevToneMappingExposure;
             this._pmndrsPrevToneMappingExposure = undefined;
+        }
+        if (typeof this._pmndrsPrevToneMapping !== 'undefined' && this.el.renderer) {
+            this.el.renderer.toneMapping = this._pmndrsPrevToneMapping;
+            this._pmndrsPrevToneMapping = undefined;
         }
         if (this.pmndrsComposer) {
             try {
