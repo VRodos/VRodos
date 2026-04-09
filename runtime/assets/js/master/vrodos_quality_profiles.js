@@ -131,6 +131,31 @@
         }
     }
 
+    function getPmndrsAtmosphereResourceProfile(self, renderer) {
+        var quality = normalizePmndrsAtmosphereQuality(self && self.data ? self.data.pmndrsAtmosphereQuality : 'balanced');
+        var canUseFloat = !!(
+            renderer &&
+            renderer.capabilities &&
+            renderer.capabilities.isWebGL2 &&
+            typeof THREE.FloatType !== 'undefined'
+        );
+        var wantsHighPrecision = quality === 'quality' || quality === 'cinematic' || quality === 'custom';
+        var type = (canUseFloat && wantsHighPrecision) ? THREE.FloatType : THREE.HalfFloatType;
+        var higherOrderScattering = quality !== 'performance';
+
+        return {
+            quality: quality,
+            type: type,
+            useFloat: type === THREE.FloatType,
+            higherOrderScattering: higherOrderScattering,
+            signature: [
+                quality,
+                type === THREE.FloatType ? 'float' : 'half',
+                higherOrderScattering ? 'higher' : 'basic'
+            ].join(':')
+        };
+    }
+
     function readPmndrsAtmosphereNumber(self, key, min, max, fallback) {
         if (!self || !self.data) {
             return fallback;
@@ -358,7 +383,7 @@
 
         self.ensurePhotorealHelperLight(
             'vrodos-pmndrs-horizon-key-light',
-            'type: directional; color: ' + keyColor + '; intensity: ' + keyIntensity.toFixed(2) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + shadowMap + '; shadowMapHeight: ' + shadowMap + '; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012; shadowNormalBias: 0.02;',
+            'type: directional; color: ' + keyColor + '; intensity: ' + keyIntensity.toFixed(2) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + shadowMap + '; shadowMapHeight: ' + shadowMap + '; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012;',
             formatVectorPosition(config.sunDirection, 28, 8)
         );
 
@@ -457,8 +482,14 @@
             return null;
         }
 
-        if (this._pmndrsAtmosphereState) {
+        var profile = getPmndrsAtmosphereResourceProfile(this, renderer);
+
+        if (this._pmndrsAtmosphereState && this._pmndrsAtmosphereState.profileSignature === profile.signature) {
             return this._pmndrsAtmosphereState;
+        }
+
+        if (this._pmndrsAtmosphereState) {
+            this.disposePmndrsAtmosphere();
         }
 
         var state = {
@@ -468,19 +499,45 @@
             skyMesh: null,
             skyMaterial: null,
             skyGeometry: null,
-            failed: false
+            failed: false,
+            profileSignature: profile.signature,
+            precision: profile.useFloat ? 'float' : 'half'
         };
 
         try {
-            state.generator = new vta.PrecomputedTexturesGenerator(renderer);
+            state.generator = new vta.PrecomputedTexturesGenerator(renderer, {
+                type: profile.type,
+                combinedScattering: true,
+                higherOrderScattering: profile.higherOrderScattering
+            });
             state.textures = state.generator.textures;
             state.promise = state.generator.update().catch(function (err) {
                 state.failed = true;
                 console.warn('[VRodos] Takram atmosphere precompute failed, falling back to PMNDRS gradient horizon:', err);
             });
         } catch (err) {
-            state.failed = true;
-            console.warn('[VRodos] Takram atmosphere init failed, falling back to PMNDRS gradient horizon:', err);
+            if (profile.useFloat && typeof THREE.HalfFloatType !== 'undefined') {
+                try {
+                    state.generator = new vta.PrecomputedTexturesGenerator(renderer, {
+                        type: THREE.HalfFloatType,
+                        combinedScattering: true,
+                        higherOrderScattering: profile.higherOrderScattering
+                    });
+                    state.textures = state.generator.textures;
+                    state.precision = 'half-fallback';
+                    state.profileSignature = profile.quality + ':half:' + (profile.higherOrderScattering ? 'higher' : 'basic');
+                    state.promise = state.generator.update().catch(function (fallbackErr) {
+                        state.failed = true;
+                        console.warn('[VRodos] Takram atmosphere precompute failed, falling back to PMNDRS gradient horizon:', fallbackErr);
+                    });
+                } catch (fallbackErr) {
+                    state.failed = true;
+                    console.warn('[VRodos] Takram atmosphere init failed, falling back to PMNDRS gradient horizon:', fallbackErr);
+                }
+            } else {
+                state.failed = true;
+                console.warn('[VRodos] Takram atmosphere init failed, falling back to PMNDRS gradient horizon:', err);
+            }
         }
 
         this._pmndrsAtmosphereState = state;
@@ -539,6 +596,7 @@
             state.skyMaterial.transmittanceTexture = state.textures.transmittanceTexture || null;
             state.skyMaterial.singleMieScatteringTexture = state.textures.singleMieScatteringTexture || null;
             state.skyMaterial.higherOrderScatteringTexture = state.textures.higherOrderScatteringTexture || null;
+            state.skyMaterial.dithering = true;
             state.skyMaterial.needsUpdate = true;
         }
 
@@ -612,6 +670,15 @@
     }
 
     function parseLightPositionVector(lightPosition) {
+        if (lightPosition && typeof lightPosition === 'object') {
+            if (lightPosition.isVector3 && typeof lightPosition.clone === 'function') {
+                return lightPosition.clone().normalize();
+            }
+            if (typeof lightPosition.x === 'number' && typeof lightPosition.y === 'number' && typeof lightPosition.z === 'number') {
+                return new THREE.Vector3(lightPosition.x, lightPosition.y, lightPosition.z).normalize();
+            }
+        }
+
         var raw = (lightPosition || '0.08 0.99 -0.1').split(/\s+/);
         var x = parseFloat(raw[0]);
         var y = parseFloat(raw[1]);
@@ -644,41 +711,51 @@
         }
 
         var gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-        // Create a tight, sharp sun core with rapid absolute falloff to 0. 
-        // Any residual alpha will blow up under HDR multiplication.
+        // PMNDRS + Takram sunsets need a readable disk, not just a specular source.
+        // Keep a bright core, but widen the warm halo so the sun survives HDR tone mapping
+        // and remains visible against the horizon glow.
         gradient.addColorStop(0.0, 'rgba(255,255,255,1)');
-        gradient.addColorStop(0.05, 'rgba(255,252,240,0.8)'); // Very small glow (radius ~ 6px)
-        gradient.addColorStop(0.1, 'rgba(255,245,214,0)'); // Sharp transparent drop-off
-        gradient.addColorStop(1.0, 'rgba(0,0,0,0)'); // Remaining 90% of the quad is absolutely invisible
+        gradient.addColorStop(0.12, 'rgba(255,249,234,0.98)');
+        gradient.addColorStop(0.24, 'rgba(255,232,180,0.55)');
+        gradient.addColorStop(0.42, 'rgba(255,206,138,0.14)');
+        gradient.addColorStop(0.58, 'rgba(255,188,118,0.04)');
+        gradient.addColorStop(1.0, 'rgba(0,0,0,0)');
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         self._pmndrsSunTexture = new THREE.CanvasTexture(canvas);
+        self._pmndrsSunTexture.generateMipmaps = false;
+        self._pmndrsSunTexture.minFilter = THREE.LinearFilter;
+        self._pmndrsSunTexture.magFilter = THREE.LinearFilter;
         self._pmndrsSunTexture.needsUpdate = true;
         return self._pmndrsSunTexture;
     }
 
-    function getPmndrsHorizonSunConfig(preset) {
+    function getPmndrsHorizonSunConfig(preset, mode) {
+        var atmosphereMode = mode === 'atmosphere';
         switch (preset) {
             case 'clear':
                 return {
-                    scale: 95,
-                    color: '#fff3c7',
-                    distance: 5400
+                    scale: atmosphereMode ? 128 : 95,
+                    color: atmosphereMode ? '#fff6d8' : '#fff3c7',
+                    distance: 5400,
+                    intensity: atmosphereMode ? 7.0 : 4.0
                 };
             case 'crisp':
                 return {
-                    scale: 108,
-                    color: '#fff0bc',
-                    distance: 5300
+                    scale: atmosphereMode ? 138 : 108,
+                    color: atmosphereMode ? '#fff2cc' : '#fff0bc',
+                    distance: 5300,
+                    intensity: atmosphereMode ? 7.6 : 4.0
                 };
             default:
                 return {
-                    scale: 120,
-                    color: '#ffedb2',
-                    distance: 5200
+                    scale: atmosphereMode ? 148 : 120,
+                    color: atmosphereMode ? '#ffefc9' : '#ffedb2',
+                    distance: 5200,
+                    intensity: atmosphereMode ? 8.2 : 4.0
                 };
         }
     }
@@ -688,7 +765,7 @@
             return;
         }
 
-        var oldSun = document.getElementById('default-sun');
+        var oldSun = document.getElementById('vrodos-pmndrs-sun');
         if (oldSun && oldSun.parentNode) {
             oldSun.parentNode.removeChild(oldSun);
         }
@@ -696,15 +773,16 @@
         self._pmndrsSunDistance = null;
     }
 
-    function ensurePmndrsHorizonSun(self, lightPosition, preset) {
+    function ensurePmndrsHorizonSun(self, lightPosition, preset, options) {
         if (!self || !self.el || typeof document === 'undefined') {
             return;
         }
+        var opts = options || {};
 
-        var sunEl = document.getElementById('default-sun');
+        var sunEl = document.getElementById('vrodos-pmndrs-sun');
         if (!sunEl) {
             sunEl = document.createElement('a-entity');
-            sunEl.setAttribute('id', 'default-sun');
+            sunEl.setAttribute('id', 'vrodos-pmndrs-sun');
             sunEl.setAttribute('data-vrodos-pmndrs-sun', 'true');
             self.el.appendChild(sunEl);
         }
@@ -720,30 +798,43 @@
                 map: texture,
                 color: '#ffedb2',
                 transparent: true,
-                alphaTest: 0.05,
+                alphaTest: 0.0,
+                blending: THREE.AdditiveBlending,
                 depthWrite: false,
-                depthTest: false,
+                depthTest: true,
                 fog: false
             });
             material.toneMapped = false;
             sprite = new THREE.Sprite(material);
             sprite.frustumCulled = false;
-            sprite.renderOrder = 9998;
+            sprite.renderOrder = 10;
             sunEl.setObject3D('mesh', sprite);
         }
 
-        var cfg = getPmndrsHorizonSunConfig(preset);
+        var cfg = getPmndrsHorizonSunConfig(preset, opts.atmosphere ? 'atmosphere' : 'fallback');
         sprite.scale.set(cfg.scale, cfg.scale, 1);
         
         // pmndrs applies ACES Filmic over the entire HDR framebuffer, which
         // compresses LDR colors (<= 1.0) into dull grey. We must multiply the 
         // sun's authored color so it sits in the HDR range and survives tone 
         // mapping as a bright glowing light source.
-        sprite.material.color.set(cfg.color).multiplyScalar(4.0);
+        sprite.material.color.set(cfg.color).multiplyScalar(cfg.intensity || (opts.atmosphere ? 5.5 : 4.0));
 
         self._pmndrsSunDirection = parseLightPositionVector(lightPosition);
         self._pmndrsSunDistance = cfg.distance;
-        H.updatePmndrsHorizonSun.call(self);
+
+        var camera = self.el.camera;
+        if (!camera || typeof camera.getWorldPosition !== 'function') {
+            return;
+        }
+
+        if (!self._pmndrsSunCameraPosition) {
+            self._pmndrsSunCameraPosition = new THREE.Vector3();
+        }
+
+        sunEl.object3D.visible = true;
+        camera.getWorldPosition(self._pmndrsSunCameraPosition);
+        sunEl.object3D.position.copy(self._pmndrsSunCameraPosition).addScaledVector(self._pmndrsSunDirection, self._pmndrsSunDistance || 5200);
     }
 
     H.updatePmndrsHorizonSun = function () {
@@ -755,12 +846,12 @@
 
         var atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
         if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
-            clearPmndrsHorizonSun(this);
             ensurePmndrsAtmosphereSky(this, atmosphereConfig);
+            ensurePmndrsHorizonSun(this, atmosphereConfig.sunDirection, this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : 'natural', { atmosphere: true });
             return;
         }
 
-        var sunEl = document.getElementById('default-sun');
+        var sunEl = document.getElementById('vrodos-pmndrs-sun');
         if (!sunEl || !sunEl.object3D || !this._pmndrsSunDirection) {
             return;
         }
@@ -1016,8 +1107,8 @@
         var atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
         if (usesTakramHorizon && atmosphereConfig && atmosphereConfig.enabled) {
             ensurePmndrsTakramHorizonLights(this, atmosphereConfig, preset);
-            clearPmndrsHorizonSun(this);
             ensurePmndrsAtmosphereSky(this, atmosphereConfig);
+            ensurePmndrsHorizonSun(this, atmosphereConfig.sunDirection, preset, { atmosphere: true });
             return;
         }
 
@@ -1034,7 +1125,7 @@
             setTimeout(hideEnvVisuals, 50);
             setTimeout(hideEnvVisuals, 200);
 
-            clearPmndrsHorizonSun(this);
+            ensurePmndrsHorizonSun(this, atmosphereConfig.sunDirection, preset, { atmosphere: true });
             if (ensurePmndrsAtmosphereSky(this, atmosphereConfig)) {
                 return;
             }
@@ -1089,7 +1180,7 @@
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-key-light',
-            'type: directional; color: #fff2d8; intensity: ' + (enhancedReflections ? Math.max(contactShadowSettings.helperKeyIntensity, 1.0).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperKeyIntensity - 0.08, 0.72).toFixed(2) : contactShadowSettings.helperKeyIntensity.toFixed(2))) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: ' + contactShadowSettings.bias + '; shadowNormalBias: ' + contactShadowSettings.normalBias + ';',
+            'type: directional; color: #fff2d8; intensity: ' + (enhancedReflections ? Math.max(contactShadowSettings.helperKeyIntensity, 1.0).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperKeyIntensity - 0.08, 0.72).toFixed(2) : contactShadowSettings.helperKeyIntensity.toFixed(2))) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: ' + contactShadowSettings.bias + ';',
             contactShadowSettings.helperPosition
         );
 

@@ -23,7 +23,7 @@ This plan compares the four realistic options (A-Frame defaults, stock Three pos
 | Phase 2 | Complete | PMNDRS runtime module implemented (`vrodos_postprocessing_pmndrs.js`). |
 | Phase 3 | Complete | PMNDRS runtime wiring into compiled master shell completed. |
 | Phase 4 | Complete | Engine selector + schema/compiler/dialog wiring completed. |
-| Phase 5 | In progress | Atmosphere-first Horizon fix approved in §12; volumetric clouds are pending. |
+| Phase 5 | Complete | Atmosphere-first Horizon/Takram implementation is in place for PMNDRS Horizon scenes (see §12). Volumetric clouds remain a follow-up item on top of this base. |
 | Phase 6 | Not started | Legacy hard-delete deferred until stability window is met. |
 
 **What is no longer relevant now**
@@ -389,6 +389,17 @@ Revisit if any of the following happen:
 
 This addendum extends the migration plan so the current PMNDRS horizon regressions are fixed first (gray top cap, missing sun), while keeping the legacy pipeline untouched. It also formalizes the PMNDRS compile-tab controls requested for visual/performance tuning.
 
+### Implementation status (2026-04-09)
+- Implemented: PMNDRS Horizon now has a Takram-driven sky path in compiled scenes.
+- Implemented: legacy Horizon remains on the A-Frame environment path and was intentionally left behavior-compatible.
+- Implemented: PMNDRS compile dialog exposes atmosphere controls plus a `Reset` button that restores the default PMNDRS atmosphere/post-FX values.
+- Implemented: PMNDRS Horizon no longer relies on `aframe-environment-component` for visual sky ownership when Takram atmosphere is enabled.
+- Implemented: PMNDRS Horizon uses helper lights plus a dedicated HDR sun disk overlay, with sunset readability tuned so compiled scenes show an actual visible sun, and the disk is depth-occluded by scene geometry instead of drawing through foreground objects.
+- Implemented: the PMNDRS sun overlay now uses its own runtime entity instead of sharing the legacy `default-sun` hook, preventing cross-talk with the old Horizon/manual-sun lifecycle.
+- Implemented: PMNDRS atmosphere quality now also drives Takram precompute precision so `quality` and `cinematic` reduce visible sunset stepping/banding compared with the lower-cost presets.
+- Implemented: local-scene `worldToECEF` bridging was added so Takram can render correctly in VRodos' non-geospatial local world coordinates.
+- Deferred: Takram volumetric clouds are still pending and should be added on top of this stabilized atmosphere baseline.
+
 ### Scope decision
 1. **Engine isolation:** PMNDRS-only implementation. Legacy engine remains byte-for-byte behavior-compatible.
 2. **Delivery order:** Atmosphere first, clouds later. Build a cloud-ready seam now, but do not enable volumetric clouds in this slice.
@@ -487,4 +498,3 @@ aframePmndrsMoonEnabled
 - Takram atmosphere README (lighting modes, limitations): <https://raw.githubusercontent.com/takram-design-engineering/three-geospatial/main/packages/atmosphere/README.md>
 - Takram clouds README (composer compatibility + effect ordering): <https://raw.githubusercontent.com/takram-design-engineering/three-geospatial/main/packages/clouds/README.md>
 - three.js#33292 (Takram clouds example, merged into r184): <https://github.com/mrdoob/three.js/pull/33292>
-
