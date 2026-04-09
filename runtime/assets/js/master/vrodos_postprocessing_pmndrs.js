@@ -163,6 +163,25 @@
             }
         }
 
+        // ACES Filmic tone mapping — applied before color grading so that
+        // grading (brightness/contrast, hue/saturation, vignette) operates
+        // on perceptually uniform (LDR) colours, preventing washed-out results.
+        // Per-scene exposure multiplier is applied via the renderer's toneMappingExposure.
+        try {
+            effects.push(new PP.ToneMappingEffect({ mode: PP.ToneMappingMode.ACES_FILMIC }));
+            var pmndrsExposure = readPmndrsNumber(this, 'pmndrsToneMappingExposure', 0.3, 2.5, 1.0);
+            if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
+                this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
+                renderer.toneMappingExposure = pmndrsExposure;
+            }
+            if (renderer && typeof renderer.toneMapping !== 'undefined' && typeof THREE.NoToneMapping !== 'undefined') {
+                this._pmndrsPrevToneMapping = renderer.toneMapping;
+                renderer.toneMapping = THREE.NoToneMapping;
+            }
+        } catch (err) {
+            console.warn('[VRodos] pmndrs ToneMappingEffect failed, skipping:', err);
+        }
+
         // Color grading — Brightness/Contrast + Hue/Saturation
         if (this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXColorEnabled')) {
             try {
@@ -185,24 +204,6 @@
             } catch (err) {
                 console.warn('[VRodos] pmndrs VignetteEffect failed, skipping:', err);
             }
-        }
-
-        // ACES Filmic tone mapping — always, last so it operates on the final HDR result.
-        // Per-scene exposure multiplier is applied via the renderer's toneMappingExposure,
-        // which the pmndrs ToneMappingEffect respects.
-        try {
-            effects.push(new PP.ToneMappingEffect({ mode: PP.ToneMappingMode.ACES_FILMIC }));
-            var pmndrsExposure = readPmndrsNumber(this, 'pmndrsToneMappingExposure', 0.3, 2.5, 1.0);
-            if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
-                this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
-                renderer.toneMappingExposure = pmndrsExposure;
-            }
-            if (renderer && typeof renderer.toneMapping !== 'undefined' && typeof THREE.NoToneMapping !== 'undefined') {
-                this._pmndrsPrevToneMapping = renderer.toneMapping;
-                renderer.toneMapping = THREE.NoToneMapping;
-            }
-        } catch (err) {
-            console.warn('[VRodos] pmndrs ToneMappingEffect failed, skipping:', err);
         }
 
         // FXAA — only AA path supported by this engine. SMAA is broken inside EffectPass on r173.

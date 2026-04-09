@@ -437,6 +437,7 @@ AFRAME.registerComponent('scene-settings', {
     ensurePhotorealHelperLight: VRODOSMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
     removePhotorealHelperLights: VRODOSMaster.SceneSettingsHelpers.removePhotorealHelperLights,
     applyHorizonSkyPreset: VRODOSMaster.SceneSettingsHelpers.applyHorizonSkyPreset,
+    updatePmndrsHorizonSun: VRODOSMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function () {},
     applyBackgroundQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyBackgroundQualityProfile,
     applyPostFXProfile: VRODOSMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSMaster.SceneSettingsHelpers.applyQualityProfiles,
@@ -705,11 +706,17 @@ AFRAME.registerComponent('scene-settings', {
         }
         this.disableFPSMeter();
         this.removePhotorealHelperLights();
+        let manualSun = document.getElementById('default-sun');
+        if (manualSun && manualSun.parentNode) {
+            manualSun.parentNode.removeChild(manualSun);
+        }
     },
     tick: function (time) {
         if (this.fpsStats && typeof this.fpsStats.update === 'function') {
             this.fpsStats.update();
         }
+
+        this.updatePmndrsHorizonSun();
 
         if (this.getEffectiveReflectionSource() !== 'scene-probe') {
             return;
