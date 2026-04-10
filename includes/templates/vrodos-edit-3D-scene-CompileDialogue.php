@@ -279,9 +279,9 @@
 										<div>
 											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Radius</span>
-												<span id="compilePmndrsSunAngularRadiusValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.0068</span>
+												<span id="compilePmndrsSunAngularRadiusValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.0047</span>
 											</div>
-											<input id="compilePmndrsSunAngularRadiusSlider" type="range" min="0.002" max="0.03" step="0.0002" value="0.0068" class="tw-range tw-range-primary tw-range-xs">
+											<input id="compilePmndrsSunAngularRadiusSlider" type="range" min="0.002" max="0.03" step="0.0001" value="0.0047" class="tw-range tw-range-primary tw-range-xs">
 										</div>
 										<div>
 											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">

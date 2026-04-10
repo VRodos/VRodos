@@ -5025,6 +5025,10 @@ input.tw-tab:checked + .tw-tab-content,
   padding-bottom: 2.5rem;
 }
 
+.vrodos-manager-wrapper .tw-pb-2 {
+  padding-bottom: 0.5rem;
+}
+
 .vrodos-manager-wrapper .tw-pb-3 {
   padding-bottom: 0.75rem;
 }
@@ -5079,10 +5083,6 @@ input.tw-tab:checked + .tw-tab-content,
 
 .vrodos-manager-wrapper .tw-pt-4 {
   padding-top: 1rem;
-}
-
-.vrodos-manager-wrapper .tw-pb-2 {
-  padding-bottom: 0.5rem;
 }
 
 .vrodos-manager-wrapper .tw-text-left {
@@ -5222,6 +5222,10 @@ input.tw-tab:checked + .tw-tab-content,
   font-style: italic;
 }
 
+.vrodos-manager-wrapper .tw-leading-4 {
+  line-height: 1rem;
+}
+
 .vrodos-manager-wrapper .tw-leading-5 {
   line-height: 1.25rem;
 }
@@ -5240,10 +5244,6 @@ input.tw-tab:checked + .tw-tab-content,
 
 .vrodos-manager-wrapper .tw-leading-tight {
   line-height: 1.25;
-}
-
-.vrodos-manager-wrapper .tw-leading-4 {
-  line-height: 1rem;
 }
 
 .vrodos-manager-wrapper .tw-tracking-\[0\.12em\] {

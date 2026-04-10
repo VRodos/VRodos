@@ -748,7 +748,14 @@ class VRodos_Compiler_Manager {
 						$a_sun_sky->setAttribute( 'material', $materialSunSky );
 
 						if ( isset( $contentObject->sunSky ) && $contentObject->sunSky == '1' ) {
-							$ascene->appendChild( $a_sun_sky );
+							$skip_legacy_sun_sky_for_pmndrs_horizon = (
+								'pmndrs' === $post_fx_engine &&
+								'1' === $pmndrs_atmosphere_enabled &&
+								'0' === (string) $bcg_choice
+							);
+							if ( ! $skip_legacy_sun_sky_for_pmndrs_horizon ) {
+								$ascene->appendChild( $a_sun_sky );
+							}
 						}
 
 						$ascene->appendChild( $a_light );

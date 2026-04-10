@@ -659,12 +659,17 @@ AFRAME.registerComponent('scene-settings', {
         let clearGeneratedBackground = function () {
             backgroundEl.removeAttribute("background");
             backgroundEl.removeAttribute("environment");
-            let oldSun = document.querySelector('a-sun-sky');
-            if (oldSun) oldSun.parentNode.removeChild(oldSun);
+            Array.prototype.forEach.call(backgroundEl.querySelectorAll('a-sun-sky'), function (oldSun) {
+                if (oldSun && oldSun.parentNode) oldSun.parentNode.removeChild(oldSun);
+            });
             let manSky = document.getElementById('default-sky');
             if (manSky) manSky.parentNode.removeChild(manSky);
             let manSun = document.getElementById('default-sun');
             if (manSun) manSun.parentNode.removeChild(manSun);
+            let pmndrsSun = document.getElementById('vrodos-pmndrs-sun');
+            if (pmndrsSun) pmndrsSun.parentNode.removeChild(pmndrsSun);
+            let pmndrsSunHaze = document.getElementById('vrodos-pmndrs-sun-haze');
+            if (pmndrsSunHaze) pmndrsSunHaze.parentNode.removeChild(pmndrsSunHaze);
             let oldOceanPlane = backgroundEl.querySelector('.ocean_asset');
             if (oldOceanPlane) oldOceanPlane.parentNode.removeChild(oldOceanPlane);
             let oldPresetSky = backgroundEl.querySelector('a-sky[data-vrodos-preset-sky="true"]');
@@ -763,6 +768,14 @@ AFRAME.registerComponent('scene-settings', {
         let manualSun = document.getElementById('default-sun');
         if (manualSun && manualSun.parentNode) {
             manualSun.parentNode.removeChild(manualSun);
+        }
+        let pmndrsSun = document.getElementById('vrodos-pmndrs-sun');
+        if (pmndrsSun && pmndrsSun.parentNode) {
+            pmndrsSun.parentNode.removeChild(pmndrsSun);
+        }
+        let pmndrsSunHaze = document.getElementById('vrodos-pmndrs-sun-haze');
+        if (pmndrsSunHaze && pmndrsSunHaze.parentNode) {
+            pmndrsSunHaze.parentNode.removeChild(pmndrsSunHaze);
         }
     },
     tick: function (time) {

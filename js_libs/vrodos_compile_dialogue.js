@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sunElevationDeg: 10,
         sunAzimuthDeg: 38,
         sunDistance: 5200,
-        sunAngularRadius: 0.0068,
+        sunAngularRadius: 0.0047,
         aerialStrength: 0.85,
         albedoScale: 0.96,
         transmittanceEnabled: true,
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sunElevationDeg: 8,
             sunAzimuthDeg: 34,
             sunDistance: 4800,
-            sunAngularRadius: 0.0056,
+            sunAngularRadius: 0.0047,
             aerialStrength: 0.6,
             albedoScale: 0.92,
             transmittanceEnabled: true,
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sunElevationDeg: 10,
             sunAzimuthDeg: 38,
             sunDistance: 5200,
-            sunAngularRadius: 0.0068,
+            sunAngularRadius: 0.0047,
             aerialStrength: 0.85,
             albedoScale: 0.96,
             transmittanceEnabled: true,
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sunElevationDeg: 12,
             sunAzimuthDeg: 40,
             sunDistance: 5600,
-            sunAngularRadius: 0.0082,
+            sunAngularRadius: 0.0047,
             aerialStrength: 1.0,
             albedoScale: 1.0,
             transmittanceEnabled: true,
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sunElevationDeg: 7,
             sunAzimuthDeg: 28,
             sunDistance: 6200,
-            sunAngularRadius: 0.0105,
+            sunAngularRadius: 0.0047,
             aerialStrength: 1.15,
             albedoScale: 1.05,
             transmittanceEnabled: true,
@@ -184,6 +184,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatPmndrsNumber(value) {
         return (Math.round(value * 100) / 100).toFixed(2);
+    }
+
+    function formatPmndrsRadius(value) {
+        var n = parseFloat(value);
+        if (isNaN(n)) {
+            n = 0;
+        }
+        return n.toFixed(4);
     }
 
     function formatPmndrsDegrees(value) {
@@ -726,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
             c.pmndrsSunAzimuthValue.textContent = formatPmndrsDegrees(c.pmndrsSunAzimuth.value);
         }
         if (c.pmndrsSunAngularRadius && c.pmndrsSunAngularRadiusValue) {
-            c.pmndrsSunAngularRadiusValue.textContent = formatPmndrsNumber(parseFloat(c.pmndrsSunAngularRadius.value));
+            c.pmndrsSunAngularRadiusValue.textContent = formatPmndrsRadius(c.pmndrsSunAngularRadius.value);
         }
         if (c.pmndrsSunDistance && c.pmndrsSunDistanceValue) {
             c.pmndrsSunDistanceValue.textContent = String(Math.round(parseFloat(c.pmndrsSunDistance.value) || 0));

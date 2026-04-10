@@ -396,7 +396,10 @@ This addendum extends the migration plan so the current PMNDRS horizon regressio
 - Implemented: PMNDRS Horizon no longer relies on `aframe-environment-component` for visual sky ownership when Takram atmosphere is enabled.
 - Implemented: PMNDRS Horizon uses helper lights plus a dedicated HDR sun disk overlay, with sunset readability tuned so compiled scenes show an actual visible sun, and the disk is depth-occluded by scene geometry instead of drawing through foreground objects.
 - Implemented: the PMNDRS sun overlay now uses its own runtime entity instead of sharing the legacy `default-sun` hook, preventing cross-talk with the old Horizon/manual-sun lifecycle.
+- Implemented: PMNDRS sun overlay halo/blending was tightened (smaller disk footprint + non-additive blend) to reduce visible sunset ring quantization while keeping the sun readable.
+- Implemented: PMNDRS sun overlay now uses a compact disk profile (minimal halo) so Takram handles atmospheric glow and the overlay no longer introduces a large stepped dome artifact.
 - Implemented: PMNDRS atmosphere quality now also drives Takram precompute precision so `quality` and `cinematic` reduce visible sunset stepping/banding compared with the lower-cost presets.
+- Implemented: PMNDRS Takram Horizon now force-cleans legacy `<a-sun-sky>` runtime remnants, and compiler output skips emitting `<a-sun-sky>` for PMNDRS+Horizon+atmosphere builds to prevent stepped dome artifacts from legacy sky geometry.
 - Implemented: local-scene `worldToECEF` bridging was added so Takram can render correctly in VRodos' non-geospatial local world coordinates.
 - Deferred: Takram volumetric clouds are still pending and should be added on top of this stabilized atmosphere baseline.
 
