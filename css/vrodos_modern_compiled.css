@@ -3077,6 +3077,14 @@ input.tw-tab:checked + .tw-tab-content,
   }
 }
 
+.tw-badge-xs {
+  height: 0.75rem;
+  font-size: 0.75rem;
+  line-height: .75rem;
+  padding-left: 0.313rem;
+  padding-right: 0.313rem;
+}
+
 .tw-badge-sm {
   height: 1rem;
   font-size: 0.75rem;
@@ -5515,6 +5523,26 @@ input.tw-tab:checked + .tw-tab-content,
 
 .vrodos-manager-wrapper .tw-text-white\/90 {
   color: rgb(255 255 255 / 0.9);
+}
+
+.vrodos-manager-wrapper .tw-text-fuchsia-500 {
+  --tw-text-opacity: 1;
+  color: rgb(217 70 239 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-indigo-500 {
+  --tw-text-opacity: 1;
+  color: rgb(99 102 241 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-orange-500 {
+  --tw-text-opacity: 1;
+  color: rgb(249 115 22 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-sky-500 {
+  --tw-text-opacity: 1;
+  color: rgb(14 165 233 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-no-underline {

@@ -77,175 +77,311 @@
 				</div>
 			</div>
 
-			<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-5">
-				<!-- Left Column: Quality -->
-				<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
-					<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
-						<i data-lucide="monitor" class="tw-w-4 tw-h-4 tw-text-emerald-500"></i>
-						<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Quality</h4>
-					</div>
-
-					<div class="tw-space-y-4">
-						<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Render</span>
-								<select id="compileRenderQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-									<option value="standard">Standard</option>
-									<option value="high">High</option>
-								</select>
-							</label>
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Shadows</span>
-								<select id="compileShadowQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-									<option value="off">Off</option>
-									<option value="medium">Medium</option>
-									<option value="high">High</option>
-								</select>
-							</label>
+			<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-5 tw-items-start">
+				<!-- Left Column: Global Settings -->
+				<div class="tw-flex tw-flex-col tw-gap-4">
+					
+					<!-- Card: Base Render Quality -->
+					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+							<i data-lucide="monitor" class="tw-w-4 tw-h-4 tw-text-emerald-500"></i>
+							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Base Render Quality</h4>
 						</div>
 
-						<label class="tw-form-control">
-							<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Anti-Aliasing</span>
-							<select id="compileAAQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-								<option value="off">Off</option>
-								<option value="balanced">Balanced</option>
-								<option value="high">High</option>
-								<option value="ultra">Ultra</option>
-							</select>
-						</label>
+						<div class="tw-space-y-4">
+							<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Render</span>
+									<select id="compileRenderQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="standard">Standard</option>
+										<option value="high">High</option>
+									</select>
+								</label>
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Shadows</span>
+									<select id="compileShadowQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="off">Off</option>
+										<option value="medium">Medium</option>
+										<option value="high">High</option>
+									</select>
+								</label>
+							</div>
 
-						<div class="tw-grid tw-grid-cols-2 tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
 							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Screen-space ambient occlusion darkens crevices and corners dynamically, plus boosts baked AO maps">Ambient Occlusion (SSAO)</span>
-								<select id="compileAmbientOcclusionPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Anti-Aliasing</span>
+								<select id="compileAAQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 									<option value="off">Off</option>
-									<option value="soft">Soft</option>
 									<option value="balanced">Balanced</option>
-									<option value="strong">Strong</option>
+									<option value="high">High</option>
+									<option value="ultra">Ultra</option>
 								</select>
 							</label>
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Adjusts shadow bias to reduce artifacts and improve shadow precision">Shadow Precision</span>
-								<select id="compileContactShadowPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-									<option value="off">Off</option>
-									<option value="soft">Soft</option>
-									<option value="strong">Strong</option>
-								</select>
-							</label>
+
+							<div class="tw-grid tw-grid-cols-2 tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Screen-space ambient occlusion darkens crevices and corners dynamically, plus boosts baked AO maps">Ambient Occlusion (SSAO)</span>
+									<select id="compileAmbientOcclusionPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="off">Off</option>
+										<option value="soft">Soft</option>
+										<option value="balanced">Balanced</option>
+										<option value="strong">Strong</option>
+									</select>
+								</label>
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Adjusts shadow bias to reduce artifacts and improve shadow precision">Shadow Precision</span>
+									<select id="compileContactShadowPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="off">Off</option>
+										<option value="soft">Soft</option>
+										<option value="strong">Strong</option>
+									</select>
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<!-- Card: Environment & Tools -->
+					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+							<i data-lucide="globe" class="tw-w-4 tw-h-4 tw-text-sky-500"></i>
+							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Environment &amp; Tools</h4>
 						</div>
 
-						<label class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
-							<div>
-								<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">FPS Meter</span>
-								<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Shows a live FPS counter in compiled scenes for quality testing.</p>
+						<div class="tw-space-y-4">
+							<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose between HDR reflections or a live scene-based reflection probe">Reflection Source</span>
+									<select id="compileReflectionSourceSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="hdr">HDR</option>
+										<option value="scene-probe">Scene Probe</option>
+									</select>
+								</label>
+								<label id="compileEnvMapPresetWrapper" class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="HDR environment map for PBR reflections and lighting">Env Lighting</span>
+									<select id="compileEnvMapPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="none">None</option>
+										<option value="studio">Studio</option>
+										<option value="quarry">Quarry</option>
+										<option value="venice">Venice Sunset</option>
+									</select>
+								</label>
 							</div>
-							<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
-						</label>
 
-						<div id="compileLegacyHorizonStageSizeRow" class="tw-pt-2 tw-border-t tw-border-slate-200">
-							<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+							<div id="compileLegacyHorizonStageSizeRow" class="tw-pt-2 tw-border-t tw-border-slate-200">
+								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+									<div>
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Legacy Horizon Size</span>
+										<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Expands the A-Frame environment dome for Legacy + HORIZON scenes.</p>
+									</div>
+									<span id="compileLegacyHorizonStageSizeValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">5000</span>
+								</div>
+								<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
+							</div>
+
+							<label class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
 								<div>
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Legacy Horizon Size</span>
-									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Expands the A-Frame environment dome for Legacy + HORIZON scenes. Safe range currently tops out at 8000.</p>
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">FPS Meter</span>
+									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Shows a live FPS counter in compiled scenes for quality testing.</p>
 								</div>
-								<span id="compileLegacyHorizonStageSizeValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">5000</span>
-							</div>
-							<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
+								<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
+							</label>
 						</div>
 					</div>
-				</div>
 
-				<!-- Right Column: Cinematic Effects -->
-				<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
-					<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
-						<div class="tw-flex tw-items-center tw-gap-2">
-							<i data-lucide="sparkles" class="tw-w-4 tw-h-4 tw-text-amber-500"></i>
-							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Cinematic FX</h4>
-						</div>
-						<input id="compilePostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
-					</div>
-
-					<div id="compilePostFxGroup" class="tw-space-y-4 tw-transition-opacity tw-duration-200 tw-opacity-50 tw-pointer-events-none">
-						<!-- Engine selector as tabs. Each tab maps to a value of postFXEngine.
-						     The Legacy tab unhides SSR + TAA controls; the Pmndrs tab unhides
-						     the Pmndrs Tweaks block. Shared controls (bloom preset, reflection,
-						     color, edge AA, env map) live below the tabs and apply to both. -->
-						<div class="tw-pb-2 tw-border-b tw-border-slate-200">
-							<div role="tablist" class="tw-tabs tw-tabs-boxed tw-bg-slate-100">
-								<button type="button" id="compilePostFxEngineTabLegacy" role="tab" data-engine="legacy" class="tw-tab tw-tab-active tw-text-[11px] tw-font-bold">
-									<i data-lucide="cpu" class="tw-w-3 tw-h-3 tw-mr-1"></i>
-									Legacy
-								</button>
-								<button type="button" id="compilePostFxEngineTabPmndrs" role="tab" data-engine="pmndrs" class="tw-tab tw-text-[11px] tw-font-bold">
-									<i data-lucide="sparkles" class="tw-w-3 tw-h-3 tw-mr-1"></i>
-									Pmndrs
-								</button>
+					<!-- Card: Universal Cinematic Effects -->
+					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+							<div class="tw-flex tw-items-center tw-gap-2">
+								<i data-lucide="sparkles" class="tw-w-4 tw-h-4 tw-text-amber-500"></i>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Universal Cinematic FX</h4>
 							</div>
-							<input type="hidden" id="compilePostFxEngineSelect" value="legacy">
-							<p id="compilePostFxEngineHint" class="tw-text-[10px] tw-text-slate-400 tw-mt-1"></p>
+							<input id="compilePostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
 						</div>
 
-						<!-- Pmndrs-only tweakable knobs. Hidden unless engine === 'pmndrs'. -->
-						<div id="compilePmndrsTweaks" class="tw-pb-2 tw-border-b tw-border-slate-200 tw-space-y-3" style="display:none;">
-							<div class="tw-flex tw-items-center tw-justify-between">
-								<div class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-600 tw-flex tw-items-center tw-gap-1">
-									<i data-lucide="sliders" class="tw-w-3 tw-h-3"></i>
-									Pmndrs Tweaks
-								</div>
-								<button type="button" id="compilePmndrsResetBtn" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-[10px] tw-text-slate-500 hover:tw-text-emerald-600" title="Reset all Pmndrs tweaks to their default values">
-									<i data-lucide="rotate-ccw" class="tw-w-3 tw-h-3"></i>
-									Reset
-								</button>
-							</div>
-							<p class="tw-text-[10px] tw-text-slate-400 tw-leading-4">
-								Shared <span class="tw-font-semibold">Bloom</span> below chooses the base bloom preset for both engines. These Pmndrs controls only adjust that base bloom and do not create a second bloom pass.
-							</p>
-
-							<div>
-								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Multiplier on the shared Bloom preset when the Pmndrs engine is active. 0 = off, 1 = preset default, 3 = much stronger.">Bloom Multiplier</span>
-									<span id="compilePmndrsBloomIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
-								</div>
-								<input id="compilePmndrsBloomIntensitySlider" type="range" min="0" max="3" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
-							</div>
-
-							<div>
-								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Luminance threshold for the Pmndrs bloom pass. Lower = more pixels bloom; higher = only the brightest highlights.">Bloom Threshold</span>
-									<span id="compilePmndrsBloomThresholdValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.62</span>
-								</div>
-								<input id="compilePmndrsBloomThresholdSlider" type="range" min="0" max="1" step="0.01" value="0.62" class="tw-range tw-range-primary tw-range-xs">
-							</div>
-
-							<div>
-								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before ACES Filmic. 1.0 = neutral.">Tone Map Exposure</span>
-									<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
-								</div>
-								<input id="compilePmndrsExposureSlider" type="range" min="0.3" max="2.5" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+						<div id="compileUniversalPostFxGroup" class="tw-space-y-4">
+							<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Bloom Preset</span>
+									<select id="compileBloomStrengthSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="off">Off</option>
+										<option value="soft">Soft</option>
+										<option value="medium">Medium</option>
+									</select>
+								</label>
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Reflection Profile</span>
+									<select id="compileReflectionProfileSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="soft">Soft</option>
+										<option value="balanced">Balanced</option>
+										<option value="enhanced">Enhanced</option>
+									</select>
+								</label>
 							</div>
 
 							<div class="tw-pt-2 tw-border-t tw-border-slate-200">
 								<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-mb-2">
-									<input id="compilePmndrsVignetteToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Darken the corners of the rendered frame for a cinematic feel.">Vignette</span>
+									<input id="compilePostFxColorToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Color Grading</span>
 								</label>
-								<div>
-									<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Vignette Darkness</span>
-										<span id="compilePmndrsVignetteDarknessValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.50</span>
-									</div>
-									<input id="compilePmndrsVignetteDarknessSlider" type="range" min="0" max="1" step="0.02" value="0.5" class="tw-range tw-range-primary tw-range-xs" disabled>
+								<div id="compileColorGradingWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Exposure Preset</span>
+										<select id="compileExposurePresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="neutral">Neutral</option>
+											<option value="bright">Bright</option>
+											<option value="cinematic">Cinematic</option>
+										</select>
+									</label>
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Contrast Preset</span>
+										<select id="compileContrastPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="soft">Soft</option>
+											<option value="balanced">Balanced</option>
+											<option value="punchy">Punchy</option>
+										</select>
+									</label>
 								</div>
 							</div>
 
-							<div class="tw-pt-2 tw-border-t tw-border-slate-200 tw-space-y-3">
+							<div class="tw-pt-2 tw-border-t tw-border-slate-200">
+								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Edge Smoothing (FXAA 3.1)</span>
+									<span id="compileEdgeAAStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px] tw-font-bold tw-uppercase">Balanced</span>
+								</div>
+								<input id="compileEdgeAAStrengthSlider" type="range" min="0" max="5" step="1" value="3" class="tw-range tw-range-primary tw-range-xs tw-mt-1">
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Right Column: Contextual Engine Controls -->
+				<div id="compileEngineControlsColumn" class="tw-flex tw-flex-col tw-gap-4">
+					
+					<!-- Engine selection tabs -->
+					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<div class="tw-mb-3">
+							<div class="tw-flex tw-items-center tw-justify-between">
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Advanced Engine Controls</h4>
+								<span id="compilePostFxEngineHintBadge" class="tw-badge tw-badge-ghost tw-badge-xs tw-text-[9px] tw-uppercase" style="display:none;">PostFX Must Be On</span>
+							</div>
+							<p id="compilePostFxEngineHint" class="tw-text-[10px] tw-text-slate-400 tw-mt-1"></p>
+						</div>
+						<div role="tablist" class="tw-tabs tw-tabs-boxed tw-bg-slate-100">
+							<button type="button" id="compilePostFxEngineTabLegacy" role="tab" data-engine="legacy" class="tw-tab tw-tab-active tw-text-[11px] tw-font-bold">
+								<i data-lucide="cpu" class="tw-w-3 tw-h-3 tw-mr-1"></i>
+								Legacy
+							</button>
+							<button type="button" id="compilePostFxEngineTabPmndrs" role="tab" data-engine="pmndrs" class="tw-tab tw-text-[11px] tw-font-bold">
+								<i data-lucide="sparkles" class="tw-w-3 tw-h-3 tw-mr-1"></i>
+								Pmndrs
+							</button>
+						</div>
+						<input type="hidden" id="compilePostFxEngineSelect" value="legacy">
+					</div>
+
+					<!-- LEGACY Engine Panes -->
+					<div id="compileLegacyPane" class="tw-flex tw-flex-col tw-gap-4">
+						<!-- Card: Legacy Enhancements -->
+						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+								<i data-lucide="layers" class="tw-w-4 tw-h-4 tw-text-indigo-500"></i>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Legacy Enhancements</h4>
+							</div>
+							<div class="tw-space-y-4">
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Screen-space reflections for floors, glass, and polished surfaces">Reflections (SSR)</span>
+									<select id="compileSSRStrengthSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="off">Off</option>
+										<option value="subtle">Subtle</option>
+										<option value="balanced">Balanced</option>
+										<option value="strong">Strong</option>
+									</select>
+								</label>
+
+								<div class="tw-pt-2 tw-border-t tw-border-slate-200">
+									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+										<input id="compilePostFxTAAToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Temporal anti-aliasing for smoother edges and reduced specular shimmer. Supplements FXAA.">Temporal AA (TAA)</span>
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- PMNDRS Engine Panes -->
+					<div id="compilePmndrsPane" class="tw-flex tw-flex-col tw-gap-4" style="display:none;">
+						<!-- Card: Camera & Optics Tuning -->
+						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+							<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+								<div class="tw-flex tw-items-center tw-gap-2">
+									<i data-lucide="camera" class="tw-w-4 tw-h-4 tw-text-fuchsia-500"></i>
+									<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Camera &amp; Optics</h4>
+								</div>
+								<button type="button" id="compilePmndrsResetBtn" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-[10px] tw-text-slate-500 hover:tw-text-emerald-600" title="Reset all Pmndrs tweaks to their default values">
+									<i data-lucide="rotate-ccw" class="tw-w-3 tw-h-3"></i> Reset
+								</button>
+							</div>
+							
+							<div class="tw-space-y-4">
+								<!-- Bloom Modifiers Wrapper -->
+								<div id="compilePmndrsBloomWrapper" class="tw-space-y-4">
+									<div>
+										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Multiplier on the shared Bloom preset when the Pmndrs engine is active.">Bloom Multiplier</span>
+											<span id="compilePmndrsBloomIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+										</div>
+										<input id="compilePmndrsBloomIntensitySlider" type="range" min="0" max="3" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+									</div>
+
+									<div>
+										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Luminance threshold for the Pmndrs bloom pass.">Bloom Threshold</span>
+											<span id="compilePmndrsBloomThresholdValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.62</span>
+										</div>
+										<input id="compilePmndrsBloomThresholdSlider" type="range" min="0" max="1" step="0.01" value="0.62" class="tw-range tw-range-primary tw-range-xs">
+									</div>
+								</div>
+
+								<div class="tw-border-t tw-border-slate-200 tw-pt-2">
+									<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before ACES Filmic.">Tone Map Exposure</span>
+										<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+									</div>
+									<input id="compilePmndrsExposureSlider" type="range" min="0.3" max="2.5" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+								</div>
+
+								<div class="tw-pt-2 tw-border-t tw-border-slate-200">
+									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-mb-2">
+										<input id="compilePmndrsVignetteToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Darken the corners of the rendered frame for a cinematic feel.">Vignette</span>
+									</label>
+									<div id="compilePmndrsVignetteWrapper">
+										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Vignette Darkness</span>
+											<span id="compilePmndrsVignetteDarknessValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.50</span>
+										</div>
+										<input id="compilePmndrsVignetteDarknessSlider" type="range" min="0" max="1" step="0.02" value="0.5" class="tw-range tw-range-primary tw-range-xs">
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Card: Takram Atmosphere -->
+						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+								<i data-lucide="sun" class="tw-w-4 tw-h-4 tw-text-orange-500"></i>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Takram Atmosphere</h4>
+							</div>
+
+							<div class="tw-space-y-4">
 								<div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
 									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 										<input id="compilePmndrsAtmosphereToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
 										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Enable Takram atmosphere and aerial perspective in the PMNDRS pipeline.">Atmosphere</span>
 									</label>
-									<label class="tw-form-control tw-min-w-[9rem]">
+								</div>
+
+								<div id="compilePmndrsAtmosphereWrapper" class="tw-space-y-4">
+									<label class="tw-form-control tw-w-full">
 										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Atmosphere Preset</span>
 										<select id="compilePmndrsAtmosphereQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 											<option value="performance">Performance</option>
@@ -255,212 +391,121 @@
 											<option value="custom">Custom</option>
 										</select>
 									</label>
-								</div>
-								<p class="tw-text-[10px] tw-text-slate-400 tw-leading-4">
-									Takram atmosphere replaces the PMNDRS Horizon sky workaround with a proper sun, sky scattering, and aerial haze. Presets write all advanced atmosphere values; moving any advanced control switches to <span class="tw-font-semibold">Custom</span>.
-								</p>
 
-								<div id="compilePmndrsAtmosphereAdvanced" class="tw-space-y-3">
-									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Elevation</span>
-												<span id="compilePmndrsSunElevationValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">10°</span>
+									<div id="compilePmndrsAtmosphereAdvanced" class="tw-space-y-3 tw-pt-3 tw-border-t tw-border-slate-200">
+										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Elevation</span>
+													<span id="compilePmndrsSunElevationValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">10°</span>
+												</div>
+												<input id="compilePmndrsSunElevationSlider" type="range" min="-5" max="45" step="1" value="10" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsSunElevationSlider" type="range" min="-5" max="45" step="1" value="10" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Azimuth</span>
-												<span id="compilePmndrsSunAzimuthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">38°</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Azimuth</span>
+													<span id="compilePmndrsSunAzimuthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">38°</span>
+												</div>
+												<input id="compilePmndrsSunAzimuthSlider" type="range" min="-180" max="180" step="1" value="38" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsSunAzimuthSlider" type="range" min="-180" max="180" step="1" value="38" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Radius</span>
-												<span id="compilePmndrsSunAngularRadiusValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.0047</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Radius</span>
+													<span id="compilePmndrsSunAngularRadiusValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.0047</span>
+												</div>
+												<input id="compilePmndrsSunAngularRadiusSlider" type="range" min="0.002" max="0.03" step="0.0001" value="0.0047" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsSunAngularRadiusSlider" type="range" min="0.002" max="0.03" step="0.0001" value="0.0047" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Distance</span>
-												<span id="compilePmndrsSunDistanceValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">5200</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Distance</span>
+													<span id="compilePmndrsSunDistanceValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">5200</span>
+												</div>
+												<input id="compilePmndrsSunDistanceSlider" type="range" min="1500" max="20000" step="100" value="5200" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsSunDistanceSlider" type="range" min="1500" max="20000" step="100" value="5200" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Aerial Strength</span>
-												<span id="compilePmndrsAerialStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.85</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Aerial Strength</span>
+													<span id="compilePmndrsAerialStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.85</span>
+												</div>
+												<input id="compilePmndrsAerialStrengthSlider" type="range" min="0" max="1.5" step="0.01" value="0.85" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsAerialStrengthSlider" type="range" min="0" max="1.5" step="0.01" value="0.85" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Albedo Scale</span>
-												<span id="compilePmndrsAlbedoScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.96</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Albedo Scale</span>
+													<span id="compilePmndrsAlbedoScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.96</span>
+												</div>
+												<input id="compilePmndrsAlbedoScaleSlider" type="range" min="0.5" max="1.5" step="0.01" value="0.96" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsAlbedoScaleSlider" type="range" min="0.5" max="1.5" step="0.01" value="0.96" class="tw-range tw-range-primary tw-range-xs">
 										</div>
-									</div>
 
-									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
-											<input id="compilePmndrsTransmittanceToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Transmittance</span>
-										</label>
-										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
-											<input id="compilePmndrsInscatterToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Inscatter</span>
-										</label>
-										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
-											<input id="compilePmndrsGroundToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Ground</span>
-										</label>
-										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
-											<input id="compilePmndrsMoonToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Moon</span>
-										</label>
-									</div>
+										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+												<input id="compilePmndrsTransmittanceToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Transmittance</span>
+											</label>
+											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+												<input id="compilePmndrsInscatterToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Inscatter</span>
+											</label>
+											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+												<input id="compilePmndrsGroundToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Ground</span>
+											</label>
+											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+												<input id="compilePmndrsMoonToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Moon</span>
+											</label>
+										</div>
 
-									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Rayleigh</span>
-												<span id="compilePmndrsRayleighScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Rayleigh</span>
+													<span id="compilePmndrsRayleighScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+												</div>
+												<input id="compilePmndrsRayleighScaleSlider" type="range" min="0.2" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsRayleighScaleSlider" type="range" min="0.2" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Scatter</span>
-												<span id="compilePmndrsMieScatteringScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.90</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Scatter</span>
+													<span id="compilePmndrsMieScatteringScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.90</span>
+												</div>
+												<input id="compilePmndrsMieScatteringScaleSlider" type="range" min="0.1" max="2.5" step="0.01" value="0.9" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsMieScatteringScaleSlider" type="range" min="0.1" max="2.5" step="0.01" value="0.9" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Extinction</span>
-												<span id="compilePmndrsMieExtinctionScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Extinction</span>
+													<span id="compilePmndrsMieExtinctionScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+												</div>
+												<input id="compilePmndrsMieExtinctionScaleSlider" type="range" min="0.1" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsMieExtinctionScaleSlider" type="range" min="0.1" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Phase G</span>
-												<span id="compilePmndrsMiePhaseGValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.80</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Mie Phase G</span>
+													<span id="compilePmndrsMiePhaseGValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.80</span>
+												</div>
+												<input id="compilePmndrsMiePhaseGSlider" type="range" min="0" max="0.95" step="0.01" value="0.8" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsMiePhaseGSlider" type="range" min="0" max="0.95" step="0.01" value="0.8" class="tw-range tw-range-primary tw-range-xs">
-										</div>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Absorption</span>
-												<span id="compilePmndrsAbsorptionScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Absorption</span>
+													<span id="compilePmndrsAbsorptionScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+												</div>
+												<input id="compilePmndrsAbsorptionScaleSlider" type="range" min="0.2" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsAbsorptionScaleSlider" type="range" min="0" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+											<label class="tw-form-control">
+												<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Ground Albedo</span>
+												<input id="compilePmndrsGroundAlbedoInput" type="color" value="#f0e6d6" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1 tw-h-8 tw-p-1">
+											</label>
 										</div>
-										<label class="tw-form-control">
-											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Ground Albedo</span>
-											<input id="compilePmndrsGroundAlbedoInput" type="color" value="#f0e6d6" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1 tw-h-8 tw-p-1">
-										</label>
 									</div>
 								</div>
 							</div>
-						</div>
-
-						<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Bloom</span>
-								<select id="compileBloomStrengthSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-									<option value="off">Off</option>
-									<option value="soft">Soft</option>
-									<option value="medium">Medium</option>
-								</select>
-							</label>
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Reflection</span>
-								<select id="compileReflectionProfileSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-									<option value="soft">Soft</option>
-									<option value="balanced">Balanced</option>
-									<option value="enhanced">Enhanced</option>
-								</select>
-							</label>
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose between HDR reflections or a live scene-based reflection probe">Reflection Source</span>
-								<select id="compileReflectionSourceSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-									<option value="hdr">HDR</option>
-									<option value="scene-probe">Scene Probe</option>
-								</select>
-							</label>
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="HDR environment map for PBR reflections and lighting">Env Lighting</span>
-								<select id="compileEnvMapPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-									<option value="none">None</option>
-									<option value="studio">Studio</option>
-									<option value="quarry">Quarry</option>
-									<option value="venice">Venice Sunset</option>
-								</select>
-							</label>
-						</div>
-
-						<div class="tw-pt-2 tw-border-t tw-border-slate-200">
-							<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-mb-2">
-								<input id="compilePostFxColorToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs" disabled>
-								<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Color Grading</span>
-							</label>
-							<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-								<label class="tw-form-control">
-									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Exposure</span>
-									<select id="compileExposurePresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-										<option value="neutral">Neutral</option>
-										<option value="bright">Bright</option>
-										<option value="cinematic">Cinematic</option>
-									</select>
-								</label>
-								<label class="tw-form-control">
-									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Contrast</span>
-									<select id="compileContrastPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-										<option value="soft">Soft</option>
-										<option value="balanced">Balanced</option>
-										<option value="punchy">Punchy</option>
-									</select>
-								</label>
-							</div>
-						</div>
-
-						<div class="tw-pt-2 tw-border-t tw-border-slate-200">
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500"
-									  title="Screen-space reflections for floors, glass, and polished surfaces">Reflections (SSR)</span>
-								<select id="compileSSRStrengthSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-									<option value="off">Off</option>
-									<option value="subtle">Subtle</option>
-									<option value="balanced">Balanced</option>
-									<option value="strong">Strong</option>
-								</select>
-							</label>
-						</div>
-
-						<div class="tw-pt-2 tw-border-t tw-border-slate-200">
-							<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-								<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Edge Smoothing (FXAA 3.1)</span>
-								<span id="compileEdgeAAStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px] tw-font-bold tw-uppercase">Balanced</span>
-							</div>
-							<input id="compileEdgeAAStrengthSlider" type="range" min="0" max="5" step="1" value="3" class="tw-range tw-range-primary tw-range-xs tw-mt-1" disabled>
-						</div>
-
-						<div class="tw-pt-2 tw-border-t tw-border-slate-200">
-							<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
-								<input id="compilePostFxTAAToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs" disabled>
-								<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500"
-									  title="Temporal anti-aliasing for smoother edges and reduced specular shimmer. Supplements FXAA.">Temporal AA (TAA)</span>
-							</label>
 						</div>
 					</div>
 				</div>
 			</div>
+
 
 			<!-- Build Progress Area -->
 			<div id="compilationProgressContainer" class="tw-mb-4" style="display: none;">

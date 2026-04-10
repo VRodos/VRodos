@@ -11,7 +11,16 @@ document.addEventListener('DOMContentLoaded', function() {
             legacyHorizonStageSize: document.getElementById('compileLegacyHorizonStageSizeSlider'),
             legacyHorizonStageSizeValue: document.getElementById('compileLegacyHorizonStageSizeValue'),
             postFx: document.getElementById('compilePostFxToggle'),
-            postFxGroup: document.getElementById('compilePostFxGroup'),
+            universalPostFxGroup: document.getElementById('compileUniversalPostFxGroup'),
+            colorGradingWrapper: document.getElementById('compileColorGradingWrapper'),
+            envMapPresetWrapper: document.getElementById('compileEnvMapPresetWrapper'),
+            engineControlsColumn: document.getElementById('compileEngineControlsColumn'),
+            legacyPane: document.getElementById('compileLegacyPane'),
+            pmndrsPane: document.getElementById('compilePmndrsPane'),
+            postFxEngineHintBadge: document.getElementById('compilePostFxEngineHintBadge'),
+            pmndrsBloomWrapper: document.getElementById('compilePmndrsBloomWrapper'),
+            pmndrsVignetteWrapper: document.getElementById('compilePmndrsVignetteWrapper'),
+            pmndrsAtmosphereWrapper: document.getElementById('compilePmndrsAtmosphereWrapper'),
             postFxColor: document.getElementById('compilePostFxColorToggle'),
             edgeAAStrength: document.getElementById('compileEdgeAAStrengthSlider'),
             edgeAAStrengthValue: document.getElementById('compileEdgeAAStrengthValue'),
@@ -599,18 +608,18 @@ document.addEventListener('DOMContentLoaded', function() {
         var isPmndrs = engine === 'pmndrs';
         var legacyHorizonStageEnabled = !isPmndrs && isLegacyHorizonStageApplicable();
 
-        if (controls.postFxGroup) {
-            if (postFxEnabled) {
-                controls.postFxGroup.classList.remove('tw-opacity-50', 'tw-pointer-events-none');
-            } else {
-                controls.postFxGroup.classList.add('tw-opacity-50', 'tw-pointer-events-none');
-            }
+        if (controls.universalPostFxGroup) {
+            controls.universalPostFxGroup.style.display = postFxEnabled ? '' : 'none';
+        }
+
+        if (controls.postFxEngineHintBadge) {
+            controls.postFxEngineHintBadge.style.display = postFxEnabled ? 'none' : '';
         }
 
         if (controls.postFxEngine) {
             controls.postFxEngine.disabled = !postFxEnabled;
         }
-        // Visually reflect the active engine on the tab strip and gate the tabs by postFx
+
         if (controls.postFxEngineTabLegacy && controls.postFxEngineTabPmndrs) {
             controls.postFxEngineTabLegacy.classList.toggle('tw-tab-active', !isPmndrs);
             controls.postFxEngineTabPmndrs.classList.toggle('tw-tab-active', isPmndrs);
@@ -620,6 +629,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 tab.style.cursor = postFxEnabled ? 'pointer' : 'not-allowed';
             });
         }
+
+        if (controls.legacyPane) {
+            controls.legacyPane.style.display = (postFxEnabled && !isPmndrs) ? '' : 'none';
+        }
+        if (controls.pmndrsPane) {
+            controls.pmndrsPane.style.display = (postFxEnabled && isPmndrs) ? '' : 'none';
+        }
+
         if (controls.postFxEngineHint) {
             controls.postFxEngineHint.textContent = isPmndrs
                 ? 'Modern fused EffectPass. SSR and Temporal AA are not available in this engine.'
@@ -627,7 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (controls.legacyHorizonStageSizeRow) {
-            controls.legacyHorizonStageSizeRow.classList.toggle('tw-opacity-60', !legacyHorizonStageEnabled);
+            controls.legacyHorizonStageSizeRow.style.display = legacyHorizonStageEnabled ? '' : 'none';
             controls.legacyHorizonStageSizeRow.title = legacyHorizonStageEnabled
                 ? 'Controls the environment dome size for Legacy + HORIZON scenes'
                 : (isPmndrs
@@ -647,20 +664,24 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.bloomStrength.disabled = !postFxEnabled;
         controls.reflectionProfile.disabled = !postFxEnabled;
         controls.reflectionSource.disabled = !postFxEnabled;
+        
+        if (controls.envMapPresetWrapper) {
+            controls.envMapPresetWrapper.style.display = envLightingEnabled ? '' : 'none';
+        }
         if (controls.envMapPreset) {
             controls.envMapPreset.disabled = !envLightingEnabled;
-            controls.envMapPreset.classList.toggle('tw-opacity-60', !envLightingEnabled);
             controls.envMapPreset.title = envLightingEnabled
                 ? 'HDR environment map for PBR reflections and lighting'
                 : 'Env Lighting is used only when Reflection Source is HDR';
+        }
+        
+        if (controls.colorGradingWrapper) {
+            controls.colorGradingWrapper.style.display = colorGradingEnabled ? '' : 'none';
         }
         controls.exposurePreset.disabled = !colorGradingEnabled;
         controls.contrastPreset.disabled = !colorGradingEnabled;
         controls.edgeAAStrength.disabled = !postFxEnabled;
 
-        // SSR and TAA are unavailable when the pmndrs engine is selected — see
-        // POSTPROCESSING_MIGRATION_PLAN.md §11. Force them disabled and apply a
-        // tooltip explaining why so the user understands the trade-off.
         if (controls.ssrStrength) {
             controls.ssrStrength.disabled = !postFxEnabled || isPmndrs;
             controls.ssrStrength.classList.toggle('tw-opacity-60', isPmndrs);
@@ -675,11 +696,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? 'Temporal AA is not available in the Pmndrs engine. Switch to Legacy to use TAA.'
                 : 'Temporal anti-aliasing for smoother edges and reduced specular shimmer. Supplements FXAA.';
         }
-        // Pmndrs tweakables: only show & enable when engine === 'pmndrs' AND postFx is on
-        if (controls.pmndrsTweaksGroup) {
-            controls.pmndrsTweaksGroup.style.display = (postFxEnabled && isPmndrs) ? '' : 'none';
-        }
+
         var pmndrsTweakEnabled = postFxEnabled && isPmndrs;
+        
+        if (controls.pmndrsBloomWrapper) {
+            controls.pmndrsBloomWrapper.style.display = bloomEnabled ? '' : 'none';
+        }
         if (controls.pmndrsBloomIntensity) {
             controls.pmndrsBloomIntensity.disabled = !pmndrsTweakEnabled || !bloomEnabled;
             controls.pmndrsBloomIntensity.classList.toggle('tw-opacity-60', !bloomEnabled);
@@ -694,18 +716,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? 'Luminance threshold for the Pmndrs bloom pass'
                 : 'Enable the shared Bloom preset below to adjust the Pmndrs bloom threshold';
         }
+        
         if (controls.pmndrsExposure) controls.pmndrsExposure.disabled = !pmndrsTweakEnabled;
+        
+        var isPmndrsVignetteEnabled = controls.pmndrsVignette && controls.pmndrsVignette.checked;
+        if (controls.pmndrsVignetteWrapper) {
+            controls.pmndrsVignetteWrapper.style.display = isPmndrsVignetteEnabled ? '' : 'none';
+        }
         if (controls.pmndrsVignette) controls.pmndrsVignette.disabled = !pmndrsTweakEnabled;
         if (controls.pmndrsVignetteDarkness) {
-            controls.pmndrsVignetteDarkness.disabled = !pmndrsTweakEnabled || !(controls.pmndrsVignette && controls.pmndrsVignette.checked);
+            controls.pmndrsVignetteDarkness.disabled = !pmndrsTweakEnabled || !isPmndrsVignetteEnabled;
         }
+
         if (controls.pmndrsAtmosphere) {
             controls.pmndrsAtmosphere.disabled = !pmndrsTweakEnabled;
         }
-        setPmndrsAtmosphereAdvancedState(
-            controls,
-            pmndrsTweakEnabled && controls.pmndrsAtmosphere && controls.pmndrsAtmosphere.checked === true
-        );
+        
+        var pmndrsAtmoChecked = pmndrsTweakEnabled && controls.pmndrsAtmosphere && controls.pmndrsAtmosphere.checked === true;
+        if (controls.pmndrsAtmosphereWrapper) {
+            controls.pmndrsAtmosphereWrapper.style.display = pmndrsAtmoChecked ? '' : 'none';
+        }
+
+        setPmndrsAtmosphereAdvancedState(controls, pmndrsAtmoChecked);
 
         updateEdgeAAStrengthLabel();
     }
