@@ -87,6 +87,16 @@ AFRAME.registerComponent('custom-movement', {
         this.raycastDirection = new THREE.Vector3(0, -1, 0);
         this.tempWorldNormal = new THREE.Vector3();
         this.raycaster = new THREE.Raycaster();
+        this.groundProbeOffsets = [
+            new THREE.Vector2(0, 0),
+            new THREE.Vector2(0.18, 0),
+            new THREE.Vector2(-0.18, 0),
+            new THREE.Vector2(0, 0.18),
+            new THREE.Vector2(0, -0.18)
+        ];
+        this.groundProbePosition = new THREE.Vector3();
+        this.groundProbeReferenceTolerance = 0.45;
+        this.groundProbeStepTolerance = 0.05;
         this.wasdControlsSuppressed = null;
         this.lastRecoveryAttemptAt = 0;
         this.positionPrimed = false;
@@ -94,6 +104,7 @@ AFRAME.registerComponent('custom-movement', {
         this.candidateGroundHit = this.createGroundHit();
         this.bestGroundHit = this.createGroundHit();
         this.recoveryGroundHit = this.createGroundHit();
+        this.offsetGroundHit = this.createGroundHit();
         this.resolvedMovementStep = {
             position: new THREE.Vector3(),
             ground: this.createGroundHit()
@@ -132,6 +143,7 @@ AFRAME.registerComponent('custom-movement', {
     createGroundHit: function () {
         return {
             point: new THREE.Vector3(),
+            rawPoint: new THREE.Vector3(),
             normal: new THREE.Vector3(0, 1, 0),
             slope: 0
         };
@@ -142,6 +154,11 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         target.point.copy(source.point);
+        if (source.rawPoint) {
+            target.rawPoint.copy(source.rawPoint);
+        } else {
+            target.rawPoint.copy(source.point);
+        }
         if (source.normal) {
             target.normal.copy(source.normal);
         } else {
@@ -149,6 +166,17 @@ AFRAME.registerComponent('custom-movement', {
         }
         target.slope = source.slope;
         return target;
+    },
+    setResolvedGroundHit: function (sourceGround, resolvedPosition, targetGround) {
+        targetGround = targetGround || this.lastGroundHit;
+        this.copyGroundHit(sourceGround, targetGround);
+
+        if (resolvedPosition) {
+            targetGround.point.x = resolvedPosition.x;
+            targetGround.point.z = resolvedPosition.z;
+        }
+
+        return targetGround;
     },
     markNavMeshDirty: function () {
         this.navMeshDirty = true;
@@ -382,7 +410,7 @@ AFRAME.registerComponent('custom-movement', {
 
         this.wasdControlsSuppressed = collisionsEnabled;
     },
-    sampleGroundAt: function (position, referenceGroundY, outputGround) {
+    sampleGroundAtSingle: function (position, referenceGroundY, outputGround) {
         this.refreshNavMeshRoots();
         if (this.navMeshRoots.length === 0) {
             return null;
@@ -397,6 +425,12 @@ AFRAME.registerComponent('custom-movement', {
         this.raycaster.far = this.data.maxStepHeight + this.data.maxDropHeight + 20;
 
         var intersections = this.raycaster.intersectObjects(this.navMeshRoots, true);
+        var hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
+        var minAllowedY = hasReferenceGround ? referenceGroundY - (this.data.maxDropHeight + this.groundProbeStepTolerance) : -Infinity;
+        var maxAllowedY = hasReferenceGround ? referenceGroundY + this.data.maxStepHeight + this.groundProbeStepTolerance : Infinity;
+        var bestHit = null;
+        var bestScore = Infinity;
+
         for (var i = 0; i < intersections.length; i++) {
             var hit = intersections[i];
             if (!hit.face) {
@@ -406,16 +440,85 @@ AFRAME.registerComponent('custom-movement', {
             this.tempWorldNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld).normalize();
             var slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(this.tempWorldNormal.dot(this.upVector), -1, 1)));
 
-            if (slope <= this.data.maxSlope) {
+            if (slope > this.data.maxSlope + 0.5) {
+                continue;
+            }
+
+            if (!hasReferenceGround) {
                 outputGround = outputGround || this.createGroundHit();
-                outputGround.point.copy(hit.point);
+                outputGround.point.set(position.x, hit.point.y, position.z);
+                outputGround.rawPoint.copy(hit.point);
                 outputGround.normal.copy(this.tempWorldNormal);
                 outputGround.slope = slope;
                 return outputGround;
             }
+
+            if (hit.point.y < minAllowedY || hit.point.y > maxAllowedY) {
+                continue;
+            }
+
+            var score = Math.abs(hit.point.y - referenceGroundY) + (i * 0.0001);
+            if (score < bestScore) {
+                bestScore = score;
+                bestHit = hit;
+                outputGround = outputGround || this.createGroundHit();
+                outputGround.point.set(position.x, hit.point.y, position.z);
+                outputGround.rawPoint.copy(hit.point);
+                outputGround.normal.copy(this.tempWorldNormal);
+                outputGround.slope = slope;
+            }
         }
 
-        return null;
+        return bestHit ? outputGround : null;
+    },
+    sampleGroundAt: function (position, referenceGroundY, outputGround) {
+        var directGround = this.sampleGroundAtSingle(position, referenceGroundY, outputGround);
+        if (directGround) {
+            return directGround;
+        }
+
+        var hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
+        var bestCandidate = null;
+        var bestScore = Infinity;
+
+        for (var i = 1; i < this.groundProbeOffsets.length; i++) {
+            var probeOffset = this.groundProbeOffsets[i];
+            this.groundProbePosition.set(
+                position.x + probeOffset.x,
+                position.y,
+                position.z + probeOffset.y
+            );
+
+            var candidateGround = this.sampleGroundAtSingle(
+                this.groundProbePosition,
+                referenceGroundY,
+                this.offsetGroundHit
+            );
+
+            if (!candidateGround) {
+                continue;
+            }
+
+            var score = this.horizontalDistanceSquared(candidateGround.rawPoint, position);
+            if (hasReferenceGround) {
+                score += Math.abs(candidateGround.point.y - referenceGroundY) * 1.5;
+            }
+
+            if (score < bestScore) {
+                bestScore = score;
+                bestCandidate = candidateGround;
+            }
+        }
+
+        if (!bestCandidate) {
+            return null;
+        }
+
+        outputGround = outputGround || this.createGroundHit();
+        this.copyGroundHit(bestCandidate, outputGround);
+        outputGround.point.x = position.x;
+        outputGround.point.z = position.z;
+        return outputGround;
     },
     canAttemptRecovery: function () {
         var now = performance.now();
@@ -430,7 +533,7 @@ AFRAME.registerComponent('custom-movement', {
         var radius = typeof searchRadius === 'number' ? searchRadius : 6;
         var bestGround = outputGround || this.bestGroundHit;
         var foundBestGround = !!this.sampleGroundAt(position, undefined, bestGround);
-        var bestDistanceSq = foundBestGround ? this.horizontalDistanceSquared(bestGround.point, position) : Infinity;
+        var bestDistanceSq = foundBestGround ? this.horizontalDistanceSquared(bestGround.rawPoint, position) : Infinity;
 
         if (foundBestGround && bestDistanceSq < 0.0001) {
             return bestGround;
@@ -457,7 +560,7 @@ AFRAME.registerComponent('custom-movement', {
                     continue;
                 }
 
-                var distanceSq = this.horizontalDistanceSquared(candidateGround.point, position);
+                var distanceSq = this.horizontalDistanceSquared(candidateGround.rawPoint, position);
                 if (distanceSq < bestDistanceSq) {
                     this.copyGroundHit(candidateGround, bestGround);
                     foundBestGround = true;
@@ -498,7 +601,8 @@ AFRAME.registerComponent('custom-movement', {
             }
 
             var deltaY = stepGround.point.y - bestGround.point.y;
-            if (deltaY > this.data.maxStepHeight || deltaY < -this.data.maxDropHeight) {
+            if (deltaY > this.data.maxStepHeight + this.groundProbeStepTolerance ||
+                deltaY < -(this.data.maxDropHeight + this.groundProbeStepTolerance)) {
                 break;
             }
 
@@ -513,7 +617,34 @@ AFRAME.registerComponent('custom-movement', {
         this.copyGroundHit(bestGround, outputStep.ground);
         return outputStep;
     },
-    snapNavigationToGround: function (groundHit) {
+    snapNavigationVerticallyToGround: function (groundHit, horizontalPosition) {
+        if (!groundHit) {
+            return false;
+        }
+
+        if (this.heightOffset === null) {
+            var currentPosition = this.getNavigationWorldPosition();
+            this.heightOffset = currentPosition.y - groundHit.point.y;
+        }
+
+        this.heightOffset = VRODOSMaster.clamp(this.heightOffset, 0.2, 2.5);
+        horizontalPosition = horizontalPosition || this.getNavigationWorldPosition();
+        this.targetWorldPosition.set(
+            horizontalPosition.x,
+            groundHit.point.y + this.heightOffset,
+            horizontalPosition.z
+        );
+
+        if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
+            return false;
+        }
+
+        this.lastResolvedPosition.copy(this.targetWorldPosition);
+        this.setResolvedGroundHit(groundHit, this.targetWorldPosition, this.lastGroundHit);
+        this.hasLastGroundHit = true;
+        return true;
+    },
+    snapNavigationToRecoveredGround: function (groundHit) {
         if (!groundHit) {
             return false;
         }
@@ -525,9 +656,9 @@ AFRAME.registerComponent('custom-movement', {
 
         this.heightOffset = VRODOSMaster.clamp(this.heightOffset, 0.2, 2.5);
         this.targetWorldPosition.set(
-            groundHit.point.x,
+            groundHit.rawPoint.x,
             groundHit.point.y + this.heightOffset,
-            groundHit.point.z
+            groundHit.rawPoint.z
         );
 
         if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
@@ -535,7 +666,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.lastResolvedPosition.copy(this.targetWorldPosition);
-        this.copyGroundHit(groundHit, this.lastGroundHit);
+        this.setResolvedGroundHit(groundHit, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
         return true;
     },
@@ -545,13 +676,20 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         var navigationPosition = this.getNavigationWorldPosition();
-        var currentGround = this.findNearestGroundAt(navigationPosition, this.getRecoverySearchRadius(navigationPosition), this.recoveryGroundHit);
+        var currentGround = this.sampleGroundAt(navigationPosition, this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined, this.sampledGroundHit);
         if (!currentGround) {
+            currentGround = this.findNearestGroundAt(navigationPosition, this.getRecoverySearchRadius(navigationPosition), this.recoveryGroundHit);
+            if (!currentGround) {
+                return;
+            }
+
+            this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
+            this.snapNavigationToRecoveredGround(currentGround);
             return;
         }
 
         this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
-        this.snapNavigationToGround(currentGround);
+        this.snapNavigationVerticallyToGround(currentGround, navigationPosition);
     },
     applyDirectMovement: function (deltaX, deltaZ) {
         if (Math.abs(deltaX) < 0.00001 && Math.abs(deltaZ) < 0.00001) {
@@ -603,7 +741,7 @@ AFRAME.registerComponent('custom-movement', {
                 this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
             }
 
-            if (!this.snapNavigationToGround(currentGround)) {
+            if (!this.snapNavigationToRecoveredGround(currentGround)) {
                 return false;
             }
 
@@ -622,7 +760,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.lastResolvedPosition.copy(this.targetWorldPosition);
-        this.copyGroundHit(resolvedStep.ground, this.lastGroundHit);
+        this.setResolvedGroundHit(resolvedStep.ground, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
         return true;
     },

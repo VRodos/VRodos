@@ -6037,6 +6037,7 @@ IrradianceSpectrum ComputeIndirectIrradianceTexture(
   ie2.DEFAULT = /* @__PURE__ */ new ie2();
   var n0 = ie2;
   var Vn2 = `precision highp sampler2DArray;
+#define PERSPECTIVE_CAMERA 1
 
 #include "core/depth"
 #include "core/math"
@@ -6326,7 +6327,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
   #endif // HAS_OVERLAY
 
   float depth = readDepthValue(depthBuffer, uv);
-  if (depth >= 1.0 - 1e-8) {
+  if (depth >= 0.9999) {
     #ifdef SKY
     vec3 rayDirection = normalize(vRayDirection);
     outputColor.rgb = getSkyRadiance(

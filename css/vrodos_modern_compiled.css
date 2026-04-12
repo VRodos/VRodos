@@ -4064,10 +4064,6 @@ input.tw-tab:checked + .tw-tab-content,
   min-width: 200px;
 }
 
-.vrodos-manager-wrapper .tw-min-w-\[9rem\] {
-  min-width: 9rem;
-}
-
 .vrodos-manager-wrapper .tw-max-w-2xl {
   max-width: 42rem;
 }
@@ -5033,10 +5029,6 @@ input.tw-tab:checked + .tw-tab-content,
   padding-bottom: 2.5rem;
 }
 
-.vrodos-manager-wrapper .tw-pb-2 {
-  padding-bottom: 0.5rem;
-}
-
 .vrodos-manager-wrapper .tw-pb-3 {
   padding-bottom: 0.75rem;
 }
@@ -5230,10 +5222,6 @@ input.tw-tab:checked + .tw-tab-content,
   font-style: italic;
 }
 
-.vrodos-manager-wrapper .tw-leading-4 {
-  line-height: 1rem;
-}
-
 .vrodos-manager-wrapper .tw-leading-5 {
   line-height: 1.25rem;
 }
@@ -5392,9 +5380,24 @@ input.tw-tab:checked + .tw-tab-content,
   color: var(--fallback-er,oklch(var(--er)/var(--tw-text-opacity, 1)));
 }
 
+.vrodos-manager-wrapper .tw-text-fuchsia-500 {
+  --tw-text-opacity: 1;
+  color: rgb(217 70 239 / var(--tw-text-opacity, 1));
+}
+
 .vrodos-manager-wrapper .tw-text-indigo-400 {
   --tw-text-opacity: 1;
   color: rgb(129 140 248 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-indigo-500 {
+  --tw-text-opacity: 1;
+  color: rgb(99 102 241 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-orange-500 {
+  --tw-text-opacity: 1;
+  color: rgb(249 115 22 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-text-primary {
@@ -5440,6 +5443,11 @@ input.tw-tab:checked + .tw-tab-content,
 .vrodos-manager-wrapper .tw-text-sky-400 {
   --tw-text-opacity: 1;
   color: rgb(56 189 248 / var(--tw-text-opacity, 1));
+}
+
+.vrodos-manager-wrapper .tw-text-sky-500 {
+  --tw-text-opacity: 1;
+  color: rgb(14 165 233 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-text-sky-600 {
@@ -5523,26 +5531,6 @@ input.tw-tab:checked + .tw-tab-content,
 
 .vrodos-manager-wrapper .tw-text-white\/90 {
   color: rgb(255 255 255 / 0.9);
-}
-
-.vrodos-manager-wrapper .tw-text-fuchsia-500 {
-  --tw-text-opacity: 1;
-  color: rgb(217 70 239 / var(--tw-text-opacity, 1));
-}
-
-.vrodos-manager-wrapper .tw-text-indigo-500 {
-  --tw-text-opacity: 1;
-  color: rgb(99 102 241 / var(--tw-text-opacity, 1));
-}
-
-.vrodos-manager-wrapper .tw-text-orange-500 {
-  --tw-text-opacity: 1;
-  color: rgb(249 115 22 / var(--tw-text-opacity, 1));
-}
-
-.vrodos-manager-wrapper .tw-text-sky-500 {
-  --tw-text-opacity: 1;
-  color: rgb(14 165 233 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-no-underline {
@@ -5763,10 +5751,6 @@ input.tw-tab:checked + .tw-tab-content,
   transition-property: transform;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
-}
-
-.vrodos-manager-wrapper .tw-duration-200 {
-  transition-duration: 200ms;
 }
 
 .vrodos-manager-wrapper .tw-duration-300 {

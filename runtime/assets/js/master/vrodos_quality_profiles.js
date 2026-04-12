@@ -134,14 +134,16 @@
 
     function getPmndrsAtmosphereResourceProfile(self, renderer) {
         var quality = normalizePmndrsAtmosphereQuality(self && self.data ? self.data.pmndrsAtmosphereQuality : 'balanced');
+        var supportsFloatLinear = !!(renderer && renderer.extensions && renderer.extensions.get('OES_texture_float_linear'));
         var canUseFloat = !!(
             renderer &&
             renderer.capabilities &&
             renderer.capabilities.isWebGL2 &&
-            typeof THREE.FloatType !== 'undefined'
+            typeof THREE.FloatType !== 'undefined' &&
+            supportsFloatLinear
         );
-        var wantsHighPrecision = quality === 'quality' || quality === 'cinematic' || quality === 'custom';
-        var type = (canUseFloat && wantsHighPrecision) ? THREE.FloatType : THREE.HalfFloatType;
+        var wantsHighPrecision = quality === 'quality' || quality === 'cinematic' || quality === 'custom' || quality === 'balanced';
+        var type = wantsHighPrecision ? THREE.FloatType : THREE.HalfFloatType;
         var higherOrderScattering = quality !== 'performance';
         // Stay aligned with Takram's default precompute path and only scale the
         // precision/performance envelope around it.
@@ -484,6 +486,23 @@
         var params = createPmndrsAtmosphereParameters(vta, config);
         copyPmndrsAtmosphereParameters(target, params);
 
+        if (typeof config.sunAngularRadius !== 'undefined') {
+            if (target.atmosphere) target.atmosphere.sunAngularRadius = config.sunAngularRadius;
+            if (typeof target.sunAngularRadius !== 'undefined') target.sunAngularRadius = config.sunAngularRadius;
+            if (target.uniforms) {
+                var atmpsVal = null;
+                if (typeof target.uniforms.has === 'function' && target.uniforms.has('ATMOSPHERE')) {
+                    atmpsVal = target.uniforms.get('ATMOSPHERE').value;
+                } else if (target.uniforms.ATMOSPHERE) {
+                    atmpsVal = target.uniforms.ATMOSPHERE.value;
+                }
+                
+                if (atmpsVal && typeof atmpsVal.sun_angular_radius !== 'undefined') {
+                    atmpsVal.sun_angular_radius = config.sunAngularRadius;
+                }
+            }
+        }
+
         if (target.sunDirection && typeof target.sunDirection.copy === 'function') {
             target.sunDirection.copy(config.sunDirection);
         }
@@ -493,8 +512,39 @@
         if (typeof target.ground !== 'undefined') {
             target.ground = config.groundEnabled;
         }
-        if (typeof target.sun !== 'undefined') {
-            target.sun = config.takramSunEnabled !== false;
+
+        var setDefine = function (defs, key, val) {
+            if (defs && typeof defs.set === 'function') {
+                if (defs.get(key) !== val) { defs.set(key, val); return true; }
+            } else if (defs) {
+                if (defs[key] !== val) { defs[key] = val; return true; }
+            }
+            return false;
+        };
+        var removeDefine = function (defs, key) {
+            if (defs && typeof defs.delete === 'function') {
+                if (defs.has(key)) { defs.delete(key); return true; }
+            } else if (defs) {
+                if (defs[key]) { delete defs[key]; return true; }
+            }
+            return false;
+        };
+
+        target.sun = config.takramSunEnabled !== false;
+        if (target.sun) {
+            target.defines = target.defines || {};
+            var needsRecompile = false;
+            if (setDefine(target.defines, "SUN", "1")) needsRecompile = true;
+            if (setDefine(target.defines, "PERSPECTIVE_CAMERA", "1")) needsRecompile = true;
+            if (needsRecompile) {
+                target.needsUpdate = true;
+                if (typeof target.setChanged === 'function') target.setChanged();
+            }
+        } else if (!target.sun && target.defines) {
+            if (removeDefine(target.defines, "SUN")) {
+                target.needsUpdate = true;
+                if (typeof target.setChanged === 'function') target.setChanged();
+            }
         }
         if (typeof target.moon !== 'undefined') {
             target.moon = config.moonEnabled;
