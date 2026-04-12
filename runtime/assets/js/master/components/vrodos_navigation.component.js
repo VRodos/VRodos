@@ -105,6 +105,16 @@ AFRAME.registerComponent('custom-movement', {
         this.bestGroundHit = this.createGroundHit();
         this.recoveryGroundHit = this.createGroundHit();
         this.offsetGroundHit = this.createGroundHit();
+        this.autoGroundSampleHit = this.createGroundHit();
+        this.autoGroundSamplePosition = new THREE.Vector3();
+        this.autoGroundSampleMinIntervalMs = 90;
+        this.autoGroundSampleMinDistance = 0.35;
+        this.autoGroundHeightDeadband = 0.06;
+        this.autoGroundOverlayTolerance = 0.08;
+        this.autoGroundMissAllowance = 2;
+        this.autoGroundMissDistance = 0.28;
+        this.lastAutoGroundSampleAt = 0;
+        this.hasLastAutoGroundSample = false;
         this.resolvedMovementStep = {
             position: new THREE.Vector3(),
             ground: this.createGroundHit()
@@ -145,7 +155,8 @@ AFRAME.registerComponent('custom-movement', {
             point: new THREE.Vector3(),
             rawPoint: new THREE.Vector3(),
             normal: new THREE.Vector3(0, 1, 0),
-            slope: 0
+            slope: 0,
+            behavior: 'precise'
         };
     },
     copyGroundHit: function (source, target) {
@@ -165,6 +176,7 @@ AFRAME.registerComponent('custom-movement', {
             target.normal.set(0, 1, 0);
         }
         target.slope = source.slope;
+        target.behavior = source.behavior || 'precise';
         return target;
     },
     setResolvedGroundHit: function (sourceGround, resolvedPosition, targetGround) {
@@ -181,6 +193,7 @@ AFRAME.registerComponent('custom-movement', {
     markNavMeshDirty: function () {
         this.navMeshDirty = true;
         this.hasLastGroundHit = false;
+        this.hasLastAutoGroundSample = false;
     },
     handleSceneLoaded: function () {
         this.markNavMeshDirty();
@@ -344,6 +357,7 @@ AFRAME.registerComponent('custom-movement', {
         for (var i = 0; i < navMeshEntities.length; i++) {
             var meshRoot = navMeshEntities[i].getObject3D('mesh');
             if (meshRoot) {
+                this.applyWalkBehaviorToNavMeshRoot(meshRoot, this.normalizeWalkBehavior(navMeshEntities[i].getAttribute('data-vrodos-walk-behavior')));
                 this.navMeshRoots.push(meshRoot);
                 this.navMeshRootBounds.setFromObject(meshRoot);
                 if (!this.navMeshRootBounds.isEmpty()) {
@@ -353,6 +367,83 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.navMeshDirty = false;
+    },
+    normalizeWalkBehavior: function (value) {
+        return String(value || '').toLowerCase() === 'auto' ? 'auto' : 'precise';
+    },
+    applyWalkBehaviorToNavMeshRoot: function (meshRoot, behavior) {
+        var normalizedBehavior = this.normalizeWalkBehavior(behavior);
+        meshRoot.traverse(function (node) {
+            if (!node.isMesh) {
+                return;
+            }
+
+            node.userData = node.userData || {};
+            node.userData.vrodosWalkBehavior = normalizedBehavior;
+        });
+    },
+    getWalkBehaviorFromIntersection: function (hit) {
+        var object3D = hit && hit.object ? hit.object : null;
+        while (object3D) {
+            if (object3D.userData && object3D.userData.vrodosWalkBehavior) {
+                return this.normalizeWalkBehavior(object3D.userData.vrodosWalkBehavior);
+            }
+            object3D = object3D.parent || null;
+        }
+
+        return 'precise';
+    },
+    shouldReuseAutoGroundSample: function (position, referenceGroundY) {
+        if (!this.hasLastAutoGroundSample) {
+            return false;
+        }
+
+        if (performance.now() - this.lastAutoGroundSampleAt > this.autoGroundSampleMinIntervalMs) {
+            return false;
+        }
+
+        if (this.horizontalDistanceSquared(this.autoGroundSamplePosition, position) >
+            (this.autoGroundSampleMinDistance * this.autoGroundSampleMinDistance)) {
+            return false;
+        }
+
+        if (typeof referenceGroundY === 'number' && isFinite(referenceGroundY)) {
+            if (Math.abs(this.autoGroundSampleHit.point.y - referenceGroundY) >
+                (this.data.maxStepHeight + this.groundProbeStepTolerance)) {
+                return false;
+            }
+        }
+
+        return this.autoGroundSampleHit.behavior === 'auto';
+    },
+    reuseAutoGroundSample: function (position, outputGround) {
+        outputGround = outputGround || this.createGroundHit();
+        this.copyGroundHit(this.autoGroundSampleHit, outputGround);
+        outputGround.point.x = position.x;
+        outputGround.point.z = position.z;
+        return outputGround;
+    },
+    storeAutoGroundSample: function (position, groundHit) {
+        if (!groundHit || groundHit.behavior !== 'auto') {
+            return;
+        }
+
+        this.autoGroundSamplePosition.copy(position);
+        this.copyGroundHit(groundHit, this.autoGroundSampleHit);
+        this.lastAutoGroundSampleAt = performance.now();
+        this.hasLastAutoGroundSample = true;
+    },
+    canUseAutoGroundMissGrace: function (groundHit, fromPosition, toPosition, missCount) {
+        if (!groundHit || groundHit.behavior !== 'auto') {
+            return false;
+        }
+
+        if (missCount >= this.autoGroundMissAllowance) {
+            return false;
+        }
+
+        return this.horizontalDistanceSquared(fromPosition, toPosition) <=
+            (this.autoGroundMissDistance * this.autoGroundMissDistance);
     },
     getRecoverySearchRadius: function (position) {
         this.refreshNavMeshRoots();
@@ -428,7 +519,8 @@ AFRAME.registerComponent('custom-movement', {
         var hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
         var minAllowedY = hasReferenceGround ? referenceGroundY - (this.data.maxDropHeight + this.groundProbeStepTolerance) : -Infinity;
         var maxAllowedY = hasReferenceGround ? referenceGroundY + this.data.maxStepHeight + this.groundProbeStepTolerance : Infinity;
-        var bestHit = null;
+        var bestAutoHit = null;
+        var bestAutoHeightDelta = Infinity;
         var bestScore = Infinity;
 
         for (var i = 0; i < intersections.length; i++) {
@@ -439,9 +531,24 @@ AFRAME.registerComponent('custom-movement', {
 
             this.tempWorldNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld).normalize();
             var slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(this.tempWorldNormal.dot(this.upVector), -1, 1)));
+            var behavior = this.getWalkBehaviorFromIntersection(hit);
 
             if (slope > this.data.maxSlope + 0.5) {
                 continue;
+            }
+
+            if (behavior === 'precise') {
+                if (hasReferenceGround && (hit.point.y < minAllowedY || hit.point.y > maxAllowedY)) {
+                    continue;
+                }
+
+                outputGround = outputGround || this.createGroundHit();
+                outputGround.point.set(position.x, hit.point.y, position.z);
+                outputGround.rawPoint.copy(hit.point);
+                outputGround.normal.copy(this.tempWorldNormal);
+                outputGround.slope = slope;
+                outputGround.behavior = behavior;
+                return outputGround;
             }
 
             if (!hasReferenceGround) {
@@ -450,6 +557,7 @@ AFRAME.registerComponent('custom-movement', {
                 outputGround.rawPoint.copy(hit.point);
                 outputGround.normal.copy(this.tempWorldNormal);
                 outputGround.slope = slope;
+                outputGround.behavior = behavior;
                 return outputGround;
             }
 
@@ -457,23 +565,40 @@ AFRAME.registerComponent('custom-movement', {
                 continue;
             }
 
-            var score = Math.abs(hit.point.y - referenceGroundY) + (i * 0.0001);
-            if (score < bestScore) {
-                bestScore = score;
-                bestHit = hit;
+            var autoHeightDelta = Math.abs(hit.point.y - referenceGroundY);
+            var autoScore = autoHeightDelta + (i * 0.0001);
+            var shouldReplaceAutoHit = autoScore < bestScore;
+
+            if (!shouldReplaceAutoHit && bestAutoHit &&
+                Math.abs(autoHeightDelta - bestAutoHeightDelta) <= this.autoGroundOverlayTolerance &&
+                hit.point.y < outputGround.point.y &&
+                (outputGround.point.y - hit.point.y) <= this.autoGroundOverlayTolerance) {
+                shouldReplaceAutoHit = true;
+            }
+
+            if (shouldReplaceAutoHit) {
+                bestScore = autoScore;
+                bestAutoHeightDelta = autoHeightDelta;
+                bestAutoHit = hit;
                 outputGround = outputGround || this.createGroundHit();
                 outputGround.point.set(position.x, hit.point.y, position.z);
                 outputGround.rawPoint.copy(hit.point);
                 outputGround.normal.copy(this.tempWorldNormal);
                 outputGround.slope = slope;
+                outputGround.behavior = behavior;
             }
         }
 
-        return bestHit ? outputGround : null;
+        return bestAutoHit ? outputGround : null;
     },
     sampleGroundAt: function (position, referenceGroundY, outputGround) {
+        if (this.shouldReuseAutoGroundSample(position, referenceGroundY)) {
+            return this.reuseAutoGroundSample(position, outputGround);
+        }
+
         var directGround = this.sampleGroundAtSingle(position, referenceGroundY, outputGround);
         if (directGround) {
+            this.storeAutoGroundSample(position, directGround);
             return directGround;
         }
 
@@ -518,6 +643,7 @@ AFRAME.registerComponent('custom-movement', {
         this.copyGroundHit(bestCandidate, outputGround);
         outputGround.point.x = position.x;
         outputGround.point.z = position.z;
+        this.storeAutoGroundSample(position, outputGround);
         return outputGround;
     },
     canAttemptRecovery: function () {
@@ -584,6 +710,7 @@ AFRAME.registerComponent('custom-movement', {
         var steps = Math.max(1, Math.ceil(totalDistance / 0.2));
         var bestPosition = outputStep.position;
         var bestGround = this.bestGroundHit;
+        var autoGroundMisses = 0;
         bestPosition.copy(currentPosition);
         this.copyGroundHit(currentGround, bestGround);
 
@@ -594,13 +721,26 @@ AFRAME.registerComponent('custom-movement', {
 
             var stepGround = this.sampleGroundAt(this.stepPosition, bestGround.point.y, this.sampledGroundHit);
             if (!stepGround) {
+                if (this.canUseAutoGroundMissGrace(bestGround, bestPosition, this.stepPosition, autoGroundMisses)) {
+                    autoGroundMisses++;
+                    bestPosition.copy(this.stepPosition);
+                    continue;
+                }
+
                 stepGround = this.findNearestGroundAt(this.stepPosition, 1.5, this.recoveryGroundHit);
             }
             if (!stepGround) {
                 break;
             }
 
+            autoGroundMisses = 0;
+
             var deltaY = stepGround.point.y - bestGround.point.y;
+            if (stepGround.behavior === 'auto' && Math.abs(deltaY) <= this.autoGroundHeightDeadband) {
+                stepGround.point.y = bestGround.point.y;
+                deltaY = 0;
+            }
+
             if (deltaY > this.data.maxStepHeight + this.groundProbeStepTolerance ||
                 deltaY < -(this.data.maxDropHeight + this.groundProbeStepTolerance)) {
                 break;

@@ -908,6 +908,7 @@ class VRodos_Compiler_Manager {
 						$sc_z = $contentObject->scale[2];
 
 						$gltf_model = $dom->createElement( 'a-entity' );
+						$walk_behavior = ( isset( $contentObject->walkableBehavior ) && 'auto' === strtolower( (string) $contentObject->walkableBehavior ) ) ? 'auto' : 'precise';
 						$gltf_model->setAttribute( 'gltf-model', '#' . $uuid );
 						$gltf_model->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
 						$gltf_model->appendChild( $dom->createTextNode( '' ) );
@@ -917,6 +918,7 @@ class VRodos_Compiler_Manager {
 						$gltf_model->setAttribute( 'class', 'override-materials hideable vrodos-navmesh' );
 						$gltf_model->setAttribute( 'material', $material );
 						$gltf_model->setAttribute( 'data-vrodos-navmesh', 'true' );
+						$gltf_model->setAttribute( 'data-vrodos-walk-behavior', $walk_behavior );
 						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
 						$gltf_model->setAttribute( 'preload', 'auto' );
 						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );

@@ -260,6 +260,85 @@ function displayAssessmentProperties(object) {
     section.style.display = 'block';
 }
 
+function vrodosNormalizeWalkableBehavior(value) {
+    return String(value || '').toLowerCase() === 'auto' ? 'auto' : 'precise';
+}
+
+function ensureWalkableSurfacePropertiesSection() {
+    let container = document.getElementById('object-properties-container');
+    if (!container) return null;
+
+    let section = document.getElementById('walkableSurfacePropertiesDiv');
+    if (section) {
+        return section;
+    }
+
+    section = document.createElement('div');
+    section.id = 'walkableSurfacePropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    section.innerHTML =
+        '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Walkable Surface</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+            '<label for="walkableBehaviorSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Walking Behavior</label>' +
+            '<select id="walkableBehaviorSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+                '<option value="precise">Precise</option>' +
+                '<option value="auto">Auto</option>' +
+            '</select>' +
+            '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Use <strong class="tw-text-slate-300">Auto</strong> for uploaded GLBs with messy or uneven topology. Use <strong class="tw-text-slate-300">Precise</strong> for cleaner helper meshes.</div>' +
+        '</div>';
+
+    container.appendChild(section);
+
+    let select = document.getElementById('walkableBehaviorSelect');
+    if (select) {
+        select.addEventListener('change', function () {
+            if (!transform_controls || !transform_controls.object) return;
+
+            let selectedObject = transform_controls.object;
+            if (String(selectedObject.category_slug || '').toLowerCase() !== 'walkable-surface') {
+                return;
+            }
+
+            let nextBehavior = vrodosNormalizeWalkableBehavior(select.value);
+            if (selectedObject.walkableBehavior === nextBehavior) {
+                return;
+            }
+
+            selectedObject.walkableBehavior = nextBehavior;
+            if (!selectedObject.userData) {
+                selectedObject.userData = {};
+            }
+            selectedObject.userData.walkableBehavior = nextBehavior;
+
+            if (typeof envir !== 'undefined' && envir.scene) {
+                envir.scene.dispatchEvent({ type: 'modificationPendingSave' });
+            }
+        });
+    }
+
+    return section;
+}
+
+function displayWalkableSurfaceProperties(object) {
+    let section = ensureWalkableSurfacePropertiesSection();
+    if (!section || !object) return;
+
+    let select = document.getElementById('walkableBehaviorSelect');
+    let currentBehavior = vrodosNormalizeWalkableBehavior(object.walkableBehavior);
+    object.walkableBehavior = currentBehavior;
+
+    if (object.userData) {
+        object.userData.walkableBehavior = currentBehavior;
+    }
+
+    if (select) {
+        select.value = currentBehavior;
+    }
+
+    section.style.display = 'block';
+}
+
 /**
  * Hide all object property sections inside the floating panel.
  */
@@ -289,6 +368,10 @@ function showPropertiesInPanel(object) {
     switch (object.category_slug) {
         case 'assessment':
             displayAssessmentProperties(object);
+            hasProperties = true;
+            break;
+        case 'walkable-surface':
+            displayWalkableSurfaceProperties(object);
             hasProperties = true;
             break;
         case 'poi-imagetext':

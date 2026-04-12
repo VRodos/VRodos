@@ -1008,6 +1008,12 @@ function setObjectProperties(object, name, resources3D) {
     }
     object['glb_id'] = resource['glb_id'];
 
+    if (String(object.category_slug || '').toLowerCase() === 'walkable-surface') {
+        object.walkableBehavior = (String(resource.walkableBehavior || object.walkableBehavior || '').toLowerCase() === 'auto')
+            ? 'auto'
+            : 'precise';
+    }
+
     // Not needed anymore, we dont override textures anymore
     /*if (resource['overrideMaterial'] === "true") {
         if (object.children[0].isMesh) {
