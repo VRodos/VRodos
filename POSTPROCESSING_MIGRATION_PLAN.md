@@ -235,7 +235,7 @@ Only after Phase 3 has been shipping visibly to users without regressions:
 | `js_libs/aframe_libs/Master_Client_prototype.html` | **Edit in Phase 3** — swap the `<script>` tag for the post-FX module; line ~64. |
 | `js_libs/aframe_libs/Simple_Client_prototype.html` | Same as above for simple client parity. |
 | `runtime/assets/js/master/vrodos_quality_profiles.js` | **Edit in Addendum §12.** PMNDRS horizon path moves to Takram atmosphere-first wiring; legacy horizon path remains unchanged. |
-| `VOLUMETRIC_CLOUDS_IMPLEMENTATION_PLAN.md` | **Update after Phase 5** — its current assumption of "port shader logic ourselves" is superseded by "use Takram packages via pmndrs composer." |
+| Volumetric clouds planning | **Merged into this file** — the earlier standalone volumetric-clouds plan is superseded by Phase 5 here plus the Horizon/Takram addendum in §12. |
 
 ---
 
@@ -488,6 +488,56 @@ aframePmndrsMoonEnabled
 ### Notes on best-practice basis
 - Takram atmosphere supports multiple lighting approaches; for VRodos' existing lit/PBR content, light-source-compatible usage is the safe first step.
 - Takram clouds documentation requires PMNDRS/postprocessing composer compatibility and ordering (`CloudsEffect` before `AerialPerspectiveEffect`), which this addendum prepares.
+
+### 2026-04-12 convergence decision: can Takram be implemented "by the book" with A-Frame?
+
+Yes, but only with a stricter ownership split than the current hybrid Horizon path.
+
+- **A-Frame remains the host runtime** for ECS, scene graph, entity lifecycle, XR/session handling, input, and compiler-driven scene metadata.
+- **Takram owns the Horizon sky frame and lighting model** inside that A-Frame-hosted Three scene.
+- **PMNDRS remains the post stack only** for desktop non-XR rendering.
+
+What "by the book" means for VRodos after reviewing the Takram docs and the current implementation history:
+
+1. Use one authoritative Takram state for:
+   - `worldToECEFMatrix`
+   - anchor position in ECEF
+   - sun/moon direction in ECEF
+   - visible sky ownership
+   - Takram lighting objects
+2. Use Takram's light-source path first:
+   - `SkyMaterial`
+   - `SunDirectionalLight`
+   - `SkyLightProbe`
+3. Do **not** mix that path with:
+   - A-Frame `environment` sky/sun visuals
+   - legacy `a-sun-sky`
+   - VRodos helper lights
+   - fallback visible sun sprites
+4. Keep `AerialPerspectiveEffect` **off** for local Horizon scenes in the current stack until the PMNDRS depth/normal path is clean. The white-cap and `glBlitFramebuffer` failures showed that our present Horizon path is not ready for Takram's post-process route.
+5. Treat local VRodos Horizon scenes as **non-geospatial authored scenes**. That means:
+   - Takram sky/light is still useful,
+   - Takram ellipsoid ground is not the right owner for the lower half of the scene,
+   - authored VRodos geometry remains the visual ground/world.
+
+### Consolidated implementation phases after the 2026-04-12 review
+
+These phases replace the now-redundant standalone Horizon/Takram planning doc.
+
+1. **Phase 5A — structural cleanup**
+   - Centralize PMNDRS Horizon/Takram mode detection.
+   - Move Horizon-only Takram state under one runtime state object.
+   - Keep rendering behavior intentionally close to the accepted PMNDRS baseline.
+2. **Phase 5B — Takram-first light-source path**
+   - Replace helper-light ownership with `SunDirectionalLight` + `SkyLightProbe`.
+   - Keep `SkyMaterial` as the visible Horizon owner.
+   - Keep Takram ground disabled for local Horizon scenes.
+3. **Phase 5C — reflection/path consistency**
+   - Make scene-probe capture the same Takram sky owner used by the visible scene.
+   - Continue excluding legacy environment leftovers.
+4. **Phase 5D — clouds follow-up**
+   - Add Takram clouds only after the Takram-first light-source baseline is stable.
+   - Preserve the documented PMNDRS effect ordering seam.
 
 ---
 
