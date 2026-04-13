@@ -203,7 +203,8 @@ class VRodos_Compiler_Manager {
 		return '';
 	}
 
-	private function sanitize_text_attr( string $value ): string {
+	private function sanitize_text_attr( $value ): string {
+		$value = (string) ( $value ?? '' );
 		$value = $this->decode_display_text( $value );
 		$value = wp_strip_all_tags( $value );
 		$value = str_replace( [ "\r", "\n", ';' ], [ ' ', ' ', ',' ], $value );
@@ -313,6 +314,9 @@ class VRodos_Compiler_Manager {
 	}
 
 	private function colorRGB2Hex( $colorRGB ) {
+		if ( ! is_array( $colorRGB ) || count( $colorRGB ) < 3 ) {
+			return '#ffffff';
+		}
 		return sprintf( '#%02x%02x%02x', 255 * $colorRGB[0], 255 * $colorRGB[1], 255 * $colorRGB[2] );
 	}
 
@@ -406,8 +410,10 @@ class VRodos_Compiler_Manager {
 		if ( isset( $scene_json->metadata->enableGeneralChat ) ) {
 			if ( filter_var( $scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN ) === true ) {
 				$chat_wrapper->setAttribute( 'data-visible', 'true' );
+				$chat_wrapper->setAttribute( 'style', 'visibility: visible' );
 			} else {
 				$chat_wrapper->setAttribute( 'data-visible', 'false' );
+				$chat_wrapper->setAttribute( 'style', 'display: none; visibility: hidden' );
 			}
 		} else {
 			$chat_wrapper->setAttribute( 'data-visible', 'false' );
@@ -454,52 +460,28 @@ class VRodos_Compiler_Manager {
 			. '/js_libs/aframe_libs/Master_Client_prototype.html'
 		);
 
-		// Fog Metadata for scene-settings component
-		$fog_category = $scene_json->metadata->fogCategory ?? 0;
-		$fog_color    = $scene_json->metadata->fogcolor ?? '#FFFFFF';
-		$fog_far      = $scene_json->metadata->fogfar ?? 1000;
-		$fog_near     = $scene_json->metadata->fognear ?? 0;
-		$fog_density  = $scene_json->metadata->fogdensity ?? 0.00000001;
 
 		// Modify strings
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
-		$content = str_replace(
-			'js/components/immerse-assessment_component.js',
-			$this->normalize_url( $this->plugin_path_url . 'js_libs/aframe_libs/js/components/immerse-assessment_component.js' ),
-			$content
-		);
+		
+		// specific path for Immerse Assessment (different location)
+		$content = str_replace( 'src="js/components/immerse-assessment_component.js"', 'src="' . $this->plugin_path_url . 'js_libs/aframe_libs/js/components/immerse-assessment_component.js"', $content );
 
-		$content = str_replace( 'AFRAME_CLEARCOLOR_PLACEHOLDER', $scene_json->metadata->ClearColor, $content );
+		// Bulk path redirection for all local assets to plugin absolute URLs
+		// We use context-aware patterns (src="js/ and href="css/) to avoid double-prefixing paths that already have placeholders
+		$content = str_replace( 'src="js/components/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/components/', $content );
+		$content = str_replace( 'src="js/master/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/master/', $content );
+		$content = str_replace( 'src="js/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/', $content );
+		$content = str_replace( 'href="css/', 'href="' . $this->plugin_path_url . 'runtime/assets/css/', $content );
 
-		// Inject plugin base URL so runtime can load HDR environment maps.
+		// Inject plugin base URL so runtime can load assets properly.
 		$content = str_replace(
 			'VRODOS_PLUGIN_URL_PLACEHOLDER',
 			esc_js( $this->plugin_path_url ),
 			$content
 		);
 
-		// Replace Fog string
-		if ( isset( $scene_json->metadata->fogCategory ) && (int)$scene_json->metadata->fogCategory !== 0 ) {
-			if ( (int)$scene_json->metadata->fogCategory === 1 ) {
-				$fogtype = 'linear';
-			} else {
-				$fogtype = 'exponential';
-			}
-
-			// Sanitize color (remove leading hash if present, then add exactly one)
-			$fogcolor = ltrim( $scene_json->metadata->fogcolor, '#' );
-
-			$fog_attr = 'type: ' . $fogtype .
-			            '; color: #' . $fogcolor .
-			            '; far: ' . ( $scene_json->metadata->fogfar ?? '1000' ) .
-			            '; density: ' . ( 1.5 * ( $scene_json->metadata->fogdensity ?? '0.00000001' ) ) .
-			            '; near: ' . ( $scene_json->metadata->fognear ?? '0' );
-
-			$content = str_replace( 'AFRAME_FOG_PLACEHOLDER', $fog_attr, $content );
-		} else {
-			$content = str_replace( 'AFRAME_FOG_PLACEHOLDER', ' ', $content );
-		}
 
 		$basicDomElements = $this->createBasicDomStructureAframeDirector( $content, $scene_json, $project_id, $scene_id, $scene_id_list );
 
@@ -511,128 +493,13 @@ class VRodos_Compiler_Manager {
 		$is_immerse_project = $this->is_immerse_project( (int) $project_id );
 
 		$projectType = $this->get_project_type_slug( (int) $project_id );
-		$a_asset     = $dom->createElement( 'a-assets' );
+		
+		// Use helper to ensure a-assets exists and is attached
+		$a_asset = $this->get_or_create_assets_container( $dom, $ascene );
 
 		$dom->getElementsByTagName( 'title' )->item( 0 )->nodeValue = $scene_title[ $index ];
 
-		$bcg_choice    = $scene_json->metadata->backgroundStyleOption ?? '';
-		$preset_choice = $scene_json->metadata->backgroundPresetOption ?? '';
-		$preset_ground_enabled = ! isset( $scene_json->metadata->backgroundPresetGroundEnabled ) || filter_var( $scene_json->metadata->backgroundPresetGroundEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$image_path    = $scene_json->metadata->backgroundImagePath ?? '';
-		if ( $bcg_choice == '3' ) {
-
-			if ( $image_path ) {
-				$a_asset_sky = $dom->createElement( 'img' );
-				$a_asset_sky->setAttribute( 'id', 'custom_sky' );
-				$a_asset_sky->setAttribute( 'src', $this->normalize_url( $image_path ) );
-				$a_asset_sky->setAttribute( 'crossorigin', 'anonymous' );
-				$a_asset->appendChild( $a_asset_sky );
-				$ascene->appendChild( $a_asset );
-			} else {
-				$bcg_choice = '0';
-			}
-		}
-
-		$movement_disabled = isset( $scene_json->metadata->disableMovement ) && filter_var( $scene_json->metadata->disableMovement, FILTER_VALIDATE_BOOLEAN );
-		$avatar_enabled    = isset( $scene_json->metadata->enableAvatar ) && filter_var( $scene_json->metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN );
-		$collision_mode    = $scene_json->metadata->aframeCollisionMode ?? 'auto';
-		$render_quality    = $scene_json->metadata->aframeRenderQuality ?? 'standard';
-		$shadow_quality    = $scene_json->metadata->aframeShadowQuality ?? 'medium';
-		$aa_quality        = $scene_json->metadata->aframeAAQuality ?? 'balanced';
-		$fps_meter_enabled = isset( $scene_json->metadata->aframeFPSMeterEnabled ) && filter_var( $scene_json->metadata->aframeFPSMeterEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$ambient_occlusion_preset = $scene_json->metadata->aframeAmbientOcclusionPreset ?? 'balanced';
-		$contact_shadow_preset = $scene_json->metadata->aframeContactShadowPreset ?? 'soft';
-		$post_fx_enabled   = isset( $scene_json->metadata->aframePostFXEnabled ) && filter_var( $scene_json->metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$post_fx_color_enabled = ! isset( $scene_json->metadata->aframePostFXColorEnabled ) || filter_var( $scene_json->metadata->aframePostFXColorEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$post_fx_edge_aa_enabled = ! isset( $scene_json->metadata->aframePostFXEdgeAAEnabled ) || filter_var( $scene_json->metadata->aframePostFXEdgeAAEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$post_fx_edge_aa_strength = $scene_json->metadata->aframePostFXEdgeAAStrength ?? '3';
-		$legacy_horizon_stage_size = isset( $scene_json->metadata->aframeLegacyHorizonStageSize ) ? (int) $scene_json->metadata->aframeLegacyHorizonStageSize : 5000;
-		$legacy_horizon_stage_size = max( 500, min( 8000, $legacy_horizon_stage_size ) );
-		$bloom_strength    = $scene_json->metadata->aframeBloomStrength ?? 'off';
-		if ( isset( $scene_json->metadata->aframePostFXBloomEnabled ) && ! filter_var( $scene_json->metadata->aframePostFXBloomEnabled, FILTER_VALIDATE_BOOLEAN ) ) {
-			$bloom_strength = 'off';
-		}
-		$post_fx_bloom_enabled = 'off' !== $bloom_strength ? '1' : '0';
-		$post_fx_vignette_enabled = '0';
-		$exposure_preset  = $scene_json->metadata->aframeExposurePreset ?? 'neutral';
-		$contrast_preset  = $scene_json->metadata->aframeContrastPreset ?? 'balanced';
-		$reflection_profile = $scene_json->metadata->aframeReflectionProfile ?? 'balanced';
-		$reflection_source = $scene_json->metadata->aframeReflectionSource ?? 'hdr';
-		$horizon_sky_preset = $scene_json->metadata->aframeHorizonSkyPreset ?? 'natural';
-		$env_map_preset    = $scene_json->metadata->aframeEnvMapPreset ?? 'none';
-		$post_fx_taa_enabled = isset( $scene_json->metadata->aframePostFXTAAEnabled ) && filter_var( $scene_json->metadata->aframePostFXTAAEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$post_fx_ssr_enabled = isset( $scene_json->metadata->aframePostFXSSREnabled ) && filter_var( $scene_json->metadata->aframePostFXSSREnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$post_fx_ssr_strength = $scene_json->metadata->aframePostFXSSRStrength ?? 'off';
-		// Post-processing engine selector: 'legacy' (vrodos_postprocessing.js custom
-		// SAO/SSR/TAA composite) or 'pmndrs' (vrodos_postprocessing_pmndrs.js, fused
-		// EffectPass, supports clouds in Phase 5 but no SSR/TRAA). Default is 'legacy'
-		// so all existing scenes and all newly compiled scenes keep current behaviour
-		// until Phase 3 confirms visual parity. See POSTPROCESSING_MIGRATION_PLAN.md §11.
-		$post_fx_engine_raw = $scene_json->metadata->aframePostFXEngine ?? 'legacy';
-		$post_fx_engine     = ( 'pmndrs' === $post_fx_engine_raw ) ? 'pmndrs' : 'legacy';
-		$pmndrs_aa_mode     = $scene_json->metadata->aframePmndrsAAMode ?? '';
-		if ( ! in_array( $pmndrs_aa_mode, [ 'none', 'smaa', 'msaa' ], true ) ) {
-			$pmndrs_aa_mode = ( 'off' === $aa_quality ) ? 'none' : 'msaa';
-		}
-		$pmndrs_aa_preset   = $scene_json->metadata->aframePmndrsAAPreset ?? '';
-		if ( ! in_array( $pmndrs_aa_preset, [ 'low', 'medium', 'high', 'ultra' ], true ) ) {
-			switch ( $aa_quality ) {
-				case 'high':
-					$pmndrs_aa_preset = 'high';
-					break;
-				case 'ultra':
-					$pmndrs_aa_preset = 'ultra';
-					break;
-				case 'off':
-				case 'balanced':
-				default:
-					$pmndrs_aa_preset = 'medium';
-					break;
-			}
-		}
-
-		// Pmndrs-only tweakable knobs. Clamped to safe ranges; sent through scene-settings
-		// even when engine === 'legacy' so the values survive an engine flip without losing data.
-		$pmndrs_bloom_intensity     = (float) ( $scene_json->metadata->aframePmndrsBloomIntensity     ?? 1.0 );
-		$pmndrs_bloom_threshold     = (float) ( $scene_json->metadata->aframePmndrsBloomThreshold     ?? 0.62 );
-		$pmndrs_vignette_enabled    = isset( $scene_json->metadata->aframePmndrsVignetteEnabled ) && filter_var( $scene_json->metadata->aframePmndrsVignetteEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$pmndrs_vignette_darkness   = (float) ( $scene_json->metadata->aframePmndrsVignetteDarkness   ?? 0.5 );
-		$pmndrs_tonemap_exposure    = (float) ( $scene_json->metadata->aframePmndrsToneMappingExposure ?? 1.0 );
-		$pmndrs_bloom_intensity     = max( 0.0, min( 3.0, $pmndrs_bloom_intensity ) );
-		$pmndrs_bloom_threshold     = max( 0.0, min( 1.0, $pmndrs_bloom_threshold ) );
-		$pmndrs_vignette_darkness   = max( 0.0, min( 1.0, $pmndrs_vignette_darkness ) );
-		$pmndrs_tonemap_exposure    = max( 0.3, min( 2.5, $pmndrs_tonemap_exposure ) );
-		$pmndrs_atmosphere_enabled  = ! isset( $scene_json->metadata->aframePmndrsAtmosphereEnabled ) || filter_var( $scene_json->metadata->aframePmndrsAtmosphereEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$pmndrs_atmosphere_quality  = $scene_json->metadata->aframePmndrsAtmosphereQuality ?? 'balanced';
-		if ( ! in_array( $pmndrs_atmosphere_quality, [ 'performance', 'balanced', 'quality', 'cinematic', 'custom' ], true ) ) {
-			$pmndrs_atmosphere_quality = 'balanced';
-		}
-		$pmndrs_sun_elevation       = max( -5.0, min( 45.0, (float) ( $scene_json->metadata->aframePmndrsSunElevationDeg ?? 10.0 ) ) );
-		$pmndrs_sun_azimuth         = max( -180.0, min( 180.0, (float) ( $scene_json->metadata->aframePmndrsSunAzimuthDeg ?? 38.0 ) ) );
-		$pmndrs_sun_distance        = max( 1500.0, min( 20000.0, (float) ( $scene_json->metadata->aframePmndrsSunDistance ?? 5200.0 ) ) );
-		$pmndrs_sun_radius          = max( 0.002, min( 0.03, (float) ( $scene_json->metadata->aframePmndrsSunAngularRadius ?? 0.0068 ) ) );
-		$pmndrs_aerial_strength     = max( 0.0, min( 1.5, (float) ( $scene_json->metadata->aframePmndrsAerialStrength ?? 0.85 ) ) );
-		$pmndrs_albedo_scale        = max( 0.5, min( 1.5, (float) ( $scene_json->metadata->aframePmndrsAlbedoScale ?? 0.96 ) ) );
-		$pmndrs_transmittance       = ! isset( $scene_json->metadata->aframePmndrsTransmittanceEnabled ) || filter_var( $scene_json->metadata->aframePmndrsTransmittanceEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$pmndrs_inscatter           = ! isset( $scene_json->metadata->aframePmndrsInscatterEnabled ) || filter_var( $scene_json->metadata->aframePmndrsInscatterEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$pmndrs_ground_enabled      = ! isset( $scene_json->metadata->aframePmndrsGroundEnabled ) || filter_var( $scene_json->metadata->aframePmndrsGroundEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$pmndrs_ground_albedo       = $scene_json->metadata->aframePmndrsGroundAlbedo ?? '#f0e6d6';
-		$pmndrs_ground_albedo       = preg_match( '/^#?[0-9a-fA-F]{6}$/', (string) $pmndrs_ground_albedo ) ? ( '#' === substr( (string) $pmndrs_ground_albedo, 0, 1 ) ? (string) $pmndrs_ground_albedo : '#' . (string) $pmndrs_ground_albedo ) : '#f0e6d6';
-		$pmndrs_rayleigh_scale      = max( 0.2, min( 2.5, (float) ( $scene_json->metadata->aframePmndrsRayleighScale ?? 1.0 ) ) );
-		$pmndrs_mie_scattering      = max( 0.1, min( 2.5, (float) ( $scene_json->metadata->aframePmndrsMieScatteringScale ?? 0.9 ) ) );
-		$pmndrs_mie_extinction      = max( 0.1, min( 2.5, (float) ( $scene_json->metadata->aframePmndrsMieExtinctionScale ?? 1.0 ) ) );
-		$pmndrs_mie_phase_g         = max( 0.0, min( 0.95, (float) ( $scene_json->metadata->aframePmndrsMiePhaseG ?? 0.8 ) ) );
-		$pmndrs_absorption_scale    = max( 0.0, min( 2.5, (float) ( $scene_json->metadata->aframePmndrsAbsorptionScale ?? 1.0 ) ) );
-		$pmndrs_moon_enabled        = isset( $scene_json->metadata->aframePmndrsMoonEnabled ) && filter_var( $scene_json->metadata->aframePmndrsMoonEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$cam_position      = implode( ' ', $scene_json->objects->avatarCamera->position );
-		$public_chat       = isset( $scene_json->metadata->enableGeneralChat ) && filter_var( $scene_json->metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN );
-
-		$cam_rotation_y = 180 / pi() * $scene_json->objects->avatarCamera->rotation[1];
-		if ( ! empty( $sceneColor ) ) {
-			$ascene->setAttribute( 'scene-settings', "color: $sceneColor; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; fpsMeterEnabled: $fps_meter_enabled; legacyHorizonStageSize: $legacy_horizon_stage_size; ambientOcclusionPreset: $ambient_occlusion_preset; contactShadowPreset: $contact_shadow_preset; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; reflectionSource: $reflection_source; horizonSkyPreset: $horizon_sky_preset; envMapPreset: $env_map_preset; postFXTAAEnabled: $post_fx_taa_enabled; postFXSSREnabled: $post_fx_ssr_enabled; postFXSSRStrength: $post_fx_ssr_strength; postFXEngine: $post_fx_engine; pmndrsAAMode: $pmndrs_aa_mode; pmndrsAAPreset: $pmndrs_aa_preset; pmndrsBloomIntensity: $pmndrs_bloom_intensity; pmndrsBloomThreshold: $pmndrs_bloom_threshold; pmndrsVignetteEnabled: $pmndrs_vignette_enabled; pmndrsVignetteDarkness: $pmndrs_vignette_darkness; pmndrsToneMappingExposure: $pmndrs_tonemap_exposure; pmndrsAtmosphereEnabled: $pmndrs_atmosphere_enabled; pmndrsAtmosphereQuality: $pmndrs_atmosphere_quality; pmndrsSunElevationDeg: $pmndrs_sun_elevation; pmndrsSunAzimuthDeg: $pmndrs_sun_azimuth; pmndrsSunDistance: $pmndrs_sun_distance; pmndrsSunAngularRadius: $pmndrs_sun_radius; pmndrsAerialStrength: $pmndrs_aerial_strength; pmndrsAlbedoScale: $pmndrs_albedo_scale; pmndrsTransmittanceEnabled: $pmndrs_transmittance; pmndrsInscatterEnabled: $pmndrs_inscatter; pmndrsGroundEnabled: $pmndrs_ground_enabled; pmndrsGroundAlbedo: $pmndrs_ground_albedo; pmndrsRayleighScale: $pmndrs_rayleigh_scale; pmndrsMieScatteringScale: $pmndrs_mie_scattering; pmndrsMieExtinctionScale: $pmndrs_mie_extinction; pmndrsMiePhaseG: $pmndrs_mie_phase_g; pmndrsAbsorptionScale: $pmndrs_absorption_scale; pmndrsMoonEnabled: $pmndrs_moon_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat; fogCategory: $fog_category; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" );
-		} else {
-			$ascene->setAttribute( 'scene-settings', "color: #ffffff; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled; movement_disabled: $movement_disabled; avatar_enabled: $avatar_enabled; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality; fpsMeterEnabled: $fps_meter_enabled; legacyHorizonStageSize: $legacy_horizon_stage_size; ambientOcclusionPreset: $ambient_occlusion_preset; contactShadowPreset: $contact_shadow_preset; postFXEnabled: $post_fx_enabled; postFXBloomEnabled: $post_fx_bloom_enabled; postFXColorEnabled: $post_fx_color_enabled; postFXVignetteEnabled: $post_fx_vignette_enabled; postFXEdgeAAEnabled: $post_fx_edge_aa_enabled; postFXEdgeAAStrength: $post_fx_edge_aa_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset; reflectionProfile: $reflection_profile; reflectionSource: $reflection_source; horizonSkyPreset: $horizon_sky_preset; envMapPreset: $env_map_preset; postFXTAAEnabled: $post_fx_taa_enabled; postFXSSREnabled: $post_fx_ssr_enabled; postFXSSRStrength: $post_fx_ssr_strength; postFXEngine: $post_fx_engine; pmndrsAAMode: $pmndrs_aa_mode; pmndrsAAPreset: $pmndrs_aa_preset; pmndrsBloomIntensity: $pmndrs_bloom_intensity; pmndrsBloomThreshold: $pmndrs_bloom_threshold; pmndrsVignetteEnabled: $pmndrs_vignette_enabled; pmndrsVignetteDarkness: $pmndrs_vignette_darkness; pmndrsToneMappingExposure: $pmndrs_tonemap_exposure; pmndrsAtmosphereEnabled: $pmndrs_atmosphere_enabled; pmndrsAtmosphereQuality: $pmndrs_atmosphere_quality; pmndrsSunElevationDeg: $pmndrs_sun_elevation; pmndrsSunAzimuthDeg: $pmndrs_sun_azimuth; pmndrsSunDistance: $pmndrs_sun_distance; pmndrsSunAngularRadius: $pmndrs_sun_radius; pmndrsAerialStrength: $pmndrs_aerial_strength; pmndrsAlbedoScale: $pmndrs_albedo_scale; pmndrsTransmittanceEnabled: $pmndrs_transmittance; pmndrsInscatterEnabled: $pmndrs_inscatter; pmndrsGroundEnabled: $pmndrs_ground_enabled; pmndrsGroundAlbedo: $pmndrs_ground_albedo; pmndrsRayleighScale: $pmndrs_rayleigh_scale; pmndrsMieScatteringScale: $pmndrs_mie_scattering; pmndrsMieExtinctionScale: $pmndrs_mie_extinction; pmndrsMiePhaseG: $pmndrs_mie_phase_g; pmndrsAbsorptionScale: $pmndrs_absorption_scale; pmndrsMoonEnabled: $pmndrs_moon_enabled; cam_position: $cam_position; cam_rotation_y: $cam_rotation_y; public_chat: $public_chat; fogCategory: $fog_category; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" );
-		}
+		$this->apply_scene_environment( $content, $dom, $ascene, $scene_json, $project_id );
 		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 
 		// Set networked properties
@@ -711,765 +578,11 @@ class VRodos_Compiler_Manager {
 
 		// print($scene_id)
 
-		foreach ( $objects as $contentObject ) {
 
-			$uuid = $contentObject->uuid ?? '';
-
-			if ( isset( $contentObject->category_name ) ) {
-				// Switch for lights
-				switch ( $contentObject->category_name ) {
-
-					case 'lightSun':
-						$a_light = $dom->createElement( 'a-light' );
-						$a_light->appendChild( $dom->createTextNode( '' ) );
-						$a_light->setAttribute( 'id', 'lighttarget' );
-						$this->setAffineTransformations( $a_light, $contentObject );
-
-						$a_light_target = $dom->createElement( 'a-entity' );
-						$a_light_target->appendChild( $dom->createTextNode( '' ) );
-						$a_light_target->setAttribute( 'position', implode( ' ', $contentObject->targetposition ) );
-						$a_light_target->setAttribute( 'id', $uuid . 'target' );
-
-						$is_casting_shadow = isset( $contentObject->castingShadow ) ? ( $contentObject->castingShadow == '1' ? 'true' : 'false' ) : 'false';
-
-						$ascene->appendChild( $a_light_target );
-						$a_light->setAttribute(
-							'light',
-							'type:directional;' .
-							'color:' . $this->colorRGB2Hex( $contentObject->lightcolor ) . ';' .
-							// "intensity:".($contentObject->lightintensity).";".
-							'castShadow:' . ( $is_casting_shadow ) . ';' .
-
-							'shadowMapHeight:' . ( $contentObject->shadowMapHeight ?? '512' ) . ';' .
-							// "shadowCameraFar: 5000;".
-							'shadowMapWidth:' . ( $contentObject->shadowMapWidth ?? '512' ) . ';' .
-							'shadowCameraTop:' . ( $contentObject->shadowCameraTop ?? '5' ) . ';' .
-							'shadowCameraRight:' . ( $contentObject->shadowCameraRight ?? '5' ) . ';' .
-							'shadowCameraLeft:' . ( $contentObject->shadowCameraLeft ?? '-5' ) . ';' .
-							'shadowCameraBottom:' . ( $contentObject->shadowCameraBottom ?? '-5' ) . ';' .
-							'shadowBias:' . ( $contentObject->shadowBias ?? '0' ) . ';' .
-							// "shadow-camera-automatic: '#41132111-4c3f-4741-9c8a-343e71fc4b46';".
-							'shadowCameraVisible: false;'
-							// #41132111-4c3f-4741-9c8a-343e71fc4b46';
-						);
-
-						$a_light->setAttribute( 'target', '#' . $uuid . 'target' );
-
-						$a_sun_sky = $dom->createElement( 'a-sun-sky' );
-						$a_sun_sky->appendChild( $dom->createTextNode( '' ) );
-
-						$SunPosVec = $contentObject->position;
-						$TargetVec = $contentObject->targetposition;
-
-						$SkySun = [$SunPosVec[0] - $TargetVec[0], $SunPosVec[1] - $TargetVec[1], $SunPosVec[2] - $TargetVec[2]];
-
-						$materialSunSky = 'side:back; sunPosition: ';
-						$materialSunSky = $materialSunSky . $SkySun[0] . ' ' . $SkySun[1] . ' ' . $SkySun[2];
-						$a_sun_sky->setAttribute( 'material', $materialSunSky );
-
-						if ( isset( $contentObject->sunSky ) && $contentObject->sunSky == '1' ) {
-							$skip_legacy_sun_sky_for_pmndrs_horizon = (
-								'pmndrs' === $post_fx_engine &&
-								'1' === $pmndrs_atmosphere_enabled &&
-								'0' === (string) $bcg_choice
-							);
-							if ( ! $skip_legacy_sun_sky_for_pmndrs_horizon ) {
-								$ascene->appendChild( $a_sun_sky );
-							}
-						}
-
-						$ascene->appendChild( $a_light );
-
-						break;
-
-					case 'lightSpot':
-						$a_light = $dom->createElement( 'a-light' );
-						$a_light->appendChild( $dom->createTextNode( '' ) );
-						$this->setAffineTransformations( $a_light, $contentObject );
-
-						$a_light_target = $dom->createElement( 'a-entity' );
-						$a_light_target->appendChild( $dom->createTextNode( '' ) );
-						$a_light_target->setAttribute( 'position', implode( ' ', $contentObject->targetposition ) );
-						$a_light_target->setAttribute( 'id', $uuid . 'target' );
-
-						$a_light->setAttribute(
-							'light',
-							'type:spot;' .
-							'color:' . $this->colorRGB2Hex( $contentObject->lightcolor ) . ';' .
-							'intensity: 2' .
-							'distance:' . $contentObject->lightdistance . ';' .
-							'decay:' . $contentObject->lightdecay . ';' .
-							'angle:' . ( $contentObject->lightangle * 180 / 3.141 ) . ';' .
-							'penumbra:' . $contentObject->lightpenumbra . ';'
-						);
-
-						$a_light->setAttribute( 'target', '#' . $uuid . 'target' );
-						$ascene->appendChild( $a_light_target );
-
-						$ascene->appendChild( $a_light );
-						break;
-
-					case 'lightLamp':
-						$a_light = $dom->createElement( 'a-light' );
-						$a_light->appendChild( $dom->createTextNode( '' ) );
-						$this->setAffineTransformations( $a_light, $contentObject );
-
-						if ( isset( $contentObject->lampcastingShadow ) ) {
-							if ( $contentObject->lampcastingShadow == '1' ) {
-								$is_casting_shadow = 'true';
-							} else {
-								$is_casting_shadow = 'false';
-							}
-						}
-
-						$a_light->setAttribute(
-							'light',
-							'type:point;' .
-							'color:' . $this->colorRGB2Hex( $contentObject->lightcolor ) . ';' .
-							'intensity:' . $contentObject->lightintensity . ';' .
-							'distance:' . $contentObject->lightdistance . ';' .
-							'castShadow:' . ( $is_casting_shadow ?? '' ) . ';' .
-							'shadowMapHeight:' . ( $contentObject->lampshadowMapHeight ?? '' ) . ';' .
-							'shadowMapWidth:' . ( $contentObject->lampshadowMapWidth ?? '' ) . ';' .
-							'shadowCameraTop:' . ( $contentObject->lampshadowCameraTop ?? '' ) . ';' .
-							'shadowCameraRight:' . ( $contentObject->lampshadowCameraRight ?? '' ) . ';' .
-							'shadowCameraLeft:' . ( $contentObject->lampshadowCameraLeft ?? '' ) . ';' .
-							'shadowCameraBottom:' . ( $contentObject->lampshadowCameraBottom ?? '' ) . ';' .
-							'shadowBias:' . ( $contentObject->lampshadowBias ?? '' ) . ';' .
-							// "shadow-camera-automatic: '#41132111-4c3f-4741-9c8a-343e71fc4b46';".
-							'shadowCameraVisible: false;'
-							// ."radius:".$contentObject->shadowRadius
-						);
-
-						$ascene->appendChild( $a_light );
-						break;
-
-					case 'lightAmbient':
-						$a_light = $dom->createElement( 'a-light' );
-						$a_light->appendChild( $dom->createTextNode( '' ) );
-						$this->setAffineTransformations( $a_light, $contentObject );
-
-						$a_light->setAttribute(
-							'light',
-							'type:ambient;' .
-							'color:' . $this->colorRGB2Hex( $contentObject->lightcolor ) . ';' .
-							'intensity:' . $contentObject->lightintensity
-						);
-
-						$ascene->appendChild( $a_light );
-						break;
-				}
-			}
-
-			if ( isset( $contentObject->category_slug ) ) {
-				// Switch for all objects except lights
-				switch ( $contentObject->category_slug ) {
-
-					case 'pawn':
-						if ( $showPawnPositions == 'true' ) {
-							$a_entity = $dom->createElement( 'a-entity' );
-							$a_entity->appendChild( $dom->createTextNode( '' ) );
-
-							$this->setAffineTransformations( $a_entity, $contentObject );
-							$a_entity->setAttribute(
-								'gltf-model',
-								'url(' . $this->normalize_url( $this->plugin_path_url . 'assets/pawn.glb' ) . ')'
-							);
-
-							$ascene->appendChild( $a_entity );
-						}
-
-						break;
-
-					case 'decoration':
-						$assets = $dom->getElementById( 'scene-assets' );
-
-						$asset_item = $dom->createElement( 'a-asset-item' );
-						$asset_item->setAttribute( 'id', $uuid );
-						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
-						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
-						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
-
-						$assets->appendChild( $asset_item );
-
-						$sc_x = $contentObject->scale[0];
-						$sc_y = $contentObject->scale[1];
-						$sc_z = $contentObject->scale[2];
-
-						$gltf_model = $dom->createElement( 'a-entity' );
-						$gltf_model->setAttribute( 'gltf-model', '#' . $uuid );
-						$gltf_model->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$gltf_model->appendChild( $dom->createTextNode( '' ) );
-						$material = '';
-						$this->setAffineTransformations( $gltf_model, $contentObject );
-						$this->setMaterial( $material, $contentObject );
-						$gltf_model->setAttribute( 'class', 'override-materials hideable' );
-						$gltf_model->setAttribute( 'material', $material );
-						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
-						$gltf_model->setAttribute( 'preload', 'auto' );
-						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );
-
-						$ascene->appendChild( $gltf_model );
-						break;
-
-					case 'walkable-surface':
-						$assets = $dom->getElementById( 'scene-assets' );
-
-						$asset_item = $dom->createElement( 'a-asset-item' );
-						$asset_item->setAttribute( 'id', $uuid );
-						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
-						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
-						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
-
-						$assets->appendChild( $asset_item );
-
-						$sc_x = $contentObject->scale[0];
-						$sc_y = $contentObject->scale[1];
-						$sc_z = $contentObject->scale[2];
-
-						$gltf_model = $dom->createElement( 'a-entity' );
-						$walk_behavior = ( isset( $contentObject->walkableBehavior ) && 'auto' === strtolower( (string) $contentObject->walkableBehavior ) ) ? 'auto' : 'precise';
-						$gltf_model->setAttribute( 'gltf-model', '#' . $uuid );
-						$gltf_model->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$gltf_model->appendChild( $dom->createTextNode( '' ) );
-						$material = '';
-						$this->setAffineTransformations( $gltf_model, $contentObject );
-						$this->setMaterial( $material, $contentObject );
-						$gltf_model->setAttribute( 'class', 'override-materials hideable vrodos-navmesh' );
-						$gltf_model->setAttribute( 'material', $material );
-						$gltf_model->setAttribute( 'data-vrodos-navmesh', 'true' );
-						$gltf_model->setAttribute( 'data-vrodos-walk-behavior', $walk_behavior );
-						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
-						$gltf_model->setAttribute( 'preload', 'auto' );
-						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );
-
-						$ascene->appendChild( $gltf_model );
-						break;
-
-					case 'door':
-						$assets = $dom->getElementById( 'scene-assets' );
-
-						$asset_item = $dom->createElement( 'a-asset-item' );
-						$asset_item->setAttribute( 'id', $uuid );
-						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
-						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
-						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
-
-						$assets->appendChild( $asset_item );
-
-						$sc_x = $contentObject->scale[0];
-						$sc_y = $contentObject->scale[1];
-						$sc_z = $contentObject->scale[2];
-
-						$gltf_model = $dom->createElement( 'a-entity' );
-						$gltf_model->setAttribute( 'id', "entity_$uuid" );
-						$gltf_model->setAttribute( 'gltf-model', '#' . "$uuid" );
-						$gltf_model->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$gltf_model->appendChild( $dom->createTextNode( '' ) );
-						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );
-
-						$material = '';
-						$this->setMaterial( $material, $contentObject );
-						$this->setAffineTransformations( $gltf_model, $contentObject );
-						$gltf_model->setAttribute( 'class', 'override-materials raycastable hideable' );
-
-						$gltf_model->setAttribute( 'material', $material );
-						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
-						$gltf_model->setAttribute( 'highlight', "entity_$uuid" );
-
-						if ( ! empty( $contentObject->sceneID_target ) ) {
-							$this->includeDoorFunctionality( $gltf_model, $contentObject->sceneID_target );
-						}
-
-						$ascene->appendChild( $gltf_model );
-
-						break;
-
-					case 'image':
-						$assets = $dom->getElementById( 'scene-assets' );
-
-						$sc_x = $contentObject->scale[0];
-						$sc_y = $contentObject->scale[1];
-						$sc_z = $contentObject->scale[2];
-
-						$a_img = $dom->createElement( 'img' );
-						$a_img->setAttribute( 'id', "image_$uuid" );
-						$a_img->setAttribute( 'src', $this->normalize_url( $contentObject->image_path ) );
-						$a_img->setAttribute( 'crossorigin', 'anonymous' );
-						$assets->appendChild( $a_img );
-
-						$a_plane_parent = $dom->createElement( 'a-entity' );
-						$a_plane_parent->setAttribute( 'id', "image-display_$uuid" );
-						$a_plane_parent->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$a_plane_parent->setAttribute( 'class', 'hideable' );
-						$a_plane_parent->appendChild( $dom->createTextNode( '' ) );
-						$this->setAffineTransformations( $a_plane_parent, $contentObject );
-
-						$a_plane_front = $dom->createElement( 'a-plane' );
-						$a_plane_front->setAttribute( 'id', "image-display-front_$uuid" );
-						$a_plane_front->setAttribute( 'height', '2' );
-						$a_plane_front->setAttribute( 'width', '2' );
-						$a_plane_front->setAttribute( 'position', '0 0 0.001' );
-						$a_plane_front->setAttribute( 'material', "src: #image_$uuid; shader: flat; side: front; transparent: false; alphaTest: 0.01; depthWrite: true; depthTest: true" );
-						$a_plane_front->setAttribute( 'class', 'image-display-surface' );
-
-						$a_plane_back = $dom->createElement( 'a-plane' );
-						$a_plane_back->setAttribute( 'id', "image-display-back_$uuid" );
-						$a_plane_back->setAttribute( 'height', '2' );
-						$a_plane_back->setAttribute( 'width', '2' );
-						$a_plane_back->setAttribute( 'position', '0 0 -0.001' );
-						$a_plane_back->setAttribute( 'rotation', '0 180 0' );
-						$a_plane_back->setAttribute( 'material', "src: #image_$uuid; shader: flat; side: front; transparent: false; alphaTest: 0.01; depthWrite: true; depthTest: true" );
-						$a_plane_back->setAttribute( 'class', 'image-display-surface' );
-
-						$a_plane_parent->appendChild( $a_plane_front );
-						$a_plane_parent->appendChild( $a_plane_back );
-						$ascene->appendChild( $a_plane_parent );
-						break;
-
-					case 'video':
-						$assets = $dom->getElementById( 'scene-assets' );
-
-						$a_asset_fs = $dom->createElement( 'img' );
-						$a_asset_fs->setAttribute( 'mixin', 'vid_panel' );
-						$a_asset_fs->setAttribute( 'id', "video_fullScreen_$uuid" );
-						$a_asset_fs->setAttribute( 'src', $this->plugin_path_url . 'assets/images/fullscreen.png' );
-						$a_asset_fs->setAttribute( 'crossorigin', 'anonymous' );
-
-						$a_asset_ex = $dom->createElement( 'img' );
-						$a_asset_ex->setAttribute( 'mixin', 'vid_panel' );
-						$a_asset_ex->setAttribute( 'id', "video_exit_$uuid" );
-						$a_asset_ex->setAttribute( 'src', $this->plugin_path_url . 'assets/images/exit.png' );
-						$a_asset_ex->setAttribute( 'crossorigin', 'anonymous' );
-
-						$a_asset_pl = $dom->createElement( 'img' );
-						$a_asset_pl->setAttribute( 'mixin', 'vid_panel' );
-						$a_asset_pl->setAttribute( 'id', "video_pl_$uuid" );
-						$a_asset_pl->setAttribute( 'src', $this->plugin_path_url . 'assets/images/play.png' );
-						$a_asset_pl->setAttribute( 'crossorigin', 'anonymous' );
-
-						$a_asset_pas = $dom->createElement( 'img' );
-						$a_asset_pas->setAttribute( 'mixin', 'vid_panel' );
-						$a_asset_pas->setAttribute( 'id', "video_pas_$uuid" );
-						$a_asset_pas->setAttribute( 'src', $this->plugin_path_url . 'assets/images/pause.png' );
-						$a_asset_pas->setAttribute( 'crossorigin', 'anonymous' );
-
-						$a_video_asset = $dom->createElement( 'video' );
-						$a_video_asset->setAttribute( 'id', "video_$uuid" );
-						$a_video_asset->setAttribute( 'crossorigin', 'anonymous' );
-						$a_video_asset->setAttribute( 'preload', 'metadata' );
-
-						$contentObject->video_loop == 1 ? $a_video_asset->setAttribute( 'loop', 'true' ) : $a_video_asset->setAttribute( 'loop', 'false' );
-						if ( $contentObject->video_loop == 1 ) {
-							$a_video_asset->setAttribute( 'autoplay-manual', 'true' );
-						} else {
-							$a_video_asset->setAttribute( 'autoplay-manual', 'false' );
-						}
-
-						if ( $contentObject->video_path != 'false' ) {
-							$a_video_asset->setAttribute( 'src', $this->normalize_url( $contentObject->video_path ) );
-						}
-
-						$assets->appendChild( $a_video_asset );
-						$assets->appendChild( $a_asset_fs );
-						$assets->appendChild( $a_asset_ex );
-						$assets->appendChild( $a_asset_pl );
-						$assets->appendChild( $a_asset_pas );
-
-						$pos_x = $contentObject->position[0];
-						$pos_y = $contentObject->position[1];
-						$pos_z = $contentObject->position[2];
-
-						$rot_x = $contentObject->rotation[0];
-						$rot_y = $contentObject->rotation[1];
-						$rot_z = $contentObject->rotation[2];
-
-						$sc_x = $contentObject->scale[0];
-						$sc_y = $contentObject->scale[1];
-						$sc_z = $contentObject->scale[2];
-
-						$a_entity_fs = $dom->createElement( 'a-plane' );
-						$a_entity_fs->setAttribute( 'id', "ent_fs_$uuid" );
-						$a_entity_fs->setAttribute( 'height', '0.08' );
-						$a_entity_fs->setAttribute( 'width', '0.08' );
-						$a_entity_fs->setAttribute( 'src', "#video_fullScreen_$uuid" );
-						$a_entity_fs->setAttribute( 'renderOrder', '9999999' );
-						$a_entity_fs->setAttribute( 'position', '-0.05 -0.03 0.000001' );
-						$a_entity_fs->setAttribute( 'material', 'shader: flat' );
-						$a_entity_fs->setAttribute( 'class', 'clickable raycastable non-clickable' );
-
-						$a_entity_pl = $dom->createElement( 'a-plane' );
-						$a_entity_pl->setAttribute( 'id', "ent_pl_$uuid" );
-						$a_entity_pl->setAttribute( 'height', '0.08' );
-						$a_entity_pl->setAttribute( 'width', '0.08' );
-						$a_entity_pl->setAttribute( 'src', "#video_pl_$uuid" );
-						$a_entity_pl->setAttribute( 'renderOrder', '9999999' );
-						$a_entity_pl->setAttribute( 'position', '0.05 -0.03 0.000001' );
-						$a_entity_pl->setAttribute( 'material', 'shader: flat;' );
-						$a_entity_pl->setAttribute( 'class', 'clickable raycastable non-clickable' );
-
-						$a_entity_ex = $dom->createElement( 'a-plane' );
-						$a_entity_ex->setAttribute( 'id', "ent_ex_$uuid" );
-						$a_entity_ex->setAttribute( 'height', '0.08' );
-						$a_entity_ex->setAttribute( 'width', '0.08' );
-						$a_entity_ex->setAttribute( 'src', "#video_exit_$uuid" );
-						$a_entity_ex->setAttribute( 'renderOrder', '9999999' );
-						$a_entity_ex->setAttribute( 'position', '0.15 0.15 0.000001' );
-						$a_entity_ex->setAttribute( 'material', 'shader: flat; depthTest: false;' );
-						$a_entity_ex->setAttribute( 'class', 'clickable raycastable non-clickable' );
-
-						// Video panel
-						$a_entity_panel = $dom->createElement( 'a-plane' );
-						$a_entity_panel->setAttribute( 'id', "vid-panel_$uuid" );
-
-						$a_entity_panel->setAttribute( 'scale', '0.00001 0.00001 0.00001' );
-						$a_entity_panel->setAttribute( 'visible', 'false' );
-
-						$a_entity_panel->setAttribute( 'class', 'clickable raycastable' );
-						$a_entity_panel->setAttribute( 'mixin', 'vidFrame' );
-
-						$exit_vid_entity_panel = $dom->createElement( 'a-entity' );
-						$exit_vid_entity_panel->setAttribute( 'id', "exit_vid_panel_$uuid" );
-						$exit_vid_entity_panel->setAttribute( 'mixin', 'poiVidEscFrame' );
-						$exit_vid_entity_panel->setAttribute( 'scale', '1 1 1' );
-						$exit_vid_entity_panel->setAttribute( 'original-scale', '1 1 1' );
-						$exit_vid_entity_panel->setAttribute( 'class', 'raycastable hideable non-clickable' );
-
-						$a_title_vid_entity = $dom->createElement( 'a-entity' );
-						$a_title_vid_entity->setAttribute( 'id', "ent_tit_$uuid" );
-						$a_title_vid_entity->setAttribute( 'position', '-0.18 0.05 0.000001' );
-
-						$vid_font_path = $this->plugin_path_url . 'assets/fonts/Roboto-Black-msdf.json';
-						$a_title_vid_entity->setAttribute( 'text', "depthTest:false; negate:false;shader: msdf; anchor: left; width: 0.5; font: $vid_font_path; color: #2f3542; value: $contentObject->video_title" );
-						$a_title_vid_entity->setAttribute( 'class', 'clickable raycastable' );
-
-						$a_vid_entity_panel = $dom->createElement( 'a-entity' );
-						$a_vid_entity_panel->setAttribute( 'id', "a_vid_entity_panel_$uuid" );
-
-						$a_vid_entity_panel->setAttribute( 'scale', '1 1 1' );
-						$a_vid_entity_panel->setAttribute( 'original-scale', '1 1 1' );
-						$a_vid_entity_panel->setAttribute( 'class', 'raycastable hideable non-clickable' );
-
-						$a_vid_title_entity_panel = $dom->createElement( 'a-entity' );
-						$a_vid_title_entity_panel->setAttribute( 'id', "a_title_vid_entity_panel_$uuid" );
-						$a_vid_title_entity_panel->setAttribute( 'mixin', 'vidTitleFrame' );
-						$a_vid_title_entity_panel->setAttribute( 'scale', '1 1 1' );
-						$a_vid_title_entity_panel->setAttribute( 'original-scale', '1 1 1' );
-						$a_vid_title_entity_panel->setAttribute( 'class', 'raycastable hideable non-clickable' );
-
-						$a_entity_panel->appendChild( $a_title_vid_entity );
-						$a_entity_panel->appendChild( $a_vid_title_entity_panel );
-						$a_entity_panel->appendChild( $exit_vid_entity_panel );
-						$a_entity_panel->appendChild( $a_vid_entity_panel );
-						$a_entity_panel->appendChild( $a_entity_fs );
-						$a_entity_panel->appendChild( $a_entity_pl );
-						$a_entity_panel->appendChild( $a_entity_ex );
-
-						$ascenePlayer->appendChild( $a_entity_panel );
-
-						$a_video = $dom->createElement( 'a-plane' );
-						$a_video->setAttribute( 'id', "video-display_$uuid" );
-						$a_video->setAttribute( 'video-controls', "id: $uuid; orig_pos:$pos_x,$pos_y,$pos_z; orig_rot:$rot_x,$rot_y,$rot_z" );
-						$a_video->setAttribute( 'height', '3' );          // Has to match size of the three.js asset
-						$a_video->setAttribute( 'width', '4' );
-						$a_video->setAttribute( 'src', "#video_$uuid" );
-						$a_video->setAttribute( 'material', 'shader: flat; side: double' );
-						$a_video->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$a_video->setAttribute( 'class', 'clickable hideable' );
-
-						$this->setAffineTransformations( $a_video, $contentObject );
-
-						$ascene->appendChild( $a_video );
-
-						break;
-
-					case 'poi-link':
-						$assets = $dom->getElementById( 'scene-assets' );
-
-						$asset_item = $dom->createElement( 'a-asset-item' );
-						$asset_item->setAttribute( 'id', "entity_$uuid" );
-						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
-						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
-						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
-						$assets->appendChild( $asset_item );
-
-						$sc_x       = $contentObject->scale[0];
-						$sc_y       = $contentObject->scale[1];
-						$sc_z       = $contentObject->scale[2];
-						$gltf_model = $dom->createElement( 'a-entity' );
-						$gltf_model->setAttribute( 'gltf-model', '#' . "entity_$uuid" );
-						$gltf_model->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$gltf_model->appendChild( $dom->createTextNode( '' ) );
-						$material = '';
-						$this->setMaterial( $material, $contentObject );
-						$this->setAffineTransformations( $gltf_model, $contentObject );
-						$gltf_model->setAttribute( 'class', 'override-materials raycastable hideable' );
-						$gltf_model->setAttribute( 'material', $material );
-						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
-						$gltf_model->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$gltf_model->setAttribute( 'link-listener', $contentObject->poi_link_url );
-						$gltf_model->setAttribute( 'highlight', "$uuid" );
-						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );
-
-						$ascene->appendChild( $gltf_model );
-
-						break;
-					case 'chat':
-						$assets = $dom->getElementById( 'scene-assets' );
-
-						$asset_item = $dom->createElement( 'a-asset-item' );
-						$asset_item->setAttribute( 'id', $uuid );
-						$asset_item->setAttribute( 'src', '' . $this->normalize_url( $contentObject->glb_path ) . '' );
-						$asset_item->setAttribute( 'response-type', 'arraybuffer' );
-						$asset_item->setAttribute( 'crossorigin', 'anonymous' );
-
-						$assets->appendChild( $asset_item );
-
-						$asset_indicator_item = $dom->createElement( 'a-asset-item' );
-						$asset_indicator_item->setAttribute( 'id', 'check_indicator_id' );
-						$asset_indicator_item->setAttribute( 'src', '' . $this->plugin_path_url . 'assets/checkmark.glb' . '' );
-						$asset_indicator_item->setAttribute( 'response-type', 'arraybuffer' );
-						$asset_indicator_item->setAttribute( 'crossorigin', 'anonymous' );
-
-						$assets->appendChild( $asset_indicator_item );
-
-						$asset_indicator_item = $dom->createElement( 'a-asset-item' );
-						$asset_indicator_item->setAttribute( 'id', 'x_indicator_id' );
-						$asset_indicator_item->setAttribute( 'src', '' . $this->plugin_path_url . 'assets/xmark.glb' . '' );
-						$asset_indicator_item->setAttribute( 'response-type', 'arraybuffer' );
-						$asset_indicator_item->setAttribute( 'crossorigin', 'anonymous' );
-
-						$assets->appendChild( $asset_indicator_item );
-
-						$sc_x                = $contentObject->scale[0];
-						$sc_y                = $contentObject->scale[1];
-						$sc_z                = $contentObject->scale[2];
-						$chat_indicator_full = false;
-
-						$gltf_model = $dom->createElement( 'a-entity' );
-						$gltf_model->setAttribute( 'gltf-model', '#' . $uuid );
-						$gltf_model->setAttribute( 'id', $uuid );
-						$gltf_model->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$num_participants = $contentObject->poi_chat_participants;
-						if ( filter_var( $contentObject->poi_chat_indicators, FILTER_VALIDATE_BOOLEAN ) === true ) {
-							$gltf_model->setAttribute( 'indicator-availability', "isfull: $chat_indicator_full; num_participants: $num_participants" );
-						}
-
-						$gltf_model->appendChild( $dom->createTextNode( '' ) );
-						$material = '';
-
-						$this->setAffineTransformations( $gltf_model, $contentObject );
-						$this->setMaterial( $material, $contentObject );
-						$gltf_model->setAttribute( 'class', 'override-materials raycastable hideable non-vr' );
-						$gltf_model->setAttribute( 'material', $material );
-						$gltf_model->setAttribute( 'help-chat', "scene_id: $scene_id; num_participants: $num_participants" );
-						$gltf_model->setAttribute( 'clear-frustum-culling', '' );
-						$gltf_model->setAttribute( 'preload', 'auto' );
-						$gltf_model->setAttribute( 'shadow', 'cast: true; receive: true' );
-						$gltf_model->setAttribute( 'title', $contentObject->poi_chat_title );
-
-						$ascene->appendChild( $gltf_model );
-						break;
-
-					case 'poi-imagetext':
-						$assets            = $dom->getElementById( 'scene-assets' );
-						$a_image_asset_exp = $dom->createElement( 'img' );
-						$a_image_asset_exp->setAttribute( 'crossorigin', 'anonymous' );
-						$a_image_asset_main = $dom->createElement( 'img' );
-						$a_image_asset_main->setAttribute( 'crossorigin', 'anonymous' );
-						$a_image_asset_esc = $dom->createElement( 'img' );
-						$a_image_asset_esc->setAttribute( 'crossorigin', 'anonymous' );
-						$a_image_asset_left = $dom->createElement( 'img' );
-						$a_image_asset_left->setAttribute( 'crossorigin', 'anonymous' );
-						$a_image_asset_right = $dom->createElement( 'img' );
-						$a_image_asset_right->setAttribute( 'crossorigin', 'anonymous' );
-
-						$a_image_asset_main->setAttribute( 'id', "main_img_$uuid" );
-						if ( $contentObject->poi_img_path != 'false' ) {
-							$a_image_asset_main->setAttribute( 'src', $this->normalize_url( $contentObject->poi_img_path ) );
-						}
-
-						$a_image_asset_esc->setAttribute( 'id', "esc_img_$uuid" );
-						$a_image_asset_esc->setAttribute( 'src', $this->plugin_path_url . 'assets/images/x_2f3542.png' );
-
-						$a_image_asset_left->setAttribute( 'id', "left_img_$uuid" );
-						$a_image_asset_left->setAttribute( 'src', $this->plugin_path_url . 'assets/images/arrow_left_2f3542.png' );
-
-						$a_image_asset_right->setAttribute( 'id', "right_img_$uuid" );
-						$a_image_asset_right->setAttribute( 'src', $this->plugin_path_url . 'assets/images/arrow_right_2f3542.png' );
-
-						$assets->appendChild( $a_image_asset_exp );
-						$assets->appendChild( $a_image_asset_main );
-						$assets->appendChild( $a_image_asset_esc );
-
-						$assets->appendChild( $a_image_asset_left );
-						$assets->appendChild( $a_image_asset_right );
-
-						$sc_x = $contentObject->scale[0];
-						$sc_y = $contentObject->scale[1];
-						$sc_z = $contentObject->scale[2];
-
-						$a_ui_entity = $dom->createElement( 'a-entity' );
-						$a_ui_entity->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-						$a_ui_entity->setAttribute( 'id', 'ui' );
-						$a_ui_entity->setAttribute( 'class', 'hideable raycastable' );
-
-						$this->setAffineTransformations( $a_ui_entity, $contentObject );
-
-						$a_menu_entity = $dom->createElement( 'a-entity' );
-						$a_menu_entity->setAttribute( 'id', 'menu' );
-						$a_menu_entity->setAttribute( 'highlight', "$uuid" );
-						$a_menu_entity->setAttribute( 'class', 'hideable raycastable' );
-						$a_menu_entity->setAttribute( 'original-scale', '1 1 1' );
-
-						$a_button_entity = $dom->createElement( 'a-entity' );
-						$a_button_entity->setAttribute( 'id', "button_poi_$uuid" );
-						$a_button_entity->setAttribute( 'mixin', 'frame' );
-						$a_button_entity->setAttribute( 'class', 'raycastable menu-button hideable' );
-						$a_button_entity->setAttribute( 'original-scale', '1 1 1' );
-
-						$material = '';
-						$this->setMaterial( $material, $contentObject );
-						$a_button_entity->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( $contentObject->glb_path ) . ')' );
-						$a_button_entity->setAttribute( 'material', $material );
-						$a_button_entity->setAttribute( 'shadow', 'cast: true; receive: true' );
-
-						$a_menu_entity->appendChild( $a_button_entity );
-						$a_ui_entity->appendChild( $a_menu_entity );
-						$ascene->appendChild( $a_ui_entity );
-
-						$a_panel_entity = $dom->createElement( 'a-entity' );
-						$a_panel_entity->setAttribute( 'id', "infoPanel_$uuid" );
-						$a_panel_entity->setAttribute( 'position', '0 0.2 -2' );
-
-						$a_panel_entity->setAttribute( 'info-panel', "$uuid" );
-						$a_panel_entity->setAttribute( 'visible', 'false' );
-						$a_panel_entity->setAttribute( 'scale', '0.001 0.001 0.001' );
-
-						$a_panel_entity->setAttribute( 'geometry', 'primitive: plane; width: 1.5; height: 1.8' );
-						$a_panel_entity->setAttribute( 'material', 'color: #f1f2f6; shader: flat; depthTest: false; transparent: true' );
-						$a_panel_entity->setAttribute( 'class', 'raycastable hideable ' );
-						$a_panel_entity->setAttribute( 'original-scale', '0.001 0.001 0.001' );
-
-						$a_main_img_entity = $dom->createElement( 'a-entity' );
-						$a_main_img_entity->setAttribute( 'id', "top_img_$uuid" );
-						$a_main_img_entity->setAttribute( 'material', "src: #main_img_$uuid" );
-						$a_main_img_entity->setAttribute( 'visible', 'false' );
-						$a_main_img_entity->setAttribute( 'original-scale', '1 1 1' );
-
-						$a_title_img_entity = $dom->createElement( 'a-entity' );
-						$a_title_img_entity->setAttribute( 'id', "title_$uuid" );
-
-						$tit_font_path = $this->plugin_path_url . 'assets/fonts/Roboto-Black-msdf.json';
-						$a_title_img_entity->setAttribute( 'text', "shader: msdf; wrapCount: 30; anchor: left; negate:false; width: 1.2; font: $tit_font_path; color: #2f3542;" );
-						$a_title_img_entity->setAttribute( 'title_to_add', "$contentObject->poi_img_title" );
-						$a_title_img_entity->setAttribute( 'class', 'hideable' );
-						$a_title_img_entity->setAttribute( 'original-scale', '1 1 1' );
-
-						$a_exit_img_entity = $dom->createElement( 'a-entity' );
-						$a_exit_img_entity->setAttribute( 'id', "exit_$uuid" );
-						$a_exit_img_entity->setAttribute( 'mixin', 'poiEsc' );
-						$a_exit_img_entity->setAttribute( 'material', "src: #esc_img_$uuid; depthTest: false; transparent: true" );
-						$a_exit_img_entity->setAttribute( 'class', 'raycastable hideable non-clickable' );
-						$a_exit_img_entity->setAttribute( 'scale', '0.2 0.2 0.2' );
-						$a_exit_img_entity->setAttribute( 'original-scale', '0.2 0.2 0.2' );
-
-						$exit_desc_entity_panel = $dom->createElement( 'a-entity' );
-						$exit_desc_entity_panel->setAttribute( 'id', "exit_panel_$uuid" );
-						$exit_desc_entity_panel->setAttribute( 'mixin', 'poiEscFrame' );
-						$exit_desc_entity_panel->setAttribute( 'scale', '1 1 1' );
-						$exit_desc_entity_panel->setAttribute( 'original-scale', '1 1 1' );
-						$exit_desc_entity_panel->setAttribute( 'class', 'raycastable hideable non-clickable' );
-
-						$a_panel_entity->appendChild( $a_exit_img_entity );
-						$a_panel_entity->appendChild( $exit_desc_entity_panel );
-						$a_panel_entity->appendChild( $a_main_img_entity );
-						$a_panel_entity->appendChild( $a_title_img_entity );
-
-						if ( $contentObject->poi_img_content ) {
-							$a_main_img_entity->setAttribute( 'mixin', 'poiImage' );
-							$a_title_img_entity->setAttribute( 'position', '-0.68 -0.1 0' );
-
-							$a_desc_img_entity = $dom->createElement( 'a-entity' );
-							$a_desc_img_entity->setAttribute( 'id', "desc_$uuid" );
-							$a_desc_img_entity->setAttribute( 'position', '-0.68 -0.3 0' );
-							$desc_font_path = $this->plugin_path_url . 'assets/fonts/Roboto-Regular-msdf.json';
-							$content_length = 90;
-
-							if ( strlen( $contentObject->poi_img_content ) > $content_length ) {
-
-								$next_desc_entity = $dom->createElement( 'a-entity' );
-								$next_desc_entity->setAttribute( 'id', "next_$uuid" );
-								$next_desc_entity->setAttribute( 'mixin', 'poiImgNext' );
-								$next_desc_entity->setAttribute( 'material', "src: #right_img_$uuid; depthTest: false; transparent: true" );
-								$next_desc_entity->setAttribute( 'class', 'raycastable hideable non-clickable' );
-								$next_desc_entity->setAttribute( 'scale', '0.14 0.14 0.14' );
-								$next_desc_entity->setAttribute( 'original-scale', '0.14 0.14 0.14' );
-
-								$next_desc_entity_panel = $dom->createElement( 'a-entity' );
-								$next_desc_entity_panel->setAttribute( 'id', "next_panel_$uuid" );
-								$next_desc_entity_panel->setAttribute( 'mixin', 'poiImgNextFrame' );
-								$next_desc_entity_panel->setAttribute( 'scale', '1 1 1' );
-								$next_desc_entity_panel->setAttribute( 'original-scale', '1 1 1' );
-								$next_desc_entity_panel->setAttribute( 'class', 'raycastable hideable non-clickable' );
-
-								$a_panel_entity->appendChild( $next_desc_entity );
-								$a_panel_entity->appendChild( $next_desc_entity_panel );
-
-								$prev_desc_entity = $dom->createElement( 'a-entity' );
-								$prev_desc_entity->setAttribute( 'id', "prev_$uuid" );
-								$prev_desc_entity->setAttribute( 'mixin', 'poiImgPrev' );
-
-								$prev_desc_entity->setAttribute( 'material', "src: #left_img_$uuid; depthTest: false; transparent: true" );
-								$prev_desc_entity->setAttribute( 'class', 'raycastable hideable non-clickable' );
-								$prev_desc_entity->setAttribute( 'scale', '0.14 0.14 0.14' );
-								$prev_desc_entity->setAttribute( 'original-scale', '0.14 0.14 0.14' );
-
-								$prev_desc_entity_panel = $dom->createElement( 'a-entity' );
-								$prev_desc_entity_panel->setAttribute( 'id', "prev_panel_$uuid" );
-								$prev_desc_entity_panel->setAttribute( 'mixin', 'poiImgPrevFrame' );
-								$prev_desc_entity_panel->setAttribute( 'scale', '1 1 1' );
-								$prev_desc_entity_panel->setAttribute( 'original-scale', '1 1 1' );
-								$prev_desc_entity_panel->setAttribute( 'class', 'raycastable hideable non-clickable' );
-
-								$a_panel_entity->appendChild( $prev_desc_entity );
-								$a_panel_entity->appendChild( $prev_desc_entity_panel );
-
-								$a_count_page_entity = $dom->createElement( 'a-entity' );
-								$a_count_page_entity->setAttribute( 'id', "page_$uuid" );
-								$a_count_page_entity->setAttribute( 'position', '0.35 -0.8 -0.1' );
-
-								$a_count_page_entity->setAttribute( 'text', "baseline: top; wrapCount: 30; width: 0.8; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: #2f3542; value:" );
-								$a_panel_entity->appendChild( $a_count_page_entity );
-							}
-
-							$a_desc_img_entity = $dom->createElement( 'a-entity' );
-							$a_desc_img_entity->setAttribute( 'id', "desc_$uuid" );
-							$a_desc_img_entity->setAttribute( 'position', '-0.68 -0.4 0' );
-
-							$a_desc_img_entity->setAttribute( 'text', "baseline: top; wrapCount: 30; width: 1.2; shader: msdf; negate:false; anchor: left; font: $desc_font_path; color: #2f3542; value:" );
-							$a_desc_img_entity->setAttribute( 'text_to_add', "$contentObject->poi_img_content" );
-							$a_panel_entity->appendChild( $a_desc_img_entity );
-
-						} else {
-							$a_main_img_entity->setAttribute( 'mixin', 'poiImageFull' );
-							$a_title_img_entity->setAttribute( 'position', '-0.68 -0.8 0' );
-						}
-
-						$ascenePlayer->appendChild( $a_panel_entity );
-
-						break;
-
-					case 'assessment':
-						// Immerse connector integration: assessment anchors only compile inside
-						// Immerse projects and render via a dedicated HTML overlay component.
-						if ( $is_immerse_project ) {
-							$this->append_immerse_assessment_entity( $dom, $ascene, $contentObject );
-						}
-						break;
-				}
-			}
-		}
+		// 3. Render Objects using the new modular pipeline (Phase 3 Refactoring Win)
+		$this->render_scene_objects( $dom, $ascene, $a_asset, $objects, $project_id, $scene_id, [
+			'showPawnPositions' => $showPawnPositions
+		] );
 
 		$this->markDelayedRevealEntities( $dom );
 
@@ -1500,43 +613,41 @@ class VRodos_Compiler_Manager {
 		$content = str_replace( 'appname', $app_name, $content );
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
+		
+		// specific path for Immerse Assessment (different location)
+		$content = str_replace( 'src="js/components/immerse-assessment_component.js"', 'src="' . $this->plugin_path_url . 'js_libs/aframe_libs/js/components/immerse-assessment_component.js"', $content );
+
+		// Bulk path redirection for all local assets to plugin absolute URLs
+		$content = str_replace( 'src="js/components/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/components/', $content );
+		$content = str_replace( 'src="js/master/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/master/', $content );
+		$content = str_replace( 'src="js/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/', $content );
+		$content = str_replace( 'href="css/', 'href="' . $this->plugin_path_url . 'runtime/assets/css/', $content );
+
 		$content = str_replace(
 			'VRODOS_PLUGIN_URL_PLACEHOLDER',
-			esc_url( $this->plugin_path_url ),
+			$this->normalize_url( $this->plugin_path_url ),
 			$content
 		);
 
-		$content = str_replace( 'AFRAME_CLEARCOLOR_PLACEHOLDER', $scene_json->metadata->ClearColor, $content );
-
-		// Replace Fog string
-		if ( isset( $scene_json->metadata->fogCategory ) && $scene_json->metadata->fogCategory !== '0' ) {
-			if ( $scene_json->metadata->fogCategory === '1' ) {
-				$fogtype = 'linear';
-			} else {
-				$fogtype = 'exponential';
-			}
-
-			$fogcolor = ltrim( $scene_json->metadata->fogcolor, '#' );
-
-			$fog_attr = 'type: ' . $fogtype .
-			            '; color: #' . $fogcolor .
-			            '; far: ' . ( $scene_json->metadata->fogfar ?? '1000' ) .
-			            '; density: ' . ( 1.5 * ( $scene_json->metadata->fogdensity ?? '0.00000001' ) ) .
-			            '; near: ' . ( $scene_json->metadata->fognear ?? '0' );
-
-			$content = str_replace( 'AFRAME_FOG_PLACEHOLDER', $fog_attr, $content );
-		} else {
-			$content = str_replace( 'AFRAME_FOG_PLACEHOLDER', ' ', $content );
-		}
+		// Placeholder replacements moved to apply_scene_environment for consistency
 
 		// Create Basic dom structure for an aframe page
 		$basicDomElements = $this->createBasicDomStructureAframeActor( $content, $scene_json );
 
-		$dom     = $basicDomElements['dom'];
-		$objects = $basicDomElements['objects'];
-
+		$dom        = $basicDomElements['dom'];
+		$objects    = $basicDomElements['objects'];
 		$actionsDiv = $basicDomElements['actionsDiv'];
+		$ascene     = $basicDomElements['ascene'];
 
+		$this->apply_scene_environment( $content, $dom, $ascene, $scene_json, $project_id );
+
+		// Use helper to ensure a-assets exists and is attached
+		$a_asset = $this->get_or_create_assets_container( $dom, $ascene );
+
+		// Render scene objects modularly
+		$this->render_scene_objects( $dom, $ascene, $a_asset, $objects, $project_id, $scene_id );
+
+		$this->markDelayedRevealEntities( $dom );
 		$i = 0;
 		foreach ( $objects as $contentObject ) {
 
@@ -1581,5 +692,613 @@ class VRodos_Compiler_Manager {
 
 		// Write back to root
 		return $this->writer( $this->plugin_path_dir . '/runtime/build/Simple_Client_' . $scene_id . '.html', $contentNew );
+	}
+
+	/**
+	 * Modularized Environment Settings
+	 */
+	private function apply_scene_environment( &$content, $dom, $ascene, $scene_json, $project_id ) {
+		$metadata = $scene_json->metadata;
+		$bcg_choice            = $metadata->backgroundStyleOption ?? '0';
+		$preset_choice         = $metadata->backgroundPresetOption ?? 'None';
+		$clear_color           = $metadata->ClearColor ?? '#ffffff';
+		$pr_type               = $this->get_project_type_slug( (int) $project_id );
+		$sel_choice            = $bcg_choice;
+		$pres_choice           = $preset_choice;
+		$fog_cat               = $metadata->fogCategory ?? 0;
+		$fog_color             = $metadata->fogcolor ?? '#FFFFFF';
+		$fog_far               = $metadata->fogfar ?? 1000;
+		$fog_near              = $metadata->fognear ?? 0;
+		$fog_density           = $metadata->fogdensity ?? 0.00000001;
+		$cam_pos               = isset($scene_json->objects->avatarCamera) ? implode(' ', $scene_json->objects->avatarCamera->position) : '0 1.6 0';
+		$cam_rot_y             = isset($scene_json->objects->avatarCamera) ? (180 / pi() * $scene_json->objects->avatarCamera->rotation[1]) : '0';
+		
+		$avatar_enabled    = isset( $metadata->enableAvatar ) && filter_var( $metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$public_chat       = isset( $metadata->enableGeneralChat ) && filter_var( $metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$movement_disabled = isset( $metadata->disableMovement ) && filter_var( $metadata->disableMovement, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$ground_enabled    = isset( $metadata->backgroundPresetGroundEnabled ) && filter_var( $metadata->backgroundPresetGroundEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$fp_meter_enabled  = isset( $metadata->enableFPSMeter ) && filter_var( $metadata->enableFPSMeter, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+
+		$ascene->setAttribute( 'scene-settings',
+			"color: $clear_color; pr_type: $pr_type; selChoice: $sel_choice; presChoice: $pres_choice; presetGroundEnabled: $ground_enabled; " .
+			"fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density; " .
+			"avatar_enabled: $avatar_enabled; movement_disabled: $movement_disabled; fpsMeterEnabled: $fp_meter_enabled; " .
+			"cam_position: $cam_pos; cam_rotation_y: $cam_rot_y; public_chat: $public_chat" .
+			( isset( $metadata->composite_params ) ? "; " . $metadata->composite_params : "" )
+		);
+
+		$image_path            = $metadata->backgroundImagePath ?? '';
+		
+		$projectType = $this->get_project_type_slug( (int) $project_id );
+
+		// 1. Handle Background (Skybox)
+		if ( $bcg_choice == '3' && $image_path ) {
+			$a_asset = $this->get_or_create_assets_container( $dom, $ascene );
+			
+			$a_asset_sky = $dom->createElement( 'img' );
+			$a_asset_sky->setAttribute( 'id', 'custom_sky' );
+			$a_asset_sky->setAttribute( 'src', $this->normalize_url( $image_path ) );
+			$a_asset_sky->setAttribute( 'crossorigin', 'anonymous' );
+			$a_asset->appendChild( $a_asset_sky );
+		}
+
+		// 2. Map all metadata for scene-settings component
+		$movement_disabled = isset( $metadata->disableMovement ) && filter_var( $metadata->disableMovement, FILTER_VALIDATE_BOOLEAN );
+		$avatar_enabled    = isset( $metadata->enableAvatar ) && filter_var( $metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN );
+		$collision_mode    = $metadata->aframeCollisionMode ?? 'auto';
+		$render_quality    = $metadata->aframeRenderQuality ?? 'standard';
+		$shadow_quality    = $metadata->aframeShadowQuality ?? 'medium';
+		$aa_quality        = $metadata->aframeAAQuality ?? 'balanced';
+		$fps_meter_enabled = isset( $metadata->aframeFPSMeterEnabled ) && filter_var( $metadata->aframeFPSMeterEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$legacy_horizon_size = max( 500, min( 8000, (int)($metadata->aframeLegacyHorizonStageSize ?? 5000) ) );
+		$ao_preset         = $metadata->aframeAmbientOcclusionPreset ?? 'balanced';
+		$cs_preset         = $metadata->aframeContactShadowPreset ?? 'soft';
+		$post_fx_enabled   = isset( $metadata->aframePostFXEnabled ) && filter_var( $metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_engine    = ( ($metadata->aframePostFXEngine ?? 'legacy') === 'pmndrs' ) ? 'pmndrs' : 'legacy';
+		$reflection_profile = $metadata->aframeReflectionProfile ?? 'balanced';
+		$reflection_source = $metadata->aframeReflectionSource ?? 'hdr';
+		$horizon_preset    = $metadata->aframeHorizonSkyPreset ?? 'natural';
+		$env_map_preset    = $metadata->aframeEnvMapPreset ?? 'none';
+		$cam_pos           = isset($scene_json->objects->avatarCamera) ? implode(' ', $scene_json->objects->avatarCamera->position) : '0 1.6 0';
+		$cam_rot_y         = isset($scene_json->objects->avatarCamera) ? (180 / pi() * $scene_json->objects->avatarCamera->rotation[1]) : '0';
+		$public_chat       = isset( $metadata->enableGeneralChat ) && filter_var( $metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+
+		// Fog Metadata
+		$fog_cat     = $metadata->fogCategory ?? 0;
+		$fog_color   = $metadata->fogcolor ?? '#FFFFFF';
+		$fog_far     = $metadata->fogfar ?? 1000;
+		$fog_near    = $metadata->fognear ?? 0;
+		$fog_density = $metadata->fogdensity ?? 0.00000001;
+
+		$scene_settings_attr = "color: " . ($metadata->ClearColor ?? '#ffffff') . 
+			"; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled" .
+			"; movement_disabled: " . ($movement_disabled ? 'true' : 'false') . 
+			"; avatar_enabled: " . ($avatar_enabled ? 'true' : 'false') .
+			"; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality" .
+			"; fpsMeterEnabled: $fps_meter_enabled; legacyHorizonStageSize: $legacy_horizon_size; ambientOcclusionPreset: $ao_preset" .
+			"; contactShadowPreset: $cs_preset; postFXEnabled: $post_fx_enabled; postFXEngine: $post_fx_engine" .
+			"; reflectionProfile: $reflection_profile; reflectionSource: $reflection_source; horizonSkyPreset: $horizon_preset" .
+			"; envMapPreset: $env_map_preset; cam_position: $cam_pos; cam_rotation_y: $cam_rot_y; public_chat: $public_chat" .
+			"; fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density";
+
+		$ascene->setAttribute( 'scene-settings', $scene_settings_attr );
+
+		// 3. PMNDRS specific tweaks
+		if ( $post_fx_engine === 'pmndrs' ) {
+			$aa_mode    = $metadata->aframePmndrsAAMode    ?? ( $aa_quality === 'off' ? 'none' : 'msaa' );
+			$aa_preset  = $metadata->aframePmndrsAAPreset  ?? ( $aa_quality === 'ultra' ? 'ultra' : 'high' );
+			$bloom_int  = max( 0.0, min( 3.0, (float)($metadata->aframePmndrsBloomIntensity ?? 1.0) ) );
+			$bloom_thr  = max( 0.0, min( 1.0, (float)($metadata->aframePmndrsBloomThreshold ?? 0.62) ) );
+			$vign_en    = isset($metadata->aframePmndrsVignetteEnabled) && filter_var($metadata->aframePmndrsVignetteEnabled, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+			$vign_dark  = max( 0.0, min( 1.0, (float)($metadata->aframePmndrsVignetteDarkness ?? 0.5) ) );
+			$tm_exp     = max( 0.3, min( 2.5, (float)($metadata->aframePmndrsToneMappingExposure ?? 1.0) ) );
+
+			$pmndrs_attr = "aaMode: $aa_mode; aaPreset: $aa_preset; bloomIntensity: $bloom_int; bloomThreshold: $bloom_thr" .
+				"; vignetteEnabled: $vign_en; vignetteDarkness: $vign_dark; toneMappingExposure: $tm_exp";
+			
+			$ascene->setAttribute( 'vrodos-postprocessing-pmndrs', $pmndrs_attr );
+		}
+
+		// 4. Update Fog and Background directly in DOM (fixes A-Frame 1.7.0+ parsing issues)
+		$clear_color = $metadata->ClearColor ?? '#ffffff';
+		$ascene->setAttribute( 'background', "color: $clear_color" );
+
+		if ( $fog_cat != 0 ) {
+			$fogtype = ($fog_cat == 1) ? 'linear' : 'exponential';
+			$fogcolor_hex = '#' . ltrim( $fog_color, '#' );
+			$fog_replace = "type: $fogtype; color: $fogcolor_hex; far: $fog_far; density: " . (1.5 * $fog_density) . "; near: $fog_near";
+			$ascene->setAttribute( 'fog', $fog_replace );
+		} else {
+			$ascene->removeAttribute( 'fog' );
+		}
+	}
+
+	/**
+	 * Asset Registry Helper
+	 */
+	private function get_or_create_assets_container( $dom, $ascene ) {
+		$a_asset = $dom->getElementsByTagName( 'a-assets' )->item(0);
+		if ( ! $a_asset ) {
+			$a_asset = $dom->createElement( 'a-assets' );
+			// Insert as the first child of the scene for A-Frame best practices
+			if ( $ascene->firstChild ) {
+				$ascene->insertBefore( $a_asset, $ascene->firstChild );
+			} else {
+				$ascene->appendChild( $a_asset );
+			}
+		}
+		return $a_asset;
+	}
+
+	/**
+	 * Modularized Object Renderer
+	 */
+	private function render_scene_objects( $dom, $ascene, $assets, $objects, $project_id, $scene_id, $config = [] ) {
+		foreach ( $objects as $obj ) {
+			$this->render_scene_object( $dom, $ascene, $assets, $obj, array_merge( $config, [
+				'project_id' => $project_id,
+				'scene_id'   => $scene_id
+			] ) );
+		}
+	}
+
+	private function render_scene_object( $dom, $ascene, $assets, $obj, $config = [] ) {
+		$cat  = $obj->category_slug ?? $obj->category_name ?? '';
+
+		switch ( $cat ) {
+			case 'lightSun':
+			case 'lightSpot':
+			case 'lightLamp':
+			case 'lightAmbient':
+				$this->render_light_entity( $dom, $ascene, $obj );
+				break;
+			case 'decoration':
+			case 'walkable-surface':
+			case 'door':
+			case 'poi-link':
+			case 'chat':
+				$this->render_gltf_entity( $dom, $ascene, $assets, $obj );
+				break;
+			case 'image':
+			case 'video':
+				$this->render_media_entity( $dom, $ascene, $assets, $obj );
+				break;
+			case 'poi-imagetext':
+				$this->render_poi_imagetext_entity( $dom, $ascene, $assets, $obj );
+				break;
+			case 'pawn':
+				$this->render_pawn_entity( $dom, $ascene, $obj, $config );
+				break;
+			case 'assessment':
+				if ( $this->is_immerse_project( (int) $config['project_id'] ) ) {
+					$this->append_immerse_assessment_entity( $dom, $ascene, $obj );
+				}
+				break;
+		}
+	}
+
+	private function render_pawn_entity( $dom, $ascene, $obj, $config ) {
+		if ( isset( $config['showPawnPositions'] ) && $config['showPawnPositions'] === 'true' ) {
+			$pawn = $dom->createElement( 'a-entity' );
+			$pawn->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( $this->plugin_path_url . 'assets/pawn.glb' ) . ')' );
+			$this->setAffineTransformations( $pawn, $obj );
+			$ascene->appendChild( $pawn );
+		}
+	}
+
+	private function render_light_entity( $dom, $ascene, $obj ) {
+		$uuid = $obj->uuid ?? '';
+		$cat  = $obj->category_name ?? $obj->category_slug ?? '';
+		$type = $this->map_light_type( $cat );
+		
+		$a_light = $dom->createElement( 'a-light' );
+		$a_light->appendChild( $dom->createTextNode( '' ) );
+		$this->setAffineTransformations( $a_light, $obj );
+
+		if ( $cat === 'lightSun' ) {
+			$a_light->setAttribute( 'id', 'lighttarget' );
+		}
+
+		$color = $this->colorRGB2Hex( $obj->lightcolor ?? null );
+		$intensity = $obj->lightintensity ?? '1';
+		$light_attr = "type: $type; color: $color; intensity: $intensity";
+
+		if ( in_array( $type, [ 'directional', 'spot' ] ) && ! empty( $obj->targetposition ) ) {
+			$target_id = $uuid . 'target';
+			$target = $dom->createElement( 'a-entity' );
+			$target->setAttribute( 'id', $target_id );
+			$target->setAttribute( 'position', implode( ' ', (array) $obj->targetposition ) );
+			$ascene->appendChild( $target );
+			$a_light->setAttribute( 'target', '#' . $target_id );
+			
+			if ( $type === 'directional' ) {
+				$is_casting_shadow = isset( $obj->castingShadow ) ? ( $obj->castingShadow == '1' ? 'true' : 'false' ) : 'false';
+				$light_attr .= '; castShadow: ' . $is_casting_shadow;
+				$light_attr .= '; shadowMapHeight: ' . ( $obj->shadowMapHeight ?? '512' );
+				$light_attr .= '; shadowMapWidth: ' . ( $obj->shadowMapWidth ?? '512' );
+				$light_attr .= '; shadowCameraTop: ' . ( $obj->shadowCameraTop ?? '5' );
+				$light_attr .= '; shadowCameraRight: ' . ( $obj->shadowCameraRight ?? '5' );
+				$light_attr .= '; shadowCameraLeft: ' . ( $obj->shadowCameraLeft ?? '-5' );
+				$light_attr .= '; shadowCameraBottom: ' . ( $obj->shadowCameraBottom ?? '-5' );
+				$light_attr .= '; shadowBias: ' . ( $obj->shadowBias ?? '0' );
+				$light_attr .= '; shadowCameraVisible: false';
+
+				// a-sun-sky logic
+				if ( isset( $obj->sunSky ) && $obj->sunSky == '1' && !empty($obj->position) && !empty($obj->targetposition) ) {
+					$a_sun_sky = $dom->createElement( 'a-sun-sky' );
+					$sun_pos = (array) $obj->position;
+					$targ_pos = (array) $obj->targetposition;
+					if (count($sun_pos) >= 3 && count($targ_pos) >= 3) {
+						$sky_sun = [$sun_pos[0] - $targ_pos[0], $sun_pos[1] - $targ_pos[1], $sun_pos[2] - $targ_pos[2]];
+						$a_sun_sky->setAttribute('material', "side:back; sunPosition: {$sky_sun[0]} {$sky_sun[1]} {$sky_sun[2]}");
+						$ascene->appendChild( $a_sun_sky );
+					}
+				}
+			}
+		} elseif ( $type === 'point' ) {
+			$light_attr .= '; distance: ' . ($obj->lightdistance ?? '0');
+			$light_attr .= '; decay: ' . ($obj->lightdecay ?? '1');
+		}
+
+		$a_light->setAttribute( 'light', $light_attr );
+		$ascene->appendChild( $a_light );
+	}
+
+	private function render_gltf_entity( $dom, $ascene, $assets, $obj ) {
+		$uuid = $obj->uuid ?? '';
+		$cat  = $obj->category_slug ?? '';
+		
+		// Add to assets
+		$asset_item = $dom->createElement( 'a-asset-item' );
+		$asset_item->setAttribute( 'id', $uuid );
+		$asset_item->setAttribute( 'src', $this->normalize_url( $obj->glb_path ?? '' ) );
+		$asset_item->setAttribute( 'response-type', 'arraybuffer' );
+		$asset_item->setAttribute( 'crossorigin', 'anonymous' );
+		$assets->appendChild( $asset_item );
+
+		// Create entity
+		$entity = $dom->createElement( 'a-entity' );
+		$entity->setAttribute( 'gltf-model', '#' . $uuid );
+		
+		$sc_x = $obj->scale[0] ?? 1;
+		$sc_y = $obj->scale[1] ?? 1;
+		$sc_z = $obj->scale[2] ?? 1;
+		$entity->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
+		
+		$this->setAffineTransformations( $entity, $obj );
+		
+		$class = 'override-materials hideable';
+		
+		if ( $cat === 'walkable-surface' ) {
+			$class .= ' vrodos-navmesh';
+			$walk_behavior = ( isset( $obj->walkableBehavior ) && 'auto' === strtolower( (string) $obj->walkableBehavior ) ) ? 'auto' : 'precise';
+			$entity->setAttribute( 'data-vrodos-navmesh', 'true' );
+			$entity->setAttribute( 'data-vrodos-walk-behavior', $walk_behavior );
+		} elseif ( $cat === 'door' ) {
+			$class .= ' raycastable';
+			$entity->setAttribute( 'id', "entity_$uuid" );
+			$entity->setAttribute( 'highlight', "entity_$uuid" );
+			if ( ! empty( $obj->sceneID_target ) ) {
+				$this->includeDoorFunctionality( $entity, $obj->sceneID_target );
+			}
+		} elseif ( $cat === 'poi-link' ) {
+			$class .= ' raycastable';
+			$entity->setAttribute( 'link-listener', (string) ($obj->poi_link_url ?? '') );
+			$entity->setAttribute( 'highlight', $uuid );
+		} elseif ( $cat === 'chat' ) {
+			// Help Chat POI
+			$class .= ' raycastable';
+			$entity->setAttribute( 'id', "entity_$uuid" );
+			$entity->setAttribute( 'highlight', "entity_$uuid" );
+			$entity->setAttribute( 'title', $this->sanitize_text_attr( $obj->poi_help_title ?? 'Help' ) );
+			$entity->setAttribute( 'help-chat', "scene_id: " . ($obj->sceneID_target ?? $scene_id) . "; num_participants: " . ($obj->poi_help_max_participants ?? '-1') );
+		}
+
+		$material = '';
+		$this->setMaterial( $material, $obj );
+		$entity->setAttribute( 'material', $material );
+		$entity->setAttribute( 'class', $class );
+		$entity->setAttribute( 'clear-frustum-culling', '' );
+		$entity->setAttribute( 'shadow', 'cast: true; receive: true' );
+		
+		$ascene->appendChild( $entity );
+	}
+
+	private function render_media_entity( $dom, $ascene, $assets, $obj ) {
+		$uuid = $obj->uuid ?? '';
+		$cat  = $obj->category_slug ?? '';
+
+		if ( $cat === 'image' ) {
+			// Image Asset
+			$a_img = $dom->createElement( 'img' );
+			$a_img->setAttribute( 'id', 'image_' . $uuid );
+			$a_img->setAttribute( 'src', $this->normalize_url( $obj->image_path ?? '' ) );
+			$a_img->setAttribute( 'crossorigin', 'anonymous' );
+			$assets->appendChild( $a_img );
+
+			// Parent entity for dual planes
+			$parent = $dom->createElement( 'a-entity' );
+			$parent->setAttribute( 'id', 'image-display_' . $uuid );
+			$this->setAffineTransformations( $parent, $obj );
+			$parent->setAttribute( 'class', 'hideable' );
+
+			// Determine if transparent (usually yes for PNG POIs)
+			$is_transparent = isset($obj->transparent) ? ($obj->transparent ? 'true' : 'false') : 'true';
+
+			$front = $dom->createElement( 'a-plane' );
+			$front->setAttribute( 'height', '2' );
+			$front->setAttribute( 'width', '2' );
+			$front->setAttribute( 'position', '0 0 0.001' );
+			$front->setAttribute( 'material', "src: #image_$uuid; shader: flat; side: front; transparent: $is_transparent; alphaTest: 0.5; depthWrite: false" );
+			
+			$back = $dom->createElement( 'a-plane' );
+			$back->setAttribute( 'height', '2' );
+			$back->setAttribute( 'width', '2' );
+			$back->setAttribute( 'position', '0 0 -0.001' );
+			$back->setAttribute( 'rotation', '0 180 0' );
+			$back->setAttribute( 'material', "src: #image_$uuid; shader: flat; side: front; transparent: $is_transparent; alphaTest: 0.5; depthWrite: false" );
+
+			$parent->appendChild( $front );
+			$parent->appendChild( $back );
+			$ascene->appendChild( $parent );
+
+		} elseif ( $cat === 'video' ) {
+			// Video Assets (Controls)
+			$v_pl = $dom->createElement( 'img' );
+			$v_pl->setAttribute( 'id', 'video_pl_' . $uuid );
+			$v_pl->setAttribute( 'src', $this->plugin_path_url . 'assets/images/play_2f3542.png' );
+			$assets->appendChild( $v_pl );
+
+			$v_pas = $dom->createElement( 'img' );
+			$v_pas->setAttribute( 'id', 'video_pas_' . $uuid );
+			$v_pas->setAttribute( 'src', $this->plugin_path_url . 'assets/images/pause_2f3542.png' );
+			$assets->appendChild( $v_pas );
+
+			$v_fs = $dom->createElement( 'img' );
+			$v_fs->setAttribute( 'id', 'video_fs_' . $uuid );
+			$v_fs->setAttribute( 'src', $this->plugin_path_url . 'assets/images/fullscreen_2f3542.png' );
+			$assets->appendChild( $v_fs );
+
+			$v_ex = $dom->createElement( 'img' );
+			$v_ex->setAttribute( 'id', 'video_ex_' . $uuid );
+			$v_ex->setAttribute( 'src', $this->plugin_path_url . 'assets/images/exit_2f3542.png' );
+			$assets->appendChild( $v_ex );
+
+			// Video Asset (Source)
+			$video = $dom->createElement( 'video' );
+			$video->setAttribute( 'id', 'video_' . $uuid );
+			$video->setAttribute( 'crossorigin', 'anonymous' );
+			$video->setAttribute( 'src', $this->normalize_url( $obj->video_path ?? '' ) );
+			$video->setAttribute( 'loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
+			$video->setAttribute( 'playsinline', '' );
+			$video->setAttribute( 'webkit-playsinline', '' );
+			$assets->appendChild( $video );
+
+			// Video Display
+			$display = $dom->createElement( 'a-plane' );
+			$display->setAttribute( 'id', 'video-display_' . $uuid );
+			$display->setAttribute( 'width', '4' );
+			$display->setAttribute( 'height', '3' );
+			$display->setAttribute( 'src', '#video_' . $uuid );
+			$display->setAttribute( 'material', 'shader: flat; side: double' );
+			$display->setAttribute( 'class', 'clickable raycastable hideable' );
+			$display->setAttribute( 'original-scale', '1 1 1' );
+			$display->setAttribute( 'video-controls', "id: $uuid" );
+			$this->setAffineTransformations( $display, $obj );
+			$ascene->appendChild( $display );
+
+			// Video Panel (Hidden by default, attached to camera by JS)
+			$panel = $dom->createElement( 'a-entity' );
+			$panel->setAttribute( 'id', 'vid-panel_' . $uuid );
+			$panel->setAttribute( 'mixin', 'vid_panel' );
+			$panel->setAttribute( 'visible', 'false' );
+			$panel->setAttribute( 'scale', '0.0001 0.0001 0.0001' );
+
+			// Exit Frame & Button
+			$exit_frame = $dom->createElement( 'a-entity' );
+			$exit_frame->setAttribute( 'id', 'exit_vid_panel_' . $uuid );
+			$exit_frame->setAttribute( 'mixin', 'poiVidEscFrame' );
+			$exit_frame->setAttribute( 'class', 'raycastable' );
+			$panel->appendChild( $exit_frame );
+
+			$exit_btn = $dom->createElement( 'a-plane' );
+			$exit_btn->setAttribute( 'id', 'ent_ex_' . $uuid );
+			$exit_btn->setAttribute( 'src', '#video_ex_' . $uuid );
+			$exit_btn->setAttribute( 'mixin', 'poiVidEscFrame' );
+			$exit_btn->setAttribute( 'material', 'transparent: true' );
+			$exit_btn->setAttribute( 'class', 'raycastable' );
+			$panel->appendChild( $exit_btn );
+
+			// Play Button
+			$play_btn = $dom->createElement( 'a-plane' );
+			$play_btn->setAttribute( 'id', 'ent_pl_' . $uuid );
+			$play_btn->setAttribute( 'src', '#video_pl_' . $uuid );
+			$play_btn->setAttribute( 'position', '0 -0.2 0.001' );
+			$play_btn->setAttribute( 'width', '0.1' );
+			$play_btn->setAttribute( 'height', '0.1' );
+			$play_btn->setAttribute( 'material', 'transparent: true' );
+			$play_btn->setAttribute( 'class', 'raycastable' );
+			$panel->appendChild( $play_btn );
+
+			// Fullscreen Button
+			$fs_btn = $dom->createElement( 'a-plane' );
+			$fs_btn->setAttribute( 'id', 'ent_fs_' . $uuid );
+			$fs_btn->setAttribute( 'src', '#video_fs_' . $uuid );
+			$fs_btn->setAttribute( 'position', '0.2 -0.2 0.001' );
+			$fs_btn->setAttribute( 'width', '0.1' );
+			$fs_btn->setAttribute( 'height', '0.1' );
+			$fs_btn->setAttribute( 'material', 'transparent: true' );
+			$fs_btn->setAttribute( 'class', 'raycastable' );
+			$panel->appendChild( $fs_btn );
+
+			// Title
+			$title = $dom->createElement( 'a-text' );
+			$title->setAttribute( 'id', 'ent_tit_' . $uuid );
+			$title->setAttribute( 'value', $this->sanitize_text_attr( $obj->video_title ?? 'Video' ) );
+			$title->setAttribute( 'position', '0 0.3 0.001' );
+			$title->setAttribute( 'align', 'center' );
+			$title->setAttribute( 'width', '0.5' );
+			$panel->appendChild( $title );
+
+			$ascene->appendChild( $panel );
+		}
+	}
+
+	private function render_poi_imagetext_entity( $dom, $ascene, $assets, $obj ) {
+		$uuid = $obj->uuid ?? '';
+		
+		// 1. Assets
+		$main_img = $dom->createElement( 'img' );
+		$main_img->setAttribute( 'id', 'main_img_' . $uuid );
+		$main_img->setAttribute( 'src', $this->normalize_url( $obj->poi_img_path ?? $obj->poi_image_path ?? '' ) );
+		$main_img->setAttribute( 'crossorigin', 'anonymous' );
+		$assets->appendChild( $main_img );
+
+		$esc_img = $dom->createElement( 'img' );
+		$esc_img->setAttribute( 'id', 'esc_img_' . $uuid );
+		$esc_img->setAttribute( 'src', $this->plugin_path_url . 'assets/images/x_2f3542.png' );
+		$assets->appendChild( $esc_img );
+
+		// 2. UI Container (attached to scene, moved by JS)
+		$ui = $dom->createElement( 'a-entity' );
+		$ui->setAttribute( 'id', $uuid );
+		$ui->setAttribute( 'class', 'hideable raycastable' );
+		$ui->setAttribute( 'visible', 'false' );
+		$ui->setAttribute( 'scale', '0.001 0.001 0.001' );
+		// Add invisible geometry to satisfy this.el.components.material access in legacy JS
+		$ui->setAttribute( 'geometry', 'primitive: plane; width: 0.001; height: 0.001' );
+		$ui->setAttribute( 'material', 'visible: false; depthTest: true' );
+		$ui->setAttribute( 'info-panel', $uuid );
+		$this->setAffineTransformations( $ui, $obj );
+		
+		// 3. The Button (Trigger GLTF)
+		$button = $dom->createElement( 'a-entity' );
+		$button->setAttribute( 'id', 'button_poi_' . $uuid );
+		$button->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( $obj->glb_path ?? '' ) . ')' );
+		$button->setAttribute( 'highlight', 'button_poi_' . $uuid );
+		$button->setAttribute( 'class', 'raycastable menu-button hideable' );
+		$button->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$this->setAffineTransformations( $button, $obj ); // Trigger stays in 3D world
+		$ascene->appendChild( $button );
+
+		// 4. The Info Panel (Inside UI Container)
+		// Geometric Background
+		$infoPanel = $dom->createElement( 'a-entity' );
+		$infoPanel->setAttribute( 'id', 'infoPanel_' . $uuid );
+		$infoPanel->setAttribute( 'geometry', 'primitive: plane; width: 1.5; height: 1.8' );
+		$infoPanel->setAttribute( 'material', 'color: #333333; shader: flat; transparent: true; opacity: 0.9' );
+		$infoPanel->setAttribute( 'position', '0 0 0.005' );
+		$ui->appendChild( $infoPanel );
+
+		// Image Display Plane
+		$top_img = $dom->createElement( 'a-entity' );
+		$top_img->setAttribute( 'id', 'top_img_' . $uuid );
+		$top_img->setAttribute( 'geometry', 'primitive: plane; width: 1.4; height: 0.8' );
+		$top_img->setAttribute( 'material', 'shader: flat; transparent: true' );
+		$top_img->setAttribute( 'position', '0 0.35 0.01' );
+		$ui->appendChild( $top_img );
+
+		// Title Text (Using fallbacks for common mismatched keys)
+		$title_text = $obj->poi_img_title ?? $obj->poi_title ?? '';
+		
+		$title = $dom->createElement( 'a-text' );
+		$title->setAttribute( 'id', 'title_' . $uuid );
+		$title->setAttribute( 'position', '0 0.82 0.01' );
+		$title->setAttribute( 'value', $this->sanitize_text_attr( $title_text ) );
+		$title->setAttribute( 'color', '#eeeeee' );
+		$title->setAttribute( 'align', 'center' );
+		$title->setAttribute( 'font', 'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt' );
+		$title->setAttribute( 'width', '1.4' );
+		$title->setAttribute( 'title_to_add', $this->sanitize_text_attr( $title_text ) );
+		$ui->appendChild( $title );
+		
+		// Description Text (Using fallbacks for common mismatched keys)
+		$desc_text = $obj->poi_img_content ?? $obj->poi_description ?? '';
+		
+		$desc = $dom->createElement( 'a-text' );
+		$desc->setAttribute( 'id', 'desc_' . $uuid );
+		$desc->setAttribute( 'position', '0 -0.25 0.01' );
+		$desc->setAttribute( 'value', $this->sanitize_text_attr( $desc_text ) );
+		$desc->setAttribute( 'color', '#cccccc' );
+		$desc->setAttribute( 'align', 'left' );
+		$desc->setAttribute( 'font', 'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt' );
+		$desc->setAttribute( 'width', '1.3' );
+		$desc->setAttribute( 'text_to_add', $this->sanitize_text_attr( $desc_text ) );
+		$ui->appendChild( $desc );
+
+		// Page Indicator
+		$page = $dom->createElement( 'a-entity' );
+		$page->setAttribute( 'id', 'page_' . $uuid );
+		$page->setAttribute( 'position', '0 -0.7 0.01' );
+		$page->setAttribute( 'text', 'value: page 1; color: #aaaaaa; align: center; font: https://cdn.aframe.io/fonts/DejaVu-sdf.fnt; width: 1' );
+		$ui->appendChild( $page );
+
+		// Navigation Buttons
+		// Next
+		$next_panel = $dom->createElement( 'a-plane' );
+		$next_panel->setAttribute( 'id', 'next_panel_' . $uuid );
+		$next_panel->setAttribute( 'position', '0.5 -0.7 0.01' );
+		$next_panel->setAttribute( 'width', '0.2' );
+		$next_panel->setAttribute( 'height', '0.1' );
+		$next_panel->setAttribute( 'color', '#444444' );
+		$next_panel->setAttribute( 'class', 'raycastable' );
+		$ui->appendChild( $next_panel );
+
+		$next_btn = $dom->createElement( 'a-entity' );
+		$next_btn->setAttribute( 'id', 'next_' . $uuid );
+		$next_btn->setAttribute( 'position', '0.5 -0.7 0.02' );
+		$next_btn->setAttribute( 'text', 'value: NEXT; color: #ffffff; align: center; width: 1' );
+		$next_btn->setAttribute( 'class', 'raycastable' );
+		$ui->appendChild( $next_btn );
+
+		// Prev
+		$prev_panel = $dom->createElement( 'a-plane' );
+		$prev_panel->setAttribute( 'id', 'prev_panel_' . $uuid );
+		$prev_panel->setAttribute( 'position', '-0.5 -0.7 0.01' );
+		$prev_panel->setAttribute( 'width', '0.2' );
+		$prev_panel->setAttribute( 'height', '0.1' );
+		$prev_panel->setAttribute( 'color', '#444444' );
+		$prev_panel->setAttribute( 'class', 'raycastable' );
+		$ui->appendChild( $prev_panel );
+
+		$prev_btn = $dom->createElement( 'a-entity' );
+		$prev_btn->setAttribute( 'id', 'prev_' . $uuid );
+		$prev_btn->setAttribute( 'position', '-0.5 -0.7 0.02' );
+		$prev_btn->setAttribute( 'text', 'value: PREV; color: #ffffff; align: center; width: 1' );
+		$prev_btn->setAttribute( 'class', 'raycastable' );
+		$ui->appendChild( $prev_btn );
+
+		// Exit Button
+		$exit_panel = $dom->createElement( 'a-plane' );
+		$exit_panel->setAttribute( 'id', 'exit_panel_' . $uuid );
+		$exit_panel->setAttribute( 'position', '0.65 0.8 0.01' );
+		$exit_panel->setAttribute( 'width', '0.12' );
+		$exit_panel->setAttribute( 'height', '0.12' );
+		$exit_panel->setAttribute( 'color', '#cc0000' );
+		$exit_panel->setAttribute( 'class', 'raycastable' );
+		$ui->appendChild( $exit_panel );
+
+		$exit_btn = $dom->createElement( 'a-plane' );
+		$exit_btn->setAttribute( 'id', 'exit_' . $uuid );
+		$exit_btn->setAttribute( 'src', '#esc_img_' . $uuid );
+		$exit_btn->setAttribute( 'position', '0.65 0.8 0.02' );
+		$exit_btn->setAttribute( 'width', '0.1' );
+		$exit_btn->setAttribute( 'height', '0.1' );
+		$exit_btn->setAttribute( 'material', 'transparent: true' );
+		$exit_btn->setAttribute( 'class', 'raycastable' );
+		$exit_btn->setAttribute( 'original-scale', '1 1 1' );
+		$ui->appendChild( $exit_btn );
+
+		$ascene->appendChild( $ui );
+	}
+
+	private function map_light_type( $cat ) {
+		$map = [
+			'lightSun'     => 'directional',
+			'lightSpot'    => 'spot',
+			'lightLamp'    => 'point',
+			'lightAmbient' => 'ambient'
+		];
+		return $map[ $cat ] ?? 'point';
 	}
 }
