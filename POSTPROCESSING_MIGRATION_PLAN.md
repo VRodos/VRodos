@@ -621,7 +621,20 @@ Current live decision on the pinned A-Frame master + Three r181 stack:
 
 - Disable `FXAAEffect` in the PMNDRS runtime.
 - Reason: live Horizon validation showed that PMNDRS FXAA introduces a visible sun halo/ring artifact.
-- Follow-up: evaluate PMNDRS-native anti-aliasing paths instead, specifically `SMAAEffect` and composer/MSAA behavior.
+- PMNDRS AA now uses an exclusive mode model that matches the official PMNDRS demo more closely:
+  - `none`
+  - `smaa`
+  - `msaa`
+- PMNDRS AA preset is separate from mode:
+  - `low`
+  - `medium`
+  - `high`
+  - `ultra`
+- Runtime mapping:
+  - `smaa` -> `SMAAEffect` only, using the selected PMNDRS preset
+  - `msaa` -> composer multisampling only, using sample-count tiers derived from the selected PMNDRS preset and clamped to the renderer's supported max
+- Current default direction: default new PMNDRS scenes to `none`, and let authors opt into `smaa` or `msaa` explicitly.
+- Backward compatibility rule: scenes that were already authored against PMNDRS before explicit PMNDRS AA metadata existed may still derive their initial PMNDRS AA choice from the historical shared `aaQuality` field until they are re-saved.
 - Historical Phase 0 notes about FXAA as a fallback remain useful only as migration history from the older r173 stack; they are no longer the active AA decision for live PMNDRS scenes.
 
 ## 15. Reference Links

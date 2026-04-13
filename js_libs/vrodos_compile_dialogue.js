@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return {
             renderQuality: document.getElementById('compileRenderQualitySelect'),
             shadowQuality: document.getElementById('compileShadowQualitySelect'),
+            aaQualityWrapper: document.getElementById('compileAAQualityWrapper'),
             aaQuality: document.getElementById('compileAAQualitySelect'),
             ambientOcclusionPreset: document.getElementById('compileAmbientOcclusionPresetSelect'),
             contactShadowPreset: document.getElementById('compileContactShadowPresetSelect'),
@@ -19,6 +20,10 @@ document.addEventListener('DOMContentLoaded', function() {
             legacyPane: document.getElementById('compileLegacyPane'),
             pmndrsPane: document.getElementById('compilePmndrsPane'),
             postFxEngineHintBadge: document.getElementById('compilePostFxEngineHintBadge'),
+            pmndrsAAWrapper: document.getElementById('compilePmndrsAAWrapper'),
+            pmndrsAAMode: document.getElementById('compilePmndrsAAModeSelect'),
+            pmndrsAAPresetWrapper: document.getElementById('compilePmndrsAAPresetWrapper'),
+            pmndrsAAPreset: document.getElementById('compilePmndrsAAPresetSelect'),
             pmndrsBloomWrapper: document.getElementById('compilePmndrsBloomWrapper'),
             pmndrsVignetteWrapper: document.getElementById('compilePmndrsVignetteWrapper'),
             pmndrsAtmosphereWrapper: document.getElementById('compilePmndrsAtmosphereWrapper'),
@@ -84,6 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Single source of truth for the pmndrs-tweak default values. Used by both
     // the Reset button and the loader/normalizer to keep behaviour consistent.
     var PMNDRS_TWEAK_DEFAULTS = {
+        aaMode: 'none',
+        aaPreset: 'medium',
         bloomIntensity: 1.0,
         bloomThreshold: 0.62,
         toneMappingExposure: 1.0,
@@ -213,6 +220,37 @@ document.addEventListener('DOMContentLoaded', function() {
             return value;
         }
         return 'balanced';
+    }
+
+    function normalizePmndrsAAMode(value) {
+        if (value === 'none' || value === 'smaa' || value === 'msaa') {
+            return value;
+        }
+        return 'inherit';
+    }
+
+    function normalizePmndrsAAPreset(value) {
+        if (value === 'low' || value === 'medium' || value === 'high' || value === 'ultra') {
+            return value;
+        }
+        return 'inherit';
+    }
+
+    function derivePmndrsAAModeFromAAQuality(value) {
+        return normalizeAAQuality(value) === 'off' ? 'none' : 'msaa';
+    }
+
+    function derivePmndrsAAPresetFromAAQuality(value) {
+        switch (normalizeAAQuality(value)) {
+            case 'high':
+                return 'high';
+            case 'ultra':
+                return 'ultra';
+            case 'off':
+            case 'balanced':
+            default:
+                return 'medium';
+        }
     }
 
     function normalizeColorHex(value, fallback) {
@@ -507,6 +545,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!envir.scene.aframePostFXEngine) {
             envir.scene.aframePostFXEngine = 'legacy';
         }
+        if (!envir.scene.aframePmndrsAAMode) {
+            envir.scene.aframePmndrsAAMode = 'inherit';
+        }
+        if (!envir.scene.aframePmndrsAAPreset) {
+            envir.scene.aframePmndrsAAPreset = 'inherit';
+        }
         if (typeof envir.scene.aframePmndrsBloomIntensity !== 'number') {
             envir.scene.aframePmndrsBloomIntensity = clampNumber(envir.scene.aframePmndrsBloomIntensity, 0, 3, 1.0);
         }
@@ -587,6 +631,8 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(envir.scene.aframePostFXSSRStrength);
         envir.scene.aframePostFXSSREnabled = envir.scene.aframePostFXSSRStrength !== 'off';
         envir.scene.aframePostFXEngine = normalizePostFxEngine(envir.scene.aframePostFXEngine);
+        envir.scene.aframePmndrsAAMode = normalizePmndrsAAMode(envir.scene.aframePmndrsAAMode);
+        envir.scene.aframePmndrsAAPreset = normalizePmndrsAAPreset(envir.scene.aframePmndrsAAPreset);
         envir.scene.aframePmndrsAtmosphereQuality = normalizePmndrsAtmosphereQuality(envir.scene.aframePmndrsAtmosphereQuality);
         if (envir.scene.aframePostFXBloomEnabled === false) {
             envir.scene.aframeBloomStrength = 'off';
@@ -641,8 +687,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (controls.postFxEngineHint) {
             controls.postFxEngineHint.textContent = isPmndrs
-                ? 'Modern fused EffectPass. SSR and Temporal AA are not available in this engine.'
+                ? 'Modern fused EffectPass. Choose PMNDRS anti-aliasing below with exclusive None, SMAA, or MSAA modes. SSR and Temporal AA are not available in this engine.'
                 : 'Hand-rolled custom pipeline. Supports SSR and Temporal AA, no volumetric clouds.';
+        }
+
+        if (controls.aaQualityWrapper) {
+            controls.aaQualityWrapper.style.display = isPmndrs ? 'none' : '';
+        }
+        if (controls.aaQuality) {
+            controls.aaQuality.disabled = isPmndrs;
+            controls.aaQuality.title = 'Controls the renderer anti-aliasing quality tier.';
         }
 
         if (controls.legacyHorizonStageSizeRow) {
@@ -706,6 +760,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         var pmndrsTweakEnabled = postFxEnabled && isPmndrs;
+        var pmndrsAAMode = controls.pmndrsAAMode ? normalizePmndrsAAMode(controls.pmndrsAAMode.value) : PMNDRS_TWEAK_DEFAULTS.aaMode;
+        var pmndrsAAPresetVisible = pmndrsTweakEnabled && pmndrsAAMode !== 'none';
+
+        if (controls.pmndrsAAWrapper) {
+            controls.pmndrsAAWrapper.style.display = pmndrsTweakEnabled ? '' : 'none';
+        }
+        if (controls.pmndrsAAMode) {
+            controls.pmndrsAAMode.disabled = !pmndrsTweakEnabled;
+        }
+        if (controls.pmndrsAAPresetWrapper) {
+            controls.pmndrsAAPresetWrapper.style.display = pmndrsAAPresetVisible ? '' : 'none';
+        }
+        if (controls.pmndrsAAPreset) {
+            controls.pmndrsAAPreset.disabled = !pmndrsAAPresetVisible;
+            controls.pmndrsAAPreset.title = pmndrsAAMode === 'none'
+                ? 'Choose SMAA or MSAA to enable a PMNDRS AA preset.'
+                : 'Quality preset for the selected PMNDRS anti-aliasing method.';
+        }
         
         if (controls.pmndrsBloomWrapper) {
             controls.pmndrsBloomWrapper.style.display = bloomEnabled ? '' : 'none';
@@ -848,6 +920,12 @@ document.addEventListener('DOMContentLoaded', function() {
             envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
         }
         envir.scene.aframePostFXEngine = selectedPostFxEngine;
+        if (controls.pmndrsAAMode) {
+            envir.scene.aframePmndrsAAMode = normalizePmndrsAAMode(controls.pmndrsAAMode.value);
+        }
+        if (controls.pmndrsAAPreset) {
+            envir.scene.aframePmndrsAAPreset = normalizePmndrsAAPreset(controls.pmndrsAAPreset.value);
+        }
         if (controls.pmndrsBloomIntensity) {
             envir.scene.aframePmndrsBloomIntensity = clampNumber(controls.pmndrsBloomIntensity.value, 0, 3, 1.0);
         }
@@ -987,6 +1065,28 @@ document.addEventListener('DOMContentLoaded', function() {
             controls.postFxEngine.value = envir && envir.scene && envir.scene.aframePostFXEngine
                 ? normalizePostFxEngine(envir.scene.aframePostFXEngine)
                 : 'legacy';
+        }
+        if (controls.pmndrsAAMode) {
+            var pmndrsAAModeValue = envir && envir.scene
+                ? normalizePmndrsAAMode(envir.scene.aframePmndrsAAMode)
+                : 'inherit';
+            if (pmndrsAAModeValue === 'inherit') {
+                pmndrsAAModeValue = envir && envir.scene && normalizePostFxEngine(envir.scene.aframePostFXEngine) === 'pmndrs'
+                    ? derivePmndrsAAModeFromAAQuality(controls.aaQuality.value)
+                    : PMNDRS_TWEAK_DEFAULTS.aaMode;
+            }
+            controls.pmndrsAAMode.value = pmndrsAAModeValue;
+        }
+        if (controls.pmndrsAAPreset) {
+            var pmndrsAAPresetValue = envir && envir.scene
+                ? normalizePmndrsAAPreset(envir.scene.aframePmndrsAAPreset)
+                : 'inherit';
+            if (pmndrsAAPresetValue === 'inherit') {
+                pmndrsAAPresetValue = envir && envir.scene && normalizePostFxEngine(envir.scene.aframePostFXEngine) === 'pmndrs'
+                    ? derivePmndrsAAPresetFromAAQuality(controls.aaQuality.value)
+                    : PMNDRS_TWEAK_DEFAULTS.aaPreset;
+            }
+            controls.pmndrsAAPreset.value = pmndrsAAPresetValue;
         }
 
         if (controls.pmndrsBloomIntensity) {
@@ -1134,6 +1234,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (controls.postFxEngine) {
         controls.postFxEngine.addEventListener('change', syncCompilePostFxState);
     }
+    if (controls.pmndrsAAMode) {
+        controls.pmndrsAAMode.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.pmndrsAAPreset) {
+        controls.pmndrsAAPreset.addEventListener('change', syncCompilePostFxState);
+    }
     // Tab strip — clicking a tab writes the engine value into the hidden input
     // and re-runs the show/hide gating. Disabled tabs (when postFx is off) are no-ops.
     function bindEngineTab(tabEl) {
@@ -1210,6 +1316,8 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.pmndrsResetBtn.addEventListener('click', function (e) {
             e.preventDefault();
             var c = getCompileDialogElements();
+            if (c.pmndrsAAMode) c.pmndrsAAMode.value = PMNDRS_TWEAK_DEFAULTS.aaMode;
+            if (c.pmndrsAAPreset) c.pmndrsAAPreset.value = PMNDRS_TWEAK_DEFAULTS.aaPreset;
             if (c.pmndrsBloomIntensity) c.pmndrsBloomIntensity.value = PMNDRS_TWEAK_DEFAULTS.bloomIntensity;
             if (c.pmndrsBloomThreshold) c.pmndrsBloomThreshold.value = PMNDRS_TWEAK_DEFAULTS.bloomThreshold;
             if (c.pmndrsExposure) c.pmndrsExposure.value = PMNDRS_TWEAK_DEFAULTS.toneMappingExposure;

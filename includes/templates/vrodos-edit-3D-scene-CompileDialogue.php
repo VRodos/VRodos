@@ -107,7 +107,7 @@
 								</label>
 							</div>
 
-							<label class="tw-form-control">
+							<label id="compileAAQualityWrapper" class="tw-form-control">
 								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Anti-Aliasing</span>
 								<select id="compileAAQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 									<option value="off">Off</option>
@@ -322,6 +322,26 @@
 							</div>
 							
 							<div class="tw-space-y-4">
+								<div id="compilePmndrsAAWrapper" class="tw-space-y-4 tw-pb-4 tw-border-b tw-border-slate-200">
+									<label class="tw-form-control tw-w-full">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose the PMNDRS anti-aliasing strategy. MSAA is the preferred default when supported; SMAA is the post-process fallback.">Anti-Aliasing Method</span>
+										<select id="compilePmndrsAAModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="none">None</option>
+											<option value="smaa">SMAA</option>
+											<option value="msaa">MSAA</option>
+										</select>
+									</label>
+									<label id="compilePmndrsAAPresetWrapper" class="tw-form-control tw-w-full">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400" title="Quality preset for the selected PMNDRS anti-aliasing method.">AA Preset</span>
+										<select id="compilePmndrsAAPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="low">Low</option>
+											<option value="medium">Medium</option>
+											<option value="high">High</option>
+											<option value="ultra">Ultra</option>
+										</select>
+									</label>
+								</div>
+
 								<!-- Bloom Modifiers Wrapper -->
 								<div id="compilePmndrsBloomWrapper" class="tw-space-y-4">
 									<div>

@@ -339,3 +339,68 @@ The current top-level order is:
 - Manual runtime diagnosis result:
   - `?vrodos_debug_disable_pmndrs_sun=1` did **not** remove the artifact
   - `?vrodos_debug_disable_pmndrs_fxaa=1` **did** remove the artifact
+
+## Phase 14
+
+### Status
+
+- Complete
+
+### Intent
+
+- Replace the removed PMNDRS FXAA path with a PMNDRS-native anti-aliasing model on the pinned r181 stack.
+- Keep the compile/runtime behavior aligned so PMNDRS AA is driven by the shared `aaQuality` selector rather than hidden legacy FXAA controls.
+
+### Applied Changes
+
+- Updated `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` so PMNDRS anti-aliasing now uses:
+  - composer multisampling from `aaQuality`
+  - `SMAAEffect` from the same `aaQuality` tier
+- Added safe fallbacks so composer construction retries without MSAA if multisampled init fails.
+- Updated `runtime/assets/js/master/components/vrodos_scene_settings.component.js` so PMNDRS AA alone is enough to keep post-processing active when no other PMNDRS effects are enabled.
+- Updated `js_libs/vrodos_compile_dialogue.js` so the PMNDRS engine hint now explains that the shared Anti-Aliasing selector drives SMAA/MSAA.
+- Recorded the live AA mapping in `POSTPROCESSING_MIGRATION_PLAN.md`.
+
+### Validation
+
+- `eslint` passed on:
+  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
+  - `runtime/assets/js/master/components/vrodos_scene_settings.component.js`
+  - `js_libs/vrodos_compile_dialogue.js`
+
+## Phase 15
+
+### Status
+
+- Complete
+
+### Intent
+
+- Refine the temporary PMNDRS AA implementation so it follows the official PMNDRS demo model more closely.
+- Expose PMNDRS-only anti-aliasing controls directly in the compile dialog instead of overloading the shared legacy AA selector.
+
+### Applied Changes
+
+- Reworked `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` to use exclusive PMNDRS AA modes:
+  - `none`
+  - `smaa`
+  - `msaa`
+- Added PMNDRS AA preset handling (`low|medium|high|ultra`) and mapped it to:
+  - `SMAAEffect` presets for `smaa`
+  - composer multisampling sample counts for `msaa`
+- Added `pmndrsAAMode` and `pmndrsAAPreset` to the `scene-settings` schema and compiler serialization path.
+- Updated the compile dialog to:
+  - hide the shared legacy AA dropdown when PMNDRS is active
+  - show PMNDRS-specific AA method and preset dropdowns
+  - default new PMNDRS scenes to `none` for anti-aliasing, while keeping the preset selector ready for explicit `smaa` or `msaa` opt-in
+  - preserve compatibility for older scenes by deriving PMNDRS defaults from the historical shared `aaQuality` field when explicit PMNDRS AA metadata is absent
+- Tightened scene-settings logic so legacy FXAA flags no longer accidentally keep PMNDRS post-FX active when PMNDRS AA mode is `none`.
+
+### Validation
+
+- `eslint` passed on:
+  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
+  - `runtime/assets/js/master/components/vrodos_scene_settings.component.js`
+  - `js_libs/vrodos_compile_dialogue.js`
+- PHP syntax check passed on:
+  - `includes/class-vrodos-compiler-manager.php`

@@ -14,7 +14,10 @@
  *   - HueSaturation        (postFXColorEnabled)
  *   - VignetteEffect       (postFXVignetteEnabled)
  *   - ToneMappingEffect    (always, ACES Filmic)
- *   - no AA effect currently enabled in PMNDRS runtime
+ *   - SMAAEffect           (pmndrsAAMode === 'smaa')
+ *
+ * Multisample AA is applied at the composer level when
+ * pmndrsAAMode === 'msaa' and WebGL2 multisampling is available.
  *
  * NOT supported in this engine — scenes that need these stay on postFXEngine='legacy':
  *   - SSR  (no actively-maintained pmndrs-compatible SSR effect in this VRodos pipeline)
@@ -92,8 +95,8 @@
         return v === true || v === 'true' || v === '1' || v === 1;
     }
 
-    function shouldDisablePmndrsFxaaDebug() {
-        if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.disablePmndrsFxaa === true) {
+    function hasPmndrsDebugFlag(debugKey, queryKey) {
+        if (window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) {
             return true;
         }
 
@@ -103,10 +106,158 @@
 
         try {
             var params = new URLSearchParams(window.location.search);
-            return params.get('vrodos_debug_disable_pmndrs_fxaa') === '1';
+            return params.get(queryKey) === '1';
         } catch (err) {
             return false;
         }
+    }
+
+    function getPmndrsAAMode(self) {
+        if (!self || typeof self.getPmndrsAAMode !== 'function') {
+            return 'none';
+        }
+        return self.getPmndrsAAMode();
+    }
+
+    function getPmndrsAAPreset(self) {
+        if (!self || typeof self.getPmndrsAAPreset !== 'function') {
+            return 'medium';
+        }
+        return self.getPmndrsAAPreset();
+    }
+
+    function isPmndrsAAEnabled(self) {
+        return !!(self && self.data && self.data.postFXEngine === 'pmndrs' && getPmndrsAAMode(self) !== 'none');
+    }
+
+    function getPmndrsRequestedMultisampling(self, renderer) {
+        var requestedSamples = 0;
+        var maxSamples = 0;
+
+        if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== 'msaa' || hasPmndrsDebugFlag('disablePmndrsMsaa', 'vrodos_debug_disable_pmndrs_msaa')) {
+            return 0;
+        }
+        if (!renderer || !renderer.capabilities || renderer.capabilities.isWebGL2 !== true) {
+            return 0;
+        }
+
+        switch (getPmndrsAAPreset(self)) {
+            case 'low':
+                requestedSamples = 2;
+                break;
+            case 'high':
+                requestedSamples = 8;
+                break;
+            case 'ultra':
+                requestedSamples = 16;
+                break;
+            case 'medium':
+            default:
+                requestedSamples = 4;
+                break;
+        }
+
+        maxSamples = parseInt(renderer.capabilities.maxSamples, 10);
+        if (!isNaN(maxSamples) && maxSamples > 0) {
+            requestedSamples = Math.min(requestedSamples, maxSamples);
+        }
+
+        return Math.max(0, Math.floor(requestedSamples));
+    }
+
+    function getPmndrsSmaaPreset(self, PP) {
+        if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== 'smaa' || hasPmndrsDebugFlag('disablePmndrsSmaa', 'vrodos_debug_disable_pmndrs_smaa') || !PP || !PP.SMAAPreset) {
+            return null;
+        }
+
+        switch (getPmndrsAAPreset(self)) {
+            case 'low':
+                return PP.SMAAPreset.LOW;
+            case 'medium':
+                return PP.SMAAPreset.MEDIUM;
+            case 'high':
+                return PP.SMAAPreset.HIGH;
+            case 'ultra':
+                return PP.SMAAPreset.ULTRA;
+            default:
+                return PP.SMAAPreset.MEDIUM;
+        }
+    }
+
+    function getPmndrsComposerSignature(self, renderer, atmosphereConfig, PP) {
+        var smaaPreset = getPmndrsSmaaPreset(self, PP);
+        return getPmndrsAtmosphereModeSignature(self, atmosphereConfig) +
+            '|aaMode:' + getPmndrsAAMode(self) +
+            '|aaPreset:' + getPmndrsAAPreset(self) +
+            '|msaa:' + getPmndrsRequestedMultisampling(self, renderer) +
+            '|smaa:' + (smaaPreset === null ? 'off' : smaaPreset);
+    }
+
+    function isPmndrsAADebugOverlayEnabled() {
+        return hasPmndrsDebugFlag('pmndrsAADebugOverlay', 'vrodos_debug_pmndrs_aa');
+    }
+
+    function ensurePmndrsAADebugOverlay(self) {
+        if (!self || !isPmndrsAADebugOverlayEnabled() || typeof document === 'undefined' || !document.body) {
+            return null;
+        }
+
+        if (!self._pmndrsAADebugOverlay) {
+            var overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.left = '12px';
+            overlay.style.bottom = '12px';
+            overlay.style.zIndex = '99999';
+            overlay.style.padding = '8px 10px';
+            overlay.style.borderRadius = '8px';
+            overlay.style.background = 'rgba(5, 15, 30, 0.88)';
+            overlay.style.color = '#7ef9ff';
+            overlay.style.font = '12px/1.35 Consolas, Monaco, monospace';
+            overlay.style.whiteSpace = 'pre';
+            overlay.style.pointerEvents = 'none';
+            overlay.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.28)';
+            overlay.textContent = 'PMNDRS AA DEBUG\nwaiting for composer...';
+            document.body.appendChild(overlay);
+            self._pmndrsAADebugOverlay = overlay;
+        }
+
+        return self._pmndrsAADebugOverlay;
+    }
+
+    function updatePmndrsAADebugOverlay(self) {
+        var overlay = ensurePmndrsAADebugOverlay(self);
+        var renderer;
+        var requestedMsaa;
+        var appliedMsaa;
+        var maxSamples;
+        var lines;
+
+        if (!overlay) {
+            return;
+        }
+
+        renderer = self && self.el ? self.el.renderer : null;
+        requestedMsaa = (self && typeof self._pmndrsRequestedMultisampling === 'number') ? self._pmndrsRequestedMultisampling : getPmndrsRequestedMultisampling(self, renderer);
+        appliedMsaa = (self && typeof self._pmndrsAppliedMultisampling === 'number') ? self._pmndrsAppliedMultisampling : 0;
+        maxSamples = (renderer && renderer.capabilities && !isNaN(parseInt(renderer.capabilities.maxSamples, 10))) ? parseInt(renderer.capabilities.maxSamples, 10) : 0;
+
+        lines = [
+            'PMNDRS AA DEBUG',
+            'mode: ' + getPmndrsAAMode(self),
+            'preset: ' + getPmndrsAAPreset(self),
+            'requested msaa: ' + requestedMsaa,
+            'applied msaa: ' + appliedMsaa,
+            'webgl2/maxSamples: ' + ((renderer && renderer.capabilities && renderer.capabilities.isWebGL2 === true) ? 'yes' : 'no') + '/' + maxSamples,
+            'smaa effect: ' + (self && self.pmndrsSmaaEffect ? 'yes' : 'no'),
+            'smaa preset: ' + ((self && self._pmndrsAppliedSmaaPreset !== null && self._pmndrsAppliedSmaaPreset !== undefined) ? self._pmndrsAppliedSmaaPreset : 'off'),
+            'composer: ' + (self && self.pmndrsComposer ? 'yes' : 'no'),
+            'effect pass: ' + (self && self.pmndrsEffectPass ? 'yes' : 'no'),
+            'bloom: ' + (self && self.pmndrsBloomEffect ? 'yes' : 'no'),
+            'atmosphere: ' + (self && self.pmndrsAerialPerspectiveEffect ? 'effect' : ((self && typeof self.isPmndrsAtmosphereEnabled === 'function' && self.isPmndrsAtmosphereEnabled()) ? 'takram-only' : 'off')),
+            'msaa fallback: ' + ((self && self._pmndrsMsaaFallbackReason) ? self._pmndrsMsaaFallbackReason : 'none')
+        ];
+
+        overlay.textContent = lines.join('\n');
     }
 
     function getPmndrsAtmosphereModeSignature(self, atmosphereConfig) {
@@ -135,10 +286,17 @@
         self.pmndrsEffectPass = null;
         self.pmndrsSsaoEffect = null;
         self.pmndrsBloomEffect = null;
+        self.pmndrsSmaaEffect = null;
         self.pmndrsAerialPerspectiveEffect = null;
         self._pmndrsAtmosphereSignature = null;
+        self._pmndrsComposerSignature = null;
+        self._pmndrsRequestedMultisampling = 0;
+        self._pmndrsAppliedMultisampling = 0;
+        self._pmndrsAppliedSmaaPreset = null;
+        self._pmndrsMsaaFallbackReason = '';
         self._pmndrsLastW = 0;
         self._pmndrsLastH = 0;
+        updatePmndrsAADebugOverlay(self);
     }
 
     function syncPmndrsAerialPerspectiveEffect(self, camera, atmosphereConfig) {
@@ -175,18 +333,39 @@
         var renderer = this.el.renderer;
         var PP = window.POSTPROCESSING;
         var THREE = window.THREE;
+        var atmosphereConfig = (typeof this.getPmndrsAtmosphereConfig === 'function') ? this.getPmndrsAtmosphereConfig() : null;
         if (!renderer || !PP || !THREE || !camera) {
             return false;
         }
 
         var composer;
+        var requestedMultisampling = getPmndrsRequestedMultisampling(this, renderer);
+        var requestedMultisamplingInitial = requestedMultisampling;
+        var composerOptions = {
+            frameBufferType: THREE.HalfFloatType
+        };
+        if (requestedMultisampling > 0) {
+            composerOptions.multisampling = requestedMultisampling;
+        }
         try {
-            composer = new PP.EffectComposer(renderer, {
-                frameBufferType: THREE.HalfFloatType
-            });
+            composer = new PP.EffectComposer(renderer, composerOptions);
         } catch (err) {
-            console.error('[VRodos] pmndrs EffectComposer construction failed:', err);
-            return false;
+            if (requestedMultisampling > 0) {
+                console.warn('[VRodos] pmndrs EffectComposer multisampling init failed, retrying without MSAA:', err);
+                requestedMultisampling = 0;
+                this._pmndrsMsaaFallbackReason = 'composer-init-failed';
+                try {
+                    composer = new PP.EffectComposer(renderer, {
+                        frameBufferType: THREE.HalfFloatType
+                    });
+                } catch (retryErr) {
+                    console.error('[VRodos] pmndrs EffectComposer construction failed:', retryErr);
+                    return false;
+                }
+            } else {
+                console.error('[VRodos] pmndrs EffectComposer construction failed:', err);
+                return false;
+            }
         }
 
         // Defensive setSize — guard against the A-Frame zero-canvas race observed in Phase 0.
@@ -198,8 +377,14 @@
         composer.addPass(renderPass);
 
         var effects = [];
-        var atmosphereConfig = (typeof this.getPmndrsAtmosphereConfig === 'function') ? this.getPmndrsAtmosphereConfig() : null;
         this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
+        this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
+        this._pmndrsRequestedMultisampling = requestedMultisamplingInitial;
+        this._pmndrsAppliedMultisampling = requestedMultisampling;
+        this._pmndrsAppliedSmaaPreset = null;
+        if (!this._pmndrsMsaaFallbackReason) {
+            this._pmndrsMsaaFallbackReason = '';
+        }
 
         if (atmosphereConfig && atmosphereConfig.enabled && !isHorizonBackground(this)) {
             var VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
@@ -320,15 +505,26 @@
             }
         }
 
-        // FXAA — disabled in the PMNDRS runtime.
-        //
-        // Real-scene validation on the pinned r181 stack showed that FXAA creates
-        // a visible halo/ring artifact around the Horizon sun. Keep AA disabled
-        // here until we evaluate a proper PMNDRS-native replacement strategy
-        // (SMAA and/or composer/MSAA behavior).
-        if (!shouldDisablePmndrsFxaaDebug() && this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXEdgeAAEnabled') && !this._pmndrsFxaaSkipWarned) {
-            console.info('[VRodos] pmndrs FXAA disabled in current VRodos pipeline after Horizon artifact validation. Follow-up target: evaluate SMAA and MSAA instead.');
-            this._pmndrsFxaaSkipWarned = true;
+        // PMNDRS anti-aliasing — exclusive mode selection:
+        //   - none: no PMNDRS AA
+        //   - smaa: SMAAEffect only
+        //   - msaa: composer multisampling only
+        // FXAA stays disabled due the Horizon sun halo artifact it introduced on
+        // the pinned r181 stack.
+        var smaaPreset = getPmndrsSmaaPreset(this, PP);
+        if (smaaPreset !== null) {
+            try {
+                this.pmndrsSmaaEffect = new PP.SMAAEffect({ preset: smaaPreset });
+                effects.push(this.pmndrsSmaaEffect);
+                this._pmndrsAppliedSmaaPreset = smaaPreset;
+            } catch (err) {
+                console.warn('[VRodos] pmndrs SMAAEffect construction failed, continuing without SMAA:', err);
+                this.pmndrsSmaaEffect = null;
+                this._pmndrsAppliedSmaaPreset = null;
+            }
+        } else {
+            this.pmndrsSmaaEffect = null;
+            this._pmndrsAppliedSmaaPreset = null;
         }
 
         // SSR / TRAA are not supported in this engine — log once per scene load.
@@ -375,6 +571,8 @@
             lastFrameTime: (typeof performance !== 'undefined' ? performance.now() : Date.now())
         };
 
+        updatePmndrsAADebugOverlay(this);
+
         return true;
     };
 
@@ -398,6 +596,8 @@
         this.pmndrsRendering = false;
         this._pmndrsSsrTraaWarned = false;
         this._pmndrsAtmosphereWarned = false;
+        ensurePmndrsAADebugOverlay(this);
+        updatePmndrsAADebugOverlay(this);
 
         var self = this;
         renderer.render = function (scene, camera) {
@@ -415,8 +615,8 @@
             // Lazy composer build on first valid frame — guarantees camera and canvas
             // are ready (Phase 0 zero-canvas race fix).
             var atmosphereConfig = (typeof self.getPmndrsAtmosphereConfig === 'function') ? self.getPmndrsAtmosphereConfig() : null;
-            var atmosphereSignature = getPmndrsAtmosphereModeSignature(self, atmosphereConfig);
-            if (self.pmndrsComposer && self._pmndrsAtmosphereSignature !== atmosphereSignature) {
+            var composerSignature = getPmndrsComposerSignature(self, self.el && self.el.renderer, atmosphereConfig, window.POSTPROCESSING);
+            if (self.pmndrsComposer && self._pmndrsComposerSignature !== composerSignature) {
                 disposePmndrsComposerResources(self);
             }
             if (!self.pmndrsComposer) {
@@ -450,6 +650,7 @@
                 self.pmndrsOriginalRender(scene, camera);
             } finally {
                 self.pmndrsRendering = false;
+                updatePmndrsAADebugOverlay(self);
             }
         };
     };
@@ -549,6 +750,7 @@
         this._pmndrsAdaptive = null;
         this._pmndrsSsrTraaWarned = false;
         this._pmndrsAtmosphereWarned = false;
+        updatePmndrsAADebugOverlay(this);
     };
 
     /**

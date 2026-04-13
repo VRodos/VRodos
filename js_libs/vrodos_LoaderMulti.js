@@ -180,6 +180,18 @@ class VRodos_LoaderMulti {
                     envir.scene.aframePostFXEngine = (resource === 'pmndrs') ? 'pmndrs' : 'legacy';
                 }
 
+                if (name === 'aframePmndrsAAMode') {
+                    envir.scene.aframePmndrsAAMode = (resource === 'none' || resource === 'smaa' || resource === 'msaa')
+                        ? resource
+                        : 'inherit';
+                }
+
+                if (name === 'aframePmndrsAAPreset') {
+                    envir.scene.aframePmndrsAAPreset = (resource === 'low' || resource === 'medium' || resource === 'high' || resource === 'ultra')
+                        ? resource
+                        : 'inherit';
+                }
+
                 if (name === 'aframeLegacyHorizonStageSize') {
                     var _lhs = parseFloat(resource);
                     envir.scene.aframeLegacyHorizonStageSize = isNaN(_lhs) ? 5000 : Math.max(500, Math.min(8000, _lhs));
@@ -738,6 +750,12 @@ class VRodos_LoaderMulti {
                         envir.scene.aframePostFXSSREnabled = resource.aframePostFXSSREnabled === true || resource.aframePostFXSSREnabled === 'true';
                         envir.scene.aframePostFXSSRStrength = resource.aframePostFXSSRStrength || 'off';
                         envir.scene.aframePostFXEngine = (resource.aframePostFXEngine === 'pmndrs') ? 'pmndrs' : 'legacy';
+                        envir.scene.aframePmndrsAAMode = (resource.aframePmndrsAAMode === 'none' || resource.aframePmndrsAAMode === 'smaa' || resource.aframePmndrsAAMode === 'msaa')
+                            ? resource.aframePmndrsAAMode
+                            : 'inherit';
+                        envir.scene.aframePmndrsAAPreset = (resource.aframePmndrsAAPreset === 'low' || resource.aframePmndrsAAPreset === 'medium' || resource.aframePmndrsAAPreset === 'high' || resource.aframePmndrsAAPreset === 'ultra')
+                            ? resource.aframePmndrsAAPreset
+                            : 'inherit';
                         var _resLhs = parseFloat(resource.aframeLegacyHorizonStageSize);
                         envir.scene.aframeLegacyHorizonStageSize = isNaN(_resLhs) ? 5000 : Math.max(500, Math.min(8000, _resLhs));
                         var _resPmBI = parseFloat(resource.aframePmndrsBloomIntensity);

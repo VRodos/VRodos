@@ -54,6 +54,8 @@ AFRAME.registerComponent('scene-settings', {
         postFXEngine: { type: "string", default: "legacy" },
         // Pmndrs-only tweakable knobs. Numbers serialized as strings since
         // A-Frame string-typed schema is what the rest of this component uses.
+        pmndrsAAMode: { type: "string", default: "inherit" },
+        pmndrsAAPreset: { type: "string", default: "inherit" },
         pmndrsBloomIntensity: { type: "string", default: "1.0" },
         pmndrsBloomThreshold: { type: "string", default: "0.62" },
         pmndrsVignetteEnabled: { type: "string", default: "0" },
@@ -206,6 +208,36 @@ AFRAME.registerComponent('scene-settings', {
                 return 'balanced';
         }
     },
+    getPmndrsAAMode: function () {
+        switch (this.data.pmndrsAAMode) {
+            case 'none':
+            case 'smaa':
+            case 'msaa':
+                return this.data.pmndrsAAMode;
+            default:
+                return this.getAAQualityLevel() === 'off' ? 'none' : 'msaa';
+        }
+    },
+    getPmndrsAAPreset: function () {
+        switch (this.data.pmndrsAAPreset) {
+            case 'low':
+            case 'medium':
+            case 'high':
+            case 'ultra':
+                return this.data.pmndrsAAPreset;
+            default:
+                switch (this.getAAQualityLevel()) {
+                    case 'high':
+                        return 'high';
+                    case 'ultra':
+                        return 'ultra';
+                    case 'off':
+                    case 'balanced':
+                    default:
+                        return 'medium';
+                }
+        }
+    },
     isPmndrsAtmosphereEnabled: function () {
         return this.data.postFXEngine === 'pmndrs' && this.data.pmndrsAtmosphereEnabled !== '0';
     },
@@ -356,19 +388,27 @@ AFRAME.registerComponent('scene-settings', {
     hasBloomEffectEnabled: function () {
         return this.getBloomStrengthValue() > 0;
     },
+    isPmndrsAAEnabled: function () {
+        return this.data.postFXEngine === 'pmndrs' && this.getPmndrsAAMode() !== 'none';
+    },
     isPostFXOptionEnabled: function (key) {
         return this.data[key] !== '0';
+    },
+    isLegacyEdgeAAEnabled: function () {
+        return this.data.postFXEngine !== 'pmndrs' && this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
     },
     hasEnabledPostFXOptions: function () {
         return this.hasBloomEffectEnabled() ||
             this.isPostFXOptionEnabled('postFXColorEnabled') ||
-            this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ||
+            this.isLegacyEdgeAAEnabled() ||
+            this.isPmndrsAAEnabled() ||
             this.isPmndrsAtmosphereEnabled();
     },
     hasCinematicShaderOptions: function () {
         return this.hasBloomEffectEnabled() ||
             this.isPostFXOptionEnabled('postFXColorEnabled') ||
-            this.isPostFXOptionEnabled('postFXEdgeAAEnabled') ||
+            this.isLegacyEdgeAAEnabled() ||
+            this.isPmndrsAAEnabled() ||
             this.isPostFXOptionEnabled('postFXTAAEnabled') ||
             this.isPostFXOptionEnabled('postFXSSREnabled') ||
             this.getAmbientOcclusionPreset() !== 'off' ||
@@ -377,7 +417,7 @@ AFRAME.registerComponent('scene-settings', {
     shouldUseEdgeAAOversample: function () {
         return this.data.renderQuality === 'high' &&
             this.data.postFXEnabled !== '0' &&
-            this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
+            this.isLegacyEdgeAAEnabled();
     },
     getEdgeAAStrengthFactor: function () {
         var parsed = parseInt(this.data.postFXEdgeAAStrength, 10);
