@@ -762,6 +762,24 @@ extract( $data );
 			envir.scene.aframePmndrsVignetteEnabled = vrodos_scene_data["aframePmndrsVignetteEnabled"] === true || vrodos_scene_data["aframePmndrsVignetteEnabled"] === 'true';
 			envir.scene.aframePmndrsVignetteDarkness = (typeof vrodos_scene_data["aframePmndrsVignetteDarkness"] === 'number') ? vrodos_scene_data["aframePmndrsVignetteDarkness"] : 0.5;
 			envir.scene.aframePmndrsToneMappingExposure = (typeof vrodos_scene_data["aframePmndrsToneMappingExposure"] === 'number') ? vrodos_scene_data["aframePmndrsToneMappingExposure"] : 1.0;
+			envir.scene.aframePmndrsAtmosphereEnabled = !(vrodos_scene_data["aframePmndrsAtmosphereEnabled"] === false || vrodos_scene_data["aframePmndrsAtmosphereEnabled"] === 'false');
+			envir.scene.aframePmndrsAtmosphereQuality = vrodos_scene_data["aframePmndrsAtmosphereQuality"] || 'balanced';
+			envir.scene.aframePmndrsSunElevationDeg = (typeof vrodos_scene_data["aframePmndrsSunElevationDeg"] === 'number') ? vrodos_scene_data["aframePmndrsSunElevationDeg"] : 10;
+			envir.scene.aframePmndrsSunAzimuthDeg = (typeof vrodos_scene_data["aframePmndrsSunAzimuthDeg"] === 'number') ? vrodos_scene_data["aframePmndrsSunAzimuthDeg"] : 38;
+			envir.scene.aframePmndrsSunDistance = (typeof vrodos_scene_data["aframePmndrsSunDistance"] === 'number') ? vrodos_scene_data["aframePmndrsSunDistance"] : 5200;
+			envir.scene.aframePmndrsSunAngularRadius = (typeof vrodos_scene_data["aframePmndrsSunAngularRadius"] === 'number') ? vrodos_scene_data["aframePmndrsSunAngularRadius"] : 0.0068;
+			envir.scene.aframePmndrsAerialStrength = (typeof vrodos_scene_data["aframePmndrsAerialStrength"] === 'number') ? vrodos_scene_data["aframePmndrsAerialStrength"] : 0.85;
+			envir.scene.aframePmndrsAlbedoScale = (typeof vrodos_scene_data["aframePmndrsAlbedoScale"] === 'number') ? vrodos_scene_data["aframePmndrsAlbedoScale"] : 0.96;
+			envir.scene.aframePmndrsTransmittanceEnabled = !(vrodos_scene_data["aframePmndrsTransmittanceEnabled"] === false || vrodos_scene_data["aframePmndrsTransmittanceEnabled"] === 'false');
+			envir.scene.aframePmndrsInscatterEnabled = !(vrodos_scene_data["aframePmndrsInscatterEnabled"] === false || vrodos_scene_data["aframePmndrsInscatterEnabled"] === 'false');
+			envir.scene.aframePmndrsGroundEnabled = !(vrodos_scene_data["aframePmndrsGroundEnabled"] === false || vrodos_scene_data["aframePmndrsGroundEnabled"] === 'false');
+			envir.scene.aframePmndrsGroundAlbedo = vrodos_scene_data["aframePmndrsGroundAlbedo"] || '#f0e6d6';
+			envir.scene.aframePmndrsRayleighScale = (typeof vrodos_scene_data["aframePmndrsRayleighScale"] === 'number') ? vrodos_scene_data["aframePmndrsRayleighScale"] : 1.0;
+			envir.scene.aframePmndrsMieScatteringScale = (typeof vrodos_scene_data["aframePmndrsMieScatteringScale"] === 'number') ? vrodos_scene_data["aframePmndrsMieScatteringScale"] : 0.9;
+			envir.scene.aframePmndrsMieExtinctionScale = (typeof vrodos_scene_data["aframePmndrsMieExtinctionScale"] === 'number') ? vrodos_scene_data["aframePmndrsMieExtinctionScale"] : 1.0;
+			envir.scene.aframePmndrsMiePhaseG = (typeof vrodos_scene_data["aframePmndrsMiePhaseG"] === 'number') ? vrodos_scene_data["aframePmndrsMiePhaseG"] : 0.8;
+			envir.scene.aframePmndrsAbsorptionScale = (typeof vrodos_scene_data["aframePmndrsAbsorptionScale"] === 'number') ? vrodos_scene_data["aframePmndrsAbsorptionScale"] : 1.0;
+			envir.scene.aframePmndrsMoonEnabled = (vrodos_scene_data["aframePmndrsMoonEnabled"] === true || vrodos_scene_data["aframePmndrsMoonEnabled"] === 'true');
 			if (typeof syncCompileDialogFromSceneSettings === 'function') {
 				syncCompileDialogFromSceneSettings();
 			}
