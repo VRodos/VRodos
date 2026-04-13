@@ -14,7 +14,7 @@
  *   - HueSaturation        (postFXColorEnabled)
  *   - VignetteEffect       (postFXVignetteEnabled)
  *   - ToneMappingEffect    (always, ACES Filmic)
- *   - FXAAEffect           (postFXEdgeAAEnabled)
+ *   - no AA effect currently enabled in PMNDRS runtime
  *
  * NOT supported in this engine — scenes that need these stay on postFXEngine='legacy':
  *   - SSR  (no actively-maintained pmndrs-compatible SSR effect in this VRodos pipeline)
@@ -90,6 +90,23 @@
         if (!self || !self.data) return false;
         var v = self.data[key];
         return v === true || v === 'true' || v === '1' || v === 1;
+    }
+
+    function shouldDisablePmndrsFxaaDebug() {
+        if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.disablePmndrsFxaa === true) {
+            return true;
+        }
+
+        if (typeof window.location === 'undefined' || !window.location.search) {
+            return false;
+        }
+
+        try {
+            var params = new URLSearchParams(window.location.search);
+            return params.get('vrodos_debug_disable_pmndrs_fxaa') === '1';
+        } catch (err) {
+            return false;
+        }
     }
 
     function getPmndrsAtmosphereModeSignature(self, atmosphereConfig) {
@@ -303,13 +320,15 @@
             }
         }
 
-        // FXAA — only AA path supported by this engine while the SMAA path remains disabled.
-        if (this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXEdgeAAEnabled')) {
-            try {
-                effects.push(new PP.FXAAEffect());
-            } catch (err) {
-                console.warn('[VRodos] pmndrs FXAAEffect failed, skipping:', err);
-            }
+        // FXAA — disabled in the PMNDRS runtime.
+        //
+        // Real-scene validation on the pinned r181 stack showed that FXAA creates
+        // a visible halo/ring artifact around the Horizon sun. Keep AA disabled
+        // here until we evaluate a proper PMNDRS-native replacement strategy
+        // (SMAA and/or composer/MSAA behavior).
+        if (!shouldDisablePmndrsFxaaDebug() && this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXEdgeAAEnabled') && !this._pmndrsFxaaSkipWarned) {
+            console.info('[VRodos] pmndrs FXAA disabled in current VRodos pipeline after Horizon artifact validation. Follow-up target: evaluate SMAA and MSAA instead.');
+            this._pmndrsFxaaSkipWarned = true;
         }
 
         // SSR / TRAA are not supported in this engine — log once per scene load.

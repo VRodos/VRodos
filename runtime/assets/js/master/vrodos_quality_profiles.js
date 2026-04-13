@@ -1239,8 +1239,30 @@
         self._pmndrsSunDistance = null;
     }
 
+    function shouldDisablePmndrsVisibleSunDebug() {
+        if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.disablePmndrsSunSprite === true) {
+            return true;
+        }
+
+        if (typeof window.location === 'undefined' || !window.location.search) {
+            return false;
+        }
+
+        try {
+            var params = new URLSearchParams(window.location.search);
+            return params.get('vrodos_debug_disable_pmndrs_sun') === '1';
+        } catch (err) {
+            return false;
+        }
+    }
+
     function ensurePmndrsTakramVisibleSun(self, config, preset) {
         if (!self || !self.el || !config || typeof document === 'undefined') {
+            return;
+        }
+
+        if (shouldDisablePmndrsVisibleSunDebug()) {
+            clearPmndrsHorizonSun(self);
             return;
         }
 
@@ -1304,6 +1326,10 @@
             return;
         }
         var opts = options || {};
+        if (shouldDisablePmndrsVisibleSunDebug()) {
+            clearPmndrsHorizonSun(self);
+            return;
+        }
         if (opts.atmosphere) {
             clearPmndrsHorizonSun(self);
             return;

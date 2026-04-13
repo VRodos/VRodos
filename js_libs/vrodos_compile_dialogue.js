@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
             universalPostFxGroup: document.getElementById('compileUniversalPostFxGroup'),
             colorGradingWrapper: document.getElementById('compileColorGradingWrapper'),
             envMapPresetWrapper: document.getElementById('compileEnvMapPresetWrapper'),
+            edgeAAWrapper: document.getElementById('compileEdgeAAWrapper'),
             engineControlsColumn: document.getElementById('compileEngineControlsColumn'),
             legacyPane: document.getElementById('compileLegacyPane'),
             pmndrsPane: document.getElementById('compilePmndrsPane'),
@@ -606,6 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var bloomEnabled = postFxEnabled && isBloomStrengthEnabled(controls.bloomStrength.value);
         var engine = controls.postFxEngine ? normalizePostFxEngine(controls.postFxEngine.value) : 'legacy';
         var isPmndrs = engine === 'pmndrs';
+        var edgeAAAvailable = postFxEnabled && !isPmndrs;
         var legacyHorizonStageEnabled = !isPmndrs && isLegacyHorizonStageApplicable();
 
         if (controls.universalPostFxGroup) {
@@ -678,9 +680,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (controls.colorGradingWrapper) {
             controls.colorGradingWrapper.style.display = colorGradingEnabled ? '' : 'none';
         }
+        if (controls.edgeAAWrapper) {
+            controls.edgeAAWrapper.style.display = edgeAAAvailable ? '' : 'none';
+        }
         controls.exposurePreset.disabled = !colorGradingEnabled;
         controls.contrastPreset.disabled = !colorGradingEnabled;
-        controls.edgeAAStrength.disabled = !postFxEnabled;
+        controls.edgeAAStrength.disabled = !edgeAAAvailable;
+        controls.edgeAAStrength.title = isPmndrs
+            ? 'FXAA is disabled in the Pmndrs pipeline. Switch to Legacy to use Edge Smoothing.'
+            : 'Edge smoothing for the Legacy post-processing pipeline.';
 
         if (controls.ssrStrength) {
             controls.ssrStrength.disabled = !postFxEnabled || isPmndrs;
@@ -823,8 +831,9 @@ document.addEventListener('DOMContentLoaded', function() {
         envir.scene.aframeExposurePreset = normalizeExposurePreset(controls.exposurePreset.value);
         envir.scene.aframeContrastPreset = normalizeContrastPreset(controls.contrastPreset.value);
 
+        var selectedPostFxEngine = controls.postFxEngine ? normalizePostFxEngine(controls.postFxEngine.value) : 'legacy';
         var edgeAAValue = normalizeEdgeAAStrengthLevel(controls.edgeAAStrength.value);
-        envir.scene.aframePostFXEdgeAAEnabled = edgeAAValue > 0;
+        envir.scene.aframePostFXEdgeAAEnabled = selectedPostFxEngine !== 'pmndrs' && edgeAAValue > 0;
         envir.scene.aframePostFXEdgeAAStrength = edgeAAValue > 0 ? edgeAAValue : (envir.scene.aframePostFXEdgeAAStrength || 3);
 
         envir.scene.aframeReflectionProfile = normalizeReflectionProfile(controls.reflectionProfile.value);
@@ -838,9 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (controls.taaEnabled) {
             envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
         }
-        if (controls.postFxEngine) {
-            envir.scene.aframePostFXEngine = normalizePostFxEngine(controls.postFxEngine.value);
-        }
+        envir.scene.aframePostFXEngine = selectedPostFxEngine;
         if (controls.pmndrsBloomIntensity) {
             envir.scene.aframePmndrsBloomIntensity = clampNumber(controls.pmndrsBloomIntensity.value, 0, 3, 1.0);
         }

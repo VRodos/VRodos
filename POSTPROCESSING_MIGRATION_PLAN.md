@@ -615,7 +615,16 @@ That file defines:
 
 VRodos is no longer treating stable and master as interchangeable runtime profiles for this migration. The current goal is to make the latest supported A-Frame/Three pair work as the single active stack.
 
-## 14. Reference Links
+## 14. Current AA Direction
+
+Current live decision on the pinned A-Frame master + Three r181 stack:
+
+- Disable `FXAAEffect` in the PMNDRS runtime.
+- Reason: live Horizon validation showed that PMNDRS FXAA introduces a visible sun halo/ring artifact.
+- Follow-up: evaluate PMNDRS-native anti-aliasing paths instead, specifically `SMAAEffect` and composer/MSAA behavior.
+- Historical Phase 0 notes about FXAA as a fallback remain useful only as migration history from the older r173 stack; they are no longer the active AA decision for live PMNDRS scenes.
+
+## 15. Reference Links
 
 - pmndrs/postprocessing: <https://github.com/pmndrs/postprocessing>
 - pmndrs/postprocessing WebXR research issue #677: <https://github.com/pmndrs/postprocessing/issues/677>

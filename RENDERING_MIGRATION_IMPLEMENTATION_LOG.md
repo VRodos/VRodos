@@ -313,3 +313,29 @@ The current top-level order is:
 - Source sweep confirmed the remaining `r173` mentions in top-level markdown are now either:
   - explicit historical/debug context, or
   - implementation-log history that documents the migration path itself
+
+## Phase 13
+
+### Status
+
+- Complete
+
+### Intent
+
+- Capture the PMNDRS Horizon artifact diagnosis so the team does not regress back to FXAA while the migration is still in flight.
+- Align the live PMNDRS runtime with the current AA direction on the pinned r181 stack.
+
+### Applied Changes
+
+- Confirmed through narrow runtime toggles that the Horizon halo artifact survives without the visible PMNDRS sun sprite, but disappears when PMNDRS `FXAAEffect` is disabled.
+- Updated `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` so the PMNDRS runtime no longer adds `FXAAEffect`.
+- Updated PMNDRS runtime comments/logging to record the current direction: keep FXAA disabled and investigate `SMAAEffect` plus PMNDRS/MSAA behavior instead.
+- Added a current-runtime AA decision note to `POSTPROCESSING_MIGRATION_PLAN.md`.
+
+### Validation
+
+- `eslint` passed on:
+  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
+- Manual runtime diagnosis result:
+  - `?vrodos_debug_disable_pmndrs_sun=1` did **not** remove the artifact
+  - `?vrodos_debug_disable_pmndrs_fxaa=1` **did** remove the artifact
