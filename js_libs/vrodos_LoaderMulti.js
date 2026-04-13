@@ -1,7 +1,3 @@
-/**
- * Created by DIMITRIOS on 7/3/2016.
- */
-
 "use strict";
 
 function vrodosLoaderSafeNumber(value, fallback) {
@@ -78,6 +74,186 @@ function vrodosLoaderCreateAssessmentObject(name, resource) {
 
     return fallback;
 }
+/**
+ * Synchronize a scene setting using the schema
+ * @param {string} key
+ * @param {any} value
+ * @param {object} resources3D - needed for context in side effects
+ */
+function vrodosSyncSceneSetting(key, value, resources3D) {
+    if (!VRODOS_SCENE_SETTINGS_SCHEMA[key]) return;
+
+    const config = VRODOS_SCENE_SETTINGS_SCHEMA[key];
+    const envirKey = config.envirKey;
+
+    // 1. Parse value based on schema type
+    let parsedValue = value;
+    if (config.type === 'boolean') {
+        parsedValue = (value === true || value === 'true');
+        // Handle "false" strings and explicit flags
+        if (value === false || value === 'false') parsedValue = false;
+    } else if (config.type === 'number') {
+        parsedValue = parseFloat(value);
+        if (isNaN(parsedValue)) parsedValue = config.default;
+    } else if (config.type === 'color') {
+        parsedValue = value || config.default;
+    }
+
+    // 2. Apply to envir.scene
+    envir.scene[envirKey] = parsedValue;
+
+    // 3. Sync common UI elements (Checkboxes)
+    const checkboxMap = {
+        'enableGeneralChat': 'enableGeneralChatCheckbox',
+        'enableAvatar': 'enableAvatarCheckbox',
+        'disableMovement': 'moveDisableCheckbox',
+        'aframeCollisionMode': 'aframeCollisionModeCheckbox'
+    };
+
+    if (checkboxMap[key]) {
+        const el = document.getElementById(checkboxMap[key]);
+        if (el) {
+            if (key === 'aframeCollisionMode') {
+                el.checked = parsedValue !== 'off';
+            } else {
+                el.checked = parsedValue;
+            }
+        }
+    }
+
+    // 4. Handle Side Effects (Background, Fog, etc.)
+    if (key === 'backgroundStyleOption') {
+        envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
+
+        let color_sel = document.getElementById('jscolorpick');
+        let custom_img_sel = document.getElementById('img_upload_bcg');
+        let preset_sel = document.getElementById('presetsBcg');
+        let preset_ground_toggle = document.getElementById('presetGroundToggle');
+
+        let img_thumb = document.getElementById('uploadImgThumb');
+        let horizon_sky_preset = document.getElementById('horizonSkyPreset');
+
+        let horizonSkyRow = document.getElementById('bcgHorizonSkyRow');
+        let colorRow = document.getElementById('bcgColorRow');
+        let presetsRow = document.getElementById('bcgPresetsRow');
+        let presetGroundRow = document.getElementById('bcgPresetGroundRow');
+        let imageRow = document.getElementById('bcgImageRow');
+        let horizonDescription = document.getElementById('sceneHorizonDescription');
+        let presetGroundEnabled = (resources3D && resources3D["backgroundPresetGroundEnabled"] !== false);
+
+        // Hide all rows first
+        if (horizonSkyRow) horizonSkyRow.style.display = 'none';
+        if (colorRow) colorRow.style.display = 'none';
+        if (presetsRow) presetsRow.style.display = 'none';
+        if (presetGroundRow) presetGroundRow.style.display = 'none';
+        if (imageRow) imageRow.style.display = 'none';
+        if (horizonDescription) {
+            horizonDescription.style.display = 'none';
+            horizonDescription.classList.add('tw-hidden');
+        }
+        if (color_sel) color_sel.disabled = true;
+        if (preset_sel) preset_sel.disabled = true;
+        if (preset_ground_toggle) {
+            preset_ground_toggle.disabled = true;
+            preset_ground_toggle.checked = presetGroundEnabled;
+        }
+        if (horizon_sky_preset) {
+            horizon_sky_preset.disabled = true;
+            horizon_sky_preset.value = (resources3D && resources3D["aframeHorizonSkyPreset"]) || 'natural';
+        }
+        if (custom_img_sel) custom_img_sel.disabled = true;
+        if (typeof setBackgroundPresetGroundEnabled === 'function') {
+            setBackgroundPresetGroundEnabled(presetGroundEnabled);
+        }
+
+        switch (envir.scene.bcg_selection) {
+            case 4:
+                envir.scene.background = null;
+                const noBcg = document.getElementById("sceneNoBackground");
+                if (noBcg) noBcg.checked = true;
+                break;
+            case 0:
+                const horizonRadio = document.getElementById("sceneHorizon");
+                if (horizonRadio) horizonRadio.checked = true;
+                if (horizonDescription) {
+                    horizonDescription.style.display = 'block';
+                    horizonDescription.classList.remove('tw-hidden');
+                }
+                if (horizon_sky_preset) horizon_sky_preset.disabled = false;
+                if (horizonSkyRow) horizonSkyRow.style.display = 'flex';
+                break;
+            case 1:
+                const colorRadio = document.getElementById("sceneColorRadio");
+                if (colorRadio) colorRadio.checked = true;
+                if (color_sel) color_sel.disabled = false;
+                if (colorRow) colorRow.style.display = 'flex';
+                break;
+            case 2:
+                const skyRadio = document.getElementById("sceneSky");
+                if (skyRadio) skyRadio.checked = true;
+                if (preset_sel) {
+                    preset_sel.disabled = false;
+                    const opt = resources3D ? (resources3D["backgroundPresetOption"] || resources3D["SceneSettings"]?.backgroundPresetOption) : null;
+                    for (let i = 0; i < preset_sel.options.length; i++) {
+                        if (preset_sel.options[i].value == opt) {
+                            preset_sel.options[i].selected = true;
+                        }
+                    }
+                }
+                if (presetsRow) presetsRow.style.display = 'flex';
+                if (preset_ground_toggle) preset_ground_toggle.disabled = false;
+                if (presetGroundRow) presetGroundRow.style.display = 'flex';
+                break;
+            case 3:
+                const customRadio = document.getElementById("sceneCustomImage");
+                if (customRadio) customRadio.checked = true;
+                if (custom_img_sel) custom_img_sel.disabled = false;
+                if (imageRow) imageRow.style.display = 'flex';
+                const path = resources3D ? (resources3D["backgroundImagePath"] || resources3D["SceneSettings"]?.backgroundImagePath) : null;
+                if (path && path != 0 && img_thumb) {
+                    img_thumb.src = path;
+                    img_thumb.hidden = false;
+                }
+                break;
+        }
+        envir.scene.img_bcg_path = resources3D ? (resources3D["backgroundImagePath"] || resources3D["SceneSettings"]?.backgroundImagePath) : envir.scene.img_bcg_path;
+        envir.scene.backgroundStyleOption = parsedValue;
+    }
+
+    if (key === 'fogCategory') {
+        const linear_elems = document.getElementsByClassName('linearElement');
+        const expo_elems = document.getElementsByClassName('exponentialElement');
+        const color_elems = document.getElementsByClassName('colorElement');
+        const fogValEl = document.getElementById("FogValues");
+        const fogTypeEl = document.getElementById('FogType');
+
+        if (parsedValue === 0) {
+            const radioNoFog = document.getElementById('RadioNoFog');
+            if (radioNoFog) radioNoFog.checked = true;
+            for (let i = 0; i < linear_elems.length; ++i) linear_elems[i].style.display = "none";
+            for (let i = 0; i < expo_elems.length; ++i) expo_elems[i].style.display = "none";
+            for (let i = 0; i < color_elems.length; ++i) color_elems[i].style.display = "none";
+            if (fogValEl) fogValEl.style.display = "none";
+            if (fogTypeEl) fogTypeEl.value = "none";
+        } else if (parsedValue === 1) {
+            const radioLinFog = document.getElementById('RadioLinearFog');
+            if (radioLinFog) radioLinFog.checked = true;
+            if (fogValEl) fogValEl.style.display = "flex";
+            for (let i = 0; i < linear_elems.length; ++i) linear_elems[i].style.display = "flex";
+            for (let i = 0; i < expo_elems.length; ++i) expo_elems[i].style.display = "none";
+            for (let i = 0; i < color_elems.length; ++i) color_elems[i].style.display = "flex";
+            if (fogTypeEl) fogTypeEl.value = "linear";
+        } else if (parsedValue === 2) {
+            if (fogTypeEl) fogTypeEl.value = "exponential";
+            for (let i = 0; i < linear_elems.length; ++i) linear_elems[i].style.display = "none";
+            for (let i = 0; i < expo_elems.length; ++i) expo_elems[i].style.display = "flex";
+            for (let i = 0; i < color_elems.length; ++i) color_elems[i].style.display = "flex";
+            if (fogValEl) fogValEl.style.display = "flex";
+            const radioExpFog = document.getElementById('RadioExponentialFog');
+            if (radioExpFog) radioExpFog.checked = true;
+        }
+    }
+}
 
 class VRodos_LoaderMulti {
 
@@ -87,352 +263,18 @@ class VRodos_LoaderMulti {
 
         const loader = new THREE.GLTFLoader(manager);
         const pendingLoads = [];
-        
 
         for (const name in resources3D) {
             const resource = resources3D[name];
-                
-                if (name === 'enableGeneralChat'){
-                    document.getElementById("enableGeneralChatCheckbox").checked = resource;
-                    envir.scene.enableGeneralChat = resource;
-                }
 
-                
-                if (name === 'enableAvatar'){
-                    document.getElementById("enableAvatarCheckbox").checked = resource;
-                    envir.scene.enableAvatar = resource;
-                }
+            // Use schema for scene settings
+            if (VRODOS_SCENE_SETTINGS_SCHEMA[name]) {
+                vrodosSyncSceneSetting(name, resource, resources3D);
+                continue;
+            }
 
-                if (name === 'disableMovement'){
-                    document.getElementById("moveDisableCheckbox").checked = resource;
-                    envir.scene.disableMovement = resource;
-                }
-
-                if (name === 'aframeCollisionMode') {
-                    envir.scene.aframeCollisionMode = resource || 'auto';
-                    let collisionToggle = document.getElementById('aframeCollisionModeCheckbox');
-                    if (collisionToggle) {
-                        collisionToggle.checked = envir.scene.aframeCollisionMode !== 'off';
-                    }
-                }
-
-                if (name === 'aframeRenderQuality') {
-                    envir.scene.aframeRenderQuality = resource || 'standard';
-                }
-
-                if (name === 'aframeShadowQuality') {
-                    envir.scene.aframeShadowQuality = resource || 'medium';
-                }
-
-                if (name === 'aframeAAQuality') {
-                    envir.scene.aframeAAQuality = resource || 'balanced';
-                }
-
-                if (name === 'aframeFPSMeterEnabled') {
-                    envir.scene.aframeFPSMeterEnabled = resource === true || resource === 'true';
-                }
-
-                if (name === 'aframeAmbientOcclusionPreset') {
-                    envir.scene.aframeAmbientOcclusionPreset = resource || 'balanced';
-                }
-
-                if (name === 'aframeContactShadowPreset') {
-                    envir.scene.aframeContactShadowPreset = resource || 'soft';
-                }
-
-                if (name === 'aframePostFXEnabled') {
-                    envir.scene.aframePostFXEnabled = resource === true || resource === 'true';
-                }
-
-                if (name === 'aframePostFXBloomEnabled') {
-                    envir.scene.aframePostFXBloomEnabled = !(resource === false || resource === 'false');
-                }
-
-                if (name === 'aframePostFXColorEnabled') {
-                    envir.scene.aframePostFXColorEnabled = !(resource === false || resource === 'false');
-                }
-
-                if (name === 'aframePostFXVignetteEnabled') {
-                    envir.scene.aframePostFXVignetteEnabled = false;
-                }
-
-                if (name === 'aframePostFXEdgeAAEnabled') {
-                    envir.scene.aframePostFXEdgeAAEnabled = !(resource === false || resource === 'false');
-                }
-
-                if (name === 'aframePostFXEdgeAAStrength') {
-                    envir.scene.aframePostFXEdgeAAStrength = resource || 3;
-                }
-
-                if (name === 'aframePostFXTAAEnabled') {
-                    envir.scene.aframePostFXTAAEnabled = resource === true || resource === 'true';
-                }
-
-                if (name === 'aframePostFXSSREnabled') {
-                    envir.scene.aframePostFXSSREnabled = resource === true || resource === 'true';
-                }
-
-                if (name === 'aframePostFXSSRStrength') {
-                    envir.scene.aframePostFXSSRStrength = resource || 'off';
-                }
-
-                if (name === 'aframePostFXEngine') {
-                    envir.scene.aframePostFXEngine = (resource === 'pmndrs') ? 'pmndrs' : 'legacy';
-                }
-
-                if (name === 'aframePmndrsAAMode') {
-                    envir.scene.aframePmndrsAAMode = (resource === 'none' || resource === 'smaa' || resource === 'msaa')
-                        ? resource
-                        : 'inherit';
-                }
-
-                if (name === 'aframePmndrsAAPreset') {
-                    envir.scene.aframePmndrsAAPreset = (resource === 'low' || resource === 'medium' || resource === 'high' || resource === 'ultra')
-                        ? resource
-                        : 'inherit';
-                }
-
-                if (name === 'aframeLegacyHorizonStageSize') {
-                    var _lhs = parseFloat(resource);
-                    envir.scene.aframeLegacyHorizonStageSize = isNaN(_lhs) ? 5000 : Math.max(500, Math.min(8000, _lhs));
-                }
-
-                if (name === 'aframePmndrsBloomIntensity') {
-                    var _pbI = parseFloat(resource);
-                    envir.scene.aframePmndrsBloomIntensity = isNaN(_pbI) ? 1.0 : _pbI;
-                }
-
-                if (name === 'aframePmndrsBloomThreshold') {
-                    var _pbT = parseFloat(resource);
-                    envir.scene.aframePmndrsBloomThreshold = isNaN(_pbT) ? 0.62 : _pbT;
-                }
-
-                if (name === 'aframePmndrsVignetteEnabled') {
-                    envir.scene.aframePmndrsVignetteEnabled = resource === true || resource === 'true';
-                }
-
-                if (name === 'aframePmndrsVignetteDarkness') {
-                    var _pvD = parseFloat(resource);
-                    envir.scene.aframePmndrsVignetteDarkness = isNaN(_pvD) ? 0.5 : _pvD;
-                }
-
-                if (name === 'aframePmndrsToneMappingExposure') {
-                    var _ptE = parseFloat(resource);
-                    envir.scene.aframePmndrsToneMappingExposure = isNaN(_ptE) ? 1.0 : _ptE;
-                }
-
-                if (name === 'aframePmndrsAtmosphereEnabled') {
-                    envir.scene.aframePmndrsAtmosphereEnabled = !(resource === false || resource === 'false');
-                }
-
-                if (name === 'aframePmndrsAtmosphereQuality') {
-                    envir.scene.aframePmndrsAtmosphereQuality = resource || 'balanced';
-                }
-
-                if (name === 'aframePmndrsSunElevationDeg') {
-                    var _pmSunEl = parseFloat(resource);
-                    envir.scene.aframePmndrsSunElevationDeg = isNaN(_pmSunEl) ? 10 : _pmSunEl;
-                }
-
-                if (name === 'aframePmndrsSunAzimuthDeg') {
-                    var _pmSunAz = parseFloat(resource);
-                    envir.scene.aframePmndrsSunAzimuthDeg = isNaN(_pmSunAz) ? 38 : _pmSunAz;
-                }
-
-                if (name === 'aframePmndrsSunDistance') {
-                    var _pmSunDist = parseFloat(resource);
-                    envir.scene.aframePmndrsSunDistance = isNaN(_pmSunDist) ? 5200 : _pmSunDist;
-                }
-
-                if (name === 'aframePmndrsSunAngularRadius') {
-                    var _pmSunRadius = parseFloat(resource);
-                    envir.scene.aframePmndrsSunAngularRadius = isNaN(_pmSunRadius) ? 0.0068 : _pmSunRadius;
-                }
-
-                if (name === 'aframePmndrsAerialStrength') {
-                    var _pmAerial = parseFloat(resource);
-                    envir.scene.aframePmndrsAerialStrength = isNaN(_pmAerial) ? 0.85 : _pmAerial;
-                }
-
-                if (name === 'aframePmndrsAlbedoScale') {
-                    var _pmAlbedo = parseFloat(resource);
-                    envir.scene.aframePmndrsAlbedoScale = isNaN(_pmAlbedo) ? 0.96 : _pmAlbedo;
-                }
-
-                if (name === 'aframePmndrsTransmittanceEnabled') {
-                    envir.scene.aframePmndrsTransmittanceEnabled = !(resource === false || resource === 'false');
-                }
-
-                if (name === 'aframePmndrsInscatterEnabled') {
-                    envir.scene.aframePmndrsInscatterEnabled = !(resource === false || resource === 'false');
-                }
-
-                if (name === 'aframePmndrsGroundEnabled') {
-                    envir.scene.aframePmndrsGroundEnabled = !(resource === false || resource === 'false');
-                }
-
-                if (name === 'aframePmndrsGroundAlbedo') {
-                    envir.scene.aframePmndrsGroundAlbedo = resource || '#f0e6d6';
-                }
-
-                if (name === 'aframePmndrsRayleighScale') {
-                    var _pmRayleigh = parseFloat(resource);
-                    envir.scene.aframePmndrsRayleighScale = isNaN(_pmRayleigh) ? 1.0 : _pmRayleigh;
-                }
-
-                if (name === 'aframePmndrsMieScatteringScale') {
-                    var _pmMieScat = parseFloat(resource);
-                    envir.scene.aframePmndrsMieScatteringScale = isNaN(_pmMieScat) ? 0.9 : _pmMieScat;
-                }
-
-                if (name === 'aframePmndrsMieExtinctionScale') {
-                    var _pmMieExt = parseFloat(resource);
-                    envir.scene.aframePmndrsMieExtinctionScale = isNaN(_pmMieExt) ? 1.0 : _pmMieExt;
-                }
-
-                if (name === 'aframePmndrsMiePhaseG') {
-                    var _pmMieG = parseFloat(resource);
-                    envir.scene.aframePmndrsMiePhaseG = isNaN(_pmMieG) ? 0.8 : _pmMieG;
-                }
-
-                if (name === 'aframePmndrsAbsorptionScale') {
-                    var _pmAbsorb = parseFloat(resource);
-                    envir.scene.aframePmndrsAbsorptionScale = isNaN(_pmAbsorb) ? 1.0 : _pmAbsorb;
-                }
-
-                if (name === 'aframePmndrsMoonEnabled') {
-                    envir.scene.aframePmndrsMoonEnabled = resource === true || resource === 'true';
-                }
-
-                if (name === 'aframeBloomStrength') {
-                    envir.scene.aframeBloomStrength = resource || 'off';
-                    if (envir.scene.aframePostFXBloomEnabled === false) {
-                        envir.scene.aframeBloomStrength = 'off';
-                    }
-                    envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
-                }
-
-                if (name === 'aframeExposurePreset') {
-                    envir.scene.aframeExposurePreset = resource || 'neutral';
-                }
-
-                if (name === 'aframeContrastPreset') {
-                    envir.scene.aframeContrastPreset = resource || 'balanced';
-                }
-
-                if (name === 'aframeReflectionProfile') {
-                    envir.scene.aframeReflectionProfile = resource || 'balanced';
-                }
-
-                if (name === 'aframeReflectionSource') {
-                    envir.scene.aframeReflectionSource = resource || 'hdr';
-                }
-
-                if (name === 'aframeHorizonSkyPreset') {
-                    envir.scene.aframeHorizonSkyPreset = resource || 'natural';
-                }
-
-                if (name === 'aframeEnvMapPreset') {
-                    envir.scene.aframeEnvMapPreset = resource || 'none';
-                }
-
-                if (name === 'backgroundStyleOption'){
-                    envir.scene.backgroundStyleOption = parseInt(resource) || 0;
-                    envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
-
-                    let color_sel = document.getElementById('jscolorpick');
-                    let custom_img_sel = document.getElementById('img_upload_bcg');
-                    let preset_sel = document.getElementById('presetsBcg');
-                    let preset_ground_toggle = document.getElementById('presetGroundToggle');
-
-                    let img_thumb = document.getElementById('uploadImgThumb');
-                    let horizon_sky_preset = document.getElementById('horizonSkyPreset');
-
-                    let horizonSkyRow = document.getElementById('bcgHorizonSkyRow');
-                    let colorRow = document.getElementById('bcgColorRow');
-                    let presetsRow = document.getElementById('bcgPresetsRow');
-                    let presetGroundRow = document.getElementById('bcgPresetGroundRow');
-                    let imageRow = document.getElementById('bcgImageRow');
-                    let horizonDescription = document.getElementById('sceneHorizonDescription');
-                    let presetGroundEnabled = resources3D["backgroundPresetGroundEnabled"] !== false;
-
-                    // Hide all rows first
-                    if (horizonSkyRow) horizonSkyRow.style.display = 'none';
-                    colorRow.style.display = 'none';
-                    presetsRow.style.display = 'none';
-                    if (presetGroundRow) presetGroundRow.style.display = 'none';
-                    imageRow.style.display = 'none';
-                    if (horizonDescription) {
-                        horizonDescription.style.display = 'none';
-                        horizonDescription.classList.add('tw-hidden');
-                    }
-                    color_sel.disabled = true;
-                    preset_sel.disabled = true;
-                    if (preset_ground_toggle) {
-                        preset_ground_toggle.disabled = true;
-                        preset_ground_toggle.checked = presetGroundEnabled;
-                    }
-                    if (horizon_sky_preset) {
-                        horizon_sky_preset.disabled = true;
-                        horizon_sky_preset.value = resources3D["aframeHorizonSkyPreset"] || 'natural';
-                    }
-                    custom_img_sel.disabled = true;
-                    if (typeof setBackgroundPresetGroundEnabled === 'function') {
-                        setBackgroundPresetGroundEnabled(presetGroundEnabled);
-                    }
-
-                    switch (envir.scene.bcg_selection){
-                        case 4:
-                            envir.scene.background = null;
-                            document.getElementById("sceneNoBackground").checked = true;
-                            break;
-                        case 0:
-                            document.getElementById("sceneHorizon").checked = true;
-                            if (horizonDescription) {
-                                horizonDescription.style.display = 'block';
-                                horizonDescription.classList.remove('tw-hidden');
-                            }
-                            if (horizon_sky_preset) {
-                                horizon_sky_preset.disabled = false;
-                            }
-                            if (horizonSkyRow) {
-                                horizonSkyRow.style.display = 'flex';
-                            }
-                            break;
-                        case 1:
-                            document.getElementById("sceneColorRadio").checked = true;
-                            color_sel.disabled = false;
-                            colorRow.style.display = 'flex';
-                            break;
-                        case 2:
-                            document.getElementById("sceneSky").checked = true;
-                            preset_sel.disabled = false;
-                            presetsRow.style.display = 'flex';
-                            if (preset_ground_toggle) preset_ground_toggle.disabled = false;
-                            if (presetGroundRow) presetGroundRow.style.display = 'flex';
-                            envir.scene.backgroundPresetOption = resources3D["backgroundPresetOption"];
-                            for(let index = 0; index < preset_sel.options.length;index++){
-                                if(preset_sel.options[index].value == resources3D["backgroundPresetOption"] ){
-                                    preset_sel.options[index].selected = true;
-                                }
-                            }
-                            break;
-                        case 3:
-                            document.getElementById("sceneCustomImage").checked = true;
-                            custom_img_sel.disabled = false;
-                            imageRow.style.display = 'flex';
-                            if (resources3D["backgroundImagePath"]  && resources3D["backgroundImagePath"] !=0 ){
-                                img_thumb.src = resources3D["backgroundImagePath"];
-                                img_thumb.hidden = false;
-                            }
-                            break;
-                    }
-                    envir.scene.img_bcg_path = resources3D["backgroundImagePath"];
-                    envir.scene.backgroundStyleOption = resources3D["backgroundStyleOption"];
-                }
-                   
-                if (name === 'ClearColor' || name === 'enableEnvironmentTexture')
-                    continue;
+            if (name === 'ClearColor' || name === 'enableEnvironmentTexture' || name === 'fogCategory' || name === 'fogtype')
+                continue;
 
                 // Fog is not parsed here but in LightsPawn_Loader
                 if (name === 'fogCategory') {
@@ -729,279 +571,14 @@ class VRodos_LoaderMulti {
                             fetchAndLoadGLB();
                         }));
                     } 
-                    else if (name =="SceneSettings") {
-
-                      
-                       if (resource.enableGeneralChat) {
-                            document.getElementById("enableGeneralChatCheckbox").checked = resource.enableGeneralChat;
-                            envir.scene.enableGeneralChat = resource.enableGeneralChat;
+                    else if (name === "SceneSettings") {
+                        for (const key in resource) {
+                            if (Object.prototype.hasOwnProperty.call(VRODOS_SCENE_SETTINGS_SCHEMA, key)) {
+                                vrodosSyncSceneSetting(key, resource[key], { "SceneSettings": resource });
+                            }
                         }
-
-                        if (resource.enableAvatar) {
-                            document.getElementById("enableAvatarCheckbox").checked = resource.enableAvatar;
-                            envir.scene.enableAvatar = resource.enableAvatar;
-                        }
-
-                        if (resource.disableMovement){
-                            document.getElementById("moveDisableCheckbox").checked = resource.disableMovement;
-                            envir.scene.disableMovement = resource.disableMovement;
-                        }
-
-                        envir.scene.aframeCollisionMode = resource.aframeCollisionMode || 'auto';
-                        let collisionToggle = document.getElementById('aframeCollisionModeCheckbox');
-                        if (collisionToggle) {
-                            collisionToggle.checked = envir.scene.aframeCollisionMode !== 'off';
-                        }
-
-                        envir.scene.aframeRenderQuality = resource.aframeRenderQuality || 'standard';
-                        envir.scene.aframeShadowQuality = resource.aframeShadowQuality || 'medium';
-                        envir.scene.aframeAAQuality = resource.aframeAAQuality || 'balanced';
-                        envir.scene.aframeFPSMeterEnabled = resource.aframeFPSMeterEnabled === true || resource.aframeFPSMeterEnabled === 'true';
-                        envir.scene.aframeAmbientOcclusionPreset = resource.aframeAmbientOcclusionPreset || 'balanced';
-                        envir.scene.aframeContactShadowPreset = resource.aframeContactShadowPreset || 'soft';
-                        envir.scene.aframePostFXEnabled = resource.aframePostFXEnabled === true || resource.aframePostFXEnabled === 'true';
-                        envir.scene.aframePostFXBloomEnabled = !(resource.aframePostFXBloomEnabled === false || resource.aframePostFXBloomEnabled === 'false');
-                        envir.scene.aframePostFXColorEnabled = !(resource.aframePostFXColorEnabled === false || resource.aframePostFXColorEnabled === 'false');
-                        envir.scene.aframePostFXVignetteEnabled = false;
-                        envir.scene.aframePostFXEdgeAAEnabled = !(resource.aframePostFXEdgeAAEnabled === false || resource.aframePostFXEdgeAAEnabled === 'false');
-                        envir.scene.aframePostFXEdgeAAStrength = resource.aframePostFXEdgeAAStrength || 3;
-                        envir.scene.aframePostFXTAAEnabled = resource.aframePostFXTAAEnabled === true || resource.aframePostFXTAAEnabled === 'true';
-                        envir.scene.aframePostFXSSREnabled = resource.aframePostFXSSREnabled === true || resource.aframePostFXSSREnabled === 'true';
-                        envir.scene.aframePostFXSSRStrength = resource.aframePostFXSSRStrength || 'off';
-                        envir.scene.aframePostFXEngine = (resource.aframePostFXEngine === 'pmndrs') ? 'pmndrs' : 'legacy';
-                        envir.scene.aframePmndrsAAMode = (resource.aframePmndrsAAMode === 'none' || resource.aframePmndrsAAMode === 'smaa' || resource.aframePmndrsAAMode === 'msaa')
-                            ? resource.aframePmndrsAAMode
-                            : 'inherit';
-                        envir.scene.aframePmndrsAAPreset = (resource.aframePmndrsAAPreset === 'low' || resource.aframePmndrsAAPreset === 'medium' || resource.aframePmndrsAAPreset === 'high' || resource.aframePmndrsAAPreset === 'ultra')
-                            ? resource.aframePmndrsAAPreset
-                            : 'inherit';
-                        var _resLhs = parseFloat(resource.aframeLegacyHorizonStageSize);
-                        envir.scene.aframeLegacyHorizonStageSize = isNaN(_resLhs) ? 5000 : Math.max(500, Math.min(8000, _resLhs));
-                        var _resPmBI = parseFloat(resource.aframePmndrsBloomIntensity);
-                        envir.scene.aframePmndrsBloomIntensity = isNaN(_resPmBI) ? 1.0 : _resPmBI;
-                        var _resPmBT = parseFloat(resource.aframePmndrsBloomThreshold);
-                        envir.scene.aframePmndrsBloomThreshold = isNaN(_resPmBT) ? 0.62 : _resPmBT;
-                        envir.scene.aframePmndrsVignetteEnabled = resource.aframePmndrsVignetteEnabled === true || resource.aframePmndrsVignetteEnabled === 'true';
-                        var _resPmVD = parseFloat(resource.aframePmndrsVignetteDarkness);
-                        envir.scene.aframePmndrsVignetteDarkness = isNaN(_resPmVD) ? 0.5 : _resPmVD;
-                        var _resPmTE = parseFloat(resource.aframePmndrsToneMappingExposure);
-                        envir.scene.aframePmndrsToneMappingExposure = isNaN(_resPmTE) ? 1.0 : _resPmTE;
-                        envir.scene.aframePmndrsAtmosphereEnabled = !(resource.aframePmndrsAtmosphereEnabled === false || resource.aframePmndrsAtmosphereEnabled === 'false');
-                        envir.scene.aframePmndrsAtmosphereQuality = resource.aframePmndrsAtmosphereQuality || 'balanced';
-                        var _resPmSunEl = parseFloat(resource.aframePmndrsSunElevationDeg);
-                        envir.scene.aframePmndrsSunElevationDeg = isNaN(_resPmSunEl) ? 10 : _resPmSunEl;
-                        var _resPmSunAz = parseFloat(resource.aframePmndrsSunAzimuthDeg);
-                        envir.scene.aframePmndrsSunAzimuthDeg = isNaN(_resPmSunAz) ? 38 : _resPmSunAz;
-                        var _resPmSunDistance = parseFloat(resource.aframePmndrsSunDistance);
-                        envir.scene.aframePmndrsSunDistance = isNaN(_resPmSunDistance) ? 5200 : _resPmSunDistance;
-                        var _resPmSunRadius = parseFloat(resource.aframePmndrsSunAngularRadius);
-                        envir.scene.aframePmndrsSunAngularRadius = isNaN(_resPmSunRadius) ? 0.0068 : _resPmSunRadius;
-                        var _resPmAerial = parseFloat(resource.aframePmndrsAerialStrength);
-                        envir.scene.aframePmndrsAerialStrength = isNaN(_resPmAerial) ? 0.85 : _resPmAerial;
-                        var _resPmAlbedo = parseFloat(resource.aframePmndrsAlbedoScale);
-                        envir.scene.aframePmndrsAlbedoScale = isNaN(_resPmAlbedo) ? 0.96 : _resPmAlbedo;
-                        envir.scene.aframePmndrsTransmittanceEnabled = !(resource.aframePmndrsTransmittanceEnabled === false || resource.aframePmndrsTransmittanceEnabled === 'false');
-                        envir.scene.aframePmndrsInscatterEnabled = !(resource.aframePmndrsInscatterEnabled === false || resource.aframePmndrsInscatterEnabled === 'false');
-                        envir.scene.aframePmndrsGroundEnabled = !(resource.aframePmndrsGroundEnabled === false || resource.aframePmndrsGroundEnabled === 'false');
-                        envir.scene.aframePmndrsGroundAlbedo = resource.aframePmndrsGroundAlbedo || '#f0e6d6';
-                        var _resPmRayleigh = parseFloat(resource.aframePmndrsRayleighScale);
-                        envir.scene.aframePmndrsRayleighScale = isNaN(_resPmRayleigh) ? 1.0 : _resPmRayleigh;
-                        var _resPmMieScat = parseFloat(resource.aframePmndrsMieScatteringScale);
-                        envir.scene.aframePmndrsMieScatteringScale = isNaN(_resPmMieScat) ? 0.9 : _resPmMieScat;
-                        var _resPmMieExt = parseFloat(resource.aframePmndrsMieExtinctionScale);
-                        envir.scene.aframePmndrsMieExtinctionScale = isNaN(_resPmMieExt) ? 1.0 : _resPmMieExt;
-                        var _resPmMieG = parseFloat(resource.aframePmndrsMiePhaseG);
-                        envir.scene.aframePmndrsMiePhaseG = isNaN(_resPmMieG) ? 0.8 : _resPmMieG;
-                        var _resPmAbsorb = parseFloat(resource.aframePmndrsAbsorptionScale);
-                        envir.scene.aframePmndrsAbsorptionScale = isNaN(_resPmAbsorb) ? 1.0 : _resPmAbsorb;
-                        envir.scene.aframePmndrsMoonEnabled = resource.aframePmndrsMoonEnabled === true || resource.aframePmndrsMoonEnabled === 'true';
-                        envir.scene.aframeBloomStrength = resource.aframeBloomStrength || 'off';
-                        if (envir.scene.aframePostFXBloomEnabled === false) {
-                            envir.scene.aframeBloomStrength = 'off';
-                        }
-                        envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
-                        envir.scene.aframeExposurePreset = resource.aframeExposurePreset || 'neutral';
-                        envir.scene.aframeContrastPreset = resource.aframeContrastPreset || 'balanced';
-                        envir.scene.aframeReflectionProfile = resource.aframeReflectionProfile || 'balanced';
-                        envir.scene.aframeReflectionSource = resource.aframeReflectionSource || 'hdr';
-                        envir.scene.aframeHorizonSkyPreset = resource.aframeHorizonSkyPreset || 'natural';
-                        envir.scene.aframeEnvMapPreset = resource.aframeEnvMapPreset || 'none';
-
                         if (typeof syncCompileDialogFromSceneSettings === 'function') {
                             syncCompileDialogFromSceneSettings();
-                        }
-                       
-
-                        if (resource.fogCategory){
-                            //document.getElementById('FogType').value = resource.fogtype;
-
-                            let linear_elems = document.getElementsByClassName('linearElement');
-                            let expo_elems = document.getElementsByClassName('exponentialElement');
-                            let color_elems = document.getElementsByClassName('colorElement');
-                            
-                            
-
-                            if (resource.fogCategory === "0") {
-                                document.getElementById('RadioNoFog').checked = true;
-                                document.getElementById('FogType').value = "none";
-                                for (let i = 0; i < linear_elems.length; ++i) {
-                                    linear_elems[i].style.display="none";
-                                }
-                                for (let i = 0; i < expo_elems.length; ++i) {
-                                    expo_elems[i].style.display="none";
-                                }
-                                for (let i = 0; i < color_elems.length; ++i) {
-                                    color_elems[i].style.display="none";
-                                }
-                                document.getElementById("FogValues").style.display="none";
-                            } else if ( resource.fogCategory === "1") {
-                                document.getElementById('RadioLinearFog').checked = true;
-                                document.getElementById('FogType').value = "linear";
-                                document.getElementById('jscolorpickFog').jscolor.fromString("#" + resource.fogcolor);
-                                document.getElementById('FogNear').value = JSON.parse(resource.fognear);
-                                document.getElementById('FogFar').value = JSON.parse(resource.fogfar);
-                                for (let i = 0; i < linear_elems.length; ++i) {
-                                    linear_elems[i].style.display="flex";
-                                }
-                                for (let i = 0; i < expo_elems.length; ++i) {
-                                    expo_elems[i].style.display="none";
-                                }
-                                for (let i = 0; i < color_elems.length; ++i) {
-                                    color_elems[i].style.display="flex";
-                                }
-                                document.getElementById("FogValues").style.display="flex";
-                            } else if ( resource.fogCategory === "2") {
-                                document.getElementById('FogType').value = "exponential";
-                                document.getElementById('RadioExponentialFog').checked =true;
-                                document.getElementById('FogDensity').value = JSON.parse(resource.fogdensity);
-                                document.getElementById('jscolorpickFog').jscolor.fromString("#" + resource.fogcolor);
-                                for (let i = 0; i < linear_elems.length; ++i) {
-                                    linear_elems[i].style.display="none";
-                                }
-                                for (let i = 0; i < expo_elems.length; ++i) {
-                                    expo_elems[i].style.display="flex";
-                                }
-                                for (let i = 0; i < color_elems.length; ++i) {
-                                    color_elems[i].style.display="flex";
-                                }
-                                document.getElementById("FogValues").style.display="flex";
-                            }
-                        }
-                        else{
-                            document.getElementById('RadioNoFog').checked = true;
-                        }
-                        if (resource.fogcolor){
-                            document.getElementById('jscolorpickFog').jscolor.fromString("#" + resource.fogcolor);
-                        }
-                        if (resource.fogfar){
-                            document.getElementById('FogFar').value = resource.fogfar;
-                        }
-                        if (resource.fognear){
-                            document.getElementById('FogNear').value = resource.fognear;
-                        }
-                        if (resource.fogdensity){
-                            document.getElementById('FogDensity').value = resource.fogdensity;
-                        }
-
-                        //updateFog("undo");
-
-                        {
-                            envir.scene.backgroundStyleOption = (resource.backgroundStyleOption !== undefined) ? parseInt(resource.backgroundStyleOption) || 0 : 0;
-                         
-                              
-                            let color_sel = document.getElementById('jscolorpick');
-                            let custom_img_sel = document.getElementById('img_upload_bcg');
-                            let preset_sel = document.getElementById('presetsBcg');
-                            let preset_ground_toggle = document.getElementById('presetGroundToggle');
-        
-                            let img_thumb = document.getElementById('uploadImgThumb');
-                            let horizon_sky_preset = document.getElementById('horizonSkyPreset');
-
-                            let horizonSkyRow = document.getElementById('bcgHorizonSkyRow');
-                            let colorRow = document.getElementById('bcgColorRow');
-                            let presetsRow = document.getElementById('bcgPresetsRow');
-                            let presetGroundRow = document.getElementById('bcgPresetGroundRow');
-                            let imageRow = document.getElementById('bcgImageRow');
-                            let horizonDescription = document.getElementById('sceneHorizonDescription');
-                            let presetGroundEnabled = resource.backgroundPresetGroundEnabled !== false;
-
-                            // Hide all rows first
-                            if (horizonSkyRow) horizonSkyRow.style.display = 'none';
-                            colorRow.style.display = 'none';
-                            presetsRow.style.display = 'none';
-                            if (presetGroundRow) presetGroundRow.style.display = 'none';
-                            imageRow.style.display = 'none';
-                            if (horizonDescription) {
-                                horizonDescription.style.display = 'none';
-                                horizonDescription.classList.add('tw-hidden');
-                            }
-                            color_sel.disabled = true;
-                            preset_sel.disabled = true;
-                            if (preset_ground_toggle) {
-                                preset_ground_toggle.disabled = true;
-                                preset_ground_toggle.checked = presetGroundEnabled;
-                            }
-                            if (horizon_sky_preset) {
-                                horizon_sky_preset.disabled = true;
-                                horizon_sky_preset.value = resource.aframeHorizonSkyPreset || 'natural';
-                            }
-                            custom_img_sel.disabled = true;
-                            if (typeof setBackgroundPresetGroundEnabled === 'function') {
-                                setBackgroundPresetGroundEnabled(presetGroundEnabled);
-                            }
-
-                    switch (envir.scene.backgroundStyleOption){
-                        case 4:
-                            envir.scene.background = null;
-                            document.getElementById("sceneNoBackground").checked = true;
-                            break;
-                        case 0:
-                            document.getElementById("sceneHorizon").checked = true;
-                            if (horizonDescription) {
-                                horizonDescription.style.display = 'block';
-                                horizonDescription.classList.remove('tw-hidden');
-                            }
-                            if (horizon_sky_preset) {
-                                        horizon_sky_preset.disabled = false;
-                                    }
-                                    if (horizonSkyRow) {
-                                        horizonSkyRow.style.display = 'flex';
-                                    }
-                                    let hex = rgbToHex(255, 255, 255);
-                                    envir.scene.background = new THREE.Color(hex);
-                                    break;
-                                case 1:
-                                    document.getElementById("sceneColorRadio").checked = true;
-                                    color_sel.disabled = false;
-                                    colorRow.style.display = 'flex';
-                                    break;
-                                case 2:
-                                    document.getElementById("sceneSky").checked = true;
-                                    preset_sel.disabled = false;
-                                    presetsRow.style.display = 'flex';
-                                    if (preset_ground_toggle) preset_ground_toggle.disabled = false;
-                                    if (presetGroundRow) presetGroundRow.style.display = 'flex';
-                                    envir.scene.backgroundPresetOption = resource.backgroundPresetOption;
-                                    envir.scene.preset_selection = resource.backgroundPresetOption;
-                                    for(let index = 0; index < preset_sel.options.length;index++){
-                                        if(preset_sel.options[index].value == resource.backgroundPresetOption){
-                                            preset_sel.options[index].selected = true;
-                                        }
-                                    }
-                                    break;
-                                case 3:
-                                    document.getElementById("sceneCustomImage").checked = true;
-                                    custom_img_sel.disabled = false;
-                                    imageRow.style.display = 'flex';
-                                    if (resource.backgroundImagePath  && resource.backgroundImagePath !=0 ){
-                                        img_thumb.src = resource.backgroundImagePath;
-                                        img_thumb.hidden = false;
-                                    }
-                                    break;
-                            }
-                            envir.scene.img_bcg_path = resource.backgroundImagePath;
-                            envir.scene.bcg_selection = parseInt(resource.backgroundStyleOption) || 0;
-                            envir.scene.backgroundStyleOption = envir.scene.bcg_selection;
                         }
                     }
                     else if (name == 'cameraCoords'){

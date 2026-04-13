@@ -112,6 +112,7 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_icons' );
 		wp_enqueue_script( 'vrodos_HierarchyViewer' );
 		wp_enqueue_script( 'vrodos_load_lilgui' );
+		wp_enqueue_script( 'vrodos_scene_settings_schema' );
 		wp_enqueue_script( 'vrodos_ScenePersistence' );
 		wp_enqueue_script( 'vrodos_jscolorpick' );
 		wp_enqueue_script( 'vrodos_html2canvas' );
@@ -238,7 +239,8 @@ class VRodos_Asset_Manager {
       ['vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'],
       ['vrodos_html2canvas', $plugin_url_js . 'external_js_libraries/html2canvas.min.js'],
       ['vrodos_inflate', $plugin_url_js . 'external_js_libraries/inflate.min.js'],
-      ['vrodos_ScenePersistence', $plugin_url_js . 'vrodos_ScenePersistence.js'],
+      ['vrodos_scene_settings_schema', $plugin_url_js . 'vrodos_scene_settings_schema.js'],
+      ['vrodos_ScenePersistence', $plugin_url_js . 'vrodos_ScenePersistence.js', ['vrodos_scene_settings_schema']],
       ['vrodos_vr_editor_analytics', $plugin_url_js . 'vrodos_3d_editor_analytics.js'],
       // AJAX Scripts
       ['ajax-script_compile', $plugin_url_js . 'ajaxes/vrodos_request_compile.js'],
@@ -258,7 +260,7 @@ class VRodos_Asset_Manager {
       ['vrodos_rayCasters', $plugin_url_js . 'vrodos_rayCasters.js'],
       ['vrodos_auxControlers', $plugin_url_js . 'vrodos_auxControlers.js'],
       ['vrodos_BordersFinder', $plugin_url_js . 'vrodos_BordersFinder.js'],
-      ['vrodos_LoaderMulti', $plugin_url_js . 'vrodos_LoaderMulti.js'],
+      ['vrodos_LoaderMulti', $plugin_url_js . 'vrodos_LoaderMulti.js', ['vrodos_scene_settings_schema']],
       ['vrodos_LightsPawn_Loader', $plugin_url_js . 'vrodos_LightsPawn_Loader.js'],
       ['vrodos_movePointerLocker', $plugin_url_js . 'vrodos_movePointerLocker.js'],
       ['vrodos_addRemoveOne', $plugin_url_js . 'vrodos_addRemoveOne.js'],

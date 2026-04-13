@@ -78,77 +78,44 @@ class VrodosSceneExporter {
                 type: 'scene',
                 generatedBy: 'VrodosSceneExporter.js',
                 timestamp: Date.now(),
-                ClearColor: scene.background ? '#' + scene.background.getHexString() : '#000000',
-                enableGeneralChat: envir.scene.enableGeneralChat === true,
-                fogCategory: envir.scene.fogCategory || 0,
-                fogtype: (envir.scene.fogCategory === 1) ? 'linear' : (envir.scene.fogCategory === 2 ? 'exponential' : 'none'),
-                fogcolor: envir.scene.fogcolor || '#FFFFFF',
-                fogfar: envir.scene.fogfar || '1000',
-                fognear: envir.scene.fognear || '0',
-                fogdensity: envir.scene.fogdensity || '0.00000001',
-                enableAvatar: envir.scene.enableAvatar === true,
-                disableMovement: envir.scene.disableMovement === true,
-                aframeCollisionMode: envir.scene.aframeCollisionMode || 'auto',
-                aframeRenderQuality: envir.scene.aframeRenderQuality || 'standard',
-                aframeShadowQuality: envir.scene.aframeShadowQuality || 'medium',
-                aframeAAQuality: envir.scene.aframeAAQuality || 'balanced',
-                aframeFPSMeterEnabled: envir.scene.aframeFPSMeterEnabled === true,
-                aframeLegacyHorizonStageSize: (typeof envir.scene.aframeLegacyHorizonStageSize === 'number') ? envir.scene.aframeLegacyHorizonStageSize : 5000,
-                aframeAmbientOcclusionPreset: envir.scene.aframeAmbientOcclusionPreset || 'balanced',
-                aframeContactShadowPreset: envir.scene.aframeContactShadowPreset || 'soft',
-                aframePostFXEnabled: envir.scene.aframePostFXEnabled === true,
-                aframePostFXBloomEnabled: (envir.scene.aframeBloomStrength || 'off') !== 'off',
-                aframePostFXColorEnabled: envir.scene.aframePostFXColorEnabled !== false,
-                aframePostFXVignetteEnabled: false,
-                aframePostFXEdgeAAEnabled: envir.scene.aframePostFXEdgeAAEnabled !== false,
-                aframePostFXEdgeAAStrength: envir.scene.aframePostFXEdgeAAStrength || 3,
-                aframePostFXTAAEnabled: envir.scene.aframePostFXTAAEnabled === true,
-                aframePostFXSSREnabled: envir.scene.aframePostFXSSREnabled === true,
-                aframePostFXSSRStrength: envir.scene.aframePostFXSSRStrength || 'off',
-                aframeBloomStrength: envir.scene.aframeBloomStrength || 'off',
-                aframeExposurePreset: envir.scene.aframeExposurePreset || 'neutral',
-                aframeContrastPreset: envir.scene.aframeContrastPreset || 'balanced',
-                aframeReflectionProfile: envir.scene.aframeReflectionProfile || 'balanced',
-                aframeReflectionSource: envir.scene.aframeReflectionSource || 'hdr',
-                aframeHorizonSkyPreset: envir.scene.aframeHorizonSkyPreset || 'natural',
-                aframeEnvMapPreset: envir.scene.aframeEnvMapPreset || 'none',
-                // Post-processing engine selector ('legacy' or 'pmndrs')
-                aframePostFXEngine: (envir.scene.aframePostFXEngine === 'pmndrs') ? 'pmndrs' : 'legacy',
-                // Pmndrs-only tweakable knobs (ignored when aframePostFXEngine === 'legacy')
-                aframePmndrsAAMode: envir.scene.aframePmndrsAAMode || 'inherit',
-                aframePmndrsAAPreset: envir.scene.aframePmndrsAAPreset || 'inherit',
-                aframePmndrsBloomIntensity: (typeof envir.scene.aframePmndrsBloomIntensity === 'number') ? envir.scene.aframePmndrsBloomIntensity : 1.0,
-                aframePmndrsBloomThreshold: (typeof envir.scene.aframePmndrsBloomThreshold === 'number') ? envir.scene.aframePmndrsBloomThreshold : 0.62,
-                aframePmndrsVignetteEnabled: envir.scene.aframePmndrsVignetteEnabled === true,
-                aframePmndrsVignetteDarkness: (typeof envir.scene.aframePmndrsVignetteDarkness === 'number') ? envir.scene.aframePmndrsVignetteDarkness : 0.5,
-                aframePmndrsToneMappingExposure: (typeof envir.scene.aframePmndrsToneMappingExposure === 'number') ? envir.scene.aframePmndrsToneMappingExposure : 1.0,
-                aframePmndrsAtmosphereEnabled: envir.scene.aframePmndrsAtmosphereEnabled !== false,
-                aframePmndrsAtmosphereQuality: envir.scene.aframePmndrsAtmosphereQuality || 'balanced',
-                aframePmndrsSunElevationDeg: (typeof envir.scene.aframePmndrsSunElevationDeg === 'number') ? envir.scene.aframePmndrsSunElevationDeg : 10,
-                aframePmndrsSunAzimuthDeg: (typeof envir.scene.aframePmndrsSunAzimuthDeg === 'number') ? envir.scene.aframePmndrsSunAzimuthDeg : 38,
-                aframePmndrsSunDistance: (typeof envir.scene.aframePmndrsSunDistance === 'number') ? envir.scene.aframePmndrsSunDistance : 5200,
-                aframePmndrsSunAngularRadius: (typeof envir.scene.aframePmndrsSunAngularRadius === 'number') ? envir.scene.aframePmndrsSunAngularRadius : 0.0068,
-                aframePmndrsAerialStrength: (typeof envir.scene.aframePmndrsAerialStrength === 'number') ? envir.scene.aframePmndrsAerialStrength : 0.85,
-                aframePmndrsAlbedoScale: (typeof envir.scene.aframePmndrsAlbedoScale === 'number') ? envir.scene.aframePmndrsAlbedoScale : 0.96,
-                aframePmndrsTransmittanceEnabled: envir.scene.aframePmndrsTransmittanceEnabled !== false,
-                aframePmndrsInscatterEnabled: envir.scene.aframePmndrsInscatterEnabled !== false,
-                aframePmndrsGroundEnabled: envir.scene.aframePmndrsGroundEnabled !== false,
-                aframePmndrsGroundAlbedo: envir.scene.aframePmndrsGroundAlbedo || '#f0e6d6',
-                aframePmndrsRayleighScale: (typeof envir.scene.aframePmndrsRayleighScale === 'number') ? envir.scene.aframePmndrsRayleighScale : 1.0,
-                aframePmndrsMieScatteringScale: (typeof envir.scene.aframePmndrsMieScatteringScale === 'number') ? envir.scene.aframePmndrsMieScatteringScale : 0.9,
-                aframePmndrsMieExtinctionScale: (typeof envir.scene.aframePmndrsMieExtinctionScale === 'number') ? envir.scene.aframePmndrsMieExtinctionScale : 1.0,
-                aframePmndrsMiePhaseG: (typeof envir.scene.aframePmndrsMiePhaseG === 'number') ? envir.scene.aframePmndrsMiePhaseG : 0.8,
-                aframePmndrsAbsorptionScale: (typeof envir.scene.aframePmndrsAbsorptionScale === 'number') ? envir.scene.aframePmndrsAbsorptionScale : 1.0,
-                aframePmndrsMoonEnabled: envir.scene.aframePmndrsMoonEnabled === true,
-                backgroundPresetOption: envir.scene.backgroundPresetOption || 'None',
-                backgroundPresetGroundEnabled: envir.scene.backgroundPresetGroundEnabled !== false,
-                backgroundStyleOption: (envir.scene.backgroundStyleOption !== undefined) ? envir.scene.backgroundStyleOption : 0,
-                backgroundImagePath: envir.scene.img_bcg_path || '0',
                 objects: 0,
             },
             urlBaseType: 'relativeToScene',
             objects: {},
         };
+
+        // Populate metadata using the centralized schema
+        for (const [key, config] of Object.entries(VRODOS_SCENE_SETTINGS_SCHEMA)) {
+            const envirKey = config.envirKey;
+            let value = envir.scene[envirKey];
+
+            // Special handling for legacy keys or specific logic
+            if (key === 'ClearColor') {
+                value = scene.background ? '#' + scene.background.getHexString() : '#000000';
+            } else if (key === 'fogtype') {
+                value = (envir.scene.fogCategory === 1) ? 'linear' : (envir.scene.fogCategory === 2 ? 'exponential' : 'none');
+            } else if (key === 'backgroundImagePath') {
+                value = envir.scene.img_bcg_path || '0';
+            }
+
+            // Type-safe assignment with sensible fallbacks
+            if (config.type === 'boolean') {
+                // Determine if we should use true/false or explicit defaults for missing values
+                if (key.includes('Enabled') || key.startsWith('enable') || key.startsWith('disable')) {
+                    if (key.includes('Inscatter') || key.includes('Transmittance') || key.includes('GroundEnabled') || key.includes('PostFXColor') || key.includes('PostFXEdgeAA') || key.includes('AtmosphereEnabled')) {
+                         output.metadata[key] = value !== false; 
+                    } else {
+                         output.metadata[key] = value === true;
+                    }
+                } else {
+                    output.metadata[key] = !!value;
+                }
+            } else if (config.type === 'number') {
+                output.metadata[key] = (typeof value === 'number') ? value : config.default;
+            } else {
+                output.metadata[key] = value || config.default;
+            }
+        }
 
         scene.traverse(node => {
             if (node.vrodos_internal_helper === true) {
@@ -304,9 +271,8 @@ class VrodosSceneImporter {
         resources3D_new["cameraCoords"] = {};
 
         for (const key in scene_json_metadata) {
-            const value = scene_json_metadata[key];
-            if (['ClearColor', 'disableMovement', 'enableGeneralChat', 'enableAvatar', 'aframeCollisionMode', 'aframeRenderQuality', 'aframeShadowQuality', 'aframeAAQuality', 'aframeFPSMeterEnabled', 'aframeLegacyHorizonStageSize', 'aframeAmbientOcclusionPreset', 'aframeContactShadowPreset', 'aframePostFXEnabled', 'aframePostFXBloomEnabled', 'aframePostFXColorEnabled', 'aframePostFXVignetteEnabled', 'aframePostFXEdgeAAEnabled', 'aframePostFXEdgeAAStrength', 'aframeBloomStrength', 'aframeExposurePreset', 'aframeContrastPreset', 'aframeReflectionProfile', 'aframeReflectionSource', 'aframeHorizonSkyPreset', 'aframeEnvMapPreset', 'aframePostFXEngine', 'aframePmndrsAAMode', 'aframePmndrsAAPreset', 'aframePmndrsBloomIntensity', 'aframePmndrsBloomThreshold', 'aframePmndrsVignetteEnabled', 'aframePmndrsVignetteDarkness', 'aframePmndrsToneMappingExposure', 'aframePmndrsAtmosphereEnabled', 'aframePmndrsAtmosphereQuality', 'aframePmndrsSunElevationDeg', 'aframePmndrsSunAzimuthDeg', 'aframePmndrsSunDistance', 'aframePmndrsSunAngularRadius', 'aframePmndrsAerialStrength', 'aframePmndrsAlbedoScale', 'aframePmndrsTransmittanceEnabled', 'aframePmndrsInscatterEnabled', 'aframePmndrsGroundEnabled', 'aframePmndrsGroundAlbedo', 'aframePmndrsRayleighScale', 'aframePmndrsMieScatteringScale', 'aframePmndrsMieExtinctionScale', 'aframePmndrsMiePhaseG', 'aframePmndrsAbsorptionScale', 'aframePmndrsMoonEnabled', 'backgroundPresetOption', 'backgroundPresetGroundEnabled', 'backgroundStyleOption', 'backgroundImagePath', 'fogtype', 'fogCategory', 'fogcolor', 'fogfar', 'fognear', 'fogdensity'].includes(key)) {
-                resources3D_new["SceneSettings"][key] = value;
+            if (Object.prototype.hasOwnProperty.call(VRODOS_SCENE_SETTINGS_SCHEMA, key)) {
+                resources3D_new["SceneSettings"][key] = scene_json_metadata[key];
             }
         }
 
