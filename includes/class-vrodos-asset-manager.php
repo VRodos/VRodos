@@ -180,13 +180,35 @@ class VRodos_Asset_Manager {
 			['ajax_url' => admin_url( 'admin-ajax.php' )]
 		);
 
-		$localized_data = ['scene_data'          => $scene_data, 'pluginPath'          => $template_data['pluginpath'], 'uploadDir'           => $template_data['upload_url'], 'projectId'           => $template_data['project_id'], 'projectSlug'         => $template_data['projectSlug'], 'isAdmin'             => $template_data['isAdmin'], 'isUserAdmin'         => $template_data['is_user_admin'], 'urlforAssetEdit'     => $template_data['urlforAssetEdit'], 'scene_id'            => $template_data['current_scene_id'], 'game_type'           => strtolower( (string) $template_data['project_type'] ), 'is_immerse_project' => ! empty( $template_data['is_immerse_project'] ), 'user_email'          => $template_data['user_email'], 'current_user_id'     => $template_data['current_user_id'], 'siteurl'             => site_url()];
+		$localized_data = [
+			'scene_data'          => $scene_data,
+			'pluginPath'          => $template_data['pluginpath'],
+			'uploadDir'           => $template_data['upload_url'],
+			'projectId'           => $template_data['project_id'],
+			'projectSlug'         => $template_data['projectSlug'],
+			'isAdmin'             => $template_data['isAdmin'],
+			'isUserAdmin'         => $template_data['is_user_admin'],
+			'urlforAssetEdit'     => $template_data['urlforAssetEdit'],
+			'scene_id'            => $template_data['current_scene_id'],
+			'game_type'           => strtolower( (string) $template_data['project_type'] ),
+			'is_immerse_project' => ! empty( $template_data['is_immerse_project'] ),
+			'user_email'          => $template_data['user_email'],
+			'current_user_id'     => $template_data['current_user_id'],
+			'siteurl'             => site_url(),
+			// Phase 2 localization
+			'upload_image_nonce'  => wp_create_nonce( 'vrodos_scene_upload_image_nonce' ),
+			'post_revision_no'    => 1,
+			'isPaused'            => false,
+			'isAnyLight'          => true,
+			'mapActions'          => new stdClass(),
+			'showPawnPositions'   => "false",
+			'sceneType'           => get_post_meta( $template_data['current_scene_id'], 'vrodos_scene_environment', true ) ?: ''
+		];
 
 		wp_localize_script( 'vrodos_scripts', 'vrodos_data', $localized_data );
 
-		// Inline script to map localized data to global vars for backward compatibility
-		$inline_script = 'var pluginPath = vrodos_data.pluginPath; var uploadDir = vrodos_data.uploadDir; var urlforAssetEdit = vrodos_data.urlforAssetEdit; var isAdmin = vrodos_data.isAdmin; var projectSlug = vrodos_data.projectSlug; var projectId = vrodos_data.projectId; var vrodos_scene_data = vrodos_data.scene_data;';
-		wp_add_inline_script( 'vrodos_scripts', $inline_script, 'before' );
+		// Editor Initialization module (Phase 2)
+		wp_enqueue_script( 'vrodos_EditorInitializer' );
 
 		// Media
 		if ( $template_data['current_scene_id'] ) {
@@ -268,6 +290,7 @@ class VRodos_Asset_Manager {
       ['vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'],
       ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'],
       ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game']],
+      ['vrodos_EditorInitializer', $plugin_url_js . 'vrodos_EditorInitializer.js', ['vrodos_scripts', 'vrodos_scene_settings_schema', 'vrodos_ScenePersistence', 'vrodos_LoaderMulti', 'vrodos_3d_editor_environmentals', 'vrodos_addRemoveOne', 'vrodos_3d_editor_buttons_drags']],
       // Active Three vendor bundle paired with the pinned A-Frame runtime.
       ['vrodos_three_vendor_bundle', $plugin_url_js . $three_vendor_dir . '/' . $three_vendor_bundle],
       // Other Libraries

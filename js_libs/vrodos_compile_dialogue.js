@@ -42,7 +42,6 @@ document.addEventListener('DOMContentLoaded', function() {
             postFxEngineHint: document.getElementById('compilePostFxEngineHint'),
             postFxEngineTabLegacy: document.getElementById('compilePostFxEngineTabLegacy'),
             postFxEngineTabPmndrs: document.getElementById('compilePostFxEngineTabPmndrs'),
-            pmndrsTweaksGroup: document.getElementById('compilePmndrsTweaks'),
             pmndrsBloomIntensity: document.getElementById('compilePmndrsBloomIntensitySlider'),
             pmndrsBloomIntensityValue: document.getElementById('compilePmndrsBloomIntensityValue'),
             pmndrsBloomThreshold: document.getElementById('compilePmndrsBloomThresholdSlider'),
@@ -472,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function ensureCompileSceneSettingsDefaults() {
-        if (typeof envir === 'undefined' || !envir.scene) {
+        if (typeof envir === 'undefined' || !envir || !envir.scene) {
             return;
         }
 
@@ -1001,15 +1000,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.syncCompileDialogFromSceneSettings = function() {
         var controls = getCompileDialogElements();
+
         if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile || !controls.reflectionSource) {
             return;
         }
 
         ensureCompileSceneSettingsDefaults();
 
-        controls.renderQuality.value = envir && envir.scene && envir.scene.aframeRenderQuality
-            ? envir.scene.aframeRenderQuality
-            : 'standard';
+        controls.renderQuality.value = envir.scene.aframeRenderQuality || 'standard';
         controls.shadowQuality.value = envir && envir.scene && envir.scene.aframeShadowQuality
             ? envir.scene.aframeShadowQuality
             : 'medium';
@@ -1330,9 +1328,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (typeof window.syncCompileDialogFromSceneSettings === 'function') {
-        window.syncCompileDialogFromSceneSettings();
-    }
+    // Initial synchronization moved to vrodos_EditorInitializer.js to ensure environment is ready
 
     function copyURLToClipboard() {
         let linkElement = document.getElementById("openWebLinkhref");

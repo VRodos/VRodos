@@ -100,16 +100,12 @@ class VrodosSceneExporter {
 
             // Type-safe assignment with sensible fallbacks
             if (config.type === 'boolean') {
-                // Determine if we should use true/false or explicit defaults for missing values
-                if (key.includes('Enabled') || key.startsWith('enable') || key.startsWith('disable')) {
-                    if (key.includes('Inscatter') || key.includes('Transmittance') || key.includes('GroundEnabled') || key.includes('PostFXColor') || key.includes('PostFXEdgeAA') || key.includes('AtmosphereEnabled')) {
-                         output.metadata[key] = value !== false; 
-                    } else {
-                         output.metadata[key] = value === true;
-                    }
-                } else {
-                    output.metadata[key] = !!value;
+                // Use explicit boolean check or fallback to default
+                let boolValue = value;
+                if (typeof boolValue !== 'boolean') {
+                    boolValue = config.default;
                 }
+                output.metadata[key] = boolValue;
             } else if (config.type === 'number') {
                 output.metadata[key] = (typeof value === 'number') ? value : config.default;
             } else {
